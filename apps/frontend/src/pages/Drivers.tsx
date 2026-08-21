@@ -18,6 +18,7 @@ import {
   updateDriverTeam,
 } from "../api/mdata";
 import { getSamsaraHealth } from "../api/samsara";
+import { VoidReasonModal } from "../components/accounting/VoidReasonModal";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
 import { ListErrorState } from "../components/ListErrorState";
@@ -257,6 +258,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [teamDeactivateReasonOpen, setTeamDeactivateReasonOpen] = useState(false);
   const [teamForm, setTeamForm] = useState({
     team_name: "",
     primary_driver_id: "",
@@ -1173,9 +1175,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   variant="secondary"
                   onClick={() => {
                     if (!selectedTeamId) return;
-                    const reason = window.prompt("Reason for deactivation (min 10 chars):", "");
-                    if (!reason || reason.trim().length < 10) return;
-                    void deactivateTeamMutation.mutate({ id: selectedTeamId, reason: reason.trim() });
+                    setTeamDeactivateReasonOpen(true);
                   }}
                 >
                   Deactivate Team
@@ -1192,6 +1192,19 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         open={addOpen}
         companyId={selectedCompanyId}
         onClose={() => setAddOpen(false)}
+      />
+
+      <VoidReasonModal
+        open={teamDeactivateReasonOpen}
+        title="Deactivate Team"
+        minLength={10}
+        postsReversingEntry={false}
+        submitLabel="Deactivate"
+        onClose={() => setTeamDeactivateReasonOpen(false)}
+        onSubmit={async (reason) => {
+          if (!selectedTeamId) return;
+          await deactivateTeamMutation.mutateAsync({ id: selectedTeamId, reason: reason.trim() });
+        }}
       />
     </div>
   );

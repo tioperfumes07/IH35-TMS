@@ -18,6 +18,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { ConfirmModal } from "../shared/ConfirmModal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { StatusBadge } from "../StatusBadge";
 import { useToast } from "../Toast";
@@ -221,6 +222,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
   const [invitePending, setInvitePending] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
+  const [inviteConfirmOpen, setInviteConfirmOpen] = useState(false);
   const [createSummary, setCreateSummary] = useState<{
     driver_id: string;
     display_name: string;
@@ -1129,21 +1131,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           type="button"
           data-testid="send-invite-confirm"
           disabled={invitePending || inviteSent || !createSummary?.driver_id}
-          onClick={async () => {
+          onClick={() => {
             if (!createSummary?.driver_id) return;
             // Deliberate second action, and it goes through the SAME endpoint the office already uses
             // to re-send — no second sender to keep in step with the first.
-            if (!window.confirm(`Send a WhatsApp invite to ${createSummary.phone}? This messages that number.`)) return;
-            setInvitePending(true);
-            try {
-              await resendDriverInvite(createSummary.driver_id);
-              setInviteSent(true);
-              pushToast(`Invite sent to ${createSummary.phone}`, "success");
-            } catch (error) {
-              pushToast(userFacingApiError(error, "Could not send invite"), "error");
-            } finally {
-              setInvitePending(false);
-            }
+            setInviteConfirmOpen(true);
           }}
         >
           {inviteSent ? "Invite sent" : invitePending ? "Sending…" : `Send WhatsApp invite to ${createSummary?.phone ?? ""}`}
@@ -1187,6 +1179,26 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           View Driver
         </Button>
       </div>
+      <ConfirmModal
+        open={inviteConfirmOpen}
+        title="Send WhatsApp invite"
+        message={`Send a WhatsApp invite to ${createSummary?.phone ?? ""}? This messages that number.`}
+        confirmLabel="Send invite"
+        onClose={() => setInviteConfirmOpen(false)}
+        onConfirm={async () => {
+          if (!createSummary?.driver_id) return;
+          setInvitePending(true);
+          try {
+            await resendDriverInvite(createSummary.driver_id);
+            setInviteSent(true);
+            pushToast(`Invite sent to ${createSummary.phone}`, "success");
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Could not send invite"), "error");
+          } finally {
+            setInvitePending(false);
+          }
+        }}
+      />
     </div>
   );
 

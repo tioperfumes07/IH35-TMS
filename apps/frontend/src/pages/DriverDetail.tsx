@@ -10,6 +10,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { ApiError } from "../api/client";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { AuditHistoryTab } from "../components/drivers/AuditHistoryTab";
+import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { LoadHistoryTab } from "../components/drivers/LoadHistoryTab";
 import { EarningsTab } from "../components/drivers/EarningsTab";
 import { useAuth } from "../auth/useAuth";
@@ -202,6 +203,7 @@ export function DriverDetailPage() {
     }
   }, [searchParams, id, navigate]);
   const [enableModalOpen, setEnableModalOpen] = useState(false);
+  const [deactivateConfirmOpen, setDeactivateConfirmOpen] = useState(false);
   const [addQualificationOpen, setAddQualificationOpen] = useState(false);
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -856,11 +858,7 @@ export function DriverDetailPage() {
             {driver.status !== "Terminated" ? (
               <Button
                 variant="danger"
-                onClick={async () => {
-                  const ok = window.confirm("Deactivate this driver?");
-                  if (!ok) return;
-                  await deactivateMutation.mutateAsync();
-                }}
+                onClick={() => setDeactivateConfirmOpen(true)}
                 loading={deactivateMutation.isPending}
               >
                 Deactivate
@@ -2081,6 +2079,18 @@ export function DriverDetailPage() {
           )}
         </div>
       </Modal>
+
+      <ConfirmModal
+        open={deactivateConfirmOpen}
+        title="Deactivate driver"
+        message="Deactivate this driver?"
+        confirmLabel="Deactivate"
+        danger
+        onClose={() => setDeactivateConfirmOpen(false)}
+        onConfirm={async () => {
+          await deactivateMutation.mutateAsync().catch(() => undefined);
+        }}
+      />
 
       <Modal open={enableModalOpen} onClose={() => setEnableModalOpen(false)} title="Enable phone login">
         <div className="space-y-4">

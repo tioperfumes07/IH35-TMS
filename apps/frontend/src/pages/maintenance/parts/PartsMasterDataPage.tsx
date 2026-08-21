@@ -10,6 +10,7 @@ import {
   updateMaintenancePart,
   voidMaintenancePart,
 } from "../../../api/maintenance";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -51,6 +52,7 @@ export function PartsMasterDataPage() {
   const [draft, setDraft] = useState<PartDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState<MaintenancePartRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [voiding, setVoiding] = useState<MaintenancePartRow | null>(null);
 
   const partsQuery = useQuery({
     queryKey: ["maintenance", "master-data", "parts", companyId, search],
@@ -180,12 +182,7 @@ export function PartsMasterDataPage() {
       <button
         type="button"
         className="text-red-600 underline"
-        onClick={async () => {
-          const reason = window.prompt("Void reason");
-          if (!reason) return;
-          await voidMaintenancePart(row.id, companyId, reason);
-          await refresh();
-        }}
+        onClick={() => setVoiding(row)}
       >
         Void
       </button>
@@ -301,6 +298,21 @@ export function PartsMasterDataPage() {
           </div>
         ) : null}
       </Modal>
+
+      <VoidReasonModal
+        open={Boolean(voiding)}
+        title="Void Part"
+        entityRef={voiding ? `${voiding.part_number} — ${voiding.name}` : undefined}
+        minLength={1}
+        postsReversingEntry={false}
+        submitLabel="Void"
+        onClose={() => setVoiding(null)}
+        onSubmit={async (reason) => {
+          if (!voiding) return;
+          await voidMaintenancePart(voiding.id, companyId, reason);
+          await refresh();
+        }}
+      />
     </div>
   );
 }
