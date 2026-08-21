@@ -99,6 +99,9 @@ function mapBillPaymentError(error: SettlementBillPaymentError) {
     SOURCE_POSTING_LINK_MISSING: 422,
     SETTLEMENT_TOTALS_INCONSISTENT: 422,
     UNBALANCED_ENTRY: 422,
+    // ACCT-F5697 — the other settlement poster already claimed this settlement; a real conflict, not
+    // a malformed request.
+    SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER: 409,
   };
   return { statusCode: byCode[error.code] ?? 400, body: { error: error.code, message: error.message, details: error.details ?? null } };
 }

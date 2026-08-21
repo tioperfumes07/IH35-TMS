@@ -83,7 +83,8 @@ export type PayRunCloseErrorCode =
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
   | "NET_PAY_NEGATIVE"
   | "NET_PAY_FLOOR_BREACH"
-  | "UNBALANCED_ENTRY";
+  | "UNBALANCED_ENTRY"
+  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER";
 
 export class SettlementPayRunError extends Error {
   code: PayRunCloseErrorCode;
@@ -366,6 +367,43 @@ export async function closeSettlementPayRun(
       throw new SettlementPayRunError(
         "SETTLEMENT_NOT_POSTABLE",
         `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`
+      );
+    }
+
+    // ACCT-F5697 — THE OTHER settlement GL poster. `settlement-bill-payment-posting.service.ts`'s
+    // postSettlementBillPayment() independently claims driver_finance.driver_settlement_gl_runs and
+    // posts Bill + BillPayment for the SAME settlement, with no awareness of payrun_gl_runs and no
+    // awareness of this function. Both existed in prod at once: S-2026-0002 was posted by BOTH —
+    // bill-payment on 2026-08-11 (Dr 6890 Cost of Labor $297.60 / Cr 1000 Bank $297.60, no escrow
+    // withheld) and pay-run close on 2026-08-21 (Dr 6890 $297.60 / Cr Escrow $250.00 / Cr Bank $47.60)
+    // — Cost of Labor booked twice ($595.20 for a $297.60 settlement) and the operating bank credited
+    // $345.20 for a settlement whose real net was $47.60, while payment_state stayed 'unpaid' the
+    // whole time (no cash actually moved). Mirrors the ACCT-F59 invoice↔revrec-latch interlock shape
+    // exactly: neither poster is retired here (that is a bigger architecture call), each just refuses
+    // when the OTHER has demonstrably already posted. "posted" alone is not proof (ACCT-F348 — a
+    // claimed run can still have zero real bills if the poster crashed mid-way), so this checks for a
+    // driver_settlement_gl_bills row that actually carries a bill_journal_entry_id, the same
+    // completion signal ACCT-F348 itself uses.
+    const otherPoster = await client.query<{ id: string }>(
+      `
+        SELECT r.id::text
+          FROM driver_finance.driver_settlement_gl_runs r
+         WHERE r.operating_company_id = $1::uuid
+           AND r.settlement_id = $2::uuid
+           AND r.status = 'posted'
+           AND EXISTS (
+             SELECT 1 FROM driver_finance.driver_settlement_gl_bills b
+              WHERE b.run_id = r.id AND b.bill_journal_entry_id IS NOT NULL
+           )
+         LIMIT 1
+      `,
+      [opco, settlementId]
+    );
+    if ((otherPoster.rowCount ?? 0) > 0) {
+      throw new SettlementPayRunError(
+        "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER",
+        `Settlement ${settlement.display_id ?? settlement.id} was already posted by the bill-payment poster (driver_settlement_gl_runs ${otherPoster.rows[0]!.id}) — refusing to double-post via pay-run close`,
+        { driver_settlement_gl_run_id: otherPoster.rows[0]!.id }
       );
     }
 

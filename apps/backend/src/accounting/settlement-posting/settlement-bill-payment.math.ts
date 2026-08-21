@@ -127,7 +127,8 @@ export type SettlementBillPaymentErrorCode =
   | "DEDUCTION_RECOVERY_ACCOUNT_MISSING"
   | "SOURCE_POSTING_LINK_MISSING"
   | "SETTLEMENT_TOTALS_INCONSISTENT"
-  | "UNBALANCED_ENTRY";
+  | "UNBALANCED_ENTRY"
+  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER";
 
 export class SettlementBillPaymentError extends Error {
   code: SettlementBillPaymentErrorCode;
