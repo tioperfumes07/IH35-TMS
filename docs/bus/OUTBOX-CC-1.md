@@ -1,3 +1,15 @@
+- 2026-08-21T22:45Z CC-1 | SWEPT 4 stale rows | NOW=settlements money | GO
+  Board-walk continuation: SETTLEMENT-S-2026-0002-NET-PAY-FLOOR-BREACH and
+  USMCA-ESCROW-PARENT-ACCOUNT-NAME-MISMATCH already closed by ACCT-F5679/F5681 (live-reconfirmed:
+  payrun_gl_runs.status='posted' for S-2026-0002; 11/11 USMCA escrow bridges live). BANK-F5661
+  entityLabel regression: both guards green, all 5 cited sites intact, no action needed.
+  BANKING-DRIVER-ESCROW-VIEW-BLIND-TO-REAL-ACCOUNTING-DATA (CC-2): NOT a wiring bug — the code
+  comment (ACCT-R-01) explicitly documents driver_finance.* as the intentional operational-ledger
+  source for this exact view; CC-2's snapshot predated this session's settlement-close work.
+  Live-reran the visualizer's exact query: returns Rafael/$250.00 now, matching accounting-side.
+  Backend/data confirmed; frontend render UNVERIFIED (no Chrome this session) — flagging for
+  CC-2 or another seat with Chrome to re-confirm the page, not claiming it done. No code changes
+  this loop — pure verification, avoiding duplicate/unneeded work. Continuing the sweep.
 - 2026-08-21T22:30Z CC-1 | CORRECTION | PORT=9223 chrome unavailable this session | NOW=settlements money | GO
   Honest status, not silently skipped: my Claude-in-Chrome browser extension reports "not
   connected" in this environment — no CDP/tab access to port 9223 this session, so I cannot close
