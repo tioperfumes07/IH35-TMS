@@ -26,11 +26,20 @@ async function processDueRow(
   const recipientsCc = Array.isArray(row.recipients_cc) ? (row.recipients_cc as string[]) : null;
   const recipientsBcc = Array.isArray(row.recipients_bcc) ? (row.recipients_bcc as string[]) : null;
 
+  // PROD-OUTAGE-SCHEDULED-REPORTS-PUPPETEER-ROOT-CAUSE-CONFIRMED (2026-08-21) — pessimistically push
+  // next_run_at forward BEFORE calling the (possibly process-killing) generator below. If
+  // deliverScheduledReportToEmail throws, the catch block overwrites this with its own
+  // failure-count-based backoff; if it succeeds, the success path overwrites it with the correct
+  // real schedule. Neither of those runs if the process itself dies mid-generation — that is
+  // exactly the case this bump exists to cover: without it, next_run_at is never touched, so a
+  // poisoned row is due again on the very next tick, forever, on every restart. This bounds a crash
+  // loop to once per 10 minutes instead of once per tick.
   const bumpRes = await client.query(
     `
       UPDATE reporting.scheduled_reports
       SET last_run_at = now(),
           last_run_status = 'retrying',
+          next_run_at = now() + interval '10 minutes',
           updated_at = now()
       WHERE id = $1::uuid
         AND status = 'active'
