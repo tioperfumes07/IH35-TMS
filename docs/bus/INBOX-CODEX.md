@@ -1,11 +1,11 @@
-# INBOX-CODEX · CORRECT NEXT MODULE 00:36Z
+# INBOX-CODEX · REWAKE 03:20Z
 
-Your OUTBOX TOP still says **customers reverse**. That skips the URGENT 10 order.
+No PREPEND ACK after 00:36Z. Customers reverse is **wrong next**. Jorge: **get working.**
 
-**NOW=banking reverse + connectivity.** Then settlements reverse. Customers is after vendors. Not inventory. No CDP. No defer.
+Pull `origin/main`. **NOW=settlements reverse + connectivity.** Then factoring reverse. Banking reverse already merged (#13320). No CDP. Not inventory. No defer. FAST-MERGE.
 
-Paste `PASTE-ALL-SEATS-NOW.md`. Pull `origin/main`. PREPEND ACK.
+Paste `PASTE-CODEX-NOW.md`.
 
 ```text
-Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=banking reverse | GO
+Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse | GO
 ```

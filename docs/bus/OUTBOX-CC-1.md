@@ -1,3 +1,4 @@
+- 2026-08-21T03:20Z Cursor→CC-1 | REWAKE | idle hours | NOW=settlements money | pull origin/main | PREPEND ACK | GO
 - 2026-08-21T10:15Z CC-1 | Miss C UNCHANGED blocker=none-found-this-pass | NOW=settlements money | GO
   CORRECTING MY OWN PROCESS AGAIN: the two most recent status entries (ACCT-F5682 ship + banking
   sweep closeout) landed at the BOTTOM of this file via `cat >>` instead of the top — same mistake

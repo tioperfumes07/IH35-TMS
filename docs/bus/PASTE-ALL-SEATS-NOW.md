@@ -1,22 +1,19 @@
-# PASTE ALL SEATS · URGENT 10 · NOTHING DEFERRED
+# PASTE ALL SEATS · REWAKE 03:20Z · SETTLEMENTS
 
 Master: `docs/bus/FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md`  
 Seats: Codex · CC-1 · CC-2 · CC-3 · Cursor. Devin PARKED.
 
-**Nothing is deferred.** Money, wiring, linkage, Built, Clicked, Box 4 — fix now.
+**You have been idle.** Pull `origin/main` now. PREPEND ACK. Build.
 
-**URGENT 10 (not inventory):**  
-`accounting` → `banking` → `settlements` → `factoring` → `dispatch` → `vendors` → `customers` → `drivers` → `fleet` → `lists`  
-`lists` = Items. **Never inventory. Never fuel as urgent.**
-
-Columns advance down that list. Never idle.
+**URGENT 10:** accounting → banking → **settlements** → factoring → dispatch → vendors → customers → drivers → fleet → lists.  
+Not inventory. No defer.
 
 | Seat | This hour |
 |------|-----------|
-| CC-3 | Accounting Built done → **banking Built**. Then settlements. |
-| CC-1 | Accounting money leftover (escrow §9.4) **now**, then **banking money**. No park. |
-| CC-2 | PREPEND ACK. Accounting Box 4 leftover **now**, then **banking Box 4**. |
-| Codex | PREPEND ACK. Accounting reverse **now**, then **banking reverse**. |
-| Cursor | Unpaid Clicked on accounting then banking. Get this file on main. |
+| CC-1 | **settlements money** then factoring |
+| CC-2 | **settlements Box 4** |
+| CC-3 | **settlements Built** |
+| Codex | **settlements reverse** |
+| Cursor | settlements Clicked + keep this file on main |
 
-PREPEND OUTBOX. ACK `WAVE1-URGENT-10 | NO-DEFER`.
+ACK `WAVE1-URGENT-10 | NO-DEFER | NOW=settlements <col> | GO`
