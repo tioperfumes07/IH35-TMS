@@ -146,7 +146,6 @@
       "route_hint": "/fleet",
       "required": [
         "unit",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -159,7 +158,6 @@
       "route_hint": "/fleet",
       "required": [
         "trailer",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -551,7 +549,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -916,7 +913,6 @@
       "surface_path": "components/fleet/CreateTrailerModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "trailer"
       ]
     },
@@ -929,7 +925,6 @@
       "surface_path": "components/fleet/CreateUnitModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "unit"
       ]
     },
@@ -942,7 +937,6 @@
       "surface_path": "components/fleet/EditTrailerModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "trailer"
       ]
     },
@@ -1961,6 +1955,48 @@
           "id": "trailer.profile.insurance_claims_reverse",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "company_enum_picker_law_2026_08_21": {
+      "finding": "FLEET-COMPANY-PICKER-NOT-INLINE-CREATE-CATALOG",
+      "note": "Same class as LST-PICKER-LAW-FLAT-CATALOG-OVERREACH / SYS-EDI-PICKER-APPLICABILITY-THEATER. Create Unit / Create Trailer / Edit Trailer / Edit Vehicle Identity only expose Owner Company and/or Leased To Company as a closed 3-entity Combobox (TRANSP / TRK / USMCA) with placeholder Select company and no + Add new company row. Companies are a fixed owner-managed set, not a growable catalog. picker_law does not apply. Dual-path twins dropped together (home.create_* + fleet.modal.create_*). KEEP picker_law on fleet.modal.quick_assign and unit.edit.quick_availability (Default Driver EntityPicker). CC-2 live CDP 2026-08-21: home.create_unit + fleet.modal.edit_trailer; they also named unit.edit.identity as the same enum.",
+      "drops": [
+        {
+          "id": "home.create_unit",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "home.create_trailer",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_unit",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_trailer",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "fleet.modal.edit_trailer",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.edit.identity",
+          "removed": [
+            "picker_law"
           ]
         }
       ]

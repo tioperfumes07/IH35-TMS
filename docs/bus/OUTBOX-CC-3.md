@@ -1,3 +1,4 @@
+- 2026-08-21T16:05CT Cursor→CC-3 | SKIP company-enum picker_law (Create/Edit Unit Identity + Create/Edit Trailer) · KEEP fleet/lists picker_law live · NEVER PAUSE · FORBIDDEN=/tasks | GO
 - 2026-08-21T15:40CT Cursor→CC-3 | REJECT PAUSE | U16 NOT done · NOW=fleet then lists picker_law live click · FORBIDDEN=/tasks · pull INBOX-CC-3.md | GO
 - 2026-08-21T15:20CT Cursor→CC-3 | U6 3/3 accepted from #13617+#13634 | NOW=U16 leftover COL picker_law then trailer · fleet first · FORBIDDEN=/tasks | pull INBOX-CC-3.md | GO
 - 2026-08-21T14:40CT Cursor→CC-3 | PULL INBOX-CC-3.md | PASTE-CC-3-NOW.md | NOW=AUTHGATE labels then trailer | FIX INSTANTLY | 3/3 | FORBIDDEN=/tasks | GO

@@ -18,6 +18,8 @@ const FILES = {
   tablePage: "apps/frontend/src/pages/maintenance/FleetTablePage.tsx",
   table: "apps/frontend/src/components/FleetTable.tsx",
   createUnit: "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
+  createTrailer: "apps/frontend/src/components/fleet/CreateTrailerModal.tsx",
+  editTrailer: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
   editVehicle: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
   quickAssignRoute: "apps/backend/src/assignments/quicksave.routes.ts",
@@ -90,6 +92,41 @@ export function audit(src) {
   if (!/setError\(cause instanceof Error \? cause\.message : "Couldn't assign this driver\. Try again\."\)/.test(src.quickAssign)) {
     failures.push(`${FILES.quickAssign}: quick-assign failures must be visible to the operator`);
   }
+  const companyEnumLeaves = [
+    "home.create_unit",
+    "home.create_trailer",
+    "fleet.modal.create_unit",
+    "fleet.modal.create_trailer",
+    "fleet.modal.edit_trailer",
+    "unit.edit.identity",
+  ];
+  const companyEnumAudit = required.honesty_audit?.company_enum_picker_law_2026_08_21;
+  if (!companyEnumAudit) {
+    failures.push(`${FILES.required}: honesty_audit.company_enum_picker_law_2026_08_21 missing`);
+  }
+  for (const id of companyEnumLeaves) {
+    const leaf = required.leaves?.find((entry) => entry.id === id);
+    if (leaf?.required?.includes("picker_law")) {
+      failures.push(`${FILES.required}: ${id} must not require picker_law (closed 3-entity company enum, not a create catalog)`);
+    }
+    const drop = companyEnumAudit?.drops?.find((entry) => entry.id === id);
+    if (!drop?.removed?.includes("picker_law")) {
+      failures.push(`${FILES.required}: ${id} must keep an explicit picker_law honesty drop`);
+    }
+  }
+  const companyOnlySurfaces = [
+    ["createUnit", FILES.createUnit, src.createUnit],
+    ["createTrailer", FILES.createTrailer, src.createTrailer],
+    ["editTrailer", FILES.editTrailer, src.editTrailer],
+  ];
+  for (const [, rel, body] of companyOnlySurfaces) {
+    if (/EntityPicker|ReferenceSelect|allowCreate\s*=/.test(body)) {
+      failures.push(`${rel}: company-enum modal must not mount EntityPicker/ReferenceSelect/allowCreate while picker_law is dropped`);
+    }
+    if (!/placeholder="Select company"/.test(body)) {
+      failures.push(`${rel}: must still expose the closed company Combobox (Select company)`);
+    }
+  }
   return failures;
 }
 
@@ -121,6 +158,24 @@ if (process.argv.includes("--selftest")) {
     ["filter-reverse-count", "required", /"leaves_touched": 33/, '"leaves_touched": 25'],
     ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
     ["reefer-edit-reverse-reinflation", "required", /("id": "unit\.edit\.reefer"[\s\S]*?"required": \[\n\s+"unit",\n\s+"connectivity")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
+    [
+      "company-enum-picker-reinflation",
+      "required",
+      /("id": "home\.create_unit"[\s\S]*?"required": \[\n\s+"unit",\n\s+"qbo_chrome")/,
+      '$1,\n        "picker_law"',
+    ],
+    [
+      "company-enum-honesty-drop-gone",
+      "required",
+      /"company_enum_picker_law_2026_08_21"/,
+      '"company_enum_picker_law_REMOVED"',
+    ],
+    [
+      "create-unit-gains-entity-picker",
+      "createUnit",
+      /import \{ Combobox \} from "\.\.\/Combobox";/,
+      'import { Combobox } from "../Combobox";\nimport { EntityPicker } from "../EntityPicker";',
+    ],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

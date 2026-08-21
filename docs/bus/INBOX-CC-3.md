@@ -19,6 +19,7 @@ YOUR “natural pause / holding for next INBOX” IS REJECTED.
 NOW = unpaid chrome `leaf:col` vertical, first unpaid, live click:
   COL picker_law then trailer
   /fleet (48) then /lists (87) then /maintenance (41) then /safety (7) then /cash-flow (5)
+  Skip company-enum picker_law (Create/Edit Unit Identity + Create/Edit Trailer company Combobox).
   Skip /tasks. Skip Built. Skip another Escape hunt unless a live leaf fails.
 
 On /lists: after zero-picker registry rows, take the NEXT real combobox that still lacks
