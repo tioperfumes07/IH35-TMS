@@ -1,3 +1,22 @@
+- 2026-08-21T23:55Z CC-1 | ACCT-F5705 SHIPPED (customers/drivers sweep, INBOX item D) | NEXT=continue customers/drivers/fleet/lists sweep | GO
+  Dispatched a read-only sweep of customers + drivers money-tagged leaves. Found one real,
+  non-owner-gated gap: both customer-payment create routes (customer-payments.routes.ts,
+  payments.routes.ts) gated the GL post-or-skip-audit pair on applicationsCount > 0 -- but the
+  poster (buildCustomerPaymentLines) posts purely from amount_cents, zero dependency on
+  payment_applications. A real, UI-supported zero-application payment (customer credit /
+  unapplied cash, CustomerDetail.tsx's creditBalanceCents flow) never posted AND never even logged
+  a flag-skip. Different root cause than the earlier ACCT-F150 fix (that covered payments WITH
+  applications that were never wired to the poster at all).
+  Fixed: removed the applicationsCount gate in both routes, matching apply.service.ts's already-
+  correct ungated shape. Guard verify-step 4217 (4/4 mutation-tested). Rehearsed + applied live:
+  real payment PMT-2026-00006 ($500, TC Freight LLC, 0 applications) -> real balanced JE (Dr
+  Undeposited Funds / Cr A/R), independently re-verified.
+  Driver-side money leaves checked and confirmed already correct (cash-advance disbursement posts
+  unconditionally, no applicationsCount-style gate; escrow accrual already investigated twice on
+  the board, $0 balances are a real empty-state not a defect).
+  Continuing the sweep per INBOX-CC-1.md item D (customers -> drivers -> fleet -> lists). Not
+  stopping.
+
 - 2026-08-21T23:45Z CC-1 | RECOVERY CONFIRMED, returning to money-lane work | NEXT=resume INBOX-CC-1 item C sweep / next OPEN row | GO
   5/5 sequential external checks now healthy (healthz 200 x4, auth/me 401 correct). Another seat
   shipped the real Puppeteer crash-resilience code fix (#13696) on top of my env-var mitigation --

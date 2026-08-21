@@ -324,11 +324,20 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       // it. Same gate, same skip-audit, same poster — no new GL math (locked rule: reuse the existing
       // poster). Flag OFF still writes the payment and applications and records the skip append-only,
       // so a skip can never read as a silent success.
+      //
+      // ACCT-F5705: the `applicationsCount > 0` gate below used to also block the post-or-skip-audit
+      // pair entirely for a zero-application payment (a customer credit / unapplied cash / prepayment
+      // — a real, UI-supported outcome, see CustomerDetail.tsx's creditBalanceCents flow). buildCustomer
+      // PaymentLines (posting-engine.service.ts) posts purely from accounting.payments.amount_cents —
+      // it has NO dependency on payment_applications — so that condition was blocking a call the
+      // poster never needed gated. apply.service.ts's own applyPayment (the correct reference shape)
+      // has no such gate. Removed here to match: every real payment now either posts or is skip-audited,
+      // never silently neither.
       const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
         operating_company_id: query.data.operating_company_id,
         user_uuid: user.uuid,
       });
-      if (applicationsCount > 0 && customerPaymentPostingEnabled) {
+      if (customerPaymentPostingEnabled) {
         // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
         // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
         // runs inside an open transaction and the payment row above is NOT yet committed.
@@ -347,7 +356,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           },
           { userId: user.uuid }
         );
-      } else if (applicationsCount > 0) {
+      } else {
         await recordPostingFlagSkip(client, user.uuid, {
           flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
           postingDomain: "customer_payment",
