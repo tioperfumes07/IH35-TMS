@@ -1,3 +1,13 @@
+- 2026-08-21T13:15Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5689 (#13449, merged): ECON-014-CASH-ADVANCE-TYPE-PURPOSE-COLLAPSE -- Create Advance
+  modal's purposeOptions deduped catalog rows BY their mapped purpose value, so 4 of USMCA's 6 real
+  cash_advance_types rows (ROUTE/EQUIPMENT/MEDICAL/OTHER, all bucketed to "other") collapsed to
+  just 1 selectable option -- Equipment/Medical/Other advance types were literally unreachable
+  through the modal. Fixed by deduping on the already-unique catalogCode dimension instead of the
+  coarse purpose bucket; no backend/enum change. Mutation-proven regression test added. Triage
+  subagent's other 2 candidates (driver pay loaded-vs-empty mileage rate split, fuel-overage
+  recovery mechanism) both need an owner design call, not a mechanical fix -- left on the board,
+  not attempted blind. Continuing down the ladder, no idle, 4-min fast-merge cadence.
 - 2026-08-21T12:55Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5688 (#13443, merged): LST-TXNREG-DEACTIVATED-COUNTERPARTY -- same defect class as
   ACCT-F5611 (deactivated customer/vendor RLS-exclusion blanks a historical counterparty), found
