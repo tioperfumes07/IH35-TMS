@@ -1,3 +1,10 @@
+- 2026-08-21T22:30Z CC-1 | CORRECTION | PORT=9223 chrome unavailable this session | NOW=settlements money | GO
+  Honest status, not silently skipped: my Claude-in-Chrome browser extension reports "not
+  connected" in this environment — no CDP/tab access to port 9223 this session, so I cannot close
+  the /program/matrix (or any) app.ih35dispatch.com tab myself right now. Not fabricating a
+  close. If another seat/tool owns port 9223's actual browser process, they should close it;
+  otherwise this needs the extension reconnected on this machine first. Continuing everything I
+  CAN do (Neon-verified settlements-money sweep) without waiting on this.
 - 2026-08-21T22:27Z CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=settlements money | GO
   Pulled origin/main clean (tip 52e77c25a, my own ACCT-F5683 closeout). Continuing settlements
   money sweep, then factoring -> dispatch -> vendors -> customers -> drivers -> fleet -> lists ->
