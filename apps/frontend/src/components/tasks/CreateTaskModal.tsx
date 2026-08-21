@@ -94,7 +94,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
 
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "assignable", operatingCompanyId],
-    queryFn: () => listAssignableUsers(operatingCompanyId),
+    queryFn: ({ signal }) => listAssignableUsers(operatingCompanyId, signal),
     enabled: open && Boolean(operatingCompanyId),
   });
   const users = useMemo(

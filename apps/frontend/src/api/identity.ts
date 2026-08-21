@@ -135,11 +135,11 @@ export function listUsers(includeInactive = false) {
 // USERS-2: minimal name/role directory for assignee pickers. Use this (NOT listUsers, which is the
 // Owner/Administrator-only full directory) anywhere a non-admin role needs to pick a colleague — task
 // assignee, work-order authorized-by, chat @-mentions. Returns active office users, names + role only.
-export function listAssignableUsers(operatingCompanyId?: string) {
+export function listAssignableUsers(operatingCompanyId?: string, signal?: AbortSignal) {
   const query = operatingCompanyId
     ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
     : "";
-  return apiRequest<{ users: IdentityUser[] }>(`/api/v1/identity/users/assignable${query}`);
+  return apiRequest<{ users: IdentityUser[] }>(`/api/v1/identity/users/assignable${query}`, { signal });
 }
 
 export function getUser(id: string) {

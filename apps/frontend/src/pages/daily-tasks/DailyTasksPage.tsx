@@ -115,7 +115,7 @@ export function DailyTasksPage() {
 
   const usersQuery = useQuery({
     queryKey: ["daily-tasks", "users", companyId],
-    queryFn: () => listAssignableUsers(companyId),
+    queryFn: ({ signal }) => listAssignableUsers(companyId, signal),
     enabled: Boolean(auth.user && companyId),
     staleTime: 60_000,
   });
