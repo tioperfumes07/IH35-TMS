@@ -3257,3 +3257,51 @@ connectivity/reverse_link guard on this leaf. | `node scripts/verify-codex-verti
 
 | **OPEN (CC-2 live-discovered 2026-08-21 ~17:35Z, while hunting the exact dispatch(14) unpaid cells for the live-matrix ladder):** `MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS` — `GET /api/v1/program/module-matrix?scope=module&module=<x>` (the per-leaf/per-cell detail endpoint, distinct from `scope=system` which resolves fine) never returns — confirmed hung past 40+ seconds on two separate attempts (`j.leaves[0]` and `JSON.stringify(j.leaves[0])`), both processes had to be SIGTERM-killed; the module-level metrics/rollup on that SAME response resolve instantly (`Object.keys(j)` = `module, entity_default, sample, generatedAt, meta, columns, leaves, groupRollups, metrics` returns in ~1s), so the hang is specifically in producing/serializing the `leaves` array contents, not the whole request. This blocks getting a reliable, unambiguous per-cell (leaf:col) breakdown for any module via the API — the only alternative right now is parsing the rendered `/program/matrix` text grid, which is fragile (I mis-parsed dispatch's own 4-box column groups twice this session trying to map raw ✓/✕ sequences to column headers without a stable anchor) or clicking through leaves one at a time guessing which are gaps. Not diagnosed further — same class of concern as the earlier `PROD-OUTAGE-EXECSYNC`/`MATRIX-GUARD-MD-29X-SYNC-FREEZE` incidents (an expensive per-request computation on this exact family of endpoints), but I don't have backend log access to confirm the specific cause here. | `apps/backend/src/program/module-matrix.service.ts` (same file as the two prior sync-freeze fixes, `#13442`/`#13450`) — the `scope=module` code path specifically | C | **whoever owns this file (CC-1/Cursor lane, same as the prior two fixes)** | Reproduce: authenticated fetch to `https://api.ih35dispatch.com/api/v1/program/module-matrix?scope=module&module=dispatch` and time it; if it hangs, profile the `leaves` array construction for that scope specifically (the `scope=system` path already resolves fast, so the per-leaf materialization logic is the suspect, not auth/DB connectivity in general). A fixed, fast version of this endpoint would let any seat get an exact leaf:col gap list instead of parsing a rendered grid. | 2 independent live fetch attempts via CDP (port 9230), both hung 40+s and were killed; `scope=system` on the identical session/moment resolved in ~1-10s | **OPEN — blocks precise per-cell targeting for the current ladder; OWNER-GATED=no** |
 | **OPEN (CC-3 live-discovered 2026-08-21 ~17:50Z, while chrome-law-checking `/safety` for the Miss-C ladder):** `SAFETY-LOG-EVENT-VERB-VS-ITEM-8-LITERAL-TEXT` — `/safety/safety-events` (Incidents & Claims) primary button reads **"+ Log Event"** — a real, working create action (opens a real safety-event log form, correctly creates a row) — but item-8's literal chrome-law text is "Primary buttons: `+ Create` / `+ Book` only (never `+ New` / `+ Add`)", which enumerates exactly two allowed verbs and "Log" is neither. | `apps/frontend/src/pages/safety/SafetyEventsPage.tsx:549-555` (`openLogModal`, button text `+ Log Event`) | A | **whoever owns safety chrome-law / item-8 interpretation (CC-3 lane, or an owner call if the allowlist is meant to be literal)** | This is a design/interpretation question, not a guessed fix: is item-8's "+ Create / + Book only" a closed allowlist (in which case "+ Log Event" should become "+ Create Event" or similar), or are those two just the most common examples with other precise domain verbs (Log, Record, etc.) implicitly fine as long as they're accurate and not "+New"/"+Add"? Every chrome-law fix shipped this session so far targeted a *missing* verb, a *wrong* verb ("+Add"), or a mislabeled nav link — never a working, accurate, non-generic verb outside the two-item allowlist. Not unilaterally relabeling a correct, unambiguous, working button on a literal-text technicality without that call. | live browser: `/safety/safety-events`, button text confirmed "+ Log Event", opens a real log-entry create form (not a nav link, not a dead button) | **OPEN — cosmetic/interpretation question on a genuinely-working button; OWNER-GATED=yes (allowlist-literal vs. verb-accurate interpretation)** |
+
+| **FIXED (CC-1, 2026-08-21):** `ACCT-F5697` — TWO mutually-unaware settlement GL posters
+(`settlement-bill-payment-posting.service.ts`'s `postSettlementBillPayment` and
+`driver-finance/settlement-payrun-close.service.ts`'s `closeSettlementPayRun`) double-posted the
+ONLY driver settlement ever GL-posted (`S-2026-0002`, USMCA, live prod) — a P0 found by a fresh,
+board-independent accounting-correctness audit, directly downstream of my own `ACCT-F5681` exercise
+earlier this session. | `apps/backend/src/driver-finance/settlement-payrun-close.service.ts`;
+`apps/backend/src/accounting/settlement-posting/{settlement-bill-payment-posting.service.ts,settlement-bill-payment.math.ts,settlement-posting.routes.ts}`;
+2 new db.test.ts tests | C | closed | Independently re-verified live before touching code: `S-2026-0002`
+was posted by BOTH — `postSettlementBillPayment` on 2026-08-11 (JEs `b7575a45`+`8bc9947e`, Dr 6890
+Cost of Labor $297.60 / Cr 1000 Bank $297.60, no escrow withheld) AND `closeSettlementPayRun` on
+2026-08-21 (JE `5a652f56`, Dr 6890 $297.60 / Cr Escrow $250.00 / Cr Bank $47.60). Combined: Cost of
+Labor overstated to $595.20 for a $297.60 settlement; operating bank overcredited $345.20 while
+`payment_state` stayed `unpaid` and `paid_at` stayed NULL the whole time — no cash ever actually
+moved. Root-caused via each file's own historical comments: `settlement-posting.routes.ts` documents
+TWO separate "canonical" declarations written at different times (SET-01: payrun-close; SET-04, added
+later: bill-payment-posting self-declares canonical too) — genuine architecture drift, not a one-off
+mistake. Fixed with a symmetric mutual-exclusion interlock mirroring the existing `ACCT-F59`
+invoice↔revrec-latch pattern exactly: each poster now checks the OTHER's real anchor-table completion
+signal (never "posted" alone — `ACCT-F348`'s own "a claimed run can still be empty" caveat applies to
+both directions) and refuses (409) rather than silently double-posting. 2 new real-Postgres db.test.ts
+tests (one per direction, full FK chain, not mocks) prove the refusal and mutation-test clean (fail on
+pre-fix source with the exact predicted double-post). Neither poster is retired — that is a bigger
+architecture call left for a dedicated pass. | PR #13558, squash-merged `bd20feef`; live Neon prod
+re-check confirming both anchor rows exist for the same settlement_id; fresh-verify
+`git show origin/main:.../settlement-payrun-close.service.ts` greps `ACCT-F5697` | **FIXED — merged +
+fresh-verified live on origin/main; OWNER-GATED=no; the DUPLICATE DATA on S-2026-0002 itself is a
+separate, immediate follow-up (see ACCT-F5698 + the reversal below), not repaired by this row alone** |
+
+| **FIXED (CC-1, 2026-08-21):** `ACCT-F5698` — the ACCT-F5697 data-repair's own reversal path
+(`reverseSettlementBillPayment` → `voidBillInClientTx` → `cascadeBillVoidToSourceBankTransactions`)
+crashed with a real Postgres `42P18` (`could not determine data type of parameter $3`) on every call
+that reached a bill with a linked bank transaction — a bind-count bug in
+`bills.service.ts:2495`, unrelated to the double-post itself but blocking its own repair. | `apps/backend/src/accounting/bills.service.ts`;
+`apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts`
+(1 stale assertion also fixed) | C | closed | `cascadeBillVoidToSourceBankTransactions`'s first UPDATE
+bound 4 values (`operatingCompanyId`, `billId`, `userId`, `voidedReason`) but its SQL only referenced 3
+of them — `$3` (`userId`) never appeared in the query text, so Postgres could not infer its type.
+Confirmed live there is no actor/voided-by column on `banking.bank_transactions` at all (only
+`voided_at`/`voided_reason`), so the fix is genuinely "the bind was never needed", not "wire a missing
+column" — dropped it and renumbered. The same full-suite run also surfaced a second, unrelated, stale
+test assertion (test (b)'s `bill_number` expectation predated the already-documented, deliberate
+"AP-BILL-NUMBER-IS-THE-LOAD-NUMBER" `B-` prefix fix) — the code was correct, the test was stale;
+fixed the assertion, not the code. Full 2-file db.test.ts suite (real ephemeral Postgres, 991
+migrations) now passes 12/12 — closes the CI-red-baseline-drift ACCT-F5697's own PR first surfaced. |
+PR #13563, squash-merged `86c5ec7d`; live db.test.ts run before/after (3 failures -> 0); fresh-verify
+`git show origin/main:apps/backend/src/accounting/bills.service.ts` greps `ACCT-F5698` | **FIXED —
+merged + fresh-verified live on origin/main; OWNER-GATED=no** |
