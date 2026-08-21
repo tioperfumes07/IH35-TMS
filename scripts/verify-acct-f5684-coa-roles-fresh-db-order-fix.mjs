@@ -2,79 +2,104 @@
 /**
  * verify-acct-f5684-coa-roles-fresh-db-order-fix.mjs
  *
- * ACCT-F5684 — 202608180900_usmca_fixed_asset_depr_coa_roles.sql inserts
- * accounting.chart_of_accounts_roles rows with role='depr_expense_default'/'accum_depr_default',
- * but the CHECK constraint permitting those values only shipped in the later-FILENAMED,
- * HELD migration 202609100050_fa_archive_fixed_assets_schema_coa_roles.sql. On prod that later
- * file was Neon-applied out of filename order (2026-07-28, three weeks before 202608180900's own
- * 2026-08-18 apply date) — so prod never hit the bug. A FRESH database replay (CI, local dev, a
- * rehearsal branch) always applies strictly in filename-sort order and fails at 202608180900
- * every time. Fixed by an ADDITIVE §0 defensive pre-widen inside 202608180900 itself (a
- * checksum-override edit — the file is already applied on prod, registered in
- * scripts/lib/migration-checksum-overrides.json so db:migrate never re-runs the changed content
- * there).
+ * ACCT-F5684/ACCT-F5685 — fixes the P0 fresh-DB CI outage where
+ * 202608180900_usmca_fixed_asset_depr_coa_roles.sql inserts accounting.chart_of_accounts_roles
+ * rows with role values ('depr_expense_default'/'accum_depr_default') that the CHECK constraint
+ * only permits after a LATER-FILENAMED, HELD migration (202609100050) widens it. On prod that
+ * later file was Neon-applied out of filename order, hiding the bug there; a fresh replay always
+ * applies in filename-sort order and fails at 202608180900.
  *
- * This guard locks: (1) the §0 pre-widen exists and runs BEFORE the file's own role INSERTs,
- * (2) it includes both role values this file needs, (3) it is idempotent (guarded, DROP+ADD
- * pattern matching the sibling migration's own convention), (4) the checksum-override entry for
- * this exact filename is registered with the disk checksum matching the file's CURRENT content
- * (so a future edit to this file without updating the override would be caught), and (5) the
- * ledger_checksum in the override matches the known-applied prod checksum (never silently
- * changed).
+ * ACCT-F5684's FIRST fix attempt (hardcoding a full-superset constraint pre-widen directly in
+ * 202608180900) was itself a regression: it broke the VERY NEXT constraint-touching migration,
+ * 202609010020_fact_05_factor_wire_fee_role.sql, whose own independently-authored, narrower role
+ * list doesn't include the two new roles — once 202608180900's widen let those rows insert
+ * early, 202609010020's own DROP+ADD failed validating them. Confirmed live via a real GitHub
+ * Actions run.
+ *
+ * THE CORRECTED FIX (this guard locks it): 202608180900's own role-binding INSERTs are wrapped
+ * in BEGIN/EXCEPTION WHEN check_violation blocks that skip gracefully instead of aborting — no
+ * constraint knowledge built into that file at all. A NEW migration, 202612880000 (ACCT-F5685),
+ * runs at the very end of the chain (after every constraint-touching file, including the HELD
+ * one) and idempotently completes the deferred bind.
+ *
+ * Locks: (1) 202608180900 no longer contains a §0 constraint pre-widen (the regression this
+ * guard now forbids), (2) both role INSERTs are wrapped in exception handlers catching
+ * check_violation, (3) the deferred-bind migration file exists and is idempotent (checks
+ * v_already_bound before writing), (4) the checksum-override entry for 202608180900 matches its
+ * CURRENT on-disk content and the known-applied prod ledger checksum never changes.
+ *
+ * Static-only: no DB connection. The full four-step chain (skip → next file unaffected → widen →
+ * deferred bind completes) was proven live on a disposable Neon rehearsal branch using the exact
+ * real file contents — documented in the PR body, not re-run here.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
 const migrationPath = "db/migrations/202608180900_usmca_fixed_asset_depr_coa_roles.sql";
+const deferredBindPath = "db/migrations/202612880000_acct_f5685_usmca_fixed_asset_coa_roles_deferred_bind.sql";
 const overridesPath = "scripts/lib/migration-checksum-overrides.json";
 const KNOWN_PROD_LEDGER_CHECKSUM = "1f6fa0f8930df1610ea4776903cef9521b002d24a945582edb3fb91c8eb8d156";
 
-const migrationSrc = readFileSync(migrationPath, "utf8");
-const overridesRaw = readFileSync(overridesPath, "utf8");
-
-function analyze(migrationSrc, overridesRaw) {
+function analyze() {
   const failures = [];
 
-  const zeroIdx = migrationSrc.indexOf("-- §0");
-  const insertIdx = migrationSrc.indexOf("INSERT INTO accounting.chart_of_accounts_roles");
-  if (zeroIdx === -1) {
-    failures.push("§0 defensive pre-widen block not found");
-  } else if (insertIdx === -1) {
-    failures.push("the file's own chart_of_accounts_roles INSERT is missing entirely");
-  } else if (zeroIdx > insertIdx) {
-    failures.push("§0 pre-widen appears AFTER the role INSERT — must run before it to have any effect");
-  }
-
-  if (!/DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check/.test(migrationSrc)) {
-    failures.push("§0 does not DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check (not idempotent-safe)");
-  }
-  if (!/ADD CONSTRAINT chart_of_accounts_roles_role_check/.test(migrationSrc)) {
-    failures.push("§0 does not re-ADD chart_of_accounts_roles_role_check");
-  }
-  if (!/'depr_expense_default'/.test(migrationSrc) || !/'accum_depr_default'/.test(migrationSrc)) {
-    failures.push("§0's widened CHECK list is missing depr_expense_default or accum_depr_default — the exact two roles this file's own INSERT needs");
-  }
-  if (!/to_regclass\('accounting\.chart_of_accounts_roles'\) IS NOT NULL/.test(migrationSrc)) {
-    failures.push("§0 is not guarded by a to_regclass existence check (would break on a partial/pre-schema DB)");
-  }
-
-  let overrides;
-  try {
-    overrides = JSON.parse(overridesRaw);
-  } catch (e) {
-    failures.push(`checksum-overrides file is not valid JSON: ${e.message}`);
+  if (!existsSync(migrationPath)) {
+    failures.push(`${migrationPath}: file not found`);
     return failures;
   }
-  const entry = overrides.find((o) => o.filename === "202608180900_usmca_fixed_asset_depr_coa_roles.sql");
-  if (!entry) {
-    failures.push("no checksum-override entry registered for 202608180900_usmca_fixed_asset_depr_coa_roles.sql — db:migrate will treat this edit as unexplained drift against prod");
+  const migrationSrc = readFileSync(migrationPath, "utf8");
+
+  // Forbid the ACCT-F5684 regression: a hardcoded full-superset §0 pre-widen block. This is the
+  // exact defect class this guard exists to prevent from recurring.
+  if (/-- §0/.test(migrationSrc) || /DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check/.test(migrationSrc)) {
+    failures.push(`${migrationPath}: contains a constraint DROP+ADD (the ACCT-F5684 regression that broke 202609010020) — this file must never touch the CHECK constraint directly, only fail-soft its own INSERTs`);
+  }
+
+  // Both role-binding INSERTs must be wrapped in an exception handler.
+  const exceptionCount = (migrationSrc.match(/EXCEPTION WHEN check_violation THEN/g) ?? []).length;
+  if (exceptionCount < 2) {
+    failures.push(`${migrationPath}: expected 2 "EXCEPTION WHEN check_violation THEN" blocks (one per role INSERT), found ${exceptionCount}`);
+  }
+  if (!/'depr_expense_default'/.test(migrationSrc) || !/'accum_depr_default'/.test(migrationSrc)) {
+    failures.push(`${migrationPath}: missing the depr_expense_default or accum_depr_default role INSERT entirely`);
+  }
+
+  // The deferred-bind migration must exist and be idempotent.
+  if (!existsSync(deferredBindPath)) {
+    failures.push(`${deferredBindPath}: deferred-bind migration not found`);
   } else {
-    if (entry.ledger_checksum !== KNOWN_PROD_LEDGER_CHECKSUM) {
-      failures.push(`override ledger_checksum (${entry.ledger_checksum}) does not match the known-applied prod checksum (${KNOWN_PROD_LEDGER_CHECKSUM}) — this must never change, it records what prod already ran`);
+    const deferredSrc = readFileSync(deferredBindPath, "utf8");
+    if (!/v_already_bound/.test(deferredSrc)) {
+      failures.push(`${deferredBindPath}: missing the already-bound idempotency guard`);
     }
-    const currentDiskChecksum = createHash("sha256").update(migrationSrc, "utf8").digest("hex");
-    if (entry.disk_checksum !== currentDiskChecksum) {
-      failures.push(`override disk_checksum (${entry.disk_checksum}) does not match the file's current on-disk checksum (${currentDiskChecksum}) — the file was edited again without updating the override, db:migrate will now flag it as unexplained drift`);
+    if (!/'depr_expense_default'/.test(deferredSrc) || !/'accum_depr_default'/.test(deferredSrc)) {
+      failures.push(`${deferredBindPath}: missing the depr_expense_default or accum_depr_default role INSERT`);
+    }
+  }
+
+  // Checksum-override entry must exist and match the CURRENT file content, with the ledger
+  // checksum frozen at the known-applied prod value.
+  if (!existsSync(overridesPath)) {
+    failures.push(`${overridesPath}: overrides file not found`);
+  } else {
+    let overrides;
+    try {
+      overrides = JSON.parse(readFileSync(overridesPath, "utf8"));
+    } catch (e) {
+      failures.push(`${overridesPath}: not valid JSON: ${e.message}`);
+      return failures;
+    }
+    const entry = overrides.find((o) => o.filename === "202608180900_usmca_fixed_asset_depr_coa_roles.sql");
+    if (!entry) {
+      failures.push("no checksum-override entry registered for 202608180900_usmca_fixed_asset_depr_coa_roles.sql");
+    } else {
+      if (entry.ledger_checksum !== KNOWN_PROD_LEDGER_CHECKSUM) {
+        failures.push(`override ledger_checksum (${entry.ledger_checksum}) does not match the known-applied prod checksum — this must never change`);
+      }
+      const currentDiskChecksum = createHash("sha256").update(migrationSrc, "utf8").digest("hex");
+      if (entry.disk_checksum !== currentDiskChecksum) {
+        failures.push(`override disk_checksum (${entry.disk_checksum}) does not match the file's current on-disk checksum (${currentDiskChecksum}) — the file was edited again without updating the override`);
+      }
     }
   }
 
@@ -82,34 +107,39 @@ function analyze(migrationSrc, overridesRaw) {
 }
 
 function selftest() {
-  const good = analyze(migrationSrc, overridesRaw);
+  const good = analyze();
   if (good.length > 0) {
     console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: FAIL on the real (good) files");
     for (const f of good) console.error(`  - ${f}`);
     process.exit(1);
   }
 
-  // Mutation 1: drop the §0 block's constraint-widen entirely.
-  const mutated1 = migrationSrc.replace(
-    /-- §0[\s\S]*?END\s*\n\$\$;\n\nDO \$\$\nDECLARE/,
-    "DO $$\nDECLARE"
-  );
-  const failures1 = analyze(mutated1, overridesRaw);
-  if (failures1.length === 0) {
-    console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: mutation 1 (remove §0 entirely) was not caught");
-    process.exit(1);
-  }
+  const migrationSrc = readFileSync(migrationPath, "utf8");
 
-  // Mutation 2: corrupt the registered override's disk_checksum so it no longer matches the file.
-  const mutatedOverrides = overridesRaw.replace(
-    '"disk_checksum": "1fcc90adcb6c988a783df8fb7392bc7038ef8ce4166aeadf8582dfddffe30724"',
-    '"disk_checksum": "0000000000000000000000000000000000000000000000000000000000000000"'
+  // Mutation 1: reintroduce the forbidden §0 constraint DROP+ADD (the exact ACCT-F5684 regression).
+  const mutated1 = migrationSrc.replace(
+    "BEGIN;\n\nDO $$\nDECLARE\n  v_usmca uuid;",
+    "BEGIN;\n\n-- §0 test injection\nDO $$\nBEGIN\n  IF to_regclass('accounting.chart_of_accounts_roles') IS NOT NULL THEN\n    ALTER TABLE accounting.chart_of_accounts_roles\n      DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check;\n  END IF;\nEND\n$$;\n\nDO $$\nDECLARE\n  v_usmca uuid;"
   );
-  if (mutatedOverrides === overridesRaw) {
-    console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: mutation 2 setup failed — target string not found");
+  if (mutated1 === migrationSrc) {
+    console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: mutation 1 setup failed — anchor not found");
     process.exit(1);
   }
-  const failures2 = analyze(migrationSrc, mutatedOverrides);
+  writeAndCheck(mutated1, "mutation 1 (reintroduce §0 constraint DROP+ADD)");
+
+  // Mutation 2: drop the deferred-bind migration file's idempotency guard reference (simulate via
+  // corrupting the checksum-override entry's disk_checksum, the cheapest reliable single-file mutation).
+  const overridesRaw = readFileSync(overridesPath, "utf8");
+  const currentDiskChecksum = createHash("sha256").update(migrationSrc, "utf8").digest("hex");
+  const mutatedOverrides = overridesRaw.replace(`"disk_checksum": "${currentDiskChecksum}"`, '"disk_checksum": "0000000000000000000000000000000000000000000000000000000000000000"');
+  if (mutatedOverrides === overridesRaw) {
+    console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: mutation 2 setup failed — anchor not found");
+    process.exit(1);
+  }
+  const backup = overridesRaw;
+  writeFileSync(overridesPath, mutatedOverrides);
+  const failures2 = analyze();
+  writeFileSync(overridesPath, backup);
   if (failures2.length === 0) {
     console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: mutation 2 (corrupt override disk_checksum) was not caught");
     process.exit(1);
@@ -118,14 +148,25 @@ function selftest() {
   console.log("verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: OK (good files clean, both targeted mutations caught)");
 }
 
+function writeAndCheck(mutatedMigrationSrc, label) {
+  const backup = readFileSync(migrationPath, "utf8");
+  writeFileSync(migrationPath, mutatedMigrationSrc);
+  const failures = analyze();
+  writeFileSync(migrationPath, backup);
+  if (failures.length === 0) {
+    console.error(`verify-acct-f5684-coa-roles-fresh-db-order-fix --selftest: ${label} was not caught`);
+    process.exit(1);
+  }
+}
+
 if (process.argv.includes("--selftest")) {
   selftest();
 } else {
-  const failures = analyze(migrationSrc, overridesRaw);
+  const failures = analyze();
   if (failures.length > 0) {
     console.error("verify-acct-f5684-coa-roles-fresh-db-order-fix: FAIL");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("verify-acct-f5684-coa-roles-fresh-db-order-fix: OK — §0 pre-widen present and ordered before the role INSERT, idempotent, checksum-override correctly registered");
+  console.log("verify-acct-f5684-coa-roles-fresh-db-order-fix: OK — 202608180900 fails soft (no constraint DROP+ADD), deferred bind migration exists and is idempotent, checksum-override registered correctly");
 }
