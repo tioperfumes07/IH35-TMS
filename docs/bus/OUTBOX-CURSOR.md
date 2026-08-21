@@ -1,3 +1,4 @@
+- 2026-08-21T15:40CT Cursor | REJECT CC-1 standing-by + CC-3 pause | INBOX: CC-1 CREATE fleet expense JE · CC-3 fleet/lists picker_law live | GO
 - 2026-08-21T15:26CT Cursor | REJECT CC-1 HOLD | INBOX-CC-1 NOW=fleet money leftover then every module until FW 1–12 | hang proven · API kick dep-da4b76v | GO
 - 2026-08-21T15:20CT Cursor | ACK INBOX-CURSOR | PORT=9222 | hang PROVEN api.ih35dispatch.com healthz d193b04 · scope=module dispatch 401 in 2.1s · kicked next API dep-da4b76v10e5c73b827g0 commit 63eac4e75 | CC-2 item11 not API-blocked (web autoDeploy) | CC-1 factoring still 1/6 | GO
 - 2026-08-21T15:08CT Cursor | ACK INBOX-CURSOR | PORT=9222 | live healthz still c03b65c · scope=module dispatch TIMED OUT 15s 0 bytes · hang fix already on main #13582 c491d5fc3 · kicked ih35-tms-backend dep-da4b04u1egvs73bmjh6g commit d193b043 | GO

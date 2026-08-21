@@ -14,9 +14,9 @@ CHROME: 9222 · matrix glance then CLOSE · never persistent /program/matrix
 HEARTBEAT: ignore stale loop text NOW=accounting. Real NOW = U6 leftover vertical.
 
 SEATS (do not rewrite their NOW in chat unless Jorge orders):
-  CC-1 9223  NEVER HOLD — A CoA locked-file then WAVE 3 create until FW 1–12
+  CC-1 9223  NEVER HOLD — apply 3 locked answers then CREATE fleet expense JE
   CC-2 9224  U16 Live fleet then lists; never idle on /login
-  CC-3 9225  U6 3/3 claimed closed — U16 picker_law→trailer (fleet first)
+  CC-3 9225  NEVER PAUSE — fleet then lists picker_law live
   Codex 9226 reverse_link → customer → vendor → load
 
 YOUR FIX-NOW (reported for Cursor — do not park):
