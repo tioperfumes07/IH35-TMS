@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CatalogFieldConfig, CatalogRow } from "../../hooks/useCatalogQuery";
+import { useCatalogQuery } from "../../hooks/useCatalogQuery";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
+import { Combobox, type ComboboxOption } from "../Combobox";
 import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
@@ -10,6 +12,7 @@ type Props = {
   open: boolean;
   catalogName: string;
   displayName: string;
+  companyId: string;
   row: CatalogRow | null;
   fields: CatalogFieldConfig[];
   readOnly?: boolean;
@@ -40,13 +43,29 @@ function FieldInput({
   field,
   value,
   disabled,
+  companyId,
   onChange,
 }: {
   field: CatalogFieldConfig;
   value: unknown;
   disabled: boolean;
+  companyId: string;
   onChange: (next: unknown) => void;
 }) {
+  // LST-F-FOREIGN-KEY-RAW-INPUT (2026-08-21): field.foreignKey already carries the referenced
+  // catalog's name + which columns hold the label/value — enough to render a real picker — but this
+  // branch used to render a bare <input type="text"> demanding the operator hand-type the raw FK
+  // UUID. No catalog in GENERIC_CATALOG_REGISTRY currently declares a "foreign_key" field (confirmed
+  // by grep — 0 live call sites), so this was never live-reachable, but it's exactly the picker_law
+  // gap this modal's own field-type system was built to prevent for every OTHER type (enum uses a
+  // real dropdown, not raw text). Hook called unconditionally (rules of hooks) — enabled only when
+  // this field genuinely is a foreign_key with its catalogName populated.
+  const referencedCatalogQuery = useCatalogQuery({
+    catalogName: field.type === "foreign_key" ? field.foreignKey?.catalogName ?? "" : "",
+    companyId,
+    enabled: field.type === "foreign_key" && Boolean(field.foreignKey?.catalogName) && Boolean(companyId),
+  });
+
   if (field.type === "boolean") {
     return (
       <label className="inline-flex items-center gap-2 text-sm">
@@ -80,14 +99,31 @@ function FieldInput({
   }
 
   if (field.type === "foreign_key") {
+    if (!field.foreignKey?.catalogName) {
+      // Misconfigured field (foreignKey metadata missing) — fail honestly rather than fall back to
+      // the old raw-ID box, which would silently reintroduce the picker_law gap this fix closes.
+      return (
+        <p className="text-xs text-red-600">
+          {field.label}: no referenced catalog configured (foreignKey.catalogName missing).
+        </p>
+      );
+    }
+    const rows = referencedCatalogQuery.data?.rows ?? [];
+    const { labelField, valueField } = field.foreignKey;
+    const options: ComboboxOption[] = rows.map((row) => ({
+      value: String(row[valueField] ?? row.id ?? ""),
+      label: String(row[labelField] ?? row.display_name ?? row.code ?? row.id ?? ""),
+    }));
     return (
-      <input
-        type="text"
-        value={String(value ?? "")}
+      <Combobox
+        options={options}
+        value={value != null ? String(value) : null}
+        onChange={onChange}
+        loading={referencedCatalogQuery.isLoading}
         disabled={disabled}
-        placeholder={field.placeholder ?? "Foreign key ID"}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-        onChange={(event) => onChange(event.target.value)}
+        allowClear
+        placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}…`}
+        dataField={field.key}
       />
     );
   }
@@ -156,6 +192,7 @@ export function CatalogEditModal({
   open,
   catalogName,
   displayName,
+  companyId,
   row,
   fields,
   readOnly = false,
@@ -242,6 +279,7 @@ export function CatalogEditModal({
                   field={field}
                   value={form[field.key]}
                   disabled={disabled}
+                  companyId={companyId}
                   onChange={(next) => setForm((current) => ({ ...current, [field.key]: next }))}
                 />
                 {errors[field.key] ? <p className="mt-1 text-xs text-red-600">{errors[field.key]}</p> : null}
@@ -258,6 +296,7 @@ export function CatalogEditModal({
                 field={field}
                 value={form[field.key]}
                 disabled={disabled}
+                companyId={companyId}
                 onChange={(next) => setForm((current) => ({ ...current, [field.key]: next }))}
               />
               {errors[field.key] ? <p className="text-xs text-red-600">{errors[field.key]}</p> : null}
