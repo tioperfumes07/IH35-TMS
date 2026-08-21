@@ -38,7 +38,9 @@ export async function verifyMigrationsOnStartup(repoRoot: string): Promise<Migra
   }
 
   const ledgerRows = await withLuciaBypass(async (client) => {
-    await client.query(`CREATE SCHEMA IF NOT EXISTS _system`);
+    // Verification runs after SET LOCAL ROLE ih35_app and must remain read-only.
+    // Schema creation belongs to db:migrate; attempting DDL here requires
+    // database-level DDL privileges and produced an error on every production boot.
     const exists = await client.query(`SELECT to_regclass('_system._schema_migrations') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {
       return [] as Array<{ filename: string; checksum: string }>;
