@@ -49,3 +49,6 @@ OUTBOX: CC-1 | FAST-MERGE | MOD=<u6-module> | COL=<leaf:col> | JE=<uuid|N/A> | N
 ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=CERTIFY U6 money accounting→…→vendors | NEVER HOLD | GO
 ===== END CC-1 =====
 ```
+
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` · U6 money first · FAST-MERGE 4MIN.
+

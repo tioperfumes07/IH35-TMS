@@ -39,3 +39,6 @@ OUTBOX: Codex | FAST-MERGE | U6 | COL=<id> | NEXT=<leaf:col> | GO
 ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=CERTIFY U6 reverse accounting→…→vendors | GO
 ===== END CODEX =====
 ```
+
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` · U6 reverse first · FAST-MERGE 4MIN.
+

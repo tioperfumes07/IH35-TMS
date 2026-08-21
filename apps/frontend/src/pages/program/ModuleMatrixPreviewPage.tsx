@@ -925,6 +925,15 @@ const CSS = `
 .ih35mm .cell4 .bx{width:16px;height:16px;font-size:10px}
 .ih35mm .bx.live-y{background:#e2e8f0;color:#1F2A44;border-color:#94a3b8}
 .ih35mm .scroll-system{overflow-x:auto;max-width:100%}
+.ih35mm .launch-ladder-wrap{margin:0 0 16px}
+.ih35mm .launch-ladder{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--card)}
+.ih35mm .launch-ladder th,.ih35mm .launch-ladder td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.ih35mm .launch-ladder th{font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:var(--slate-lt)}
+.ih35mm .launch-ladder .wave-u6{font-weight:800;color:var(--navy)}
+.ih35mm .launch-ladder .vert-col{font-size:11px;max-width:280px}
+.ih35mm .launch-ladder .certify-yes{color:var(--green);font-weight:800}
+.ih35mm .launch-ladder .certify-open{color:var(--red);font-weight:700}
+.ih35mm .launch-ladder .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}
 .ih35mm .system-table{min-width:1280px}
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
 .ih35mm .system-table .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}

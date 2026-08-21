@@ -261,11 +261,14 @@ export function assertScoreboardContract(sources) {
             `${sysRel}: All modules must render union columns like module boards with the same 4-box ✓/●/✕ cells`,
           );
         }
-        if (!/PRIORITY_10_MODULE_IDS|priority 10|Priority 10/.test(sysPage)) {
-          problems.push(`${sysRel}: All modules must list priority-10 modules first, then the remainder`);
+        if (!/URGENT_6_MODULE_IDS|PRIORITY_10_MODULE_IDS|priority 10|Priority 10/.test(sysPage)) {
+          problems.push(`${sysRel}: All modules must list Urgent 6 / launch-ladder modules first, then the remainder`);
         }
-        if (!/module-matrix-system-section-priority-10/.test(sysPage)) {
-          problems.push(`${sysRel}: missing Priority 10 section marker (module-matrix-system-section-priority-10)`);
+        if (!/module-matrix-system-section-u6|module-matrix-system-section-priority-10/.test(sysPage)) {
+          problems.push(`${sysRel}: missing Urgent 6 section marker (module-matrix-system-section-u6)`);
+        }
+        if (!/module-matrix-launch-ladder/.test(sysPage) || !/FAST-MERGE/.test(sysPage)) {
+          problems.push(`${sysRel}: must render launch-ladder columns including FAST-MERGE`);
         }
         if (!/module-matrix-system-legend/.test(sysPage) && !/Required · not audited/.test(sysPage)) {
           problems.push(`${sysRel}: must show the same 4-box legend as module boards`);
