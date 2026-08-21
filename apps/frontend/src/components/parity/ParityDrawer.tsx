@@ -48,6 +48,15 @@ export function ParityDrawer({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      // FLEET-F-ESCAPE-EATS-DRAWER (2026-08-21): the capture-phase listener below ran BEFORE a
+      // nested Combobox's own bubble-phase Escape handler ever got a chance to fire, so pressing
+      // Escape to dismiss an open picker dropdown inside this drawer instead discarded the whole
+      // form (live-reproduced on Fleet's Create Unit: typed Unit Number, opened the Owner Company
+      // picker, pressed Escape — the entire drawer closed and the typed value was gone). Combobox
+      // already handles its own Escape correctly (closes just the dropdown, stopPropagation) — this
+      // capture-phase listener just has to step aside while a Combobox listbox is open and let that
+      // bubble-phase handler run instead of pre-empting it.
+      if (document.querySelector('[data-combobox-listbox="portal"]')) return;
       e.preventDefault();
       // Capture + stop so parent Modal (Create WO) does not treat Escape as discard.
       if (stackAboveModal) {
