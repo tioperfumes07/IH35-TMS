@@ -27,7 +27,7 @@ export function TasksCalendarPage() {
 
   const query = useQuery({
     queryKey: ["tasks", "calendar", companyId, bounds.start, bounds.end],
-    queryFn: () => fetchPlannerTasks({ operating_company_id: companyId, date_from: bounds.start, date_to: bounds.end }),
+    queryFn: ({ signal }) => fetchPlannerTasks({ operating_company_id: companyId, date_from: bounds.start, date_to: bounds.end }, signal),
     enabled: Boolean(companyId),
   });
 

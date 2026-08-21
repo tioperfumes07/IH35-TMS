@@ -1,11 +1,11 @@
-# STATUS-NOW · STANDING
+# STATUS-NOW · 2026-08-21 10:33 CT
 
-Close matrix. No API deploy. Seats execute `docs/bus/STANDING-ORDER-SEATS.md` — not waiting for Cursor.
+Seats: execute INBOX TOP / STANDING-ORDER. Cursor: planner abort-signal.
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | factoring → dispatch money |
-| CC-2 | `/insurance` Live (skip login-blocked claim) → `/safety` → WAVE 2 |
-| CC-3 | vendors then customers Save→reload |
-| Codex | drivers Save→reload then reverse |
-| Cursor | leftovers |
+| CC-1 | `/factoring` create then dispatch money |
+| CC-2 | `/insurance` Live then `/safety` |
+| CC-3 | vendor/customer Save→reload then `/compliance` |
+| Codex | `/drivers` Save then reverse then `/fleet` |
+| Cursor | planner queryFn signal |

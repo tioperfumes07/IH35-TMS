@@ -80,7 +80,7 @@ export function TasksChatPage() {
 
   const tasksQuery = useQuery({
     queryKey: ["tasks", "chat-picker", companyId, date_from, date_to],
-    queryFn: () => fetchPlannerTasks({ operating_company_id: companyId, date_from, date_to }),
+    queryFn: ({ signal }) => fetchPlannerTasks({ operating_company_id: companyId, date_from, date_to }, signal),
     enabled: Boolean(companyId),
   });
 

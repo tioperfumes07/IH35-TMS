@@ -106,10 +106,10 @@ export async function fetchPlannerTasks(params: {
   date_from: string;
   date_to: string;
   assigned_to?: string;
-}) {
+}, signal?: AbortSignal) {
   const q = new URLSearchParams({ operating_company_id: params.operating_company_id, date_from: params.date_from, date_to: params.date_to });
   if (params.assigned_to) q.set("assigned_to", params.assigned_to);
-  return apiRequest<PlannerData>(`/api/v1/tasks/planner?${q}`);
+  return apiRequest<PlannerData>(`/api/v1/tasks/planner?${q}`, { signal });
 }
 
 /** Generic task list (no date range required) — used by the completion picker to show OPEN tasks. */
