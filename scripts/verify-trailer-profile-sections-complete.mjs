@@ -57,6 +57,9 @@ export function problems(
   if (/const maintUnitId = unitId/.test(service)) {
     failures.push("trailer maintenance must not be gated through the currently attached unit");
   }
+  if (!/FROM mdata\.loads l[\s\S]{0,120}?l\.assigned_unit_id = \$1::uuid[\s\S]{0,120}?l\.operating_company_id = \$2::uuid/.test(service)) {
+    failures.push("attached trailer context must resolve the current load through canonical assigned_unit_id with company scope");
+  }
 
   // CREATE-PATH-TRIP #6343 — trailer profile must mount fuel + expense reverse (list filters #6340).
   if (!/FuelTransactionsReverseSection[\s\S]{0,220}?filter=\{\{\s*trailer_id:/.test(page)) {
@@ -119,6 +122,7 @@ function selftest() {
     ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 0],
     ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
     ["trailer WO FK regressed to unit", page, service.replaceAll("w.equipment_id = $1::uuid", "w.unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
+    ["current-load unit FK regressed", page, service.replace("l.assigned_unit_id = $1::uuid", "l.assigned_primary_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
     ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), 1],
     ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, 1],
   ];
