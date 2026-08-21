@@ -11,6 +11,8 @@
  *   1. render.yaml is missing or ih35-tms-backend service block is absent.
  *   2. Either smoke env key is not declared under ih35-tms-backend envVars.
  *   3. docs/testing/boot-aggregate-smoke-env.md is missing or does not name both keys.
+ *   4. render.yaml preDeployCommand still runs ci:boot-*-smoke (those belong in GitHub CI).
+ *   5. .github/workflows/ci.yml is missing ci:boot-api-smoke or ci:boot-aggregate-smoke.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,6 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-g4-deploy-smoke-env-in-render";
 const RENDER = path.join(ROOT, "render.yaml");
 const DOC = path.join(ROOT, "docs/testing/boot-aggregate-smoke-env.md");
+const CI_YML = path.join(ROOT, ".github/workflows/ci.yml");
 const REQUIRED_KEYS = ["IH35_SMOKE_UNIT_ID", "IH35_SMOKE_OPERATING_COMPANY_ID"];
 
 function extractBackendEnvBlock(renderText) {
@@ -41,8 +44,22 @@ function assertConfigured() {
     errors.push("render.yaml: ih35-tms-backend service block not found");
     return errors;
   }
-  if (!/preDeployCommand:.*ci:boot-aggregate-smoke/.test(render)) {
-    errors.push("render.yaml: preDeployCommand must run ci:boot-aggregate-smoke");
+  const preDeployLine = (backendBlock.match(/preDeployCommand:[^\n]+/) || [""])[0];
+  if (/ci:boot-api-smoke|ci:boot-aggregate-smoke/.test(preDeployLine)) {
+    errors.push(
+      "render.yaml: preDeployCommand must NOT run ci:boot-*-smoke (those stay in GitHub CI; they 90s-fail docs deploys)",
+    );
+  }
+  if (!fs.existsSync(CI_YML)) {
+    errors.push(".github/workflows/ci.yml missing");
+  } else {
+    const ci = fs.readFileSync(CI_YML, "utf8");
+    if (!ci.includes("npm run ci:boot-api-smoke")) {
+      errors.push(".github/workflows/ci.yml must run npm run ci:boot-api-smoke");
+    }
+    if (!ci.includes("npm run ci:boot-aggregate-smoke")) {
+      errors.push(".github/workflows/ci.yml must run npm run ci:boot-aggregate-smoke");
+    }
   }
   if (!/buildFilter:/.test(backendBlock) || !/ignoredPaths:/.test(backendBlock) || !/docs\/bus\/\*\*/.test(backendBlock)) {
     errors.push("render.yaml ih35-tms-backend must ignore docs/bus/** (OUTBOX pings) not all docs/**");
@@ -74,7 +91,7 @@ function selftest() {
 services:
   - type: web
     name: ih35-tms-backend
-    preDeployCommand: npm run ci:boot-aggregate-smoke
+    preDeployCommand: npm run db:migrate
     buildFilter:
       ignoredPaths:
         - docs/bus/**

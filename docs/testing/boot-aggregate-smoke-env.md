@@ -1,14 +1,17 @@
 # Boot aggregate smoke — fixed unit env (G4-DEPLOY / ACCT-R-04)
 
-`render.yaml` preDeploy runs `npm run ci:boot-aggregate-smoke` against the production database.
-The smoke script (`scripts/ci-boot-aggregate-smoke.mjs`) calls
+GitHub CI (`.github/workflows/ci.yml`) runs `npm run ci:boot-api-smoke` and
+`npm run ci:boot-aggregate-smoke`. Render `preDeployCommand` does **not** run those — a 90s
+in-process API boot during deploy was failing docs/OUTBOX SHAs (`pre_deploy_failed`) while
+production was already serving.
+
+The aggregate smoke script (`scripts/ci-boot-aggregate-smoke.mjs`) calls
 `GET /api/v1/mdata/units/:id` and asserts the Block 11/12 aggregate envelope.
 
 ## Problem
 
 When `IH35_SMOKE_UNIT_ID` and `IH35_SMOKE_OPERATING_COMPANY_ID` are unset, the script discovers
-the newest active TRANSP unit at deploy time. A single bad row on that unit can fail preDeploy and
-roll back every deploy.
+the newest active TRANSP unit at CI time. A single bad row on that unit can fail the CI smoke.
 
 ## Fix
 
@@ -22,10 +25,9 @@ Set both env vars on the **ih35-tms-backend** Render service (declared in `rende
 
 When both are set, `resolveUnitAndCompany()` skips live discovery and uses the fixed pair.
 
-`render.yaml` also sets `IH35_SMOKE_REQUIRE_FIXED_UNIT=true`. On production preDeploy, the smoke
-therefore fails before database discovery if either UUID is absent. This is intentional: configure
-both dashboard values before deploying instead of silently testing whichever live unit was updated
-most recently. Local and CI runs may leave the requirement unset to retain fixture discovery.
+`render.yaml` still sets `IH35_SMOKE_REQUIRE_FIXED_UNIT=true` for when the aggregate smoke is run
+against production-shaped env (CI with those secrets). The smoke fails before discovery if either
+UUID is absent. Local runs may leave the requirement unset to retain fixture discovery.
 
 ## Related overrides (optional)
 
