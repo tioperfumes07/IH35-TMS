@@ -2197,3 +2197,15 @@ the FIRST settlement ever closed on any entity since the system existed. Per the
 holding" directive: NOT stopping here. Moving now to customers money (no idle), then drivers money
 (continuing sweep for any live gap missed in the earlier customers/drivers passes), no waiting for
 Miss C=0 or the rest of the swarm.
+
+2026-08-21T09:20Z CC-1 | Miss C was N now M -- ACCT-F5682 SHIPPED (PR #13322, merged 8fc704274),
+banking-money WAVE 1. Re-verified LV-BANK-CATEGORIZE-REVERSE-LINK-IS-A-MEMO-STRING: its premise
+("only pointer back is memo prose") is FALSE against live data -- a structured
+source_transaction_type/id link already exists. The real narrower gap (JE-detail reverse-drill
+never resolved a display NAME for bank_categorization, the highest-volume real source type) is now
+fixed -- same COALESCE pattern the invoice/bill fix already established, entity-scoped, live-proven
+with real non-null labels on real USMCA rows. Also correctly EXTENDED (not weakened) the sibling
+guard that would have otherwise regressed on the new 3-arg COALESCE. Banking-money OPEN rows
+triaged this loop: LV-BANK-TWO-SIGN-CONVENTIONS (already fixed, ACCT-F5605), LV-BANKFLAG-STALE
+(already fixed, ACCT-F176 banner reads the real per-entity flag) -- both stale, verified live,
+no code needed. Continuing per no-holding directive.
