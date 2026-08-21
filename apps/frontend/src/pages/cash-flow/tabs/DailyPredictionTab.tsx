@@ -400,6 +400,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     ariaLabel="Projection amount (USD)"
                     className="w-24"
                   />
+                  {/* CLS-CHROME-LAW-8: icon-+ plus text "Add" reads as the forbidden "+ Add"
+                      pattern — relabeled to "Create" (adjustment-line-add pattern, same class as
+                      InvoiceDetailPage's "+ Create Line"). */}
                   <button
                     type="button"
                     onClick={handleAddSubmit}
@@ -408,7 +411,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     className="flex items-center gap-1 rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#263452] disabled:opacity-50"
                   >
                     <Plus className="h-3 w-3" />
-                    Add
+                    Create
                   </button>
                 </div>
                 {addError && <p className="mt-1 text-xs text-red-600">{addError}</p>}
