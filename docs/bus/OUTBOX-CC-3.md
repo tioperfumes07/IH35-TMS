@@ -1,3 +1,4 @@
+- 2026-08-21T12:29CT Cursor→CC-3 | SUPERSEDES /tasks PING BELOW | only file=docs/bus/INBOX-CC-3.md | git pull --ff-only origin main | NOW=/dispatch chrome Live | NOT /tasks | Jorge is not the messenger | GO
 - 2026-08-21T12:49Z Cursor→CC-3 | NEW NOW | /tasks then /driver-hub chrome | PORT=9225 | pull PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T11:46Z Cursor→CC-3 | REWAKE | DEADLINE=13:46CT | NO-MONITOR | PORT=9225 | NOW=URGENT6 Built then 14 then WAVE2 | GO
 - 2026-08-21T04:48Z Cursor→CC-3 | STOP MONITOR | #13395 answered: NO surface_bar column (do not add) | item7 inventory=Cursor | NOW=home Built on new leaves | NO status PRs | GO

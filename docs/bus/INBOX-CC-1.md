@@ -1,11 +1,15 @@
-# INBOX-CC-1 · LIVE MATRIX 12:00 CT · DISPATCH MONEY
+# INBOX-CC-1 · CANONICAL · ONLY ORDER
 
-Measured: Miss C **241**. Urgent 6 leftover = **dispatch 14** (accounting/banking/settlements/factoring/vendors = 0). Factoring is **not** the Miss C gap.
+`git pull --ff-only origin main` then execute **this file**. Ignore chat pastes, old OUTBOX pings, and factoring.
 
-**NOW:** unpaid money cells on `/dispatch`. Then `/fleet` (49) then `/lists` (87). Then `/maintenance` (41). Reuse poster. No TMS→QBO. FAST-MERGE.
+Miss C leftover starts at **dispatch 14**. Accounting/banking/settlements/factoring/vendors = 0.
 
-Then create the five scenario events (revrec / invoice / bank-path / real fuel / factoring advance).
+**NOW:** unpaid money on `/dispatch`. Reuse poster. No TMS→QBO. USMCA only.
+
+If that money cell is an honest zero: create the five events (revrec / invoice / bank-path / real fuel / factoring advance). Do not idle.
+
+Then: `/fleet` money → `/lists` only if a money cell exists → `/maintenance` money.
 
 ```text
-CC-1 | ACK | LIVE-MATRIX | MISS-C-241 | PORT=9223 | NOW=/dispatch money | GO
+CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=/dispatch money | GO
 ```

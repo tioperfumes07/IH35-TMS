@@ -1,11 +1,11 @@
-# STATUS-NOW · 2026-08-21 12:00 CT · LIVE
+# STATUS-NOW · 2026-08-21 12:29 CT
 
-healthz `77f7844` · matrix tip `77f7844` · Miss C **241/3363** · Box 4 **3122/3363**
+One INBOX file per seat. Owner does not paste. Seats pull main.
 
-| Seat | NOW |
-|------|-----|
-| CC-1 | `/dispatch` money |
-| CC-2 | `/dispatch` unpaid Live |
-| CC-3 | `/dispatch` chrome-law |
-| Codex | `/dispatch` reverse |
-| Cursor | bus on Miss C leftover list |
+| Seat | File | NOW |
+|------|------|-----|
+| CC-1 | INBOX-CC-1 | `/dispatch` money |
+| CC-2 | INBOX-CC-2 | `/dispatch` unpaid Live |
+| CC-3 | INBOX-CC-3 | `/dispatch` chrome Live |
+| Codex | INBOX-CODEX | `/dispatch` reverse |
+| Cursor | INBOX-CURSOR | bus; no owner pastes |
