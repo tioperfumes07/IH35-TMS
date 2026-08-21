@@ -217,8 +217,18 @@ function repoProblems() {
     if (!svc.includes("parseOutboxClickedKeys") || !svc.includes("GITHUB_OUTBOX_CONTENTS")) {
       problems.push("module-matrix.service.ts must parse OUTBOX Clicked and fetch origin/main via GitHub (docs/** deploy ignore)");
     }
-    if (!svc.includes("GITHUB_OUTBOX_HEAD_BYTES") || !/ledgerInflight/.test(svc)) {
-      problems.push("module-matrix must cap public-raw OUTBOX downloads and single-flight ledger parse (public-repo hang)");
+    if (/raw\.slice\(0,\s*GITHUB_OUTBOX_HEAD_BYTES\)/.test(svc) || /Range = `bytes=0-\$\{GITHUB_OUTBOX_HEAD_BYTES/.test(svc)) {
+      problems.push("Clicked OUTBOX must parse the FULL file — 128KB head dropped ~3300 Devin LIVE PASS lines");
+    }
+    if (!/ledgerInflight/.test(svc)) {
+      problems.push("module-matrix must single-flight ledger parse (public-repo hang)");
+    }
+    const devinLive = fs
+      .readFileSync(path.join(ROOT, "docs/bus/OUTBOX-DEVIN.md"), "utf8")
+      .split("\n")
+      .filter((l) => /LIVE PASS/i.test(l)).length;
+    if (devinLive < 3000) {
+      problems.push(`OUTBOX-DEVIN.md must keep historical LIVE PASS lines (have ${devinLive}, need >=3000)`);
     }
     if (!/module=\(\[a-z0-9_-\]\+\)/.test(svc) && !svc.includes("module=([a-z0-9_-]+)")) {
       problems.push("module-matrix.service.ts must salvage Devin module= + leaf= LIVE PASS lines");

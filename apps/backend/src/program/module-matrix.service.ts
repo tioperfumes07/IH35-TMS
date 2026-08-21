@@ -54,6 +54,8 @@ const OUTBOX_CLICKED_FILES = [
   "docs/bus/OUTBOX-DEVIN-A.md",
   "docs/bus/OUTBOX-CODEX.md",
   "docs/bus/OUTBOX-CURSOR.md",
+  "docs/bus/OUTBOX-CC-2.md",
+  "docs/bus/OUTBOX-CC-3.md",
 ];
 /** Clicked: disk first; GitHub raw only when docs/bus is missing from the image. */
 const GITHUB_OUTBOX_CONTENTS =
@@ -98,12 +100,10 @@ const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
 /** 3s made every All-modules load re-parse 29 boards + GitHub OUTBOX and miss the 20s FE abort. */
 const MATRIX_CACHE_MS = 300_000;
-/** Clicked lines sit at the top of OUTBOX-*.md. After the repo went public, unauthenticated
- * raw.githubusercontent.com started returning the FULL files (OUTBOX-DEVIN.md ~2.2MB). While the
- * repo was private, that raw URL 404'd and we fell through to a small disk copy — matrix stayed
- * fast and stale. Public success + FE poll = overlapping multi-MB downloads on the Node event loop,
- * module-matrix never completes, healthz/502 during deploy. Cap OUTBOX reads; ledger stays full. */
-const GITHUB_OUTBOX_HEAD_BYTES = 131072;
+/** GitHub raw Range cap is ONLY the fallback when disk OUTBOX is missing.
+ * Disk must parse the FULL file: OUTBOX-DEVIN.md ~2.2MB / 4175 LIVE PASS lines.
+ * Slicing disk (and GitHub) to 128KB dropped Clicked from ~3300 to ~1000 (head had 257 Devin lines).
+ * Cache is 5 min so a full read is not the 3s-poll event-loop hang. */
 /** Survives in-process cache miss / SIGTERM restart so /program/matrix does not paint zeros. */
 const SYSTEM_LAST_GOOD_PATH =
   process.env.IH35_MATRIX_LAST_GOOD?.trim() || "/tmp/ih35-system-matrix-last.json";
@@ -1192,15 +1192,15 @@ function isBusOutboxRel(rel: string): boolean {
 async function loadOutboxTextFromGithub(rel: string): Promise<string | null> {
   const rawUrl = `https://raw.githubusercontent.com/tioperfumes07/IH35-TMS/main/${rel}`;
   const acRaw = new AbortController();
-  const tRaw = setTimeout(() => acRaw.abort(), 8000);
+  const tRaw = setTimeout(() => acRaw.abort(), isBusOutboxRel(rel) ? 25_000 : 8_000);
   try {
     const headers: Record<string, string> = { "User-Agent": "ih35-tms-matrix-clicked" };
     // Never send Authorization on raw — a stale private-repo PAT 401s even after the repo is public.
-    if (isBusOutboxRel(rel)) headers.Range = `bytes=0-${GITHUB_OUTBOX_HEAD_BYTES - 1}`;
+    // Clicked OUTBOX: full file (no Range). 128KB head dropped 3918 Devin LIVE PASS lines.
     const rawRes = await fetch(rawUrl, { signal: acRaw.signal, headers });
     if (rawRes.ok || rawRes.status === 206) {
       const text = await rawRes.text();
-      return isBusOutboxRel(rel) ? text.slice(0, GITHUB_OUTBOX_HEAD_BYTES) : text;
+      return text;
     }
   } catch {
     /* contents API fallback — skip for OUTBOX (files exceed GitHub's 1MB contents cap) */
@@ -1241,8 +1241,7 @@ async function loadOutboxClickedKeys(): Promise<Set<string>> {
       // PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was existsSync + readFileSync.
       const raw = await readFile(full, "utf8").catch(() => null);
       if (raw != null) {
-        const text = isBusOutboxRel(rel) ? raw.slice(0, GITHUB_OUTBOX_HEAD_BYTES) : raw;
-        for (const k of parseOutboxClickedKeys(text)) keys.add(k);
+        for (const k of parseOutboxClickedKeys(raw)) keys.add(k);
       }
     }
     if (keys.size > 0) {
