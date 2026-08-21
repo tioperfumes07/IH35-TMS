@@ -114,6 +114,7 @@ const guards = [
   "verify-liability-surfaces-built.mjs",
   "verify-lists-required-liability-honest.mjs",
   "verify-lists-required-money-honest.mjs",
+  "verify-load-driver-pay-bill-driver-human-label.mjs",
   "verify-load-factoring-invoice-entitylink.mjs",
   "verify-load-liability-scenario-dispatch-honest.mjs",
   "verify-maint-bill-factoring-liab-built.mjs",

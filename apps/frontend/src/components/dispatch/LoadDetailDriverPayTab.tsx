@@ -12,6 +12,7 @@ import { EntityLink } from "../shared/EntityLink";
 type DriverBillRow = {
   id: string;
   driver_id: string;
+  driver_name?: string | null;
   load_id: string;
   load_number?: string | null;
   bill_number: string;
@@ -173,7 +174,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
                     <EntityLink
                       kind="driver"
                       id={bill.driver_id}
-                      label="Driver"
+                      label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}
                       className="truncate text-xs font-medium text-gray-800"
                       data-testid="load-driver-pay-driver-link"
                     />

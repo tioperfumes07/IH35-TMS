@@ -64,13 +64,21 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         return { kind: "forbidden" as const };
       }
 
+      // DISPATCH-DRIVER-PAY-BILL-DRIVER-HUMAN-LABEL-MISSING — this endpoint returned no
+      // driver_name (SELECT * has no driver join at all), so the mounted LoadDetailDriverPayTab
+      // EntityLink rendered a hardcoded generic "Driver" label instead of the driver's own name.
+      // Same-company LEFT JOIN mdata.drivers, mirroring the identical pattern already used by the
+      // sibling /driver-bills/open route below — never a cross-entity guess.
       const billsRes = await client.query(
         `
-          SELECT *
-          FROM driver_finance.driver_bills
-          WHERE operating_company_id = $1::uuid
-            AND load_id = $2
-          ORDER BY created_at ASC
+          SELECT
+            db.*,
+            concat_ws(' ', d.first_name, d.last_name) AS driver_name
+          FROM driver_finance.driver_bills db
+          LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+          WHERE db.operating_company_id = $1::uuid
+            AND db.load_id = $2
+          ORDER BY db.created_at ASC
         `,
         [parsed.data.operating_company_id, parsed.data.load_id]
       );
