@@ -40,7 +40,7 @@ Jorge is **not** the messenger.
 | **1 · Gate** | ~60–90s | `node scripts/money-pr-local-gate.mjs` → **exit 0** (Cursor: `cursor-ship-preflight --body-file /tmp/pr-body.txt`) |
 | **2 · Push** | ~30s | Normal `git push` first. If push dies **only** at `verify-static-fallback` on **ENV-VERIFY-STATIC** class (not your guard/selftest) → **`git push --no-verify`** — authorized; **not** bypassing step 1 |
 | **3 · Open PR** | ~15s | `gh pr create …` (or skip if exists) — **do NOT** `gh pr checks --watch` |
-| **4 · Merge** | ~15s | `gh pr merge N --squash --delete-branch --admin` **immediately** after step 1 PASS |
+| **4 · Merge** | ~15s | `gh pr merge N --squash --delete-branch --admin` **immediately** after step 1 PASS. If that command tries to check out local `main` (worktree already has `main`) or returns 404 on POST: `gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` — same squash, no local checkout |
 | **5 · Neon** | after | Money/migrations: **you** apply on Neon · prove one query |
 | **6 · Next** | same turn | OUTBOX one line → start next ☐ in INBOX |
 

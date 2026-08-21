@@ -1,45 +1,41 @@
-# INBOX-CODEX · 9226 · URGENT 6 REVERSE + FWD COLUMNS
+# INBOX-CODEX · 9226 · CERTIFY URGENT 6 REVERSE NOW
 
-**FORBIDDEN:** another 340-guard loop, vendors/drivers/customers reverse tours, fake PASS on Checking session. CI-green ≠ Live. FAST-MERGE. Never idle.
+**FORBIDDEN:** 340-guard loop, fleet/lists before U6 certify, fake PASS on Checking session.
+
+**Owner 2026-08-21 16:05 CT: CERTIFY the Urgent 6 modules RIGHT NOW.**
 
 ## PASTE BOX (copy everything in the fence)
 
 ```text
-===== CODEX · PORT 9226 · URGENT 6 REVERSE/FWD =====
+===== CODEX · PORT 9226 · CERTIFY U6 REVERSE NOW =====
 PULL: git pull --ff-only origin main
-FILE: docs/bus/INBOX-CODEX.md  (this is the only NOW)
-LAW: USMCA · FAST-MERGE · fix instantly · never defer · never HOLD · no 340-guard reloop
+FILE: docs/bus/INBOX-CODEX.md
+LAW: USMCA · FAST-MERGE 4MIN · never HOLD · no 340-guard reloop
 CHROME: 9226 · prove reverse drill live · CLOSE TAB · never leave /program/matrix open
-NOTE: if GET /api/v1/program/module-matrix?scope=module hangs, that is Cursor (MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS). You work from dispatch.required.json + live click. Do not wait.
 
-YOUR N/M: Urgent 6 = 11 of 11 unpaid dispatch cells. VERTICAL: finish one column, then the next.
+FAST-MERGE 4–5 MIN (ON — do not deviate):
+  LAW: docs/bus/FAST-MERGE-4MIN-LAW.md
+  1) node scripts/money-pr-local-gate.mjs MUST exit 0
+  2) git push; if ONLY ENV verify-static AFTER gate PASS → git push --no-verify
+  3) gh pr create — NEVER gh pr checks --watch
+  4) gh pr merge N --squash --delete-branch --admin NOW
+     if checkout-main fails: gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
+  5) OUTBOX one line → next cell SAME TURN
 
-COL reverse_link (5) NOW:
-  queues.at_risk:reverse_link
-  queues.detention:reverse_link
-  queues.border:reverse_link
-  queues.border_history:reverse_link
-  docs.ocr:reverse_link
+CERTIFY = FW 1–12. You own connectivity + reverse_link (then customer/vendor/load) on U6.
 
-THEN COL customer (3):
-  queues.at_risk:customer
-  queues.detention:customer
-  docs.ocr:customer
+U6 MODULES IN ORDER (VERTICAL columns, first unpaid):
+  accounting → banking → settlements → factoring → dispatch → vendors
+COLUMNS: reverse_link → customer → vendor → load  (picker/trailer = CC-3; gl_je = CC-1)
 
-THEN COL vendor (2):
-  queues.border:vendor
-  queues.border_history:vendor
+Dispatch 11/11 reverse leftover: if honestly 0-row queues, OUTBOX UNCHANGED blocker=<leaf:col>
+then NEXT same turn. Do not invent crossings. Do not skip to fleet while U6 reverse unpaid.
 
-THEN COL load (1):
-  docs.ocr:load
+THEN rest of urgent: customers → drivers → fleet → lists.
 
-Empty queues / "No completed crossings" = wire the column if broken; if honestly 0 rows, OUTBOX UNCHANGED blocker=<leaf:col>. Still counts 11/11. Do not invent crossings. Trailer + AuthGate = CC-3. gl_je = CC-1/CC-2.
+IF picker: OUTBOX-CC-3. IF money: OUTBOX-CC-1. IF Live stamp: OUTBOX-CC-2.
 
-IF picker first-row broken: OUTBOX-CC-3. IF money: OUTBOX-CC-1. IF need Live stamp: OUTBOX-CC-2.
-
-THEN same columns on Urgent 16: fleet 48 → lists 87 → maintenance 41 → safety 7 → cash-flow 5.
-
-OUTBOX: Codex | U6 n/11 | COL=<id> | NEXT=<leaf:col> | GO
-ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | PENDING=11/11 | NOW=COL reverse_link queues.at_risk | GO
+OUTBOX: Codex | FAST-MERGE | U6 | COL=<id> | NEXT=<leaf:col> | GO
+ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=CERTIFY U6 reverse accounting→…→vendors | GO
 ===== END CODEX =====
 ```

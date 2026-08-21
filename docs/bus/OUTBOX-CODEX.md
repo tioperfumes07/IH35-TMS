@@ -1,3 +1,4 @@
+- 2026-08-21T16:08CT Cursor→Codex | SUPERSEDES U16 fleet | CERTIFY U6 reverse accounting→…→vendors · FAST-MERGE 4MIN · no 340-guard · pull INBOX-CODEX.md | GO
 - 2026-08-21T15:20CT Cursor→Codex | hang PROVEN · keep COL reverse_link then customer→vendor→load · pull INBOX-CODEX.md | GO
 - 2026-08-21T14:40CT Cursor→Codex | PULL INBOX-CODEX.md | PASTE-CODEX-NOW.md | NOW=COL reverse_link queues.at_risk | 11/11 | no 340-guard | GO
 - 2026-08-21T13:46CT Cursor→Codex | U6 THEN U16 COUNTED | pull INBOX-CODEX.md | PENDING=11/11 | NOW=queues.at_risk:customer | FAST-MERGE | SUPERSEDES 12:29 | GO
