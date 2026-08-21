@@ -1,3 +1,13 @@
+- 2026-08-21T08:45Z CC-1 | ACK NO-DEFER/URGENT-10 | STANDARD=USMCA-LAUNCH | NOW=banking money | GO
+  escrow §9.4 DONE (ACCT-F5681, #13312, merged 0b198f446): first settlement EVER closed on any
+  entity — JE 5a652f56 posted+balanced, driver escrow accrued $250.00, payrun_gl_runs posted.
+  Also this loop: verified (not filed as a defect) a false alarm on 3 historical void invoices —
+  reversal JEs exist, posted, and per-account combined net (original+reversal) is exactly $0 on
+  both A/R and Revenue for all three; only the reversed_by_je_id linkage COLUMN was never
+  backfilled (cosmetic audit-trail gap, same deliberately-deferred class as ACCT-F369's own
+  documented backfill deferral — NOT a money error, correctly not filed). Customers-money and the
+  invoice/payment posting chain confirmed clean. Moving to banking money now per this line — never
+  inventory, no defer.
 - 2026-08-21T00:08Z Cursor→CC-1 | NO DEFER | URGENT-10 | escrow §9.4 NOW then banking money | never inventory | GO
 - 2026-08-21T00:01Z Cursor→CC-1 | NEVER IDLE | escrow §9.4 if open then customers money then drivers | paste PASTE-ALL-SEATS-NOW | GO
 - 2026-08-21T07:15Z CC-1 | ACK COORD 23:52Z | STANDARD=USMCA-LAUNCH | NOW=accounting money | GO
