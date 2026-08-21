@@ -578,7 +578,18 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <div className="rounded-sm border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <span>Bank accounts</span>
-                <button className="text-slate-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
+                {/* CLS-CHROME-LAW-8: this bare "+" panel-header shortcut (same action as the "+
+                    Create Account / Manage Accounts" button above) had no accessible label at
+                    all. Added aria-label so it identifies itself to screen readers / a11y
+                    tooling; kept the compact glyph visually since space here is tight. */}
+                <button
+                  className="text-slate-700 hover:underline"
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  aria-label="Manage bank accounts"
+                >
+                  +
+                </button>
               </div>
               <div className="max-h-[260px] overflow-y-auto">
                 {bankAccountsPanelRows.map((row) => (
