@@ -38,6 +38,7 @@ const CHECKS = [
   { name: "notify preferences EntityLink drills", file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx", pattern: /EntityLink/ },
   { name: "dispatch settings page exists", file: "apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx", pattern: /export function DispatchSettingsPage|function DispatchSettingsPage/ },
   { name: "load template library exists", file: "apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx", pattern: /export function LoadTemplateLibrary|function LoadTemplateLibrary/ },
+  { name: "dispatch sheet resolves canonical stop location label", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /loc\.location_name[\s\S]{0,180}LEFT JOIN mdata\.locations loc[\s\S]{0,180}loc\.operating_company_id = \$2::uuid/ },
 ];
 
 function checkAll(readFile) {
