@@ -105,6 +105,7 @@ const guards = [
   "verify-invoice-inline-surface-applicability.mjs",
   "verify-invoice-settlement-line-poster-excludes-inactive.mjs",
   "verify-invoices-bulk-void-reverses-gl.mjs",
+  "verify-je-source-links-bank-categorization-label.mjs",
   "verify-invoices-customer-historical-label-resolver.mjs",
   "verify-liabilities-table-display-id-no-false-tombstone.mjs",
   "verify-liability-built-tags-strict.mjs",

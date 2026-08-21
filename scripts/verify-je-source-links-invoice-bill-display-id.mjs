@@ -33,8 +33,12 @@ const pageSrc = readFileSync(pagePath, "utf8");
 
 const failures = [];
 
-if (!/COALESCE\(src_inv\.display_id, src_bill\.display_id\) AS source_transaction_display_id/.test(serviceSrc)) {
-  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects source_transaction_display_id via COALESCE(src_inv.display_id, src_bill.display_id)`);
+// ACCT-F5682 — extended (not narrowed): the COALESCE now also accepts a bank_categorization
+// display label as a THIRD fallback arg after src_bill.display_id. The invoice/bill resolution
+// this guard exists to protect is unchanged — src_inv.display_id and src_bill.display_id must
+// still be the first two args, in order; anything may follow before the closing AS clause.
+if (!/COALESCE\(src_inv\.display_id, src_bill\.display_id(?:, [^)]+)?\) AS source_transaction_display_id/.test(serviceSrc)) {
+  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects source_transaction_display_id via COALESCE(src_inv.display_id, src_bill.display_id, ...)`);
 }
 if (!/COALESCE\(link_inv\.display_id, link_bill\.display_id\) AS linked_object_display_id/.test(serviceSrc)) {
   failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects linked_object_display_id via COALESCE(link_inv.display_id, link_bill.display_id)`);
