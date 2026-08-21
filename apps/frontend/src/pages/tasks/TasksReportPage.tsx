@@ -52,7 +52,7 @@ export function TasksReportPage() {
 
   const query = useQuery({
     queryKey: ["tasks", "report", companyId, date_from, date_to],
-    queryFn: () => fetchPlannerTasks({ operating_company_id: companyId, date_from, date_to }),
+    queryFn: ({ signal }) => fetchPlannerTasks({ operating_company_id: companyId, date_from, date_to }, signal),
     enabled: Boolean(companyId),
   });
 

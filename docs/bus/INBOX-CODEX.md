@@ -1,9 +1,9 @@
-# INBOX-CODEX · STANDING · NEVER HOLD
+# INBOX-CODEX · 10:33 CT · GO NOW
 
-**Read `docs/bus/STANDING-ORDER-SEATS.md`.** Worktree `/private/tmp/IH35-codex-now`. No fake reverse PASS on “Checking session…”.
+Read `docs/bus/STANDING-ORDER-SEATS.md`. Worktree `/private/tmp/IH35-codex-now`.
 
-**NOW:** `https://app.ih35dispatch.com/drivers` (USMCA) Save→reload then reverse+connectivity → fleet → lists.
+**NOW:** `/drivers` Save→reload then reverse+connectivity → `/fleet` reverse. No LIVE PASS on Checking session.
 
 ```text
-Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=/drivers Save→reload then reverse then fleet | GO
+Codex | ACK | PORT=9226 | NOW=/drivers Save→reload then reverse then /fleet | GO
 ```

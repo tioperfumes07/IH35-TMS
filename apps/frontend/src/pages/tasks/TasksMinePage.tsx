@@ -37,7 +37,7 @@ export function TasksMinePage() {
 
   const query = useQuery({
     queryKey: ["tasks", "mine", companyId, myId, date_from, date_to],
-    queryFn: () => fetchPlannerTasks({ operating_company_id: companyId, assigned_to: myId, date_from, date_to }),
+    queryFn: ({ signal }) => fetchPlannerTasks({ operating_company_id: companyId, assigned_to: myId, date_from, date_to }, signal),
     enabled: Boolean(companyId && myId),
   });
 

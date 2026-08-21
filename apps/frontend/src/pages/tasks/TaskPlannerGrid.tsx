@@ -234,7 +234,7 @@ export function TaskPlannerGrid() {
 
   const query = useQuery({
     queryKey: ["planner", companyId, filter.from, filter.to],
-    queryFn: () => fetchPlannerTasks({ operating_company_id: companyId, date_from: filter.from, date_to: filter.to }),
+    queryFn: ({ signal }) => fetchPlannerTasks({ operating_company_id: companyId, date_from: filter.from, date_to: filter.to }, signal),
     enabled: Boolean(companyId),
   });
 
