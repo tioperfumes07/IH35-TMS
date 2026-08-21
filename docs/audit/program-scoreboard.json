@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T15:29:27-05:00",
-    "sourceSha": "f4095e97a",
+    "generatedAt": "2026-08-21T15:32:51-05:00",
+    "sourceSha": "28a26c8ec",
     "deployedSha": "63eac4e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2034,
+    "ledgerRows": 2035,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 13643,
+      "title": "FINDING: U6-14OF14-COMPLETE-DOCS-OCR-HONEST-ZERO LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13643",
+      "sha": "28a26c8ec",
+      "committedAtIso": "2026-08-21T15:32:51-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:30 PM CT",
+      "url": "",
+      "sha": "a970304a6",
+      "committedAtIso": "2026-08-21T20:30:25Z"
+    },
+    {
       "number": 13642,
       "title": "FINDING: U6-11OF14-BORDER-VENDOR-PICKER-LIVE-DEPLOY-UNBLOCKED LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13635",
       "sha": "3720b1492",
       "committedAtIso": "2026-08-21T15:12:23-05:00"
-    },
-    {
-      "number": 13634,
-      "title": "Claude-3- FINDING: CC3-U6-1OF3-FULLY-LIVE-CONFIRMED",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13634",
-      "sha": "1870e7937",
-      "committedAtIso": "2026-08-21T15:11:37-05:00"
-    },
-    {
-      "number": 13633,
-      "title": "FINDING: U6-10OF14-BOOK-LOAD-TRAILER-PICKER-LIVE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13633",
-      "sha": "67c9e3cea",
-      "committedAtIso": "2026-08-21T15:11:27-05:00"
     }
   ]
 }
