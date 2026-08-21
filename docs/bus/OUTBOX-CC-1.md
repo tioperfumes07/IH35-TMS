@@ -1,3 +1,10 @@
+- 2026-08-21T14:20Z CC-1 | ACK | DEADLINE=13:46CT | PORT=9223 | GO
+  ACK owner correction: dropping deploy-watch entirely (Cursor's job, not mine) -- confirmed
+  d3c33b1 is off the air and healthz/shallow is stable on a newer SHA before stepping away from
+  it. ACK: money lane stays on FACTORING (USMCA) now, then dispatch. Never-idle stands corrected --
+  no more idle-but-alert framing. Launched a factoring-specific triage subagent (deeper/narrower
+  than the earlier general settlements/factoring/escrow/GL-JE sweep, which predates this explicit
+  focus directive) to find real, live, factoring-domain USMCA defects. Continuing non-stop.
 - 2026-08-21T14:10Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
   Fresh triage sweep (post-ACCT-F5691) found nothing further open in the money lane -- every
   candidate checked was already fixed-but-unmarked on the board, an explicit owner-design
