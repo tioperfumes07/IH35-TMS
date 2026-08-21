@@ -1,3 +1,11 @@
+- 2026-08-21T19:26Z CC-1 | FLEET-MONEY TRIAGED, NOW=maintenance(41) | GO
+  U6 closed at 5/6 SHIPPED + 1/6 UNCHANGED (factoring-advance, owner-gated, evidenced in the row
+  above). fleet(48): same pattern as dispatch -- only 9 of the 48 Miss-C cells are money-tagged;
+  6/9 already PROD-VERIFIED, 3/9 are genuine honest-zeros (no test data yet, wiring proven working
+  elsewhere), 1 real finding (Sold/disposal->GL) is owner-gated on the already-locked TRK-only
+  asset-ownership ruling. 0 structural code defects to fix. lists = 0 money per INBOX-CC-1.md,
+  skipping. Moving to maintenance(41) next in the Urgent-16 ladder.
+
 - 2026-08-21T19:20Z CC-1 | U6 5/6 | NEXT=factoring-advance DECISION NEEDED | GO
   3-4/6 revrec + invoice+evidence SHIPPED live on prod, same real load L-20260816-0168 as 1/6:
   faithfully replayed the real load-transition route's own logic (dispatched -> in_transit ->
