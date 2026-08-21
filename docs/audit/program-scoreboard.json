@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-20T19:18:39-05:00",
-    "sourceSha": "4c59d2822",
-    "deployedSha": "98c271b",
+    "generatedAt": "2026-08-20T23:09:16-05:00",
+    "sourceSha": "6a4e9ce71",
+    "deployedSha": "08db0d0",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 1999,
+    "ledgerRows": 2005,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 13367,
+      "title": "FINDING: DRIVERS-PROFILES-DETAIL-BOX4-LIVE-MONEY LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:43 PM CT",
-      "url": "",
-      "sha": "4c27b4f09",
-      "committedAtIso": "2026-08-21T00:43:26Z"
+      "mergedAtCt": "08/20/2026, 11:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13367",
+      "sha": "6a4e9ce71",
+      "committedAtIso": "2026-08-20T23:09:16-05:00"
     },
     {
-      "number": 13328,
-      "title": "FINDING: COORD-REWAKE-CC3-CODEX-BANKING",
+      "number": 13366,
+      "title": "FINDING: ACCT-F5684 LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13328",
-      "sha": "42dbec107",
-      "committedAtIso": "2026-08-20T19:33:16-05:00"
+      "mergedAtCt": "08/20/2026, 11:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13366",
+      "sha": "08db0d07e",
+      "committedAtIso": "2026-08-20T23:05:49-05:00"
     },
     {
-      "number": 13327,
-      "title": "FINDING: CC-1-OUTBOX-TOP-PLACEMENT-CORRECTION LANE: NON-FINANCIAL",
+      "number": 13365,
+      "title": "FINDING: OUTBOX-CC2-UNBLOCKED-SHIPPED-0430Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13327",
-      "sha": "114765e9d",
-      "committedAtIso": "2026-08-20T19:25:46-05:00"
+      "mergedAtCt": "08/20/2026, 11:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13365",
+      "sha": "81bc21378",
+      "committedAtIso": "2026-08-20T23:04:22-05:00"
     },
     {
-      "number": 13326,
-      "title": "FINDING: OUTBOX-CC2-ESCROW-CLOSED-BANKING-NEXT-2026-08-21-0025Z LANE: NON-FINANCIAL",
+      "number": 13364,
+      "title": "FINDING: Live-Chrome verification confirms the /program/matrix backend API is currently down (502/hang) — Box2/3/4 all read 0 because of the outage, not a real regression",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13326",
-      "sha": "a921e91e7",
-      "committedAtIso": "2026-08-20T19:24:23-05:00"
+      "mergedAtCt": "08/20/2026, 11:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13364",
+      "sha": "7cbef3734",
+      "committedAtIso": "2026-08-20T23:03:43-05:00"
     },
     {
-      "number": 13325,
-      "title": "FINDING: BANKING-MONEY-SWEEP-CLOSEOUT LANE: NON-FINANCIAL",
+      "number": 13363,
+      "title": "FINDING: 4-QUEUED-TARGETS-BOX4-LIVE-MONEY-CDP-9230 LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13325",
-      "sha": "3125e7098",
-      "committedAtIso": "2026-08-20T19:23:59-05:00"
+      "mergedAtCt": "08/20/2026, 11:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13363",
+      "sha": "d1420cb3b",
+      "committedAtIso": "2026-08-20T23:03:00-05:00"
     },
     {
-      "number": 13324,
-      "title": "FINDING: BANKING-DRIVER-ESCROW-VIEW-BLIND-TO-REAL-ACCOUNTING-DATA LANE: FINANCIAL",
+      "number": 13362,
+      "title": "FINDING: SETTLEMENTS-FINANCE-REVERSE-GUARD-WRONG-DISPUTES-LEAF-ID",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13324",
-      "sha": "cbe423ab8",
-      "committedAtIso": "2026-08-20T19:23:06-05:00"
+      "mergedAtCt": "08/20/2026, 10:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13362",
+      "sha": "b1de348f8",
+      "committedAtIso": "2026-08-20T22:58:37-05:00"
     },
     {
-      "number": 13323,
-      "title": "FINDING: ACCT-F5682-BOARD-CLOSEOUT LANE: NON-FINANCIAL",
+      "number": 13361,
+      "title": "FINDING: port 9225 has a real Chrome process but is unreachable — no extension paired (MCP path) and sandboxed network refuses raw CDP (curl path) — both confirmed facts, not guesses",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13323",
-      "sha": "eb0599864",
-      "committedAtIso": "2026-08-20T19:21:02-05:00"
+      "mergedAtCt": "08/20/2026, 10:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13361",
+      "sha": "ec09385cc",
+      "committedAtIso": "2026-08-20T22:58:28-05:00"
     },
     {
-      "number": 13322,
-      "title": "FINDING: ACCT-F5682 LANE: FINANCIAL",
+      "number": 13360,
+      "title": "FINDING: cannot open a debugged MCP browser on any port — hard capability boundary, reporting rather than pretending",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13322",
-      "sha": "8fc704274",
-      "committedAtIso": "2026-08-20T19:19:54-05:00"
+      "mergedAtCt": "08/20/2026, 10:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13360",
+      "sha": "4f6cd84de",
+      "committedAtIso": "2026-08-20T22:53:06-05:00"
     },
     {
-      "number": 13321,
-      "title": "FINDING: ACCOUNTING-ESCROW-BOX4-LIVE-MONEY LANE: NON-FINANCIAL",
+      "number": 13359,
+      "title": "FINDING: OUTBOX-CC2-6-TARGETS-QUEUED-0415Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13321",
-      "sha": "4c59d2822",
-      "committedAtIso": "2026-08-20T19:18:39-05:00"
+      "mergedAtCt": "08/20/2026, 10:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13359",
+      "sha": "0bb29ea78",
+      "committedAtIso": "2026-08-20T22:51:58-05:00"
     },
     {
-      "number": 13320,
-      "title": "FINDING: BANKING-TRANSACTIONS-REVERSE-GUARD-CROSS-SURFACE-OVERCLAIM",
+      "number": 13358,
+      "title": "FINDING: MATRIX-ENDPOINT-UNTHROTTLED-DESPITE-DECLARED-RATELIMIT",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 07:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13320",
-      "sha": "fa426c7e5",
-      "committedAtIso": "2026-08-20T19:16:23-05:00"
+      "mergedAtCt": "08/20/2026, 10:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13358",
+      "sha": "541656d47",
+      "committedAtIso": "2026-08-20T22:51:28-05:00"
     }
   ]
 }
