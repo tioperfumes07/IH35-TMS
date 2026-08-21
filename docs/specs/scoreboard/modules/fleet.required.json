@@ -173,8 +173,7 @@
       "required": [
         "unit",
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -183,8 +182,7 @@
       "sub": "Kind filter \u00b7 Trucks",
       "route_hint": "/fleet?kind=truck",
       "required": [
-        "unit",
-        "reverse_link"
+        "unit"
       ]
     },
     {
@@ -193,8 +191,7 @@
       "sub": "Kind filter \u00b7 Trailers",
       "route_hint": "/fleet?kind=trailer",
       "required": [
-        "trailer",
-        "reverse_link"
+        "trailer"
       ]
     },
     {
@@ -212,8 +209,7 @@
       "required": [
         "unit",
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -223,8 +219,7 @@
       "route_hint": "/fleet?status=InService",
       "required": [
         "unit",
-        "trailer",
-        "reverse_link"
+        "trailer"
       ]
     },
     {
@@ -233,8 +228,7 @@
       "sub": "KPI filter \u00b7 In-Shop",
       "route_hint": "/fleet?status=InMaintenance",
       "required": [
-        "unit",
-        "reverse_link"
+        "unit"
       ]
     },
     {
@@ -243,8 +237,7 @@
       "sub": "KPI filter \u00b7 Out-of-Service",
       "route_hint": "/fleet?status=OutOfService",
       "required": [
-        "unit",
-        "reverse_link"
+        "unit"
       ]
     },
     {
@@ -1708,7 +1701,7 @@
     "reverse_link_column_2026_08_14": {
       "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
       "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
-      "leaves_touched": 25,
+      "leaves_touched": 32,
       "drops": [
         {
           "id": "roster.kind.company",
@@ -1716,6 +1709,55 @@
             "reverse_link"
           ],
           "reason": "no company-vehicle table/entity exists at all in mdata"
+        },
+        {
+          "id": "roster.kind.all",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side roster kind filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.kind.trucks",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side roster kind filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.kind.trailers",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side roster kind filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.filter.type",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side roster filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.filter.status_active",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side KPI filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.filter.status_inshop",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side KPI filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
+        },
+        {
+          "id": "roster.filter.status_oos",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "client-side KPI filter state is not an FK-bearing entity and has no related record that can reverse-query the filter"
         },
         {
           "id": "unit.profile.identity",
