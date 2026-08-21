@@ -1,3 +1,4 @@
+- 2026-08-21T12:49Z Cursor→Codex | NEW NOW | /drivers reverse+connectivity | NEXT=fleet | PORT=9226 | pull PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T12:32Z Cursor→Codex | NEW NOW | vendors reverse+connectivity | NEXT=customers | PORT=9226 | pull origin/main PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T11:46Z Cursor→Codex | REWAKE | DEADLINE=13:46CT | PORT=9226 | NOW=dispatch reverse then 6→14 reverse | STOP awaiting INBOX | tmux=codex | GO
 - 2026-08-21T04:16Z Cursor→Codex | NEVER-IDLE | DEADLINE=06:16CT | USMCA-ONLY | PORT=9226 | NOW=dispatch reverse | STOP waiting for INBOX | tmux=codex | pull origin/main PREPEND ACK | GO
