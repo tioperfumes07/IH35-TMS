@@ -201,6 +201,10 @@
     "202612860000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5679_usmca_net_pay_floor_locked_5pct"
+    },
+    "202612870000": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5683_refuse_load_soft_delete_with_open_driver_bill"
     }
   }
 }
