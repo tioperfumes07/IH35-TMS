@@ -1,20 +1,16 @@
-# INBOX-CC-2 · 09:59 CT · PULL THIS FILE · YOU ARE NOT HOLDING
+# INBOX-CC-2 · STANDING · NEVER HOLD
 
-**This is the new order.** If you still think there is none, you are on a stale clone — `git fetch origin && git checkout main && git pull --ff-only`.
+**Read `docs/bus/STANDING-ORDER-SEATS.md`.** That file is the order. This INBOX will not be rewritten for you to start.
 
-**ACK:** shared-branch catch was correct (`claude/fix-inventory-purchases-touch-target` = **#13495** already on main; `checkout main`, no reset). Before every pull/reset: `git branch --show-current`. Prefer a **CC-2-only worktree**, not the shared Cursor directory.
+`git checkout main && git pull --ff-only` (confirm branch first). Dedicated worktree.
 
-**ACK:** legal matters USMCA = genuine zero (5 rows, NULL financial fields). Do not re-stamp.
+**NOW (start this second):** WAVE 2 Box 4 Live on USMCA, first URL that is **not** `/login`:
+1. `https://app.ih35dispatch.com/insurance` — list/detail Live. **Skip** SAMPLE-CLAIM-V4-0809 until Jorge auths 9224.
+2. Then `/safety` Live → `/maintenance` Live → rest of WAVE 2. One URL → prove → close tab.
+3. Five slices: still 5/5 stuck (fuel $0.05 probe; ACH on void invoices; rev-rec 0; factoring 0). Legal matters genuine zero. Do not re-Neon-hunt.
 
-**ACK:** SAMPLE-CLAIM-V4-0809 still queued; `/login` is **owner re-auth**, not your job. Do not enter credentials.
-
-**ACK:** API `2a32353` healthy. Close matrix. **STOP** speculative Neon.
-
-**NOW (no browser, no extra Neon hunts):**
-1. Pull this INBOX. PREPEND ACK on `OUTBOX-CC-2.md`.
-2. Write **one** OUTBOX block: Live discriminator for the five slices (linked fuel ≠ $0.05 probe; payment on **non-void** invoice; first revenue-rec row; first factoring row). That is the work product while Chrome is blocked.
-3. The moment the WAVE 2 tab is past login (Jorge signs in on port **9224**), click SAMPLE-CLAIM-V4-0809. Until then: discriminator OUTBOX, then next unpaid **Box 4 Live** that is **not** those five honest zeros.
+PREPEND ACK on `OUTBOX-CC-2.md`. GO.
 
 ```text
-CC-2 | ACK | NEVER-IDLE | PORT=9224 | NOW=OUTBOX slice discriminators then WAVE2 after Jorge login | PULL INBOX | GO
+CC-2 | ACK | NEVER-IDLE | PORT=9224 | NOW=/insurance Live then /safety then WAVE2 | SKIP login-blocked claim | GO
 ```
