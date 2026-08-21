@@ -49,6 +49,8 @@ export type RevrecPostResult = {
     | "earn_missing_for_bill"
     | "amount_mismatch"
     | "missing_delivery_evidence"
+    // ACCT-F5692 — Event 2 refuses without an approved dispatch.pod_documents row for this load.
+    | "missing_pod_evidence"
     // ACCT-F59 reverse interlock — an invoice already recognized this load's revenue/A-R. Distinct
     // from "already_posted" on purpose: that one means THIS latch fired, this one means the OTHER
     // poster did, and conflating them would hide which path double-counted.
@@ -225,6 +227,34 @@ async function loadLatchExists(
     [operatingCompanyId, loadId, event]
   );
   return Boolean(res.rows[0]?.id);
+}
+
+// ACCT-F5692 — Event 2 (bill, target status literally named `completed_docs_received`) had no check
+// that a completion document actually exists. Live-verified on prod 2026-08-21: dispatch.pod_documents
+// is 0 rows system-wide while 3 USMCA loads (one real money, is_sample_data=false, $1,875.50) already
+// sit in completed_docs_received with a posted `bill` JE (DR A/R / CR Unbilled) — a receivable booked
+// on paperwork that provably does not exist. Mirrors the exact gate the factoring submission queue
+// already uses to decide POD-eligibility (submission-queue.service.ts `has_approved_pod`): an
+// `approved`, non-archived dispatch.pod_documents row for this load. Fail-closed like every other gate
+// in this poster — a missing/errored check returns a gate string, it never throws or defaults to post.
+async function hasApprovedPodEvidence(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<boolean> {
+  const res = await client.query<{ exists: boolean }>(
+    `
+      SELECT true AS exists
+      FROM dispatch.pod_documents pd
+      WHERE pd.load_id = $1::uuid
+        AND pd.operating_company_id = $2::uuid
+        AND pd.status = 'approved'
+        AND pd.archived_at IS NULL
+      LIMIT 1
+    `,
+    [loadId, operatingCompanyId]
+  );
+  return Boolean(res.rows[0]?.exists);
 }
 
 async function earnAmountCents(
@@ -415,6 +445,11 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       const earnAmt = await earnAmountCents(client, input.operating_company_id, input.load_id);
       if (earnAmt == null) return { gate: "earn_missing_for_bill" as const };
       amount = earnAmt;
+
+      // ACCT-F5692 — Event 2 bills A/R against completion paperwork; refuse without it, same shape
+      // as Event 1's missing_delivery_evidence gate above.
+      const hasPod = await hasApprovedPodEvidence(client, input.operating_company_id, input.load_id);
+      if (!hasPod) return { gate: "missing_pod_evidence" as const };
     }
     if (amount <= 0) return { gate: "zero_amount" as const };
 
@@ -456,6 +491,7 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   }
   if (prepared.gate === "earn_missing_for_bill") return { posted: false, reason: "earn_missing_for_bill" };
   if (prepared.gate === "missing_delivery_evidence") return { posted: false, reason: "missing_delivery_evidence" };
+  if (prepared.gate === "missing_pod_evidence") return { posted: false, reason: "missing_pod_evidence" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
 
   const created = await createJournalEntry(
