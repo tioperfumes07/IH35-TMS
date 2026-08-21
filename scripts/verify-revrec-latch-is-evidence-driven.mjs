@@ -29,6 +29,13 @@
  * WHAT WOULD SILENTLY REGRESS THIS: deleting the evidence gate to "fix" a test that expects a post,
  * or reverting the depart handler to the one-line ternary during a conflict resolution. Both look
  * harmless in a diff and both restore revenue recognition with no delivery evidence.
+ *
+ * ACCT-F5692 (added 2026-08-21) — Event 2 had the SAME status-driven blindness, one hop later. The
+ * target status is literally named `completed_docs_received`, yet the poster never checked that a
+ * completion document exists. Live-verified on prod: dispatch.pod_documents was 0 rows system-wide
+ * while 3 USMCA loads — one real money, is_sample_data=false, $1,875.50 — already carried a posted
+ * `bill` JE (DR A/R / CR Unbilled Revenue). Same class, same fix shape: a fail-closed gate keyed off
+ * captured evidence (an approved dispatch.pod_documents row), not off status alone.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -75,6 +82,32 @@ export function auditPoster(src) {
     ["soft_deleted_at IS NULL", "must exclude soft-deleted stops"],
   ]) {
     if (!code.includes(needle)) problems.push(`${POSTER} evidence query ${why} (missing: ${needle}).`);
+  }
+
+  // ACCT-F5692 — Event 2 (bill) must refuse without an approved completion document, same shape as
+  // Event 1's evidence gate above. Scoped to sources that implement a bill-event branch at all, so an
+  // earn-only fixture (or a future poster that genuinely never handles Event 2) is not force-flagged
+  // for a code path it doesn't claim to implement — the REAL poster.service.ts always has both.
+  if (/event === "bill"/.test(code)) {
+    if (!/dispatch\.pod_documents/.test(code)) {
+      problems.push(
+        `${POSTER} has no dispatch.pod_documents lookup — Event 2 (bill, completed_docs_received) ` +
+          `would post A/R with no completion document check at all.`
+      );
+      return problems;
+    }
+    if (!/missing_pod_evidence/.test(code)) {
+      problems.push(`${POSTER} has no missing_pod_evidence gate — the bill path cannot refuse.`);
+    }
+    if (!/event === "bill"[\s\S]{0,400}hasApprovedPodEvidence/.test(code)) {
+      problems.push(
+        `${POSTER} defines the POD evidence lookup but does not apply it to the bill event — a dead ` +
+          `helper leaves Event 2 status-driven.`
+      );
+    }
+    if (!code.includes("status = 'approved'")) {
+      problems.push(`${POSTER} POD evidence query must require status = 'approved', not any POD row.`);
+    }
   }
   return problems;
 }
@@ -152,6 +185,55 @@ function selftest() {
   `;
   if (auditPoster(posterFixed).length !== 0)
     failures.push(`case3 FAIL — fixed poster flagged: ${auditPoster(posterFixed).join(" | ")}`);
+
+  // --- poster, ACCT-F5692 negative direction: bill event with no POD lookup at all ---
+  const posterPreFixBill = `
+    ${posterFixed}
+    if (event === "bill") {
+      const earnAmt = await earnAmountCents(client, o, l);
+      if (earnAmt == null) return { gate: "earn_missing_for_bill" };
+      amount = earnAmt;
+    }
+  `;
+  if (auditPoster(posterPreFixBill).length === 0)
+    failures.push("case2b FAIL — bill event with no POD evidence check was NOT caught");
+
+  // --- poster, ACCT-F5692 dead-helper direction: defined but never applied to the bill event ---
+  const posterDeadHelperBill = `
+    ${posterFixed}
+    async function hasApprovedPodEvidence(c, o, l) {
+      const r = await c.query(\`SELECT true AS exists FROM dispatch.pod_documents pd
+        WHERE pd.load_id = $1::uuid AND pd.operating_company_id = $2::uuid
+          AND pd.status = 'approved' AND pd.archived_at IS NULL LIMIT 1\`);
+      return Boolean(r.rows[0]?.exists);
+    }
+    const reason = "missing_pod_evidence";
+    if (event === "bill") { doSomethingElse(); }
+  `;
+  if (
+    !auditPoster(posterDeadHelperBill).some((p) => p.includes("does not apply it to the bill event"))
+  )
+    failures.push("case2c FAIL — POD evidence helper defined but never applied to bill was NOT caught");
+
+  // --- poster, ACCT-F5692 positive direction: the fixed bill-gate shape must be clean ---
+  const posterFixedBill = `
+    ${posterFixed}
+    async function hasApprovedPodEvidence(client, operatingCompanyId, loadId) {
+      const res = await client.query(\`SELECT true AS exists FROM dispatch.pod_documents pd
+        WHERE pd.load_id = $1::uuid AND pd.operating_company_id = $2::uuid
+          AND pd.status = 'approved' AND pd.archived_at IS NULL LIMIT 1\`, [loadId, operatingCompanyId]);
+      return Boolean(res.rows[0]?.exists);
+    }
+    if (event === "bill") {
+      const earnAmt = await earnAmountCents(client, o, l);
+      if (earnAmt == null) return { gate: "earn_missing_for_bill" };
+      amount = earnAmt;
+      const hasPod = await hasApprovedPodEvidence(client, o, l);
+      if (!hasPod) return { gate: "missing_pod_evidence" };
+    }
+  `;
+  if (auditPoster(posterFixedBill).length !== 0)
+    failures.push(`case3b FAIL — fixed bill-gate poster flagged: ${auditPoster(posterFixedBill).join(" | ")}`);
 
   // --- driver, negative direction: the exact pre-fix line ---
   const driverPreFix = `const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";`;
