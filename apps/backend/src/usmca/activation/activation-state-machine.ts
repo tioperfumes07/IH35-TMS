@@ -17,6 +17,8 @@ export type ChecklistItem = {
   completed: boolean;
 };
 
+export type ChecklistCompleted = Record<string, boolean>;
+
 export const CHECKLIST_ITEMS: ChecklistItem[] = [
   { id: "tms_entity_scope", label: "USMCA TMS entity scope and RLS verified", required_for: "soft_launch", completed: false },
   { id: "tms_posting_flags", label: "USMCA TMS posting enabled and QBO sync flags disabled", required_for: "soft_launch", completed: false },
@@ -35,6 +37,18 @@ export const CHECKLIST_ITEMS: ChecklistItem[] = [
   { id: "bank_rec_30d", label: "Bank reconciliation pristine for 30 days", required_for: "full_active", completed: false },
   { id: "launch_evidence", label: "Required launch guards and live proofs recorded", required_for: "full_active", completed: false },
 ];
+
+export const CHECKLIST_ITEM_IDS = CHECKLIST_ITEMS.map((item) => item.id);
+
+export function parseChecklistCompleted(value: unknown): ChecklistCompleted {
+  if (value == null) return {};
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  if (typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  return Object.entries(parsed as Record<string, unknown>).reduce<ChecklistCompleted>((completedItems, [id, completed]) => {
+    if (CHECKLIST_ITEM_IDS.includes(id) && typeof completed === "boolean") completedItems[id] = completed;
+    return completedItems;
+  }, {});
+}
 
 export const VALID_TRANSITIONS: Record<ActivationState, ActivationState[]> = {
   hidden: ["soft_launch", "rollback"],
