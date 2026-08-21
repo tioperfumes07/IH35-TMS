@@ -6,6 +6,8 @@ import process from "node:process";
 const route = fs.readFileSync("apps/backend/src/banking/categorization.routes.ts", "utf8");
 const api = fs.readFileSync("apps/frontend/src/api/banking.ts", "utf8");
 const panel = fs.readFileSync("apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx", "utf8");
+const accountingMatrix = fs.readFileSync("docs/specs/scoreboard/modules/accounting.required.json", "utf8");
+const bankingMatrix = fs.readFileSync("docs/specs/scoreboard/modules/banking.required.json", "utf8");
 
 function byLinkageHandler(source) {
   const marker = 'app.get("/api/v1/banking/transactions/by-linkage"';
@@ -21,7 +23,7 @@ function mutateByLinkage(source, from, to) {
   return source.replace(handler, handler.replace(from, to));
 }
 
-function verify(r, a, p) {
+function verify(r, a, p, accounting = accountingMatrix, banking = bankingMatrix) {
   const failures = [];
   const handler = byLinkageHandler(r);
   if (!handler) failures.push("by-linkage reverse route is not mounted");
@@ -33,17 +35,33 @@ function verify(r, a, p) {
   if (p.includes("as LinkageRow[]")) failures.push("panel still casts an untyped API response");
   if (!p.includes('kind="bank_transaction"') || !p.includes('kind="journal_entry"')) failures.push("mounted reverse drills are missing");
   if (!p.includes("query.isError") || !p.includes("query.isSuccess && rows.length === 0")) failures.push("panel conflates fetch failure with an empty reverse set");
+  for (const [module, matrix] of [["accounting", accounting], ["banking", banking]]) {
+    try {
+      const leaf = JSON.parse(matrix).leaves?.find((item) => item.id === "banking.panel.linked_bank_transactions");
+      for (const column of ["bank", "gl_je", "connectivity", "reverse_link"]) {
+        if (!leaf?.required?.includes(column)) failures.push(`${module} exact linked-bank leaf does not own ${column}`);
+      }
+    } catch {
+      failures.push(`${module} Required matrix does not parse`);
+    }
+  }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    [mutateByLinkage(route, "ded.operating_company_id = bt.operating_company_id", "TRUE"), api, panel],
-    [mutateByLinkage(route, "je.operating_company_id = bt.operating_company_id", "TRUE"), api, panel],
-    [mutateByLinkage(route, "bt.operating_company_id = $1::uuid", "TRUE"), api, panel],
-    [mutateByLinkage(route, "AND bt.voided_at IS NULL", "AND TRUE"), api, panel],
-    [route, api.replace("rows: LinkedBankTransactionRow[]", "rows: Array<Record<string, unknown>>"), panel],
-    [route, api, panel.replace('kind="journal_entry"', 'kind="account"')],
+    [mutateByLinkage(route, "ded.operating_company_id = bt.operating_company_id", "TRUE"), api, panel, accountingMatrix, bankingMatrix],
+    [mutateByLinkage(route, "je.operating_company_id = bt.operating_company_id", "TRUE"), api, panel, accountingMatrix, bankingMatrix],
+    [mutateByLinkage(route, "bt.operating_company_id = $1::uuid", "TRUE"), api, panel, accountingMatrix, bankingMatrix],
+    [mutateByLinkage(route, "AND bt.voided_at IS NULL", "AND TRUE"), api, panel, accountingMatrix, bankingMatrix],
+    [route, api.replace("rows: LinkedBankTransactionRow[]", "rows: Array<Record<string, unknown>>"), panel, accountingMatrix, bankingMatrix],
+    [route, api, panel.replace('kind="journal_entry"', 'kind="account"'), accountingMatrix, bankingMatrix],
+    [route, api, panel.replace('kind="bank_transaction"', 'kind="load"'), accountingMatrix, bankingMatrix],
+    [route, api, panel.replace("query.isError", "query.isPending"), accountingMatrix, bankingMatrix],
+    [route, api, panel.replace("query.isSuccess && rows.length === 0", "rows.length === 0"), accountingMatrix, bankingMatrix],
+    [route, api, `${panel}\nas LinkageRow[]`, accountingMatrix, bankingMatrix],
+    [route, api, panel, accountingMatrix.replace('"id": "banking.panel.linked_bank_transactions"', '"id": "banking.panel.linked_bank_transactions.removed"'), bankingMatrix],
+    [route, api, panel, accountingMatrix, bankingMatrix.replace('"id": "banking.panel.linked_bank_transactions"', '"id": "banking.panel.linked_bank_transactions.removed"')],
   ];
   mutations.forEach((mutation, index) => { if (verify(...mutation).length === 0) throw new Error(`selftest mutation ${index + 1} escaped`); });
   console.log(`verify-linked-bank-transactions-panel-scope SELFTEST PASS (${mutations.length}/${mutations.length})`);
