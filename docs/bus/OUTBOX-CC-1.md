@@ -1,3 +1,17 @@
+- 2026-08-21T10:15Z CC-1 | Miss C UNCHANGED blocker=none-found-this-pass | NOW=settlements money | GO
+  CORRECTING MY OWN PROCESS AGAIN: the two most recent status entries (ACCT-F5682 ship + banking
+  sweep closeout) landed at the BOTTOM of this file via `cat >>` instead of the top — same mistake
+  flagged earlier this session, recurred. Moving them to the top now; going forward every entry is
+  prepended via direct top-of-file edit, never appended. CURRENT STATUS (accurate as of this line):
+  banking-money sweep for this loop is DONE — ACCT-F5682 shipped (#13322, merged 8fc704274: JE
+  reverse-drill now resolves a real display label for bank_categorization, the highest-volume
+  source type, entity-scoped, live-proven with real non-null labels on real USMCA rows); three
+  banking rows verified already-fixed with no code needed (LV-BANK-TWO-SIGN-CONVENTIONS/
+  ACCT-F5605, LV-BANKFLAG-STALE/ACCT-F176, CLS-SILENT-CAP's 3 CC-1 money-path instances — all
+  wired to CappedListNotice with real server totals). One genuine banking item stays OPEN, correctly
+  scoped not parked: P23-BANKING-RAW-UUID-BACKEND-GAPS needs a real new backend endpoint
+  (entity-scoped ledger-entry lookup + entity_type discriminator) — sized as its own build. Per
+  PASTE-CC-1-NOW's order (escrow -> banking -> settlements), moving to settlements money now.
 - 2026-08-21T08:45Z CC-1 | ACK NO-DEFER/URGENT-10 | STANDARD=USMCA-LAUNCH | NOW=banking money | GO
   escrow §9.4 DONE (ACCT-F5681, #13312, merged 0b198f446): first settlement EVER closed on any
   entity — JE 5a652f56 posted+balanced, driver escrow accrued $250.00, payrun_gl_runs posted.
