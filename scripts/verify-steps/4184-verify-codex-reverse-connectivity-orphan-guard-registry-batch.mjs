@@ -13,6 +13,7 @@ const GUARDS = [
   "verify-matrix-endpoint-hard-throttle.mjs",
   "verify-no-execsync-on-request-path.mjs",
   "verify-safety-integrity-alert-subject-tombstones.mjs",
+  "verify-task-link-activity-event.mjs",
   "verify-trip-profitability-tombstone-drills.mjs",
 ];
 
