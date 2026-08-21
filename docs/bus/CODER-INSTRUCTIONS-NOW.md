@@ -8,7 +8,7 @@ Bar: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` items **1–12**. Ho
 
 **HARD:** `docs/bus/NO-PERSISTENT-MATRIX-TAB.md` · FAST-MERGE 4-min ON.
 
-**LIVE (do not guess):** healthz **200** / SHA **`27b26a0`** (API behind `origin/main`). Scoreboard zeros while SHA ≠ #13413 are **feed failure**, not unpaid chrome.
+**LIVE (verified 07:32 CT):** healthz **200** · `version":"c3504c3"` · uptime ~482s. Close `/program/matrix`.
 
 ### Certify order (owner 06:46 CT)
 
@@ -35,7 +35,7 @@ Then remaining WAVE 2 (`home` → `tasks` → …).
 | CC-1 | settlements money → next of 6 |
 | CC-2 | unpaid Live on URGENT 6 if Miss C > 0; else WAVE 2 + scenarios |
 | CC-3 | home item-8 chrome if 6/14 chrome paid; else first unpaid of 6 |
-| Codex | dispatch reverse → vendors |
+| Codex | **vendors reverse+connectivity** → customers |
 | Cursor | settlements Clicked → factoring Clicked |
 
 PREPEND ACK on your OUTBOX. Jorge is not the messenger. Open debug Chrome on **your** port, one leaf, prove, **close the tab**.
