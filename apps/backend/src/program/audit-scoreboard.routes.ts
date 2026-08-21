@@ -38,7 +38,7 @@ export function resolveTipShaCached(): string | undefined {
   }
   return tipShaMemo;
 }
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -92,7 +92,6 @@ export function __matrixThrottleForTest(ip: string, now: number): boolean {
 }
 import { formatCt } from "./program-board.service.js";
 import { buildModuleMatrix, buildSystemModuleMatrix } from "./module-matrix.service.js";
-import { existsSync, readFileSync } from "node:fs";
 
 const REPO_ROOT = (() => {
   try {
@@ -192,15 +191,17 @@ async function loadLedgerCommitMetaFromGitHub(): Promise<{ generatedAt: string; 
  * Read the ledger-generated last-10 feed committed at docs/audit/program-scoreboard.json.
  * Never throws: a missing or malformed artifact returns [] so the caller can fall back.
  */
-function readRecentActivityFromLedger(limit: number): RecentPr[] {
+async function readRecentActivityFromLedger(limit: number): Promise<RecentPr[]> {
   // Resolve through SCOREBOARD_JSON (REPO_ROOT + docs/audit/program-scoreboard.json), the SAME
   // constant the fallback payload loader already uses. Guessing relative paths off process.cwd()
   // would be a second, divergent path resolution in one file: the backend's cwd is whatever the
   // Render start command sets, so a cwd-relative read can miss the artifact that resolveMonorepoRoot
   // finds — and this function fails SILENTLY to [], which is precisely the empty-panel state the
   // finding is about. One resolution, or the two drift apart.
+  // PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was readFileSync; a sync fs call blocks the
+  // whole event loop for every request being served, not just this one.
   try {
-    const parsed = JSON.parse(readFileSync(SCOREBOARD_JSON, "utf8")) as { recentActivity?: unknown };
+    const parsed = JSON.parse(await readFile(SCOREBOARD_JSON, "utf8")) as { recentActivity?: unknown };
     if (!Array.isArray(parsed.recentActivity)) return [];
     const items: RecentPr[] = [];
     for (const row of parsed.recentActivity) {
@@ -368,7 +369,7 @@ export async function loadRecentActivityFromGitHub(
     return { items: fromGh.slice(0, limit), source: "github" };
   }
 
-  const ledger = readRecentActivityFromLedger(limit);
+  const ledger = await readRecentActivityFromLedger(limit);
   recentCache = { atMs: now, items: ledger, source: "ledger_committed" };
   return { items: ledger.slice(0, limit), source: "ledger_committed" };
 }
@@ -697,20 +698,35 @@ export function buildClassModuleMatrix(
   return { modules: [...moduleIds], classIds, cells };
 }
 
-export function readClassScoreboardFromQueue(): {
+// PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was readFileSync + a per-row existsSync
+// inside the map (a sync fs call blocks the whole event loop for every request being served, not
+// just this one). The read is now async; per-row guard existence checks resolve up front via
+// Promise.all so the row-building map itself stays synchronous (pure, no async callback needed).
+export async function readClassScoreboardFromQueue(): Promise<{
   meta: { generatedAt: string; source: string; columnCount: number; rowCount: number };
   summary: { total: number; drained: number; building: number; notStarted: number; liveDefect: number; drainedWithoutGuard: number };
   rows: Array<Record<string, unknown>>;
   matrix: ReturnType<typeof buildClassModuleMatrix>;
-} | null {
+} | null> {
   try {
-    const parsed = JSON.parse(readFileSync(WAVE_QUEUE_JSON, "utf8")) as { waves?: unknown };
+    const parsed = JSON.parse(await readFile(WAVE_QUEUE_JSON, "utf8")) as { waves?: unknown };
     if (!Array.isArray(parsed.waves)) return null;
-    const rows = parsed.waves.map((raw) => {
+    const waves = parsed.waves;
+    const guardExistsByIndex = await Promise.all(
+      waves.map(async (raw) => {
+        const w = (raw ?? {}) as Record<string, unknown>;
+        const guard = typeof w.guard === "string" && w.guard ? w.guard : null;
+        if (!guard) return false;
+        return access(path.join(REPO_ROOT, guard))
+          .then(() => true)
+          .catch(() => false);
+      }),
+    );
+    const rows = waves.map((raw, i) => {
       const w = (raw ?? {}) as Record<string, unknown>;
       const status = String(w.status ?? "");
       const guard = typeof w.guard === "string" && w.guard ? w.guard : null;
-      const guardExists = guard != null && existsSync(path.join(REPO_ROOT, guard));
+      const guardExists = guard != null && guardExistsByIndex[i];
       const cell = classCellVerified(status, guard, guardExists);
       const instances = Array.isArray(w.instances) ? w.instances.length : 0;
       const drainProof = (w.drain_proof ?? {}) as Record<string, unknown>;
@@ -777,7 +793,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         const gateTally = ensureGateTally(data);
         const gateTallyByEntity = ensureGateTallyByEntity(data);
         const recent = await loadRecentActivityFromGitHub(10);
-        const classScoreboard = readClassScoreboardFromQueue();
+        const classScoreboard = await readClassScoreboardFromQueue();
         // 60s here would cap the by-class grid's reactivity at 60s no matter how fast the page polls.
         // The queue read is a single small JSON parse, so it is cheap enough to serve fresh.
         reply.header("cache-control", "no-store");
