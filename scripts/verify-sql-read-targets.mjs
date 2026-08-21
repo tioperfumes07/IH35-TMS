@@ -80,6 +80,13 @@ const QUAL = "([a-z_][a-z0-9_]*)\\.([a-z_][a-z0-9_]*)"; // schema.table → grou
 const ALIASED = new RegExp(`\\b(?:FROM|JOIN)\\s+${QUAL}\\b(?!\\s*\\()(?:\\s+(?:AS\\s+)?(?!ON\\b|USING\\b|WHERE\\b|LEFT\\b|RIGHT\\b|INNER\\b|JOIN\\b|GROUP\\b|ORDER\\b|LIMIT\\b|ON\\b)([a-z_][a-z0-9_]*))?`, "gi");
 const COLREF = /\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)/g;
 
+function maskSqlComments(sql) {
+  const blank = (text) => text.replace(/[^\n]/g, " ");
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, blank)
+    .replace(/--[^\n]*/g, blank);
+}
+
 const problems = [];
 let blocks = 0, refsChecked = 0, skippedUntracked = 0;
 
@@ -89,7 +96,7 @@ for (const file of walk(BACKEND)) {
   const src = maskComments(fs.readFileSync(file, "utf8"));
   // each backtick template-literal block (SQL lives in these); no nested backticks in our SQL
   for (const blockMatch of src.matchAll(/`([^`]*)`/gs)) {
-    const block = blockMatch[1];
+    const block = maskSqlComments(blockMatch[1]);
     if (!/\b(FROM|JOIN)\b/i.test(block)) continue;
     blocks++;
     // alias map for THIS block: alias -> "schema.table" (schema-qualified, tracked tables only)
@@ -103,7 +110,10 @@ for (const file of walk(BACKEND)) {
         continue;
       }
       alias2table[alias] = qual;
-      alias2table[table] = qual; // also allow table-name-qualified refs
+      // PostgreSQL hides the bare table name once an explicit alias is declared. Registering both
+      // made schema-qualified names and lateral-output aliases look like columns on unrelated tables
+      // (drivers.retention_scores, claim.claim_id).
+      if (!m[3]) alias2table[table] = qual;
     }
     if (!Object.keys(alias2table).length) continue;
     for (const m of block.matchAll(COLREF)) {

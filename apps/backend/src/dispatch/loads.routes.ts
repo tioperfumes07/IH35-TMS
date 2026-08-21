@@ -806,12 +806,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- lowest-UUID-company upload trap (see [[docs-upload-lowest-uuid-company-trap]]) cannot
           -- leak a foreign company's file in here. Most recent non-deleted upload wins.
           LEFT JOIN LATERAL (
-            SELECT df.id AS file_id, df.original_filename, df.created_at AS uploaded_at
+            SELECT rate_file.id AS file_id, rate_file.original_filename, rate_file.created_at AS uploaded_at
             FROM docs.file_links dfl
-            JOIN docs.files df ON df.id = dfl.file_id AND df.deleted_at IS NULL
-            JOIN catalogs.file_categories fc ON fc.id = df.category_id AND fc.code = 'rate_confirmation'
+            JOIN docs.files rate_file ON rate_file.id = dfl.file_id AND rate_file.deleted_at IS NULL
+            JOIN catalogs.file_categories fc ON fc.id = rate_file.category_id AND fc.code = 'rate_confirmation'
             WHERE dfl.entity_type = 'load' AND dfl.entity_id = l.id AND dfl.deleted_at IS NULL
-            ORDER BY df.created_at DESC
+            ORDER BY rate_file.created_at DESC
             LIMIT 1
           ) rc ON true
           WHERE ${loadRefMatchSql("l", 1)}
