@@ -1,3 +1,16 @@
+- 2026-08-21T16:35Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5696 merged (#13529, 572cf68a): fixed the subledger-GL tie-out's escrow rollup gap.
+  USMCA's escrow hierarchy is 3 levels deep (grandparent -> "Driver Escrow" middle parent ->
+  per-driver leaf); the tie-out read only the resolved grandparent's own postings (always $0) while
+  the real ACCT-F5681 $250 accrual sits on a leaf account under it. Fixed with a WITH RECURSIVE
+  subtree rollup. Live re-verified: escrow_liability_default now ties. Only ar_control remains
+  variant on USMCA's live tie-out now -- LV-REVREC-LATCH-AR-INVISIBLE-TO-AR-AGING, correctly
+  owner-gated (AR-recognition design decision, not a mechanical gap).
+  This closes out the subledger-GL tie-out sweep entirely: ACCT-F5695 (sign convention) + ACCT-F5696
+  (escrow rollup) both shipped, fresh-verified, live-confirmed. Full segment this loop: ACCT-F5692,
+  F5693, F5694, F5695, F5696 -- 5 real fixes, all merged + fresh-verified + live-proven, plus 3
+  honestly owner-gated/scoped-for-next-pass OPEN rows filed rather than rushed. Continuing to scan
+  for the next unpaid money leaf. No idle.
 - 2026-08-21T16:25Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5695 merged (#13522, 3b464841): fixed the subledger-GL tie-out's sign-convention bug for
   credit-normal control accounts (ap_control/escrow/factoring). Live-verified before/after: ap_control
