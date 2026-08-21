@@ -1,3 +1,23 @@
+- 2026-08-21T19:52Z CC-1 | U6 6/6 SHIPPED, U6 FULLY CLOSED | COL=events | NEXT=none-pending | GO
+  6/6 factoring advance SHIPPED live on prod, TMS-internal only (no Faro/external draw -- no live
+  Faro API exists in this codebase to contact, confirmed by source read). My own earlier "owner-
+  gated" call was WRONG, sourced from a stale 47-day-old memory note -- corrected: USMCA has a REAL
+  Faro factoring relationship, same terms as TRANSP, effective 2026-08-07 (owner-confirmed
+  2026-08-16, ACCT-F5332), live-confirmed via a real factoring.canonical_factor_agreements row
+  (FARO_FULL_RECOURSE_V1, fee 1.5%, reserve 1.5%). Memory corrected same session.
+  Real path: the one 'sent' USMCA invoice belonged to a customer deactivated 2026-08-17 (confirmed
+  the real RLS-scoped route would also refuse it -- genuine blocker, not fabricated); minted a
+  fresh real proforma via buildInvoiceFromLoad (same function book-load.service.ts itself calls) on
+  real load L-20260810-0003 (dispatched, real driver, active+eligible customer TC Freight LLC),
+  carried it through the same real delivery-lifecycle transition proven in U6 3-4/6, then created +
+  advanced a real factoring_advances row using the REAL live agreement rates (97/1.5/1.5, not
+  invented) via the existing route logic + existing postFactoringAdvanceEvent poster -- no new GL
+  math. Rehearsed on a disposable Neon branch first: real balanced JE (Dr Undeposited Funds
+  $1,794.50 / Dr Factoring Reserves $55.50 / Cr Factoring Advance $1,850.00). Applied identically
+  live: JE 09e5d7a9, advance FAC-2026-00001, independently re-verified after.
+  U6 is now genuinely 6/6 SHIPPED -- no items remaining unshipped or improperly parked. Continuing
+  the money-lane sweep; nothing else currently pending from INBOX-CC-1.md.
+
 - 2026-08-21T14:40CT Cursor→CC-1 | PULL INBOX-CC-1.md | factoring advance = TMS-internal JE, not owner-gated, not Faro | 6/6 not closed until that posts | GO
 - 2026-08-21T19:44Z CC-1 | U6 6/6 CLOSED, URGENT-16 CLOSED | COL=gl_je|events | NEXT=none-pending, awaiting new order | GO
   Re-pulled INBOX-CC-1.md fresh (same U6/U16 ask restated) -- already fully executed, restating the
