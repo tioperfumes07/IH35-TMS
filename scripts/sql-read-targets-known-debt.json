@@ -29,7 +29,6 @@
     "apps/backend/src/integrity/driver-metrics.service.ts: w.avg_repair_cost — column \"avg_repair_cost\" does not exist on maintenance.work_orders",
     "apps/backend/src/integrity/driver-metrics.service.ts: w.wo_count — column \"wo_count\" does not exist on maintenance.work_orders",
     "apps/backend/src/maintenance/wo-cost-context.routes.ts: FROM/JOIN maintenance.labor_rates — TABLE not in migrated schema",
-    "apps/backend/src/notifications/dispatcher.ts: u.uuid — column \"uuid\" does not exist on identity.users",
     "apps/backend/src/observability/health-deep.routes.ts: FROM/JOIN banking.plaid_items — TABLE not in migrated schema",
     "apps/backend/src/observability/health-deep.routes.ts: FROM/JOIN qbo.connections — TABLE not in migrated schema",
     "apps/backend/src/owner/todays-attention/aggregator.service.ts: FROM/JOIN banking.reconciliation_drift_alerts — TABLE not in migrated schema",

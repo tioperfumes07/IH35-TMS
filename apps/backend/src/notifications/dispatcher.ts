@@ -401,12 +401,12 @@ export async function listCompanyUserIdsByRoles(
 ): Promise<string[]> {
   try {
     return await withLuciaBypass(async (client) => {
-      const res = await client.query<{ uuid: string }>(
+      const res = await client.query<{ id: string }>(
         `
-          SELECT DISTINCT u.uuid
+          SELECT DISTINCT u.id
           FROM identity.users u
           JOIN org.user_company_access uca
-            ON uca.user_id = u.uuid
+            ON uca.user_id = u.id
            AND uca.deactivated_at IS NULL
            AND uca.company_id = $1::uuid
           WHERE u.deactivated_at IS NULL
@@ -414,7 +414,7 @@ export async function listCompanyUserIdsByRoles(
         `,
         [operatingCompanyId, roles]
       );
-      return res.rows.map((row) => String(row.uuid));
+      return res.rows.map((row) => String(row.id));
     });
   } catch (error) {
     console.warn("[notifications] list_company_users_failed", String((error as Error)?.message ?? error));
