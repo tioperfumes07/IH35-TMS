@@ -26,6 +26,8 @@ export type EdiPartner = EdiPartnerInput & {
   created_at: string;
 };
 
+export type EdiPartnerSummary = Omit<EdiPartner, "connection_config">;
+
 export type ConnectionTestResult = {
   ok: boolean;
   message: string;
@@ -64,8 +66,8 @@ export async function addEdiPartner(client: DbClient, input: EdiPartnerInput): P
   return res.rows[0]!.uuid;
 }
 
-export async function listPartners(client: DbClient, operatingCompanyId: string): Promise<EdiPartner[]> {
-  const res = await client.query<EdiPartner>(
+export async function listPartners(client: DbClient, operatingCompanyId: string): Promise<EdiPartnerSummary[]> {
+  const res = await client.query<EdiPartnerSummary>(
     `
       SELECT
         uuid,
@@ -76,7 +78,6 @@ export async function listPartners(client: DbClient, operatingCompanyId: string)
         gs_qualifier,
         gs_id,
         connection_type,
-        connection_config,
         supported_transactions,
         is_active,
         created_at::text
