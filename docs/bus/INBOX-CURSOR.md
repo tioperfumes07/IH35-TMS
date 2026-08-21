@@ -44,3 +44,6 @@ YOUR FIX-NOW:
 ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus CERTIFY U6 FAST-MERGE 4MIN | GO
 ===== END CURSOR =====
 ```
+
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` · launch-ladder columns on `/program/matrix?scope=system` (not a 5th Box).
+

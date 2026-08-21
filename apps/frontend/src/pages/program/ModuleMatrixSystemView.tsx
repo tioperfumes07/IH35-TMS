@@ -1,6 +1,6 @@
 /**
  * System-wide module matrix — SAME column groups + SAME 4-box ✓/●/✕ chrome as each module board.
- * Rows = modules (priority 10 first, then remainder) · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.
+ * Rows = modules (Urgent 6 → rest of urgent → WAVE2) · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.
  * Each cell = MatrixCell4 from column Abl rollup (tooltip keeps Audited%·Built%·Live% detail).
  */
 import { Fragment, useMemo } from "react";
@@ -9,8 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
-  URGENT_16_MODULE_IDS,
-  isUrgent16Module,
+  URGENT_6_MODULE_IDS,
+  REST_OF_URGENT_MODULE_IDS,
+  VERTICAL_CERTIFY_COL_LABEL,
+  FAST_MERGE_STATUS,
+  isUrgent6Module,
+  isRestOfUrgentModule,
+  launchWaveForModule,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
@@ -276,6 +281,16 @@ function ablTitle(abl: AblPct): string {
   return `Req ${abl.requiredCells} · Audited ${abl.auditedPct}% · Built ${abl.builtPct}% · Live ${abl.livePct}%`;
 }
 
+function moduleMissC(row: SystemModuleRow | undefined): number {
+  if (!row) return -1;
+  const frozenOps = row.frozenOps ?? 0;
+  const opsClicked = row.opsClicked ?? 0;
+  return (
+    row.missOpsClicked ??
+    Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked))
+  );
+}
+
 function AblCell4({
   abl,
   liveOk,
@@ -339,8 +354,9 @@ export function ModuleMatrixSystemView() {
     return sortModulesPriority10First(source);
   }, [data?.modules]);
 
-  const priorityRows = orderedRows.filter((r) => isUrgent16Module(r.module));
-  const restRows = orderedRows.filter((r) => !isUrgent16Module(r.module));
+  const u6Rows = orderedRows.filter((r) => isUrgent6Module(r.module));
+  const restUrgentRows = orderedRows.filter((r) => isRestOfUrgentModule(r.module));
+  const restRows = orderedRows.filter((r) => !isUrgent6Module(r.module) && !isRestOfUrgentModule(r.module));
 
   // Feed the tracker with the API's exact integer tallies. Reconstructing counts from rounded
   // percentages can paint 3444/3446 as 3446/3446 and contradict the exact Software total row.
@@ -473,15 +489,17 @@ export function ModuleMatrixSystemView() {
           item's mapped Required cells (same as Miss C). Column <b>12 Clicked</b> is 4/4 only when
           Clicked = every Required cell. Partial = yellow/red until 100%.
           Urgent 6 = accounting → banking → settlements → factoring → dispatch → vendors. Finish leftover
-          dispatch Live cells <b>vertically by column</b> (picker_law → trailer → reverse_link → customer →
-          vendor → load → gl_je), then rest of Urgent 16.
+          Live cells <b>vertically by column</b> ({VERTICAL_CERTIFY_COL_LABEL}), then rest of urgent
+          (customers → drivers → fleet → lists). FAST-MERGE {FAST_MERGE_STATUS} (4–5 min).
           Five scenario events are not a 5th Box and not new Required.json leaves (maps
           frozen). They are named hops on Program: revrec · invoice+evidence · bank-path · real fuel ·
           factoring advance. CC-1 still owes them when Miss C is 0.
           Do not add Required leaves. Do not add a 5th Verified Box. Ignore Box 4 keyword fan-out. Money
           cells count in Frozen / Miss C / READY. Miss C = Required cells that are not Box 4 Live (Clicked
           100% does not zero Miss C). READY Live✓ when Miss C = 0.
-          Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then remainder A–Z ({restRows.length}).
+          Launch ladder columns (Wave / Vertical COL / FAST-MERGE / FW 1–11 / Live 12 / Certify) sit on
+          this board so the plan cannot be forgotten. Grid order: U6 → rest of urgent → WAVE2 remainder
+          ({restRows.length}).
           {tip ? (
             <>
               {" "}
@@ -508,6 +526,57 @@ export function ModuleMatrixSystemView() {
       ) : (
         <div className="banner">Loading system matrix rollup…</div>
       )}
+
+      <div className="launch-ladder-wrap" data-testid="module-matrix-launch-ladder">
+        <h2 data-testid="module-matrix-launch-ladder-heading">
+          Launch ladder{" "}
+          <span className="sub">
+            own columns (not Required.json) · U6 then rest of urgent · FAST-MERGE {FAST_MERGE_STATUS} ·
+            vertical {VERTICAL_CERTIFY_COL_LABEL} · Certify = Miss C 0 + FW 1–12
+          </span>
+        </h2>
+        <table className="launch-ladder" data-testid="module-matrix-launch-ladder-table">
+          <thead>
+            <tr>
+              <th>Seq</th>
+              <th>Wave</th>
+              <th>Module</th>
+              <th title="Drain one column across U6, then the next column">Vertical COL</th>
+              <th title="docs/bus/FAST-MERGE-4MIN-LAW.md">FAST-MERGE</th>
+              <th title="Fully-Wired items 1–11 (Built / Box 3)">FW 1–11</th>
+              <th title="Fully-Wired item 12 = Box 4 Live">Live 12</th>
+              <th title="CERTIFY only when Miss C is 0 on this module">Certify</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS].map((id, i) => {
+              const row = orderedRows.find((r) => r.module === id);
+              const missC = moduleMissC(row);
+              const wave = launchWaveForModule(id);
+              const builtPct = row?.boxAbl?.builtPct ?? 0;
+              const livePct = row?.boxAbl?.livePct ?? 0;
+              const certify = apiLive && missC === 0;
+              return (
+                <tr key={id} data-testid={`launch-ladder-row-${id}`}>
+                  <td>{i + 1}</td>
+                  <td className={wave === "U6" ? "wave-u6" : "wave-rest"}>{wave}</td>
+                  <td>
+                    <b>{row?.label ?? id}</b>
+                    <span className="mod-id">{id}</span>
+                  </td>
+                  <td className="vert-col">{VERTICAL_CERTIFY_COL_LABEL}</td>
+                  <td>ON · 4min</td>
+                  <td>{row?.available ? `${builtPct}%` : "—"}</td>
+                  <td>{row?.available ? `${livePct}%` : "—"}</td>
+                  <td className={certify ? "certify-yes" : "certify-open"}>
+                    {apiLive ? (certify ? "CERTIFY" : `OPEN Miss C ${missC}`) : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <MatrixBoxTracker
         boardKey="system"
@@ -626,7 +695,7 @@ export function ModuleMatrixSystemView() {
       <h2 data-testid="module-matrix-system-heading">
         All modules matrix{" "}
         <span className="sub">
-          urgent 16 A–Z → rest A–Z · left = module · top = same columns · cell = R / A / B / L
+          U6 → rest of urgent → WAVE2 · left = module · top = same columns · cell = R / A / B / L
         </span>
       </h2>
 
@@ -694,14 +763,20 @@ export function ModuleMatrixSystemView() {
               </tr>
             </thead>
             <tbody>
-              <tr className="section" data-testid="module-matrix-system-section-priority-10">
-                <td colSpan={colSpan}>Urgent 16 — A–Z</td>
+              <tr className="section" data-testid="module-matrix-system-section-u6">
+                <td colSpan={colSpan}>Urgent 6 — certify now (accounting → banking → settlements → factoring → dispatch → vendors)</td>
               </tr>
-              {priorityRows.map((row) => (
+              {u6Rows.map((row) => (
+                <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
+              ))}
+              <tr className="section" data-testid="module-matrix-system-section-rest-urgent">
+                <td colSpan={colSpan}>Rest of urgent — after U6 (customers → drivers → fleet → lists)</td>
+              </tr>
+              {restUrgentRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
               ))}
               <tr className="section" data-testid="module-matrix-system-section-rest">
-                <td colSpan={colSpan}>Remaining modules</td>
+                <td colSpan={colSpan}>WAVE 2 remainder — after rest of urgent</td>
               </tr>
               {restRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>

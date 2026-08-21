@@ -3,6 +3,7 @@
  * Source: docs/specs/scoreboard/matrix-module-order.json
  */
 import matrixOrder from "@scoreboard/matrix-module-order.json";
+import launchLadder from "@scoreboard/launch-ladder.json";
 
 export type MatrixModuleId =
   | "maintenance"
@@ -128,8 +129,18 @@ export function parseMatrixModule(raw: string | null): MatrixModuleId {
 }
 
 /**
- * Owner urgency order — VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md §2.
- * All-modules system board lists these first, then remaining sidebar modules.
+ * Owner 2026-08-21 — CERTIFY Urgent 6 first, then rest of urgent, vertically.
+ * Canonical JSON: docs/specs/scoreboard/launch-ladder.json
+ */
+export const URGENT_6_MODULE_IDS = launchLadder.urgent_6 as readonly MatrixModuleId[];
+export const REST_OF_URGENT_MODULE_IDS = launchLadder.rest_of_urgent as readonly MatrixModuleId[];
+export const VERTICAL_CERTIFY_COL_IDS = launchLadder.vertical_cols as readonly string[];
+export const FAST_MERGE_STATUS = launchLadder.fast_merge as string;
+export const VERTICAL_CERTIFY_COL_LABEL = VERTICAL_CERTIFY_COL_IDS.join(" → ");
+
+/**
+ * Owner urgency order — VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md §2 (historical P10).
+ * Launch sort uses URGENT_6 then REST_OF_URGENT, not this list.
  */
 export const PRIORITY_10_MODULE_IDS: readonly MatrixModuleId[] = [
   "lists",
@@ -186,6 +197,20 @@ export function isUrgent16Module(id: string): boolean {
   return (URGENT_16_MODULE_IDS as readonly string[]).includes(id);
 }
 
+export function isUrgent6Module(id: string): boolean {
+  return (URGENT_6_MODULE_IDS as readonly string[]).includes(id);
+}
+
+export function isRestOfUrgentModule(id: string): boolean {
+  return (REST_OF_URGENT_MODULE_IDS as readonly string[]).includes(id);
+}
+
+export function launchWaveForModule(id: string): "U6" | "REST" | "WAVE2" {
+  if (isUrgent6Module(id)) return "U6";
+  if (isRestOfUrgentModule(id)) return "REST";
+  return "WAVE2";
+}
+
 export function isUrgent14Module(id: string): boolean {
   return isUrgent16Module(id);
 }
@@ -194,11 +219,11 @@ export function isPriority10Module(id: string): boolean {
   return (PRIORITY_10_MODULE_IDS as readonly string[]).includes(id);
 }
 
-/** Sort: urgent 16 A–Z first, then remaining modules A–Z by label. */
+/** Sort: Urgent 6 locked order → rest of urgent → remaining modules A–Z by label. */
 export function sortModulesPriority10First<T extends { module: string }>(rows: T[]): T[] {
   const byId = new Map(rows.map((r) => [r.module, r]));
   const out: T[] = [];
-  for (const id of URGENT_16_MODULE_IDS) {
+  for (const id of [...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS]) {
     const hit = byId.get(id);
     if (hit) {
       out.push(hit);

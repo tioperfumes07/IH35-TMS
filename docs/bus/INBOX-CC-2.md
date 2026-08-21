@@ -42,3 +42,6 @@ OUTBOX: CC-2 | FAST-MERGE | U6 | MOD=<module> | COL=<leaf:col> | Miss C M→N | 
 ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=CERTIFY U6 Live accounting→…→vendors | GO
 ===== END CC-2 =====
 ```
+
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` · U6 Live first · FAST-MERGE 4MIN.
+

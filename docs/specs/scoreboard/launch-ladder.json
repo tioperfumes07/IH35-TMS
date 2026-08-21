@@ -1,0 +1,32 @@
+{
+  "owner_locked": "2026-08-21",
+  "finding": "LAUNCH-LADDER-SCOREBOARD-COLUMNS",
+  "note": "Program system scoreboard columns so seats cannot forget the plan. NOT new Required.json linkage columns. NOT a 5th Box.",
+  "fast_merge": "ON",
+  "fast_merge_minutes": "4-5",
+  "law": "docs/bus/FAST-MERGE-4MIN-LAW.md",
+  "vertical_cols": [
+    "picker_law",
+    "trailer",
+    "reverse_link",
+    "customer",
+    "vendor",
+    "load",
+    "gl_je"
+  ],
+  "urgent_6": [
+    "accounting",
+    "banking",
+    "settlements",
+    "factoring",
+    "dispatch",
+    "vendors"
+  ],
+  "rest_of_urgent": [
+    "customers",
+    "drivers",
+    "fleet",
+    "lists"
+  ],
+  "then": "WAVE2 remaining modules after U6+REST certified (Fully-Wired 1-12, Live Chrome last)"
+}

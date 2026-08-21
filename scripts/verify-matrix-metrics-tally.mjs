@@ -270,8 +270,11 @@ function repoProblems() {
     if (!/Clicked/.test(view) || !/Named/.test(view) || !/Modals/.test(view) || !/READY/.test(view) || !/Miss C/.test(view)) {
       problems.push("ModuleMatrixSystemView must keep atoms and add Named + Leaves + Modals + Clicked + Frozen + Miss C + READY");
     }
-    if (!/Urgent 16/.test(view) || !/URGENT_16_MODULE_IDS/.test(view)) {
-      problems.push("system matrix must label Urgent 16 A–Z (legal + finance included)");
+    if (!/launch-ladder|module-matrix-launch-ladder/.test(view) || !/FAST-MERGE/.test(view) || !/Vertical COL/.test(view) || !/Certify/.test(view)) {
+      problems.push("system matrix must show launch-ladder columns: Wave, Vertical COL, FAST-MERGE, FW 1–11, Live 12, Certify");
+    }
+    if (!/Urgent 6/.test(view) || !/URGENT_6_MODULE_IDS/.test(view)) {
+      problems.push("system matrix must label Urgent 6 first (accounting→…→vendors), not Urgent 16 A–Z as NOW");
     }
     if (!/module-matrix-kpi-frozen/.test(view) || !/module-matrix-kpi-miss-c/.test(view)) {
       problems.push("system matrix must show Frozen and Miss C KPIs as opsClicked of frozenOps");
@@ -290,6 +293,13 @@ function repoProblems() {
   if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
   else {
     const cat = fs.readFileSync(CATALOG, "utf8");
+    if (!/export const URGENT_6_MODULE_IDS = launchLadder\.urgent_6/.test(cat)) {
+      problems.push("moduleMatrixCatalog must export URGENT_6_MODULE_IDS from launch-ladder.json");
+    }
+    const ladderJson = fs.readFileSync(path.join(ROOT, "docs/specs/scoreboard/launch-ladder.json"), "utf8");
+    if (!/"accounting"/.test(ladderJson) || !/"vendors"/.test(ladderJson) || !/"fast_merge"/.test(ladderJson)) {
+      problems.push("launch-ladder.json must name Urgent 6 modules and FAST-MERGE");
+    }
     const block = cat.match(/export const URGENT_16_MODULE_IDS[\s\S]*?\] as const/);
     if (!block) {
       problems.push("moduleMatrixCatalog must export URGENT_16_MODULE_IDS");
