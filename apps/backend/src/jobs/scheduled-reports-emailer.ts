@@ -33,7 +33,8 @@ export function initializeScheduledReportsEmailer(app: FastifyInstance) {
         app.log.info({ summary }, `[${WORKER_NAME}] tick complete`);
       }, app.log);
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info(`[${WORKER_NAME}] initialized — cron */15 * * * * (America/Chicago)`);

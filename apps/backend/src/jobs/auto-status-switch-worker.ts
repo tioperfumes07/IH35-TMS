@@ -98,7 +98,8 @@ export function initializeAutoStatusSwitchWorker(app: FastifyInstance): void {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("Auto status switch worker scheduled (every 5 minutes, America/Chicago)");

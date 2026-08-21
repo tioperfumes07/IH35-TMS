@@ -137,7 +137,8 @@ export function initializeComplianceReminderCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
   app.log.info("Compliance reminder cron scheduled (daily 06:00 America/Chicago)");
 }

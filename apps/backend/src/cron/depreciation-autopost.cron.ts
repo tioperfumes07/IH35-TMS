@@ -204,7 +204,8 @@ export function initializeDepreciationAutopostCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("Depreciation autopost cron scheduled (monthly 06:15 America/Chicago; flag-gated)");

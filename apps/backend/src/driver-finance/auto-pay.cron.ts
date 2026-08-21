@@ -106,7 +106,8 @@ export function initializeDriverSettlementAutoPayCron(app: FastifyInstance) {
         app.log.info({ candidates, queued, companies: companyIds.length }, "driver settlement auto-pay cron tick");
       });
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
   app.log.info("Driver settlement auto-pay cron scheduled (Friday 06:00 America/Chicago)");
 }

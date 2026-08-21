@@ -26,7 +26,8 @@ export async function initializeMasterDataSyncCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   cron.schedule(
@@ -40,7 +41,8 @@ export async function initializeMasterDataSyncCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("QBO master-data sync cron initialized (02:00 CT full, every 15m delta)");

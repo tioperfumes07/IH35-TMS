@@ -28,7 +28,8 @@ export function initializeLovesCardImportCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("Loves card import cron scheduled (daily 06:00 America/Chicago)");

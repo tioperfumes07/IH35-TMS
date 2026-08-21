@@ -36,7 +36,8 @@ export function initializeReconCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   cron.schedule(
@@ -50,7 +51,8 @@ export function initializeReconCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("Recon cron scheduled (AM 06:00 + PM 19:00 America/Chicago)");

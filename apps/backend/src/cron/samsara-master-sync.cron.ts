@@ -152,7 +152,8 @@ export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Samsara master sync cron scheduled (hourly at :30, America/Chicago)");

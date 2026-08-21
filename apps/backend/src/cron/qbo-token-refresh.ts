@@ -69,7 +69,8 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   // Watchdog: alert if any active company loses QBO connectivity.
@@ -126,7 +127,8 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("QBO token refresh cron initialized: hourly refresh + 15m connectivity watchdog");

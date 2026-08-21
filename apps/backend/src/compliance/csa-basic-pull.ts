@@ -237,7 +237,8 @@ export function initializeCsaBasicPullCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
   app.log.info("CSA BASIC pull cron scheduled (daily 05:30 America/Chicago)");
 }

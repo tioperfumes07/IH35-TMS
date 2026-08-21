@@ -117,7 +117,8 @@ export function initializeDriverLeaveBalanceRolloverCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Driver leave balance-rollover cron scheduled (Jan 1 00:30 America/Chicago)");

@@ -35,7 +35,8 @@ export function initializeAuditChainVerifyCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("Audit-chain-verify cron scheduled (daily 03:00 America/Chicago)");

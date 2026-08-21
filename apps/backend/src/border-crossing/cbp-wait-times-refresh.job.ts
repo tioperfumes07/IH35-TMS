@@ -43,7 +43,8 @@ export function initializeCbpWaitTimesRefreshCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("CBP wait times refresh cron scheduled (every 5 min, 06:00–22:00 America/Chicago)");

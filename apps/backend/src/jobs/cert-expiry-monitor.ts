@@ -84,7 +84,8 @@ export function initializeCertExpiryMonitor(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Cert expiry monitor scheduled (daily 06:00 America/Chicago)");

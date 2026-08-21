@@ -304,7 +304,7 @@ export function initializeEmailCron(app: FastifyInstance) {
       },
       app.log
     );
-  });
+  }, { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, });
 
   app.log.info("[email-cron] scheduled (every 60 seconds; processes up to 50 queued rows per tick)");
 }

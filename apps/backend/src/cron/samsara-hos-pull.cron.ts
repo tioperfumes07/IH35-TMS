@@ -147,7 +147,8 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Samsara HOS pull cron scheduled (hourly at :15, America/Chicago)");
