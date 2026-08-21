@@ -12,6 +12,7 @@ const LOAD_DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"
 const VEHICLE_PAGE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const EXPENSE_ROUTES = "apps/backend/src/accounting/expenses.routes.ts";
 const WO_DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
+const ASSIGNMENT = "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx";
 
 export function problems(
   page,
@@ -20,7 +21,8 @@ export function problems(
   loadDrawer = "",
   vehiclePage = "",
   expenseRoutes = "",
-  woDetail = ""
+  woDetail = "",
+  assignment = ""
 ) {
   const failures = [];
   for (const id of [
@@ -42,6 +44,15 @@ export function problems(
   }
   if (!/profileQ\.isError/.test(page) || !/Couldn't load trailer profile/.test(page) || !/onRetry=\{\(\) => void profileQ\.refetch\(\)\}/.test(page)) {
     failures.push("trailer profile must replace failed loading with an actionable retry state");
+  }
+  if (!/equipment\.assigned_driver_id/.test(service) || !/FROM mdata\.drivers d[\s\S]{0,500}?dca\.company_id = \$2::uuid/.test(service)) {
+    failures.push("trailer assigned driver must resolve through an explicitly company-scoped reverse read");
+  }
+  if (!/current_assignment: \{ attached_to_unit, current_load, assigned_driver \}/.test(service)) {
+    failures.push("trailer aggregate must return the assigned driver in current_assignment");
+  }
+  if (!/kind="driver"[\s\S]{0,160}?name=\{driver\.name\}[\s\S]{0,100}?noun="Driver"/.test(assignment)) {
+    failures.push("trailer profile must render its assigned driver as a canonical reverse drill");
   }
 
   // P31: a trailer's reverse history must use the persisted assignment FK, include inactive
@@ -127,18 +138,22 @@ function selftest() {
   const vehiclePage = fs.readFileSync(path.join(ROOT, VEHICLE_PAGE), "utf8");
   const expenseRoutes = fs.readFileSync(path.join(ROOT, EXPENSE_ROUTES), "utf8");
   const woDetail = fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8");
+  const assignment = fs.readFileSync(path.join(ROOT, ASSIGNMENT), "utf8");
   const cases = [
-    ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 0],
-    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
-    ["trailer WO FK regressed to unit", page, service.replaceAll("w.equipment_id = $1::uuid", "w.unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
-    ["current-load unit FK regressed", page, service.replace("l.assigned_unit_id = $1::uuid", "l.assigned_primary_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
-    ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), 1],
-    ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, 1],
-    ["aggregate timeout removed", page.replace("AbortSignal.timeout(15_000)", "undefined"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
-    ["retry state removed", page.replace("Couldn't load trailer profile", "Trailer unavailable"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
+    ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 0],
+    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["trailer WO FK regressed to unit", page, service.replaceAll("w.equipment_id = $1::uuid", "w.unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["current-load unit FK regressed", page, service.replace("l.assigned_unit_id = $1::uuid", "l.assigned_primary_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), assignment, 1],
+    ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, assignment, 1],
+    ["aggregate timeout removed", page.replace("AbortSignal.timeout(15_000)", "undefined"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["retry state removed", page.replace("Couldn't load trailer profile", "Trailer unavailable"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["assigned driver scope removed", page, service.replace("dca.company_id = $2::uuid", "TRUE"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["assigned driver payload removed", page, service.replace("current_assignment: { attached_to_unit, current_load, assigned_driver }", "current_assignment: { attached_to_unit, current_load }"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["assigned driver drill removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment.replace('kind="driver"', 'kind="vendor"'), 1],
   ];
-  for (const [name, p, s, d, l, v, e, w, minimum] of cases) {
-    const count = problems(p, s, d, l, v, e, w).length;
+  for (const [name, p, s, d, l, v, e, w, a, minimum] of cases) {
+    const count = problems(p, s, d, l, v, e, w, a).length;
     if (count < minimum || (minimum === 0 && count !== 0)) {
       console.error(`verify:trailer-profile-sections-complete SELFTEST FAIL: ${name} produced ${count}`);
       process.exit(1);
@@ -160,6 +175,7 @@ const failures = problems(
   fs.readFileSync(path.join(ROOT, VEHICLE_PAGE), "utf8"),
   fs.readFileSync(path.join(ROOT, EXPENSE_ROUTES), "utf8"),
   fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8"),
+  fs.readFileSync(path.join(ROOT, ASSIGNMENT), "utf8"),
 );
 if (failures.length) {
   for (const failure of failures) console.error(`verify:trailer-profile-sections-complete FAIL: ${failure}`);

@@ -7,6 +7,7 @@ export function CurrentAssignmentSection({
 }) {
   const unit = assignment.attached_to_unit as Record<string, unknown> | null;
   const load = assignment.current_load as Record<string, unknown> | null;
+  const driver = assignment.assigned_driver as Record<string, unknown> | null;
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-gray-800">
@@ -20,6 +21,19 @@ export function CurrentAssignmentSection({
             id={String(unit.unit_id)}
             name={unit.unit_number}
             noun="Unit"
+          />
+        ) : (
+          "None"
+        )}
+      </p>
+      <p className="text-xs text-gray-700">
+        Assigned driver:{" "}
+        {driver?.id ? (
+          <EntityLinkOrTombstone
+            kind="driver"
+            id={String(driver.id)}
+            name={driver.name}
+            noun="Driver"
           />
         ) : (
           "None"
