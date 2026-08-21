@@ -1,4 +1,5 @@
-- 2026-08-21T04:16Z Cursor | REWAKE ALL | DEADLINE=06:16CT | USMCA-ONLY no TRK no TRANSP no QBO | CC-1 settlements money | CC-2 customers/fleet/lists Box4 | CC-3 settlements Built then next | Codex dispatch reverse | Cursor settlements Clicked | scenarios after urgent 10 | NEVER-IDLE | GO
+- 2026-08-21T04:23Z Cursor | LEFTOVERS=me | CC-3 Built march only | certify 6 then 14 | NOW=settlements Clicked + other-wave leftovers | GO
+
 
 - 2026-08-20T12:10Z Cursor | FW 1–11 4th ✓ was hardcoded livePct=0 | Clicked fills it | CC-1/2/3 NO IDLE | Devin keep clicking | GO
 - 2026-08-20T16:10Z Cursor | URGENT-14 law on main | pull INBOX TOP | no WAVE1 | no ask | through inventory | GO

@@ -70,11 +70,11 @@ Columns advance independently down this list. Never idle.
 
 | Seat | Column forever | Never |
 |------|----------------|-------|
-| **CC-3** | Box 3 **Built** leftover (surface bar, qbo_chrome, honest leaf-specific guards) · Chrome **9225** | GL math · Clicked stamps |
+| **CC-3** | Box 3 **Built march** down 6 → 14 → WAVE 2 (`qbo_chrome` / `picker_law` / surface on **this** module). If 0 unpaid, next module same turn. Chrome **9225** | GL math · Clicked stamps · **leftovers** · other-wave residue · monitor |
 | **Codex** | `connectivity` + `reverse_link` (both-way drill, McLeod seriousness) · Chrome **9226** | GL · Clicked stamps |
 | **CC-1** | **Money** — canonical write + reuse `postSourceTransaction` / `maybePostBankCategorizationToGl` · header+lines · balanced JE when USMCA flags ON · bank/JE/bill/invoice/payment/settlement/factor/escrow · Chrome **9223** | inventing FKs · TMS→QBO write-back · parking money · Clicked stamps |
 | **CC-2** | **Box 4 Live** append-lease `AUDIT-COVERAGE-LIVE.md` PROD-VERIFIED + `` `leaf:col` `` (money stamps are money, not NON-MONEY) · Chrome **9224** | Clicked theater · keyword fan-out Live |
-| **Cursor** | Lead · bus · leftover Built · scoreboard honesty · **item 12 Clicked** (unpaid cells only, no 876 rewalk) · FAST-MERGE own PRs · Chrome **9222** | Stamping Box 4 · inventing a 6th wave · running Devin |
+| **Cursor** | Lead · bus · **leftovers / other modules / other waves** CC-3 already zeroed · scoreboard honesty · **item 12 Clicked** (unpaid cells only, no 876 rewalk) · FAST-MERGE own PRs · Chrome **9222** | Stamping Box 4 · inventing a 6th wave · running Devin |
 
 **Devin-A is PARKED (owner 2026-08-20 18:50 CT).** Do not start `devin-a-live-loop`. Do not ping Devin. Clicked = Cursor.
 

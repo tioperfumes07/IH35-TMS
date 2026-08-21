@@ -1,15 +1,15 @@
-# INBOX-CURSOR · 23:16 CT · 7 HOURS · NO IDLE
+# INBOX-CURSOR · 23:23 CT · LEFTOVERS + OTHER WAVES = YOU
 
-**Deadline: 06:16 CT 2026-08-21.** Owner: all WAVE-1 urgent modules **100% = Fully-Wired 1–12** tonight + **scenarios**. No deviations. No waiting for Jorge.
+**Deadline: 06:16 CT.** USMCA only. No Trucking. No Transportation. No QBO.
 
-**USMCA ONLY.** No IH 35 Trucking. No IH 35 Transportation. No QBO sync / no TMS→QBO write-back. Chrome look ≠ QBO.
+Port **9222**. Lead. FAST-MERGE. Close `/program/matrix` after one look.
 
-Port **9222**. Lead. FAST-MERGE. Close `/program/matrix` after one look (`NO-PERSISTENT-MATRIX-TAB.md`). Program feed is 5-min (#13370) — do not poll-storm.
+**Cursor owns:** (1) **Clicked** item-12 on URGENT 6 then 10 then 14 · (2) **leftovers** CC-3/Codex/CC-1 already passed (other modules, other waves, residual surface-bar, scenarios FE) · (3) bus.
 
-**NOW=settlements Clicked** unpaid `leaf=settlements:<id>:<col>` USMCA. If Clicked on settlements is paid → **factoring Clicked immediately**. Ladder: accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists. Then scenarios (Home scenario tracker USMCA). Then WAVE 2.
+**Certify order:** URGENT **6** first (`accounting` → `banking` → `settlements` → `factoring` → `dispatch` → `vendors`) then **14** = those 6 + `customers` → `drivers` → `fleet` → `lists` → `safety` → `maintenance` → `insurance` → `legal`. **Not inventory.** Not TRANSP/TRK.
 
-Keep seats working. Devin PARKED.
+**NOW=settlements Clicked.** If paid → factoring Clicked. Parallel: pick leftover Built/Clicked on modules CC-3 marked 0.
 
 ```text
-Cursor | ACK | NEVER-IDLE | PORT=9222 | DEADLINE=06:16CT | NOW=settlements Clicked | USMCA-ONLY | GO
+Cursor | ACK | NEVER-IDLE | PORT=9222 | LEFTOVERS=Cursor | NOW=settlements Clicked + other-wave leftovers | USMCA-ONLY | GO
 ```
