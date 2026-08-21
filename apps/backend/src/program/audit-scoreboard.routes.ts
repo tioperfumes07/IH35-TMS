@@ -773,14 +773,13 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
       if (scope === "system" || scope === "all") {
         try {
           const payload = await buildSystemModuleMatrix(req.user?.uuid);
-          const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
           reply.header("cache-control", "no-store");
           return reply.send({
             ...payload,
             meta: {
               ...payload.meta,
-              prodReadAt,
-              prodReadSource,
+              prodReadAt: formatCt(new Date()) || "—",
+              prodReadSource: "request_time",
             },
           });
         } catch (err) {

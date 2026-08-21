@@ -60,8 +60,8 @@ type LiveMatrix = {
   };
 };
 
-const MATRIX_POLL_MS = 30_000;
-const SCOREBOARD_POLL_MS = 30_000;
+const MATRIX_POLL_MS = 300_000;
+const SCOREBOARD_POLL_MS = 300_000;
 
 type MatrixRecentPr = {
   number: number;
@@ -425,7 +425,7 @@ export function ModuleMatrixPreviewPage() {
     queryFn: fetchMatrixRecentMerged,
     refetchInterval: SCOREBOARD_POLL_MS,
     refetchIntervalInBackground: false,
-    staleTime: 0,
+    staleTime: 300_000,
     retry: 1,
   });
   const recentRows = recentMerged?.items ?? [];
@@ -446,7 +446,7 @@ export function ModuleMatrixPreviewPage() {
     queryFn: () => fetchModuleMatrix(moduleId),
     refetchInterval: MATRIX_POLL_MS,
     refetchIntervalInBackground: false,
-    staleTime: 0,
+    staleTime: 300_000,
     placeholderData: (prev) => prev ?? undefined,
     enabled: !showSystem,
   });

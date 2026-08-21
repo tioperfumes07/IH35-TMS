@@ -97,7 +97,7 @@ const GUARD_MD = path.join(REPO_ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
 /** 3s made every All-modules load re-parse 29 boards + GitHub OUTBOX and miss the 20s FE abort. */
-const MATRIX_CACHE_MS = 120_000;
+const MATRIX_CACHE_MS = 300_000;
 /** Clicked lines sit at the top of OUTBOX-*.md. After the repo went public, unauthenticated
  * raw.githubusercontent.com started returning the FULL files (OUTBOX-DEVIN.md ~2.2MB). While the
  * repo was private, that raw URL 404'd and we fell through to a small disk copy — matrix stayed
@@ -288,7 +288,7 @@ const PROBE_DONE_MAP: Record<
   ],
 };
 
-let cache: { atMs: number; module: string; payload: ModuleMatrixPayload } | null = null;
+const moduleMatrixCache = new Map<string, { atMs: number; payload: ModuleMatrixPayload }>();
 
 export type ModuleMatrixPayload = {
   module: string;
@@ -1257,8 +1257,10 @@ export async function buildModuleMatrix(
   userUuid?: string,
 ): Promise<ModuleMatrixPayload> {
   const now = Date.now();
-  if (cache && cache.module === moduleId && now - cache.atMs < MATRIX_CACHE_MS) {
-    return cache.payload;
+  const cacheKey = `${moduleId}:${userUuid ? "neon_live" : "committed_stale"}`;
+  const hit = moduleMatrixCache.get(cacheKey);
+  if (hit && now - hit.atMs < MATRIX_CACHE_MS) {
+    return hit.payload;
   }
 
   const required = await loadRequiredMap(moduleId);
@@ -1439,7 +1441,7 @@ export async function buildModuleMatrix(
     },
   };
 
-  cache = { atMs: now, module: moduleId, payload };
+  moduleMatrixCache.set(cacheKey, { atMs: now, payload });
   return payload;
 }
 
@@ -1686,6 +1688,7 @@ function addCounts(
 }
 
 let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
+let systemInflight: Promise<SystemModuleMatrixPayload> | null = null;
 
 function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
   const base = finalizeTierMetrics(emptyTierBucket());
@@ -1718,13 +1721,32 @@ async function loadMatrixModuleOrder(): Promise<Array<{ id: string; label: strin
 }
 
 export async function buildSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
-  const now = Date.now();
   const probeScope = userUuid ? "neon_live" : "committed_stale";
+  const now = Date.now();
   if (systemCache && systemCache.probeScope === probeScope && now - systemCache.atMs < MATRIX_CACHE_MS) {
     return systemCache.payload;
   }
+  // Stale-while-revalidate: first successful rollup stays on screen; refresh in background.
+  if (systemCache && systemCache.probeScope === probeScope) {
+    if (!systemInflight) {
+      systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
+        systemInflight = null;
+      });
+    }
+    return systemCache.payload;
+  }
+  if (systemInflight) return systemInflight;
+  systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
+    systemInflight = null;
+  });
+  return systemInflight;
+}
 
-  // Warm ledger + Clicked OUTBOX once — GitHub raw, not 29× Contents API inside the 20s FE abort.
+async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
+  const now = Date.now();
+  const probeScope = userUuid ? "neon_live" : "committed_stale";
+
+  // Warm ledger + Clicked OUTBOX once — GitHub raw, not 29× Contents API inside the FE abort.
   await loadLedgerRows();
   await loadOutboxClickedKeys();
 
@@ -1749,72 +1771,19 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     sysFwCounts.set(spec.id, { req: 0, aud: 0, bu: 0, li: 0 });
   }
 
-  for (const entry of order) {
-    try {
-      const board = await buildModuleMatrix(entry.id, userUuid);
-      modulesAvailable += 1;
-      if (board.meta.probeSource === "neon_live") probeSource = "neon_live";
-      const abl = ablMetricsFromBoard(board);
-      for (const c of abl.columns) {
-        if (!colMeta.has(c.id)) colMeta.set(c.id, c);
-        if (!systemColCounts.has(c.id)) systemColCounts.set(c.id, { req: 0, aud: 0, bu: 0, li: 0 });
+  const boards = await Promise.all(
+    order.map(async (entry) => {
+      try {
+        const board = await buildModuleMatrix(entry.id, userUuid);
+        return { entry, board };
+      } catch {
+        return { entry, board: null as ModuleMatrixPayload | null };
       }
-      for (const [colId, counts] of Object.entries(abl.columnCounts)) {
-        addCounts(systemColCounts.get(colId)!, counts);
-      }
-      addCounts(sysAblCounts, abl.boxCounts);
-      sysClosed += abl.closedCells;
-      sysClicked += abl.clickedCells;
-      sysLeaves += Number(board.metrics.leafCount) || 0;
-      sysModals += Number(board.metrics.modalLeafCount) || 0;
-      sysFrozenOps += abl.frozenOps;
-      sysOpsClicked += abl.opsClicked;
-      sysOpsLive += abl.opsLive;
-      for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
-        const from = abl.fwCounts[spec.id];
-        if (!from) continue;
-        addCounts(sysFwCounts.get(spec.id)!, from);
-      }
-      modules.push({
-        module: entry.id,
-        label: entry.label,
-        available: true,
-        metrics: board.metrics,
-        boxAbl: abl.boxAbl,
-        columnAbl: abl.columnAbl,
-        closedCells: abl.closedCells,
-        leafCount: board.metrics.leafCount,
-        modalLeafCount: board.metrics.modalLeafCount ?? 0,
-        clickedCells: board.metrics.clickedCells ?? abl.clickedCells,
-        frozenOps: abl.frozenOps,
-        opsClicked: abl.opsClicked,
-        missOpsClicked: abl.missOpsClicked,
-        readyAbl: abl.readyAbl,
-        fwAbl: abl.fwAbl,
-        groupRollups: board.groupRollups,
-        probeProgress: board.meta.probeProgress,
-        probeSource: board.meta.probeSource,
-      });
-      mergeTierBuckets(systemBucket, {
-        requiredCells: Number(board.metrics.requiredCells) || 0,
-        liveCells: Number(board.metrics.liveCells) || 0,
-        builtOnlyCells: Number(board.metrics.builtOnlyCells) || 0,
-        probeOnlyCells: Number(board.metrics.probeOnlyCells) || 0,
-        auditedOnlyCells: Number(board.metrics.auditedOnlyCells) || 0,
-        unauditedCells: Number(board.metrics.unauditedCells) || 0,
-      });
-      for (const g of board.groupRollups ?? []) {
-        if (!groupBuckets.has(g.group)) groupBuckets.set(g.group, emptyTierBucket());
-        mergeTierBuckets(groupBuckets.get(g.group)!, {
-          requiredCells: Number(g.requiredCells) || 0,
-          liveCells: Number(g.liveCells) || 0,
-          builtOnlyCells: Number(g.builtOnlyCells) || 0,
-          probeOnlyCells: Number(g.probeOnlyCells) || 0,
-          auditedOnlyCells: Number(g.auditedOnlyCells) || 0,
-          unauditedCells: Number(g.unauditedCells) || 0,
-        });
-      }
-    } catch {
+    }),
+  );
+
+  for (const { entry, board } of boards) {
+    if (!board) {
       modules.push({
         module: entry.id,
         label: entry.label,
@@ -1832,6 +1801,69 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         readyAbl: emptyAbl(),
         fwAbl: {},
         groupRollups: [],
+      });
+      continue;
+    }
+    modulesAvailable += 1;
+    if (board.meta.probeSource === "neon_live") probeSource = "neon_live";
+    const abl = ablMetricsFromBoard(board);
+    for (const c of abl.columns) {
+      if (!colMeta.has(c.id)) colMeta.set(c.id, c);
+      if (!systemColCounts.has(c.id)) systemColCounts.set(c.id, { req: 0, aud: 0, bu: 0, li: 0 });
+    }
+    for (const [colId, counts] of Object.entries(abl.columnCounts)) {
+      addCounts(systemColCounts.get(colId)!, counts);
+    }
+    addCounts(sysAblCounts, abl.boxCounts);
+    sysClosed += abl.closedCells;
+    sysClicked += abl.clickedCells;
+    sysLeaves += Number(board.metrics.leafCount) || 0;
+    sysModals += Number(board.metrics.modalLeafCount) || 0;
+    sysFrozenOps += abl.frozenOps;
+    sysOpsClicked += abl.opsClicked;
+    sysOpsLive += abl.opsLive;
+    for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
+      const from = abl.fwCounts[spec.id];
+      if (!from) continue;
+      addCounts(sysFwCounts.get(spec.id)!, from);
+    }
+    modules.push({
+      module: entry.id,
+      label: entry.label,
+      available: true,
+      metrics: board.metrics,
+      boxAbl: abl.boxAbl,
+      columnAbl: abl.columnAbl,
+      closedCells: abl.closedCells,
+      leafCount: board.metrics.leafCount,
+      modalLeafCount: board.metrics.modalLeafCount ?? 0,
+      clickedCells: board.metrics.clickedCells ?? abl.clickedCells,
+      frozenOps: abl.frozenOps,
+      opsClicked: abl.opsClicked,
+      missOpsClicked: abl.missOpsClicked,
+      readyAbl: abl.readyAbl,
+      fwAbl: abl.fwAbl,
+      groupRollups: board.groupRollups,
+      probeProgress: board.meta.probeProgress,
+      probeSource: board.meta.probeSource,
+    });
+    mergeTierBuckets(systemBucket, {
+      requiredCells: Number(board.metrics.requiredCells) || 0,
+      liveCells: Number(board.metrics.liveCells) || 0,
+      builtOnlyCells: Number(board.metrics.builtOnlyCells) || 0,
+      probeOnlyCells: Number(board.metrics.probeOnlyCells) || 0,
+      auditedOnlyCells: Number(board.metrics.auditedOnlyCells) || 0,
+      unauditedCells: Number(board.metrics.unauditedCells) || 0,
+    });
+    for (const g of board.groupRollups ?? []) {
+      if (!groupBuckets.has(g.group)) groupBuckets.set(g.group, emptyTierBucket());
+      mergeTierBuckets(groupBuckets.get(g.group)!, {
+        requiredCells: Number(g.requiredCells) || 0,
+        liveCells: Number(g.liveCells) || 0,
+        builtOnlyCells: Number(g.builtOnlyCells) || 0,
+        probeOnlyCells: Number(g.probeOnlyCells) || 0,
+        auditedOnlyCells: Number(g.auditedOnlyCells) || 0,
+        unauditedCells: Number(g.unauditedCells) || 0,
       });
     }
   }
@@ -1924,8 +1956,9 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
 
 /** Test helper — clear request cache between assertions. */
 export function clearModuleMatrixCache(): void {
-  cache = null;
+  moduleMatrixCache.clear();
   systemCache = null;
+  systemInflight = null;
   ledgerCache = null;
   clickedOutboxCache = null;
 }
