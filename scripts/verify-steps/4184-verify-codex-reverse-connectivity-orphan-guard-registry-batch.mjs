@@ -10,6 +10,8 @@ const GUARDS = [
   "verify-legal-template-audit-actor-tombstone.mjs",
   "verify-linked-bank-transactions-panel-scope.mjs",
   "verify-maintenance-damage-register-tombstones.mjs",
+  "verify-matrix-endpoint-hard-throttle.mjs",
+  "verify-no-execsync-on-request-path.mjs",
   "verify-safety-integrity-alert-subject-tombstones.mjs",
   "verify-trip-profitability-tombstone-drills.mjs",
 ];
