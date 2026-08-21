@@ -49,6 +49,7 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'vendor' THEN NULLIF(TRIM(audit_vendor.vendor_name), '')
       WHEN ${alias}.subject_type = 'invoice' THEN NULLIF(TRIM(audit_invoice.display_id), '')
       WHEN ${alias}.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
+      WHEN ${alias}.subject_type = 'journal_entry' THEN NULLIF(TRIM(audit_je.memo), '')
       WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
         WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(audit_wo.display_id), '')
         WHEN 'accounting.invoices' THEN NULLIF(TRIM(audit_invoice.display_id), '')
@@ -95,7 +96,11 @@ function auditSubjectJoins(alias: string) {
       ON (( ${alias}.subject_type = 'bill' AND audit_bill.id = ${alias}.subject_id )
        OR ( ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.bills'
             AND audit_bill.id = ${alias}.source_reference_id ))
-     AND audit_bill.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_bill.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.journal_entries audit_je
+      ON ${alias}.subject_type = 'journal_entry'
+     AND audit_je.id = ${alias}.subject_id
+     AND audit_je.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
@@ -293,7 +298,13 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
           ${elDate ? `AND ${elDate}` : ""}
         UNION ALL
         SELECT ae.event_class AS event_type,
-               (ae.payload->>'resource_type') AS subject_type,
+               -- VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE: CODER-12-VOID-SPINE's
+               -- accounting.journal_entry.reversed payloads carry reversed_entity_type, not
+               -- resource_type (a different event source's naming convention) -- without this
+               -- fallback subject_type is NULL for every one of these rows, so the shared
+               -- auditSubjectProjection() CASE below always falls to its ELSE NULL branch
+               -- regardless of how many subject_type arms it has.
+               COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type') AS subject_type,
                CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
                                   ae.payload->>'expense_id', ae.payload->>'entity_id', '')
                               ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
@@ -303,7 +314,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
                ae.actor_user_uuid::text AS actor_user_id, ae.created_at AS occurred_at,
                ae.payload, ae.source, 'audit.audit_events'::text AS audit_source,
                $1::uuid AS operating_company_id,
-               (ae.payload->>'resource_type') AS source_table,
+               COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type') AS source_table,
                CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
                                   ae.payload->>'expense_id', ae.payload->>'entity_id', '')
                               ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
