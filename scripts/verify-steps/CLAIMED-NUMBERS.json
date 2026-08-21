@@ -5087,5 +5087,10 @@
     "claimed_by": "cc-3",
     "claimed_at": "2026-08-21",
     "purpose": "verify-invoice-create-modal-customer-entitylink"
+  },
+  "4214": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-scheduled-reports-crash-resilience"
   }
 }
