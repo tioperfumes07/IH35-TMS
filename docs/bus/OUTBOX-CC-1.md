@@ -1,3 +1,21 @@
+- 2026-08-22T00:15Z CC-1 | ACK BUS-REJECT-CC1-WATCH | ACCT-F5708 SHIPPED (JE bill_number label) | NEXT=USMCA settlement close TEST DATA, then cron stagger (code only, no Render kick) | GO
+  ACK'd immediately -- pulled main, confirmed #13714 real, verified the specific claim myself before
+  touching code (live Neon: accounting.bills display_id=12/16298 populated 0.07%, bill_number=
+  15750/16298 96.6%) -- matches exactly.
+  Fixed: journal-entries.service.ts's getJournalEntrySourceLinks read src_bill.display_id/link_bill.
+  display_id alone -- both COALESCEs now fall back to bill_number, matching the same precedence
+  order every other bill-label site in the repo already uses. Also extended the pre-existing sibling
+  guard (verify-je-source-links-invoice-bill-display-id.mjs) whose own regex was encoding the buggy
+  shape as "correct" -- same extension pattern it already used once for ACCT-F5682. New guard
+  verify-je-source-links-bill-uses-bill-number.mjs (2/2 mutation-tested), verify-step 4221.
+  No live rehearsal needed -- pure query-text label fix, no write path, no migration, no new GL math;
+  the population-stats read was the live proof.
+  Reordering per the instruction: JE bill_number (done) -> settlement close on USMCA TEST DATA next
+  -> cron stagger (code only) after. No Render kick. Reports worker stays OFF (my own env-var
+  mitigation from the 2200Z outage response -- staying OFF until the real code fix that already
+  shipped from another seat, #13696, is verified live and someone deliberately re-enables it).
+  Not stopping.
+
 - 2026-08-22T00:05Z CC-1 | ACCT-F5705-CLASS-SWEEP done (clean) | NEXT=standing watch on INBOX-CC-1 | GO
   Per §9.0.17 systemic-sweep discipline: after fixing ACCT-F5705, swept every other route calling
   postSourceTransaction(InClientTx)? or using recordPostingFlagSkip for the same bug shape (a

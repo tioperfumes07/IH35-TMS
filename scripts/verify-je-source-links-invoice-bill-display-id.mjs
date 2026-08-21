@@ -37,11 +37,17 @@ const failures = [];
 // display label as a THIRD fallback arg after src_bill.display_id. The invoice/bill resolution
 // this guard exists to protect is unchanged — src_inv.display_id and src_bill.display_id must
 // still be the first two args, in order; anything may follow before the closing AS clause.
-if (!/COALESCE\(src_inv\.display_id, src_bill\.display_id(?:, [^)]+)?\) AS source_transaction_display_id/.test(serviceSrc)) {
-  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects source_transaction_display_id via COALESCE(src_inv.display_id, src_bill.display_id, ...)`);
+//
+// ACCT-F5708 — extended again (still not narrowed): accounting.bills.display_id is a near-dead
+// column (12 of 16,298 rows populated live, 0.07%) — src_bill.bill_number (96.6% populated) is now
+// REQUIRED as the next fallback arg immediately after src_bill.display_id / link_bill.display_id,
+// or bill-sourced JE labels tombstone "Source — not visible" almost every time despite the link
+// itself being correct. Anything else may still follow before the closing AS clause.
+if (!/COALESCE\(src_inv\.display_id, src_bill\.display_id, src_bill\.bill_number(?:, [^)]+)?\) AS source_transaction_display_id/.test(serviceSrc)) {
+  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects source_transaction_display_id via COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, ...) — bill_number is the 96.6%-populated fallback display_id is missing on almost every bill`);
 }
-if (!/COALESCE\(link_inv\.display_id, link_bill\.display_id\) AS linked_object_display_id/.test(serviceSrc)) {
-  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects linked_object_display_id via COALESCE(link_inv.display_id, link_bill.display_id)`);
+if (!/COALESCE\(link_inv\.display_id, link_bill\.display_id, link_bill\.bill_number(?:, [^)]+)?\) AS linked_object_display_id/.test(serviceSrc)) {
+  failures.push(`${servicePath}: getJournalEntrySourceLinks no longer selects linked_object_display_id via COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, ...)`);
 }
 // Safe-cast direction: the uuid side (accounting.invoices/bills.id) must be cast ::text, never the
 // TEXT source_transaction_id/linked_object_id cast ::uuid (that direction RAISEs on a non-uuid value).
