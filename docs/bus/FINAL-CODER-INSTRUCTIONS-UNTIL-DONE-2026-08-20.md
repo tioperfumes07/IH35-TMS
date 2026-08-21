@@ -71,7 +71,9 @@ Columns advance independently down this list. Never idle.
 
 `home` → `tasks` → `driver-hub` → `compliance` → `safety` → `maintenance` → `insurance` → `legal` → `cash-flow` → `finance` → `form_425` → `fuel` → `inventory` → `reports` → `docs` → `users` → `help` → `program` → `system`
 
-**Stop only when:** WAVE 1 + WAVE 2 every module at the bar · system Miss C = 0 · READY ✓.
+**Stop only when:** WAVE 1 + WAVE 2 every module at the bar · **WAVE 3 second pass** (same modules, unpaid cells + five scenario events) · system Miss C = 0 · READY ✓.
+
+**WAVE 3 (owner 2026-08-21 11:53 CT):** not new modules. Re-walk WAVE 1 then WAVE 2 on your column. Canonical: `docs/bus/WAVE-2-AND-3-EVERYTHING-2026-08-21.md`.
 
 ---
 

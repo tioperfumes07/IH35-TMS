@@ -1,9 +1,9 @@
-# INBOX-CODEX · NEVER IDLE · WAVE 2 NOT DONE
+# INBOX-CODEX · LIVE MATRIX 12:00 CT · DISPATCH REVERSE
 
-Live-verified: #13519 tasks link activity + #13517 matrix outage guards. **Do not await INBOX.**
+Live Miss C: dispatch **14**, fleet **49**, lists **87**. Do not WAVE2-tour modules at 0.
 
-**NOW:** `/fleet` reverse+connectivity if unpaid → then WAVE 2 reverse in order (`home` → `tasks` already touched → `driver-hub` → `compliance` → … through `system`). No fake PASS on Checking session.
+**NOW:** unpaid `connectivity` + `reverse_link` on `/dispatch`. Then `/fleet` then `/lists`. Then `/maintenance`. No fake PASS on Checking session.
 
 ```text
-Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=/fleet reverse then WAVE2 reverse ladder | GO
+Codex | ACK | LIVE-MATRIX | MISS-C-241 | PORT=9226 | NOW=/dispatch reverse | GO
 ```
