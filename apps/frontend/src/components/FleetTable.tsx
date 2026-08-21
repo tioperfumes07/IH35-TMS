@@ -11,6 +11,7 @@ import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar"
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { EditTrailerModal } from "./fleet/EditTrailerModal";
 import { EntityLink } from "./shared/EntityLink";
+import { ConfirmModal } from "./shared/ConfirmModal";
 import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
@@ -162,6 +163,7 @@ export function FleetTable({
   const { pushToast } = useToast();
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<FleetRow | null>(null);
+  const [inactivateConfirmOpen, setInactivateConfirmOpen] = useState(false);
 
   // List-filter dropdowns (separate from the bulk-EDIT dropdowns of the same name).
   const [statusFilter, setStatusFilter] = useState("");
@@ -370,11 +372,8 @@ export function FleetTable({
 
   const onInactivateSelected = useCallback(() => {
     if (selectedRows.length === 0) return;
-    if (!window.confirm(`Inactivate ${selectedRows.length} selected unit(s)? This soft-deletes them (reversible) — the records are retained.`)) {
-      return;
-    }
-    inactivateMutation.mutate(selectedRows);
-  }, [selectedRows, inactivateMutation]);
+    setInactivateConfirmOpen(true);
+  }, [selectedRows]);
 
   const onReactivateSelected = useCallback(() => {
     if (selectedRows.length === 0) return;
@@ -667,6 +666,15 @@ export function FleetTable({
           setEditingRow(null);
         }}
         onSaved={() => pushToast("Trailer updated", "success")}
+      />
+      <ConfirmModal
+        open={inactivateConfirmOpen}
+        title="Inactivate units"
+        message={`Inactivate ${selectedRows.length} selected unit(s)? This soft-deletes them (reversible) — the records are retained.`}
+        confirmLabel="Inactivate"
+        danger
+        onClose={() => setInactivateConfirmOpen(false)}
+        onConfirm={() => inactivateMutation.mutate(selectedRows)}
       />
     </div>
   );

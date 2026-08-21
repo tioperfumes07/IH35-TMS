@@ -10,6 +10,7 @@ import {
   updateMaintenanceVehicle,
   voidMaintenanceVehicle,
 } from "../../../api/maintenance";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
@@ -55,6 +56,7 @@ export function VehiclesMasterDataPage() {
   const [draft, setDraft] = useState<VehicleDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState<MaintenanceVehicleRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [voiding, setVoiding] = useState<MaintenanceVehicleRow | null>(null);
 
   const vehiclesQuery = useQuery({
     queryKey: ["maintenance", "master-data", "vehicles", companyId, search],
@@ -170,12 +172,7 @@ export function VehiclesMasterDataPage() {
       <button
         type="button"
         className="text-red-600 underline"
-        onClick={async () => {
-          const reason = window.prompt("Void reason");
-          if (!reason) return;
-          await voidMaintenanceVehicle(row.id, companyId, reason);
-          await refresh();
-        }}
+        onClick={() => setVoiding(row)}
       >
         Void
       </button>
@@ -286,6 +283,21 @@ export function VehiclesMasterDataPage() {
           </div>
         ) : null}
       </Modal>
+
+      <VoidReasonModal
+        open={Boolean(voiding)}
+        title="Void Vehicle"
+        entityRef={voiding ? entityLabel(voiding.vin, voiding.id, "Vehicle") : undefined}
+        minLength={1}
+        postsReversingEntry={false}
+        submitLabel="Void"
+        onClose={() => setVoiding(null)}
+        onSubmit={async (reason) => {
+          if (!voiding) return;
+          await voidMaintenanceVehicle(voiding.id, companyId, reason);
+          await refresh();
+        }}
+      />
     </div>
   );
 }

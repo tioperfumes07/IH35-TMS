@@ -453,6 +453,8 @@ export function CustomerDetailPage() {
   const [showVoidedQuality, setShowVoidedQuality] = useState(false);
   const [qualityModalOpen, setQualityModalOpen] = useState(false);
   const [voidingQualityEvent, setVoidingQualityEvent] = useState<CustomerQualityEvent | null>(null);
+  const [editingQualityEventDetails, setEditingQualityEventDetails] = useState<CustomerQualityEvent | null>(null);
+  const [editDetailsDraft, setEditDetailsDraft] = useState("");
   const [fmcsaModalOpen, setFmcsaModalOpen] = useState(false);
   const [fmcsaHistoryOpen, setFmcsaHistoryOpen] = useState(false);
   const [qualityForm, setQualityForm] = useState({
@@ -1768,9 +1770,8 @@ export function CustomerDetailPage() {
                         size="sm"
                         variant="secondary"
                         onClick={() => {
-                          const next = window.prompt("Update details", event.details ?? "");
-                          if (next === null) return;
-                          updateQualityEventMutation.mutate({ eventId: event.id, details: next });
+                          setEditingQualityEventDetails(event);
+                          setEditDetailsDraft(event.details ?? "");
                         }}
                       >
                         Edit Details
@@ -2873,6 +2874,33 @@ export function CustomerDetailPage() {
               loading={voidQualityEventMutation.isPending}
             >
               Void Event
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={Boolean(editingQualityEventDetails)} onClose={() => setEditingQualityEventDetails(null)} title="Edit Details">
+        <div className="space-y-3">
+          <textarea
+            value={editDetailsDraft}
+            onChange={(event) => setEditDetailsDraft(event.target.value)}
+            rows={3}
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setEditingQualityEventDetails(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editingQualityEventDetails) return;
+                updateQualityEventMutation.mutate({ eventId: editingQualityEventDetails.id, details: editDetailsDraft });
+                setEditingQualityEventDetails(null);
+              }}
+              loading={updateQualityEventMutation.isPending}
+            >
+              Save
             </Button>
           </div>
         </div>
