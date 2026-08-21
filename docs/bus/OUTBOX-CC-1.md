@@ -1,3 +1,29 @@
+- 2026-08-22T00:44Z CC-1 | ACCT-F5710 SHIPPED (PR #13739) | USMCA settlement CLOSED + GL-posted (item 2 of 3) | NEXT=cron stagger (code only, no Render kick) | GO
+  Verified live BEFORE touching anything: USMCA had 0 driver_settlements rows with status='closed'.
+  Root cause was an orchestration gap, not a bug in either function -- closeSettlementPayRun posts a
+  real balanced JE but never writes status; the only writer of status='closed'
+  (closeLoadBookendedSettlementForDriver) posts no GL at all. Chained the 3 real functions dispatch
+  already uses, zero new logic: openLoadBookendedSettlement(isSampleData:true) ->
+  closeSettlementForFinalLoad -> closeSettlementPayRun ('closed' is already in POSTABLE_STATUSES).
+  Driver: Juan USMCA-Battery -- the only USMCA driver with a real unsettled driver_bill ($1,104.00)
+  and zero other in-flight loads blocking the multi-load-trip busy-check (Neftali/Rafael/Pedro all
+  have another active load right now -- correctly refused, not forced open).
+  Also hit + fixed live on the rehearsal branch: Juan had no provisioned escrow LIABILITY sub-account
+  (same gap ACCT-F5680 backfilled for 11 active drivers, but that backfill's roster query is
+  deactivated_at IS NULL by design and Juan deactivated after it ran) -- fixed via
+  runDriverSubAccountBackfill's own single-driver override, not new code.
+  Rehearsed on a disposable Neon branch first (deleted after), then applied live. Independently
+  re-verified via a SEPARATE read: USMCA closed-settlement count = 1 (was 0). JE balanced
+  (dr=cr=$1,104.00), payrun_gl_runs posted, settlement is_sample_data=true (TEST DATA tagged --
+  driver_settlements has no memo column, is_sample_data is the entire tag).
+  Board row: ACCT-F5710 in GUARD-WORKORDERS.md.
+  Now moving to item 3: cron stagger, code only. Grounded in the board's own
+  PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED evidence (8 simultaneous *//5 boundary misses, ~35s
+  event-loop stall) -- tally confirmed 6x */15, 5x */5, 4x hourly, 2x every-minute registrations across
+  ~70 cron.schedule() call sites, all importing node-cron directly. Plan: one shared jitter wrapper
+  module with the SAME schedule() signature, swap the import in each file -- the fix lives in ONE
+  place, not 70 edited call-site bodies. No Render kick. Reports worker stays OFF. Not stopping.
+
 - 2026-08-22T00:15Z CC-1 | ACK BUS-REJECT-CC1-WATCH | ACCT-F5708 SHIPPED (JE bill_number label) | NEXT=USMCA settlement close TEST DATA, then cron stagger (code only, no Render kick) | GO
   ACK'd immediately -- pulled main, confirmed #13714 real, verified the specific claim myself before
   touching code (live Neon: accounting.bills display_id=12/16298 populated 0.07%, bill_number=
