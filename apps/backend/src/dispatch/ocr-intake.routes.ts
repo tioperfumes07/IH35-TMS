@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   createOcrIntakeFromEmail,
+  finalizeOcrIntakeConversion,
   getOcrIntakeConvertPrefill,
   listOcrIntakeQueue,
   processOcrIntakeQueueItem,
@@ -30,6 +31,10 @@ const emailWebhookBodySchema = z.object({
 
 const convertBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+});
+
+const finalizeBodySchema = convertBodySchema.extend({
+  load_id: z.string().uuid(),
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -86,6 +91,25 @@ export async function registerDispatchOcrIntakeRoutes(app: FastifyInstance) {
     const result = await getOcrIntakeConvertPrefill(user.uuid, body.data.operating_company_id, params.data.id);
     if (!result.ok) {
       if (result.error === "not_found") return reply.code(404).send({ error: result.error });
+      return reply.code(409).send({ error: result.error });
+    }
+    return result;
+  });
+
+  app.post("/api/v1/dispatch/ocr-intake/items/:id/finalize", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = itemParamsSchema.safeParse(req.params ?? {});
+    const body = finalizeBodySchema.safeParse(req.body ?? {});
+    if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
+    const result = await finalizeOcrIntakeConversion(
+      user.uuid,
+      body.data.operating_company_id,
+      params.data.id,
+      body.data.load_id
+    );
+    if (!result.ok) {
+      if (result.error === "not_found" || result.error === "load_not_found") return reply.code(404).send({ error: result.error });
       return reply.code(409).send({ error: result.error });
     }
     return result;

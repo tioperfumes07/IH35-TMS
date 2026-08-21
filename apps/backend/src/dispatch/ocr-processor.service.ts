@@ -72,7 +72,10 @@ export async function listOcrIntakeQueue(userId: string, operatingCompanyId: str
         SELECT *
         FROM dispatch.ocr_intake_queue
         WHERE operating_company_id = $1::uuid
-          AND status IN ('pending_ocr', 'processing', 'ready_review', 'failed')
+          AND (
+            status IN ('pending_ocr', 'processing', 'ready_review', 'failed')
+            OR (status = 'converted' AND converted_load_id IS NOT NULL)
+          )
         ORDER BY created_at DESC
         LIMIT 200
       `,
@@ -246,20 +249,57 @@ export async function getOcrIntakeConvertPrefill(
     const status = String(row.status);
     if (status !== "ready_review") return { ok: false as const, error: "not_ready" };
     const fields = (row.extracted_fields ?? {}) as OcrIntakeExtractedFields;
-    await client.query(
-      `UPDATE dispatch.ocr_intake_queue SET status = 'converted', updated_at = now() WHERE id = $1`,
-      [itemId]
+    // Opening Book Load is not conversion. Keep the intake reviewable if the user cancels;
+    // conversion is finalized only after the canonical load writer returns its persisted id.
+    const item = mapRow(row);
+    return { ok: true as const, item, book_load_prefill: buildBookLoadPrefillFromExtracted(fields) };
+  });
+}
+
+export async function finalizeOcrIntakeConversion(
+  userId: string,
+  operatingCompanyId: string,
+  itemId: string,
+  loadId: string
+): Promise<{ ok: true; item: OcrIntakeQueueRow } | { ok: false; error: "not_found" | "load_not_found" | "already_converted" }> {
+  return withCompany(userId, operatingCompanyId, async (client) => {
+    const intakeRes = await client.query(
+      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+      [itemId, operatingCompanyId]
+    );
+    const row = intakeRes.rows[0] as Record<string, unknown> | undefined;
+    if (!row) return { ok: false as const, error: "not_found" as const };
+    if (row.converted_load_id && String(row.converted_load_id) !== loadId) {
+      return { ok: false as const, error: "already_converted" as const };
+    }
+
+    const loadRes = await client.query(
+      `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [loadId, operatingCompanyId]
+    );
+    if (!loadRes.rows[0]) return { ok: false as const, error: "load_not_found" as const };
+
+    const updated = await client.query(
+      `UPDATE dispatch.ocr_intake_queue
+          SET status = 'converted', converted_load_id = $3::uuid, updated_at = now()
+        WHERE id = $1 AND operating_company_id = $2::uuid
+        RETURNING *`,
+      [itemId, operatingCompanyId, loadId]
     );
     await appendCrudAudit(
       client,
       userId,
       "dispatch.ocr_intake.converted",
-      { resource_type: "dispatch.ocr_intake_queue", resource_id: itemId, operating_company_id: operatingCompanyId },
+      {
+        resource_type: "dispatch.ocr_intake_queue",
+        resource_id: itemId,
+        operating_company_id: operatingCompanyId,
+        load_id: loadId,
+      },
       "info",
       "B21-D7"
     );
-    const item = mapRow({ ...row, status: "converted" });
-    return { ok: true as const, item, book_load_prefill: buildBookLoadPrefillFromExtracted(fields) };
+    return { ok: true as const, item: mapRow(updated.rows[0] as Record<string, unknown>) };
   });
 }
 

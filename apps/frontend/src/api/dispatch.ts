@@ -1054,6 +1054,7 @@ export type OcrIntakeQueueItem = {
   extracted_fields: OcrIntakeExtractedFields;
   confidence_score: number | null;
   error_message: string | null;
+  converted_load_id: string | null;
   created_at: string;
 };
 
@@ -1068,6 +1069,16 @@ export function convertOcrIntakeToBookLoad(itemId: string, body: { operating_com
     `/api/v1/dispatch/ocr-intake/items/${itemId}/convert`,
     { method: "POST", body }
   );
+}
+
+export function finalizeOcrIntakeConversion(
+  itemId: string,
+  body: { operating_company_id: string; load_id: string }
+) {
+  return apiRequest<{ item: OcrIntakeQueueItem }>(`/api/v1/dispatch/ocr-intake/items/${itemId}/finalize`, {
+    method: "POST",
+    body,
+  });
 }
 
 export function reprocessOcrIntakeItem(itemId: string, operatingCompanyId: string) {

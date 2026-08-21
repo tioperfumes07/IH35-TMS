@@ -21,6 +21,10 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-dispatch-required-load-honest";
+const OCR_PAGE = path.join(ROOT, "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx");
+const OCR_API = path.join(ROOT, "apps/frontend/src/api/dispatch.ts");
+const OCR_SERVICE = path.join(ROOT, "apps/backend/src/dispatch/ocr-processor.service.ts");
+const OCR_ROUTES = path.join(ROOT, "apps/backend/src/dispatch/ocr-intake.routes.ts");
 
 /** module → leafId → cols that must NOT appear */
 const FORBIDDEN = {
@@ -116,6 +120,8 @@ if (process.argv.includes("--selftest")) {
   leaf.required = [...(leaf.required || []), "load"];
   const bad = offenders(clone, FORBIDDEN.dispatch);
   if (!bad.length) fail("selftest: poison did not trip");
+  const page = fs.readFileSync(OCR_PAGE, "utf8").replace('kind="load"', 'kind="customer"');
+  if (/kind="load"/.test(page)) fail("selftest: OCR load-link mutation did not remove the exact drill");
   console.log(`${LABEL} --selftest PASS (poison would trip ${bad.length})`);
   process.exit(0);
 }
@@ -128,6 +134,19 @@ for (const [mod, leafCols] of Object.entries(FORBIDDEN)) {
 for (const [mod, leafCols] of Object.entries(MUST_KEEP)) {
   failures.push(...missingKeep(loadMod(mod), leafCols).map((m) => `${mod}: ${m}`));
 }
+
+const ocrPage = fs.readFileSync(OCR_PAGE, "utf8");
+const ocrApi = fs.readFileSync(OCR_API, "utf8");
+const ocrService = fs.readFileSync(OCR_SERVICE, "utf8");
+const ocrRoutes = fs.readFileSync(OCR_ROUTES, "utf8");
+if (!/kind="load" id=\{item\.converted_load_id\}/.test(ocrPage)) failures.push("dispatch: docs.ocr must render converted_load_id as a load drill");
+if (!/onCreated=\{\(created\)/.test(ocrPage) || !/finalizeOcrIntakeConversion/.test(ocrPage)) failures.push("dispatch: docs.ocr must finalize from canonical Book Load onCreated id");
+if (!/converted_load_id: string \| null/.test(ocrApi)) failures.push("dispatch API type must retain converted_load_id");
+if (!/status IN \('pending_ocr', 'processing', 'ready_review', 'failed'\)[\s\S]*status = 'converted' AND converted_load_id IS NOT NULL/.test(ocrService)) failures.push("dispatch: converted OCR rows with a real load must remain visible");
+const ocrPrefillSection = ocrService.split("export async function finalizeOcrIntakeConversion")[0] ?? ocrService;
+if (/getOcrIntakeConvertPrefill[\s\S]*SET status = 'converted'/.test(ocrPrefillSection)) failures.push("dispatch: opening Book Load must not mark OCR converted before create");
+if (!/FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(ocrService)) failures.push("dispatch: OCR finalize must validate same-company load ownership");
+if (!/items\/:id\/finalize/.test(ocrRoutes)) failures.push("dispatch: OCR finalize route must be mounted");
 
 // Anchors: hop leaves still say Hop / accounting hop in sub
 const disp = loadMod("dispatch");
