@@ -1,15 +1,16 @@
-# INBOX-CC-2 · 06:46 CT · 7 HOURS · NO IDLE
+# INBOX-CC-2 · STANDING · NEVER HOLD
 
-**Deadline: 13:46 CT 2026-08-21.** Miss C = unpaid Box 4 Live. Pull `origin/main`. PREPEND ACK. **Work now.** CDP **9224** (spare 9228 — announce PORT=).
+**Read `docs/bus/STANDING-ORDER-SEATS.md`.** That file is the order. This INBOX will not be rewritten for you to start.
 
-**USMCA ONLY.** No Trucking. No Transportation. No QBO sync.
+`git checkout main && git pull --ff-only` (confirm branch first). Dedicated worktree.
 
-CLOSE `/program/matrix`. One leaf → PROD-VERIFIED + `` `leaf:col` `` → close tab. FAST-MERGE. You verify live — you do **not** build money.
+**NOW (start this second):** WAVE 2 Box 4 Live on USMCA, first URL that is **not** `/login`:
+1. `https://app.ih35dispatch.com/insurance` — list/detail Live. **Skip** SAMPLE-CLAIM-V4-0809 until Jorge auths 9224.
+2. Then `/safety` Live → `/maintenance` Live → rest of WAVE 2. One URL → prove → close tab.
+3. Five slices: still 5/5 stuck (fuel $0.05 probe; ACH on void invoices; rev-rec 0; factoring 0). Legal matters genuine zero. Do not re-Neon-hunt.
 
-**NOW:** If Miss C remains on **URGENT 6** (accounting→vendors), those Live stamps **first**. Else WAVE 2 Box 4 (home/tasks/safety/maintenance/insurance/legal/fuel/inventory/reports) **and** `/program/scenario-tracker` live dots. Do not wait for INBOX. Do not idle after one module.
-
-Picker FAILs from other seats land on **this OUTBOX first line** — act same turn.
+PREPEND ACK on `OUTBOX-CC-2.md`. GO.
 
 ```text
-CC-2 | ACK | NEVER-IDLE | PORT=9224 | DEADLINE=13:46CT | NOW=URGENT6 MissC then WAVE2+scenarios | USMCA-ONLY | GO
+CC-2 | ACK | NEVER-IDLE | PORT=9224 | NOW=/insurance Live then /safety then WAVE2 | SKIP login-blocked claim | GO
 ```
