@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(cash_advances|drawer\\.advance_detail|drawer\\.liability_detail|modal\\.mark_disbursed|modal\\.hold_deduction|modal\\.liability_breakdown|panel\\.pay_run_close)$","task":"LINK-F5185-settlements-reverse-cluster"} */
+/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(cash_advances|settlements\\.(drawer\\.(advance_detail|liability_detail)|modal\\.(mark_disbursed|hold_deduction|liability_breakdown)|panel\\.pay_run_close))$","task":"LINK-F5185-settlements-reverse-cluster"} */
 /**
  * GUARD: closes all 7 of the original open LINK-F5171 settlements reverse_link leaves
  * (settlements:disputes/liabilities.list were already closed in PR #6740).
@@ -45,6 +45,16 @@ const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage
 const SETTLEMENT_DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
 const SETTLEMENT_FINANCE_SECTION = "apps/frontend/src/components/driver-profile/DriverSettlementFinanceReverseSection.tsx";
 const LIABILITIES_HOME = "apps/frontend/src/pages/liabilities/LiabilitiesHome.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/settlements.required.json";
+const CLAIMED_LEAVES = [
+  "cash_advances",
+  "settlements.drawer.advance_detail",
+  "settlements.drawer.liability_detail",
+  "settlements.modal.mark_disbursed",
+  "settlements.modal.hold_deduction",
+  "settlements.modal.liability_breakdown",
+  "settlements.panel.pay_run_close",
+];
 const FILES = [
   CAR_SERVICE,
   CAR_ROUTES,
@@ -58,6 +68,7 @@ const FILES = [
   SETTLEMENT_DETAIL,
   SETTLEMENT_FINANCE_SECTION,
   LIABILITIES_HOME,
+  MATRIX,
 ];
 const LABEL = "verify-driver-cash-advances-settlement-modal-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
@@ -80,6 +91,15 @@ export function assertSettlementsClusterReverse(sources) {
   const settlementDetail = src[SETTLEMENT_DETAIL];
   const settlementFinanceSection = src[SETTLEMENT_FINANCE_SECTION];
   const liabilitiesHome = src[LIABILITIES_HOME];
+  try {
+    const matrix = JSON.parse(src[MATRIX]);
+    for (const id of CLAIMED_LEAVES) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) problems.push(`${MATRIX}: exact Required ownership missing ${id}:reverse_link`);
+    }
+  } catch {
+    problems.push(`${MATRIX}: settlements Required matrix must parse`);
+  }
 
   // -- cash_advances (new build) --
   if (!/AND r\.driver_id = \$/.test(carService)) {
@@ -257,6 +277,7 @@ function selftest() {
         setDetailOpen(true);
       }, [deepLinkLiabilityId]);
     `,
+    [MATRIX]: JSON.stringify({ leaves: CLAIMED_LEAVES.map((id) => ({ id, required: ["reverse_link"] })) }),
   };
   const goodProblems = assertSettlementsClusterReverse(good);
   if (goodProblems.length) {
@@ -293,6 +314,7 @@ function selftest() {
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace('dataTestId="liabilities-filter-driver"', 'dataTestId="x"') },
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setSelectedLiabilityId(deepLinkLiabilityId);", "") },
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setDetailOpen(true);\n      }, [deepLinkLiabilityId]);", "}, [deepLinkLiabilityId]);") },
+    ...CLAIMED_LEAVES.map((id) => ({ ...good, [MATRIX]: good[MATRIX].replace(`"id":"${id}"`, `"id":"${id}.removed"`) })),
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertSettlementsClusterReverse(mutated).length === 0) {
