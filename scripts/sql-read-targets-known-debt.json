@@ -16,7 +16,6 @@
     "apps/backend/src/banking/integrity/account-company-audit.service.ts: ba.bank_name — column \"bank_name\" does not exist on banking.bank_accounts",
     "apps/backend/src/compliance/compliance-aggregate.service.ts: p.unit_id — column \"unit_id\" does not exist on mdata.equipment_plates",
     "apps/backend/src/dispatch/customer-notify.service.ts: l.latest_eta_prediction — column \"latest_eta_prediction\" does not exist on mdata.loads",
-    "apps/backend/src/dispatch/dispatch-sheet.routes.ts: loc.name — column \"name\" does not exist on mdata.locations",
     "apps/backend/src/dispatch/load-status-signal/tri-signal.service.ts: s.scheduled_arrival_at — column \"scheduled_arrival_at\" does not exist on dispatch.auto_status_suggestions",
     "apps/backend/src/dispatch/load-status-signal/tri-signal.service.ts: s.sequence_number — column \"sequence_number\" does not exist on dispatch.auto_status_suggestions",
     "apps/backend/src/dispatch/load-status-signal/tri-signal.service.ts: s.stop_type — column \"stop_type\" does not exist on dispatch.auto_status_suggestions",

@@ -114,7 +114,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         `
           SELECT
             s.*,
-            loc.name AS location_name
+            loc.location_name
           FROM mdata.load_stops s
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                         AND loc.operating_company_id = $2::uuid
