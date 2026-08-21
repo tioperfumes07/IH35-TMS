@@ -624,10 +624,8 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {

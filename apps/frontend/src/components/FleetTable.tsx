@@ -294,7 +294,7 @@ export function FleetTable({
         targets.map((row) =>
           row.kind === "trailer"
             ? patchTrailer(row.id, operatingCompanyId, { deactivated_at: null })
-            : patchUnit(row.id, { deactivated_at: null })
+            : patchUnit(row.id, operatingCompanyId, { deactivated_at: null })
         )
       );
       const ok = results.filter((r) => r.status === "fulfilled").length;

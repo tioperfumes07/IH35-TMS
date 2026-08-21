@@ -19,6 +19,7 @@ const guards = [
   "verify-drivers-pay-rate-templates-connectivity.mjs",
   "verify-equipment-transfer-driver-reverse.mjs",
   "verify-fleet-driver-wiring.mjs",
+  "verify-fleet-unit-patch-company-scope.mjs",
   "verify-fuel-planner-unit-driver-entitylink.mjs",
   "verify-home-driver-reverse-leaves.mjs",
   "verify-hos-violation-driver-reverse.mjs",

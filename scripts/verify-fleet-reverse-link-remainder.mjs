@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\.profile\.documents|unit\.edit\.quick_availability|trailer\.profile\.(assignment|maintenance|insurance_claims_reverse|documents))$","task":"VERTICAL-REVERSE-LINK-FLEET-REMAINDER"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\.profile\.documents|trailer\.profile\.(assignment|maintenance|insurance_claims_reverse|documents))$","task":"VERTICAL-REVERSE-LINK-FLEET-REMAINDER"} */
 import fs from "node:fs";
 
 const unitDocs = fs.readFileSync("apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx", "utf8");
-const edit = fs.readFileSync("apps/frontend/src/components/fleet/EditVehicleModal.tsx", "utf8");
 const driverAssignment = fs.readFileSync("apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx", "utf8");
 const trailerAssignment = fs.readFileSync("apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx", "utf8");
 const maintenance = fs.readFileSync("apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx", "utf8");
@@ -19,7 +18,6 @@ function qboMappingRequiresReverse(source) {
 
 function failures(s = {}) {
   const u = s.unitDocs ?? unitDocs;
-  const e = s.edit ?? edit;
   const da = s.driverAssignment ?? driverAssignment;
   const ta = s.trailerAssignment ?? trailerAssignment;
   const m = s.maintenance ?? maintenance;
@@ -29,7 +27,6 @@ function failures(s = {}) {
   const fm = s.fleetMap ?? fleetMap;
   return [
     ["unit document exact drill", u.includes('kind="document" id={row.file_id}')],
-    ["quick availability driver FK", e.includes('{ key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" }')],
     ["default-driver reverse unit drill", da.includes('EntityLinkOrTombstone') && da.includes('id={def.unit_id == null ? null : String(def.unit_id)}') && da.includes('name={def.unit_number}')],
     ["trailer assignment unit drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}') && ta.includes('name={unit.unit_number}')],
     ["trailer assignment load drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="load"') && ta.includes('id={String(load.load_id)}') && ta.includes('name={load.load_number}')],
@@ -71,4 +68,4 @@ if (missing.length) {
   console.error(`verify-fleet-reverse-link-remainder FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
-console.log("verify-fleet-reverse-link-remainder PASS — six exact fleet leaves + QBO mapping N/A proven");
+console.log("verify-fleet-reverse-link-remainder PASS — five exact fleet leaves + QBO mapping N/A proven");

@@ -1850,6 +1850,7 @@ export function createEquipment(body: CreateEquipmentInput) {
   return apiRequest<MdataEquipment>("/api/v1/mdata/equipment", { method: "POST", body });
 }
 
-export function patchUnit(id: string, body: Record<string, unknown>) {
-  return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`, { method: "PATCH", body });
+export function patchUnit(id: string, operatingCompanyId: string, body: Record<string, unknown>) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}?${qs.toString()}`, { method: "PATCH", body });
 }
