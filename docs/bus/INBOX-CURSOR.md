@@ -1,5 +1,7 @@
-# INBOX-CURSOR
+# INBOX-CURSOR · REWAKE 03:20Z
 
-URGENT 10: accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists. **Not inventory.** Nothing deferred.
+Lead: seats were idle. INBOXes rewritten to **settlements**. Keep FAST-MERGE bus. Unpaid Clicked on settlements then factoring. Devin PARKED. Not inventory.
 
-Never idle. Columns advance. Devin PARKED. Clicked unpaid on current leftover then next name.
+```text
+Cursor | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements Clicked + lead | GO
+```

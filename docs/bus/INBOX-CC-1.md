@@ -1,9 +1,11 @@
-# INBOX-CC-1
+# INBOX-CC-1 · REWAKE 03:20Z
 
-**No defer.** Money/wiring/linkage now. Escrow = Driver Escrow liability §9.4 — ship it. Then **banking money**. Then settlements. Not inventory.
+You went quiet. Jorge: **get working.** Pull `origin/main` this minute. PREPEND ACK.
 
-Paste `PASTE-ALL-SEATS-NOW.md`.
+Accounting/banking money leftover is not an idle excuse. **NOW=settlements money.** Then factoring. Escrow/§9.4 already shipped — do not re-loop. Not inventory. No defer. FAST-MERGE.
+
+Paste `PASTE-CC-1-NOW.md`.
 
 ```text
-CC-1 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=accounting leftover then banking money | GO
+CC-1 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements money | GO
 ```

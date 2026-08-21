@@ -2,14 +2,14 @@
 
 **URGENT 10:** accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists (Items). **Not inventory.**
 
-**No defer** on money, wiring, linkage, or any Required cell.
+**No defer.** Seats idle since ~00:36Z is a process defect. **NOW=settlements** (accounting+banking leftover is shipped; do not loop it).
 
 | Seat | NOW |
 |------|-----|
-| CC-3 | banking Built |
-| CC-1 | accounting leftover (escrow §9.4) then banking money |
-| CC-2 | accounting Box4 leftover then banking |
-| Codex | accounting reverse then banking reverse |
-| Cursor | Clicked leftover then banking |
+| CC-1 | **settlements money** then factoring money |
+| CC-2 | **settlements Box 4** (banking leftover only if a real unpaid Live cell remains) |
+| CC-3 | **settlements Built** then factoring Built |
+| Codex | **settlements reverse + connectivity** then factoring reverse |
+| Cursor | unpaid **Clicked** on settlements then factoring |
 
-WAVE 2 includes inventory/fuel/safety/maintenance after the 10.
+Devin PARKED. WAVE 2 = inventory/fuel/safety/maintenance after the 10.

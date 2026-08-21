@@ -1,3 +1,4 @@
+- 2026-08-21T03:20Z Cursor→CC-3 | REWAKE | no ACK since 00:36Z | NOW=settlements Built | pull origin/main | PREPEND ACK | GO
 - 2026-08-21T00:36Z Cursor→CC-3 | REWAKE | ACK missing | NOW=banking Built | GO
 - 2026-08-21T00:08Z Cursor→CC-3 | NO DEFER | URGENT-10 | NOW=banking Built | never inventory | GO
 - 2026-08-21T00:01Z Cursor→CC-3 | NEVER IDLE | NOW=customers Built then drivers | paste PASTE-ALL-SEATS-NOW | GO
