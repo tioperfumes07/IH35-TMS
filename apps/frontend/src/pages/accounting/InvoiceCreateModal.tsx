@@ -179,7 +179,14 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 {
                   key: "customer",
                   label: "Customer",
-                  render: (load) => entityLabel(load.customer_name, load.customer_id, "Customer"),
+                  // C5 (same principle as the Load # column above): a "Customer" column with a real
+                  // customer_id promises a drill-through, not a plain unclickable label.
+                  render: (load) =>
+                    load.customer_id ? (
+                      <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />
+                    ) : (
+                      entityLabel(load.customer_name, load.customer_id, "Customer")
+                    ),
                 },
                 {
                   key: "status",
