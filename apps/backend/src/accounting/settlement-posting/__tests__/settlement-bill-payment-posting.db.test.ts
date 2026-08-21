@@ -533,7 +533,11 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       [glBillIds]
     );
     expect(bills.length).toBe(3);
-    expect(new Set(bills.map((b) => b.bill_number))).toEqual(new Set(loadNumbers));
+    // AP-BILL-NUMBER-IS-THE-LOAD-NUMBER (settlement-bill-payment-posting.service.ts) — bill_number is
+    // the AP screen's own "Bill #" identity series, deliberately prefixed "B-" off the load number so
+    // it never reads as though the load number itself were an AP document id. This assertion predated
+    // that fix and still expected the bare load number; updated to match the current, correct shape.
+    expect(new Set(bills.map((b) => b.bill_number))).toEqual(new Set(loadNumbers.map((n) => `B-${n}`)));
     for (const b of bills) {
       expect(b.vendor_id).toBe(driverVendorId);
       // CLS-DRIVER-VENDOR-UUID-FALLBACK — the bill must carry the REAL mdata.vendors row, not the

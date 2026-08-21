@@ -2492,11 +2492,20 @@ export async function cascadeBillVoidToSourceBankTransactions(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rowCount?: number | null; rows: Array<Record<string, unknown>> }> },
   input: { operatingCompanyId: string; billId: string; userId: string; reason: string }
 ): Promise<{ voided_placeholder_count: number; reverted_feed_line_count: number }> {
+  // ACCT-F5698 — banking.bank_transactions has no actor column to bind input.userId against
+  // (only voided_at / voided_reason; confirmed live, no voided_by_user_id or equivalent). The
+  // UPDATE below correctly never references it, but the bind array still passed it as $3, so
+  // Postgres could not infer a type for the unreferenced placeholder and every real call — not
+  // just this test — threw 42P18 ("could not determine data type of parameter $3") the instant a
+  // bill with a linked placeholder/feed-line bank transaction was voided. assertNoUnusedQueryParams
+  // (auth/db.ts) exists precisely to catch this class and did — the call site just never got fixed.
+  // Dropped the unused bind; userId stays on the function's own input type for the audit-event call
+  // below, which DOES use it.
   const voided = await client.query(
     `
       UPDATE banking.bank_transactions
       SET voided_at = now(),
-          voided_reason = $4,
+          voided_reason = $3,
           updated_at = now()
       WHERE operating_company_id = $1::uuid
         AND linked_entity_id = $2::uuid
@@ -2504,7 +2513,7 @@ export async function cascadeBillVoidToSourceBankTransactions(
         AND matched_journal_entry_id IS NULL
         AND plaid_transaction_id IS NULL
     `,
-    [input.operatingCompanyId, input.billId, input.userId, `linked_bill_voided: ${input.reason}`]
+    [input.operatingCompanyId, input.billId, `linked_bill_voided: ${input.reason}`]
   );
   const reverted = await client.query(
     `
