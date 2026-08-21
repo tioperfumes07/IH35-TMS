@@ -45,7 +45,14 @@ const ISSUE_RULES = [
     id: "table-no-mobile-fallback",
     test: (content, file) => {
       if (!/\.tsx$/.test(file)) return null;
-      if (/<table[\s>]/.test(content) && !/MobileOptimizedTable|overflow-x-auto|sm:table|md:table/.test(content)) {
+      // MOBILE-RESPONSIVE-AUDIT-BASELINE-DRIFT — a `<table>` inside a backtick template literal
+      // (e.g. printLetterHtml's `bodyHtml: \`...<table>...\`\`` print/PDF documents) is never
+      // rendered as live JSX in a browser viewport a mobile user could scroll, so it is not a
+      // real instance of this rule's concern. Strip template-literal bodies before scanning, so
+      // print-only HTML strings never trip this rule — a genuine on-screen JSX <table> outside
+      // any backtick string still fires normally.
+      const withoutTemplateLiterals = content.replace(/`(?:[^`\\]|\\.)*`/gs, "");
+      if (/<table[\s>]/.test(withoutTemplateLiterals) && !/MobileOptimizedTable|overflow-x-auto|sm:table|md:table/.test(content)) {
         return "Table without mobile overflow/fallback pattern";
       }
       return null;
