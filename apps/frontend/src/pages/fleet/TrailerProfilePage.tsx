@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import { ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -28,6 +29,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -42,10 +44,35 @@ export type TrailerProfileAggregate = {
   plates: Array<Record<string, unknown>>;
 };
 
-function fetchTrailerProfile(equipmentId: string, operatingCompanyId: string) {
-  return apiRequest<TrailerProfileAggregate>(
-    `/api/v1/mdata/equipment/${equipmentId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-  );
+async function fetchTrailerProfile(equipmentId: string, operatingCompanyId: string, signal?: AbortSignal) {
+  const timeoutSignal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(15_000)
+      : undefined;
+  const ctrl = new AbortController();
+  const forwardAbort = () => {
+    if (!ctrl.signal.aborted) ctrl.abort();
+  };
+  if (signal?.aborted || timeoutSignal?.aborted) forwardAbort();
+  signal?.addEventListener("abort", forwardAbort, { once: true });
+  timeoutSignal?.addEventListener("abort", forwardAbort, { once: true });
+  try {
+    return await apiRequest<TrailerProfileAggregate>(
+      `/api/v1/mdata/equipment/${equipmentId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+      { signal: ctrl.signal }
+    );
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    if (name === "AbortError" || name === "TimeoutError") {
+      throw new ApiError(408, {
+        message: "Trailer profile request timed out or was cancelled. Retry to load the profile.",
+      });
+    }
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", forwardAbort);
+    timeoutSignal?.removeEventListener("abort", forwardAbort);
+  }
 }
 
 export function TrailerProfilePage() {
@@ -59,7 +86,7 @@ export function TrailerProfilePage() {
 
   const profileQ = useQuery({
     queryKey: ["trailer-profile", id, companyId],
-    queryFn: () => fetchTrailerProfile(id, companyId),
+    queryFn: ({ signal }) => fetchTrailerProfile(id, companyId, signal),
     enabled: Boolean(id && companyId),
   });
 
@@ -93,6 +120,16 @@ export function TrailerProfilePage() {
 
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+  }
+  if (profileQ.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load trailer profile"
+        status={0}
+        message={(profileQ.error as Error)?.message}
+        onRetry={() => void profileQ.refetch()}
+      />
+    );
   }
   if (profileQ.isLoading) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Loading trailer profile…</div>;
