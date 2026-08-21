@@ -67,11 +67,16 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
         </div>
         <div className="flex items-center gap-2">
           {actions}
+          {/* CLS-CHROME-LAW-8: this is a plain navigation link to /vendors, not a create action —
+              "+ " is the app-wide convention for "opens a create flow" (confirmed by every other
+              "+ X" button in this app). Relabeled to match the established plain-navigation-link
+              convention ("Go to X", see QboStyleHomePage.tsx's "Go to registers"), so it stops
+              implying an inline vendor-create flow that doesn't exist here. */}
           <Link
             to="/vendors"
             className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
           >
-            + Vendor
+            Go to vendors
           </Link>
           <div ref={createMenuRef} className="relative">
             <button
