@@ -1,3 +1,18 @@
+- 2026-08-21T14:28Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
+  Factoring (USMCA) triage complete: 14 of 15 board "factor" rows already fixed/stale, re-verified
+  and left alone. The remaining one (PRIORITY-1-FARO) got a real update since it was filed --
+  USMCA now HAS an active Faro factor row (advance_rate=0.97, fee=0.015, reserve=0.015,
+  recourse=95d, matches the locked contract) -- but the purchase pipeline still has never posted a
+  single JE for any entity because USMCA's 37 invoices are 34 void + 3 proforma + 0 in 'sent'
+  status, so the eligible-invoice query the submit flow reads correctly returns nothing. Confirmed
+  NOT a poster bug -- 147/147 factoring unit tests pass, poster.service.ts is defensively
+  fail-closed with full ASC 860 secured-borrowing design already in place. This is a live-data/
+  business-process gap (no eligible invoice has ever reached 'sent'), not a code fix -- closed the
+  board row as no-code-defect rather than fabricating a fix for something that isn't broken.
+  Driving a real invoice through Submit-Factoring to get first-ever live proof is a real financial
+  action (creates an actual advance/reserve/GL entry), not a coding task -- left for the
+  operational owner of that step rather than taken unilaterally.
+  Moving to DISPATCH per instruction. No idle.
 - 2026-08-21T14:20Z CC-1 | ACK | DEADLINE=13:46CT | PORT=9223 | GO
   ACK owner correction: dropping deploy-watch entirely (Cursor's job, not mine) -- confirmed
   d3c33b1 is off the air and healthz/shallow is stable on a newer SHA before stepping away from
