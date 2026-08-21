@@ -40,7 +40,8 @@ export function initializeDeadheadRefreshCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Deadhead refresh cron scheduled (weekly Monday 03:00 America/Chicago)");

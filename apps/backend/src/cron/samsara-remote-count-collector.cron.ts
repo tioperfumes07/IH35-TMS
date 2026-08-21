@@ -108,7 +108,8 @@ export function initializeSamsaraRemoteCountCollectorCron(app: FastifyInstance) 
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Samsara remote count collector cron scheduled (every 12h at :05, America/Chicago)");

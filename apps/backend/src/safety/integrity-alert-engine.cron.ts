@@ -40,7 +40,8 @@ export function initializeIntegrityAlertEngineCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Integrity alert engine cron scheduled (every 6h at :20 America/Chicago)");

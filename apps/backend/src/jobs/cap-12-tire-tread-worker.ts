@@ -127,7 +127,8 @@ export function initializeCap12TireTreadWorker(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info({ cron: CRON_EXPRESSION, tz: CRON_TZ }, "[STARTUP] cap-12-tire-tread-worker scheduled");

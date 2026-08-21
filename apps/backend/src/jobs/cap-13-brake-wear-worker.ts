@@ -123,7 +123,8 @@ export function initializeCap13BrakeWearWorker(app: FastifyInstance) {
         await runCap13BrakeWearWorkerTick();
       }, app.log);
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info({ cron: CRON_EXPRESSION, tz: CRON_TZ }, "[STARTUP] cap-13-brake-wear-worker scheduled");

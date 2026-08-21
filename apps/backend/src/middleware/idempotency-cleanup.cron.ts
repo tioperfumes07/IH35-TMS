@@ -43,7 +43,8 @@ export function initializeIdempotencyCleanupCron(app: FastifyInstance): void {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Idempotency cleanup cron scheduled (daily 03:30 America/Chicago)");

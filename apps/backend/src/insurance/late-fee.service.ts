@@ -122,7 +122,8 @@ export function initializeInsuranceLateFeeCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Insurance late fee cron scheduled (daily 09:00 America/Chicago)");

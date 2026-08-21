@@ -118,7 +118,7 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
       },
       app.log
     );
-  });
+  }, { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, });
 
   app.log.info("QBO sync alerts cron scheduled (every 5 minutes; retry bookkeeping only unless extended)");
 }

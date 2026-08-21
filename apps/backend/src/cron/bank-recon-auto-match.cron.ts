@@ -137,7 +137,8 @@ export function initializeBankReconAutoMatchCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Bank recon auto-match cron scheduled (nightly 02:15 America/Chicago)");

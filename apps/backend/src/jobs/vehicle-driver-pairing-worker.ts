@@ -103,7 +103,8 @@ export function initializeVehicleDriverPairingWorker(app: FastifyInstance): void
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info(`[STARTUP] ${CRON_NAME} initialized (schedule="${schedule}")`);

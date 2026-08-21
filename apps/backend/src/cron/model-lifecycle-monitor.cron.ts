@@ -85,7 +85,8 @@ export function initializeModelLifecycleMonitorCron(app: FastifyInstance) {
     async () => {
       await wrapBackgroundJobTick(CRON_NAME, async () => { await runModelLifecycleCheck(app.log); }, app.log);
     },
-    { timezone: "America/Chicago" },
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" },
   );
   app.log.info("Model-lifecycle monitor cron scheduled (daily 08:30 America/Chicago)");
 }

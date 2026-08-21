@@ -53,7 +53,8 @@ export function initializeScheduledReportsCron(logger: FastifyBaseLogger) {
           logger.error({ err: error, reportId: definition.reportId }, "Scheduled report fetch failed");
         }
       },
-      { timezone: TIMEZONE }
+      {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: TIMEZONE }
     );
   }
 

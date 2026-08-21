@@ -83,7 +83,8 @@ export function initializeDaRandomPoolDrawWorker(app: FastifyInstance): void {
         app.log
       );
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
   app.log.info("DA random pool draw worker scheduled (quarterly: Jan/Apr/Jul/Oct 1st 07:00 CST)");

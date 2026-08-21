@@ -45,7 +45,8 @@ export function initializeSamsaraCacheWarmer(app: FastifyInstance): void {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   cron.schedule(
@@ -60,7 +61,8 @@ export function initializeSamsaraCacheWarmer(app: FastifyInstance): void {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
 
   app.log.info("Samsara cache warmer scheduled (tier3 */5min, tier4 */15min America/Chicago)");

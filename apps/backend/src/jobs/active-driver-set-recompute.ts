@@ -77,7 +77,7 @@ export function initializeActiveDriverSetRecomputeWorker(app: FastifyInstance): 
     tick(app).catch((err) => {
       app.log.error({ err }, `[${WORKER_NAME}] unhandled tick error`);
     });
-  });
+  }, { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, });
 
   app.log.info(`[STARTUP] ${WORKER_NAME} initialized (schedule="${schedule}")`);
 }

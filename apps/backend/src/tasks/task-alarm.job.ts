@@ -100,7 +100,8 @@ export function initializeTaskAlarmCron(app: FastifyInstance) {
         app.log
       );
     },
-    { timezone: "America/Chicago" }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
   app.log.info("Task alarm cron scheduled (every 15 minutes, America/Chicago)");
 }

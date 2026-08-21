@@ -45,7 +45,8 @@ export function initializeDriverRetentionScorerWorker(app: FastifyInstance) {
         .then((result) => app.log.info({ result }, `[${WORKER_NAME}] tick complete`))
         .catch((err) => app.log.error({ err }, `[${WORKER_NAME}] tick failed`));
     },
-    { timezone: CRON_TZ }
+    {
+      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
   app.log.info({ cron: CRON_EXPRESSION, tz: CRON_TZ }, `[${WORKER_NAME}] started`);
 }
