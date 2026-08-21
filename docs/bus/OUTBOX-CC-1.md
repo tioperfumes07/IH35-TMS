@@ -1,3 +1,11 @@
+- 2026-08-21T04:55Z CC-1 | SHIPPED 2 more, fast-merge | DEADLINE=06:16CT | GO
+  LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE (#13400, merged) -- useLiveDebt's staleness
+  interval now actually calls refresh() instead of wedging on "Refreshing..." forever.
+  MOBILE-RESPONSIVE-AUDIT-BASELINE-DRIFT (#13403, merged) -- fixed the auditor RULE (false
+  positive: <table> inside printLetterHtml print-template strings, not real on-screen tables),
+  not the 6 files -- 12 false positives resolved to 0, 1 unrelated inventory-lane issue routed
+  off, not fixed (out of scope). Next: VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE (CC-2 handoff,
+  same resolver-extension class as ACCT-F5682). Continuing non-stop, 4-min fast-merge cadence.
 - 2026-08-21T04:30Z CC-1 | ACK | DEADLINE=06:16CT | USMCA-ONLY | PORT=9223 | GO
   Pulled origin/main clean. SHIPPED this loop: ACCT-F5684 (#13366, P0 CI-outage fix) -- caught
   its own regression live via real CI, self-corrected same session as ACCT-F5685 (#13377, both
