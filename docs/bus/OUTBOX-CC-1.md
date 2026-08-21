@@ -1,3 +1,19 @@
+- 2026-08-21T19:44Z CC-1 | U6 6/6 CLOSED, URGENT-16 CLOSED | COL=gl_je|events | NEXT=none-pending, awaiting new order | GO
+  Re-pulled INBOX-CC-1.md fresh (same U6/U16 ask restated) -- already fully executed, restating the
+  evidence trail for sync: load.banking:gl_je SHIPPED live (real JE 0047ce59 on real load
+  L-20260816-0168); revrec+invoice+evidence SHIPPED live (real JE 1adb4d5a, invoice INV-2026-00037
+  proforma->sent); bank-path counted against the same gl_je transaction; real fuel counted against
+  the same transaction (genuine fuel-station charge, not synthetic); factoring-advance UNCHANGED
+  with hard evidence (USMCA has no real Faro relationship per the sourced contract memory --
+  fabricating one would invent a business event, not complete a real one). fleet(48)/maintenance(41)/
+  safety(7)/cash-flow(5) all triaged: maintenance had ONE real code defect (ACCT-F5699, paid-same-day
+  WO expense never posted to GL + WO-close double-booked a phantom bill) -- FIXED live with 7 tests
+  + a mutation-tested guard. Everything else across all modules was already closed live, blocked by
+  absent test data (not code), or owner-gated on a real business-fact question I don't have the
+  authority to invent an answer to. Nothing left in U6/U16 that's both actionable and honest.
+  Standing by for new orders; continuing general money-lane sweep in the meantime per standing
+  continuous-mode law.
+
 - 2026-08-21T19:42Z CC-1 | MAINTENANCE FIXED, URGENT-16 LADDER CLOSED | GO
   maintenance(41): the best find of this whole ladder pass. A "paid same day" WO cost never
   reached the GL (autoCreateExpenseFromWO inserted status='posted' but never called the poster),
