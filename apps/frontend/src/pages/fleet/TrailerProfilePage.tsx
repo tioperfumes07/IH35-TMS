@@ -30,6 +30,8 @@ import { TrailerTiresReverseSection } from "../../components/maintenance/Trailer
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
+import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
+import { quicksaveEquipmentAssignment } from "../../api/mdata";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -83,6 +85,7 @@ export function TrailerProfilePage() {
   const queryClient = useQueryClient();
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [quickAssignOpen, setQuickAssignOpen] = useState(false);
 
   const profileQ = useQuery({
     queryKey: ["trailer-profile", id, companyId],
@@ -278,6 +281,7 @@ export function TrailerProfilePage() {
           companyId={companyId}
           equipmentNumber={trailerLabel}
           onEdit={() => setEditModalOpen(true)}
+          onQuickAssign={() => setQuickAssignOpen(true)}
           onChangeStatus={() => setStatusModalOpen(true)}
           onArchive={handleArchive}
         />
@@ -296,6 +300,22 @@ export function TrailerProfilePage() {
         operatingCompanyId={companyId}
         onClose={() => setEditModalOpen(false)}
         onSaved={invalidateProfile}
+      />
+      <QuickAssignModal
+        open={quickAssignOpen}
+        companyId={companyId}
+        target={{ equipmentKind: "trailer", equipmentId: id, equipmentLabel: trailerLabel }}
+        onClose={() => setQuickAssignOpen(false)}
+        onConfirm={async (driverId) => {
+          await quicksaveEquipmentAssignment({
+            operating_company_id: companyId,
+            equipment_kind: "trailer",
+            equipment_id: id,
+            driver_id: driverId,
+          });
+          invalidateProfile();
+          pushToast("Driver assigned", "success");
+        }}
       />
     </div>
   );

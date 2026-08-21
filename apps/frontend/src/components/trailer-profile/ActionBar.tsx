@@ -8,6 +8,7 @@ export function ActionBar({
   companyId,
   equipmentNumber,
   onEdit,
+  onQuickAssign,
   onChangeStatus,
   onArchive,
 }: {
@@ -15,6 +16,7 @@ export function ActionBar({
   companyId: string;
   equipmentNumber: string;
   onEdit?: () => void;
+  onQuickAssign?: () => void;
   onChangeStatus?: () => void;
   onArchive?: () => void;
 }) {
@@ -23,6 +25,9 @@ export function ActionBar({
     <div className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur-sm">
       <button type="button" className={linkClass} onClick={onEdit} data-testid="tp-edit-button">
         Edit
+      </button>
+      <button type="button" className={linkClass} onClick={onQuickAssign} data-testid="tp-quick-assign-driver">
+        Quick assign driver
       </button>
       <button type="button" className={linkClass} onClick={onChangeStatus}>
         Change Status

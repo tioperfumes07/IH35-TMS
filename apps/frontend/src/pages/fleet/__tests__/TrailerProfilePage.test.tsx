@@ -76,6 +76,7 @@ describe("TrailerProfilePage", () => {
     expect(screen.getByTestId("tp-section-6-compliance")).toBeTruthy();
     expect(screen.getByTestId("tp-section-7-documents")).toBeTruthy();
     expect(screen.getByTestId("tp-section-8-action-bar")).toBeTruthy();
+    expect(screen.getByTestId("tp-quick-assign-driver")).toBeTruthy();
     expect(screen.getByTestId("tp-reefer-a19-slot")).toBeTruthy();
     expect(await screen.findByText("Reefer hours tracking")).toBeTruthy();
     // DUALPATH-07 fix: the old TrailerRecentActivitySection widget must not render live.
@@ -97,7 +98,7 @@ describe("TrailerProfilePage", () => {
     vi.spyOn(clientApi, "apiRequest").mockRejectedValueOnce(new Error("aggregate unavailable"));
     renderPage();
     expect(await screen.findByText("Couldn't load trailer profile")).toBeTruthy();
-    expect(screen.getByText("aggregate unavailable")).toBeTruthy();
+    expect(screen.getByText(/aggregate unavailable/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /retry/i })).toBeTruthy();
     expect(screen.queryByText("Loading trailer profile…")).toBeNull();
   });
