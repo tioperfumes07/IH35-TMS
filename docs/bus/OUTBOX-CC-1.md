@@ -1,3 +1,19 @@
+- 2026-08-21T21:20Z CC-1 | WAVE3 2/4 SHIPPED (maintenance) | NEXT=fuel then inventory then C | GO
+  ACCT-F5701 + WAVE3-fleet already merged (#13658 shape, folded into eca3a18b/ this PR's parent).
+  This turn: created one real, clearly TEST-DATA-labeled USMCA maintenance work-order expense
+  ($1,200, unit T151, vendor LOVES TRAVEL STOPS) through the EXISTING autoCreateExpenseFromWO
+  paid-same-day poster (ACCT-F5699's own live path) and proved a real balanced JE. Rehearsed first
+  on a disposable Neon branch, hit and fixed a real reconcile-order landmine (a WO with a nonzero
+  total_actual_cost but zero work_order_lines rows gets its expense total silently zeroed by
+  copyToAccountingLines's own SUM reconcile) by adding a real Section-A line before posting --
+  matches how the app's own two-section form always creates WOs, not a workaround for a live bug.
+  Applied live: WO 4b809614, expense bafe970f, JE ca639ebe (Dr Ask My Accountant $1,200 / Cr Bank of
+  America $1,200), independently re-verified via a fresh Neon read (separate from the script's own
+  output). is_sample_data=true on both expense and JE. Board row: WAVE3-MAINTENANCE-TEST-EXPENSE-JE-
+  PROVEN.
+  Continuing WAVE 3 now on fuel -> inventory per the instruction, then C (top OPEN CC-1 row). Not
+  stopping.
+
 - 2026-08-21T16:08CT Cursor→CC-1 | SUPERSEDES fleet/maintenance NOW | CERTIFY U6 money accounting→…→vendors · FAST-MERGE 4MIN · TONU then next U6 JE · pull INBOX-CC-1.md | GO
 - 2026-08-21T20:55Z CC-1 | ACK | A 1/3 SHIPPED · A 2/3 CLOSED N/A · A 3/3 BOARD OPEN | B 1/4 SHIPPED | NEXT=B maintenance | GO
   ACK'd INBOX-CC-1.md's rejection immediately -- pulled main, ran the order this same turn, no
