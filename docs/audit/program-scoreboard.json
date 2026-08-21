@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T15:32:51-05:00",
-    "sourceSha": "28a26c8ec",
+    "generatedAt": "2026-08-21T15:41:40-05:00",
+    "sourceSha": "5cda3acc3",
     "deployedSha": "63eac4e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2035,
+    "ledgerRows": 2036,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,60 @@
   },
   "recentActivity": [
     {
+      "number": 13648,
+      "title": "FINDING: FLEET-U16-1-UNIT-QUICK-AVAILABILITY-DRIVER-PICKER-LIVE LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13648",
+      "sha": "5cda3acc3",
+      "committedAtIso": "2026-08-21T15:41:40-05:00"
+    },
+    {
+      "number": 13647,
+      "title": "FINDING: CURSOR-BUS-CC1-NEVER-HOLD",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13647",
+      "sha": "7c14eadd6",
+      "committedAtIso": "2026-08-21T15:38:13-05:00"
+    },
+    {
+      "number": 13646,
+      "title": "Claude-3- FINDING: CC3-USEESCAPEKEY-AUDIT-CONFIRMED-SAFE",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13646",
+      "sha": "8f6ef61fe",
+      "committedAtIso": "2026-08-21T15:34:16-05:00"
+    },
+    {
+      "number": 13645,
+      "title": "FINDING: CC2-U6-COMPLETE-14OF14-STATUS LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13645",
+      "sha": "352d603f3",
+      "committedAtIso": "2026-08-21T15:34:05-05:00"
+    },
+    {
+      "number": 13644,
+      "title": "FINDING: CC1-MONEY-LADDER-COMPLETE-2026-08-21 LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13644",
+      "sha": "5e5d42a3d",
+      "committedAtIso": "2026-08-21T15:34:01-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:33 PM CT",
+      "url": "",
+      "sha": "d717d7604",
+      "committedAtIso": "2026-08-21T20:33:55Z"
+    },
+    {
       "number": 13643,
       "title": "FINDING: U6-14OF14-COMPLETE-DOCS-OCR-HONEST-ZERO LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2155,60 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13641",
       "sha": "39fe3ce60",
       "committedAtIso": "2026-08-21T15:26:04-05:00"
-    },
-    {
-      "number": 13640,
-      "title": "FINDING: CC1-BOARD-HYGIENE-CLOSE-STALE-SETTLEMENT-DEBT-ROW LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13640",
-      "sha": "45809deb2",
-      "committedAtIso": "2026-08-21T15:25:12-05:00"
-    },
-    {
-      "number": 13639,
-      "title": "FINDING: FLEET-TRAILER-ASSIGNMENT-REVERSE-REACHABILITY",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13639",
-      "sha": "63eac4e75",
-      "committedAtIso": "2026-08-21T15:22:18-05:00"
-    },
-    {
-      "number": 13638,
-      "title": "FINDING: ACCT-F5700 LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13638",
-      "sha": "f0c48cf9d",
-      "committedAtIso": "2026-08-21T15:19:06-05:00"
-    },
-    {
-      "number": 13637,
-      "title": "FINDING: RENDER-DEPLOY-STALE-BEHIND-MAIN LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13637",
-      "sha": "29a3541f8",
-      "committedAtIso": "2026-08-21T15:14:40-05:00"
-    },
-    {
-      "number": 13636,
-      "title": "FINDING: CC2-U6-10OF14-STATUS-1515Z LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13636",
-      "sha": "b43c35e48",
-      "committedAtIso": "2026-08-21T15:13:01-05:00"
-    },
-    {
-      "number": 13635,
-      "title": "FINDING: FLEET-TRAILER-ASSIGNED-DRIVER-REVERSE",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13635",
-      "sha": "3720b1492",
-      "committedAtIso": "2026-08-21T15:12:23-05:00"
     }
   ]
 }
