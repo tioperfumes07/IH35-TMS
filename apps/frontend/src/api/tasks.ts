@@ -204,7 +204,7 @@ export type TaskActivity = {
   id: string;
   task_id: string;
   actor_user_id: string | null;
-  event_type: "comment" | "status_change" | "assignment";
+  event_type: "comment" | "status_change" | "assignment" | "link_added";
   payload: Record<string, unknown>;
   created_at: string;
   actor_name: string | null;
