@@ -778,9 +778,9 @@
       "id": "dispatch.modal.load_create",
       "tab": "Modals",
       "sub": "Modal: Load Create",
-      "route_hint": "surface://pages/dispatch/LoadCreateModal.tsx",
+      "route_hint": "surface://pages/dispatch/components/BookLoadModalV4.tsx",
       "surface_kind": "modal",
-      "surface_path": "pages/dispatch/LoadCreateModal.tsx",
+      "surface_path": "pages/dispatch/components/BookLoadModalV4.tsx",
       "required": [
         "connectivity",
         "picker_law",
