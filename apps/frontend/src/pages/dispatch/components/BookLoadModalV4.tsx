@@ -30,6 +30,7 @@ import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
@@ -383,6 +384,14 @@ export function BookLoadModalV4({
   // if it fails), so this is a pre-submit PREVIEW, same "read-only preview, submit-time gate is the real
   // enforcement" pattern as PreDispatchValidationPanel.
   const [authGateBlocked, setAuthGateBlocked] = useState(false);
+  // AUTHGATE-PANEL-MISSING-ENTITY-LABELS (2026-08-21): lifted up from BookLoadEquipmentSection —
+  // the only place a picked unit/trailer/driver's real display name is known — so <AuthGatePanel>
+  // below can render real names instead of falling back to "Unit — not visible" (id-only).
+  const [equipmentOptions, setEquipmentOptions] = useState<{
+    unit: EntityPickerOption | null;
+    trailer: EntityPickerOption | null;
+    primaryDriver: EntityPickerOption | null;
+  }>({ unit: null, trailer: null, primaryDriver: null });
   // GAP-47 — active-repair-work-order block on the selected driver, with a dispatcher override checkbox.
   const [overrideRepairBlock, setOverrideRepairBlock] = useState(false);
   const [repairBlockSubmitBlocked, setRepairBlockSubmitBlocked] = useState(false);
@@ -1579,6 +1588,7 @@ export function BookLoadModalV4({
                       deadheadAfterAt={deadheadAfterAt}
                       deadheadDropCity={deadheadDropPreview.city}
                       deadheadDropState={deadheadDropPreview.state}
+                      onOptionsResolved={setEquipmentOptions}
                     />
                   </div>
                 </section>
@@ -1678,6 +1688,9 @@ export function BookLoadModalV4({
                   unitUuid={assignedUnitId || undefined}
                   driverUuid={assignedPrimaryDriverId || undefined}
                   trailerUuid={assignedTrailerUnitId || undefined}
+                  unitLabel={equipmentOptions.unit?.label ?? null}
+                  driverLabel={equipmentOptions.primaryDriver?.label ?? null}
+                  trailerLabel={equipmentOptions.trailer?.label ?? null}
                   onBlockersChange={setAuthGateBlocked}
                 />
                 <LoadCreateModal
