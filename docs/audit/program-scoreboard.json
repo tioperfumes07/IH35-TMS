@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T13:19:30-05:00",
-    "sourceSha": "c7f13b231",
+    "generatedAt": "2026-08-21T13:22:30-05:00",
+    "sourceSha": "035cfe35b",
     "deployedSha": "c03b65c",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2024,
+    "ledgerRows": 2027,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 13580,
+      "title": "Claude-2-FINDING: fix audit-ledger row-ID collision 43402",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 01:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13580",
+      "sha": "035cfe35b",
+      "committedAtIso": "2026-08-21T13:22:30-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 01:21 PM CT",
+      "url": "",
+      "sha": "08e8769b4",
+      "committedAtIso": "2026-08-21T18:21:04Z"
+    },
+    {
       "number": 13581,
       "title": "FINDING: LV-MAINT-ARRIVING-CONVERT-WO-REVERSE",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13573",
       "sha": "795c4b2d7",
       "committedAtIso": "2026-08-21T13:05:35-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 01:03 PM CT",
-      "url": "",
-      "sha": "4b3b19461",
-      "committedAtIso": "2026-08-21T18:03:01Z"
-    },
-    {
-      "number": 13572,
-      "title": "FINDING: LV-FLEET-TRAILER-LEGAL-REVERSE",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 01:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13572",
-      "sha": "4a9295fc1",
-      "committedAtIso": "2026-08-21T13:02:07-05:00"
     }
   ]
 }
