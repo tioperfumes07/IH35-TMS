@@ -1764,7 +1764,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
     let req = 0;
     let aud = 0;
     let bu = 0;
-    let ck = 0;
+    let li = 0;
     for (const col of board.columns) {
       const group = col.group || "other";
       if (!fullyWiredColumnMatches(spec, col.id, group)) continue;
@@ -1773,11 +1773,11 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
       req += c.req;
       aud += c.aud;
       bu += c.bu;
-      ck += c.ck;
+      li += c.li;
     }
-    // 4th box = Chrome Clicked on mapped Required cells (not keyword Live; not hardcoded 0).
-    fwCounts[spec.id] = { req, aud, bu, li: ck };
-    fwAbl[spec.id] = ablFromCounts(req, aud, bu, ck);
+    // 4th box = Box 4 Live on mapped Required cells (same as Miss C). Clicked 100% must not paint Fully-Wired launch.
+    fwCounts[spec.id] = { req, aud, bu, li };
+    fwAbl[spec.id] = ablFromCounts(req, aud, bu, li);
   }
 
   return {

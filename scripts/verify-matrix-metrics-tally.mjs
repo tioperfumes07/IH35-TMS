@@ -129,6 +129,32 @@ export function missCLiveProblems(svc) {
   return problems;
 }
 
+export function fwLiveFourthProblems(view) {
+  const problems = [];
+  if (!/4th ✓ = Box 4 Live/.test(view)) {
+    problems.push("system matrix must set Fully-Wired 1–11 4th box = Box 4 Live (not Clicked)");
+  }
+  if (
+    !/revrec/.test(view) ||
+    !/invoice\+evidence/.test(view) ||
+    !/bank-path/.test(view) ||
+    !/real fuel/.test(view) ||
+    !/factoring advance/.test(view)
+  ) {
+    problems.push("system matrix must name the five scenario events so they cannot be forgotten");
+  }
+  if (!/accounting → banking → settlements → factoring → dispatch → vendors/.test(view)) {
+    problems.push("system matrix Urgent 6 must be accounting banking settlements factoring dispatch vendors");
+  }
+  if (!/vertically by column/.test(view)) {
+    problems.push("system matrix must keep Urgent leftover vertical by column");
+  }
+  if (!/not a 5th Box/.test(view) || !/not new Required\.json leaves/.test(view)) {
+    problems.push("system matrix must refuse a 5th Box and refuse new Required.json leaves");
+  }
+  return problems;
+}
+
 export function missCStaleWorkProblems(view) {
   const problems = [];
   if (!/module-matrix-miss-c-stale-work/.test(view) || !/Clicked-only work does not lower Miss C/.test(view)) {
@@ -193,10 +219,13 @@ function repoProblems() {
       problems.push("module-matrix.service.ts must roll up Fully-Wired 1–12 from Built/closed");
     }
     if (/fwAbl\[spec\.id\] = ablFromCounts\(req, aud, bu, 0\)/.test(svc) || /fwCounts\[spec\.id\] = \{ req, aud, bu, li: 0 \}/.test(svc)) {
-      problems.push("FW 1–11 4th box must use Clicked on mapped cols — hardcoded livePct 0 is forbidden");
+      problems.push("FW 1–11 4th box must not hardcode livePct 0");
     }
-    if (!svc.includes("ck += c.ck")) {
-      problems.push("FW 1–11 must sum per-column Clicked (ck) into livePct");
+    if (/fwAbl\[spec\.id\] = ablFromCounts\(req, aud, bu, ck\)/.test(svc) || /li: ck/.test(svc)) {
+      problems.push("FW 1–11 4th box must use Live (c.li), not Clicked (ck) — Clicked 100% must not paint Fully-Wired launch");
+    }
+    if (!svc.includes("li += c.li")) {
+      problems.push("FW 1–11 must sum per-column Live (c.li) into the 4th box");
     }
     if (!/clickedCells/.test(svc)) {
       problems.push("module-matrix.service.ts must expose clickedCells (Chrome click, not Box 4)");
@@ -251,6 +280,7 @@ function repoProblems() {
       problems.push("Frozen KPI = Clicked of frozen; Miss C KPI = unpaid Live of frozen (Clicked 100% must not zero Miss C)");
     }
     problems.push(...missCStaleWorkProblems(view));
+    problems.push(...fwLiveFourthProblems(view));
     if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
       problems.push("system matrix must not park money out of Frozen/Miss C/READY");
     }
@@ -361,6 +391,11 @@ if (SELFTEST) {
   const plantedStaleHint = systemView.replace("Clicked-only work does not lower Miss C", "merge always lowers Miss C");
   if (!missCStaleWorkProblems(plantedStaleHint).some((p) => p.includes("Clicked-only"))) {
     console.error(`${LABEL} selftest: Miss C stale-work hint mutation escaped`);
+    process.exit(1);
+  }
+  const plantedFwClicked = systemView.replace("4th ✓ = Box 4 Live", "4th ✓ = Chrome Clicked");
+  if (!fwLiveFourthProblems(plantedFwClicked).some((p) => p.includes("4th box = Box 4 Live"))) {
+    console.error(`${LABEL} selftest: FW 1–11 Clicked-fourth mutation escaped`);
     process.exit(1);
   }
   const repo = repoProblems();
