@@ -49,21 +49,28 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const res = await client
         .query(
-          // §4 landmine: there is NO mdata.drivers.escrow_balance column (the prior ref returned blank
-          // via the .catch fallback below). Driver escrow lives in driver_finance.escrow_balances
-          // (current_balance_cents — migration 202606120600). Expose it as dollars for the visualizer,
-          // which renders escrow_balance with .toFixed(2).
+          // ACCT-F5703: driver_finance.escrow_balances is a separate, near-empty operational ledger
+          // (1 row system-wide, live-confirmed 2026-08-21) that was never kept in sync with the real
+          // GL-linked liability subledger, accounting.escrow_accounts (Block-23) — the same table
+          // /accounting/escrow already reads correctly. Repointed here so this visualizer shows the
+          // same balances the accounting page shows. Driver escrow legitimately persists for
+          // separated/terminated drivers (escrow-separation.service.ts) — do NOT reinstate a
+          // deactivated_at filter that would hide a real outstanding balance; instead surface every
+          // active driver (regardless of balance) plus any deactivated driver who actually still has
+          // an escrow account row.
           `
             SELECT
               d.id AS driver_id,
               CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
-              COALESCE(eb.current_balance_cents, 0) / 100.0 AS escrow_balance
+              COALESCE(ea.balance_cents, 0) / 100.0 AS escrow_balance
             FROM mdata.drivers d
-            LEFT JOIN driver_finance.escrow_balances eb
-              ON eb.driver_id = d.id
-              AND eb.operating_company_id = d.operating_company_id
+            LEFT JOIN accounting.escrow_accounts ea
+              ON ea.holder_id = d.id
+              AND ea.holder_type = 'driver'
+              AND ea.purpose = 'driver_bond'
+              AND ea.operating_company_id = d.operating_company_id
             WHERE d.operating_company_id = $1::uuid
-              AND d.deactivated_at IS NULL
+              AND (d.deactivated_at IS NULL OR ea.id IS NOT NULL)
             ORDER BY driver_name
           `,
           [q.operating_company_id]
@@ -85,58 +92,55 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
 
     const timeline = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id, params.data.driver_id];
-      const filters = ["el.operating_company_id = $1::uuid", "el.driver_id = $2"];
+      const filters = [
+        "ea.operating_company_id = $1::uuid",
+        "ea.holder_id = $2",
+        "ea.holder_type = 'driver'",
+        "ea.purpose = 'driver_bond'",
+      ];
       if (q.from) {
         values.push(q.from);
-        filters.push(`el.created_at >= $${values.length}::timestamptz`);
+        filters.push(`ep.posted_at >= $${values.length}::timestamptz`);
       }
       if (q.to) {
         values.push(q.to);
-        filters.push(`el.created_at <= $${values.length}::timestamptz`);
+        filters.push(`ep.posted_at <= $${values.length}::timestamptz`);
       }
       if (q.type) {
         values.push(q.type);
-        filters.push(`el.transaction_type = $${values.length}`);
+        filters.push(`ep.posting_type = $${values.length}`);
       }
-      // §4 landmine fix: driver_finance.escrow_ledger has NO entry_type/bucket/memo/amount columns
-      // (migration 202606120600) — SELECT * used to leave the frontend's EscrowDriverTimelineRow
-      // contract (entry_type/bucket/amount/memo) entirely unfilled, so every timeline row rendered a
-      // generic "Escrow movement" label with a $0.00 amount. Real columns: transaction_type,
-      // amount_cents, description. Aliased here to match the existing frontend contract (no bucket
-      // concept exists on this ledger — always null, same honest-— rather than fabricated behavior
-      // already used elsewhere in this codebase for missing dimensions).
-      // WAVE-C-gl_je-driver-escrow: forward escrow movement -> its settlement's deduction GL JE.
-      // driver_finance.escrow_ledger has no journal_entry_id of its own (§4 landmine above); the JE
-      // that actually recorded this deduction lives one hop over on the settlement's GL posting run
-      // (driver_finance.driver_settlement_gl_runs.deduction_journal_entry_id, written by the existing
-      // settlement GL poster — 202607060900_settlement_bill_payment_posting.sql). Read-only join; no
-      // new GL math, no posting from this read. A movement with no settlement_id (e.g. a manual
-      // adjustment) or a settlement not yet GL-posted honestly returns NULL, not a fabricated link.
+      // ACCT-F5703: repointed off driver_finance.escrow_ledger (near-empty, never kept in sync) onto
+      // accounting.escrow_postings — the real postings backing accounting.escrow_accounts.balance_cents,
+      // already correctly linked to its GL journal entry via linked_journal_entry_id (no settlement-hop
+      // join needed, unlike the prior driver_finance.escrow_ledger path which had no JE link of its own).
+      // settlement_line_id has no equivalent on escrow_postings — honestly NULL, not fabricated, same
+      // pattern this file already used for the (also-honest) NULL bucket dimension.
       const res = await client
         .query(
           `
             SELECT
-              el.id,
-              el.driver_id,
-              el.transaction_type AS entry_type,
+              ep.id,
+              ea.holder_id AS driver_id,
+              ep.posting_type AS entry_type,
               NULL::text AS bucket,
-              (el.amount_cents::numeric / 100) AS amount,
-              el.description AS memo,
-              el.created_at,
-              el.settlement_id::text AS settlement_id,
-              el.settlement_line_id::text AS settlement_line_id,
-              je.id::text AS journal_entry_id,
+              (ep.amount_cents::numeric / 100) AS amount,
+              ep.note AS memo,
+              ep.posted_at AS created_at,
+              CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
+              NULL::text AS settlement_line_id,
+              ep.linked_journal_entry_id::text AS journal_entry_id,
               je.entry_date::text AS journal_entry_date,
               je.memo AS journal_entry_memo
-            FROM driver_finance.escrow_ledger el
-            LEFT JOIN driver_finance.driver_settlement_gl_runs sgr
-              ON sgr.settlement_id = el.settlement_id
-             AND sgr.operating_company_id = el.operating_company_id
+            FROM accounting.escrow_accounts ea
+            JOIN accounting.escrow_postings ep
+              ON ep.escrow_account_id = ea.id
+             AND ep.operating_company_id = ea.operating_company_id
             LEFT JOIN accounting.journal_entries je
-              ON je.id = sgr.deduction_journal_entry_id
-             AND je.operating_company_id = el.operating_company_id
+              ON je.id = ep.linked_journal_entry_id
+             AND je.operating_company_id = ep.operating_company_id
             WHERE ${filters.join(" AND ")}
-            ORDER BY el.created_at DESC
+            ORDER BY ep.posted_at DESC
             LIMIT 500
           `,
           values

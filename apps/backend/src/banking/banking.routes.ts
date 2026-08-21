@@ -364,22 +364,25 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         const res = await client
           .query(
             `
-              -- §4 landmine fix: driver_finance.escrow_ledger has NO memo/entry_type/amount columns
-              -- (migration 202606120600) — the prior query referenced them, hard-errored, and the
-              -- .catch below silently returned zero rows for every account-level escrow register
-              -- request. Real columns: description, transaction_type, amount_cents. driver_id is
-              -- surfaced so the register row can drill through to the driver (Doc-18 defect #12).
+              -- ACCT-F5703: repointed off driver_finance.escrow_ledger (near-empty, never kept in
+              -- sync) onto accounting.escrow_postings/escrow_accounts — the real GL-linked liability
+              -- subledger /accounting/escrow already reads correctly. driver_id is only meaningful for
+              -- holder_type='driver' rows (this account-level register can also carry vendor/factor
+              -- reserve postings); honestly NULL rather than mislabeling a non-driver holder.
               SELECT
-                el.id,
-                el.created_at::date AS txn_date,
-                COALESCE(el.description, el.transaction_type, 'Escrow movement') AS description,
-                (el.amount_cents::numeric / 100) AS amount,
-                el.transaction_type AS category,
+                ep.id,
+                ep.posted_at::date AS txn_date,
+                COALESCE(ep.note, ep.posting_type, 'Escrow movement') AS description,
+                (ep.amount_cents::numeric / 100) AS amount,
+                ep.posting_type AS category,
                 'synced'::text AS status,
-                el.driver_id::text AS driver_id
-              FROM driver_finance.escrow_ledger el
-              WHERE el.operating_company_id = $1::uuid
-              ORDER BY el.created_at DESC
+                CASE WHEN ea.holder_type = 'driver' THEN ea.holder_id::text ELSE NULL END AS driver_id
+              FROM accounting.escrow_postings ep
+              JOIN accounting.escrow_accounts ea
+                ON ea.id = ep.escrow_account_id
+               AND ea.operating_company_id = ep.operating_company_id
+              WHERE ep.operating_company_id = $1::uuid
+              ORDER BY ep.posted_at DESC
               LIMIT $2 OFFSET $3
             `,
             [q.operating_company_id, q.limit, q.offset]
