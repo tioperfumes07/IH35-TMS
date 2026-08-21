@@ -85,6 +85,18 @@ export function buildSubledgerGlControlRecRow(input: {
 // and flip sign for a credit-normal account so this function always returns the balance in the SAME
 // "positive = real economic amount in that account's natural direction" convention every subledger
 // source already uses.
+// LV-ESCROW-CONTROL-ACCOUNT-BLIND-TO-CHILD-SUBACCOUNTS — a control account can be a GRANDPARENT
+// with real money posted only to descendant sub-accounts, not to itself. Live-verified on USMCA
+// 2026-08-21: escrow_liability_default resolves to "Driver Escrow - Held in Trust" (the ACCT-F5681
+// alias-fixed grandparent, parent_account_id IS NULL) — ZERO direct postings against it — while the
+// real $250.00 first-ever escrow accrual posted to a per-driver LEAF account THREE LEVELS down
+// (grandparent -> "Driver Escrow" middle parent -> the specific driver's own sub-account, the row
+// driver-subaccount-provision.service.ts's own resolveDriverEscrowParentId hierarchy creates).
+// `fn_account_balances_as_of` reads one account_id's own postings only; a single-row lookup is
+// therefore structurally blind to any hierarchy with real depth. Fix: recurse the FULL descendant
+// subtree via catalogs.accounts.parent_account_id (arbitrary depth, not hardcoded to one level —
+// the escrow hierarchy alone is already 3 levels deep) and sum every descendant's own
+// sign-normalized balance, not just the root's.
 async function loadControlBalanceCents(
   client: DbClient,
   operatingCompanyId: string,
@@ -93,17 +105,31 @@ async function loadControlBalanceCents(
 ): Promise<number> {
   const res = await client.query<{ closing_balance_cents: string | number; normal_balance: string }>(
     `
-      SELECT closing_balance_cents::bigint AS closing_balance_cents, normal_balance
-      FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL::date)
-      WHERE account_id = $3::uuid
-      LIMIT 1
+      WITH RECURSIVE subtree AS (
+        SELECT id FROM catalogs.accounts
+         WHERE id = $3::uuid AND operating_company_id = $1::uuid
+        UNION ALL
+        SELECT a.id
+          FROM catalogs.accounts a
+          JOIN subtree s ON a.parent_account_id = s.id
+         WHERE a.operating_company_id = $1::uuid
+      )
+      SELECT b.closing_balance_cents::bigint AS closing_balance_cents, b.normal_balance
+        FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL::date) b
+        JOIN subtree s ON s.id = b.account_id
     `,
     [operatingCompanyId, asOfDate, controlAccountId]
   );
-  const row = res.rows[0];
-  if (!row) return 0;
-  const raw = Number(row.closing_balance_cents ?? 0);
-  return row.normal_balance === "credit" ? -raw : raw;
+  if (res.rows.length === 0) return 0;
+  // Every row in one account's own subtree shares the same account_type by construction (a
+  // Liability parent never has an Asset child in this chart) — sign-normalize per row using each
+  // row's OWN normal_balance anyway, rather than reading it once from the root and assuming every
+  // descendant matches, so a hypothetical future miscategorized child still sums correctly instead
+  // of silently reusing the wrong sign.
+  return res.rows.reduce((sum, row) => {
+    const raw = Number(row.closing_balance_cents ?? 0);
+    return sum + (row.normal_balance === "credit" ? -raw : raw);
+  }, 0);
 }
 
 async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: string): Promise<number> {
