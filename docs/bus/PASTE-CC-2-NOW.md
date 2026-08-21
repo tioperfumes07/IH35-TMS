@@ -14,7 +14,8 @@ U6 14/14 ACCEPTED (43411–43417). Do not re-stamp dispatch leftover.
 
 NOW = Urgent 16 Live, same columns: picker_law → trailer → reverse_link → customer → vendor → load → gl_je
   fleet 48 → lists 87 → maintenance 41 → safety 7 → cash-flow 5
-First unpaid `leaf:col` on /fleet. Session flake: skip click, OUTBOX UNCHANGED blocker=session, NEXT cell same turn.
+Continue fleet reverse_link. Skip company-enum picker_law honesty leaves. Session flake: skip click,
+OUTBOX UNCHANGED blocker=session, NEXT cell same turn.
 
 OUTBOX: CC-2 | U16 | COL=<id> | NEXT=<leaf:col> | GO
 ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=U16 fleet Live first unpaid | GO
