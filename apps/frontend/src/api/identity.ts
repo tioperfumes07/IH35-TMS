@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { ApiError, apiRequest } from "./client";
 import type { AuthMeResponse, IdentityUser, IdentityWorkflowRequest, UserRole } from "../types/api";
 
 export type DispatcherErrorReason = {
@@ -83,8 +83,35 @@ export type IdentityUserDetail = {
   }>;
 };
 
-export function getMe() {
-  return apiRequest<AuthMeResponse>("/api/v1/auth/me");
+const AUTH_ME_TIMEOUT_MS = 8_000;
+
+/** Hung /api/v1/auth/me left every fresh tab on “Checking session...” forever (Safari + Codex CDP). */
+export async function getMe(signal?: AbortSignal): Promise<AuthMeResponse> {
+  const timeoutSignal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(AUTH_ME_TIMEOUT_MS)
+      : undefined;
+  const ctrl = new AbortController();
+  const forwardAbort = () => {
+    if (!ctrl.signal.aborted) ctrl.abort();
+  };
+  if (signal?.aborted || timeoutSignal?.aborted) forwardAbort();
+  signal?.addEventListener("abort", forwardAbort, { once: true });
+  timeoutSignal?.addEventListener("abort", forwardAbort, { once: true });
+  try {
+    return await apiRequest<AuthMeResponse>("/api/v1/auth/me", { signal: ctrl.signal });
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    if (name === "AbortError" || name === "TimeoutError") {
+      throw new ApiError(408, {
+        message: "Session check timed out. Retry — you may still be signed in.",
+      });
+    }
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", forwardAbort);
+    timeoutSignal?.removeEventListener("abort", forwardAbort);
+  }
 }
 
 export function getIdentityProfile() {

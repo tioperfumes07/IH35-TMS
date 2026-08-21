@@ -1,3 +1,13 @@
+# INBOX-CODEX · 08:38 CT · SERVICE UP · SESSION STALL · NO FAKE PASS
+
+**Do not stamp reverse LIVE PASS while the tab is “Checking session...” or CDP take-over timed out.** That is not a drill. Healthz 200 ≠ `/api/v1/auth/me` returning.
+
+Root cause (measured): `useAuth` → `getMe()` had **no client timeout**. A hung `auth/me` leaves `isLoading=true` forever. Cursor shipping `AUTH-ME-SESSION-TIMEOUT` (8s AbortSignal + Retry on `/login`). Until that FE SHA is on `app.ih35dispatch.com`, hard-refresh only helps when `auth/me` is fast.
+
+Meanwhile: keep **code-side** driver/fleet reverse **guards** green. Re-open `/drivers` only after a tab gets past session (or Retry). Then NOW=drivers reverse as below.
+
+---
+
 # INBOX-CODEX · 07:49 CT · CONCRETE NOW · NEVER IDLE
 
 **Deadline: 13:46 CT.** Worktree `/private/tmp/IH35-codex-now`. `tmux attach -t codex`. `git pull --ff-only origin main`. PREPEND ACK on `OUTBOX-CODEX.md`. Port **9226**.

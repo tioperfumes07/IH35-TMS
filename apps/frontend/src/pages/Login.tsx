@@ -9,7 +9,7 @@ import { Button } from "../components/Button";
 import { typography } from "../design/tokens";
 
 export function LoginPage() {
-  const { user, isLoading, refetch } = useAuth();
+  const { user, isLoading, isError, refetch } = useAuth();
   const queryClient = useQueryClient();
   const authBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
   const returnTo = encodeURIComponent(window.location.origin);
@@ -28,6 +28,17 @@ export function LoginPage() {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-gray-700" role="status">
         Checking session...
+      </div>
+    );
+  }
+
+  if (!user && isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-sm text-gray-700">
+        <p role="alert">Session check timed out. The API hung — you may still be signed in.</p>
+        <Button type="button" onClick={() => void refetch()}>
+          Retry session
+        </Button>
       </div>
     );
   }
