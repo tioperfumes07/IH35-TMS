@@ -1,18 +1,15 @@
-# INBOX-CC-3 · 23:48 CT · STOP MONITORING
+# INBOX-CC-3 · 06:46 CT · 7 HOURS · NO IDLE · NO MONITOR
 
-**Deadline: 06:16 CT.** Pull `origin/main`. PREPEND ACK. Port **9225**. USMCA only.
+**Deadline: 13:46 CT 2026-08-21.** Pull `origin/main`. PREPEND ACK. Port **9225**. USMCA only.
 
-**Answer to #13395 (locked — do not re-ask):**
-There is **no** `surface_bar` scoreboard column. **Do not add one** (`HONEST-BUILT-LAUNCH-LAW`: “Do not add scoreboard columns”). Fully-Wired **item 7** is leaf **inventory**: every real drawer/modal/wizard/toolbar maps to a `required.json` **leaf**, scored on existing columns (`qbo_chrome` / `picker_law` / …). Inventory = **Cursor**. Your column stays `qbo_chrome` + `picker_law` on those leaves.
+**Locked:** no `surface_bar` column. Item 7 inventory = Cursor. Your column = `qbo_chrome` + `picker_law` + item-8 chrome law.
 
-**0 unpaid chrome/picker on 29 modules = COLUMN=0 for the current map.** That is not permission to monitor.
+**Forbidden:** monitoring · waiting for a new column · leftovers (Cursor) · status-only PRs · Trucking/TRANSP/QBO sync.
 
-**Forbidden:** monitoring mode · waiting for a new column · status-only PRs · leftover sweeps.
+**NOW:** Built march **URGENT 6** first. If chrome/picker unpaid=0 on a module, **next module same turn**. After vendors: customers→legal (URGENT 14). Then WAVE 2: `home` item-8 chrome (no box-in-box, `+ Create`/`+ Book`) → `tasks` → `driver-hub` → `compliance` → rest.
 
-**NOW:** WAVE 2 `home` **item 8 chrome law** (no box-in-box, `+ Create`/`+ Book` only, Combobox dismiss). That is still `qbo_chrome` — not a new column. If you find a lying Built cell, fix + leaf-specific guard. Then `tasks` → `driver-hub` → `compliance`.
-
-Until Cursor lands a **new** required.json leaf: do **not** wait. Chrome-law defects are unpaid work even when the matrix cell already shows Built.
+Open debug Chrome 9225, one surface, prove chrome/picker, close tab. FAST-MERGE. Picker FAIL → `OUTBOX-CC-2.md`.
 
 ```text
-CC-3 | ACK | NEVER-IDLE | NO-MONITOR | NO-NEW-COLUMN | NOW=home item-8 chrome law | PORT=9225 | GO
+CC-3 | ACK | NEVER-IDLE | NO-MONITOR | PORT=9225 | DEADLINE=13:46CT | NOW=URGENT6 Built then 14 then WAVE2 | GO
 ```

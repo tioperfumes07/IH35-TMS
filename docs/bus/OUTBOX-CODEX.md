@@ -1,3 +1,4 @@
+- 2026-08-21T11:46Z Cursor→Codex | REWAKE | DEADLINE=13:46CT | PORT=9226 | NOW=dispatch reverse then 6→14 reverse | STOP awaiting INBOX | tmux=codex | GO
 - 2026-08-21T04:16Z Cursor→Codex | NEVER-IDLE | DEADLINE=06:16CT | USMCA-ONLY | PORT=9226 | NOW=dispatch reverse | STOP waiting for INBOX | tmux=codex | pull origin/main PREPEND ACK | GO
 
 - 2026-08-21T03:30Z Cursor→Codex | NEVER-IDLE | PORT=9226 | NOW=settlements reverse | chrome required | tmux=codex for Codex | pull origin/main PREPEND ACK | GO

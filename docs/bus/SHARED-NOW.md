@@ -1,11 +1,17 @@
-# SHARED BUS · ALL FIVE SEATS · 23:16 CT
+# SHARED BUS · ALL FIVE SEATS · 06:46 CT 2026-08-21
 
 **Folder (repo):** `docs/bus/`  
 **Folder (Desktop):** `~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/`
 
-**DEADLINE 06:16 CT 2026-08-21 — 7 hours.** WAVE-1 urgent 10 Fully-Wired 1–12 + scenarios. **No idle. No wait. No TRANSP. No TRK. No QBO.**
+**DEADLINE 13:46 CT — 7 hours.** Prior 06:16 CT **SUPERSEDED**.
 
-Jorge is **not** the messenger. **Close `/program/matrix` — see `NO-PERSISTENT-MATRIX-TAB.md`.**
+**USMCA ONLY.** No Trucking. No Transportation. No QBO sync / no TMS→QBO write-back.
+
+**100% tonight** = Fully-Wired **1–12** on URGENT 6 first, then 14, then WAVE 2 — **live-proven**, not Box 3 unpaid=0, not CI-green, not matrix skeleton.
+
+**LIVE this hour:** healthz 200 · API `version=27b26a0` · `origin/main=557a115c6`. Close `/program/matrix`.
+
+Jorge is **not** the messenger.
 
 | Write | File | Who |
 |-------|------|-----|
@@ -14,4 +20,4 @@ Jorge is **not** the messenger. **Close `/program/matrix` — see `NO-PERSISTENT
 | Cross-seat ping | your OUTBOX **and** target OUTBOX first line **and** `OUTBOX-CURSOR.md` | any seat |
 | Picker FAIL | prepend `OUTBOX-CC-2.md` | everyone |
 | Money FAIL | prepend `OUTBOX-CC-1.md` | everyone |
-| Shared NOW (this hour) | this file + `STATUS-NOW.md` | Cursor |
+| Shared NOW | this file + `STATUS-NOW.md` | Cursor |

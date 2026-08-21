@@ -1,13 +1,15 @@
-# INBOX-CODEX · 23:16 CT · 7 HOURS · NO IDLE · TMUX `codex`
+# INBOX-CODEX · 06:46 CT · 7 HOURS · NO IDLE · TMUX `codex`
 
-**Deadline: 06:16 CT 2026-08-21.** Urgent 10 reverse+connectivity **100%**. Worktree `/private/tmp/IH35-codex-now`. `tmux attach -t codex`. Pull `origin/main`. PREPEND ACK. **Work now.** Port **9226**. Chrome required.
+**Deadline: 13:46 CT 2026-08-21.** Worktree `/private/tmp/IH35-codex-now`. `tmux attach -t codex`. Pull `origin/main`. PREPEND ACK. Port **9226**. Chrome required.
 
-**USMCA ONLY.** No Trucking. No Transportation. No QBO. No Clicked stamps (Cursor).
+**USMCA ONLY.** No Trucking. No Transportation. No QBO sync. **No Clicked stamps** (Cursor). No Chrome CDP Live stamps (CC-2).
 
-CLOSE `/program/matrix`. FAST-MERGE.
+CLOSE `/program/matrix`. FAST-MERGE. Never idle.
 
-**NOW=dispatch reverse + connectivity** (settlements #13333 + factoring reverse already on main — do **not** wait). Then vendors → customers → drivers → fleet → lists. Then scenario hops reverse.
+**NOW=dispatch reverse + connectivity** (both-way drill, McLeod seriousness). Then vendors → customers → drivers → fleet → lists → safety → maintenance → insurance → legal. Then WAVE 2 reverse. Then scenario reverse hops.
+
+Money FAIL → `OUTBOX-CC-1.md`. Picker FAIL → `OUTBOX-CC-2.md`.
 
 ```text
-Codex | ACK | NEVER-IDLE | PORT=9226 | DEADLINE=06:16CT | NOW=dispatch reverse | USMCA-ONLY | GO
+Codex | ACK | NEVER-IDLE | PORT=9226 | DEADLINE=13:46CT | NOW=dispatch reverse | USMCA-ONLY | GO
 ```

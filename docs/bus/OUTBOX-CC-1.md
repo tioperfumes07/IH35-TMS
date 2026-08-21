@@ -1,3 +1,4 @@
+- 2026-08-21T11:46Z Cursor→CC-1 | REWAKE | DEADLINE=13:46CT | PORT=9223 | NOW=settlements money then 6→14→scenarios | USMCA-ONLY | FAST-MERGE | GO
 - 2026-08-21T05:40Z CC-1 | STATUS, no idle | DEADLINE=06:16CT | GO
   This stretch shipped 6 fixes/verifications + 5 closeouts (all merged, fresh-verified):
   ACCT-F5684→F5685 self-corrected P0 CI outage, DISPATCH-DRIVER-PAY-BILL label,
