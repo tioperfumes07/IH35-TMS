@@ -160,6 +160,21 @@ function runStaticGuard() {
         "account (ACCT-F5695) — a dead check leaves the sign bug live"
     );
   }
+  // LV-ESCROW-CONTROL-ACCOUNT-BLIND-TO-CHILD-SUBACCOUNTS — a control account can be a grandparent
+  // (e.g. USMCA's escrow hierarchy is 3 levels deep) with real postings only on a descendant leaf.
+  // loadControlBalanceCents must roll up the FULL descendant subtree, not read one account_id.
+  if (!/WITH RECURSIVE subtree/.test(service)) {
+    failures.push(
+      "service no longer rolls up the control account's descendant subtree (WITH RECURSIVE) — " +
+        "a grandparent control account with postings only on a child/grandchild would read $0 again"
+    );
+  }
+  if (!/a\.parent_account_id\s*=\s*s\.id/.test(service)) {
+    failures.push(
+      "service's subtree recursion no longer joins on catalogs.accounts.parent_account_id — " +
+        "would stop recursing after the root and regress to the single-account blindness"
+    );
+  }
 
   if (!routes.includes('app.get("/api/v1/accounting/subledger-gl-control-rec"')) {
     failures.push("route must be GET /api/v1/accounting/subledger-gl-control-rec");
