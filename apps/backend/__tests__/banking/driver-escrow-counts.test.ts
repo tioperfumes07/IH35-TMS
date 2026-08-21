@@ -12,13 +12,23 @@ describe("banking driver-escrow-counts", () => {
   it("distinguishes active drivers from drivers with escrow balance", () => {
     assert.match(countModule, /active_drivers/);
     assert.match(countModule, /drivers_with_escrow_balance/);
-    assert.match(countModule, /count\(DISTINCT id\)/i);
-    assert.match(countModule, /COALESCE\(escrow_balance, 0\) <> 0/);
+    assert.match(countModule, /count\(DISTINCT d\.id\)/i);
+    assert.match(countModule, /COALESCE\(ea\.balance_cents, 0\) <> 0/);
   });
 
   it("counts only drivers with non-zero escrow balance", () => {
     assert.doesNotMatch(countModule, /is_active\s*=\s*true/i);
     assert.match(countModule, /deactivated_at IS NULL/);
+  });
+
+  // ACCT-F5703: driver_finance.escrow_balances is a separate, near-empty operational ledger that was
+  // never kept in sync with the real GL-linked accounting.escrow_accounts subledger — regression guard
+  // against repointing back to the wrong (near-always-empty) source table.
+  it("reads the canonical GL-linked escrow subledger, not the stale driver_finance ledger", () => {
+    assert.doesNotMatch(countModule, /JOIN driver_finance\.escrow_balances/);
+    assert.match(countModule, /accounting\.escrow_accounts/);
+    assert.match(countModule, /holder_type\s*=\s*'driver'/);
+    assert.match(countModule, /purpose\s*=\s*'driver_bond'/);
   });
 
   it("labels match canonical SoT doc and Banking UI copy", () => {

@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 989,
+  "migration_count": 990,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -3958,6 +3958,10 @@
     {
       "filename": "202612950000_acct_f5701_tonu_income_account_and_cancellation_invoice_linkage.sql",
       "checksum": "e2181761e595697e44f1e0a94de1828f5cf8ba74fd23c13144e00452f899ad02"
+    },
+    {
+      "filename": "202612960000_acct_banking_driver_escrow_source_repoint.sql",
+      "checksum": "9f465264badc85576443012cdaab4ea4c1692276610ca74b4686de26b3910142"
     }
   ]
 }

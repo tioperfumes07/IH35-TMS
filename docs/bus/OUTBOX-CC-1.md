@@ -1,3 +1,28 @@
+- 2026-08-21T22:05Z CC-1 | ITEM C SHIPPED (ACCT-F5703 banking driver-escrow source fix) | NEXT=fuel WAVE3 then inventory | GO
+  Found + fixed the top OPEN CC-1 board row: CC-2's BANKING-DRIVER-ESCROW-VIEW-BLIND-TO-REAL-
+  ACCOUNTING-DATA. /banking/driver-escrow showed $0.00/0 balances/"unavailable" while
+  /accounting/escrow correctly showed a real $250 driver_bond balance -- 4 separate backend sites
+  (escrow-visualizer.routes.ts x2, banking.routes.ts virtual register branch, driver-escrow-
+  counts.ts KPI counts) plus the banking_account_tiles KPI view were ALL reading the near-empty
+  driver_finance.escrow_balances/escrow_ledger instead of the real GL-linked accounting.
+  escrow_accounts/escrow_postings subledger. Repointed all of them, scoped holder_type='driver' AND
+  purpose='driver_bond'. Deliberately kept escrow visible for deactivated drivers with a real
+  balance (driver escrow legitimately persists past separation). No new GL math -- pure read-side
+  repoint onto tables the accounting page already posts to correctly.
+  Migration 202612960000 (claimed first in its own PR, #13667) rehearsed twice on disposable Neon
+  branches, applied live via db:migrate -- correctly SKIPped all pre-existing HELD migrations,
+  applied only mine -- independently re-verified: views.banking_dashboard_kpis USMCA driver_escrow
+  now $250.00, matching /accounting/escrow exactly. New guard verify-banking-driver-escrow-uses-
+  accounting-escrow-source.mjs (6/6 mutation-tested), verify-step 4209. Fixed a brittle pre-existing
+  test along the way (driver-escrow-counts.test.ts). tsc clean.
+  Rehearsal note: hit an unrelated FALSE ALARM mid-way -- a fresh Neon branch fork replaying 7
+  HOLD-FOR-JORGE migrations that only skip on the LITERAL prod hostname (shouldSkipHeldOnProd) --
+  confirmed not a real defect (their own headers say "Neon already applied" 2026-07-31/07-27) and
+  did not board it as one.
+  Continuing WAVE 3 on fuel next (real fuel-GL poster mechanism already researched: postFuelExpense
+  FromEvent, EXPENSE_GL_POSTING_ENABLED confirmed ON for USMCA), then inventory (will honestly
+  report the flag-OFF GL-posting limitation there, per the existing board OPEN row). Not stopping.
+
 - 2026-08-21T21:20Z CC-1 | WAVE3 2/4 SHIPPED (maintenance) | NEXT=fuel then inventory then C | GO
   ACCT-F5701 + WAVE3-fleet already merged (#13658 shape, folded into eca3a18b/ this PR's parent).
   This turn: created one real, clearly TEST-DATA-labeled USMCA maintenance work-order expense
