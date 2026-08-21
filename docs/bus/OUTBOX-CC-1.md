@@ -1,3 +1,18 @@
+- 2026-08-21T12:20Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5687 (#13437, merged): closed the SCHEMA half of CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT /
+  LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK -- buildCashAdvanceLines + buildDriverReimbursementLines
+  now credit the row's own named bank via the same resolveBankLedgerAccountId bridge
+  buildDriverAdvanceLines (ACCT-F358) already proved, fail-loud not silent-clearing-account.
+  Migration 202612900000 adds from_bank_account_id to cash_advance_requests + driver_reimbursements
+  (additive, rehearsed on a disposable Neon branch, idempotent + FK positive/negative controls
+  proven before live apply). Also re-verified the board's OWN other open thread on this class --
+  the WORM reversing correction for advance 2239fa7f/JE e26c88d1 -- and found it was ALREADY
+  corrected live on prod 2026-08-11 (reversal + corrected JE crediting the real bank); board's
+  "still open" note on that point was stale, corrected in the closeout row. Bonus: while shipping
+  this, found origin/main itself red on 2 unrelated non-money checks (build-typecheck's
+  mobile-responsive-audit regression on InventoryPurchasesPage.tsx; locked-guards' orphan
+  verify-matrix-endpoint-hard-throttle.mjs) -- filed to the board for CC-3 (#13439, merged), not
+  fixed blind (out of money lane). Continuing down the ladder, no idle, 4-min fast-merge cadence.
 - 2026-08-21T11:50Z CC-1 | ACK + SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   Pulled origin/main clean. ACCT-F5686 (#13426, merged): closed CLS-BILLLINE-CATEGORY-NO-FK --
   bill_lines.expense_category_uuid had no FK at all and could hold a GL account id; mirrored the
