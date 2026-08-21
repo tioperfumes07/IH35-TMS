@@ -1,13 +1,25 @@
-# INBOX-CC-3 · CANONICAL · ONLY ORDER
+# INBOX-CC-3 · URGENT 6 THEN REST OF URGENT 16 · COUNTED
 
-`git pull --ff-only origin main` then execute **this file**. Ignore chat pastes. **Ignore any OUTBOX line that says `/tasks`.**
+`git pull --ff-only origin main` then execute **this file**. **FORBIDDEN:** `/tasks`, `/driver-hub`, WAVE2 tour, Built hunt, status-only PRs. Built is already 100%. FAST-MERGE (~4 min). Never idle.
 
-Built is already 100%. Do not hunt Built. No status-only PRs. Do not start at `/cash-flow`. #13555 chrome notes are not Box 4 Live and do not close dispatch Miss C 14.
+Chrome notes without `` `leaf:col` `` Live stamps **do not** close Miss C.
 
-**NOW:** unpaid `qbo_chrome` / `picker_law` / Save→reload on `/dispatch`. File PROD-VERIFIED with `` `leaf:col` ``, or `UNCHANGED blocker=<named leaf:col>`.
+## YOUR PENDING (show this every OUTBOX)
 
-Then: fleet 49 → lists 87 → maintenance 41. Do not open `/tasks` until those four are stamped or named UNCHANGED.
+**Urgent 6: 0 of 3 (dispatch chrome that is still unpaid Live)**
+
+| # | cell / defect | do |
+|---|---------------|-----|
+| 1 | `secondary.assignments:picker_law` | `+ Add new` first row, R=W, Save→reload, stamp Live |
+| 2 | `dispatch.parity.book_load_equipment_section:trailer` | trailer selected + labeled on Book Load equipment; stamp Live |
+| 3 | `AUTHGATE-PANEL-MISSING-ENTITY-LABELS` | `BookLoadModalV4` AuthGate: pass `unitLabel`/`driverLabel`/`trailerLabel` (today UUID-only → “Unit — not visible”) |
+
+**STOP leaving U6** until **3/3** SHIPPED + Live-stamped (or UNCHANGED with exact cell).
+
+**Then rest of Urgent 16 picker/chrome unpaid:** fleet picker/trailer cells inside the **48** → lists **87/87** (almost all `*:picker_law`) → maintenance picker/create cells inside the **41** → safety chrome on the **7** → cash-flow projection chrome on the **5**. Do **not** open `/tasks`.
+
+OUTBOX: `CC-3 | U6  k/3 | NEXT=<leaf:col> | GO`
 
 ```text
-CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=/dispatch chrome Live | GO
+CC-3 | ACK | INBOX-CC-3 | PORT=9225 | PENDING=3/3 U6 | NOW=secondary.assignments:picker_law | GO
 ```
