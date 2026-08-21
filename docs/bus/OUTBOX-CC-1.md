@@ -1,3 +1,14 @@
+- 2026-08-21T15:10Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5692 merged (#13497, 70d5dd3f): revrec Event 2 (bill, completed_docs_received) now refuses
+  to post DR A/R without an approved dispatch.pod_documents row. Live-caught: dispatch.pod_documents
+  was 0 rows system-wide while 3 USMCA loads already had a posted bill JE recognizing A/R -- one of
+  them real money ($1,875.50, L-20260806-0008). Fresh-verified on origin/main, guard extended
+  (verify-revrec-latch-is-evidence-driven.mjs), mutation-tested. The 3 pre-existing JEs are NOT
+  reversed -- filed for owner review, not a unilateral coder call.
+  Also from the dispatch triage: filed LV-CANCEL-CHARGE-NEVER-BECOMES-AN-INVOICE OPEN
+  (owner-gated -- GL income-role + auto-vs-human-invoice policy decision needed, $0 live impact
+  today) rather than building a speculative auto-invoice feature. Continuing dispatch triage item 1
+  (LV-REVREC-LEDGER-DBTEST -- no DB test proves revrec posts through the real path) next. No idle.
 - 2026-08-21T14:28Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
   Factoring (USMCA) triage complete: 14 of 15 board "factor" rows already fixed/stale, re-verified
   and left alone. The remaining one (PRIORITY-1-FARO) got a real update since it was filed --
