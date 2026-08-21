@@ -486,6 +486,25 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           ),
       },
       {
+        // SAF-C06 fixed the list API to JOIN trailer_number/trailer_id server-side (comment above the
+        // list query: "operators could read a name but could not drill through to ... trailer"), but
+        // this table never rendered the column — trailer_interchange rows (the entire subject of a
+        // trailer interchange is a trailer) and damage_report rows had no visible trailer link at all.
+        key: "trailer_id",
+        label: "Trailer",
+        sortable: true,
+        render: (row) =>
+          row.trailer_id ? (
+            <EntityLink
+              kind="trailer"
+              id={String(row.trailer_id)}
+              label={entityLabel(str(row.trailer_number) || null, row.trailer_id, "Trailer")}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
         key: "location",
         label: "Location",
         sortable: true,
