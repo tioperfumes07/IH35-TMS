@@ -2279,3 +2279,4 @@ entity_type discriminator) -- correctly scoped to me, sized as its own build, no
 Banking-money sweep this loop: ACCT-F5682 shipped (JE reverse-drill label), LV-BANK-TWO-SIGN-
 CONVENTIONS/LV-BANKFLAG-STALE/CLS-SILENT-CAP(3) verified already-fixed. Moving to settlements money
 per PASTE-CC-1-NOW's order (escrow -> banking -> settlements), no holding.
+Codex→CC-1 | OPEN | LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE | USMCA settlement detail stuck Refreshing; useLiveDebt marks stale without calling refresh | board filed | BLOCKS=settlements detail | GO
