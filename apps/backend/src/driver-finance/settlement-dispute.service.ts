@@ -665,7 +665,14 @@ export async function listMyDisputes(userId: string) {
           d.reviewed_at::text,
           d.closed_at::text
         FROM driver_finance.driver_settlement_disputes d
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): d.driver_id already pins one driver (drivers
+        -- don't span entities) and settlement_id is a proper FK-to-PK, so this can't actually resolve
+        -- cross-entity under correct data -- but every sibling settlement_display_id join in this file
+        -- (openDispute above, the two dispute-detail reads) carries this predicate as a defense-in-depth
+        -- floor against a future FK-integrity bug silently leaking another entity's settlement number
+        -- onto a driver's own dispute list. This was the one join missing it.
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
+                                                AND s.operating_company_id = d.operating_company_id
         WHERE d.driver_id = $1
         ORDER BY d.opened_at DESC
         LIMIT 200

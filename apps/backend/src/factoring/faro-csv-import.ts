@@ -424,7 +424,10 @@ async function aggregateFaroActualsByAdvance(
               AND ii.voided_at IS NULL
           ) AS total_invoice_count
         FROM accounting.invoices i
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but the
+        -- advance whose display_id and factor_fee_cents this projects was not.
         JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                              AND fa.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
           AND i.display_id = $2::text
         LIMIT 1

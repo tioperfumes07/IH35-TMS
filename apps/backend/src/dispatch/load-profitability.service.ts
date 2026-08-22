@@ -197,7 +197,11 @@ export async function computeLoadProfitability(
     const factRes = await client.query<{ fee_cents: string }>(
       `SELECT COALESCE(SUM(fa.factor_fee_cents), 0)::text AS fee_cents
        FROM accounting.invoices inv
+       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): inv is scoped by the WHERE below, but the
+       -- advance whose factor_fee_cents feeds this SUM was not -- a cross-entity fa would corrupt
+       -- this load's profitability number.
        JOIN accounting.factoring_advances fa ON fa.id = inv.factoring_advance_id
+                                             AND fa.operating_company_id = inv.operating_company_id
        WHERE inv.source_load_id = $1
          AND inv.operating_company_id = $2::uuid`,
       [loadId, operatingCompanyId]
@@ -312,7 +316,9 @@ export async function computeTripProfitabilityReport(
     fact AS (
       SELECT inv.source_load_id::text AS load_id, COALESCE(SUM(fa.factor_fee_cents), 0)::bigint AS fee
       FROM accounting.invoices inv
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): same class as the single-load query above.
       JOIN accounting.factoring_advances fa ON fa.id = inv.factoring_advance_id
+                                            AND fa.operating_company_id = inv.operating_company_id
       WHERE inv.source_load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
         AND inv.operating_company_id = $1::uuid
       GROUP BY inv.source_load_id

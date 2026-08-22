@@ -309,7 +309,7 @@ export async function approveLineItem(
 
   // If this is an escrow hold, update running balance
   if (row.category === 'escrow_for_claims' && amountCents < 0) {
-    await updateEscrowBalance(client, row.settlement_id, amountCents, 'hold', input.lineItemId, input.approvedBy);
+    await updateEscrowBalance(client, row.settlement_id, amountCents, 'hold', input.lineItemId, input.approvedBy, operatingCompanyId);
   }
 }
 
@@ -375,12 +375,17 @@ async function updateEscrowBalance(
   amountCents: number,
   transactionType: 'hold' | 'release',
   lineItemId: string,
-  approvedByUserId: string
+  approvedByUserId: string,
+  operatingCompanyId: string
 ): Promise<void> {
-  // Get driver from the canonical settlement header
+  // Get driver from the canonical settlement header.
+  // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): id alone does not verify the settlement belongs to
+  // the caller's own company -- operatingCompanyId is already known at every call site (the caller
+  // just approved a line item scoped to it), so this now verifies rather than blindly trusting id.
   const settlementResult = await client.query<{ driver_id: string; operating_company_id: string }>(`
-    SELECT driver_id, operating_company_id FROM driver_finance.driver_settlements WHERE id = $1
-  `, [settlementId]);
+    SELECT driver_id, operating_company_id FROM driver_finance.driver_settlements
+    WHERE id = $1 AND operating_company_id = $2::uuid
+  `, [settlementId, operatingCompanyId]);
 
   if (settlementResult.rows.length === 0) return;
 

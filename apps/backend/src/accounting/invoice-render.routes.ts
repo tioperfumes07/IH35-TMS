@@ -95,7 +95,10 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
             SELECT fa.advance_rate_pct, fa.reserve_pct, v.vendor_name
             FROM accounting.factoring_advances fa
             JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $2::uuid
+            -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): fa itself was read by bare id -- this
+            -- feeds the advance/reserve percentages rendered on a customer-facing invoice document.
             WHERE fa.id = $1
+              AND fa.operating_company_id = $2::uuid
             LIMIT 1
           `,
           [invoice.factoring_advance_id, query.data.operating_company_id]
