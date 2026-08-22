@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\\.drawer\\.factoring$","task":"LINK-F5171-LOAD-FACTORING-INVOICE-DRILL","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.factoring"],"task":"DISP-F5859-LOAD-FACTORING-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * LINK-F5171 — load.drawer.factoring reverse: linked invoice on the load factoring
  * checklist must EntityLink to the invoice record (not plain entityLabel text).
@@ -16,8 +16,10 @@ const TARGET = "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx";
 const API = "apps/frontend/src/api/accounting.ts";
 const ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-load-factoring-invoice-entitylink.mjs";
+const HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.factoring"],"task":"DISP-F5859-LOAD-FACTORING-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 
-function audit(src, api, route, matrix) {
+function audit(src, api, route, matrix, self) {
   const failures = [];
   if (!/from ["'].*EntityLink["']/.test(src)) {
     failures.push(`${TARGET}: must import EntityLink`);
@@ -49,6 +51,9 @@ function audit(src, api, route, matrix) {
   } catch {
     failures.push("dispatch Required matrix parses");
   }
+  if (!self.split("\n").includes(HEADER)) {
+    failures.push(`${SELF}: Built annotation must own exactly load.drawer.factoring:reverse_link`);
+  }
   if (
     /note=\{hasInvoice \? entityLabel\(linkedInvoice\?\.display_id/.test(src) ||
     /note=\{hasInvoice \? entityLabel\(linkedInvoice/.test(src)
@@ -63,7 +68,8 @@ if (process.argv.includes("--selftest")) {
   const api = fs.readFileSync(path.join(ROOT, API), "utf8");
   const route = fs.readFileSync(path.join(ROOT, ROUTE), "utf8");
   const matrix = fs.readFileSync(path.join(ROOT, MATRIX), "utf8");
-  if (audit(good, api, route, matrix).length) {
+  const self = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+  if (audit(good, api, route, matrix, self).length) {
     console.error(`${LABEL} SELFTEST FAIL — live file should pass`);
     process.exit(1);
   }
@@ -77,12 +83,17 @@ if (process.argv.includes("--selftest")) {
   ];
   for (const [name, target, nextApi, nextRoute, nextMatrix, pattern, replacement] of plants) {
     const broken = target.replace(pattern, replacement);
-    if (!audit(broken, nextApi, nextRoute, nextMatrix).length) {
+    if (!audit(broken, nextApi, nextRoute, nextMatrix, self).length) {
       console.error(`${LABEL} SELFTEST FAIL — planted regression not caught: ${name}`);
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest OK — ${plants.length}/${plants.length} production/matrix defects rejected`);
+  const wrongHeader = self.replace('"leaves":["load.drawer.factoring"]', '"leaves":["load.drawer.driver_pay"]');
+  if (!audit(good, api, route, matrix, wrongHeader).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted exact-header regression not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK — ${plants.length + 1}/${plants.length + 1} production/matrix/header defects rejected`);
   process.exit(0);
 }
 
@@ -92,6 +103,7 @@ const failures = audit(
   fs.readFileSync(path.join(ROOT, API), "utf8"),
   fs.readFileSync(path.join(ROOT, ROUTE), "utf8"),
   fs.readFileSync(path.join(ROOT, MATRIX), "utf8"),
+  fs.readFileSync(path.join(ROOT, SELF), "utf8"),
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL:`);
