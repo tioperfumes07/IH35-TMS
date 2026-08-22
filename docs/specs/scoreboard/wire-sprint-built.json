@@ -391,8 +391,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ],
       "leafRe": "^(accidents|violations|claims|cargo_claims|driver|load)"
     },
