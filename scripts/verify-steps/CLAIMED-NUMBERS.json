@@ -1,4 +1,9 @@
 {
+  "4330": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-catalog-label-column-not-self-aliased"
+  },
   "4333": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
@@ -5298,5 +5303,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1214
+  "total_claimed": 1215
 }
