@@ -363,6 +363,7 @@ export async function listAccountingSourceLineage(
           link_bill.display_id,
           link_dispute.dispute_description,
           link_settlement.display_id,
+          link_load.load_number,
           link_deduction.display_label
         ) AS linked_object_display_id,
         tsl.relationship_role,
@@ -401,6 +402,10 @@ export async function listAccountingSourceLineage(
         ON tsl.linked_object_type = 'driver_settlement'
        AND link_settlement.id::text = tsl.linked_object_id
        AND link_settlement.operating_company_id = jp.operating_company_id
+      LEFT JOIN mdata.loads link_load
+        ON tsl.linked_object_type = 'load'
+       AND link_load.id::text = tsl.linked_object_id
+       AND link_load.operating_company_id = jp.operating_company_id
       LEFT JOIN LATERAL (
         SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
         FROM driver_finance.driver_settlement_deductions d
