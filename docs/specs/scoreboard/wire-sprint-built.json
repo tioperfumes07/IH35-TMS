@@ -2320,18 +2320,6 @@
       "leafRe": "^safety\\.(drawer|parity)\\.(company_violation_detail|integrity_alert_detail|anomaly_detail)$"
     },
     {
-      "task": "VERTICAL-REVERSE-LINK-FUEL-CARD-OVERAGE",
-      "pr": "this PR",
-      "guard": "scripts/verify-fuel-card-overage-profile-reverse.mjs",
-      "modules": [
-        "fuel"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^card_overage$"
-    },
-    {
       "task": "VERTICAL-REVERSE-LINK-DRIVER-TEAM-SPLIT-CONFIG",
       "pr": "this PR",
       "guard": "scripts/verify-driver-team-split-config-reverse.mjs",
