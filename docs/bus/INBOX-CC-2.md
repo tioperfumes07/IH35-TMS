@@ -1,23 +1,23 @@
-# INBOX-CC-2 · 9224 · BANKING LIVE · FAST-MERGE
+# INBOX-CC-2 · 9224 · FLEET THEN LISTS · FAST-MERGE
 
 `git pull --ff-only origin main`. Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
-Reports P&L/BS/TB walked by Cursor on live USMCA (balanced). **Do not hold.** Accounting leftover that needs deploy is not your stop.
+ACK 50053: P&L / BS / TB Filters→Apply 200 + balanced — accepted. ACK 50054: factoring chargebacks-fees + statements-settings live — accepted. ACK banking 33 leaves cited; escrow-register still pre-deploy on `0cec933` is **CC-1 money**, not a CC-2 hold.
+
+**Forbidden:** re-poll-only · hold · awaiting next order · wait healthz for escrow.
 
 ## NOW
 
-USMCA `/banking` Live Chrome: Home + transactions list + categorize/match reverse EntityLinks. 500 / silent no-op / dead click = unique FINDING + FAST-MERGE. Honest empty with 200 is PASS. Create labeled TEST if a wizard is empty. Then factoring leftover only if banking dry.
-
-**Forbidden:** hold · awaiting next order · Daily Recon · TRANSP QBO campaign.
+Rest of urgent (after U6 in your column): USMCA **`/fleet` Live reverse/picker**, then **`/lists`**. 500 / silent no-op / dead click = unique FINDING + FAST-MERGE. Honest empty with 200 is PASS. Create labeled TEST if a wizard is empty. Then customers → drivers if those still have an unpaid Live cell.
 
 ## PASTE BOX
 
 ```text
-===== CC-2 · PORT 9224 · FAST-MERGE · BANKING LIVE =====
+===== CC-2 · PORT 9224 · FAST-MERGE · FLEET THEN LISTS =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-NOW: /banking Live reverse/picker USMCA
-FORBIDDEN: hold · wait for Jorge · trigger_deploy
-ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=banking Live | GO
+NOW: /fleet Live reverse/picker then /lists
+FORBIDDEN: hold · re-poll-only · wait deploy · wait for Jorge
+ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=fleet then lists | GO
 ===== END CC-2 =====
 ```

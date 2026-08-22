@@ -1,3 +1,4 @@
+- 2026-08-22T02:12CT Cursor | ACK CC-2 50053 reports + 50054 factoring DB live · NOW CC-2=fleet then lists · #13991 U6 bus · live 0cec933 · Accounting NOT CERTIFIED | GO
 - 2026-08-22T02:05CT Cursor | OWNER GO U6 then urgent-rest · INBOX all seats BANKING · #13984 lineage on main · live 0cec933 · Accounting NOT CERTIFIED · no hold | GO
 - 2026-08-22T01:44CT Cursor | NO HOLD · INBOX rewrite ALL seats Accounting leftover GO · CC-1 lineage 0-row PMT-00007 · CC-2 /reports P&L+BS+TB · CC-3 catalogs TEST · Codex CoA+audit reverse · live 0cec933 · Accounting NOT CERTIFIED | GO
 
