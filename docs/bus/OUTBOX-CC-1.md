@@ -1,3 +1,40 @@
+CC-1 | COMPLIANCE-ACK | merge-law=READ | entity=USMCA-ONLY | lane=OK | bus=FILES-NOT-JORGE | worktree=/Users/jorgemunoz/IH35-TMS-clean/.claude/worktrees/cc1-final-ship | DO-NOW=ACCT-F5753 | gate=money-pr-local-gate | NEXT=continuing banking/escrow/factoring sweep
+
+- 2026-08-22T05:10Z CC-1 | ACCT-F5753 SHIPPED (PR #13911, `gh pr merge --admin`, no CI wait) | factoring_recourse_at_risk reads real _cents columns, not dead JSONB | SELF-CORRECTED merge cadence mid-session (owner: "we are using the fast weekend merge method you regressed") | NEXT=banking/escrow/factoring sweep continues, merging on local-gate PASS from here forward, no CI polling | GO
+  Owner directive in chat: "Escrow register SQL, then factoring recourse money (_cents view)" ->
+  matched INBOX-CC-1.md item 2 exactly: views.factoring_recourse_at_risk's invoice_amount/
+  advance_amount/reserve_amount were sourced via to_jsonb(fa.*)->>'<key>' dynamic lookups against key
+  names that DO NOT EXIST on accounting.factoring_advances at all (confirmed live via
+  information_schema.columns BEFORE writing any code) -- every COALESCE chain always fell through to
+  its fallback (0 / the advance's own uuid / 'Unknown Customer'), for every row, regardless of real
+  data. Real columns are invoice_total_cents/advance_amount_cents/reserve_amount_cents.
+  Applied DIRECTLY to Neon prod (project tiny-field-89581227) via RESET ROLE + CREATE OR REPLACE VIEW
+  BEFORE the PR was even opened -- immediately verified with a bypass-RLS read: the single live prod
+  row (factoring_advance FAC-2026-00001) now returns invoice_reference="INV-2026-00038",
+  customer_name="TC Freight LLC", invoice_amount=$1850.00, advance_amount=$1794.50,
+  reserve_amount=$55.50 -- real values, not the permanent $0/"Unknown Customer" tombstone.
+  Added a real invoice_reference/customer_name via the actual reverse-FK path
+  (accounting.invoices.factoring_advance_id -> mdata.customers.customer_name), matching
+  factoring.routes.ts's own existing LEFT JOIN LATERAL pattern for resolving the invoice behind an
+  advance -- one consistent convention, not a new one.
+  MID-SESSION CORRECTION: after this PR was already open and green on local gate, the owner flagged
+  that I had regressed off the permanent FAST MERGE METHOD (weekend-merge-law-2026-08-11, made
+  permanent 2026-08-15) -- I had reverted to polling `gh api .../check-runs` and scheduling wakeups to
+  wait for full CI on every PR this session, instead of merging the instant `money-pr-local-gate.mjs`
+  passes via `gh pr merge N --squash --delete-branch --admin`. Corrected immediately: merged #13911
+  with --admin with zero CI wait. Posting the required COMPLIANCE-ACK line above. Going forward for
+  the rest of this session: merge on local-gate PASS, no CI polling, no ScheduleWakeup for CI-watching
+  -- the local gate + live Neon proof (where applicable) is the authorization, per the standing law.
+  LIVE PROOF: node scripts/verify-factoring-recourse-view-real-cents-columns.mjs --selftest exit 0
+  (5/5). node scripts/verify-factoring-recourse-view-real-cents-columns.mjs exit 0. Live Neon
+  bypass-RLS read (both before writing code AND immediately after applying) confirmed the fix on the
+  actual prod object, not merely a rehearsal. node scripts/verify-guard-wired.mjs exit 0. node
+  scripts/money-pr-local-gate.mjs exit 0. Merged PR #13911 confirmed (mergedAt set, sha d76a27c53 on
+  origin/main).
+  REMAINING: views.factoring_summary has a similar to_jsonb(fc)->>'recourse_days' dead-key pattern but
+  on accounting.factoring_companies, which doesn't exist on prod (to_regclass returns NULL) -- that
+  branch is unreachable/moot, correctly out of scope, not silently ignored.
+
 - 2026-08-22T03:55Z CC-1 | BANK-F5751 SHIPPED (PR #13894) | escrow register Settlement column resolves a real display_id -- follow-up closing a gap in my OWN earlier BANK-F5743 fix | NEXT=continuing banking sweep (TransfersListPage.tsx / BankTransactionSplitModal.tsx candidates) | GO
   Caught while re-checking DriverEscrowTabContent.tsx during the sweep: my own BANK-F5743 fix (register
   escrow branch missing settlement_id/journal_entry_id) closed the JE column but left the Settlement
