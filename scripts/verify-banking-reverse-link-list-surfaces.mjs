@@ -21,6 +21,7 @@ const PLAID = "apps/backend/src/integrations/plaid/link.routes.ts";
 const TRANSFERS = "apps/frontend/src/pages/banking/TransfersListPage.tsx";
 const PLAID_PANEL = "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx";
 const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
+const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
@@ -48,6 +49,7 @@ const CHECKS = [
   { name: "Plaid connections transfer drill", file: PLAID_PANEL, pattern: /t\.matched_transfer_id \? <EntityLink key="transfer" kind="transfer"[\s\S]{0,180}t\.matched_transfer_label/ },
   { name: "company expense reverse read", file: PLAID, pattern: /bt\.matched_expense_id::text AS matched_expense_id,[\s\S]{0,100}expense\.expense_number AS matched_expense_number/ },
   { name: "both transaction readers expose multi-match contract", file: PLAID, pattern: /ARRAY_REMOVE\(ARRAY\[[\s\S]{0,500}AS matched_kinds[\s\S]*ARRAY_REMOVE\(ARRAY\[[\s\S]{0,500}AS matched_kinds/ },
+  { name: "both transaction readers expose canonical matched truth", file: PLAID, pattern: /matched_journal_entry_id IS NOT NULL\) AS is_matched[\s\S]*matched_journal_entry_id IS NOT NULL\) AS is_matched/ },
   { name: "Plaid connections journal entry drill", file: PLAID_PANEL, pattern: /t\.matched_journal_entry_id \? <EntityLink key="je" kind="journal_entry"[\s\S]{0,180}t\.matched_journal_entry_memo/ },
   { name: "Plaid connections expense drill", file: PLAID_PANEL, pattern: /t\.matched_expense_id \? <EntityLink key="expense" kind="expense"[\s\S]{0,180}t\.matched_expense_number/ },
   { name: "Plaid connections renders concurrent matches", file: PLAID_PANEL, pattern: /const links = \[[\s\S]{0,1200}t\.matched_journal_entry_id[\s\S]{0,800}t\.matched_expense_id[\s\S]{0,1000}links\.length/ },
@@ -60,6 +62,10 @@ const CHECKS = [
   { name: "bank account register expense drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_expense_id \? <EntityLink key="expense" kind="expense"[\s\S]{0,180}row\.matched_expense_number/ },
   { name: "bank account register journal entry drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_journal_entry_id \? <EntityLink key="je" kind="journal_entry"[\s\S]{0,180}row\.matched_journal_entry_memo/ },
   { name: "bank account register renders concurrent matches", file: ACCOUNT_DETAIL, pattern: /function matchedTransactionLinks[\s\S]{0,1600}row\.matched_expense_id[\s\S]{0,800}row\.matched_journal_entry_id[\s\S]{0,800}links\.length/ },
+  { name: "reconciliation classifies every persisted match", file: RECON_WORKSPACE, pattern: /function transactionIsMatched\(tx: PlaidBankTransaction\)[\s\S]{0,120}tx\.is_matched[\s\S]{0,500}tx\.matched_transfer_id[\s\S]{0,160}tx\.matched_journal_entry_id/ },
+  { name: "reconciliation uses canonical match classifier", file: RECON_WORKSPACE, pattern: /transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)/ },
+  { name: "reconciliation transfer reverse drill", file: RECON_WORKSPACE, pattern: /kind="transfer" id=\{tx\.matched_transfer_id\}[\s\S]{0,180}tx\.matched_transfer_label/ },
+  { name: "reconciliation journal entry reverse drill", file: RECON_WORKSPACE, pattern: /kind="journal_entry" id=\{tx\.matched_journal_entry_id\}[\s\S]{0,180}tx\.matched_journal_entry_memo/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },

@@ -355,6 +355,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             CASE WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement' END,
             CASE WHEN bt.matched_bill_id IS NOT NULL THEN 'bill' END
           ], NULL) AS matched_kinds,
+          (bt.matched_load_id IS NOT NULL OR bt.matched_bill_id IS NOT NULL OR
+           bt.matched_settlement_id IS NOT NULL OR bt.matched_expense_id IS NOT NULL OR
+           bt.matched_transfer_id IS NOT NULL OR bt.matched_journal_entry_id IS NOT NULL) AS is_matched,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
@@ -688,6 +691,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             CASE WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement' END,
             CASE WHEN bt.matched_bill_id IS NOT NULL THEN 'bill' END
           ], NULL) AS matched_kinds,
+          (bt.matched_load_id IS NOT NULL OR bt.matched_bill_id IS NOT NULL OR
+           bt.matched_settlement_id IS NOT NULL OR bt.matched_expense_id IS NOT NULL OR
+           bt.matched_transfer_id IS NOT NULL OR bt.matched_journal_entry_id IS NOT NULL) AS is_matched,
           -- QBO-parity Relay register: expose diesel/reefer/DEF/fee lines already stored at ingest
           -- (not a single total). Join only when source_ref is a Relay fuel mirror.
           COALESCE((

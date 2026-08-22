@@ -77,7 +77,7 @@ function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCe
   let matchedCredits = 0;
   let matchedDebits = 0;
   for (const tx of transactions) {
-    const isMatched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
+    const isMatched = transactionIsMatched(tx);
     if (!isMatched) continue;
     const amountAbs = Math.abs(Number(tx.amount_cents ?? 0));
     if (tx.is_credit) matchedCredits += amountAbs;
@@ -91,6 +91,18 @@ function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCe
     bookBalanceCents: bookBalance,
     varianceCents: variance,
   };
+}
+
+function transactionIsMatched(tx: PlaidBankTransaction) {
+  if (typeof tx.is_matched === "boolean") return tx.is_matched;
+  return Boolean(
+    tx.matched_load_id ||
+      tx.matched_bill_id ||
+      tx.matched_settlement_id ||
+      tx.matched_expense_id ||
+      tx.matched_transfer_id ||
+      tx.matched_journal_entry_id,
+  );
 }
 
 function varianceClass(varianceCents: number) {
@@ -168,7 +180,7 @@ export function ReconciliationWorkspacePage() {
       filterMode === "all"
         ? localTransactions
         : localTransactions.filter((tx) => {
-            const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
+            const matched = transactionIsMatched(tx);
             return filterMode === "matched" ? matched : !matched;
           });
     const dir = txnSort.dir === "asc" ? 1 : -1;
@@ -316,9 +328,7 @@ export function ReconciliationWorkspacePage() {
               .replace(/"/g, "&quot;");
           const rowsHtml = visibleTransactions
             .map((tx) => {
-              const matched = Boolean(
-                tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id,
-              );
+              const matched = transactionIsMatched(tx);
               return `<tr>
                 <td>${esc(tx.transaction_date ? formatDateUS(tx.transaction_date) : "—")}</td>
                 <td>${esc(tx.description || "Bank transaction")}</td>
@@ -486,7 +496,7 @@ export function ReconciliationWorkspacePage() {
             </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
               {visibleTransactions.map((tx) => {
-                const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
+                const matched = transactionIsMatched(tx);
                 return (
                   <button
                     key={tx.id}
@@ -524,6 +534,12 @@ export function ReconciliationWorkspacePage() {
                             link correctly. */}
                         {tx.matched_expense_id ? (
                           <EntityLink kind="expense" id={tx.matched_expense_id} label={entityLabel(null, tx.matched_expense_id, "Expense")} />
+                        ) : null}
+                        {tx.matched_transfer_id ? (
+                          <EntityLink kind="transfer" id={tx.matched_transfer_id} label={entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer")} />
+                        ) : null}
+                        {tx.matched_journal_entry_id ? (
+                          <EntityLink kind="journal_entry" id={tx.matched_journal_entry_id} label={entityLabel(tx.matched_journal_entry_memo, tx.matched_journal_entry_id, "Journal entry")} />
                         ) : null}
                       </div>
                     ) : null}
@@ -681,4 +697,3 @@ export function ReconciliationWorkspacePage() {
     </div>
   );
 }
-

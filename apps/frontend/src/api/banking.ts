@@ -100,6 +100,8 @@ export type PlaidBankTransaction = {
   matched_kind?: string | null;
   /** All persisted matches; a transaction can legitimately carry both an expense and its posted JE. */
   matched_kinds?: string[];
+  /** Server truth across every persisted match FK; false only when every relation is absent. */
+  is_matched?: boolean;
   notes: string | null;
   created_at: string;
   // Doc-18 GAP B: feed origin. 'manual' = hand-entered (date is editable); 'plaid'/'qbo_import'/'csv_import'
