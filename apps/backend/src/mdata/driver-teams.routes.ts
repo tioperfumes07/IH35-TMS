@@ -74,18 +74,27 @@ async function driverBelongsToCompany(
   driverId: string,
   companyId: string
 ): Promise<boolean> {
+  // CC3-DRIVERTEAMS-COMPANY-JOIN-20260822 — this used to also JOIN org.user_company_access on
+  // uca.user_id = d.identity_user_id, requiring the driver's OWN LOGIN ACCOUNT to hold an active
+  // company-access grant. That is a different authorization concept (which humans can sign into
+  // which company) from "which company does this driver ROW belong to" and excludes the vast
+  // majority of drivers: only 15/264 have identity_user_id set at all (no Driver PWA login yet).
+  // Live-reproduced on this exact endpoint, USMCA, 2026-08-22: the Primary/Secondary Driver
+  // pickers (EntityPicker kind=driver, itself correctly scoped by d.operating_company_id only —
+  // see drivers.routes.ts GET /api/v1/mdata/drivers) offered real USMCA drivers Isaac Carballo
+  // Roque + Luis Manuel Zavaleta Landeros, and POST /api/v1/mdata/driver-teams hard-rejected both
+  // with `drivers_not_in_operating_company` because neither has an identity_user_id. This is the
+  // identical defect already root-caused and fixed in the sibling `assertDriverCompany` in
+  // driver-team.service.ts (2026-08-18, PEDRO/Neftali Live — the same fix, ported here): opco on
+  // the driver ROW is the membership gate, full stop. Cross-company leakage is already blocked by
+  // `d.operating_company_id = $2` alone; no other predicate adds real protection, only false
+  // rejections.
   const res = await client.query<{ id: string }>(
     `
       SELECT d.id
       FROM mdata.drivers d
-      JOIN org.user_company_access uca ON uca.user_id = d.identity_user_id
       WHERE d.id = $1
-        AND uca.company_id = $2
-        -- The driver ROW must belong to the company too, not merely their user account (same defect as
-        -- MDATA-F02 in driver-team.service.ts): a driver in company Y whose user has access to X would
-        -- otherwise pass this gate and be teamed into X.
         AND d.operating_company_id = $2::uuid
-        AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
     [driverId, companyId]
