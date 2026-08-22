@@ -340,7 +340,12 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             AND s.operating_company_id = $2::uuid
             AND s.settlement_model = 'load_bookended'
           LIMIT 1
-          FOR UPDATE
+          -- SETL-F5900 — an unscoped FOR UPDATE spanning this LEFT JOIN identity.users u (the
+          -- nullable side: a driver need not have a linked identity_user_id) is rejected by
+          -- Postgres at parse time ("FOR UPDATE cannot be applied to the nullable side of an
+          -- outer join"), 500ing every close attempt. d is inner-joined so it always has a row
+          -- when s does; only s needs the row lock (aggregateSettlementTotals below relies on it).
+          FOR UPDATE OF s
         `,
         [params.data.id, body.operating_company_id]
       );
