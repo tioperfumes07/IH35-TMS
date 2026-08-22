@@ -59,6 +59,7 @@ const SOURCE_ROUTES: Readonly<Record<string, (id: string) => string>> = {
   "accounting.journal_entries": (id) => `/accounting/journal-entries/${id}`,
   "accounting.fixed_assets": (id) => `/accounting/fixed-assets?asset_id=${id}`,
   "banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`,
+  "banking.reconciliation_sessions": (id) => `/banking/reconciliation-workspace?session_id=${id}`,
   "banking.transfers": (id) => `/banking/transfers?transfer_id=${id}`,
   "driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`,
 };
