@@ -569,7 +569,31 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         `,
         [parsedParams.data.id, resolvedOperatingCompanyId]
       );
-      return res.rows[0] ?? null;
+      if (res.rows[0]) return res.rows[0];
+
+      // ACCT-F5767 — vendors_select's RLS policy hides every deactivated_at IS NOT NULL row from any
+      // non-bypass reader, so an archived vendor still legitimately cited by a historical FK (e.g. a
+      // vendor credit's EntityLink) 404s here even though the row exists in this same company.
+      // Void-not-delete requires archived rows stay readable. Fall back to the same-company-scoped
+      // SECURITY DEFINER resolver (mirrors resolve_vendor_label_same_company's security shape) ONLY
+      // when the primary, RLS-scoped read above found nothing — the common (active vendor) path is
+      // completely unchanged.
+      const fallback = await client.query(
+        `
+          SELECT ${VENDOR_SELECT_COLUMNS}
+               , (
+                   SELECT NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+                     FROM mdata.drivers d
+                    WHERE d.id = v.driver_id
+                      AND d.operating_company_id = v.operating_company_id
+                    LIMIT 1
+                 ) AS driver_name
+          FROM mdata.get_vendor_same_company($1::uuid, $2::uuid) AS v
+          LIMIT 1
+        `,
+        [parsedParams.data.id, resolvedOperatingCompanyId]
+      );
+      return fallback.rows[0] ?? null;
     });
 
     if (!row) return reply.code(404).send({ error: "mdata_vendor_not_found" });
