@@ -80,7 +80,15 @@ export const dispatchErrorReasonsCatalogConfig: GenericCatalogConfig = {
   urlSegment: "dispatcher-error-reasons",
   displayName: "Dispatcher Error Reasons",
   entityScoped: true,
-  displayNameColumn: "label",
+  // CC3-CATLABEL-01: do NOT set displayNameColumn here -- this catalog's API/frontend field key
+  // IS "label" (see allowedColumns/validators below), matching the physical column 1:1. Setting
+  // displayNameColumn: "label" makes apiColumnForDbColumn() rename the physical `label` column to
+  // API key `display_name` on every SELECT (that mechanism is for catalogs whose frontend field
+  // key is generically "display_name" mapped to a differently-named physical column -- see
+  // driverTerminationReasonsCatalogConfig below for the correct use of that pattern). The
+  // mis-set alias silently dropped every created row's Label from list + edit (data was written
+  // correctly to catalogs.dispatcher_error_reasons.label; the API just returned it under the
+  // wrong key), live-reproduced via a real create + window.fetch-captured POST body + raw GET.
   allowedColumns: ["code", "label", "description", "event_type", "severity", "is_active"],
   requiredColumns: ["code", "label", "event_type", "severity"],
   validators: {
@@ -116,7 +124,9 @@ export const customerQualityEventReasonsCatalogConfig: GenericCatalogConfig = {
   urlSegment: "customer-quality-event-reasons",
   displayName: "Customer Quality Event Reasons",
   entityScoped: true,
-  displayNameColumn: "label",
+  // CC3-CATLABEL-01: same fix as dispatchErrorReasonsCatalogConfig above -- this catalog's API
+  // field key is also "label" directly, not the generic "display_name". Do not re-add
+  // displayNameColumn here.
   allowedColumns: ["code", "label", "description", "event_type", "severity", "is_active"],
   requiredColumns: ["code", "label", "event_type", "severity"],
   validators: {
