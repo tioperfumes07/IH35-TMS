@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^(accounting\\.list|banking\\.entry)$","task":"LINK-F5184-accounting-list-banking-entry-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.list","banking.entry"],"task":"FACT-F5842-ACCOUNTING-BANKING-REVERSE-EXACT-LEAVES"} */
 /**
  * GUARD: a load can find its own factoring advance batch, both from Accounting → Factoring
  * (factoring:accounting.list) and from Banking → Factoring (Faro) (factoring:banking.entry) —
@@ -35,7 +35,9 @@ const BANK_API = "apps/frontend/src/api/banking.ts";
 const LIST_PAGE = "apps/frontend/src/pages/accounting/FactoringListPage.tsx";
 const BANKING_HOME = "apps/frontend/src/pages/banking/BankingHome.tsx";
 const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx";
-const FILES = [ACCT_ROUTES, BANK_ROUTES, ACCT_API, BANK_API, LIST_PAGE, BANKING_HOME, FACTORING_TAB];
+const SELF = "scripts/verify-load-factoring-advance-banking-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [ACCT_ROUTES, BANK_ROUTES, ACCT_API, BANK_API, LIST_PAGE, BANKING_HOME, FACTORING_TAB, SELF, REQUIRED];
 const LABEL = "verify-load-factoring-advance-banking-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -52,6 +54,23 @@ export function assertLoadFactoringReverse(sources) {
   const listPage = src[LIST_PAGE];
   const bankingHome = src[BANKING_HOME];
   const factoringTab = src[FACTORING_TAB];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["accounting\.list","banking\.entry"\],"task":"FACT-F5842-ACCOUNTING-BANKING-REVERSE-EXACT-LEAVES"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own the exact accounting-list and banking-entry reverse leaves`);
+  }
+  let requiredLeaves = [];
+  try {
+    requiredLeaves = JSON.parse(required).leaves ?? [];
+  } catch {
+    problems.push(`${REQUIRED}: must remain valid JSON`);
+  }
+  for (const id of ["accounting.list", "banking.entry"]) {
+    if (!requiredLeaves.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) {
+      problems.push(`${REQUIRED}: ${id} must remain a Required reverse_link leaf`);
+    }
+  }
 
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(acctRoutes)) {
     problems.push(`${ACCT_ROUTES}: listQuerySchema must accept optional load_id`);
@@ -204,6 +223,8 @@ function selftest() {
         View in Banking (Faro) →
       </Link>
     `,
+    [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.list","banking.entry"],"task":"FACT-F5842-ACCOUNTING-BANKING-REVERSE-EXACT-LEAVES"} */`,
+    [REQUIRED]: `{"leaves":[{"id":"accounting.list","required":["reverse_link"]},{"id":"banking.entry","required":["reverse_link"]}]}`,
   };
   const goodProblems = assertLoadFactoringReverse(good);
   if (goodProblems.length) {
@@ -243,6 +264,9 @@ function selftest() {
       ),
     },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace("/banking/factoring?load_id=", "/banking/factoring") },
+    { ...good, [SELF]: good[SELF].replace('"leaves":["accounting.list","banking.entry"]', '"leafRe":".*"') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('{"id":"accounting.list","required":["reverse_link"]}', '{"id":"accounting.list","required":["load"]}') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('{"id":"banking.entry","required":["reverse_link"]}', '{"id":"banking.entry","required":["load"]}') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertLoadFactoringReverse(mutated).length === 0) {
