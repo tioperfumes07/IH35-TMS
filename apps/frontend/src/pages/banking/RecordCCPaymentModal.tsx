@@ -26,6 +26,7 @@ type Props = {
   prefillMemo?: string;
   prefillFromBankId?: string;
   linkBankTransactionId?: string | null;
+  linkBankTransactionLabel?: string | null;
 };
 
 function todayIsoDate() {
@@ -49,6 +50,7 @@ export function RecordCCPaymentModal({
   prefillMemo,
   prefillFromBankId,
   linkBankTransactionId,
+  linkBankTransactionLabel,
 }: Props) {
   const { pushToast } = useToast();
   const [ccVendorId, setCcVendorId] = useState<string | null>(null);
@@ -196,7 +198,11 @@ export function RecordCCPaymentModal({
         {linkBankTransactionId ? (
           <p className="text-xs text-gray-600">
             Originating bank transaction:{" "}
-            <EntityLink kind="bank_transaction" id={linkBankTransactionId} label="View transaction →" />
+            <EntityLink
+              kind="bank_transaction"
+              id={linkBankTransactionId}
+              label={linkBankTransactionLabel?.trim() || "Bank transaction"}
+            />
           </p>
         ) : null}
         <label className="block text-xs font-semibold text-gray-700">

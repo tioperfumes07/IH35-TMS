@@ -3004,6 +3004,7 @@ export function BankingTransactionsDesignView({
         seedAccountId={selectedAccount?.id}
         seedAccountSide={transferModalTx?.is_credit ? "to" : "from"}
         linkBankTransactionId={transferModalTx?.id ?? null}
+        linkBankTransactionLabel={transferModalTx ? transactionLabel(transferModalTx) : null}
         onClose={() => setTransferModalTx(null)}
         onSaved={() => {
           setTransferModalTx(null);
@@ -3020,6 +3021,7 @@ export function BankingTransactionsDesignView({
         prefillMemo={ccPaymentModalTx ? transactionLabel(ccPaymentModalTx) : undefined}
         prefillFromBankId={selectedAccount?.id}
         linkBankTransactionId={ccPaymentModalTx?.id ?? null}
+        linkBankTransactionLabel={ccPaymentModalTx ? transactionLabel(ccPaymentModalTx) : null}
         onClose={() => setCcPaymentModalTx(null)}
         onSaved={() => {
           setCcPaymentModalTx(null);

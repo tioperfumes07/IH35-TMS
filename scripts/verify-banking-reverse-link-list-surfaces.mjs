@@ -28,6 +28,8 @@ const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationRecon
 const RECON_SUGGESTIONS = "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx";
 const BANK_RECON = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
 const SPLIT_MODAL = "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx";
+const RECORD_TRANSFER = "apps/frontend/src/pages/banking/RecordTransferModal.tsx";
+const RECORD_CC_PAYMENT = "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -112,6 +114,9 @@ const CHECKS = [
   { name: "split commit advance exact reverse drill", file: SPLIT_MODAL, pattern: /kind="cash_advance"[\s\S]{0,120}id=\{result\.driver_advance_id\}[\s\S]{0,160}Driver advance · split line/ },
   { name: "split commit deduction exact reverse drill", file: SPLIT_MODAL, pattern: /kind="settlement_deduction"[\s\S]{0,120}id=\{result\.deduction_id\}[\s\S]{0,160}Recovery deduction · split line/ },
   { name: "split commit journal entry exact reverse drill", file: SPLIT_MODAL, pattern: /kind="journal_entry"[\s\S]{0,120}id=\{result\.journal_entry_id\}[\s\S]{0,160}Journal entry · split line/ },
+  { name: "record transfer source drill accepts human transaction label", file: RECORD_TRANSFER, pattern: /linkBankTransactionLabel\?: string \| null;[\s\S]*kind="bank_transaction"[\s\S]{0,120}id=\{linkBankTransactionId\}[\s\S]{0,160}linkBankTransactionLabel\?\.trim\(\) \|\| "Bank transaction"/ },
+  { name: "credit card payment source drill accepts human transaction label", file: RECORD_CC_PAYMENT, pattern: /linkBankTransactionLabel\?: string \| null;[\s\S]*kind="bank_transaction"[\s\S]{0,120}id=\{linkBankTransactionId\}[\s\S]{0,160}linkBankTransactionLabel\?\.trim\(\) \|\| "Bank transaction"/ },
+  { name: "bank register threads source labels into both record creators", file: VIEW, pattern: /<RecordTransferModal[\s\S]{0,600}linkBankTransactionLabel=\{transferModalTx \? transactionLabel\(transferModalTx\) : null\}[\s\S]{0,800}<RecordCCPaymentModal[\s\S]{0,600}linkBankTransactionLabel=\{ccPaymentModalTx \? transactionLabel\(ccPaymentModalTx\) : null\}/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
