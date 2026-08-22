@@ -1,7 +1,7 @@
 /**
  * CLOSURE-11 — hook for maintenance services catalog + ETA.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 
 export type MaintenanceService = {
@@ -16,6 +16,21 @@ export type MaintenanceService = {
   is_safety_critical: boolean;
   typical_cost_cents: number;
   compliance_ref: string | null;
+  is_active: boolean;
+};
+
+export type CreateMaintenanceServiceInput = {
+  service_code: string;
+  service_name: string;
+  service_category: string;
+  applies_to_type: "truck" | "trailer" | "reefer" | "all";
+  interval_miles?: number | null;
+  interval_months?: number | null;
+  interval_hours?: number | null;
+  is_safety_critical: boolean;
+  typical_duration_hours?: number | null;
+  typical_cost_cents: number;
+  compliance_ref?: string | null;
   is_active: boolean;
 };
 
@@ -49,6 +64,19 @@ export function useMaintenanceServicesCatalog(
       `/api/v1/catalogs/maintenance/services-catalog?${params.toString()}`
     ),
     enabled: Boolean(operatingCompanyId),
+  });
+}
+
+export function useCreateMaintenanceService(operatingCompanyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateMaintenanceServiceInput) =>
+      apiRequest<MaintenanceService>("/api/v1/catalogs/maintenance/services-catalog", {
+        method: "POST",
+        body: { ...body, operating_company_id: operatingCompanyId },
+      }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["catalogs", "maintenance", "services-catalog"] }),
   });
 }
 

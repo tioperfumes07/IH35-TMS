@@ -50,6 +50,7 @@ export type OemPartCreateBody = {
 };
 
 type ListFilters = {
+  operating_company_id: string;
   brand?: string;
   category?: string;
   fleet_only?: boolean;
@@ -60,8 +61,9 @@ type ListFilters = {
 const basePath = "/api/v1/lists/oem-parts";
 
 export const oemPartsCatalogClient = {
-  list(filters: ListFilters = {}) {
+  list(filters: ListFilters) {
     const params = new URLSearchParams();
+    params.set("operating_company_id", filters.operating_company_id);
     if (filters.brand) params.set("brand", filters.brand);
     if (filters.category) params.set("category", filters.category);
     if (filters.fleet_only === false) params.set("fleet_only", "false");
@@ -71,8 +73,8 @@ export const oemPartsCatalogClient = {
     return apiRequest<OemPartsListResponse>(qs ? `${basePath}?${qs}` : basePath);
   },
 
-  brands() {
-    return apiRequest<OemPartsBrandsResponse>(`${basePath}/brands`);
+  brands(operatingCompanyId: string) {
+    return apiRequest<OemPartsBrandsResponse>(`${basePath}/brands?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
   },
 
   create(body: OemPartCreateBody) {
