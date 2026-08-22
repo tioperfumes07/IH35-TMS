@@ -1,3 +1,30 @@
+- 2026-08-22T01:20Z CC-1 | ACCT-F5711 SHIPPED (PR #13745/#13750/#13751) | cron stagger (item 3 of 3, DONE) + 2 unrelated locked-guards blockers found+fixed | NEXT=accounting-module work per new INBOX (register ref UUID, expense vendor tombstones) | GO
+  3-item INBOX-CC-1 relayed sequence is now fully closed: JE bill_number=ACCT-F5708, settlement
+  close=ACCT-F5710, cron stagger=ACCT-F5711. All 79 cron.schedule() call sites across ~70 files now
+  carry node-cron 4.6.0's own built-in maxRandomDelay:20000 (no custom wrapper -- the library ships
+  this natively, README-documented) -- spreads the confirmed 8-simultaneous-miss */5-boundary pileup
+  (PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED) across a 20s window instead of one wall-clock
+  second. No cron's expression/timezone/callback touched. No Render kick.
+  Shipping this surfaced TWO separate, genuinely pre-existing locked-guards failures on origin/main
+  itself (reproduced locally BEFORE merging past them with --admin, confirmed unrelated to the cron
+  diff via job-log reads, not inferred) -- fixed both rather than deferred:
+    1) verify-db-pool-budget.mjs + verify-migration-verification-readonly.mjs (merged same day via
+       #13680/#13683) were never wired into a claimed verify-step -- verify:guard-wired was failing
+       on EVERY open PR. Claimed steps 4225/4229, authored the two standard wrapper files.
+    2) verify-settlement-dispute-je-gate.mjs's anchor regex went blind when ACCT-F5676 (#13264)
+       renamed the real call site createJournalEntry -> createJournalEntryOnClient (a literal
+       prefix collision broke the old regex). The underlying gate-before-post safety property was
+       NEVER actually broken -- verified by reading the real service file directly. Widened the
+       regex + added a regression selftest case.
+  Board row: ACCT-F5711 in GUARD-WORKORDERS.md (combined, covers all 3 pieces).
+  Pulled fresh INBOX-CC-1.md: NEW directive posted 19:07 CT, "MODULE LOCK = ACCOUNTING" -- all seats
+  stay on Accounting until leftover dry; item 4 explicitly greenlit cron stagger as code-only-allowed
+  despite the lock. Moving to items 1-3: ACCT-REGISTER-REF-IS-SOURCE-UUID (account-register.service.ts
+  reference field is the raw source_transaction_id UUID, not a human doc id -- entityLabel() tombstones
+  it), expenses list Vendor-not-visible (4 live, deactivated-vendor RLS-visibility gap, same class as
+  the already-fixed LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL, missing from
+  verify-deactivated-counterparty-resolver-coverage.mjs's own sweep list). Not stopping.
+
 - 2026-08-22T00:44Z CC-1 | ACCT-F5710 SHIPPED (PR #13739) | USMCA settlement CLOSED + GL-posted (item 2 of 3) | NEXT=cron stagger (code only, no Render kick) | GO
   Verified live BEFORE touching anything: USMCA had 0 driver_settlements rows with status='closed'.
   Root cause was an orchestration gap, not a bug in either function -- closeSettlementPayRun posts a
