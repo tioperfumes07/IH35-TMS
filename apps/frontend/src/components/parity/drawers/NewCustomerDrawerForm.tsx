@@ -22,14 +22,18 @@ type Props = {
   operatingCompanyId: string;
   onCreated: (result: InlineCreateResult) => void;
   onClose: () => void;
+  fixedCustomerType?: Exclude<CustomerProfileFormValues["customer_type"], "">;
 };
 
 const PARENT_CUSTOMER_FETCH_LIMIT = 200;
 
-export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
+export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, fixedCustomerType }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [values, setValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
+  const [values, setValues] = useState<CustomerProfileFormValues>(() => ({
+    ...emptyCustomerProfileValues(),
+    customer_type: fixedCustomerType ?? "",
+  }));
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<"legal_name" | "customer_type" | "email", string>>>({});
 
   const customersQuery = useQuery({
@@ -124,6 +128,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
         operatingCompanyId={operatingCompanyId}
         mode="create"
+        lockedCustomerType={fixedCustomerType}
         paymentTermOptions={paymentTermsQuery.data ?? []}
         onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
         parentCustomerOptions={parentCustomerOptions}

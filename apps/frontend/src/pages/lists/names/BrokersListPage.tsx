@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listCustomers, type Customer } from "../../../api/mdata";
 import { DataTable } from "../../../components/DataTable";
+import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { NewCustomerDrawerForm } from "../../../components/parity/drawers/NewCustomerDrawerForm";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -19,6 +22,7 @@ export function BrokersListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["names", "brokers", companyId, search],
@@ -57,6 +61,7 @@ export function BrokersListPage() {
         breadcrumb={["Lists & Catalogs", "Names master", "Brokers"]}
         title="Brokers"
         countBadge={rows.length}
+        actions={<Button onClick={() => setCreateOpen(true)}>+ Create broker</Button>}
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
@@ -90,6 +95,20 @@ export function BrokersListPage() {
       />
 
       <div className="text-xs text-slate-500">Total brokers: {rows.length}</div>
+
+      {createOpen ? (
+        <ParityDrawer open title="New broker" onClose={() => setCreateOpen(false)} onBack={() => setCreateOpen(false)}>
+          <NewCustomerDrawerForm
+            operatingCompanyId={companyId}
+            fixedCustomerType="broker"
+            onClose={() => setCreateOpen(false)}
+            onCreated={() => {
+              setCreateOpen(false);
+              void query.refetch();
+            }}
+          />
+        </ParityDrawer>
+      ) : null}
     </div>
   );
 }

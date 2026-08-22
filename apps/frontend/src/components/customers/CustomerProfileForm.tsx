@@ -445,6 +445,7 @@ function SelectField({
   options,
   required = false,
   name,
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -452,6 +453,7 @@ function SelectField({
   options: Array<{ value: string; label: string }>;
   required?: boolean;
   name?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="block text-sm">
@@ -462,6 +464,7 @@ function SelectField({
       <select
         name={name}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         aria-required={required || undefined}
         className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
@@ -501,9 +504,11 @@ type Props = {
   /** LST-PICKER-01: refetch parent roster after inline "+ Add new customer". */
   onParentCustomerCreated?: () => void;
   customerId?: string;
+  /** A domain-specific creator may lock the legacy role while retaining this canonical full form. */
+  lockedCustomerType?: Exclude<CustomerProfileFormValues["customer_type"], "">;
 };
 
-export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
+export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId, lockedCustomerType }: Props) {
   const queryClient = useQueryClient();
   // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — Array.isArray (not `?? []`): a truthy non-array
   // (react-query cache holding the `{ payment_terms }` envelope under a shared key) still crashes `.map`.
@@ -568,6 +573,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
             name="customer_type"
             required
             value={values.customer_type}
+            disabled={Boolean(lockedCustomerType)}
             onChange={(customer_type) => onPatch({ customer_type: customer_type as CustomerProfileFormValues["customer_type"] })}
             options={[
               { value: "", label: "— Select type —" },
