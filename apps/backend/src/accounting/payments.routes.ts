@@ -98,7 +98,11 @@ async function fetchPaymentDetail(
     `
       SELECT
         p.*,
-        c.customer_name,
+        -- ACCT-F5785 — mdata.customers' customers_select RLS requires deactivated_at IS NULL for a
+        -- non-bypass reader, so a plain JOIN here silently dropped the WHOLE payment detail row (not
+        -- just the label) once its customer was later archived. Same pattern ACCT-F5611 already fixed
+        -- for invoices.routes.ts: LEFT JOIN + fall back to the existing same-company resolver.
+        COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id)) AS customer_name,
         ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
         dep_acct.account_number AS deposited_to_account_number,
         dep_acct.account_name AS deposited_to_account_name,
@@ -106,7 +110,7 @@ async function fetchPaymentDetail(
         bt.description AS matched_bank_transaction_description,
         bt.amount_cents::text AS matched_bank_transaction_amount_cents
       FROM accounting.payments p
-      JOIN mdata.customers c
+      LEFT JOIN mdata.customers c
         ON c.id = p.customer_id
        AND c.operating_company_id = p.operating_company_id
       LEFT JOIN catalogs.accounts dep_acct
@@ -241,7 +245,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         `
           SELECT COUNT(*)::int AS total
           FROM accounting.payments p
-          JOIN mdata.customers c
+          -- ACCT-F5785 — LEFT JOIN (not a plain JOIN): customers_select RLS excludes a deactivated
+          -- customer for a non-bypass reader, and a plain JOIN here would drop the payment's count
+          -- entirely once its customer was later archived. Same class as fetchPaymentDetail above.
+          LEFT JOIN mdata.customers c
             ON c.id = p.customer_id
            AND c.operating_company_id = p.operating_company_id
            AND c.operating_company_id = $1::uuid
@@ -259,13 +266,14 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         `
           SELECT
             p.*,
-            c.customer_name,
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id)) AS customer_name,
             ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
             bt.transaction_date AS matched_bank_transaction_date,
             bt.description AS matched_bank_transaction_description,
             bt.amount_cents::text AS matched_bank_transaction_amount_cents
           FROM accounting.payments p
-          JOIN mdata.customers c
+          -- ACCT-F5785 — LEFT JOIN + resolver fallback (see countRes above for why).
+          LEFT JOIN mdata.customers c
             ON c.id = p.customer_id
            AND c.operating_company_id = p.operating_company_id
            AND c.operating_company_id = $1::uuid
