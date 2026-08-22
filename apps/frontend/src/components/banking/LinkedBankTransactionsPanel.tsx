@@ -88,13 +88,20 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                         />
                       </>
                     ) : null}
-                    {row.deduction_id
-                      ? ` · deduction ${row.deduction_type || ""} ${
-                          row.deduction_amount_cents != null
-                            ? formatUsdCents(Math.abs(Number(row.deduction_amount_cents)))
-                            : ""
-                        } (${row.deduction_status || "—"})`
-                      : ""}
+                    {row.deduction_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink
+                          kind="settlement_deduction"
+                          id={row.deduction_id}
+                          label={`${row.deduction_label || row.deduction_type || "Driver deduction"}${
+                            row.deduction_amount_cents != null
+                              ? ` · ${formatUsdCents(Math.abs(Number(row.deduction_amount_cents)))}`
+                              : ""
+                          } · ${row.deduction_status || "—"}`}
+                        />
+                      </>
+                    ) : null}
                   </div>
                 </div>
                 <span className={`shrink-0 tabular-nums font-medium ${signed < 0 ? "text-red-700" : "text-slate-800"}`}>

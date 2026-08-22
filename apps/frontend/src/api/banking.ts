@@ -635,6 +635,7 @@ export type LinkedBankTransactionRow = {
   deduction_amount_cents: number | string | null;
   deduction_status: string | null;
   deduction_type: string | null;
+  deduction_label: string | null;
 };
 
 // ── BANK-SPLIT-1 — QBO-style split-transaction popup (real, persisted; behind BANK_TX_SPLIT_ENABLED) ─────

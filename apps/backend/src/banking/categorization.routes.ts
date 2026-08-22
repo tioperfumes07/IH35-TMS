@@ -698,7 +698,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             je.memo AS matched_journal_entry_memo,
             ded.amount_cents::bigint AS deduction_amount_cents,
             ded.status AS deduction_status,
-            ded.deduction_type AS deduction_type
+            ded.deduction_type AS deduction_type,
+            COALESCE(NULLIF(TRIM(ded.deduction_type), ''), 'Driver deduction') AS deduction_label
           FROM banking.bank_transactions bt
           LEFT JOIN driver_finance.driver_settlement_deductions ded
             ON ded.id = bt.categorization_deduction_id
