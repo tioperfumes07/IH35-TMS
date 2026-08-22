@@ -12,6 +12,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
 
@@ -170,6 +171,21 @@ export function TransactionRegisterPage() {
         sortValue: (r) => r.status ?? "",
         cellClass: "text-slate-600",
         render: (r) => r.status ?? "—",
+      },
+      {
+        // ACCT-F5982: this leaf's own required column (gl_je) had no forward link at all — every
+        // guard tagging it never opened this file. Real link when a source posted (bank/invoice/
+        // bill); fuel/settlement rows honestly have no single JE of their own (see the backend's
+        // own comment on those UNION arms) rather than an invented one.
+        key: "journal_entry",
+        label: "GL / JE",
+        cellClass: "text-slate-700",
+        render: (r) =>
+          r.journal_entry_id ? (
+            <EntityLink kind="journal_entry" id={r.journal_entry_id} label="View JE →" />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "link",
