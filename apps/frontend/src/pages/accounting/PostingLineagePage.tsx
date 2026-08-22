@@ -58,6 +58,11 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
     case "depreciation_schedule_row":
     case "loan_amortization_row":
       return t;
+    case "factoring_customer_payment":
+    case "factoring_chargeback":
+    case "factoring_reserve_release":
+    case "factoring_default_interest":
+      return "factoring_advance";
     case "expense":
       return "expense";
     case "settlement":
