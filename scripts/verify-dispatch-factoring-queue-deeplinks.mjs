@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring","dispatch"],"cols":["customer","load","connectivity","reverse_link"],"leafRe":"^(dispatch\\.queue|home\\.|hub\\.)","task":"P04-dispatch-queue","pr":"pending"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","load","connectivity","reverse_link"],"leafRe":"^dispatch\\.queue$","task":"P04-dispatch-queue","pr":"pending"} */
 /**
  * verify-dispatch-factoring-queue-deeplinks.mjs  (audit gap #9)
  *

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["customer","connectivity","reverse_link"],"leafRe":"^batches\\.detail","task":"FACT-FE-BATCH-INVOICES","pr":"pending"} */
 /**
  * verify-factoring-batch-detail-uses-paritytable — qbo-parity-a1 (factoring BatchDetail surface)
  *

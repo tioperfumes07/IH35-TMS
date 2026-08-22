@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link","connectivity"],"leafRe":"^(factors\\.list|reserves\\.dashboard|reserves\\.tracker)$","task":"LINK-FACTOR-ENTITYLINK-DRILL"} */
 /**
  * Factors gain a real EntityLink kind — same class as LINK-F5140 (geofence): EntityLink.tsx kind
  * "factor" resolves to /factoring/factors?factor_id=, FactorAdmin.tsx reads that param (resolving
