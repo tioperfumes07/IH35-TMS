@@ -17,11 +17,22 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { ReconMatchSuggestions } from "./ReconMatchSuggestions";
+import { formatDateUS } from "../../lib/formatDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
+
+const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = {
+  load: "load",
+  settlement: "settlement",
+  fuel: "fuel_transaction",
+  work_order: "work_order",
+  ar_invoice: "invoice",
+  bill: "bill",
+};
 
 export function BankingObligationReconcilePage() {
   const navigate = useNavigate();
@@ -228,8 +239,14 @@ export function BankingObligationReconcilePage() {
                 <div className="flex-1">
                   <div className="font-medium">{money(row.amount_cents)}</div>
                   <div className="text-xs text-slate-600">
-                    {row.transaction_date} · {row.description ?? row.merchant_name ?? "—"}
+                    {formatDateUS(row.transaction_date)} · {row.description ?? row.merchant_name ?? "—"}
                   </div>
+                  <EntityLink
+                    kind="bank_transaction"
+                    id={row.id}
+                    label={row.description?.trim() || row.merchant_name?.trim() || "View bank transaction"}
+                    className="text-xs"
+                  />
                   <ReconMatchSuggestions
                     companyId={companyId}
                     bankTransactionId={row.id}
@@ -256,9 +273,8 @@ export function BankingObligationReconcilePage() {
           <h2 className="mb-2 text-sm font-semibold">Unmatched obligations</h2>
           <div className="max-h-[480px] space-y-1 overflow-y-auto text-sm">
             {obligations.map((o) => (
-              <button
+              <div
                 key={`${o.obligation_type}-${o.obligation_id}`}
-                type="button"
                 className={`w-full rounded border px-2 py-2 text-left ${
                   dragTxnId ? "border-slate-300 bg-slate-100/40" : "border-slate-100"
                 }`}
@@ -277,8 +293,14 @@ export function BankingObligationReconcilePage() {
               >
                 <div className="text-xs uppercase text-slate-500">{o.obligation_type.replace("_", " ")}</div>
                 <div className="font-medium">{money(o.amount_cents)}</div>
-                <div className="text-xs text-slate-600">{o.event_date} · {o.label}</div>
-              </button>
+                <div className="text-xs text-slate-600">{formatDateUS(o.event_date)}</div>
+                <EntityLink
+                  kind={OBLIGATION_ENTITY_KIND[o.obligation_type]}
+                  id={o.obligation_id}
+                  label={o.label}
+                  className="text-xs"
+                />
+              </div>
             ))}
             {obligations.length === 0 ? <p className="text-xs text-gray-500">No obligations loaded.</p> : null}
           </div>
