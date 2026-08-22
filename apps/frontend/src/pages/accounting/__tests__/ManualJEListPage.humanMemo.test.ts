@@ -57,3 +57,31 @@ describe("ManualJEListPage humanMemo", () => {
     expect(humanMemo("")).toBe("—");
   });
 });
+
+// LV-JE-MEMO-RECORD-NOT-VISIBLE — the real fix: when the backend resolves a human document id for
+// the JE's own source_transaction_id (journal-entries.service.ts's JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL),
+// humanMemo() must use it instead of the previously-hardcoded null, for every known memo shape.
+describe("ManualJEListPage humanMemo — resolved source name (LV-JE-MEMO-RECORD-NOT-VISIBLE)", () => {
+  const uuid = "138991fa-2b17-41a0-9c19-ceaf1815d5fa";
+
+  it("resolves the dominant Fuel txn shape to a real unit label instead of tombstoning", () => {
+    expect(humanMemo(`Fuel txn ${uuid}`, uuid, "T149")).toBe("T149");
+  });
+
+  it("resolves a Bill payment posting memo to a real bill number", () => {
+    expect(humanMemo(`Expense ${uuid} posting`, uuid, "EXP-2026-00042")).toBe("EXP-2026-00042 posting");
+  });
+
+  it("is case-insensitive matching the resolved source id against the embedded uuid", () => {
+    expect(humanMemo(`Reversal of ${uuid.toUpperCase()}`, uuid, "JE-2026-00007")).toBe("JE-2026-00007");
+  });
+
+  it("does NOT resolve a uuid that does not match the JE's own source_transaction_id — still tombstones", () => {
+    const otherUuid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    expect(humanMemo(`Fuel txn ${uuid}`, otherUuid, "T149")).toBe("Fuel transaction — not visible");
+  });
+
+  it("falls back to tombstone when resolvedDisplayId is null even if resolvedSourceId matches (honest gap, e.g. bill_payment/driver_advance not yet covered)", () => {
+    expect(humanMemo(`Bill payment ${uuid} posting`, uuid, null)).toBe("Bill payment — not visible posting");
+  });
+});

@@ -43,16 +43,32 @@ const KNOWN_MEMO_ID_PATTERNS: Array<{ re: RegExp; noun: string }> = [
   { re: /Void reversal of invoice [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Invoice" },
   { re: /Reversal of [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, noun: "Journal entry" },
 ];
-export function humanMemo(memo: string | null | undefined): string {
+// LV-JE-MEMO-RECORD-NOT-VISIBLE — resolvedSourceId/resolvedDisplayId come from the JE's own
+// typed source_transaction_id/source_transaction_display_id (the backend now resolves this via the
+// same joins account-register.service.ts and getJournalEntrySourceLinks already use — see
+// journal-entries.service.ts's JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL). When the UUID embedded in the
+// memo text matches the JE's own resolved source id, pass the REAL name to entityLabel() instead of
+// the previously-hardcoded null, so it can actually resolve instead of always tombstoning. A UUID
+// that doesn't match (or when no resolution exists — bill_payment/driver_advance sources, or no
+// typed source at all) falls through to the original, unchanged behavior.
+export function humanMemo(
+  memo: string | null | undefined,
+  resolvedSourceId?: string | null,
+  resolvedDisplayId?: string | null
+): string {
   if (!memo) return "—";
   let result = memo;
   for (const { re, noun } of KNOWN_MEMO_ID_PATTERNS) {
     result = result.replace(re, (whole) => {
       const uuid = whole.match(UUID_RE)?.[0] ?? "";
-      return entityLabel(null, uuid, noun);
+      const name = resolvedSourceId && uuid.toLowerCase() === resolvedSourceId.toLowerCase() ? resolvedDisplayId : null;
+      return entityLabel(name, uuid, noun);
     });
   }
-  return result.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
+  return result.replace(UUID_RE, (uuid) => {
+    const name = resolvedSourceId && uuid.toLowerCase() === resolvedSourceId.toLowerCase() ? resolvedDisplayId : null;
+    return entityLabel(name, uuid, "Record");
+  });
 }
 
 /** LST-F107: JE column must not lead with a bare UUID fragment (date column already exists). */
@@ -61,13 +77,17 @@ function journalEntryListLabel(entry: {
   journal_entry_type_name?: string | null;
   source?: string | null;
   memo?: string | null;
+  source_transaction_id?: string | null;
+  source_transaction_display_id?: string | null;
 }): string {
   const type =
     entry.journal_entry_type_code?.trim() ||
     entry.journal_entry_type_name?.trim() ||
     entry.source?.trim() ||
     "JE";
-  const memo = entry.memo?.trim() ? humanMemo(entry.memo) : "";
+  const memo = entry.memo?.trim()
+    ? humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id)
+    : "";
   if (memo && memo !== "—") {
     return `${type} · ${memo.length > 36 ? `${memo.slice(0, 36)}…` : memo}`;
   }
@@ -166,7 +186,13 @@ export function ManualJEListPage() {
         ),
       },
       { key: "entry_date", label: "Date", sortable: true, render: (entry) => formatDateUS(entry.entry_date) },
-      { key: "memo", label: "Memo", sortable: true, sortValue: (entry) => entry.memo ?? "", render: (entry) => humanMemo(entry.memo) },
+      {
+        key: "memo",
+        label: "Memo",
+        sortable: true,
+        sortValue: (entry) => entry.memo ?? "",
+        render: (entry) => humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id),
+      },
       { key: "source", label: "Source", sortable: true },
       { key: "status", label: "Status", sortable: true },
       { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
