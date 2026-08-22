@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["legal"],"cols":["reverse_link"],"leafRe":"^(contracts\\.(list|create)|legal\\.(modal|parity)\\.unified_contract_creator)$","task":"LEGAL-VENDOR-CONTRACT-REVERSE","vertical":"column-wave"} */
-/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^detail\\.profile$","task":"LEGAL-VENDOR-CONTRACT-REVERSE","vertical":"column-wave"} */
-/** @matrix-built {"modules":["users"],"cols":["reverse_link"],"leafRe":"^detail$","task":"LEGAL-VENDOR-CONTRACT-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["legal"],"cols":["reverse_link"],"leaves":["contracts.list","contracts.create"],"task":"LEGAL-F5896-CONTRACT-REVERSE-EXACT","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
@@ -14,7 +12,11 @@ const paths = {
   service: "apps/backend/src/legal/contracts.service.ts",
   routes: "apps/backend/src/legal/contracts.routes.ts",
   pickerRegistry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
+  matrix: "docs/specs/scoreboard/modules/legal.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-legal-vendor-contract-reverse.mjs",
 };
+const HEADER = '/** @matrix-built {"modules":["legal"],"cols":["reverse_link"],"leaves":["contracts.list","contracts.create"],"task":"LEGAL-F5896-CONTRACT-REVERSE-EXACT","vertical":"class-sweep"} */';
 
 const sources = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 
@@ -45,7 +47,18 @@ const checks = [
 ];
 
 function failures(candidate) {
-  return checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+  const found = checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+  let matrix;
+  try { matrix = JSON.parse(candidate.matrix); } catch (error) { found.push(`Legal matrix parse: ${error.message}`); }
+  for (const id of ["contracts.list", "contracts.create"]) {
+    const leaf = matrix?.leaves?.find((item) => item.id === id);
+    if (!leaf?.required?.includes("reverse_link")) found.push(`${id} must require reverse_link`);
+    if (leaf?.route_hint !== "/legal/contracts") found.push(`${id} must name mounted /legal/contracts route`);
+  }
+  if (!candidate.self.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact contract header missing");
+  try { if (JSON.parse(candidate.feed).entries?.some((entry) => entry.guard === paths.self)) found.push("manual feed duplicates exact ownership"); }
+  catch (error) { found.push(`feed parse: ${error.message}`); }
+  return found;
 }
 
 const found = failures(sources);
@@ -64,7 +77,18 @@ if (process.argv.includes("--self-test")) {
     }
     proven += 1;
   }
-  console.log(`verify-legal-vendor-contract-reverse: SELF-TEST PASS — ${proven} planted defects rejected`);
+  for (const id of ["contracts.list", "contracts.create"]) {
+    const idToken = `"id": "${id}"`, start = sources.matrix.indexOf(idToken), end = sources.matrix.indexOf("\n    {", start + idToken.length), block = sources.matrix.slice(start, end < 0 ? sources.matrix.length : end);
+    for (const [token, replacement] of [[idToken, `"id": "${id}.broken"`], ['"reverse_link"', '"reverse_link_broken"'], ['"route_hint": "/legal/contracts"', '"route_hint": "broken"']]) {
+      const changed = sources.matrix.slice(0, start) + block.replace(token, replacement) + sources.matrix.slice(end < 0 ? sources.matrix.length : end);
+      if (!failures({ ...sources, matrix: changed }).length) throw new Error(`matrix mutation survived: ${id} ${token}`);
+    }
+  }
+  const broken = HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"');
+  if (!failures({ ...sources, self: sources.self.replace(HEADER, broken) }).length) throw new Error("header mutation survived");
+  const feed = JSON.parse(sources.feed); feed.entries.unshift({ guard: paths.self, modules: ["legal"], cols: ["reverse_link"], leafRe: ".*" });
+  if (!failures({ ...sources, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
+  console.log("verify-legal-vendor-contract-reverse: SELF-TEST PASS — 31 planted defects rejected");
 }
 
 console.log(`verify-legal-vendor-contract-reverse: PASS — ${checks.length} vendor contract linkage invariants`);
