@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_(search|range)$","task":"CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["banking","cash-flow","driver-hub","fuel","home","program","system","users"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_filter$","task":"CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leaves":["chrome.toolbar_search","chrome.toolbar_range"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["banking","cash-flow","driver-hub","fuel","home","program","system","users"],"cols":["connectivity"],"leaves":["chrome.toolbar_filter"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -67,9 +67,13 @@ const CONNECTIVITY_EXCLUSIONS = {
   form_425: ["tab.qb", "law.virtual_banks_excluded"],
   system: ["tab.qbo_recon", "tab.qbo_sync", "law.no_tms_qbo_writeback"],
 };
+const SELF = "scripts/verify-all-module-list-toolbar-search-range-filter.mjs";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SEARCH_HEADER = '/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leaves":["chrome.toolbar_search","chrome.toolbar_range"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const FILTER_HEADER = '/** @matrix-built {"modules":["banking","cash-flow","driver-hub","fuel","home","program","system","users"],"cols":["connectivity"],"leaves":["chrome.toolbar_filter"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 function read() {
-  const files = new Set([...Object.values(CORE), ...Object.values(EVIDENCE).map(([file]) => file)]);
+  const files = new Set([...Object.values(CORE), ...Object.values(EVIDENCE).map(([file]) => file), SELF, FEED]);
   for (const module of Object.keys(EVIDENCE)) files.add(`docs/specs/scoreboard/modules/${module}.required.json`);
   return Object.fromEntries([...files].map((file) => [file, fs.readFileSync(file, "utf8")]));
 }
@@ -135,6 +139,11 @@ export function verify(source) {
       }
     }
   }
+  const annotations = source[SELF].split("import fs")[0];
+  if (!annotations.includes(SEARCH_HEADER)) failures.push("exact all-module search/range header missing");
+  if (!annotations.includes(FILTER_HEADER)) failures.push("exact filter applicability header missing");
+  const duplicate = (JSON.parse(source[FEED]).entries ?? []).some((row) => row.guard === SELF && row.cols?.includes("connectivity"));
+  if (duplicate) failures.push("manual feed duplicates exact toolbar search/range/filter ownership");
   return failures;
 }
 
@@ -184,6 +193,9 @@ if (process.argv.includes("--self-test")) {
       mutations.push(() => ({ ...source, [matrixFile]: source[matrixFile].replace(`"id": "${id}"`, `"id": "broken.${id}"`) }));
     }
   }
+  mutations.push(() => ({ ...source, [SELF]: source[SELF].replace(SEARCH_HEADER, SEARCH_HEADER.replace("connectivity", "reverse_link")) }));
+  mutations.push(() => ({ ...source, [SELF]: source[SELF].replace(FILTER_HEADER, FILTER_HEADER.replace("connectivity", "reverse_link")) }));
+  mutations.push(() => ({ ...source, [FEED]: source[FEED].replace('"entries": [', `"entries": [{"guard":"${SELF}","cols":["connectivity"]},`) }));
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
