@@ -139,6 +139,7 @@ const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
   {
     key: "id",
     label: "Payment",
+    sortable: true,
     render: (p) => (
       <EntityLink
         kind="bill_payment"
