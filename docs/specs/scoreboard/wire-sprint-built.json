@@ -1219,22 +1219,6 @@
       "leafRe": "^(pm|schedule|unit|profile|create)"
     },
     {
-      "task": "BORDER-CROSSING-UNIT-CREATE-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-border-crossing-unit-linkage.mjs",
-      "modules": [
-        "dispatch",
-        "fleet"
-      ],
-      "cols": [
-        "unit",
-        "connectivity",
-        "reverse_link",
-        "picker_law"
-      ],
-      "leafRe": "^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history|unit\\.profile\\.border_crossings_reverse)$"
-    },
-    {
       "task": "BORDER-CROSSING-DRIVER-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-driver-linkage.mjs",
