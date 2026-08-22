@@ -24,8 +24,18 @@ import process from "node:process";
 
 const LABEL = "verify-accounting-subnav-grouped";
 
+const ESCROW_PAGE = "apps/frontend/src/pages/accounting/EscrowPage.tsx";
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
 const MANIFEST_FILE = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
+
+/** Live Chrome leftover: /accounting/escrow h1 was wrapper default "Accounting" while URL was escrow. */
+export function checkEscrowPageH1(src) {
+  const failures = [];
+  if (!/<AccountingSubNavWrapper[\s\S]*?title="Escrow"/.test(src)) {
+    failures.push('EscrowPage must pass title="Escrow" into AccountingSubNavWrapper (h1 must not stay "Accounting")');
+  }
+  return failures;
+}
 
 /** Approved top-node group labels (PNG + ACCT-F5050 Invoices ▾ promotion). "More" is the overflow. */
 const APPROVED_GROUP_LABELS = [
@@ -172,6 +182,13 @@ function selftest() {
   const flatManifest = goodManifest.replace(/GROUP_LABELS\.bills/g, "").replace('"Bill payment"', '"BillPay"');
   if (checkManifest(flatManifest).length === 0) problems.push("selftest: manifest missing a group should FAIL");
 
+  if (checkEscrowPageH1('<AccountingSubNavWrapper title="Escrow">').length !== 0) {
+    problems.push("selftest: Escrow wrapper with title=Escrow should PASS");
+  }
+  if (checkEscrowPageH1("<AccountingSubNavWrapper>").length === 0) {
+    problems.push("selftest: Escrow wrapper without title=Escrow should FAIL");
+  }
+
   if (problems.length) {
     console.error(`[${LABEL}] SELFTEST FAILED:`);
     for (const p of problems) console.error(`  - ${p}`);
@@ -195,6 +212,10 @@ function main() {
 
   if (!fs.existsSync(manifestPath)) failures.push(`${MANIFEST_FILE} (missing)`);
   else failures.push(...checkManifest(fs.readFileSync(manifestPath, "utf8")).map((m) => `${MANIFEST_FILE}: ${m}`));
+
+  const escrowPath = path.join(root, ESCROW_PAGE);
+  if (!fs.existsSync(escrowPath)) failures.push(`${ESCROW_PAGE} (missing)`);
+  else failures.push(...checkEscrowPageH1(fs.readFileSync(escrowPath, "utf8")).map((m) => `${ESCROW_PAGE}: ${m}`));
 
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
