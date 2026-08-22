@@ -70,10 +70,16 @@ export function registerRows(regText) {
     if (inFence) continue;
     const m = /^\|\s*(☐|☑)\s*\|\s*(.+)$/.exec(line);
     if (!m) continue;
-    const id = ID_RE.exec(m[2]);
-    if (!id) continue;
     const cells = m[2].replace(/\|\s*$/, "").split("|").map((c) => c.trim());
     // cells: id, sev, lane, coder, pr, date, live proof, guard, verified
+    // The id MUST come from cells[0] (this row's own id column), never from ID_RE.exec() against
+    // the whole row text — a row whose real id has a different prefix (e.g. ACCT-F...) can still
+    // legitimately mention an LV-/CI- id in its own PROSE (a cross-reference to another row, e.g.
+    // "flagged on the existing LV-... OPEN row instead"); matching anywhere in the row text
+    // wrongly adopts that prose mention as the row's id and manufactures a phantom duplicate
+    // against the row that id really belongs to (LST-ORPH-04-FINDINGS-REGISTER-ID-MISPARSE).
+    const id = ID_RE.exec(cells[0] ?? "");
+    if (!id) continue;
     rows.push({ done: m[1] === "☑", id: id[1], cells });
   }
   return rows;
