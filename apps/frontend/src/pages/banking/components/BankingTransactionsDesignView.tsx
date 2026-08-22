@@ -150,6 +150,18 @@ type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
 type CategorizeBy = "category" | "item";
 
+function hasPersistedMatch(tx: PlaidBankTransaction) {
+  if (typeof tx.is_matched === "boolean") return tx.is_matched;
+  return Boolean(
+    tx.matched_load_id ||
+      tx.matched_bill_id ||
+      tx.matched_settlement_id ||
+      tx.matched_expense_id ||
+      tx.matched_transfer_id ||
+      tx.matched_journal_entry_id,
+  );
+}
+
 type ViewSettings = {
   showCheckNo: boolean;
   showPayee: boolean;
@@ -488,7 +500,7 @@ export function BankingTransactionsDesignView({
         String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
         String(tx.notes ?? "").toLowerCase().includes("excluded from banking transactions view");
       const looksCategorized =
-        Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_journal_entry_id) ||
+        hasPersistedMatch(tx) ||
         (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
       if (looksExcluded) {
         out.excluded.push(tx);
@@ -543,7 +555,7 @@ export function BankingTransactionsDesignView({
         case "missing_from_to":
           return !String(tx.merchant_name ?? tx.description ?? "").trim();
         case "uncategorized":
-          return !tx.matched_kind && !tx.matched_bill_id && !tx.matched_load_id && !tx.matched_settlement_id && !tx.matched_journal_entry_id;
+          return !tx.matched_kind && !hasPersistedMatch(tx);
         case "requests_waiting_reply":
           return String(tx.notes ?? "").toLowerCase().includes("waiting for reply");
         case "requests_reply_received":
