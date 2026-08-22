@@ -17,6 +17,7 @@ export type AccountingAuditTrailEvent = {
   source_transaction_type: string | null;
   source_entity_kind: string | null;
   source_transaction_id: string | null;
+  source_transaction_display_id: string | null;
   source_transaction_line_id: string | null;
   account_id: string;
   account_number: string | null;
@@ -43,10 +44,12 @@ export type AccountingSourceLineageRow = {
   source_transaction_type: string;
   source_entity_kind: string | null;
   source_transaction_id: string;
+  source_transaction_display_id: string | null;
   source_transaction_line_id: string | null;
   linked_object_type: string | null;
   linked_object_entity_kind: string | null;
   linked_object_id: string | null;
+  linked_object_display_id: string | null;
   relationship_role: string | null;
   account_id: string;
   account_number: string | null;
@@ -155,6 +158,13 @@ export async function listAccountingAuditTrail(
         jp.posting_batch_id::text AS posting_batch_id,
         jp.source_transaction_type,
         jp.source_transaction_id,
+        COALESCE(
+          src_inv.display_id,
+          src_bill.bill_number,
+          src_bill.display_id,
+          src_exp.expense_number,
+          src_banktx.display_label
+        ) AS source_transaction_display_id,
         jp.source_transaction_line_id,
         jp.account_id::text AS account_id,
         a.account_number,
@@ -175,6 +185,26 @@ export async function listAccountingAuditTrail(
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
        AND a.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.invoices src_inv
+        ON jp.source_transaction_type = 'invoice'
+       AND src_inv.id::text = jp.source_transaction_id
+       AND src_inv.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bills src_bill
+        ON jp.source_transaction_type = 'bill'
+       AND src_bill.id::text = jp.source_transaction_id
+       AND src_bill.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.expenses src_exp
+        ON jp.source_transaction_type = 'expense'
+       AND src_exp.id::text = jp.source_transaction_id
+       AND src_exp.operating_company_id = jp.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''), 'Bank transaction') AS display_label
+        FROM banking.bank_transactions bt
+        WHERE jp.source_transaction_type = 'bank_categorization'
+          AND bt.id::text = jp.source_transaction_id
+          AND bt.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_banktx ON true
       WHERE ${where.join(" AND ")}
       ORDER BY COALESCE(je.created_at, pb.created_at, now()) DESC, jp.id DESC
       LIMIT $${values.length}
@@ -223,6 +253,7 @@ export async function listAccountingAuditTrail(
       source_transaction_type: row.source_transaction_type ? String(row.source_transaction_type) : null,
       source_entity_kind: accountingSourceEntityKind(row.source_transaction_type ? String(row.source_transaction_type) : null),
       source_transaction_id: row.source_transaction_id ? String(row.source_transaction_id) : null,
+      source_transaction_display_id: row.source_transaction_display_id ? String(row.source_transaction_display_id) : null,
       source_transaction_line_id: row.source_transaction_line_id ? String(row.source_transaction_line_id) : null,
       account_id: String(row.account_id ?? ""),
       account_number: row.account_number == null ? null : String(row.account_number),
@@ -259,9 +290,17 @@ export async function listAccountingSourceLineage(
         jp.posting_batch_id::text AS posting_batch_id,
         jp.source_transaction_type,
         jp.source_transaction_id,
+        COALESCE(
+          src_inv.display_id,
+          src_bill.bill_number,
+          src_bill.display_id,
+          src_exp.expense_number,
+          src_banktx.display_label
+        ) AS source_transaction_display_id,
         jp.source_transaction_line_id,
         tsl.linked_object_type,
         tsl.linked_object_id,
+        COALESCE(link_inv.display_id, link_bill.bill_number, link_bill.display_id) AS linked_object_display_id,
         tsl.relationship_role,
         jp.account_id::text AS account_id,
         a.account_number,
@@ -281,6 +320,34 @@ export async function listAccountingSourceLineage(
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
        AND a.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.invoices src_inv
+        ON jp.source_transaction_type = 'invoice'
+       AND src_inv.id::text = jp.source_transaction_id
+       AND src_inv.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bills src_bill
+        ON jp.source_transaction_type = 'bill'
+       AND src_bill.id::text = jp.source_transaction_id
+       AND src_bill.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.expenses src_exp
+        ON jp.source_transaction_type = 'expense'
+       AND src_exp.id::text = jp.source_transaction_id
+       AND src_exp.operating_company_id = jp.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''), 'Bank transaction') AS display_label
+        FROM banking.bank_transactions bt
+        WHERE jp.source_transaction_type = 'bank_categorization'
+          AND bt.id::text = jp.source_transaction_id
+          AND bt.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_banktx ON true
+      LEFT JOIN accounting.invoices link_inv
+        ON tsl.linked_object_type = 'invoice'
+       AND link_inv.id::text = tsl.linked_object_id
+       AND link_inv.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bills link_bill
+        ON tsl.linked_object_type = 'bill'
+       AND link_bill.id::text = tsl.linked_object_id
+       AND link_bill.operating_company_id = jp.operating_company_id
       WHERE jp.operating_company_id = $1::uuid
         AND jp.source_transaction_type = $2::text
         AND jp.source_transaction_id = $3::text
@@ -299,10 +366,12 @@ export async function listAccountingSourceLineage(
       source_transaction_type: String(row.source_transaction_type ?? ""),
       source_entity_kind: accountingSourceEntityKind(String(row.source_transaction_type ?? "")),
       source_transaction_id: String(row.source_transaction_id ?? ""),
+      source_transaction_display_id: row.source_transaction_display_id ? String(row.source_transaction_display_id) : null,
       source_transaction_line_id: row.source_transaction_line_id ? String(row.source_transaction_line_id) : null,
       linked_object_type: row.linked_object_type ? String(row.linked_object_type) : null,
       linked_object_entity_kind: accountingSourceEntityKind(row.linked_object_type ? String(row.linked_object_type) : null),
       linked_object_id: row.linked_object_id ? String(row.linked_object_id) : null,
+      linked_object_display_id: row.linked_object_display_id ? String(row.linked_object_display_id) : null,
       relationship_role: row.relationship_role ? String(row.relationship_role) : null,
       account_id: String(row.account_id ?? ""),
       account_number: row.account_number == null ? null : String(row.account_number),

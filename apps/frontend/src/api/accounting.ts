@@ -1906,6 +1906,7 @@ export type AccountingAuditTrailEvent = {
   source_transaction_type: string | null;
   source_entity_kind: string | null;
   source_transaction_id: string | null;
+  source_transaction_display_id: string | null;
   source_transaction_line_id: string | null;
   account_id: string;
   account_number: string | null;
@@ -1925,10 +1926,12 @@ export type AccountingSourceLineageRow = {
   source_transaction_type: string;
   source_entity_kind: string | null;
   source_transaction_id: string;
+  source_transaction_display_id: string | null;
   source_transaction_line_id: string | null;
   linked_object_type: string | null;
   linked_object_entity_kind: string | null;
   linked_object_id: string | null;
+  linked_object_display_id: string | null;
   relationship_role: string | null;
   account_id: string;
   account_number: string | null;

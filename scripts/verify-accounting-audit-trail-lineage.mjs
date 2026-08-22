@@ -31,8 +31,17 @@ if (!/jp\.source_transaction_id = \$3::text/.test(serviceSource)) {
 if (!serviceSource.includes("accounting.transaction_source_links")) {
   fail("lineage query must include transaction_source_links join");
 }
-if (!pageSource.includes("Source lineage")) {
-  fail("audit trail page must expose source lineage action");
+if (!serviceSource.includes("source_transaction_display_id")) {
+  fail("audit trail list/lineage must resolve source_transaction_display_id (invoice/bill/expense/bank)");
+}
+if (!/src_bill\.bill_number/.test(serviceSource) || !/src_exp\.expense_number/.test(serviceSource)) {
+  fail("source display resolver must use bill_number + expense_number (not UUID chrome)");
+}
+if (/entityLabel\(\s*null\s*,\s*row\.source_transaction_id/.test(pageSource)) {
+  fail("AccountingAuditTrailPage must not entityLabel(null, source_transaction_id) — use display_id");
+}
+if (/entityLabel\(\s*null\s*,\s*row\.linked_object_id/.test(pageSource)) {
+  fail("AccountingAuditTrailPage must not entityLabel(null, linked_object_id) — use display_id");
 }
 // The real filter now reads/writes through a staged-filter draft (Apply/Cancel/Reset —
 // staged.draft.accountId / staged.setDraft({ ..., accountId })) rather than binding the
