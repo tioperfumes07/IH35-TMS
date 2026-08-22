@@ -24,6 +24,7 @@ const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
 const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
 const MATCH_DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
+const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -94,6 +95,10 @@ const CHECKS = [
   { name: "linked panel deduction label join is company scoped", file: CATEGORIZATION_ROUTES, pattern: /LEFT JOIN driver_finance\.driver_settlement_deductions ded[\s\S]{0,180}ded\.operating_company_id = bt\.operating_company_id/ },
   { name: "linked panel deduction exact reverse drill", file: LINKED_PANEL, pattern: /row\.deduction_id \? \([\s\S]{0,300}kind="settlement_deduction"[\s\S]{0,120}id=\{row\.deduction_id\}[\s\S]{0,300}row\.deduction_label/ },
   { name: "match drawer candidate drills use scoped human references", file: MATCH_DRAWER, pattern: /function candidateDrillLabel\(candidate: BankMatchCandidate\)[\s\S]{0,180}candidate\.memo\?\.trim\(\)[\s\S]{0,120}KIND_LABELS\[candidate\.ledger_entry_kind\][\s\S]*kind=\{KIND_ENTITY\[c\.ledger_entry_kind\]\}[\s\S]{0,160}label=\{candidateDrillLabel\(c\)\}/ },
+  { name: "obligation reconcile maps every obligation kind to mounted drills", file: OBLIGATION_RECON, pattern: /const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = \{[\s\S]{0,300}load: "load"[\s\S]{0,300}settlement: "settlement"[\s\S]{0,300}fuel: "fuel_transaction"[\s\S]{0,300}work_order: "work_order"[\s\S]{0,300}ar_invoice: "invoice"[\s\S]{0,300}bill: "bill"/ },
+  { name: "obligation reconcile bank rows drill to exact transactions", file: OBLIGATION_RECON, pattern: /kind="bank_transaction"\s+id=\{row\.id\}[\s\S]{0,220}row\.description\?\.trim\(\)[\s\S]{0,120}row\.merchant_name\?\.trim\(\)/ },
+  { name: "obligation reconcile targets drill by scoped label outside buttons", file: OBLIGATION_RECON, pattern: /obligations\.map\(\(o\) => \(\s+<div[\s\S]{0,1200}kind=\{OBLIGATION_ENTITY_KIND\[o\.obligation_type\]\}[\s\S]{0,160}id=\{o\.obligation_id\}[\s\S]{0,160}label=\{o\.label\}/ },
+  { name: "obligation reconcile displays both dates through shared formatter", file: OBLIGATION_RECON, pattern: /formatDateUS\(row\.transaction_date\)[\s\S]{0,3000}formatDateUS\(o\.event_date\)/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
