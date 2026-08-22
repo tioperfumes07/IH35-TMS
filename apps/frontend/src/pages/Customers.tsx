@@ -348,6 +348,27 @@ export function CustomersPage() {
   });
   const customersRoster = customersQuery.data?.customers ?? [];
   const customersServerTotal = customersQuery.data?.total ?? 0;
+  // ACCT-F5790 — `active_company_only: true` above scopes to the ACTIVE company's records, and
+  // mdata.customers' own customers_select RLS additionally hides any deactivated_at-set row for a
+  // non-bypass reader. Both are correct for the base roster (pickers/parentCustomerOptions below must
+  // stay active-only), but it means customersRoster NEVER contains an inactive customer, so the
+  // Inactive tab always counted/showed zero regardless of real data (ACCT-F5789 fixed the backend
+  // status=inactive branch itself; this is the frontend half — the master-list page never called it).
+  // A SEPARATE, explicit status=inactive fetch, additive-only: does not touch active_company_only's
+  // semantics or any other consumer of customersRoster (parentCustomerOptions stays sourced from the
+  // active-only roster below, unchanged).
+  const inactiveCustomersQuery = useQuery({
+    queryKey: ["customers", "inactive", companyId],
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, status: "inactive" }),
+    enabled: Boolean(companyId),
+  });
+  const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
+  // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
+  // consumer of customersRoster (parentCustomerOptions) stays active-only on purpose.
+  const fullCustomersRoster = useMemo(
+    () => [...customersRoster, ...inactiveCustomersRoster],
+    [customersRoster, inactiveCustomersRoster]
+  );
   // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
   const parentCustomerOptions = useMemo(
     () =>
@@ -368,10 +389,13 @@ export function CustomersPage() {
   });
   // LIST-EMPTY-1: shared list-state status — children render "No customers found."
   // only once this settles, never during the roster fetch.
+  // ACCT-F5790 — combined with inactiveCustomersQuery so the empty-state gate also waits for the
+  // inactive fetch, not just the active-only base roster (avoids a "No customers found" flash on the
+  // Inactive tab while that second query is still in flight).
   const customersStatus = {
-    isPending: customersQuery.isPending,
-    isError: customersQuery.isError,
-    isFetching: customersQuery.isFetching,
+    isPending: customersQuery.isPending || inactiveCustomersQuery.isPending,
+    isError: customersQuery.isError || inactiveCustomersQuery.isError,
+    isFetching: customersQuery.isFetching || inactiveCustomersQuery.isFetching,
   };
 
   // §7 RESTORE — the deleted quality segments. b3690eb68 removed these tabs AND their filter arms; the arms
@@ -383,8 +407,10 @@ export function CustomersPage() {
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
+  // ACCT-F5790 — sourced from fullCustomersRoster (active + inactive), not customersRoster
+  // (active-only), so the Inactive/All tabs actually have inactive rows to show.
   const visibleCustomers = useMemo(() => {
-    let all = customersRoster;
+    let all = fullCustomersRoster;
     if (listStatus === "inactive") all = all.filter((customer) => customer.deactivated_at != null);
     else if (listStatus !== "all") all = all.filter((customer) => customer.deactivated_at == null);
     // V8 roster filters — applied here so BOTH the sidebar (visibleCustomers) and the
@@ -396,22 +422,24 @@ export function CustomersPage() {
     else if (qualitySegment === "watch") all = all.filter((c) => c.quality_overall_flag === "caution");
     else if (qualitySegment === "factored") all = all.filter((c) => Boolean(c.factoring_company_vendor_id));
     return all;
-  }, [customersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment]);
+  }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment]);
 
   // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68), mirroring the Vendors half. b3690eb68 deleted the
   // customer list segment tabs during the side-rail realignment; §7 is ADDITIVE-ONLY and Drivers still ships
   // the identical pattern (Drivers.tsx:659-665). Counts are computed off the FULL roster BEFORE the status
   // filter, so each tab shows its own total rather than the filtered remainder.
+  // ACCT-F5790 — sourced from fullCustomersRoster (active + inactive); was customersRoster
+  // (active-only), which made the Inactive tab always count 0 regardless of real data.
   const customerTabCounts = useMemo(
     () => ({
-      all: customersRoster.length,
-      active: customersRoster.filter((customer) => customer.deactivated_at == null).length,
-      inactive: customersRoster.filter((customer) => customer.deactivated_at != null).length,
-      preferred: customersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
-      watch: customersRoster.filter((c) => c.quality_overall_flag === "caution").length,
-      factored: customersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
+      all: fullCustomersRoster.length,
+      active: fullCustomersRoster.filter((customer) => customer.deactivated_at == null).length,
+      inactive: fullCustomersRoster.filter((customer) => customer.deactivated_at != null).length,
+      preferred: fullCustomersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
+      watch: fullCustomersRoster.filter((c) => c.quality_overall_flag === "caution").length,
+      factored: fullCustomersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
     }),
-    [customersRoster]
+    [fullCustomersRoster]
   );
 
   const customersSorted = useMemo(() => {
