@@ -10,8 +10,8 @@
  * text "No prepaid expenses found." (LIST-EMPTY-1), the URL-sort wiring (useUrlSort +
  * sortKey/sortDirection/onSortChange — BANK-SORT-ROLLOUT-ACCT), and the error surface on the list
  * query must all be preserved. No posting/GL logic lives in this file's tables; the create
- * mutation (CreateModal) and the GL-posting preview (GATED — flag OFF) are pre-existing flows and
- * must remain untouched.
+ * mutation (CreateModal) must keep createPrepaidExpense AND send asset_account_id +
+ * payment_account_id via ReferenceSelect createKind="account" (posting flag ON fails closed).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -75,7 +75,19 @@ function assertMigrated(src) {
     errors.push(`${PAGE}: schedule JE column must keep the EntityLink journal-entry drill-through`);
   }
   if (!src.includes("createPrepaidExpense")) {
-    errors.push(`${PAGE}: CreateModal flow must remain untouched (createPrepaidExpense missing)`);
+    errors.push(`${PAGE}: CreateModal flow must remain (createPrepaidExpense missing)`);
+  }
+  if (!src.includes("ReferenceSelect")) {
+    errors.push(`${PAGE}: CreateModal must use ReferenceSelect for prepaid/payment/expense GL`);
+  }
+  if ((src.match(/createKind="account"/g) ?? []).length < 3) {
+    errors.push(`${PAGE}: CreateModal must have ≥3 ReferenceSelect createKind="account" (asset + payment + expense)`);
+  }
+  if (!src.includes("asset_account_id:") || !src.includes("payment_account_id:")) {
+    errors.push(`${PAGE}: createPrepaidExpense payload must send asset_account_id and payment_account_id`);
+  }
+  if (src.includes("GL posting GATED — flag OFF")) {
+    errors.push(`${PAGE}: CreateModal must not lie that posting is gated OFF while the API requires GLs`);
   }
   return errors;
 }
@@ -86,6 +98,7 @@ function selftest() {
     import { EntityLink } from "../../components/shared/EntityLink";
     import { useUrlSort } from "../../hooks/useUrlSort";
     import { createPrepaidExpense } from "../../api/prepaid-expenses";
+    import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
     const SCHEDULE_COLUMNS = [
       { key: "period_number", label: "#", sortable: true },
       { key: "period_date", label: "Period Date", sortable: true },
@@ -119,6 +132,10 @@ function selftest() {
       columns={SCHEDULE_COLUMNS}
       storageKey="prepaid-expense-schedule"
     />
+    createPrepaidExpense({ asset_account_id: form.asset_account_id, payment_account_id: form.payment_account_id })
+    <ReferenceSelect createKind="account" />
+    <ReferenceSelect createKind="account" />
+    <ReferenceSelect createKind="account" />
   `;
   const bad = `
     export function PrepaidExpensesPage() {
