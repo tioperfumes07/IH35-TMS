@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["trailer"],"leafRe":"^(home\\.create_trailer|fleet\\.modal\\.(create_trailer|edit_trailer|quick_assign)|unit\\.profile\\.reefer)$","task":"LINK-F5163-FLEET-TRAILER-MODALS-REEFER"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.reefer"],"task":"FLEET-F5914-REEFER-TRAILER-REVERSE-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical trailer-column sweep (2026-08-14): the fleet Create-Trailer modal
  * (mounted both from the Fleet Home "+ Create Trailer" action and as its own component leaf) posts
@@ -20,8 +21,12 @@ const FILES = {
   editTrailer: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
   reefer: "apps/frontend/src/components/vehicle-profile/ReeferSection.tsx",
+  required: "docs/specs/scoreboard/modules/fleet.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-fleet-trailer-modals-and-reefer.mjs",
 };
 const LABEL = "verify-fleet-trailer-modals-and-reefer";
+const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.reefer"],"task":"FLEET-F5914-REEFER-TRAILER-REVERSE-EXACT","vertical":"class-sweep"} */';
 
 export function audit(src) {
   const failures = [];
@@ -53,6 +58,22 @@ export function audit(src) {
       `${FILES.reefer}: attached trailer heading must drill through with EntityLinkOrTombstone (unresolved-safe) + vp-reefer-trailer-link`,
     );
   }
+  let leaf;
+  const visit = (value) => {
+    if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") {
+      if (value.id === "unit.profile.reefer" && Array.isArray(value.required)) leaf = value;
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(JSON.parse(src.required));
+  if (!leaf) failures.push("Fleet unit.profile.reefer Required leaf missing");
+  else {
+    if (!leaf.required.includes("reverse_link")) failures.push("Fleet reefer leaf must require reverse_link");
+    if (leaf.route_hint !== "/fleet/units/:id") failures.push("Fleet reefer leaf must mount on canonical unit profile");
+  }
+  if (!src.self.split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push("exact Fleet reefer reverse header missing");
+  if (/"guard"\s*:\s*"scripts\/verify-fleet-trailer-modals-and-reefer\.mjs"/.test(src.feed)) failures.push("manual feed duplicates Fleet reefer ownership");
   return failures;
 }
 
@@ -62,6 +83,9 @@ function loadSrc(root) {
     editTrailer: fs.readFileSync(path.join(root, FILES.editTrailer), "utf8"),
     quickAssign: fs.readFileSync(path.join(root, FILES.quickAssign), "utf8"),
     reefer: fs.readFileSync(path.join(root, FILES.reefer), "utf8"),
+    required: fs.readFileSync(path.join(root, FILES.required), "utf8"),
+    feed: fs.readFileSync(path.join(root, FILES.feed), "utf8"),
+    self: fs.readFileSync(path.join(root, FILES.self), "utf8"),
   };
 }
 
@@ -81,6 +105,11 @@ if (process.argv.includes("--selftest")) {
     ["reefer-link", "reefer", /kind="trailer"/, 'kind="unit"'],
     ["reefer-tombstone", "reefer", /EntityLinkOrTombstone/g, "EntityLink"],
     ["reefer-testid", "reefer", /vp-reefer-trailer-link/g, "vp-reefer-trailer-gone"],
+    ["leaf", "required", /"unit\.profile\.reefer"/, '"unit.profile.reefer_MISSING"'],
+    ["reverse", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"'],
+    ["route", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"'],
+    ["header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-fleet-trailer-modals-and-reefer.mjs"},`],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
