@@ -3,6 +3,7 @@
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^drivers\\.modal\\.(add_training|create_driver|send_message|suspend_confirm|terminate_confirm|w8ben|driver_import|settlement_dispute)$","task":"LINK-F5168-DRIVERS-MODALS-WIRING"} */
 /** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.modal.add_training","drivers.modal.create_driver","drivers.modal.send_message","drivers.modal.suspend_confirm","drivers.modal.terminate_confirm","drivers.modal.w8ben","drivers.modal.driver_import","drivers.modal.settlement_dispute"],"task":"DRV-F5923-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.panel.pending_settlement_deductions","drivers.panel.driver_dqf","drivers.wizard.onboarding_wizard_page","drivers.parity.create_driver","drivers.parity.driver_picker_with_create"],"task":"DRV-F5924-PANEL-WIZARD-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["profiles.list","profiles.create","profiles.documents"],"task":"DRV-F5926-PROFILES-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^(drivers\\.panel\\.(pending_settlement_deductions|driver_dqf)|drivers\\.wizard\\.onboarding_wizard_page|drivers\\.parity\\.(create_driver|driver_picker_with_create))$","task":"LINK-F5168-DRIVERS-PANELS-WIZARD-WIRING"} */
 /**
  * OWNER-EXECUTION-PLAN vertical driver-column sweep (2026-08-14): 24 genuine drivers-module leaves —
@@ -24,6 +25,7 @@ const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-drivers-module-driver-wiring.mjs";
 const EXACT_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.modal.add_training","drivers.modal.create_driver","drivers.modal.send_message","drivers.modal.suspend_confirm","drivers.modal.terminate_confirm","drivers.modal.w8ben","drivers.modal.driver_import","drivers.modal.settlement_dispute"],"task":"DRV-F5923-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const PANEL_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.panel.pending_settlement_deductions","drivers.panel.driver_dqf","drivers.wizard.onboarding_wizard_page","drivers.parity.create_driver","drivers.parity.driver_picker_with_create"],"task":"DRV-F5924-PANEL-WIZARD-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const PROFILES_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["profiles.list","profiles.create","profiles.documents"],"task":"DRV-F5926-PROFILES-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const MODAL_ROUTES = new Map([
   ["drivers.modal.add_training", "surface://components/drivers/AddTrainingModal.tsx"],
   ["drivers.modal.create_driver", "surface://components/drivers/CreateDriverModal.tsx"],
@@ -40,6 +42,11 @@ const PANEL_ROUTES = new Map([
   ["drivers.wizard.onboarding_wizard_page", "surface://pages/drivers/OnboardingWizardPage.tsx"],
   ["drivers.parity.create_driver", "surface://components/drivers/CreateDriverModal.tsx"],
   ["drivers.parity.driver_picker_with_create", "surface://components/drivers/DriverPickerWithCreate.tsx"],
+]);
+const PROFILE_ROUTES = new Map([
+  ["profiles.list", "/drivers/profiles"],
+  ["profiles.create", "/drivers/profiles"],
+  ["profiles.documents", "/drivers/:id"],
 ]);
 
 const CHECKS = [
@@ -86,9 +93,15 @@ export function audit(files) {
       if (!leaf?.required?.includes("connectivity")) failures.push(`${REQUIRED}: ${id} must require connectivity`);
       if (leaf?.route_hint !== route) failures.push(`${REQUIRED}: ${id} must name route ${route}`);
     }
+    for (const [id, route] of PROFILE_ROUTES) {
+      const leaf = required.leaves?.find((row) => row.id === id);
+      if (!leaf?.required?.includes("connectivity")) failures.push(`${REQUIRED}: ${id} must require connectivity`);
+      if (leaf?.route_hint !== route) failures.push(`${REQUIRED}: ${id} must name route ${route}`);
+    }
   }
   if (files[SELF] && !files[SELF].split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push(`${SELF}: exact driver modal connectivity header missing`);
   if (files[SELF] && !files[SELF].split("/**\n * OWNER-")[0].includes(PANEL_HEADER)) failures.push(`${SELF}: exact driver panel/wizard connectivity header missing`);
+  if (files[SELF] && !files[SELF].split("/**\n * OWNER-")[0].includes(PROFILES_HEADER)) failures.push(`${SELF}: exact driver profiles connectivity header missing`);
   if (files[FEED] && /"guard"\s*:\s*"scripts\/verify-drivers-module-driver-wiring\.mjs"/.test(files[FEED])) failures.push(`${FEED}: manual feed duplicates exact driver modal connectivity`);
   return failures;
 }
@@ -133,9 +146,18 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
+  for (const id of PROFILE_ROUTES.keys()) {
+    const mutated = { ...good, [REQUIRED]: good[REQUIRED].replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (mutated[REQUIRED] === good[REQUIRED] || audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Profile Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    caught++;
+  }
   for (const [name, key, before, after] of [
     ["header", SELF, EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")],
     ["panel-header", SELF, PANEL_HEADER, PANEL_HEADER.replace("connectivity", "reverse_link")],
+    ["profiles-header", SELF, PROFILES_HEADER, PROFILES_HEADER.replace("connectivity", "reverse_link")],
     ["feed", FEED, "[", `[{"guard":"scripts/verify-drivers-module-driver-wiring.mjs"},`],
   ]) {
     const mutated = { ...good, [key]: good[key].replace(before, after) };
