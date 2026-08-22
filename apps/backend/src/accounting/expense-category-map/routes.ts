@@ -102,7 +102,7 @@ async function appendExpenseCategoryMapAudit(
         $2::text,
         $3::jsonb,
         $4::uuid,
-        $5::uuid
+        $5::text
       )
     `,
     [
@@ -111,10 +111,11 @@ async function appendExpenseCategoryMapAudit(
       JSON.stringify({
         action: params.action,
         mapping_id: params.mappingId,
+        operating_company_id: params.operatingCompanyId,
         ...params.payload,
       }),
-      params.operatingCompanyId,
       params.actorUserUuid,
+      "expense-category-map",
     ]
   );
 }
