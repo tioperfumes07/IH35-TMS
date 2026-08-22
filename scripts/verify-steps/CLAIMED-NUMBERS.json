@@ -5122,5 +5122,10 @@
     "claimed_by": "cc-3",
     "claimed_at": "2026-08-22",
     "purpose": "verify-driver-planner-leave-requests-label-honest"
+  },
+  "4237": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-je-list-memo-resolves-source-name"
   }
 }
