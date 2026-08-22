@@ -721,6 +721,7 @@ export function InvoiceDetailPage() {
           open={recordPaymentOpen}
           operatingCompanyId={selectedCompanyId}
           prefillCustomerId={invoice.customer_id}
+          prefillCustomerName={invoice.customer_name}
           prefillAmountCents={invoice.amount_open_cents}
           prefillInvoiceId={invoice.id}
           onClose={() => setRecordPaymentOpen(false)}

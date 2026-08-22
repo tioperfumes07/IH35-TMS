@@ -21,6 +21,13 @@ type Props = {
   onClose: () => void;
   onRecorded: (paymentId: string) => void;
   prefillCustomerId?: string;
+  // ACCT-F5791: the customer combobox below only knows about ACTIVE customers (listCustomers has
+  // no status filter). When an invoice's customer has since been deactivated, prefillCustomerId
+  // still carries the correct id (Apply-to-invoices/Amount resolve fine), but the combobox has no
+  // matching option and silently renders blank — a same-company-scoped display name here lets a
+  // synthetic option be injected so the field shows who is actually selected. Never used to
+  // override the active-customer options list itself.
+  prefillCustomerName?: string | null;
   prefillAmountCents?: number;
   prefillInvoiceId?: string;
 };
@@ -109,6 +116,7 @@ export function RecordPaymentModal({
   onClose,
   onRecorded,
   prefillCustomerId,
+  prefillCustomerName,
   prefillAmountCents,
   prefillInvoiceId,
 }: Props) {
@@ -234,11 +242,21 @@ export function RecordPaymentModal({
   const totalApplied = useMemo(() => Object.values(applyByInvoice).reduce((sum, value) => sum + Number(value || 0), 0), [applyByInvoice]);
   const remaining = Math.max(0, amountCents - totalApplied);
 
-  const customerOptions = (customersQuery.data ?? []).map((row) => ({
-    value: row.id,
-    label: row.name,
-    type: row.customer_code ?? undefined,
-  }));
+  const customerOptions = useMemo(() => {
+    const base = (customersQuery.data ?? []).map((row) => ({
+      value: row.id,
+      label: row.name,
+      type: row.customer_code ?? undefined,
+    }));
+    // ACCT-F5791: prefillCustomerId can point at a deactivated customer, which the active-only
+    // customersQuery above never returns. Without a matching option the combobox renders blank
+    // even though customerId state is correct (see prefillCustomerName comment on Props). Inject
+    // a synthetic option ONLY for that case — the active-customer list itself is never widened.
+    if (prefillCustomerId && !base.some((opt) => opt.value === prefillCustomerId)) {
+      base.unshift({ value: prefillCustomerId, label: prefillCustomerName ?? "Customer (inactive)", type: undefined });
+    }
+    return base;
+  }, [customersQuery.data, prefillCustomerId, prefillCustomerName]);
 
   return (
     <ParityDrawer
