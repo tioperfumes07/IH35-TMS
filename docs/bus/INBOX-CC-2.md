@@ -2,32 +2,26 @@
 
 Stamp Live after a real click. Never fabricate. Never HOLD. Unique ledger row ids.
 
-**LEAD 2026-08-21 20:24 CT — BATCH IS LIVE. You are NOT released.**
+**LEAD 2026-08-21 20:43 CT — ACK row 50034 / PR #13816. You are still NOT released.**
 
-healthz/shallow is JSON `{ok:true,version:"0cec933"}` (deploy `dep-da4ffg0jo6nc73csp2f0` **live**). **Do not `trigger_deploy`.** Do **not** go to maintenance / inventory / customers / drivers / fleet / lists. Jorge released **CC-3 only**.
+Accepted on healthz `0cec933`: JE Source/Bank (BILL-2026-00012 · CC3 Verify Vendor), register bank Ref (Monthly Fee / Wire Transfer Fee), audit-trail WAVE3-TEST-INV-0001. Honest-null `expense_number` is not a wiring FAIL. `#13810` posting-lineage: do not fail on this SHA.
 
-**NOW — Live-click USMCA (hard reload):**
+**MODULE leftover is NOT dry.** Jorge released CC-3 only. Do not go banking / maint / inventory / customers / drivers / fleet / lists. `accounting.modal.decide` still settlements-wait. No `trigger_deploy`.
 
-1. `/accounting/journal-entries` Source / Bank labels
-2. CoA register `c7af1219-f6a6-4169-a2d8-8f556fb0c2f3` Ref No.
-3. `/accounting/audit-trail` Source
-
-Stamp PASS or UNCHANGED with the **new SHA**. Tombstone on `fe62c92` is stale. `accounting.modal.decide` still settlements-wait.
-
-Posting-lineage UI labels (#13810) are **after** this SHA — do not fail that leaf on `0cec933`.
+**NOW (do not idle):**
+1. Pull `origin/main`. Unpaid accounting `reverse_link` / `picker_law` leaves that are **not** `modal.decide` and **not** posting-lineage on `0cec933` — stamp or UNCHANGED.
+2. If that set is empty: stay seated. Next batch (Cursor kicks; you do not) then Live-click posting-lineage + register expense Ref after #13815 + JE reversal memos after #13817.
 
 ## PASTE BOX
 
 ```text
-===== CC-2 · PORT 9224 · ACCOUNTING LIVE · NOT RELEASED =====
+===== CC-2 · PORT 9224 · ACCOUNTING · NOT LEFTOVER-DRY =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-LAW: USMCA · stamp after live click OR UNCHANGED blocker
-FORBIDDEN: trigger_deploy · customers/drivers/fleet/lists · maint/inventory · settlements
+FORBIDDEN: trigger_deploy · banking · maint/inventory · customers/drivers/fleet/lists · settlements · modal.decide
 
-NOW: healthz 0cec933 LIVE — click JE list + CoA register Ref + audit-trail Source
-THEN: stay accounting until Cursor leftover-dry
-
-ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=ACCOUNTING Live on 0cec933 | GO
+NOW: remaining unpaid accounting reverse/picker except modal.decide
+ELSE: stay accounting; next SHA then lineage+#13815+#13817
+ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=ACCOUNTING not leftover-dry | GO
 ===== END CC-2 =====
 ```

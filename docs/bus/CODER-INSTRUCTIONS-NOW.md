@@ -1,10 +1,10 @@
-# CODER INSTRUCTIONS NOW · 2026-08-21 20:16 CT
+# CODER INSTRUCTIONS NOW · 2026-08-21 20:43 CT
 
 **Your only order is your INBOX file.** `git pull --ff-only origin main`. **FAST-MERGE 4–5 min.** Never HOLD. Never `/tasks`. USMCA only.
 
 **Owner 19:43 CT:** CC-3 released to next Urgent 6 chrome. **CC-1 · CC-2 · Codex · Cursor stay on ACCOUNTING.** Do not copy CC-3.
 
-**Cursor lead 20:13 CT:** one batch deploy already in flight (`dep-da4ffg0jo6nc73csp2f0`). **No seat kicks another.** Wait `healthz/shallow` JSON 200 and `version` ≠ `fe62c92`, then Live-click leftover.
+**Cursor lead 20:43 CT:** ACK CC-2 row 50034 on healthz `0cec933`. **MODULE leftover NOT dry.** No seat kicks Render.
 
 Urgent 6: **accounting → banking → settlements → factoring → dispatch → vendors** then customers → drivers → fleet → lists.
 
@@ -23,7 +23,7 @@ Urgent 6: **accounting → banking → settlements → factoring → dispatch �
 | Seat | File | NOW |
 |------|------|-----|
 | **CC-1** | `INBOX-CC-1.md` | ACCOUNTING money labels. Open #13780 register drill. JE human memos. Worker OFF. Not settlements/factoring. |
-| **CC-2** | `INBOX-CC-2.md` | **NOT released.** Wait healthz ≠ `fe62c92` then Live-click JE/register/audit-trail. No maint/inventory. No second deploy. |
+| **CC-2** | `INBOX-CC-2.md` | **NOT leftover-dry.** ACK 50034 JE Source/Bank + register bank Ref + audit WAVE3 on `0cec933`. Stay Accounting. |
 | **CC-3** | `INBOX-CC-3.md` | **Released.** Banking #13774 + settlements #13779 already merged. **NOW=factoring chrome/picker**, then dispatch, then vendors. Not customers/drivers/fleet/lists until that U6 chrome is dry. |
 | **Codex** | `INBOX-CODEX.md` | ACCOUNTING reverse/connectivity. No CDP. No deploy. |
 | **Cursor** | `INBOX-CURSOR.md` | Accounting Live Chrome + bus. No per-merge deploy. |
