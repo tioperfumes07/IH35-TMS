@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["compliance","maintenance","safety"],"cols":["reverse_link"],"leafRe":"^(tab\.hos_tracker|fleet\.hos_board|property_tax\.(list|detail)|form2290|defects\.convert_to_wo|pre_flight_dvir\.queue|fault_drafts\.review|idvr\.list|escrow_record\.list)$","task":"LINK-F5151-COMPLIANCE-MAINTENANCE-RECORD-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["compliance"],"cols":["reverse_link"],"leaves":["tab.hos_tracker","fleet.hos_board","property_tax.list","property_tax.detail","form2290"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["defects.convert_to_wo","pre_flight_dvir.queue","fault_drafts.review"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["idvr.list","escrow_record.list"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -18,7 +20,15 @@ const FILES = {
   complianceMatrix: "docs/specs/scoreboard/modules/compliance.required.json",
   maintenanceMatrix: "docs/specs/scoreboard/modules/maintenance.required.json",
   safetyMatrix: "docs/specs/scoreboard/modules/safety.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-compliance-maintenance-record-links.mjs",
 };
+
+const HEADERS = [
+  '/** @matrix-built {"modules":["compliance"],"cols":["reverse_link"],"leaves":["tab.hos_tracker","fleet.hos_board","property_tax.list","property_tax.detail","form2290"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["defects.convert_to_wo","pre_flight_dvir.queue","fault_drafts.review"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["idvr.list","escrow_record.list"],"task":"CLASS-F5886-COMPLIANCE-MAINTENANCE-REVERSE-EXACT","vertical":"class-sweep"} */',
+];
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -70,6 +80,8 @@ export function verify(source) {
       if (!leaf?.required?.includes("reverse_link")) failures.push(`${key}:${id} must inventory reverse_link`);
     }
   }
+  for (const header of HEADERS) if (!source.self.split("\n").includes(header)) failures.push(`exact Built header missing: ${header}`);
+  if ((JSON.parse(source.feed).entries ?? []).some((entry) => entry.guard === FILES.self)) failures.push("duplicate manual Built feed remains");
   return failures;
 }
 
@@ -86,8 +98,12 @@ if (process.argv.includes("--self-test")) {
     ["hosService", "unit_id: r.unit_id", "unit_id: null"],
     ["hosApi", "unit_id: string | null", "unit_id_broken: string | null"],
     ["hosTracker", '<EntityLinkOrTombstone kind="unit" id={driver.unit_id}', '<EntityLinkOrTombstone kind="driver" id={driver.driver_id}'],
+    ["hosTracker", 'kind="driver" id={driver.driver_id}', 'kind="unit" id={driver.unit_id}'],
     ["fleetHos", '<EntityLink kind="unit" id={row.unit_id}', '<span data-unit={row.unit_id}'],
+    ["fleetHos", 'kind="driver"', 'kind="unit"'],
     ["propertyTax", 'kind="property_tax_rendition"', 'kind="unit"'],
+    ["propertyTax", "id={r.id}", "id={r.unit_id}"],
+    ["propertyTax", '<EntityLink kind="unit" id={l.unit_id}', '<span data-unit={l.unit_id}'],
     ["propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', '<EntityLink kind="unit" id={l.unit_id}'],
     ["form2290", '<EntityLink kind="unit" id={u.unit_id}', '<span data-unit={u.unit_id}'],
     ["defects", 'kind="maintenance_defect"', 'kind="unit"'],
@@ -95,18 +111,21 @@ if (process.argv.includes("--self-test")) {
     ["preFlight", 'kind="work_order"', 'kind="unit"'],
     ["preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "backend is not built"],
     ["faultDrafts", 'kind="work_order"', 'kind="unit"'],
+    ["faultDrafts", 'kind="unit" id={row.unit_id}', 'kind="work_order" id={row.id}'],
     ["faultDrafts", "selected.wo_title ?? selected.display_id", "selected.id"],
     ["idvr", 'kind="work_order"', 'kind="unit"'],
     ["idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', 'navigate("/safety/idvr")'],
     ["escrow", 'data-testid={`escrow-driver-link-${row.id}`}', 'data-testid="broken-escrow-link"'],
-    ["complianceMatrix", '"id": "tab.hos_tracker"', '"id": "tab.hos_tracker.broken"'],
-    ["maintenanceMatrix", '"id": "defects.convert_to_wo"', '"id": "defects.convert_to_wo.broken"'],
-    ["safetyMatrix", '"id": "idvr.list"', '"id": "idvr.list.broken"'],
+    ...Object.entries(REQUIRED_LEAVES).flatMap(([key, ids]) => ids.map((id) => [key, `"id": "${id}"`, `"id": "${id}.broken"`])),
+    ...HEADERS.map((header) => ["self", header, `${header}.broken`]),
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
     if (!verify({ ...source, [key]: source[key].replaceAll(before, after) }).length) throw new Error(`self-test mutation survived: ${key}`);
   }
-  console.log(`PASS: ${mutations.length} planted defects were rejected`);
+  const feed = JSON.parse(source.feed);
+  feed.entries.unshift({ task: "BROKEN", guard: FILES.self, modules: ["maintenance"], cols: ["reverse_link"], leafRe: ".*" });
+  if (!verify({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("self-test feed mutation survived");
+  console.log(`PASS: ${mutations.length + 1} planted defects were rejected`);
 }
 console.log("PASS: compliance and maintenance records reverse-drill across Compliance, Maintenance, and Safety");
