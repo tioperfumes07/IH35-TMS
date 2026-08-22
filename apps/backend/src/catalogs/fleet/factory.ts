@@ -21,6 +21,8 @@ type CatalogFactoryConfig = {
   displayName: string;
   codeRegex: RegExp;
   readOnly?: boolean;
+  /** A small number of operational pickers legitimately request more than the default 200 rows. */
+  listLimitMax?: number;
   // PER-ENTITY (owner ruling 2026-07-24): when true, the catalog carries operating_company_id and
   // every read/write is membership-checked + RLS-scoped to that entity via withCompanyScope, and the
   // uniqueness of `code` is per-entity. REQUIRED explicitly (LST-F02b) — omitting used to default to
@@ -43,6 +45,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   if (!urlSegmentGuard.test(config.urlSegment)) throw new Error(`invalid_url_segment_for_catalog_factory: ${config.urlSegment}`);
 
   const scoped = config.companyScoped === true;
+  const catalogListQuerySchema = config.listLimitMax
+    ? listQuerySchema.extend({ limit: z.coerce.number().int().min(1).max(config.listLimitMax).default(50) })
+    : listQuerySchema;
   const basePath = `${config.routePrefix}/${config.urlSegment}`;
   // operating_company_id column is projected only for scoped catalogs (the global ones don't have it).
   const opcoSelect = scoped ? "t.operating_company_id," : "";
@@ -79,7 +84,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const parsed = (scoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
+    const parsed = (scoped ? companyScopedListQuerySchema : catalogListQuerySchema).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
     const opco = scoped ? (q as { operating_company_id: string }).operating_company_id : null;
