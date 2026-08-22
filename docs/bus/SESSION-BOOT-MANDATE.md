@@ -6,6 +6,8 @@ Every hour: `WAVE-2-AND-3-EVERYTHING-2026-08-21.md` → `INBOX-<SEAT>.md` → `C
 
 **WAVE 1 = Urgent 6 then rest of urgent (customers/drivers/fleet/lists)** then **WAVE 2** then **WAVE 3**. Finish each **module**. Canonical: `docs/bus/WAVE-2-AND-3-EVERYTHING-2026-08-21.md`.
 
+**Owner 21:18 CT:** If a coder has **truly finished Accounting in their lane**, they continue to the **next Urgent 6 module (banking)** — do not idle waiting for leftover-dry. Module CERTIFIED remains Fully-Wired 1–12 on the current healthz SHA (Cursor Live Chrome).
+
 **USMCA ONLY.** No Trucking. No Transportation. **No QBO sync / no TMS→QBO write-back.** QBO/McLeod/NetSuite/Alvys = **product quality**, not QuickBooks Online sync.
 
 Seats: Codex · CC-1 · CC-2 · CC-3 · Cursor. Devin PARKED.
