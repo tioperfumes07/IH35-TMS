@@ -6325,6 +6325,9 @@
       "vendor_id",
       "vendor_invoice_amount",
       "vendor_invoice_number",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id",
       "work_order_id"
     ],
     "maintenance.parts_purchases": [
