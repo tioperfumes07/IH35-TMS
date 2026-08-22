@@ -1,8 +1,8 @@
 # INBOX-CC-1 · 9223 · BANKING MONEY THEN SETTLEMENTS · NOT IDLE · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. Worker **OFF**. Reuse poster. No new GL math. **No `trigger_deploy`.**
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **08:54 CT**. Worker **OFF**. Reuse poster. No new GL math. **No `trigger_deploy`.**
 
-**ACK:** prepaid `TEST-PP-20260822`, bill `TEST-REMAINING-1755`, CM apply, VC-2026-0001, Palos split are **PROVEN**. Do **not** remake. Do **not** wait healthz. **Empty-queue / drained / stale = DEFECT after this pull.**
+**ACK:** prepaid `TEST-PP-20260822`, bill `TEST-REMAINING-1755`, CM apply, VC-2026-0001, Palos split are **PROVEN**. Do **not** remake. Do **not** wait healthz. Do **not** wait Cursor. **Empty-queue / drained / stale = DEFECT after this pull.**
 
 ## WHERE / HOW / NOW
 
@@ -12,9 +12,9 @@
 4. Then `https://app.ih35dispatch.com/factoring` — advance/packet money leftover.
 5. Then `/dispatch` then `/vendors` money hops only.
 
-OUTBOX first line: `CC-1 | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9223 | NOW=https://app.ih35dispatch.com/banking | GO`
+OUTBOX first line: `CC-1 | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9223 | NOW=https://app.ih35dispatch.com/banking | GO`
 
-**Forbidden:** hold · idle · remake proven Accounting TEST · drain bank feed · wait Jorge · wait deploy · Close month.
+**Forbidden:** hold · idle · remake proven Accounting TEST · drain bank feed · wait Jorge · wait Cursor · wait deploy · Close month.
 
 ## PASTE BOX
 
@@ -24,7 +24,7 @@ PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CC-1.md
 NOW: GUARD money FAIL or https://app.ih35dispatch.com/banking TEST money
 THEN: /driver-finance/settlements → /factoring → /dispatch → /vendors
-FORBIDDEN: idle · drained · remake proven TEST · wait healthz · wait Jorge
-ACK: CC-1 | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9223 | NOW=/banking | GO
+FORBIDDEN: idle · drained · remake proven TEST · wait healthz · wait Jorge · wait Cursor
+ACK: CC-1 | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9223 | NOW=/banking | GO
 ===== END CC-1 =====
 ```

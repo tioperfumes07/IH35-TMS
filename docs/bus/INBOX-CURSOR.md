@@ -1,8 +1,10 @@
-# INBOX-CURSOR · 9222 · LEAD · URGENT-BLOCKS-NOW 04:11CT · FAST-MERGE
+# INBOX-CURSOR · 9222 · LEAD · URGENT-BLOCKS-NOW 08:54CT · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. **No `trigger_deploy` while `dep-da4mig6k1f9s73eqohog` is in progress.** Prior `dep-da4ma06k1f9s73epv6rg` already **update_failed**. Web/driver autoDeploy already live — do not stack those.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`.
 
-Owner: seats must **ACK 04:11CT** and open their **first URL**. Accounting 4 CREATE-TEST hops **proven** — do not pad, **do not freeze seats**.
+**Render:** authenticate from Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd` — **do not skip**. Set dashboard `healthCheckPath=/api/v1/healthz/readyz`. **One** batch deploy of `origin/main` after product merges. **No per-merge kick.** CC/Codex never `trigger_deploy`.
+
+Owner: seats must **ACK 08:54CT** and open their **first URL**. Accounting 4 CREATE-TEST hops **proven** — do not pad, **do not freeze seats**.
 
 ## PROVEN (no remake)
 
@@ -10,12 +12,12 @@ Owner: seats must **ACK 04:11CT** and open their **first URL**. Accounting 4 CRE
 
 ## WHERE / HOW / NOW
 
-1. Keep INBOXes = this timestamp. If a seat OUTBOX says stale/drained, rewrite is already on main — they **pull**.
-2. Cursor-lane wiring FAILs (EVEN verify-step; no CLAIMED in feature PR): ship + FAST-MERGE.
+1. Keep INBOXes = this timestamp. If a seat OUTBOX says stale/drained, they **pull**.
+2. Merge any **product** PRs, then **one** API deploy (not #10720 tracker-only unless needed).
 3. When `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` ≠ `0cec933`: Daily Recon **200**, archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999`, prepaid Create GL pickers. **Then** Accounting certify if those pass. Until then **NOT CERTIFIED**.
 4. After certify: unpaid Live on U2–R4 same as CC-2 if still open.
 
-**Forbidden:** hold seats on Accounting · empty-queue · drain For-review · second API kick in-flight.
+**Forbidden:** hold seats on Accounting · empty-queue · drain For-review · stacked API deploys.
 
 ## PASTE BOX
 
@@ -23,9 +25,9 @@ Owner: seats must **ACK 04:11CT** and open their **first URL**. Accounting 4 CRE
 ===== CURSOR · PORT 9222 · FAST-MERGE · LEAD =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CURSOR.md
-NOW: no second API kick dep-da4mig6k1f9s73eqohog · wiring FAILs · seats ACK 04:11CT
+NOW: Desktop APIS Render auth · one batch deploy · seats ACK 08:54CT
 THEN: healthz ≠ 0cec933 → Daily Recon 200 + archived vendor + prepaid pickers
 FORBIDDEN: freeze seats · pad TEST · drain For-review · stacked deploy
-ACK: Cursor | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9222 | NOW=lead | GO
+ACK: Cursor | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9222 | NOW=lead | GO
 ===== END CURSOR =====
 ```

@@ -1,16 +1,18 @@
-# URGENT BLOCKS NOW · 2026-08-22 04:11 CT · BINDING
+# URGENT BLOCKS NOW · 2026-08-22 08:54 CT · BINDING
 
-**This file is the NOW.** Pull `origin/main`. If your INBOX disagrees with **this timestamp**, this file wins. Claiming **stale** / **drained** / **empty-queue** / **awaiting next order** after this pull is a **process defect**.
+**This file is the NOW.** Pull `origin/main`. If your INBOX disagrees with **this timestamp**, this file wins. Claiming **stale** / **drained** / **empty-queue** / **awaiting next order** / **waiting Cursor** / **waiting healthz** after this pull is a **process defect**.
 
 | App | Entity | Company UUID |
 |-----|--------|----------------|
 | `https://app.ih35dispatch.com` | **USMCA only** | `5c854333-6ea5-4faa-af31-67cb272fef80` |
 
-Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→QBO write-back. No `eld`. No `/program/matrix` parked tab. **No `trigger_deploy` from any seat.** Cursor API: `dep-da4ma06k1f9s73epv6rg` **update_failed**; replacement **`dep-da4mig6k1f9s73eqohog`** in flight. Do not stack.
+Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→QBO write-back. No `eld`. No `/program/matrix` parked tab.
 
 **Ports (do not steal):** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin-A **PARKED**.
 
-**Law:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · Fully-Wired 1–12 · FAST-MERGE.
+**Law:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · Fully-Wired 1–12 · FAST-MERGE · `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`.
+
+**Render (Cursor only, one batch):** authenticate from Desktop APIs file `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd` (`APIS-ACCESS.md`). **Do not skip auth.** MCP login card is optional; the Desktop key is the auth. **No `trigger_deploy` from CC-1 / CC-2 / CC-3 / Codex.** Cursor: **one** API deploy after merges are on `main`. Do not stack.
 
 ---
 
@@ -21,10 +23,10 @@ Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→
 3. If the wizard is **unproven**: one labeled **TEST DATA** create → save → **reload** → canonical row. Memo `TEST DATA VOID-AT-LAUNCH`. Placeholders `$1,200` / `$1.20` / remainder on an open TEST bill.
 4. If the wizard is **already proven** (list below): **do not remake**. Click through; unique FINDING only on **500 / dead click / silent no-op**.
 5. Unique FINDING = one PR: code + guard `scripts/verify-*.mjs` + EVEN/band claim sequence + `cursor-ship-preflight` / money gate + FAST-MERGE.
-6. OUTBOX **first line** same turn: `SEAT | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=n | NOW=<exact URL> | GO`
+6. OUTBOX **first line** same turn: `SEAT | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=n | NOW=<exact URL> | GO`
 7. Then the **next URL in YOUR list**. Never invent “module dry” while a URL in your list is unopened this session.
 
-**Forbidden:** wait Jorge · wait `healthz` as idle · remake Accounting proven hops · drain Banking For-review · Close month · second Render deploy · inventory while your list is unfinished.
+**Forbidden:** wait Jorge · wait Cursor · wait `healthz` as idle · remake Accounting proven hops · drain Banking For-review · Close month · second Render deploy from a coder seat · inventory while your list is unfinished.
 
 ---
 
@@ -39,7 +41,7 @@ Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→
 | Bank split sample | Palos Garza txn `f9cc15bf-…` two vendors |
 | Sales-tax agency | CC-2 TEST agency (do not duplicate) |
 
-**CERTIFY:** blocked until API `healthz/shallow` `version` ≠ `0cec933` **and** `GET /api/v1/accounting/daily-recon` is **200**. Cursor re-clicks Daily Recon + archived vendor `308f6434-…` + prepaid Create pickers **after** that SHA. Not your idle excuse.
+**CERTIFY (Cursor Live Chrome, after the one batch deploy is live):** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` ≠ `0cec933` **and** `GET /api/v1/accounting/daily-recon` is **200**, then re-click Daily Recon + archived vendor `308f6434-…` + prepaid Create GL pickers. **That is not a seat idle.** Seats execute U2–U6 / R1–R4 **now**.
 
 ---
 
@@ -49,7 +51,7 @@ Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→
 
 | # | Module | Home URL |
 |---|--------|----------|
-| U1 | Accounting | `/accounting` — CREATE-TEST **done**; certify = Cursor after deploy |
+| U1 | Accounting | `/accounting` — CREATE-TEST **done**; certify = Cursor after the **one** batch deploy |
 | U2 | Banking | `/banking` |
 | U3 | Settlements | `/driver-finance/settlements` |
 | U4 | Factoring | `/factoring` |
@@ -71,7 +73,7 @@ Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→
 
 ---
 
-## Per-seat NOW (04:11 CT) — exact next clicks
+## Per-seat NOW (08:54 CT) — exact next clicks
 
 ### CC-1 · 9223 · MONEY
 
@@ -128,13 +130,13 @@ No status-only PRs. No “Built 100% so idle.”
 
 No fake reverse PASS. No Chrome login theater.
 
-### Cursor · 9222 · LEAD + LIVE AFTER DEPLOY
+### Cursor · 9222 · LEAD + CERTIFY AFTER ONE BATCH DEPLOY
 
 | Order | Where | What / how |
 |-------|--------|------------|
-| 1 | Render API **`dep-da4mig6k1f9s73eqohog`** | Watch. **No second kick** while `build_in_progress` / `update_in_progress`. Prior `dep-da4ma06k1f9s73epv6rg` already failed — do not re-kick that id. |
-| 2 | When `healthz` ≠ `0cec933` | `/accounting/daily-recon` must 200. Archived vendor `308f6434`. Prepaid Create GL pickers. Then stamp Accounting certify **only** if those pass. |
-| 3 | Until SHA moves | Cursor-lane wiring FAILs (EVEN verify-steps, no CLAIMED in feature PR). Keep this file + INBOXes current. |
+| 1 | Desktop APIs + Render API | Auth from `APIS-ALL-05-29-2026.rtfd`. Set live `healthCheckPath=/api/v1/healthz/readyz` (must match `render.yaml`). **One** `POST /deploys` of current `origin/main`. Never per-merge. Never stack. |
+| 2 | When `healthz` ≠ `0cec933` | `/accounting/daily-recon` must 200. Archived vendor `308f6434`. Prepaid Create GL pickers. Then stamp Accounting certify **only** if those pass. Then U2–U6 Live leftover. |
+| 3 | Until SHA moves | Seats **GO** U2–R4. Cursor-lane wiring FAILs (EVEN verify-steps, no CLAIMED in feature PR). |
 | 4 | After Accounting certify | Same U2→R4 sequence as CC-2 if a leaf is still unpaid Live. |
 
 ---
@@ -142,5 +144,5 @@ No fake reverse PASS. No Chrome login theater.
 ## ACK (every seat, first OUTBOX line after pull)
 
 ```text
-<SEAT> | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=<n> | NOW=<first URL in your table> | GO
+<SEAT> | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=<n> | NOW=<first URL in your table> | GO
 ```
