@@ -5,7 +5,6 @@ import { EntityLink, type EntityKind } from "../../components/shared/EntityLink"
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -136,11 +135,6 @@ export function EscrowPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- select when accounts load / URL deep-link changes
   }, [accountRows, searchParams]);
 
-  const selectedAccount = useMemo(
-    () => accountRows.find((row) => row.id === selectedAccountId) ?? null,
-    [accountRows, selectedAccountId]
-  );
-
   const accountColumns = useMemo<ParityColumn<EscrowAccount>[]>(
     () => [
       {
@@ -208,12 +202,10 @@ export function EscrowPage() {
   );
 
   return (
-    <AccountingSubNavWrapper>
-      <div className="space-y-4 p-4">
-      <PageHeader
-        title="Escrow"
-        subtitle="Escrow accounts and posting history"
-        actions={
+    <AccountingSubNavWrapper
+      title="Escrow"
+      subtitle="Escrow accounts and posting history"
+      actions={
           <div className="flex flex-wrap gap-2 text-xs">
             <Link
               to="/driver-finance/settlements"
@@ -238,8 +230,8 @@ export function EscrowPage() {
             </Link>
           </div>
         }
-      />
-
+    >
+      <div className="space-y-4 p-4">
       <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit">
         {(["accounts", "pending"] as const).map((tab) => (
           <button
@@ -288,12 +280,6 @@ export function EscrowPage() {
               emptyText="No escrow accounts found."
             />
           )}
-
-          {selectedAccount ? (
-            <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-700">
-              Selected account: <span className="font-mono">{selectedAccount.id}</span> · Balance {money(selectedAccount.balance_cents)}
-            </div>
-          ) : null}
 
           {selectedAccountId ? (
             <ParityTable

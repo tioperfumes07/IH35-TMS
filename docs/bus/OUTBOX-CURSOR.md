@@ -1,3 +1,4 @@
+- 2026-08-21T19:32CT Cursor | SHIP #13772 ACCT-F5426 register human Ref No. · NOW=CC-1 JE human memos · escrow h1 in-flight · Accounting NOT CERTIFIED · Live=BLOCKED · no Render kick | GO
 - 2026-08-21T19:07CT Cursor | OWNER LOCKSTEP · ALL SEATS NOW=ACCOUNTING until leftover dry then banking→… | CC-1 register UUID · CC-2 acct reverse · CC-3 acct picker · Codex acct reverse · Cursor Live Chrome acct | Live=BLOCKED · no Render kick | GO
 - 2026-08-21T18:56CT Cursor | OWNER: categorize is not a coder job · NOW=honest labels+wiring (register UUID ref, expense_number) · Live Chrome U6 · Live=BLOCKED · no Render kick | GO
 - 2026-08-21T18:44CT Cursor | OWNER HONESTY · no BofA categorize/recon · Neon USMCA bank_txn 312 (277 for_review 0 JE · 35 matched) UI For review 230 · register 69 postings 66 UUID refs 0 QBO JE · NOW=CC-1 ACCT-REGISTER-REF-IS-SOURCE-UUID · Live=BLOCKED · no Render kick | GO
