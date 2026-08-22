@@ -110,6 +110,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "lease_contract";
     case "recurring_template":
       return "recurring_template";
+    case "period_close":
+      return "period_close";
     default:
       return null;
   }

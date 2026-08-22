@@ -20,6 +20,8 @@ const AMORTIZATION = "apps/frontend/src/pages/finance/AmortizationPage.tsx";
 const LEASE_DETAIL = "apps/frontend/src/pages/accounting/AccountingLeaseDetailPage.tsx";
 const RECURRING_DETAIL = "apps/frontend/src/pages/accounting/AccountingRecurringTemplateDetailPage.tsx";
 const RECURRING_ROUTE = "apps/backend/src/accounting/recurring-template-detail.routes.ts";
+const PERIOD_CLOSE_DETAIL = "apps/frontend/src/pages/accounting/AccountingPeriodCloseDetailPage.tsx";
+const PERIOD_CLOSE_ROUTE = "apps/backend/src/accounting/period-close-detail.routes.ts";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -90,6 +92,18 @@ const CHECKS = [
   { name: "Audit Trail drills recurring template", file: AUDIT_TRAIL, pattern: /case "recurring_template":\s*return "recurring_template";/ },
   { name: "Posting Lineage drills recurring template", file: POSTING_LINEAGE, pattern: /case "recurring_template":\s*return "recurring_template";/ },
   { name: "JE Detail drills recurring template", file: JE_DETAIL, pattern: /case "recurring_template":\s*return "recurring_template";/ },
+  { name: "Audit API canonicalizes period close", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "period_close":\s*return "period_close";/ },
+  { name: "JE source API canonicalizes period close", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'period_close' THEN 'period_close'/ },
+  { name: "EntityLink owns fiscal-year close route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "period_close":\s*return `\/accounting\/period-closes\/\$\{encodeURIComponent\(id\)\}`;/ },
+  { name: "Fiscal-year close detail route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/period-closes\/:fiscalYearId"[\s\S]*?<AccountingPeriodCloseDetailPage/ },
+  { name: "Fiscal-year close detail uses scoped exact reader", file: PERIOD_CLOSE_DETAIL, pattern: /getAccountingPeriodClose\(fiscalYearId, companyId\)/ },
+  { name: "Fiscal-year close backend validates stored identifier", file: PERIOD_CLOSE_ROUTE, pattern: /fiscal_year_id: z\.string\(\)\.regex\(\/\^FY\\d\{4\}\$\/\)/ },
+  { name: "Fiscal-year close backend explicitly scopes source link", file: PERIOD_CLOSE_ROUTE, pattern: /tsl\.operating_company_id = \$1::uuid[\s\S]*?tsl\.linked_object_type = 'period_close'[\s\S]*?tsl\.linked_object_id = \$2/ },
+  { name: "Fiscal-year close backend scopes posting join", file: PERIOD_CLOSE_ROUTE, pattern: /jep\.id = tsl\.journal_entry_posting_id[\s\S]*?jep\.operating_company_id = tsl\.operating_company_id/ },
+  { name: "Fiscal-year close detail drills journal entry", file: PERIOD_CLOSE_DETAIL, pattern: /kind="journal_entry" id=\{row\.journal_entry_id\}/ },
+  { name: "Audit Trail drills period close", file: AUDIT_TRAIL, pattern: /case "period_close":\s*return "period_close";/ },
+  { name: "Posting Lineage drills period close", file: POSTING_LINEAGE, pattern: /case "period_close":\s*return "period_close";/ },
+  { name: "JE Detail drills period close", file: JE_DETAIL, pattern: /case "period_close":\s*return "period_close";/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },

@@ -82,6 +82,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "lease_contract";
     case "recurring_template":
       return "recurring_template";
+    case "period_close":
+      return "period_close";
     default:
       return sourceType?.trim() || null;
   }
