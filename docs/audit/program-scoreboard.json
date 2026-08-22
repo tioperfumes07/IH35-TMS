@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-22T09:20:44-05:00",
-    "sourceSha": "826a2183d",
+    "generatedAt": "2026-08-22T09:23:59-05:00",
+    "sourceSha": "4b20270f8",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2115,
+    "ledgerRows": 2116,
     "failOpen": 0,
     "defects": 19
   },
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 14203,
+      "title": "FINDING: OUTBOX-CC-2-50076-STATUS LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 09:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14203",
+      "sha": "46035574c",
+      "committedAtIso": "2026-08-22T09:25:00-05:00"
+    },
+    {
+      "number": 14202,
+      "title": "chore: claim migration 202613070000 + verify-step 4309 for ACCT-F5789",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 09:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14202",
+      "sha": "fe688b7e1",
+      "committedAtIso": "2026-08-22T09:24:18-05:00"
+    },
+    {
+      "number": 14200,
+      "title": "ChatGpt-Codex-1- fix(dispatch): DISP-F5855 exact load detail reverse Built",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 09:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14200",
+      "sha": "f01c59db7",
+      "committedAtIso": "2026-08-22T09:24:06-05:00"
+    },
+    {
+      "number": 14201,
+      "title": "FINDING: VENDORS-REFRESH-50076 LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 09:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14201",
+      "sha": "4b20270f8",
+      "committedAtIso": "2026-08-22T09:23:59-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 09:23 AM CT",
+      "url": "",
+      "sha": "eea8962b9",
+      "committedAtIso": "2026-08-22T14:23:03Z"
+    },
+    {
       "number": 14199,
       "title": "FINDING: OUTBOX-CC-2-50075-STATUS LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14195",
       "sha": "48a5eef55",
       "committedAtIso": "2026-08-22T09:17:48-05:00"
-    },
-    {
-      "number": 14194,
-      "title": "FINDING: CURSOR-ACK-0914",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14194",
-      "sha": "a221c83c1",
-      "committedAtIso": "2026-08-22T09:16:34-05:00"
-    },
-    {
-      "number": 14190,
-      "title": "FINDING: CI-RED-BASELINE-DRIFT-ORPHAN-GUARD LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14190",
-      "sha": "f736f53a6",
-      "committedAtIso": "2026-08-22T09:16:09-05:00"
-    },
-    {
-      "number": 14193,
-      "title": "FINDING: ACCT-F5788-FROM-LOAD-CUSTOMER-LEFT-JOIN LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14193",
-      "sha": "ae7f6660f",
-      "committedAtIso": "2026-08-22T09:15:43-05:00"
-    },
-    {
-      "number": 14192,
-      "title": "FINDING: OUTBOX-CC-2-50073-ACK-0908 LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14192",
-      "sha": "fae2ae532",
-      "committedAtIso": "2026-08-22T09:15:25-05:00"
-    },
-    {
-      "number": 14191,
-      "title": "ChatGpt-Codex-1- fix(dispatch): DISP-F5853 exact in-transit reverse Built",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14191",
-      "sha": "6fdbfd84d",
-      "committedAtIso": "2026-08-22T09:14:21-05:00"
     }
   ]
 }
