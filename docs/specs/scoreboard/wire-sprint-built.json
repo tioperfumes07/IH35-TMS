@@ -1647,24 +1647,6 @@
       "leafRe": "^(background|medical|driver|profile|detail|safety|compliance|create)"
     },
     {
-      "task": "UNIT-FINANCE-LINKAGE-GL-JE-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-unit-finance-gl-je-reverse.mjs",
-      "modules": [
-        "fleet",
-        "accounting"
-      ],
-      "cols": [
-        "unit",
-        "ap_bill",
-        "expense",
-        "gl_je",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^unit\\.detail\\.finance_linkage$"
-    },
-    {
       "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-embedded-assignment-reverse-links.mjs",

@@ -1,13 +1,18 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["fleet","accounting"],"cols":["unit","ap_bill","expense","gl_je","connectivity","reverse_link"],"leafRe":"^unit\\.detail\\.finance_linkage$","task":"UNIT-FINANCE-LINKAGE-GL-JE-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["unit","ap_bill","expense","gl_je","connectivity"],"leaves":["unit.detail.finance_linkage"],"task":"UNIT-FINANCE-LINKAGE-GL-JE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.detail.finance_linkage"],"task":"FLEET-F5917-FINANCE-LINKAGE-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 const LABEL = "verify-unit-finance-gl-je-reverse";
 const files = {
   service: "apps/backend/src/accounting/bills.service.ts",
   api: "apps/frontend/src/api/accounting.ts",
   view: "apps/frontend/src/pages/units/UnitFinanceLinkageTab.tsx",
+  required: "docs/specs/scoreboard/modules/fleet.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-unit-finance-gl-je-reverse.mjs",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.detail.finance_linkage"],"task":"FLEET-F5917-FINANCE-LINKAGE-REVERSE-EXACT","vertical":"class-sweep"} */';
 function audit(s) {
   const failures = [];
   if (!/jep\.source_transaction_type = 'bill'/.test(s.service) || !/jep\.source_transaction_id = b\.id::text/.test(s.service)) failures.push("bill→JE posting resolution missing");
@@ -18,6 +23,23 @@ function audit(s) {
   if ((s.view.match(/kind="journal_entry"/g) || []).length < 2) failures.push("bill and expense JE drills missing");
   if (!/b\.journal_entry_id/.test(s.view) || !/e\.journal_entry_id/.test(s.view)) failures.push("conditional source JE rendering missing");
   if (!/linkedMoneyQuery\.isError/.test(s.view) || !/No bills or expenses stamp/.test(s.view)) failures.push("honest reverse states missing");
+  if (!/EntityLink kind="bill" id=\{b\.id\}/.test(s.view) || !/kind="expense"[\s\S]{0,80}id=\{e\.id\}/.test(s.view)) failures.push("canonical bill/expense source drills missing");
+  let leaf;
+  const visit = (value) => {
+    if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") {
+      if (value.id === "unit.detail.finance_linkage" && Array.isArray(value.required)) leaf = value;
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(JSON.parse(s.required));
+  if (!leaf) failures.push("Fleet unit finance linkage Required leaf missing");
+  else {
+    if (!leaf.required.includes("reverse_link")) failures.push("Fleet unit finance linkage must require reverse_link");
+    if (leaf.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Fleet unit finance linkage route must name the canonical finance tab");
+  }
+  if (!s.self.split('import fs from "node:fs";')[0].includes(EXACT_HEADER)) failures.push("exact Fleet finance-linkage reverse header missing");
+  if (/"guard"\s*:\s*"scripts\/verify-unit-finance-gl-je-reverse\.mjs"/.test(s.feed)) failures.push("manual feed duplicates unit finance-linkage ownership");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -32,6 +54,12 @@ if (process.argv.includes("--selftest")) {
     ["bill-drill", "view", /b\.journal_entry_id/g, "b.missing_je_id"],
     ["expense-drill", "view", /e\.journal_entry_id/g, "e.missing_je_id"],
     ["drill-kind", "view", /kind="journal_entry"/g, 'kind="expense"'],
+    ["source-drill", "view", /EntityLink kind="bill" id=\{b\.id\}/, 'EntityLink kind="unit" id={b.id}'],
+    ["leaf", "required", /"unit\.detail\.finance_linkage"/, '"unit.detail.finance_linkage_MISSING"'],
+    ["reverse", "required", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,300})"reverse_link"/, '$1"reverse_link_MISSING"'],
+    ["route", "required", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,200})"\/fleet\/units\/:id\/detail\?tab=finance"/, '$1"/fleet/units/:id"'],
+    ["header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-unit-finance-gl-je-reverse.mjs"},`],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
