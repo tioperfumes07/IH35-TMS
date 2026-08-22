@@ -1224,7 +1224,12 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   }
 
   const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);
-  const billLabel = bill.bill_number ? `Bill ${bill.bill_number}` : `Bill ${sourceId}`;
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — same fix as buildExpenseLines' label below: bill_number is
+  // 96.6% populated live (ACCT-F5708), but the rare null case previously baked the raw bill UUID into
+  // the permanent JE memo. journal-entries.service.ts's list resolver ties this JE to its bill via
+  // journal_entry_postings.source_transaction_id, not memo text, so an honest "Bill" with no id is
+  // strictly better than a raw UUID.
+  const billLabel = bill.bill_number ? `Bill ${bill.bill_number}` : "Bill";
   return {
     postingDate: bill.bill_date,
     memo: `${billLabel} posting`,
@@ -1378,7 +1383,14 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)");
   }
 
-  const label = exp.expense_number ? `Expense ${exp.expense_number}` : `Expense ${sourceId}`;
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — expense_number is NULL by design for driverless/unattributed
+  // expenses (no load to scope a load-scoped number to; see expenses.routes.ts + migration
+  // 202608131400's header). The old ${sourceId} fallback baked the raw expense UUID straight into the
+  // permanent JE memo text for every one of those rows. journal-entries.service.ts's list resolver
+  // already ties this JE to its expense via journal_entry_postings.source_transaction_id (not memo
+  // text), so the memo itself no longer needs to carry an identifier for display to work — an honest
+  // "Expense" with no id is strictly better than a raw UUID nobody can read.
+  const label = exp.expense_number ? `Expense ${exp.expense_number}` : "Expense";
   return {
     postingDate: exp.transaction_date,
     memo: `${label} posting`,

@@ -755,6 +755,7 @@ const JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL = `
       pay.display_id,
       ds.display_id,
       ex.expense_number,
+      bpay.display_id, bpay.bill_number,
       ftu.unit_number,
       NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')
     )
@@ -776,6 +777,12 @@ const JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL = `
       ON src.t = 'settlement' AND ds.id::text = src.sid AND ds.operating_company_id = je.operating_company_id
     LEFT JOIN accounting.expenses ex
       ON src.t = 'expense' AND ex.id::text = src.sid AND ex.operating_company_id = je.operating_company_id
+    -- LV-JE-MEMO-RECORD-NOT-VISIBLE (229-row residual) — bill_payment has no display id of its own;
+    -- resolve through the bill it paid, same two-hop join account-register.service.ts already uses.
+    LEFT JOIN accounting.bill_payments bpp
+      ON src.t = 'bill_payment' AND bpp.id::text = src.sid AND bpp.operating_company_id = je.operating_company_id
+    LEFT JOIN accounting.bills bpay
+      ON bpay.id = bpp.bill_id AND bpay.operating_company_id = je.operating_company_id
     LEFT JOIN fuel.fuel_transactions ft
       ON src.t = 'fuel_event' AND ft.id::text = src.sid AND ft.operating_company_id = je.operating_company_id
     -- Deliberately UNSCOPED by entity (matches fuel-transactions.routes.ts's own unit join): a unit

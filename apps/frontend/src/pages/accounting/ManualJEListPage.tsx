@@ -41,6 +41,19 @@ const KNOWN_MEMO_ID_PATTERNS: Array<{ re: RegExp; noun: string }> = [
   { re: /Bank categorization:? ?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Bank transaction" },
   { re: /Void reversal of bill [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Bill" },
   { re: /Void reversal of invoice [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Invoice" },
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE (229-row residual, live 2026-08-21 healthz 0cec933) — void-cancel-
+  // executors.ts writes 3 more "Void reversal of X <uuid>: <reason>" shapes this list never covered:
+  // expense (:422), bill payment (:506), and customer_payment (called "payment" in the memo, :574).
+  // Ordered before the generic "Void reversal of bill"/"invoice" patterns is unnecessary here (each
+  // requires a DIFFERENT literal noun immediately before the uuid, so none can partially match another
+  // — "bill payment" never satisfies the "bill "-then-uuid pattern since "payment" isn't a uuid) but
+  // kept grouped together for readability.
+  { re: /Void reversal of bill payment [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Bill payment" },
+  { re: /Void reversal of expense [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Expense" },
+  { re: /Void reversal of payment [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Payment" },
+  // settlement-posting.service.ts:610 — the ONE void-reversal shape with " posting" before the colon,
+  // not directly the colon (matches the same lookahead style already used for Bank categorization above).
+  { re: /Void reversal of settlement [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Settlement" },
   { re: /Reversal of [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, noun: "Journal entry" },
 ];
 // LV-JE-MEMO-RECORD-NOT-VISIBLE — resolvedSourceId/resolvedDisplayId come from the JE's own
