@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\.(settlement_summary|profit_per_truck|maintenance_cost_per_unit)$","task":"OPERATING-REPORT-ENTITY-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^(profiles\\.detail|settlements)$","task":"OPERATING-REPORT-ENTITY-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\.profile\\.maintenance$","task":"OPERATING-REPORT-ENTITY-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\.profit_per_truck$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\.profile\\.maintenance$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
@@ -9,7 +9,15 @@ const sources = {
   settlements: fs.readFileSync("apps/frontend/src/pages/reports/SettlementSummaryPage.tsx", "utf8"),
   profit: fs.readFileSync("apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", "utf8"),
   maintenance: fs.readFileSync("apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx", "utf8"),
+  reportsMatrix: fs.readFileSync("docs/specs/scoreboard/modules/reports.required.json", "utf8"),
+  driversMatrix: fs.readFileSync("docs/specs/scoreboard/modules/drivers.required.json", "utf8"),
+  fleetMatrix: fs.readFileSync("docs/specs/scoreboard/modules/fleet.required.json", "utf8"),
+  self: fs.readFileSync("scripts/verify-operating-report-entity-reverse-leaves.mjs", "utf8"),
 };
+
+function required(source, key, id) {
+  return JSON.parse(source[key]).leaves.find((leaf) => leaf.id === id)?.required ?? [];
+}
 
 const checks = [
   ["settlements", /getSettlementSummary\(\{[\s\S]*operating_company_id: companyId/, "settlement read is company-scoped"],
@@ -26,9 +34,27 @@ const checks = [
   ["maintenance", /ReportBlockVPendingBanner[\s\S]*query\.refetch\(\)/, "maintenance failure is retryable"],
 ];
 
-const failures = (candidate) => checks
-  .filter(([key, pattern]) => !pattern.test(candidate[key]))
-  .map(([, , label]) => label);
+const failures = (candidate) => {
+  const found = checks
+    .filter(([key, pattern]) => !pattern.test(candidate[key]))
+    .map(([, , label]) => label);
+  const cells = [
+    ["reportsMatrix", "report.profit_per_truck"],
+    ["driversMatrix", "settlements"],
+    ["fleetMatrix", "unit.profile.maintenance"],
+  ];
+  for (const [key, id] of cells) {
+    if (!required(candidate, key, id).includes("reverse_link")) found.push(`${key} ${id} must require reverse_link`);
+  }
+  const headers = [
+    '"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\\\.profit_per_truck$"',
+    '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$"',
+    '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"',
+  ];
+  const annotationBlock = candidate.self.split("\n").slice(0, 4).join("\n");
+  for (const header of headers) if (!annotationBlock.includes(header)) found.push(`exact Built header missing: ${header}`);
+  return found;
+};
 
 const found = failures(sources);
 if (found.length) {
@@ -47,7 +73,19 @@ if (process.argv.includes("--self-test")) {
       process.exit(1);
     }
   }
-  console.log(`verify-operating-report-entity-reverse-leaves: SELF-TEST PASS — ${checks.length} planted defects rejected`);
+  const evidenceMutations = [
+    ["reportsMatrix", '"id": "report.profit_per_truck"', '"id": "report.profit_per_truck.broken"'],
+    ["driversMatrix", '"id": "settlements"', '"id": "settlements.broken"'],
+    ["fleetMatrix", '"id": "unit.profile.maintenance"', '"id": "unit.profile.maintenance.broken"'],
+    ["self", '"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\\\.profit_per_truck$"', '"modules":["reports"],"cols":["connectivity"],"leafRe":"^report\\\\.profit_per_truck$"'],
+    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$"', '"modules":["drivers"],"cols":["connectivity"],"leafRe":"^settlements$"'],
+    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"', '"modules":["fleet"],"cols":["connectivity"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"'],
+  ];
+  for (const [key, before, after] of evidenceMutations) {
+    if (!sources[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);
+    if (!failures({ ...sources, [key]: sources[key].replace(before, after) }).length) throw new Error(`self-test mutation survived: ${key}`);
+  }
+  console.log(`verify-operating-report-entity-reverse-leaves: SELF-TEST PASS — ${checks.length + evidenceMutations.length} planted defects rejected`);
 }
 
 console.log(`verify-operating-report-entity-reverse-leaves: PASS — ${checks.length} report/entity reverse invariants`);
