@@ -184,7 +184,7 @@ export function TransfersListPage() {
             <EntityLink
               kind="bank_transaction"
               id={row.matched_bank_transaction_id}
-              label={entityLabel(null, row.matched_bank_transaction_id, "Bank transaction")}
+              label={entityLabel(row.matched_bank_transaction_label, row.matched_bank_transaction_id, "Bank transaction")}
             />
           ) : (
             <span className="text-xs text-slate-500">—</span>

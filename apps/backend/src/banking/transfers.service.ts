@@ -601,6 +601,21 @@ const TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL = `
   )
 `;
 
+const TRANSFER_MATCHED_BANK_TRANSACTION_LABEL_SQL = `
+  (
+    SELECT COALESCE(
+      NULLIF(TRIM(bt.description), ''),
+      NULLIF(TRIM(bt.merchant_name), ''),
+      'Bank transaction ' || TO_CHAR(bt.transaction_date, 'MM/DD/YYYY')
+    )
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = t.operating_company_id
+      AND bt.matched_transfer_id = t.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
+  )
+`;
+
 export async function listTransfers(input: {
   userId: string;
   operatingCompanyId: string;
@@ -645,7 +660,8 @@ export async function listTransfers(input: {
           tb.account_name AS to_bank_name,
           fa.account_name AS from_coa_name,
           ta.account_name AS to_coa_name,
-          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_label
         FROM banking.transfers t
         LEFT JOIN banking.bank_accounts fb
           ON fb.id = t.from_account_id
@@ -676,7 +692,8 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
       `
         SELECT
           t.*,
-          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_label
         FROM banking.transfers t
         WHERE t.id = $1
           AND t.operating_company_id = $2::uuid
@@ -1036,4 +1053,3 @@ export async function getIntercompanyTransferGroup(groupId: string, operatingCom
     return res.rows;
   });
 }
-
