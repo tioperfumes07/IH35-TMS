@@ -87,6 +87,10 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "recurring_template";
     case "period_close":
       return "period_close";
+    case "prepaid_amortization_row":
+    case "depreciation_schedule_row":
+    case "loan_amortization_row":
+      return sourceType?.trim() || null;
     default:
       return sourceType?.trim() || null;
   }

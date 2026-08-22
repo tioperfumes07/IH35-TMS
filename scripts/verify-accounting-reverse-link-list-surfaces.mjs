@@ -22,6 +22,8 @@ const RECURRING_DETAIL = "apps/frontend/src/pages/accounting/AccountingRecurring
 const RECURRING_ROUTE = "apps/backend/src/accounting/recurring-template-detail.routes.ts";
 const PERIOD_CLOSE_DETAIL = "apps/frontend/src/pages/accounting/AccountingPeriodCloseDetailPage.tsx";
 const PERIOD_CLOSE_ROUTE = "apps/backend/src/accounting/period-close-detail.routes.ts";
+const SCHEDULE_DETAIL = "apps/frontend/src/pages/accounting/AccountingScheduleRowDetailPage.tsx";
+const SCHEDULE_ROUTE = "apps/backend/src/accounting/schedule-row-detail.routes.ts";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -104,6 +106,17 @@ const CHECKS = [
   { name: "Audit Trail drills period close", file: AUDIT_TRAIL, pattern: /case "period_close":\s*return "period_close";/ },
   { name: "Posting Lineage drills period close", file: POSTING_LINEAGE, pattern: /case "period_close":\s*return "period_close";/ },
   { name: "JE Detail drills period close", file: JE_DETAIL, pattern: /case "period_close":\s*return "period_close";/ },
+  { name: "Schedule-row EntityLink kinds exist", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "prepaid_amortization_row":\s*case "depreciation_schedule_row":\s*case "loan_amortization_row":\s*return `\/accounting\/schedule-rows\/\$\{kind\}\/\$\{id\}`;/ },
+  { name: "Schedule-row detail route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/schedule-rows\/:kind\/:id"[\s\S]*?<AccountingScheduleRowDetailPage/ },
+  { name: "Schedule-row reader kind whitelist", file: SCHEDULE_ROUTE, pattern: /z\.enum\(\["prepaid_amortization_row", "depreciation_schedule_row", "loan_amortization_row"\]\)/ },
+  { name: "Prepaid row read explicitly company scoped", file: SCHEDULE_ROUTE, pattern: /FROM accounting\.prepaid_amortization_rows r[\s\S]*?r\.operating_company_id = \$1::uuid AND r\.id = \$2::uuid/ },
+  { name: "Depreciation row read explicitly company scoped", file: SCHEDULE_ROUTE, pattern: /FROM accounting\.depreciation_schedule_rows r[\s\S]*?r\.operating_company_id = \$1::uuid AND r\.id = \$2::uuid/ },
+  { name: "Loan row read explicitly company scoped", file: SCHEDULE_ROUTE, pattern: /FROM finance\.loan_amortization_rows r[\s\S]*?r\.operating_company_id = \$1::uuid AND r\.id = \$2::uuid/ },
+  { name: "Schedule row drills parent", file: SCHEDULE_DETAIL, pattern: /<EntityLink kind=\{row\.parent_kind\} id=\{row\.parent_id\}/ },
+  { name: "Schedule row drills posted JE", file: SCHEDULE_DETAIL, pattern: /kind="journal_entry" id=\{row\.posted_journal_entry_id\}/ },
+  { name: "Audit Trail drills all schedule rows", file: AUDIT_TRAIL, pattern: /case "prepaid_amortization_row":\s*case "depreciation_schedule_row":\s*case "loan_amortization_row":\s*return t;/ },
+  { name: "Posting Lineage drills all schedule rows", file: POSTING_LINEAGE, pattern: /case "prepaid_amortization_row":\s*case "depreciation_schedule_row":\s*case "loan_amortization_row":\s*return t;/ },
+  { name: "JE Detail drills all schedule rows", file: JE_DETAIL, pattern: /case "prepaid_amortization_row":\s*case "depreciation_schedule_row":\s*case "loan_amortization_row":\s*return t;/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },

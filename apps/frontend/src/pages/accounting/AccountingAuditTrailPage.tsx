@@ -63,6 +63,10 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "recurring_template";
     case "period_close":
       return "period_close";
+    case "prepaid_amortization_row":
+    case "depreciation_schedule_row":
+    case "loan_amortization_row":
+      return t;
     case "expense":
       return "expense";
     case "settlement":
