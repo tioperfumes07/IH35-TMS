@@ -1,3 +1,29 @@
+- 2026-08-22T03:55Z CC-1 | BANK-F5751 SHIPPED (PR #13894) | escrow register Settlement column resolves a real display_id -- follow-up closing a gap in my OWN earlier BANK-F5743 fix | NEXT=continuing banking sweep (TransfersListPage.tsx / BankTransactionSplitModal.tsx candidates) | GO
+  Caught while re-checking DriverEscrowTabContent.tsx during the sweep: my own BANK-F5743 fix (register
+  escrow branch missing settlement_id/journal_entry_id) closed the JE column but left the Settlement
+  column's label still hardcoded null -- the query returned settlement_id (a raw uuid) but never joined
+  driver_finance.driver_settlements for a display_id.
+  Live-verified BEFORE writing any code (Neon tiny-field-89581227, bypass-scoped): both known escrow
+  rows (d58efce0-..., 77fe680d-...) resolve real settlement_display_id (S-20260802-0258 / S-2026-0002),
+  matching the settlement numbers already visible in journal_entry_memo text on the same rows -- proof
+  the join was safe before shipping it.
+  Extended scripts/verify-banking-escrow-register-settlement-je-link.mjs (the SAME guard from BANK-F5743,
+  verify-step 4241) with 3 new checks rather than writing a separate guard -- one guard owns the whole
+  escrow-register-linkage invariant, 7/7 mutation cases now (up from 4/4).
+  This one passed verify-no-money-theater naturally (genuine backend SQL change), unlike BANK-F5748's
+  frontend-only fix which needed the honest documentation-comment resolution.
+  CI NOTE: typecheck-merge-result failed on this PR but the log showed an unambiguous npm ECONNRESET
+  network flake during Install, NOT a TypeScript error -- confirmed by reading the actual log before
+  merging past it (this check has caught 2 real bugs earlier this session, so it always gets read, never
+  assumed-noise).
+  LIVE PROOF: node scripts/verify-banking-escrow-register-settlement-je-link.mjs --selftest exit 0 (7/7).
+  node scripts/verify-banking-escrow-register-settlement-je-link.mjs exit 0. npx tsc -b apps/backend +
+  apps/frontend exit 0. node scripts/verify-guard-wired.mjs exit 0. node scripts/money-pr-local-gate.mjs
+  exit 0. Merged PR #13894 confirmed on origin/main (sha ac152662d).
+  BOARD NOTE: one of BANK-F5748's 2 documented REMAINING gaps (candidate-events labels) was
+  independently closed by a concurrent sweep (#13893) while this shipped -- cross-referenced on the
+  board, not re-done.
+
 - 2026-08-22T03:40Z CC-1 | BANK-F5748 SHIPPED (PR #13883) | ReconciliationWorkspace.tsx matched-entity labels no longer hardcode null -- self-discovered via sweep, same defect class as accounting's LV-JE-MEMO-RECORD-NOT-VISIBLE | NEXT=continuing banking sweep (BankAccountDetail next candidate, per BANK-F5662 comments) | GO
   Self-discovered (not filed by CC-2/Cursor this time) by systematically grepping
   apps/frontend/src/pages/banking/ for entityLabel(null, ...) -- the exact hardcoded-null pattern this
