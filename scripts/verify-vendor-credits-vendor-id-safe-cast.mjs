@@ -38,9 +38,20 @@ for (const m of joinLines) {
   }
 }
 
-// Never cast the vendor_id text column itself to uuid — a QBO-keyed id ('472') would RAISE, not miss.
-if (/vc\.vendor_id::uuid/.test(src)) {
-  failures.push("found 'vc.vendor_id::uuid' — never cast the vendor_id text column to uuid, cast v.id to text instead (see vendor-identity.ts header comment)");
+// JOIN must never cast vendor_id to uuid (QBO id '472' would RAISE). The deactivated-vendor
+// resolver may regex-gate a uuid-shaped vendor_id then ::uuid — that is not a join predicate.
+if (/LEFT JOIN mdata\.vendors[\s\S]{0,120}vc\.vendor_id::uuid/.test(src)) {
+  failures.push("join still casts vc.vendor_id::uuid — must compare v.id::text = vc.vendor_id");
+}
+const joinStripped = src.replace(/mdata\.resolve_vendor_label_same_company\([\s\S]*?vc\.operating_company_id\s*\)/g, "RESOLVER()");
+if (/vc\.vendor_id::uuid/.test(joinStripped)) {
+  failures.push("found 'vc.vendor_id::uuid' outside resolve_vendor_label_same_company — never cast the text column on the join");
+}
+if (
+  /vc\.vendor_id::uuid/.test(src) &&
+  !/vc\.vendor_id ~ '\^\[0-9a-fA-F\]\{8\}-\[0-9a-fA-F\]\{4\}-\[0-9a-fA-F\]\{4\}-\[0-9a-fA-F\]\{4\}-\[0-9a-fA-F\]\{12\}\$'/.test(src)
+) {
+  failures.push("vc.vendor_id::uuid in resolver must be gated on a uuid-shaped regex so QBO text ids cannot RAISE");
 }
 
 if (failures.length > 0) {
