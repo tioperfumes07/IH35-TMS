@@ -219,7 +219,7 @@ async function fetchReconRows(
         END::text                                           AS match_status
       FROM qbo_queue q
       LEFT JOIN tms_je je
-        ON (q.entity_type = 'journal_entry' AND je.je_id::text = q.entity_id)
+        ON (q.entity_type = 'journal_entry' AND je.je_id = q.entity_id)
         OR je.qbo_linked_id = q.qbo_id
     )
     SELECT

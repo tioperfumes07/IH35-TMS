@@ -32,6 +32,11 @@ check("Autoloaded via accounting/index.ts (@fastify/autoload)", (() => {
 check("TMS source: accounting.journal_entries read", backendRoute.includes("accounting.journal_entries"));
 check("TMS source: accounting.journal_entry_postings read", backendRoute.includes("accounting.journal_entry_postings"));
 check("QBO source: integrations.qbo_sync_queue read", backendRoute.includes("integrations.qbo_sync_queue"));
+check(
+  "JE↔queue join is uuid=uuid (not je_id::text = entity_id — Postgres 42883 text=uuid)",
+  backendRoute.includes("q.entity_type = 'journal_entry' AND je.je_id = q.entity_id") &&
+    !backendRoute.includes("je.je_id::text = q.entity_id"),
+);
 
 // 3. Entity scope enforced
 check("RLS set_config used (withCompanyScope)", backendRoute.includes("withCompanyScope"));
@@ -73,6 +78,22 @@ check("Daily Recon tab in ACCOUNTING_CLEAN_TABS", subnav.includes("daily-recon")
 // 10. Entity TRANSP only — no cross-entity netting
 check("No TRK/USMCA cross-entity netting in route", !backendRoute.includes("TRK") && !backendRoute.includes("USMCA"));
 check("Entity-scope via operating_company_id (no global queries)", (backendRoute.match(/operating_company_id/g) || []).length >= 3);
+
+function jeQueueJoinIsUuidSafe(src) {
+  return (
+    src.includes("q.entity_type = 'journal_entry' AND je.je_id = q.entity_id") &&
+    !src.includes("je.je_id::text = q.entity_id")
+  );
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = backendRoute.replace(
+    "q.entity_type = 'journal_entry' AND je.je_id = q.entity_id",
+    "q.entity_type = 'journal_entry' AND je.je_id::text = q.entity_id",
+  );
+  check("selftest: planted ::text=uuid join fails the uuid-safe predicate", !jeQueueJoinIsUuidSafe(planted));
+  check("selftest: current source still uuid-safe", jeQueueJoinIsUuidSafe(backendRoute));
+}
 
 console.log(`\n${passed + failed === 0 ? "No checks ran" : `${passed}/${passed + failed} passed`}`);
 if (failed > 0) {
