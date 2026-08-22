@@ -1,6 +1,6 @@
 {
   "_comment": "0519-ri1(a) orphan-FK inventory ratchet. Regenerate: UPDATE_ORPHAN_FK_BASELINE=1. Adding real FK constraints is owner-gated (db-integrity-hardening-0519).",
-  "count": 788,
+  "count": 793,
   "keys": [
     "0001_audit_init.sql::actor_user_uuid",
     "0003_outbox_init.sql::aggregate_id",
@@ -789,6 +789,11 @@
     "202612560000_inv_purchase_ledger_sor_stock_upsert.sql::operating_company_id",
     "202612560000_inv_purchase_ledger_sor_stock_upsert.sql::voided_by_user_id",
     "202612570000_reports_scheduled_canonicalize.sql::voided_by_user_id",
-    "202612580000_incidents_work_order_fk.sql::work_order_id"
+    "202612580000_incidents_work_order_fk.sql::work_order_id",
+    "202612760000_fuel_loves_prices_daily.sql::station_uuid",
+    "202612811300_acct_f5606_credit_memo_applications.sql::credit_memo_id",
+    "202612811300_acct_f5606_credit_memo_applications.sql::invoice_id",
+    "202612820000_customer_type_fk.sql::customer_type_id",
+    "202612950000_acct_f5701_tonu_income_account_and_cancellation_invoice_linkage.sql::charged_by_user_id"
   ]
 }
