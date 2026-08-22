@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["tasks"],"cols":["reverse_link"],"leafRe":"^tasks\\.drawer\\.task$","task":"LINK-F5171-TASK-DRAWER-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["tasks"],"cols":["reverse_link"],"leaves":["tasks.drawer.task"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-task-drawer-reverse-links";
@@ -9,6 +9,16 @@ const MINE = "apps/frontend/src/pages/tasks/TasksMinePage.tsx";
 const CALENDAR = "apps/frontend/src/pages/tasks/TasksCalendarPage.tsx";
 const API = "apps/frontend/src/api/tasks.ts";
 const ROUTES = "apps/backend/src/tasks/task.routes.ts";
+const MATRIX = "docs/specs/scoreboard/modules/tasks.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-task-drawer-reverse-links.mjs";
+const HEADER = '/** @matrix-built {"modules":["tasks"],"cols":["reverse_link"],"leaves":["tasks.drawer.task"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */';
+const mutateTaskDrawerLeaf = (source, mutate) => {
+  const parsed = JSON.parse(source);
+  const leaf = parsed.leaves.find((candidate) => candidate.id === "tasks.drawer.task");
+  mutate(leaf);
+  return JSON.stringify(parsed);
+};
 
 export function failures(files) {
   const found = [];
@@ -38,6 +48,14 @@ export function failures(files) {
     /subject_customer\.operating_company_id = t\.operating_company_id/,
     /subject_wo\.operating_company_id = t\.operating_company_id/,
   ]) if ((files.routes.match(new RegExp(scope.source, "g")) ?? []).length < 2) found.push(`${ROUTES}: both reads must retain subject label scope ${scope}`);
+  let matrix;
+  try { matrix = JSON.parse(files.matrix); } catch (error) { found.push(`Tasks matrix parse: ${error.message}`); }
+  const leaf = matrix?.leaves?.find((candidate) => candidate.id === "tasks.drawer.task");
+  if (!leaf?.required?.includes("reverse_link")) found.push("tasks.drawer.task must require reverse_link");
+  if (leaf?.route_hint !== "/tasks") found.push("tasks.drawer.task must name mounted route /tasks");
+  if (!files.self.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact Tasks drawer header missing");
+  try { if (JSON.parse(files.feed).entries?.some((entry) => entry.guard === SELF)) found.push("manual feed duplicates exact Tasks ownership"); }
+  catch (error) { found.push(`feed parse: ${error.message}`); }
   return found;
 }
 
@@ -48,6 +66,9 @@ const current = {
   calendar: fs.readFileSync(CALENDAR, "utf8"),
   api: fs.readFileSync(API, "utf8"),
   routes: fs.readFileSync(ROUTES, "utf8"),
+  matrix: fs.readFileSync(MATRIX, "utf8"),
+  feed: fs.readFileSync(FEED, "utf8"),
+  self: fs.readFileSync(SELF, "utf8"),
 };
 
 if (process.argv.includes("--selftest")) {
@@ -67,6 +88,10 @@ if (process.argv.includes("--selftest")) {
     { ...current, calendar: current.calendar.replace("subjectLabel={t.subject_label}", "subjectLabel={null}") },
     { ...current, routes: current.routes.replace("END AS subject_label", "END AS missing_subject_label") },
     { ...current, routes: current.routes.replace(/subject_customer\.operating_company_id = t\.operating_company_id/g, "TRUE") },
+    { ...current, matrix: current.matrix.replace('"id": "tasks.drawer.task"', '"id": "tasks.drawer.task.broken"') },
+    { ...current, matrix: mutateTaskDrawerLeaf(current.matrix, (leaf) => { leaf.route_hint = "/broken"; }) },
+    { ...current, self: current.self.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) },
+    { ...current, feed: JSON.stringify({ entries: [{ guard: SELF }] }) },
   ];
   mutations.forEach((mutation, index) => {
     if (!failures(mutation).length) {
@@ -74,7 +99,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   });
-  console.log(`${LABEL} SELFTEST PASS — eleven drawer/subject label regressions detected`);
+  console.log(`${LABEL} SELFTEST PASS — 15/15 drawer/subject/evidence regressions detected`);
   process.exit(0);
 }
 
