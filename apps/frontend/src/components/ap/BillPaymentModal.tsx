@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVendorBills, type VendorBill } from "../../api/accounting";
 import { recordApBillPayment } from "../../api/ap";
+import { getAllAccounts } from "../../api/banking";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
+import { PlaidLink } from "../banking/PlaidLink";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ParityTable } from "../parity/ParityTable";
 import { SelectCombobox } from "../shared/SelectCombobox";
@@ -68,12 +71,34 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
   const [error, setError] = useState<string | null>(null);
   // TASKS-PLANNER-V2-CONNECTIVITY: after a payment posts, offer to close an open task it fulfils.
   const [completedPaymentId, setCompletedPaymentId] = useState<string | null>(null);
+  // ACCT-F5981: picker law — every non-cash payment needs a real "from bank account" so
+  // accounting.bill_payments.from_bank_account_id (and the bank balance) aren't silently left null.
+  // Mirrors PayBillModal.tsx's already-live Combobox + Plaid "+ Add new bank account" pattern exactly.
+  const [fromBankAccountId, setFromBankAccountId] = useState("");
+  const [bankCreateOpen, setBankCreateOpen] = useState(false);
 
   const billsQuery = useQuery({
     queryKey: ["ap-bill-payment-modal", operatingCompanyId, vendorId],
     queryFn: () => listVendorBills(operatingCompanyId, { vendor_id: vendorId, has_balance: true, limit: 200 }).then((res) => res.rows ?? []),
     enabled: open && Boolean(operatingCompanyId && vendorId),
   });
+
+  const accountsQuery = useQuery({
+    queryKey: ["bill-payment-modal", "accounts", operatingCompanyId],
+    queryFn: () => getAllAccounts(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const bankOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => ({
+        value: String(account.id ?? ""),
+        label: String(account.display_name ?? account.account_name ?? "Account"),
+      })),
+    [accountsQuery.data?.accounts]
+  );
+
+  const needsBankAccount = paymentMethod !== "cash";
 
   const openBills = useMemo(
     () =>
@@ -134,9 +159,21 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
     setIncluded({});
     setAmounts({});
     setError(null);
+    setFromBankAccountId("");
+    setBankCreateOpen(false);
   }, [open, vendorId]);
 
+  // Default "From bank" once accounts arrive, but never overwrite an explicit selection (including a
+  // freshly Plaid-created account) — same rule as PayBillModal.tsx's identical effect.
+  useEffect(() => {
+    if (!open) return;
+    if (fromBankAccountId) return;
+    const firstId = accountsQuery.data?.accounts?.[0]?.id;
+    if (firstId) setFromBankAccountId(String(firstId));
+  }, [open, fromBankAccountId, accountsQuery.data?.accounts]);
+
   return (
+    <>
     <ParityDrawer
       open={open}
       onClose={onClose}
@@ -202,6 +239,10 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
             setError("Check number is required for check payments.");
             return;
           }
+          if (needsBankAccount && !fromBankAccountId) {
+            setError("From bank account is required for this payment method.");
+            return;
+          }
           for (const row of rows) {
             if (row.payment_amount_cents > row.original_balance_cents) {
               setError(`Payment for ${row.bill_number} exceeds open balance.`);
@@ -215,6 +256,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
               paid_at: paymentDate,
               amount_cents: totalCents,
               payment_method: paymentMethod,
+              bank_account_id: needsBankAccount ? fromBankAccountId : undefined,
               check_number: paymentMethod === "check" ? checkNumber.trim() || undefined : undefined,
               reference_number: referenceNumber.trim() || undefined,
               memo: memo.trim() || undefined,
@@ -260,6 +302,24 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
             {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → *_cents byte-for-byte. */}
             <MoneyInput valueDollars={totalAmount} onChangeDollars={setTotalAmount} ariaLabel="Total payment amount (USD)" />
           </label>
+          {needsBankAccount ? (
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+              From bank account
+              {/* Picker law: catalog + inline + Add new inside Combobox (first row), not outside —
+                  same pattern as PayBillModal.tsx's identical field. */}
+              <Combobox
+                dataField="from-bank-account"
+                placeholder="Select bank account…"
+                options={bankOptions}
+                value={fromBankAccountId || null}
+                onChange={(next) => setFromBankAccountId(next ?? "")}
+                allowAddNew={{
+                  label: "+ Add new bank account",
+                  onAdd: () => setBankCreateOpen(true),
+                }}
+              />
+            </label>
+          ) : null}
           {paymentMethod === "check" ? (
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Check #
@@ -351,5 +411,32 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
 
       </form>
     </ParityDrawer>
+
+    {/* Nested drawer: bank accounts are provisioned via Plaid (canonical Banking path) — same
+        pattern as PayBillModal.tsx's identical "Add bank account" drawer. */}
+    <ParityDrawer
+      open={bankCreateOpen}
+      onClose={() => setBankCreateOpen(false)}
+      title="Add bank account"
+      size="regular"
+    >
+      <div className="space-y-3 text-sm text-gray-700" data-testid="bill-payment-modal-add-bank-drawer">
+        <p>
+          Connect a bank account for this company. After Plaid succeeds, the new account appears in{" "}
+          <strong>From bank account</strong> and can be selected for this payment.
+        </p>
+        <PlaidLink
+          operatingCompanyId={operatingCompanyId}
+          label="Connect via Plaid"
+          onSuccess={async (accounts) => {
+            const nextId = String(accounts[0]?.id ?? "");
+            if (nextId) setFromBankAccountId(nextId);
+            await accountsQuery.refetch();
+            setBankCreateOpen(false);
+          }}
+        />
+      </div>
+    </ParityDrawer>
+    </>
   );
 }
