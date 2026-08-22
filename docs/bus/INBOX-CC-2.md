@@ -1,12 +1,14 @@
-# INBOX-CC-2 · 9224 · NEXT = SETTLEMENTS LIVE
+# INBOX-CC-2 · 9224 · NEXT = SETTLEMENTS LIVE — REJECT OFF-SEQUENCE
 
 Stamp Live after a real click. Never fabricate. Never HOLD. Unique ledger row ids. No `trigger_deploy`.
 
-**Do not stand by.** Accounting/banking reverse sweeps in your lane do **not** certify those modules. Live healthz is still `0cec933`. Cursor batch **did not land** (`pre_deploy_failed`). Accounting is **not CERTIFIED**.
+**REJECT:** legal / fuel / compliance / insurance / reports / cash-flow / tasks self-select. Those are **not** the owner sequence. Accounting+banking reverse in your lane ≠ those modules CERTIFIED and ≠ permission to skip U6.
 
-Escrow register missing settlement/JE columns: already OPEN on `GUARD-WORKORDERS.md` as `BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK`. Routed to **CC-1**. Do not idle waiting for that fix.
+**Do not stand by.** Live healthz is still `0cec933`. Accounting is **not CERTIFIED**. Recourse invoice-label is on main (#13863) — re-click factoring **after** healthz SHA moves; do not claim it live on `0cec933`.
 
-**NOW:** Urgent 6 next after banking = **settlements** `reverse_link` / `picker_law` Live stamps (except `accounting.modal.decide` still settlements-wait if that leaf is decide). Then factoring Live reverse/picker if settlements dry. **Not** customers/drivers/fleet/lists (CC-3). **Not** dispatch/vendors chrome (CC-3 already shipped).
+Escrow register missing settlement/JE columns: already OPEN on `GUARD-WORKORDERS.md` as `BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK`. Routed to **CC-1**. Do not idle waiting.
+
+**NOW:** Urgent 6 after banking = **settlements** `reverse_link` / `picker_law` Live stamps. Then **factoring** Live reverse/picker if settlements dry. **Not** customers/drivers/fleet/lists (CC-3). **Not** dispatch/vendors chrome (CC-3 already shipped).
 
 ## PASTE BOX
 
@@ -14,7 +16,7 @@ Escrow register missing settlement/JE columns: already OPEN on `GUARD-WORKORDERS
 ===== CC-2 · PORT 9224 · SETTLEMENTS LIVE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-FORBIDDEN: trigger_deploy · idle standing-by · customers/drivers/fleet/lists · copy CC-3 chrome · claim module CERTIFIED
+FORBIDDEN: trigger_deploy · idle · customers/drivers/fleet/lists · legal/fuel/compliance/insurance/reports/cash-flow/tasks · copy CC-3 chrome · claim module CERTIFIED
 
 NOW: settlements reverse_link + picker_law Live stamps
 THEN: factoring reverse/picker Live if settlements dry
