@@ -584,6 +584,8 @@ export function listWorkOrdersFiltered(
   params: {
     source_type?: string;
     external_vendor_id?: string;
+    /** Canonical resolved vendor identity across vendor_id and legacy external_vendor_id storage. */
+    vendor_id?: string;
     status?: string;
     location?: string;
     bucket?: string;
@@ -596,6 +598,7 @@ export function listWorkOrdersFiltered(
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.source_type) qs.set("source_type", params.source_type);
   if (params.external_vendor_id) qs.set("external_vendor_id", params.external_vendor_id);
+  if (params.vendor_id) qs.set("vendor_id", params.vendor_id);
   if (params.status) qs.set("status", params.status);
   if (params.location) qs.set("location", params.location);
   if (params.bucket) qs.set("bucket", params.bucket);

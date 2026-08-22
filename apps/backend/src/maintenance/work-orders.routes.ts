@@ -30,6 +30,8 @@ const listQuerySchema = z.object({
   wo_type: z.string().optional(),
   source_type: z.string().optional(),
   external_vendor_id: z.string().uuid().optional(),
+  // Vendor profile reverse: work orders may persist either legacy external_vendor_id or canonical vendor_id.
+  vendor_id: z.string().uuid().optional(),
   equipment_id: z.string().uuid().optional(),
   search: z.string().trim().max(120).optional(),
   // Service/Location drill-through: filter the WO list by service location + bucket so the tab's
@@ -440,7 +442,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
         where.push("w.voided_at IS NULL");
-      } else if (q.equipment_id || q.load_id || q.driver_id) {
+      } else if (q.equipment_id || q.load_id || q.driver_id || q.vendor_id) {
         // LOAD-WO-REVERSE / DRV-LINK-WO-REVERSE: caller-controlled scope — include completed history;
         // voided stay hidden (void-not-delete).
         where.push("w.voided_at IS NULL");
@@ -466,6 +468,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.external_vendor_id) {
         values.push(q.external_vendor_id);
         where.push(`w.external_vendor_id = $${values.length}`);
+      }
+      if (q.vendor_id) {
+        values.push(q.vendor_id);
+        where.push(`COALESCE(w.external_vendor_id, w.vendor_id) = $${values.length}::uuid`);
       }
       if (q.equipment_id) {
         values.push(q.equipment_id);

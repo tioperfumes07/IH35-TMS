@@ -14,7 +14,7 @@ type Props = {
 export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }: Props) {
   const query = useQuery({
     queryKey: ["vendor-work-orders", operatingCompanyId, vendorId],
-    queryFn: () => listWorkOrdersFiltered(operatingCompanyId, { external_vendor_id: vendorId }),
+    queryFn: () => listWorkOrdersFiltered(operatingCompanyId, { vendor_id: vendorId }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
 
