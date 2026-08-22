@@ -132,10 +132,21 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
   );
 }
 
-// Display-only ParityTable migration of the former hand-rolled payments sub-table: same four
-// columns in the same order, same cell renders (formatDateUS / money / EntityLink / memo
-// fallback), same loading/error/empty-returns-null behavior. Read-only — no actions, no posting.
+// Display-only ParityTable migration of the former hand-rolled payments sub-table. The canonical
+// payment drill is intentionally first: a bill's reverse Payments section must not terminate at a
+// dead display row. Read-only — no actions, no posting.
 const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
+  {
+    key: "id",
+    label: "Payment",
+    render: (p) => (
+      <EntityLink
+        kind="bill_payment"
+        id={p.id}
+        label={entityLabel(p.reference_number ?? p.check_number, p.id, "Payment")}
+      />
+    ),
+  },
   { key: "payment_date", label: "Payment date", sortable: true, render: (p) => formatDateUS(p.payment_date) },
   { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right", render: (p) => money(p.amount_cents) },
   {
