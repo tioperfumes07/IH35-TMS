@@ -1784,13 +1784,13 @@
         "prod_verified": true
       },
       "driver-finance": {
-        "pass_count": 4,
+        "pass_count": 5,
         "total_count": 5,
         "slices": [
           {
             "key": "hop.assign",
-            "holds": false,
-            "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
+            "holds": true,
+            "evidence": "6 driver bill(s) priced from the rate card, not the customer rate"
           },
           {
             "key": "scenario.settlement",
@@ -1813,17 +1813,17 @@
             "evidence": "2 escrow ledger entr(ies)"
           }
         ],
-        "progress": 80,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "accounting": {
-        "pass_count": 4,
+        "pass_count": 5,
         "total_count": 5,
         "slices": [
           {
             "key": "hop.revenue",
-            "holds": false,
-            "evidence": "no count probe (resolved at request time)"
+            "holds": true,
+            "evidence": "9 standing revenue-recognition latch posting(s)"
           },
           {
             "key": "hop.invoice",
@@ -1833,21 +1833,21 @@
           {
             "key": "hop.gl",
             "holds": true,
-            "evidence": "1895 live journal entr(ies)"
+            "evidence": "2026 live journal entr(ies)"
           },
           {
             "key": "scenario.coa",
             "holds": true,
-            "evidence": "189 account(s) in the chart"
+            "evidence": "193 account(s) in the chart"
           },
           {
             "key": "scenario.ap",
             "holds": true,
-            "evidence": "5 open (non-voided) bill(s)"
+            "evidence": "8 open (non-voided) bill(s)"
           }
         ],
-        "progress": 80,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "banking": {
         "pass_count": 1,
@@ -1861,7 +1861,7 @@
           {
             "key": "scenario.banking",
             "holds": true,
-            "evidence": "200 categorized bank transaction(s)"
+            "evidence": "201 categorized bank transaction(s)"
           }
         ],
         "progress": 50,
@@ -1887,7 +1887,7 @@
           {
             "key": "scenario.driver_onboarding",
             "holds": true,
-            "evidence": "262 driver(s) on file"
+            "evidence": "264 driver(s) on file"
           }
         ],
         "progress": 100,
@@ -1982,8 +1982,8 @@
       {
         "key": "hop.assign",
         "module": "driver-finance",
-        "holds": false,
-        "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
+        "holds": true,
+        "evidence": "6 driver bill(s) priced from the rate card, not the customer rate"
       },
       {
         "key": "hop.dispatch",
@@ -2006,8 +2006,8 @@
       {
         "key": "hop.revenue",
         "module": "accounting",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "9 standing revenue-recognition latch posting(s)"
       },
       {
         "key": "hop.invoice",
@@ -2019,7 +2019,7 @@
         "key": "hop.gl",
         "module": "accounting",
         "holds": true,
-        "evidence": "1895 live journal entr(ies)"
+        "evidence": "2026 live journal entr(ies)"
       },
       {
         "key": "hop.bank",
@@ -2037,13 +2037,13 @@
         "key": "scenario.driver_onboarding",
         "module": "drivers",
         "holds": true,
-        "evidence": "262 driver(s) on file"
+        "evidence": "264 driver(s) on file"
       },
       {
         "key": "scenario.coa",
         "module": "accounting",
         "holds": true,
-        "evidence": "189 account(s) in the chart"
+        "evidence": "193 account(s) in the chart"
       },
       {
         "key": "scenario.settlement",
@@ -2073,7 +2073,7 @@
         "key": "scenario.ap",
         "module": "accounting",
         "holds": true,
-        "evidence": "5 open (non-voided) bill(s)"
+        "evidence": "8 open (non-voided) bill(s)"
       },
       {
         "key": "scenario.fuel",
@@ -2115,7 +2115,7 @@
         "key": "scenario.banking",
         "module": "banking",
         "holds": true,
-        "evidence": "200 categorized bank transaction(s)"
+        "evidence": "201 categorized bank transaction(s)"
       }
     ]
   },
