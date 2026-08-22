@@ -1,35 +1,67 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["cash-flow"],"cols":["reverse_link"],"leafRe":"^cash-flow\\.panel\\.projection$","task":"VERTICAL-REVERSE-LINK-CASH-FORECAST-PROFILES"} */
+/** @matrix-built {"modules":["cash-flow","vendors","customers","drivers","fleet"],"cols":["connectivity","reverse_link"],"leafRe":"^cash-flow\\.panel\\.projection$","task":"VERTICAL-REVERSE-LINK-CASH-FORECAST-PROFILES"} */
 import fs from "node:fs";
-const read = (path) => fs.readFileSync(path, "utf8");
-const files = {
-  routes: read("apps/backend/src/forecast/cash-forecast-manual.routes.ts"),
-  api: read("apps/frontend/src/api/forecast.ts"),
-  panel: read("apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx"),
-  reverse: read("apps/frontend/src/components/cash-flow/CashForecastReverseSection.tsx"),
-  driver: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
-  unit: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
-  customer: read("apps/frontend/src/pages/CustomerDetail.tsx"),
-  vendor: read("apps/frontend/src/pages/VendorDetail.tsx"),
+
+const LABEL = "verify-cash-forecast-profile-reverse";
+const paths = {
+  route: "apps/backend/src/forecast/cash-forecast-manual.routes.ts",
+  api: "apps/frontend/src/api/forecast.ts",
+  panel: "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+  reverse: "apps/frontend/src/components/cash-flow/CashForecastReverseSection.tsx",
+  driver: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  unit: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+  customer: "apps/frontend/src/pages/CustomerDetail.tsx",
+  vendor: "apps/frontend/src/pages/VendorDetail.tsx",
 };
-function failures(s = files) { return [
-  ["company-scoped entity filters", s.routes.includes("party_ref_id: z.string().uuid().optional()") && s.routes.includes("party_ref_id = $${values.length}::uuid") && s.routes.includes("ref_external_id = $${values.length}") && s.api.includes("for (const [key, value] of Object.entries(filters))")],
-  ["exact entry filter and target", s.routes.includes("entry_id: z.string().uuid().optional()") && s.routes.includes("id = $${values.length}::uuid") && s.reverse.includes('kind="cash_forecast_entry"') && s.reverse.includes("id={entry.id}") && s.panel.includes('searchParams.get("entry_id")') && s.panel.includes("entry_id: entryId")],
-  ["shared filtered reverse reader", s.reverse.includes("listForecastEntries(operatingCompanyId, undefined, undefined, filter)") && s.reverse.includes('queryKey: ["cash-forecast-reverse", operatingCompanyId, filter]')],
-  ["driver and customer mounts", s.driver.includes('party_ref_kind: "driver", party_ref_id: id') && s.customer.includes('party_ref_kind: "customer", party_ref_id: id')],
-  ["vendor and unit mounts", s.vendor.includes('party_ref_kind: "vendor", party_ref_id: vendor.id') && s.unit.includes('ref_kind: "unit", ref_external_id: id')],
-].filter(([, ok]) => !ok).map(([name]) => name); }
-if (process.argv.includes("--selftest")) {
-  const checks = [
-    failures({ ...files, routes: files.routes.replace("party_ref_id = $${values.length}::uuid", "TRUE") }).includes("company-scoped entity filters"),
-    failures({ ...files, panel: files.panel.replace("entry_id: entryId", "") }).includes("exact entry filter and target"),
-    failures({ ...files, reverse: files.reverse.replace("listForecastEntries(operatingCompanyId, undefined, undefined, filter)", "listForecastEntries(operatingCompanyId)") }).includes("shared filtered reverse reader"),
-    failures({ ...files, customer: "" }).includes("driver and customer mounts"),
-    failures({ ...files, unit: "" }).includes("vendor and unit mounts"),
-  ];
-  if (checks.some((ok) => !ok)) { console.error(`verify-cash-forecast-profile-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-cash-forecast-profile-reverse selftest PASS — 5/5 filter/profile/target mutations red"); process.exit(0);
+const source = Object.fromEntries(Object.entries(paths).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+
+const checks = [
+  ["route accepts party UUID filter", "route", /party_ref_id: z\.string\(\)\.uuid\(\)\.optional\(\)/],
+  ["route binds party UUID predicate", "route", /values\.push\(q\.data\.party_ref_id\)[\s\S]{0,100}party_ref_id = \$\$\{values\.length\}::uuid/],
+  ["route accepts unit external identity filter", "route", /ref_external_id: z\.string\(\)[^\n]*\.optional\(\)/],
+  ["route binds unit external identity predicate", "route", /values\.push\(q\.data\.ref_external_id\)[\s\S]{0,100}ref_external_id = \$\$\{values\.length\}/],
+  ["route accepts exact entry UUID", "route", /entry_id: z\.string\(\)\.uuid\(\)\.optional\(\)/],
+  ["route binds exact entry UUID predicate", "route", /values\.push\(q\.data\.entry_id\)[\s\S]{0,100}id = \$\$\{values\.length\}::uuid/],
+  ["API serializes every supplied reverse filter", "api", /for \(const \[key, value\] of Object\.entries\(filters\)\)[\s\S]{0,120}params\.set\(key, value\)/],
+  ["reverse cache binds company and complete filter", "reverse", /queryKey: \["cash-forecast-reverse", operatingCompanyId, filter\]/],
+  ["reverse GET sends company and complete filter", "reverse", /listForecastEntries\(operatingCompanyId, undefined, undefined, filter\)/],
+  ["reverse query waits for selected company", "reverse", /enabled: Boolean\(operatingCompanyId\)/],
+  ["reverse keeps honest error state", "reverse", /query\.isError[\s\S]{0,120}Cash projections unavailable/],
+  ["reverse keeps honest empty state", "reverse", /No linked cash projections/],
+  ["each returned entry drills by exact canonical ID", "reverse", /preview\.map\(\(entry\) =>[\s\S]{0,100}<li key=\{entry\.id\}>[\s\S]{0,120}kind="cash_forecast_entry"[\s\S]{0,80}id=\{entry\.id\}/],
+  ["each returned entry uses human date/money/direction label", "reverse", /label=\{`\$\{entry\.entry_date\} · \$\{\(entry\.amount_cents \/ 100\)\.toLocaleString[\s\S]{0,160}\$\{entry\.direction\}`\}/],
+  ["panel reads exact entry deep link", "panel", /searchParams\.get\("entry_id"\)/],
+  ["panel forwards exact entry filter", "panel", /entry_id: entryId/],
+  ["driver profile mounts canonical driver filter", "driver", /<CashForecastReverseSection[\s\S]{0,180}party_ref_kind: "driver", party_ref_id: id/],
+  ["customer profile mounts canonical customer filter", "customer", /<CashForecastReverseSection[\s\S]{0,180}party_ref_kind: "customer", party_ref_id: id/],
+  ["vendor profile mounts canonical vendor filter", "vendor", /<CashForecastReverseSection[\s\S]{0,180}party_ref_kind: "vendor", party_ref_id: vendor\.id/],
+  ["unit profile mounts canonical unit filter", "unit", /<CashForecastReverseSection[\s\S]{0,180}ref_kind: "unit", ref_external_id: id/],
+];
+
+function audit(sources) {
+  return checks.filter(([, key, pattern]) => !pattern.test(sources[key])).map(([message]) => message);
 }
-const missing = failures();
-if (missing.length) { console.error(`verify-cash-forecast-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
-console.log("verify-cash-forecast-profile-reverse PASS — projections return from every canonical party/unit profile to an exact row");
+
+if (process.argv.includes("--selftest")) {
+  const baseline = audit(source);
+  if (baseline.length) {
+    console.error(`${LABEL} SELFTEST FAIL — baseline: ${baseline.join("; ")}`);
+    process.exit(1);
+  }
+  for (const [message, key, pattern] of checks) {
+    const changedSource = source[key].replace(pattern, "/* planted cash-forecast reverse defect */");
+    if (changedSource === source[key] || !audit({ ...source, [key]: changedSource }).includes(message)) {
+      console.error(`${LABEL} SELFTEST FAIL — escaped or inert plant: ${message}`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} production-source defects caught`);
+  process.exit(0);
+}
+
+const failures = audit(source);
+if (failures.length) {
+  console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — company-scoped party/unit filters→exact cash entry→vendor/customer/driver/unit reverse`);
