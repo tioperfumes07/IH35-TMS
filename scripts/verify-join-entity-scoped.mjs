@@ -60,6 +60,20 @@ const TARGETS = new Map([
   ["accounting.journal_entries", OPCO],
   ["catalogs.accounts", OPCO],
   ["catalogs.classes", OPCO],
+  // CLS-DISPLAYID-UNSCOPED (2026-08-22): driver_finance.driver_settlements and
+  // accounting.factoring_advances both carry the same per-entity display_id hazard as
+  // accounting.invoices — verified live on prod (br-fancy-credit-akjnd07a):
+  // driver_settlements: operating_company_id uuid NOT NULL, display_id text NOT NULL,
+  //   UNIQUE (operating_company_id, display_id).
+  // factoring_advances: operating_company_id uuid, display_id text,
+  //   UNIQUE (operating_company_id, display_id) + UNIQUE (operating_company_id, id).
+  // The GUARD-WORKORDERS row that requested this asked for "invoices, bills, payments, settlements,
+  // factoring advances" — settlements and accounting.factoring_advances were the two per-entity-
+  // display_id tables missing from TARGETS (bare `factoring.*` schema tables have no display_id
+  // column at all, confirmed by migration sweep, so that schema is correctly excluded — the actual
+  // factoring-advance table lives in `accounting.*`, not `factoring.*`).
+  ["driver_finance.driver_settlements", OPCO],
+  ["accounting.factoring_advances", OPCO],
 ]);
 
 /** Any backticked template literal that contains a JOIN. */

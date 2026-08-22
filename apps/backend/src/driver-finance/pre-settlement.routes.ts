@@ -276,7 +276,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         [params.data.id, body.load_id, String(load.load_number ?? body.load_id)]
       );
 
-      const totals = await aggregateSettlementTotals(client, params.data.id);
+      const totals = await aggregateSettlementTotals(client, params.data.id, body.operating_company_id);
 
       await appendCrudAudit(
         client,
@@ -352,7 +352,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         return { invalidStatus: true as const, status };
       }
 
-      await aggregateSettlementTotals(client, params.data.id);
+      await aggregateSettlementTotals(client, params.data.id, body.operating_company_id);
 
       await client.query(
         `

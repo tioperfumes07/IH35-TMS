@@ -48,8 +48,15 @@ if (close && cap && flags) {
   }
 
   // 3) Ordering: applier call appears BEFORE aggregateSettlementTotals in the close body.
+  //
+  // ACCT-F5786 (CLS-DISPLAYID-UNSCOPED): aggregateSettlementTotals gained a 3rd operatingCompanyId
+  // parameter so its own driver_settlements JOIN could carry an entity predicate -- the exact literal
+  // call text changed from "aggregateSettlementTotals(client, settlementId)" to
+  // "aggregateSettlementTotals(client, settlementId, opts.operatingCompanyId)". Match on the stable
+  // prefix (function name + first two args) rather than the full literal, so a future signature change
+  // that keeps these first two args doesn't silently re-break this guard the same way.
   const idxApplier = close.indexOf("applyPendingDeductionsToSettlementWithNetFloor(client");
-  const idxAggregate = close.indexOf("aggregateSettlementTotals(client, settlementId)");
+  const idxAggregate = close.indexOf("aggregateSettlementTotals(client, settlementId");
   if (idxApplier < 0) fail("could not locate the applier invocation in the close");
   if (idxAggregate < 0) fail("could not locate aggregateSettlementTotals invocation in the close");
   if (idxApplier >= 0 && idxAggregate >= 0 && idxApplier > idxAggregate) {

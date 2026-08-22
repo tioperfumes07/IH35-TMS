@@ -192,7 +192,11 @@ async function resolveSettlementForLoadOrDriver(
       `
         SELECT ds.id::text AS id
         FROM driver_finance.settlement_lines sl
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): sl is scoped by the WHERE below, but the
+        -- settlement it resolves to a real bank-feed match was not -- same class as the invoice
+        -- mislabel this rule exists to catch, here on the money-matching path.
         JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+                                                  AND ds.operating_company_id = sl.operating_company_id
         WHERE sl.operating_company_id = $1::uuid
           AND sl.load_id = $2::uuid
           AND coalesce(sl.is_active, true) = true

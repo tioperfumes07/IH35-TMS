@@ -123,16 +123,24 @@ async function emitOutbox(client: DbClient, eventType: string, payload: Record<s
   ]);
 }
 
-async function assertDriverOwnsSettlement(client: DbClient, input: { settlementId: string; driverId: string }) {
+async function assertDriverOwnsSettlement(
+  client: DbClient,
+  input: { settlementId: string; driverId: string; operatingCompanyId: string }
+) {
   const res = await client.query<{ id: string }>(
     `
       SELECT id
       FROM driver_finance.driver_settlements
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): id + driver_id already disambiguate (a driver
+      -- can't own a settlement outside its own entity), but this floor matches every sibling
+      -- driver_finance.driver_settlements read in this codebase, which all carry an explicit
+      -- operating_company_id predicate as a defense-in-depth guard against a future FK-integrity bug.
       WHERE id = $1
         AND driver_id = $2
+        AND operating_company_id = $3::uuid
       LIMIT 1
     `,
-    [input.settlementId, input.driverId]
+    [input.settlementId, input.driverId, input.operatingCompanyId]
   );
   if (!res.rows[0]?.id) throw new Error("E_SETTLEMENT_NOT_FOUND_FOR_DRIVER");
 }
@@ -154,7 +162,11 @@ export async function submitSettlementDisputeP6(
 
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await assertDriverOwnsSettlement(client, { settlementId: input.settlement_id, driverId: input.driver_id });
+    await assertDriverOwnsSettlement(client, {
+      settlementId: input.settlement_id,
+      driverId: input.driver_id,
+      operatingCompanyId: input.operating_company_id,
+    });
 
     const category = mapReasonToCategory(input.reason_code);
     const description = ensureDescription(input.reason_text);
@@ -227,7 +239,11 @@ export async function listSettlementDisputesForSettlementDriverP6(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await assertDriverOwnsSettlement(client, { settlementId: input.settlement_id, driverId: input.driver_id });
+    await assertDriverOwnsSettlement(client, {
+      settlementId: input.settlement_id,
+      driverId: input.driver_id,
+      operatingCompanyId: input.operating_company_id,
+    });
 
     const res = await client.query(
       `
@@ -552,8 +568,11 @@ export async function decideSettlementDisputeP6(
       if (!email) return;
 
       const settleRes = await luciaClient.query<{ display_id: string | null }>(
-        `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1 LIMIT 1`,
-        [dispute.settlement_id]
+        // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): id alone does not scope the row -- this label
+        // goes into an email subject/body sent to a real driver, the exact "another entity's number
+        // rendered as a plausible reference" shape this class exists to catch.
+        `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [dispute.settlement_id, input.operating_company_id]
       );
       const settlementLabel = String(settleRes.rows[0]?.display_id ?? dispute.settlement_id);
 
@@ -576,8 +595,10 @@ export async function decideSettlementDisputeP6(
     }).catch(() => undefined);
 
     const displayRes = await client.query<{ display_id: string | null }>(
-      `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1 LIMIT 1`,
-      [dispute.settlement_id]
+      // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): matches the fix above -- id alone does not scope
+      // the row this response label comes from.
+      `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [dispute.settlement_id, input.operating_company_id]
     );
 
     return {

@@ -69,7 +69,7 @@ const voidBodySchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
-async function fetchAdvanceDetail(client: any, advanceId: string) {
+async function fetchAdvanceDetail(client: any, advanceId: string, operatingCompanyId: string) {
   const advanceRes = await client.query(
     `
       SELECT
@@ -86,10 +86,15 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
       -- vendor it names was not. This supplies the vendor NAME shown on the advance.
       JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
                           AND v.operating_company_id = fa.operating_company_id
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the outer WHERE was id-only despite the
+      -- comment above claiming "the advance is scoped" -- every OTHER caller of this helper
+      -- redundantly re-checks ownership before calling, but the plain GET .../:id route did not,
+      -- so this was the one real gap the comment's own claim was hiding.
       WHERE fa.id = $1
+        AND fa.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [advanceId]
+    [advanceId, operatingCompanyId]
   );
   const advance = advanceRes.rows[0] ?? null;
   if (!advance) return null;
@@ -244,10 +249,14 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
               WHERE i.factoring_advance_id = fa.id
                 AND i.operating_company_id = fa.operating_company_id
             )::int AS invoice_count
+          -- CLS-JOIN-ENTITY-UNSCOPED: where[0] is always "fa.operating_company_id = $1::uuid" (set
+          -- unconditionally above), so this is already scoped at runtime -- the static entity-scope
+          -- guard cannot see a predicate assembled through a JS array, only literal SQL text, so a
+          -- redundant AND fa.operating_company_id = $1::uuid is added directly here.
           FROM accounting.factoring_advances fa
           JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
                               AND v.operating_company_id = fa.operating_company_id
-          WHERE ${where.join(" AND ")}
+          WHERE fa.operating_company_id = $1::uuid AND ${where.join(" AND ")}
           ORDER BY fa.submitted_at DESC, fa.created_at DESC
           LIMIT $${limitIdx}
         `,
@@ -324,7 +333,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const detail = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      return fetchAdvanceDetail(client, params.data.id);
+      return fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id);
     });
     if (!detail) return reply.code(404).send({ error: "factoring_advance_not_found" });
     return detail;
@@ -453,7 +462,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         "P3-T11.20.5-FACTORING"
       );
 
-      const detail = await fetchAdvanceDetail(client, advanceId);
+      const detail = await fetchAdvanceDetail(client, advanceId, query.data.operating_company_id);
       return { code: 201 as const, data: detail };
     });
 
@@ -535,7 +544,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.5-FACTORING"
       );
-      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id) };
+      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id) };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
@@ -617,7 +626,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.5-FACTORING"
       );
-      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id) };
+      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id) };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
@@ -734,7 +743,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         "P3-T11.20.5-FACTORING"
       );
 
-      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id) };
+      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id) };
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
@@ -812,7 +821,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         "P3-T11.20.5-FACTORING"
       );
 
-      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id) };
+      return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id) };
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });

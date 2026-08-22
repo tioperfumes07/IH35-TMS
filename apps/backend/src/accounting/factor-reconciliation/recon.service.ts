@@ -160,7 +160,11 @@ export async function importStatement(input: {
           i.display_id::text AS display_id,
           i.total_cents::bigint AS total_cents
         FROM accounting.invoices i
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but the
+        -- advance it filters against was not -- a cross-entity fa row could surface the wrong
+        -- invoice in a reconciliation query filtered by vendor/date.
         JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                              AND fa.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
           AND fa.factoring_company_vendor_id = $2::uuid
           AND (
