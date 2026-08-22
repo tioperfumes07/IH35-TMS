@@ -4,6 +4,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-posting-lineage-page-source-type-datalist"
   },
+  "4274": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-audit-append-event-source-not-uuid-cast"
+  },
   "4269": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
