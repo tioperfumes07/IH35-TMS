@@ -145,11 +145,14 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
         render: (row) => {
           const sid = String(row.settlement_id ?? "").trim();
           if (!sid) return <span className="text-xs text-slate-500">—</span>;
+          // BANK-F5751 — banking.routes.ts now joins driver_finance.driver_settlements for a real
+          // display_id (e.g. "S-2026-0002"); this used to hardcode entityLabel(null, ...) and always
+          // tombstone as "Settlement — not visible" even though the id resolved to a real row.
           return (
             <EntityLink
               kind="settlement"
               id={sid}
-              label={entityLabel(null, sid, "Settlement")}
+              label={entityLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
               data-testid="banking-escrow-settlement-link"
             />
           );
