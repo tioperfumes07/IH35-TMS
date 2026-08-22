@@ -74,17 +74,24 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       onClose();
     },
     onError: (error) => {
+      // SILENT-VALIDATION-OFFSCREEN: this form scrolls long. An inline field error near the top
+      // is invisible if the user clicked Save from further down, and looks like a dead button
+      // with no feedback at all. Every required-field code also pushes a toast (same as the
+      // catch-all below) so the user always gets a signal, regardless of scroll position.
       const code = (error as Error & { code?: string }).code;
       if (code === "legal_name_required") {
         setFieldErrors({ legal_name: "Legal name is required" });
+        pushToast("Legal name is required", "error");
         return;
       }
       if (code === "customer_type_required") {
         setFieldErrors({ customer_type: "Customer type is required" });
+        pushToast("Customer type is required", "error");
         return;
       }
       if (code === "email_required") {
         setFieldErrors({ email: "Email is required" });
+        pushToast("Email is required", "error");
         return;
       }
       pushToast(userFacingApiError(error, "Could not save customer."), "error");
