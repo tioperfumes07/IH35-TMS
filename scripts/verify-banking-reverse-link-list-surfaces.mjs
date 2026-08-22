@@ -37,6 +37,7 @@ const CHECKS = [
   { name: "list load drill", file: VIEW, pattern: /kind="load"\s+id=\{tx\.resolved_load_id\}/ },
   { name: "list settlement drill", file: VIEW, pattern: /kind="settlement"\s+id=\{tx\.matched_settlement_id\}/ },
   { name: "list bill drill", file: VIEW, pattern: /kind="bill"\s+id=\{tx\.matched_bill_id\}/ },
+  { name: "list linkage strip visible for every matched kind", file: VIEW, pattern: /tx\.categorization_load_id \|\|\s+hasPersistedMatch\(tx\) \|\|\s+tx\.categorization_trailer_id/ },
   { name: "list journal entry drill", file: VIEW, pattern: /kind="journal_entry"\s+id=\{tx\.matched_journal_entry_id\}/ },
   { name: "transaction view all-kind match classifier", file: VIEW, pattern: /function hasPersistedMatch\(tx: PlaidBankTransaction\)[\s\S]{0,120}tx\.is_matched[\s\S]{0,500}tx\.matched_expense_id[\s\S]{0,160}tx\.matched_transfer_id[\s\S]{0,160}tx\.matched_journal_entry_id/ },
   { name: "transaction review uses canonical classifier", file: VIEW, pattern: /const looksCategorized =\s+hasPersistedMatch\(tx\)/ },

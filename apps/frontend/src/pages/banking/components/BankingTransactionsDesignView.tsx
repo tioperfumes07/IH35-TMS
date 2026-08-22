@@ -1058,10 +1058,7 @@ export function BankingTransactionsDesignView({
                 (tx.categorization_unit_id ||
                   tx.categorization_driver_id ||
                   tx.categorization_load_id ||
-                  tx.matched_load_id ||
-                  tx.matched_settlement_id ||
-                  tx.matched_transfer_id ||
-                  tx.matched_expense_id ||
+                  hasPersistedMatch(tx) ||
                   tx.categorization_trailer_id) && (
                   <div
                     className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
