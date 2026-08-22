@@ -24,14 +24,20 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+function countMatches(text, pattern) {
+  return [...text.matchAll(pattern)].length;
+}
+
 export function audit(src) {
   const failures = [];
 
-  if (!/bill\.bill_number AS matched_bill_number/.test(src.route)) {
-    failures.push(`${ROUTE_FILE}: company-transactions SELECT must join matched_bill_number`);
+  const billLabelCount = countMatches(src.route, /bill\.bill_number AS matched_bill_number/g);
+  if (billLabelCount !== 2) {
+    failures.push(`${ROUTE_FILE}: both transaction SELECTs must project matched_bill_number (expected 2, found ${billLabelCount})`);
   }
-  if (!/LEFT JOIN accounting\.bills bill[\s\S]{0,80}ON bill\.id = bt\.matched_bill_id[\s\S]{0,80}bill\.operating_company_id = bt\.operating_company_id/.test(src.route)) {
-    failures.push(`${ROUTE_FILE}: missing entity-scoped LEFT JOIN accounting.bills on matched_bill_id`);
+  const billJoinCount = countMatches(src.route, /LEFT JOIN accounting\.bills bill[\s\S]{0,80}ON bill\.id = bt\.matched_bill_id[\s\S]{0,80}bill\.operating_company_id = bt\.operating_company_id/g);
+  if (billJoinCount !== 2) {
+    failures.push(`${ROUTE_FILE}: both transaction readers must company-scope the matched bill join (expected 2, found ${billJoinCount})`);
   }
   // BANK-F5627 — driver_finance.settlements is a phantom table that has never existed; the real
   // table is driver_finance.driver_settlements (created by migration 0124). BANK-F5153's own code
@@ -40,8 +46,10 @@ export function audit(src) {
   // fixed the route to the real table name, but this guard's own regex was never updated to match —
   // leaving it demanding the BROKEN table name forever, ready to steer a future "fix" straight back
   // into the same outage. Match the real, currently-shipped table name here.
-  if (!/settlement\.display_id AS matched_settlement_display_id/.test(src.route) || !/LEFT JOIN driver_finance\.driver_settlements settlement[\s\S]{0,100}settlement\.id = bt\.matched_settlement_id[\s\S]{0,100}settlement\.operating_company_id = bt\.operating_company_id/.test(src.route)) {
-    failures.push(`${ROUTE_FILE}: missing entity-scoped matched settlement label (must join driver_finance.driver_settlements, not the phantom driver_finance.settlements — BANK-F5627)`);
+  const settlementLabelCount = countMatches(src.route, /settlement\.display_id AS matched_settlement_display_id/g);
+  const settlementJoinCount = countMatches(src.route, /LEFT JOIN driver_finance\.driver_settlements settlement[\s\S]{0,100}settlement\.id = bt\.matched_settlement_id[\s\S]{0,100}settlement\.operating_company_id = bt\.operating_company_id/g);
+  if (settlementLabelCount !== 2 || settlementJoinCount !== 2) {
+    failures.push(`${ROUTE_FILE}: both transaction readers must project and company-scope matched settlements (labels ${settlementLabelCount}/2, joins ${settlementJoinCount}/2; never use phantom driver_finance.settlements — BANK-F5627)`);
   }
 
   if (!/matched_bill_number\??:\s*string \| null/.test(src.api)) {
@@ -75,10 +83,15 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["route-select", "route", /bill\.bill_number AS matched_bill_number/, "-- removed"],
-    ["route-join", "route", /LEFT JOIN accounting\.bills bill\n\s+ON bill\.id = bt\.matched_bill_id/, "-- removed join"],
+    ["account-route-select", "route", /bill\.bill_number AS matched_bill_number/, "-- removed"],
+    ["company-route-select", "route", /bill\.bill_number AS matched_bill_number/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "-- removed" : match],
+    ["account-route-join", "route", /LEFT JOIN accounting\.bills bill\n\s+ON bill\.id = bt\.matched_bill_id/, "-- removed join"],
+    ["company-route-join", "route", /LEFT JOIN accounting\.bills bill\n\s+ON bill\.id = bt\.matched_bill_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "-- removed join" : match],
     ["api-type", "api", /matched_bill_number\?:\s*string \| null;/, "// removed"],
-    ["settlement-label", "route", /settlement\.display_id AS matched_settlement_display_id/, "NULL AS missing_settlement_label"],
+    ["account-settlement-label", "route", /settlement\.display_id AS matched_settlement_display_id/, "NULL AS missing_settlement_label"],
+    ["company-settlement-label", "route", /settlement\.display_id AS matched_settlement_display_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "NULL AS missing_settlement_label" : match],
+    ["account-settlement-join", "route", /LEFT JOIN driver_finance\.driver_settlements settlement\n\s+ON settlement\.id = bt\.matched_settlement_id/, "-- removed settlement join"],
+    ["company-settlement-join", "route", /LEFT JOIN driver_finance\.driver_settlements settlement\n\s+ON settlement\.id = bt\.matched_settlement_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "-- removed settlement join" : match],
     ["settlement-api", "api", /matched_settlement_display_id\?:\s*string \| null;/, "// removed"],
     ["view-link", "view", /kind="bill"\n\s+id=\{tx\.matched_bill_id\}/, 'kind="load"\n                        id={tx.matched_bill_id}'],
     ["panel-bill", "panel", /kind="bill" id=\{t\.matched_bill_id\}/, 'kind="load" id={t.matched_bill_id}'],
