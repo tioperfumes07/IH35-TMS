@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accounting-reverse-link-list-surfaces";
 const AUDIT_TRAIL = "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx";
+const POSTING_LINEAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.tsx";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -31,6 +32,13 @@ const CHECKS = [
   { name: "Audit API emits canonical source kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /source_entity_kind:\s*accountingSourceEntityKind/ },
   { name: "Audit client carries canonical source kind", file: "apps/frontend/src/api/accounting.ts", pattern: /export type AccountingAuditTrailEvent = \{[\s\S]*?source_transaction_type:\s*string \| null;\s*source_entity_kind:\s*string \| null;[\s\S]*?\n\};/ },
   { name: "Audit Trail consumes canonical source kind", file: AUDIT_TRAIL, pattern: /type=\{row\.source_entity_kind \?\? row\.source_transaction_type\}/ },
+  { name: "Posting Lineage bill-payment canonical drill", file: POSTING_LINEAGE, pattern: /case "bill_payment":\s*return "bill_payment";/ },
+  { name: "Posting Lineage driver-advance canonical drill", file: POSTING_LINEAGE, pattern: /case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/ },
+  { name: "Posting Lineage transfer canonical drill", file: POSTING_LINEAGE, pattern: /case "transfer":\s*return "transfer";/ },
+  { name: "Lineage API emits canonical source kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /source_entity_kind:\s*accountingSourceEntityKind\(String\(row\.source_transaction_type/ },
+  { name: "Lineage API emits canonical linked-object kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /linked_object_entity_kind:\s*accountingSourceEntityKind\(row\.linked_object_type/ },
+  { name: "Lineage client carries canonical linked-object kind", file: "apps/frontend/src/api/accounting.ts", pattern: /export type AccountingSourceLineageRow = \{[\s\S]*?linked_object_type:\s*string \| null;\s*linked_object_entity_kind:\s*string \| null;/ },
+  { name: "Posting Lineage consumes canonical linked-object kind", file: POSTING_LINEAGE, pattern: /type=\{row\.linked_object_entity_kind \?\? row\.linked_object_type\}/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },
@@ -90,6 +98,17 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — driver-advance and transfer dead-drill mutations red`);
+  const postingLineage = fs.readFileSync(path.join(ROOT, POSTING_LINEAGE), "utf8");
+  const wrongLineageBillRoute = postingLineage.replace(/case "bill_payment":\s*return "bill_payment";/, 'case "bill_payment":\n      return "payment";');
+  const deadLineageAdvance = postingLineage.replace(/case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/, 'case "cash_advance":\n      return "cash_advance";');
+  const deadLineageTransfer = postingLineage.replace(/case "transfer":\s*return "transfer";/, "");
+  if (/case "bill_payment":\s*return "bill_payment";/.test(wrongLineageBillRoute)
+    || /case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/.test(deadLineageAdvance)
+    || /case "transfer":\s*return "transfer";/.test(deadLineageTransfer)) {
+    console.error(`${LABEL} SELFTEST FAIL — Posting Lineage wrong/dead-route mutation stayed green`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — Posting Lineage wrong/dead-route mutations red`);
   process.exit(0);
 }
 

@@ -41,9 +41,11 @@ export type AccountingSourceLineageRow = {
   memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string;
+  source_entity_kind: string | null;
   source_transaction_id: string;
   source_transaction_line_id: string | null;
   linked_object_type: string | null;
+  linked_object_entity_kind: string | null;
   linked_object_id: string | null;
   relationship_role: string | null;
   account_id: string;
@@ -281,9 +283,11 @@ export async function listAccountingSourceLineage(
       memo: row.memo == null ? null : String(row.memo),
       posting_batch_id: row.posting_batch_id ? String(row.posting_batch_id) : null,
       source_transaction_type: String(row.source_transaction_type ?? ""),
+      source_entity_kind: accountingSourceEntityKind(String(row.source_transaction_type ?? "")),
       source_transaction_id: String(row.source_transaction_id ?? ""),
       source_transaction_line_id: row.source_transaction_line_id ? String(row.source_transaction_line_id) : null,
       linked_object_type: row.linked_object_type ? String(row.linked_object_type) : null,
+      linked_object_entity_kind: accountingSourceEntityKind(row.linked_object_type ? String(row.linked_object_type) : null),
       linked_object_id: row.linked_object_id ? String(row.linked_object_id) : null,
       relationship_role: row.relationship_role ? String(row.relationship_role) : null,
       account_id: String(row.account_id ?? ""),
