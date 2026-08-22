@@ -62,6 +62,9 @@ export type FactoringChargebackFeeRow = {
   customer_name: string | null;
   invoice_id: string | null;
   invoice_display_id: string | null;
+  /** ACCT-F5901: views.factoring_chargebacks_fees (202613080000) now selects the real advance
+   * dollar amount, mirroring FactoringRecourseInvoice.advance_amount above. */
+  advance_amount: number;
 };
 
 export type FactoringMonthlyFeeSummary = {
