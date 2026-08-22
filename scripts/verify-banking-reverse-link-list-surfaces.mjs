@@ -23,6 +23,7 @@ const PLAID_PANEL = "apps/frontend/src/pages/banking/components/BankingPlaidConn
 const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
 const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
+const MATCH_DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -92,6 +93,7 @@ const CHECKS = [
   { name: "linked panel deduction human label projection", file: CATEGORIZATION_ROUTES, pattern: /COALESCE\(NULLIF\(TRIM\(ded\.deduction_type\), ''\), 'Driver deduction'\) AS deduction_label/ },
   { name: "linked panel deduction label join is company scoped", file: CATEGORIZATION_ROUTES, pattern: /LEFT JOIN driver_finance\.driver_settlement_deductions ded[\s\S]{0,180}ded\.operating_company_id = bt\.operating_company_id/ },
   { name: "linked panel deduction exact reverse drill", file: LINKED_PANEL, pattern: /row\.deduction_id \? \([\s\S]{0,300}kind="settlement_deduction"[\s\S]{0,120}id=\{row\.deduction_id\}[\s\S]{0,300}row\.deduction_label/ },
+  { name: "match drawer candidate drills use scoped human references", file: MATCH_DRAWER, pattern: /function candidateDrillLabel\(candidate: BankMatchCandidate\)[\s\S]{0,180}candidate\.memo\?\.trim\(\)[\s\S]{0,120}KIND_LABELS\[candidate\.ledger_entry_kind\][\s\S]*kind=\{KIND_ENTITY\[c\.ledger_entry_kind\]\}[\s\S]{0,160}label=\{candidateDrillLabel\(c\)\}/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
