@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_claims_reverse","trailer.profile.insurance_claims_reverse"],"task":"FLEET-F5908-INSURANCE-CLAIMS-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.insurance_claims_reverse"],"task":"FLEET-F5951-UNIT-INSURANCE-CLAIMS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const unitDocs = fs.readFileSync("apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx", "utf8");
@@ -16,6 +17,7 @@ const fleetMap = fs.readFileSync("docs/specs/scoreboard/modules/fleet.required.j
 const feed = fs.readFileSync("docs/specs/scoreboard/wire-sprint-built.json", "utf8");
 const self = fs.readFileSync("scripts/verify-fleet-reverse-link-remainder.mjs", "utf8");
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_claims_reverse","trailer.profile.insurance_claims_reverse"],"task":"FLEET-F5908-INSURANCE-CLAIMS-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.insurance_claims_reverse"],"task":"FLEET-F5951-UNIT-INSURANCE-CLAIMS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 function qboMappingRequiresReverse(source) {
   const parsed = JSON.parse(source);
@@ -60,7 +62,9 @@ function failures(s = {}) {
     if (!leaf?.required?.includes("reverse_link")) found.push(`${id} must require reverse_link`);
     if (leaf?.route_hint !== route) found.push(`${id} must name mounted route ${route}`);
   }
+  if (!matrix?.leaves?.find((row) => row.id === "unit.profile.insurance_claims_reverse")?.required?.includes("connectivity")) found.push("unit.profile.insurance_claims_reverse must require connectivity");
   if (!sf.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact Fleet insurance-claims header missing");
+  if (!sf.split('import fs from "node:fs";')[0].includes(CONNECTIVITY_HEADER)) found.push("exact Fleet unit insurance-claims connectivity header missing");
   try { if (JSON.parse(fd).entries?.some((entry) => entry.guard === "scripts/verify-fleet-reverse-link-remainder.mjs")) found.push("manual feed duplicates Fleet claims ownership"); }
   catch (error) { found.push(`feed parse: ${error.message}`); }
   return found;
@@ -87,6 +91,8 @@ if (process.argv.includes("--selftest")) {
     failures({ fleetMap: fleetMap.replace('"id": "unit.profile.insurance_claims_reverse"', '"id": "unit.profile.insurance_claims_reverse.broken"') }).includes("unit.profile.insurance_claims_reverse must require reverse_link"),
     failures({ fleetMap: fleetMap.replace('"id": "trailer.profile.insurance_claims_reverse"', '"id": "trailer.profile.insurance_claims_reverse.broken"') }).includes("trailer.profile.insurance_claims_reverse must require reverse_link"),
     failures({ self: self.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) }).includes("exact Fleet insurance-claims header missing"),
+    failures({ fleetMap: fleetMap.replace('"id": "unit.profile.insurance_claims_reverse"', '"id": "unit.profile.insurance_claims_reverse.connectivity-broken"') }).includes("unit.profile.insurance_claims_reverse must require connectivity"),
+    failures({ self: self.replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) }).includes("exact Fleet unit insurance-claims connectivity header missing"),
     failures({ feed: JSON.stringify({ entries: [{ guard: "scripts/verify-fleet-reverse-link-remainder.mjs" }] }) }).includes("manual feed duplicates Fleet claims ownership"),
   ];
   if (checks.some((ok) => !ok)) {
