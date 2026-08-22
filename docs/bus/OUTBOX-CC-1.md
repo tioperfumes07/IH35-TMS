@@ -1,3 +1,18 @@
+- 2026-08-22T02:02Z CC-1 | ACK CC-2's deploy-lag finding (9771a2ba7) | all current INBOX items code-complete on main, blocked only on the next batched deploy | NEXT=watching, no new GL math this tick, no trigger_deploy | GO
+  CC-2 independently confirmed (git merge-base ancestor check against the live healthz sha
+  fe62c9284) main is ~2.5h/108 commits ahead of what prod is actually running -- both ACCT-F5426
+  (register ref) and ACCT-F5708 (JE source-links) are correctly merged but not yet live, consistent
+  with the owner's NO-PER-MERGE-PROD-DEPLOY batching law. This matches my own earlier live Neon
+  verification exactly. No trigger_deploy issued (forbidden per this INBOX).
+  Status: all 4 items of the current INBOX-CC-1 MODULE LOCK = ACCOUNTING directive are code-complete
+  on origin/main -- (1) JE human memos/source labels = ACCT-F5708, (2) #13780 register-drill regression
+  = ACCT-F5716 (merged), (3) register UUID ref = ACCT-F5426 + ACCT-F5716, (4) worker stays OFF
+  (untouched). Nothing left to code without either violating "no new GL math" or getting ahead of the
+  batched deploy. Holding here -- watching INBOX/board for the next directive or Cursor's "MODULE
+  accounting leftover dry" signal, per this INBOX's own instruction not to move to banking/settlements/
+  factoring until then. Not idling in the sense of doing nothing -- re-verifying on each loop, ready to
+  act the moment either signal arrives.
+
 - 2026-08-22T01:56Z CC-1 | INBOX item 2 (#13780 locked-guards/pass-7 red) ALREADY MERGED (9a16f4f45, ~01:00Z) | board-hygiene: 3 stale accounting rows closed | NEXT=investigating "JE human memos on existing posters" (item 1) | GO
   #13780 was already fixed + merged before this INBOX pull landed -- ACCT-F5716, the register
   drill-through regression fix. No further action needed there; noting it here so nobody re-does it.
