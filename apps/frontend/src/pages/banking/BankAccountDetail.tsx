@@ -434,7 +434,13 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
     key: "matched",
     label: "Matched",
     render: (row) =>
-      row.matched_load_id ? (
+      row.matched_transfer_id ? (
+        <EntityLink
+          kind="transfer"
+          id={row.matched_transfer_id}
+          label={entityLabel(row.matched_transfer_label ?? null, row.matched_transfer_id, "Transfer")}
+        />
+      ) : row.matched_load_id ? (
         <EntityLink
           kind="load"
           id={row.matched_load_id}
@@ -451,6 +457,12 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
           kind="settlement"
           id={row.matched_settlement_id}
           label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")}
+        />
+      ) : row.matched_expense_id ? (
+        <EntityLink
+          kind="expense"
+          id={row.matched_expense_id}
+          label={entityLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")}
         />
       ) : (
         "No"

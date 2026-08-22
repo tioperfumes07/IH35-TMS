@@ -83,6 +83,7 @@ export type PlaidBankTransaction = {
   /** EXPENSE column-wave: reconciliation.routes.ts now selects this back; previously omitted, so a
    * transaction matched only to an expense showed as unmatched in the Reconciliation Workspace. */
   matched_expense_id?: string | null;
+  matched_expense_number?: string | null;
   /** Stamped when categorize→GL posts via bank_categorization (Law §9 reverse → JE). */
   matched_journal_entry_id?: string | null;
   /** Human label for the matched JE (memo) — same ACCT-F5153 convention as matched_bill_number. */
