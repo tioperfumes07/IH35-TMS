@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","inventory","vendors"],"cols":["reverse_link"],"leafRe":"^(secondary\.pre_settlements|docs\.(ocr|equipment_transfers)|misc\.layover|assignments\.(wo_link|unit_link|vendor_link)|md\.(transaction_list|vendor_details))$","task":"LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch","inventory","vendors"],"cols":["reverse_link"],"leaves":["secondary.pre_settlements","docs.ocr","docs.equipment_transfers","misc.layover","assignments.wo_link","assignments.unit_link","assignments.vendor_link","md.transaction_list","md.vendor_details"],"task":"CLASS-F5865-WORKFLOW-REVERSE-EXACT-NINE-LEAVES","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -14,7 +14,9 @@ const FILES = {
   dispatchMatrix: "docs/specs/scoreboard/modules/dispatch.required.json",
   inventoryMatrix: "docs/specs/scoreboard/modules/inventory.required.json",
   vendorsMatrix: "docs/specs/scoreboard/modules/vendors.required.json",
+  self: "scripts/verify-dispatch-inventory-vendor-workflow-links.mjs",
 };
+const HEADER = '/** @matrix-built {"modules":["dispatch","inventory","vendors"],"cols":["reverse_link"],"leaves":["secondary.pre_settlements","docs.ocr","docs.equipment_transfers","misc.layover","assignments.wo_link","assignments.unit_link","assignments.vendor_link","md.transaction_list","md.vendor_details"],"task":"CLASS-F5865-WORKFLOW-REVERSE-EXACT-NINE-LEAVES","vertical":"class-sweep"} */';
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -52,6 +54,7 @@ export function verify(source) {
       if (!leaf?.required?.includes("reverse_link")) failures.push(`${key}:${id} must inventory reverse_link`);
     }
   }
+  if (!source.self.split("\n").includes(HEADER)) failures.push("exact nine-leaf Built annotation drifted");
   return failures;
 }
 
@@ -62,7 +65,7 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["routes", 'path="/dispatch/equipment-transfers"', 'path="/dispatch/equipment-transfers-broken"'],
     ["routes", 'path="/dispatch/layovers/driver/:driverId"', 'path="/dispatch/layovers"'],
@@ -81,10 +84,11 @@ if (process.argv.includes("--self-test")) {
     ["vendors", 'vendor_id: selectedVendor!.id', 'vendor_id: undefined'],
     ["vendors", '<EntityLink kind="bill" id={r.id}', '<span data-bill={r.id}'],
     ["vendors", 'data-testid="vendor-master-detail-record-link"', 'data-testid="broken-vendor-link"'],
-    ["dispatchMatrix", '"id": "secondary.pre_settlements"', '"id": "secondary.pre_settlements.broken"'],
-    ["inventoryMatrix", '"id": "assignments.wo_link"', '"id": "assignments.wo_link.broken"'],
-    ["vendorsMatrix", '"id": "md.transaction_list"', '"id": "md.transaction_list.broken"'],
   ];
+  for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
+    for (const id of ids) mutations.push([key, `"id": "${id}"`, `"id": "${id}.broken"`]);
+  }
+  mutations.push(["self", '"leaves":["secondary.pre_settlements"', '"leaves":["secondary.assignments"']);
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
     if (!verify({ ...source, [key]: source[key].replaceAll(before, after) }).length) throw new Error(`self-test mutation survived: ${key}`);
