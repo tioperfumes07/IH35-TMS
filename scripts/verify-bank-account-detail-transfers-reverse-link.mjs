@@ -1,108 +1,60 @@
 #!/usr/bin/env node
-// P19-MODULE-BANKING-TRANSFERS-REVERSE-LINK (verify-step reserved separately).
-//
-// ROOT CAUSE this closes: banking.transfers.from_account_id/to_account_id are a real, join-able
-// link into banking.bank_accounts (or catalogs.accounts for the COA side) — listTransfers already
-// filters by accountId, and the backend route (GET /api/v1/banking/transfers) already accepts it —
-// but nothing on BankAccountDetailPage ever called it. An internal transfer into/out of an account
-// was completely invisible on that account's own page, reachable only via a manual trip to the
-// global /banking/transfers list with the filter set by hand. Live USMCA/TRK victims: transfer
-// 89363414-... ($1.00, TRANSP->USMCA) touches account e83028a5-... and is not matched to any Plaid
-// feed row either (matched_transfer_id), so it left no trace anywhere on that account's page.
-//
-// FIX: BankAccountDetailPage now queries listTransfers(accountId) and renders a Transfers section
-// (direction relative to the viewed account, other-side EntityLink, amount, memo) alongside the
-// existing Plaid-sourced register.
-//
-// Static source assertion — no DB needed.
+/**
+ * BANK-F5794 — a bank account's transfer reverse list must stay scoped to the
+ * selected company/account and drill to the exact human-labelled counter account.
+ *
+ * Self-test: node scripts/verify-bank-account-detail-transfers-reverse-link.mjs --selftest
+ */
 import fs from "node:fs";
 
 const FILE = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
+const LABEL = "verify-bank-account-detail-transfers-reverse-link";
 
-function fail(msg) {
-  console.error(`FAIL verify-bank-account-detail-transfers-reverse-link: ${msg}`);
-  process.exitCode = 1;
+const CHECKS = [
+  { name: "company/account scoped transfer query key", pattern: /queryKey:\s*\["banking", "transfers", "by-account", id, companyId\]/ },
+  { name: "company/account scoped transfer read", pattern: /listTransfers\(companyId, \{ accountId: id, status: "active", limit: 50 \}\)/ },
+  { name: "transfer read disabled without company and account", pattern: /listTransfers\(companyId, \{ accountId: id, status: "active", limit: 50 \}\),\s+enabled: Boolean\(id && companyId\)/ },
+  { name: "direction derives from exact from-account FK", pattern: /t\.from_account_id === id \? "Out" : "In"/ },
+  { name: "counter-account id derives from transfer direction", pattern: /const otherAccountId = isOutgoing \? t\.to_account_id : t\.from_account_id/ },
+  { name: "counter-account kind derives from transfer direction", pattern: /const otherAccountKind = isOutgoing \? t\.to_account_kind : t\.from_account_kind/ },
+  { name: "counter-account human label derives from scoped projections", pattern: /const otherAccountName = isOutgoing\s*\? t\.to_bank_name \|\| t\.to_coa_name\s*:\s*t\.from_bank_name \|\| t\.from_coa_name/ },
+  { name: "counter-account drill uses canonical kind", pattern: /kind=\{otherAccountKind === "coa" \? "account" : "bank_account"\}/ },
+  { name: "counter-account drill uses exact FK", pattern: /id=\{otherAccountId\}/ },
+  { name: "counter-account drill uses human label", pattern: /label=\{entityLabel\(otherAccountName, otherAccountId, "Account"\)\}/ },
+  { name: "reverse section is rendered from scoped rows", pattern: /transfers\.length > 0[\s\S]{0,220}data-testid="bank-account-detail-transfers"/ },
+  { name: "reverse table preserves exact transfer row identity", pattern: /<ParityTable<Transfer>[\s\S]{0,220}rows=\{transfers\}[\s\S]{0,160}rowKey=\{\(t\) => t\.id\}/ },
+];
+
+export function collectFailures(src) {
+  return CHECKS.filter(({ pattern }) => !pattern.test(src)).map(({ name }) => name);
 }
 
-function check(src) {
-  if (!src.includes("listTransfers(")) {
-    fail(`${FILE}: no longer calls listTransfers() — the reverse link to banking.transfers is gone.`);
-    return;
-  }
-  if (!/accountId:\s*id/.test(src)) {
-    fail(`${FILE}: listTransfers() call no longer filters by this account's id.`);
-  }
-  if (!src.includes('data-testid="bank-account-detail-transfers"')) {
-    fail(`${FILE}: the Transfers section is no longer rendered.`);
-  }
-}
-
-function main() {
-  check(fs.readFileSync(FILE, "utf8"));
-  if (process.exitCode !== 1) {
-    console.log("PASS verify-bank-account-detail-transfers-reverse-link");
-  }
-}
-
-function selftest() {
-  const original = fs.readFileSync(FILE, "utf8");
-  let probesProven = 0;
-
-  // Mutation 1: drop the listTransfers call (regress to the class of bug this fixes).
-  {
-    const mutated = original.replace("queryFn: () => listTransfers(companyId, { accountId: id, status: \"active\", limit: 50 }),", "queryFn: () => Promise.resolve({ transfers: [] }),");
-    if (mutated === original) {
-      console.error("SELFTEST SETUP FAILED: listTransfers call pattern not found.");
-      process.exitCode = 1;
-      return;
-    }
-    fs.writeFileSync(FILE, mutated);
-    let caught = false;
-    try {
-      check(mutated);
-      caught = process.exitCode === 1;
-    } finally {
-      process.exitCode = undefined;
-      fs.writeFileSync(FILE, original);
-    }
-    if (!caught) {
-      console.error("SELFTEST INERT: dropping the listTransfers call was not caught.");
-      process.exitCode = 1;
-      return;
-    }
-    probesProven++;
-  }
-
-  // Mutation 2: remove the rendered section's testid.
-  {
-    const mutated = original.replace('data-testid="bank-account-detail-transfers"', "");
-    if (mutated === original) {
-      console.error("SELFTEST SETUP FAILED: testid pattern not found.");
-      process.exitCode = 1;
-      return;
-    }
-    fs.writeFileSync(FILE, mutated);
-    let caught = false;
-    try {
-      check(mutated);
-      caught = process.exitCode === 1;
-    } finally {
-      process.exitCode = undefined;
-      fs.writeFileSync(FILE, original);
-    }
-    if (!caught) {
-      console.error("SELFTEST INERT: removing the section testid was not caught.");
-      process.exitCode = 1;
-      return;
-    }
-    probesProven++;
-  }
-
-  console.log(`PASS verify-bank-account-detail-transfers-reverse-link --selftest (mutation probes proven non-inert: ${probesProven})`);
-}
+const source = fs.readFileSync(FILE, "utf8");
 
 if (process.argv.includes("--selftest")) {
-  selftest();
-} else {
-  main();
+  const baseline = collectFailures(source);
+  if (baseline.length) {
+    console.error(`[${LABEL}] SELFTEST baseline FAIL:\n- ${baseline.join("\n- ")}`);
+    process.exit(1);
+  }
+  let rejected = 0;
+  const inert = [];
+  for (const check of CHECKS) {
+    const planted = source.replace(check.pattern, "/* planted BANK-F5794 reverse defect */");
+    if (planted !== source && collectFailures(planted).includes(check.name)) rejected += 1;
+    else inert.push(check.name);
+  }
+  if (rejected !== CHECKS.length) {
+    console.error(`[${LABEL}] SELFTEST FAIL: rejected ${rejected}/${CHECKS.length} independent plants; inert: ${inert.join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] --selftest PASS: rejected ${rejected}/${CHECKS.length} independent account-transfer plants`);
+  process.exit(0);
 }
+
+const failures = collectFailures(source);
+if (failures.length) {
+  console.error(`[${LABEL}] FAIL:\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`[${LABEL}] PASS: ${CHECKS.length} exact account-transfer reverse obligations ratcheted`);
