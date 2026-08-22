@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes","drivers.panel.pending_settlement_deductions"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["escrow_record.list"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 import fs from "node:fs";
 
@@ -15,9 +15,9 @@ const files = {
   safetyMatrix: "docs/specs/scoreboard/modules/safety.required.json",
   self: "scripts/verify-driver-finance-reverse-leaves.mjs",
 };
-const REQUIRED = { driversMatrix: ["cash_advances", "deductions", "disputes"], safetyMatrix: ["escrow_record.list"] };
+const REQUIRED = { driversMatrix: ["cash_advances", "deductions", "disputes", "drivers.panel.pending_settlement_deductions"], safetyMatrix: ["escrow_record.list"] };
 const HEADERS = [
-  '/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes","drivers.panel.pending_settlement_deductions"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
   '/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["escrow_record.list"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
 ];
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
@@ -128,7 +128,7 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
-  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length + 6} production/evidence mutations detected`);
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length + 7} production/evidence mutations detected`);
   process.exit(0);
 }
 

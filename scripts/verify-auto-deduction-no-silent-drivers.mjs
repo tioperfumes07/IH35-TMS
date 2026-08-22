@@ -4,7 +4,7 @@
  * LST-F5184 — list reverse filter is EntityPicker + URL sync (create form keeps DriverPickerWithCreate).
  * Cursor even claim: 2138.
  *
- * @matrix-built {"modules":["drivers"],"cols":["picker_law","reverse_link","connectivity"],"leafRe":"^drivers\\.tab\\.auto_deductions$","task":"LST-F5184-auto-deduction-driver-filter","vertical":"column-wave"}
+ * @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["drivers.panel.auto_deduction_policies"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -13,6 +13,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-auto-deduction-no-silent-drivers";
 const FILE = "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/drivers.required.json";
+const SELF = "scripts/verify-auto-deduction-no-silent-drivers.mjs";
+const HEADER = ' * @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["drivers.panel.auto_deduction_policies"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}';
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -51,11 +54,24 @@ export function collectProblems(root = ROOT) {
   return problems;
 }
 
+function collectEvidenceProblems(matrixSrc, selfSrc) {
+  const problems = [];
+  try {
+    const leaf = JSON.parse(matrixSrc).leaves?.find((item) => item.id === "drivers.panel.auto_deduction_policies");
+    if (!leaf?.required?.includes("reverse_link")) problems.push("drivers.panel.auto_deduction_policies must require reverse_link");
+  } catch { problems.push(`${MATRIX}: must parse`); }
+  if (!selfSrc.split("\n").includes(HEADER)) problems.push(`${SELF}: exact Built header missing`);
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
   const baseline = collectProblems();
-  if (baseline.length) {
+  const matrix = readRel(ROOT, MATRIX) ?? "";
+  const self = readRel(ROOT, SELF) ?? "";
+  const evidenceBaseline = collectEvidenceProblems(matrix, self);
+  if (baseline.length || evidenceBaseline.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
-    for (const p of baseline) console.error("  - " + p);
+    for (const p of [...baseline, ...evidenceBaseline]) console.error("  - " + p);
     process.exit(1);
   }
   const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-auto-deduct-"));
@@ -76,9 +92,18 @@ const driverNameById = new Map()
   } finally {
     fs.rmSync(stubRoot, { recursive: true, force: true });
   }
-  console.log(`${LABEL} SELFTEST OK`);
+  const matrixMutant = matrix.replace('"id": "drivers.panel.auto_deduction_policies"', '"id": "drivers.panel.auto_deduction_policies.removed"');
+  if (!collectEvidenceProblems(matrixMutant, self).some((problem) => problem.includes("must require reverse_link"))) {
+    console.error(`${LABEL} SELFTEST FAIL: Required mutation escaped`);
+    process.exit(1);
+  }
+  if (!collectEvidenceProblems(matrix, self.replace(HEADER, `${HEADER}.removed`)).some((problem) => problem.includes("exact Built header missing"))) {
+    console.error(`${LABEL} SELFTEST FAIL: header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST OK — 3/3 runtime/evidence defects rejected`);
 } else {
-  const problems = collectProblems();
+  const problems = [...collectProblems(), ...collectEvidenceProblems(readRel(ROOT, MATRIX) ?? "", readRel(ROOT, SELF) ?? "")];
   if (problems.length) {
     console.error(`${LABEL} FAIL:`);
     for (const p of problems) console.error("  - " + p);
