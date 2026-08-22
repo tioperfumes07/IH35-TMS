@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["home","cash_advances","permits","pay_rate_templates","deductions","team_splits","disputes","leave"],"task":"DRV-F5925-CORE-ROUTE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * WAVE-B connectivity closeout — factoring + banking + drivers remaining leaves.
  *
@@ -15,6 +16,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-wave-b-factoring-banking-drivers-connectivity";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
+const REQUIRED = "docs/specs/scoreboard/modules/drivers.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-wave-b-factoring-banking-drivers-connectivity.mjs";
+const EXACT_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["home","cash_advances","permits","pay_rate_templates","deductions","team_splits","disputes","leave"],"task":"DRV-F5925-CORE-ROUTE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const DRIVER_ROUTES = new Map([
+  ["home", "/drivers"], ["cash_advances", "/drivers/cash-advances"],
+  ["permits", "/drivers/permits"], ["pay_rate_templates", "/drivers/pay-rate-templates"],
+  ["deductions", "/drivers/deductions"], ["team_splits", "/drivers/team-splits"],
+  ["disputes", "/drivers/disputes"], ["leave", "/drivers/leave"],
+]);
 const mountedRoute = (route, component) => new RegExp(
   `path="${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,220}<${component}\\b`
 );
@@ -67,6 +78,19 @@ function checkAll(readFile) {
   return failures;
 }
 
+function checkEvidence(requiredSrc, selfSrc, feedSrc) {
+  const failures = [];
+  const required = JSON.parse(requiredSrc);
+  for (const [id, route] of DRIVER_ROUTES) {
+    const leaf = required.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("connectivity")) failures.push(`${REQUIRED}: ${id} must require connectivity`);
+    if (leaf?.route_hint !== route) failures.push(`${REQUIRED}: ${id} must name route ${route}`);
+  }
+  if (!selfSrc.split("/**\n * WAVE-")[0].includes(EXACT_HEADER)) failures.push(`${SELF}: exact Drivers core connectivity header missing`);
+  if (/"guard"\s*:\s*"scripts\/verify-wave-b-factoring-banking-drivers-connectivity\.mjs"/.test(feedSrc)) failures.push(`${FEED}: manual feed duplicates exact Drivers core connectivity`);
+  return failures;
+}
+
 if (process.argv.includes("--selftest")) {
   const sources = new Map([...new Set(CHECKS.map((check) => check.file))].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
   const failures = [];
@@ -82,11 +106,21 @@ if (process.argv.includes("--selftest")) {
       failures.push(`${check.name}: independent plant escaped`);
     }
   }
+  const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
+  const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+  const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
+  failures.push(...checkEvidence(requiredGood, selfGood, feedGood));
+  for (const id of DRIVER_ROUTES.keys()) {
+    const mutated = requiredGood.replace(`"id": "${id}"`, `"id": "${id}.broken"`);
+    if (mutated === requiredGood || checkEvidence(mutated, selfGood, feedGood).length === 0) failures.push(`${id}: Required mutation escaped`);
+  }
+  if (checkEvidence(requiredGood, selfGood.replace(EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")), feedGood).length === 0) failures.push("exact header mutation escaped");
+  if (checkEvidence(requiredGood, selfGood, feedGood.replace("[", `[{"guard":"scripts/verify-wave-b-factoring-banking-drivers-connectivity.mjs"},`)).length === 0) failures.push("feed mutation escaped");
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (${CHECKS.length}/${CHECKS.length} exact plants rejected)`);
+  console.log(`${LABEL} --selftest PASS (${CHECKS.length} runtime + ${DRIVER_ROUTES.size + 2} evidence plants rejected)`);
   process.exit(0);
 }
 
@@ -94,6 +128,11 @@ const failures = checkAll((rel) => {
   const abs = path.join(ROOT, rel);
   return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
 });
+failures.push(...checkEvidence(
+  fs.readFileSync(path.join(ROOT, REQUIRED), "utf8"),
+  fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+  fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+));
 if (failures.length) {
   console.error(`${LABEL} FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
