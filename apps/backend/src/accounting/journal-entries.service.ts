@@ -961,6 +961,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type = 'prepaid_purchase' THEN 'prepaid_asset'
             WHEN tsl.linked_object_type = 'fuel_event' THEN 'fuel_transaction'
             WHEN tsl.linked_object_type = 'driver_reimbursement' THEN 'driver_reimbursement'
+            WHEN tsl.linked_object_type = 'dispute_disbursement' THEN 'settlement_dispute'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
@@ -974,7 +975,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
           -- though the href it builds from source_transaction_id was already correct.
           COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label, src_reimbursement.display_label) AS source_transaction_display_id,
-          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number) AS linked_object_display_id
+          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         LEFT JOIN accounting.invoices src_inv
@@ -1017,6 +1018,10 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           ON tsl.linked_object_type = 'bill'
           AND link_bill.id::text = tsl.linked_object_id
           AND link_bill.operating_company_id = $2::uuid
+        LEFT JOIN driver_finance.driver_settlement_disputes link_dispute
+          ON tsl.linked_object_type = 'dispute_disbursement'
+          AND link_dispute.id::text = tsl.linked_object_id
+          AND link_dispute.operating_company_id = $2::uuid
         WHERE jep.journal_entry_uuid = $1
           AND jep.operating_company_id = $2::uuid
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST

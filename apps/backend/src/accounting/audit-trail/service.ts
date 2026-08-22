@@ -152,6 +152,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "recurring_template";
     case "period_close":
       return "period_close";
+    case "dispute_disbursement":
+      return "settlement_dispute";
     case "prepaid_amortization_row":
     case "depreciation_schedule_row":
     case "loan_amortization_row":
@@ -351,7 +353,7 @@ export async function listAccountingSourceLineage(
         jp.source_transaction_line_id,
         tsl.linked_object_type,
         tsl.linked_object_id,
-        COALESCE(link_inv.display_id, link_bill.bill_number, link_bill.display_id) AS linked_object_display_id,
+        COALESCE(link_inv.display_id, link_bill.bill_number, link_bill.display_id, link_dispute.dispute_description) AS linked_object_display_id,
         tsl.relationship_role,
         jp.account_id::text AS account_id,
         a.account_number,
@@ -380,6 +382,10 @@ export async function listAccountingSourceLineage(
         ON tsl.linked_object_type = 'bill'
        AND link_bill.id::text = tsl.linked_object_id
        AND link_bill.operating_company_id = jp.operating_company_id
+      LEFT JOIN driver_finance.driver_settlement_disputes link_dispute
+        ON tsl.linked_object_type = 'dispute_disbursement'
+       AND link_dispute.id::text = tsl.linked_object_id
+       AND link_dispute.operating_company_id = jp.operating_company_id
       WHERE jp.operating_company_id = $1::uuid
         AND jp.source_transaction_type = $2::text
         AND jp.source_transaction_id = $3::text

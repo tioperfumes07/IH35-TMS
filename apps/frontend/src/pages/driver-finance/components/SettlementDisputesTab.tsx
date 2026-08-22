@@ -44,6 +44,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   // LST-F5182 — visible EntityPicker (URL seed + DriverPickerWithCreate without URL write is not reverse chrome).
   // LV-DRIVER-FINANCE-SETTLEMENT-DISPUTES-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const requestedDisputeId = searchParams.get("dispute_id")?.trim() ?? "";
   const [status, setStatus] = useState<"open" | "all">("open");
   const [selected, setSelected] = useState<SettlementDisputeRow | null>(null);
 
@@ -89,11 +90,20 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
     enabled: Boolean(companyId),
   });
 
+  const selectedDisputeId = selected?.id ?? requestedDisputeId;
   const detailQuery = useQuery({
-    queryKey: ["driver-finance", "settlement-disputes", "detail", selected?.id ?? "", companyId],
-    queryFn: () => getSettlementDispute(selected!.id, companyId),
-    enabled: Boolean(selected?.id && companyId),
+    queryKey: ["driver-finance", "settlement-disputes", "detail", selectedDisputeId, companyId],
+    queryFn: () => getSettlementDispute(selectedDisputeId, companyId),
+    enabled: Boolean(selectedDisputeId && companyId),
   });
+
+  function openDispute(row: SettlementDisputeRow | null) {
+    const p = new URLSearchParams(searchParams);
+    if (row?.id) p.set("dispute_id", row.id);
+    else p.delete("dispute_id");
+    setSearchParams(p, { replace: true });
+    setSelected(row);
+  }
 
   const reviewMutation = useMutation({
     mutationFn: (id: string) => markSettlementDisputeUnderReview(id, { operating_company_id: companyId }),
@@ -115,7 +125,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       }),
     onSuccess: async () => {
       pushToast("Dispute resolved", "success");
-      setSelected(null);
+      openDispute(null);
       setResolution("in_favor");
       setResolutionNotes("");
       setResolutionAmount("");
@@ -276,7 +286,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           storageKey="settlement-disputes"
           exportFilename="settlement-disputes"
           rowActions={(row) => (
-            <Button size="sm" variant="secondary" onClick={() => setSelected(row)}>
+            <Button size="sm" variant="secondary" onClick={() => openDispute(row)}>
               Open
             </Button>
           )}
@@ -302,7 +312,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               size="sm"
               variant="secondary"
               onClick={() => {
-                setSelected(null);
+                openDispute(null);
                 setResolution("in_favor");
                 setResolutionNotes("");
                 setResolutionAmount("");
@@ -319,6 +329,12 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               <p>Status: {titleize(detail.status)}</p>
               <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
               <p>Description: {detail.dispute_description}</p>
+              {detail.resolution_journal_entry_id ? (
+                <p>
+                  Resolution JE:{" "}
+                  <EntityLink kind="journal_entry" id={detail.resolution_journal_entry_id} label="Open journal entry" />
+                </p>
+              ) : null}
             </div>
             <div className="rounded-sm border border-gray-100 p-2">
               <p className="font-semibold text-gray-700">Settlement Breakdown</p>
