@@ -141,8 +141,16 @@ function assertAutoTsParsesShorthand() {
 }
 
 if (process.argv.includes("--selftest")) {
+  // NOTE: process.exit() does not run pending `finally` blocks in Node — calling it inside the try
+  // (as this used to on both the success and the catch path) skipped the finally's fs.unlinkSync(tmp)
+  // cleanup and leaked scripts/verify-matrix-built-selftest-tmp-<pid>.mjs into the tree on every
+  // single --selftest run (found live: 2 separate leaked copies from unrelated runs, each one
+  // itself then flagged by verify-guard-wired.mjs/verify-matrix-built-leaf-specific.mjs as an
+  // orphan/broad-leafRe guard). Record the outcome instead and exit only after the shared
+  // finally-based cleanup below has actually run.
   const tmp = path.join(ROOT, "scripts", `verify-matrix-built-selftest-tmp-${process.pid}.mjs`);
   const bad = `#!/usr/bin/env node\n// EntityLink reverse_link connectivity FK test fixture — deliberately missing tag\nconsole.log("tmp");\n`;
+  let failure = null;
   try {
     assertAutoTsParsesShorthand();
     console.log(`${LABEL} selftest: matrix-built-auto shorthand/csv parser present OK`);
@@ -155,10 +163,8 @@ if (process.argv.includes("--selftest")) {
       throw new Error("shorthand tag should satisfy missingTag");
     }
     console.log(`${LABEL} selftest: missingTag + shorthand accept OK`);
-    process.exit(0);
   } catch (e) {
-    console.error(`${LABEL} selftest FAIL`, e);
-    process.exit(1);
+    failure = e;
   } finally {
     try {
       fs.unlinkSync(tmp);
@@ -166,6 +172,11 @@ if (process.argv.includes("--selftest")) {
       /* ignore */
     }
   }
+  if (failure) {
+    console.error(`${LABEL} selftest FAIL`, failure);
+    process.exit(1);
+  }
+  process.exit(0);
 }
 
 const forward = goingForwardFailures();
