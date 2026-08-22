@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^accounting\\.detail$","task":"VERTICAL-REVERSE-LINK-factoring-remainder","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.detail"],"task":"FACT-F5825","vertical":"column-wave"}
  * Self-test: node scripts/verify-factoring-reverse-link-remainder.mjs --selftest
  */
 import fs from "node:fs";
@@ -12,7 +12,9 @@ const LABEL = "verify-factoring-reverse-link-remainder";
 const DETAIL = "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx";
 const ROUTES = "apps/frontend/src/routes/manifest.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/factoring.required.json";
+const GUARD = "scripts/verify-factoring-reverse-link-remainder.mjs";
 const CHECKS = [
+  { name: "exact leaf-specific Built claim", file: GUARD, pattern: /@matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["accounting\.detail"\],"task":"FACT-F5825"/ },
   { name: "factoring detail route mounted", file: ROUTES, pattern: /path="\/accounting\/factoring\/:id"[\s\S]{0,180}<FactoringDetailPage \/>/ },
   { name: "invoice reverse drill", file: DETAIL, pattern: /kind="invoice" id=\{invoice\.id\}[\s\S]{0,100}invoice\.display_id/ },
   { name: "customer reverse drill", file: DETAIL, pattern: /kind="customer" id=\{invoice\.customer_id\}[\s\S]{0,120}invoice\.customer_name/ },
@@ -21,7 +23,7 @@ const CHECKS = [
 ];
 
 function readSources() {
-  return Object.fromEntries([DETAIL, ROUTES, MATRIX].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
+  return Object.fromEntries([DETAIL, ROUTES, MATRIX, GUARD].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
 }
 
 function run(sources) {
@@ -55,7 +57,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — exact leaf ownership stayed green`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6/6 planted defects rejected`);
+  console.log(`${LABEL} SELFTEST PASS — 7/7 planted defects rejected`);
   process.exit(0);
 }
 
