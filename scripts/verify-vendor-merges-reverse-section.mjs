@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^home\\.vendor_merges$","task":"LINK-F5183-vendor-merges-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.vendor_merges"],"task":"FACT-F5840-VENDOR-MERGES-REVERSE-EXACT-LEAF"} */
 /**
  * GUARD: both a driver's own profile and a vendor's own profile show the QBO vendor-merge rows
  * involving them (LINK-F5171 reverse_link sweep gap factoring:home.vendor_merges).
@@ -34,7 +34,9 @@ const DRIVER_SECTION = "apps/frontend/src/components/driver-profile/DriverVendor
 const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const VENDOR_SECTION = "apps/frontend/src/components/vendors/VendorMergesReverseSection.tsx";
 const VENDOR_DETAIL = "apps/frontend/src/pages/VendorDetail.tsx";
-const FILES = [SERVICE, ROUTES, API, HOME, DRIVER_SECTION, DRIVER_PROFILE, VENDOR_SECTION, VENDOR_DETAIL];
+const SELF = "scripts/verify-vendor-merges-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [SERVICE, ROUTES, API, HOME, DRIVER_SECTION, DRIVER_PROFILE, VENDOR_SECTION, VENDOR_DETAIL, SELF, REQUIRED];
 const LABEL = "verify-vendor-merges-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -52,6 +54,21 @@ export function assertVendorMergesReverse(sources) {
   const driverProfile = src[DRIVER_PROFILE];
   const vendorSection = src[VENDOR_SECTION];
   const vendorDetail = src[VENDOR_DETAIL];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["home\.vendor_merges"\],"task":"FACT-F5840-VENDOR-MERGES-REVERSE-EXACT-LEAF"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own only the exact vendor-merges reverse leaf`);
+  }
+  let requiredLeaves = [];
+  try {
+    requiredLeaves = JSON.parse(required).leaves ?? [];
+  } catch {
+    problems.push(`${REQUIRED}: must remain valid JSON`);
+  }
+  if (!requiredLeaves.find((leaf) => leaf.id === "home.vendor_merges")?.required?.includes("reverse_link")) {
+    problems.push(`${REQUIRED}: home.vendor_merges must remain a Required reverse_link leaf`);
+  }
 
   if (!/AND m\.driver_id = \$/.test(service)) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by driver_id server-side when provided`);
@@ -185,6 +202,8 @@ function selftest() {
       import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
       <VendorMergesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
     `,
+    [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.vendor_merges"],"task":"FACT-F5840-VENDOR-MERGES-REVERSE-EXACT-LEAF"} */`,
+    [REQUIRED]: `{"leaves":[{"id":"home.vendor_merges","required":["reverse_link"]}]}`,
   };
   const goodProblems = assertVendorMergesReverse(good);
   if (goodProblems.length) {
@@ -221,6 +240,8 @@ function selftest() {
       ...good,
       [VENDOR_SECTION]: good[VENDOR_SECTION].replace('kind="factoring_vendor_merges_vendor"', 'from "react-router-dom"'),
     },
+    { ...good, [SELF]: good[SELF].replace('"leaves":["home.vendor_merges"]', '"leafRe":"^home.*$"') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('"reverse_link"', '"qbo_chrome"') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertVendorMergesReverse(mutated).length === 0) {
