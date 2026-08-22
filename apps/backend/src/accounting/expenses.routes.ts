@@ -218,12 +218,24 @@ export type ExpenseListRow = {
   work_order_display_id: string | null;
   /** ACCT-F17 — bank txn stamped via matched_expense_id (Law §9 reverse). */
   matched_bank_transaction_id: string | null;
+  matched_bank_transaction_description: string | null;
 };
 
 /** Bank-recon accept stamps banking.bank_transactions.matched_expense_id — reverse hop for Expenses. */
 const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = `
   (
     SELECT bt.id::text
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = e.operating_company_id
+      AND bt.matched_expense_id = e.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
+  )
+`;
+
+const EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL = `
+  (
+    SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''))
     FROM banking.bank_transactions bt
     WHERE bt.operating_company_id = e.operating_company_id
       AND bt.matched_expense_id = e.id
@@ -338,7 +350,8 @@ export async function queryExpensesList(
             AND rm.operating_company_id = e.operating_company_id
             AND rm.match_state IN ('auto_matched', 'user_matched')
         )                                            AS is_reconciled,
-        ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id
+        ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
+        ${EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_description
       FROM accounting.expenses e
       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id

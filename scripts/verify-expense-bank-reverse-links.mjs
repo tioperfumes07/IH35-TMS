@@ -32,6 +32,10 @@ export function check(files) {
     f.push(`${ROUTES}: missing EXPENSE_MATCHED_BANK subquery (or equivalent)`);
   }
 
+  if (!/EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL/.test(routes) || !/matched_bank_transaction_description/.test(routes)) {
+    f.push(`${ROUTES}: must project matched_bank_transaction_description beside the id hop`);
+  }
+
   const api = files[API] ?? "";
   if (!/matched_bank_transaction_id/.test(api)) {
     f.push(`${API}: ExpenseListRow/ExpenseDetail must declare matched_bank_transaction_id`);
@@ -45,6 +49,9 @@ export function check(files) {
   const list = files[LIST] ?? "";
   if (!/matched_bank_transaction_id/.test(list) || !/kind=["']bank_transaction["']/.test(list)) {
     f.push(`${LIST}: must EntityLink bank_transaction column from matched_bank_transaction_id`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*r\.matched_bank_transaction_id/.test(list)) {
+    f.push(`${LIST}: must not entityLabel(null, matched_bank_transaction_id) — use description`);
   }
 
   return f;
@@ -66,14 +73,20 @@ export function run(root = ROOT) {
 if (process.argv.includes("--selftest")) {
   const good = {
     [ROUTES]: `const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = \`SELECT bt.id WHERE bt.matched_expense_id = e.id\`;
-      AS matched_bank_transaction_id`,
+      const EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL = \`SELECT bt.merchant_name\`;
+      AS matched_bank_transaction_id AS matched_bank_transaction_description`,
     [API]: `matched_bank_transaction_id?: string | null;`,
     [DETAIL]: `<EntityLink kind="bank_transaction" id={expense.matched_bank_transaction_id} />`,
-    [LIST]: `key: "matched_bank_transaction_id", render: (r) => <EntityLink kind="bank_transaction" id={r.matched_bank_transaction_id} />`,
+    [LIST]: `key: "matched_bank_transaction_id", render: (r) => <EntityLink kind="bank_transaction" id={r.matched_bank_transaction_id} label={entityLabel(r.matched_bank_transaction_description, r.matched_bank_transaction_id, "Bank transaction")} />`,
   };
   if (check(good).length) throw new Error(`${LABEL} PASS path failed: ${check(good).join("; ")}`);
   const bad = { ...good, [DETAIL]: `<div>no bank</div>` };
   if (!check(bad).length) throw new Error(`${LABEL} FAIL path did not catch missing detail EntityLink`);
+  const tombstone = {
+    ...good,
+    [LIST]: `key: "matched_bank_transaction_id", render: (r) => <EntityLink kind="bank_transaction" id={r.matched_bank_transaction_id} label={entityLabel(null, r.matched_bank_transaction_id, "Bank transaction")} />`,
+  };
+  if (!check(tombstone).length) throw new Error(`${LABEL} FAIL path did not catch UUID tombstone Bank label`);
   console.log(`${LABEL} --selftest OK`);
 } else {
   const f = run();
