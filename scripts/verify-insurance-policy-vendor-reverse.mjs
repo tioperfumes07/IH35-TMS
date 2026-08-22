@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["insurance","vendors","safety"],"cols":["vendor","connectivity","reverse_link","picker_law"],"task":"INSURANCE-POLICY-VENDOR-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["insurance"],"cols":["vendor","connectivity","reverse_link","picker_law"],"leaves":["policies.create","policies.list","insurance.modal.policy_create","insurance.parity.policy_create"],"task":"INSURANCE-POLICY-VENDOR-REVERSE","vertical":"column-wave"} */ /** @matrix-built {"modules":["vendors"],"cols":["vendor","connectivity","reverse_link"],"leaves":["detail.profile"],"task":"INSURANCE-POLICY-VENDOR-REVERSE-PROFILE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-insurance-policy-vendor-reverse";
 const files = {
+  guard: "scripts/verify-insurance-policy-vendor-reverse.mjs",
   creator: "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
   route: "apps/backend/src/insurance/policy.routes.ts",
   api: "apps/frontend/src/api/insurance.ts",
@@ -14,6 +15,8 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 const checks = [
+  ["insurance Built claim names exact applicable leaves", "guard", /@matrix-built \{"modules":\["insurance"\],"cols":\["vendor","connectivity","reverse_link","picker_law"\],"leaves":\["policies\.create","policies\.list","insurance\.modal\.policy_create","insurance\.parity\.policy_create"\]/],
+  ["vendor profile Built claim names exact applicable leaf", "guard", /@matrix-built \{"modules":\["vendors"\],"cols":\["vendor","connectivity","reverse_link"\],"leaves":\["detail\.profile"\]/],
   ["creator reloads canonical vendor selection", "creator", /value=\{form\.insurer_vendor_id \|\| null\}/],
   ["creator writes selection into policy form", "creator", /onChange=\{\(next, option\) => \{[\s\S]{0,160}insurer_vendor_id: id,[\s\S]{0,120}insurer_name: option\?\.label/],
   ["creator submits the same canonical vendor FK", "creator", /vendor_id: next\.payload\.insurer_vendor_id/],

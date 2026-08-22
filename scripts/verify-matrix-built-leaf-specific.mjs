@@ -64,6 +64,12 @@ export function isLeafSpecific(leafRe) {
   return true;
 }
 
+function exactLeavesToRegex(leaves) {
+  if (!Array.isArray(leaves) || !leaves.length || leaves.some((leaf) => typeof leaf !== "string" || !leaf.trim())) return "";
+  const escaped = leaves.map((leaf) => leaf.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return escaped.length === 1 ? `^${escaped[0]}$` : `^(?:${escaped.join("|")})$`;
+}
+
 export function scanEntries(readFileText = (p) => fs.readFileSync(p, "utf8"), listScripts = () =>
   fs.readdirSync(path.join(ROOT, "scripts")).filter((n) => n.startsWith("verify-") && n.endsWith(".mjs"))
 ) {
@@ -88,7 +94,7 @@ export function scanEntries(readFileText = (p) => fs.readFileSync(p, "utf8"), li
     for (const m of source.matchAll(MATRIX_BUILT_JSON_RE)) {
       try {
         const tag = JSON.parse(m[1]);
-        entries.push({ file, cols: tag.cols || [], leafRe: tag.leafRe ?? "", task: tag.task });
+        entries.push({ file, cols: tag.cols || [], leafRe: tag.leafRe ?? exactLeavesToRegex(tag.leaves), task: tag.task });
       } catch {
         // malformed legacy tag — not this guard's concern (verify-matrix-built-tag-present covers it)
       }
@@ -134,6 +140,16 @@ if (process.argv.includes("--selftest")) {
   const exact = audit([{ file: "fixture", cols: ["reverse_link"], leafRe: "^detail\\.loads$" }]);
   if (exact.length) {
     console.error(`${LABEL} SELFTEST FAIL — leaf-specific tag rejected`);
+    process.exit(1);
+  }
+  const exactLeavesTag = scanEntries(
+    (file) => file.endsWith(FEED_FILE)
+      ? JSON.stringify({ entries: [] })
+      : '#!/usr/bin/env node\n/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.detail"],"task":"EXACT"} */\n',
+    () => ["verify-exact-leaves-fixture.mjs"],
+  );
+  if (audit(exactLeavesTag).length || exactLeavesTag[0]?.leafRe !== "^accounting\\.detail$") {
+    console.error(`${LABEL} SELFTEST FAIL — exact leaves[] tag was not converted to an anchored escaped regex`);
     process.exit(1);
   }
   const anchored = audit([{ file: "fixture", cols: ["connectivity"], leafRe: "^(bills\\.|ap\\.)" }]);

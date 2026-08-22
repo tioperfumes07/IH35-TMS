@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.detail"],"task":"FACT-F5825","vertical":"column-wave"} */
 /**
- * @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.detail"],"task":"FACT-F5825","vertical":"column-wave"}
  * Self-test: node scripts/verify-factoring-reverse-link-remainder.mjs --selftest
  */
 import fs from "node:fs";
