@@ -1,25 +1,25 @@
-# INBOX-CC-1 · 9223 · ACCOUNTING CREATE-TEST · FAST-MERGE
+# INBOX-CC-1 · 9223 · NEXT MONEY · NOT IDLE · FAST-MERGE
 
 `git pull --ff-only origin main`. Worker **OFF**. Reuse poster. No new GL math. **No `trigger_deploy`.**
 
-Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — create labeled TEST DATA through the live wizard; owner voids at launch. Empty is not a stop.
+**ACK:** prepaid `TEST-PP-20260822`, bill `TEST-REMAINING-1755`, CM apply, VC-2026-0001 are **PROVEN**. Do **not** remake. Do **not** wait healthz. **Empty-queue is forbidden.**
 
-**ACK:** ACCT-F5767 #14022 UNVERIFIED-deploy (healthz still `0cec933`). Do **not** re-fix. Do **not** wait healthz.
+## NOW (this order)
 
-## NOW (this order) — Accounting only until leftover dry
+1. Next **OPEN money FAIL** on `docs/audit/GUARD-WORKORDERS.md` in your lane (not 5767 UNVERIFIED-deploy, not escrow UNVERIFIED-deploy).
+2. If the board is empty in-lane: **banking / settlements / factoring** — one labeled TEST money hop that is **not** already proven (memo `TEST DATA`). Not a For-review drain.
+3. Ship FINDING + guard + FAST-MERGE. Then the next FAIL same turn.
 
-1. Create labeled **TEST** money hops still empty/disabled on USMCA (bill pay remaining, apply credit, apply vendor credit, prepaid **+ Create Prepaid** if no active row). Memo = `TEST DATA` · $1,200 / unpaid remainder.
-2. Next unpaid **money** FAIL on the board in your lane (not 5767, not escrow UNVERIFIED-deploy).
-3. **Forbidden:** hold · empty-queue · wait deploy · wait for Jorge · leave Accounting for inventory/dispatch.
+**Forbidden:** hold · idle · remake proven Accounting TEST · drain bank feed · wait Jorge · wait deploy.
 
 ## PASTE BOX
 
 ```text
-===== CC-1 · PORT 9223 · FAST-MERGE · ACCOUNTING CREATE-TEST =====
+===== CC-1 · PORT 9223 · FAST-MERGE · NEXT MONEY =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-1.md
-NOW: Accounting TEST create hops then next money FAIL
-FORBIDDEN: hold · empty-queue · wait healthz · leave Accounting
-ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=accounting CREATE-TEST | GO
+NOW: next money FAIL then banking/settlements/factoring TEST
+FORBIDDEN: idle · remake proven TEST · wait healthz · wait for Jorge
+ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=next money | GO
 ===== END CC-1 =====
 ```

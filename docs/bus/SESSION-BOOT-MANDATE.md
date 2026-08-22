@@ -2,6 +2,8 @@
 
 **Canonical NOW = your `INBOX-<SEAT>.md` after `git pull --ff-only origin main`.** Idle because `healthz` is still `0cec933` is forbidden. Skip-OUTBOX is forbidden. Factoring Recourse Pipeline has live USMCA row INV-2026-00038.
 
+**2026-08-22 03:36 CT:** Accounting CREATE-TEST 4 hops proven ≠ idle. Pull INBOX. TEST an unproven hop **or** wire the next Urgent 6 / rest-of-urgent module. Empty-queue is a process defect.
+
 Every hour: `INBOX-<SEAT>.md` → `CODER-INSTRUCTIONS-NOW.md` → `CHROME-PORTS-LOCKED.md` → `NO-PERSISTENT-MATRIX-TAB.md` → `FAST-MERGE-4MIN-LAW.md`
 
 **DEADLINE: 13:46 CT 2026-08-21** (7 hours from 06:46 CT). Prior **06:16 CT is SUPERSEDED.**
