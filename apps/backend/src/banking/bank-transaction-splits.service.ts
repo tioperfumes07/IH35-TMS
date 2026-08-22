@@ -202,14 +202,14 @@ export async function getSplitLines(
 }
 
 /**
- * REVERSE drill-through: given exactly one of driver_id/unit_id/trailer_id/load_id/vendor_id, list every
+ * REVERSE drill-through: given exactly one of driver_id/unit_id/trailer_id/load_id/vendor_id/customer_id, list every
  * split line tagged to it (+ its parent bank transaction + whatever it produced — advance/deduction/bill).
  * Mirrors the shape of the single-line categorize's by-linkage endpoint (BLOCK-6b), generalized to splits.
  */
 export async function getSplitLinesByLinkage(
   companyId: string,
   actorUserUuid: string,
-  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; vendor_id?: string },
+  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; vendor_id?: string; customer_id?: string },
   limit = 200
 ): Promise<Array<Record<string, unknown>>> {
   return withCompanyScope(actorUserUuid, companyId, async (client: Client) => {
@@ -226,6 +226,7 @@ export async function getSplitLinesByLinkage(
           s.category_kind,
           s.gl_account_id::text,
           s.vendor_id::text,
+          s.customer_id::text,
           s.driver_id::text,
           s.unit_id::text,
           s.trailer_id::text,
@@ -246,11 +247,12 @@ export async function getSplitLinesByLinkage(
             OR ($4::uuid IS NOT NULL AND s.trailer_id = $4::uuid)
             OR ($5::uuid IS NOT NULL AND s.load_id = $5::uuid)
             OR ($6::uuid IS NOT NULL AND s.vendor_id = $6::uuid)
+            OR ($7::uuid IS NOT NULL AND s.customer_id = $7::uuid)
           )
         ORDER BY bt.transaction_date DESC, s.line_no ASC
-        LIMIT $7
+        LIMIT $8
       `,
-      [companyId, linkage.driver_id ?? null, linkage.unit_id ?? null, linkage.trailer_id ?? null, linkage.load_id ?? null, linkage.vendor_id ?? null, limit]
+      [companyId, linkage.driver_id ?? null, linkage.unit_id ?? null, linkage.trailer_id ?? null, linkage.load_id ?? null, linkage.vendor_id ?? null, linkage.customer_id ?? null, limit]
     );
     return res.rows;
   });
