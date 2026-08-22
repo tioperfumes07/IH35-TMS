@@ -156,6 +156,7 @@ export type EntityKind =
   | "compliance_hos_driver"
   | "inventory_part"
   | "parts_inventory"
+  | "catalog_item"
   | "maintenance_vendor"
   | "pm_schedule"
   | "safety_event"
@@ -337,6 +338,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/inventory?part_id=${id}`;
     case "parts_inventory":
       return `/maintenance/parts-inventory?part_inventory_id=${id}`;
+    case "catalog_item":
+      return `/catalogs/items?item_id=${id}`;
     case "maintenance_vendor":
       return `/maintenance/vendors/${id}`;
     case "pm_schedule":

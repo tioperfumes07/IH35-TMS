@@ -51,6 +51,22 @@ export function ItemsListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
+  const deepLinkItemId = searchParams.get("item_id");
+  const deepLinkItemQuery = useQuery({
+    queryKey: ["catalogs", "accounting", "items", "detail", companyId, deepLinkItemId],
+    queryFn: () => itemsCatalogClient.get(String(deepLinkItemId), companyId),
+    enabled: Boolean(companyId && deepLinkItemId),
+  });
+
+  useEffect(() => {
+    if (!deepLinkItemId || !deepLinkItemQuery.data) return;
+    setModalMode("edit");
+    setSelectedRow(deepLinkItemQuery.data);
+    setModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("item_id");
+    setSearchParams(next, { replace: true });
+  }, [deepLinkItemId, deepLinkItemQuery.data, searchParams, setSearchParams]);
 
   // LST-F5213 — Live Chrome deep-link: Lists ?create=1 must open item create (posting-templates / void-cancel parity).
   useEffect(() => {

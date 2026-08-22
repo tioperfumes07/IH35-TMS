@@ -1560,7 +1560,14 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="customer" id={links.customer_id} label={entityLabel(links.customer_name, links.customer_id, "Customer")} />
                 ) : null}
                 {links?.item_id ? (
-                  <span className="text-gray-700">Item: {entityLabel(links.item_name, links.item_id, "Item")}</span>
+                  <span className="text-gray-700">
+                    Item:{" "}
+                    <EntityLink
+                      kind="catalog_item"
+                      id={links.item_id}
+                      label={entityLabel(links.item_name, links.item_id, "Item")}
+                    />
+                  </span>
                 ) : null}
                 {links?.deduction_id ? (
                   <span className="text-gray-700" title={links.deduction_status ?? undefined}>
