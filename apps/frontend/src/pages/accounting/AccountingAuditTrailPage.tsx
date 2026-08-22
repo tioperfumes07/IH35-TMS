@@ -196,7 +196,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.source_entity_kind ?? row.source_transaction_type}
                   id={row.source_transaction_id}
-                  label={entityLabel(null, row.source_transaction_id, "Source transaction")}
+                  label={entityLabel(row.source_transaction_display_id, row.source_transaction_id, "Source transaction")}
                 />
               </>
             ) : null}
@@ -278,7 +278,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.linked_object_type}
                   id={row.linked_object_id}
-                  label={entityLabel(null, row.linked_object_id, "Linked object")}
+                  label={entityLabel(row.linked_object_display_id, row.linked_object_id, "Linked object")}
                 />
               </>
             ) : null}
@@ -384,7 +384,7 @@ export function AccountingAuditTrailPage() {
             <PostingEntityLink
               type={lineageKey.source_transaction_type}
               id={lineageKey.source_transaction_id}
-              label={entityLabel(null, lineageKey.source_transaction_id, "Source transaction")}
+              label={entityLabel(lineageRows?.[0]?.source_transaction_display_id, lineageKey.source_transaction_id, "Source transaction")}
             />
           </div>
           {lineageMut.isPending ? <div className="text-xs text-slate-500">Loading lineage…</div> : null}
