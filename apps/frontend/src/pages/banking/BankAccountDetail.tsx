@@ -32,6 +32,18 @@ import { userFacingApiError } from "../../lib/api-error-message";
 
 const PAGE_SIZE = 50;
 
+function matchedTransactionLinks(row: PlaidBankTransaction) {
+  const links = [
+    row.matched_transfer_id ? <EntityLink key="transfer" kind="transfer" id={row.matched_transfer_id} label={entityLabel(row.matched_transfer_label ?? null, row.matched_transfer_id, "Transfer")} /> : null,
+    row.matched_load_id ? <EntityLink key="load" kind="load" id={row.matched_load_id} label={entityLabel(row.matched_load_number ?? null, row.matched_load_id, "Load")} /> : null,
+    row.matched_bill_id ? <EntityLink key="bill" kind="bill" id={row.matched_bill_id} label={entityLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")} /> : null,
+    row.matched_settlement_id ? <EntityLink key="settlement" kind="settlement" id={row.matched_settlement_id} label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")} /> : null,
+    row.matched_expense_id ? <EntityLink key="expense" kind="expense" id={row.matched_expense_id} label={entityLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")} /> : null,
+    row.matched_journal_entry_id ? <EntityLink key="je" kind="journal_entry" id={row.matched_journal_entry_id} label={entityLabel(row.matched_journal_entry_memo ?? null, row.matched_journal_entry_id, "Journal entry")} /> : null,
+  ].filter(Boolean);
+  return links.length ? <div className="flex flex-wrap gap-1">{links}</div> : "No";
+}
+
 /** Signed QBO amount — direction from is_credit (same spentReceived convention as the live register). */
 export function formatBankTransactionSignedAmount(tx: Pick<PlaidBankTransaction, "amount_cents" | "is_credit">) {
   const { spent, received } = spentReceived(tx as PlaidBankTransaction);
@@ -433,46 +445,7 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
   {
     key: "matched",
     label: "Matched",
-    render: (row) =>
-      row.matched_transfer_id ? (
-        <EntityLink
-          kind="transfer"
-          id={row.matched_transfer_id}
-          label={entityLabel(row.matched_transfer_label ?? null, row.matched_transfer_id, "Transfer")}
-        />
-      ) : row.matched_load_id ? (
-        <EntityLink
-          kind="load"
-          id={row.matched_load_id}
-          label={entityLabel(row.matched_load_number ?? null, row.matched_load_id, "Load")}
-        />
-      ) : row.matched_bill_id ? (
-        <EntityLink
-          kind="bill"
-          id={row.matched_bill_id}
-          label={entityLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")}
-        />
-      ) : row.matched_settlement_id ? (
-        <EntityLink
-          kind="settlement"
-          id={row.matched_settlement_id}
-          label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")}
-        />
-      ) : row.matched_expense_id ? (
-        <EntityLink
-          kind="expense"
-          id={row.matched_expense_id}
-          label={entityLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")}
-        />
-      ) : row.matched_journal_entry_id ? (
-        <EntityLink
-          kind="journal_entry"
-          id={row.matched_journal_entry_id}
-          label={entityLabel(row.matched_journal_entry_memo ?? null, row.matched_journal_entry_id, "Journal entry")}
-        />
-      ) : (
-        "No"
-      ),
+    render: matchedTransactionLinks,
   },
 ];
 
