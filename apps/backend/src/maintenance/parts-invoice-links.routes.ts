@@ -10,6 +10,12 @@ const querySchema = z.object({
   vendor_id: z.string().uuid().optional(),
   work_order_id: z.string().uuid().optional(),
 });
+// ACCT-F5756 — no frontend caller of DELETE exists yet (verified via repo-wide grep before this fix),
+// so this can add a reason without breaking an in-flight UI; defaults to a fixed reason for API
+// callers that omit it rather than making it a required breaking change up front.
+const voidQuerySchema = querySchema.extend({
+  void_reason: z.string().trim().min(1).max(500).optional(),
+});
 const woParamsSchema = z.object({ id: z.string().uuid() });
 const unitParamsSchema = z.object({ unitId: z.string().uuid() });
 const linkParamsSchema = z.object({ id: z.string().uuid() });
@@ -92,6 +98,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
           LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
                                                            AND pi.operating_company_id = pil.operating_company_id
           WHERE ${filters.join(" AND ")}
+            AND pil.voided_at IS NULL
           ORDER BY pil.created_at DESC
           LIMIT 500
         `,
@@ -159,6 +166,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
                                                              AND pi.operating_company_id = pil.operating_company_id
             WHERE pil.operating_company_id = $1::uuid
               AND wo.unit_id = $2
+              AND pil.voided_at IS NULL
             ORDER BY pil.created_at DESC
             LIMIT 500
           `,
@@ -288,25 +296,56 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
     if (!user) return;
     const params = linkParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
-    const query = querySchema.safeParse(req.query ?? {});
+    const query = voidQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
+    // ACCT-F5756 — INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE: this route used to physically remove
+    // the row outright, destroying the append-only WO parts-consumption record with no reversal
+    // metadata, and never restoring parts_inventory.on_hand_qty (the stock this link's create path
+    // decremented by qty_used). Same-company void that stamps actor/reason, excludes voided rows from
+    // every active read (list/unit-history/wo-cost-validation), and restores stock exactly once,
+    // atomically with the void itself.
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      const deleted = await client.query(
+      const voided = await client.query(
         `
-          DELETE FROM maintenance.parts_invoice_links
-          WHERE id = $1 AND operating_company_id = $2::uuid
-          RETURNING id, work_order_id
+          UPDATE maintenance.parts_invoice_links
+          SET voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid
+          WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
+          RETURNING id, work_order_id, parts_inventory_id, qty_used
         `,
-        [params.data.id, query.data.operating_company_id]
+        [
+          params.data.id,
+          query.data.operating_company_id,
+          query.data.void_reason ?? "Removed via parts-invoice-links API",
+          user.uuid,
+        ]
       );
-      const row = deleted.rows[0] as { id: string; work_order_id: string } | undefined;
+      const row = voided.rows[0] as
+        | { id: string; work_order_id: string; parts_inventory_id: string | null; qty_used: number }
+        | undefined;
       if (!row) return { notFound: true as const };
+
+      if (row.parts_inventory_id) {
+        await client.query(
+          `
+            UPDATE maintenance.parts_inventory
+            SET on_hand_qty = COALESCE(on_hand_qty, 0) + $2, updated_at = now()
+            WHERE id = $1 AND operating_company_id = $3::uuid
+          `,
+          [row.parts_inventory_id, row.qty_used, query.data.operating_company_id]
+        );
+      }
+
       await appendCrudAudit(
         client,
         user.uuid,
         "maintenance.wo.parts_link_removed",
-        { resource_id: row.work_order_id, parts_invoice_link_id: row.id },
+        {
+          resource_id: row.work_order_id,
+          parts_invoice_link_id: row.id,
+          void_reason: query.data.void_reason ?? "Removed via parts-invoice-links API",
+          stock_restored_qty: row.parts_inventory_id ? row.qty_used : 0,
+        },
         "warning",
         "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
       );

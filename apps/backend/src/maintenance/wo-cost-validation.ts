@@ -70,6 +70,7 @@ export async function validateWoVendorInvoiceTotals(
         COALESCE(SUM(vendor_invoice_amount::numeric * GREATEST(qty_used, 1)), 0)::numeric AS total
       FROM maintenance.parts_invoice_links
       WHERE work_order_id = $1::uuid
+        AND voided_at IS NULL
     `,
     [woId]
   );
