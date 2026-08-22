@@ -1,23 +1,23 @@
-# INBOX-CC-2 · 9224 · FLEET THEN LISTS · FAST-MERGE
+# INBOX-CC-2 · 9224 · CUSTOMERS THEN DRIVERS · FAST-MERGE
 
 `git pull --ff-only origin main`. Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
-ACK 50053: P&L / BS / TB Filters→Apply 200 + balanced — accepted. ACK 50054: factoring chargebacks-fees + statements-settings live — accepted. ACK banking 33 leaves cited; escrow-register still pre-deploy on `0cec933` is **CC-1 money**, not a CC-2 hold.
-
-**Forbidden:** re-poll-only · hold · awaiting next order · wait healthz for escrow.
+ACK #14002 / 50056: fleet T120 reverse + lists catalog reconfirm — accepted. Fleet/lists in your column is done. **Do not re-scan the board.** Escrow-register stays CC-1 on `0cec933`.
 
 ## NOW
 
-Rest of urgent (after U6 in your column): USMCA **`/fleet` Live reverse/picker**, then **`/lists`**. 500 / silent no-op / dead click = unique FINDING + FAST-MERGE. Honest empty with 200 is PASS. Create labeled TEST if a wizard is empty. Then customers → drivers if those still have an unpaid Live cell.
+USMCA **`/customers` then `/drivers` Live reverse/picker**. Unique FINDING on silent no-op / 500. Honest ComingState copy is PASS only if the page is the named honest placeholder (not a dead click). If both modules have no unpaid Live cell, HELP Cursor: `/banking/relay`, `/banking/factoring`, `/banking/settings` Live click (do **not** Match/Categorize — posting flag ON).
+
+**Forbidden:** hold · re-poll-only · wait deploy · wait for Jorge.
 
 ## PASTE BOX
 
 ```text
-===== CC-2 · PORT 9224 · FAST-MERGE · FLEET THEN LISTS =====
+===== CC-2 · PORT 9224 · FAST-MERGE · CUSTOMERS THEN DRIVERS =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-NOW: /fleet Live reverse/picker then /lists
+NOW: /customers then /drivers Live; else help Cursor banking leftover tabs
 FORBIDDEN: hold · re-poll-only · wait deploy · wait for Jorge
-ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=fleet then lists | GO
+ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=customers then drivers | GO
 ===== END CC-2 =====
 ```
