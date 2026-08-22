@@ -14,7 +14,8 @@ const SOURCE_DISPLAY_ID_SQL = `
           CASE WHEN jp.source_transaction_type = 'customer_payment' THEN 'Invoice Payment' END,
           NULLIF(btrim(src_bpay_bill.bill_number), ''),
           src_banktx.display_label,
-          src_fueltx.display_label
+          src_fueltx.display_label,
+          src_reimbursement.display_label
         )`;
 
 const SOURCE_DISPLAY_JOINS_SQL = `
@@ -56,7 +57,15 @@ const SOURCE_DISPLAY_JOINS_SQL = `
           AND ft.id::text = jp.source_transaction_id
           AND ft.operating_company_id = jp.operating_company_id
         LIMIT 1
-      ) src_fueltx ON true`;
+      ) src_fueltx ON true
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(r.reason, ''), 'Driver ' || replace(r.reimbursement_type, '_', ' ') || ' reimbursement') AS display_label
+        FROM driver_finance.driver_reimbursements r
+        WHERE jp.source_transaction_type = 'driver_reimbursement'
+          AND r.id::text = jp.source_transaction_id
+          AND r.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_reimbursement ON true`;
 
 export type AccountingAuditTrailEvent = {
   id: string;
@@ -158,6 +167,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "prepaid_asset";
     case "fuel_event":
       return "fuel_transaction";
+    case "driver_reimbursement":
+      return "driver_reimbursement";
     default:
       return sourceType?.trim() || null;
   }

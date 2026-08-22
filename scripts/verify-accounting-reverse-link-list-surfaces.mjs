@@ -24,6 +24,8 @@ const PERIOD_CLOSE_DETAIL = "apps/frontend/src/pages/accounting/AccountingPeriod
 const PERIOD_CLOSE_ROUTE = "apps/backend/src/accounting/period-close-detail.routes.ts";
 const SCHEDULE_DETAIL = "apps/frontend/src/pages/accounting/AccountingScheduleRowDetailPage.tsx";
 const SCHEDULE_ROUTE = "apps/backend/src/accounting/schedule-row-detail.routes.ts";
+const REIMBURSEMENT_DETAIL = "apps/frontend/src/pages/accounting/AccountingDriverReimbursementDetailPage.tsx";
+const REIMBURSEMENT_ROUTE = "apps/backend/src/accounting/driver-reimbursement-detail.routes.ts";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -150,6 +152,25 @@ const CHECKS = [
   { name: "Audit Trail drills fuel event", file: AUDIT_TRAIL, pattern: /case "fuel_event":\s*return "fuel_transaction";/ },
   { name: "Posting Lineage drills fuel event", file: POSTING_LINEAGE, pattern: /case "fuel_event":\s*return "fuel_transaction";/ },
   { name: "JE Detail drills fuel event", file: JE_DETAIL, pattern: /case "fuel_event":\s*return "fuel_transaction";/ },
+  { name: "Reimbursement writer stores canonical reimbursement id", file: "apps/backend/src/driver-finance/driver-reimbursement.service.ts", pattern: /source_transaction_type: "driver_reimbursement",\s*source_transaction_id: input\.reimbursement_id/ },
+  { name: "EntityLink owns reimbursement route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "driver_reimbursement":\s*return `\/accounting\/driver-reimbursements\/\$\{id\}`;/ },
+  { name: "Reimbursement frontend route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/driver-reimbursements\/:id"[\s\S]*?<AccountingDriverReimbursementDetailPage/ },
+  { name: "Reimbursement backend route mounted", file: "apps/backend/src/index.ts", pattern: /await registerDriverReimbursementDetailRoutes\(app\)/ },
+  { name: "Reimbursement exact reader scopes company and id", file: REIMBURSEMENT_ROUTE, pattern: /WHERE r\.operating_company_id = \$1::uuid AND r\.id = \$2::uuid/ },
+  { name: "Reimbursement reader verifies membership", file: REIMBURSEMENT_ROUTE, pattern: /assertCompanyMembership\(user\.uuid, opco\)/ },
+  { name: "Reimbursement reader scopes driver join", file: REIMBURSEMENT_ROUTE, pattern: /d\.id = r\.driver_id AND d\.operating_company_id = r\.operating_company_id/ },
+  { name: "Reimbursement detail drills driver", file: REIMBURSEMENT_DETAIL, pattern: /kind="driver" id=\{row\.driver_id\}/ },
+  { name: "Reimbursement detail drills load", file: REIMBURSEMENT_DETAIL, pattern: /kind="load" id=\{row\.load_id\}/ },
+  { name: "Reimbursement detail drills settlement", file: REIMBURSEMENT_DETAIL, pattern: /kind="settlement" id=\{row\.applied_to_settlement_id\}/ },
+  { name: "Reimbursement detail drills JE", file: REIMBURSEMENT_DETAIL, pattern: /kind="journal_entry" id=\{row\.journal_entry_id\}/ },
+  { name: "Audit API canonicalizes reimbursement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "driver_reimbursement":\s*return "driver_reimbursement";/ },
+  { name: "Audit API resolves scoped reimbursement label", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /FROM driver_finance\.driver_reimbursements r[\s\S]*?r\.id::text = jp\.source_transaction_id[\s\S]*?r\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE API canonicalizes reimbursement", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'driver_reimbursement' THEN 'driver_reimbursement'/ },
+  { name: "JE API resolves scoped reimbursement label", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /FROM driver_finance\.driver_reimbursements r[\s\S]*?r\.id::text = jep\.source_transaction_id[\s\S]*?r\.operating_company_id = \$2::uuid/ },
+  { name: "Audit Trail drills reimbursement", file: AUDIT_TRAIL, pattern: /case "driver_reimbursement":\s*return "driver_reimbursement";/ },
+  { name: "Posting Lineage drills reimbursement", file: POSTING_LINEAGE, pattern: /case "driver_reimbursement":\s*return "driver_reimbursement";/ },
+  { name: "JE Detail drills reimbursement", file: JE_DETAIL, pattern: /case "driver_reimbursement":\s*return "driver_reimbursement";/ },
+  { name: "JE Detail amount uses canonical money formatter", file: JE_DETAIL, pattern: /render: \(posting\) => formatUsdCents\(posting\.amount_cents\)/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },

@@ -78,6 +78,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "prepaid_asset";
     case "fuel_event":
       return "fuel_transaction";
+    case "driver_reimbursement":
+      return "driver_reimbursement";
     case "expense":
       return "expense";
     case "settlement":

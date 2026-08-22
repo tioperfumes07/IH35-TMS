@@ -372,6 +372,7 @@ import { initializeAccountingCrons, registerAccountingRoutes } from "./accountin
 import { registerRecurringTemplateDetailRoutes } from "./accounting/recurring-template-detail.routes.js";
 import { registerPeriodCloseDetailRoutes } from "./accounting/period-close-detail.routes.js";
 import { registerScheduleRowDetailRoutes } from "./accounting/schedule-row-detail.routes.js";
+import { registerDriverReimbursementDetailRoutes } from "./accounting/driver-reimbursement-detail.routes.js";
 import { registerCashFlowRoutes } from "./accounting/cash-flow.routes.js";
 import { registerCashForecastRoutes } from "./accounting/cash-forecast.routes.js";
 import { registerFinanceHubRoutes } from "./accounting/finance-hub.routes.js";
@@ -1148,6 +1149,7 @@ async function main() {
   await registerRecurringTemplateDetailRoutes(app);
   await registerPeriodCloseDetailRoutes(app);
   await registerScheduleRowDetailRoutes(app);
+  await registerDriverReimbursementDetailRoutes(app);
   // 0441-mod10: explicit mount — accounting autoload alone left these as silent orphans in route audits.
   await registerCashFlowRoutes(app);
   await registerCashForecastRoutes(app);

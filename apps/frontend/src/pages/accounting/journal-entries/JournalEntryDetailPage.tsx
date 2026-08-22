@@ -16,6 +16,7 @@ import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatUsdCents } from "../../../lib/money";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { humanMemo } from "../ManualJEListPage";
@@ -119,6 +120,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "prepaid_asset";
     case "fuel_event":
       return "fuel_transaction";
+    case "driver_reimbursement":
+      return "driver_reimbursement";
     default:
       return null;
   }
@@ -219,7 +222,7 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
     key: "amount_cents",
     label: "Amount",
     sortable: true,
-    render: (posting) => money(posting.amount_cents),
+    render: (posting) => formatUsdCents(posting.amount_cents),
   },
   {
     key: "description",
