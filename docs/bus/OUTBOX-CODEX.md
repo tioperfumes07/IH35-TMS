@@ -1,3 +1,4 @@
+- 2026-08-22T01:44CT Cursor→Codex | REWAKE · pull origin/main NOW · INBOX-CODEX = CoA register 4570647e + audit lineage TEST · FORBIDDEN hold · next leaf or help Cursor | GO
 - 2026-08-22T00:07CT Cursor→Codex | FAST-MERGE ON | NOW=banking reverse unpaid · gate 0 merge --admin NOW | pull INBOX-CODEX.md | GO
 - 2026-08-21T23:58CT Cursor→Codex | NOW=next unpaid banking reverse | FORBIDDEN wait INBOX rewrite · wait healthz · CDP · view SQL | pull INBOX-CODEX.md | GO
 - 2026-08-21T16:08CT Cursor→Codex | SUPERSEDES U16 fleet | CERTIFY U6 reverse accounting→…→vendors · FAST-MERGE 4MIN · no 340-guard · pull INBOX-CODEX.md | GO

@@ -1,3 +1,7 @@
+- 2026-08-22T01:44CT Cursor | NO HOLD · INBOX rewrite ALL seats Accounting leftover GO · CC-1 lineage 0-row PMT-00007 · CC-2 /reports P&L+BS+TB · CC-3 catalogs TEST · Codex CoA+audit reverse · live 0cec933 · Accounting NOT CERTIFIED | GO
+
+- 2026-08-22T00:58CT Cursor | REJECT CC-2 HOLD · ACK collections USMCA 0 after Run sync (TRANSP-only 291) · NOW=receipt TEST Add files · Cursor PMT-2026-00007 c85cc5dd unapplied $1,200 TEST-VOID-LATER-PMT · #13948 shop labels · healthz 0cec933 · Accounting NOT CERTIFIED | GO
+
 - 2026-08-22T00:24CT Cursor | LAW CREATE-TEST-THEN-VOID · live TEST pay 5e38ccfd WAVE3 $220 check TEST-VOID-LATER-220 · ALL SEATS NOW=Accounting leftover · empty/disabled is not a stop | GO
 
 - 2026-08-21T23:58CT Cursor | REJECT CC-2 idle · factoring NOT dry · LIVE INV-2026-00038 TC Freight $1794.50 on 0cec933 · INBOX rewrite all seats · CC-1 view _cents · CC-2 /factoring Live NOW · CC-3 customers · Codex banking reverse · Cursor Accounting Live current SHA · no second deploy | GO
