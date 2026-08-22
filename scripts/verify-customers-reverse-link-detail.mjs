@@ -3,7 +3,7 @@
  * Customers reverse_link — Built for detail leaves with EntityLink on CustomerDetail.
  * Create/sync/edit/chrome honesty-dropped in required.json.
  *
- * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^detail\\.(profile|billing|quality)$","task":"VERTICAL-REVERSE-LINK-customers-detail","vertical":"column-wave"}
+ * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["detail.profile","detail.billing","detail.quality"],"task":"CUST-F5872-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-customers-reverse-link-detail.mjs --selftest
  */
@@ -22,7 +22,9 @@ const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
 const ROUTE_MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
+const SELF = "scripts/verify-customers-reverse-link-detail.mjs";
 const CLAIMED_LEAVES = ["detail.profile", "detail.billing", "detail.quality"];
+const EXACT_HEADER = ' * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["detail.profile","detail.billing","detail.quality"],"task":"CUST-F5872-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"}';
 
 const CHECKS = [
   { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
@@ -130,7 +132,7 @@ const CHECKS = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX].map((file) => [
+    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX, SELF].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),
@@ -148,6 +150,7 @@ function run(sources) {
   } catch {
     failures.push("customers Required matrix parses");
   }
+  if (!sources[SELF].split("\n").includes(EXACT_HEADER)) failures.push("exact customer detail Built header");
   return failures;
 }
 
@@ -173,7 +176,12 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  const mutationCount = CHECKS.length + CLAIMED_LEAVES.length;
+  const plantedSelf = live[SELF].replace(EXACT_HEADER, `${EXACT_HEADER}.removed`);
+  if (plantedSelf === live[SELF] || !run({ ...live, [SELF]: plantedSelf }).includes("exact customer detail Built header")) {
+    console.error(`${LABEL} SELFTEST FAIL — exact Built header stayed green`);
+    process.exit(1);
+  }
+  const mutationCount = CHECKS.length + CLAIMED_LEAVES.length + 1;
   console.log(`${LABEL} SELFTEST PASS — ${mutationCount}/${mutationCount} planted defects rejected`);
   process.exit(0);
 }
