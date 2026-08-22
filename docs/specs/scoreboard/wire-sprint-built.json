@@ -1965,20 +1965,6 @@
       "leafRe": "^(reconciliation|factoring|driver_escrow|submit\\.queue|batches\\.create|factors\\.admin|faro\\.import|accounting\\.(list|detail|factor_recon)|banking\\.entry|factoring\\.wizard\\.batch|report\\.(management|per_truck_cpm|fuel_reconciliation|dispatch_margin|geofence_dwell))$"
     },
     {
-      "task": "LINK-F5151-COMPLIANCE-MAINTENANCE-RECORD-LINKS",
-      "pr": "this PR",
-      "guard": "scripts/verify-compliance-maintenance-record-links.mjs",
-      "modules": [
-        "compliance",
-        "maintenance",
-        "safety"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|idvr\\.list|escrow_record\\.list)$"
-    },
-    {
       "task": "LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-inventory-vendor-workflow-links.mjs",
