@@ -6,6 +6,10 @@ export type AccountRegisterRow = {
   entry_date: string;
   type: string;
   source_transaction_type: string | null;
+  // ACCT-REGISTER-SOURCEROUTE-UUID-REGRESSION: `reference` is a human document id (bill_number,
+  // invoice display_id, ...) since ACCT-F5426 — never pass it to sourceRoute()/hrefs. This raw
+  // source_transaction_id UUID is the one drill-through routing needs.
+  source_transaction_id: string | null;
   reference: string | null;
   payee: string | null;
   memo: string | null;

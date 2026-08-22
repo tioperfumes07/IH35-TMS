@@ -47,6 +47,11 @@ export type AccountRegisterRow = {
   entry_date: string;
   type: string;
   source_transaction_type: string | null; // raw type for drill-through routing (label is in `type`)
+  // ACCT-REGISTER-SOURCEROUTE-UUID-REGRESSION: `reference` (below) became a human document id in
+  // ACCT-F5426, but AccountRegisterPage.tsx's sourceRoute() still called navigate() with it — every
+  // drill-through link (invoice/bill/payment/expense/settlement) silently broke, since those routes
+  // expect the entity's real UUID, not its display id. This raw id is the one sourceRoute() must use.
+  source_transaction_id: string | null;
   reference: string | null;
   payee: string | null;
   memo: string | null;
@@ -111,6 +116,7 @@ export function buildRegisterRows(
         ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
         : "Journal Entry",
       source_transaction_type: p.source_transaction_type ?? null,
+      source_transaction_id: p.source_transaction_id ?? null,
       // ACCT-REGISTER-REF-IS-SOURCE-UUID: Ref No. is a human document id from already-joined
       // source rows. Never copy source_transaction_id (UUID) here — EntityLink tombstones it as
       // "Journal entry — not visible" on every register row.

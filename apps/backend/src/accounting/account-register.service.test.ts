@@ -76,6 +76,19 @@ describe("account register — running-balance math", () => {
     expect(rows[1].reference).toBeNull();
   });
 
+  // ACCT-REGISTER-SOURCEROUTE-UUID-REGRESSION: `reference` became human-readable in ACCT-F5426, but
+  // AccountRegisterPage.tsx's sourceRoute() drill-through still needs the RAW source_transaction_id
+  // UUID — it must survive on the row as its own field, distinct from (and never equal to) `reference`.
+  it("preserves the raw source_transaction_id separately for drill-through routing", () => {
+    const uuid = "8c199b5f-0000-4000-8000-000000000002";
+    const { rows } = buildRegisterRows(0, "debit", [
+      posting({ source_transaction_type: "bill", source_transaction_id: uuid, reference: "B-20260810-0003" }),
+    ]);
+    expect(rows[0].source_transaction_id).toBe(uuid);
+    expect(rows[0].reference).toBe("B-20260810-0003");
+    expect(rows[0].source_transaction_id).not.toBe(rows[0].reference);
+  });
+
   it("opening balance carries through an empty period", () => {
     const { rows, closing_balance_cents } = buildRegisterRows(4200, "debit", []);
     expect(rows).toEqual([]);
