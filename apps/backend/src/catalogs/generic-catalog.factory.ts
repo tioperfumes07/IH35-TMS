@@ -280,9 +280,16 @@ export function createCatalogRoutes(
 
         const runCreate = async (client: any) => {
           if ("code" in body && body.code) {
+            // CLS-CATALOG-CODE-CONFLICT-COLUMN: this conflict pre-check must go through
+            // dbColumnForApiColumn like every other read/write below it — a bare `code` 42703s
+            // on any codeColumn-aliased catalog (labor_rates -> rate_code, maintenance_part_locations
+            // -> location_code) because that physical column doesn't exist. Live-reproduced on
+            // maintenance_part_locations before this fix (POST /api/v1/catalogs/maintenance/part-locations,
+            // code 42703, "column \"code\" does not exist").
+            const codeDbColumn = dbColumnForApiColumn("code", config);
             const conflictSql = entityScoped
-              ? `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND operating_company_id = $2::uuid LIMIT 1`
-              : `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`;
+              ? `SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 AND operating_company_id = $2::uuid LIMIT 1`
+              : `SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 LIMIT 1`;
             const conflictVals = entityScoped ? [body.code, operatingCompanyId] : [body.code];
             const conflict = await client.query(conflictSql, conflictVals);
             if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
@@ -352,7 +359,10 @@ export function createCatalogRoutes(
 
         const updated = await withCurrentUser(authUser.uuid, async (client) => {
           if ("code" in body && body.code) {
-            const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND id <> $2 LIMIT 1`, [
+            // CLS-CATALOG-CODE-CONFLICT-COLUMN: same fix as the create-path conflict check above —
+            // route through dbColumnForApiColumn instead of a bare `code` literal.
+            const codeDbColumn = dbColumnForApiColumn("code", config);
+            const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 AND id <> $2 LIMIT 1`, [
               body.code,
               parsedParams.data.id,
             ]);
