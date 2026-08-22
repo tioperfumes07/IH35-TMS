@@ -5061,10 +5061,6 @@
     "1445": [
       "1445-verify-acct-surfaces-structural.mjs",
       "1445-verify-expense-category-picker-canonical.mjs"
-    ],
-    "4127": [
-      "4127-verify-combobox-anchor-motion-reposition.mjs",
-      "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
   "total_claimed": 1213,
@@ -5132,5 +5128,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
     "purpose": "verify-banking-escrow-register-settlement-je-link"
+  },
+  "4238": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-combobox-anchor-motion-reposition (renumbered off colliding 4127, see LST-ORPH-04-DUPLICATE-4127 fix)"
   }
 }
