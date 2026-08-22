@@ -9,34 +9,34 @@ describe("ManualJEListPage humanMemo", () => {
   const uuid = "138991fa-2b17-41a0-9c19-ceaf1815d5fa";
 
   it("labels the dominant Fuel txn shape with a specific noun, not the generic fallback", () => {
-    expect(humanMemo(`Fuel txn ${uuid}`)).toBe("Fuel transaction — not visible");
+    expect(humanMemo(`Fuel txn ${uuid}`)).toBe("Fuel transaction");
   });
 
   it("labels an Expense posting memo", () => {
-    expect(humanMemo(`Expense ${uuid} posting`)).toBe("Expense — not visible posting");
+    expect(humanMemo(`Expense ${uuid} posting`)).toBe("Expense posting");
   });
 
   it("labels a Bill payment posting memo", () => {
-    expect(humanMemo(`Bill payment ${uuid} posting`)).toBe("Bill payment — not visible posting");
+    expect(humanMemo(`Bill payment ${uuid} posting`)).toBe("Bill payment posting");
   });
 
   it("labels a Driver advance posting memo", () => {
-    expect(humanMemo(`Driver advance ${uuid} posting`)).toBe("Driver advance — not visible posting");
+    expect(humanMemo(`Driver advance ${uuid} posting`)).toBe("Driver advance posting");
   });
 
   it("labels the Bank categorization fallback-format memo (no embedded description)", () => {
-    expect(humanMemo(`Bank categorization ${uuid} posting`)).toBe("Bank transaction — not visible posting");
+    expect(humanMemo(`Bank categorization ${uuid} posting`)).toBe("Bank transaction posting");
   });
 
   it("labels a Void reversal of bill memo, preserving the trailing reason text", () => {
     expect(humanMemo(`Void reversal of bill ${uuid}: ACCT-F330 — restore GL reversal`)).toBe(
-      "Bill — not visible: ACCT-F330 — restore GL reversal"
+      "Bill: ACCT-F330 — restore GL reversal"
     );
   });
 
   it("labels a Void reversal of invoice memo", () => {
     expect(humanMemo(`Void reversal of invoice ${uuid}: owner_void_all_usmca_test`)).toBe(
-      "Invoice — not visible: owner_void_all_usmca_test"
+      "Invoice: owner_void_all_usmca_test"
     );
   });
 
@@ -46,30 +46,30 @@ describe("ManualJEListPage humanMemo", () => {
   // "Void reversal of settlement ... posting" shape.
   it("labels a Void reversal of expense memo", () => {
     expect(humanMemo(`Void reversal of expense ${uuid}: owner_void_all_usmca_test`)).toBe(
-      "Expense — not visible: owner_void_all_usmca_test"
+      "Expense: owner_void_all_usmca_test"
     );
   });
 
   it("labels a Void reversal of bill payment memo (not swallowed by the bare 'bill' pattern)", () => {
     expect(humanMemo(`Void reversal of bill payment ${uuid}: owner_void_all_usmca_test`)).toBe(
-      "Bill payment — not visible: owner_void_all_usmca_test"
+      "Bill payment: owner_void_all_usmca_test"
     );
   });
 
   it("labels a Void reversal of payment (customer_payment) memo", () => {
     expect(humanMemo(`Void reversal of payment ${uuid}: owner_void_all_usmca_test`)).toBe(
-      "Payment — not visible: owner_void_all_usmca_test"
+      "Payment: owner_void_all_usmca_test"
     );
   });
 
   it("labels a Void reversal of settlement posting memo", () => {
     expect(humanMemo(`Void reversal of settlement ${uuid} posting: owner_void_all_usmca_test`)).toBe(
-      "Settlement — not visible posting: owner_void_all_usmca_test"
+      "Settlement posting: owner_void_all_usmca_test"
     );
   });
 
   it("labels a self-referential Reversal of <je> memo", () => {
-    expect(humanMemo(`Reversal of ${uuid}`)).toBe("Journal entry — not visible");
+    expect(humanMemo(`Reversal of ${uuid}`)).toBe("Journal entry");
   });
 
   it("keeps the reversal reason and drops the uuid for Reversal of journal entry <uuid>:", () => {
@@ -81,7 +81,7 @@ describe("ManualJEListPage humanMemo", () => {
   });
 
   it("falls back to the generic Record label for an unrecognized memo shape", () => {
-    expect(humanMemo(`Something new ${uuid} happened`)).toBe("Something new Record — not visible happened");
+    expect(humanMemo(`Something new ${uuid} happened`)).toBe("Something new Record happened");
   });
 
   it("passes through memos with no embedded uuid unchanged", () => {
@@ -112,12 +112,12 @@ describe("ManualJEListPage humanMemo — resolved source name (LV-JE-MEMO-RECORD
     expect(humanMemo(`Reversal of ${uuid.toUpperCase()}`, uuid, "JE-2026-00007")).toBe("JE-2026-00007");
   });
 
-  it("does NOT resolve a uuid that does not match the JE's own source_transaction_id — still tombstones", () => {
+  it("does NOT resolve a uuid that does not match the JE's own source_transaction_id — uses the noun, never not-visible", () => {
     const otherUuid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
-    expect(humanMemo(`Fuel txn ${uuid}`, otherUuid, "T149")).toBe("Fuel transaction — not visible");
+    expect(humanMemo(`Fuel txn ${uuid}`, otherUuid, "T149")).toBe("Fuel transaction");
   });
 
-  it("falls back to tombstone when resolvedDisplayId is null even if resolvedSourceId matches (honest gap, e.g. bill_payment/driver_advance not yet covered)", () => {
-    expect(humanMemo(`Bill payment ${uuid} posting`, uuid, null)).toBe("Bill payment — not visible posting");
+  it("falls back to the noun when resolvedDisplayId is null even if resolvedSourceId matches", () => {
+    expect(humanMemo(`Bill payment ${uuid} posting`, uuid, null)).toBe("Bill payment posting");
   });
 });

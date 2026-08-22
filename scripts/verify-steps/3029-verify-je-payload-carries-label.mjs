@@ -28,11 +28,11 @@ const SCAN_DIR = path.join(ROOT, "apps/backend/src");
 const FRONTEND_CONSUMERS = [
   {
     file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    required: /entityLabel\(r\.journal_entry_memo,\s*r\.journal_entry_id,\s*"Journal entry"\)/,
+    required: /humanMemo\(r\.journal_entry_memo,\s*r\.id,/,
   },
   {
     file: "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
-    required: /entityLabel\(row\.memo,\s*row\.journal_entry_id,\s*"Journal entry"\)/,
+    required: /visibleDocumentLabel\(row\.memo,\s*row\.journal_entry_id,\s*"Journal entry"\)/,
   },
   {
     file: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",

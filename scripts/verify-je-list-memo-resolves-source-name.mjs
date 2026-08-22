@@ -18,7 +18,8 @@
  *       leased cross-entity made the join return NULL even though the fuel_transactions row itself
  *       was already correctly entity-scoped one hop up).
  *   (3) frontend: humanMemo() accepts resolvedSourceId/resolvedDisplayId and passes a real name to
- *       entityLabel() when the embedded uuid matches, not always null.
+ *       visibleDocumentLabel() when the embedded uuid matches (real #) or the type noun when it does not
+ *       — never entityLabel tombstone ("— not visible") on a JE the operator is already looking at.
  *   (4) frontend: both call sites (the Memo column render, and journalEntryListLabel) pass
  *       entry.source_transaction_id / entry.source_transaction_display_id through.
  *
@@ -61,6 +62,12 @@ function failures(sources) {
   }
   if (/entityLabel\(null,\s*uuid,\s*noun\)/.test(page) || /entityLabel\(null,\s*uuid,\s*"Record"\)/.test(page)) {
     out.push(`${PAGE}: humanMemo() still calls entityLabel with a hardcoded null name — the structural bug this fix closes`);
+  }
+  if (!/visibleDocumentLabel\(name,\s*uuid,\s*noun\)/.test(page)) {
+    out.push(`${PAGE}: humanMemo() must use visibleDocumentLabel for unresolved UUID memos — never "Expense — not visible" on a visible JE list row`);
+  }
+  if (/entityLabel\(name,\s*uuid,\s*noun\)/.test(page) || /entityLabel\(name,\s*uuid,\s*"Record"\)/.test(page)) {
+    out.push(`${PAGE}: humanMemo() still tombstones visible JE rows via entityLabel(name, uuid)`);
   }
 
   // (4) both call sites pass the resolved fields through
@@ -120,7 +127,7 @@ export function humanMemo(
   resolvedSourceId?: string | null,
   resolvedDisplayId?: string | null
 ): string {
-  return entityLabel(name, uuid, noun);
+  return visibleDocumentLabel(name, uuid, noun);
 }
 render: (entry) => humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id)
 const memo = entry.memo?.trim() ? humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id) : "";
@@ -147,7 +154,13 @@ const memo = entry.memo?.trim() ? humanMemo(entry.memo, entry.source_transaction
     {
       name: "humanMemo reverted to hardcoded null -> error",
       service: goodService,
-      page: goodPage.replace("return entityLabel(name, uuid, noun);", 'return entityLabel(null, uuid, noun);'),
+      page: goodPage.replace("return visibleDocumentLabel(name, uuid, noun);", 'return entityLabel(null, uuid, noun);'),
+      wantMin: 1,
+    },
+    {
+      name: "humanMemo reverted to entityLabel tombstone -> error",
+      service: goodService,
+      page: goodPage.replace("return visibleDocumentLabel(name, uuid, noun);", "return entityLabel(name, uuid, noun);"),
       wantMin: 1,
     },
     {

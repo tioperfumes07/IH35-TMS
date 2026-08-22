@@ -37,6 +37,22 @@ export function entityLabel(
 }
 
 /**
+ * Visible list/register/audit row: never claim the document is "not visible" while showing it.
+ * UUID-shaped or Unknown names are missing document numbers, not RLS tombstones.
+ */
+export function visibleDocumentLabel(
+  name: unknown,
+  _id?: unknown,
+  noun = "Record",
+): string {
+  if (name != null) {
+    const s = String(name).trim();
+    if (s !== "" && !UUID_SHAPE_RE.test(s) && !/^unknown\b/i.test(s)) return s;
+  }
+  return noun;
+}
+
+/**
  * LV-REPORTS-*-DEAD-CUSTOMER-TOMBSTONE-LINK — unresolved / unknown buckets must not
  * mount EntityLink (dead drill → Failed to load customer details).
  * Covers: entityLabel "— not visible", raw "Unknown …" cohort labels, UUID-shaped names.

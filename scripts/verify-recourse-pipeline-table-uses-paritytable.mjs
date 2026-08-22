@@ -49,8 +49,20 @@ function assertMigrated(src) {
   if (!src.includes("No invoice #")) {
     errors.push(`${PAGE}: Invoice column must use No invoice # for a visible empty document number (not Advance tombstone)`);
   }
+  if (!src.includes("No customer name")) {
+    errors.push(`${PAGE}: Customer column must use No customer name for Unknown/UUID names (not Customer — not visible)`);
+  }
+  if (!/visibleDocumentLabel\(invoice/.test(src)) {
+    errors.push(`${PAGE}: Invoice column must visibleDocumentLabel UUID-shaped invoice_reference (live painted raw UUID)`);
+  }
+  if (/label=\{invoice !== "" \? invoice : "No invoice #"\}/.test(src)) {
+    errors.push(`${PAGE}: Invoice column still paints a non-empty UUID invoice_reference as the label`);
+  }
   if (/entityLabel\(row\.invoice_reference,\s*row\.factoring_advance_id,\s*"Advance"\)/.test(src)) {
     errors.push(`${PAGE}: Invoice column must not tombstone a visible row as Advance — not visible`);
+  }
+  if (/entityLabel\(row\.customer_name,\s*row\.customer_id/.test(src)) {
+    errors.push(`${PAGE}: Customer column must not entityLabel tombstone Unknown Customer / UUID names`);
   }
   if (!/<EntityLink[^>]*kind=["']customer["'][\s\S]{0,240}?row\.customer_id/.test(src)) {
     errors.push(`${PAGE}: customer column must use EntityLink kind="customer" id={row.customer_id} when present`);
@@ -88,8 +100,8 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
-      { key: "invoice_reference", label: "Invoice", render: (row) => <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.invoice_reference || "No invoice #"} /> },
-      { key: "customer_name", label: "Customer", render: (row) => <EntityLink kind="customer" id={row.customer_id} label={row.customer_name} /> },
+      { key: "invoice_reference", label: "Invoice", render: (row) => <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={visibleDocumentLabel(invoice, row.factoring_advance_id, "No invoice #")} /> },
+      { key: "customer_name", label: "Customer", render: (row) => <EntityLink kind="customer" id={row.customer_id} label={visibleDocumentLabel(row.customer_name, row.customer_id, "No customer name")} /> },
       { key: "advance_amount", label: "Advance" },
       { key: "reserve_amount", label: "Reserve" },
       { key: "recourse_expiry_date", label: "Recourse Expiry" },
@@ -121,6 +133,22 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const uuidPaint = good.replace(
+    'visibleDocumentLabel(invoice, row.factoring_advance_id, "No invoice #")',
+    'invoice !== "" ? invoice : "No invoice #"',
+  );
+  if (assertMigrated(uuidPaint).length < 1) {
+    console.error(`${LABEL} --selftest FAIL UUID invoice paint regression`);
+    process.exit(1);
+  }
+  const tombstoneCustomer = good.replace(
+    'visibleDocumentLabel(row.customer_name, row.customer_id, "No customer name")',
+    'entityLabel(row.customer_name, row.customer_id, "Customer")',
+  );
+  if (assertMigrated(tombstoneCustomer).length < 1) {
+    console.error(`${LABEL} --selftest FAIL customer tombstone regression`);
     process.exit(1);
   }
   const badCustomer = good.replace(

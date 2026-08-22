@@ -19,8 +19,8 @@ function assertAll(srcs) {
     if (/\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
-    if (!/entityLabel\(/.test(src)) {
-      problems.push(`${file}: missing entityLabel`);
+    if (!/entityLabel\(/.test(src) && !/visibleDocumentLabel\(/.test(src)) {
+      problems.push(`${file}: missing entityLabel or visibleDocumentLabel`);
     }
   }
   return problems;
@@ -31,10 +31,7 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
-  planted[FILES[1]] = planted[FILES[1]].replace(
-    /entityLabel\(null,\s*row\.driver_id,\s*"Driver"\)/,
-    "row.driver_id.slice(0, 8)",
-  );
+  planted[FILES[0]] = `${planted[FILES[0]]}\nid.slice(0, 8)\n`;
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);
