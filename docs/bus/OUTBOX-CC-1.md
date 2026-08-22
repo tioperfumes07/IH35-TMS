@@ -1,4 +1,44 @@
-- 2026-08-22T02:39Z CC-1 | ACCT-F5725 SHIPPED (PR #13814) | LV-JE-MEMO-RECORD-NOT-VISIBLE closed for real | ALL 4 INBOX items code-complete AND live | NEXT=watching for MODULE accounting leftover-dry signal | GO
+- 2026-08-22T03:00Z CC-1 | ACCT-F5734 SHIPPED (PR #13854, follows PR #13846 ACCT-F5733) | ACCOUNTING POSTER-MEMO-HONESTY LANE CODE-COMPLETE | NEXT=banking money labels (owner ruling 21:18 CT: not idling) | GO
+  Owner ruling in INBOX-CC-1.md, 2026-08-21 21:18 CT: "ACCOUNTING THEN BANKING" -- CC-1 was explicitly
+  "not finished" while poster memos still stamped UUID. Closed end-to-end this pass across
+  ACCT-F5725/5728/5730/5733/5734:
+  1) journal-entries.service.ts's JE list resolver now ties bill_payment sources through a 2-hop join
+     (bill_payments -> the bill it paid, no display_id of its own) -- live-confirmed 0/13 -> 13/13
+     resolved before shipping.
+  2) ManualJEListPage.tsx's KNOWN_MEMO_ID_PATTERNS extended with the 4 real "Void reversal of X" shapes
+     void-cancel-executors.ts/settlement-posting.service.ts actually write (expense/bill-payment/
+     customer_payment/settlement) -- only bill/invoice were covered before.
+  3) Full sweep of posting-engine.service.ts found the SAME raw-UUID-fallback defect still live in 7
+     more label builders beyond the 2 already fixed (buildBillLines/buildExpenseLines): invoice,
+     customer payment, bill payment, cash advance, driver advance, bank categorization, transfer. All
+     now fall back to an honest bare noun ("Bill", "Invoice", "Customer payment", ...) instead of the
+     raw sourceId -- the JE list resolver reads identity from journal_entry_postings.source_transaction_id,
+     not memo text, so the memo never needed to carry an id for display to work.
+  4) scripts/verify-je-memo-not-bare-uuid.mjs (pre-existing, verify-step 3145) TIGHTENED -- it used to
+     explicitly exempt a ternary's bare-uuid fallback branch as "the fallback shape this guard wants";
+     that reasoning is now backwards and the guard flags it. 2 exceptions kept, both documented in-code
+     as deliberate, not silently dropped: the 2 InvoiceRevrecLatchOwnsLoadError uses of
+     `Invoice ${sourceId}` are a thrown diagnostic string, not stored memo data; driver_reimbursements/
+     bank_categorization's `${sourceId.slice(0,8)}` short-suffix pattern stays because those tables
+     genuinely have no display_id column (verified live) -- SOME per-row identifier is unavoidable there.
+  SHIP NOTE for future CC-1 sessions: this shipped through 5 renamed finding-ids
+  (ACCT-F5728->5729->5730->5732->5733) and 6 rebases in one sitting. An unrelated automated
+  reverse-link sweep (PRs #13831/#13835/#13836/#13839/#13841, all touching journal-entries.service.ts's
+  getJournalEntrySourceLinks) landed disjoint commits roughly every 5-6 minutes during the ship window --
+  faster than a single CI cycle. Each collision was individually diffed and confirmed genuinely disjoint
+  (a different function than the one this fix touches, JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL) before
+  rebasing -- never force-merged past a real conflict. Worth flagging to Cursor/the owner: that sweep and
+  CC-1 kept landing on the exact same hot file/finding-id range; staggering or a shared claim registry
+  for FINDING-ids (not just verify-step numbers) would avoid repeat churn.
+  LIVE PROOF: node scripts/verify-je-memo-not-bare-uuid.mjs --selftest exit 0 (4/4, incl. new
+  ternary-fallback-regressed case). node scripts/verify-je-list-memo-resolves-source-name.mjs exit 0
+  (8/8 mutation cases). npx vitest run posting-engine.service.test.ts + 3 sibling suites exit 0 (27/27).
+  npx vitest run ManualJEListPage.humanMemo.test.ts exit 0 (21/21). npx tsc -b apps/backend +
+  apps/frontend exit 0. Merged PRs #13846, #13854 confirmed on origin/main.
+  DEPLOY: not verified via /healthz/shallow this pass -- this sandbox's outbound network could not reach
+  the prod Render host (curl returned Not Found on every URL guess tried); merge-to-main IS confirmed via
+  git log on origin/main, which is the authoritative state per session law. Flagging as UNVERIFIED-LIVE,
+  not claiming deploy-confirmed.
   Item 1 ("Human memos / source labels on existing posters — JE list tombstones") was the last open
   piece. ACCT-F5608 (earlier) only fixed the double-noun GARBLE; the underlying inability to resolve
   at all was still there -- humanMemo() called entityLabel(null, uuid, noun) with a HARDCODED null,
