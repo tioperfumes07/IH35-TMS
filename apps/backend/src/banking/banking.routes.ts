@@ -374,6 +374,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               -- are populated on real rows and the frontend (DriverEscrowTabContent.tsx) was already
               -- correctly written to render an EntityLink for both — it never got the chance. Same
               -- CASE/join shape escrow-visualizer.routes.ts already uses in this same schema.
+              -- BANK-F5751 (2026-08-22) — the fix above still left the Settlement column's LABEL
+              -- hardcoded null on the frontend (only settlement_id, the raw uuid, was returned). This
+              -- adds the missing driver_finance.driver_settlements join for a real settlement_display_id
+              -- — live-confirmed against the same 2 rows: S-20260802-0258 / S-2026-0002.
               SELECT
                 ep.id,
                 ep.posted_at::date AS txn_date,
@@ -383,6 +387,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 'synced'::text AS status,
                 CASE WHEN ea.holder_type = 'driver' THEN ea.holder_id::text ELSE NULL END AS driver_id,
                 CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
+                ds.display_id AS settlement_display_id,
                 ep.linked_journal_entry_id::text AS journal_entry_id,
                 je.memo AS journal_entry_memo
               FROM accounting.escrow_postings ep
@@ -392,6 +397,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               LEFT JOIN accounting.journal_entries je
                 ON je.id = ep.linked_journal_entry_id
                AND je.operating_company_id = ep.operating_company_id
+              LEFT JOIN driver_finance.driver_settlements ds
+                ON ds.id = ep.source_id
+               AND ep.source_type = 'driver_settlement'
+               AND ds.operating_company_id = ep.operating_company_id
               WHERE ep.operating_company_id = $1::uuid
               ORDER BY ep.posted_at DESC
               LIMIT $2 OFFSET $3
