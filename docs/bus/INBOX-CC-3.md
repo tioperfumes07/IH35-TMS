@@ -1,8 +1,8 @@
 # INBOX-CC-3 · 9225 · CUSTOMERS → DRIVERS → FLEET → LISTS · NOT IDLE · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. CREATE-TEST-THEN-VOID.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **08:54 CT**. CREATE-TEST-THEN-VOID.
 
-**Your queue is NOT empty. Drained is a lie until Lists is done this session.** Accounting CREATE-TEST proven is **not** your stop.
+**Your queue is NOT empty. Drained is a lie until Lists is done this session.** Accounting CREATE-TEST proven is **not** your stop. Do **not** wait Cursor / healthz.
 
 ## WHERE / HOW / NOW
 
@@ -14,9 +14,9 @@ Chrome **9225**. USMCA. Picker law: `+ Add new` **first row** in the dropdown �
 4. `https://app.ih35dispatch.com/lists` — catalog card → correct list → `+ Create` → canonical.
 5. Then WAVE 2: `/maintenance` pickers. Unique FINDING on silent no-op / 500. FAST-MERGE. Next URL same turn.
 
-OUTBOX first line: `CC-3 | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9225 | NOW=https://app.ih35dispatch.com/customers | GO`
+OUTBOX first line: `CC-3 | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9225 | NOW=https://app.ih35dispatch.com/customers | GO`
 
-**Forbidden:** hold · empty-queue · re-poll-only · wait Jorge · wait Accounting CERTIFIED · status-only PRs.
+**Forbidden:** hold · empty-queue · re-poll-only · wait Jorge · wait Cursor · wait Accounting CERTIFIED · status-only PRs.
 
 ## PASTE BOX
 
@@ -26,7 +26,7 @@ PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CC-3.md
 NOW: https://app.ih35dispatch.com/customers picker/+ Create
 THEN: /drivers → /fleet → /lists → /maintenance
-FORBIDDEN: idle · drained · empty-queue · wait Jorge
-ACK: CC-3 | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9225 | NOW=/customers | GO
+FORBIDDEN: idle · drained · empty-queue · wait Jorge · wait Cursor
+ACK: CC-3 | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9225 | NOW=/customers | GO
 ===== END CC-3 =====
 ```

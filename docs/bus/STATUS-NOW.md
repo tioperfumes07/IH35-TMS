@@ -1,6 +1,8 @@
-# STATUS-NOW · 2026-08-22 04:11 CT
+# STATUS-NOW · 2026-08-22 08:54 CT
 
-FAST-MERGE **ON**. Live still `0cec933` until API deploy **`dep-da4mig6k1f9s73eqohog`** is **live** (prior `dep-da4ma06k1f9s73epv6rg` failed). Accounting **NOT CERTIFIED**. CREATE-TEST hops **proven** — seats **execute URGENT-BLOCKS-NOW**, not idle.
+FAST-MERGE **ON**. Live still `0cec933` until Cursor’s **one** batch API deploy is **live**. Accounting **NOT CERTIFIED** until then. CREATE-TEST hops **proven** — seats **execute URGENT-BLOCKS-NOW 08:54CT**, not idle.
+
+Open product PRs: **none** waiting (only tracker #10720 — not the certify batch). Merge product PRs as they appear, then **one** deploy — never per-merge.
 
 | Seat | Port | NOW (first action) |
 |------|------|---------------------|
@@ -8,6 +10,6 @@ FAST-MERGE **ON**. Live still `0cec933` until API deploy **`dep-da4mig6k1f9s73eq
 | CC-2 | 9224 | `https://app.ih35dispatch.com/banking` every tab Live — not For-review drain |
 | CC-3 | 9225 | `https://app.ih35dispatch.com/customers` picker/`+ Create` |
 | Codex | 9226 | Banking reverse `banking.*` — no CDP theater |
-| Cursor | 9222 | No second kick `dep-da4mig6k1f9s73eqohog`. Wiring FAILs until SHA moves, then Daily Recon 200 |
+| Cursor | 9222 | Desktop APIs Render auth · `healthCheckPath=readyz` · **one** deploy of `origin/main` · then Daily Recon + archived vendor + prepaid pickers |
 
-**ACK required:** `SEAT | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=n | NOW=<url> | GO`
+**ACK required:** `SEAT | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=n | NOW=<url> | GO`
