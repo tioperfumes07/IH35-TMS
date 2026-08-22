@@ -7,6 +7,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.edit.identity","unit.edit.insurance","unit.edit.irp_plates","unit.edit.reefer","unit.edit.financial","unit.edit.lifecycle"],"task":"FLEET-F5947-UNIT-EDIT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.toll_tags","unit.detail.brakes","unit.detail.tires"],"task":"FLEET-F5949-UNIT-DETAIL-SPECIALTY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.qbo_mapping"],"task":"FLEET-F5953-ASSET-CLASSIFICATION-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): VehicleProfilePage.tsx's 20
  * unit.profile.* sections and EditVehicleModal.tsx's 8 unit.edit.* tabs are all genuinely
@@ -64,6 +65,7 @@ const DETAIL_CONNECTIVITY = new Map([
   ["unit.detail.brakes", /activeTab === "brakes" \? <UnitBrakesTab unitId=\{id\} companyId=\{companyId\}/],
   ["unit.detail.tires", /activeTab === "tires" \? <UnitTiresTab unitId=\{id\} companyId=\{companyId\}/],
 ]);
+const CLASSIFICATION_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.qbo_mapping"],"task":"FLEET-F5953-ASSET-CLASSIFICATION-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 export function audit(src) {
   const failures = [];
@@ -82,6 +84,11 @@ export function audit(src) {
   }
   if (!/\.\.\.\(qboAvailable \? \{ qbo_vendor_id:[\s\S]{0,80}?\} : \{\}\)/.test(src.profile)) {
     failures.push(`${FILES.profile}: non-QBO class saves must not overwrite qbo_vendor_id`);
+  }
+  if (!/qboAvailable \? "QBO mapping" : "Asset classification"/.test(src.profile) ||
+      !/<SelectCombobox[\s\S]{0,180}value=\{qboClassTmsId\}/.test(src.profile) ||
+      !/qbo_class_id: qboClassTmsId \|\| null/.test(src.profile)) {
+    failures.push(`${FILES.profile}: unit.profile.qbo_mapping must retain USMCA TMS class connectivity while gating QBO vendor mapping to TRANSP`);
   }
   if (!/profileQuery\.isPending \? ["']Loading…["'] : String\(entityLabel/.test(src.profile)) {
     failures.push(`${FILES.profile}: loading state must not render a false Unit — not visible identity`);
@@ -134,6 +141,8 @@ export function audit(src) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
   if (!src.self.split("\n").includes(DETAIL_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact specialty unit-detail connectivity header missing`);
+  if (!required.leaves?.find((leaf) => leaf.id === "unit.profile.qbo_mapping")?.required?.includes("connectivity")) failures.push(`${FILES.required}: unit.profile.qbo_mapping must require connectivity`);
+  if (!src.self.split("\n").includes(CLASSIFICATION_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact asset-classification connectivity header missing`);
   return failures;
 }
 
@@ -153,6 +162,8 @@ if (process.argv.includes("--selftest")) {
     ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
     ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
+    ["profile-class-control", "profile", /<SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
+    ["profile-class-write", "profile", /qbo_class_id: qboClassTmsId \|\| null/, "qbo_class_id: null"],
     ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
     ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
@@ -242,7 +253,17 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — specialty detail connectivity header mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1 + (PROFILE_CONNECTIVITY.size * 2) + 1 + (EDIT_CONNECTIVITY.size * 2) + 1 + (DETAIL_CONNECTIVITY.size * 2) + 1} mutations detected`);
+  const classificationRequired = { ...good, required: good.required.replace('"id": "unit.profile.qbo_mapping"', '"id": "unit.profile.qbo_mapping.broken"') };
+  if (audit(classificationRequired).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — asset classification Required mutation escaped`);
+    process.exit(1);
+  }
+  const wrongClassificationHeader = { ...good, self: good.self.replace(CLASSIFICATION_CONNECTIVITY_HEADER, `${CLASSIFICATION_CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongClassificationHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — asset classification header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1 + (PROFILE_CONNECTIVITY.size * 2) + 1 + (EDIT_CONNECTIVITY.size * 2) + 1 + (DETAIL_CONNECTIVITY.size * 2) + 1 + 2} mutations detected`);
   process.exit(0);
 }
 
