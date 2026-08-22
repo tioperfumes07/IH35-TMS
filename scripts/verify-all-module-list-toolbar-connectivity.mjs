@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_gear$","task":"CLS-LIST-TOOLBAR-GEAR-APPLY","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leaves":["chrome.toolbar_gear"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -60,9 +60,12 @@ const EXACT_CONSUMERS = {
   settlements: { route: "/driver-finance/settlements", surface: "pages/driver-finance/components/SettlementsTable.tsx" },
   finance: { route: "/finance/ar-ap-aging", surface: "pages/finance/ArApAgingPage.tsx" },
 };
+const SELF = "scripts/verify-all-module-list-toolbar-connectivity.mjs";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const EXACT_HEADER = '/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leaves":["chrome.toolbar_gear"],"task":"CLASS-F5930-TOOLBAR-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 function read() {
-  const files = new Set([...Object.values(CORE), ...Object.values(EVIDENCE).map(([file]) => file), HELP_MATRIX]);
+  const files = new Set([...Object.values(CORE), ...Object.values(EVIDENCE).map(([file]) => file), HELP_MATRIX, SELF, FEED]);
   for (const module of Object.keys(EVIDENCE)) files.add(`docs/specs/scoreboard/modules/${module}.required.json`);
   return Object.fromEntries([...files].map((file) => [file, fs.readFileSync(file, "utf8")]));
 }
@@ -109,6 +112,9 @@ export function verify(source) {
       failures.push(`help:${id} must remain explicit N/A because Help has no data pipeline list`);
     }
   }
+  if (!source[SELF].split("import fs")[0].includes(EXACT_HEADER)) failures.push("exact all-module gear header missing");
+  const duplicate = (JSON.parse(source[FEED]).entries ?? []).some((row) => row.guard === SELF && row.cols?.includes("connectivity"));
+  if (duplicate) failures.push("manual feed duplicates exact toolbar gear ownership");
   return failures;
 }
 
@@ -145,6 +151,8 @@ if (process.argv.includes("--self-test")) {
       return { ...source, [file]: JSON.stringify(matrix) };
     });
   }
+  mutations.push(() => ({ ...source, [SELF]: source[SELF].replace(EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")) }));
+  mutations.push(() => ({ ...source, [FEED]: source[FEED].replace('"entries": [', `"entries": [{"guard":"${SELF}","cols":["connectivity"]},`) }));
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
