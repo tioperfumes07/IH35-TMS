@@ -977,7 +977,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
           -- though the href it builds from source_transaction_id was already correct.
           COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label, src_reimbursement.display_label) AS source_transaction_display_id,
-          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description, link_deduction.display_label) AS linked_object_display_id
+          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description, link_settlement.display_id, link_deduction.display_label) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         LEFT JOIN accounting.invoices src_inv
@@ -1024,6 +1024,10 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           ON tsl.linked_object_type = 'dispute_disbursement'
           AND link_dispute.id::text = tsl.linked_object_id
           AND link_dispute.operating_company_id = $2::uuid
+        LEFT JOIN driver_finance.driver_settlements link_settlement
+          ON tsl.linked_object_type = 'driver_settlement'
+          AND link_settlement.id::text = tsl.linked_object_id
+          AND link_settlement.operating_company_id = $2::uuid
         LEFT JOIN LATERAL (
           SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
           FROM driver_finance.driver_settlement_deductions d
