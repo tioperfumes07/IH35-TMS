@@ -37,8 +37,8 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
           {loans.slice(0, 5).map((loan) => (
             <li key={loan.id}>
               <EntityLink
-                kind="equipment_loans_vendor"
-                id={vendorId}
+                kind="equipment_loan"
+                id={loan.id}
                 label={`${entityLabel(loan.equipment_number, loan.equipment_id, "Equipment")} · ${formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · ${loan.status}`}
                 className="text-xs font-semibold text-slate-700 hover:underline"
               />

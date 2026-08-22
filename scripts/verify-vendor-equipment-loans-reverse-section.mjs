@@ -29,7 +29,8 @@ const API = "apps/frontend/src/api/data-infra.ts";
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const SECTION = "apps/frontend/src/components/vendors/VendorEquipmentLoansReverseSection.tsx";
 const VENDOR_DETAIL = "apps/frontend/src/pages/VendorDetail.tsx";
-const FILES = [SERVICE, ROUTES, API, HOME, SECTION, VENDOR_DETAIL];
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
+const FILES = [SERVICE, ROUTES, API, HOME, SECTION, VENDOR_DETAIL, ENTITY_LINK];
 const LABEL = "verify-vendor-equipment-loans-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -45,14 +46,15 @@ export function assertVendorEquipmentLoansReverse(sources) {
   const home = src[HOME];
   const section = src[SECTION];
   const vendorDetail = src[VENDOR_DETAIL];
+  const entityLink = src[ENTITY_LINK];
 
-  if (!/vendorId\?:\s*string/.test(service)) {
+  if (!/export async function listEquipmentLoans\(userId: string, operatingCompanyId: string, status\?: string, vendorId\?: string\)/.test(service)) {
     problems.push(`${SERVICE}: listEquipmentLoans must accept an optional vendorId param`);
   }
   if (!/AND l\.lender_vendor_id = \$/.test(service)) {
     problems.push(`${SERVICE}: listEquipmentLoans must filter by lender_vendor_id server-side when vendorId provided`);
   }
-  if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: loanListQuerySchema must accept optional vendor_id`);
   }
   if (!/listEquipmentLoans\(user\.uuid, query\.data\.operating_company_id, query\.data\.status, query\.data\.vendor_id\)/.test(routes)) {
@@ -77,7 +79,7 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (!/import\s*\{\s*VendorEquipmentLoansReverseSection\s*\}/.test(vendorDetail)) {
     problems.push(`${VENDOR_DETAIL}: must import VendorEquipmentLoansReverseSection`);
   }
-  if (!/<VendorEquipmentLoansReverseSection[\s\S]*?vendorId=\{vendor\.id\}/.test(vendorDetail)) {
+  if (!/<VendorEquipmentLoansReverseSection operatingCompanyId=\{companyId\} vendorId=\{vendor\.id\} \/>/.test(vendorDetail)) {
     problems.push(`${VENDOR_DETAIL}: must mount <VendorEquipmentLoansReverseSection vendorId={vendor.id} .../>`);
   }
 
@@ -90,47 +92,22 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (!/entityLabel\(loan\.equipment_number, loan\.equipment_id, "Equipment"\)/.test(section)) {
     problems.push(`${SECTION}: equipment label must reject raw equipment-id fallback`);
   }
+  if (!/kind="equipment_loan"[\s\S]{0,100}id=\{loan\.id\}/.test(section)) {
+    problems.push(`${SECTION}: every returned row must drill by its exact canonical loan id`);
+  }
+  if (!/searchParams\.get\("loan_id"\)/.test(home) ||
+      !/row\.id\) === loanIdFromUrl[\s\S]{0,120}setSelectedLoanId\(String\(requestedLoan\.id\)\)/.test(home)) {
+    problems.push(`${HOME}: exact loan_id deep link must select the returned loan row`);
+  }
+  if (!/case "equipment_loan":[\s\S]{0,100}\/factoring\/equipment-loans\?loan_id=\$\{id\}/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: equipment_loan must route by canonical loan_id`);
+  }
 
   return problems;
 }
 
 function selftest() {
-  const good = {
-    [SERVICE]: `
-      export async function listEquipmentLoans(userId: string, operatingCompanyId: string, status?: string, vendorId?: string) {
-        if (vendorId) {
-          values.push(vendorId);
-          whereSql += \` AND l.lender_vendor_id = $\${values.length}::uuid\`;
-        }
-      }
-    `,
-    [ROUTES]: `
-      const loanListQuerySchema = z.object({
-        vendor_id: z.string().uuid().optional(),
-      });
-      const rows = await listEquipmentLoans(user.uuid, query.data.operating_company_id, query.data.status, query.data.vendor_id);
-    `,
-    [API]: `
-      export function listEquipmentLoans(companyId: string, vendorId?: string) {
-        return apiRequest(\`/api/v1/banking/equipment-loans\`);
-      }
-    `,
-    [HOME]: `
-      const [searchParams, setSearchParams] = useSearchParams();
-      const deepLinkVendorId = searchParams.get("vendor_id");
-      const equipmentLoansQuery = useQuery({
-        queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
-      });
-      dataTestId="factoring-home-filter-vendor"
-    `,
-    [SECTION]: `listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows)
-      equipment_loans_vendor
-      entityLabel(loan.equipment_number, loan.equipment_id, "Equipment")`,
-    [VENDOR_DETAIL]: `
-      import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
-      <VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
-    `,
-  };
+  const good = Object.fromEntries(FILES.map((rel) => [rel, read(rel)]));
   const goodProblems = assertVendorEquipmentLoansReverse(good);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
@@ -138,26 +115,37 @@ function selftest() {
   }
 
   const mutations = [
-    { ...good, [SERVICE]: good[SERVICE].replace("status?: string, vendorId?: string", "status?: string") },
-    { ...good, [SERVICE]: good[SERVICE].replace("AND l.lender_vendor_id = $", "") },
-    { ...good, [ROUTES]: good[ROUTES].replace("vendor_id: z.string().uuid().optional(),", "") },
-    { ...good, [ROUTES]: good[ROUTES].replace(", query.data.vendor_id)", ")") },
-    { ...good, [API]: good[API].replace("vendorId?: string", "") },
-    { ...good, [HOME]: good[HOME].replace('searchParams.get("vendor_id")', '""') },
-    { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },
-    { ...good, [HOME]: good[HOME].replace("listEquipmentLoans(companyId, deepLinkVendorId ?? undefined)", "listEquipmentLoans(companyId)") },
-    { ...good, [SECTION]: good[SECTION].replace("listEquipmentLoans(operatingCompanyId, vendorId)", "") },
-    { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorEquipmentLoansReverseSection }", "// removed") },
-    { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("vendorId={vendor.id}", "") },
-    { ...good, [SECTION]: good[SECTION].replace("entityLabel", "rawLabel") },
+    [SERVICE, /export async function listEquipmentLoans\(userId: string, operatingCompanyId: string, status\?: string, vendorId\?: string\)/, "export async function listEquipmentLoans(userId: string, operatingCompanyId: string, status?: string)"],
+    [SERVICE, /AND l\.lender_vendor_id = \$/, "AND TRUE = $"],
+    [ROUTES, /const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "const loanListQuerySchema = z.object({ vendor_id: z.never()"],
+    [ROUTES, /query\.data\.status, query\.data\.vendor_id/, "query.data.status, undefined"],
+    [API, /export function listEquipmentLoans\(companyId: string, vendorId\?: string\)/, "export function listEquipmentLoans(companyId: string)"],
+    [HOME, /searchParams\.get\("vendor_id"\)/, 'searchParams.get("missing_vendor")'],
+    [HOME, /listEquipmentLoans\(companyId, deepLinkVendorId/, "listEquipmentLoans(companyId, undefined"],
+    [HOME, /dataTestId="factoring-home-filter-vendor"/, 'dataTestId="missing-vendor-filter"'],
+    [SECTION, /listEquipmentLoans\(operatingCompanyId, vendorId\)/, "listEquipmentLoans(operatingCompanyId)"],
+    [VENDOR_DETAIL, /import \{ VendorEquipmentLoansReverseSection \}/, "import { MissingEquipmentLoansSection }"],
+    [VENDOR_DETAIL, /<VendorEquipmentLoansReverseSection operatingCompanyId=\{companyId\} vendorId=\{vendor\.id\} \/>/, "<VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={undefined} />"],
+    [SECTION, /entityLabel\(loan\.equipment_number, loan\.equipment_id, "Equipment"\)/, "String(loan.equipment_id)"],
+    [SECTION, /kind="equipment_loan"/, 'kind="equipment_loans_vendor"'],
+    [SECTION, /id=\{loan\.id\}/, "id={vendorId}"],
+    [HOME, /searchParams\.get\("loan_id"\)/, 'searchParams.get("missing_loan")'],
+    [HOME, /setSelectedLoanId\(String\(requestedLoan\.id\)\)/, "setSelectedLoanId(vendorIdFromUrl)"],
+    [ENTITY_LINK, /case "equipment_loan":/, 'case "missing_equipment_loan":'],
+    [ENTITY_LINK, /\/factoring\/equipment-loans\?loan_id=\$\{id\}/, "/factoring/equipment-loans"],
   ];
-  for (const [i, mutated] of mutations.entries()) {
-    if (assertVendorEquipmentLoansReverse(mutated).length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL — mutation ${i} escaped detection`);
+  for (const [i, [file, pattern, replacement]] of mutations.entries()) {
+    const changed = good[file].replace(pattern, replacement);
+    if (changed === good[file]) {
+      console.error(`${LABEL} SELFTEST FAIL — mutation ${i} was inert`);
+      process.exit(1);
+    }
+    if (assertVendorEquipmentLoansReverse({ ...good, [file]: changed }).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — production mutation ${i} escaped detection`);
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations all detected`);
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} production-source mutations all detected`);
   process.exit(0);
 }
 

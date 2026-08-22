@@ -115,6 +115,7 @@ export type EntityKind =
   | "factoring_chargebacks_customer"
   | "factoring_submit_queue_customer"
   | "equipment_loans_vendor"
+  | "equipment_loan"
   | "equipment_transfer"
   // LINK-F5183: vendor-merges reverse Open → filtered Factoring Home tab.
   | "factoring_vendor_merges_driver"
@@ -475,6 +476,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/factoring/submit?customer_id=${id}`;
     case "equipment_loans_vendor":
       return `/factoring/equipment-loans?vendor_id=${id}`;
+    case "equipment_loan":
+      return `/factoring/equipment-loans?loan_id=${id}`;
     case "equipment_transfer":
       return `/dispatch/equipment-transfers?transfer_id=${id}`;
     case "factoring_vendor_merges_driver":
