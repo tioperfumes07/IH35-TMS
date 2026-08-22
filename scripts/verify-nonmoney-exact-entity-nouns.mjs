@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["compliance","safety","drivers","insurance","dispatch","fleet","legal","maintenance"],"cols":["driver","unit","work_order","connectivity","reverse_link"],"leafRe":"^(tab\\.violations|safety\\.(drawer|parity)\\.accident_report|profiles\\.detail|claims\\.list|load\\.detail|unit\\.profile\\.(identity|legal_reverse|insurance_claims_reverse)|trailer\\.profile\\.(legal_reverse|insurance_claims_reverse)|matters\\.list|wo\\.console\\.list|home\\.rm_status_board|maintenance\\.modal\\.(work_order_detail|work_order_create|create_work_order))$","task":"NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["compliance","safety","drivers","insurance","fleet","legal","maintenance"],"cols":["driver","unit","work_order","connectivity","reverse_link"],"leafRe":"^(tab\\.violations|safety\\.(drawer|parity)\\.accident_report|profiles\\.detail|claims\\.list|unit\\.profile\\.(identity|legal_reverse|insurance_claims_reverse)|trailer\\.profile\\.(legal_reverse|insurance_claims_reverse)|matters\\.list|wo\\.console\\.list|home\\.rm_status_board|maintenance\\.modal\\.(work_order_detail|work_order_create|create_work_order))$","task":"NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","work_order","connectivity"],"leafRe":"^load\\.detail$","task":"NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
