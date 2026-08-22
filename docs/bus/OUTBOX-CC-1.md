@@ -1,4 +1,34 @@
-- 2026-08-22T03:00Z CC-1 | ACCT-F5734 SHIPPED (PR #13854, follows PR #13846 ACCT-F5733) | ACCOUNTING POSTER-MEMO-HONESTY LANE CODE-COMPLETE | NEXT=banking money labels (owner ruling 21:18 CT: not idling) | GO
+- 2026-08-22T03:20Z CC-1 | BANK-F5743 SHIPPED (PR #13871) | BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK closed -- first banking item per INBOX-CC-1.md's NOW list | NEXT=re-reading INBOX for next banking item / scanning banking.routes.ts + frontend for more raw-UUID/missing-linkage instances | GO
+  INBOX-CC-1.md (port 9223, "POSTERS THEN BANKING") named this AS the first banking item: register SQL
+  drops settlement_id/journal_entry_id even when Neon has them, sibling escrow-visualizer.routes.ts
+  endpoint in the same file already had the correct pattern -- CC-2 filed it (verify-only, live-confirmed
+  via 2 real USMCA escrow postings), CC-1 fixed it.
+  Reused escrow-visualizer.routes.ts's exact CASE/join shape (no new pattern invented): settlement_id via
+  CASE WHEN ep.source_type='driver_settlement' THEN ep.source_id::text END, journal_entry_id off
+  ep.linked_journal_entry_id, journal_entry_memo via a new LEFT JOIN accounting.journal_entries. Frontend
+  (DriverEscrowTabContent.tsx) was already correctly written to render EntityLinks for both columns -- it
+  never got the chance because the query never selected them.
+  Live-verified BEFORE shipping (not after-the-fact): Neon bypass-scoped read (project
+  tiny-field-89581227) against the exact 2 rows CC-2's board finding cited (d58efce0-...,
+  77fe680d-...) confirmed both now resolve real settlement_id/journal_entry_id/journal_entry_memo.
+  SHIP NOTE: hit two collision classes shipping this one small fix -- (1) FINDING-id BANK-F5742 was
+  already taken by a concurrent PR (#13869) by the time I finished; renamed to BANK-F5743 before
+  pushing. (2) After the rename+amend, the push was rejected (amend rewrote history, force-push is
+  blocked) but `gh pr create` still succeeded against the STALE pre-amend commit still sitting on the
+  remote branch -- caught the body/commit mismatch before merge, closed that PR (#13870) unmerged, used
+  the rename-branch-and-fresh-PR workaround (branch -v2) to ship the correct paired commit+body as
+  PR #13871. Lesson for future sessions: after any amend, ALWAYS verify the push actually succeeded
+  (not just that gh pr create returned a URL) before treating a PR as representing your latest commit.
+  A second concurrent agent (#13874) also independently used BANK-F5743 shortly after mine merged --
+  not this session's problem to fix (mine landed first), flagging only as further evidence banking.routes.ts
+  is now as contested a hot file as journal-entries.service.ts was during the accounting lane.
+  LIVE PROOF: node scripts/verify-banking-escrow-register-settlement-je-link.mjs --selftest exit 0 (4/4
+  mutation cases). node scripts/verify-banking-escrow-register-settlement-je-link.mjs exit 0. npx tsc -b
+  apps/backend exit 0. node scripts/verify-guard-wired.mjs exit 0. node scripts/money-pr-local-gate.mjs
+  exit 0. Merged PR #13871 confirmed on origin/main (sha 39d03cb43).
+  DEPLOY: not verified via /healthz/shallow -- this sandbox's outbound network cannot reach the prod
+  Render host (confirmed repeatedly this session); merge-to-main is confirmed via git log, not claiming
+  a live deploy check that did not happen.
   Owner ruling in INBOX-CC-1.md, 2026-08-21 21:18 CT: "ACCOUNTING THEN BANKING" -- CC-1 was explicitly
   "not finished" while poster memos still stamped UUID. Closed end-to-end this pass across
   ACCT-F5725/5728/5730/5733/5734:
