@@ -28,10 +28,14 @@ const ALLOWLIST = new Map([
   // --- Dead code: built then abandoned, no frontend caller (leave unmounted) ---
   ["registerBankingManualJeRoutes", "ARCHIVED 2026-06-24 (Tier-1 H-1) — dead path, unmounted; original in manual-je.routes.deprecated.ts. Canonical JE = /api/v1/accounting/journal-entries."],
   ["registerDeepHealthRoutes", "ARCHIVED 2026-07-26 — was never mounted (GET /api/v1/healthz/deep 404s in prod), and its handler reads tables that do not exist. Deliberately NOT given auth: adding a guard would have resurrected dead code against a phantom schema. Unmounted + archived is the safe state; verify-step 1590 asserts it stays unauthenticated-unreachable."],
-  ["registerAccountingReconciliationRoutes", "dead code — no frontend caller (2026-06 sweep)"],
+  // registerAccountingReconciliationRoutes — MOUNTED via @fastify/autoload default `fp(...)`
+  // export (accounting/reconciliation.routes.ts); "dead code" was stale — live frontend callers
+  // in apps/frontend/src/api/accounting.ts hit /api/v1/accounting/reconciliation/{workspace,
+  // match,unmatch}.
   ["registerSafetyDrugPoolRoutes", "dead code — no frontend caller"],
   ["registerSamsaraMasterSyncRoutes", "dead code / admin-only — no frontend caller"],
-  ["registerScheduledReportsRoutes", "dead code — no frontend caller"],
+  // registerScheduledReportsRoutes — MOUNTED (apps/backend/src/index.ts:963, direct call) with a
+  // live frontend caller (apps/frontend/src/api/scheduled-reports.ts); "dead code" was stale.
   // registerCategorizationRulesRoutes — MOUNTED 2026-07-30 (ACCT-LINK-06 apply-historical live ops).
   // --- Collision/unsafe: mounting duplicates an existing route -> boot crash. Do NOT mount. ---
   // ACCT-R-13 (2026-07-25): registerSettlementApprovalRoutes is now MOUNTED (index.ts) — removed
@@ -107,9 +111,33 @@ for (const f of files) {
   while ((cm = callRe.exec(body))) calledIdents.add(cm[1]);
 }
 
-// A register fn is "called" if its own name is called, or any alias resolving to it is called.
+// --- @fastify/autoload false-positive class --------------------------------------------------
+// apps/backend/src/index.ts calls registerAccountingRoutes(app), which (apps/backend/src/
+// accounting/index.ts) runs @fastify/autoload over the whole accounting/ directory tree
+// (matchFilter /\.routes\.(ts|js)$/, ignoring cash-flow/cash-forecast/finance-hub — those are
+// mounted explicitly instead, see the registerAccountingRoutes call site's own comment). Autoload
+// mounts a route file via its `export default fp(fn, {...})`, never by anyone writing `fn(app)`
+// — so a registrar reached ONLY this way has zero call sites under the exportRe/callRe heuristic
+// above and looks orphaned when it is actually live. That call site's comment names 3 real
+// examples hitting exactly this (recurring-template-detail, period-close-detail,
+// schedule-row-detail) after a prior boot-crash incident from mounting one of them a second time
+// — do not "fix" a future one of these by adding an explicit call in index.ts.
+const ACCOUNTING_AUTOLOAD_DIR = join(SRC, "accounting") + "/";
+const ACCOUNTING_AUTOLOAD_IGNORE_RE = /(\.test\.|(^|\/)cash-flow\.routes\.|(^|\/)cash-forecast\.routes\.|(^|\/)finance-hub\.routes\.)/;
+const fpDefaultExportRe = /export\s+default\s+fp\s*\(\s*(\w+)\b/;
+const autoloadMounted = new Set();
+for (const f of files) {
+  if (!f.startsWith(ACCOUNTING_AUTOLOAD_DIR) || !/\.routes\.ts$/.test(f)) continue;
+  if (ACCOUNTING_AUTOLOAD_IGNORE_RE.test(f)) continue;
+  const m = fpDefaultExportRe.exec(readFileSync(f, "utf8"));
+  if (m) autoloadMounted.add(m[1]);
+}
+
+// A register fn is "called" if its own name is called, any alias resolving to it is called, or
+// @fastify/autoload mounts it via a default `fp(...)` export (see block above).
 function isCalled(name) {
   if (calledIdents.has(name)) return true;
+  if (autoloadMounted.has(name)) return true;
   for (const [alias, orig] of aliasToOriginal) {
     if (orig === name && calledIdents.has(alias)) return true;
   }
