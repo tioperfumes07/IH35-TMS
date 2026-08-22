@@ -28,11 +28,11 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-22T03:50:45-05:00",
-    "sourceSha": "e09d6d962",
+    "generatedAt": "2026-08-22T04:21:59-05:00",
+    "sourceSha": "65f8f8f05",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2102,
+    "ledgerRows": 2104,
     "failOpen": 0,
     "defects": 19
   },
@@ -1812,13 +1812,13 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "prod_verified": true
       },
       "driver-finance": {
-        "pass_count": 4,
+        "pass_count": 5,
         "total_count": 5,
         "slices": [
           {
             "key": "hop.assign",
-            "holds": false,
-            "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
+            "holds": true,
+            "evidence": "6 driver bill(s) priced from the rate card, not the customer rate"
           },
           {
             "key": "scenario.settlement",
@@ -1841,17 +1841,17 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
             "evidence": "2 escrow ledger entr(ies)"
           }
         ],
-        "progress": 80,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "accounting": {
-        "pass_count": 4,
+        "pass_count": 5,
         "total_count": 5,
         "slices": [
           {
             "key": "hop.revenue",
-            "holds": false,
-            "evidence": "no count probe (resolved at request time)"
+            "holds": true,
+            "evidence": "9 standing revenue-recognition latch posting(s)"
           },
           {
             "key": "hop.invoice",
@@ -1861,21 +1861,21 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "hop.gl",
             "holds": true,
-            "evidence": "1895 live journal entr(ies)"
+            "evidence": "2026 live journal entr(ies)"
           },
           {
             "key": "scenario.coa",
             "holds": true,
-            "evidence": "189 account(s) in the chart"
+            "evidence": "193 account(s) in the chart"
           },
           {
             "key": "scenario.ap",
             "holds": true,
-            "evidence": "5 open (non-voided) bill(s)"
+            "evidence": "8 open (non-voided) bill(s)"
           }
         ],
-        "progress": 80,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "banking": {
         "pass_count": 1,
@@ -1889,7 +1889,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.banking",
             "holds": true,
-            "evidence": "200 categorized bank transaction(s)"
+            "evidence": "201 categorized bank transaction(s)"
           }
         ],
         "progress": 50,
@@ -1915,7 +1915,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.driver_onboarding",
             "holds": true,
-            "evidence": "262 driver(s) on file"
+            "evidence": "264 driver(s) on file"
           }
         ],
         "progress": 100,
@@ -2010,8 +2010,8 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       {
         "key": "hop.assign",
         "module": "driver-finance",
-        "holds": false,
-        "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
+        "holds": true,
+        "evidence": "6 driver bill(s) priced from the rate card, not the customer rate"
       },
       {
         "key": "hop.dispatch",
@@ -2034,8 +2034,8 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       {
         "key": "hop.revenue",
         "module": "accounting",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "9 standing revenue-recognition latch posting(s)"
       },
       {
         "key": "hop.invoice",
@@ -2047,7 +2047,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "hop.gl",
         "module": "accounting",
         "holds": true,
-        "evidence": "1895 live journal entr(ies)"
+        "evidence": "2026 live journal entr(ies)"
       },
       {
         "key": "hop.bank",
@@ -2065,13 +2065,13 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.driver_onboarding",
         "module": "drivers",
         "holds": true,
-        "evidence": "262 driver(s) on file"
+        "evidence": "264 driver(s) on file"
       },
       {
         "key": "scenario.coa",
         "module": "accounting",
         "holds": true,
-        "evidence": "189 account(s) in the chart"
+        "evidence": "193 account(s) in the chart"
       },
       {
         "key": "scenario.settlement",
@@ -2101,7 +2101,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.ap",
         "module": "accounting",
         "holds": true,
-        "evidence": "5 open (non-voided) bill(s)"
+        "evidence": "8 open (non-voided) bill(s)"
       },
       {
         "key": "scenario.fuel",
@@ -2143,7 +2143,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.banking",
         "module": "banking",
         "holds": true,
-        "evidence": "200 categorized bank transaction(s)"
+        "evidence": "201 categorized bank transaction(s)"
       }
     ]
   }
