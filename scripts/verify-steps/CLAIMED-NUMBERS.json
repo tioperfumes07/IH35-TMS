@@ -1,4 +1,9 @@
 {
+  "4346": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-termination-reasons-rls-single-policy"
+  },
   "4345": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
@@ -5323,5 +5328,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1216
+  "total_claimed": 1217
 }
