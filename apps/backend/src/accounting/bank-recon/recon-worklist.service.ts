@@ -71,6 +71,22 @@ export async function getReconWorklist(input: {
           AND bt.bank_account_id = $2::uuid
           AND bt.transaction_date BETWEEN $3::date AND $4::date
           AND rm.match_state = 'auto_matched'
+          -- RECON-ACCEPT-DEAD-CANDIDATE — a bank line resolved via direct Categorize (Banking →
+          -- Transactions) already sets bt.review_state = 'matched' when it posts its JE. The same JE
+          -- also scores as a reconciliation_matches auto_matched candidate for this line (this is the
+          -- suggestion engine working as designed — the JE genuinely is the best match). Without this
+          -- filter, that already-resolved line kept surfacing here as a live, clickable "Accept"
+          -- candidate that acceptMatchWithResolveDifference's own idempotency guard
+          -- (match.service.ts: if txn.review_state === "matched", throw new Error
+          -- "bank_transaction_already_matched") can never actually accept — every click 500s. The
+          -- line is already correctly reconciled (confirmedStateWhere() already counts its
+          -- auto_matched row toward progress); it just has nothing left for the user to accept, so it
+          -- must not be offered as an outstanding action item. Live-reproduced 2026-08-22: categorized
+          -- USMCA bank_transaction 438fb0c5 (Wire Transfer Fee, $15.00) -> JE 1f8ef271 posted+balanced
+          -- -> worklist correctly showed it as an auto-match candidate -> Accept 500'd
+          -- ("bank_transaction_already_matched") on every attempt, live-Chrome-confirmed via a direct
+          -- fetch to /api/v1/bank-recon/accept-match, not just a client-side guess.
+          AND bt.review_state <> 'matched'
         ORDER BY bt.transaction_date ASC, bt.created_at ASC
       `,
       [input.operating_company_id, input.account_id, input.period_start, input.period_end]
