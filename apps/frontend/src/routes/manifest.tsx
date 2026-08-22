@@ -4107,6 +4107,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/accounting/chart-of-accounts"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/lists/accounting/chart-of-accounts" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/chart-of-accounts/register/:accountId"
           element={
             <ProtectedRoute>

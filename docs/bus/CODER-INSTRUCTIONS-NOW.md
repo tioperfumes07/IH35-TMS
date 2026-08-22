@@ -1,12 +1,12 @@
-# CODER INSTRUCTIONS NOW · 2026-08-21 21:39 CT
+# CODER INSTRUCTIONS NOW · 2026-08-21 22:10 CT
 
 **Your only order is your INBOX file.** `git pull --ff-only origin main`. **FAST-MERGE 4–5 min.** Never HOLD. Never `/tasks`. USMCA only.
 
 **Owner sequence (do not deviate):** certify **Accounting** (Fully-Wired 1–12 on the **current** healthz SHA) → Urgent 6 (**banking → settlements → factoring → dispatch → vendors**) → rest of urgent (**customers → drivers → fleet → lists**).
 
-**Owner 21:18 CT:** If a coder has **truly finished Accounting in their lane**, they continue to the **next module in that sequence** (CC-1/CC-2/Codex → banking). Do not idle leftover-dry.
+**Honest now:** Accounting is **not CERTIFIED**. Live still `{ok:true,version:"0cec933"}`. Dashboard preDeploy **just stripped to migrate + critical-runtime**. In-flight catch-up `dep-da4h4son74is73dkep20` may still run the old command — **do not kick another deploy**. **Do not reuse ACCT-F5732.**
 
-**Honest now:** Accounting is **not CERTIFIED**. Live still `{ok:true,version:"0cec933"}`. Cursor batch **`pre_deploy_failed`**. CC-2 must not treat reverse sweeps as module CERTIFIED. **Do not reuse ACCT-F5732.** Current CC-1 ship id = **ACCT-F5733** (#13846).
+**CC-2:** legal/fuel/compliance/insurance/reports/cash-flow/tasks self-select is **REJECTED**. NOW=**settlements** Live.
 
 ## HARD — every seat
 
@@ -20,10 +20,10 @@
 
 | Seat | File | NOW |
 |------|------|-----|
-| **CC-1** | `INBOX-CC-1.md` | Ship **#13846 ACCT-F5733** then **banking** money. First: escrow register settlement/JE SQL. Worker OFF. |
-| **CC-2** | `INBOX-CC-2.md` | **Do not stand by.** NOW=**settlements** Live reverse/picker, then factoring Live. Escrow SQL → CC-1. |
+| **CC-1** | `INBOX-CC-1.md` | **#13846 already merged.** NOW=banking money: escrow register settlement/JE SQL. Worker OFF. |
+| **CC-2** | `INBOX-CC-2.md` | **REJECT off-sequence.** NOW=**settlements** Live reverse/picker, then factoring Live. |
 | **CC-3** | `INBOX-CC-3.md` | **Rest of urgent:** customers → drivers → fleet → lists. U6 chrome done. |
-| **Codex** | `INBOX-CODEX.md` | **NOW=banking reverse** (BANK-F5735 then next unpaid). No CDP. |
-| **Cursor** | `INBOX-CURSOR.md` | **Certify Accounting Live Chrome** on `0cec933`. Batch did **not** land. |
+| **Codex** | `INBOX-CODEX.md` | **NOW=banking reverse** next unpaid after BANK-F5740. No CDP. No escrow SQL (CC-1). |
+| **Cursor** | `INBOX-CURSOR.md` | **Certify Accounting Live Chrome** after SHA moves; CoA alias ACCT-F5741. |
 
 **Honest:** reverse PASS ≠ module CERTIFIED. Accounting CERTIFIED only when Fully-Wired 1–12 proven live on current healthz SHA.

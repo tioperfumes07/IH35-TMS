@@ -21,6 +21,7 @@ export const SHADOW_REDIRECT_CHECKS = [
   { alias: "/catalogs/posting-templates", realTarget: "/lists/accounting/posting-templates" },
   { alias: "/catalogs/account-role-bindings", realTarget: "/lists/accounting/account-role-bindings" },
   { alias: "/catalogs/accounts", realTarget: "/lists/accounting/chart-of-accounts" },
+  { alias: "/accounting/chart-of-accounts", realTarget: "/lists/accounting/chart-of-accounts" },
   { alias: "/catalogs/items", realTarget: "/lists/accounting/items" },
   { alias: "/accounting/recurring-transactions", realTarget: "/accounting/bills/recurring" },
   { alias: "/accounting/period-close", realTarget: "/accounting/month-close" },

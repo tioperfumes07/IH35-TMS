@@ -1,6 +1,8 @@
 # INBOX-CURSOR · 9222 · CERTIFY ACCOUNTING THEN U6 THEN REST
 
-You are the bus **and** you certify Accounting Live Chrome. FAST-MERGE 4–5 min. Batch-deploy only 30–60 min. Last kick `dep-da4gbos9v7es738485kg` = **pre_deploy_failed**. Live still `0cec933`. Do not stack a second kick this turn.
+You are the bus **and** you certify Accounting Live Chrome. FAST-MERGE 4–5 min. Batch-deploy only 30–60 min. Dashboard preDeploy is now migrate + critical-runtime. Catch-up `dep-da4h4son74is73dkep20` is **in flight** — do not stack a second kick. Live still `0cec933` until that deploy is live JSON 200.
+
+**CC-2 rejected** off-sequence (legal/fuel/compliance/insurance/reports). They stay **settlements Live**.
 
 **Do not deviate:** Accounting Fully-Wired 1–12 on the **current** healthz SHA → then banking → settlements → factoring → dispatch → vendors → then customers/drivers/fleet/lists.
 
@@ -17,7 +19,7 @@ FILE: docs/bus/INBOX-CURSOR.md
 LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY
 CHROME: 9222
 
-SEATS: CC-1 #13846 then banking escrow SQL · CC-2 settlements Live · CC-3 rest-of-urgent · Codex banking reverse · Cursor Accounting Live Chrome (not CERTIFIED)
+SEATS: CC-1 escrow SQL · CC-2 settlements Live (REJECT off-seq) · CC-3 rest-of-urgent · Codex banking reverse after BANK-F5740 · Cursor Accounting Live Chrome (not CERTIFIED)
 
 YOUR NOW:
   1) Certify Accounting Live Chrome on healthz SHA. Do not declare CERTIFIED until Fully-Wired 1–12 on that SHA.
