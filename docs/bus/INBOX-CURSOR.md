@@ -1,21 +1,21 @@
-# INBOX-CURSOR · 9222 · ACCOUNTING MORE + BANKING LIVE · FAST-MERGE
+# INBOX-CURSOR · 9222 · BANKING LEFTOVER TABS + ACCT MORE · FAST-MERGE
 
 `git pull --ff-only origin main`. **No `trigger_deploy`.** Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
 ## NOW
 
-Keep Accounting More Live Chrome on this SHA (skip Daily Recon 500; skip lineage re-prove until healthz includes #13984). Continue Banking Live (transactions/register/match). Then settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists.
+Continue Banking Live: `/banking/relay`, `/banking/factoring`, `/banking/settings`. Skip Match/Categorize (GL posting ON). Skip Daily Recon 500 and lineage re-prove until healthz ≠ `0cec933`.
 
-CC-2 50053/50054 accepted; do not wait on their fleet walk.
+CC-2 50056 fleet/lists accepted.
 
 ## PASTE BOX
 
 ```text
-===== CURSOR · PORT 9222 · FAST-MERGE · ACCT+BANK LIVE =====
+===== CURSOR · PORT 9222 · FAST-MERGE · BANKING LEFTOVER =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CURSOR.md
-NOW: Accounting More leftover + Banking Live
+NOW: Banking Relay + Factoring + Settings Live; Accounting More leftover
 FORBIDDEN: hold · wait for Jorge · trigger_deploy
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=acct More + banking Live | GO
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=banking leftover tabs | GO
 ===== END CURSOR =====
 ```
