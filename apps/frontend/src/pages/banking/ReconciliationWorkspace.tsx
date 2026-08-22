@@ -514,17 +514,30 @@ export function ReconciliationWorkspacePage() {
                     <div className="text-sm text-gray-700">{money(Number(tx.amount_cents))}</div>
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                        {/* BANK-F5744 — plaid/link.routes.ts already joins matched_load_number/
+                            matched_bill_number/matched_settlement_display_id/matched_expense_number
+                            alongside every matched_*_id (BANK-F5662/ACCT-F5153/EXPENSE column-wave
+                            comments on the type), but this render hardcoded entityLabel(null, ...),
+                            structurally discarding the human label it already had in hand. */}
                         {tx.matched_load_id ? (
-                          <EntityLink kind="load" id={tx.matched_load_id} label={entityLabel(null, tx.matched_load_id, "Load")} />
+                          <EntityLink
+                            kind="load"
+                            id={tx.matched_load_id}
+                            label={entityLabel(tx.matched_load_number ?? null, tx.matched_load_id, "Load")}
+                          />
                         ) : null}
                         {tx.matched_bill_id ? (
-                          <EntityLink kind="bill" id={tx.matched_bill_id} label={entityLabel(null, tx.matched_bill_id, "Bill")} />
+                          <EntityLink
+                            kind="bill"
+                            id={tx.matched_bill_id}
+                            label={entityLabel(tx.matched_bill_number ?? null, tx.matched_bill_id, "Bill")}
+                          />
                         ) : null}
                         {tx.matched_settlement_id ? (
                           <EntityLink
                             kind="settlement"
                             id={tx.matched_settlement_id}
-                            label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
+                            label={entityLabel(tx.matched_settlement_display_id ?? null, tx.matched_settlement_id, "Settlement")}
                           />
                         ) : null}
                         {/* EXPENSE column-wave: bank-transaction-splits.service.ts (and the
@@ -533,7 +546,11 @@ export function ReconciliationWorkspacePage() {
                             unmatched here even though ExpenseDetailPage.tsx already showed the reverse
                             link correctly. */}
                         {tx.matched_expense_id ? (
-                          <EntityLink kind="expense" id={tx.matched_expense_id} label={entityLabel(null, tx.matched_expense_id, "Expense")} />
+                          <EntityLink
+                            kind="expense"
+                            id={tx.matched_expense_id}
+                            label={entityLabel(tx.matched_expense_number ?? null, tx.matched_expense_id, "Expense")}
+                          />
                         ) : null}
                         {tx.matched_transfer_id ? (
                           <EntityLink kind="transfer" id={tx.matched_transfer_id} label={entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer")} />

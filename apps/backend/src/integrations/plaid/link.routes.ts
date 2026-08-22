@@ -327,6 +327,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- joins at all, so BankAccountDetail's Matched column could only ever render "— not visible"
           -- tombstones for fully-resolvable loads/bills/settlements/JEs. Same ACCT-F5153 convention as
           -- the company-transactions SELECT below: entity-scoped LEFT JOINs, label alongside FK.
+          -- BANK-F5746 (2026-08-22) — verified this join was already correct and complete; the residual
+          -- gap was entirely on the frontend, where ReconciliationWorkspace.tsx's matched-entity
+          -- EntityLinks hardcoded entityLabel(null, ...) instead of threading these already-joined
+          -- matched_*_number/_display_id columns through. Fixed there, not here — noting it here so a
+          -- future reader tracing "why does this join exist" finds both halves of the story.
           l.load_number AS matched_load_number,
           bt.matched_bill_id,
           bill.bill_number AS matched_bill_number,
