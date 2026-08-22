@@ -307,16 +307,23 @@ export function CustomersPage() {
     onError: (error) => {
       setCreateFormError("");
       setCreateFieldErrors({});
+      // SILENT-VALIDATION-OFFSCREEN: this form scrolls long. An inline field error near the top
+      // is invisible if the user clicked Save from further down, and looks like a dead button
+      // with no feedback at all. Every required-field code also pushes a toast (same as the
+      // catch-all below) so the user always gets a signal, regardless of scroll position.
       if ((error as Error & { code?: string }).code === "legal_name_required") {
         setCreateFieldErrors({ legal_name: "Legal name is required" });
+        pushToast("Legal name is required", "error");
         return;
       }
       if ((error as Error & { code?: string }).code === "customer_type_required") {
         setCreateFieldErrors({ customer_type: "Customer type is required" });
+        pushToast("Customer type is required", "error");
         return;
       }
       if ((error as Error & { code?: string }).code === "email_required") {
         setCreateFieldErrors({ email: "Email is required" });
+        pushToast("Email is required", "error");
         return;
       }
       const err = error as ApiError;

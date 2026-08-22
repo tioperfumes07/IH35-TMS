@@ -50,7 +50,9 @@ describe("NewCustomerDrawerForm validation (canonical CustomerProfileForm)", () 
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     expect(createCustomer).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.getByText(/Customer type is required/i)).toBeTruthy());
+    // SILENT-VALIDATION-OFFSCREEN: both the inline field error AND a toast must fire, so the
+    // failure is visible even when the erroring field is scrolled out of view (>=2 matches).
+    await waitFor(() => expect(screen.getAllByText(/Customer type is required/i).length).toBeGreaterThanOrEqual(2));
   });
 
   it("blocks submit when email is empty", async () => {
@@ -63,7 +65,9 @@ describe("NewCustomerDrawerForm validation (canonical CustomerProfileForm)", () 
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     expect(createCustomer).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.getByText(/Email is required/i)).toBeTruthy());
+    // SILENT-VALIDATION-OFFSCREEN: both the inline field error AND a toast must fire, so the
+    // failure is visible even when the erroring field is scrolled out of view (>=2 matches).
+    await waitFor(() => expect(screen.getAllByText(/Email is required/i).length).toBeGreaterThanOrEqual(2));
   });
 
   it("submits with name, type, and email when valid", async () => {
