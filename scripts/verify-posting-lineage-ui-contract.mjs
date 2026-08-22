@@ -36,6 +36,9 @@ if (!navText.includes('/accounting/posting-lineage')) {
 if (!pageText.includes("getAccountingSourceLineage")) {
   fail("Posting lineage page must call getAccountingSourceLineage");
 }
+if (!pageText.includes('=== "payment"') || !pageText.includes('"customer_payment"')) {
+  fail("Posting lineage page must map UI payment to canonical customer_payment");
+}
 if (!pageText.includes("source_transaction_type") || !pageText.includes("source_transaction_id")) {
   fail("Posting lineage page must submit source_transaction_type and source_transaction_id");
 }

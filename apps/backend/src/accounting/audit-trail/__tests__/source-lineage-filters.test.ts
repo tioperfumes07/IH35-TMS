@@ -26,6 +26,23 @@ describe("accounting source lineage filters", () => {
     ]);
   });
 
+  it("aliases UI payment to stored customer_payment without dropping the $2 exact match", async () => {
+    const query = vi.fn(async () => ({ rows: [] }));
+    await listAccountingSourceLineage(
+      { query },
+      {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        source_transaction_type: "payment",
+        source_transaction_id: "pay_1001",
+        limit: 100,
+      },
+    );
+    const sql = String(query.mock.calls[0]?.[0] ?? "");
+    expect(sql).toContain("jp.source_transaction_type = $2::text");
+    expect(sql).toContain("$2::text IN ('payment', 'customer_payment')");
+    expect(sql).toContain("jp.source_transaction_type IN ('payment', 'customer_payment')");
+  });
+
   // LINEAGE-ROUTE-OMITS-JE-MEMO — accounting.journal_entries has no number/ref/doc column; memo IS
   // the JE's human identity. The source-lineage query used to omit it entirely (grep -c memo == 0),
   // so InvoiceDetailPage's lineage chips had no name to render and hardcoded entityLabel(null, jeId, …).

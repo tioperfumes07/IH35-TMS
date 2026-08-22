@@ -246,7 +246,10 @@ export function PostingLineagePage() {
         onSubmit={(e) => {
           e.preventDefault();
           const next = {
-            sourceType: sourceType.trim().toLowerCase(),
+            sourceType:
+              sourceType.trim().toLowerCase() === "payment"
+                ? "customer_payment"
+                : sourceType.trim().toLowerCase(),
             sourceId: sourceId.trim(),
           };
           if (!next.sourceType || !next.sourceId || !companyId) return;

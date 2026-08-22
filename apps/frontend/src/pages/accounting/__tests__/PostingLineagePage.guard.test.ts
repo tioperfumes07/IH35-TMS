@@ -42,4 +42,9 @@ describe("PostingLineagePage GLOBAL-COLS-01 guard", () => {
     expect(page).toContain("source_transaction_type");
     expect(page).toContain("source_transaction_id");
   });
+
+  it("maps UI type payment to canonical customer_payment (PMT lineage 0-row)", () => {
+    expect(page).toContain('=== "payment"');
+    expect(page).toContain('"customer_payment"');
+  });
 });
