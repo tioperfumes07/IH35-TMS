@@ -962,6 +962,8 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type = 'fuel_event' THEN 'fuel_transaction'
             WHEN tsl.linked_object_type = 'driver_reimbursement' THEN 'driver_reimbursement'
             WHEN tsl.linked_object_type = 'dispute_disbursement' THEN 'settlement_dispute'
+            WHEN tsl.linked_object_type = 'driver_settlement' THEN 'settlement'
+            WHEN tsl.linked_object_type = 'driver_settlement_deduction' THEN 'settlement_deduction'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
@@ -975,7 +977,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
           -- though the href it builds from source_transaction_id was already correct.
           COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label, src_reimbursement.display_label) AS source_transaction_display_id,
-          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description) AS linked_object_display_id
+          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description, link_deduction.display_label) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         LEFT JOIN accounting.invoices src_inv
@@ -1022,6 +1024,14 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           ON tsl.linked_object_type = 'dispute_disbursement'
           AND link_dispute.id::text = tsl.linked_object_id
           AND link_dispute.operating_company_id = $2::uuid
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
+          FROM driver_finance.driver_settlement_deductions d
+          WHERE tsl.linked_object_type = 'driver_settlement_deduction'
+            AND d.id::text = tsl.linked_object_id
+            AND d.operating_company_id = $2::uuid
+          LIMIT 1
+        ) link_deduction ON true
         WHERE jep.journal_entry_uuid = $1
           AND jep.operating_company_id = $2::uuid
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST

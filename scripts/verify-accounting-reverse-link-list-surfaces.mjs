@@ -28,8 +28,27 @@ const REIMBURSEMENT_DETAIL = "apps/frontend/src/pages/accounting/AccountingDrive
 const REIMBURSEMENT_ROUTE = "apps/backend/src/accounting/driver-reimbursement-detail.routes.ts";
 const DISPUTE_TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
 const DISPUTE_SERVICE = "apps/backend/src/driver-finance/settlement-dispute.service.ts";
+const DEDUCTION_ROUTE = "apps/backend/src/driver-finance/deductions.routes.ts";
+const DEDUCTION_PANEL = "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx";
 
 const CHECKS = [
+  { name: "Settlement poster stores canonical deduction id", file: "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts", pattern: /linked_object_type:\s*"driver_settlement_deduction",\s*linked_object_id:\s*line\.deduction_id/ },
+  { name: "Deduction reader accepts exact id", file: DEDUCTION_ROUTE, pattern: /deduction_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/ },
+  { name: "Deduction reader scopes exact id", file: DEDUCTION_ROUTE, pattern: /where\.push\(`d\.id = \$\$\{values\.length\}::uuid`\)/ },
+  { name: "Deduction reader independently scopes company", file: DEDUCTION_ROUTE, pattern: /const where = \["d\.operating_company_id = \$1::uuid"\]/ },
+  { name: "Settlement deduction EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "settlement_deduction":\s*return `\/drivers\/deductions\?deduction_id=\$\{id\}`;/ },
+  { name: "Deduction panel consumes exact deep link", file: DEDUCTION_PANEL, pattern: /searchParams\.get\("deduction_id"\)/ },
+  { name: "Deduction panel forwards exact id", file: DEDUCTION_PANEL, pattern: /deduction_id:\s*requestedDeductionId \|\| undefined/ },
+  { name: "Exact deduction read includes applied rows", file: DEDUCTION_PANEL, pattern: /status:\s*requestedDeductionId \? undefined : "pending"/ },
+  { name: "Audit API canonicalizes settlement deduction", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "driver_settlement_deduction":\s*return "settlement_deduction";/ },
+  { name: "Audit lineage labels settlement deductions", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_deduction\.display_label[\s\S]*?driver_finance\.driver_settlement_deductions d/ },
+  { name: "Audit deduction label join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /d\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE source canonicalizes settlement deduction", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /linked_object_type = 'driver_settlement_deduction' THEN 'settlement_deduction'/ },
+  { name: "JE source labels settlement deductions", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_deduction\.display_label[\s\S]*?driver_finance\.driver_settlement_deductions d/ },
+  { name: "JE deduction label join is company scoped", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /d\.operating_company_id = \$2::uuid/ },
+  { name: "Audit Trail preserves deduction identity", file: AUDIT_TRAIL, pattern: /case "driver_settlement_deduction":\s*return "settlement_deduction";/ },
+  { name: "Posting Lineage preserves deduction identity", file: POSTING_LINEAGE, pattern: /case "driver_settlement_deduction":\s*return "settlement_deduction";/ },
+  { name: "JE Detail preserves deduction identity", file: JE_DETAIL, pattern: /case "driver_settlement_deduction":\s*return "settlement_deduction";/ },
   { name: "Dispute disbursement writer stores canonical dispute id", file: DISPUTE_SERVICE, pattern: /linked_object_type:\s*"dispute_disbursement",\s*linked_object_id:\s*input\.dispute_id/ },
   { name: "Dispute exact reader scopes company and id", file: DISPUTE_SERVICE, pattern: /WHERE d\.id = \$2\s*AND d\.operating_company_id = \$1::uuid/ },
   { name: "Settlement dispute EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "settlement_dispute":\s*return `\/driver-finance\/settlements\?tab=disputes&dispute_id=\$\{id\}`;/ },
