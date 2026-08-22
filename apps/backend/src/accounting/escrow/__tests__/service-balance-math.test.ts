@@ -15,8 +15,10 @@ vi.mock("../../coa-roles/resolver.service.js", () => ({
   resolveRoleAccount: mocked.resolveRoleAccountMock,
 }));
 
+// escrow/service.ts calls createJournalEntryOnClient (caller-owned-transaction variant), not the
+// standalone createJournalEntry — the mock below tracks the function actually imported/called.
 vi.mock("../../journal-entries.service.js", () => ({
-  createJournalEntry: mocked.createJournalEntryMock,
+  createJournalEntryOnClient: mocked.createJournalEntryMock,
 }));
 
 import { depositEscrow, releaseEscrow } from "../service.js";

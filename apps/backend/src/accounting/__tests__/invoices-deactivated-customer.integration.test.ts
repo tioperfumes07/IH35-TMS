@@ -35,6 +35,10 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
   let companyId: string;
 
   const suffix = randomUUID().slice(0, 8);
+  // display_id must satisfy accounting.invoices' invoices_display_id_check (^INV-[0-9]{4}-[0-9]{5}$,
+  // digits only) — suffix is hex and can contain letters (a-f), which the check rejects. This is what
+  // made the fixture flaky: it only failed when the random UUID's slice happened to contain a letter.
+  const suffixDigits = String(parseInt(suffix, 16) % 100000).padStart(5, "0");
   const customerId = randomUUID();
   const customerName = `Deactivated Customer ${suffix}`;
   const invoiceId = randomUUID();
@@ -73,7 +77,7 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
       await db.query(
         `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents)
          VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 12500)`,
-        [invoiceId, companyId, customerId, `INV-2026-${suffix.slice(0, 5).padStart(5, "0")}`]
+        [invoiceId, companyId, customerId, `INV-2026-${suffixDigits}`]
       );
       // The whole point of this suite: deactivate the customer AFTER the invoice already cites it.
       await db.query(`UPDATE mdata.customers SET deactivated_at = now() WHERE id = $1::uuid`, [customerId]);
