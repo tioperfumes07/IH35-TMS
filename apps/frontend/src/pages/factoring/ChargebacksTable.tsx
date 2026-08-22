@@ -14,6 +14,10 @@ export type ChargebackFeeRow = {
   statement_reference: string | null;
   chargeback_amount: number;
   factor_fee_amount: number;
+  invoice_id: string | null;
+  invoice_display_id: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
 };
 
 type Props = {
@@ -58,6 +62,20 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
       label: "Date",
       sortable: true,
       render: (row) => fmtDate(row.created_at),
+    },
+    {
+      key: "invoice_id",
+      label: "Invoice",
+      render: (row) => row.invoice_id ? (
+        <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+      ) : "—",
+    },
+    {
+      key: "customer_id",
+      label: "Customer",
+      render: (row) => row.customer_id ? (
+        <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+      ) : "—",
     },
     {
       key: "statement_reference",

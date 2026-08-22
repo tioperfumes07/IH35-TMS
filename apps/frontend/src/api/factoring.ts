@@ -59,6 +59,9 @@ export type FactoringChargebackFeeRow = {
   statement_reference: string | null;
   /** LINK-F5180: resolved via the same accounting.invoices join used by recourse-pipeline. */
   customer_id: string | null;
+  customer_name: string | null;
+  invoice_id: string | null;
+  invoice_display_id: string | null;
 };
 
 export type FactoringMonthlyFeeSummary = {
