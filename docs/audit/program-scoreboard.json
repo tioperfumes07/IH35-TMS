@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T21:42:51-05:00",
-    "sourceSha": "54bc61bab",
+    "generatedAt": "2026-08-21T22:06:07-05:00",
+    "sourceSha": "485ad0f36",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2080,
+    "ledgerRows": 2084,
     "failOpen": 1,
     "defects": 18
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 milestone, maintenance picker_law/reverse_link sweep complete",
+      "number": 13864,
+      "title": "FINDING: BANK-F5740 — matched load reverse identity",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:43 PM CT",
-      "url": "",
-      "sha": "96dda976c",
-      "committedAtIso": "2026-08-21T21:43:29-05:00"
-    },
-    {
-      "number": 13848,
-      "title": "FINDING: maintenance reverse_link queue leaves all honest-zero, closes the sweep",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13848",
-      "sha": "54bc61bab",
-      "committedAtIso": "2026-08-21T21:42:51-05:00"
-    },
-    {
-      "number": 13847,
-      "title": "FINDING: BANK-F5734 — Plaid panel transfer reverse drill",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13847",
-      "sha": "e1e01f99a",
-      "committedAtIso": "2026-08-21T21:42:37-05:00"
-    },
-    {
-      "number": 13845,
-      "title": "FINDING: BUS-CC3-REST-OF-URGENT",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13845",
-      "sha": "59a04a8a4",
-      "committedAtIso": "2026-08-21T21:41:13-05:00"
-    },
-    {
-      "number": 13844,
-      "title": "FINDING: BANK-F5733 — matched transfer reverse drill",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13844",
-      "sha": "a7e1d2561",
-      "committedAtIso": "2026-08-21T21:38:10-05:00"
+      "mergedAtCt": "08/21/2026, 10:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13864",
+      "sha": "30ef8c7df",
+      "committedAtIso": "2026-08-21T22:07:24-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 milestone, banking sweep complete with 1 real defect filed",
+      "title": "FINDING: OUTBOX-CC-2 milestone, insurance sweep complete",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:36 PM CT",
+      "mergedAtCt": "08/21/2026, 10:06 PM CT",
       "url": "",
-      "sha": "f53419e87",
-      "committedAtIso": "2026-08-21T21:36:31-05:00"
+      "sha": "10363f3a3",
+      "committedAtIso": "2026-08-21T22:06:44-05:00"
     },
     {
-      "number": 13843,
-      "title": "FINDING: bank driver_escrow reverse_link real structural defect, filed not fabricated",
+      "number": 13862,
+      "title": "FINDING: insurance coverage_gaps/lawsuits reverse_link + lawsuits.create picker_law real PASS, closes module",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13843",
-      "sha": "f88f83fb7",
-      "committedAtIso": "2026-08-21T21:35:58-05:00"
+      "mergedAtCt": "08/21/2026, 10:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13862",
+      "sha": "485ad0f36",
+      "committedAtIso": "2026-08-21T22:06:07-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK LANE: NON-FINANCIAL",
+      "title": "Cursor- fix(factoring): ACCT-F5740 — recourse Invoice must not tombstone as Advance",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:33 PM CT",
+      "mergedAtCt": "08/21/2026, 10:06 PM CT",
       "url": "",
-      "sha": "30c49aa17",
-      "committedAtIso": "2026-08-21T21:33:39-05:00"
+      "sha": "a81eb1f0e",
+      "committedAtIso": "2026-08-21T22:06:04-05:00"
     },
     {
-      "number": 13841,
-      "title": "FINDING: ACCT-F5732 — linked unit human reverse",
+      "number": 13860,
+      "title": "FINDING: BANK-F5739 — transfer JE reverse human label",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13841",
-      "sha": "2a3c52409",
-      "committedAtIso": "2026-08-21T21:31:18-05:00"
+      "mergedAtCt": "08/21/2026, 10:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13860",
+      "sha": "1a5e3fe03",
+      "committedAtIso": "2026-08-21T22:03:32-05:00"
+    },
+    {
+      "number": 13854,
+      "title": "FINDING: ACCT-F5734 LANE: FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 10:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13854",
+      "sha": "d7bacac34",
+      "committedAtIso": "2026-08-21T22:02:25-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 ACK Codex relay, pivoting maintenance to banking",
+      "title": "FINDING: OUTBOX-CC-2 milestone, compliance sweep complete",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 09:30 PM CT",
+      "mergedAtCt": "08/21/2026, 10:00 PM CT",
       "url": "",
-      "sha": "5b130eeb2",
-      "committedAtIso": "2026-08-21T21:30:19-05:00"
+      "sha": "37cb7fd1a",
+      "committedAtIso": "2026-08-21T22:00:28-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(accounting): ACCT-F5738 — expenses list must not tombstone visible rows",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 09:59 PM CT",
+      "url": "",
+      "sha": "e4f873af0",
+      "committedAtIso": "2026-08-21T21:59:55-05:00"
+    },
+    {
+      "number": 13858,
+      "title": "FINDING: compliance fleet.hos_board + form2290 reverse_link real PASS, closes module",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 09:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13858",
+      "sha": "67234e63c",
+      "committedAtIso": "2026-08-21T21:59:50-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: OUTBOX-CC-2 milestone, legal+fuel sweep complete",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 09:57 PM CT",
+      "url": "",
+      "sha": "fdc6c7bd4",
+      "committedAtIso": "2026-08-21T21:57:25-05:00"
     }
   ]
 }
