@@ -20,55 +20,75 @@
  */
 import { readFileSync } from "node:fs";
 
-const failures = [];
-
 const routesPath = "apps/backend/src/driver-finance/settlements.routes.ts";
-const routesSrc = readFileSync(routesPath, "utf8");
-
-const loadIdsSubqueryCount = (routesSrc.match(/array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/g) || []).length;
-if (loadIdsSubqueryCount < 2) {
-  failures.push(`${routesPath}: expected 2 load_ids array_agg subqueries (general list + driver reverse-drill), found ${loadIdsSubqueryCount}`);
-}
-
-const loadIdsMappingCount = (routesSrc.match(/load_ids:\s*Array\.isArray\(row\.load_ids\)/g) || []).length;
-if (loadIdsMappingCount < 2) {
-  failures.push(`${routesPath}: expected 2 response-mapping blocks including load_ids, found ${loadIdsMappingCount}`);
-}
-
 const panelPath = "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx";
-const panelSrc = readFileSync(panelPath, "utf8");
-if (!/kind="load"/.test(panelSrc)) {
-  failures.push(`${panelPath}: no longer renders a real EntityLink kind="load" for covered loads`);
-}
-if (!/settlement\.load_ids/.test(panelSrc)) {
-  failures.push(`${panelPath}: no longer reads settlement.load_ids`);
+const tablePath = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
+const apiTypePath = "apps/frontend/src/api/driverFinance.ts";
+const source = {
+  routes: readFileSync(routesPath, "utf8"),
+  panel: readFileSync(panelPath, "utf8"),
+  table: readFileSync(tablePath, "utf8"),
+  api: readFileSync(apiTypePath, "utf8"),
+};
+
+function handler(src, start, end) {
+  const from = src.indexOf(start);
+  const to = src.indexOf(end, from + start.length);
+  return from >= 0 ? src.slice(from, to >= 0 ? to : undefined) : "";
 }
 
-const tablePath = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
-const tableSrc = readFileSync(tablePath, "utf8");
-if (!/kind="load"/.test(tableSrc) || !/row\.load_ids/.test(tableSrc)) {
-  failures.push(`${tablePath}: Loads column must EntityLink kind="load" from row.load_ids (not count-only)`);
+export function collectFailures(src = source) {
+  const failures = [];
+  const general = handler(src.routes, 'app.get("/api/v1/driver-finance/settlements"', 'app.get("/api/v1/drivers/:id/settlements"');
+  const driver = handler(src.routes, 'app.get("/api/v1/drivers/:id/settlements"', 'app.get("/api/v1/driver-finance/settlements/:id"');
+  for (const [name, block] of [["general list", general], ["driver reverse list", driver]]) {
+    if (!/array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/.test(block)) {
+      failures.push(`${routesPath}: ${name} must project canonical load_ids`);
+    }
+    if (!/load_ids:\s*Array\.isArray\(row\.load_ids\)/.test(block)) {
+      failures.push(`${routesPath}: ${name} response must map load_ids`);
+    }
+  }
+  if (!/settlement\.load_ids[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{id\}/.test(src.panel)) {
+    failures.push(`${panelPath}: must drill each settlement.load_ids value as kind=load`);
+  }
+  if (!/row\.load_ids[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{id\}/.test(src.table)) {
+    failures.push(`${tablePath}: Loads column must drill each row.load_ids value as kind=load`);
+  }
+  if (!/load_ids\?:\s*string\[\]/.test(src.api)) {
+    failures.push(`${apiTypePath}: SettlementListRow no longer declares load_ids`);
+  }
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = tableSrc.replace(/kind="load"/g, 'kind="settlement"');
-  if (/kind="load"/.test(planted)) {
-    console.error("verify-settlements-load-ids-reverse-link SELFTEST FAILED: plant did not remove load EntityLink");
+  const baseline = collectFailures();
+  if (baseline.length) {
+    console.error(`verify-settlements-load-ids-reverse-link SELFTEST FAILED: good sources rejected: ${baseline.join(" | ")}`);
     process.exit(1);
   }
-  const wouldFail = !/kind="load"/.test(planted) || !/row\.load_ids/.test(planted);
-  if (!wouldFail) {
-    console.error("verify-settlements-load-ids-reverse-link SELFTEST FAILED: planted table would still pass");
+  const mutations = [
+    ["general producer", "routes", /array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/, "array_agg(NULL)"],
+    ["driver producer", "routes", /array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "array_agg(NULL)" : match],
+    ["general mapper", "routes", /load_ids:\s*Array\.isArray\(row\.load_ids\)/, "load_ids: false"],
+    ["driver mapper", "routes", /load_ids:\s*Array\.isArray\(row\.load_ids\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "load_ids: false" : match],
+    ["pre-settlements panel", "panel", /kind="load"\s+id=\{id\}/, 'kind="settlement" id={id}'],
+    ["settlements table", "table", /kind="load"\s+id=\{id\}/, 'kind="settlement" id={id}'],
+    ["API type", "api", /load_ids\?:\s*string\[\]/, "load_count?: number"],
+  ];
+  const escaped = [];
+  for (const [name, key, pattern, replacement] of mutations) {
+    const planted = { ...source, [key]: source[key].replace(pattern, replacement) };
+    if (planted[key] === source[key] || collectFailures(planted).length === 0) escaped.push(name);
+  }
+  if (escaped.length) {
+    console.error(`verify-settlements-load-ids-reverse-link SELFTEST FAILED: escaped ${escaped.join(", ")}`);
     process.exit(1);
   }
-  console.log("verify-settlements-load-ids-reverse-link selftest: planted count-only Loads column fails");
+  console.log(`verify-settlements-load-ids-reverse-link selftest PASS — ${mutations.length}/${mutations.length} independent plants rejected`);
 }
 
-const apiTypePath = "apps/frontend/src/api/driverFinance.ts";
-const apiTypeSrc = readFileSync(apiTypePath, "utf8");
-if (!/load_ids\?:\s*string\[\]/.test(apiTypeSrc)) {
-  failures.push(`${apiTypePath}: SettlementListRow no longer declares load_ids`);
-}
+const failures = collectFailures();
 
 if (failures.length > 0) {
   console.error("verify-settlements-load-ids-reverse-link: FAIL");
