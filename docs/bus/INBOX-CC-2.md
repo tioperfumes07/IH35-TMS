@@ -1,15 +1,13 @@
-# INBOX-CC-2 · 9224 · LIVE · 12:28 CT · SETTLEMENTS THEN FACTORING · FAST-MERGE
+# INBOX-CC-2 · 9224 · LIVE · 16:55 CT · HELP CURSOR CERTIFY · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **12:28 CT**.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **16:55 CT**.
 
-You help Cursor Live-verify. **Do not re-walk all 14.** Unique FINDING only (500 / dead click / silent no-op).
+Cursor certifies remaining U6 then rest of 14. **Do not re-walk all 14.** Unique FINDING only (500 / dead click / silent no-op).
 
-## NOW (exclusive)
+## NOW
 
-1. `https://app.ih35dispatch.com/driver-finance/settlements`
-2. then `https://app.ih35dispatch.com/driver-finance/settlement-close`
-3. then `https://app.ih35dispatch.com/factoring`
+Help Cursor Live-verify leftover unique FINDING on settlements/factoring **after Cursor leaves that URL**. Empty → next unique FAIL on the board. **Do not idle.**
 
-Chrome **9224 only**. Close tab after each hop. **Forbidden:** `/banking*` `/dispatch` `/lists` `/maintenance` `/safety` `/legal` (Cursor or other seats own those).
+**Forbidden:** `/banking*` while Cursor certifies · `/dispatch` · `/lists` · `/legal` (CC-3) · remake Book Load.
 
-OUTBOX: `CC-2 | ACK | URGENT-BLOCKS-NOW 12:28CT | PORT=9224 | NOW=https://app.ih35dispatch.com/driver-finance/settlements | GO`
+OUTBOX: `CC-2 | ACK | URGENT-BLOCKS-NOW 16:55CT | PORT=9224 | NOW=help Cursor Live unique FINDING | GO`
