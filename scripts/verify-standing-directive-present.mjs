@@ -22,23 +22,34 @@ const DELIVERY = "docs/specs/DELIVERY-METHOD-LOCKED.md";
 const POINTERS = [
   {
     rel: ".cursor/rules/33-standing-session-directive.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "alwaysApply", "SEARCH BEFORE YOU ASK"],
+    mustInclude: [
+      "STANDING-SESSION-DIRECTIVE.md",
+      "DELIVERY-METHOD-LOCKED.md",
+      "alwaysApply",
+      "SEARCH BEFORE YOU ASK",
+      "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+    ],
   },
   {
     rel: ".windsurf/rules/standing-session-directive.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "SEARCH BEFORE YOU ASK"],
+    mustInclude: [
+      "STANDING-SESSION-DIRECTIVE.md",
+      "DELIVERY-METHOD-LOCKED.md",
+      "SEARCH BEFORE YOU ASK",
+      "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+    ],
   },
   {
     rel: ".claude/skills/ih35-tms-standards/SKILL.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
   },
   {
     rel: ".cursor/rules/00-always-read-first.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
   },
   {
     rel: "AGENTS.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
   },
 ];
 
@@ -73,6 +84,9 @@ export function assertStandingDirectivePresent(root = ROOT) {
     if (!/PLACEHOLDER/i.test(body) || !/TEST DATA|test data/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include §7 TEST WITH PLACEHOLDER NUMBERS (labeled test data)`);
     }
+    if (!/CREATE-TEST-THEN-VOID/i.test(body) || !/CREATE-TEST-THEN-VOID-LAW-2026-08-22/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include CREATE-TEST-THEN-VOID law pointer`);
+    }
   }
 
   for (const p of POINTERS) {
@@ -103,7 +117,7 @@ if (SELFTEST) {
     fs.mkdirSync(path.join(tmpRoot, ".cursor", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".windsurf", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".claude", "skills", "ih35-tms-standards"), { recursive: true });
-    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n## 6. SEARCH BEFORE YOU ASK\n## 7. PLACEHOLDER test data\n");
+    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n## 6. SEARCH BEFORE YOU ASK\n## 7. PLACEHOLDER test data\nCREATE-TEST-THEN-VOID-LAW-2026-08-22.md CREATE-TEST-THEN-VOID\n");
     fs.writeFileSync(path.join(tmpRoot, DELIVERY), "# delivery stub\n");
     // Broken pointer — missing STANDING reference
     fs.writeFileSync(

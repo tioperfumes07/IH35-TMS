@@ -20,7 +20,7 @@ Governance: NO holds · NO `JORGE-APPROVED` · merge on green with proof · code
 
 **§6:** Search blueprint / questionnaire / locked decisions / accounting skill / approved UI / repo / Neon **before** escalating to the owner. Asking what the files already answer is a defect.
 
-**§7:** Skeleton hops may use labeled TEST DATA placeholders ($1,200 flat, $1.20/mi, $0.05 accessorial). Never present fabricated numbers as live production truth; never block a test on a missing real figure.
+**§7:** Skeleton hops may use labeled TEST DATA placeholders ($1,200 flat, $1.20/mi, $0.05 accessorial). Never present fabricated numbers as live production truth; never block a test on a missing real figure. **CREATE-TEST-THEN-VOID:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — empty TMS is expected; create labeled tests live; owner voids when operational 100%; disabled pay buttons are not a stop.
 
 **§10 / Fully wired:** never answer “includes all” unless the FULLY-WIRED-COMPLETE-BAR list (items 1–12) is what you will build. Live Chrome is last.
 

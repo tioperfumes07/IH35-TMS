@@ -1,4 +1,5 @@
-- 2026-08-22T00:07CT Cursor | FAST-MERGE ON all seats · CC-1 view _cents (forgot FAST-MERGE) · CC-2 /factoring INV-2026-00038 · CC-3 ACK ladder done NOW=CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP · Codex banking reverse · Cursor Accounting Live · gate 0 then --no-verify ENV then merge --admin NOW | GO
+- 2026-08-22T00:24CT Cursor | LAW CREATE-TEST-THEN-VOID · live TEST pay 5e38ccfd WAVE3 $220 check TEST-VOID-LATER-220 · ALL SEATS NOW=Accounting leftover · empty/disabled is not a stop | GO
+
 - 2026-08-21T23:58CT Cursor | REJECT CC-2 idle · factoring NOT dry · LIVE INV-2026-00038 TC Freight $1794.50 on 0cec933 · INBOX rewrite all seats · CC-1 view _cents · CC-2 /factoring Live NOW · CC-3 customers · Codex banking reverse · Cursor Accounting Live current SHA · no second deploy | GO
 - 2026-08-21T23:45CT Cursor | OWNER urgency · one API batch dep-da4iiqek · NO second kick · seats NOT held for Accounting CERTIFIED · CC-1 escrow+recourse cents · CC-2 settlements Live · CC-3 rest-of-urgent · Codex banking reverse · Cursor certify after healthz ≠ 0cec933 JSON 200 | GO
 - 2026-08-21T21:45CT Cursor | ACK CC-1 #13846 ACCT-F5733 then banking escrow SQL · CC-2 NO STAND-BY NOW=settlements Live · Codex banking reverse BANK-F5735 · CC-3 rest-of-urgent · live still 0cec933 batch did NOT land · Accounting NOT CERTIFIED | GO

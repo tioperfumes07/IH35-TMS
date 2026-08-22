@@ -13,7 +13,7 @@
 > Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
 > applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
 
-> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§10 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS** · **§10 FULLY WIRED**) +
+> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§10 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS** · **CREATE-TEST-THEN-VOID** [docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md](docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md) · **§10 FULLY WIRED**) +
 > [docs/specs/OWNER-QUALITY-COMPACT.md](docs/specs/OWNER-QUALITY-COMPACT.md) (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** · Desktop `Claude.docx` permanized as `OWNER-QUALITY-COMPACT-Claude.docx`) +
 > [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) +
 > [docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md](docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md) — load every session.
