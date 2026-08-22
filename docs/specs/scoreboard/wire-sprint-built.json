@@ -1949,25 +1949,6 @@
       "leafRe": "^(hub(\\.alias)?|nav\\.(overview|statements|ar_ap_aging|projections|scenarios|break_even|calculator|amortization|loan_wizard)|statements\\.(pl|bs|tb)|home|planner|relay_inbox|settings|expense_mapping|loves_prices|compliance|center|overview|runbooks|article|search|cat\\.(getting_started|dispatch|settlements|banking|reports|ops_dispatch|driver_perf|equipment|safety|customers|vendors|accounting|tax_reg|multi_company)|jump\\.(maintenance|fuel|safety|drivers|dispatch|lists)|hub\\.(driver|driver_reporting)|hop\\.program|home\\.(reports|hub|custom_builder)|subnav\\.(reports|category_hub|run_report|cancellations|scheduled_custom|audit))$"
     },
     {
-      "task": "LINK-F5157-OPERATOR-RECORD-SURFACE-CONNECTIVITY",
-      "pr": "this PR",
-      "guard": "scripts/verify-operator-record-surface-connectivity.mjs",
-      "modules": [
-        "compliance",
-        "insurance",
-        "inventory",
-        "legal",
-        "maintenance",
-        "tasks",
-        "users",
-        "driver-hub"
-      ],
-      "cols": [
-        "connectivity"
-      ],
-      "leafRe": "^(overview\\.(summary_cards|credentials_table|notification_rules|notification_log)|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|landing|policies\\.detail|type_catalog\\.list|coverage_gaps|nav\\.(parts_tab|assignments_tab|purchases_tab)|assignments\\.(banner|trail|search|wo_link|unit_link|vendor_link|crosslink_parts|crosslink_purchases|honest_empty)|contracts\\.list|templates\\.(list|detail)|policies|attorney_review|reports|damage_reports\\.intake|road_service\\.active|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|board\\.planner_grid|mine\\.list|chat\\.mentions|list|detail|create|role_change|deactivate|tab\\.all|kpi|inbox)$"
-    },
-    {
       "task": "LINK-F5158-ANALYTICAL-DASHBOARD-SURFACE-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-analytical-dashboard-surface-connectivity.mjs",

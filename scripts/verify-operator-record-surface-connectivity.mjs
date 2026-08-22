@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["compliance","insurance","inventory","legal","maintenance","tasks","users","driver-hub"],"cols":["connectivity"],"leafRe":"^(overview\\.(summary_cards|credentials_table|notification_rules|notification_log)|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|landing|policies\\.detail|type_catalog\\.list|coverage_gaps|nav\\.(parts_tab|assignments_tab|purchases_tab)|assignments\\.(banner|trail|search|wo_link|unit_link|vendor_link|crosslink_parts|crosslink_purchases|honest_empty)|contracts\\.list|templates\\.(list|detail)|policies|attorney_review|reports|damage_reports\\.intake|road_service\\.active|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|board\\.planner_grid|mine\\.list|chat\\.mentions|list|detail|create|role_change|deactivate|tab\\.all|kpi|inbox)$","task":"LINK-F5157-OPERATOR-RECORD-SURFACE-CONNECTIVITY","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["compliance","insurance","inventory","legal","maintenance","tasks","driver-hub"],"cols":["connectivity"],"leafRe":"^(overview\\.(summary_cards|credentials_table|notification_rules|notification_log)|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|landing|policies\\.detail|type_catalog\\.list|coverage_gaps|nav\\.(parts_tab|assignments_tab|purchases_tab)|assignments\\.(banner|trail|search|wo_link|unit_link|vendor_link|crosslink_parts|crosslink_purchases|honest_empty)|contracts\\.list|templates\\.(list|detail)|policies|attorney_review|reports|damage_reports\\.intake|road_service\\.active|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|board\\.planner_grid|mine\\.list|chat\\.mentions|inbox)$","task":"LINK-F5157-OPERATOR-RECORD-SURFACE-CONNECTIVITY","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["users"],"cols":["connectivity"],"leaves":["list","detail","create","role_change","deactivate","tab.all","kpi","detail.drawer.dispatcher_safety_event","chrome.toolbar_search","chrome.toolbar_range","chrome.toolbar_gear","chrome.toolbar_filter"],"task":"USR-F5901-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -32,6 +33,7 @@ const FILES = {
   tasksMine: "apps/frontend/src/pages/tasks/TasksMinePage.tsx",
   tasksChat: "apps/frontend/src/pages/tasks/TasksChatPage.tsx",
   users: "apps/frontend/src/pages/Users.tsx",
+  userDetail: "apps/frontend/src/pages/UserDetail.tsx",
   driverInbox: "apps/frontend/src/components/driver-inbox/DriverInbox.tsx",
   routes: "apps/frontend/src/routes/manifest.tsx",
   complianceMatrix: "docs/specs/scoreboard/modules/compliance.required.json",
@@ -42,7 +44,10 @@ const FILES = {
   tasksMatrix: "docs/specs/scoreboard/modules/tasks.required.json",
   usersMatrix: "docs/specs/scoreboard/modules/users.required.json",
   driverHubMatrix: "docs/specs/scoreboard/modules/driver-hub.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-operator-record-surface-connectivity.mjs",
 };
+const USERS_HEADER = '/** @matrix-built {"modules":["users"],"cols":["connectivity"],"leaves":["list","detail","create","role_change","deactivate","tab.all","kpi","detail.drawer.dispatcher_safety_event","chrome.toolbar_search","chrome.toolbar_range","chrome.toolbar_gear","chrome.toolbar_filter"],"task":"USR-F5901-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 const REQUIRED_LEAVES = {
   complianceMatrix: ["overview.summary_cards", "overview.credentials_table", "overview.notification_rules", "overview.notification_log", "fleet.hos_board", "property_tax.list", "property_tax.detail", "form2290"],
@@ -51,7 +56,7 @@ const REQUIRED_LEAVES = {
   legalMatrix: ["landing", "contracts.list", "templates.list", "templates.detail", "policies", "attorney_review", "reports"],
   maintenanceMatrix: ["damage_reports.intake", "road_service.active", "defects.convert_to_wo", "pre_flight_dvir.queue", "fault_drafts.review"],
   tasksMatrix: ["board.planner_grid", "mine.list", "chat.mentions"],
-  usersMatrix: ["list", "detail", "create", "role_change", "deactivate", "tab.all", "kpi"],
+  usersMatrix: ["list", "detail", "create", "role_change", "deactivate", "tab.all", "kpi", "detail.drawer.dispatcher_safety_event", "chrome.toolbar_search", "chrome.toolbar_range", "chrome.toolbar_gear", "chrome.toolbar_filter"],
   driverHubMatrix: ["inbox"],
 };
 
@@ -101,6 +106,8 @@ export function verify(source) {
   for (const route of ["/tasks", "/tasks/mine", "/tasks/chat"]) need("routes", `path="${route}"`, `tasks route ${route} must remain mounted`);
 
   for (const token of ["<ParityTable<IdentityUser>", 'data-testid="user-roster-record-link"', "createUserMutation", "roleWorkflowMutation", "deactivateMutation", "<SecondaryNavTabs", "<KpiCard"]) need("users", token, `users surface must retain ${token}`);
+  for (const token of ['filterBar={', '<CollapsedListFilters', 'storageKey="users-list"']) need("users", token, `users shared toolbar must retain ${token}`);
+  need("userDetail", 'title="Create Dispatcher Safety Event"', "user detail must mount dispatcher safety event drawer");
   for (const route of ["/users", "/users/:id"]) need("routes", `path="${route}"`, `users route ${route} must remain mounted`);
   need("driverInbox", "export function DriverInbox", "Driver Hub inbox must remain implemented");
   need("routes", 'path="/driver-hub"', "Driver Hub route must remain mounted");
@@ -113,6 +120,9 @@ export function verify(source) {
       if (!leaf?.required?.includes("connectivity")) failures.push(`${key}:${id} must inventory connectivity`);
     }
   }
+  if (!source.self.split('import fs from "node:fs";')[0].includes(USERS_HEADER)) failures.push("exact 12-leaf Users connectivity header missing");
+  try { if (JSON.parse(source.feed).entries?.some((entry) => entry.guard === FILES.self)) failures.push("manual feed duplicates exact Users ownership"); }
+  catch (error) { failures.push(`feed parse: ${error.message}`); }
   return failures;
 }
 
@@ -137,12 +147,15 @@ if (process.argv.includes("--self-test")) {
     ["maintPreflight", 'data-testid="pre-flight-dvir-queue"', 'data-testid="broken"'], ["tasksBoard", "<TaskPlannerGrid />", "<div />"],
     ["tasksMine", "<ParityTable", "<BrokenTable"], ["tasksChat", 'data-testid="tasks-chat-mention"', 'data-testid="broken"'],
     ["users", "<ParityTable<IdentityUser>", "<BrokenTable"], ["users", "roleWorkflowMutation", "brokenRoleWorkflow"],
+    ["users", "<CollapsedListFilters", "<BrokenFilters"], ["userDetail", 'title="Create Dispatcher Safety Event"', 'title="Broken"'],
     ["driverInbox", "export function DriverInbox", "function BrokenInbox"], ["routes", 'path="/compliance/form-2290"', 'path="/broken-2290"'],
     ["routes", 'path="/inventory/assignments"', 'path="/broken-inventory"'], ["routes", 'path="/maintenance/defects"', 'path="/broken-maintenance"'],
     ["complianceMatrix", '"id": "form2290"', '"id": "broken.form2290"'], ["insuranceMatrix", '"id": "landing"', '"id": "broken.landing"'],
     ["inventoryMatrix", '"id": "assignments.trail"', '"id": "broken.trail"'], ["legalMatrix", '"id": "contracts.list"', '"id": "broken.contracts"'],
     ["maintenanceMatrix", '"id": "defects.convert_to_wo"', '"id": "broken.defects"'], ["tasksMatrix", '"id": "board.planner_grid"', '"id": "broken.board"'],
     ["usersMatrix", '"id": "list"', '"id": "broken.list"'], ["driverHubMatrix", '"id": "inbox"', '"id": "broken.inbox"'],
+    ["self", USERS_HEADER, USERS_HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')],
+    ["feed", '"entries": [', `"entries": [{"guard":"${FILES.self}"},`],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
