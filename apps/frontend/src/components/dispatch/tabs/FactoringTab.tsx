@@ -176,13 +176,13 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   // invoice linked to this load
   const invoicesQ = useQuery({
-    queryKey: ["factoring-tab", "invoices", operatingCompanyId, load?.customer_id],
-    queryFn: () => listInvoices(operatingCompanyId, { customer_id: load!.customer_id }),
-    enabled: Boolean(load?.customer_id),
+    queryKey: ["factoring-tab", "invoices", "by-load", operatingCompanyId, loadId],
+    queryFn: () => listInvoices(operatingCompanyId, { source_load_id: loadId, limit: 1 }),
+    enabled: Boolean(operatingCompanyId && loadId),
   });
   const linkedInvoice = useMemo(() => {
-    return (invoicesQ.data?.invoices ?? []).find((inv) => inv.source_load_id === loadId) ?? null;
-  }, [invoicesQ.data, loadId]);
+    return invoicesQ.data?.invoices?.[0] ?? null;
+  }, [invoicesQ.data]);
 
   // invoice docs (for PDF link)
   const invoiceDocsQ = useQuery({
