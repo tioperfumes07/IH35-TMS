@@ -21,6 +21,10 @@ const CHECKS = [
   { name: "expense EntityLink", pattern: /kind="expense"/ },
   { name: "bill_payment EntityLink", pattern: /kind="bill_payment"/ },
   { name: "VendorApAgingSection mount", pattern: /VendorApAgingSection/ },
+  {
+    name: "archived vendor 404 honesty",
+    pattern: /vendorQuery\.error instanceof ApiError && vendorQuery\.error\.status === 404[\s\S]*This vendor is archived or is not available in the selected company[\s\S]*Historical transactions remain preserved/,
+  },
 ];
 
 function run(src) {
