@@ -896,19 +896,48 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      // BANK-RECON-UNMATCH-CLEARS-ONLY-THREE-OF-SIX-MATCH-KINDS — this UPDATE used to clear only
+      // matched_load_id/matched_bill_id/matched_settlement_id (the 3 kinds THIS route's own /match
+      // handler writes). matched_expense_id/matched_transfer_id/matched_journal_entry_id are written
+      // by a SEPARATE subsystem (accounting/bank-recon/match.service.ts's accept flow, denormalized
+      // per MATCHED_COLUMN_BY_KIND onto this same bank_transactions row) — Unmatch silently left those
+      // 3 kinds still matched with a 200 {ok:true} response. Extended to clear all 6 the frontend
+      // (ReconciliationWorkspace.tsx) actually renders as matched. A CTE captures the PRE-clear values
+      // of the 3 other-subsystem kinds so they can be recorded, not just silently unlinked — never
+      // voiding/reversing the underlying expense/transfer/JE record itself (those stay valid GL
+      // entries; only THIS transaction's link to them is cleared, same semantics load/bill/settlement
+      // already had).
+      const res = await client.query<{
+        id: string;
+        prev_expense_id: string | null;
+        prev_transfer_id: string | null;
+        prev_journal_entry_id: string | null;
+      }>(
         `
-          UPDATE banking.bank_transactions
+          WITH prior AS (
+            SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id
+            FROM banking.bank_transactions
+            WHERE id = $1
+              AND bank_account_id = $2
+              AND operating_company_id = $3::uuid
+              AND transaction_date BETWEEN $4 AND $5
+          )
+          UPDATE banking.bank_transactions bt
           SET
             matched_load_id = NULL,
             matched_bill_id = NULL,
             matched_settlement_id = NULL,
+            matched_expense_id = NULL,
+            matched_transfer_id = NULL,
+            matched_journal_entry_id = NULL,
             updated_at = now()
-          WHERE id = $1
-            AND bank_account_id = $2
-            AND operating_company_id = $3::uuid
-            AND transaction_date BETWEEN $4 AND $5
-          RETURNING id
+          FROM prior
+          WHERE bt.id = prior.id
+          RETURNING
+            bt.id,
+            prior.matched_expense_id::text AS prev_expense_id,
+            prior.matched_transfer_id::text AS prev_transfer_id,
+            prior.matched_journal_entry_id::text AS prev_journal_entry_id
         `,
         [
           body.data.transaction_id,
@@ -918,7 +947,37 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           session.period_end,
         ]
       );
-      if (!res.rows[0]) return false;
+      const row = res.rows[0];
+      if (!row) return false;
+
+      // banking.reconciliation_matches is the OTHER subsystem's own audit-of-record for these 3
+      // kinds (its ledger_entry_kind CHECK only permits payment/bill_payment/transfer/je/expense —
+      // load/bill/settlement never had a row there). Mark each previously-matched kind 'rejected'
+      // there too, mirroring recon-worklist.service.ts's rejectReconMatch, so a future match-suggestion
+      // pass doesn't just re-surface the same pairing with no memory of this unmatch, and the two
+      // subsystems' audit trails stay consistent with each other.
+      const rejectedKinds: Array<{ kind: "expense" | "transfer" | "je"; id: string }> = [];
+      if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
+      if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
+      if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
+      for (const { kind, id } of rejectedKinds) {
+        await client.query(
+          `
+            INSERT INTO banking.reconciliation_matches (
+              operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
+              match_score, match_state, matched_at, matched_by_user_uuid
+            )
+            VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
+            ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+            DO UPDATE SET
+              match_score = 0,
+              match_state = 'rejected',
+              matched_at = now(),
+              matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
+          `,
+          [query.data.operating_company_id, body.data.transaction_id, kind, id, user.uuid]
+        );
+      }
 
       await appendCrudAudit(
         client,
@@ -928,6 +987,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           resource_type: "banking.bank_transactions",
           resource_id: body.data.transaction_id,
           session_id: session.id,
+          rejected_ledger_kinds: rejectedKinds.map((r) => r.kind),
         },
         "info",
         "P5-T2-RECON"
