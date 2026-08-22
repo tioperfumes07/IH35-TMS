@@ -1,4 +1,19 @@
 {
+  "4302": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-banking-split-customer-reverse"
+  },
+  "4304": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-chargeback-invoice-customer-reverse"
+  },
+  "4306": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-vendor-work-orders-canonical-reverse"
+  },
   "4301": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
