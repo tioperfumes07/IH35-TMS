@@ -1,69 +1,70 @@
 #!/usr/bin/env node
 /**
- * FAIL-S1 REVERSE ratchet — the load drawer's "Safety records on this load" must list safety events.
+ * DISP-F5797 — load↔safety-event reverse chain.
+ * The selected company/load drives the server-filtered read, and each returned
+ * safety event/driver/unit drills through its exact FK and human label.
  *
- * #5019 gave the Log Safety Event form a Related load picker, so new events carry
- * `related_load_id` (proven live: event 262f6d5e → load L-20260808-0085). But the reverse section
- * listed Accidents, Damage Reports, Trailer Interchanges and Cargo Claims and NOT safety events —
- * so the link existed in the database and appeared on no screen. §10a: a link is done only when it
- * drills BOTH ways.
- *
- * The reverse block is only real if the server can be asked the question, so this also pins the
- * `related_load_id` filter on the events-log route and its client. Dropping any one of the three
- * silently returns the whole company's events, or none — both look like "no bug" on screen.
- *
- * Static only — no DB, no network, no build. Runs in well under a second.
+ * Self-test: node scripts/verify-load-safety-reverse-includes-events.mjs --selftest
  */
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-load-safety-reverse-includes-events";
+const F = {
+  section: "apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx",
+  client: "apps/frontend/src/api/safety.ts",
+  route: "apps/backend/src/safety/events/safety-events.routes.ts",
+};
 
-const SECTION = "apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx";
-const CLIENT = "apps/frontend/src/api/safety.ts";
-const ROUTE = "apps/backend/src/safety/events/safety-events.routes.ts";
+const CHECKS = [
+  { name: "load safety query key binds company and load", file: F.section, pattern: /queryKey: \["safety", "reverse", "events-log", "load", companyId, loadId\]/ },
+  { name: "load safety read binds company and related-load FK", file: F.section, pattern: /listSafetyEventLog\(companyId, \{ related_load_id: loadId \}\)/ },
+  { name: "load safety read disabled without both identities", file: F.section, pattern: /listSafetyEventLog\(companyId, \{ related_load_id: loadId \}\),\s+enabled: Boolean\(companyId\) && Boolean\(loadId\)/ },
+  { name: "load safety reverse section marker", file: F.section, pattern: /data-testid="load-safety-reverse-safety-events"/ },
+  { name: "full safety-event list opens scoped to exact load", file: F.section, pattern: /kind="safety_events_load"\s+id=\{loadId\}\s+label="Open Safety Events"/ },
+  { name: "safety-event row preserves exact identity", file: F.section, pattern: /rows\.map\(\(row\) => \([\s\S]{0,180}key=\{row\.id\}[\s\S]{0,220}kind="safety_event"\s+id=\{row\.id\}\s+label=\{entityLabel\(row\.title \|\| null, row\.id, "Safety event"\)\}/ },
+  { name: "safety-event driver drill binds exact FK and label", file: F.section, pattern: /kind="driver"\s+id=\{s\(row\.subject_driver_id\)\}\s+label=\{entityLabel\(\s*row\.subject_driver_name,\s*row\.subject_driver_id,\s*"Driver"/ },
+  { name: "safety-event unit drill binds exact FK and label", file: F.section, pattern: /kind="unit"\s+id=\{s\(row\.subject_unit_id\)\}\s+label=\{entityLabel\(\s*row\.subject_unit_number,\s*row\.subject_unit_id,\s*"Unit"/ },
+  { name: "client accepts related-load FK", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,380}related_load_id\?: string/ },
+  { name: "client sends selected company", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,650}new URLSearchParams\(\{ operating_company_id: companyId \}\)/ },
+  { name: "client sends related-load FK", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,900}if \(params\.related_load_id\) qs\.set\("related_load_id", params\.related_load_id\)/ },
+  { name: "route validates related-load UUID", file: F.route, pattern: /const listQuerySchema = companyQuerySchema\.extend\(\{[\s\S]{0,500}related_load_id: z\.string\(\)\.uuid\(\)\.optional\(\)/ },
+  { name: "route starts with selected-company filter", file: F.route, pattern: /const values: unknown\[\] = \[query\.data\.operating_company_id\];\s+const filters = \["e\.operating_company_id = \$1::uuid"\]/ },
+  { name: "route applies exact related-load filter", file: F.route, pattern: /if \(query\.data\.related_load_id\) \{\s+values\.push\(query\.data\.related_load_id\);\s+filters\.push\(`e\.related_load_id = \$\$\{values\.length\}::uuid`\);\s+\}/ },
+  { name: "load human-label join is same-company", file: F.route, pattern: /app\.get\("\/api\/v1\/safety\/events-log"[\s\S]{0,6500}LEFT JOIN mdata\.loads l\s+ON l\.id = e\.related_load_id\s+AND l\.operating_company_id = e\.operating_company_id/ },
+];
 
-const stripComments = (text) =>
-  text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
-    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, (m) => m.replace(/[^\n]/g, " "))
-    .replace(/\/\/[^\n]*/g, (m) => " ".repeat(m.length));
-
-const read = (rel) => stripComments(readFileSync(join(repoRoot, rel), "utf8"));
-
-const failures = [];
-
-const section = read(SECTION);
-if (!/listSafetyEventLog\s*\(/.test(section)) {
-  failures.push(`${SECTION}: does not call listSafetyEventLog — the load drawer cannot show safety events at all.`);
-}
-if (!/related_load_id:\s*loadId/.test(section)) {
-  failures.push(`${SECTION}: calls the events log without \`related_load_id: loadId\` — that lists every event in the company, not this load's.`);
-}
-if (!/load-safety-reverse-safety-events/.test(section)) {
-  failures.push(`${SECTION}: the safety-events block lost its data-testid — the reverse block is no longer addressable in tests.`);
-}
-
-const client = read(CLIENT);
-if (!/related_load_id\?:\s*string/.test(client) || !/qs\.set\(\s*["']related_load_id["']/.test(client)) {
-  failures.push(`${CLIENT}: listSafetyEventLog must accept \`related_load_id\` AND put it on the query string.`);
+function readSources() {
+  return Object.fromEntries(Object.values(F).map((file) => [file, fs.readFileSync(file, "utf8")]));
 }
 
-const route = read(ROUTE);
-if (!/related_load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route)) {
-  failures.push(`${ROUTE}: listQuerySchema must accept an optional \`related_load_id\` uuid.`);
+export function collectFailures(sources) {
+  return CHECKS.filter(({ file, pattern }) => !pattern.test(sources[file])).map(({ name }) => name);
 }
-if (!/e\.related_load_id\s*=\s*\$\$\{values\.length\}::uuid|e\.related_load_id = \$\$/.test(route) && !/related_load_id = \$\$\{values\.length\}/.test(route)) {
-  if (!/filters\.push\([^)]*related_load_id/.test(route)) {
-    failures.push(`${ROUTE}: the \`related_load_id\` query param is accepted but never filtered on — the endpoint would ignore it and return everything.`);
+
+const sources = readSources();
+if (process.argv.includes("--selftest")) {
+  const baseline = collectFailures(sources);
+  if (baseline.length) {
+    console.error(`[${LABEL}] SELFTEST baseline FAIL:\n- ${baseline.join("\n- ")}`);
+    process.exit(1);
   }
+  const inert = [];
+  for (const check of CHECKS) {
+    const original = sources[check.file];
+    const planted = original.replace(check.pattern, "/* planted DISP-F5797 load-safety reverse defect */");
+    if (planted === original || !collectFailures({ ...sources, [check.file]: planted }).includes(check.name)) inert.push(check.name);
+  }
+  if (inert.length) {
+    console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent load-safety reverse plants`);
+  process.exit(0);
 }
 
-if (failures.length > 0) {
-  console.error("FAIL verify-load-safety-reverse-includes-events");
-  for (const f of failures) console.error(`  - ${f}`);
+const failures = collectFailures(sources);
+if (failures.length) {
+  console.error(`[${LABEL}] FAIL:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-
-console.log("PASS verify-load-safety-reverse-includes-events — load drawer lists this load's safety events, filtered server-side");
+console.log(`[${LABEL}] PASS: ${CHECKS.length} exact load-safety reverse obligations ratcheted`);
