@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists"],"cols":["connectivity","reverse_link"],"leafRe":"^hub\\.(home|domain\\.(safety|dispatch|drivers|maintenance|fuel|fleet|accounting|customers|vendors|names_master|reference))$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["customers"],"cols":["connectivity","reverse_link"],"leafRe":"^home\\.roster$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["vendors"],"cols":["connectivity","reverse_link"],"leafRe":"^home\\.roster$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["hub.home","hub.domain.safety","hub.domain.dispatch","hub.domain.drivers","hub.domain.maintenance","hub.domain.fuel","hub.domain.fleet","hub.domain.accounting","hub.domain.customers","hub.domain.vendors","hub.domain.names_master","hub.domain.reference"],"task":"LISTS-F5954-HUB-DOMAIN-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * COMPLETENESS GATE — every wireable catalogs.* table must be reachable and editable.
  *
@@ -49,6 +47,44 @@ const HUB = join(ROOT, "apps", "frontend", "src", "pages", "lists", "components"
 const MANIFEST = join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx");
 const FE_REGISTRY = join(ROOT, "apps", "frontend", "src", "hooks", "useCatalogQuery.ts");
 const BACKEND_DIR = join(ROOT, "apps", "backend", "src");
+const LISTS_REQUIRED = join(ROOT, "docs", "specs", "scoreboard", "modules", "lists.required.json");
+const LISTS_HUB_PAGE = join(ROOT, "apps", "frontend", "src", "pages", "lists", "ListsHubPage.tsx");
+const SELF = join(ROOT, "scripts", "verify-every-catalog-wired.mjs");
+const HUB_CONNECTIVITY_LEAVES = [
+  "hub.home",
+  "hub.domain.safety",
+  "hub.domain.dispatch",
+  "hub.domain.drivers",
+  "hub.domain.maintenance",
+  "hub.domain.fuel",
+  "hub.domain.fleet",
+  "hub.domain.accounting",
+  "hub.domain.customers",
+  "hub.domain.vendors",
+  "hub.domain.names_master",
+  "hub.domain.reference",
+];
+const HUB_DOMAIN_KEYS = ["safety","dispatch","drivers","maintenance","fuel","fleet","accounting","customers","vendors","names_master","reference"];
+const HUB_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["hub.home","hub.domain.safety","hub.domain.dispatch","hub.domain.drivers","hub.domain.maintenance","hub.domain.fuel","hub.domain.fleet","hub.domain.accounting","hub.domain.customers","hub.domain.vendors","hub.domain.names_master","hub.domain.reference"],"task":"LISTS-F5954-HUB-DOMAIN-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+
+function hubConnectivityProblems({ required, hub, hubPage, manifest, self }) {
+  const failures = [];
+  let matrix;
+  try { matrix = JSON.parse(required); } catch (error) { return [`Lists matrix parse: ${error.message}`]; }
+  for (const id of HUB_CONNECTIVITY_LEAVES) {
+    const leaf = matrix.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("connectivity")) failures.push(`${id} must require connectivity`);
+  }
+  for (const key of HUB_DOMAIN_KEYS) {
+    if (!new RegExp(`key: ["']${key}["']`).test(hub)) failures.push(`Lists DOMAIN_CONFIG missing ${key}`);
+  }
+  if (!/path="\/lists"[\s\S]{0,180}<ListsHubPage/.test(manifest)) failures.push("/lists must mount ListsHubPage");
+  if (!/path="\/lists\/hub\/:domain"[\s\S]{0,200}<DomainCatalogHubPage/.test(manifest)) failures.push("/lists/hub/:domain must mount DomainCatalogHubPage");
+  if (!/<AllCatalogsMap onCatalogClick=\{openCatalog\} onDomainClick=\{openDomainHub\}/.test(hubPage) ||
+      !/navigate\(`\/lists\/hub\/\${domainKey\}`\)/.test(hubPage)) failures.push("Lists hub must route every domain click through the mounted domain hub");
+  if (!self.split("\n").includes(HUB_CONNECTIVITY_HEADER)) failures.push("exact Lists hub connectivity header missing");
+  return failures;
+}
 
 // Master rosters are intentionally not catalogs.* factory tables. Their Lists cards delegate to the
 // complete customer/vendor modules, whose entity-scoped GET + POST routes preserve the richer profile
@@ -228,6 +264,17 @@ export function bespokeRouteTables(files) {
     const registeredPaths = [...src.matchAll(/app\.(?:get|post|put|patch|delete)\s*\(\s*[`"']([^`"']+)/g)].map(
       (m) => m[1]
     );
+    const pathConstants = new Map(
+      [...src.matchAll(/const\s+([A-Za-z_$][\w$]*)\s*=\s*["']([^"']+)["']/g)].map((match) => [match[1], match[2]])
+    );
+    for (const match of src.matchAll(/app\.(?:get|post|put|patch|delete)\s*\(\s*([A-Za-z_$][\w$]*)/g)) {
+      const resolved = pathConstants.get(match[1]);
+      if (resolved) registeredPaths.push(resolved);
+    }
+    for (const match of src.matchAll(/app\.(?:get|post|put|patch|delete)\s*\(\s*`\$\{([A-Za-z_$][\w$]*)\}[^\`]*/g)) {
+      const resolved = pathConstants.get(match[1]);
+      if (resolved) registeredPaths.push(resolved);
+    }
     for (const m of src.matchAll(/catalogs\.([a-z_][a-z0-9_]*)/g)) {
       const table = m[1];
       const kebab = table.replace(/_/g, "-");
@@ -303,6 +350,17 @@ function main() {
 
   const hubSrc = readFileSync(HUB, "utf8");
   const manifestSrc = readFileSync(MANIFEST, "utf8");
+  const hubConnectivityFailures = hubConnectivityProblems({
+    required: readFileSync(LISTS_REQUIRED, "utf8"),
+    hub: hubSrc,
+    hubPage: readFileSync(LISTS_HUB_PAGE, "utf8"),
+    manifest: manifestSrc,
+    self: readFileSync(SELF, "utf8"),
+  });
+  if (hubConnectivityFailures.length) {
+    console.error(`verify-every-catalog-wired FAIL — Lists hub connectivity:\n- ${hubConnectivityFailures.join("\n- ")}`);
+    process.exit(1);
+  }
   const feRegistrySrc = readFileSync(FE_REGISTRY, "utf8");
   const feCatalogKeys = new Set(
     [...feRegistrySrc.matchAll(/catalogKey:\s*"([a-z0-9-]+)"/g)].map((m) => m[1])
@@ -504,6 +562,43 @@ function selftest() {
   ];
 
   let bad = 0;
+  const hubSource = {
+    required: readFileSync(LISTS_REQUIRED, "utf8"),
+    hub: readFileSync(HUB, "utf8"),
+    hubPage: readFileSync(LISTS_HUB_PAGE, "utf8"),
+    manifest: readFileSync(MANIFEST, "utf8"),
+    self: readFileSync(SELF, "utf8"),
+  };
+  if (hubConnectivityProblems(hubSource).length) {
+    console.error("  selftest FAIL — live Lists hub connectivity rejected");
+    bad += 1;
+  }
+  for (const id of HUB_CONNECTIVITY_LEAVES) {
+    if (!hubConnectivityProblems({ ...hubSource, required: hubSource.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) }).length) {
+      console.error(`  selftest FAIL — Required mutation escaped: ${id}`);
+      bad += 1;
+    }
+  }
+  for (const key of HUB_DOMAIN_KEYS) {
+    if (!hubConnectivityProblems({ ...hubSource, hub: hubSource.hub.replace(new RegExp(`key: ["']${key}["']`), `key: "${key}-broken"`) }).length) {
+      console.error(`  selftest FAIL — domain mutation escaped: ${key}`);
+      bad += 1;
+    }
+  }
+  for (const [field, pattern] of [
+    ["manifest", /path="\/lists"/],
+    ["manifest", /path="\/lists\/hub\/:domain"/],
+    ["hubPage", /<AllCatalogsMap onCatalogClick=\{openCatalog\} onDomainClick=\{openDomainHub\}/],
+  ]) {
+    if (!hubConnectivityProblems({ ...hubSource, [field]: hubSource[field].replace(pattern, "REMOVED_HUB_CONNECTIVITY") }).length) {
+      console.error(`  selftest FAIL — ${field} route/mount mutation escaped`);
+      bad += 1;
+    }
+  }
+  if (!hubConnectivityProblems({ ...hubSource, self: hubSource.self.replace(HUB_CONNECTIVITY_HEADER, `${HUB_CONNECTIVITY_HEADER}.broken`) }).length) {
+    console.error("  selftest FAIL — exact header mutation escaped");
+    bad += 1;
+  }
   for (const c of cases) {
     const m = backendByTable([{ path: "test.ts", src: c.src }]);
     if (!c.check(m)) {
@@ -512,6 +607,18 @@ function selftest() {
     } else {
       console.log(`  selftest OK — ${c.name}`);
     }
+  }
+  const basePathServed = bespokeRouteTables([{
+    path: "apps/backend/src/catalogs/accounting/factory.ts",
+    src: `const basePath = "/api/v1/catalogs/accounting/qbo-categories";
+app.get(basePath, async () => { await db.query("SELECT * FROM catalogs.qbo_categories"); });
+app.patch(\`\${basePath}/:id\`, async () => {});`,
+  }]);
+  if (basePathServed.has("qbo_categories")) {
+    console.log("  selftest OK — const basePath Fastify route resolves to its catalog table");
+  } else {
+    console.error("  selftest FAIL — const basePath Fastify route was treated as missing");
+    bad += 1;
   }
 
   const completeMaster = masterRosterBackedKeys({
