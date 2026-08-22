@@ -3,6 +3,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.edit\\.(identity|insurance|irp_plates|reefer|financial|lifecycle|quick_availability|documents)$","task":"LINK-F5167-FLEET-UNIT-EDIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.detail\\.(permits|toll_tags|tasks|brakes|tires|finance_linkage)$","task":"LINK-F5167-FLEET-UNIT-DETAIL"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^trailer\\.profile\\.assignment$","task":"LINK-F5167-FLEET-TRAILER-ASSIGNMENT-UNIT"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.permits","unit.detail.tasks"],"task":"FLEET-F5932-UNIT-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): VehicleProfilePage.tsx's 20
  * unit.profile.* sections and EditVehicleModal.tsx's 8 unit.edit.* tabs are all genuinely
@@ -28,11 +29,16 @@ const FILES = {
   editModal: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
   assignment: "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx",
+  required: "docs/specs/scoreboard/modules/fleet.required.json",
+  self: "scripts/verify-fleet-unit-profile-edit-detail.mjs",
 };
 const LABEL = "verify-fleet-unit-profile-edit-detail";
+const CONNECTIVITY_LEAVES = ["unit.detail.permits", "unit.detail.tasks"];
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.permits","unit.detail.tasks"],"task":"FLEET-F5932-UNIT-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 export function audit(src) {
   const failures = [];
+  const required = JSON.parse(src.required);
   if (!/fetchUnitProfile\(id, companyId/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.* sections must all be fed by a real fetchUnitProfile(id, ...) query`);
   }
@@ -80,6 +86,10 @@ export function audit(src) {
   if (!/unit\?\.unit_id \?[\s\S]{0,120}EntityLinkOrTombstone[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}[\s\S]{0,80}name=\{unit\.unit_number\}/.test(src.assignment)) {
     failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real or tombstoned attached-unit drill`);
   }
+  for (const id of CONNECTIVITY_LEAVES) {
+    if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
+  }
+  if (!src.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact unit-detail connectivity header missing`);
   return failures;
 }
 
@@ -125,7 +135,19 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  for (const id of CONNECTIVITY_LEAVES) {
+    const mutated = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Required connectivity mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  const wrongHeader = { ...good, self: good.self.replace(CONNECTIVITY_HEADER, `${CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — exact connectivity header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1} mutations detected`);
   process.exit(0);
 }
 
