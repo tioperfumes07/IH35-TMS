@@ -10,7 +10,8 @@ const SOURCE_DISPLAY_ID_SQL = `
           NULLIF(btrim(src_bill.display_id), ''),
           NULLIF(btrim(src_pay.display_id), ''),
           NULLIF(btrim(src_exp.expense_number), ''),
-          CASE WHEN jp.source_transaction_type = 'expense' THEN 'Expense' END,
+          CASE WHEN jp.source_transaction_type = 'expense' AND src_exp.id IS NOT NULL
+            THEN 'Expense ' || src_exp.transaction_date::text END,
           CASE WHEN jp.source_transaction_type = 'customer_payment' THEN 'Invoice Payment' END,
           NULLIF(btrim(src_bpay_bill.bill_number), ''),
           src_banktx.display_label,
@@ -365,6 +366,9 @@ export async function listAccountingSourceLineage(
           link_settlement.display_id,
           link_load.load_number,
           link_unit.unit_number,
+          link_pay.display_id,
+          NULLIF(btrim(link_exp.expense_number), ''),
+          CASE WHEN link_exp.id IS NOT NULL THEN 'Expense ' || link_exp.transaction_date::text END,
           link_deduction.display_label
         ) AS linked_object_display_id,
         tsl.relationship_role,
@@ -411,6 +415,14 @@ export async function listAccountingSourceLineage(
         ON tsl.linked_object_type = 'unit'
        AND link_unit.id::text = tsl.linked_object_id
        AND COALESCE(link_unit.currently_leased_to_company_id, link_unit.owner_company_id) = jp.operating_company_id
+      LEFT JOIN accounting.payments link_pay
+        ON tsl.linked_object_type IN ('payment', 'customer_payment')
+       AND link_pay.id::text = tsl.linked_object_id
+       AND link_pay.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.expenses link_exp
+        ON tsl.linked_object_type = 'expense'
+       AND link_exp.id::text = tsl.linked_object_id
+       AND link_exp.operating_company_id = jp.operating_company_id
       LEFT JOIN LATERAL (
         SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
         FROM driver_finance.driver_settlement_deductions d
