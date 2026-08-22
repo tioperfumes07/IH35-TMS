@@ -1564,7 +1564,12 @@ export function BankingTransactionsDesignView({
                 ) : null}
                 {links?.deduction_id ? (
                   <span className="text-gray-700" title={links.deduction_status ?? undefined}>
-                    Deduction: {links.deduction_type || "settlement"}{" "}
+                    Deduction:{" "}
+                    <EntityLink
+                      kind="settlement_deduction"
+                      id={links.deduction_id}
+                      label={links.deduction_type?.trim() || "Driver deduction"}
+                    />{" "}
                     {links.deduction_amount_cents != null
                       ? formatUsdCents(Math.abs(Number(links.deduction_amount_cents)))
                       : ""}
