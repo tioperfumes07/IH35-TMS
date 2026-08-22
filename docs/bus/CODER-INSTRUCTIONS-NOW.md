@@ -6,7 +6,7 @@
 
 **USMCA only** `https://app.ih35dispatch.com` · `5c854333-6ea5-4faa-af31-67cb272fef80`  
 Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin **PARKED**.  
-**No `trigger_deploy`.** API batch `dep-da4ma06k1f9s73epv6rg` is Cursor’s. Do not stack.
+**No `trigger_deploy`.** Cursor API in flight: `dep-da4mig6k1f9s73eqohog` (prior `dep-da4ma06k1f9s73epv6rg` failed). Do not stack.
 
 Accounting CREATE-TEST is **done** (bill remaining, CM apply, VC apply, prepaid, Palos split sample). **Do not remake.** Certify is Cursor **after** `healthz` ≠ `0cec933` and Daily Recon **200**. That is **not** your idle.
 

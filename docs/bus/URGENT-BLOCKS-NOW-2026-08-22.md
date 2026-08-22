@@ -6,7 +6,7 @@
 |-----|--------|----------------|
 | `https://app.ih35dispatch.com` | **USMCA only** | `5c854333-6ea5-4faa-af31-67cb272fef80` |
 
-Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→QBO write-back. No `eld`. No `/program/matrix` parked tab. **No `trigger_deploy`** (Cursor already kicked API `dep-da4ma06k1f9s73epv6rg`; do not stack).
+Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→QBO write-back. No `eld`. No `/program/matrix` parked tab. **No `trigger_deploy` from any seat.** Cursor API: `dep-da4ma06k1f9s73epv6rg` **update_failed**; replacement **`dep-da4mig6k1f9s73eqohog`** in flight. Do not stack.
 
 **Ports (do not steal):** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin-A **PARKED**.
 
@@ -132,7 +132,7 @@ No fake reverse PASS. No Chrome login theater.
 
 | Order | Where | What / how |
 |-------|--------|------------|
-| 1 | Render API `dep-da4ma06k1f9s73epv6rg` | Watch status. **No second kick** while `update_in_progress`. If `update_failed`, kick **one** new deploy. |
+| 1 | Render API **`dep-da4mig6k1f9s73eqohog`** | Watch. **No second kick** while `build_in_progress` / `update_in_progress`. Prior `dep-da4ma06k1f9s73epv6rg` already failed — do not re-kick that id. |
 | 2 | When `healthz` ≠ `0cec933` | `/accounting/daily-recon` must 200. Archived vendor `308f6434`. Prepaid Create GL pickers. Then stamp Accounting certify **only** if those pass. |
 | 3 | Until SHA moves | Cursor-lane wiring FAILs (EVEN verify-steps, no CLAIMED in feature PR). Keep this file + INBOXes current. |
 | 4 | After Accounting certify | Same U2→R4 sequence as CC-2 if a leaf is still unpaid Live. |
