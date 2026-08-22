@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * @matrix-built {"modules":["drivers","fleet","safety","dispatch","maintenance"],"cols":["reverse_link"],"leaves":["profiles.detail","trailer.profile.assignment","accidents.list","safety_events.list","load.drawer.overview","maintenance.modal.work_order_detail"],"task":"CLASS-F5857-EMBEDDED-ASSIGNMENT-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}
+ * @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.profile.assignment"],"task":"FLEET-F5935-TRAILER-ASSIGNMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"}
  *
  * Embedded assignment and reverse-record panels receive canonical related IDs. Their human
  * labels must drill through the shared EntityLink resolver rather than remain inert or carry
@@ -90,10 +91,15 @@ function check(sources) {
       }
     }
   }
+  const fleetMatrix = JSON.parse(sources["matrix:fleet"]);
+  if (!fleetMatrix.leaves?.find((leaf) => leaf.id === "trailer.profile.assignment")?.required?.includes("connectivity")) {
+    failures.push(`${MATRICES.fleet}: trailer.profile.assignment must require connectivity`);
+  }
   const annotationLines = sources.self.split("\n").filter((line) => line.includes("@matrix-built"));
   if (!annotationLines.includes(' * @matrix-built {"modules":["drivers","fleet","safety","dispatch","maintenance"],"cols":["reverse_link"],"leaves":["profiles.detail","trailer.profile.assignment","accidents.list","safety_events.list","load.drawer.overview","maintenance.modal.work_order_detail"],"task":"CLASS-F5857-EMBEDDED-ASSIGNMENT-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}')) {
     failures.push(`${FILES.self}: Built annotation must own exactly six embedded-assignment reverse leaves`);
   }
+  if (!annotationLines.includes(' * @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.profile.assignment"],"task":"FLEET-F5935-TRAILER-ASSIGNMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"}')) failures.push(`${FILES.self}: exact Fleet assignment connectivity annotation missing`);
   return failures;
 }
 
@@ -143,12 +149,17 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
   if (!check({ ...sources, self: wrongSelf }).some((failure) => failure.includes("Built annotation"))) {
     missed.push("exact Built annotation mutation escaped");
   }
+  const fleetConnectivity = JSON.parse(sources["matrix:fleet"]);
+  fleetConnectivity.leaves.find((leaf) => leaf.id === "trailer.profile.assignment").required = fleetConnectivity.leaves.find((leaf) => leaf.id === "trailer.profile.assignment").required.filter((column) => column !== "connectivity");
+  if (!check({ ...sources, "matrix:fleet": JSON.stringify(fleetConnectivity) }).some((failure) => failure.includes("trailer.profile.assignment must require connectivity"))) missed.push("fleet assignment connectivity Required mutation escaped");
+  const wrongConnectivityHeader = sources.self.replace('"task":"FLEET-F5935-TRAILER-ASSIGNMENT-CONNECTIVITY-EXACT"', '"task":"FLEET-F5935-BROKEN"');
+  if (!check({ ...sources, self: wrongConnectivityHeader }).some((failure) => failure.includes("assignment connectivity annotation"))) missed.push("Fleet assignment connectivity annotation mutation escaped");
   if (missed.length) {
     console.error(`${LABEL} SELFTEST FAIL\n${missed.join("\n")}`);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST PASS — ${mutations.length + 7} planted defects rejected`,
+    `${LABEL} SELFTEST PASS — ${mutations.length + 9} planted defects rejected`,
   );
   process.exit(0);
 }
