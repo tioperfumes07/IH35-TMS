@@ -26,8 +26,26 @@ const SCHEDULE_DETAIL = "apps/frontend/src/pages/accounting/AccountingScheduleRo
 const SCHEDULE_ROUTE = "apps/backend/src/accounting/schedule-row-detail.routes.ts";
 const REIMBURSEMENT_DETAIL = "apps/frontend/src/pages/accounting/AccountingDriverReimbursementDetailPage.tsx";
 const REIMBURSEMENT_ROUTE = "apps/backend/src/accounting/driver-reimbursement-detail.routes.ts";
+const DISPUTE_TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
+const DISPUTE_SERVICE = "apps/backend/src/driver-finance/settlement-dispute.service.ts";
 
 const CHECKS = [
+  { name: "Dispute disbursement writer stores canonical dispute id", file: DISPUTE_SERVICE, pattern: /linked_object_type:\s*"dispute_disbursement",\s*linked_object_id:\s*input\.dispute_id/ },
+  { name: "Dispute exact reader scopes company and id", file: DISPUTE_SERVICE, pattern: /WHERE d\.id = \$2\s*AND d\.operating_company_id = \$1::uuid/ },
+  { name: "Settlement dispute EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "settlement_dispute":\s*return `\/driver-finance\/settlements\?tab=disputes&dispute_id=\$\{id\}`;/ },
+  { name: "Dispute tab consumes exact deep link", file: DISPUTE_TAB, pattern: /searchParams\.get\("dispute_id"\)/ },
+  { name: "Dispute tab exact reader is company scoped", file: DISPUTE_TAB, pattern: /getSettlementDispute\(selectedDisputeId, companyId\)/ },
+  { name: "Dispute tab persists exact selection", file: DISPUTE_TAB, pattern: /p\.set\("dispute_id", row\.id\)/ },
+  { name: "Dispute tab drills resolution JE", file: DISPUTE_TAB, pattern: /kind="journal_entry" id=\{detail\.resolution_journal_entry_id\}/ },
+  { name: "Audit API canonicalizes dispute disbursement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "dispute_disbursement":\s*return "settlement_dispute";/ },
+  { name: "Audit lineage labels disputes", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_dispute\.dispute_description[\s\S]*?driver_finance\.driver_settlement_disputes link_dispute/ },
+  { name: "Audit dispute label join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_dispute\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE source canonicalizes dispute disbursement", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /linked_object_type = 'dispute_disbursement' THEN 'settlement_dispute'/ },
+  { name: "JE source labels disputes", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_dispute\.dispute_description[\s\S]*?driver_finance\.driver_settlement_disputes link_dispute/ },
+  { name: "JE dispute label join is company scoped", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_dispute\.operating_company_id = \$2::uuid/ },
+  { name: "Audit Trail drills dispute disbursement", file: AUDIT_TRAIL, pattern: /case "dispute_disbursement":\s*return "settlement_dispute";/ },
+  { name: "Posting Lineage drills dispute disbursement", file: POSTING_LINEAGE, pattern: /case "dispute_disbursement":\s*return "settlement_dispute";/ },
+  { name: "JE Detail drills dispute disbursement", file: JE_DETAIL, pattern: /case "dispute_disbursement":\s*return "settlement_dispute";/ },
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
   { name: "ReceiptsPage EntityLink payment", file: "apps/frontend/src/pages/accounting/ReceiptsPage.tsx", pattern: /EntityLink/ },
   { name: "CollectionsPage EntityLink", file: "apps/frontend/src/pages/accounting/CollectionsPage.tsx", pattern: /EntityLink/ },

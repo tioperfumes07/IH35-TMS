@@ -122,6 +122,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "fuel_transaction";
     case "driver_reimbursement":
       return "driver_reimbursement";
+    case "dispute_disbursement":
+      return "settlement_dispute";
     default:
       return null;
   }
