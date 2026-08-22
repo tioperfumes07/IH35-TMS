@@ -241,6 +241,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-21",
       "purpose": "acct_f_banking_driver_escrow_repoint_accounting_escrow_accounts"
+    },
+    "202612970000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-22",
+      "purpose": "fact_recourse_view_dead_jsonb_to_real_cents_columns"
     }
   }
 }
