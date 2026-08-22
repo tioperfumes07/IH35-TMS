@@ -1341,6 +1341,14 @@ export type JournalEntry = {
   matched_bank_transaction_id?: string | null;
   /** ACCT-F5720 — merchant/description for the matched bank hop (id stays for the EntityLink). */
   matched_bank_transaction_description?: string | null;
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — the representative source posting's typed columns + resolved
+  // human document id (display_id/bill_number/expense_number/unit_number, per source type), so
+  // ManualJEListPage.humanMemo() can pass a REAL name to entityLabel() instead of the hardcoded
+  // null that made it structurally unable to resolve. Honest null for source types not yet covered
+  // (bill_payment, driver_advance) or when the JE has no typed source at all.
+  source_transaction_type?: string | null;
+  source_transaction_id?: string | null;
+  source_transaction_display_id?: string | null;
   postings?: JournalEntryPosting[];
   created_at: string;
   updated_at: string;

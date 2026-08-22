@@ -705,6 +705,92 @@ const JE_MATCHED_BANK_TRANSACTION_LABEL_SQL = `
   )
 `;
 
+// LV-JE-MEMO-RECORD-NOT-VISIBLE — the list page's humanMemo() regex-replaces every UUID embedded in
+// je.memo with entityLabel(null, uuid, noun): the name argument is HARDCODED null, so it can never
+// resolve and always falls back to "<noun> — not visible", regardless of whether the source record is
+// real and resolvable (confirmed live: 1,885/1,930 posted JEs, 97.7%, had a resolvable source that
+// tombstoned anyway). journal_entry_postings already carries source_transaction_type/
+// source_transaction_id per line (the SAME columns account-register.service.ts and
+// getJournalEntrySourceLinks already resolve from) — this list query just never joined out to them.
+// Picks ONE representative posting per JE (ORDER BY line_sequence, matching this file's own
+// LIFO/ordering precedent elsewhere) since a manually-created JE's lines typically share one source;
+// self-contained correlated subqueries (only reference outer je.id/je.operating_company_id), so they
+// slot into the SELECT list without touching the existing GROUP BY je.id.
+const JE_SOURCE_TRANSACTION_TYPE_SQL = `
+  (
+    SELECT p2.source_transaction_type
+    FROM accounting.journal_entry_postings p2
+    WHERE p2.journal_entry_uuid = je.id
+      AND p2.source_transaction_type IS NOT NULL
+    ORDER BY p2.line_sequence ASC
+    LIMIT 1
+  )
+`;
+
+const JE_SOURCE_TRANSACTION_ID_SQL = `
+  (
+    SELECT p2.source_transaction_id
+    FROM accounting.journal_entry_postings p2
+    WHERE p2.journal_entry_uuid = je.id
+      AND p2.source_transaction_type IS NOT NULL
+    ORDER BY p2.line_sequence ASC
+    LIMIT 1
+  )
+`;
+
+// Human document id for the representative source, reusing the exact display_id-then-bill_number
+// precedence ACCT-F5708 established (accounting.bills.display_id is 0.07% populated live;
+// bill_number is 96.6%) plus the same per-type joins account-register.service.ts already uses for
+// its own reference/payee columns. fuel_event (the DOMINANT live shape — 82.6% of posted JEs, "Fuel
+// txn <uuid>" — fuel.fuel_transactions carries no display-id column at all) resolves via the SAME
+// unit-number identity FuelTransactionsTable.tsx already uses to identify a fuel transaction to a
+// human. bill_payment and driver_advance are NOT yet covered here (no proven display-id column found
+// for either table) — those rows still fall through to the pre-existing humanMemo() garble-avoidance,
+// not a regression, just not newly resolved; noted honestly rather than silently claimed complete.
+const JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL = `
+  (
+    SELECT COALESCE(
+      b.display_id, b.bill_number,
+      inv.display_id,
+      pay.display_id,
+      ds.display_id,
+      ex.expense_number,
+      ftu.unit_number,
+      NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')
+    )
+    FROM (
+      SELECT p2.source_transaction_type AS t, p2.source_transaction_id AS sid
+      FROM accounting.journal_entry_postings p2
+      WHERE p2.journal_entry_uuid = je.id
+        AND p2.source_transaction_type IS NOT NULL
+      ORDER BY p2.line_sequence ASC
+      LIMIT 1
+    ) src
+    LEFT JOIN accounting.bills b
+      ON src.t = 'bill' AND b.id::text = src.sid AND b.operating_company_id = je.operating_company_id
+    LEFT JOIN accounting.invoices inv
+      ON src.t = 'invoice' AND inv.id::text = src.sid AND inv.operating_company_id = je.operating_company_id
+    LEFT JOIN accounting.payments pay
+      ON src.t = 'customer_payment' AND pay.id::text = src.sid AND pay.operating_company_id = je.operating_company_id
+    LEFT JOIN driver_finance.driver_settlements ds
+      ON src.t = 'settlement' AND ds.id::text = src.sid AND ds.operating_company_id = je.operating_company_id
+    LEFT JOIN accounting.expenses ex
+      ON src.t = 'expense' AND ex.id::text = src.sid AND ex.operating_company_id = je.operating_company_id
+    LEFT JOIN fuel.fuel_transactions ft
+      ON src.t = 'fuel_event' AND ft.id::text = src.sid AND ft.operating_company_id = je.operating_company_id
+    -- Deliberately UNSCOPED by entity (matches fuel-transactions.routes.ts's own unit join): a unit
+    -- can be owned by one entity and currently leased to another, and the fuel purchase can be
+    -- recorded under a THIRD entity's books (confirmed live: unit 181b5c93... owner_company_id=TRK,
+    -- currently_leased_to_company_id=USMCA, but its fuel_transactions row + this JE are both TRANSP).
+    -- unit_number is an identifying label, not financial data — the real entity scope is already
+    -- enforced one hop up, on ft.operating_company_id = je.operating_company_id above.
+    LEFT JOIN mdata.units ftu
+      ON ftu.id = ft.unit_id
+    LEFT JOIN banking.bank_transactions bt
+      ON src.t = 'bank_categorization' AND bt.id::text = src.sid AND bt.operating_company_id = je.operating_company_id
+  )
+`;
+
 export async function listJournalEntries(input: {
   userId: string;
   operating_company_id: string;
@@ -770,6 +856,9 @@ export async function listJournalEntries(input: {
           je.updated_at::text,
           ${JE_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
           ${JE_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_description,
+          ${JE_SOURCE_TRANSACTION_TYPE_SQL} AS source_transaction_type,
+          ${JE_SOURCE_TRANSACTION_ID_SQL} AS source_transaction_id,
+          ${JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL} AS source_transaction_display_id,
           COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END),0)::bigint AS debit_total_cents,
           COALESCE(SUM(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END),0)::bigint AS credit_total_cents
         FROM accounting.journal_entries je
