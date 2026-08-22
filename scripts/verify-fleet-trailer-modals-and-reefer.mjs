@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["trailer"],"leafRe":"^(home\\.create_trailer|fleet\\.modal\\.(create_trailer|edit_trailer|quick_assign)|unit\\.profile\\.reefer)$","task":"LINK-F5163-FLEET-TRAILER-MODALS-REEFER"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.reefer"],"task":"FLEET-F5914-REEFER-TRAILER-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["fleet.modal.create_trailer","fleet.modal.edit_trailer","fleet.modal.quick_assign","unit.profile.reefer"],"task":"FLEET-F5934-TRAILER-MODAL-REEFER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical trailer-column sweep (2026-08-14): the fleet Create-Trailer modal
  * (mounted both from the Fleet Home "+ Create Trailer" action and as its own component leaf) posts
@@ -27,6 +28,8 @@ const FILES = {
 };
 const LABEL = "verify-fleet-trailer-modals-and-reefer";
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.reefer"],"task":"FLEET-F5914-REEFER-TRAILER-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_LEAVES = ["fleet.modal.create_trailer", "fleet.modal.edit_trailer", "fleet.modal.quick_assign", "unit.profile.reefer"];
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["fleet.modal.create_trailer","fleet.modal.edit_trailer","fleet.modal.quick_assign","unit.profile.reefer"],"task":"FLEET-F5934-TRAILER-MODAL-REEFER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 export function audit(src) {
   const failures = [];
@@ -59,10 +62,12 @@ export function audit(src) {
     );
   }
   let leaf;
+  const connectivityLeaves = new Map();
   const visit = (value) => {
     if (Array.isArray(value)) value.forEach(visit);
     else if (value && typeof value === "object") {
       if (value.id === "unit.profile.reefer" && Array.isArray(value.required)) leaf = value;
+      if (CONNECTIVITY_LEAVES.includes(value.id) && Array.isArray(value.required)) connectivityLeaves.set(value.id, value);
       Object.values(value).forEach(visit);
     }
   };
@@ -73,6 +78,10 @@ export function audit(src) {
     if (leaf.route_hint !== "/fleet/units/:id") failures.push("Fleet reefer leaf must mount on canonical unit profile");
   }
   if (!src.self.split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push("exact Fleet reefer reverse header missing");
+  for (const id of CONNECTIVITY_LEAVES) {
+    if (!connectivityLeaves.get(id)?.required?.includes("connectivity")) failures.push(`Fleet ${id} must require connectivity`);
+  }
+  if (!src.self.split("/**\n * OWNER-")[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet trailer modal/reefer connectivity header missing");
   if (/"guard"\s*:\s*"scripts\/verify-fleet-trailer-modals-and-reefer\.mjs"/.test(src.feed)) failures.push("manual feed duplicates Fleet reefer ownership");
   return failures;
 }
@@ -109,6 +118,7 @@ if (process.argv.includes("--selftest")) {
     ["reverse", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"'],
     ["route", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"'],
     ["header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["connectivity-header", "self", CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "unit")],
     ["feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-fleet-trailer-modals-and-reefer.mjs"},`],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
@@ -122,7 +132,14 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  for (const id of CONNECTIVITY_LEAVES) {
+    const mutated = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}_MISSING"`) };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — connectivity leaf escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length} mutations detected`);
   process.exit(0);
 }
 
