@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\\.drawer\\.settlement$","task":"LINK-F5127-LOAD-DRILL-ROUTES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.settlement"],"task":"DISP-F5843-LOAD-SETTLEMENT-REVERSE-EXACT-LEAF","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
 const sources = {
+  self: fs.readFileSync("scripts/verify-load-drill-route-vertical-sweep.mjs", "utf8"),
   arrival: fs.readFileSync("apps/frontend/src/pages/driver/ArrivalPrompt.tsx", "utf8"),
   status: fs.readFileSync("apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx", "utf8"),
   settlement: fs.readFileSync("apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx", "utf8"),
@@ -15,6 +16,7 @@ const sources = {
 };
 
 const checks = [
+  ["self", /^\/\*\* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["load\.drawer\.settlement"\],"task":"DISP-F5843-LOAD-SETTLEMENT-REVERSE-EXACT-LEAF","vertical":"class-sweep"\} \*\/$/m, "Built annotation owns exact load.drawer.settlement reverse leaf"],
   ["arrival", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{activePrompt\.load_id\}/, "arrival prompt drills to driver load detail"],
   ["status", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{active\.load_id\}/, "status prompt drills to driver load detail"],
   ["settlement", /kind="load" id=\{leg\.load_id\}/, "settlement-chain leg drills to office load detail"],
@@ -43,7 +45,7 @@ if (found.length) {
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   for (const [key, pattern, label] of checks) {
     const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
     if (!failures(mutant).includes(label)) {
