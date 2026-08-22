@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["unit","trailer","expense","connectivity","reverse_link"],"leafRe":"^(unit|trailer)\\.profile\\.expenses_reverse$","task":"FLEET-EXPENSE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.expenses_reverse","trailer.profile.expenses_reverse"],"task":"FLEET-F5936-EXPENSE-REVERSE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-fleet-expense-reverse-leaves";
@@ -10,7 +11,9 @@ const files = {
   api: "apps/frontend/src/api/accounting.ts",
   route: "apps/backend/src/accounting/expenses.routes.ts",
   manifest: "docs/specs/scoreboard/modules/fleet.required.json",
+  self: "scripts/verify-fleet-expense-reverse-leaves.mjs",
 };
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.expenses_reverse","trailer.profile.expenses_reverse"],"task":"FLEET-F5936-EXPENSE-REVERSE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 function audit(s) {
@@ -28,8 +31,9 @@ function audit(s) {
   const manifest = JSON.parse(s.manifest);
   for (const id of ["unit.profile.expenses_reverse", "trailer.profile.expenses_reverse"]) {
     const leaf = manifest.leaves.find((candidate) => candidate.id === id);
-    if (!leaf || !leaf.required.includes("expense") || !leaf.required.includes("reverse_link")) failures.push(`${id} inventory leaf missing`);
+    if (!leaf || !leaf.required.includes("expense") || !leaf.required.includes("reverse_link") || !leaf.required.includes("connectivity")) failures.push(`${id} inventory leaf missing`);
   }
+  if (!s.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet expense reverse connectivity header missing");
   return failures;
 }
 
@@ -45,6 +49,9 @@ if (process.argv.includes("--selftest")) {
     ["trailer-param", "api", /query\.set\("trailer_id", params\.trailer_id\)/g, 'query.set("wrong", params.trailer_id)'],
     ["route-unit", "route", /e\.unit_id = \$\$\{values\.length\}::uuid/g, "TRUE"],
     ["entity-scope", "route", /e\.operating_company_id = \$1::uuid/g, "TRUE"],
+    ["connectivity-header", "self", CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "expense")],
+    ["unit-required", "manifest", /("id": "unit\.profile\.expenses_reverse"[\s\S]{0,240})"connectivity"/, '$1"connectivity_MISSING"'],
+    ["trailer-required", "manifest", /("id": "trailer\.profile\.expenses_reverse"[\s\S]{0,240})"connectivity"/, '$1"connectivity_MISSING"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
