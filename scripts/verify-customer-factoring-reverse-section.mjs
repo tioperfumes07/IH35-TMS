@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^(factors\\.admin|batches\\.detail)$","task":"LINK-F5178-customer-factoring-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["factors.admin","batches.detail"],"task":"FACT-F5836-CUSTOMER-FACTORING-REVERSE-EXACT-LEAVES"} */
 /**
  * FACT-F5796 — customer factoring and recourse invoice reverse chains.
  * The selected company/customer must drive the canonical read and URL round-trip;
@@ -10,6 +10,8 @@
 import fs from "node:fs";
 
 const LABEL = "verify-customer-factoring-reverse-section";
+const SELF = "scripts/verify-customer-factoring-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
 const F = {
   section: "apps/frontend/src/components/customers/CustomerFactoringReverseSection.tsx",
   recourse: "apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx",
@@ -18,9 +20,14 @@ const F = {
   customer: "apps/frontend/src/pages/CustomerDetail.tsx",
   admin: "apps/frontend/src/pages/factoring/FactorAdmin.tsx",
   entity: "apps/frontend/src/components/shared/EntityLink.tsx",
+  self: SELF,
+  required: REQUIRED,
 };
 
 const CHECKS = [
+  { name: "Built annotation owns only the exact factoring reverse leaves", file: F.self, pattern: /^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["factors\.admin","batches\.detail"\],"task":"FACT-F5836-CUSTOMER-FACTORING-REVERSE-EXACT-LEAVES"\} \*\/$/m },
+  { name: "factor admin Required leaf still owes reverse_link", file: F.required, pattern: /"id": "factors\.admin"[\s\S]{0,350}"required": \[[\s\S]{0,250}"reverse_link"/ },
+  { name: "batch detail Required leaf still owes reverse_link", file: F.required, pattern: /"id": "batches\.detail"[\s\S]{0,350}"required": \[[\s\S]{0,250}"reverse_link"/ },
   { name: "customer factoring query key binds company and customer", file: F.section, pattern: /queryKey: \["customer-factoring-reverse", operatingCompanyId, customerId\]/ },
   { name: "customer factoring read binds customer and company", file: F.section, pattern: /getCustomerFactor\(customerId, operatingCompanyId\)/ },
   { name: "customer factoring read is disabled without both identities", file: F.section, pattern: /enabled: Boolean\(operatingCompanyId && customerId\)/ },
@@ -46,7 +53,7 @@ const CHECKS = [
 ];
 
 function readSources() {
-  return Object.fromEntries(Object.values(F).map((file) => [file, fs.readFileSync(file, "utf8")]));
+  return Object.fromEntries([...new Set(Object.values(F))].map((file) => [file, fs.readFileSync(file, "utf8")]));
 }
 
 export function collectFailures(sources) {
@@ -67,7 +74,7 @@ if (process.argv.includes("--selftest")) {
     const original = sources[check.file];
     const planted = check.banned
       ? `${original}\n/* planted */ <Link to="/factoring/factors"><EntityLink kind="factoring_advance" id={row.id} /></Link>\n`
-      : original.replace(check.pattern, "/* planted FACT-F5796 customer/invoice reverse defect */");
+      : original.replace(check.pattern, "/* planted FACT-F5836 customer/invoice reverse defect */");
     if (planted === original || !collectFailures({ ...sources, [check.file]: planted }).includes(check.name)) inert.push(check.name);
   }
   if (inert.length) {
