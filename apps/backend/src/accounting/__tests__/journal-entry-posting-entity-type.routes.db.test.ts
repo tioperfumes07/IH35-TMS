@@ -49,16 +49,18 @@ describeIntegration("POST /api/v1/accounting/journal-entries entity_type pairing
     await db.connect();
 
     await bypass(async () => {
+      // accounts_active_requires_account_number: an active (non-deactivated) account must carry a
+      // real account_number — these fixtures predate that constraint and never set one.
       const acctRes = await db.query<{ id: string }>(
-        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type)
-         VALUES ($1::uuid, $2, 'Expense') RETURNING id`,
-        [companyId, `ENTITY-TYPE-TEST-DEBIT ${suffix}`]
+        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number)
+         VALUES ($1::uuid, $2, 'Expense', $3) RETURNING id`,
+        [companyId, `ENTITY-TYPE-TEST-DEBIT ${suffix}`, `ETT-D-${suffix}`]
       );
       accountId = acctRes.rows[0]!.id;
       const creditRes = await db.query<{ id: string }>(
-        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type)
-         VALUES ($1::uuid, $2, 'Expense') RETURNING id`,
-        [companyId, `ENTITY-TYPE-TEST-CREDIT ${suffix}`]
+        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number)
+         VALUES ($1::uuid, $2, 'Expense', $3) RETURNING id`,
+        [companyId, `ENTITY-TYPE-TEST-CREDIT ${suffix}`, `ETT-C-${suffix}`]
       );
       creditAccountId = creditRes.rows[0]!.id;
     });

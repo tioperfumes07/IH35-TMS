@@ -8,9 +8,12 @@ vi.mock("../../bulk/bulk-update.factory.js", () => ({ isOwnerOrAdmin: (role: str
 const isEnabledMock = vi.fn();
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: (...a: unknown[]) => isEnabledMock(...a) }));
 
+// ACCT-F5687 moved this service onto postSourceTransactionInClientTx (atomic with the bank-cache
+// decrement, same client) instead of postSourceTransaction — the mock below tracks the function the
+// service actually calls now, not the one it used to call.
 const postSourceTransactionMock = vi.fn();
 vi.mock("../../accounting/posting-engine.service.js", () => ({
-  postSourceTransaction: (...a: unknown[]) => postSourceTransactionMock(...a),
+  postSourceTransactionInClientTx: (...a: unknown[]) => postSourceTransactionMock(...a),
 }));
 
 // withCurrentUser(uuid, cb) => cb(mockClient). The SAME mock client is used across the two calls.
@@ -77,7 +80,10 @@ describe("payDriverReimbursementImmediately — pays WITHOUT a settlement", () =
       expect(res.posted).toBe(true);
       expect(res.journalEntryId).toBe("je-1");
     }
+    // postSourceTransactionInClientTx(client, input, actor) — the client is the mocked withCurrentUser
+    // client (opaque here), so only the input/actor shape is asserted.
     expect(postSourceTransactionMock).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ source_transaction_type: "driver_reimbursement", source_transaction_id: REIMB }),
       { userId: USER }
     );

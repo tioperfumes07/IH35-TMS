@@ -79,9 +79,14 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
         // encoding a shape the application never produces — and a fixture that models an impossible
         // row tests nothing real. The assertion below is unaffected: the reverse drill-through
         // excludes this bill on `revoked_at`, not on status.
+        // trg_bills_sync_void_markers fires whenever status='void' or either void-timestamp column is
+        // set, and stamps voided_at from revoked_at — which then requires bills_void_reason_required's
+        // void_reason (or revoked_reason, which the trigger also mirrors into void_reason) to be
+        // non-empty. This fixture set revoked_at without a reason and the trigger's own populated
+        // voided_at then tripped the constraint the fixture never touched directly.
         `INSERT INTO accounting.bills
-           (id, operating_company_id, bill_number, bill_date, amount_cents, total_amount, status, linked_work_order_uuid, unit_id, revoked_at)
-         VALUES ($1::uuid, $2::uuid, $3, CURRENT_DATE, 12345, 123.45, $7, $4::uuid, $5::uuid, $6)`,
+           (id, operating_company_id, bill_number, bill_date, amount_cents, total_amount, status, linked_work_order_uuid, unit_id, revoked_at, revoked_reason)
+         VALUES ($1::uuid, $2::uuid, $3, CURRENT_DATE, 12345, 123.45, $7, $4::uuid, $5::uuid, $6, $8)`,
         [
           id,
           companyId,
@@ -90,6 +95,7 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
           unit,
           opts?.revoked ? new Date().toISOString() : null,
           opts?.revoked ? "void" : "unpaid",
+          opts?.revoked ? "wo-linked-financials fixture void" : null,
         ]
       );
     });

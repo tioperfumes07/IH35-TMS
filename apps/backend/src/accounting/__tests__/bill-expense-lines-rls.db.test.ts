@@ -246,7 +246,14 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
       caught = err as Error & { code?: string };
     }
     expect(caught, "cross-OCI bill_line insert should be rejected").toBeDefined();
-    expect(caught?.code).toBe("42501"); // insufficient_privilege — RLS WITH CHECK violation
+    // trg_bill_lines_derive_company now fires BEFORE the row-level WITH CHECK and derives
+    // operating_company_id from the parent bill via an RLS-scoped SELECT — when the parent bill
+    // belongs to another tenant that SELECT sees no rows, so the trigger raises a clear, named
+    // exception (E_BILL_LINE_PARENT_NOT_VISIBLE, default SQLSTATE P0001) instead of letting the insert
+    // reach the generic 42501 insufficient_privilege path. Either shape proves the row is rejected;
+    // this asserts the current, more specific one.
+    expect(caught?.code).toBe("P0001");
+    expect(caught?.message).toContain("E_BILL_LINE_PARENT_NOT_VISIBLE");
   });
 
   it("expense_lines isolate through their parent expense (scoped sees only own; bypass sees all)", async () => {

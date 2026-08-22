@@ -49,10 +49,12 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
     await db.connect();
 
     await bypass(async () => {
+      // accounts_active_requires_account_number: an active (non-deactivated) account must carry a
+      // real account_number — this fixture predates that constraint and never set one.
       const acctRes = await db.query<{ id: string }>(
-        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type)
-         VALUES ($1::uuid, $2, 'Expense') RETURNING id`,
-        [companyId, `SRC-LINK-TEST ${suffix}`]
+        `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number)
+         VALUES ($1::uuid, $2, 'Expense', $3) RETURNING id`,
+        [companyId, `SRC-LINK-TEST ${suffix}`, `SLT-${suffix}`]
       );
       const accountId = acctRes.rows[0]!.id;
 
