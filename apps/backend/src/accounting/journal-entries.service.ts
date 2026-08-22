@@ -826,6 +826,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN jep.source_transaction_type = 'driver_advance' THEN 'cash_advance'
             WHEN jep.source_transaction_type IN ('prepaid_asset', 'prepaid_amortization') THEN 'prepaid_asset'
             WHEN jep.source_transaction_type IN ('fixed_asset', 'fixed_asset_depreciation') THEN 'fixed_asset'
+            WHEN jep.source_transaction_type = 'loan' THEN 'finance_loan'
             ELSE jep.source_transaction_type
           END AS source_entity_kind,
           jep.source_transaction_id,
@@ -839,6 +840,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type = 'driver_advance' THEN 'cash_advance'
             WHEN tsl.linked_object_type IN ('prepaid_asset', 'prepaid_amortization') THEN 'prepaid_asset'
             WHEN tsl.linked_object_type IN ('fixed_asset', 'fixed_asset_depreciation') THEN 'fixed_asset'
+            WHEN tsl.linked_object_type = 'loan' THEN 'finance_loan'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
