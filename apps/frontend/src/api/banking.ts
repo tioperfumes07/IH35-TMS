@@ -98,6 +98,8 @@ export type PlaidBankTransaction = {
   account_name?: string | null;
   account_mask?: string | null;
   matched_kind?: string | null;
+  /** All persisted matches; a transaction can legitimately carry both an expense and its posted JE. */
+  matched_kinds?: string[];
   notes: string | null;
   created_at: string;
   // Doc-18 GAP B: feed origin. 'manual' = hand-entered (date is editable); 'plaid'/'qbo_import'/'csv_import'

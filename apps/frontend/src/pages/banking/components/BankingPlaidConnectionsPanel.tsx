@@ -52,42 +52,15 @@ function categoryLabel(t: PlaidBankTransaction) {
 }
 
 function matchedLabel(t: PlaidBankTransaction) {
-  if (t.matched_kind === "transfer" && t.matched_transfer_id) {
-    return (
-      <EntityLink
-        kind="transfer"
-        id={t.matched_transfer_id}
-        label={entityLabel(t.matched_transfer_label, t.matched_transfer_id, "Transfer")}
-      />
-    );
-  }
-  if (t.matched_kind === "je" && t.matched_journal_entry_id) {
-    return (
-      <EntityLink
-        kind="journal_entry"
-        id={t.matched_journal_entry_id}
-        label={entityLabel(t.matched_journal_entry_memo, t.matched_journal_entry_id, "Journal entry")}
-      />
-    );
-  }
-  if (t.matched_kind === "expense" && t.matched_expense_id) {
-    return (
-      <EntityLink
-        kind="expense"
-        id={t.matched_expense_id}
-        label={entityLabel(t.matched_expense_number, t.matched_expense_id, "Expense")}
-      />
-    );
-  }
-  if (t.matched_kind === "load" && t.matched_load_id) {
-    return <EntityLink kind="load" id={t.matched_load_id} label={entityLabel(t.matched_load_number, t.matched_load_id, "Load")} />;
-  }
-  if (t.matched_kind === "settlement" && t.matched_settlement_id) {
-    return <EntityLink kind="settlement" id={t.matched_settlement_id} label={entityLabel(t.matched_settlement_display_id, t.matched_settlement_id, "Settlement")} />;
-  }
-  if (t.matched_kind === "bill" && t.matched_bill_id) {
-    return <EntityLink kind="bill" id={t.matched_bill_id} label={entityLabel(t.matched_bill_number, t.matched_bill_id, "Bill")} />;
-  }
+  const links = [
+    t.matched_transfer_id ? <EntityLink key="transfer" kind="transfer" id={t.matched_transfer_id} label={entityLabel(t.matched_transfer_label, t.matched_transfer_id, "Transfer")} /> : null,
+    t.matched_journal_entry_id ? <EntityLink key="je" kind="journal_entry" id={t.matched_journal_entry_id} label={entityLabel(t.matched_journal_entry_memo, t.matched_journal_entry_id, "Journal entry")} /> : null,
+    t.matched_expense_id ? <EntityLink key="expense" kind="expense" id={t.matched_expense_id} label={entityLabel(t.matched_expense_number, t.matched_expense_id, "Expense")} /> : null,
+    t.matched_load_id ? <EntityLink key="load" kind="load" id={t.matched_load_id} label={entityLabel(t.matched_load_number, t.matched_load_id, "Load")} /> : null,
+    t.matched_settlement_id ? <EntityLink key="settlement" kind="settlement" id={t.matched_settlement_id} label={entityLabel(t.matched_settlement_display_id, t.matched_settlement_id, "Settlement")} /> : null,
+    t.matched_bill_id ? <EntityLink key="bill" kind="bill" id={t.matched_bill_id} label={entityLabel(t.matched_bill_number, t.matched_bill_id, "Bill")} /> : null,
+  ].filter(Boolean);
+  if (links.length) return <div className="flex flex-wrap gap-1">{links}</div>;
   return "Unmatched";
 }
 

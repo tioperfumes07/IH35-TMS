@@ -347,6 +347,14 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             WHEN bt.matched_bill_id IS NOT NULL THEN 'bill'
             ELSE NULL
           END AS matched_kind,
+          ARRAY_REMOVE(ARRAY[
+            CASE WHEN bt.matched_transfer_id IS NOT NULL THEN 'transfer' END,
+            CASE WHEN bt.matched_journal_entry_id IS NOT NULL THEN 'je' END,
+            CASE WHEN bt.matched_expense_id IS NOT NULL THEN 'expense' END,
+            CASE WHEN bt.matched_load_id IS NOT NULL THEN 'load' END,
+            CASE WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement' END,
+            CASE WHEN bt.matched_bill_id IS NOT NULL THEN 'bill' END
+          ], NULL) AS matched_kinds,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt

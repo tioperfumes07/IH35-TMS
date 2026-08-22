@@ -1049,6 +1049,7 @@ export function BankingTransactionsDesignView({
                   tx.matched_load_id ||
                   tx.matched_settlement_id ||
                   tx.matched_transfer_id ||
+                  tx.matched_expense_id ||
                   tx.categorization_trailer_id) && (
                   <div
                     className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
@@ -1103,6 +1104,13 @@ export function BankingTransactionsDesignView({
                         kind="transfer"
                         id={tx.matched_transfer_id}
                         label={entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer")}
+                      />
+                    ) : null}
+                    {tx.matched_expense_id ? (
+                      <EntityLink
+                        kind="expense"
+                        id={tx.matched_expense_id}
+                        label={entityLabel(tx.matched_expense_number, tx.matched_expense_id, "Expense")}
                       />
                     ) : null}
                   </div>
