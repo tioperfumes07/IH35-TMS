@@ -256,6 +256,11 @@
       "claimed_by": "cc-3",
       "claimed_at": "2026-08-22",
       "purpose": "customer_shipping_country_drop_not_null"
+    },
+    "202613000000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-22",
+      "purpose": "audit_trigger_abandonment_chargebacks_settlement_disputes"
     }
   }
 }
