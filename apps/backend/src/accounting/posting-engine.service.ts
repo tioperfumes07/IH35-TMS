@@ -982,7 +982,13 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     throw err;
   }
 
-  const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — same class as buildBillLines/buildExpenseLines: this is the
+  // PERMANENT JE memo text (see `memo: \`${descriptionBase} posting\`` below), not an error message —
+  // unlike the InvoiceRevrecLatchOwnsLoadError uses of `Invoice ${sourceId}` above, which are thrown
+  // diagnostics, not stored data. journal-entries.service.ts's list resolver ties this JE to its
+  // invoice via journal_entry_postings.source_transaction_id, not memo text, so an honest "Invoice"
+  // with no id is strictly better than a raw UUID nobody can read.
+  const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : "Invoice";
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
   const revenueCredits: PostingLineDraft[] = [];
   let revenueTotal = 0;
@@ -1458,7 +1464,9 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   );
   if (!debitCashAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
 
-  const label = payment.display_id ? `Customer payment ${payment.display_id}` : `Customer payment ${sourceId}`;
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — see buildBillLines/buildExpenseLines: honest "Customer payment"
+  // with no id beats baking the raw payment UUID into the permanent JE memo.
+  const label = payment.display_id ? `Customer payment ${payment.display_id}` : "Customer payment";
   const amount = Number(payment.amount_cents ?? 0);
   return {
     postingDate: payment.payment_date,
@@ -1623,7 +1631,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the bill, not the payment's own uuid. billSrcRes is
   // already fetched above for the source_system check; bill_number rides along for free.
   const billNumber = billSrcRes.rows[0]?.bill_number;
-  const label = billNumber ? `Bill payment for bill ${billNumber}` : `Bill payment ${sourceId}`;
+  const label = billNumber ? `Bill payment for bill ${billNumber}` : "Bill payment";
   return {
     postingDate: payment.payment_date,
     memo: `${label} posting`,
@@ -1722,7 +1730,7 @@ async function buildCashAdvanceLines(
 
   const amount = Number(request.requested_amount_cents);
   // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the request, not its own uuid.
-  const label = request.display_id ? `Cash advance ${request.display_id}` : `Cash advance ${sourceId}`;
+  const label = request.display_id ? `Cash advance ${request.display_id}` : "Cash advance";
   return {
     postingDate: request.posting_date,
     memo: `${label} posting`,
@@ -1839,7 +1847,7 @@ async function buildDriverAdvanceLines(
   // amount is numeric(10,2) dollars → cents for the ledger.
   const amountCents = Math.round(Number(advance.amount) * 100);
   // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the advance, not its own uuid.
-  const label = advance.display_id ? `Driver advance ${advance.display_id}` : `Driver advance ${sourceId}`;
+  const label = advance.display_id ? `Driver advance ${advance.display_id}` : "Driver advance";
   return {
     postingDate,
     memo: `${label} posting`,
@@ -1947,7 +1955,7 @@ async function buildDriverReimbursementLines(
   // otherwise collide across every reimbursement of the same type.
   const label = reimb.reimbursement_type
     ? `Driver reimbursement (${reimb.reimbursement_type}) ${sourceId.slice(0, 8)}`
-    : `Driver reimbursement ${sourceId}`;
+    : `Driver reimbursement ${sourceId.slice(0, 8)}`;
   return {
     postingDate,
     memo: `${label} posting`,
@@ -2049,7 +2057,7 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
   const txnDescription = (txn.description ?? "").trim();
   const label = txnDescription
     ? `Bank categorization: ${txnDescription.slice(0, 60)} ${sourceId.slice(0, 8)}`
-    : `Bank categorization ${sourceId}`;
+    : "Bank categorization";
   const moneyIn = txn.is_credit === true;
   const catLine: PostingLineDraft = {
     account_id: catAccountId,
@@ -2175,7 +2183,7 @@ async function buildTransferLines(client: DbClient, operatingCompanyId: string, 
   // operator gave it one; the type is real information either way, so it always leads.
   const label = transfer.reference_number
     ? `Transfer (${transfer.transfer_type}) ${transfer.reference_number}`
-    : `Transfer (${transfer.transfer_type}) ${sourceId}`;
+    : `Transfer (${transfer.transfer_type})`;
   return {
     postingDate: transfer.transfer_date,
     memo: transfer.memo ? `${label} — ${transfer.memo}` : `${label} posting`,

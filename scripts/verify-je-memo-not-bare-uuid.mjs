@@ -6,11 +6,22 @@
  * be. 144 pre-existing TMS-native JE memos on prod carry this shape (deliberately NOT backfilled — a
  * WORM historical-data decision, not this guard's concern).
  *
+ * LV-JE-MEMO-RECORD-NOT-VISIBLE (ACCT-F5730/ACCT-F5733) — this guard originally EXEMPTED a ternary
+ * fallback (`cond ? withRealField : withSourceId`) as "fine, that's the fallback shape this guard
+ * wants." That reasoning is now stale: journal-entries.service.ts's list resolver ties every JE to its
+ * source via journal_entry_postings.source_transaction_id/source_transaction_display_id (not memo
+ * text), so display no longer depends on the memo carrying an identifier at all — an honest bare noun
+ * ("Bill", "Expense", "Customer payment") is strictly better than a raw UUID in ANY branch, including a
+ * rare-fallback one. The tightened rule below flags a literal `${sourceId}` interpolation wherever it
+ * appears, ternary or not.
+ *
  * INVARIANT (static — no database): the `label` a source-type builder in posting-engine.service.ts
- * assigns for its posting memo must NOT be an UNCONDITIONAL bare `${sourceId}` (or `String(sourceId)`)
- * — either it must be entirely absent from the label (a real human field is always available), or it
- * must appear only inside a conditional fallback branch (`cond ? withRealField : withSourceId`) so the
- * bare id is the LAST resort, not the only choice.
+ * assigns for its posting memo must NEVER interpolate the bare `${sourceId}` (or `String(sourceId)`)
+ * — not unconditionally, and not as a ternary's fallback branch either. The one allowed exception is a
+ * SHORT id suffix (`${sourceId.slice(0, 8)}`) used alongside a real human field (type/description) for
+ * per-row uniqueness when the source table has no display_id/number column at all (driver
+ * reimbursements, bank categorization) — that is a deliberate, already-reviewed design, not this
+ * defect class, and is distinguishable because it is never the LITERAL substring `${sourceId}`.
  *
  * Deliberately scoped to the label-construction lines in posting-engine.service.ts (`const label =`),
  * not a repo-wide memo scan — that would need real SQL/JS parsing to avoid false positives on
@@ -41,19 +52,19 @@ export function checkJeMemoLabels(src) {
 
   const problems = [];
   for (const expr of labelLines) {
-    // A ternary (`cond ? a : b`) is fine even if one branch is bare sourceId — that's the fallback
-    // shape this guard wants. Only an UNCONDITIONAL bare sourceId template is the defect.
-    const isTernary = /\?.*:/.test(expr);
-    if (isTernary) continue;
-    const isBareTemplate = /^`[^$]*\$\{sourceId\}[^$]*`$/.test(expr) && !/\$\{[a-zA-Z]/.test(expr.replace(/\$\{sourceId\}/, ""));
-    if (isBareTemplate) {
+    // LV-JE-MEMO-RECORD-NOT-VISIBLE — the literal substring `${sourceId}` (exact interpolation, no
+    // method call after it) is the defect ANYWHERE it appears, ternary fallback branch or not. A short
+    // suffix like `${sourceId.slice(0, 8)}` does NOT match this substring (there is more than
+    // `sourceId` before the closing brace), so the deliberate short-suffix exception stays allowed.
+    const hasBareSourceIdInterpolation = /\$\{sourceId\}/.test(expr);
+    if (hasBareSourceIdInterpolation) {
       problems.push(expr);
     }
   }
   if (problems.length > 0) {
     return {
       ok: false,
-      reason: `${problems.length} label(s) are an unconditional bare \${sourceId} template with no human-field fallback: ${problems.join(" | ")}`,
+      reason: `${problems.length} label(s) interpolate the bare \${sourceId} (a raw uuid) somewhere — unconditionally or as a ternary fallback: ${problems.join(" | ")}`,
     };
   }
   return { ok: true, scanned: labelLines.length };
@@ -63,8 +74,11 @@ const isEntryPoint = import.meta.url === `file://${process.argv[1]}`;
 
 if (isEntryPoint && process.argv.includes("--selftest")) {
   const good = `
-    const label = payment.display_id ? \`Customer payment \${payment.display_id}\` : \`Customer payment \${sourceId}\`;
+    const label = payment.display_id ? \`Customer payment \${payment.display_id}\` : "Customer payment";
     const label2 = \`Bill payment for bill \${billNumber}\`;
+    const label3 = reimb.reimbursement_type
+      ? \`Driver reimbursement (\${reimb.reimbursement_type}) \${sourceId.slice(0, 8)}\`
+      : \`Driver reimbursement \${sourceId.slice(0, 8)}\`;
   `;
   const goodResult = checkJeMemoLabels(good);
   if (!goodResult.ok) fail(`selftest: known-good fixture should pass — ${goodResult.reason}`);
@@ -75,6 +89,14 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   const regressedResult = checkJeMemoLabels(regressed);
   if (regressedResult.ok) fail("selftest: regressed fixture (unconditional bare sourceId template) should FAIL but passed");
 
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE — the class this guard originally missed: a ternary whose FALLBACK
+  // branch bakes the literal bare uuid. This used to be explicitly exempted; now it must FAIL.
+  const ternaryFallbackRegressed = `
+    const label = payment.display_id ? \`Customer payment \${payment.display_id}\` : \`Customer payment \${sourceId}\`;
+  `;
+  const ternaryFallbackResult = checkJeMemoLabels(ternaryFallbackRegressed);
+  if (ternaryFallbackResult.ok) fail("selftest: ternary-fallback-to-bare-sourceId fixture should FAIL but passed (this is the exact class ACCT-F5730/ACCT-F5733 fixed)");
+
   const commentTrap = `
     // const label = payment.display_id ? ... : \`Bill payment \${sourceId}\` — fixed elsewhere
     const label = \`Bill payment \${sourceId}\`;
@@ -82,7 +104,7 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   const commentTrapResult = checkJeMemoLabels(commentTrap);
   if (commentTrapResult.ok) fail("selftest: comment-trap fixture (fix mentioned only in a comment) should FAIL but the guard matched its own prose");
 
-  console.log(`[${LABEL}] selftest: PASS — good/regressed/comment-trap fixtures all classify correctly`);
+  console.log(`[${LABEL}] selftest: PASS — good/regressed/ternary-fallback-regressed/comment-trap fixtures all classify correctly`);
   process.exit(0);
 }
 
@@ -92,5 +114,5 @@ if (isEntryPoint) {
   const src = fs.readFileSync(filePath, "utf8");
   const result = checkJeMemoLabels(src);
   if (!result.ok) fail(`${TARGET}: ${result.reason}`);
-  console.log(`[${LABEL}] PASS — ${result.scanned} label assignment(s) checked, none is an unconditional bare uuid template`);
+  console.log(`[${LABEL}] PASS — ${result.scanned} label assignment(s) checked, none interpolates the bare \${sourceId} raw uuid (unconditionally or as a ternary fallback)`);
 }
