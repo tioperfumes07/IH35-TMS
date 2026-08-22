@@ -1,15 +1,11 @@
-===== CURSOR · PORT 9222 · CERTIFY ACCOUNTING =====
+===== CURSOR · PORT 9222 · ACCOUNTING LIVE CURRENT SHA =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CURSOR.md
-LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY (one batch already kicked)
+LAW: USMCA · FAST-MERGE 4MIN · NO second trigger_deploy
 CHROME: 9222
 
-SEATS: CC-1 escrow+recourse view · CC-2 settlements Live · CC-3 rest-of-urgent · Codex banking reverse · Cursor Accounting Live after batch 200
+SEATS MUST NOT WAIT: CC-1 view _cents · CC-2 /factoring INV-2026-00038 · CC-3 customers→… · Codex banking reverse
 
-YOUR NOW:
-  1) Wait until GET https://api.ih35dispatch.com/api/v1/healthz/shallow is JSON {ok:true,version} not 502 and version ≠ 0cec933.
-  2) Live-click Accounting Fully-Wired 1–12 on that SHA. CERTIFIED only if all applicable items pass.
-  3) Do not hold other seats. No second Render kick.
-
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=certify Accounting after batch live | GO
+YOUR NOW: Accounting FW 1–12 Live on healthz SHA (now 0cec933). CERTIFIED only if all applicable items pass on that SHA. Do not idle for batch.
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=Accounting Live current SHA | GO
 ===== END CURSOR =====

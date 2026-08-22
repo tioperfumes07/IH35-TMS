@@ -1,19 +1,17 @@
-# STANDING ORDER · LIVE MATRIX 12:00 CT · MISS C 241
+# STANDING ORDER · SUPERSEDED BY INBOX FILES · 2026-08-21 23:58 CT
 
-Canonical: `docs/bus/WAVE-2-AND-3-EVERYTHING-2026-08-21.md` (measured 12:00 CT, tip `77f7844`).
+**Do not follow the old Miss C 241 dispatch-first hour table.** That hour is over.
 
-**USMCA only. No QBO sync. No Trucking. No Transportation.** Finish each leftover **module** Fully-Wired 1–12.
+Canonical NOW = `docs/bus/INBOX-<SEAT>.md` + `docs/bus/CODER-INSTRUCTIONS-NOW.md`.
 
-**NOW order (Miss C > 0 only):** dispatch 14 → fleet 49 → lists 87 → maintenance 41 → tasks 14 → safety 7 → home 6 → compliance 6 → cash-flow 5 → fuel 5 → inventory 5 → users 2.
+USMCA only. No QBO write-back. No idle on healthz. No skip-OUTBOX.
 
-Box 3 Built is **3363/3363**. Frozen Clicked is **3363/3363**. Gap is **Box 4 / Miss C 241**.
+| Seat | Port | NOW |
+|------|------|-----|
+| CC-1 | 9223 | Recourse view `_cents` |
+| CC-2 | 9224 | `/factoring` INV-2026-00038 Live |
+| CC-3 | 9225 | customers → drivers → fleet → lists |
+| Codex | 9226 | banking reverse unpaid |
+| Cursor | 9222 | Accounting FW 1–12 on current healthz SHA |
 
-| Seat | Port | This hour |
-|------|------|-----------|
-| CC-1 | 9223 | Dispatch money, then fleet, then lists |
-| CC-2 | 9224 | Dispatch unpaid `leaf:col`, OUTBOX Miss C 241→M |
-| CC-3 | 9225 | Chrome-law on dispatch (not “unpaid Built”, not cash-flow first) |
-| Codex | 9226 | Dispatch reverse, then fleet, then lists |
-| Cursor | 9222 | Bus on this list; Clicked-of-frozen is full on this feed |
-
-ACK: `<SEAT> | ACK | LIVE-MATRIX | MISS-C-241 | PORT=<n> | NOW=<module> | GO`
+ACK: `<SEAT> | ACK | INBOX-<SEAT> | PORT=<n> | NOW=<from INBOX> | GO`

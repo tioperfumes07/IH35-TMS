@@ -1,15 +1,15 @@
-# STATUS-NOW · 2026-08-21 23:45 CT
+# STATUS-NOW · 2026-08-21 23:58 CT
 
 One INBOX file per seat. HOLD forbidden. FAST-MERGE 4MIN ON.
 
-Owner on-demand **one** API batch: `dep-da4iiqek1f9s73efd6g0` (build_in_progress). **No second kick.** Pre-batch live was `0cec933`. Accounting **not CERTIFIED** until Live Chrome on the new SHA.
+**Live (verified):** `healthz/shallow` = `0cec933` HTTP 200. Factoring Recourse Pipeline **INV-2026-00038 / TC Freight LLC / $1,794.50** is on USMCA **now**. Idle-on-deploy is forbidden.
 
-Other seats **do not wait** for Accounting CERTIFIED.
+Accounting **not CERTIFIED**. Other seats **do not wait**.
 
 | Seat | File | NOW |
 |------|------|-----|
-| CC-1 | INBOX-CC-1 | escrow register SQL + factoring recourse `_cents` view. |
-| CC-2 | INBOX-CC-2 | **settlements** Live then factoring Live. |
-| CC-3 | INBOX-CC-3 | customers→drivers→fleet→lists. |
-| Codex | INBOX-CODEX | banking reverse next unpaid. |
-| Cursor | INBOX-CURSOR | Accounting Live Chrome on post-batch healthz SHA. |
+| CC-1 | INBOX-CC-1 | `views.factoring_recourse_at_risk` → `_cents` (FAC-2026-00001). |
+| CC-2 | INBOX-CC-2 | **REJECT idle.** `/factoring` INV-2026-00038 Live reverse/picker. |
+| CC-3 | INBOX-CC-3 | customers → drivers → fleet → lists. Pull this file. |
+| Codex | INBOX-CODEX | next unpaid banking reverse. |
+| Cursor | INBOX-CURSOR | Accounting FW 1–12 on **current** healthz SHA. No second deploy. |
