@@ -63,12 +63,15 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
   });
 }
 
-// The parts-MASTER table this route was built against (mdata.maintenance_parts, with sku/manufacturer/
-// category/barcode/model_compatibility) does NOT exist on prod, and NO existing table matches its shape:
-// catalogs.parts lacks 7 of 9 columns; maintenance.parts_inventory is a stock table (on_hand_qty/last_
-// purchase_*). Resolving this is a Jorge data-model decision (canonical parts master vs. the ~6 stub
-// tables) — see memory bucket3-phantom-schema-disposition. Until then, degrade gracefully instead of
-// 42P01'ing every request: guard on to_regclass and report the feature as unprovisioned.
+// LISTS-PARTS-MASTER-CANONICAL-TABLE-MISSING — this comment used to say the parts-MASTER table
+// (mdata.maintenance_parts) did not exist on prod and no table matched its shape. That was
+// correct when the route was first built but is now STALE: db/migrations/202606281030_maintenance_
+// parts_catalog.sql provisions mdata.maintenance_parts with exactly this shape (sku, manufacturer,
+// model_compatibility, category, sub_category, typical_unit_cost_cents, barcode_upc), confirmed
+// live on prod 2026-08-22 (information_schema.columns, all 10 route-referenced columns present) —
+// distinct from catalogs.parts (still lacks most of these columns) and maintenance.parts_inventory
+// (a stock/on-hand table, not a parts master). The to_regclass guard below is kept as harmless
+// defense-in-depth (never 42P01 if the table were ever absent again) — it is not load-bearing.
 async function partsMasterTableExists(client: {
   query: <R = Record<string, unknown>>(sql: string, vals?: unknown[]) => Promise<{ rows: R[] }>;
 }): Promise<boolean> {

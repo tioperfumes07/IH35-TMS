@@ -4,11 +4,13 @@
  */
 import { useState } from "react";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
+import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useMaintenancePartsCatalog, type MaintPartRow } from "../../hooks/useMaintenancePartsCatalog";
+import { CreateMaintPartModal } from "./CreateMaintPartModal";
 
 const MANUFACTURERS = ["", "Detroit Diesel", "Cummins", "Freightliner", "Peterbilt", "Kenworth"];
 const CATEGORIES = [
@@ -75,6 +77,7 @@ export function MaintenancePartsCatalog() {
   const [manufacturer, setManufacturer] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const query = useMaintenancePartsCatalog({
     operating_company_id: companyId,
@@ -95,6 +98,18 @@ export function MaintenancePartsCatalog() {
         breadcrumb={["Lists & Catalogs", "Maintenance", "Parts Catalog"]}
         title="Maintenance Parts Catalog"
         countBadge={total}
+        actions={
+          <Button type="button" onClick={() => setCreateOpen(true)}>
+            + Create
+          </Button>
+        }
+      />
+
+      <CreateMaintPartModal
+        open={createOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => void query.refetch()}
       />
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
