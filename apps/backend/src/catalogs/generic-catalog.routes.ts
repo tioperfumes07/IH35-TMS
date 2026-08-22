@@ -730,6 +730,15 @@ export const laborRatesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // CC3-CATALOG-AUDIT-COLUMNS-500-LABORRATES: catalogs.labor_rates has NEITHER updated_at NOR
+  // created_by_user_id/updated_by_user_id (id, created_at, operating_company_id, rate_code,
+  // rate_name, rate_per_hour, is_internal, is_active only -- confirmed live via information_schema).
+  // Both flags defaulted true, so CREATE unconditionally wrote created_by_user_id/updated_by_user_id
+  // -- live-reproduced real 500 (42703 "column \"created_by_user_id\" of relation \"labor_rates\"
+  // does not exist") on every Create attempt. Same bug class as LST-CATALOG-AUDIT-COLUMNS-500
+  // elsewhere in this file; this catalog was simply never given the flag.
+  hasUpdatedAt: false,
+  hasAuditUserColumns: false,
 };
 
 export const maintenancePartLocationsCatalogConfig: GenericCatalogConfig = {
@@ -751,6 +760,17 @@ export const maintenancePartLocationsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // CC3-CATALOG-AUDIT-COLUMNS-500-PARTLOCATIONS: catalogs.maintenance_part_locations has NEITHER
+  // updated_at NOR created_by_user_id/updated_by_user_id (id, created_at, operating_company_id,
+  // location_code, location_name, applies_to, category, display_order, is_active only -- confirmed
+  // live via information_schema). Both flags defaulted true, so CREATE unconditionally wrote
+  // created_by_user_id/updated_by_user_id -- live-reproduced real 500 (42703 "column
+  // \"created_by_user_id\" of relation \"maintenance_part_locations\" does not exist") on every
+  // Create attempt, distinct from CLS-CATALOG-CODE-CONFLICT-COLUMN (already fixed, a different bug
+  // on this same table's conflict-check query). Same bug class as LST-CATALOG-AUDIT-COLUMNS-500
+  // elsewhere in this file; this catalog was simply never given the flag.
+  hasUpdatedAt: false,
+  hasAuditUserColumns: false,
 };
 
 /** LST-WIRE-08 — driver termination reasons: `label` shape (no display_name/sort_order), served via alias. */
