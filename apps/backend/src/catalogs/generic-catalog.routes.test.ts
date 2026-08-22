@@ -5,7 +5,12 @@ import { z } from "zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mapSpreadsheetRows, normalizeHeaderKey, parseSpreadsheetBuffer } from "./excel-uploader.js";
 import { createCatalogRoutes, type GenericCatalogConfig } from "./generic-catalog.factory.js";
-import { cashAdvanceTypesCatalogConfig, fleetEquipmentTypesCatalogConfig } from "./generic-catalog.routes.js";
+import {
+  cashAdvanceTypesCatalogConfig,
+  fleetEquipmentTypesCatalogConfig,
+  laborRatesCatalogConfig,
+  maintenancePartLocationsCatalogConfig,
+} from "./generic-catalog.routes.js";
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("INSERT INTO catalogs.excel_upload_jobs")) {
@@ -424,5 +429,51 @@ describe.sequential("generic catalog framework — hasAuditUserColumns", () => {
     expect(insertSql).toBeDefined();
     expect(insertSql).toContain("created_by_user_id");
     expect(insertSql).toContain("updated_by_user_id");
+  });
+
+  // CC3-CATALOG-AUDIT-COLUMNS-500-LABORRATES / -PARTLOCATIONS — labor_rates and
+  // maintenance_part_locations have NEITHER updated_at NOR created_by_user_id/updated_by_user_id at
+  // all (confirmed live via information_schema), yet both flags defaulted true (neither catalog had
+  // ever been given hasUpdatedAt/hasAuditUserColumns). Live-reproduced 2026-08-22: a real Create
+  // attempt on each hard-500'd with a raw Postgres 42703 ("column \"created_by_user_id\" of relation
+  // ... does not exist") surfaced straight to the operator. Entity-scoped catalogs (routed through
+  // withCompanyScope, not withCurrentUser directly) — buildAppFor's shared mocks already cover both.
+
+  it("labor_rates (hasUpdatedAt+hasAuditUserColumns: false): CREATE never references updated_at or the audit-user columns", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(laborRatesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/maintenance/labor-rates?operating_company_id=${TEST_OPCO}`,
+      payload: { code: "CC3-TEST-RATE", display_name: "125.50" },
+    });
+    expect(response.statusCode).toBe(201);
+    const insertSql = sqlLog.find((s) => s.trim().startsWith("INSERT INTO"));
+    expect(insertSql).toBeDefined();
+    expect(insertSql).not.toContain("created_by_user_id");
+    expect(insertSql).not.toContain("updated_by_user_id");
+    // The RETURNING clause legitimately still names updated_at (NULL::timestamptz AS updated_at,
+    // hasUpdatedAt:false's honest read-back placeholder) -- only the INSERT column list matters here.
+    const insertColumnList = insertSql?.split("VALUES")[0] ?? "";
+    expect(insertColumnList).not.toContain("updated_at");
+  });
+
+  it("maintenance_part_locations (hasUpdatedAt+hasAuditUserColumns: false): CREATE never references updated_at or the audit-user columns", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(maintenancePartLocationsCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/maintenance/part-locations?operating_company_id=${TEST_OPCO}`,
+      payload: { code: "CC3-TEST-LOC", display_name: "Test Location" },
+    });
+    expect(response.statusCode).toBe(201);
+    const insertSql = sqlLog.find((s) => s.trim().startsWith("INSERT INTO"));
+    expect(insertSql).toBeDefined();
+    expect(insertSql).not.toContain("created_by_user_id");
+    expect(insertSql).not.toContain("updated_by_user_id");
+    // The RETURNING clause legitimately still names updated_at (NULL::timestamptz AS updated_at,
+    // hasUpdatedAt:false's honest read-back placeholder) -- only the INSERT column list matters here.
+    const insertColumnList = insertSql?.split("VALUES")[0] ?? "";
+    expect(insertColumnList).not.toContain("updated_at");
   });
 });
