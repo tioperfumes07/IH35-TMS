@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["fleet","fuel","accounting","drivers"],"cols":["load","trailer","connectivity","reverse_link"],"leafRe":"^(roster\\.|unit\\.|trailer\\.|expenses\\.|fuel|history|driver)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
-/** @matrix-built {"modules":["dispatch"],"cols":["load","trailer","connectivity"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.expenses_reverse","trailer.profile.assignment","trailer.profile.maintenance","trailer.profile.expenses_reverse"],"task":"CLASS-F5881-TRAILER-PROFILE-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +13,31 @@ const VEHICLE_PAGE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const EXPENSE_ROUTES = "apps/backend/src/accounting/expenses.routes.ts";
 const WO_DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const ASSIGNMENT = "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx";
+const FLEET_MATRIX = "docs/specs/scoreboard/modules/fleet.required.json";
+const BUILT_FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-trailer-profile-sections-complete.mjs";
+
+const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.expenses_reverse","trailer.profile.assignment","trailer.profile.maintenance","trailer.profile.expenses_reverse"],"task":"CLASS-F5881-TRAILER-PROFILE-REVERSE-EXACT","vertical":"class-sweep"} */';
+const EXACT_LEAVES = [
+  "unit.profile.expenses_reverse",
+  "trailer.profile.assignment",
+  "trailer.profile.maintenance",
+  "trailer.profile.expenses_reverse",
+];
+
+function evidenceProblems(source) {
+  const failures = [];
+  const matrix = JSON.parse(source.matrix);
+  for (const id of EXACT_LEAVES) {
+    if (!matrix.leaves.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`missing Required reverse cell ${id}`);
+  }
+  if (!source.self.split("\n").includes(EXACT_HEADER)) failures.push("exact Fleet reverse Built header missing");
+  const feed = JSON.parse(source.feed);
+  if ((feed.entries ?? []).some((entry) => entry.guard === SELF && entry.cols?.includes("reverse_link"))) {
+    failures.push("legacy trailer-profile manual feed still paints reverse leaves");
+  }
+  return failures;
+}
 
 export function problems(
   page,
@@ -168,7 +192,23 @@ function selftest() {
       process.exit(1);
     }
   }
-  console.log("verify:trailer-profile-sections-complete SELFTEST PASS — P31 + ACCT-F5031/5032/5033 reverse mutations caught");
+  const evidence = {
+    matrix: fs.readFileSync(path.join(ROOT, FLEET_MATRIX), "utf8"),
+    feed: fs.readFileSync(path.join(ROOT, BUILT_FEED), "utf8"),
+    self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+  };
+  if (evidenceProblems(evidence).length) throw new Error(`baseline evidence failed: ${evidenceProblems(evidence).join("; ")}`);
+  for (const id of EXACT_LEAVES) {
+    const mutant = { ...evidence, matrix: evidence.matrix.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (!evidenceProblems(mutant).length) throw new Error(`Required mutation survived: ${id}`);
+  }
+  if (!evidenceProblems({ ...evidence, self: evidence.self.replace(EXACT_HEADER, `${EXACT_HEADER}.broken`) }).length) {
+    throw new Error("exact header mutation survived");
+  }
+  const feed = JSON.parse(evidence.feed);
+  feed.entries.unshift({ task: "P31-BROKEN", guard: SELF, modules: ["fleet"], cols: ["reverse_link"], leafRe: "^unit\\." });
+  if (!evidenceProblems({ ...evidence, feed: JSON.stringify(feed) }).length) throw new Error("legacy feed mutation survived");
+  console.log(`verify:trailer-profile-sections-complete SELFTEST PASS — ${cases.length - 1 + EXACT_LEAVES.length + 2} planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -186,6 +226,11 @@ const failures = problems(
   fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8"),
   fs.readFileSync(path.join(ROOT, ASSIGNMENT), "utf8"),
 );
+failures.push(...evidenceProblems({
+  matrix: fs.readFileSync(path.join(ROOT, FLEET_MATRIX), "utf8"),
+  feed: fs.readFileSync(path.join(ROOT, BUILT_FEED), "utf8"),
+  self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+}));
 if (failures.length) {
   for (const failure of failures) console.error(`verify:trailer-profile-sections-complete FAIL: ${failure}`);
   process.exit(1);

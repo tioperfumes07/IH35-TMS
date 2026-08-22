@@ -699,21 +699,6 @@
       "leafRe": "^(list\\.|detail\\.|md\\.)"
     },
     {
-      "task": "P31",
-      "pr": "#5830",
-      "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
-      "modules": [
-        "dispatch",
-        "fleet"
-      ],
-      "cols": [
-        "load",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.)"
-    },
-    {
       "task": "P30",
       "pr": "#5979",
       "guard": "scripts/verify-steps/3123-verify-driver-profile-settlement-reverse-link.mjs",
@@ -1086,23 +1071,6 @@
         "reverse_link"
       ],
       "leafRe": "^(expenses\\.|trailer\\.|detail)"
-    },
-    {
-      "task": "CREATE-PATH-TRIP-TRAILER-FUEL-EXPENSE-REVERSE",
-      "pr": "#6343",
-      "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
-      "modules": [
-        "fleet",
-        "fuel",
-        "accounting"
-      ],
-      "cols": [
-        "trailer",
-        "connectivity",
-        "reverse_link",
-        "load"
-      ],
-      "leafRe": "^(trailer\\.|expenses\\.|fuel|history)"
     },
     {
       "task": "ACCT-F5024-FUEL-CLASS-OWNER-LEASE",
