@@ -22,6 +22,9 @@ export function run(root = process.cwd()) {
   if (!lookup.includes("linked_object_type = 'transfer'")) {
     failures.push("transfer-tms-je-lookup must also try transaction_source_links linked_object_type=transfer");
   }
+  if (!/FROM accounting\.journal_entries[\s\S]*operating_company_id = \$1::uuid[\s\S]*journal_entry_memo/.test(lookup)) {
+    failures.push("transfer JE reverse must resolve a company-scoped human memo");
+  }
   if (!lookup.includes("reversal_of_line_id IS NULL")) {
     failures.push(
       "transfer-tms-je-lookup must exclude reversal lines (reversal_of_line_id IS NULL) so revoke does not land JE drill on the reversing entry"
@@ -38,11 +41,18 @@ export function run(root = process.cwd()) {
   if (!routes.includes("attachTransferJournalEntryIds") || !routes.includes("transfer-tms-je-lookup")) {
     failures.push("transfers.routes must enrich list/detail via attachTransferJournalEntryIds");
   }
+  if (!/type TransferReverseProjection[\s\S]*journal_entry_memo\?: string \| null[\s\S]*attachTransferJournalReverse/.test(routes)) {
+    failures.push("transfers routes must carry the JE human label through list and detail responses");
+  }
   if (!api.includes("journal_entry_id?:") && !api.includes("journal_entry_id?: string")) {
     failures.push("Transfer type must expose optional journal_entry_id");
   }
+  if (!api.includes("journal_entry_memo?:")) failures.push("Transfer type must expose journal_entry_memo");
   if (!transfers.includes('kind="journal_entry"') && !transfers.includes("kind='journal_entry'")) {
     failures.push("TransfersListPage must EntityLink journal_entry when journal_entry_id present");
+  }
+  if (!/entityLabel\(row\.journal_entry_memo, row\.journal_entry_id, "Journal entry"\)/.test(transfers)) {
+    failures.push("TransfersListPage must label the JE drill with its resolved memo");
   }
   if (!transfers.includes("banking-transfer-gl-posting-honesty-banner")) {
     failures.push("TransfersListPage must show TRANSFER_GL_POSTING_ENABLED honesty banner");
@@ -64,16 +74,16 @@ if (process.argv.includes("--selftest")) {
   };
   mk(
     "apps/backend/src/lib/transfer-tms-je-lookup.ts",
-    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\nreversal_of_line_id IS NULL\nORDER BY jep.created_at ASC, jep.line_sequence ASC\n`
+    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\nreversal_of_line_id IS NULL\nORDER BY jep.created_at ASC, jep.line_sequence ASC\nFROM accounting.journal_entries\noperating_company_id = $1::uuid\njournal_entry_memo\n`
   );
   mk(
     "apps/backend/src/banking/transfers.routes.ts",
-    `attachTransferJournalEntryIds\ntransfer-tms-je-lookup\n`
+    `attachTransferJournalEntryIds\ntransfer-tms-je-lookup\ntype TransferReverseProjection = { journal_entry_memo?: string | null };\nattachTransferJournalReverse\n`
   );
-  mk("apps/frontend/src/api/banking.ts", `journal_entry_id?: string | null;\n`);
+  mk("apps/frontend/src/api/banking.ts", `journal_entry_id?: string | null;\njournal_entry_memo?: string | null;\n`);
   mk(
     "apps/frontend/src/pages/banking/TransfersListPage.tsx",
-    `kind="journal_entry"\nbanking-transfer-gl-posting-honesty-banner\ntransfersQuery.isSuccess\n`
+    `kind="journal_entry"\nentityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")\nbanking-transfer-gl-posting-honesty-banner\ntransfersQuery.isSuccess\n`
   );
   mk(
     "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
