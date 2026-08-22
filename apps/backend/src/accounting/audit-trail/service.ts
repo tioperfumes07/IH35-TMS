@@ -15,6 +15,7 @@ export type AccountingAuditTrailEvent = {
   memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string | null;
+  source_entity_kind: string | null;
   source_transaction_id: string | null;
   source_transaction_line_id: string | null;
   account_id: string;
@@ -55,6 +56,18 @@ export type AccountingSourceLineageRow = {
 };
 
 type Cursor = { occurred_at: string; id: string };
+
+export function accountingSourceEntityKind(sourceType: string | null | undefined): string | null {
+  switch ((sourceType ?? "").trim().toLowerCase()) {
+    case "customer_payment":
+    case "payment":
+      return "payment";
+    case "bill_payment":
+      return "bill_payment";
+    default:
+      return sourceType?.trim() || null;
+  }
+}
 
 export function decodeAuditTrailCursor(raw: string | undefined): Cursor | null {
   if (!raw) return null;
@@ -188,6 +201,7 @@ export async function listAccountingAuditTrail(
       memo: row.memo == null ? null : String(row.memo),
       posting_batch_id: row.posting_batch_id ? String(row.posting_batch_id) : null,
       source_transaction_type: row.source_transaction_type ? String(row.source_transaction_type) : null,
+      source_entity_kind: accountingSourceEntityKind(row.source_transaction_type ? String(row.source_transaction_type) : null),
       source_transaction_id: row.source_transaction_id ? String(row.source_transaction_id) : null,
       source_transaction_line_id: row.source_transaction_line_id ? String(row.source_transaction_line_id) : null,
       account_id: String(row.account_id ?? ""),

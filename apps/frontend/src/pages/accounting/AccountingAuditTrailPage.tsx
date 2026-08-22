@@ -40,8 +40,9 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "bill";
     case "customer_payment":
     case "payment":
-    case "bill_payment":
       return "payment";
+    case "bill_payment":
+      return "bill_payment";
     case "expense":
       return "expense";
     case "settlement":
@@ -173,7 +174,7 @@ export function AccountingAuditTrailPage() {
               <>
                 {" / "}
                 <PostingEntityLink
-                  type={row.source_transaction_type}
+                  type={row.source_entity_kind ?? row.source_transaction_type}
                   id={row.source_transaction_id}
                   label={entityLabel(null, row.source_transaction_id, "Source transaction")}
                 />

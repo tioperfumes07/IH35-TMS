@@ -34,6 +34,7 @@ export type InvoiceJournalEntryLink = {
   status: string | null;
   source: string | null;
   source_transaction_type: string | null;
+  source_entity_kind: string | null;
   source_transaction_id: string | null;
   posting_batch_id: string | null;
 };
