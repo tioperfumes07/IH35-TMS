@@ -1,3 +1,31 @@
+- 2026-08-22T05:35Z CC-1 | ACCT-F5756 SHIPPED (PR #13931, merge --admin, no CI wait) | parts-invoice-links DELETE is now an atomic void, not a physical delete | picked up next OPEN money/WORM SQL row (INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE) | NEXT=next OPEN money SQL on the board | GO
+  Gate 0 -> push -> claim (migration 202612980000 + verify-step 4257 in one claim PR) -> merge --admin
+  -> real fix PR -> merge --admin -> Neon (already applied before the PR even opened) -> OUTBOX. No
+  chrome sweep.
+  maintenance.parts_invoice_links had NO void/reversal metadata at all (confirmed live via
+  information_schema.columns) -- every DELETE permanently destroyed the append-only WO
+  parts-consumption record AND never restored parts_inventory.on_hand_qty, leaving stock permanently
+  understated by qty_used with no way to recover the true figure once the row was gone.
+  Added voided_at/void_reason/voided_by_user_id (same shape as banking.reconciliation_matches's
+  existing convention), applied directly to Neon prod via RESET ROLE before opening the fix PR.
+  DELETE now runs an atomic void (never double-voids, scoped to voided_at IS NULL) + restores
+  on_hand_qty in the same transaction. Both active-list reads AND wo-cost-validation.ts's cost rollup
+  now exclude voided rows -- the cost-rollup exclusion was proactive: void-not-delete alone would have
+  silently introduced a NEW bug (a voided part still counting toward WO total_actual_cost) if I hadn't
+  traced every reader of this table first.
+  Prod table has ZERO real rows today (confirmed live before choosing a method) -- rehearsed the full
+  void+stock-restore round-trip via a SYNTHETIC row (real work_order/vendor/parts_inventory/user ids)
+  inserted inside a Neon transaction ended with ROLLBACK: on_hand_qty correctly went 2 -> 4, then an
+  independent follow-up read confirmed both the synthetic row (count=0) and on_hand_qty (back to 2)
+  were fully reverted -- zero prod data mutated.
+  LIVE PROOF: node scripts/verify-parts-invoice-links-void-not-delete.mjs --selftest exit 0 (7/7). node
+  scripts/verify-parts-invoice-links-void-not-delete.mjs exit 0. npx tsc -b apps/backend exit 0.
+  Migration + synthetic-row rehearsal both against real prod (Neon tiny-field-89581227). node
+  scripts/verify-guard-wired.mjs exit 0. node scripts/money-pr-local-gate.mjs exit 0. Merged PR #13931
+  confirmed on origin/main.
+  REMAINING: none for this defect -- no frontend UI calls this DELETE endpoint yet (confirmed via
+  repo-wide grep before shipping), so there was no in-flight consumer behavior to break.
+
 - 2026-08-22T05:22Z CC-1 | BANK-F5761 SHIPPED (PR #13921, merge --admin, no CI wait) | reconciliation unmatch now clears all 6 match kinds, not 3 | picked up the next OPEN money SQL row on the board (BANK-RECON-UNMATCH-CLEARS-ONLY-THREE-OF-SIX-MATCH-KINDS) per the fast-merge cadence | NEXT=next OPEN money SQL on the board | GO
   Gate 0 -> push -> PR -> merge --admin immediately -> (no Neon step needed, pure backend code change,
   not a migration) -> OUTBOX, per the corrected cadence. No chrome sweep.
