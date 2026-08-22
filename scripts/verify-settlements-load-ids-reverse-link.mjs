@@ -2,7 +2,7 @@
 /**
  * verify-settlements-load-ids-reverse-link.mjs
  *
- * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(settlements\\.list|pre_settlements|settlements\\.panel\\.pre_settlements)$","task":"SETL-LIST-LOAD-REVERSE"}
+ * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["settlements.list","pre_settlements","settlements.panel.pre_settlements"],"task":"SETL-F5831"}
  *
  * P14 Box4 gap: settlements.panel.pre_settlements's `load`/`reverse_link` cells were unpaid because
  * SettlementListRow only ever carried `load_count` (a number), never the actual load ids — the
@@ -24,11 +24,13 @@ const routesPath = "apps/backend/src/driver-finance/settlements.routes.ts";
 const panelPath = "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx";
 const tablePath = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
 const apiTypePath = "apps/frontend/src/api/driverFinance.ts";
+const guardPath = "scripts/verify-settlements-load-ids-reverse-link.mjs";
 const source = {
   routes: readFileSync(routesPath, "utf8"),
   panel: readFileSync(panelPath, "utf8"),
   table: readFileSync(tablePath, "utf8"),
   api: readFileSync(apiTypePath, "utf8"),
+  guard: readFileSync(guardPath, "utf8"),
 };
 
 function handler(src, start, end) {
@@ -39,6 +41,9 @@ function handler(src, start, end) {
 
 export function collectFailures(src = source) {
   const failures = [];
+  if (!/@matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.list","pre_settlements","settlements\.panel\.pre_settlements"\],"task":"SETL-F5831"\}/.test(src.guard)) {
+    failures.push(`${guardPath}: exact leaf-specific Built annotation missing`);
+  }
   const general = handler(src.routes, 'app.get("/api/v1/driver-finance/settlements"', 'app.get("/api/v1/drivers/:id/settlements"');
   const driver = handler(src.routes, 'app.get("/api/v1/drivers/:id/settlements"', 'app.get("/api/v1/driver-finance/settlements/:id"');
   for (const [name, block] of [["general list", general], ["driver reverse list", driver]]) {
@@ -77,6 +82,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
+    ["exact Built annotation", "guard", /@matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.list","pre_settlements","settlements\.panel\.pre_settlements"\],"task":"SETL-F5831"\}/, "@matrix-built removed"],
     ["general producer", "routes", /array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/, "array_agg(NULL)"],
     ["driver producer", "routes", /array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "array_agg(NULL)" : match],
     ["general mapper", "routes", /load_ids:\s*Array\.isArray\(row\.load_ids\)/, "load_ids: false"],
