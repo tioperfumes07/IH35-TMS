@@ -1837,25 +1837,6 @@
       "leafRe": "^(planning\\.(loads|timeline)|claims\\.list|lawsuits\\.list|home\\.(rm_status_board|recent_activity))$"
     },
     {
-      "task": "LINK-F5135-SELECTED-RECORD-SUMMARY-REVERSE-LINKS",
-      "pr": "this PR",
-      "guard": "scripts/verify-selected-record-summary-reverse-links.mjs",
-      "modules": [
-        "dispatch",
-        "insurance",
-        "maintenance"
-      ],
-      "cols": [
-        "driver",
-        "unit",
-        "load",
-        "policy",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^(home\\.kanban|policies\\.list|pm\\.auto_engine\\.run|pm\\.schedule\\.list)$"
-    },
-    {
       "task": "LINK-F5138-CONTEXT-IDENTITY-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-context-identity-reverse-links.mjs",
