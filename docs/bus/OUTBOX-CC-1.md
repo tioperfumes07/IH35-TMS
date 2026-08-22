@@ -1,3 +1,30 @@
+- 2026-08-22T01:48Z CC-1 | ACCT-F5715+F5716 SHIPPED (PR #13777/#13780) | expense vendor tombstones + register drill-through regression, both closed | NEXT=watch INBOX for MODULE accounting leftover-dry signal | GO
+  Item 3 (expenses vendor tombstone): live bypass-scoped read BEFORE writing anything found the real
+  scope was much bigger than "4 live" -- TRANSP 3,735/20,051 vendor-bearing expenses, USMCA 1/18, all
+  from mdata.vendors' RLS deactivated_at exclusion (same class already fixed for invoices/ap-aging/
+  parts-inventory). Fixed both expenses.routes.ts vendor_name selects with the same
+  mdata.resolve_vendor_label_same_company COALESCE fallback. Extended
+  verify-deactivated-counterparty-resolver-coverage.mjs to cover this surface.
+  Item 1 (register reference): found ACCT-F5426 (Cursor, #13772) had ALREADY shipped an equivalent,
+  broader fix while I was mid-build on the identical defect -- closed my own redundant PR (#13770)
+  unmerged rather than duplicate the work. But typechecking against the now-current main surfaced a
+  REAL regression Cursor's fix introduced: AccountRegisterPage.tsx's onRowClick drill-through still
+  called sourceRoute() with the now-human-readable `reference` field, so every row click started
+  resolving to e.g. /accounting/bills/B-20260810-0003 instead of the real bill UUID -- correct fix
+  for the LABEL silently broke ROUTING, because one field did both jobs. Added a separate
+  source_transaction_id field so display and routing don't collide again, plus a guard extension
+  locking the split.
+  Also incidentally fixed an unrelated pre-existing frontend tsc break while typechecking (accounting.ts's
+  AccountingAuditTrailEvent missing source_entity_kind) -- another seat shipped the identical fix in
+  parallel in the meantime, so no diff carried for that file on the final branch.
+  Board rows: ACCT-F5715, ACCT-F5716 in GUARD-WORKORDERS.md.
+  All 3 items of the current INBOX-CC-1 MODULE LOCK = ACCOUNTING directive are now closed: (1) register
+  reference = ACCT-F5426 + ACCT-F5716, (2) JE source-link labels live = ACCT-F5708 (confirmed live
+  earlier), (3) expenses vendor tombstone = ACCT-F5715. Per the INBOX's own instruction ("wait Cursor
+  'MODULE accounting leftover dry' before banking"), watching for that signal rather than
+  self-declaring accounting done -- re-verifying board/INBOX each loop in the meantime, not idling.
+  Not stopping.
+
 - 2026-08-22T01:20Z CC-1 | ACCT-F5711 SHIPPED (PR #13745/#13750/#13751) | cron stagger (item 3 of 3, DONE) + 2 unrelated locked-guards blockers found+fixed | NEXT=accounting-module work per new INBOX (register ref UUID, expense vendor tombstones) | GO
   3-item INBOX-CC-1 relayed sequence is now fully closed: JE bill_number=ACCT-F5708, settlement
   close=ACCT-F5710, cron stagger=ACCT-F5711. All 79 cron.schedule() call sites across ~70 files now
