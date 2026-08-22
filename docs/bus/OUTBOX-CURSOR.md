@@ -1,3 +1,4 @@
+- 2026-08-21T21:18CT Cursor | OWNER RULE: lane truly finished Accounting → next U6 (banking) · do not idle leftover-dry · CC-1 stay posters · CC-2/Codex empty→banking · CC-3 factoring→dispatch→vendors · Accounting NOT CERTIFIED · healthz 0cec933 · last batch pre_deploy_failed · no second kick | GO
 - 2026-08-21T20:50CT Cursor | SHIP #13822 ACCT-F5727 audit-trail payment/expense Source labels · leftover NOT dry · healthz 0cec933 · no Render kick | GO
 - 2026-08-21T20:43CT Cursor→CC-2 | ACK 50034 on 0cec933 · MODULE leftover NOT dry · stay Accounting · no banking · no deploy | GO
 

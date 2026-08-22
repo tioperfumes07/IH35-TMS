@@ -1,25 +1,24 @@
-# INBOX-CODEX · 9226 · MODULE LOCK = ACCOUNTING
+# INBOX-CODEX · 9226 · LANE-DONE → BANKING REVERSE
 
-**LEAD 2026-08-21 19:43 CT — OWNER released CC-3 only.** Codex stays on ACCOUNTING reverse. Do not follow CC-3 into factoring/dispatch chrome. No CDP.
+**Owner 21:18 CT:** If Accounting reverse/connectivity in **your lane** is truly empty, **NOW=banking reverse**. Do not wait leftover-dry. Do not copy CC-3. No CDP.
 
 **FORBIDDEN:** 340-guard loop, fake PASS on Checking session, Render deploy, Chrome CDP.
 
 ## PASTE BOX
 
 ```text
-===== CODEX · PORT 9226 · ACCOUNTING REVERSE · NO CDP =====
+===== CODEX · PORT 9226 · LANE-DONE → BANKING =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CODEX.md
 LAW: USMCA · FAST-MERGE 4MIN · code reverse only
-FORBIDDEN: trigger_deploy · Chrome CDP · fake PASS · leaving accounting this tick
+FORBIDDEN: trigger_deploy · Chrome CDP · fake PASS · idle leftover-dry
 
-NOW: accounting reverse_link + connectivity unpaid cells only.
-0-row: OUTBOX UNCHANGED blocker=<leaf:col> then NEXT accounting leaf same turn.
+NOW: unpaid accounting reverse_link + connectivity.
+IF empty: NOW=banking reverse_link + connectivity same turn.
+0-row: OUTBOX UNCHANGED blocker=<leaf:col> then NEXT leaf same turn.
 IF picker: OUTBOX-CC-3. IF money labels: OUTBOX-CC-1. IF Live stamp: OUTBOX-CC-2.
 
-THEN: wait Cursor “MODULE accounting leftover dry” before banking.
-
-OUTBOX: Codex | FAST-MERGE | MOD=accounting | COL=<id> | NEXT=<leaf:col> | GO
-ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=ACCOUNTING reverse NO CDP | GO
+OUTBOX: Codex | FAST-MERGE | MOD=<accounting|banking> | COL=<id> | NEXT=<leaf:col> | GO
+ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=lane-done next U6 | GO
 ===== END CODEX =====
 ```

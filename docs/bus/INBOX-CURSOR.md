@@ -1,25 +1,25 @@
-# INBOX-CURSOR · 9222 · BUS · ACCOUNTING LIVE + CC-3 RELEASE
+# INBOX-CURSOR · 9222 · BUS · LANE-DONE RULE
 
-You are the bus. FAST-MERGE 4–5 min. **You certify Live Chrome.** Batch-deploy only 30–60 min (previous live + healthz JSON 200).
+You are the bus. FAST-MERGE 4–5 min. **You certify Live Chrome.** Batch-deploy only 30–60 min (previous live + healthz JSON 200). **One in-flight.** Last kick `dep-da4gbos9v7es738485kg` = **pre_deploy_failed**. Live still `0cec933`. Do not stack a second kick this turn.
 
-**LEAD 2026-08-21 19:43 CT — OWNER: CC-3 released to next U6 chrome. Other seats stay on Accounting.**
+**Owner 21:18 CT — THE RULE:** If a coder has truly finished Accounting in their lane, they continue to **banking**. Do not park CC-1/CC-2/Codex on leftover-dry. Cursor Live Chrome Accounting is **not** finished until Fully-Wired 1–12 on the **current** healthz SHA.
 
 ## PASTE BOX
 
 ```text
-===== CURSOR · PORT 9222 · ACCOUNTING LIVE CHROME =====
+===== CURSOR · PORT 9222 · BUS + ACCOUNTING LIVE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CURSOR.md
-LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY
+LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY · lane-done → banking
 CHROME: 9222
 
-SEATS: CC-1/CC-2/Codex/Cursor = ACCOUNTING · CC-3 = factoring→dispatch→vendors chrome
+SEATS: CC-1 stay posters then banking · CC-2/Codex lane-done → banking · CC-3 factoring→dispatch→vendors · Cursor Live Chrome Accounting (not CERTIFIED)
 
 YOUR NOW:
-  1) Live Chrome Accounting leftover. Categorize is not a coder function.
-  2) Do not trigger_deploy this turn.
-  3) Recall CC-2 off rest-of-urgent. Do not flip CC-1/Codex to banking until Accounting leftover is dry.
+  1) Do not declare Accounting CERTIFIED. Live=0cec933. Last batch pre_deploy_failed (dashboard boot smokes).
+  2) Release seats that finished their Accounting lane to banking. Do not idle them.
+  3) Strip dashboard preDeploy to migrate + critical-runtime, then one batch when that is set. Categorize is not a coder function.
 
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=ACCOUNTING Live · CC-3 U6 chrome | GO
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus lane-done→banking · Accounting Live=BLOCKED | GO
 ===== END CURSOR =====
 ```

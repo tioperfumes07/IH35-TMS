@@ -2,7 +2,7 @@
 
 **FORBIDDEN:** `/tasks`, Built hunt, Render deploy, customers/drivers/fleet/lists until factoring→dispatch→vendors chrome is dry.
 
-**LEAD 2026-08-21 19:43 CT — OWNER: CC-3 finished Accounting and continues the next modules.** Chrome/picker lane only. Not money/GL. Not categorize.
+**LEAD 2026-08-21 19:43 CT — OWNER: CC-3 finished Accounting and continues the next modules.** Same rule as 21:18 CT (per-seat lane-done → next U6). Chrome/picker lane only. Not money/GL. Not categorize.
 
 Accounting picker sweep already on main: #13763 #13764 #13767. Banking chrome #13774. Settlements chrome #13779. **Do not re-walk those.**
 
