@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet","drivers"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^dispatch\\.modal\\.quick_assign$|^fleet\\.modal\\.quick_assign$|^unit\\.profile\\.(quick_assign|current_load)$","task":"THEATER-QUICK-ASSIGN-UNIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch","fleet","drivers"],"cols":["unit","connectivity","picker_law"],"leafRe":"^dispatch\\.modal\\.quick_assign$|^fleet\\.modal\\.quick_assign$|^unit\\.profile\\.(quick_assign|current_load)$","task":"THEATER-QUICK-ASSIGN-UNIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.current_load"],"task":"FLEET-F5907-CURRENT-LOAD-TASKS-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-quick-assign-unit-linkage";
@@ -10,8 +11,18 @@ const files = {
   aggregate: "apps/backend/src/mdata/unit-aggregate.service.ts",
   reverse: "apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx",
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+  matrix: "docs/specs/scoreboard/modules/fleet.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-quick-assign-unit-linkage.mjs",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.current_load"],"task":"FLEET-F5907-CURRENT-LOAD-TASKS-REVERSE-EXACT","vertical":"class-sweep"} */';
+const mutateCurrentLoadLeaf = (text, mutate) => {
+  const parsed = JSON.parse(text);
+  const leaf = parsed.leaves.find((row) => row.id === "unit.profile.current_load");
+  mutate(leaf);
+  return JSON.stringify(parsed);
+};
 
 function audit(s) {
   const failures = [];
@@ -27,6 +38,14 @@ function audit(s) {
   if (!/EntityLinkOrTombstone[\s\S]{0,120}kind="load"/.test(s.reverse) || !/Available — no active load assigned to unit/.test(s.reverse)) failures.push("canonical unresolved-safe load drill or honest empty state missing");
   if (!/unitNumber:\s*string/.test(s.reverse) || !/EntityLinkOrTombstone[\s\S]{0,120}kind="unit"[\s\S]{0,120}name=\{unitNumber\}/.test(s.reverse)) failures.push("empty-state unit reverse must consume canonical unit number through unresolved-safe drill");
   if (!/CurrentLoadSection currentLoad=\{profile\.current_load\} unitId=\{id\} unitNumber=\{unitNumber\}/.test(s.profile)) failures.push("unit profile reverse mount must forward canonical unit number");
+  let matrix;
+  try { matrix = JSON.parse(s.matrix); } catch (error) { failures.push(`Fleet matrix parse: ${error.message}`); }
+  const leaf = matrix?.leaves?.find((row) => row.id === "unit.profile.current_load");
+  if (!leaf?.required?.includes("reverse_link")) failures.push("unit.profile.current_load must require reverse_link");
+  if (leaf?.route_hint !== "/fleet/units/:id") failures.push("unit.profile.current_load must name mounted route /fleet/units/:id");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER)) failures.push("exact Fleet current-load header missing");
+  try { if (JSON.parse(s.feed).entries?.some((entry) => entry.guard === files.self)) failures.push("manual feed duplicates Fleet current-load ownership"); }
+  catch (error) { failures.push(`feed parse: ${error.message}`); }
   return failures;
 }
 
@@ -45,6 +64,13 @@ if (process.argv.includes("--selftest")) {
     ["label-contract", "reverse", /unitNumber:\s*string/, "unitNumber?: string"],
     ["label-consumer", "reverse", /name=\{unitNumber\}/, "name={null}"],
     ["label-parent", "profile", / unitNumber=\{unitNumber\}/, ""],
+    ["header", "self", new RegExp(HEADER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')],
+    ["feed", "feed", /^.*$/s, JSON.stringify({ entries: [{ guard: files.self }] })],
+  ];
+  const evidenceMutants = [
+    { ...source, matrix: mutateCurrentLoadLeaf(source.matrix, (leaf) => { leaf.id += ".broken"; }) },
+    { ...source, matrix: mutateCurrentLoadLeaf(source.matrix, (leaf) => { leaf.required = leaf.required.filter((col) => col !== "reverse_link"); }) },
+    { ...source, matrix: mutateCurrentLoadLeaf(source.matrix, (leaf) => { leaf.route_hint = "/broken"; }) },
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
@@ -53,7 +79,8 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  evidenceMutants.forEach((mutation, index) => { if (!audit(mutation).length) { console.error(`${LABEL} SELFTEST FAIL — matrix evidence ${index + 1}`); process.exit(1); } });
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + evidenceMutants.length}/${mutations.length + evidenceMutants.length} runtime/evidence mutations detected`);
   process.exit(0);
 }
 const failures = audit(source);

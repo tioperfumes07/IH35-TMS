@@ -2,7 +2,7 @@
 /**
  * Fleet reverse_link — transfers list EntityLink F+R; create/edit modals honesty-dropped.
  *
- * @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^transfers\\.in_progress$","task":"VERTICAL-REVERSE-LINK-fleet-transfers","vertical":"column-wave"}
+ * @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["transfers.in_progress"],"task":"CLASS-F5906-HIDDEN-TRANSFER-REVERSE-EXACT","vertical":"class-sweep"}
  *
  * Self-test: node scripts/verify-fleet-reverse-link-transfers.mjs --selftest
  */
@@ -13,34 +13,60 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-fleet-reverse-link-transfers";
 const PAGE = "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/fleet.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-fleet-reverse-link-transfers.mjs";
+const HEADER = ' * @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["transfers.in_progress"],"task":"CLASS-F5906-HIDDEN-TRANSFER-REVERSE-EXACT","vertical":"class-sweep"}';
 
-function check(src) {
+function check(files) {
   const fails = [];
-  if (!/EntityLink(?:OrTombstone)?/.test(src)) fails.push(`${PAGE}: must import/render EntityLink`);
-  if (!/kind="unit"/.test(src) && !/kind="trailer"/.test(src)) fails.push(`${PAGE}: must EntityLink unit or trailer (equipment_id)`);
-  if (!/kind="driver"/.test(src) || (src.match(/kind="driver"/g) || []).length < 2) {
-    fails.push(`${PAGE}: must EntityLink from_driver and to_driver`);
-  }
+  if (!/EntityLinkOrTombstone kind="trailer" id=\{row\.equipment_id\} name=\{row\.equipment_number\}/.test(files.page)) fails.push(`${PAGE}: trailer drill must bind canonical id and label`);
+  if (!/EntityLinkOrTombstone kind="driver" id=\{row\.from_driver_id\} name=\{row\.from_driver_name\}/.test(files.page)) fails.push(`${PAGE}: from-driver drill must bind canonical id and label`);
+  if (!/EntityLinkOrTombstone kind="driver" id=\{row\.to_driver_id\} name=\{row\.to_driver_name\}/.test(files.page)) fails.push(`${PAGE}: to-driver drill must bind canonical id and label`);
+  let matrix;
+  try { matrix = JSON.parse(files.matrix); } catch (error) { fails.push(`Fleet matrix parse: ${error.message}`); }
+  const leaf = matrix?.leaves?.find((row) => row.id === "transfers.in_progress");
+  if (!leaf?.required?.includes("reverse_link")) fails.push("transfers.in_progress must require reverse_link");
+  if (leaf?.route_hint !== "/fleet/transfers-in-progress") fails.push("transfers.in_progress must name mounted route /fleet/transfers-in-progress");
+  if (!files.self.split('import fs from "node:fs";')[0].includes(HEADER)) fails.push("exact Fleet transfers header missing");
+  try { if (JSON.parse(files.feed).entries?.some((entry) => entry.guard === SELF)) fails.push("manual feed duplicates Fleet transfers ownership"); }
+  catch (error) { fails.push(`feed parse: ${error.message}`); }
   return fails;
 }
 
+const current = {
+  page: fs.readFileSync(path.join(ROOT, PAGE), "utf8"),
+  matrix: fs.readFileSync(path.join(ROOT, MATRIX), "utf8"),
+  feed: fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+  self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+};
+
 if (process.argv.includes("--selftest")) {
-  const liveSrc = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const live = check(liveSrc);
-  const planted = check("// poison\n");
-  if (planted.length < 2) {
-    console.error(`${LABEL} SELFTEST FAIL`);
-    process.exit(1);
-  }
-  console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
+  const live = check(current);
   if (live.length) {
     console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
     process.exit(1);
   }
+  const mutations = [
+    { ...current, page: current.page.replace('kind="trailer" id={row.equipment_id}', 'kind="trailer" id={null}') },
+    { ...current, page: current.page.replace('kind="driver" id={row.from_driver_id}', 'kind="driver" id={null}') },
+    { ...current, page: current.page.replace('kind="driver" id={row.to_driver_id}', 'kind="driver" id={null}') },
+    { ...current, matrix: current.matrix.replace('"id": "transfers.in_progress"', '"id": "transfers.in_progress.broken"') },
+    { ...current, matrix: current.matrix.replace('"route_hint": "/fleet/transfers-in-progress"', '"route_hint": "/broken"') },
+    { ...current, self: current.self.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) },
+    { ...current, feed: JSON.stringify({ entries: [{ guard: SELF }] }) },
+  ];
+  mutations.forEach((mutation, index) => {
+    if (!check(mutation).length) {
+      console.error(`${LABEL} SELFTEST FAIL — mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  });
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} runtime/evidence defects rejected`);
   process.exit(0);
 }
 
-const fails = check(fs.readFileSync(path.join(ROOT, PAGE), "utf8"));
+const fails = check(current);
 if (fails.length) {
   console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
   process.exit(1);

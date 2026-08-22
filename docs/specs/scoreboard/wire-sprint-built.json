@@ -1491,23 +1491,6 @@
       "leafRe": "^(quick.?assign|assignment|trailer|load|profile|dispatch|create)"
     },
     {
-      "task": "QUICK-ASSIGN-UNIT-LINKAGE",
-      "pr": "this PR",
-      "guard": "scripts/verify-quick-assign-unit-linkage.mjs",
-      "modules": [
-        "dispatch",
-        "fleet",
-        "drivers"
-      ],
-      "cols": [
-        "unit",
-        "connectivity",
-        "reverse_link",
-        "picker_law"
-      ],
-      "leafRe": "^(quick.?assign|assignment|unit|load|profile|dispatch|create)"
-    },
-    {
       "task": "EQUIPMENT-TRANSFER-TRAILER-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-equipment-transfer-trailer-linkage.mjs",
@@ -2240,18 +2223,6 @@
       "leafRe": "^(payments\\.receive|accounting\\.parity\\.vendor_credits_page|accounting\\.panel\\.(trk_bulk_register|detail))$"
     },
     {
-      "task": "VERTICAL-REVERSE-LINK-UNIT-TASKS",
-      "pr": "this PR",
-      "guard": "scripts/verify-unit-task-reverse-drill.mjs",
-      "modules": [
-        "fleet"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^unit\\.detail\\.tasks$"
-    },
-    {
       "task": "VERTICAL-REVERSE-LINK-FLEET-REMAINDER",
       "pr": "this PR",
       "guard": "scripts/verify-fleet-reverse-link-remainder.mjs",
@@ -2334,18 +2305,6 @@
         "reverse_link"
       ],
       "leafRe": "^dispatch\\.modal\\.save_load_template$"
-    },
-    {
-      "task": "VERTICAL-REVERSE-LINK-SYSTEM-AUDIT-RECORD",
-      "pr": "this PR",
-      "guard": "scripts/verify-system-audit-record-reverse.mjs",
-      "modules": [
-        "system"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^audit\\.trail$"
     },
     {
       "task": "LINK-F5170-CUSTOMER-PICKER-CANONICAL-LABELS",

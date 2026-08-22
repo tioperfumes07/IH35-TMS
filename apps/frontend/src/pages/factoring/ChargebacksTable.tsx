@@ -18,6 +18,11 @@ export type ChargebackFeeRow = {
   invoice_display_id: string | null;
   customer_id: string | null;
   customer_name: string | null;
+  // ACCT-F5901 — the Advance column rendered statement_reference's free-text memo (same string as
+  // the neighboring Statement Ref column) because no dollar field existed on this row at all.
+  // views.factoring_chargebacks_fees (202613080000) now selects the real advance amount, mirroring
+  // views.factoring_recourse_at_risk's already-live advance_amount column exactly.
+  advance_amount: number;
 };
 
 type Props = {
@@ -49,12 +54,13 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
     {
       key: "factoring_advance_id",
       label: "Advance",
+      sortable: true,
+      // ACCT-F5901 — was entityLabel(row.statement_reference, ...), which rendered the exact same
+      // free-text memo string the neighboring Statement Ref column also renders, not a dollar
+      // amount. The drill-through to the advance record is preserved (never remove a working
+      // link); only the label changes, from duplicated memo text to the real dollar figure.
       render: (row) => (
-        <EntityLink
-          kind="factoring_advance"
-          id={row.factoring_advance_id}
-          label={entityLabel(row.statement_reference, row.factoring_advance_id, "Advance")}
-        />
+        <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={fmtCurrency(row.advance_amount)} />
       ),
     },
     {
