@@ -8,6 +8,7 @@
  * Self-test: node scripts/verify-pre-settlements-reverse-drill.mjs --selftest
  * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["settlements.detail","settlement_close"],"task":"SETL-F5835"}
+ * @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.pre_settlement","dispatch.panel.pre_settlement"],"task":"DISP-F5868-PRE-SETTLEMENT-REVERSE-EXACT-LEAVES","vertical":"column-wave"}
  */
 import fs from "node:fs";
 
@@ -35,11 +36,13 @@ const F = {
   settlementsPage: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
   driverSettlements: "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
   matrix: "docs/specs/scoreboard/modules/settlements.required.json",
+  dispatchMatrix: "docs/specs/scoreboard/modules/dispatch.required.json",
   self: "scripts/verify-pre-settlements-reverse-drill.mjs",
 };
 
 const CHECKS = [
   { name: "exact detail/close reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.detail","settlement_close"\],"task":"SETL-F5835"\}$/m },
+  { name: "exact dispatch pre-settlement reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["load\.drawer\.pre_settlement","dispatch\.panel\.pre_settlement"\],"task":"DISP-F5868-PRE-SETTLEMENT-REVERSE-EXACT-LEAVES","vertical":"column-wave"\}$/m },
   { name: "settlement detail selected-company read", file: F.detail, pattern: /queryKey: \["driver-finance", "settlement-detail", settlementId, companyId\][\s\S]{0,160}getSettlement\(settlementId!, companyId\)[\s\S]{0,100}enabled: Boolean\(settlementId && companyId\)/ },
   { name: "settlement detail route-param mount", file: F.settlementsPage, pattern: /selectedSettlementId = searchParams\.get\("settlement_id"\)[\s\S]{0,10000}selectedSettlementId && activeTab === "settlements"[\s\S]{0,1500}<SettlementDetailPage \/>/ },
   { name: "driver profile exact settlement return", file: F.driverSettlements, pattern: /kind="settlement"\s+id=\{row\.settlement_id\}[\s\S]{0,160}entityLabel\(row\.week_ending \|\| null, row\.settlement_id, "Settlement"\)/ },
@@ -94,6 +97,15 @@ export function collectFailures(sources) {
   } catch {
     failures.push("settlements Required matrix parses");
   }
+  try {
+    const matrix = JSON.parse(sources[F.dispatchMatrix]);
+    for (const id of ["load.drawer.pre_settlement", "dispatch.panel.pre_settlement"]) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) failures.push(`exact dispatch Required ownership: ${id}:reverse_link`);
+    }
+  } catch {
+    failures.push("dispatch Required matrix parses");
+  }
   return failures;
 }
 
@@ -116,11 +128,15 @@ if (process.argv.includes("--selftest")) {
     const planted = sources[F.matrix].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
     if (planted === sources[F.matrix] || !collectFailures({ ...sources, [F.matrix]: planted }).includes(`exact Required ownership: ${id}:reverse_link`)) inert.push(`matrix ${id}`);
   }
+  for (const id of ["load.drawer.pre_settlement", "dispatch.panel.pre_settlement"]) {
+    const planted = sources[F.dispatchMatrix].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
+    if (planted === sources[F.dispatchMatrix] || !collectFailures({ ...sources, [F.dispatchMatrix]: planted }).includes(`exact dispatch Required ownership: ${id}:reverse_link`)) inert.push(`dispatch matrix ${id}`);
+  }
   if (inert.length) {
     console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length + 2}/${CHECKS.length + 2} independent settlement linkage plants`);
+  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length + 4}/${CHECKS.length + 4} independent settlement linkage plants`);
   process.exit(0);
 }
 
