@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBankTransactionsByLinkage } from "../../api/banking";
+import { getBankTransactionSplitsByLinkage, getBankTransactionsByLinkage, type LinkedBankTransactionSplitRow } from "../../api/banking";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel as formatEntityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
@@ -33,6 +33,16 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
   });
 
   const rows = query.data?.rows ?? [];
+  const splitQuery = useQuery({
+    queryKey: ["banking", "split-lines-by-linkage", companyId, linkage.kind, linkage.id],
+    queryFn: () =>
+      getBankTransactionSplitsByLinkage(companyId, {
+        [linkage.kind]: linkage.id,
+        limit: 50,
+      }),
+    enabled: Boolean(companyId && linkage.id),
+  });
+  const splitRows: LinkedBankTransactionSplitRow[] = splitQuery.data?.rows ?? [];
 
   return (
     <div
@@ -51,9 +61,10 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
         Match/Categorize on Banking → Transactions.
       </p>
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading linked bank transactions…</p> : null}
+      {splitQuery.isError ? <ListErrorBanner onRetry={() => void splitQuery.refetch()} /> : null}
+      {query.isLoading || splitQuery.isLoading ? <p className="text-sm text-gray-500">Loading linked bank transactions…</p> : null}
       {/* Absence only after a successful response — never from a failed/pending fetch. */}
-      {query.isSuccess && rows.length === 0 ? (
+      {query.isSuccess && splitQuery.isSuccess && rows.length === 0 && splitRows.length === 0 ? (
         <p className="text-sm text-gray-500" data-testid="linked-bank-transactions-empty">
           No bank transactions tagged to this {linkage.kind.replace("_id", "")} yet. Tagging happens on Banking →
           Transactions → Categorize (persisted links only).
@@ -111,6 +122,32 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
             );
           })}
         </ul>
+      ) : null}
+      {splitRows.length > 0 ? (
+        <div className="mt-3 border-t border-gray-100 pt-2" data-testid="linked-bank-split-lines">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tagged split lines</p>
+          <ul className="divide-y divide-gray-100">
+            {splitRows.map((row) => (
+              <li key={row.split_line_id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <div className="min-w-0">
+                  <EntityLink
+                    kind="bank_transaction"
+                    id={row.bank_transaction_id}
+                    label={formatEntityLabel(row.description?.trim() || null, row.bank_transaction_id, `Bank transaction · split ${row.line_no}`)}
+                  />
+                  <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-gray-500">
+                    <span>{formatDateUS(row.transaction_date) || "—"} · line {row.line_no}</span>
+                    {row.result_bill_id ? <EntityLink kind="bill" id={row.result_bill_id} label="Posted bill" /> : null}
+                    {row.result_driver_advance_id ? <EntityLink kind="cash_advance" id={row.result_driver_advance_id} label="Driver advance" /> : null}
+                    {row.result_deduction_id ? <EntityLink kind="settlement_deduction" id={row.result_deduction_id} label="Recovery deduction" /> : null}
+                    {row.result_journal_entry_id ? <EntityLink kind="journal_entry" id={row.result_journal_entry_id} label="Journal entry" /> : null}
+                  </div>
+                </div>
+                <span className="shrink-0 tabular-nums font-medium text-slate-800">{formatUsdCents(Math.abs(Number(row.amount_cents ?? 0)))}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </div>
   );

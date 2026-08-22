@@ -709,7 +709,7 @@ export function voidBankTransactionSplit(transactionId: string, companyId: strin
 /** BANK-SPLIT-1 — reverse drill-through: split lines tagged to a given driver/unit/trailer/load/vendor. */
 export function getBankTransactionSplitsByLinkage(
   companyId: string,
-  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; vendor_id?: string; limit?: number }
+  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; vendor_id?: string; customer_id?: string; limit?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (linkage.driver_id) params.set("driver_id", linkage.driver_id);
@@ -717,11 +717,26 @@ export function getBankTransactionSplitsByLinkage(
   if (linkage.trailer_id) params.set("trailer_id", linkage.trailer_id);
   if (linkage.load_id) params.set("load_id", linkage.load_id);
   if (linkage.vendor_id) params.set("vendor_id", linkage.vendor_id);
+  if (linkage.customer_id) params.set("customer_id", linkage.customer_id);
   if (linkage.limit != null) params.set("limit", String(linkage.limit));
-  return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
+  return apiRequest<{ rows: LinkedBankTransactionSplitRow[]; total_count: number }>(
     `/api/v1/banking/transaction-splits/by-linkage?${params.toString()}`
   );
 }
+
+export type LinkedBankTransactionSplitRow = {
+  split_line_id: string;
+  bank_transaction_id: string;
+  transaction_date: string | null;
+  description: string | null;
+  line_no: number;
+  amount_cents: number | string;
+  posting_status: string | null;
+  result_driver_advance_id: string | null;
+  result_deduction_id: string | null;
+  result_bill_id: string | null;
+  result_journal_entry_id: string | null;
+};
 
 export function categorizeBankTransactionToAccount(
   transactionId: string,

@@ -1333,7 +1333,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     }
   });
 
-  // REVERSE drill-through: given a Driver/Unit/Trailer/Trip(Load)/Vendor, list the split lines tagged to it
+  // REVERSE drill-through: given a Driver/Unit/Trailer/Trip(Load)/Vendor/Customer, list the split lines tagged to it
   // (+ their parent bank txn + whatever each line produced — advance/deduction/bill). Exactly one linkage
   // param required, mirroring the single-line by-linkage endpoint above (BLOCK-6b), generalized to splits.
   app.get("/api/v1/banking/transaction-splits/by-linkage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -1346,15 +1346,16 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         trailer_id: z.string().uuid().optional(),
         load_id: z.string().uuid().optional(),
         vendor_id: z.string().uuid().optional(),
+        customer_id: z.string().uuid().optional(),
         limit: z.coerce.number().int().min(1).max(500).default(200),
       })
       .safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
-    const provided = [q.data.driver_id, q.data.unit_id, q.data.trailer_id, q.data.load_id, q.data.vendor_id].filter(Boolean);
+    const provided = [q.data.driver_id, q.data.unit_id, q.data.trailer_id, q.data.load_id, q.data.vendor_id, q.data.customer_id].filter(Boolean);
     if (provided.length !== 1) {
       return reply.code(400).send({
         error: "exactly_one_linkage_required",
-        detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id, vendor_id",
+        detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id, vendor_id, customer_id",
       });
     }
     const rows = await getSplitLinesByLinkage(
@@ -1366,6 +1367,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         trailer_id: q.data.trailer_id,
         load_id: q.data.load_id,
         vendor_id: q.data.vendor_id,
+        customer_id: q.data.customer_id,
       },
       q.data.limit
     );
