@@ -61,6 +61,24 @@ function matchedLabel(t: PlaidBankTransaction) {
       />
     );
   }
+  if (t.matched_kind === "je" && t.matched_journal_entry_id) {
+    return (
+      <EntityLink
+        kind="journal_entry"
+        id={t.matched_journal_entry_id}
+        label={entityLabel(t.matched_journal_entry_memo, t.matched_journal_entry_id, "Journal entry")}
+      />
+    );
+  }
+  if (t.matched_kind === "expense" && t.matched_expense_id) {
+    return (
+      <EntityLink
+        kind="expense"
+        id={t.matched_expense_id}
+        label={entityLabel(t.matched_expense_number, t.matched_expense_id, "Expense")}
+      />
+    );
+  }
   if (t.matched_kind === "load" && t.matched_load_id) {
     return <EntityLink kind="load" id={t.matched_load_id} label={entityLabel(null, t.matched_load_id, "Load")} />;
   }
