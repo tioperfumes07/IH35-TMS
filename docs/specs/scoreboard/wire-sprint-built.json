@@ -406,8 +406,7 @@
       "cols": [
         "driver",
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ],
       "leafRe": "^matters\\."
     },
@@ -1139,7 +1138,6 @@
       "cols": [
         "trailer",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ],
       "leafRe": "^(matters|trailer|detail|profile|create)"
@@ -1171,7 +1169,6 @@
       "cols": [
         "driver",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ],
       "leafRe": "^(matters|driver|profile|detail|create)"
@@ -1187,7 +1184,6 @@
       "cols": [
         "unit",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ],
       "leafRe": "^(matters|unit|profile|detail|create)"
@@ -1202,25 +1198,9 @@
       ],
       "cols": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ],
       "leafRe": "^(matters|lawsuit|detail|create)"
-    },
-    {
-      "task": "LEGAL-MATTER-CLAIM-WRITER-INTEGRITY",
-      "pr": "this PR",
-      "guard": "scripts/verify-legal-matter-claim-linkage.mjs",
-      "modules": [
-        "legal",
-        "insurance"
-      ],
-      "cols": [
-        "connectivity",
-        "reverse_link",
-        "picker_law"
-      ],
-      "leafRe": "^(matters|claim|detail|create)"
     },
     {
       "task": "WARRANTY-CLAIM-VENDOR-UPDATE-INTEGRITY",
@@ -2528,8 +2508,7 @@
         "driver",
         "unit",
         "work_order",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ],
       "leafRe": "^(tab\\.violations|safety\\.(drawer|parity)\\.accident_report|profiles\\.detail|claims\\.list|load\\.detail|unit\\.profile\\.(identity|legal_reverse|insurance_claims_reverse)|trailer\\.profile\\.(legal_reverse|insurance_claims_reverse)|matters\\.list|wo\\.console\\.list|home\\.rm_status_board|maintenance\\.modal\\.(work_order_detail|work_order_create|create_work_order))$"
     },

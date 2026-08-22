@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["legal","fleet"],"cols":["trailer","connectivity","reverse_link","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^trailer\\.profile\\.legal_reverse$","task":"THEATER-LEGAL-MATTER-TRAILER-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["legal","fleet"],"cols":["trailer","connectivity","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^trailer\\.profile\\.legal_reverse$","task":"THEATER-LEGAL-MATTER-TRAILER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-legal-matter-trailer-linkage";
