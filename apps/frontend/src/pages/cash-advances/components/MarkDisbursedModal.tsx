@@ -1,14 +1,18 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { markCashAdvanceDisbursed, type CashAdvanceMethod } from "../../../api/cashAdvances";
+import { getPlaidCompanyTransactions } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { Combobox } from "../../../components/shared/Combobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatDateUS } from "../../../lib/formatDate";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   open: boolean;
@@ -27,10 +31,39 @@ type Props = {
 export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advance, onClose, onDone }: Props) {
   const { pushToast } = useToast();
   const [method, setMethod] = useState<CashAdvanceMethod>("direct_bank_transfer");
-  const [bankTxnId, setBankTxnId] = useState("");
+  const [bankTxnId, setBankTxnId] = useState<string | null>(null);
+  const [bankSearch, setBankSearch] = useState("");
   const [comdataTxnId, setComdataTxnId] = useState("");
   const [checkNumber, setCheckNumber] = useState("");
   const [wireRef, setWireRef] = useState("");
+
+  // ACCT-F5965 — was a raw free-text <input> for a field the backend correctly types as
+  // z.string().uuid().optional() (a genuine FK into banking.bank_transactions, consumed by 2 real
+  // UPDATE statements) — any human-readable reference an operator typed threw a raw "Invalid UUID"
+  // Zod error. Mirrors FineLifecycleActions.tsx's bank-transaction picker for the structurally
+  // identical "link a real bank transaction" use case: company-wide, searchable, read-only GET, no
+  // inline "+ Create" (a bank transaction is bank-fed, never hand-created here).
+  const bankTxQuery = useQuery({
+    queryKey: ["banking", "company-transactions", "cash-advance-disburse-picker", operatingCompanyId, bankSearch],
+    queryFn: () =>
+      getPlaidCompanyTransactions(operatingCompanyId, {
+        limit: 100,
+        q: bankSearch.trim() ? bankSearch.trim() : undefined,
+        sort: "date_desc",
+      }),
+    enabled: Boolean(operatingCompanyId) && method === "direct_bank_transfer",
+  });
+
+  const bankOptions = useMemo(
+    () =>
+      (bankTxQuery.data?.transactions ?? []).map((tx) => ({
+        value: String(tx.id),
+        label: `${formatDateUS(tx.transaction_date)} · $${(Math.abs(Number(tx.amount_cents ?? 0)) / 100).toFixed(2)} · ${
+          tx.merchant_name ?? tx.description ?? "(no description)"
+        }`,
+      })),
+    [bankTxQuery.data]
+  );
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -88,8 +121,22 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
 
           {method === "direct_bank_transfer" ? (
             <label className="space-y-1">
-              <span>Bank transaction ID/reference</span>
-              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={bankTxnId} onChange={(e) => setBankTxnId(e.target.value)} />
+              <span>Bank transaction (optional)</span>
+              <div data-testid="cash-advance-disburse-bank-transaction-picker">
+                <Combobox
+                  options={bankOptions}
+                  value={bankTxnId}
+                  onChange={setBankTxnId}
+                  onSearch={setBankSearch}
+                  placeholder={bankTxQuery.isLoading ? "Loading bank transactions…" : "Search by description or merchant…"}
+                />
+              </div>
+              <CappedListNotice
+                shown={bankOptions.length}
+                limit={100}
+                hint="Type to search bank transactions beyond the first page."
+                className="text-xs text-slate-600"
+              />
             </label>
           ) : null}
           {method === "wire" ? (
