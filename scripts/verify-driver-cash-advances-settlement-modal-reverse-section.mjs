@@ -152,8 +152,14 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/listCashAdvances\(operatingCompanyId,\s*\{\s*driver_id:\s*driverId\s*\}\)/.test(driverSection)) {
     problems.push(`${DRIVER_SECTION}: must query cash advances scoped to driverId`);
   }
-  if (!/kind="cash_advance"/.test(driverSection)) {
-    problems.push(`${DRIVER_SECTION}: disbursed advance rows must EntityLink kind=cash_advance`);
+  if (!/queryKey: \["cash-advance-requests", "reverse-driver", operatingCompanyId, driverId\]/.test(driverSection) || !/queryKey: \["cash-advances", "reverse-driver", operatingCompanyId, driverId\]/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: reverse cache keys must include company and driver`);
+  }
+  if (!/const enabled = Boolean\(operatingCompanyId\) && Boolean\(driverId\)/.test(driverSection) || !/enabled,/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: reverse reads must wait for company and driver`);
+  }
+  if (!/kind="cash_advance"[\s\S]{0,100}id=\{id\}[\s\S]{0,180}entityLabel\(row\.display_id as string \| null, id, "Advance"\)/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: disbursed advance rows must drill exact ids with human labels`);
   }
   if (!/kind="cash_advance_request"[\s\S]{0,100}id=\{id\}[\s\S]{0,180}entityLabel\(\(r as Record<string, unknown>\)\.display_id as string \| null, id, "Request"\)/.test(driverSection)) {
     problems.push(`${DRIVER_SECTION}: pending request rows must drill exact request ids with human labels`);
@@ -161,11 +167,13 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/case "cash_advance_request":[\s\S]{0,100}cash-advance-requests\?request_id=\$\{id\}/.test(entityLink)) {
     problems.push(`${ENTITY_LINK}: cash_advance_request must resolve to the canonical exact request route`);
   }
+  if (!/Failed to load pending requests\./.test(driverSection) || !/Failed to load cash advances\./.test(driverSection)) problems.push(`${DRIVER_SECTION}: both reverse readers must expose failures`);
+  if (!/No pending requests or cash advances for this driver\./.test(driverSection)) problems.push(`${DRIVER_SECTION}: reverse section must expose a true empty state`);
   if (!/import\s*\{\s*DriverCashAdvancesReverseSection\s*\}/.test(driverProfile)) {
     problems.push(`${DRIVER_PROFILE}: must import DriverCashAdvancesReverseSection`);
   }
-  if (!/<DriverCashAdvancesReverseSection[\s\S]*?driverId=\{id\}/.test(driverProfile)) {
-    problems.push(`${DRIVER_PROFILE}: must mount <DriverCashAdvancesReverseSection driverId={id} .../>`);
+  if (!/<DriverCashAdvancesReverseSection[\s\S]{0,180}operatingCompanyId=\{companyId\}[\s\S]{0,180}driverId=\{id\}/.test(driverProfile)) {
+    problems.push(`${DRIVER_PROFILE}: must mount cash-advance reverse with company and driver id`);
   }
 
   // -- modal.hold_deduction / modal.liability_breakdown / panel.pay_run_close (pin pre-existing chain) --
@@ -250,10 +258,18 @@ function selftest() {
       <AdvanceDetailDrawer onMarkDisbursed={() => setMarkDisbursedOpen(true)} />
     `,
     [DRIVER_SECTION]: `
+      const enabled = Boolean(operatingCompanyId) && Boolean(driverId)
+      queryKey: ["cash-advance-requests", "reverse-driver", operatingCompanyId, driverId]
       cashAdvanceRequestsOfficeApi.listPending(operatingCompanyId, driverId)
+      enabled,
+      queryKey: ["cash-advances", "reverse-driver", operatingCompanyId, driverId]
       listCashAdvances(operatingCompanyId, { driver_id: driverId }).then((r) => r.advances)
+      enabled,
       <EntityLink kind="cash_advance_request" id={id} label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")} />
-      kind="cash_advance"
+      <EntityLink kind="cash_advance" id={id} label={entityLabel(row.display_id as string | null, id, "Advance")} />
+      Failed to load pending requests.
+      Failed to load cash advances.
+      No pending requests or cash advances for this driver.
     `,
     [ENTITY_LINK]: `case "cash_advance_request": return \`/driver-finance/cash-advance-requests?request_id=\${id}\`;`,
     [DRIVER_PROFILE]: `
@@ -335,7 +351,74 @@ function selftest() {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations all detected`);
+  const live = Object.fromEntries(FILES.map((file) => [file, read(file)]));
+  const liveProblems = assertSettlementsClusterReverse(live);
+  if (liveProblems.length) {
+    console.error(`${LABEL} SELFTEST FAIL — production baseline: ${liveProblems.join("; ")}`);
+    process.exit(1);
+  }
+  const productionPlants = [
+    [CAR_SERVICE, /AND r\.driver_id = \$/, "AND r.driver_id = NULLIF($"],
+    [CAR_ROUTES, /driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "driver_id: z.never()"],
+    [CAR_ROUTES, /driverId:\s*parsed\.data\.driver_id/, "driverId: undefined"],
+    [CAR_API, /listPending\(operatingCompanyId: string, driverId\?: string\)/, "listPending(operatingCompanyId: string)"],
+    [CAR_PAGE, /searchParams\.get\("driver_id"\)/, 'searchParams.get("x")'],
+    [CAR_PAGE, /listPending\(companyId,\s*(deepLinkDriverId\s*\?\?\s*undefined|effectiveDriverId)\)/, "listPending(companyId)"],
+    [CAR_PAGE, /dataTestId="cash-advance-requests-filter-driver"/, 'dataTestId="x"'],
+    [CAR_PAGE, /allowCreate=\{false\}/, "allowCreate"],
+    [CA_HOME, /driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/, 'driverIdFilter = searchParams.get("x")'],
+    [CA_HOME, /dataTestId="cash-advances-filter-driver"/, 'dataTestId="x"'],
+    [CA_HOME, /kind=["']driver["']/, 'kind="vendor"'],
+    [CA_HOME, /allowCreate=\{false\}/, "allowCreate"],
+    [CA_HOME, /onMarkDisbursed=\{\(\)\s*=>\s*setMarkDisbursedOpen\(true\)\}/, "onMarkDisbursed={undefined}"],
+    [DRIVER_SECTION, /listPending\(operatingCompanyId,\s*driverId\)/, "listPending(operatingCompanyId)"],
+    [DRIVER_SECTION, /listCashAdvances\(operatingCompanyId,\s*\{\s*driver_id:\s*driverId\s*\}\)/, "listCashAdvances(operatingCompanyId, {})"],
+    [DRIVER_SECTION, /\["cash-advance-requests", "reverse-driver", operatingCompanyId, driverId\]/, '["cash-advance-requests"]'],
+    [DRIVER_SECTION, /\["cash-advances", "reverse-driver", operatingCompanyId, driverId\]/, '["cash-advances"]'],
+    [DRIVER_SECTION, /const enabled = Boolean\(operatingCompanyId\) && Boolean\(driverId\)/, "const enabled = true"],
+    [DRIVER_SECTION, /id=\{id\}\s+label=\{entityLabel\(\(r as Record<string, unknown>\)\.display_id as string \| null, id, "Request"\)\}/, 'id={driverId} label="Request"'],
+    [DRIVER_SECTION, /id=\{id\}\s+label=\{entityLabel\(row\.display_id as string \| null, id, "Advance"\)\}/, 'id={driverId} label="Advance"'],
+    [DRIVER_SECTION, /Failed to load pending requests\./, "Loading requests"],
+    [DRIVER_SECTION, /Failed to load cash advances\./, "Loading advances"],
+    [DRIVER_SECTION, /No pending requests or cash advances for this driver\./, "No rows"],
+    [ENTITY_LINK, /case "cash_advance_request":/, 'case "removed_cash_advance_request":'],
+    [DRIVER_PROFILE, /import\s*\{\s*DriverCashAdvancesReverseSection\s*\}/, "import { RemovedCashAdvancesReverseSection }"],
+    [DRIVER_PROFILE, /(<DriverCashAdvancesReverseSection\s+)operatingCompanyId=\{companyId\}/, "$1operatingCompanyId={undefined}"],
+    [DRIVER_PROFILE, /(<DriverCashAdvancesReverseSection\s+operatingCompanyId=\{companyId\}\s+)driverId=\{id\}/, "$1driverId={undefined}"],
+    [SETTLEMENTS_SECTION, /kind="settlement"/, 'kind="driver"'],
+    [DRIVER_PROFILE, /<SettlementsSection/, "<RemovedSettlementsSection"],
+    [SETTLEMENTS_PAGE, /searchParams\.get\("settlement_id"\)/, 'searchParams.get("x")'],
+    [SETTLEMENTS_PAGE, /<SettlementDetailPage \/>/, "<MissingSettlementDetail />"],
+    [SETTLEMENT_DETAIL, /import \{ PayRunClosePanel \}/, "import { RemovedPayRunClosePanel }"],
+    [SETTLEMENT_DETAIL, /<PayRunClosePanel/, "<RemovedPayRunClosePanel"],
+    [SETTLEMENT_DETAIL, /import \{ LiabilityBreakdownModal \}/, "import { RemovedLiabilityBreakdownModal }"],
+    [SETTLEMENT_DETAIL, /<LiabilityBreakdownModal/, "<RemovedLiabilityBreakdownModal"],
+    [SETTLEMENT_DETAIL, /import \{ HoldDeductionModal \}/, "import { RemovedHoldDeductionModal }"],
+    [SETTLEMENT_DETAIL, /<HoldDeductionModal/, "<RemovedHoldDeductionModal"],
+    [SETTLEMENT_FINANCE_SECTION, /kind="liability"/, 'kind="driver"'],
+    [LIABILITIES_HOME, /searchParams\.get\("liability_id"\)/, 'searchParams.get("x")'],
+    [LIABILITIES_HOME, /setSelectedLiabilityId\(deepLinkLiabilityId\)/, "setSelectedLiabilityId(null)"],
+    [LIABILITIES_HOME, /setDetailOpen\(true\)/g, "setDetailOpen(false)"],
+    [LIABILITIES_HOME, /driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/, 'driverIdFilter = searchParams.get("x")'],
+    [LIABILITIES_HOME, /dataTestId="liabilities-filter-driver"/, 'dataTestId="x"'],
+    [LIABILITIES_HOME, /allowCreate=\{false\}/, "allowCreate"],
+  ];
+  for (const [i, [file, pattern, replacement]] of productionPlants.entries()) {
+    const changed = live[file].replace(pattern, replacement);
+    if (changed === live[file] || assertSettlementsClusterReverse({ ...live, [file]: changed }).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — production mutation ${i} escaped or was inert`);
+      process.exit(1);
+    }
+  }
+  for (const id of CLAIMED_LEAVES) {
+    const changed = live[MATRIX].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
+    if (changed === live[MATRIX] || assertSettlementsClusterReverse({ ...live, [MATRIX]: changed }).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — production matrix mutation escaped for ${id}`);
+      process.exit(1);
+    }
+  }
+  const total = mutations.length + productionPlants.length + CLAIMED_LEAVES.length;
+  console.log(`${LABEL} SELFTEST PASS — ${total}/${total} fixture+production+matrix mutations detected`);
   process.exit(0);
 }
 
