@@ -6,6 +6,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.permits","unit.detail.tasks"],"task":"FLEET-F5932-UNIT-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.edit.identity","unit.edit.insurance","unit.edit.irp_plates","unit.edit.reefer","unit.edit.financial","unit.edit.lifecycle"],"task":"FLEET-F5947-UNIT-EDIT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.toll_tags","unit.detail.brakes","unit.detail.tires"],"task":"FLEET-F5949-UNIT-DETAIL-SPECIALTY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): VehicleProfilePage.tsx's 20
  * unit.profile.* sections and EditVehicleModal.tsx's 8 unit.edit.* tabs are all genuinely
@@ -56,6 +57,12 @@ const EDIT_CONNECTIVITY = new Map([
   ["unit.edit.reefer", /activeTab === "Reefer"[\s\S]{0,180}<FieldSet title="Reefer \(linked trailer\)"/],
   ["unit.edit.financial", /\{ key: "acquired_date", label: "Acquired Date", type: "date", tab: "Financial" \}/],
   ["unit.edit.lifecycle", /\{ key: "sold_date", label: "Sale Date", type: "date", tab: "Lifecycle"/],
+]);
+const DETAIL_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.toll_tags","unit.detail.brakes","unit.detail.tires"],"task":"FLEET-F5949-UNIT-DETAIL-SPECIALTY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const DETAIL_CONNECTIVITY = new Map([
+  ["unit.detail.toll_tags", /activeTab === "toll-tags" \? <UnitTollTagsTab unitId=\{id\} companyId=\{companyId\}/],
+  ["unit.detail.brakes", /activeTab === "brakes" \? <UnitBrakesTab unitId=\{id\} companyId=\{companyId\}/],
+  ["unit.detail.tires", /activeTab === "tires" \? <UnitTiresTab unitId=\{id\} companyId=\{companyId\}/],
 ]);
 
 export function audit(src) {
@@ -122,6 +129,11 @@ export function audit(src) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
   if (!src.self.split("\n").includes(EDIT_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact unit-edit connectivity header missing`);
+  for (const [id, pattern] of DETAIL_CONNECTIVITY) {
+    if (!pattern.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: ${id} distinct detail tab missing`);
+    if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
+  }
+  if (!src.self.split("\n").includes(DETAIL_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact specialty unit-detail connectivity header missing`);
   return failures;
 }
 
@@ -213,7 +225,24 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — edit connectivity header mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1 + (PROFILE_CONNECTIVITY.size * 2) + 1 + (EDIT_CONNECTIVITY.size * 2) + 1} mutations detected`);
+  for (const [id, pattern] of DETAIL_CONNECTIVITY) {
+    const runtimeMutation = { ...good, unitDetail: good.unitDetail.replace(pattern, "REMOVED_DETAIL_TAB") };
+    if (runtimeMutation.unitDetail === good.unitDetail || audit(runtimeMutation).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — detail runtime mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    const requiredMutation = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (audit(requiredMutation).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — detail Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  const wrongDetailHeader = { ...good, self: good.self.replace(DETAIL_CONNECTIVITY_HEADER, `${DETAIL_CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongDetailHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — specialty detail connectivity header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1 + (PROFILE_CONNECTIVITY.size * 2) + 1 + (EDIT_CONNECTIVITY.size * 2) + 1 + (DETAIL_CONNECTIVITY.size * 2) + 1} mutations detected`);
   process.exit(0);
 }
 
