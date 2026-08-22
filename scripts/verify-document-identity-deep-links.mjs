@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["docs","drivers","vendors","customers","dispatch","fleet"],"cols":["customer","driver","vendor","unit","load","connectivity","reverse_link"],"leafRe":"^(home|docs\\.modal\\.preview|profiles\\.documents|detail\\.documents|load\\.drawer\\.documents|unit\\.profile\\.documents|trailer\\.profile\\.documents)$","task":"LINK-F5143-DOCUMENT-IDENTITY-DEEP-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\.documents$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\.profile\\.documents|trailer\\.profile\\.documents)$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -10,7 +12,10 @@ const FILES = {
   unit: "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
   trailer: "apps/frontend/src/components/trailer-profile/DocumentsSection.tsx",
   customer: "apps/frontend/src/pages/CustomerDetail.tsx",
+  docsMatrix: "docs/specs/scoreboard/modules/docs.required.json",
   drivers: "docs/specs/scoreboard/modules/drivers.required.json",
+  fleetMatrix: "docs/specs/scoreboard/modules/fleet.required.json",
+  self: "scripts/verify-document-identity-deep-links.mjs",
 };
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function leaf(source, key, id) { try { return JSON.parse(source[key]).leaves.find((candidate) => candidate.id === id); } catch { return null; } }
@@ -32,7 +37,18 @@ function verify(source) {
   need("customer", 'kind="document"', "customer financial-summary documents must use the canonical document route");
   need("customer", 'id={d.id}', "customer financial-summary documents must use the producer's canonical attachment id");
   need("customer", 'name={d.filename}', "customer financial-summary documents must retain the producer's human filename");
-  if (!leaf(source, "drivers", "profiles.documents")?.required?.includes("reverse_link")) failures.push("drivers profiles.documents must require reverse_link");
+  const requiredReverseLeaves = [
+    ["docsMatrix", "home"],
+    ["drivers", "profiles.documents"],
+    ["fleetMatrix", "unit.profile.documents"],
+    ["fleetMatrix", "trailer.profile.documents"],
+  ];
+  for (const [key, id] of requiredReverseLeaves) {
+    if (!leaf(source, key, id)?.required?.includes("reverse_link")) failures.push(`${key} ${id} must require reverse_link`);
+  }
+  need("self", '"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$"', "Docs home must have exact reverse Built ownership");
+  need("self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\\\.documents$"', "Drivers documents must have exact reverse Built ownership");
+  need("self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"', "Fleet document leaves must have exact reverse Built ownership");
   return failures;
 }
 const source = read();
@@ -51,7 +67,13 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["customer", 'data-testid="customer-financial-document-record-link"', 'data-testid="broken-customer-document-link"'],
     ["customer", 'id={d.id}', 'id={undefined}'],
     ["customer", 'name={d.filename}', 'name={undefined}'],
+    ["docsMatrix", '"id": "home"', '"id": "home.broken"'],
     ["drivers", '"id": "profiles.documents"', '"id": "profiles.documents.broken"'],
+    ["fleetMatrix", '"id": "unit.profile.documents"', '"id": "unit.profile.documents.broken"'],
+    ["fleetMatrix", '"id": "trailer.profile.documents"', '"id": "trailer.profile.documents.broken"'],
+    ["self", '"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$"', '"modules":["docs"],"cols":["connectivity"],"leafRe":"^home$"'],
+    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\\\.documents$"', '"modules":["drivers"],"cols":["connectivity"],"leafRe":"^profiles\\\\.documents$"'],
+    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"', '"modules":["fleet"],"cols":["connectivity"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"'],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);
