@@ -69,14 +69,31 @@ export async function attachTransferJournalEntryIds<T extends { id: string }>(
   client: QueryClient,
   operatingCompanyId: string,
   transfers: T[]
-): Promise<Array<T & { journal_entry_id: string | null }>> {
+): Promise<Array<T & { journal_entry_id: string | null; journal_entry_memo: string | null }>> {
   const map = await mapTransferIdsToJournalEntryIds(
     client,
     operatingCompanyId,
     transfers.map((t) => t.id)
   );
+  const journalEntryIds = [...new Set([...map.values()])];
+  const memoById = new Map<string, string>();
+  if (journalEntryIds.length) {
+    const memoRes = await client.query<{ id: string; memo: string | null }>(
+      `
+        SELECT id::text AS id, memo
+        FROM accounting.journal_entries
+        WHERE operating_company_id = $1::uuid
+          AND id = ANY($2::uuid[])
+      `,
+      [operatingCompanyId, journalEntryIds]
+    );
+    for (const row of memoRes.rows) {
+      if (row.memo?.trim()) memoById.set(row.id, row.memo.trim());
+    }
+  }
   return transfers.map((t) => ({
     ...t,
     journal_entry_id: map.get(t.id) ?? null,
+    journal_entry_memo: map.get(t.id) ? memoById.get(map.get(t.id)!) ?? null : null,
   }));
 }

@@ -311,6 +311,7 @@ export type Transfer = {
   qbo_journal_entry_id: string | null;
   /** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */
   journal_entry_id?: string | null;
+  journal_entry_memo?: string | null;
   /** BANK-F12 — bank txn stamped via matched_transfer_id (Law §9 reverse). */
   matched_bank_transaction_id?: string | null;
   matched_bank_transaction_label?: string | null;

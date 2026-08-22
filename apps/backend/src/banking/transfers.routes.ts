@@ -14,6 +14,18 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { attachTransferJournalEntryIds } from "../lib/transfer-tms-je-lookup.js";
 
+type TransferReverseProjection = { id: string; journal_entry_id?: string | null; journal_entry_memo?: string | null };
+
+function attachTransferJournalReverse<T extends TransferReverseProjection>(
+  userId: string,
+  operatingCompanyId: string,
+  transfers: T[]
+) {
+  return withCompanyScope(userId, operatingCompanyId, (client) =>
+    attachTransferJournalEntryIds(client, operatingCompanyId, transfers)
+  );
+}
+
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   transfer_type: z.enum(["bank_to_bank", "cc_payment", "cash_deposit", "owner_contribution", "owner_distribution"]),
@@ -284,7 +296,10 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     return { group_id: params.data.groupId, legs };
   });
 
-  app.get("/api/v1/banking/transfers", async (req, reply) => {
+  app.get(
+    "/api/v1/banking/transfers",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -303,13 +318,19 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
       limit: query.data.limit,
       offset: query.data.offset,
     });
-    const withJe = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      attachTransferJournalEntryIds(client, query.data.operating_company_id, transfers as Array<{ id: string }>)
+    const withJe = await attachTransferJournalReverse(
+      user.uuid,
+      query.data.operating_company_id,
+      transfers as TransferReverseProjection[]
     );
     return { transfers: withJe };
-  });
+    }
+  );
 
-  app.get("/api/v1/banking/transfers/:id", async (req, reply) => {
+  app.get(
+    "/api/v1/banking/transfers/:id",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -321,11 +342,12 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
 
     const detail = await getTransferDetail(params.data.id, query.data.operating_company_id, user.uuid);
     if (!detail) return reply.code(404).send({ error: "transfer_not_found" });
-    const [transfer] = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      attachTransferJournalEntryIds(client, query.data.operating_company_id, [detail.transfer as { id: string }])
-    );
+    const [transfer] = await attachTransferJournalReverse(user.uuid, query.data.operating_company_id, [
+      detail.transfer as TransferReverseProjection,
+    ]);
     return { ...detail, transfer };
-  });
+    }
+  );
 
   app.post("/api/v1/banking/transfers/:id/revoke", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -366,4 +388,3 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     }
   });
 }
-

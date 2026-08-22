@@ -171,7 +171,7 @@ export function TransfersListPage() {
         label: "TMS JE",
         render: (row) =>
           row.journal_entry_id ? (
-            <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
+            <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")} />
           ) : (
             <span className="text-xs text-slate-500">—</span>
           ),
