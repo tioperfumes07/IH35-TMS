@@ -32,6 +32,15 @@ const DEDUCTION_ROUTE = "apps/backend/src/driver-finance/deductions.routes.ts";
 const DEDUCTION_PANEL = "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx";
 
 const CHECKS = [
+  { name: "Revenue recognition stores canonical load id", file: "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts", pattern: /linked_object_type:\s*"load",\s*linked_object_id:\s*input\.load_id/ },
+  { name: "Audit lineage labels linked load", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_load\.load_number[\s\S]*?mdata\.loads link_load/ },
+  { name: "Audit linked-load join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_load\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE source labels linked load", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_load\.load_number[\s\S]*?mdata\.loads link_load/ },
+  { name: "JE linked-load join is company scoped", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_load\.operating_company_id = \$2::uuid/ },
+  { name: "Load EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "load":\s*return `\/dispatch\/loads\/\$\{id\}`;/ },
+  { name: "Audit Trail drills linked load", file: AUDIT_TRAIL, pattern: /case "load":\s*return "load";/ },
+  { name: "Posting Lineage drills linked load", file: POSTING_LINEAGE, pattern: /case "load":\s*return "load";/ },
+  { name: "JE Detail drills linked load", file: JE_DETAIL, pattern: /case "load":\s*return "load";/ },
   { name: "Settlement poster stores canonical settlement id", file: "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts", pattern: /linked_object_type:\s*"driver_settlement",\s*linked_object_id:\s*input\.settlementId/ },
   { name: "Audit API canonicalizes driver settlement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "driver_settlement":\s*return "settlement";/ },
   { name: "Audit lineage labels driver settlement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_settlement\.display_id[\s\S]*?driver_finance\.driver_settlements link_settlement/ },
