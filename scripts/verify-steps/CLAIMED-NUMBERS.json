@@ -1,4 +1,9 @@
 {
+  "4333": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settle-for-update-scoped-to-settlement-row"
+  },
   "4329": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
