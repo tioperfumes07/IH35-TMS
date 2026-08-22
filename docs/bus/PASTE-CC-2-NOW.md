@@ -1,8 +1,8 @@
-===== CC-2 · PORT 9224 · FAST-MERGE · 14 MODULES LIVE =====
+===== CC-2 · PORT 9224 · FAST-MERGE · AFTER-14 LIVE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CC-2.md
-NOW: https://app.ih35dispatch.com/banking (or first unpaid 2–14 this pull; else /tasks)
-THEN: settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists → maintenance → safety → insurance → legal
-FORBIDDEN: idle · 09:08 closed · remake proven TEST · drain For-review · wait Cursor · claim CERTIFIED on 0cec933
-ACK: CC-2 | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=9224 | NOW=/banking | GO
+NOW: https://app.ih35dispatch.com/tasks
+THEN: /home /compliance /cash-flow /fuel /inventory /users
+FORBIDDEN: re-walk 1–14 · remake proven TEST · drain For-review · re-file vendors Inactive as new defect
+ACK: CC-2 | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9224 | NOW=/tasks | GO
 ===== END CC-2 =====

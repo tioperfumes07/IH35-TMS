@@ -11,8 +11,8 @@ FAST-MERGE every 4–5 minutes is allowed. **Calling Render’s deploy API after
 
 Measured 2026-08-21: 9 prod deploys in 90 minutes; each deploy ~3 min; API returns **502 for the entire deploy**. That was the “API is down” outage. autoDeploy is already OFF.
 
-**Never:** `trigger_deploy` · `render deploys create` · Dashboard Deploy now · “kick ih35-tms because healthz SHA lags main”.
+**Never:** `trigger_deploy` · `render deploys create` · Dashboard Deploy now · “kick ih35-tms because healthz SHA lags main” after a single merge.
 
-**Deploy:** timer 30–60 min **or** on demand (Jorge / Cursor lead **once per batch**). One in-flight deploy. Wait until live + `healthz/shallow` JSON 200.
+**Deploy:** **every 5–10 merged PRs** (default **5**, hard cap **10**) **or** on demand (Jorge / Cursor lead). One in-flight deploy. Wait until live + `healthz/shallow` JSON 200.
 
 Keep `healthCheckPath=/api/v1/healthz/readyz`. Boot smokes stay in GitHub CI, not Render pre-deploy.

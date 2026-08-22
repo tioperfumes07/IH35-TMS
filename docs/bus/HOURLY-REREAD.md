@@ -1,11 +1,5 @@
 # HOURLY RE-READ
 
-```text
-git pull --ff-only origin main
-```
+**SUPERSEDED.** Do not run a competing hourly loop.
 
-Read: `CODER-INSTRUCTIONS-NOW.md` · `CHROME-PORTS-LOCKED.md` · `INBOX-<SEAT>.md` · `FAST-MERGE-4MIN-LAW.md`
-
-ACK: `NEVER-IDLE | URGENT-6-THEN-10-THEN-ALL | PORT=<n> | NOW=<module> <col> | GO`
-
-Do not idle. Do not pause after a module.
+`git pull --ff-only origin main` then `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` + `INBOX-<SEAT>.md`.

@@ -119,6 +119,20 @@ function assertConfigured() {
       );
     }
   }
+  const deployLaw = fs.readFileSync(
+    path.join(ROOT, "docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md"),
+    "utf8",
+  );
+  if (!/every 5–10 merged PRs/.test(deployLaw)) {
+    errors.push(
+      "docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md must lock deploy cadence every 5–10 merged PRs (owner 2026-08-22)",
+    );
+  }
+  if (!/never wait past 10/.test(deployLaw)) {
+    errors.push(
+      "docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md must hard-cap batches (never wait past 10 undeployed PRs)",
+    );
+  }
   if (!fs.existsSync(DOC)) {
     errors.push("docs/testing/boot-aggregate-smoke-env.md missing");
   } else {
