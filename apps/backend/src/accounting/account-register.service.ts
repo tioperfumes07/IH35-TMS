@@ -33,6 +33,12 @@ export type RawPosting = {
   amount_cents: number;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
+  // ACCT-REGISTER-REF-IS-SOURCE-UUID: the human-readable document id for the source transaction
+  // (invoice/bill/payment/settlement display_id, bill_number fallback, expense_number), resolved via
+  // the same LEFT JOINs already present for `payee` — never the raw source_transaction_id UUID.
+  // Honest NULL for source types with no clean per-document identifier yet (journal_entry,
+  // bank_categorization, transfer, cash_advance, driver_advance).
+  reference_display_id: string | null;
   // CA-05 QBO-parity additions (all read-only, derived):
   payee: string | null; // from the source transaction (bill→vendor, invoice→customer); null when unresolved
   split_account: string | null; // the contra account(s); "-Split-" when the JE touches >1 other account
@@ -45,6 +51,10 @@ export type AccountRegisterRow = {
   entry_date: string;
   type: string;
   source_transaction_type: string | null; // raw type for drill-through routing (label is in `type`)
+  // ACCT-REGISTER-REF-IS-SOURCE-UUID: raw source_transaction_id UUID, kept separate from `reference`
+  // (now human-readable) so sourceRoute()'s drill-through hrefs (which need the real entity id) keep
+  // working. Never render this directly — it is a routing param, not a display value.
+  source_transaction_id: string | null;
   reference: string | null;
   payee: string | null;
   memo: string | null;
@@ -109,7 +119,8 @@ export function buildRegisterRows(
         ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
         : "Journal Entry",
       source_transaction_type: p.source_transaction_type ?? null,
-      reference: p.source_transaction_id ?? null,
+      source_transaction_id: p.source_transaction_id ?? null,
+      reference: p.reference_display_id ?? null,
       payee: p.payee ?? null,
       memo: p.memo ?? null,
       description: p.description ?? null,
@@ -212,6 +223,15 @@ export async function getAccountRegister(
             --   bill_payment has no clean direct party link → honest NULL (not fabricated).
             COALESCE(bv.vendor_name, ev.vendor_name, ic.customer_name, pc.customer_name,
                      NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')) AS payee,
+            -- ACCT-REGISTER-REF-IS-SOURCE-UUID: human document id per source type, same joins as
+            -- payee above (only one is ever non-null per row, gated by source_transaction_type).
+            -- display_id-then-bill_number precedence matches the convention already established in
+            -- getJournalEntrySourceLinks (ACCT-F5708): accounting.bills.display_id is 0.07% populated
+            -- live, bill_number is 96.6% populated — COALESCE prefers display_id when present, falls
+            -- back to bill_number otherwise. Honest NULL for source types with no joined document
+            -- table here (journal_entry, bank_categorization, transfer, cash_advance, driver_advance).
+            COALESCE(b.display_id, b.bill_number, inv.display_id, pay.display_id, ds.display_id,
+                     ex.expense_number) AS reference_display_id,
             sp.split_account
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je

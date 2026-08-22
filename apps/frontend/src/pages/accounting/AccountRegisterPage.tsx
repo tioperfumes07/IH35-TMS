@@ -58,8 +58,12 @@ function bankPickerLabel(a: BankRegisterPickerRow): string {
 // Drill-through: map a register row's source transaction to its REAL detail/source route (all verified to
 // exist in routes/manifest.tsx). invoice + customer_payment + bill have true per-id detail; the rest
 // resolve to their source module. Falls back to the journal-entries surface for plain JEs / unmapped types.
-function sourceRoute(type: string | null, reference: string | null): string {
+// ACCT-REGISTER-REF-IS-SOURCE-UUID: takes the RAW source_transaction_id (routing param, the real
+// entity id every one of these routes expects) — never the human-readable `reference` display id,
+// which since this fix is a display_id/bill_number/expense_number, not a UUID these routes can look up.
+function sourceRoute(type: string | null, sourceTransactionId: string | null): string {
   const t = (type ?? "").toLowerCase();
+  const reference = sourceTransactionId;
   if (t === "invoice" && reference) return `/accounting/invoices/${reference}`;
   if (t === "customer_payment" && reference) return `/accounting/payments/${reference}`;
   if (t === "bill" && reference) return `/accounting/bills/${reference}`;
@@ -601,7 +605,7 @@ export function AccountRegisterPage() {
           rows={report?.rows ?? []}
           rowKey={(r) => r.posting_id}
           loading={registerQuery.isLoading}
-          onRowClick={(r) => navigate(sourceRoute(r.source_transaction_type, r.reference))}
+          onRowClick={(r) => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
           emptyText="No transactions in this range."
           storageKey="account-register"
           pageSizeOptions={[50, 75, 100, 200, 300]}

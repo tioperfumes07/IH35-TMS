@@ -12,6 +12,7 @@ function posting(over: Partial<RawPosting>): RawPosting {
     amount_cents: 0,
     source_transaction_type: null,
     source_transaction_id: null,
+    reference_display_id: null,
     payee: null,
     split_account: null,
     class_name: null,
@@ -60,9 +61,26 @@ describe("account register — running-balance math", () => {
       posting({ source_transaction_type: "bill_payment", source_transaction_id: "BP-9" }),
     ]);
     expect(rows[0].type).toBe("Invoice");
-    expect(rows[0].reference).toBe("INV-1");
+    expect(rows[0].reference).toBe(null); // reference_display_id not resolved for this fixture row
+    expect(rows[0].source_transaction_id).toBe("INV-1"); // raw id still passed through for drill-through routing
     expect(rows[1].type).toBe("Journal Entry");
     expect(rows[2].type).toBe("Bill Payment");
+  });
+
+  // ACCT-REGISTER-REF-IS-SOURCE-UUID: `reference` must be the resolved human document id
+  // (reference_display_id from the query's own COALESCE over display_id/bill_number/expense_number),
+  // never the raw source_transaction_id UUID — even when both are populated on the same row.
+  it("reference is the human document id, not the raw source_transaction_id UUID", () => {
+    const { rows } = buildRegisterRows(0, "debit", [
+      posting({
+        source_transaction_type: "bill",
+        source_transaction_id: "5c854333-6ea5-4faa-af31-67cb272fef80", // a real-shaped UUID
+        reference_display_id: "B-20260810-0003", // the resolved human bill_number
+      }),
+    ]);
+    expect(rows[0].reference).toBe("B-20260810-0003");
+    expect(rows[0].source_transaction_id).toBe("5c854333-6ea5-4faa-af31-67cb272fef80");
+    expect(rows[0].reference).not.toBe(rows[0].source_transaction_id);
   });
 
   it("opening balance carries through an empty period", () => {

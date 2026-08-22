@@ -6,6 +6,9 @@ export type AccountRegisterRow = {
   entry_date: string;
   type: string;
   source_transaction_type: string | null;
+  // ACCT-REGISTER-REF-IS-SOURCE-UUID: raw source_transaction_id UUID for drill-through routing.
+  // `reference` is now the human-readable display id — never pass it to sourceRoute()/hrefs.
+  source_transaction_id: string | null;
   reference: string | null;
   payee: string | null;
   memo: string | null;
