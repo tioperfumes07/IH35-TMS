@@ -26,6 +26,7 @@ const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransaction
 const MATCH_DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
 const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx";
 const RECON_SUGGESTIONS = "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx";
+const BANK_RECON = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -103,6 +104,8 @@ const CHECKS = [
   { name: "reconcile suggestions map every kind to mounted drills", file: RECON_SUGGESTIONS, pattern: /const SUGGESTION_ENTITY_KIND: Record<ReconcileSuggestionType, EntityKind> = \{[\s\S]{0,400}load: "load"[\s\S]{0,400}settlement: "settlement"[\s\S]{0,400}fuel: "fuel_transaction"[\s\S]{0,400}work_order: "work_order"[\s\S]{0,400}ar_invoice: "invoice"[\s\S]{0,400}bill: "bill"[\s\S]{0,400}factoring_batch: "factoring_batch"/ },
   { name: "ordinary reconcile suggestion separates drill from apply", file: RECON_SUGGESTIONS, pattern: /kind=\{SUGGESTION_ENTITY_KIND\[suggestion\.obligation_type\]\}[\s\S]{0,160}id=\{suggestion\.obligation_id\}[\s\S]{0,160}label=\{suggestion\.label\}[\s\S]{0,500}<button[\s\S]{0,300}props\.onAccept/ },
   { name: "factoring reconcile suggestion separates drill from apply", file: RECON_SUGGESTIONS, pattern: /kind="factoring_batch"\s+id=\{props\.suggestion\.obligation_id\}[\s\S]{0,180}props\.suggestion\.batch_number[\s\S]{0,500}<button[\s\S]{0,180}onClick=\{props\.onApply\}/ },
+  { name: "bank reconciliation source drill uses scoped human label", file: BANK_RECON, pattern: /kind="bank_transaction"\s+id=\{row\.id\}[\s\S]{0,220}row\.merchant_name\?\.trim\(\)[\s\S]{0,120}row\.description\?\.trim\(\)/ },
+  { name: "bank reconciliation selected and variance dates use shared formatter", file: BANK_RECON, pattern: /formatDateUS\(selectedRow\.transaction_date\)[\s\S]{0,6000}formatDateUS\(entry\.entry_date\)/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
