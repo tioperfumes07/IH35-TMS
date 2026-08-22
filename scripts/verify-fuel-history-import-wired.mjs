@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fuel"],"cols":["reverse_link"],"leaves":["history"],"task":"FUEL-F5899-HISTORY-REVERSE-EXACT","vertical":"class-sweep"} */
 /**
  * verify-fuel-history-import-wired.mjs  (module 03-fuel G1/G2)
  *
@@ -34,6 +35,10 @@ const TX_TABLE = "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx";
 const BACKEND_LIST_ROUTE = "apps/backend/src/fuel/fuel-transactions.routes.ts";
 const BACKEND_IMPORT_ROUTE = "apps/backend/src/fuel/fuel-transaction-import.routes.ts";
 const BACKEND_INDEX = "apps/backend/src/index.ts";
+const MATRIX = "docs/specs/scoreboard/modules/fuel.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-fuel-history-import-wired.mjs";
+const HEADER = '/** @matrix-built {"modules":["fuel"],"cols":["reverse_link"],"leaves":["history"],"task":"FUEL-F5899-HISTORY-REVERSE-EXACT","vertical":"class-sweep"} */';
 const REVERSE_MOUNTS = [
   ["apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", "load_id"],
   ["apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "driver_id"],
@@ -174,6 +179,19 @@ function checkReverseVendorLabels(apiClientSrc, reverseSrc, listRouteSrc, mountS
   return failures;
 }
 
+function checkExactEvidence(matrixSrc, feedSrc, selfSrc) {
+  const failures = [];
+  let matrix;
+  try { matrix = JSON.parse(matrixSrc); } catch (error) { failures.push(`Fuel matrix parse: ${error.message}`); }
+  const leaf = matrix?.leaves?.find((candidate) => candidate.id === "history");
+  if (!leaf?.required?.includes("reverse_link")) failures.push("history must require reverse_link");
+  if (leaf?.route_hint !== "/fuel/history") failures.push("history must name mounted route /fuel/history");
+  if (!selfSrc.split('import fs from "node:fs";')[0].includes(HEADER)) failures.push("exact history header missing");
+  try { if (JSON.parse(feedSrc).entries?.some((entry) => entry.guard === SELF)) failures.push("manual feed duplicates exact ownership"); }
+  catch (error) { failures.push(`feed parse: ${error.message}`); }
+  return failures;
+}
+
 function scan() {
   const plannerSrc = read(PLANNER_HOME);
   const apiClientSrc = read(API_CLIENT);
@@ -200,6 +218,7 @@ function scan() {
   failures.push(...checkImportButtonWired(plannerSrc, importModalSrc));
   failures.push(...checkBackendEndpointsExist(listRouteSrc, importRouteSrc, indexSrc));
   failures.push(...checkReverseVendorLabels(apiClientSrc, reverseSrc, listRouteSrc, mountSources));
+  failures.push(...checkExactEvidence(read(MATRIX), read(FEED), read(SELF)));
   return failures;
 }
 
@@ -300,8 +319,18 @@ function selftest() {
   expectFail("vendor label unresolved", checkReverseVendorLabels(goodVendorApi, `entityLabel(null, row.vendor_id, "Vendor")`, goodVendorRoute, goodMounts));
   expectFail("load reverse mount dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute, { ...goodMounts, [REVERSE_MOUNTS[0][0]]: "" }));
 
+  const matrixSrc = read(MATRIX), feedSrc = read(FEED), selfSrc = read(SELF);
+  const start = matrixSrc.indexOf('"id": "history"'), end = matrixSrc.indexOf("\n    {", start), block = matrixSrc.slice(start, end < 0 ? matrixSrc.length : end);
+  const mutateHistory = (token, replacement) => matrixSrc.slice(0, start) + block.replace(token, replacement) + matrixSrc.slice(end < 0 ? matrixSrc.length : end);
+  expectPass("exact history evidence", checkExactEvidence(matrixSrc, feedSrc, selfSrc));
+  expectFail("history id mutation", checkExactEvidence(mutateHistory('"id": "history"', '"id": "history.broken"'), feedSrc, selfSrc));
+  expectFail("history reverse mutation", checkExactEvidence(mutateHistory('"reverse_link"', '"reverse_link_broken"'), feedSrc, selfSrc));
+  expectFail("history route mutation", checkExactEvidence(mutateHistory('"route_hint": "/fuel/history"', '"route_hint": "/broken"'), feedSrc, selfSrc));
+  expectFail("history header mutation", checkExactEvidence(matrixSrc, feedSrc, selfSrc.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"'))));
+  expectFail("history feed duplication", checkExactEvidence(matrixSrc, JSON.stringify({ entries: [{ guard: SELF }] }), selfSrc));
+
   if (!ok) process.exit(1);
-  console.log("[verify-fuel-history-import-wired] SELFTEST PASS — recognizes wired vs dead-button/hardcoded-empty states.");
+  console.log("[verify-fuel-history-import-wired] SELFTEST PASS — runtime scenarios + 5/5 exact evidence mutations rejected.");
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
