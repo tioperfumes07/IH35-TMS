@@ -1,17 +1,77 @@
 #!/usr/bin/env node
-/** @matrix-built modules=driver-hub,maintenance,drivers cols=driver,connectivity,reverse_link leafRe=^(driver-hub\.modal\.report_issue|driver_reports\.queue|profiles\.detail)$ task=DRIVER-REPORT-DRIVER-REVERSE */
-// LINK-THEATER-01 narrowing (2026-08-14): this guard's 10 assertions read exactly 9 files that
-// together prove ONE feature — driver-submitted maintenance reports, from create
-// (driver-hub.modal.report_issue, ReportIssueModal.tsx) through the maintenance queue
-// (driver_reports.queue, DriverReportsQueuePage.tsx) to the reverse mount on the driver's own
-// profile (profiles.detail, DriverProfilePage.tsx — confirmed leaf id in drivers.required.json).
-// The prior leafRe default (unset -> ".*" per the shorthand parser) claimed Built for every leaf in
-// driver-hub + maintenance + drivers, off assertions that touch three specific surfaces. Narrowed to
-// what is actually proven. NOTE: DriverDetail.tsx (/drivers/:id, also DriverReportsReverseSection-
-// mounted per this guard's own "detail" mutation arm) has no tracked leaf id in
-// drivers.required.json at all — a separate, real inventory gap this narrowing does not fix and does
-// not silently claim either.
+/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["driver_reports.queue"],"task":"MAINT-F5884-DRIVER-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
-const L="verify-driver-report-driver-reverse",c=fs.readFileSync("apps/frontend/src/pages/driver/ReportIssueModal.tsx","utf8"),w=fs.readFileSync("apps/backend/src/driver/reports.routes.ts","utf8"),r=fs.readFileSync("apps/backend/src/maintenance/driver-reports.routes.ts","utf8"),a=fs.readFileSync("apps/frontend/src/api/maintenance.ts","utf8"),v=fs.readFileSync("apps/frontend/src/components/maintenance/DriverReportsReverseSection.tsx","utf8"),d=fs.readFileSync("apps/frontend/src/pages/DriverDetail.tsx","utf8"),p=fs.readFileSync("apps/frontend/src/pages/drivers/DriverProfilePage.tsx","utf8"),q=fs.readFileSync("apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx","utf8"),h=fs.readFileSync("apps/frontend/src/pages/maintenance/MaintenanceHome.tsx","utf8");
-function audit(b,x,y,z,s,t,u,e,i){const f=[];if(!/submitDriverReport/.test(b)||!/load_id: loadId \?\? null/.test(b))f.push("driver creator payload");if(!/driver\.id/.test(x)||!/INSERT INTO maintenance\.driver_reports/.test(x)||!/driver_id, load_id/.test(x))f.push("session-derived driver writer");if(!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(y)||!/r\.driver_id = \$\$\{values\.length\}::uuid/.test(y))f.push("exact scoped reverse");if(!/driver_id\?: string/.test(z)||!/params\.driver_id/.test(z))f.push("typed API filter");if(!/listDriverReports\(\{ operating_company_id: operatingCompanyId, driver_id: driverId \}\)/.test(s))f.push("driver reverse");if(!/DriverReportsReverseSection/.test(t)||!/DriverReportsReverseSection/.test(u))f.push("both profile mounts");if(!/kind=["']driver_report["']/.test(s)||!/highlightedReportId/.test(e)||!/rowClassName/.test(e)||!/driverReportId/.test(i))f.push("canonical drill");if(!/kind=["']driver_reports_driver["']/.test(s)||!/Open report queue/.test(s))f.push("queue EntityLink");if(!/filterDriverId/.test(e)||!/driverReportsDriverId/.test(i)||!/searchParams\.get\(["']driver_id["']\)/.test(i)||!/dataTestId="driver-reports-filter-driver"/.test(e)||!/allowCreate=\{false\}/.test(e))f.push("queue driver filter honor");if(!/query\.isError/.test(s)||!/No reports submitted by this driver/.test(s))f.push("honest states");return f}
-if(process.argv.includes("--selftest")){const m=[["creator",c.replaceAll("submitDriverReport","missingSubmit"),w,r,a,v,d,p,q,h],["writer",c,w.replaceAll("driver.id","missingDriver"),r,a,v,d,p,q,h],["schema",c,w,r.replaceAll("driver_id: z.string().uuid().optional()","wrong_id: z.string()"),a,v,d,p,q,h],["sql",c,w,r.replace("r.driver_id = $${values.length}::uuid","TRUE"),a,v,d,p,q,h],["api",c,w,r,a.replaceAll("driver_id?: string","wrong_id?: string"),v,d,p,q,h],["reverse",c,w,r,a,v.replaceAll("driver_id: driverId","driver_id: ''"),d,p,q,h],["detail",c,w,r,a,v,d.replaceAll("DriverReportsReverseSection","MissingSection"),p,q,h],["profile",c,w,r,a,v,d,p.replaceAll("DriverReportsReverseSection","MissingSection"),q,h],["drill",c,w,r,a,v.replace('kind="driver_report"','kind="unit"'),d,p,q,h],["empty",c,w,r,a,v.replace("No reports submitted by this driver","No rows"),d,p,q,h],["queue",c,w,r,a,v.replace('kind="driver_reports_driver"','kind="driver_report"'),d,p,q,h],["honor",c,w,r,a,v,d,p,q.replaceAll("filterDriverId","filterX"),h]];for(const[n,...s]of m)if(!audit(...s).length){console.error(`${L} SELFTEST FAIL — ${n}`);process.exit(1)}console.log(`${L} SELFTEST PASS — 12 mutations detected`);process.exit(0)}const f=audit(c,w,r,a,v,d,p,q,h);if(f.length){console.error(`${L} FAIL\n- ${f.join("\n- ")}`);process.exit(1)}console.log(`${L} PASS — driver-session report FK→exact reverse→both driver profiles→queue drill`);
+
+const LABEL = "verify-driver-report-driver-reverse";
+const GUARD = "scripts/verify-driver-report-driver-reverse.mjs";
+const HEADER = '/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["driver_reports.queue"],"task":"MAINT-F5884-DRIVER-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */';
+const FILES = {
+  creator: "apps/frontend/src/pages/driver/ReportIssueModal.tsx",
+  writer: "apps/backend/src/driver/reports.routes.ts",
+  routes: "apps/backend/src/maintenance/driver-reports.routes.ts",
+  api: "apps/frontend/src/api/maintenance.ts",
+  reverse: "apps/frontend/src/components/maintenance/DriverReportsReverseSection.tsx",
+  detail: "apps/frontend/src/pages/DriverDetail.tsx",
+  profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  queue: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
+  home: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+  matrix: "docs/specs/scoreboard/modules/maintenance.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: GUARD,
+};
+const source = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+
+function audit(s = source) {
+  const failures = [];
+  if (!/await submitDriverReport\(\{[\s\S]{0,180}?load_id: loadId \?\? null/.test(s.creator)) failures.push("driver creator payload");
+  if (!/INSERT INTO maintenance\.driver_reports \([\s\S]{0,300}?driver_id, load_id[\s\S]{0,300}?operatingCompanyId,[\s\S]{0,60}?driver\.id,[\s\S]{0,60}?parsed\.data\.load_id \?\? null/.test(s.writer)) failures.push("session-derived driver writer");
+  if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(s.routes) || !/r\.driver_id = \$\$\{values\.length\}::uuid/.test(s.routes)) failures.push("exact scoped reverse");
+  if (!/listDriverReports\(params: \{ operating_company_id: string; status\?: string; driver_id\?: string; load_id\?: string \}\)[\s\S]{0,300}?if \(params\.driver_id\) qs\.set\("driver_id", params\.driver_id\)/.test(s.api)) failures.push("typed API filter");
+  if (!/listDriverReports\(\{ operating_company_id: operatingCompanyId, driver_id: driverId \}\)/.test(s.reverse)) failures.push("driver reverse");
+  if (!/<DriverReportsReverseSection operatingCompanyId=\{String\(driver\.operating_company_id\)\} driverId=\{id\}/.test(s.detail) || !/<DriverReportsReverseSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(s.profile)) failures.push("both profile mounts");
+  if (!/kind=["']driver_report["']/.test(s.reverse) || !/highlightedReportId/.test(s.queue) || !/rowClassName/.test(s.queue) || !/driverReportId/.test(s.home)) failures.push("canonical drill");
+  if (!/kind=["']driver_reports_driver["']/.test(s.reverse) || !/Open report queue/.test(s.reverse)) failures.push("queue EntityLink");
+  if (!/const effectiveDriverId = driverPickerId\.trim\(\) \|\| filterDriverId \|\| undefined/.test(s.queue) || !/driver_id: effectiveDriverId/.test(s.queue) || !/driverReportsDriverId/.test(s.home) || !/searchParams\.get\(["']driver_id["']\)/.test(s.home) || !/dataTestId="driver-reports-filter-driver"/.test(s.queue) || !/allowCreate=\{false\}/.test(s.queue)) failures.push("queue driver filter honor");
+  if (!/query\.isError/.test(s.reverse) || !/No reports submitted by this driver/.test(s.reverse)) failures.push("honest states");
+  const matrix = JSON.parse(s.matrix);
+  if (!matrix.leaves.find((leaf) => leaf.id === "driver_reports.queue")?.required?.includes("reverse_link")) failures.push("Maintenance Required reverse cell missing");
+  if (!s.self.split("\n").includes(HEADER)) failures.push("exact Maintenance Built header missing");
+  if ((JSON.parse(s.feed).entries ?? []).some((entry) => entry.guard === GUARD && entry.cols?.includes("reverse_link"))) failures.push("broad manual driver-report feed remains");
+  return failures;
+}
+
+if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
+  if (audit().length) throw new Error(`baseline failed: ${audit().join("; ")}`);
+  const mutations = [
+    ["creator", "await submitDriverReport({", "await missingSubmit({"],
+    ["writer", "driver.id,\n            parsed.data.load_id ?? null", "missingDriver,\n            parsed.data.load_id ?? null"],
+    ["routes", "driver_id: z.string().uuid().optional()", "wrong_id: z.string()"],
+    ["routes", "r.driver_id = $${values.length}::uuid", "TRUE"],
+    ["api", "status?: string; driver_id?: string; load_id?: string", "status?: string; wrong_id?: string; load_id?: string"],
+    ["reverse", "driver_id: driverId", "driver_id: ''"],
+    ["detail", "<DriverReportsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id}", "<MissingSection operatingCompanyId={String(driver.operating_company_id)} driverId={id}"],
+    ["profile", "<DriverReportsReverseSection operatingCompanyId={companyId} driverId={id}", "<MissingSection operatingCompanyId={companyId} driverId={id}"],
+    ["reverse", 'kind="driver_report"', 'kind="unit"'],
+    ["reverse", "No reports submitted by this driver", "No rows"],
+    ["reverse", 'kind="driver_reports_driver"', 'kind="driver_report"'],
+    ["queue", "driver_id: effectiveDriverId", "driver_id: undefined"],
+    ["matrix", '"id": "driver_reports.queue"', '"id": "driver_reports.queue.broken"'],
+    ["self", HEADER, `${HEADER}.broken`],
+  ];
+  for (const [key, before, after] of mutations) {
+    if (!source[key].includes(before)) throw new Error(`fixture missing: ${key}`);
+    if (!audit({ ...source, [key]: source[key].replace(before, after) }).length) throw new Error(`mutation survived: ${key}`);
+  }
+  const feed = JSON.parse(source.feed);
+  feed.entries.unshift({ task: "BROKEN", guard: GUARD, modules: ["maintenance"], cols: ["reverse_link"], leafRe: "^maintenance" });
+  if (!audit({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + 1}/${mutations.length + 1} mutations detected`);
+  process.exit(0);
+}
+
+const failures = audit();
+if (failures.length) {
+  console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — driver-session report FK reaches exact Maintenance queue reverse route`);
