@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements","vendors","maintenance"],"cols":["ap_bill","work_order","liability","connectivity","reverse_link"],"leafRe":"^(cash_advances|detail\\.ap\\.bills|wo\\.console\\.list)$","task":"LINK-F5139-PRIMARY-ROSTER-RECORD-REVERSE-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["vendors","maintenance"],"cols":["ap_bill","work_order","liability","connectivity","reverse_link"],"leafRe":"^(detail\\.ap\\.bills|wo\\.console\\.list)$","task":"LINK-F5139-PRIMARY-ROSTER-RECORD-REVERSE-LINKS","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
