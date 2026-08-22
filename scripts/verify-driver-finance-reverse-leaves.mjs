@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^(cash_advances|deductions|disputes)$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^driver_escrow$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^escrow_record\\.list$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 
