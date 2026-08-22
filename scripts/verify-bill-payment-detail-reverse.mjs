@@ -13,16 +13,18 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertBillPaymentDetailReverse() {
+function billPaymentDetailReverseErrors(sources = {}) {
   const errors = [];
-  const service = read("apps/backend/src/accounting/bills.service.ts");
-  const routes = read("apps/backend/src/accounting/bills.routes.ts");
-  const detailPage = read("apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx");
-  const listPage = read("apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx");
-  const register = read("apps/frontend/src/pages/accounting/AccountRegisterPage.tsx");
-  const entityLink = read("apps/frontend/src/components/shared/EntityLink.tsx");
-  const api = read("apps/frontend/src/api/accounting.ts");
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
+  const service = sources.service ?? read("apps/backend/src/accounting/bills.service.ts");
+  const routes = sources.routes ?? read("apps/backend/src/accounting/bills.routes.ts");
+  const detailPage = sources.detailPage ?? read("apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx");
+  const listPage = sources.listPage ?? read("apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx");
+  const billDetailPage = sources.billDetailPage ?? read("apps/frontend/src/pages/accounting/BillDetailPage.tsx");
+  const billsPage = sources.billsPage ?? read("apps/frontend/src/pages/accounting/BillsPage.tsx");
+  const register = sources.register ?? read("apps/frontend/src/pages/accounting/AccountRegisterPage.tsx");
+  const entityLink = sources.entityLink ?? read("apps/frontend/src/components/shared/EntityLink.tsx");
+  const api = sources.api ?? read("apps/frontend/src/api/accounting.ts");
+  const manifest = sources.manifest ?? read("apps/frontend/src/routes/manifest.tsx");
 
   if (!/export async function getBillPaymentDetail\(/.test(service)) {
     errors.push("backend: getBillPaymentDetail missing");
@@ -72,27 +74,40 @@ function assertBillPaymentDetailReverse() {
   if (!/onRowClick=\{.*bill-payments/.test(listPage.replace(/\n/g, " "))) {
     errors.push("BillPaymentsListPage: onRowClick must navigate to detail");
   }
+  for (const [surface, source] of [
+    ["BillDetailPage Payments table", billDetailPage],
+    ["BillsPage expanded payments table", billsPage],
+  ]) {
+    if (!/kind=["']bill_payment["']/.test(source)) {
+      errors.push(`${surface}: payment rows must reverse-drill to canonical bill-payment detail`);
+    }
+    if (!/entityLabel\([^)]*(?:reference_number|check_number)[^)]*\.id[^)]*["']Payment["']/.test(source.replace(/\n/g, " "))) {
+      errors.push(`${surface}: payment drill must show a human reference/check label with honest fallback`);
+    }
+  }
   return errors;
 }
 
 function selftest() {
-  const errors = assertBillPaymentDetailReverse();
-  if (errors.length) {
-    console.error(`${LABEL} SELFTEST FAILED: ${errors.join("; ")}`);
-    process.exit(1);
+  const baseline = billPaymentDetailReverseErrors();
+  if (baseline.length) throw new Error(`baseline failed: ${baseline.join("; ")}`);
+  for (const [name, mutation] of [
+    ["bill detail payment drill", { billDetailPage: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx").replace('kind="bill_payment"', 'kind="bill"') }],
+    ["bills list payment drill", { billsPage: read("apps/frontend/src/pages/accounting/BillsPage.tsx").replace('kind="bill_payment"', 'kind="bill"') }],
+  ]) {
+    if (billPaymentDetailReverseErrors(mutation).length === 0) {
+      throw new Error(`inert planted defect: ${name}`);
+    }
   }
   console.log(`${LABEL} SELFTEST PASS`);
 }
 
-if (process.argv.includes("--selftest")) {
-  selftest();
-  process.exit(0);
+try {
+  const errors = billPaymentDetailReverseErrors();
+  if (errors.length) throw new Error(errors.join("; "));
+  if (process.argv.includes("--selftest")) selftest();
+  console.log(`${LABEL} PASS`);
+} catch (error) {
+  console.error(`${LABEL} FAIL: ${error.message}`);
+  process.exitCode = 1;
 }
-
-const errors = assertBillPaymentDetailReverse();
-if (errors.length) {
-  console.error(`${LABEL} FAIL`);
-  for (const e of errors) console.error(`  ${e}`);
-  process.exit(1);
-}
-console.log(`${LABEL} PASS`);

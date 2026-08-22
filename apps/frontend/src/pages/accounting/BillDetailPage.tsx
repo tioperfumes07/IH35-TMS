@@ -179,6 +179,17 @@ export function BillDetailPage() {
 
   // QBO-parity grid — columns, order, and content preserved verbatim from the former hand-rolled table.
   const paymentColumns: Array<ParityColumn<BillPayment>> = [
+    {
+      key: "id",
+      label: "Payment",
+      render: (pmt) => (
+        <EntityLink
+          kind="bill_payment"
+          id={pmt.id}
+          label={entityLabel(pmt.reference_number ?? pmt.check_number, pmt.id, "Payment")}
+        />
+      ),
+    },
     { key: "payment_date", label: "Date", sortable: true, render: (pmt) => formatDateUS(pmt.payment_date) },
     { key: "amount_cents", label: "Amount", sortable: true, render: (pmt) => money(pmt.amount_cents) },
     { key: "payment_method", label: "Method", sortable: true },
