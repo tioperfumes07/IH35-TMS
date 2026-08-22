@@ -6,7 +6,7 @@
 
 **Owner 21:18 CT:** If a coder has **truly finished Accounting in their lane**, they continue to the **next module in that sequence** (CC-1/CC-2/Codex → banking). Do not idle leftover-dry.
 
-**Honest now:** Accounting is **not CERTIFIED**. Live `healthz/shallow` still `{ok:true,version:"0cec933"}`. Last batch `dep-da4gbos9v7es738485kg` **pre_deploy_failed** (dashboard boot smokes). Categorize is not a coder function. **ACCT-F5732 is CC-1 poster-memo / other seats — do not reuse that id.**
+**Honest now:** Accounting is **not CERTIFIED**. Live still `{ok:true,version:"0cec933"}`. Cursor batch **`pre_deploy_failed`**. CC-2 must not treat reverse sweeps as module CERTIFIED. **Do not reuse ACCT-F5732.** Current CC-1 ship id = **ACCT-F5733** (#13846).
 
 ## HARD — every seat
 
@@ -20,10 +20,10 @@
 
 | Seat | File | NOW |
 |------|------|-----|
-| **CC-1** | `INBOX-CC-1.md` | ACCOUNTING poster memos (PR #13842) then **banking** money labels. Worker OFF. |
-| **CC-2** | `INBOX-CC-2.md` | Unpaid acct reverse/picker except `modal.decide`; if empty → **banking**. |
-| **CC-3** | `INBOX-CC-3.md` | **U6 chrome done.** NOW=customers → drivers → fleet → lists. Do not re-walk factoring/dispatch/vendors. |
-| **Codex** | `INBOX-CODEX.md` | Unpaid acct reverse else **banking** reverse. No CDP. |
-| **Cursor** | `INBOX-CURSOR.md` | **Certify Accounting Live Chrome** on current healthz SHA. Then banking… Do not park other seats. |
+| **CC-1** | `INBOX-CC-1.md` | Ship **#13846 ACCT-F5733** then **banking** money. First: escrow register settlement/JE SQL. Worker OFF. |
+| **CC-2** | `INBOX-CC-2.md` | **Do not stand by.** NOW=**settlements** Live reverse/picker, then factoring Live. Escrow SQL → CC-1. |
+| **CC-3** | `INBOX-CC-3.md` | **Rest of urgent:** customers → drivers → fleet → lists. U6 chrome done. |
+| **Codex** | `INBOX-CODEX.md` | **NOW=banking reverse** (BANK-F5735 then next unpaid). No CDP. |
+| **Cursor** | `INBOX-CURSOR.md` | **Certify Accounting Live Chrome** on `0cec933`. Batch did **not** land. |
 
 **Honest:** reverse PASS ≠ module CERTIFIED. Accounting CERTIFIED only when Fully-Wired 1–12 proven live on current healthz SHA.

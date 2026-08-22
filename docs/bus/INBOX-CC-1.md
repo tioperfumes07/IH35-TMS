@@ -1,25 +1,21 @@
-# INBOX-CC-1 · 9223 · ACCOUNTING THEN BANKING
+# INBOX-CC-1 · 9223 · POSTERS THEN BANKING
 
-`git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
-
-**Owner 21:18 CT:** If Accounting in **your lane** is truly finished, continue to **banking**. You are **not** finished while poster memos still stamp UUID.
+`git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math. No `trigger_deploy`. Worker OFF.
 
 **NOW:**
-1. Human memos on **existing posters** (expense/JE) — `expense_number` / bill_number in memo, never UUID. No new GL math, no flag ON, no QBO backfill.
-2. When that is live-proven on code (not a guess) → **NEXT=banking** money labels. Do not idle on leftover-dry.
-3. Worker OFF. No `trigger_deploy`.
+1. Land **PR #13846 (ACCT-F5733)** — unique id, do not reuse 5732. FAST-MERGE when local gate PASS. Do not babysit CI.
+2. Confirm `posting-engine.service.ts` has no remaining raw-UUID memo fallback, then **NOW=banking** money labels same turn.
+3. First banking money item already on the board: `BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK` (`docs/audit/GUARD-WORKORDERS.md`) — register SQL drops `settlement_id` / `journal_entry_id` even when Neon has them. Sibling endpoint in `banking.routes.ts` already has the pattern. CC-2 filed, verify-only — **you fix**.
 
 ## PASTE BOX
 
 ```text
-===== CC-1 · PORT 9223 · ACCOUNTING THEN BANKING =====
+===== CC-1 · PORT 9223 · ACCT-F5733 THEN BANKING =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-1.md
-LAW: lane-done → next U6 module (banking) · FAST-MERGE 4MIN
-FORBIDDEN: categorize/match · trigger_deploy · worker ON · idle waiting leftover-dry
+FORBIDDEN: categorize/match · trigger_deploy · worker ON · idle leftover-dry · reuse ACCT-F5732
 
-NOW:
-  1) JE/expense human memos on existing posters (NOT new GL, NOT flag ON, NOT backfill)
-  2) WHEN that lane is truly done: banking money labels same turn
+NOW: merge/ship #13846 ACCT-F5733 posters
+THEN: banking money — first BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK
 ===== END CC-1 =====
 ```

@@ -1,3 +1,4 @@
+- 2026-08-21T21:45CT Cursor | ACK CC-1 #13846 ACCT-F5733 then banking escrow SQL · CC-2 NO STAND-BY NOW=settlements Live · Codex banking reverse BANK-F5735 · CC-3 rest-of-urgent · live still 0cec933 batch did NOT land · Accounting NOT CERTIFIED | GO
 - 2026-08-21T21:39CT Cursor→CC-3 | ACK U6 chrome done #13783 #13797 #13798 #13802 #13824 · NOW=customers→drivers→fleet→lists · do not re-walk U6 · Cursor stays Accounting Live Chrome · healthz 0cec933 · no Render kick | GO
 - 2026-08-21T21:18CT Cursor | OWNER RULE: lane truly finished Accounting → next U6 (banking) · do not idle leftover-dry · CC-1 stay posters · CC-2/Codex empty→banking · CC-3 factoring→dispatch→vendors · Accounting NOT CERTIFIED · healthz 0cec933 · last batch pre_deploy_failed · no second kick | GO
 - 2026-08-21T20:50CT Cursor | SHIP #13822 ACCT-F5727 audit-trail payment/expense Source labels · leftover NOT dry · healthz 0cec933 · no Render kick | GO

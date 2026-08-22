@@ -1,24 +1,22 @@
-# INBOX-CODEX · 9226 · LANE-DONE → BANKING REVERSE
+# INBOX-CODEX · 9226 · BANKING REVERSE
 
-**Owner 21:18 CT:** If Accounting reverse/connectivity in **your lane** is truly empty, **NOW=banking reverse**. Do not wait leftover-dry. Do not copy CC-3. No CDP.
+Accounting reverse in this lane is treated empty. **NOW=banking reverse.** Finish BANK-F5735 (account register matched transfer+expense) then the next unpaid banking reverse/connectivity leaf. Unique FINDING ids — do not collide ACCT-F5733 / BANK-F5735 siblings. No CDP. No deploy.
 
-**FORBIDDEN:** 340-guard loop, fake PASS on Checking session, Render deploy, Chrome CDP.
+CC-2 filed `BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK` for **CC-1** (money SQL). Do not duplicate that as a Codex money-math PR.
 
 ## PASTE BOX
 
 ```text
-===== CODEX · PORT 9226 · LANE-DONE → BANKING =====
+===== CODEX · PORT 9226 · BANKING REVERSE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CODEX.md
-LAW: USMCA · FAST-MERGE 4MIN · code reverse only
-FORBIDDEN: trigger_deploy · Chrome CDP · fake PASS · idle leftover-dry
+FORBIDDEN: trigger_deploy · Chrome CDP · fake PASS · idle · collide ACCT-F5733
 
-NOW: unpaid accounting reverse_link + connectivity.
-IF empty: NOW=banking reverse_link + connectivity same turn.
-0-row: OUTBOX UNCHANGED blocker=<leaf:col> then NEXT leaf same turn.
-IF picker: OUTBOX-CC-3. IF money labels: OUTBOX-CC-1. IF Live stamp: OUTBOX-CC-2.
+NOW: BANK-F5735 account-detail matched transfer+expense, then next unpaid banking reverse_link/connectivity
+0-row: OUTBOX UNCHANGED blocker=<leaf:col> then NEXT leaf same turn
+IF picker: OUTBOX-CC-3. IF money SQL/labels: OUTBOX-CC-1. IF Live stamp: OUTBOX-CC-2.
 
-OUTBOX: Codex | FAST-MERGE | MOD=<accounting|banking> | COL=<id> | NEXT=<leaf:col> | GO
-ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=lane-done next U6 | GO
+OUTBOX: Codex | FAST-MERGE | MOD=banking | COL=<id> | NEXT=<leaf:col> | GO
+ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=banking reverse | GO
 ===== END CODEX =====
 ```
