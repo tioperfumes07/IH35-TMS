@@ -1,33 +1,34 @@
-# INBOX-CURSOR · 9222 · LEAD · URGENT-BLOCKS-NOW 08:54CT · FAST-MERGE
+# INBOX-CURSOR · 9222 · LEAD · 14 MODULES · 09:08 CT · FAST-MERGE
 
 `git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`.
 
-**Render:** authenticate from Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd` — **do not skip**. Set dashboard `healthCheckPath=/api/v1/healthz/readyz`. **One** batch deploy of `origin/main` after product merges. **No per-merge kick.** CC/Codex never `trigger_deploy`.
+**Honesty:** curl `healthz/shallow` at 09:08 CT still **`0cec933`** → Accounting **NOT CERTIFIED**. Do **not** tell seats it is certified. Do **not** freeze them.
 
-Owner: seats must **ACK 08:54CT** and open their **first URL**. Accounting 4 CREATE-TEST hops **proven** — do not pad, **do not freeze seats**.
+**Render:** Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd`. One in-flight deploy (`dep-da4qm10jo6nc73dqu0qg` was `update_in_progress`). **No second kick.** `healthCheckPath=/api/v1/healthz/readyz`. CC/Codex never `trigger_deploy`.
 
-## PROVEN (no remake)
+## FAST-MERGE (Cursor)
 
-`TEST-REMAINING-1755` · CM-2026-0002/0003 applied · VC-2026-0001 · `TEST-PP-20260822` · Palos Garza split. Void later. No For-review drain.
+`node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` PASS → one push → PR title `Cursor- …` → merge `--admin` (API if worktree blocks checkout). EVEN verify-steps. No CLAIMED in feature PR.
 
 ## WHERE / HOW / NOW
 
-1. Keep INBOXes = this timestamp. If a seat OUTBOX says stale/drained, they **pull**.
-2. Merge any **product** PRs, then **one** API deploy (not #10720 tracker-only unless needed).
-3. When `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` ≠ `0cec933`: Daily Recon **200**, archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999`, prepaid Create GL pickers. **Then** Accounting certify if those pass. Until then **NOT CERTIFIED**.
-4. After certify: unpaid Live on U2–R4 same as CC-2 if still open.
+1. INBOXes = **09:08 CT**. Seat saying **04:11 CT** did not pull — rewrite already on bus; they **pull**.
+2. When SHA ≠ `0cec933`: `/accounting/daily-recon` **200** (authenticated), archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999`, prepaid Create GL pickers. Stamp U1 certify **only if those pass**.
+3. Until then: Cursor-lane wiring on unpaid 2–14 (same URLs as CC-2). FAST-MERGE.
+4. After U1 certify: Live leftover through `/legal` then WAVE leftover.
+5. Quality: McLeod / QBO chrome (no write-back) / NetSuite controls / Alvys workflow. Fully-Wired 1–12. Live Chrome last. `Live=BLOCKED` until item 12 on current SHA.
 
-**Forbidden:** hold seats on Accounting · empty-queue · drain For-review · stacked API deploys.
+OUTBOX: `Cursor | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=9222 | NOW=lead+14 | GO`
 
 ## PASTE BOX
 
 ```text
-===== CURSOR · PORT 9222 · FAST-MERGE · LEAD =====
+===== CURSOR · PORT 9222 · FAST-MERGE · LEAD 14 MODULES =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CURSOR.md
-NOW: Desktop APIS Render auth · one batch deploy · seats ACK 08:54CT
-THEN: healthz ≠ 0cec933 → Daily Recon 200 + archived vendor + prepaid pickers
-FORBIDDEN: freeze seats · pad TEST · drain For-review · stacked deploy
-ACK: Cursor | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=9222 | NOW=lead | GO
+NOW: seats ACK 09:08CT · no second Render kick · U1 NOT CERTIFIED on 0cec933
+THEN: healthz ≠ 0cec933 → Daily Recon 200 + archived vendor + prepaid pickers → then Live 2–14
+FORBIDDEN: freeze seats · tell seats Accounting CERTIFIED · pad TEST · drain For-review · stacked deploy
+ACK: Cursor | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=9222 | NOW=lead | GO
 ===== END CURSOR =====
 ```

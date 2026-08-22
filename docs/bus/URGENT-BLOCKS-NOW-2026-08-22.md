@@ -1,148 +1,178 @@
-# URGENT BLOCKS NOW · 2026-08-22 08:54 CT · BINDING
+# URGENT BLOCKS NOW · 2026-08-22 09:08 CT · BINDING · 14 MODULES
 
-**This file is the NOW.** Pull `origin/main`. If your INBOX disagrees with **this timestamp**, this file wins. Claiming **stale** / **drained** / **empty-queue** / **awaiting next order** / **waiting Cursor** / **waiting healthz** after this pull is a **process defect**.
+**This file is the NOW.** `git pull --ff-only origin main`. If your INBOX disagrees with **09:08 CT**, this file wins.
+
+Claiming **stale** / **drained** / **empty-queue** / **awaiting next order** / **waiting Cursor** / **waiting healthz** / **Accounting already certified** after this pull is a **process defect**.
 
 | App | Entity | Company UUID |
 |-----|--------|----------------|
 | `https://app.ih35dispatch.com` | **USMCA only** | `5c854333-6ea5-4faa-af31-67cb272fef80` |
 
-Switcher must show USMCA. No Trucking. No Transportation. No QBO sync. No TMS→QBO write-back. No `eld`. No `/program/matrix` parked tab.
+Switcher **must** show USMCA. No Trucking. No Transportation. **No QBO sync. No TMS→QBO write-back.** No `eld`. No parked `/program/matrix`. Devin-A **PARKED**.
 
-**Ports (do not steal):** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin-A **PARKED**.
+**Ports:** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**.
 
-**Law:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · Fully-Wired 1–12 · FAST-MERGE · `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`.
+**Quality bar (launch today):** McLeod ops seriousness · QuickBooks trust (chrome + books, not QBO write-back) · NetSuite controls (audit, entity scope, WORM) · Alvys workflow. Honesty: CI-green ≠ live. Empty TMS is **expected**. **CREATE-TEST-THEN-VOID.** Unique FINDING only on **500 / dead click / silent no-op**. Do not invent “zero defects” without a click this session after **this** pull.
 
-**Render (Cursor only, one batch):** authenticate from Desktop APIs file `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd` (`APIS-ACCESS.md`). **Do not skip auth.** MCP login card is optional; the Desktop key is the auth. **No `trigger_deploy` from CC-1 / CC-2 / CC-3 / Codex.** Cursor: **one** API deploy after merges are on `main`. Do not stack.
+**Law:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · Fully-Wired 1–12 · `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md` · USMCA-only until launch.
 
----
-
-## How (every seat, every leaf)
-
-1. `git pull --ff-only origin main`
-2. Open **one** URL below on **your** port. Prove it. **Close the tab.**
-3. If the wizard is **unproven**: one labeled **TEST DATA** create → save → **reload** → canonical row. Memo `TEST DATA VOID-AT-LAUNCH`. Placeholders `$1,200` / `$1.20` / remainder on an open TEST bill.
-4. If the wizard is **already proven** (list below): **do not remake**. Click through; unique FINDING only on **500 / dead click / silent no-op**.
-5. Unique FINDING = one PR: code + guard `scripts/verify-*.mjs` + EVEN/band claim sequence + `cursor-ship-preflight` / money gate + FAST-MERGE.
-6. OUTBOX **first line** same turn: `SEAT | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=n | NOW=<exact URL> | GO`
-7. Then the **next URL in YOUR list**. Never invent “module dry” while a URL in your list is unopened this session.
-
-**Forbidden:** wait Jorge · wait Cursor · wait `healthz` as idle · remake Accounting proven hops · drain Banking For-review · Close month · second Render deploy from a coder seat · inventory while your list is unfinished.
+**Render:** Cursor only, Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd`. **No `trigger_deploy` from CC-1/2/3/Codex.** One batch deploy. Do not stack. Live API **`0cec933` is not a seat idle.**
 
 ---
 
-## Accounting — CLOSED for CREATE-TEST (do not remake)
+## FAST-MERGE (every ship, ~4–5 min)
+
+1. **Gate:** CC-1/CC-2/CC-3/Codex `node scripts/money-pr-local-gate.mjs` → exit 0. Cursor `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` → exit 0. FINDING-first commit. One FINDING. Guard on wiring. Tip contains `origin/main`.
+2. **Push:** `git push`. If blocked **only** by `verify-static-fallback` ENV / no local PG → `git push --no-verify` **after** step 1 PASS.
+3. **PR:** `gh pr create` — **never** `gh pr checks --watch`.
+4. **Merge:** `gh pr merge N --squash --delete-branch --admin` immediately.
+5. **Neon:** money/migrations — **you** apply + one query proof.
+6. **OUTBOX** first line → **next URL same turn**. Continuous. Never idle.
+
+**Forbidden:** merge with gate FAIL · `--no-verify` before gate PASS · `--no-verify` for **your** red guard · wait Jorge to merge · For-review drain · Close month · remake proven Accounting TESTs.
+
+**Bands:** Cursor EVEN verify-steps · CC-1 ≡1 (mod 4) · CC-2 ≡3 (mod 4). Claim-before-write. No CLAIMED json in feature PRs.
+
+---
+
+## Accounting honesty (U1)
+
+CREATE-TEST hops are **proven** — **do not remake:**
 
 | Proven | Artifact |
 |--------|----------|
-| Bill remaining / Record Payment | `TEST-REMAINING-1755` $300 paid $200 open $100 |
-| Apply AR credit | CM-2026-0002 / 0003 applied |
-| Apply AP vendor credit | VC-2026-0001 applied |
-| Prepaid | `TEST-PP-20260822` $1,200 / 12 periods |
-| Bank split sample | Palos Garza txn `f9cc15bf-…` two vendors |
+| Bill remaining / Record Payment | `TEST-REMAINING-1755` |
+| Apply AR credit | CM-2026-0002 / 0003 |
+| Apply AP vendor credit | VC-2026-0001 |
+| Prepaid | `TEST-PP-20260822` |
+| Bank split sample | Palos Garza `f9cc15bf-…` |
 | Sales-tax agency | CC-2 TEST agency (do not duplicate) |
 
-**CERTIFY (Cursor Live Chrome, after the one batch deploy is live):** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` ≠ `0cec933` **and** `GET /api/v1/accounting/daily-recon` is **200**, then re-click Daily Recon + archived vendor `308f6434-…` + prepaid Create GL pickers. **That is not a seat idle.** Seats execute U2–U6 / R1–R4 **now**.
+**CERTIFY:** Cursor Live Chrome **only** when `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` **≠** `0cec933` **and** authenticated Daily Recon **200**, then Daily Recon click + archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999` + prepaid Create GL pickers. **Measured 09:08 CT: still `0cec933` → Accounting is NOT CERTIFIED.** That is **not** a reason for other seats to stop. They execute **U2 onward** now.
 
 ---
 
-## Sequence (all urgent — do in this order, never skip ahead)
-
-**Urgent 6**
+## The 14 (this order — never skip ahead)
 
 | # | Module | Home URL |
 |---|--------|----------|
-| U1 | Accounting | `/accounting` — CREATE-TEST **done**; certify = Cursor after the **one** batch deploy |
-| U2 | Banking | `/banking` |
-| U3 | Settlements | `/driver-finance/settlements` |
-| U4 | Factoring | `/factoring` |
-| U5 | Dispatch | `/dispatch` |
-| U6 | Vendors | `/vendors` |
+| 1 | Accounting | `https://app.ih35dispatch.com/accounting` |
+| 2 | Banking | `https://app.ih35dispatch.com/banking` |
+| 3 | Settlements | `https://app.ih35dispatch.com/driver-finance/settlements` |
+| 4 | Factoring | `https://app.ih35dispatch.com/factoring` |
+| 5 | Dispatch | `https://app.ih35dispatch.com/dispatch` |
+| 6 | Vendors | `https://app.ih35dispatch.com/vendors` |
+| 7 | Customers | `https://app.ih35dispatch.com/customers` |
+| 8 | Drivers | `https://app.ih35dispatch.com/drivers` |
+| 9 | Fleet | `https://app.ih35dispatch.com/fleet` |
+| 10 | Lists | `https://app.ih35dispatch.com/lists` |
+| 11 | Maintenance | `https://app.ih35dispatch.com/maintenance` |
+| 12 | Safety | `https://app.ih35dispatch.com/safety` |
+| 13 | Insurance | `https://app.ih35dispatch.com/insurance` |
+| 14 | Legal | `https://app.ih35dispatch.com/legal` |
 
-**Rest of urgent**
+**After 14 only:** `/tasks` → `/home` → `/compliance` → `/cash-flow` → `/fuel` → `/inventory` → `/users`.
 
-| # | Module | Home URL |
-|---|--------|----------|
-| R1 | Customers | `/customers` |
-| R2 | Drivers | `/drivers` |
-| R3 | Fleet | `/fleet` |
-| R4 | Lists | `/lists` |
-
-**Then WAVE 2 leftover (only after R4)**
-
-`/maintenance` → `/tasks` → `/safety` → `/home` → `/compliance` → `/cash-flow` → `/fuel` → `/inventory` → `/users`
-
----
-
-## Per-seat NOW (08:54 CT) — exact next clicks
-
-### CC-1 · 9223 · MONEY
-
-**NOW:** U2 Banking money, then U3, U4. Not Accounting remakes.
-
-| Order | Where | What / how |
-|-------|--------|------------|
-| 1 | `https://app.ih35dispatch.com/banking` | Unpaid **money** FAIL from `docs/audit/GUARD-WORKORDERS.md` in your lane. Reuse poster. No new GL math. |
-| 2 | Same module: expense/bill/payment only if that hop is **unproven** | One TEST. **Do not** Match/Categorize the rest of For-review. |
-| 3 | `https://app.ih35dispatch.com/driver-finance/settlements` | Settlement close / deduction / pay-run **money** leftover. One TEST if unproven. |
-| 4 | `https://app.ih35dispatch.com/factoring` | Advance / packet money leftover. One TEST if unproven. Faro terms. |
-| 5 | `/dispatch` then `/vendors` | Money hops only (Book Load persist is not GL math; still USMCA). |
-
-OPEN board money row beats a green click. File other-lane defects on the board same turn.
-
-### CC-2 · 9224 · LIVE CHROME
-
-**NOW:** U2 then U3. Click every **tab** on the module.
-
-| Order | Where | What / how |
-|-------|--------|------------|
-| 1 | `/banking` | Home, an account, For review **sample only** (already split). Relay `/banking/relay`. Plaid/Connections if in nav. Dead click = FINDING. |
-| 2 | `/driver-finance/settlements` | List, close, cash advances, liabilities, disputes, pay-rate templates, deductions — each tab. |
-| 3 | `/factoring` | Recourse pipeline, packets, queue. |
-| 4 | `/dispatch` | Board + Book Load wizard **one** TEST load if unproven. |
-| 5 | `/vendors` | List + one vendor detail (not `308f6434` until API SHA moves). |
-| 6 | `/customers` → `/drivers` → `/fleet` → `/lists` | Rest of urgent Live. |
-
-### CC-3 · 9225 · CHROME + PICKER
-
-**NOW:** R1→R4 (customers first). Urgent 6 chrome only if you find a **picker** FAIL on U2–U6 while CC-2 is on Live.
-
-| Order | Where | What / how |
-|-------|--------|------------|
-| 1 | `/customers` | `+ Create` / `+ Add new` **first row** in dropdown → same wizard Lists would use → save → appears selected after reload. |
-| 2 | `/drivers` | Same picker law. Tabs: profiles, settlements, cash advances, permits. |
-| 3 | `/fleet` | Units/trailers pickers. |
-| 4 | `/lists` | Catalog cards → correct list → `+ Create` → canonical table. |
-| 5 | Then WAVE 2 `/maintenance` pickers. |
-
-No status-only PRs. No “Built 100% so idle.”
-
-### Codex · 9226 · REVERSE + CONNECTIVITY · NO CDP unless proving a reverse click you already coded
-
-**NOW:** U2 then U3 code reverse.
-
-| Order | Where (code + live GET) | What / how |
-|-------|-------------------------|------------|
-| 1 | Banking | Canonical `banking.*` (not `bank.*`). Forward FK + reverse query/endpoint returns the row. Guard. |
-| 2 | Settlements | `driver_finance.*` (not payroll). Reverse from driver/load/liability. |
-| 3 | Factoring | Invoice/customer reverse; `_cents` columns not dead JSONB. |
-| 4 | Dispatch | `mdata.loads` reverse. |
-| 5 | Vendors | `mdata.vendors` GET; archived detail is UNVERIFIED-deploy until SHA moves — **do not idle on it**. Next unpaid reverse. |
-
-No fake reverse PASS. No Chrome login theater.
-
-### Cursor · 9222 · LEAD + CERTIFY AFTER ONE BATCH DEPLOY
-
-| Order | Where | What / how |
-|-------|--------|------------|
-| 1 | Desktop APIs + Render API | Auth from `APIS-ALL-05-29-2026.rtfd`. Set live `healthCheckPath=/api/v1/healthz/readyz` (must match `render.yaml`). **One** `POST /deploys` of current `origin/main`. Never per-merge. Never stack. |
-| 2 | When `healthz` ≠ `0cec933` | `/accounting/daily-recon` must 200. Archived vendor `308f6434`. Prepaid Create GL pickers. Then stamp Accounting certify **only** if those pass. Then U2–U6 Live leftover. |
-| 3 | Until SHA moves | Seats **GO** U2–R4. Cursor-lane wiring FAILs (EVEN verify-steps, no CLAIMED in feature PR). |
-| 4 | After Accounting certify | Same U2→R4 sequence as CC-2 if a leaf is still unpaid Live. |
+**How (every leaf):** one URL on **your** port → prove → **close the tab**. Unproven wizard: one labeled **TEST DATA** save → reload → canonical. Memo `TEST DATA VOID-AT-LAUNCH`. Placeholders `$1,200` / `$1.20/mi`. Proven: click-through only.
 
 ---
 
-## ACK (every seat, first OUTBOX line after pull)
+## Per-seat ownership across all 14
+
+### CC-1 · 9223 · MONEY / GL (reuse poster — no new GL math)
+
+OPEN `docs/audit/GUARD-WORKORDERS.md` money row in-lane **beats** a green click.
+
+| # | Module | What you do |
+|---|--------|-------------|
+| 1 | Accounting | Unique money FAIL only. **Do not** remake proven TESTs. No Close month. |
+| 2 | Banking | Money hop (payment/match **sample**, escrow, register dollars). **Do not** drain For-review. Factoring = secured borrowing, not sale. |
+| 3 | Settlements | Close / deduction / pay-run / cash advance money. `driver_finance.*` only. |
+| 4 | Factoring | Advance / packet / fee / reserve **money**. Faro terms. Recourse. Owner-manual reserves — do not create reserve accounts. |
+| 5 | Dispatch | Book Load **persist** (not posting). Rate/accessorial TEST if unproven. |
+| 6 | Vendors | Vendor bill/expense/payment leftover. Canonical `mdata.vendors`. |
+| 7 | Customers | Invoice / AR payment leftover. Canonical `mdata.customers`. |
+| 8 | Drivers | Driver-as-vendor / settlement money leftover. |
+| 9 | Fleet | USMCA **leases** equipment — **no** PP&E / Accum Depr on USMCA. Money only if a real FAIL (lease/bill). |
+| 10 | Lists | CoA **bindings** / purpose leftover — do not invent accounts. No TRANSP/USMCA Vehicles/FixedAsset/AccumDepr TMS-native. |
+| 11 | Maintenance | WO → bill/expense via **existing poster**. |
+| 12 | Safety | Fine / liability money leftover. |
+| 13 | Insurance | Claim → bill/deductible leftover. Forward+reverse money terminus. |
+| 14 | Legal | Matter → bill leftover. |
+
+Then after-14 money only if a named FAIL.
+
+### CC-2 · 9224 · LIVE CHROME (every tab)
+
+Every **sub-nav tab** on the module. Dead click / 500 / silent no-op = FINDING + FAST-MERGE. One TEST wizard if **that** hop is unproven.
+
+| # | Module | What you click |
+|---|--------|----------------|
+| 1 | Accounting | Do **not** remake proven TESTs. Leftover tabs only if unpaid Live. Certify is Cursor. |
+| 2 | Banking | Home, account, For-review **sample only**, Relay `/banking/relay`, Plaid/Connections if in nav. |
+| 3 | Settlements | List, close, cash advances, liabilities, disputes, pay-rate, deductions. |
+| 4 | Factoring | Recourse pipeline, packets, queue, advances. |
+| 5 | Dispatch | Board + Book Load **one** TEST load if unproven. |
+| 6 | Vendors | List + one detail (not `308f6434` until SHA ≠ `0cec933`). |
+| 7 | Customers | List + detail + create if unproven. |
+| 8 | Drivers | Profiles, settlements, cash advances, permits tabs. |
+| 9 | Fleet | Units + trailers tabs. |
+| 10 | Lists | Catalog cards → correct list. |
+| 11 | Maintenance | WO list + create chrome. |
+| 12 | Safety | Accidents / fines / meetings tabs in design. |
+| 13 | Insurance | Policies / claims tabs. |
+| 14 | Legal | Matters tabs. |
+
+### CC-3 · 9225 · PICKER + `+ Create` (V2)
+
+`+ Add new` is the **first row inside the dropdown**. Same wizard Lists uses. Save → appears + selected + survives reload. R=W canonical table. Entity-scoped.
+
+| # | Module | Pickers |
+|---|--------|---------|
+| 1 | Accounting | Leftover pickers only (prepaid GL **after** SHA moves). |
+| 2–6 | Banking→Vendors | Vendor/customer/account/load pickers on those homes. |
+| 7 | Customers | `+ Create` / nested `+ Add new`. |
+| 8 | Drivers | Driver create + nested catalogs. |
+| 9 | Fleet | Unit/trailer pickers. |
+| 10 | Lists | Card → list → `+ Create` → canonical. |
+| 11 | Maintenance | Vendor/unit on WO. |
+| 12 | Safety | Driver/unit/load pickers. |
+| 13 | Insurance | Policy/driver/unit/load on claim. |
+| 14 | Legal | Matter linkage pickers. |
+
+### Codex · 9226 · REVERSE + CONNECTIVITY (no CDP theater)
+
+Prove with SQL/GET/guard. Canonical tables. Forward **and** reverse. Memo-only UUID = FAIL.
+
+| # | Module | Canonical |
+|---|--------|-----------|
+| 1 | Accounting | `accounting.*` / `catalogs.accounts` — leftover reverse only. |
+| 2 | Banking | `banking.*` never `bank.*`. |
+| 3 | Settlements | `driver_finance.*` never payroll. |
+| 4 | Factoring | `_cents` live; invoice/customer reverse. |
+| 5 | Dispatch | `mdata.loads`. |
+| 6 | Vendors | `mdata.vendors`. Archived `308f6434` 404 = UNVERIFIED-deploy — **do not idle**. |
+| 7 | Customers | `mdata.customers`. |
+| 8 | Drivers | `mdata.drivers`. |
+| 9 | Fleet | `mdata.units` (owner/lease — **no** `operating_company_id` on units). |
+| 10 | Lists | Catalog R=W. |
+| 11 | Maintenance | `maintenance.*` never `maint.*`. |
+| 12 | Safety | `safety.*` F+R. |
+| 13 | Insurance | Claim graph F+R. |
+| 14 | Legal | Matter ↔ claim/bill F+R. |
+
+### Cursor · 9222 · LEAD + CERTIFY + WIRING
+
+1. Keep this file + INBOXes = **09:08 CT**. Seats that say 04:11 CT **did not pull**.
+2. Render: one in-flight deploy max. **No second kick.** When `healthz` ≠ `0cec933`: Daily Recon 200 + archived vendor + prepaid pickers → then stamp Accounting certify **only if those pass**.
+3. Cursor-lane wiring FAILs (EVEN steps). FAST-MERGE.
+4. After U1 certify attempt: same Live leftover as CC-2 on unpaid 2–14.
+5. Never freeze seats on U1.
+
+---
+
+## ACK (first OUTBOX line after pull)
 
 ```text
-<SEAT> | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=<n> | NOW=<first URL in your table> | GO
+<SEAT> | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=<n> | NOW=<first URL in your INBOX> | GO
 ```

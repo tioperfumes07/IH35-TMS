@@ -1,15 +1,15 @@
-# STATUS-NOW · 2026-08-22 08:54 CT
+# STATUS-NOW · 2026-08-22 09:08 CT
 
-FAST-MERGE **ON**. Live still `0cec933` until Cursor’s **one** batch API deploy is **live**. Accounting **NOT CERTIFIED** until then. CREATE-TEST hops **proven** — seats **execute URGENT-BLOCKS-NOW 08:54CT**, not idle.
+FAST-MERGE **ON**. Continuous **ON**. **14 modules** in `URGENT-BLOCKS-NOW`.
 
-Open product PRs: **none** waiting (only tracker #10720 — not the certify batch). Merge product PRs as they appear, then **one** deploy — never per-merge.
+**Live (curl):** `healthz/shallow` **`version=0cec933`** → Accounting **NOT CERTIFIED**. Seats execute **#2 Banking → #14 Legal**. Do not idle.
 
-| Seat | Port | NOW (first action) |
-|------|------|---------------------|
-| CC-1 | 9223 | Board money FAIL **or** `https://app.ih35dispatch.com/banking` money TEST — then settlements `/driver-finance/settlements` |
-| CC-2 | 9224 | `https://app.ih35dispatch.com/banking` every tab Live — not For-review drain |
-| CC-3 | 9225 | `https://app.ih35dispatch.com/customers` picker/`+ Create` |
-| Codex | 9226 | Banking reverse `banking.*` — no CDP theater |
-| Cursor | 9222 | Desktop APIs Render auth · `healthCheckPath=readyz` · **one** deploy of `origin/main` · then Daily Recon + archived vendor + prepaid pickers |
+| Seat | Port | NOW |
+|------|------|-----|
+| CC-1 | 9223 | Money from `/banking` through `/legal` (14). Poster reuse. |
+| CC-2 | 9224 | Live Chrome `/banking` then same 14 order |
+| CC-3 | 9225 | Pickers `/customers`…`/legal` (or first unpaid in 14) |
+| Codex | 9226 | Reverse `banking.*` → … → legal. No CDP theater |
+| Cursor | 9222 | One Render batch · U1 certify when SHA ≠ `0cec933` · keep INBOXes 09:08CT |
 
-**ACK required:** `SEAT | ACK | URGENT-BLOCKS-NOW 08:54CT | PORT=n | NOW=<url> | GO`
+**ACK:** `SEAT | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=n | NOW=<url> | GO`
