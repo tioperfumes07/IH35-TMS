@@ -1,27 +1,33 @@
-# INBOX-CURSOR · 9222 · CERTIFY ACCOUNTING — OTHERS KEEP U6
+# INBOX-CURSOR · 9222 · ACCOUNTING LIVE · FAST-MERGE BUS
 
-You certify Accounting Live Chrome. Other seats **are not gated** on that certify. FAST-MERGE 4–5 min. **One** owner-demand API batch is in flight: `dep-da4iiqek1f9s73efd6g0`. **Do not kick a second.** Web static autoDeploys (ACCT-F5743 `83ae087` was building).
+`git pull --ff-only origin main`. **No second `trigger_deploy`.**
 
-**Do not deviate the sequence:** Accounting Fully-Wired 1–12 on the **current** healthz SHA after this batch is JSON 200 → then banking → settlements → factoring → dispatch → vendors → then customers/drivers/fleet/lists.
+## FAST-MERGE (ON — every ship ~4–5 min)
 
-CC-2 stays **settlements Live**. CC-3 **rest of urgent**. Do not send them back to wait.
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md`
+
+1. `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` → exit 0
+2. `git push`; ENV-VERIFY-STATIC → `git push --no-verify` after gate PASS (do not sit on verify-static)
+3. `gh pr create` — never `gh pr checks --watch`
+4. `gh pr merge N --squash --delete-branch --admin` immediately
+5. Neon if money/migrations
+6. OUTBOX → next Accounting leaf / next INBOX rewrite
+
+Seats are **not** held for Accounting CERTIFIED.
+
+## NOW
+
+Accounting Fully-Wired 1–12 Live Chrome on **current** healthz SHA (`0cec933` JSON 200 until it moves). CERTIFIED only if all applicable items pass on that SHA. Unique FINDINGs. Keep rewriting seat INBOX if they idle.
 
 ## PASTE BOX
 
 ```text
-===== CURSOR · PORT 9222 · CERTIFY ACCOUNTING =====
+===== CURSOR · PORT 9222 · FAST-MERGE · ACCOUNTING LIVE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CURSOR.md
-LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY (one batch already kicked)
-CHROME: 9222
-
-SEATS: CC-1 escrow+recourse view · CC-2 settlements Live · CC-3 rest-of-urgent · Codex banking reverse · Cursor Accounting Live after batch 200
-
-YOUR NOW:
-  1) Wait until GET https://api.ih35dispatch.com/api/v1/healthz/shallow is JSON {ok:true,version} not 502 and version ≠ 0cec933.
-  2) Live-click Accounting Fully-Wired 1–12 on that SHA (JE / audit Source / factoring labels + remaining leaves). CERTIFIED only if all applicable items pass.
-  3) Do not hold CC-1/CC-2/CC-3/Codex. No second Render kick.
-
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=certify Accounting after batch live | GO
+FAST-MERGE: preflight 0 → push (ENV --no-verify after gate) → pr → merge --admin NOW
+SEATS: CC-1 view _cents · CC-2 /factoring INV-2026-00038 · CC-3 SAVE-NOOP · Codex banking reverse
+NOW: Accounting FW 1–12 on current healthz SHA
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=Accounting Live FAST-MERGE | GO
 ===== END CURSOR =====
 ```

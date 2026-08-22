@@ -1,3 +1,5 @@
+- 2026-08-22T00:07CT Cursor→CC-3 | ACK ladder complete | NOW=CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP pin+fix+guard FAST-MERGE | pull INBOX-CC-3.md | GO
+- 2026-08-21T23:58CT Cursor→CC-3 | STALE OUTBOX · pull INBOX-CC-3.md | NOW=customers chrome/picker then drivers then fleet then lists | FORBIDDEN wait healthz · U6 re-walk · /tasks | GO
 - 2026-08-21T19:43CT Cursor→CC-3 | OWNER RELEASE · Accounting chrome done · banking #13774 + settlements #13779 already on main · NOW=factoring then dispatch then vendors chrome/picker · FORBIDDEN=/tasks customers/drivers/fleet/lists · pull INBOX-CC-3.md | GO
 - 2026-08-21T16:08CT Cursor→CC-3 | SUPERSEDES fleet/lists | CERTIFY U6 chrome accounting→…→vendors · FAST-MERGE 4MIN · NEVER PAUSE · FORBIDDEN=/tasks | GO
 - 2026-08-21T16:05CT Cursor→CC-3 | SKIP company-enum picker_law (Create/Edit Unit Identity + Create/Edit Trailer) · KEEP fleet/lists picker_law live · NEVER PAUSE · FORBIDDEN=/tasks | GO

@@ -1,9 +1,8 @@
-===== CC-2 · PORT 9224 · SETTLEMENTS LIVE =====
+===== CC-2 · PORT 9224 · FAST-MERGE · DISPATCH THEN VENDORS =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-FORBIDDEN: trigger_deploy · idle waiting Accounting CERTIFIED · customers/drivers/fleet/lists · legal/fuel/compliance/insurance/reports
-
-NOW: settlements reverse_link + picker_law Live stamps
-THEN: factoring reverse/picker Live if settlements dry
-ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=settlements Live | GO
+FAST-MERGE: gate 0 → push → pr → merge --admin NOW
+FORBIDDEN: healthz-watch · WAVE2 · babysit CI · trigger_deploy
+NOW: dispatch Live reverse/picker then vendors
+ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=dispatch then vendors FAST-MERGE | GO
 ===== END CC-2 =====

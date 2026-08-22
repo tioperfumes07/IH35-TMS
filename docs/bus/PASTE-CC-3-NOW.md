@@ -1,11 +1,8 @@
-===== CC-3 · PORT 9225 · REST OF URGENT =====
+===== CC-3 · PORT 9225 · FAST-MERGE · CUSTOMER SAVE NOOP =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-3.md
-FORBIDDEN: trigger_deploy · /tasks · wait Accounting CERTIFIED · re-walk factoring/dispatch/vendors · money/GL
-
-NOW: customers chrome/picker leftover
-  then drivers chrome/picker
-  then fleet chrome/picker
-  then lists chrome/picker
-ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=customers then drivers then fleet then lists | GO
+FAST-MERGE: gate 0 → push (ENV --no-verify after gate) → pr → merge --admin NOW → OUTBOX
+FORBIDDEN: re-walk customers/drivers/fleet/lists · WAVE2 · /tasks · babysit CI · trigger_deploy
+NOW: CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP pin+fix+guard
+ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP FAST-MERGE | GO
 ===== END CC-3 =====

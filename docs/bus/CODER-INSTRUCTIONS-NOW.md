@@ -1,29 +1,15 @@
-# CODER INSTRUCTIONS NOW · 2026-08-21 23:45 CT
+# CODER INSTRUCTIONS NOW · 2026-08-22 00:07 CT
 
-**Your only order is your INBOX file.** `git pull --ff-only origin main`. **FAST-MERGE 4–5 min.** Never HOLD. Never `/tasks`. USMCA only.
+**FAST-MERGE 4–5 MIN IS ON.** Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Your only product order is `INBOX-<SEAT>.md`.
 
-**Owner (this turn):** certify Accounting **does not hold** other seats. U6 and rest of urgent keep moving. Jorge on-demand **one** API batch deploy is in flight (`dep-da4iiqek1f9s73efd6g0`) — **do not start a second**.
+Every ship: (1) `money-pr-local-gate` exit 0 (Cursor: `cursor-ship-preflight --body-file`) (2) `git push` / `--no-verify` **only** if ENV-VERIFY-STATIC after gate PASS (3) `gh pr create` no `--watch` (4) `gh pr merge --squash --delete-branch --admin` **now** (5) Neon if money (6) OUTBOX → next.
 
-**Owner sequence (do not skip modules):** Cursor certifies **Accounting** Live Chrome on the **new** healthz SHA after this batch is JSON 200 → Urgent 6 (**banking → settlements → factoring → dispatch → vendors**) → rest (**customers → drivers → fleet → lists**).
+Never: babysit CI · wait verify-static · ask Jorge to merge · `trigger_deploy` · wait Accounting CERTIFIED · wait healthz ≠ `0cec933`.
 
-**Do not reuse ACCT-F5732 / ACCT-F5733 / ACCT-F5743.**
-
-## HARD — every seat
-
-1. **Do NOT call Render deploy.** Cursor lead already kicked **one** batch. No second kick.
-2. **Do NOT buy Render storage.**
-3. **Do NOT re-enable `ENABLE_SCHEDULED_REPORTS_WORKER` this turn.**
-4. **Do NOT pause for Jorge.** Do **not** wait for Accounting CERTIFIED.
-5. Native `window.confirm` freeze: ConfirmModal / VoidReasonModal.
-6. **USMCA only.** No QBO write-back.
-7. **Categorize / Match / recon is not a coder function.**
-
-| Seat | File | NOW |
-|------|------|-----|
-| **CC-1** | `INBOX-CC-1.md` | Banking escrow register SQL **and** factoring recourse view money columns (`_cents`). Worker OFF. |
-| **CC-2** | `INBOX-CC-2.md` | **settlements** Live reverse/picker, then **factoring** Live. Do not wait on Accounting certify. |
-| **CC-3** | `INBOX-CC-3.md` | Rest of urgent: customers → drivers → fleet → lists. |
-| **Codex** | `INBOX-CODEX.md` | Next unpaid **banking reverse**. No CDP. No escrow/view SQL (CC-1). |
-| **Cursor** | `INBOX-CURSOR.md` | Certify Accounting Live Chrome when this batch `healthz/shallow` is JSON 200 (not 502). |
-
-**Honest:** reverse PASS ≠ module CERTIFIED. Accounting CERTIFIED only when Fully-Wired 1–12 proven live on the **current** healthz SHA after this batch.
+| Seat | NOW |
+|------|-----|
+| CC-1 | next OPEN money SQL FAST-MERGE (#13911 done) |
+| CC-2 | dispatch then vendors FAST-MERGE (#13914 done) |
+| CC-3 | CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP FAST-MERGE |
+| Codex | banking reverse FAST-MERGE |
+| Cursor | Accounting Live FAST-MERGE |
