@@ -3,6 +3,7 @@
 // Rule 37 claim 4184 landed on main in PR #13250 before this wrapper was authored.
 const GUARDS = [
   "verify-bill-detail-linked-identity-human-labels.mjs",
+  "verify-customers-list-md-tabs-reverse.mjs",
   "verify-driver-finance-cash-advances-deductions-disputes-reverse.mjs",
   "verify-bill-payment-bank-account-human-label.mjs",
   "verify-factor-reconciliation-invoice-human-label.mjs",
