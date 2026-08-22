@@ -41,9 +41,8 @@ export function check(sources) {
       problems.push(`${BACKEND}: weeks CTE must SELECT id::text AS settlement_id — without it no per-row link is possible`);
     }
   }
-  if (!profile?.includes("<SettlementsSection") || !profile?.includes("settlements={aggregate.settlements ?? {}}")) {
-    problems.push(`${PROFILE}: driver profile must mount SettlementsSection from the scoped aggregate`);
-  }
+  if (!profile?.includes("<SettlementsSection")) problems.push(`${PROFILE}: driver profile must mount SettlementsSection`);
+  if (!profile?.includes("settlements={aggregate.settlements ?? {}}")) problems.push(`${PROFILE}: driver profile must feed SettlementsSection from the scoped aggregate`);
   if (!/path="\/drivers\/:id\/profile"[\s\S]{0,180}<DriverProfilePage \/>/.test(manifest ?? "")) {
     problems.push(`${MANIFEST}: canonical driver profile route must remain mounted`);
   }
@@ -71,51 +70,32 @@ function readAll() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = {
-    [BACKEND]: `
-      weeks AS (
-            SELECT
-              id::text AS settlement_id,
-              period_end::text AS week_ending
-            FROM driver_finance.driver_settlements
-    `,
-    [SECTION]: `
-      settlement_id: w.settlement_id ? String(w.settlement_id) : "",
-      <EntityLink
-          kind="settlement"
-          id={row.settlement_id}
-        />
-    `,
-    [PROFILE]: `<SettlementsSection settlements={aggregate.settlements ?? {}} />`,
-    [MANIFEST]: `<Route path="/drivers/:id/profile"><DriverProfilePage /></Route>`,
-  };
-  const badBackend = { ...good, [BACKEND]: good[BACKEND].replace("id::text AS settlement_id,\n", "") };
-  const badFrontend = { ...good, [SECTION]: good[SECTION].replace('kind="settlement"', 'kind="driver"') };
-  const badMount = { ...good, [PROFILE]: good[PROFILE].replace("<SettlementsSection", "<RemovedSettlementsSection") };
-  const badRoute = { ...good, [MANIFEST]: good[MANIFEST].replace('path="/drivers/:id/profile"', 'path="/drivers/:id/removed"') };
-
+  const good = readAll();
   const goodProblems = check(good);
   if (goodProblems.length) {
     console.error(`${LABEL} --selftest FAIL: good fixture rejected`, goodProblems);
     process.exit(1);
   }
-  if (!check(badBackend).some((p) => p.includes("weeks CTE must SELECT"))) {
-    console.error(`${LABEL} --selftest FAIL: dropped backend id not caught`);
-    process.exit(1);
+  const mutations = [
+    [BACKEND, /id::text AS settlement_id/, "NULL::text AS settlement_id"],
+    [PROFILE, /<SettlementsSection/, "<RemovedSettlementsSection"],
+    [PROFILE, /settlements=\{aggregate\.settlements \?\? \{\}\}/, "settlements={{}}"],
+    [MANIFEST, /path="\/drivers\/:id\/profile"/, 'path="/drivers/:id/removed"'],
+    [SECTION, /settlement_id:\s*w\.settlement_id/, "settlement_id: undefined"],
+    [SECTION, /kind="settlement"/, 'kind="driver"'],
+    [SECTION, /id=\{row\.settlement_id\}/, "id={row.driver_id}"],
+  ];
+  let caught = 0;
+  for (const [file, pattern, replacement] of mutations) {
+    const original = good[file];
+    const mutated = original.replace(pattern, replacement);
+    if (mutated === original || check({ ...good, [file]: mutated }).length === 0) {
+      console.error(`${LABEL} --selftest FAIL: escaped or inert production mutation ${file} ${pattern}`);
+      process.exit(1);
+    }
+    caught += 1;
   }
-  if (!check(badFrontend).some((p) => p.includes("must render EntityLink"))) {
-    console.error(`${LABEL} --selftest FAIL: swapped EntityLink kind not caught`);
-    process.exit(1);
-  }
-  if (!check(badMount).some((p) => p.includes("must mount SettlementsSection"))) {
-    console.error(`${LABEL} --selftest FAIL: removed profile mount not caught`);
-    process.exit(1);
-  }
-  if (!check(badRoute).some((p) => p.includes("canonical driver profile route"))) {
-    console.error(`${LABEL} --selftest FAIL: removed canonical route not caught`);
-    process.exit(1);
-  }
-  console.log(`${LABEL} --selftest OK — 4/4 planted defects caught`);
+  console.log(`${LABEL} --selftest OK — ${caught}/${mutations.length} production-source defects caught`);
 } else {
   const problems = check(readAll());
   if (problems.length) {
