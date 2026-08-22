@@ -42,5 +42,11 @@ if (!pageText.includes("source_transaction_type") || !pageText.includes("source_
 if (!apiText.includes("export function getAccountingSourceLineage")) {
   fail("accounting API client must expose getAccountingSourceLineage");
 }
+if (/entityLabel\(\s*null\s*,\s*row\.journal_entry_id/.test(pageText)) {
+  fail("PostingLineagePage JE column must use memo, not entityLabel(null, journal_entry_id)");
+}
+if (/entityLabel\(\s*null\s*,\s*row\.linked_object_id/.test(pageText)) {
+  fail("PostingLineagePage linked object must use linked_object_display_id, not UUID tombstone");
+}
 
 console.log("verify:posting-lineage-ui-contract — OK");
