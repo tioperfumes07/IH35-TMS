@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const routePath = path.join(process.cwd(), "apps/backend/src/accounting/audit-trail/routes.ts");
 const servicePath = path.join(process.cwd(), "apps/backend/src/accounting/audit-trail/service.ts");
@@ -86,13 +88,38 @@ if (/<select[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = serviceSource
-    .replace("accounting.payments link_pay", "REMOVED_LINKED_PAYMENT")
-    .replace("accounting.expenses link_exp", "REMOVED_LINKED_EXPENSE");
-  if (/accounting\.payments link_pay|accounting\.expenses link_exp/.test(planted)) {
-    fail("--selftest could not plant missing linked-object resolvers");
+  const plants = [
+    ["linked payment table", "accounting.payments link_pay", "REMOVED_LINKED_PAYMENT", "linked customer_payment must resolve"],
+    ["linked payment label", "link_pay.display_id", "REMOVED_LINKED_PAYMENT_LABEL", "linked customer_payment must resolve"],
+    ["linked expense table", "accounting.expenses link_exp", "REMOVED_LINKED_EXPENSE", "linked expense must resolve"],
+    ["linked expense label", "'Expense ' || link_exp.transaction_date::text", "REMOVED_LINKED_EXPENSE_LABEL", "linked expense must resolve"],
+  ];
+  let caught = 0;
+  for (const [name, needle, replacement, expected] of plants) {
+    if (!serviceSource.includes(needle)) fail(`--selftest plant missing from real source: ${name}`);
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "acct-audit-lineage-"));
+    try {
+      for (const rel of ["apps/backend/src/accounting/audit-trail", "apps/frontend/src/pages/accounting", "scripts"]) {
+        fs.mkdirSync(path.join(fixture, rel), { recursive: true });
+      }
+      fs.writeFileSync(path.join(fixture, "apps/backend/src/accounting/audit-trail/routes.ts"), routeSource);
+      fs.writeFileSync(path.join(fixture, "apps/backend/src/accounting/audit-trail/service.ts"), serviceSource.replace(needle, replacement));
+      fs.writeFileSync(path.join(fixture, "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx"), pageSource);
+      fs.copyFileSync(process.argv[1], path.join(fixture, "scripts/verify-accounting-audit-trail-lineage.mjs"));
+      const result = spawnSync(process.execPath, ["scripts/verify-accounting-audit-trail-lineage.mjs"], {
+        cwd: fixture,
+        encoding: "utf8",
+      });
+      if (result.status === 0 || !`${result.stdout}${result.stderr}`.includes(expected)) {
+        fail(`--selftest plant escaped: ${name}`);
+      }
+      caught += 1;
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
   }
-  console.log("verify:accounting-audit-trail-lineage --selftest linked-object plant would FAIL — OK");
+  console.log(`verify:accounting-audit-trail-lineage --selftest — PASS (${caught}/${plants.length} independent lineage mutations caught)`);
+  process.exit(0);
 }
 
 console.log("verify:accounting-audit-trail-lineage — OK");
