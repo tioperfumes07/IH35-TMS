@@ -1,3 +1,32 @@
+- 2026-08-22T01:56Z CC-1 | INBOX item 2 (#13780 locked-guards/pass-7 red) ALREADY MERGED (9a16f4f45, ~01:00Z) | board-hygiene: 3 stale accounting rows closed | NEXT=investigating "JE human memos on existing posters" (item 1) | GO
+  #13780 was already fixed + merged before this INBOX pull landed -- ACCT-F5716, the register
+  drill-through regression fix. No further action needed there; noting it here so nobody re-does it.
+  Live-reconfirmed item 3's own premise too: USMCA account-scoped read (bypass, RLS-immune
+  discriminator) = 7 expenses with vendor_uuid IS NULL (honest empty, correctly untouched) + 1 with a
+  deactivated vendor (the row ACCT-F5715 fixes) + 0 truly orphaned. Both cohorts are real and distinct;
+  my fix doesn't conflict with or duplicate the "7 NULL, honest empty" finding -- it closes a different,
+  separately-verified gap the NULL-check alone wouldn't have caught (and TRANSP had 3,735 of the same
+  class, real money-lane impact beyond what "4 live" scoped).
+  While waiting on next accounting work: ran a board-hygiene sweep for stale OPEN accounting rows
+  (money lane moves fast, staleness compounds). Found + closed 3, each independently re-verified
+  against current repo content before closing (not taking the sub-search's word for it):
+    - ACCT-F142/F142b (duplicate vendor bills / no void reason) -- migration 202612230000 already
+      lands both fixes; corroborated by the already-closed sibling row ACCT-F158.
+    - CLS-SUBLEDGER-GL-DARK (invoices/bills never post to GL, "$40.7M+$26.7M+$39.9M unposted") --
+      postInvoiceGlIfEnabled/postBillGlIfEnabled both confirmed live-wired in invoice-send.service.ts
+      and bills.service.ts.
+    - ACCT-F92 (payment-account picker offered Accumulated Depreciation etc.) --
+      account-picker-scope.ts confirmed live and consumed by both named form components.
+  One genuinely-still-open item surfaced in the same sweep: ACCT-F148 (accounting.invoice_lines'
+  CHECK(line_total_cents >= 0) can't represent a credit/discount/write-down line -- 155 real QBO lines
+  worked around as abs()+adjustment instead of fixed at the schema level). NOT touching it right now --
+  it's a genuine owner-gated accounting-policy decision (raw negative vs. explicit is_credit flag) with
+  real GL-math blast radius, and this INBOX's own item 1 explicitly forbids new GL math this tick.
+  Flagging it here rather than starting it silently.
+  Now checking whether "JE human memos on existing posters" (item 1) names a surface beyond what
+  ACCT-F5708 already fixed (the JE-detail source-links resolver) -- investigating a possible separate
+  JE-LIST-level tombstone before claiming this item done too. Not stopping.
+
 - 2026-08-22T01:48Z CC-1 | ACCT-F5715+F5716 SHIPPED (PR #13777/#13780) | expense vendor tombstones + register drill-through regression, both closed | NEXT=watch INBOX for MODULE accounting leftover-dry signal | GO
   Item 3 (expenses vendor tombstone): live bypass-scoped read BEFORE writing anything found the real
   scope was much bigger than "4 live" -- TRANSP 3,735/20,051 vendor-bearing expenses, USMCA 1/18, all
