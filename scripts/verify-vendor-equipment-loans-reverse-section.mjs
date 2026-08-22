@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^home\\.equipment_loans$","task":"LINK-F5182-vendor-equipment-loans-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.equipment_loans"],"task":"FACT-F5839-EQUIPMENT-LOANS-REVERSE-EXACT-LEAF"} */
 /**
  * GUARD: a lender vendor's own profile shows the equipment loans it holds against this company
  * (LINK-F5171 reverse_link sweep gap factoring:home.equipment_loans, vendor side -- the unit side
@@ -30,7 +30,9 @@ const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const SECTION = "apps/frontend/src/components/vendors/VendorEquipmentLoansReverseSection.tsx";
 const VENDOR_DETAIL = "apps/frontend/src/pages/VendorDetail.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
-const FILES = [SERVICE, ROUTES, API, HOME, SECTION, VENDOR_DETAIL, ENTITY_LINK];
+const SELF = "scripts/verify-vendor-equipment-loans-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [SERVICE, ROUTES, API, HOME, SECTION, VENDOR_DETAIL, ENTITY_LINK, SELF, REQUIRED];
 const LABEL = "verify-vendor-equipment-loans-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -47,6 +49,21 @@ export function assertVendorEquipmentLoansReverse(sources) {
   const section = src[SECTION];
   const vendorDetail = src[VENDOR_DETAIL];
   const entityLink = src[ENTITY_LINK];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["home\.equipment_loans"\],"task":"FACT-F5839-EQUIPMENT-LOANS-REVERSE-EXACT-LEAF"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own only the exact equipment-loans reverse leaf`);
+  }
+  let requiredLeaves = [];
+  try {
+    requiredLeaves = JSON.parse(required).leaves ?? [];
+  } catch {
+    problems.push(`${REQUIRED}: must remain valid JSON`);
+  }
+  if (!requiredLeaves.find((leaf) => leaf.id === "home.equipment_loans")?.required?.includes("reverse_link")) {
+    problems.push(`${REQUIRED}: home.equipment_loans must remain a Required reverse_link leaf`);
+  }
 
   if (!/export async function listEquipmentLoans\(userId: string, operatingCompanyId: string, status\?: string, vendorId\?: string\)/.test(service)) {
     problems.push(`${SERVICE}: listEquipmentLoans must accept an optional vendorId param`);
@@ -133,6 +150,8 @@ function selftest() {
     [HOME, /setSelectedLoanId\(String\(requestedLoan\.id\)\)/, "setSelectedLoanId(vendorIdFromUrl)"],
     [ENTITY_LINK, /case "equipment_loan":/, 'case "missing_equipment_loan":'],
     [ENTITY_LINK, /\/factoring\/equipment-loans\?loan_id=\$\{id\}/, "/factoring/equipment-loans"],
+    [SELF, /^\/\*\* @matrix-built .*$/m, "/** planted broad Built claim */"],
+    [REQUIRED, /"id": "home\.equipment_loans"([\s\S]{0,300}?"required": \[[^\]]*)"reverse_link"/, '"id": "home.equipment_loans"$1"qbo_chrome"'],
   ];
   for (const [i, [file, pattern, replacement]] of mutations.entries()) {
     const changed = good[file].replace(pattern, replacement);
