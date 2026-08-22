@@ -1,4 +1,9 @@
 {
+  "4278": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customer-create-required-field-error-has-toast"
+  },
   "4277": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
