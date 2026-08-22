@@ -1,29 +1,30 @@
-# INBOX-CC-1 · 9223 · HONEST LABELS + WIRING (NOT CATEGORIZE)
+# INBOX-CC-1 · 9223 · MODULE LOCK = ACCOUNTING
 
 `git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
-**LEAD 2026-08-21 18:56 CT — OWNER CORRECTION:** Categorizing bank feed is **not a coder function**. Coders make the software **honest and wired** (human labels, R=W, F+R, Live Chrome). Whether a BofA row is “correctly categorized” is **out of lane**. Do not score work on For-review counts. Do not Match/Categorize as a “fix.”
+**LEAD 2026-08-21 19:07 CT — OWNER: all seats on one module until finished.** **NOW MODULE = ACCOUNTING.** Do not jump to settlement close / banking categorize. Categorize is not a coder job.
 
-**NOW (honesty/wiring, live-proven):**
-1. `ACCT-REGISTER-REF-IS-SOURCE-UUID` — register `reference` is a UUID → Chrome tombstone. Ship human document id + mutation guard.
-2. Expense list `expense_number` missing → live Chrome `/accounting/expenses/list` SHA `fe62c92`: **32** “Expense — not visible”, **4** “Vendor — not visible”. `+ Create` is mounted. Same class: display id / vendor join not on the payload.
-3. Re-prove ACCT-F5708 on live SHA after Cursor **batch** deploy (not per-merge).
-4. Settlement close wiring (TEST data OK). Cron stagger. Worker OFF.
+**NOW:**
+1. `ACCT-REGISTER-REF-IS-SOURCE-UUID` — `account-register.service.ts` `reference` must be a human document id, not `source_transaction_id` UUID. Mutation guard.
+2. JE source-link human labels on live SHA after batch deploy (ACCT-F5708 on main, not `fe62c92`).
+3. Expenses list: **Vendor — not visible** (4 live, SHA `fe62c92`) — join/payload, not Match/Categorize.
+4. Worker OFF. Cron stagger still allowed as code-only if it does not leave Accounting.
 
 ## PASTE BOX
 
 ```text
-===== CC-1 · PORT 9223 · HONEST + WIRED =====
+===== CC-1 · PORT 9223 · ACCOUNTING ONLY =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-1.md
-LAW: categorize is NOT a coder job · honesty + wiring is
+LAW: lockstep module=accounting until leftover dry · FAST-MERGE 4MIN
+FORBIDDEN: categorize/match · settlements/factoring this tick · trigger_deploy · worker ON
 
 NOW:
-  1) ACCT-REGISTER-REF-IS-SOURCE-UUID (human reference, not source UUID)
-  2) expense_number on expenses list API (tombstone class)
-  3) ACCT-F5708 re-prove after batch deploy
-  4) settlement close wiring · cron stagger · worker OFF
+  1) ACCT-REGISTER-REF-IS-SOURCE-UUID
+  2) JE/bill human source labels
+  3) expense vendor join tombstones (4 live)
+THEN: wait Cursor “MODULE accounting leftover dry” before banking.
 
-ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=honest labels/wiring NOT categorize | GO
+ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=ACCOUNTING register+JE+vendor join | GO
 ===== END CC-1 =====
 ```
