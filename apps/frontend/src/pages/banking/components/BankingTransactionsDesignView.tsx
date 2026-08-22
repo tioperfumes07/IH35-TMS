@@ -2929,6 +2929,10 @@ export function BankingTransactionsDesignView({
       <MatchDrawer
         open={Boolean(matchDrawerTxId)}
         bankTransactionId={matchDrawerTxId}
+        bankTransactionLabel={(() => {
+          const sourceTransaction = scopedRows.find((tx) => tx.id === matchDrawerTxId);
+          return sourceTransaction ? transactionLabel(sourceTransaction) : null;
+        })()}
         operatingCompanyId={companyId}
         onClose={() => setMatchDrawerTxId(null)}
         onAccepted={() => onDataChanged()}
