@@ -2,7 +2,7 @@
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\.detail$","task":"LINK-F5124-PROFILE-REPORT-SAFETY-REVERSE","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\.deadhead$","task":"LINK-F5124-PROFILE-REPORT-SAFETY-REVERSE","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^(safety_events\.list|internal_fines\.list)$","task":"LINK-F5124-PROFILE-REPORT-SAFETY-REVERSE","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\.detail$","task":"LINK-F5124-PROFILE-REPORT-SAFETY-REVERSE","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.detail"],"task":"DISP-F5855-LOAD-DETAIL-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 
 import fs from "node:fs";
 
@@ -14,6 +14,8 @@ const sources = {
   events: fs.readFileSync("apps/frontend/src/pages/safety/SafetyEventsPage.tsx", "utf8"),
   fines: fs.readFileSync("apps/frontend/src/pages/safety/InternalFinesPage.tsx", "utf8"),
   entityLink: fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8"),
+  matrix: fs.readFileSync("docs/specs/scoreboard/modules/dispatch.required.json", "utf8"),
+  self: fs.readFileSync("scripts/verify-profile-report-safety-reverse-drills.mjs", "utf8"),
 };
 
 const checks = [
@@ -32,7 +34,9 @@ const checks = [
 
 const failures = (candidate) => checks
   .filter(([key, pattern]) => !pattern.test(candidate[key]))
-  .map(([, , label]) => label);
+  .map(([, , label]) => label)
+  .concat(JSON.parse(candidate.matrix).leaves?.find((leaf) => leaf.id === "load.detail")?.required?.includes("reverse_link") ? [] : ["load.detail Required reverse ownership"])
+  .concat(candidate.self.split("\n").filter((line) => line.includes("@matrix-built")).includes('/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.detail"],"task":"DISP-F5855-LOAD-DETAIL-REVERSE-EXACT-LEAF","vertical":"column-wave"} */') ? [] : ["exact load.detail Built annotation"]);
 
 const found = failures(sources);
 if (found.length) {
@@ -40,7 +44,7 @@ if (found.length) {
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   for (const [key, pattern, label] of checks) {
     const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
     if (!failures(mutant).includes(label)) {
@@ -48,7 +52,18 @@ if (process.argv.includes("--self-test")) {
       process.exit(1);
     }
   }
-  console.log(`verify-profile-report-safety-reverse-drills: SELF-TEST PASS — ${checks.length} planted defects rejected`);
+  const matrix = JSON.parse(sources.matrix);
+  const leaf = matrix.leaves.find((candidate) => candidate.id === "load.detail");
+  leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+  if (!failures({ ...sources, matrix: JSON.stringify(matrix) }).includes("load.detail Required reverse ownership")) {
+    console.error("verify-profile-report-safety-reverse-drills: SELF-TEST FAIL — Required reverse ownership");
+    process.exit(1);
+  }
+  if (!failures({ ...sources, self: sources.self.replace('"leaves":["load.detail"]', '"leaves":["load.banking"]') }).includes("exact load.detail Built annotation")) {
+    console.error("verify-profile-report-safety-reverse-drills: SELF-TEST FAIL — exact Built annotation");
+    process.exit(1);
+  }
+  console.log(`verify-profile-report-safety-reverse-drills: SELF-TEST PASS — ${checks.length + 2} planted defects rejected`);
 }
 
 console.log(`verify-profile-report-safety-reverse-drills: PASS — ${checks.length} profile/report/safety reverse invariants`);

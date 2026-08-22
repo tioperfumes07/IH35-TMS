@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet","fuel","accounting","drivers"],"cols":["load","trailer","connectivity","reverse_link"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.|expenses\\.|fuel|history|driver)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
+/** @matrix-built {"modules":["fleet","fuel","accounting","drivers"],"cols":["load","trailer","connectivity","reverse_link"],"leafRe":"^(roster\\.|unit\\.|trailer\\.|expenses\\.|fuel|history|driver)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["load","trailer","connectivity"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

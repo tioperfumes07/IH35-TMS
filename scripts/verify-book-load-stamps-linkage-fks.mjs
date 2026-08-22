@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","trailer","load","connectivity","reverse_link"],"leafRe":"^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.)","task":"P39","pr":"#5958"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","trailer","load","connectivity"],"leafRe":"^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.)","task":"P39","pr":"#5958"} */
 /**
  * P39 (WIRING-PLAN-50) — Book Load must persist linkage FKs on create:
  *   - mdata.loads: customer_id, assigned_unit_id, assigned_primary_driver_id
