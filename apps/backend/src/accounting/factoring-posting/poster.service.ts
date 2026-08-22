@@ -57,6 +57,7 @@ import {
   createJournalEntry,
   createJournalEntryOnClient,
   enqueueJournalEntrySideEffects,
+  reverseJournalEntryNoFlip,
   type CreateJournalEntryInput,
 } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
@@ -1152,6 +1153,73 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     journal_entry_id: created.id,
     memo: prepared.memo,
   };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// VOID REVERSAL — ACCT-F5980. Voiding an advance BEFORE reserve-release/customer-payment/recourse
+// (route only allows void from status IN ('submitted','advanced')) is the only lifecycle point where a
+// funding JE can exist without any downstream JE depending on it. The factoring-advances void route
+// used to flip factoring_advances.status='voided' and never touch the posted funding liability JE —
+// the source record read "voided" while the GL still carried a live, un-reversed liability forever.
+// Fixed by reusing the SAME reverse-not-flip machinery journal-entries.service.ts already exposes for
+// the standalone JE-void action (Option 1 / NetSuite-QBO model: post an equal/opposite reversing JE,
+// bidirectional header linkage, original NEVER flipped/deleted) — no new GL math invented here.
+// ---------------------------------------------------------------------------------------------------
+export type ReverseFactoringAdvanceInput = {
+  operating_company_id: string;
+  factoring_advance_id: string;
+  actor_user_id: string;
+  reason: string;
+};
+
+export type ReverseFactoringAdvanceResult =
+  | { reversed: false; reason: "flag_off" | "no_posting_found" }
+  | { reversed: true; reversal_journal_entry_id: string; original_journal_entry_id: string };
+
+export async function reverseFactoringAdvanceEvent(
+  input: ReverseFactoringAdvanceInput
+): Promise<ReverseFactoringAdvanceResult> {
+  return retryOnFactoringDeadlock(() => reverseFactoringAdvanceEventImpl(input));
+}
+
+async function reverseFactoringAdvanceEventImpl(
+  input: ReverseFactoringAdvanceInput
+): Promise<ReverseFactoringAdvanceResult> {
+  return withCurrentUser(input.actor_user_id, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    // Same gate the original funding post used — if GL posting is OFF for this entity there is no
+    // liability JE to reverse (the advance was never posted, so a status-only void is already correct).
+    if (!(await factoringPostingEnabled(client, input.operating_company_id))) {
+      return { reversed: false, reason: "flag_off" as const };
+    }
+    const journalEntryId = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
+      event_key: "funding",
+    });
+    if (!journalEntryId) {
+      return { reversed: false, reason: "no_posting_found" as const };
+    }
+    const { reversal } = await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId,
+      reason: input.reason,
+      actorUserId: input.actor_user_id,
+    });
+    if (!reversal.reversal_journal_entry_id) {
+      // Unreachable in practice — reverseJournalEntryNoFlip itself throws "journal_entry_nothing_to_reverse"
+      // before returning a null id — but stay type-honest rather than asserting past the compiler.
+      throw new Error("factoring_advance_reversal_journal_entry_id_missing");
+    }
+    return {
+      reversed: true as const,
+      reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+      original_journal_entry_id: journalEntryId,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------------------------------

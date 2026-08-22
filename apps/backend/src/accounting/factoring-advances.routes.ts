@@ -4,7 +4,12 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
-import { postFactoringAdvanceEvent, postFactoringCustomerPaymentEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
+import {
+  postFactoringAdvanceEvent,
+  postFactoringCustomerPaymentEvent,
+  postFactoringReleaseEvent,
+  reverseFactoringAdvanceEvent,
+} from "./factoring-posting/poster.service.js";
 import {
   getFactoringAdvancePacket,
   getFactoringReserveRollup,
@@ -851,6 +856,19 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       if (!advance) return { code: 404 as const, error: "factoring_advance_not_found" };
       if (!["submitted", "advanced"].includes(String(advance.status))) return { code: 409 as const, error: "factoring_status_invalid_transition" };
 
+      const voidReason = body.data.reason ?? "Factoring advance voided";
+      // ACCT-F5980 — reverse any posted funding liability JE BEFORE this connection's own status
+      // UPDATE below takes its lock on this row (same lock-order fix ACCT-F5651 already applied to the
+      // advance-posting call: reverseFactoringAdvanceEvent opens its OWN connection, same as
+      // postFactoringAdvanceEvent). Without this, void flipped the source record while a live,
+      // un-reversed liability JE stayed posted in the GL forever — status='voided' but books disagreed.
+      const reversal = await reverseFactoringAdvanceEvent({
+        operating_company_id: query.data.operating_company_id,
+        factoring_advance_id: params.data.id,
+        actor_user_id: user.uuid,
+        reason: voidReason,
+      });
+
       await client.query(`UPDATE accounting.factoring_advances SET status = 'voided', notes = COALESCE($2, notes) WHERE id = $1`, [
         params.data.id,
         body.data.reason ?? null,
@@ -875,11 +893,20 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           resource_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
           reason: body.data.reason ?? null,
+          gl_reversed: reversal.reversed,
+          reversal_journal_entry_id: reversal.reversed ? reversal.reversal_journal_entry_id : null,
         },
         "warning",
         "P3-T11.20.5-FACTORING"
       );
-      return { code: 200 as const, data: { ok: true } };
+      return {
+        code: 200 as const,
+        data: {
+          ok: true,
+          gl_reversed: reversal.reversed,
+          reversal_journal_entry_id: reversal.reversed ? reversal.reversal_journal_entry_id : null,
+        },
+      };
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
