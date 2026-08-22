@@ -310,22 +310,36 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
       }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+
+      // ACCT-F5768 — vendors_select's RLS policy requires deactivated_at IS NULL for any non-bypass
+      // reader, which directly contradicts this endpoint's own status=inactive filter
+      // (deactivated_at IS NOT NULL) — ANDed together they can never both hold, so status=inactive
+      // always returned 0 rows for a real user regardless of real data. Route that ONE branch through
+      // the same-company-scoped SECURITY DEFINER resolver (mirrors get_vendor_same_company /
+      // resolve_vendor_label_same_company's exact security shape); every other status value keeps
+      // reading mdata.vendors directly, unchanged.
+      const fromClause = status === "inactive" ? "mdata.list_vendors_same_company($1::uuid)" : "mdata.vendors";
+      const fromValues = status === "inactive" ? [resolvedOperatingCompanyId, ...values] : values;
+      const shift = status === "inactive" ? 1 : 0;
+      const shiftedWhereClause =
+        shift > 0 ? whereClause.replace(/\$(\d+)/g, (_m, n) => `$${Number(n) + shift}`) : whereClause;
+
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.vendors ${whereClause}`,
-        values
+        `SELECT count(*)::int AS total FROM ${fromClause} ${shiftedWhereClause}`,
+        fromValues
       );
-      values.push(limit);
-      values.push(offset);
+      fromValues.push(limit);
+      fromValues.push(offset);
       const res = await client.query(
         `
           SELECT ${VENDOR_SELECT_COLUMNS}
-          FROM mdata.vendors
-          ${whereClause}
+          FROM ${fromClause}
+          ${shiftedWhereClause}
           ORDER BY created_at DESC
-          LIMIT $${values.length - 1}
-          OFFSET $${values.length}
+          LIMIT $${fromValues.length - 1}
+          OFFSET $${fromValues.length}
         `,
-        values
+        fromValues
       );
       return { rows: res.rows.map((row) => scrubVendorProjectionSource(row as Record<string, unknown>)), total: countRes.rows[0]?.total ?? 0 };
     });
