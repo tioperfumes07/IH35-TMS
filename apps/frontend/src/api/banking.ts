@@ -313,6 +313,7 @@ export type Transfer = {
   journal_entry_id?: string | null;
   /** BANK-F12 — bank txn stamped via matched_transfer_id (Law §9 reverse). */
   matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_label?: string | null;
   /** BANK-DOM-05: joins initiator+counterparty legs when set. */
   intercompany_transfer_group_id?: string | null;
   counterparty_company_id?: string | null;
