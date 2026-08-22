@@ -464,6 +464,12 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
           id={row.matched_expense_id}
           label={entityLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")}
         />
+      ) : row.matched_journal_entry_id ? (
+        <EntityLink
+          kind="journal_entry"
+          id={row.matched_journal_entry_id}
+          label={entityLabel(row.matched_journal_entry_memo ?? null, row.matched_journal_entry_id, "Journal entry")}
+        />
       ) : (
         "No"
       ),

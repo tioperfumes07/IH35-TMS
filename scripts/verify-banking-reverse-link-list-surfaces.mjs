@@ -47,6 +47,8 @@ const CHECKS = [
   { name: "per-account expense reverse read", file: PLAID, pattern: /bt\.matched_expense_id::text AS matched_expense_id,[\s\S]{0,100}expense\.expense_number AS matched_expense_number/ },
   { name: "expense label join company scoped", file: PLAID, pattern: /LEFT JOIN accounting\.expenses expense\s+ON expense\.id = bt\.matched_expense_id\s+AND expense\.operating_company_id = bt\.operating_company_id/ },
   { name: "bank account register expense drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_expense_id \? \([\s\S]{0,180}kind="expense"[\s\S]{0,180}row\.matched_expense_number/ },
+  { name: "bank account register journal entry drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_journal_entry_id \? \([\s\S]{0,180}kind="journal_entry"[\s\S]{0,180}row\.matched_journal_entry_memo/ },
+  { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
   { name: "categorize load drill", file: VIEW, pattern: /kind="load" id=\{links\.load_id\}[\s\S]{0,120}links\.load_number/ },

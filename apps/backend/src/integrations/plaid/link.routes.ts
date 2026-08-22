@@ -694,7 +694,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
               AND rft.transaction_id = substring(bt.source_ref FROM length('relay_fuel:') + 1)
           ), '[]'::json) AS relay_fuel_lines
         FROM banking.bank_transactions bt
-        JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+        JOIN banking.bank_accounts ba
+          ON ba.id = bt.bank_account_id
+         AND ba.operating_company_id = bt.operating_company_id
         LEFT JOIN mdata.drivers d
           ON d.id = bt.categorization_driver_id
          AND d.operating_company_id = bt.operating_company_id
