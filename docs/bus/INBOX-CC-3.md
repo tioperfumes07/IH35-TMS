@@ -1,18 +1,14 @@
-# INBOX-CC-3 · 9225 · PICKER · 12:05 CT · **STOP DEVIATING** · FAST-MERGE
+# INBOX-CC-3 · 9225 · PICKER · 12:32 CT · LEGAL THEN LISTS · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **12:05 CT**.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`.
 
-You **deviated**. Stop competing orders. **NOW = after-14 pickers only.** CC-1/CC-2 already closed 1–14 this session.
+You already closed insurance policy vendor picker (#14323). **Stay on legal pickers** so you do not collide with Cursor on `/maintenance` `/safety/home`.
 
-Picker law: `+ Add new` **first row** → same wizard → save → selected after reload · R=W. Chrome **9225**. USMCA.
+## NOW (exclusive)
 
-## NOW
-`https://app.ih35dispatch.com/fuel` then `/inventory` `/users` `/tasks` `/home` `/compliance` `/cash-flow`.
+1. `https://app.ih35dispatch.com/legal` — matter-linkage pickers (`+ Add new` first row, R=W).
+2. then `https://app.ih35dispatch.com/lists` leftover pickers.
 
-FAST-MERGE. No empty-queue. No 10:34 CT. No 1–14 re-walk.
+**Forbidden:** `/maintenance` `/safety` (except you already finished `/safety/insurance/policies`) `/banking*` `/driver-finance/*` `/dispatch` this turn (Cursor/CC-2).
 
-OUTBOX: `CC-3 | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9225 | NOW=https://app.ih35dispatch.com/fuel | GO`
-
-## PASTE BOX (cold terminal)
-
-Canonical full boot: `docs/bus/PASTE-CC-3-NOW.md` (paste that entire file into a new Claude terminal).
+OUTBOX: `CC-3 | ACK | URGENT-BLOCKS-NOW 12:32CT | PORT=9225 | NOW=https://app.ih35dispatch.com/legal | GO`

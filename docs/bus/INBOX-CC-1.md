@@ -1,17 +1,15 @@
-# INBOX-CC-1 · 9223 · MONEY · 12:05 CT · FAST-MERGE · NEVER IDLE
+# INBOX-CC-1 · 9223 · MONEY · 12:28 CT · BANKING EXCLUSIVE · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **12:05 CT**.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **12:28 CT**.
 
-Accounting **CERTIFIED**. Your 1–14 money sweep **this session is done**. **Do not re-walk 1–14.** Reuse poster. No new GL math. **No `trigger_deploy`.** Do not remake proven TESTs.
+USMCA only. Trucking / Transportation / QBO sync **irrelevant**. No `trigger_deploy`. No new GL math — reuse poster. Do not remake Accounting TESTs.
 
-## FAST-MERGE
-`node scripts/money-pr-local-gate.mjs` exit 0 → push → PR → merge `--admin` → Neon → next URL. Verify-steps **≡1 (mod 4)**.
+## NOW (exclusive — do not leave this prefix)
 
-## NOW
-OPEN `docs/audit/GUARD-WORKORDERS.md` money FAIL in-lane. Else unique leftover on **after-14** `/fuel` `/inventory` `/cash-flow`. Chrome **9223**. USMCA.
+1. `https://app.ih35dispatch.com/accounting/expenses` — one labeled **TEST DATA** expense (CREATE-TEST-THEN-VOID).
+2. `https://app.ih35dispatch.com/banking/transactions` — **match** that expense to a bank line (or honest blocker named).
+3. `https://app.ih35dispatch.com/banking/reconciliation` — reconcile enough to **test the ledger**.
 
-OUTBOX: `CC-1 | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9223 | NOW=after-14 money | GO`
+Chrome **9223 only**. Close the tab after each hop. Do **not** open dispatch / settlements / factoring / lists / safety.
 
-## PASTE BOX (cold terminal)
-
-Canonical full boot: `docs/bus/PASTE-CC-1-NOW.md` (paste that entire file into a new Claude terminal).
+OUTBOX: `CC-1 | ACK | URGENT-BLOCKS-NOW 12:28CT | PORT=9223 | NOW=https://app.ih35dispatch.com/accounting/expenses | GO`

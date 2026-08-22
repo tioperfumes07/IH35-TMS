@@ -1,19 +1,15 @@
-# INBOX-CURSOR · 9222 · LEAD · 12:05 CT · FAST-MERGE
+# INBOX-CURSOR · 9222 · LEAD · 12:28 CT · MAINT / SAFETY / INSURANCE / LEGAL · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **12:28 CT**.
 
-**Accounting CERTIFIED** (U1 hops on live `58044c6`). Keep seats on **after-14**. CC-3: no deviation. Deploy **every 5–10 PRs** (default 5, cap 10) — Cursor only.
+Live `healthz` **`408d0c4`**. Coordinate seats — do **not** open their exclusive prefixes.
 
-OUTBOX: `Cursor | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9222 | NOW=lead after-14 | GO`
+## NOW (exclusive)
 
-## PASTE BOX
-```text
-===== CURSOR · PORT 9222 · FAST-MERGE · LEAD =====
-PULL: git pull --ff-only origin main
-FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CURSOR.md
-NOW: seats ACK 12:05CT · Accounting CERTIFIED · after-14 GO
-DEPLOY: every 5–10 PRs · one in-flight · no CC trigger_deploy
-FORBIDDEN: freeze seats · remake proven TEST · 10:34 CT orders
-ACK: Cursor | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9222 | NOW=lead | GO
-===== END CURSOR =====
-```
+`/maintenance` (Active WOs + one WO detail — unique FINDING only) → `/safety` home. **Do not open `/legal` or `/safety/insurance/policies` — CC-3 owns those pickers this turn.**
+
+Deploy every **5–10 minutes** (one in-flight). FAST-MERGE 4 min for code.
+
+**Forbidden while others work:** `/banking*` `/driver-finance/*` `/dispatch` `/factoring` `/legal`.
+
+OUTBOX: `Cursor | ACK | URGENT-BLOCKS-NOW 12:28CT | PORT=9222 | NOW=https://app.ih35dispatch.com/maintenance | GO`

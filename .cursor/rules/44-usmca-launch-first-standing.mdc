@@ -1,0 +1,15 @@
+---
+description: PERMANENT — USMCA launch first; TRANSP/TRK/QBO sync irrelevant; banking TEST expense+match+recon; idle seats help Cursor Live; FAST-MERGE 4 min; deploy 5–10 min
+alwaysApply: true
+---
+
+# USMCA LAUNCH FIRST (owner 2026-08-22)
+
+**Canonical:** `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`
+
+- **Trucking, Transportation, QuickBooks sync = irrelevant** until USMCA is fully complete and launched. No TRANSP/TRK work. No TMS→QBO write-back.
+- **Banking:** create labeled TEST **expenses**, **match**, **reconcile**, **test the ledger**. Void after launch. Empty/disabled is not a stop.
+- **Urgent 14 done** → help **Cursor Live-verify** (9222). Do not idle. Do not invent a competing queue.
+- **FAST-MERGE** ~4–5 min (`docs/bus/FAST-MERGE-4MIN-LAW.md`). **Deploy** every **5–10 minutes** (Cursor lead, one in-flight) **and** every **5–10 merged PRs** (never wait past 10). Never per-merge.
+
+Presence: standing session directive + this alwaysApply rule.

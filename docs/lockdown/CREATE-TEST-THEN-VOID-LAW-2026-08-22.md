@@ -16,6 +16,7 @@
 5. **Forbidden reports (every session):** “cannot certify because 0 payments / buttons disabled / no transactions” **without** first creating the TEST hop in that same session.
 6. **No TMS→QBO write-back.** TEST creates stay in the TMS. USMCA TMS is authoritative.
 7. **One module until leftover dry** when the owner asks to certify a module: every seat works **that module’s** create / picker / reverse / money leftover — not a parallel “next module” while Accounting Live Chrome is unfinished.
+8. **Banking ledger hops (owner 2026-08-22):** create labeled TEST **expenses**, **match** to bank lines, **reconcile**, and **test the ledger**. This is how Banking is proven. Do not treat For-review as “hands off.” Void after launch. Canonical reminder: `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`.
 
 ## Companion
 
