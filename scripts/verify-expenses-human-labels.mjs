@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** LST-F116 — Expenses list/detail must not fall back to UUID slices for chrome labels. */
+/** ACCT-F5738 — visible expense rows must not use entityLabel tombstones for their own #. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,8 +18,14 @@ function assert(list, detail) {
   if (/highlightedExpenseId\.slice\(0,\s*8\)/.test(list)) {
     problems.push(`${LIST}: deep-link header still UUID-slices`);
   }
-  if (!/entityLabel\(r\.expense_number/.test(list)) {
-    problems.push(`${LIST}: must use entityLabel for expense_number`);
+  if (!/expenseListLabel\(r\.expense_number\)/.test(list) || !/No expense #/.test(list)) {
+    problems.push(`${LIST}: must use expenseListLabel / No expense # for visible rows`);
+  }
+  if (/entityLabel\(r\.expense_number,\s*r\.id,\s*"Expense"\)/.test(list)) {
+    problems.push(`${LIST}: must not tombstone visible expense #`);
+  }
+  if (!/humanMemo\(/.test(list)) {
+    problems.push(`${LIST}: JE column must humanMemo UUID posting memos`);
   }
   if (/expense\.id\.slice\(0,\s*8\)/.test(detail) || /expense_number\s*\?\?\s*expense\.id\.slice/.test(detail)) {
     problems.push(`${DETAIL}: displayId still UUID-slices`);
@@ -27,8 +33,8 @@ function assert(list, detail) {
   if (/return id\.slice\(0,\s*8\)/.test(detail)) {
     problems.push(`${DETAIL}: accountLabel still returns id.slice`);
   }
-  if (!/entityLabel\(expense\.expense_number/.test(detail)) {
-    problems.push(`${DETAIL}: must use entityLabel for expense displayId`);
+  if (!/expenseListLabel\(expense\.expense_number\)/.test(detail)) {
+    problems.push(`${DETAIL}: must use expenseListLabel for displayId`);
   }
   return problems;
 }
@@ -36,14 +42,8 @@ function assert(list, detail) {
 if (SELFTEST) {
   const list = fs.readFileSync(path.join(ROOT, LIST), "utf8");
   const detail = fs.readFileSync(path.join(ROOT, DETAIL), "utf8");
-  const plantedList = list.replace(
-    /entityLabel\(r\.expense_number,\s*r\.id,\s*"Expense"\)/,
-    "r.expense_number || r.id.slice(0, 8)",
-  );
-  const plantedDetail = detail.replace(
-    /entityLabel\(expense\.expense_number,\s*expense\.id,\s*"Expense"\)/,
-    "expense.expense_number ?? expense.id.slice(0, 8)",
-  );
+  const plantedList = list.replace(/expenseListLabel\(r\.expense_number\)/, "r.expense_number || r.id.slice(0, 8)");
+  const plantedDetail = detail.replace(/expenseListLabel\(expense\.expense_number\)/, "expense.expense_number ?? expense.id.slice(0, 8)");
   if (!assert(plantedList, plantedDetail).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);

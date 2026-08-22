@@ -121,6 +121,15 @@ function contractErrors(src) {
   if (!src.list.includes('kind="expense"')) {
     errors.push("VERIFY-4: ExpensesListPage must EntityLink expense (self, Expense # column)");
   }
+  if (!src.list.includes("No expense #")) {
+    errors.push("VERIFY-4: ExpensesListPage must use No expense # for a visible row with empty document number (not entityLabel tombstone)");
+  }
+  if (!src.list.includes("humanMemo(")) {
+    errors.push("VERIFY-4: ExpensesListPage JE column must humanMemo UUID posting memos");
+  }
+  if (/entityLabel\(r\.expense_number,\s*r\.id,\s*"Expense"\)/.test(src.list)) {
+    errors.push("VERIFY-4: ExpensesListPage must not tombstone a visible expense # as Expense — not visible");
+  }
 
   for (const rel of REVERSE_GUARD_FILES) {
     if (!fs.existsSync(path.join(ROOT, rel))) {
@@ -136,7 +145,7 @@ function selftest() {
     map: "ACCT-SURF-02 `/accounting/expenses`",
     manifest: 'path="/accounting/expenses"\n<ExpensesListPage />\n',
     subnav: "/accounting/expenses",
-    list: 'RecordExpenseModal\nkind="vendor"\nkind="journal_entry"\nkind="expense"\n',
+    list: 'RecordExpenseModal\nkind="vendor"\nkind="journal_entry"\nkind="expense"\nNo expense #\nhumanMemo(\n',
     modal: "ParityDrawer\n<ParityDrawer\n",
     form: ['createKind="vendor"', 'createKind="category"', 'createKind="account"'].join("\n"),
     submit: "expense_date:\namount_cents:\npayment_account_uuid:\n",
