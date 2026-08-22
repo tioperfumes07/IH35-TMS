@@ -1,25 +1,25 @@
-# INBOX-CC-1 · 9223 · VENDORS RLS ARCHIVE READ · FAST-MERGE
+# INBOX-CC-1 · 9223 · ACCOUNTING CREATE-TEST · FAST-MERGE
 
 `git pull --ff-only origin main`. Worker **OFF**. Reuse poster. No new GL math. **No `trigger_deploy`.**
 
-Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
+Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — create labeled TEST DATA through the live wizard; owner voids at launch. Empty is not a stop.
 
-**Your queue is NOT empty.** Escrow-register UNVERIFIED-deploy and receipts FIXED (#13995) do **not** mean idle.
+**ACK:** ACCT-F5767 #14022 UNVERIFIED-deploy (healthz still `0cec933`). Do **not** re-fix. Do **not** wait healthz.
 
-## NOW (this order)
+## NOW (this order) — Accounting only until leftover dry
 
-1. **`VENDORS-SELECT-HIDES-DEACTIVATED` (LIVE FAIL, Cursor Chrome 2026-08-22).** Neon prod (`tiny-field-89581227`, `bypass_rls=lucia`): `mdata.vendors` `308f6434-0a51-4109-953e-c86ffb1f0999` name `CC3 Battery Vendor 20260806-01`, opco USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`, **`deactivated_at` set**. Policy `vendors_select` USING includes `deactivated_at IS NULL`. App GET `/api/v1/mdata/vendors/:id` therefore 404s. `/accounting/vendor-credits` still lists **VC-2026-0001** with EntityLink to that vendor → live banner **Failed to load vendor details**. Void-not-delete: archived vendors in the same opco must stay **readable**. Unique FINDING + FAST-MERGE + apply on Neon. Guard: SELECT as `ih35_app` with opco GUC returns the archived row; mutation that restores `deactivated_at IS NULL` in USING fails the guard.
-2. **`BILL-DETAIL-PAYMENTS-HISTORY-ROW-NOT-CLICKABLE`** if still true in code on `origin/main`.
-3. Next unpaid money FAIL on the board in your lane. **Forbidden:** hold · empty-queue · wait healthz · wait for Jorge.
+1. Create labeled **TEST** money hops still empty/disabled on USMCA (bill pay remaining, apply credit, apply vendor credit, prepaid **+ Create Prepaid** if no active row). Memo = `TEST DATA` · $1,200 / unpaid remainder.
+2. Next unpaid **money** FAIL on the board in your lane (not 5767, not escrow UNVERIFIED-deploy).
+3. **Forbidden:** hold · empty-queue · wait deploy · wait for Jorge · leave Accounting for inventory/dispatch.
 
 ## PASTE BOX
 
 ```text
-===== CC-1 · PORT 9223 · FAST-MERGE · VENDORS RLS ARCHIVE =====
+===== CC-1 · PORT 9223 · FAST-MERGE · ACCOUNTING CREATE-TEST =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-1.md
-NOW: VENDORS-SELECT-HIDES-DEACTIVATED then bill-detail payments row
-FORBIDDEN: hold · empty-queue · wait for Jorge · trigger_deploy
-ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=vendors_select archived readable | GO
+NOW: Accounting TEST create hops then next money FAIL
+FORBIDDEN: hold · empty-queue · wait healthz · leave Accounting
+ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=accounting CREATE-TEST | GO
 ===== END CC-1 =====
 ```

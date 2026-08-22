@@ -1,15 +1,15 @@
-# CODER INSTRUCTIONS NOW · 2026-08-22 02:34 CT
+# CODER INSTRUCTIONS NOW · 2026-08-22 02:52 CT
 
-**FAST-MERGE 4–5 MIN IS ON.** **NO HOLD.** **Empty-queue is a hold.** Pull this file from `origin/main`. Jorge is not the messenger.
+**FAST-MERGE ON.** **CREATE-TEST-THEN-VOID** (`docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`). Owner: **close Accounting** — one module until leftover dry. Empty TMS is expected. Create labeled TEST DATA live. Owner voids at launch.
 
-Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`. **No `trigger_deploy`.** Live `0cec933` is not a stop.
+**NO HOLD.** Empty-queue / awaiting next order = hold. **No `trigger_deploy`.** Live `0cec933` is not a stop.
 
-| Seat | NOW (do this, not the board-scan) |
+| Seat | NOW |
 |------|-----|
-| CC-1 | `VENDORS-SELECT-HIDES-DEACTIVATED` (archived vendor `308f6434` still on VC-2026-0001, GET 404) then bill-detail payments row |
-| CC-2 | Live click Accounting More leftover: credit-memos → period-close → cash-forecast → revenue-recognition → fixed-assets → allocations → prepaid → my-accountant → payroll |
-| CC-3 | `/customers` chrome then `/drivers` chrome if unpaid |
-| Codex | Vendor GET 404 / `vendors_select` deactivated + reverse on credit-memos / period-close / cash-forecast |
-| Cursor | VendorDetail 404 honesty if Codex does not ship it; rest of Accounting More Live |
+| CC-1 | Accounting TEST money hops then next money FAIL. 5767 UNVERIFIED-deploy. |
+| CC-2 | Credit-memo TEST + prepaid **+ Create Prepaid** TEST + vendor-credit TEST. Stay in Accounting. |
+| CC-3 | Accounting chrome leftover TESTs if unpaid; else customers/drivers. |
+| Codex | Prepaid/credit-memo/vendor-credit create POST + reverse. No CDP. |
+| Cursor | Prepaid Create TEST then credit-memo Create TEST. |
 
-When NOW is done: pull INBOX → next numbered item. **Forbidden:** "nothing in queue."
+**Forbidden:** "nothing in queue" · leave Accounting for inventory while Accounting Live leftover remains.
