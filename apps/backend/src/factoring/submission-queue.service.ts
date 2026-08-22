@@ -75,7 +75,7 @@ export async function listSubmissionQueueInvoices(
         i.id::text                          AS invoice_id,
         i.display_id,
         i.customer_id::text,
-        c.customer_name,
+        COALESCE(c.customer_name, c2.customer_name) AS customer_name,
         i.issue_date::text,
         i.due_date::text,
         i.total_cents::bigint,
@@ -106,15 +106,27 @@ export async function listSubmissionQueueInvoices(
           LIMIT 1
         ), false)::boolean                  AS has_rate_confirmation
       FROM accounting.invoices i
-      JOIN mdata.customers c ON c.id = i.customer_id
-                             AND c.operating_company_id = $1::uuid
-      JOIN mdata.vendors   fv ON fv.id = c.factoring_company_vendor_id
-                              AND fv.operating_company_id = $1::uuid
+      -- ACCT-F5787 — mdata.customers' customers_select RLS excludes a deactivated customer for a
+      -- non-bypass reader, and a plain JOIN here silently dropped this real, currently-sendable
+      -- invoice from the operator's "submit to Faro" queue the moment its customer was archived. Same
+      -- class as ACCT-F5611/5767/5768/5784/5785/5786, but this consumer needs the FULL customer row
+      -- (c.factoring_company_vendor_id drives the second JOIN below AND the WHERE clause), not just a
+      -- label, so it uses the new full-row resolver (mdata.get_customer_same_company, mirrors
+      -- mdata.get_vendor_same_company / ACCT-F5767 exactly) via a LATERAL fallback that only runs when
+      -- the primary RLS-scoped join already found nothing.
+      LEFT JOIN mdata.customers c ON c.id = i.customer_id
+                                  AND c.operating_company_id = $1::uuid
+      LEFT JOIN LATERAL (
+        SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
+        WHERE c.id IS NULL
+      ) c2 ON true
+      LEFT JOIN mdata.vendors fv ON fv.id = COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id)
+                                 AND fv.operating_company_id = $1::uuid
       WHERE i.operating_company_id = $1::uuid
         AND i.status                = 'sent'
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
         AND i.voided_at            IS NULL
-        AND c.factoring_company_vendor_id IS NOT NULL
+        AND COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id) IS NOT NULL
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
