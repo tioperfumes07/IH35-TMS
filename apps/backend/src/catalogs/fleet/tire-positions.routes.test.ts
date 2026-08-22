@@ -23,8 +23,8 @@ describe("tire-positions catalog routes (AUDIT-FIX-9)", () => {
     mockRequireAuth.mockReset();
     mockRequireAuth.mockReturnValue(true);
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("to_regclass('catalogs.tire_positions')")) return { rows: [{ ok: true }] };
       if (sql.includes("count(*)")) return { rows: [{ total: "2" }] };
+      if (sql.includes("SELECT id FROM catalogs.tire_positions WHERE code")) return { rows: [] };
       return {
         rows: [
           {
@@ -76,5 +76,15 @@ describe("tire-positions catalog routes (AUDIT-FIX-9)", () => {
       url: "/api/v1/catalogs/fleet/tire-positions?is_active=true&limit=501",
     });
     expect(res.statusCode).toBe(400);
+  });
+
+  it("creates through the governed global catalog writer", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/catalogs/fleet/tire-positions",
+      payload: { code: "SPARE-1", display_name: "Spare Position", sort_order: 120 },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO catalogs.tire_positions"))).toBe(true);
   });
 });
