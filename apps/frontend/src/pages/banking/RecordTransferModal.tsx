@@ -42,6 +42,7 @@ type Props = {
   seedAccountId?: string;
   seedAccountSide?: "from" | "to";
   linkBankTransactionId?: string | null;
+  linkBankTransactionLabel?: string | null;
 };
 
 const transferTypeOptions: Array<{ value: TransferType; label: string }> = [
@@ -74,6 +75,7 @@ export function RecordTransferModal({
   seedAccountId,
   seedAccountSide,
   linkBankTransactionId,
+  linkBankTransactionLabel,
 }: Props) {
   const { pushToast } = useToast();
   const [transferType, setTransferType] = useState<TransferType>(defaultTransferType);
@@ -279,7 +281,11 @@ export function RecordTransferModal({
         {linkBankTransactionId ? (
           <p className="text-xs text-gray-600">
             Originating bank transaction:{" "}
-            <EntityLink kind="bank_transaction" id={linkBankTransactionId} label="View transaction →" />
+            <EntityLink
+              kind="bank_transaction"
+              id={linkBankTransactionId}
+              label={linkBankTransactionLabel?.trim() || "Bank transaction"}
+            />
           </p>
         ) : null}
         <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -344,4 +350,3 @@ export function RecordTransferModal({
     </ParityDrawer>
   );
 }
-
