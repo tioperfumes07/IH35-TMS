@@ -72,6 +72,10 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
     case "factoring_reserve_release":
     case "factoring_default_interest":
       return "factoring_advance";
+    case "loan_payment":
+      return "finance_loan";
+    case "prepaid_purchase":
+      return "prepaid_asset";
     case "expense":
       return "expense";
     case "settlement":

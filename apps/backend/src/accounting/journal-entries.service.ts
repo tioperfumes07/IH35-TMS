@@ -845,6 +845,8 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN jep.source_transaction_type = 'period_close' THEN 'period_close'
             WHEN jep.source_transaction_type IN ('prepaid_amortization_row', 'depreciation_schedule_row', 'loan_amortization_row') THEN jep.source_transaction_type
             WHEN jep.source_transaction_type IN ('factoring_customer_payment', 'factoring_chargeback', 'factoring_reserve_release', 'factoring_default_interest') THEN 'factoring_advance'
+            WHEN jep.source_transaction_type = 'loan_payment' THEN 'finance_loan'
+            WHEN jep.source_transaction_type = 'prepaid_purchase' THEN 'prepaid_asset'
             ELSE jep.source_transaction_type
           END AS source_entity_kind,
           jep.source_transaction_id,
@@ -864,6 +866,8 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type = 'period_close' THEN 'period_close'
             WHEN tsl.linked_object_type IN ('prepaid_amortization_row', 'depreciation_schedule_row', 'loan_amortization_row') THEN tsl.linked_object_type
             WHEN tsl.linked_object_type IN ('factoring_customer_payment', 'factoring_chargeback', 'factoring_reserve_release', 'factoring_default_interest') THEN 'factoring_advance'
+            WHEN tsl.linked_object_type = 'loan_payment' THEN 'finance_loan'
+            WHEN tsl.linked_object_type = 'prepaid_purchase' THEN 'prepaid_asset'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
