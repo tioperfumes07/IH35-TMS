@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^driver_escrow$","task":"LINK-F5177-banking-driver-escrow-reverse"} */
+/** @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leaves":["driver_escrow"],"task":"BANK-F5849-DRIVER-ESCROW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * GUARD: the driver's own profile can jump straight into the company-wide Driver Escrow visualizer
  * pre-scoped to that driver, and the visualizer itself honors the deep link on load
@@ -26,6 +26,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HISTORY_VIEW = "apps/frontend/src/pages/drivers/operations/EscrowHistoryView.tsx";
 const TAB_CONTENT = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
+const SELF = "scripts/verify-banking-driver-escrow-reverse-link.mjs";
 const FILES = [HISTORY_VIEW, TAB_CONTENT];
 const LABEL = "verify-banking-driver-escrow-reverse-link";
 const SELFTEST = process.argv.includes("--selftest");
@@ -38,6 +40,8 @@ export function assertBankingDriverEscrowReverse(sources) {
   const problems = [];
   const historyView = src[HISTORY_VIEW];
   const tabContent = src[TAB_CONTENT];
+  const matrixSource = sources?.[MATRIX] ?? read(MATRIX);
+  const selfSource = sources?.[SELF] ?? read(SELF);
 
   if (!/\/banking\/driver-escrow\?driver_id=\$\{driverId\}/.test(historyView)) {
     problems.push(`${HISTORY_VIEW}: must link to /banking/driver-escrow?driver_id=\${driverId}`);
@@ -57,6 +61,14 @@ export function assertBankingDriverEscrowReverse(sources) {
     !/allowCreate=\{false\}/.test(tabContent)
   ) {
     problems.push(`${TAB_CONTENT}: must render EntityPicker kind=driver filter (allowCreate=false)`);
+  }
+  const leaf = JSON.parse(matrixSource).leaves?.find((candidate) => candidate.id === "driver_escrow");
+  if (!leaf?.required?.includes("reverse_link")) {
+    problems.push(`${MATRIX}: driver_escrow must require reverse_link`);
+  }
+  const annotationLines = selfSource.split("\n").filter((line) => line.includes("@matrix-built"));
+  if (!annotationLines.includes('/** @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leaves":["driver_escrow"],"task":"BANK-F5849-DRIVER-ESCROW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */')) {
+    problems.push(`${SELF}: Built annotation must credit only driver_escrow:reverse_link`);
   }
   return problems;
 }
@@ -79,6 +91,8 @@ function selftest() {
       dataTestId="banking-escrow-filter-driver"
       allowCreate={false}
     `,
+    [MATRIX]: read(MATRIX),
+    [SELF]: read(SELF),
   };
   const goodProblems = assertBankingDriverEscrowReverse(good);
   if (goodProblems.length) {
@@ -93,6 +107,11 @@ function selftest() {
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace(/setSearchParams/g, "") },
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace('dataTestId="banking-escrow-filter-driver"', 'dataTestId="x"') },
   ];
+  const missingRequired = JSON.parse(good[MATRIX]);
+  const escrowLeaf = missingRequired.leaves.find((candidate) => candidate.id === "driver_escrow");
+  escrowLeaf.required = escrowLeaf.required.filter((column) => column !== "reverse_link");
+  mutations.push({ ...good, [MATRIX]: JSON.stringify(missingRequired) });
+  mutations.push({ ...good, [SELF]: good[SELF].replace('"leaves":["driver_escrow"]', '"leaves":["transactions.list"]') });
   for (const [i, mutated] of mutations.entries()) {
     if (assertBankingDriverEscrowReverse(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — mutation ${i} escaped detection`);
