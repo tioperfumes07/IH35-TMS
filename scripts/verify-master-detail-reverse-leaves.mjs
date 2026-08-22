@@ -1,14 +1,18 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^md\\.(transaction_list|customer_details|new_transaction)$","task":"MASTER-DETAIL-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["md.transaction_list","md.customer_details","md.new_transaction"],"task":"CUST-F5871-MASTER-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^(md\\.(transaction_list|vendor_details)|md\\.header\\.(edit|new_transaction))$","task":"MASTER-DETAIL-REVERSE-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["accounting"],"cols":["reverse_link"],"leafRe":"^(customers|vendors)$","task":"MASTER-DETAIL-REVERSE-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-master-detail-reverse-leaves";
+const CUSTOMER_LEAVES = ["md.transaction_list", "md.customer_details", "md.new_transaction"];
+const CUSTOMER_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["md.transaction_list","md.customer_details","md.new_transaction"],"task":"CUST-F5871-MASTER-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"} */';
 const source = {
   customers: fs.readFileSync("apps/frontend/src/pages/Customers.tsx", "utf8"),
   vendors: fs.readFileSync("apps/frontend/src/pages/Vendors.tsx", "utf8"),
   routes: fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8"),
+  customerMatrix: fs.readFileSync("docs/specs/scoreboard/modules/customers.required.json", "utf8"),
+  self: fs.readFileSync("scripts/verify-master-detail-reverse-leaves.mjs", "utf8"),
 };
 
 function audit(s) {
@@ -30,6 +34,17 @@ function audit(s) {
   for (const [path, target] of [["/accounting/customers", "/customers"], ["/accounting/vendors", "/vendors"]]) {
     if (!new RegExp(`path="${path}"[\\s\\S]{0,180}<Navigate to="${target}" replace`).test(s.routes)) failures.push(`${path} canonical redirect missing`);
   }
+  try {
+    const matrix = JSON.parse(s.customerMatrix);
+    for (const id of CUSTOMER_LEAVES) {
+      if (!matrix.leaves?.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) {
+        failures.push(`customers:${id} must require reverse_link`);
+      }
+    }
+  } catch {
+    failures.push("customers Required matrix must parse");
+  }
+  if (!s.self.split("\n").includes(CUSTOMER_HEADER)) failures.push("exact customer Built header missing");
   return failures;
 }
 
@@ -53,7 +68,22 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  let caught = mutations.length;
+  for (const id of CUSTOMER_LEAVES) {
+    const candidate = { ...source, customerMatrix: source.customerMatrix.replace(`"id": "${id}"`, `"id": "${id}.removed"`) };
+    if (!audit(candidate).some((failure) => failure.includes(`customers:${id}`))) {
+      console.error(`${LABEL} SELFTEST FAIL — Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    caught += 1;
+  }
+  const headerCandidate = { ...source, self: source.self.replace(CUSTOMER_HEADER, `${CUSTOMER_HEADER}.removed`) };
+  if (!audit(headerCandidate).some((failure) => failure.includes("exact customer Built header missing"))) {
+    console.error(`${LABEL} SELFTEST FAIL — customer header mutation escaped`);
+    process.exit(1);
+  }
+  caught += 1;
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length + CUSTOMER_LEAVES.length + 1} mutations detected`);
   process.exit(0);
 }
 
