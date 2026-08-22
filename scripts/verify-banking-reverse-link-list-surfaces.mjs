@@ -3,7 +3,7 @@
  * Banking reverse_link — leaf-specific Built for surfaces with EntityLink drills.
  * Create-only modals honesty-dropped in required.json (same PR).
  *
- * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^transactions\\.(list|categorize)$","task":"VERTICAL-REVERSE-LINK-banking-lists","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leaves":["transactions.list","transactions.categorize"],"task":"BANK-F5830","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-banking-reverse-link-list-surfaces.mjs --selftest
  */
@@ -36,9 +36,11 @@ const RECORD_CC_PAYMENT = "apps/frontend/src/pages/banking/RecordCCPaymentModal.
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
+const SELF = "scripts/verify-banking-reverse-link-list-surfaces.mjs";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
 const CHECKS = [
+  { name: "exact leaf-specific Built annotation", file: SELF, pattern: /@matrix-built \{"modules":\["banking"\],"cols":\["reverse_link"\],"leaves":\["transactions\.list","transactions\.categorize"\],"task":"BANK-F5830","vertical":"column-wave"\}/ },
   { name: "transactions route mounted", file: ROUTES, pattern: /path="\/banking\/transactions"[\s\S]{0,180}<BankingHomePage initialTab="transactions" \/>/ },
   { name: "transactions view mounted", file: HOME, pattern: /<BankingTransactionsDesignView[\s\S]{0,160}companyId=\{companyId\}/ },
   { name: "categorization reverse read company scoped", file: VIEW, pattern: /getBankTransactionCategorizationLinks\(String\(expandedTxId\), companyId\)/ },
