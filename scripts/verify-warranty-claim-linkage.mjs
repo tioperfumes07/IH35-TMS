@@ -20,15 +20,19 @@ function audit(s) {
   if (!/<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/.test(s.page)) failures.push("claim list must use an unresolved-safe work-order drill");
   if (!/wo\.display_id AS work_order_display_id/.test(s.route)) failures.push("claim list must project the work-order display id");
   if (!/LEFT JOIN maintenance\.work_orders wo[\s\S]{0,180}wo\.operating_company_id = wc\.operating_company_id/.test(s.route)) failures.push("claim list work-order label join must be company scoped");
-  if (!/work_order_display_id\?: string \| null/.test(s.api) || !/name=\{row\.work_order_display_id\}/.test(s.page)) failures.push("typed work-order display id must reach the mounted claim list");
+  if (!/export type MaintenanceWarrantyClaimRow = \{[\s\S]{0,220}work_order_display_id\?: string \| null/.test(s.api) || !/name=\{row\.work_order_display_id\}/.test(s.page)) failures.push("typed work-order display id must reach the mounted claim list");
   if (!/<EntityLinkOrTombstone kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/.test(s.page)) failures.push("nullable vendor identity must use the unresolved-safe canonical drill");
   if (!/row\.id === highlightedClaimId/.test(s.page)) failures.push("claim list must honor warranty_claim deep links");
-  if (!/AS warranty_ok/.test(s.route) || !/AS work_order_ok/.test(s.route) || !/AS vendor_ok/.test(s.route) || !/linked_entity_not_in_operating_company/.test(s.route)) failures.push("claim writer must validate warranty/work-order/vendor before insert");
+  if (!/AS warranty_ok/.test(s.route)) failures.push("claim writer must validate warranty ownership before insert");
+  if (!/AS work_order_ok/.test(s.route)) failures.push("claim writer must validate work-order ownership before insert");
+  if (!/AS vendor_ok/.test(s.route)) failures.push("claim writer must validate vendor ownership before insert");
+  if (!/if \(!row\) return reply\.code\(400\)\.send\(\{ error: "linked_entity_not_in_operating_company" \}\)/.test(s.route)) failures.push("claim writer must reject cross-company linked entities honestly");
   if (!/if \(body\.vendor_id\)[\s\S]{0,500}FROM mdata\.vendors[\s\S]{0,250}operating_company_id = \$2::uuid[\s\S]{0,180}deactivated_at IS NULL[\s\S]{0,250}invalid_vendor/.test(s.route)) failures.push("claim update must validate an active tenant vendor before replacing vendor_id");
   if (!/outcome\.kind === "invalid_vendor"[\s\S]{0,180}reply\.code\(400\)[\s\S]{0,120}linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid update vendor must return an honest 400");
   if (!/filters\.push\(`wc\.vendor_id = \$\$\{values\.length\}`\)/.test(s.route)) failures.push("claim list must filter vendor_id in SQL");
   if (!/params\.vendor_id\) q\.set\("vendor_id", params\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor_id reverse filter");
-  if (!/listMaintenanceWarrantyClaims\(operatingCompanyId, filter\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("shared reverse section must read exact filters and show failures");
+  if (!/listMaintenanceWarrantyClaims\(operatingCompanyId, filter\)/.test(s.reverse)) failures.push("shared reverse section must read exact filters");
+  if (!/<ListErrorBanner/.test(s.reverse)) failures.push("shared reverse section must show failures");
   if (!/<WarrantyClaimsReverseSection[\s\S]{0,260}filter=\{\{ work_order_id: id \}\}/.test(s.wo)) failures.push("work-order detail must mount warranty reverse section");
   if (!/<WarrantyClaimsReverseSection[\s\S]{0,260}filter=\{\{ vendor_id: vendor\.id \}\}/.test(s.vendor)) failures.push("vendor profile must mount warranty reverse section");
   if (!/case "warranty_claim":[\s\S]{0,100}warranty-claims\?claim_id=/.test(s.entityLink)) failures.push("warranty_claim must resolve to the canonical highlighted list target");
@@ -39,16 +43,22 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "page", /kind="work_order"/, 'kind="unit"'],
     ["payload", "page", /work_order_id:\s*claimDraft\.work_order_id \|\| undefined/, "work_order_id: undefined"],
+    ["WO tombstone drill", "page", /<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/, '<EntityLink kind="work_order" id={row.work_order_id} label={row.work_order_display_id}'],
     ["WO label projection", "route", /wo\.display_id AS work_order_display_id/, "NULL AS work_order_display_id"],
     ["WO label scope", "route", /wo\.operating_company_id = wc\.operating_company_id/, "TRUE"],
+    ["WO label type", "api", /(export type MaintenanceWarrantyClaimRow = \{[\s\S]{0,220})work_order_display_id\?: string \| null/, "$1work_order_display_id?: never"],
     ["WO label consumer", "page", /name=\{row\.work_order_display_id\}/, "name={null}"],
     ["vendor tombstone", "page", /EntityLinkOrTombstone kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/, 'EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name}'],
-    ["writer", "route", /AS work_order_ok/, "AS wo_ok"],
+    ["warranty writer ownership", "route", /AS warranty_ok/, "AS warranty_missing"],
+    ["work-order writer ownership", "route", /AS work_order_ok/, "AS work_order_missing"],
+    ["vendor writer ownership", "route", /AS vendor_ok/, "AS vendor_missing"],
+    ["writer ownership error", "route", /(if \(!row\) return reply\.code\(400\)\.send\(\{ error: ")linked_entity_not_in_operating_company/, "$1linked_entity_unknown"],
     ["update writer", "route", /(if \(body\.vendor_id\)[\s\S]{0,500})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["update error", "route", /outcome\.kind === "invalid_vendor"/, 'outcome.kind === "ok"'],
     ["vendor filter", "route", /filters\.push\(`wc\.vendor_id = \$\$\{values\.length\}`\)/, "void values"],
     ["api filter", "api", /q\.set\("vendor_id", params\.vendor_id\)/g, 'q.set("status", params.vendor_id)'],
     ["reverse read", "reverse", /listMaintenanceWarrantyClaims\(operatingCompanyId, filter\)/, "listMaintenanceWarrantyClaims(operatingCompanyId)"],
+    ["reverse error", "reverse", /<ListErrorBanner/, "<MissingListErrorBanner"],
     ["wo mount", "wo", /WarrantyClaimsReverseSection/g, "MissingWarrantySection"],
     ["vendor mount", "vendor", /WarrantyClaimsReverseSection/g, "MissingWarrantySection"],
     ["drill", "entityLink", /case "warranty_claim":/, 'case "warranty_record":'],
@@ -61,7 +71,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — 15 linkage mutations detected`);
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} production-source mutations detected`);
   process.exit(0);
 }
 
