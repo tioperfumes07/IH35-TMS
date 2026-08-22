@@ -323,7 +323,7 @@ export function AccountRegisterPage() {
           <EntityLink
             kind="journal_entry"
             id={r.journal_entry_id}
-            label={entityLabel(r.reference, r.journal_entry_id, "Journal entry")}
+            label={r.reference?.trim() ? r.reference.trim() : "—"}
           />
         ) : (
           r.reference ?? "—"

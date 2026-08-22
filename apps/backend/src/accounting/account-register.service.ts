@@ -231,6 +231,7 @@ export async function getAccountRegister(
               NULLIF(btrim(inv.display_id), ''),
               NULLIF(btrim(pay.display_id), ''),
               NULLIF(btrim(ex.expense_number), ''),
+              CASE WHEN p.source_transaction_type = 'expense' THEN 'Expense' END,
               NULLIF(btrim(ds.display_id), ''),
               NULLIF(btrim(bpay.bill_number), ''),
               NULLIF(btrim(btx_lbl.display_label), '')

@@ -1,3 +1,4 @@
+- 2026-08-21T20:32CT Cursor | LIVE 0cec933 · register bank Ref human · 31 expense Ref tombstones=entityLabel(je uuid) FE fix in-flight · CC-1 JE memos 229 not-visible · no deploy | GO
 - 2026-08-21T20:26CT Cursor | TICK · healthz 0cec933 200 · CC-2 NOT released Live-click JE/register/audit · no Render kick | GO
 - 2026-08-21T20:16CT Cursor→CC-2 | NOT RELEASED · wait dep-da4ffg0 live (do not kick) · then Live-click JE+register+audit-trail · no maint/inventory | GO
 

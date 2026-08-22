@@ -29,6 +29,9 @@ if (/reference:\s*p\.source_transaction_id/.test(svc)) {
 if (!/NULLIF\(btrim\(b\.bill_number\)/.test(svc)) {
   failures.push(`${svcPath}: human reference no longer COALESCE bill_number`);
 }
+if (!/CASE WHEN p\.source_transaction_type = 'expense' THEN 'Expense' END/.test(svc)) {
+  failures.push(`${svcPath}: expense Ref No. no longer falls back to Expense when expense_number is null`);
+}
 if (!/\bAS reference\b/.test(svc)) {
   failures.push(`${svcPath}: SQL no longer aliases a human reference column`);
 }
@@ -65,6 +68,11 @@ if (!refColMatch) {
   }
   if (!/id=\{r\.journal_entry_id\}/.test(refCol)) {
     failures.push(`${pagePath}: the EntityLink no longer binds id={r.journal_entry_id}`);
+  }
+  if (/entityLabel\(\s*r\.reference,\s*r\.journal_entry_id/.test(refCol)) {
+    failures.push(
+      `${pagePath}: Ref No. still passes journal_entry_id into entityLabel — that paints "Journal entry — not visible" whenever reference is null (live USMCA BofA 0cec933: 31 tombstones; bank rows already have human reference)`
+    );
   }
   if (!/r\.reference \?\? "—"/.test(refCol)) {
     failures.push(`${pagePath}: the honest plain-text fallback for rows with no journal_entry_id is gone`);

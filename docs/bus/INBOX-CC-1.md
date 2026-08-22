@@ -2,15 +2,14 @@
 
 `git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
-**LEAD 2026-08-21 19:43 CT — OWNER released CC-3 only.** You stay on ACCOUNTING. Do not copy CC-3 into factoring/settlements/banking money.
+**LEAD 2026-08-21 20:32 CT — healthz `0cec933` LIVE.** Stay ACCOUNTING. CC-3 only released.
 
-`git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
+Cursor Live Chrome on BofA register `c7af1219-…`: bank Ref No. is human (`Monthly Fee…`); expense/JE rows still `reference: null` + memo `Expense <uuid> posting`. JE list still 229 “not visible” in memos (`Record — not visible` inside reversal text). That is **poster memo**, not deploy lag.
 
-**NOW (fastest Accounting Live path — not new GL math):**
-1. Human memos / source labels on **existing posters** (JE list tombstones). Do **not** write new GL math, do **not** flip posting flags ON, do **not** backfill historical QBO docs.
-2. Open **#13780** (register drill vs human Ref) — locked-guards/pass-7 red is yours; do not leave it.
-3. Register UUID ref **FIXED (PR #13772)** — not live until batch deploy.
-4. Worker OFF.
+**NOW:**
+1. Human memos on **existing posters** (expense/JE) — `expense_number` / bill_number in memo, never UUID. No new GL math, no flag ON, no QBO backfill.
+2. Register COALESCE already joins `ex.expense_number` — if those USMCA expenses have null `expense_number`, that is also yours (server-generated display id).
+3. Worker OFF. No `trigger_deploy`.
 
 ## PASTE BOX
 
@@ -22,10 +21,7 @@ LAW: lockstep module=accounting until leftover dry · FAST-MERGE 4MIN
 FORBIDDEN: categorize/match · settlements/factoring this tick · trigger_deploy · worker ON
 
 NOW:
-  1) JE human memos on existing posters (NOT new GL, NOT flag ON, NOT backfill)
-  2) #13780 register drill red — fix locked-guards
-THEN: wait Cursor “MODULE accounting leftover dry” before banking.
-
-ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=ACCOUNTING register+JE+vendor join | GO
+  1) JE/expense human memos on existing posters (NOT new GL, NOT flag ON, NOT backfill)
+  2) Live proof: healthz 0cec933 · register expense rows reference null · JE list 229 not-visible
 ===== END CC-1 =====
 ```
