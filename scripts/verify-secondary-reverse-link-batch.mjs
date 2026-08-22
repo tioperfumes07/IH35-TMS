@@ -3,7 +3,6 @@
  * Secondary-module reverse_link Built for EntityLink surfaces.
  *
  * @matrix-built {"modules":["home"],"cols":["reverse_link"],"leafRe":"^hub\\.driver_reporting$","task":"VERTICAL-REVERSE-LINK-secondary-home","vertical":"column-wave"}
- * @matrix-built {"modules":["inventory"],"cols":["reverse_link"],"leafRe":"^(parts\\.roster|assignments\\.(unit_link|vendor_link|wo_link))$","task":"VERTICAL-REVERSE-LINK-secondary-inventory","vertical":"column-wave"}
  * @matrix-built {"modules":["compliance"],"cols":["reverse_link"],"leafRe":"^(property_tax\\.(list|detail)|form2290|fleet\\.hos_board|tab\\.hos_tracker)$","task":"VERTICAL-REVERSE-LINK-secondary-compliance","vertical":"column-wave"}
  * @matrix-built {"modules":["finance"],"cols":["reverse_link"],"leafRe":"^nav\\.ar_ap_aging$","task":"VERTICAL-REVERSE-LINK-secondary-finance","vertical":"column-wave"}
  * @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$","task":"VERTICAL-REVERSE-LINK-secondary-docs","vertical":"column-wave"}
