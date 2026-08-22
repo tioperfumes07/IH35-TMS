@@ -151,6 +151,28 @@ export function VendorsPage() {
     enabled: Boolean(companyId),
   });
   const vendorsRoster = vendorsQuery.data?.vendors ?? [];
+  // ACCT-F5793 — `active_company_only: true` above scopes to the ACTIVE company's records, and
+  // mdata.vendors' own vendors_select RLS additionally hides any deactivated_at-set row for a
+  // non-bypass reader. Both are correct for the base roster (vendorTypes/categoryOptions below must
+  // stay active-only), but it means vendorsRoster NEVER contains an inactive vendor, so the
+  // Inactive tab always counted/showed zero regardless of real data (ACCT-F5768 fixed the backend
+  // status=inactive branch itself; this is the frontend half — the master-list page never called
+  // it, the exact CUSTOMERS-MASTER-LIST-NEVER-FETCHES-INACTIVE / ACCT-F5790 sibling for vendors).
+  // A SEPARATE, explicit status=inactive fetch, additive-only: does not touch active_company_only's
+  // semantics or any other consumer of vendorsRoster (vendorTypes/categoryOptions stay sourced from
+  // the active-only roster below, unchanged).
+  const inactiveVendorsQuery = useQuery({
+    queryKey: ["vendors", "inactive", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, status: "inactive" }),
+    enabled: Boolean(companyId),
+  });
+  const inactiveVendorsRoster = inactiveVendorsQuery.data?.vendors ?? [];
+  // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
+  // consumer of vendorsRoster (vendorTypes, categoryOptions) stays active-only on purpose.
+  const fullVendorsRoster = useMemo(
+    () => [...vendorsRoster, ...inactiveVendorsRoster],
+    [vendorsRoster, inactiveVendorsRoster]
+  );
   // LV-VENDORS-BY-CATEGORY-PICKER-LAW — this filter reads the same company-scoped catalog as
   // VendorCreateModal. Deriving options only from existing vendors made new catalog values
   // impossible to select and left the leaf with a bare <select> and no inline creator.
@@ -159,7 +181,15 @@ export function VendorsPage() {
     companyId,
     enabled: Boolean(companyId),
   });
-  const vendorsServerTotal = vendorsQuery.data?.total ?? 0;
+  // ACCT-F5793 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
+  // total is that tab's own authoritative server COUNT, picked per listStatus (mirrors ACCT-F5792's
+  // identical fix for Customers.tsx). Byte-for-byte the same active-only total for every other tab.
+  const vendorsServerTotal =
+    listStatus === "inactive"
+      ? inactiveVendorsQuery.data?.total ?? 0
+      : listStatus === "all"
+        ? (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
+        : vendorsQuery.data?.total ?? 0;
   const balancesQuery = useQuery({
     queryKey: ["accounting", "vendor-balances", companyId],
     queryFn: () => listVendorBalances(companyId, { all: true }),
@@ -167,10 +197,13 @@ export function VendorsPage() {
   });
   // LIST-EMPTY-1: shared list-state status — children render "No vendors found."
   // only once this settles, never during the roster fetch.
+  // ACCT-F5793 — combined with inactiveVendorsQuery so the empty-state gate also waits for the
+  // inactive fetch, not just the active-only base roster (avoids a "No vendors found" flash on the
+  // Inactive tab while that second query is still in flight).
   const vendorsStatus = {
-    isPending: vendorsQuery.isPending,
-    isError: vendorsQuery.isError,
-    isFetching: vendorsQuery.isFetching,
+    isPending: vendorsQuery.isPending || inactiveVendorsQuery.isPending,
+    isError: vendorsQuery.isError || inactiveVendorsQuery.isError,
+    isFetching: vendorsQuery.isFetching || inactiveVendorsQuery.isFetching,
   };
 
   const vendorTypes = useMemo<ReferenceOption[]>(() => {
@@ -199,8 +232,10 @@ export function VendorsPage() {
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active. By Category filters vendor_type.
+  // ACCT-F5793 — sourced from fullVendorsRoster (active + inactive), not vendorsRoster, so the
+  // Inactive tab actually has rows to filter down to.
   const visibleVendors = useMemo(() => {
-    let all = vendorsRoster;
+    let all = fullVendorsRoster;
     if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
     else if (listStatus === "active") all = all.filter((vendor) => vendor.deactivated_at == null);
     else if (listStatus === "by-category" && categoryFilter) {
@@ -211,24 +246,26 @@ export function VendorsPage() {
     // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
     if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
     return all;
-  }, [vendorsRoster, listStatus, rosterCategory, categoryFilter, vendorTypes]);
+  }, [fullVendorsRoster, listStatus, rosterCategory, categoryFilter, vendorTypes]);
 
   // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). Counts off full roster BEFORE status filter.
+  // ACCT-F5793 — sourced from fullVendorsRoster (active + inactive); was vendorsRoster, which made
+  // the Inactive tab always count 0 regardless of real data.
   const vendorTabCounts = useMemo(
     () => ({
-      all: vendorsRoster.length,
-      active: vendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
-      inactive: vendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
+      all: fullVendorsRoster.length,
+      active: fullVendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
+      inactive: fullVendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
       byCategory: categoryFilter
-        ? vendorsRoster.filter((vendor) => {
+        ? fullVendorsRoster.filter((vendor) => {
             const selected = vendorTypes.find((type) => type.value === categoryFilter);
             return [categoryFilter, selected?.label ?? ""]
               .map((value) => value.toLowerCase())
               .includes(String(vendor.vendor_type ?? "").toLowerCase());
           }).length
-        : vendorsRoster.length,
+        : fullVendorsRoster.length,
     }),
-    [vendorsRoster, categoryFilter, vendorTypes]
+    [fullVendorsRoster, categoryFilter, vendorTypes]
   );
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
