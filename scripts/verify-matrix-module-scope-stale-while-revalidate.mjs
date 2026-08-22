@@ -53,16 +53,21 @@ function failures(sources) {
   }
 
   // Scope to the exported buildModuleMatrix wrapper (between its declaration and the start of
-  // computeModuleMatrixUncached) and confirm it actually SERVES stale/last-good instead of
-  // always awaiting a fresh computation.
+  // computeModuleMatrixUncached) and confirm it never AWAITS the full projection.
   const wrapStart = svc.indexOf("export async function buildModuleMatrix(");
   const wrapEnd = svc.indexOf("async function computeModuleMatrixUncached(");
   if (wrapStart === -1 || wrapEnd === -1 || wrapEnd < wrapStart) {
     out.push("module-matrix.service: could not locate buildModuleMatrix wrapper / computeModuleMatrixUncached split — file shape changed, re-check this guard");
   } else {
     const wrapper = svc.slice(wrapStart, wrapEnd);
-    if (!/void runCompute\(\);\s*\n\s*return hit\.payload;/.test(wrapper)) {
-      out.push("module-matrix.service: buildModuleMatrix must return a stale in-memory hit immediately (not block) while refreshing in the background");
+    if (!/kickMatrixComputeOffThread\(\)/.test(wrapper)) {
+      out.push("module-matrix.service: buildModuleMatrix must kick the worker_thread, not compute on the HTTP thread");
+    }
+    if (/return runCompute\(/.test(wrapper) || /void runCompute\(/.test(wrapper) || /computeModuleMatrixUncached\(/.test(wrapper)) {
+      out.push("module-matrix.service: buildModuleMatrix must not call computeModuleMatrixUncached / runCompute on the request path (PROD-MATRIX-REQUEST-PATH-FREEZE)");
+    }
+    if (!/kickMatrixComputeOffThread\(\);\s*\n\s*return hit\.payload;/.test(wrapper)) {
+      out.push("module-matrix.service: buildModuleMatrix must return a stale in-memory hit immediately (not block) while the worker refreshes");
     }
     if (!/readModuleLastGood\(cacheKey\)/.test(wrapper)) {
       out.push("module-matrix.service: buildModuleMatrix must consult the disk last-good on a cold in-memory cache before blocking");
@@ -70,8 +75,8 @@ function failures(sources) {
     if (!/return lastGood/.test(wrapper)) {
       out.push("module-matrix.service: buildModuleMatrix must return the disk last-good immediately, not just read it");
     }
-    if (!/moduleMatrixInflight\.get\(cacheKey\)/.test(wrapper) || !/moduleMatrixInflight\.set\(cacheKey/.test(wrapper)) {
-      out.push("module-matrix.service: buildModuleMatrix must dedup concurrent callers via moduleMatrixInflight, not spawn a fresh computation per request");
+    if (!/computeModuleMatrixRequiredOnly/.test(wrapper)) {
+      out.push("module-matrix.service: cold miss must return computeModuleMatrixRequiredOnly — never await the ledger projection");
     }
   }
 
@@ -110,8 +115,8 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: SVC,
       mutate: (text) =>
         text.replace(
-          "  if (hit) {\n    void runCompute();\n    return hit.payload;\n  }\n",
-          "  if (hit) {\n    return runCompute();\n  }\n",
+          "  if (hit) {\n    kickMatrixComputeOffThread();\n    return hit.payload;\n  }\n",
+          "  if (hit) {\n    return computeModuleMatrixUncached(moduleId, cacheKey);\n  }\n",
         ),
     },
     {
@@ -119,7 +124,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: SVC,
       mutate: (text) =>
         text.replace(
-          "  const lastGood = await readModuleLastGood(cacheKey);\n  if (lastGood) {\n    moduleMatrixCache.set(cacheKey, { atMs: now - MATRIX_CACHE_MS, payload: lastGood });\n    void runCompute();\n    return lastGood;\n  }\n",
+          "  const lastGood = await readModuleLastGood(cacheKey);\n  if (lastGood) {\n    moduleMatrixCache.set(cacheKey, { atMs: now - MATRIX_CACHE_MS, payload: lastGood });\n    kickMatrixComputeOffThread();\n    return lastGood;\n  }\n",
           "",
         ),
     },
