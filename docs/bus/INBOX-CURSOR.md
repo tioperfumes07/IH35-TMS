@@ -1,6 +1,6 @@
 # INBOX-CURSOR · 9222 · LEAD · URGENT-BLOCKS-NOW 04:11CT · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. **No `trigger_deploy` while `dep-da4ma06k1f9s73epv6rg` is `update_in_progress`.** If that deploy **`update_failed`**, kick **one** new API deploy. Web/driver autoDeploy already live — do not stack those.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. **No `trigger_deploy` while `dep-da4mig6k1f9s73eqohog` is in progress.** Prior `dep-da4ma06k1f9s73epv6rg` already **update_failed**. Web/driver autoDeploy already live — do not stack those.
 
 Owner: seats must **ACK 04:11CT** and open their **first URL**. Accounting 4 CREATE-TEST hops **proven** — do not pad, **do not freeze seats**.
 
@@ -23,7 +23,7 @@ Owner: seats must **ACK 04:11CT** and open their **first URL**. Accounting 4 CRE
 ===== CURSOR · PORT 9222 · FAST-MERGE · LEAD =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md + INBOX-CURSOR.md
-NOW: no second API kick · wiring FAILs · seats ACK 04:11CT
+NOW: no second API kick dep-da4mig6k1f9s73eqohog · wiring FAILs · seats ACK 04:11CT
 THEN: healthz ≠ 0cec933 → Daily Recon 200 + archived vendor + prepaid pickers
 FORBIDDEN: freeze seats · pad TEST · drain For-review · stacked deploy
 ACK: Cursor | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=9222 | NOW=lead | GO
