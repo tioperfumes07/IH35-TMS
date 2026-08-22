@@ -495,7 +495,7 @@ export function CustomersPage() {
       },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },
-      { key: "balance", label: "Balance", render: (r) => fmtMoney(r.amount_open_cents) },
+      { key: "balance", label: "Balance", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },
       {
         key: "load_no",
         label: "Load #",

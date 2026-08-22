@@ -16,11 +16,12 @@
  * remainder. The correct total (confirmed via the same live SQL, excluding void) is $3,200.00 across
  * only 2 customers.
  *
- * FIX: openByCustomerId now filters through isVoidInvoice + invoiceOpenCentsForDisplay, same as
- * AccountingHubPage.tsx's ACCT-F5395 fix.
+ * FIX: openByCustomerId and the master-detail transaction-list Balance column now filter through
+ * isVoidInvoice + invoiceOpenCentsForDisplay, same as AccountingHubPage.tsx's ACCT-F5395 fix.
  *
  * Static check (always runs): Customers.tsx imports both helpers from ./accounting/InvoicesListPage
- * and the openByCustomerId loop uses both — and does NOT regress to a bare amount_open_cents sum.
+ * and both the openByCustomerId loop and transaction-list Balance cell use the canonical helper —
+ * neither may regress to a bare amount_open_cents read.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -60,6 +61,14 @@ export function assertOpenByCustomerExcludesVoid(source) {
     }
   }
 
+  if (!/key:\s*["']balance["'][^\n]*render:\s*\(r\)\s*=>\s*fmtMoney\(invoiceOpenCentsForDisplay\(r\)\)/.test(source)) {
+    errors.push("customer transaction-list Balance must use invoiceOpenCentsForDisplay(r)");
+  }
+
+  if (/key:\s*["']balance["'][^\n]*render:\s*\(r\)\s*=>\s*fmtMoney\(r\.amount_open_cents\)/.test(source)) {
+    errors.push("customer transaction-list Balance regressed to raw amount_open_cents (voids display as open)");
+  }
+
   return errors;
 }
 
@@ -86,6 +95,14 @@ function selftest() {
         "$1const current = map.get(invoice.customer_id) ?? 0;\n$1    map.set(invoice.customer_id, current + Number(invoice.amount_open_cents ?? 0));"
       ),
       "bare amount_open_cents sum",
+    ],
+    [
+      "transaction-list Balance reverted to raw amount_open_cents",
+      live.replace(
+        "{ key: \"balance\", label: \"Balance\", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },",
+        "{ key: \"balance\", label: \"Balance\", render: (r) => fmtMoney(r.amount_open_cents) },"
+      ),
+      "transaction-list Balance",
     ],
   ];
 
