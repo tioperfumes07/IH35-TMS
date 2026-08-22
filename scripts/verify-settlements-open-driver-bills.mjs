@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["settlements"],"cols":["connectivity","reverse_link"],"leaves":["settlements.panel.open_driver_bills"],"task":"SETL-F5834"} */
 /** Ratchet: settlements.panel.open_driver_bills connectivity + reverse_link. */
 import fs from "node:fs";
 import path from "node:path";
@@ -11,6 +12,8 @@ const paths = {
   api: "apps/frontend/src/api/driverFinance.ts",
   list: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
   detail: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  self: "scripts/verify-settlements-open-driver-bills.mjs",
+  matrix: "docs/specs/scoreboard/modules/settlements.required.json",
 };
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const source = Object.fromEntries(Object.entries(paths).map(([key, rel]) => [key, read(rel)]));
@@ -24,6 +27,16 @@ function sliceBetween(text, start, end) {
 
 export function collectFailures(src = source) {
   const errors = [];
+  if (!/^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["connectivity","reverse_link"\],"leaves":\["settlements\.panel\.open_driver_bills"\],"task":"SETL-F5834"\} \*\/$/m.test(src.self)) {
+    errors.push("Exact open-driver-bills Built annotation missing");
+  }
+  try {
+    const matrix = JSON.parse(src.matrix);
+    const leaf = matrix.leaves?.find((item) => item.id === "settlements.panel.open_driver_bills");
+    for (const column of ["connectivity", "reverse_link"]) if (!leaf?.required?.includes(column)) errors.push(`Required ownership missing open_driver_bills:${column}`);
+  } catch {
+    errors.push("Settlements Required matrix must parse");
+  }
   const route = sliceBetween(src.backend, 'app.get("/api/v1/driver-finance/driver-bills/open"', "\n  });");
   const listPanel = sliceBetween(src.list, "function OpenDriverBillsPanel(", "\nfunction setFilter(");
   const detailSection = sliceBetween(src.detail, "function OpenDriverBillsSection(", "\nfunction ");
@@ -78,6 +91,7 @@ function selftest() {
     process.exit(1);
   }
   const mutations = [
+    ["self", '/** @matrix-built {"modules":["settlements"],"cols":["connectivity","reverse_link"],"leaves":["settlements.panel.open_driver_bills"],"task":"SETL-F5834"} */', "@matrix-built removed"],
     ["backend", "openBillsQuerySchema.safeParse(req.query ?? {})", "openBillsQuerySchema.safeParse({})"],
     ["backend", "withCompanyScope(user.uuid, parsed.data.operating_company_id", "withCompanyScope(user.uuid, crypto.randomUUID()"],
     ["backend", "FROM driver_finance.driver_bills db", "FROM accounting.bills db"],
@@ -96,6 +110,12 @@ function selftest() {
     ["detail", 'id={bill.load_id ?? ""}', 'id={bill.id}'],
     ["detail", 'entityLabel(bill.load_number, bill.load_id, "Load")', 'entityLabel(null, bill.id, "Load")'],
   ];
+  const matrix = JSON.parse(source.matrix);
+  const leaf = matrix.leaves.find((item) => item.id === "settlements.panel.open_driver_bills");
+  for (const column of ["connectivity", "reverse_link"]) {
+    const plantedMatrix = JSON.stringify({ ...matrix, leaves: matrix.leaves.map((item) => item.id === leaf.id ? { ...item, required: item.required.filter((value) => value !== column) } : item) });
+    mutations.push(["matrix", source.matrix, plantedMatrix]);
+  }
   let rejected = 0;
   for (const [file, needle, replacement] of mutations) {
     if (!source[file].includes(needle)) {
