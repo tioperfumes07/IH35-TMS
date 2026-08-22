@@ -17,11 +17,11 @@ FILE: docs/bus/INBOX-CURSOR.md
 LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY
 CHROME: 9222
 
-SEATS: CC-1 posters then banking · CC-2/Codex lane-done → banking · CC-3 customers→drivers→fleet→lists · Cursor Accounting Live Chrome (not CERTIFIED)
+SEATS: CC-1 #13846 then banking escrow SQL · CC-2 settlements Live · CC-3 rest-of-urgent · Codex banking reverse · Cursor Accounting Live Chrome (not CERTIFIED)
 
 YOUR NOW:
   1) Certify Accounting Live Chrome on healthz SHA. Do not declare CERTIFIED until Fully-Wired 1–12 on that SHA.
-  2) Do not idle CC-3 on U6. Do not park CC-1/CC-2/Codex on leftover-dry.
+  2) Do not let CC-2 stand by. Do not send CC-3 back to U6. Do not park CC-1 after #13846.
   3) No second Render kick until dashboard preDeploy is migrate + critical-runtime only.
 
 ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=certify Accounting Live Chrome | GO
