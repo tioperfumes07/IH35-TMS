@@ -41,8 +41,16 @@ const migFiles = fs.existsSync(path.join(ROOT, MIG_DIR))
       .sort()
   : [];
 
-// The migration that has the final word is the highest-sorted file that references the view.
-const defining = migFiles.filter((f) => /factoring_summary/.test(read(path.join(MIG_DIR, f))));
+// The migration that has the final word is the highest-sorted file that DEFINES the view
+// (CREATE [OR REPLACE] VIEW), not merely one that mentions/reads it — a later migration can
+// legitimately SELECT FROM views.factoring_summary as a dependency (e.g. ACCT-F5761's
+// factoring_statements_settings gate) without redefining it; a bare-substring match wrongly
+// treated that as the "latest" definition and produced a false failure (same bug class fixed in
+// verify-factoring-chargebacks-fees-view-real-cents-columns.mjs / verify-factoring-recourse-view-
+// real-cents-columns.mjs).
+const defining = migFiles.filter((f) =>
+  /CREATE\s+(OR\s+REPLACE\s+)?VIEW\s+views\.factoring_summary\b/i.test(read(path.join(MIG_DIR, f)))
+);
 if (defining.length === 0) {
   errors.push(`(a) no migration references views.factoring_summary — cannot verify unit convention.`);
 } else {

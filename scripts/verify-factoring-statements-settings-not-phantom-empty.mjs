@@ -22,10 +22,17 @@ const MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
 const LABEL = "verify-factoring-statements-settings-not-phantom-empty";
 
 function latestStatementsSettingsViewMigration() {
+  // Match migrations that DEFINE the view (CREATE [OR REPLACE] VIEW views.factoring_statements_settings),
+  // not just any migration that mentions the view name in passing. Currently the real defining migration
+  // happens to sort last among files mentioning the string, but this is the exact selector shape that
+  // just produced a false failure in the sibling guards (verify-factoring-chargebacks-fees-view-real-
+  // cents-columns.mjs / verify-factoring-recourse-view-real-cents-columns.mjs) once a later migration
+  // referenced the view name in a comment/dependency read without redefining it — hardened here
+  // pre-emptively rather than waiting for the same bug to land a third time.
   const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql"));
   const matches = files.filter((f) => {
     const src = fs.readFileSync(path.join(MIGRATIONS_DIR, f), "utf8");
-    return /factoring_statements_settings/.test(src);
+    return /CREATE\s+(OR\s+REPLACE\s+)?VIEW\s+views\.factoring_statements_settings\b/i.test(src);
   });
   matches.sort();
   return matches[matches.length - 1] ?? null;

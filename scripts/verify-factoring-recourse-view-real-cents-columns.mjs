@@ -26,10 +26,17 @@ const MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
 const LABEL = "verify-factoring-recourse-view-real-cents-columns";
 
 function latestRecourseViewMigration() {
+  // Match migrations that DEFINE the view (CREATE [OR REPLACE] VIEW views.factoring_recourse_at_risk),
+  // not just any migration that mentions the view name in passing — a naive "last file that mentions
+  // the string" selector was fooled by 202613010000 (ACCT-F5760, factoring_chargebacks_fees), which
+  // cites this view's own fix by name in a comment and sorts after this view's real defining migration
+  // (202612970000, ACCT-F5753), without ever redefining invoice_amount/advance_amount/reserve_amount/
+  // customer_name — producing a false "reverted" failure. Same fix applied to the sibling guard,
+  // verify-factoring-chargebacks-fees-view-real-cents-columns.mjs, which hit this for real.
   const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql"));
   const matches = files.filter((f) => {
     const src = fs.readFileSync(path.join(MIGRATIONS_DIR, f), "utf8");
-    return /factoring_recourse_at_risk/.test(src);
+    return /CREATE\s+(OR\s+REPLACE\s+)?VIEW\s+views\.factoring_recourse_at_risk\b/i.test(src);
   });
   matches.sort();
   return matches[matches.length - 1] ?? null;
