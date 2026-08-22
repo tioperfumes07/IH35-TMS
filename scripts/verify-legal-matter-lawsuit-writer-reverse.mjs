@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["legal","insurance"],"cols":["connectivity","reverse_link","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^lawsuits\\.(list|create)$","task":"THEATER-LEGAL-MATTER-LAWSUIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["legal","insurance"],"cols":["connectivity","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^lawsuits\\.(list|create)$","task":"THEATER-LEGAL-MATTER-LAWSUIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-legal-matter-lawsuit-writer-reverse";

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["legal"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^matters\\.","task":"P34","pr":"#5840"} */
+/** @matrix-built {"modules":["legal"],"cols":["driver","unit","connectivity"],"leafRe":"^matters\\.","task":"P34","pr":"#5840"} */
 /**
  * verify-legal-reverse-drill-fleet-insurance.mjs
  *
