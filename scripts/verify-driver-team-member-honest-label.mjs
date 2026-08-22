@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","drivers"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^(catalog\\.drivers\\.teams\\.(list|create)|lists\\.modal\\.driver_team|profiles\\.detail)$","task":"DRIVER-TEAM-MEMBER-RAW-UUID-LABEL","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leaves":["catalog.drivers.teams.list"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists"],"cols":["driver","connectivity"],"leaves":["catalog.drivers.teams.list","catalog.drivers.teams.create","lists.modal.driver_team"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["driver","connectivity"],"leaves":["profiles.detail"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
@@ -10,7 +12,16 @@ const files = {
   modal: fs.readFileSync("apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", "utf8"),
   reverse: fs.readFileSync("apps/frontend/src/components/driver-profile/DriverTeamsReverseSection.tsx", "utf8"),
   profile: fs.readFileSync("apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "utf8"),
+  listsMatrix: fs.readFileSync("docs/specs/scoreboard/modules/lists.required.json", "utf8"),
+  driversMatrix: fs.readFileSync("docs/specs/scoreboard/modules/drivers.required.json", "utf8"),
+  self: fs.readFileSync("scripts/verify-driver-team-member-honest-label.mjs", "utf8"),
+  feed: fs.readFileSync("docs/specs/scoreboard/wire-sprint-built.json", "utf8"),
 };
+const HEADERS = [
+  '/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leaves":["catalog.drivers.teams.list"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["lists"],"cols":["driver","connectivity"],"leaves":["catalog.drivers.teams.list","catalog.drivers.teams.create","lists.modal.driver_team"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["drivers"],"cols":["driver","connectivity"],"leaves":["profiles.detail"],"task":"LISTS-F5883-DRIVER-TEAMS-EXACT","vertical":"class-sweep"} */',
+];
 
 function failures(candidate = files) {
   const found = [];
@@ -31,6 +42,22 @@ function failures(candidate = files) {
   if (!candidate.reverse.includes('team.primary_driver_first_name') || !candidate.reverse.includes('team.secondary_driver_first_name') || !candidate.reverse.includes('team.primary_driver_last_name') || !candidate.reverse.includes('team.secondary_driver_last_name')) found.push("Driver profile teammate drill loses its scoped human name");
   if (!candidate.reverse.includes('<EntityLinkOrTombstone') || !candidate.reverse.includes('kind="driver"') || !candidate.reverse.includes('id={teammateId}') || !candidate.reverse.includes('name={teammateName}') || !candidate.reverse.includes('noun="Driver"')) found.push("Driver profile teammate remains dead text or loses unresolved-driver tombstone policy");
   if (!candidate.profile.includes('<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}')) found.push("Driver profile loses mounted team reverse section");
+  const listsMatrix = JSON.parse(candidate.listsMatrix);
+  const driversMatrix = JSON.parse(candidate.driversMatrix);
+  const cells = [
+    [listsMatrix, "catalog.drivers.teams.list", "reverse_link"],
+    [listsMatrix, "catalog.drivers.teams.list", "driver"],
+    [listsMatrix, "catalog.drivers.teams.list", "connectivity"],
+    [listsMatrix, "catalog.drivers.teams.create", "driver"],
+    [listsMatrix, "catalog.drivers.teams.create", "connectivity"],
+    [listsMatrix, "lists.modal.driver_team", "driver"],
+    [listsMatrix, "lists.modal.driver_team", "connectivity"],
+    [driversMatrix, "profiles.detail", "driver"],
+    [driversMatrix, "profiles.detail", "connectivity"],
+  ];
+  for (const [matrix, id, col] of cells) if (!matrix.leaves.find((leaf) => leaf.id === id)?.required?.includes(col)) found.push(`Required cell missing: ${id}:${col}`);
+  for (const header of HEADERS) if (!candidate.self.split("\n").includes(header)) found.push(`exact Built header missing: ${header}`);
+  if ((JSON.parse(candidate.feed).entries ?? []).some((entry) => entry.guard === "scripts/verify-driver-team-member-honest-label.mjs")) found.push("duplicate broad manual Built feed remains");
   return found;
 }
 
@@ -57,7 +84,22 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     if (failures(mutant).length === 0) escaped.push(`${key}: planted defect escaped (${name})`);
   }
   if (escaped.length) { console.error(`${LABEL} SELFTEST FAIL\n${escaped.join("\n")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  const evidenceMutations = [
+    ["listsMatrix", '"id": "catalog.drivers.teams.list"', '"id": "catalog.drivers.teams.list.broken"'],
+    ["listsMatrix", '"id": "catalog.drivers.teams.create"', '"id": "catalog.drivers.teams.create.broken"'],
+    ["listsMatrix", '"id": "lists.modal.driver_team"', '"id": "lists.modal.driver_team.broken"'],
+    ["driversMatrix", '"id": "profiles.detail"', '"id": "profiles.detail.broken"'],
+    ...HEADERS.map((header) => ["self", header, `${header}.broken`]),
+  ];
+  for (const [key, needle, replacement] of evidenceMutations) {
+    if (!files[key].includes(needle)) escaped.push(`${key}: evidence anchor missing`);
+    else if (failures({ ...files, [key]: files[key].replace(needle, replacement) }).length === 0) escaped.push(`${key}: evidence mutation escaped`);
+  }
+  const feed = JSON.parse(files.feed);
+  feed.entries.unshift({ task: "BROKEN", guard: "scripts/verify-driver-team-member-honest-label.mjs", modules: ["lists"], cols: ["reverse_link"], leafRe: "^catalog" });
+  if (failures({ ...files, feed: JSON.stringify(feed) }).length === 0) escaped.push("feed: duplicate mutation escaped");
+  if (escaped.length) { console.error(`${LABEL} SELFTEST FAIL\n${escaped.join("\n")}`); process.exit(1); }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + evidenceMutations.length + 1}/${mutations.length + evidenceMutations.length + 1} planted defects rejected`);
   process.exit(0);
 }
 
