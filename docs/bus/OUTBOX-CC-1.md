@@ -1,3 +1,24 @@
+- 2026-08-22T05:52Z CC-1 | ACCT-F5759 SHIPPED (PR #13942, merge --admin, no CI wait) | real audit-trigger gap closed on driver_finance.abandonment_chargebacks/settlement_disputes | also closed 2 more stale board rows (LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER's own earlier "100%" claim had undercounted; LV-BANK-TWO-SIGN-CONVENTIONS re-verified still fixed) | NEXT=re-checking INBOX-CC-1.md before continuing further | GO
+  Board hygiene sweep this cycle found a pattern: the 2026-08-17 subagent-triage batch re-filed several
+  ALREADY-CLOSED items as fresh OPEN rows without cross-checking later resolutions. Closed 2 confirmed
+  stale (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, LV-BANK-TWO-SIGN-CONVENTIONS) with live re-verification
+  before each closure, not just trusting the earlier FIXED row's text.
+  LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER was DIFFERENT: the earlier "100% coverage" claim (PR #13276)
+  turned out to ALSO be wrong -- its own trigger-detection regex only matched `tg_audit_row%`, missing
+  the `trg_audit_<table>` naming convention most tables actually use (a false-negative in my FIRST
+  re-check too, caught and corrected before shipping anything). Broader re-measurement found the TRUE
+  remaining gap: 2 real money tables (driver_finance.abandonment_chargebacks/settlement_disputes),
+  both with real _cents columns and 0 live rows. Fixed for real this time -- applied directly to Neon
+  prod, both triggers confirmed live post-apply.
+  LIVE PROOF: node scripts/verify-audit-trigger-coverage-abandonment-chargebacks-settlement-disputes.mjs
+  --selftest exit 0 (3/3). Same script exit 0 (real check). Neon pg_trigger read post-apply confirms
+  both trg_audit_abandonment_chargebacks and trg_audit_settlement_disputes exist. node
+  scripts/verify-guard-wired.mjs exit 0. node scripts/money-pr-local-gate.mjs exit 0. Merged PR #13942
+  confirmed on origin/main (sha 1dbd8dab).
+  SESSION NOTE: this cycle shipped 5 real code/migration fixes (BANK-F5743, BANK-F5748, BANK-F5751,
+  ACCT-F5753, BANK-F5761, ACCT-F5756, ACCT-F5759 -- 7 total) plus 3 stale-board closures, all via
+  gate-0-then-merge-immediately with zero CI babysitting, per the corrected fast-merge cadence.
+
 - 2026-08-22T05:42Z CC-1 | ACCT-F5757 SHIPPED (PR #13936, merge --admin, no CI wait) | closed a stale board row -- LV-EXPENSES-UNAUDITED-AND-ACTORLESS was already fixed (ACT-F5413) and never marked | live-confirmed 23/23 recent expenses actor-stamped | NEXT=continuing to next OPEN money SQL row | GO
 
 - 2026-08-22T05:35Z CC-1 | ACCT-F5756 SHIPPED (PR #13931, merge --admin, no CI wait) | parts-invoice-links DELETE is now an atomic void, not a physical delete | picked up next OPEN money/WORM SQL row (INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE) | NEXT=next OPEN money SQL on the board | GO
