@@ -59,7 +59,7 @@ TRANSP + USMCA, and Depreciation + Accumulated Depreciation live **ONLY on TRK's
 **2. TEST vs REAL DATA.** **ALL TMS-native data across TRANSP, TRK, and USMCA is TEST data.** The ONLY
 real financial data is the QuickBooks history in TRANSP (the QBO mirror/import). **An empty TMS table is
 EXPECTED, never a defect.** Guards checking "real financial data" key on **QBO-origin / TRANSP-mirror
-rows, never TMS-native rows**.
+rows, never TMS-native rows**. **CREATE-TEST-THEN-VOID** (`docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`): create labeled TEST docs live to prove wizards; owner voids when operational 100%. Empty/disabled is not a session stop.
 
 **3. ANSWERED = CLOSED (behavioral law).** An owner decision written in any locked file is **CLOSED**. A
 coder must NOT stop, pause, or ask the owner about anything already answered in the locked files.

@@ -1,33 +1,22 @@
-# INBOX-CODEX · 9226 · BANKING REVERSE · FAST-MERGE
+# INBOX-CODEX · 9226 · ACCOUNTING REVERSE TEST · FAST-MERGE
 
-`git pull --ff-only origin main`. No CDP. No escrow/view SQL (CC-1). No `trigger_deploy`.
+`git pull --ff-only origin main`. No CDP. No `trigger_deploy`. Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
-## FAST-MERGE (ON — every ship ~4–5 min)
-
-Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md`
-
-1. `node scripts/money-pr-local-gate.mjs` → exit 0
-2. `git push`; ENV-VERIFY-STATIC only → `git push --no-verify` after gate PASS
-3. `gh pr create` — never `gh pr checks --watch`
-4. `gh pr merge N --squash --delete-branch --admin` immediately
-5. No Neon unless you wrote SQL (you should not)
-6. OUTBOX → next unpaid leaf same turn
-
-Never wait INBOX rewrite. Never wait healthz. Never babysit CI.
+Empty reverse is **not** UNCHANGED-dry until you have a TEST row. Use live TEST payment `5e38ccfd` / WAVE3.
 
 ## NOW
 
-Next unpaid banking `reverse_link` / `connectivity` leaf. 0-row: `UNCHANGED blocker=<leaf:col>` then next banking leaf. If banking reverse empty: settlements reverse leftover. Unique FINDING ids.
+Accounting **reverse_link / connectivity** leftover. Trace bill payment `5e38ccfd` → bill → vendor → JE. Unique FINDING. FAST-MERGE. Banking reverse **after** Accounting leftover dry.
 
 ## PASTE BOX
 
 ```text
-===== CODEX · PORT 9226 · FAST-MERGE · BANKING REVERSE =====
+===== CODEX · PORT 9226 · FAST-MERGE · ACCOUNTING REVERSE TEST =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CODEX.md
-FAST-MERGE: gate 0 → push (ENV --no-verify after gate) → pr → merge --admin NOW → OUTBOX
-FORBIDDEN: CDP · wait healthz · escrow SQL · babysit CI · trigger_deploy
-NOW: next unpaid banking reverse_link/connectivity
-ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=banking reverse FAST-MERGE | GO
+LAW: CREATE-TEST-THEN-VOID
+FORBIDDEN: CDP · wait healthz · “0 reverse so skip”
+NOW: Accounting reverse on TEST payment 5e38ccfd WAVE3
+ACK: Codex | ACK | INBOX-CODEX | PORT=9226 | NOW=Accounting reverse TEST | GO
 ===== END CODEX =====
 ```

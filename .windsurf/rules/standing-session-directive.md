@@ -15,7 +15,7 @@ alwaysApply: true
 Cascade = auditor on active slice only. Claude Coder = money/Neon. Cursor = screens/janitor.  
 NO holds · NO `JORGE-APPROVED` · merge on green with proof.
 
-**§6:** Search the system before asking the owner. **§7:** Labeled TEST DATA placeholders OK for skeleton hops — never fake production numbers.  
+**§6:** Search the system before asking the owner. **§7:** Labeled TEST DATA placeholders OK for skeleton hops — never fake production numbers. **CREATE-TEST-THEN-VOID:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.  
 **Fully wired:** never claim “includes all” without FULLY-WIRED-COMPLETE-BAR items 1–12.
 
 Presence enforced by `scripts/verify-standing-directive-present.mjs` (verify-step 2374).

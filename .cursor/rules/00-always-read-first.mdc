@@ -19,7 +19,7 @@ label or a merge click. Safeguard = PROOF, not approval.** See `.cursor/rules/00
 (governance section) for the canonical statement; on conflict with any other file in this list, OWNER LAW wins.
 
 **★★ STANDING SESSION LOAD (every agent, every turn):**  
-`docs/specs/STANDING-SESSION-DIRECTIVE.md` + `docs/specs/OWNER-QUALITY-COMPACT.md` (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED**) + `docs/specs/DELIVERY-METHOD-LOCKED.md` + `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
+`docs/specs/STANDING-SESSION-DIRECTIVE.md` + `docs/specs/OWNER-QUALITY-COMPACT.md` (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED**) + `docs/specs/DELIVERY-METHOD-LOCKED.md` + `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` + `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`  
 (Cursor rule `33-standing-session-directive.mdc` · `38-fully-wired-complete-bar.mdc` · Windsurf `standing-session-directive.md` · CI steps **2374** / **2380**).
 
 These are standing law. They load via always-apply Cursor rules AND must be treated as already in force:
