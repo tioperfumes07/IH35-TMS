@@ -116,6 +116,29 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
   }
 }
 
+function sourceAuditNoun(type: string | null | undefined): string {
+  switch ((type ?? "").toLowerCase()) {
+    case "invoice":
+      return "Invoice";
+    case "bill":
+      return "Bill";
+    case "customer_payment":
+    case "payment":
+      return "Invoice Payment";
+    case "bill_payment":
+      return "Bill Payment";
+    case "expense":
+      return "Expense";
+    case "fuel_event":
+      return "Fuel purchase";
+    case "settlement":
+    case "driver_settlement":
+      return "Settlement";
+    default:
+      return "Source";
+  }
+}
+
 function PostingEntityLink({
   type,
   id,
@@ -211,7 +234,11 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.source_entity_kind ?? row.source_transaction_type}
                   id={row.source_transaction_id}
-                  label={entityLabel(row.source_transaction_display_id, row.source_transaction_id, "Source transaction")}
+                  label={entityLabel(
+                    row.source_transaction_display_id,
+                    row.source_transaction_id,
+                    sourceAuditNoun(row.source_transaction_type),
+                  )}
                 />
               </>
             ) : null}
@@ -399,7 +426,11 @@ export function AccountingAuditTrailPage() {
             <PostingEntityLink
               type={lineageKey.source_transaction_type}
               id={lineageKey.source_transaction_id}
-              label={entityLabel(lineageRows?.[0]?.source_transaction_display_id, lineageKey.source_transaction_id, "Source transaction")}
+              label={entityLabel(
+                lineageRows?.[0]?.source_transaction_display_id,
+                lineageKey.source_transaction_id,
+                sourceAuditNoun(lineageKey.source_transaction_type),
+              )}
             />
           </div>
           {lineageMut.isPending ? <div className="text-xs text-slate-500">Loading lineage…</div> : null}
