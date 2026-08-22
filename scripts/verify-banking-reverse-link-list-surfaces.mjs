@@ -22,6 +22,8 @@ const TRANSFERS = "apps/frontend/src/pages/banking/TransfersListPage.tsx";
 const PLAID_PANEL = "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx";
 const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
 const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
+const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
+const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
@@ -66,6 +68,9 @@ const CHECKS = [
   { name: "reconciliation uses canonical match classifier", file: RECON_WORKSPACE, pattern: /transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)/ },
   { name: "reconciliation transfer reverse drill", file: RECON_WORKSPACE, pattern: /kind="transfer" id=\{tx\.matched_transfer_id\}[\s\S]{0,180}tx\.matched_transfer_label/ },
   { name: "reconciliation journal entry reverse drill", file: RECON_WORKSPACE, pattern: /kind="journal_entry" id=\{tx\.matched_journal_entry_id\}[\s\S]{0,180}tx\.matched_journal_entry_memo/ },
+  { name: "linked panel deduction human label projection", file: CATEGORIZATION_ROUTES, pattern: /COALESCE\(NULLIF\(TRIM\(ded\.deduction_type\), ''\), 'Driver deduction'\) AS deduction_label/ },
+  { name: "linked panel deduction label join is company scoped", file: CATEGORIZATION_ROUTES, pattern: /LEFT JOIN driver_finance\.driver_settlement_deductions ded[\s\S]{0,180}ded\.operating_company_id = bt\.operating_company_id/ },
+  { name: "linked panel deduction exact reverse drill", file: LINKED_PANEL, pattern: /row\.deduction_id \? \([\s\S]{0,300}kind="settlement_deduction"[\s\S]{0,120}id=\{row\.deduction_id\}[\s\S]{0,300}row\.deduction_label/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
