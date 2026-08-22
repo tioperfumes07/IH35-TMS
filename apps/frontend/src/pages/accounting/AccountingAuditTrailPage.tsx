@@ -48,6 +48,12 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "cash_advance";
     case "transfer":
       return "transfer";
+    case "prepaid_asset":
+    case "prepaid_amortization":
+      return "prepaid_asset";
+    case "fixed_asset":
+    case "fixed_asset_depreciation":
+      return "fixed_asset";
     case "expense":
       return "expense";
     case "settlement":
