@@ -20,11 +20,13 @@ Forbidden: reporting “cannot reconcile / cannot test ledger / no expenses” w
 
 No TMS→QBO write-back. Match/reconcile stays in the TMS.
 
-## 3. Urgent 14 done → help Cursor Live-verify
+## 3. Urgent 14 — exclusive module (not a shared queue)
 
-Urgent 14 (closed as the NOW when swept): accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists → maintenance → safety → insurance → legal.
+**Canonical:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-If a coder’s urgent-14 lane is **done** (no unique 500 / dead click / silent no-op FINDING this pull): **do not idle and do not invent a 15th module plan.** Join **Cursor lead Live Chrome** (port **9222**) and help **verify live** — leftover after-14 tabs, certify hops, unique FAILs only. Jorge is not the messenger; read INBOX + OUTBOX-CURSOR.
+Order: accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists → maintenance → safety → insurance → legal.
+
+Each seat owns **one current module** from that law’s table. Empty unique-FINDING → next row on **your** list. **Do not** idle, HOLD, invent a 15th plan, or enter another seat’s URL prefix. Jorge is not the messenger.
 
 ## 4. FAST-MERGE 4 minutes · deploy 5–10 minutes
 

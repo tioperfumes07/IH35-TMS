@@ -1,7 +1,3 @@
-# INBOX-DEVIN-A
+# INBOX-DEVIN-A — PARKED
 
-**PARKED (owner 2026-08-20).** Do not run. Clicked moved to Cursor.
-
-```text
-Devin-A | STOP | PARKED | no live-loop | GO-ELSEWHERE=Cursor
-```
+Do not take work. Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`

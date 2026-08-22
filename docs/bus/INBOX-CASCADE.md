@@ -1,3 +1,5 @@
-# INBOX-CASCADE · NOW
+# INBOX-CASCADE
 
-**OFF build.** Seats execute `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. CC-2 holds `AUDIT-COVERAGE-LIVE.md` append-lease. Merge only if asked. Do not compete with CC-2 Live rows. Do not tell Jorge the queue is drained.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+
+Do not rewrite exclusive lists. Audit only. Seats own modules. Devin PARKED.

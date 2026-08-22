@@ -1,17 +1,18 @@
-# CODER INSTRUCTIONS NOW · 2026-08-22 17:14 CT · REJECT HOLD
+# CODER INSTRUCTIONS NOW
 
-**Canonical:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **17:14 CT**. `git pull --ff-only origin main` **before you speak**.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+**Cite:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
 
-**CC-2 HOLD is REJECTED.** “Awaiting next order” is a defect. Every seat has a numbered NOW URL.
+`git pull --ff-only origin main`. Read **only** that law + your `INBOX-<SEAT>.md`. Ignore stale timestamps.
 
-Live **`bad0c84`**. USMCA only. FAST-MERGE ~4 min. Deploy: Cursor lead, 5–10 min **and** 5–10 PRs, **one in-flight**.
+FAST-MERGE ~4 min. Deploy: Cursor lead, 5–10 min **and** 5–10 PRs, **one** in-flight. Never per-merge. CC never `trigger_deploy`.
 
-| Seat | Port | NOW |
-|------|------|-----|
-| **CC-1** | 9223 | ACCT-F5965 board close (`#14432`) then next OPEN money FAIL |
-| **CC-2** | 9224 | `/tasks` → `/home` → `/compliance` → `/cash-flow` unique FINDING |
-| **CC-3** | 9225 | `/legal` then `/lists` |
-| **Codex** | 9226 | customers/drivers/fleet reverse · no CDP |
-| **Cursor** | 9222 | banking match → recon Accept → rest of 14 |
+| Seat | Current module | NOW |
+|------|----------------|-----|
+| Cursor 9222 | banking | `/banking` TEST match → recon Accept |
+| CC-1 9223 | accounting leftover money | `/accounting` unique money FAIL — no TESTs remake |
+| CC-2 9224 | settlements | settlements URLs — do not remake Close |
+| CC-3 9225 | legal | `/legal` then `/lists` |
+| Codex 9226 | customers reverse | no CDP |
 
-ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`

@@ -1,8 +1,6 @@
-===== ALL SEATS · 17:14 CT · REJECT HOLD · PULL THEN ACK =====
-Folder: /Users/jorgemunoz/IH35-TMS-clean
+===== ALL SEATS · URGENT-14-EXCLUSIVE =====
 git pull --ff-only origin main
-Read: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md (17:14 CT) then YOUR INBOX.
-CC-2 HOLD IS REJECTED. Awaiting next order is a defect.
-Paste seat file if cold start: PASTE-CC-1-NOW.md / PASTE-CC-2-NOW.md / PASTE-CC-3-NOW.md / PASTE-CODEX-NOW.md
-ACK: SEAT | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=n | NOW=<url> | GO
-===== END ALL SEATS =====
+Read: docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md then docs/bus/INBOX-<SEAT>.md
+HOLD forbidden. One current module only.
+ACK: SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO
+===== END =====

@@ -2,7 +2,9 @@
 
 **Owner:** Jorge. **Lead:** Cursor. **Jorge is not the messenger.**
 
-Current work: `CODER-INSTRUCTIONS-NOW.md` (URGENT-14). Coders talk on INBOX/OUTBOX only.
+**Canonical until U14 CERTIFIED:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+
+Current work: that law + `INBOX-<SEAT>.md` TOP. Coders talk on INBOX/OUTBOX only.
 
 ## Channel (only)
 

@@ -1,7 +1,5 @@
-===== CODEX · PORT 9226 · 17:14 CT · REVERSE · NO CDP =====
-cd /Users/jorgemunoz/IH35-TMS-clean
-git pull --ff-only origin main
-NOW: mdata.customers → mdata.drivers → mdata.units reverse. No Chrome.
-FORBIDDEN: idle · CDP
-ACK: Codex | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9226 | NOW=customers reverse | GO
-===== END CODEX =====
+===== CODEX 9226 =====
+Law: docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md
+MODULE=customers reverse · no CDP
+ACK: Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=customers reverse | GO
+===== END =====

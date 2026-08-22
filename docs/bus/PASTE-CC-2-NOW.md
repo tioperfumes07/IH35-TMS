@@ -1,14 +1,5 @@
-===== CC-2 · PORT 9224 · 17:14 CT · REJECT HOLD · NEVER IDLE =====
-cd /Users/jorgemunoz/IH35-TMS-clean
-git pull --ff-only origin main
-YOU VERIFY LIVE. You do not take CC-1 money math. HOLD is FORBIDDEN.
-
-READ: docs/bus/CODER-INSTRUCTIONS-NOW.md · URGENT-BLOCKS-NOW-2026-08-22.md · INBOX-CC-2.md
-
-NOW: https://app.ih35dispatch.com/tasks → /home → /compliance → /cash-flow
-Unique FINDING only. Close the tab after each hop. OUTBOX first line.
-
-FORBIDDEN: awaiting next order · idle · /banking* · remake settlement Close · remake Book Load
-
-ACK: CC-2 | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9224 | NOW=https://app.ih35dispatch.com/tasks | GO
-===== END CC-2 =====
+===== CC-2 9224 =====
+Law: docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md
+MODULE=settlements HOLD FORBIDDEN
+ACK: CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | MODULE=settlements | NOW=https://app.ih35dispatch.com/driver-finance | GO
+===== END =====

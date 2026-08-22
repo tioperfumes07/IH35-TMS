@@ -1,13 +1,13 @@
-# INBOX-CURSOR · 9222 · LEAD · 17:14 CT · CERTIFY U6 THEN 14 · FAST-MERGE
+# INBOX-CURSOR · 9222 · LEAD
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **17:14 CT**.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+**Cite:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
 
-Live **`bad0c84`**. Accounting **CERTIFIED**. **REJECT CC-2 HOLD.** One Render batch if ≥10 undeployed (one in-flight).
+CURRENT MODULE: **banking**  
+NOW: `https://app.ih35dispatch.com/banking/transactions` — TEST expense → **Match** same amount → `/banking/reconciliation` **Accept**. Do not drain For-review. Do not Close period with 0 sessions.
 
-## NOW
+Then your list: dispatch → vendors → maintenance → safety → insurance.
 
-1. `https://app.ih35dispatch.com/banking/transactions` — TEST **match** (do not drain For-review).
-2. `https://app.ih35dispatch.com/banking/reconciliation` — Accept on a candidate (BANK-F5850 is on this SHA). **Do not Close period** with 0 sessions.
-3. Then rest of 14 Live leftover: customers → drivers → fleet → lists (after CC-3) → maint/safety/insurance. **Skip `/legal` while CC-3 is there.**
+FORBIDDEN: another seat’s prefix · remake Accounting TESTs · second Render kick while one in-flight · CC deploy.
 
-OUTBOX: `Cursor | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9222 | NOW=https://app.ih35dispatch.com/banking/transactions | GO`
+OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=banking | NOW=https://app.ih35dispatch.com/banking/transactions | GO`

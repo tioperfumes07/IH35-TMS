@@ -71,7 +71,7 @@ Only escalate a question that is **genuinely absent from ALL of those AND is a t
 ## 7. TEST WITH OBVIOUS PLACEHOLDER NUMBERS (never block the skeleton on a missing real value)
 To exercise a skeleton hop before real operational values exist, use a **clearly-fake placeholder** (e.g. **$1,200** flat, `$1.20/mi`, or `$0.05` for accessorials per the test battery) and **label it test data**. A labeled placeholder in a test run is **not** a guess — a fabricated number presented as **real production data** is. Never stall a test waiting on a real rate/figure; the real figures are entered later (owner-entered where they are operational truth — pay rates, opening balances) **before the production posting flag flips**.
 
-**CREATE-TEST-THEN-VOID (owner 2026-08-22 — answered=closed):** Canonical `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`. Empty TMS tables are **expected**. **Create labeled TEST documents** through live wizards (save→canonical→reload) so Live Chrome / Fully-Wired item 2 can be proven. The owner **voids** those tests when the software is operational 100%. **Disabled** pay/+Create buttons: select the required picker row or create the TEST row — do not report “no transactions / cannot certify” without creating the hop that same session. No TMS→QBO write-back. **USMCA launch first** (`docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`): Trucking / Transportation / QBO sync irrelevant; Banking TEST expense→match→reconcile is required; urgent-14 done → help Cursor Live-verify on **disjoint URL prefixes**.
+**CREATE-TEST-THEN-VOID (owner 2026-08-22 — answered=closed):** Canonical `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`. Empty TMS tables are **expected**. **Create labeled TEST documents** through live wizards (save→canonical→reload) so Live Chrome / Fully-Wired item 2 can be proven. The owner **voids** those tests when the software is operational 100%. **Disabled** pay/+Create buttons: select the required picker row or create the TEST row — do not report “no transactions / cannot certify” without creating the hop that same session. No TMS→QBO write-back. **USMCA launch first** (`docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`): Trucking / Transportation / QBO sync irrelevant; Banking TEST expense→match→reconcile is required. **Urgent 14 exclusive certify** (`docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`): reload every session until all 14 CERTIFIED; one seat one current module; HOLD forbidden.
 
 ## 8. WIRE-FIRST SPRINT + VERTICAL WIRING (owner-locked 2026-08-12)
 
@@ -103,6 +103,13 @@ To exercise a skeleton hop before real operational values exist, use a **clearly
 1. Real tab/leaf/route · 2. Create→canonical table · 3. Money/economics when owed · 4. Forward FKs · 5. Reverse links · 6. Matrix columns Built (leaf-specific) · 7. **Surface bar** (tab/sub-tab/leaf · search/filter/gear/range/picker/Combobox · modal/popup/side panel/drawer/ParityDrawer · wizard/nested create — every control→matrix) · 8. Chrome law · 9. Universal picker+creator · 10. Entity/RLS/audit · 11. Guard+evidence · 12. **Live check in Chrome LAST** (only after Built=100% for the scope).
 
 Forbidden: saying yes to “includes all” when only chrome or only money was built. Wire sprint may report `Built` / `Live=BLOCKED` — never “fully wired” before item 12.
+
+## 11. URGENT 14 EXCLUSIVE MODULE CERTIFY (owner-locked 2026-08-22 — until all 14 CERTIFIED)
+
+**Canonical:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+**Cursor rule:** `.cursor/rules/45-urgent-14-exclusive-module-certify.mdc`
+
+One seat, one **current** module, Fully-Wired 1–12, Live Chrome last. HOLD forbidden. Do not steal another seat’s URL prefix. Unique FINDING only. Next work = next row on **your** list. Live SHA = `healthz/shallow`.
 
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

@@ -1,3 +1,3 @@
-# INBOX-DEVIN · RETIRED NAME
+# INBOX-DEVIN — PARKED
 
-You are Devin-A. Use `docs/bus/INBOX-DEVIN-A.md` only.
+Do not take work. Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
