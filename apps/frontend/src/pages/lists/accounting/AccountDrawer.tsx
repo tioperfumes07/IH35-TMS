@@ -272,18 +272,19 @@ export function AccountDrawer({
       const parentId = form.is_subaccount && form.parent_account_id.trim() ? form.parent_account_id : null;
       const body = {
         account_name: form.account_name.trim(),
-        // COA-DETAIL-TYPE-VOCAB-MISMATCH: the backend resolves account_type against
-        // catalogs.account_types.code|name (accounts.routes.ts:121-123), but the picker's value is the
-        // 8-value QBO-style UI enum ("Expense", "CostOfGoodsSold", …). Only "Equity" and "Income" happen to
-        // match by name, so choosing ANY detail type on the other six 400'd with
-        // detail_type_account_type_mismatch — and clearing the detail type "fixed" it by silently saving
-        // detail_type_id=NULL / account_subtype=NULL, which breaks CoA→QBO parity with no warning.
-        // Translate at the boundary: `previewEntry` already resolves the exact catalog row, preferring the
-        // one that OWNS the chosen detail type, so its .code disambiguates the one-to-many enums
-        // (Asset → BANK|AR|OCA|FA|OA, Liability → CC|AP|OCL|LTL) that no flat enum→code map could.
-        // Only applied when a detail type is actually selected; the cleared-detail-type path already
-        // succeeded and is left untouched.
-        account_type: previewEntry?.code ?? form.account_type,
+        // COA-DETAIL-TYPE-VOCAB-MISMATCH: createAccountBodySchema.account_type is a STRICT 8-value
+        // Zod enum ("Expense", "CostOfGoodsSold", …) — sending the raw QBO catalog code (e.g. "EXP")
+        // 400s with "Invalid option: expected one of ...", surfaced straight to the operator (live-
+        // reproduced 2026-08-22 creating a real Expenses-type account: `previewEntry?.code` alone sent
+        // "EXP", which is not in the enum at all). `previewEntry` still resolves the exact catalog row
+        // (preferring the one that OWNS the chosen detail type, disambiguating the one-to-many groups
+        // — Asset → BANK|AR|OCA|FA|OA, Liability → CC|AP|OCL|LTL — that no flat code→enum map alone
+        // could), but its `.code` must be converted through catalogCodeToCoaEnum() before it reaches
+        // the API, matching the accompanying backend fix (accounts.routes.ts
+        // CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM) so resolveDetailType()'s account_type match succeeds for
+        // all 15 catalog codes, not just the 2 (Equity/Income) whose display name happened to equal
+        // the enum by coincidence.
+        account_type: catalogCodeToCoaEnum(previewEntry?.code ?? form.account_type),
         account_number: form.account_number.trim() || null,
         // account_subtype + notes are .optional() (not .nullable()) on the create schema, so an empty value
         // must be omitted (undefined), NOT sent as null — sending null was the "validation_error" on save.

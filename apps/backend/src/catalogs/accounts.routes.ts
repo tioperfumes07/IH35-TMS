@@ -25,6 +25,35 @@ const accountTypeSchema = z.enum([
   "OtherExpense",
 ]);
 
+// COA-DETAIL-TYPE-VOCAB-MISMATCH-BACKEND: catalogs.account_types.group_label is a COARSER 5-value
+// grouping (ASSET/LIABILITY/EQUITY/INCOME/EXPENSE) than the 8-value accountTypeSchema enum this route
+// requires -- group_label collapses OtherIncome into INCOME and CostOfGoodsSold/OtherExpense into
+// EXPENSE (confirmed live: catalogs.account_types has exactly 5 distinct group_label values across its
+// 15 code rows), so it cannot disambiguate which of the 8 enum values a given catalog code maps to.
+// resolveDetailType() below used to compare the caller's (Zod-validated, exact-cased) account_type
+// against catalogs.account_types.name (a human display label like "Expenses", "Cost of Goods Sold")
+// -- which only coincidentally matches the enum by name for Equity/Income, and 400s with
+// detail_type_account_type_mismatch for every other group. Mirrors the frontend's
+// COA_ENUM_TO_CATALOG_CODES (apps/frontend/src/api/coa-list.ts) so both sides resolve the exact same
+// code -> enum mapping instead of drifting.
+const CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM: Record<string, (typeof accountTypeSchema)["options"][number]> = {
+  BANK: "Asset",
+  AR: "Asset",
+  OCA: "Asset",
+  FA: "Asset",
+  OA: "Asset",
+  CC: "Liability",
+  AP: "Liability",
+  OCL: "Liability",
+  LTL: "Liability",
+  EQ: "Equity",
+  INC: "Income",
+  OINC: "OtherIncome",
+  COGS: "CostOfGoodsSold",
+  EXP: "Expense",
+  OEXP: "OtherExpense",
+};
+
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -120,7 +149,12 @@ async function resolveDetailType(
   if (!row) return { ok: false, error: "detail_type_not_found" };
   const typeCode = String(row.type_code ?? "");
   const typeName = String(row.type_name ?? "");
-  if (args.account_type !== typeCode && args.account_type !== typeName) {
+  // See CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM above: args.account_type is always one of the 8 Zod-enum
+  // values by this point, never the catalog code or its display name -- compare against the code's
+  // resolved enum, not the raw code/name, so this succeeds for all 15 catalog codes (previously only
+  // Equity/Income happened to match typeName by coincidence).
+  const resolvedEnum = CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM[typeCode];
+  if (args.account_type !== resolvedEnum && args.account_type !== typeCode && args.account_type !== typeName) {
     return { ok: false, error: "detail_type_account_type_mismatch" };
   }
   return { ok: true, name: String(row.name) };
