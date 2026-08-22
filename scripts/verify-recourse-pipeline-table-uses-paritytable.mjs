@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["customer","connectivity","reverse_link"],"leafRe":"^(home\\.recourse_pipeline|recourse_pipeline)","task":"FACT-RECOURSE-CUSTOMER","pr":"pending"} */
 /**
  * verify-recourse-pipeline-table-uses-paritytable — qbo-parity-a1 (RecoursePipelineTable surface)
  *

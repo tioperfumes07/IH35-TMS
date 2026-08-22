@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting"],"cols":["reverse_link"],"leafRe":"^bill_payments\\.list$","task":"FINANCIAL-DOCUMENT-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^submit\\.queue$","task":"FINANCIAL-DOCUMENT-REVERSE-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["insurance"],"cols":["reverse_link"],"leafRe":"^policies\\.list$","task":"FINANCIAL-DOCUMENT-REVERSE-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 
