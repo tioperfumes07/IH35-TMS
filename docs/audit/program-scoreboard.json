@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-22T01:55:29-05:00",
-    "sourceSha": "9e174e0a2",
+    "generatedAt": "2026-08-22T01:57:40-05:00",
+    "sourceSha": "5f5199611",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2092,
+    "ledgerRows": 2093,
     "failOpen": 0,
     "defects": 19
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 13980,
+      "title": "FINDING: REPORTS-PL-BS-TB-RECONFIRMED-50053",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 01:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13980",
+      "sha": "5f5199611",
+      "committedAtIso": "2026-08-22T01:57:40-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 01:56 AM CT",
+      "url": "",
+      "sha": "1ed7e9223",
+      "committedAtIso": "2026-08-22T06:56:38Z"
+    },
+    {
       "number": 13979,
       "title": "FINDING: AUDIT-953 stale inventory vendor linkage status",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13972",
       "sha": "3c578f703",
       "committedAtIso": "2026-08-22T01:46:05-05:00"
-    },
-    {
-      "number": 13971,
-      "title": "FINDING: BANK-F5764 stale banking reverse OPEN marker",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 01:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13971",
-      "sha": "9d720fe42",
-      "committedAtIso": "2026-08-22T01:39:53-05:00"
-    },
-    {
-      "number": 13970,
-      "title": "FINDING: MARK-DISBURSED-SHIPPED-OUTBOX",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 01:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13970",
-      "sha": "a580b0fc9",
-      "committedAtIso": "2026-08-22T01:38:10-05:00"
     }
   ]
 }
