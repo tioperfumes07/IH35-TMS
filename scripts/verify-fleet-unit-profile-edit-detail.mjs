@@ -4,6 +4,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.detail\\.(permits|toll_tags|tasks|brakes|tires|finance_linkage)$","task":"LINK-F5167-FLEET-UNIT-DETAIL"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^trailer\\.profile\\.assignment$","task":"LINK-F5167-FLEET-TRAILER-ASSIGNMENT-UNIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.permits","unit.detail.tasks"],"task":"FLEET-F5932-UNIT-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): VehicleProfilePage.tsx's 20
  * unit.profile.* sections and EditVehicleModal.tsx's 8 unit.edit.* tabs are all genuinely
@@ -35,6 +36,17 @@ const FILES = {
 const LABEL = "verify-fleet-unit-profile-edit-detail";
 const CONNECTIVITY_LEAVES = ["unit.detail.permits", "unit.detail.tasks"];
 const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.detail.permits","unit.detail.tasks"],"task":"FLEET-F5932-UNIT-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const PROFILE_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const PROFILE_CONNECTIVITY = new Map([
+  ["unit.profile.identity", /data-testid="vp-section-1-identity"[\s\S]{0,220}<IdentityStatusHeader[\s\S]{0,120}unitId=\{id\}/],
+  ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,160}<LiveTelemetrySection/],
+  ["unit.profile.current_load", /data-testid="vp-section-4-load"[\s\S]{0,180}<CurrentLoadSection[\s\S]{0,120}unitId=\{id\}/],
+  ["unit.profile.trip_cost", /data-testid="vp-section-4-load"[\s\S]{0,500}<TripCostCalculator unitId=\{id\} companyId=\{companyId\}/],
+  ["unit.profile.maintenance", /data-testid="vp-section-5-maintenance"[\s\S]{0,360}<MaintenanceSnapshotSection[\s\S]{0,220}unitId=\{id\}/],
+  ["unit.profile.compliance", /data-testid="vp-section-6-compliance"[\s\S]{0,120}<ComplianceSection compliance=\{profile\.compliance\}/],
+  ["unit.profile.action_bar", /data-testid="vp-section-11-action-bar"[\s\S]{0,180}<ActionBar[\s\S]{0,100}unitId=\{id\}[\s\S]{0,100}companyId=\{companyId\}/],
+  ["unit.profile.audit_history", /data-testid="vp-section-12-audit-history"[\s\S]{0,240}<EntityAuditHistoryTab operatingCompanyId=\{companyId\} entityType="unit" entityId=\{id\}/],
+]);
 
 export function audit(src) {
   const failures = [];
@@ -90,6 +102,11 @@ export function audit(src) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
   if (!src.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact unit-detail connectivity header missing`);
+  for (const [id, pattern] of PROFILE_CONNECTIVITY) {
+    if (!pattern.test(src.profile)) failures.push(`${FILES.profile}: ${id} distinct mounted connectivity missing`);
+    if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
+  }
+  if (!src.self.split("\n").includes(PROFILE_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact unit-profile core connectivity header missing`);
   return failures;
 }
 
@@ -147,7 +164,24 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — exact connectivity header mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1} mutations detected`);
+  for (const [id, pattern] of PROFILE_CONNECTIVITY) {
+    const runtimeMutation = { ...good, profile: good.profile.replace(pattern, "REMOVED_PROFILE_SECTION") };
+    if (runtimeMutation.profile === good.profile || audit(runtimeMutation).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — profile runtime mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    const requiredMutation = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (audit(requiredMutation).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — profile Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  const wrongProfileHeader = { ...good, self: good.self.replace(PROFILE_CONNECTIVITY_HEADER, `${PROFILE_CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongProfileHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — profile connectivity header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + CONNECTIVITY_LEAVES.length + 1 + (PROFILE_CONNECTIVITY.size * 2) + 1} mutations detected`);
   process.exit(0);
 }
 
