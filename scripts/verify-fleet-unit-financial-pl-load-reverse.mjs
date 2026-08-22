@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5916-FINANCIAL-PL-REVERSE-EXACT","vertical":"class-sweep"} */
 /**
  * verify-fleet-unit-financial-pl-load-reverse.mjs
  * FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING
@@ -17,6 +18,10 @@ import process from "node:process";
 const LABEL = "verify-fleet-unit-financial-pl-load-reverse";
 const SERVICE = "apps/backend/src/mdata/unit-financial.service.ts";
 const SECTION = "apps/frontend/src/components/vehicle-profile/FinancialUnitPLSection.tsx";
+const REQUIRED = "docs/specs/scoreboard/modules/fleet.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-fleet-unit-financial-pl-load-reverse.mjs";
+const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5916-FINANCIAL-PL-REVERSE-EXACT","vertical":"class-sweep"} */';
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -26,6 +31,9 @@ function analyze(overrides = {}) {
   const failures = [];
   const service = overrides.service ?? read(SERVICE);
   const section = overrides.section ?? read(SECTION);
+  const required = overrides.required ?? read(REQUIRED);
+  const feed = overrides.feed ?? read(FEED);
+  const self = overrides.self ?? read(SELF);
 
   // The returned type must carry real load identities + an honest total count (not a bare "hasMore").
   if (!/contributing_loads:\s*UnitFinancialContributingLoad\[\]/.test(service)) {
@@ -72,7 +80,7 @@ function analyze(overrides = {}) {
 
   // Frontend must render a real canonical load drill for each contributing load, an honest empty
   // state, and an honest disclosed cap — not a decorative count with no link.
-  if (!/kind="load"[\s\S]{0,120}id=\{load\.id\}/.test(section) && !/id=\{load\.id\}[\s\S]{0,120}kind="load"/.test(section)) {
+  if (!/EntityLinkOrTombstone[\s\S]{0,120}kind="load"[\s\S]{0,120}id=\{load\.id\}/.test(section) && !/EntityLinkOrTombstone[\s\S]{0,120}id=\{load\.id\}[\s\S]{0,120}kind="load"/.test(section)) {
     failures.push("FinancialUnitPLSection must render EntityLinkOrTombstone kind=\"load\" id={load.id} for each contributing load");
   }
   if (!/No loads contributed revenue in this period/.test(section)) {
@@ -81,6 +89,22 @@ function analyze(overrides = {}) {
   if (!/totalCount - loads\.length/.test(section)) {
     failures.push("FinancialUnitPLSection must disclose the real remaining count when the list is capped (no silent cap)");
   }
+  let leaf;
+  const visit = (value) => {
+    if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") {
+      if (value.id === "unit.profile.financial_pl" && Array.isArray(value.required)) leaf = value;
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(JSON.parse(required));
+  if (!leaf) failures.push("Fleet financial P&L Required leaf missing");
+  else {
+    if (!leaf.required.includes("reverse_link")) failures.push("Fleet financial P&L must require reverse_link");
+    if (leaf.route_hint !== "/fleet/units/:id") failures.push("Fleet financial P&L must mount on canonical unit profile");
+  }
+  if (!self.split("/**\n * verify-")[0].includes(EXACT_HEADER)) failures.push("exact Fleet financial P&L reverse header missing");
+  if (/"guard"\s*:\s*"scripts\/verify-fleet-unit-financial-pl-load-reverse\.mjs"/.test(feed)) failures.push("manual feed duplicates financial P&L reverse ownership");
 
   return failures;
 }
@@ -108,6 +132,11 @@ function selftest() {
     ["frontend link removed", { section: section.replace('kind="load"', 'kind="unit"') }],
     ["empty state removed", { section: section.replace("No loads contributed revenue in this period.", "No data.") }],
     ["silent cap (disclosure removed)", { section: section.replace(/\{typeof totalCount === "number"[\s\S]*?<\/p>\n\s*\) : null\}/, "") }],
+    ["Required leaf removed", { required: read(REQUIRED).replace('"unit.profile.financial_pl"', '"unit.profile.financial_pl_MISSING"') }],
+    ["Required reverse removed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"') }],
+    ["Required route changed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"') }],
+    ["exact header removed", { self: read(SELF).replace(EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")) }],
+    ["duplicate feed inserted", { feed: `[{"guard":"scripts/verify-fleet-unit-financial-pl-load-reverse.mjs"}]` }],
   ];
   for (const [name, overrides] of mutations) {
     const before = analyze();
