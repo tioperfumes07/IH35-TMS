@@ -29,7 +29,6 @@ import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomp
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -73,7 +72,15 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   const [saving, setSaving] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [commitResults, setCommitResults] = useState<
-    Array<{ line_no: number; posted: boolean; reason: string; driver_advance_id?: string; deduction_id?: string; bill_id?: string }> | null
+    Array<{
+      line_no: number;
+      posted: boolean;
+      reason: string;
+      driver_advance_id?: string;
+      deduction_id?: string;
+      bill_id?: string;
+      journal_entry_id?: string;
+    }> | null
   >(null);
   // Per-line disclosure state for the secondary Driver/Unit/Trailer/Trip link fields — collapsed by
   // default so the primary Category/Description/Amount row reads clean (owner feedback: "boxes are
@@ -426,11 +433,39 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                           {result.bill_id ? (
                             <>
                               {" · "}
-                              <EntityLink kind="bill" id={result.bill_id} label={entityLabel(null, result.bill_id, "Bill")} />
+                              <EntityLink kind="bill" id={result.bill_id} label={`Bill · split line ${result.line_no}`} />
                             </>
                           ) : null}
-                          {result.driver_advance_id ? " · advance posted" : null}
-                          {result.deduction_id ? " · recovery scheduled" : null}
+                          {result.driver_advance_id ? (
+                            <>
+                              {" · "}
+                              <EntityLink
+                                kind="cash_advance"
+                                id={result.driver_advance_id}
+                                label={`Driver advance · split line ${result.line_no}`}
+                              />
+                            </>
+                          ) : null}
+                          {result.deduction_id ? (
+                            <>
+                              {" · "}
+                              <EntityLink
+                                kind="settlement_deduction"
+                                id={result.deduction_id}
+                                label={`Recovery deduction · split line ${result.line_no}`}
+                              />
+                            </>
+                          ) : null}
+                          {result.journal_entry_id ? (
+                            <>
+                              {" · "}
+                              <EntityLink
+                                kind="journal_entry"
+                                id={result.journal_entry_id}
+                                label={`Journal entry · split line ${result.line_no}`}
+                              />
+                            </>
+                          ) : null}
                         </>
                       ) : (
                         result.reason

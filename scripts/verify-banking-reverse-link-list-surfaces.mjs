@@ -27,6 +27,7 @@ const MATCH_DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx
 const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx";
 const RECON_SUGGESTIONS = "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx";
 const BANK_RECON = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
+const SPLIT_MODAL = "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -106,6 +107,11 @@ const CHECKS = [
   { name: "factoring reconcile suggestion separates drill from apply", file: RECON_SUGGESTIONS, pattern: /kind="factoring_batch"\s+id=\{props\.suggestion\.obligation_id\}[\s\S]{0,180}props\.suggestion\.batch_number[\s\S]{0,500}<button[\s\S]{0,180}onClick=\{props\.onApply\}/ },
   { name: "bank reconciliation source drill uses scoped human label", file: BANK_RECON, pattern: /kind="bank_transaction"\s+id=\{row\.id\}[\s\S]{0,220}row\.merchant_name\?\.trim\(\)[\s\S]{0,120}row\.description\?\.trim\(\)/ },
   { name: "bank reconciliation selected and variance dates use shared formatter", file: BANK_RECON, pattern: /formatDateUS\(selectedRow\.transaction_date\)[\s\S]{0,6000}formatDateUS\(entry\.entry_date\)/ },
+  { name: "split commit contract retains every posted reverse id", file: SPLIT_MODAL, pattern: /driver_advance_id\?: string;[\s\S]{0,160}deduction_id\?: string;[\s\S]{0,160}bill_id\?: string;[\s\S]{0,160}journal_entry_id\?: string;/ },
+  { name: "split commit bill uses contextual human drill label", file: SPLIT_MODAL, pattern: /kind="bill" id=\{result\.bill_id\} label=\{`Bill · split line \$\{result\.line_no\}`\}/ },
+  { name: "split commit advance exact reverse drill", file: SPLIT_MODAL, pattern: /kind="cash_advance"[\s\S]{0,120}id=\{result\.driver_advance_id\}[\s\S]{0,160}Driver advance · split line/ },
+  { name: "split commit deduction exact reverse drill", file: SPLIT_MODAL, pattern: /kind="settlement_deduction"[\s\S]{0,120}id=\{result\.deduction_id\}[\s\S]{0,160}Recovery deduction · split line/ },
+  { name: "split commit journal entry exact reverse drill", file: SPLIT_MODAL, pattern: /kind="journal_entry"[\s\S]{0,120}id=\{result\.journal_entry_id\}[\s\S]{0,160}Journal entry · split line/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
