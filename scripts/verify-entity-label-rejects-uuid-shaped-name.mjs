@@ -3,7 +3,7 @@
 /** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^secondary\\.assignments$","task":"CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS"} */
-/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^home\\.overview$","task":"CLS-DISPATCH-OVERVIEW-ENTITY-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.overview"],"task":"DISP-F5862-HOME-OVERVIEW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^fault_drafts\\.review$","task":"MAINT-FAULT-DRAFTS-TOMBSTONE"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^driver_reports\\.queue$","task":"MAINT-DRIVER-REPORTS-QUEUE-TOMBSTONE"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^pm\\.schedule\\.list$","task":"MAINT-PM-SCHEDULE-TOMBSTONE"} */
@@ -30,6 +30,9 @@ const MAINT_WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrder
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const VENDOR_WORK_ORDERS = "apps/frontend/src/pages/vendors/VendorWorkOrdersReverseSection.tsx";
 const DETENTION_BOARD = "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx";
+const DISPATCH_MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-entity-label-rejects-uuid-shaped-name.mjs";
+const OVERVIEW_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.overview"],"task":"DISP-F5862-HOME-OVERVIEW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -1871,6 +1874,18 @@ export function auditDetentionBoardEntityLinks(src) {
   return problems;
 }
 
+function auditOverviewBuilt(matrixSrc, selfSrc) {
+  const problems = [];
+  try {
+    const leaf = JSON.parse(matrixSrc).leaves?.find((item) => item.id === "home.overview");
+    if (!leaf?.required?.includes("reverse_link")) problems.push(`${DISPATCH_MATRIX}: home.overview must require reverse_link`);
+  } catch {
+    problems.push(`${DISPATCH_MATRIX}: Required matrix must parse`);
+  }
+  if (!selfSrc.split("\n").includes(OVERVIEW_HEADER)) problems.push(`${SELF}: exact home.overview Built annotation drifted`);
+  return problems;
+}
+
 function auditTree() {
   const problems = [
     ...auditEntityLabel(readFileSync(join(ROOT, TARGET), "utf8")),
@@ -1882,6 +1897,10 @@ function auditTree() {
     ...auditCustomerLoadEntityLinks(readFileSync(join(ROOT, CUSTOMER_DETAIL), "utf8")),
     ...auditVendorWorkOrderUnitLink(readFileSync(join(ROOT, VENDOR_WORK_ORDERS), "utf8")),
     ...auditDetentionBoardEntityLinks(readFileSync(join(ROOT, DETENTION_BOARD), "utf8")),
+    ...auditOverviewBuilt(
+      readFileSync(join(ROOT, DISPATCH_MATRIX), "utf8"),
+      readFileSync(join(ROOT, SELF), "utf8"),
+    ),
   ];
   for (const s of SIBLINGS) {
     problems.push(...auditSibling(s.rel, readFileSync(join(ROOT, s.rel), "utf8"), s.bad, s.good));
@@ -1993,6 +2012,14 @@ ORDER BY w.opened_at DESC NULLS LAST`;
 
   const real = auditTree();
   if (real.length) failures.push(`selftest: real tree: ${real.join(" | ")}`);
+  const matrix = readFileSync(join(ROOT, DISPATCH_MATRIX), "utf8");
+  const self = readFileSync(join(ROOT, SELF), "utf8");
+  if (!auditOverviewBuilt(matrix.replace('"id": "home.overview"', '"id": "home.overview.removed"'), self).length) {
+    failures.push("selftest: home.overview Required removal NOT detected");
+  }
+  if (!auditOverviewBuilt(matrix, self.replace('"leaves":["home.overview"]', '"leaves":["home.list"]')).length) {
+    failures.push("selftest: home.overview exact Built header drift NOT detected");
+  }
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
