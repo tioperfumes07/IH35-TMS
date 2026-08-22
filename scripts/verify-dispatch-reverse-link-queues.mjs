@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^(queues\\.(border|alerts|trip_pairing|factoring|factoring_queue)|docs\\.(ocr|equipment_transfers)|misc\\.layover)$","task":"VERTICAL-REVERSE-LINK-dispatch-queues","vertical":"column-wave"}
+ * @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.border","queues.border_history","queues.at_risk","queues.trip_pairing","queues.factoring","queues.factoring_queue","docs.ocr","docs.equipment_transfers","misc.layover"],"task":"DISP-F5844-QUEUE-REVERSE-EXACT-LEAVES","vertical":"column-wave"}
  * Ratchet exact canonical row drills on every governed Dispatch queue leaf.
  */
 import fs from "node:fs";
@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-dispatch-reverse-link-queues";
 const files = {
+  self: "scripts/verify-dispatch-reverse-link-queues.mjs",
+  matrix: "docs/specs/scoreboard/modules/dispatch.required.json",
   border: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
   atRisk: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
   trips: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx",
@@ -20,6 +22,7 @@ const files = {
   layover: "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, rel]) => [key, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
+const governedLeaves = ["queues.border", "queues.border_history", "queues.at_risk", "queues.trip_pairing", "queues.factoring", "queues.factoring_queue", "docs.ocr", "docs.equipment_transfers", "misc.layover"];
 const checks = [
   ["border", /kind="unit" id=\{row\.unit_id\} label=\{label\}[\s\S]{0,80}?border-history-unit-link/, "border row unit drill"],
   ["border", /kind="driver" id=\{selected\.driver_id\} label=\{label\}[\s\S]{0,80}?border-history-driver-link/, "border detail driver drill"],
@@ -47,7 +50,20 @@ const checks = [
 ];
 
 export function collectFailures(src = source) {
-  return checks.filter(([key, pattern]) => !pattern.test(src[key])).map(([, , name]) => name);
+  const failures = checks.filter(([key, pattern]) => !pattern.test(src[key])).map(([, , name]) => name);
+  if (!/^ \* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["queues\.border","queues\.border_history","queues\.at_risk","queues\.trip_pairing","queues\.factoring","queues\.factoring_queue","docs\.ocr","docs\.equipment_transfers","misc\.layover"\],"task":"DISP-F5844-QUEUE-REVERSE-EXACT-LEAVES","vertical":"column-wave"\}$/m.test(src.self)) {
+    failures.push("exact nine-leaf Built annotation");
+  }
+  let leaves = [];
+  try {
+    leaves = JSON.parse(src.matrix).leaves ?? [];
+  } catch {
+    failures.push("dispatch Required matrix parses");
+  }
+  for (const id of governedLeaves) {
+    if (!leaves.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`${id} owns reverse_link`);
+  }
+  return failures;
 }
 
 function selftest() {
@@ -59,8 +75,17 @@ function selftest() {
     if (plantedText === source[key]) throw new Error(`plant target missing: ${name}`);
     if (collectFailures({ ...source, [key]: plantedText }).includes(name)) rejected += 1;
   }
-  if (rejected !== checks.length) throw new Error(`rejected ${rejected}/${checks.length} plants`);
-  console.log(`[${LABEL}] --selftest PASS: rejected ${rejected}/${checks.length} independent exact-row plants`);
+  const headerMutant = { ...source, self: source.self.replace(/^ \* @matrix-built .*$/m, " * planted broad Built claim") };
+  if (collectFailures(headerMutant).includes("exact nine-leaf Built annotation")) rejected += 1;
+  for (const id of governedLeaves) {
+    const matrix = JSON.parse(source.matrix);
+    const leaf = matrix.leaves.find((candidate) => candidate.id === id);
+    leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+    if (collectFailures({ ...source, matrix: JSON.stringify(matrix) }).includes(`${id} owns reverse_link`)) rejected += 1;
+  }
+  const total = checks.length + 1 + governedLeaves.length;
+  if (rejected !== total) throw new Error(`rejected ${rejected}/${total} plants`);
+  console.log(`[${LABEL}] --selftest PASS: rejected ${rejected}/${total} independent exact-row/evidence plants`);
 }
 
 try {
@@ -68,7 +93,7 @@ try {
   else {
     const failures = collectFailures();
     if (failures.length) throw new Error(failures.join("; "));
-    console.log(`[${LABEL}] PASS: ${checks.length} exact queue reverse drills ratcheted`);
+    console.log(`[${LABEL}] PASS: ${checks.length + 1 + governedLeaves.length} exact queue reverse/evidence obligations ratcheted`);
   }
 } catch (error) {
   console.error(`[${LABEL}] FAIL: ${error instanceof Error ? error.message : String(error)}`);
