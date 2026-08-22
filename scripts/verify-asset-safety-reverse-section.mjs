@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5909-ASSET-SAFETY-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5939-ASSET-SAFETY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * GUARD: unit and trailer profiles show the asset's safety records (SAF-F17 / Law §9 reverse linkage).
  *
@@ -40,6 +41,7 @@ const MATRIX = "docs/specs/scoreboard/modules/fleet.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-asset-safety-reverse-section.mjs";
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5909-ASSET-SAFETY-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5939-ASSET-SAFETY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const LABEL = "verify-asset-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -174,9 +176,11 @@ export function assertAssetSafetyReverse(sources) {
   for (const [id, route] of [["unit.profile.safety_reverse", "/fleet/units/:id"], ["trailer.profile.safety_reverse", "/fleet/trailers/:id"]]) {
     const leaf = matrix?.leaves?.find((row) => row.id === id);
     if (!leaf?.required?.includes("reverse_link")) problems.push(`${id} must require reverse_link`);
+    if (!leaf?.required?.includes("connectivity")) problems.push(`${id} must require connectivity`);
     if (leaf?.route_hint !== route) problems.push(`${id} must name mounted route ${route}`);
   }
   if (!src[SELF].split('import fs from "node:fs";')[0].includes(HEADER)) problems.push("exact Fleet asset-safety header missing");
+  if (!src[SELF].split('import fs from "node:fs";')[0].includes(CONNECTIVITY_HEADER)) problems.push("exact Fleet asset-safety connectivity header missing");
   try { if (JSON.parse(src[FEED]).entries?.some((entry) => entry.guard === SELF)) problems.push("manual feed duplicates Fleet asset-safety ownership"); }
   catch (error) { problems.push(`feed parse: ${error.message}`); }
 
@@ -377,11 +381,21 @@ if (SELFTEST) {
       { ...live, [MATRIX]: mutateLeaf(live[MATRIX], id, (leaf) => { leaf.route_hint = "/broken"; }) },
       `${id} must name mounted route ${route}`
     );
+    expectCaught(
+      `${id}-connectivity`,
+      { ...live, [MATRIX]: mutateLeaf(live[MATRIX], id, (leaf) => { leaf.required = leaf.required.filter((column) => column !== "connectivity"); }) },
+      `${id} must require connectivity`
+    );
   }
   expectCaught(
     "exact-header",
     { ...live, [SELF]: live[SELF].replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) },
     "exact Fleet asset-safety header missing"
+  );
+  expectCaught(
+    "exact-connectivity-header",
+    { ...live, [SELF]: live[SELF].replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) },
+    "exact Fleet asset-safety connectivity header missing"
   );
   expectCaught(
     "duplicate-feed",
@@ -398,7 +412,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 26/26 runtime/evidence defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 29/29 runtime/evidence defects caught, live sources clean`);
   process.exit(0);
 }
 
