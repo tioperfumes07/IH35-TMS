@@ -18,6 +18,8 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 function canAccess(role?: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
@@ -188,28 +190,40 @@ export function CategorizationRulesPage() {
           </div>
           <div className="space-y-2">
             {rules.map((rule) => (
-              <button
+              <div
                 key={rule.id}
-                type="button"
                 draggable
                 onDragStart={() => setDragRuleId(rule.id)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => void onDropRule(rule.id)}
-                onClick={() => {
-                  setSelectedRuleId(rule.id);
-                  setPattern(rule.plaid_category_pattern);
-                  setPriority(String(rule.priority));
-                  setCoaAccountId(rule.coa_account_id ?? "");
-                }}
                 className={`w-full rounded border px-2 py-2 text-left text-xs ${
                   selectedRuleId === rule.id ? "border-slate-300 bg-slate-100" : "border-gray-100 hover:bg-gray-50"
                 }`}
               >
-                <p className="font-semibold text-gray-900">
-                  #{rule.priority} {rule.plaid_category_pattern}
+                <button
+                  type="button"
+                  className="w-full text-left"
+                  onClick={() => {
+                    setSelectedRuleId(rule.id);
+                    setPattern(rule.plaid_category_pattern);
+                    setPriority(String(rule.priority));
+                    setCoaAccountId(rule.coa_account_id ?? "");
+                  }}
+                >
+                  <span className="block font-semibold text-gray-900">
+                    #{rule.priority} {rule.plaid_category_pattern}
+                  </span>
+                </button>
+                <p className="text-gray-600">
+                  {rule.coa_account_id ? (
+                    <EntityLink
+                      kind="account"
+                      id={rule.coa_account_id}
+                      label={entityLabel(coaLookup.get(rule.coa_account_id), rule.coa_account_id, "Account")}
+                    />
+                  ) : "No account selected"}
                 </p>
-                <p className="text-gray-600">{rule.coa_account_id ? coaLookup.get(rule.coa_account_id) ?? "Mapped account" : "No account selected"}</p>
-              </button>
+              </div>
             ))}
             {rules.length === 0 && !rulesQuery.isLoading ? <p className="text-sm text-gray-500">No active rules yet.</p> : null}
           </div>
@@ -271,9 +285,16 @@ export function CategorizationRulesPage() {
                 <p className="font-medium text-gray-900">{tx.description || "(No description)"}</p>
                 <p className="text-gray-600">{(tx.plaid_category ?? []).join(" / ") || "No Plaid category"}</p>
                 <p className={tx.coa_account_id ? "text-slate-700" : "text-slate-500"}>
-                  {tx.coa_account_id
-                    ? `Matched: ${tx.account_number || ""} ${tx.account_name || ""}`.trim()
-                    : "Unmatched"}
+                  {tx.coa_account_id ? (
+                    <>
+                      Matched:{" "}
+                      <EntityLink
+                        kind="account"
+                        id={tx.coa_account_id}
+                        label={entityLabel(`${tx.account_number || ""} ${tx.account_name || ""}`.trim(), tx.coa_account_id, "Account")}
+                      />
+                    </>
+                  ) : "Unmatched"}
                 </p>
               </div>
             ))}
@@ -286,4 +307,3 @@ export function CategorizationRulesPage() {
     </div>
   );
 }
-

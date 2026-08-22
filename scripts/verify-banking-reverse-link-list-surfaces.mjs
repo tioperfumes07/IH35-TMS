@@ -30,6 +30,7 @@ const BANK_RECON = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
 const SPLIT_MODAL = "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const ITEMS_LIST = "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx";
+const CATEGORIZATION_RULES = "apps/frontend/src/pages/banking/CategorizationRulesPage.tsx";
 const RECORD_TRANSFER = "apps/frontend/src/pages/banking/RecordTransferModal.tsx";
 const RECORD_CC_PAYMENT = "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
@@ -129,6 +130,8 @@ const CHECKS = [
   { name: "catalog item canonical exact route", file: ENTITY_LINK, pattern: /\| "catalog_item"[\s\S]*case "catalog_item":\s+return `\/catalogs\/items\?item_id=\$\{id\}`/ },
   { name: "catalog item deep link exact company-scoped read", file: ITEMS_LIST, pattern: /deepLinkItemId = searchParams\.get\("item_id"\)[\s\S]{0,500}itemsCatalogClient\.get\(String\(deepLinkItemId\), companyId\)[\s\S]{0,700}setSelectedRow\(deepLinkItemQuery\.data\)[\s\S]{0,120}setModalOpen\(true\)/ },
   { name: "categorization item exact human drill", file: VIEW, pattern: /links\?\.item_id \? \([\s\S]{0,260}kind="catalog_item"[\s\S]{0,120}id=\{links\.item_id\}[\s\S]{0,160}entityLabel\(links\.item_name, links\.item_id, "Item"\)/ },
+  { name: "categorization rule account exact human drill outside selector", file: CATEGORIZATION_RULES, pattern: /rules\.map\(\(rule\) => \(\s+<div[\s\S]{0,1800}<button[\s\S]{0,900}<\/button>[\s\S]{0,600}kind="account"[\s\S]{0,140}id=\{rule\.coa_account_id\}[\s\S]{0,240}coaLookup\.get\(rule\.coa_account_id\)/ },
+  { name: "categorization preview account exact human drill", file: CATEGORIZATION_RULES, pattern: /tx\.coa_account_id \? \([\s\S]{0,240}kind="account"[\s\S]{0,100}id=\{tx\.coa_account_id\}[\s\S]{0,220}tx\.account_number[\s\S]{0,100}tx\.account_name/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
