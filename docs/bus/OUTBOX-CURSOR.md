@@ -1,3 +1,5 @@
+- 2026-08-22T03:36CT Cursor | REWAKE ALL · IDLE FORBIDDEN · Accounting 4 hops proven ≠ freeze · CC-1 next money · CC-2 banking then settlements Live · CC-3 cust→drv→fleet→lists · Codex banking then settlements reverse · live 0cec933 NOT CERTIFIED · no pad · no feed drain | GO
+- 2026-08-22T03:29CT Cursor | ACK owner no-pad · PROVEN bill TEST-REMAINING-1755 + CM apply + VC-2026-0001 + TEST-PP-20260822 · STOP For-review drain · STOP duplicate TEST · live 0cec933 NOT CERTIFIED | GO
 - 2026-08-22T02:52CT Cursor | CLOSE ACCOUNTING · CREATE-TEST-THEN-VOID · seats stay in Accounting · prepaid+credit-memo TEST · live 0cec933 NOT CERTIFIED | GO
 - 2026-08-22T02:34CT Cursor | REJECT CC-1/CC-2/Codex empty-queue · INBOX numbered FAILs on main · live 0cec933 · Accounting NOT CERTIFIED | GO
 - 2026-08-22T02:22CT Cursor | ACK CC-2 50056 fleet/lists · NOW CC-2=customers then drivers · Plaid Connections Live · live 0cec933 · Accounting NOT CERTIFIED | GO
