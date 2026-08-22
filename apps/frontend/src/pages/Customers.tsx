@@ -347,7 +347,6 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
   });
   const customersRoster = customersQuery.data?.customers ?? [];
-  const customersServerTotal = customersQuery.data?.total ?? 0;
   // ACCT-F5790 — `active_company_only: true` above scopes to the ACTIVE company's records, and
   // mdata.customers' own customers_select RLS additionally hides any deactivated_at-set row for a
   // non-bypass reader. Both are correct for the base roster (pickers/parentCustomerOptions below must
@@ -363,6 +362,17 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
   });
   const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
+  // ACCT-F5792 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
+  // total is that tab's own authoritative server COUNT, just picked per listStatus instead of always
+  // reading the active-only query's total. Before this fix, the Inactive tab (13 real rows, confirmed
+  // live) showed "1-12 of 12" underneath because the pager always read customersQuery's active-only
+  // total (12) regardless of which roster was actually being displayed.
+  const customersServerTotal =
+    listStatus === "inactive"
+      ? inactiveCustomersQuery.data?.total ?? 0
+      : listStatus === "all"
+        ? (customersQuery.data?.total ?? 0) + (inactiveCustomersQuery.data?.total ?? 0)
+        : customersQuery.data?.total ?? 0;
   // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
   // consumer of customersRoster (parentCustomerOptions) stays active-only on purpose.
   const fullCustomersRoster = useMemo(
