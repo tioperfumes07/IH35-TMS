@@ -93,15 +93,24 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     sources: ["driver_finance.driver_pay_rates", "driver_finance.driver_bills"],
     probe: {
       // A driver bill priced from the RATE CARD, never equal to the customer rate (ACCT-F63).
+      //
+      // ACCT-F5783 — the JOIN's ON-clause used to AND-embed the entity scope directly
+      // (`AND l.operating_company_id = $1::uuid`), which is NOT NULL-tolerant: every caller invokes
+      // this probe with $1=NULL for the all-entities read (see this file's ScenarioProbe contract
+      // comment), and `l.operating_company_id = NULL::uuid` evaluates to NULL, so the whole ON
+      // predicate went NULL and the INNER JOIN matched zero rows — masking all 6 real qualifying
+      // driver bills (live-verified: 4 USMCA + 2 TRANSP) behind a permanent false "0". Fixed by
+      // joining on load_id alone and moving entity scoping into the WHERE clause with the same
+      // NULL-tolerant form the sibling b.operating_company_id filter already uses.
       sql: `
         SELECT count(*)::text AS n
           FROM driver_finance.driver_bills b
           JOIN mdata.loads l ON l.id = b.load_id
-                             AND l.operating_company_id = $1::uuid
          WHERE b.status <> 'void'
            AND b.rate_per_mile_cents IS NOT NULL
            AND b.gross_amount_cents <> l.rate_total_cents
            AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
+           AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} driver bill(s) priced from the rate card, not the customer rate`,
     },
