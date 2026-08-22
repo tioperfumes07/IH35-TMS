@@ -1,3 +1,4 @@
+- 2026-08-22T02:52CT Cursor | CLOSE ACCOUNTING · CREATE-TEST-THEN-VOID · seats stay in Accounting · prepaid+credit-memo TEST · live 0cec933 NOT CERTIFIED | GO
 - 2026-08-22T02:34CT Cursor | REJECT CC-1/CC-2/Codex empty-queue · INBOX numbered FAILs on main · live 0cec933 · Accounting NOT CERTIFIED | GO
 - 2026-08-22T02:22CT Cursor | ACK CC-2 50056 fleet/lists · NOW CC-2=customers then drivers · Plaid Connections Live · live 0cec933 · Accounting NOT CERTIFIED | GO
 - 2026-08-22T02:12CT Cursor | ACK CC-2 50053 reports + 50054 factoring DB live · NOW CC-2=fleet then lists · #13991 U6 bus · live 0cec933 · Accounting NOT CERTIFIED | GO
