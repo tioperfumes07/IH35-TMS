@@ -2,6 +2,62 @@ type Queryable = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
 };
 
+/** Human source id — same precedence as account-register reference (never UUID). */
+const SOURCE_DISPLAY_ID_SQL = `
+        COALESCE(
+          NULLIF(btrim(src_inv.display_id), ''),
+          NULLIF(btrim(src_bill.bill_number), ''),
+          NULLIF(btrim(src_bill.display_id), ''),
+          NULLIF(btrim(src_pay.display_id), ''),
+          NULLIF(btrim(src_exp.expense_number), ''),
+          CASE WHEN jp.source_transaction_type = 'expense' THEN 'Expense' END,
+          CASE WHEN jp.source_transaction_type = 'customer_payment' THEN 'Invoice Payment' END,
+          NULLIF(btrim(src_bpay_bill.bill_number), ''),
+          src_banktx.display_label,
+          src_fueltx.display_label
+        )`;
+
+const SOURCE_DISPLAY_JOINS_SQL = `
+      LEFT JOIN accounting.invoices src_inv
+        ON jp.source_transaction_type = 'invoice'
+       AND src_inv.id::text = jp.source_transaction_id
+       AND src_inv.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bills src_bill
+        ON jp.source_transaction_type = 'bill'
+       AND src_bill.id::text = jp.source_transaction_id
+       AND src_bill.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.payments src_pay
+        ON jp.source_transaction_type = 'customer_payment'
+       AND src_pay.id::text = jp.source_transaction_id
+       AND src_pay.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.expenses src_exp
+        ON jp.source_transaction_type = 'expense'
+       AND src_exp.id::text = jp.source_transaction_id
+       AND src_exp.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bill_payments src_bpp
+        ON jp.source_transaction_type = 'bill_payment'
+       AND src_bpp.id::text = jp.source_transaction_id
+       AND src_bpp.operating_company_id = jp.operating_company_id
+      LEFT JOIN accounting.bills src_bpay_bill
+        ON src_bpay_bill.id = src_bpp.bill_id
+       AND src_bpay_bill.operating_company_id = jp.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''), 'Bank transaction') AS display_label
+        FROM banking.bank_transactions bt
+        WHERE jp.source_transaction_type = 'bank_categorization'
+          AND bt.id::text = jp.source_transaction_id
+          AND bt.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_banktx ON true
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
+        FROM fuel.fuel_transactions ft
+        WHERE jp.source_transaction_type = 'fuel_event'
+          AND ft.id::text = jp.source_transaction_id
+          AND ft.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_fueltx ON true`;
+
 export type AccountingAuditTrailEvent = {
   id: string;
   occurred_at: string;
@@ -173,14 +229,7 @@ export async function listAccountingAuditTrail(
         jp.posting_batch_id::text AS posting_batch_id,
         jp.source_transaction_type,
         jp.source_transaction_id,
-        COALESCE(
-          src_inv.display_id,
-          src_bill.bill_number,
-          src_bill.display_id,
-          src_exp.expense_number,
-          src_banktx.display_label,
-          src_fueltx.display_label
-        ) AS source_transaction_display_id,
+        ${SOURCE_DISPLAY_ID_SQL} AS source_transaction_display_id,
         jp.source_transaction_line_id,
         jp.account_id::text AS account_id,
         a.account_number,
@@ -201,34 +250,7 @@ export async function listAccountingAuditTrail(
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
        AND a.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.invoices src_inv
-        ON jp.source_transaction_type = 'invoice'
-       AND src_inv.id::text = jp.source_transaction_id
-       AND src_inv.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.bills src_bill
-        ON jp.source_transaction_type = 'bill'
-       AND src_bill.id::text = jp.source_transaction_id
-       AND src_bill.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.expenses src_exp
-        ON jp.source_transaction_type = 'expense'
-       AND src_exp.id::text = jp.source_transaction_id
-       AND src_exp.operating_company_id = jp.operating_company_id
-      LEFT JOIN LATERAL (
-        SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''), 'Bank transaction') AS display_label
-        FROM banking.bank_transactions bt
-        WHERE jp.source_transaction_type = 'bank_categorization'
-          AND bt.id::text = jp.source_transaction_id
-          AND bt.operating_company_id = jp.operating_company_id
-        LIMIT 1
-      ) src_banktx ON true
-      LEFT JOIN LATERAL (
-        SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
-        FROM fuel.fuel_transactions ft
-        WHERE jp.source_transaction_type = 'fuel_event'
-          AND ft.id::text = jp.source_transaction_id
-          AND ft.operating_company_id = jp.operating_company_id
-        LIMIT 1
-      ) src_fueltx ON true
+      ${SOURCE_DISPLAY_JOINS_SQL}
       WHERE ${where.join(" AND ")}
       ORDER BY COALESCE(je.created_at, pb.created_at, now()) DESC, jp.id DESC
       LIMIT $${values.length}
@@ -314,14 +336,7 @@ export async function listAccountingSourceLineage(
         jp.posting_batch_id::text AS posting_batch_id,
         jp.source_transaction_type,
         jp.source_transaction_id,
-        COALESCE(
-          src_inv.display_id,
-          src_bill.bill_number,
-          src_bill.display_id,
-          src_exp.expense_number,
-          src_banktx.display_label,
-          src_fueltx.display_label
-        ) AS source_transaction_display_id,
+        ${SOURCE_DISPLAY_ID_SQL} AS source_transaction_display_id,
         jp.source_transaction_line_id,
         tsl.linked_object_type,
         tsl.linked_object_id,
@@ -345,34 +360,7 @@ export async function listAccountingSourceLineage(
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
        AND a.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.invoices src_inv
-        ON jp.source_transaction_type = 'invoice'
-       AND src_inv.id::text = jp.source_transaction_id
-       AND src_inv.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.bills src_bill
-        ON jp.source_transaction_type = 'bill'
-       AND src_bill.id::text = jp.source_transaction_id
-       AND src_bill.operating_company_id = jp.operating_company_id
-      LEFT JOIN accounting.expenses src_exp
-        ON jp.source_transaction_type = 'expense'
-       AND src_exp.id::text = jp.source_transaction_id
-       AND src_exp.operating_company_id = jp.operating_company_id
-      LEFT JOIN LATERAL (
-        SELECT COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, ''), 'Bank transaction') AS display_label
-        FROM banking.bank_transactions bt
-        WHERE jp.source_transaction_type = 'bank_categorization'
-          AND bt.id::text = jp.source_transaction_id
-          AND bt.operating_company_id = jp.operating_company_id
-        LIMIT 1
-      ) src_banktx ON true
-      LEFT JOIN LATERAL (
-        SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
-        FROM fuel.fuel_transactions ft
-        WHERE jp.source_transaction_type = 'fuel_event'
-          AND ft.id::text = jp.source_transaction_id
-          AND ft.operating_company_id = jp.operating_company_id
-        LIMIT 1
-      ) src_fueltx ON true
+      ${SOURCE_DISPLAY_JOINS_SQL}
       LEFT JOIN accounting.invoices link_inv
         ON tsl.linked_object_type = 'invoice'
        AND link_inv.id::text = tsl.linked_object_id

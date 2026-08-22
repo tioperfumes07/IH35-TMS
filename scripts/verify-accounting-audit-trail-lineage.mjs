@@ -37,8 +37,23 @@ if (!serviceSource.includes("source_transaction_display_id")) {
 if (!/src_bill\.bill_number/.test(serviceSource) || !/src_exp\.expense_number/.test(serviceSource)) {
   fail("source display resolver must use bill_number + expense_number (not UUID chrome)");
 }
+if (!/accounting\.payments src_pay/.test(serviceSource)) {
+  fail("source display resolver must join accounting.payments for customer_payment (live 0cec933: customer_payment / Source transaction — not visible)");
+}
+if (!/CASE WHEN jp\.source_transaction_type = 'expense' THEN 'Expense'/.test(serviceSource)) {
+  fail("null expense_number must fall back to the word Expense, not a UUID tombstone");
+}
+if (!/CASE WHEN jp\.source_transaction_type = 'customer_payment' THEN 'Invoice Payment'/.test(serviceSource)) {
+  fail("null payment display_id must fall back to Invoice Payment, not Source transaction — not visible");
+}
+if (!/src_fueltx\.display_label/.test(serviceSource)) {
+  fail("source display resolver must keep fuel_event transaction_reference join (Codex ACCT-F5726)");
+}
 if (/entityLabel\(\s*null\s*,\s*row\.source_transaction_id/.test(pageSource)) {
   fail("AccountingAuditTrailPage must not entityLabel(null, source_transaction_id) — use display_id");
+}
+if (pageSource.includes('"Source transaction"')) {
+  fail("AccountingAuditTrailPage must not use generic Source transaction noun — type-specific + SQL display_id");
 }
 if (/entityLabel\(\s*null\s*,\s*row\.linked_object_id/.test(pageSource)) {
   fail("AccountingAuditTrailPage must not entityLabel(null, linked_object_id) — use display_id");
