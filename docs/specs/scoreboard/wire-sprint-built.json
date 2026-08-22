@@ -1127,21 +1127,6 @@
       "leafRe": "^(parts|parts_inventory|detail|profile)"
     },
     {
-      "task": "LEGAL-MATTER-TRAILER-CREATE-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-legal-matter-trailer-linkage.mjs",
-      "modules": [
-        "legal",
-        "fleet"
-      ],
-      "cols": [
-        "trailer",
-        "connectivity",
-        "picker_law"
-      ],
-      "leafRe": "^(matters|trailer|detail|profile|create)"
-    },
-    {
       "task": "MAINT-TRAILER-TIRE-PROGRAM-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-trailer-tire-program-linkage.mjs",

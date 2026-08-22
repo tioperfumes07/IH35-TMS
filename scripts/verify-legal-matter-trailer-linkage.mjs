@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["legal","fleet"],"cols":["trailer","connectivity","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^trailer\\.profile\\.legal_reverse$","task":"THEATER-LEGAL-MATTER-TRAILER-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5910-LEGAL-MATTERS-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-legal-matter-trailer-linkage";
@@ -9,10 +10,21 @@ const files = {
   routes: "apps/backend/src/legal/matters.routes.ts",
   detail: "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx",
   reverse: "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+  unitReverse: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
   reverseSection: "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx",
   api: "apps/frontend/src/api/legal-matters.ts",
+  matrix: "docs/specs/scoreboard/modules/fleet.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-legal-matter-trailer-linkage.mjs",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5910-LEGAL-MATTERS-REVERSE-EXACT","vertical":"class-sweep"} */';
+const mutateLeaf = (text, id, mutate) => {
+  const parsed = JSON.parse(text);
+  const leaf = parsed.leaves.find((row) => row.id === id);
+  mutate(leaf);
+  return JSON.stringify(parsed);
+};
 
 function audit(s) {
   const failures = [];
@@ -26,8 +38,21 @@ function audit(s) {
   if ((s.service.match(/eq\.equipment_number\s+AS equipment_number/g) ?? []).length < 2 || (s.service.match(/LEFT JOIN mdata\.equipment eq ON eq\.id = m\.equipment_id/g) ?? []).length < 2) failures.push("list and detail payloads must resolve trailer label");
   if (!/kind="trailer"[\s\S]{0,160}matter\.equipment_id[\s\S]{0,160}equipment_number/.test(s.detail)) failures.push("matter detail must drill to canonical trailer");
   if (!/filter=\{\{ equipment_id: id \}\}/.test(s.reverse)) failures.push("trailer profile must mount exact legal-matter reverse filter");
+  if (!/LegalMattersReverseSection[\s\S]{0,180}filter=\{\{ unit_id: id \}\}/.test(s.unitReverse)) failures.push("unit profile must mount exact legal-matter reverse filter");
   if (!/equipment_id\?: string/.test(s.api) || !/params\.equipment_id = filters\.equipment_id/.test(s.api)) failures.push("client must forward exact equipment reverse filter");
   if (!/\{ equipment_id: string;/.test(s.reverseSection)) failures.push("reverse component must accept trailer equipment key space");
+  if (!/const id = m\.id == null \? null : String\(m\.id\)/.test(s.reverseSection) || !/EntityLinkOrTombstone[\s\S]{0,180}kind="matter"[\s\S]{0,180}id=\{id\}[\s\S]{0,180}name=\{m\.matter_number\}/.test(s.reverseSection)) failures.push("reverse rows must drill to canonical matter ids and human labels");
+  if (!/m\.unit_id = \$\$\{values\.length\}/.test(s.service) || !/m\.equipment_id = \$\$\{values\.length\}/.test(s.service)) failures.push("service must retain exact unit and trailer reverse filters");
+  let matrix;
+  try { matrix = JSON.parse(s.matrix); } catch (error) { failures.push(`Fleet matrix parse: ${error.message}`); }
+  for (const [id, route] of [["unit.profile.legal_reverse", "/fleet/units/:id"], ["trailer.profile.legal_reverse", "/fleet/trailers/:id"]]) {
+    const leaf = matrix?.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
+    if (leaf?.route_hint !== route) failures.push(`${id} must name mounted route ${route}`);
+  }
+  if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER)) failures.push("exact Fleet legal-reverse header missing");
+  try { if (JSON.parse(s.feed).entries?.some((entry) => entry.guard === files.self)) failures.push("manual feed duplicates Fleet legal ownership"); }
+  catch (error) { failures.push(`feed parse: ${error.message}`); }
   return failures;
 }
 
@@ -42,7 +67,11 @@ if (process.argv.includes("--selftest")) {
     ["label", "service", /eq\.equipment_number\s+AS equipment_number/g, "NULL AS equipment_number"],
     ["detail", "detail", /kind="trailer"/, 'kind="unit"'],
     ["reverse", "reverse", /filter=\{\{ equipment_id: id \}\}/, "filter={{ unit_id: id }}"],
+    ["unit-reverse", "unitReverse", /filter=\{\{ unit_id: id \}\}/, "filter={{ equipment_id: id }}"],
     ["api", "api", /params\.equipment_id = filters\.equipment_id/, "params.unit_id = filters.equipment_id"],
+    ["matter-drill", "reverseSection", /id=\{id\}/, "id={null}"],
+    ["header", "self", new RegExp(HEADER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')],
+    ["feed", "feed", /^.*$/s, JSON.stringify({ entries: [{ guard: files.self }] })],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
@@ -51,7 +80,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} trailer-link mutations detected`);
+  const matrixMutations = [];
+  for (const id of ["unit.profile.legal_reverse", "trailer.profile.legal_reverse"]) {
+    matrixMutations.push({ ...source, matrix: mutateLeaf(source.matrix, id, (leaf) => { leaf.id += ".broken"; }) });
+    matrixMutations.push({ ...source, matrix: mutateLeaf(source.matrix, id, (leaf) => { leaf.route_hint = "/broken"; }) });
+  }
+  matrixMutations.forEach((mutation, index) => { if (!audit(mutation).length) { console.error(`${LABEL} SELFTEST FAIL — matrix mutation ${index + 1} escaped`); process.exit(1); } });
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + matrixMutations.length}/${mutations.length + matrixMutations.length} runtime/evidence mutations detected`);
   process.exit(0);
 }
 
