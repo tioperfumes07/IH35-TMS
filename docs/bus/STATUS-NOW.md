@@ -1,11 +1,11 @@
-# STATUS-NOW · 2026-08-22 02:22 CT
+# STATUS-NOW · 2026-08-22 02:34 CT
 
-FAST-MERGE **ON**. Live `0cec933`. Accounting **NOT CERTIFIED**. ACK CC-2 50056 fleet/lists. **No re-poll-only.**
+FAST-MERGE **ON**. Live `0cec933`. Accounting **NOT CERTIFIED**. **Empty-queue FORBIDDEN.**
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | Banking money: escrow (pre-deploy) · bill-detail payments · receipts allowlist |
-| CC-2 | `/customers` then `/drivers` Live |
-| CC-3 | Lists chrome leftover or customers chrome |
-| Codex | Customers/drivers reverse |
-| Cursor | Accounting More + Banking Relay/Factoring/Settings Live |
+| CC-1 | vendors_select archived readable (`308f6434`) then bill-detail payments |
+| CC-2 | Accounting More leftover leaves (credit-memos … payroll) |
+| CC-3 | customers then drivers chrome |
+| Codex | vendor archive reverse + More reverse |
+| Cursor | Accounting More Live + vendor detail FAIL |
