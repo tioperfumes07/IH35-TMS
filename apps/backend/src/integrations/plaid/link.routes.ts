@@ -336,8 +336,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           je.memo AS matched_journal_entry_memo,
           bt.matched_transfer_id::text AS matched_transfer_id,
           COALESCE(NULLIF(TRIM(transfer.reference_number), ''), NULLIF(TRIM(transfer.memo), '')) AS matched_transfer_label,
+          bt.matched_expense_id::text AS matched_expense_id,
+          expense.expense_number AS matched_expense_number,
           CASE
             WHEN bt.matched_transfer_id IS NOT NULL THEN 'transfer'
+            WHEN bt.matched_expense_id IS NOT NULL THEN 'expense'
             WHEN bt.matched_journal_entry_id IS NOT NULL THEN 'je'
             WHEN bt.matched_load_id IS NOT NULL THEN 'load'
             WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
@@ -362,6 +365,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN banking.transfers transfer
           ON transfer.id = bt.matched_transfer_id
          AND transfer.operating_company_id = bt.operating_company_id
+        LEFT JOIN accounting.expenses expense
+          ON expense.id = bt.matched_expense_id
+         AND expense.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY bt.transaction_date DESC, bt.created_at DESC
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

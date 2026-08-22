@@ -20,6 +20,7 @@ const API = "apps/frontend/src/api/banking.ts";
 const PLAID = "apps/backend/src/integrations/plaid/link.routes.ts";
 const TRANSFERS = "apps/frontend/src/pages/banking/TransfersListPage.tsx";
 const PLAID_PANEL = "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx";
+const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
@@ -42,6 +43,10 @@ const CHECKS = [
   { name: "list transfer drill", file: VIEW, pattern: /kind="transfer"\s+id=\{tx\.matched_transfer_id\}[\s\S]{0,160}tx\.matched_transfer_label/ },
   { name: "transfer exact deep link read", file: TRANSFERS, pattern: /const deepLinkTransferId = searchParams\.get\("transfer_id"\)[\s\S]{0,5000}getTransfer\(deepLinkTransferId, companyId\)/ },
   { name: "Plaid connections transfer drill", file: PLAID_PANEL, pattern: /t\.matched_kind === "transfer" && t\.matched_transfer_id[\s\S]{0,220}kind="transfer"[\s\S]{0,160}t\.matched_transfer_label/ },
+  { name: "bank account register transfer drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_transfer_id \? \([\s\S]{0,180}kind="transfer"[\s\S]{0,180}row\.matched_transfer_label/ },
+  { name: "per-account expense reverse read", file: PLAID, pattern: /bt\.matched_expense_id::text AS matched_expense_id,[\s\S]{0,100}expense\.expense_number AS matched_expense_number/ },
+  { name: "expense label join company scoped", file: PLAID, pattern: /LEFT JOIN accounting\.expenses expense\s+ON expense\.id = bt\.matched_expense_id\s+AND expense\.operating_company_id = bt\.operating_company_id/ },
+  { name: "bank account register expense drill", file: ACCOUNT_DETAIL, pattern: /row\.matched_expense_id \? \([\s\S]{0,180}kind="expense"[\s\S]{0,180}row\.matched_expense_number/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
   { name: "categorize load drill", file: VIEW, pattern: /kind="load" id=\{links\.load_id\}[\s\S]{0,120}links\.load_number/ },
