@@ -61,6 +61,13 @@ if (listenIdx < 0) {
 if (invokeIdx > listenIdx) {
   fail("startup migration drift guard must run before app.listen()");
 }
+const bootAssertIdx = bootstrap.indexOf("await assertMigrationDriftBootGuard(");
+if (bootAssertIdx < 0) {
+  fail(`${BOOTSTRAP_FILE} must invoke assertMigrationDriftBootGuard(...)`);
+}
+if (bootAssertIdx < listenIdx) {
+  fail("assertMigrationDriftBootGuard must run AFTER app.listen so Render can bind PORT first");
+}
 
 const migrationsAbs = path.join(ROOT, MIGRATIONS_DIR);
 if (!fs.existsSync(migrationsAbs)) {

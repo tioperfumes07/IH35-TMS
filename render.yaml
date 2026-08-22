@@ -12,7 +12,10 @@ services:
     # pre_deploy (~86s) while production is already serving — that is the "API failed again"
     # false alarm. Measured 2026-08-21: dep-da44v9e SHA 63fdc2b04 (docs) pre_deploy_failed;
     # d4a13f4 (#13461) went live and healthz/shallow returned JSON 200 version d4a13f4.
-    preDeployCommand: npm run db:migrate && npm run db:verify:critical-runtime
+    # Migrate only. db:verify:critical-runtime belongs in GitHub CI — running it here
+    # delayed PORT bind (~6 min measured 2026-08-22) so rolling updates died update_failed
+    # while prod stayed on the old SHA (0cec933).
+    preDeployCommand: npm run db:migrate
     startCommand: npm run start
     # HTTP ready check (not TCP-only). Live dashboard must match. Do not kick prod per merge.
     healthCheckPath: /api/v1/healthz/readyz

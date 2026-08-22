@@ -1187,6 +1187,12 @@ async function main() {
   const host = "0.0.0.0";
   try {
     await app.ready();
+    assertNoDuplicateFastifyRoutes(app);
+
+    // Bind PORT before the Neon drift query. A hung/slow boot guard after ready() left
+    // Render scanning "No open ports" then update_failed (prod stuck on old SHA).
+    await app.listen({ port, host });
+    app.log.info({ port, host }, "Server started");
 
     const conn = await pool.connect();
     try {
@@ -1198,11 +1204,6 @@ async function main() {
     } finally {
       conn.release();
     }
-
-    assertNoDuplicateFastifyRoutes(app);
-
-    await app.listen({ port, host });
-    app.log.info({ port, host }, "Server started");
     if (!bootApiSmoke) {
     try {
       initializeAccountingCrons(app);
