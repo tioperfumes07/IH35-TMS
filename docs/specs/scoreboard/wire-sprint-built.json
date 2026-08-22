@@ -2340,18 +2340,6 @@
       "leafRe": "^safety\\.(drawer|parity)\\.(company_violation_detail|integrity_alert_detail|anomaly_detail)$"
     },
     {
-      "task": "VERTICAL-REVERSE-LINK-INSURANCE-PROFILES",
-      "pr": "this PR",
-      "guard": "scripts/verify-insurance-profile-reverse.mjs",
-      "modules": [
-        "insurance"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^(coverage_gaps|lawsuits\\.list)$"
-    },
-    {
       "task": "VERTICAL-REVERSE-LINK-FUEL-CARD-OVERAGE",
       "pr": "this PR",
       "guard": "scripts/verify-fuel-card-overage-profile-reverse.mjs",

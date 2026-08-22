@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["insurance"],"cols":["reverse_link"],"leafRe":"^(coverage_gaps|lawsuits\\.list)$","task":"VERTICAL-REVERSE-LINK-INSURANCE-PROFILES"} */
 import fs from "node:fs";
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
