@@ -59,6 +59,11 @@ function formatMoneyCents(cents: number | null | undefined) {
   return formatUsdCents(Math.abs(Number(cents)));
 }
 
+function candidateDrillLabel(candidate: BankMatchCandidate) {
+  const memo = candidate.memo?.trim();
+  return memo || KIND_LABELS[candidate.ledger_entry_kind];
+}
+
 /** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
 function kindBadgeClassName() {
   return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
@@ -260,7 +265,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                         <EntityLink
                           kind={KIND_ENTITY[c.ledger_entry_kind]}
                           id={c.ledger_entry_id}
-                          label={KIND_LABELS[c.ledger_entry_kind]}
+                          label={candidateDrillLabel(c)}
                           data-testid="match-candidate-kind"
                           className={kindBadgeClassName()}
                         />
