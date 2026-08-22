@@ -22,12 +22,16 @@ export function run(root = process.cwd()) {
   if (!lookup.includes("linked_object_type = 'transfer'")) {
     failures.push("transfer-tms-je-lookup must also try transaction_source_links linked_object_type=transfer");
   }
+  if (!/FROM banking\.transfers t[\s\S]*WHERE t\.operating_company_id = \$1::uuid[\s\S]*t\.id = ANY\(\$2::uuid\[\]\)/.test(lookup)) {
+    failures.push("transfer JE producer must scope banking.transfers by company and requested transfer ids");
+  }
   if (!/FROM accounting\.journal_entries[\s\S]*operating_company_id = \$1::uuid[\s\S]*journal_entry_memo/.test(lookup)) {
     failures.push("transfer JE reverse must resolve a company-scoped human memo");
   }
-  if (!lookup.includes("reversal_of_line_id IS NULL")) {
+  const reversalFilterCount = lookup.match(/jep\.reversal_of_line_id IS NULL/g)?.length ?? 0;
+  if (reversalFilterCount !== 2) {
     failures.push(
-      "transfer-tms-je-lookup must exclude reversal lines (reversal_of_line_id IS NULL) so revoke does not land JE drill on the reversing entry"
+      `transfer-tms-je-lookup must exclude reversal lines in both lookup paths (expected 2, found ${reversalFilterCount})`
     );
   }
   if (!lookup.includes("ORDER BY jep.created_at ASC") && !lookup.includes("ORDER BY jep.created_at ASC, jep.line_sequence ASC")) {
@@ -38,18 +42,20 @@ export function run(root = process.cwd()) {
   if (/ORDER BY jep\.line_sequence ASC\s*\n\s*LIMIT 1/.test(lookup) && !lookup.includes("reversal_of_line_id IS NULL")) {
     failures.push("forbidden: ORDER BY line_sequence LIMIT 1 without excluding reversal lines");
   }
-  if (!routes.includes("attachTransferJournalEntryIds") || !routes.includes("transfer-tms-je-lookup")) {
+  if (!routes.includes('import { attachTransferJournalEntryIds } from "../lib/transfer-tms-je-lookup.js";')) {
     failures.push("transfers.routes must enrich list/detail via attachTransferJournalEntryIds");
   }
   if (!/type TransferReverseProjection[\s\S]*journal_entry_memo\?: string \| null[\s\S]*attachTransferJournalReverse/.test(routes)) {
     failures.push("transfers routes must carry the JE human label through list and detail responses");
   }
-  if (!api.includes("journal_entry_id?:") && !api.includes("journal_entry_id?: string")) {
+  const transferType = api.match(/export type Transfer = \{[\s\S]*?\n\};/)?.[0] ?? "";
+  if (!transferType.includes("journal_entry_id?: string | null")) {
     failures.push("Transfer type must expose optional journal_entry_id");
   }
-  if (!api.includes("journal_entry_memo?:")) failures.push("Transfer type must expose journal_entry_memo");
-  if (!transfers.includes('kind="journal_entry"') && !transfers.includes("kind='journal_entry'")) {
-    failures.push("TransfersListPage must EntityLink journal_entry when journal_entry_id present");
+  if (!transferType.includes("journal_entry_memo?: string | null")) failures.push("Transfer type must expose journal_entry_memo");
+  const journalEntryDrillCount = transfers.match(/kind=["']journal_entry["']/g)?.length ?? 0;
+  if (journalEntryDrillCount !== 2) {
+    failures.push(`TransfersListPage list and detail must both EntityLink journal_entry (expected 2, found ${journalEntryDrillCount})`);
   }
   if (!/entityLabel\(row\.journal_entry_memo, row\.journal_entry_id, "Journal entry"\)/.test(transfers)) {
     failures.push("TransfersListPage must label the JE drill with its resolved memo");
@@ -68,32 +74,49 @@ export function run(root = process.cwd()) {
 
 if (process.argv.includes("--selftest")) {
   const tmp = fs.mkdtempSync("/tmp/verify-banking-transfer-je-");
-  const mk = (rel, body) => {
+  const files = [
+    "apps/backend/src/lib/transfer-tms-je-lookup.ts",
+    "apps/backend/src/banking/transfers.routes.ts",
+    "apps/frontend/src/api/banking.ts",
+    "apps/frontend/src/pages/banking/TransfersListPage.tsx",
+    "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
+  ];
+  const sources = new Map(files.map((rel) => [rel, fs.readFileSync(`${process.cwd()}/${rel}`, "utf8")]));
+  const write = (rel, body) => {
     fs.mkdirSync(`${tmp}/${rel.split("/").slice(0, -1).join("/")}`, { recursive: true });
     fs.writeFileSync(`${tmp}/${rel}`, body);
   };
-  mk(
-    "apps/backend/src/lib/transfer-tms-je-lookup.ts",
-    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\nreversal_of_line_id IS NULL\nORDER BY jep.created_at ASC, jep.line_sequence ASC\nFROM accounting.journal_entries\noperating_company_id = $1::uuid\njournal_entry_memo\n`
-  );
-  mk(
-    "apps/backend/src/banking/transfers.routes.ts",
-    `attachTransferJournalEntryIds\ntransfer-tms-je-lookup\ntype TransferReverseProjection = { journal_entry_memo?: string | null };\nattachTransferJournalReverse\n`
-  );
-  mk("apps/frontend/src/api/banking.ts", `journal_entry_id?: string | null;\njournal_entry_memo?: string | null;\n`);
-  mk(
-    "apps/frontend/src/pages/banking/TransfersListPage.tsx",
-    `kind="journal_entry"\nentityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")\nbanking-transfer-gl-posting-honesty-banner\ntransfersQuery.isSuccess\n`
-  );
-  mk(
-    "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
-    `case "transfer":\n      return "transfer";\n`
-  );
-  if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
-  mk("apps/frontend/src/pages/banking/TransfersListPage.tsx", "x\n");
-  if (!run(tmp).length) throw new Error("FAIL fail");
+  const reset = () => sources.forEach((body, rel) => write(rel, body));
+  reset();
+  if (run(tmp).length) throw new Error("production copy must pass: " + run(tmp).join("; "));
+  const plants = [
+    [files[0], "source_transaction_type = 'transfer'", "source_transaction_type = 'wrong'"],
+    [files[0], "linked_object_type = 'transfer'", "linked_object_type = 'wrong'"],
+    [files[0], "WHERE t.operating_company_id = $1::uuid", "WHERE t.operating_company_id = $9::uuid"],
+    [files[0], "WHERE operating_company_id = $1::uuid\n          AND id = ANY($2::uuid[])", "WHERE operating_company_id = $9::uuid\n          AND id = ANY($2::uuid[])"],
+    [files[0], "reversal_of_line_id IS NULL", "reversal_of_line_id IS NOT NULL"],
+    [files[0], "ORDER BY jep.created_at ASC", "ORDER BY jep.line_sequence ASC"],
+    [files[1], "attachTransferJournalEntryIds", "attachWrongJournalEntryIds"],
+    [files[1], "journal_entry_memo?: string | null", "journal_entry_caption?: string | null"],
+    [files[2], "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_id?: string | null", "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_key?: string | null"],
+    [files[2], "journal_entry_id?: string | null;\n  journal_entry_memo?: string | null;\n  /** BANK-F12", "journal_entry_id?: string | null;\n  journal_entry_caption?: string | null;\n  /** BANK-F12"],
+    [files[3], 'kind="journal_entry"', 'kind="transfer"'],
+    [files[3], 'entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")', 'entityLabel(null, row.journal_entry_id, "Journal entry")'],
+    [files[3], "banking-transfer-gl-posting-honesty-banner", "banking-transfer-hidden-banner"],
+    [files[3], "transfersQuery.isSuccess", "!transfersQuery.isLoading"],
+    [files[4], 'case "transfer":', 'case "wrong-transfer":'],
+  ];
+  let rejected = 0;
+  for (const [rel, needle, replacement] of plants) {
+    reset();
+    const source = sources.get(rel);
+    if (!source.includes(needle)) throw new Error(`plant drift: ${rel} missing ${needle}`);
+    write(rel, source.replace(needle, replacement));
+    if (!run(tmp).length) throw new Error(`mutation escaped: ${rel} :: ${needle}`);
+    rejected += 1;
+  }
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log("verify-banking-transfer-je-reverse --selftest OK");
+  console.log(`verify-banking-transfer-je-reverse SELFTEST PASS — ${rejected}/${plants.length} production defects rejected`);
 } else {
   const f = run();
   if (f.length) {
