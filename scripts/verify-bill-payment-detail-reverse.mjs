@@ -48,6 +48,15 @@ function assertBillPaymentDetailReverse() {
   if (!/kind="journal_entry"/.test(detailPage) || !/kind="bill"/.test(detailPage)) {
     errors.push("BillPaymentDetailPage: must EntityLink bill + journal_entry");
   }
+  if (/entityLabel\(\s*null\s*,\s*payment\.journal_entry_id/.test(detailPage)) {
+    errors.push("BillPaymentDetailPage: JE label must not tombstone when date is missing — use memo via humanMemo");
+  }
+  if (!/humanMemo\(payment\.journal_entry_memo/.test(detailPage)) {
+    errors.push("BillPaymentDetailPage: must run journal_entry_memo through humanMemo (strip poster UUIDs)");
+  }
+  if (!/COALESCE\(NULLIF\(btrim\(je\.memo\), ''\), 'Bill payment'\)/.test(service)) {
+    errors.push("getBillPaymentDetail: empty JE memo must fall back to Bill payment, not a UUID tombstone");
+  }
   if (!/\/accounting\/bill-payments\/\$\{reference\}/.test(register)) {
     errors.push("AccountRegisterPage: bill_payment sourceRoute must include reference id");
   }
@@ -56,6 +65,9 @@ function assertBillPaymentDetailReverse() {
   }
   if (!/export function getBillPayment\(/.test(api)) {
     errors.push("api: getBillPayment missing");
+  }
+  if (!/humanMemo\(row\.journal_entry_memo/.test(listPage)) {
+    errors.push("BillPaymentsListPage: must run journal_entry_memo through humanMemo");
   }
   if (!/onRowClick=\{.*bill-payments/.test(listPage.replace(/\n/g, " "))) {
     errors.push("BillPaymentsListPage: onRowClick must navigate to detail");

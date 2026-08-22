@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -111,9 +112,12 @@ export function BillPaymentDetailPage() {
               kind="journal_entry"
               id={payment.journal_entry_id}
               label={
-                payment.journal_entry_date
-                  ? `${formatDateUS(payment.journal_entry_date)}${payment.journal_entry_memo ? ` — ${payment.journal_entry_memo}` : ""}`
-                  : entityLabel(null, payment.journal_entry_id, "Journal entry")
+                [
+                  payment.journal_entry_date ? formatDateUS(payment.journal_entry_date) : null,
+                  humanMemo(payment.journal_entry_memo),
+                ]
+                  .filter((part) => part && part !== "—")
+                  .join(" — ") || entityLabel(payment.journal_entry_memo, payment.journal_entry_id, "Journal entry")
               }
             />
           </DataPanelRow>

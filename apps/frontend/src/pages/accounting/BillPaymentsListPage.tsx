@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -185,9 +186,12 @@ export function BillPaymentsListPage() {
             id={row.journal_entry_id ?? undefined}
             label={
               row.journal_entry_id
-                ? row.journal_entry_date
-                  ? `${formatDateUS(row.journal_entry_date)}${row.journal_entry_memo ? ` — ${row.journal_entry_memo}` : ""}`
-                  : entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")
+                ? [
+                    row.journal_entry_date ? formatDateUS(row.journal_entry_date) : null,
+                    humanMemo(row.journal_entry_memo),
+                  ]
+                    .filter((part) => part && part !== "—")
+                    .join(" — ") || entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")
                 : undefined
             }
           />
