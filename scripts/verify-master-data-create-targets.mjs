@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^list\\.create$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
-/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":"^lists\\.drawer\\.new_customer_drawer_form$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
-/** @matrix-built {"modules":["inventory"],"cols":["reverse_link"],"leafRe":"^parts\\.create$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["list.create"],"task":"CLASS-F5874-MASTER-DATA-CREATE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["inventory"],"cols":["reverse_link"],"leaves":["parts.create"],"task":"CLASS-F5874-MASTER-DATA-CREATE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 /**
  * verify-master-data-create-targets.mjs
  *
@@ -36,6 +35,14 @@ const CUSTOMER_CREATORS = [
 const CUSTOMER_PAYLOAD_HELPER = "apps/frontend/src/components/customers/CustomerProfileForm.tsx";
 const PART_CREATE_DRAWER = "apps/frontend/src/pages/inventory/PartCreateDrawer.tsx";
 const PARTS_PAGE = "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx";
+const CUSTOMERS_MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
+const INVENTORY_MATRIX = "docs/specs/scoreboard/modules/inventory.required.json";
+const SELF = "scripts/verify-master-data-create-targets.mjs";
+const REQUIRED = [[CUSTOMERS_MATRIX, "list.create"], [INVENTORY_MATRIX, "parts.create"]];
+const HEADERS = [
+  '/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["list.create"],"task":"CLASS-F5874-MASTER-DATA-CREATE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["inventory"],"cols":["reverse_link"],"leaves":["parts.create"],"task":"CLASS-F5874-MASTER-DATA-CREATE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
+];
 
 function read(rel, errors) {
   const abs = path.join(ROOT, rel);
@@ -113,10 +120,17 @@ export function auditMasterDataCreateTargets(sources) {
   if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\]/.test(customerDrawer) || !/onCreated\(\{ id: customer\.id, label \}\)/.test(customerDrawer)) {
     errors.push("D1-1 REGRESSION: NewCustomerDrawerForm must reload then return the canonical customer id.");
   }
+  for (const [file, id] of REQUIRED) {
+    try {
+      const matrix = JSON.parse(sources[file] ?? "");
+      if (!matrix.leaves?.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) errors.push(`Required ownership missing: ${file}:${id}:reverse_link`);
+    } catch { errors.push(`Required matrix must parse: ${file}`); }
+  }
+  for (const header of HEADERS) if (!(sources[SELF] ?? "").split("\n").includes(header)) errors.push(`exact Built header missing: ${header}`);
   return errors;
 }
 
-const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER, PARTS_PAGE];
+const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER, PARTS_PAGE, CUSTOMERS_MATRIX, INVENTORY_MATRIX, SELF];
 const readErrors = [];
 const sources = Object.fromEntries(FILES.map((rel) => [rel, read(rel, readErrors) ?? ""]));
 const errors = [...readErrors, ...auditMasterDataCreateTargets(sources)];
@@ -140,7 +154,24 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify-master-data-create-targets SELFTEST PASS — ${cases.length} planted creator defects caught`);
+  let caught = cases.length;
+  for (const [file, id] of REQUIRED) {
+    const mutated = { ...sources, [file]: sources[file].replace(`"id": "${id}"`, `"id": "${id}.removed"`) };
+    if (!auditMasterDataCreateTargets(mutated).some((error) => error.includes(`${id}:reverse_link`))) {
+      console.error(`verify-master-data-create-targets SELFTEST FAIL — Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const header of HEADERS) {
+    const mutated = { ...sources, [SELF]: sources[SELF].replace(header, `${header}.removed`) };
+    if (!auditMasterDataCreateTargets(mutated).some((error) => error.includes("exact Built header missing"))) {
+      console.error("verify-master-data-create-targets SELFTEST FAIL — header mutation escaped");
+      process.exit(1);
+    }
+    caught++;
+  }
+  console.log(`verify-master-data-create-targets SELFTEST PASS — ${caught}/${cases.length + REQUIRED.length + HEADERS.length} planted creator/evidence defects caught`);
   process.exit(0);
 }
 
