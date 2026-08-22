@@ -4,7 +4,8 @@
  * Sources (union, deduped):
  *  1. docs/specs/scoreboard/wire-sprint-built.json (legacy manual feed)
  *  2. @matrix-built tags in scripts/verify-*.mjs headers (preferred for new merges):
- *     - JSON:  @matrix-built { "modules":[…], "cols":[…], "leafRe":"…", "task":"…" }
+ *     - JSON:  @matrix-built { "modules":[…], "cols":[…], "leaves":["exact.leaf"], "task":"…" }
+ *       (`leafRe` remains supported for anchored legacy family claims.)
  *     - shorthand: @matrix-built modules=a,b cols=x,y leafRe=^foo$ task=NAME
  *     - csv-only: @matrix-built maintenance,fleet  (cols default connectivity,reverse_link)
  *
@@ -31,6 +32,12 @@ const MATRIX_BUILT_SHORTHAND_RE =
 /** Bare module list: @matrix-built maintenance,fleet (no modules= / no JSON). */
 const MATRIX_BUILT_CSV_RE =
   /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
+
+function exactLeavesToRegex(leaves: unknown): string | null {
+  if (!Array.isArray(leaves) || !leaves.length || leaves.some((leaf) => typeof leaf !== "string" || !leaf.trim())) return null;
+  const escaped = leaves.map((leaf) => leaf.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return escaped.length === 1 ? `^${escaped[0]}$` : `^(?:${escaped.join("|")})$`;
+}
 
 function readJson<T>(abs: string): T | null {
   try {
@@ -70,15 +77,16 @@ export function parseMatrixBuiltTags(guardRel: string, content: string): WireSpr
   const out: WireSprintBuiltEntry[] = [];
   for (const m of content.matchAll(MATRIX_BUILT_JSON_RE)) {
     try {
-      const j = JSON.parse(m[1]!) as Partial<WireSprintBuiltEntry>;
-      if (!j.modules?.length || !j.cols?.length || !j.leafRe) continue;
+      const j = JSON.parse(m[1]!) as Partial<WireSprintBuiltEntry> & { leaves?: unknown };
+      const leafRe = j.leafRe || exactLeavesToRegex(j.leaves);
+      if (!j.modules?.length || !j.cols?.length || !leafRe) continue;
       out.push({
         task: String(j.task ?? path.basename(guardRel, ".mjs")),
         pr: j.pr,
         guard: guardRel,
         modules: j.modules,
         cols: j.cols,
-        leafRe: j.leafRe,
+        leafRe,
         source: "@matrix-built",
       });
     } catch {
