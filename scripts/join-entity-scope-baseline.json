@@ -6,6 +6,7 @@
     "apps/backend/src/accounting/customer-payments.routes.ts|FROM|accounting.payments|-",
     "apps/backend/src/accounting/customer-payments.routes.ts|FROM|accounting.payments|p",
     "apps/backend/src/accounting/journal-entries.service.ts|FROM|accounting.journal_entries|je",
+    "apps/backend/src/accounting/journal-entries.service.ts|JOIN|mdata.units|ftu",
     "apps/backend/src/accounting/payments.routes.ts|FROM|accounting.payments|-",
     "apps/backend/src/accounting/payments.routes.ts|FROM|accounting.payments|p",
     "apps/backend/src/accounting/period-close-retained-earnings.service.ts|FROM|catalogs.accounts|a",

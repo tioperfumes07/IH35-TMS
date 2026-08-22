@@ -252,7 +252,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
            LEFT JOIN accounting.fixed_assets fa
              ON fa.id = lal.fixed_asset_id AND fa.operating_company_id = lal.operating_company_id
            LEFT JOIN mdata.units u
-             ON u.id = lal.unit_uuid AND u.operating_company_id = lal.operating_company_id
+             ON u.id = lal.unit_uuid AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = lal.operating_company_id
           WHERE lal.operating_company_id = $1::uuid AND lal.lease_contract_id = $2::uuid AND lal.is_active = true
           ORDER BY lal.created_at ASC`,
         [opco, params.data.lease_id]

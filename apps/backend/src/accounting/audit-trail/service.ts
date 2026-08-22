@@ -410,7 +410,7 @@ export async function listAccountingSourceLineage(
       LEFT JOIN mdata.units link_unit
         ON tsl.linked_object_type = 'unit'
        AND link_unit.id::text = tsl.linked_object_id
-       AND link_unit.operating_company_id = jp.operating_company_id
+       AND COALESCE(link_unit.currently_leased_to_company_id, link_unit.owner_company_id) = jp.operating_company_id
       LEFT JOIN LATERAL (
         SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
         FROM driver_finance.driver_settlement_deductions d
