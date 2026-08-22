@@ -49,6 +49,9 @@ export type EntityKind =
   | "lease_contract"
   | "recurring_template"
   | "period_close"
+  | "prepaid_amortization_row"
+  | "depreciation_schedule_row"
+  | "loan_amortization_row"
   | "insurance_policy"
   | "dvir"
   | "maintenance_inspection"
@@ -350,6 +353,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/recurring-templates/${id}`;
     case "period_close":
       return `/accounting/period-closes/${encodeURIComponent(id)}`;
+    case "prepaid_amortization_row":
+    case "depreciation_schedule_row":
+    case "loan_amortization_row":
+      return `/accounting/schedule-rows/${kind}/${id}`;
     case "expense":
       return `/accounting/expenses/${id}`;
     case "bank_transaction":

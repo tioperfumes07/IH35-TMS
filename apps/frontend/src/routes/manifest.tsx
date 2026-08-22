@@ -288,6 +288,7 @@ const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/Loa
 const AccountingLeaseDetailPage = React.lazy(() => import("../pages/accounting/AccountingLeaseDetailPage").then((m) => ({ default: m.AccountingLeaseDetailPage })));
 const AccountingRecurringTemplateDetailPage = React.lazy(() => import("../pages/accounting/AccountingRecurringTemplateDetailPage").then((m) => ({ default: m.AccountingRecurringTemplateDetailPage })));
 const AccountingPeriodCloseDetailPage = React.lazy(() => import("../pages/accounting/AccountingPeriodCloseDetailPage").then((m) => ({ default: m.AccountingPeriodCloseDetailPage })));
+const AccountingScheduleRowDetailPage = React.lazy(() => import("../pages/accounting/AccountingScheduleRowDetailPage").then((m) => ({ default: m.AccountingScheduleRowDetailPage })));
 const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
@@ -4179,6 +4180,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/leases/:id" element={<ProtectedRoute><AccountingLeaseDetailPage /></ProtectedRoute>} />
         <Route path="/accounting/recurring-templates/:id" element={<ProtectedRoute><AccountingRecurringTemplateDetailPage /></ProtectedRoute>} />
         <Route path="/accounting/period-closes/:fiscalYearId" element={<ProtectedRoute><AccountingPeriodCloseDetailPage /></ProtectedRoute>} />
+        <Route path="/accounting/schedule-rows/:kind/:id" element={<ProtectedRoute><AccountingScheduleRowDetailPage /></ProtectedRoute>} />
         {/* Accounting PR 3/6 — FH-7 §3.14 Allocations tab: read-only rollup of bill_unit_allocation. */}
         <Route path="/accounting/allocations" element={<ProtectedRoute><AllocationsPage /></ProtectedRoute>} />
         {/* FIN-23 — QBO reconcile / modify captures (read-only, behind QBO_RECONCILE_UI_ENABLED). */}

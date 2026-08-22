@@ -49,7 +49,8 @@ function journalEntryChromeLabel(entry: {
 }
 
 function postingEntityKind(type: string | null | undefined): EntityKind | null {
-  switch ((type ?? "").toLowerCase()) {
+  const t = (type ?? "").toLowerCase();
+  switch (t) {
     case "invoice":
       return "invoice";
     case "customer_payment":
@@ -112,6 +113,10 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "recurring_template";
     case "period_close":
       return "period_close";
+    case "prepaid_amortization_row":
+    case "depreciation_schedule_row":
+    case "loan_amortization_row":
+      return t;
     default:
       return null;
   }
