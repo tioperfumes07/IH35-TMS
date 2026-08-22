@@ -17,10 +17,10 @@ const LABEL = "verify-vendors-reverse-link-detail-ap";
 const FILE = "apps/frontend/src/pages/VendorDetail.tsx";
 
 const CHECKS = [
-  { name: "bill EntityLink", pattern: /kind="bill"/ },
-  { name: "expense EntityLink", pattern: /kind="expense"/ },
-  { name: "bill_payment EntityLink", pattern: /kind="bill_payment"/ },
-  { name: "VendorApAgingSection mount", pattern: /VendorApAgingSection/ },
+  { name: "bill EntityLink", pattern: /render: \(b\) => <EntityLink kind="bill" id=\{b\.id\} label=\{entityLabel\(b\.bill_number, b\.id, "Record"\)\} \/>/ },
+  { name: "expense EntityLink", pattern: /render: \(e\) => \([\s\S]{0,100}<EntityLink kind="expense" id=\{e\.id\} label=\{entityLabel\(e\.expense_number, e\.id, "Record"\)\} \/>/ },
+  { name: "bill_payment EntityLink", pattern: /render: \(p\) => \([\s\S]{0,100}<EntityLink kind="bill_payment" id=\{p\.id\} label=\{entityLabel\(p\.reference, p\.id, "Payment"\)\} \/>/ },
+  { name: "VendorApAgingSection mount", pattern: /<VendorApAgingSection operatingCompanyId=\{companyId\} vendorId=\{vendor\.id\} \/>/ },
   {
     name: "archived vendor 404 honesty",
     pattern: /vendorQuery\.error instanceof ApiError && vendorQuery\.error\.status === 404[\s\S]*This vendor is archived or is not available in the selected company[\s\S]*Historical transactions remain preserved/,
@@ -39,12 +39,16 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL live:\n- ${liveFails.join("\n- ")}`);
     process.exit(1);
   }
-  const planted = run("// poison");
-  if (planted.length < CHECKS.length) {
-    console.error(`${LABEL} SELFTEST FAIL poison`);
-    process.exit(1);
+  let caught = 0;
+  for (const check of CHECKS) {
+    const mutant = live.replace(check.pattern, "/* planted defect */");
+    if (mutant === live || !run(mutant).includes(check.name)) {
+      console.error(`${LABEL} SELFTEST FAIL — escaped or inert plant: ${check.name}`);
+      process.exit(1);
+    }
+    caught += 1;
   }
-  console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${CHECKS.length} production-source mutations rejected`);
   process.exit(0);
 }
 
