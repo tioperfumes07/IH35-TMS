@@ -389,6 +389,24 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     setSelectedPriorDriverId((current) => current ?? terminatedMatches[0]?.driverId ?? null);
   }, [returningDetection, terminatedMatches]);
 
+  // CC3TEST-DRIVER-CREATE-SAVE-DISABLED-NO-REASON: Save's `disabled` prop below ORs together five
+  // independent gates, but nothing surfaced WHICH one was blocking -- live-reproduced clicking Save
+  // on step 4 with the drug-screen checkbox unchecked did nothing at all: zero network requests, zero
+  // console output, zero visible change (confirmed via window.fetch instrumentation). An operator with
+  // no reason shown reads that as a broken button, not a missing checkbox. Mirrors the `disabled`
+  // condition's branch order exactly so the reason always matches the actual blocking gate.
+  const saveDisabledReason = !identityStepReady
+    ? "Missing a required Step 1 field (operating company, first/last name, or a valid 10-digit phone)."
+    : !drugScreenAcknowledged
+      ? 'Check "Pre-employment drug screen ordered / result on file" above to enable Save.'
+      : returningDetection?.returning_driver && !overrideReturningWarning
+        ? "Acknowledge the returning-driver detection above to enable Save."
+        : overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId
+          ? 'Select the prior driver record to link, or choose "Treat as a new hire" instead.'
+          : returningCheckLoading
+            ? "Checking for a matching returning-driver record…"
+            : undefined;
+
   const createMutation = useMutation({
     mutationFn: createDriver,
     onSuccess: async (created) => {
@@ -1064,7 +1082,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </div>
           ) : null}
 
-          <div className="col-span-full flex flex-wrap justify-between gap-2">
+          <div className="col-span-full space-y-1">
+          <div className="flex flex-wrap justify-between gap-2">
             <Button
               variant="secondary"
               type="button"
@@ -1106,12 +1125,22 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       !selectedPriorDriverId) ||
                     returningCheckLoading
                   }
+                  title={saveDisabledReason}
                   loading={createMutation.isPending}
                   onSave={() => void runDriverCreateSave("default")}
                   onSaveAndAddAnother={() => void runDriverCreateSave("add_another")}
                 />
               )}
             </div>
+          </div>
+          {/* CC3TEST-DRIVER-CREATE-SAVE-DISABLED-NO-REASON: a tooltip alone requires hovering the
+              button to discover; this inline line is visible without hovering on the exact step
+              where the most common blocker (the drug-screen checkbox above) lives. */}
+          {wizardStep === DRIVER_CREATE_WIZARD_STEPS.length && saveDisabledReason ? (
+            <p className="text-right text-xs text-red-600" data-testid="driver-create-save-disabled-reason">
+              {saveDisabledReason}
+            </p>
+          ) : null}
           </div>
     </form>
   );

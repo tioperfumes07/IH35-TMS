@@ -23,6 +23,10 @@ export type SaveDropdownProps = {
   disabled?: boolean;
   dirty?: boolean;
   loading?: boolean;
+  /** Shown as a native tooltip on the primary button. Callers should set this whenever `disabled`
+   * is true for a reason the operator can't see elsewhere on the form — a disabled Save with no
+   * explanation reads as a silent no-op (CC3TEST-DRIVER-CREATE-SAVE-DISABLED-NO-REASON). */
+  title?: string;
 };
 
 const LS_PREFIX = "ih35.saveDropdown.";
@@ -72,6 +76,7 @@ export function SaveDropdown({
   disabled = false,
   dirty: _dirty = false,
   loading = false,
+  title,
 }: SaveDropdownProps) {
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -141,6 +146,7 @@ export function SaveDropdown({
         className="rounded-r-none border-r border-green-700"
         disabled={disabled}
         loading={loading}
+        title={disabled ? title : undefined}
         onClick={() => void runPrimary()}
       >
         {primaryText}
