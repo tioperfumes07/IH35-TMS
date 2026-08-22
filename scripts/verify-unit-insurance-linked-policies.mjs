@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_summary"],"task":"FLEET-F5913-INSURANCE-SUMMARY-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.insurance_summary"],"task":"FLEET-F5940-INSURANCE-SUMMARY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 // P19-MODULE-12-INSURANCE-VEHICLE-PROFILE-REVERSE-LINK (verify-step reserved separately).
 //
 // ROOT CAUSE this closes: VehicleProfilePage's "Insurance summary" card was built ENTIRELY from
@@ -27,6 +28,7 @@ const REQUIRED_FILE = "docs/specs/scoreboard/modules/fleet.required.json";
 const FEED_FILE = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF_FILE = "scripts/verify-unit-insurance-linked-policies.mjs";
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_summary"],"task":"FLEET-F5913-INSURANCE-SUMMARY-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.insurance_summary"],"task":"FLEET-F5940-INSURANCE-SUMMARY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 function fail(msg) {
   console.error(`FAIL verify-unit-insurance-linked-policies: ${msg}`);
@@ -87,9 +89,11 @@ function evidenceFailures({ required, feed, self }) {
   if (!found) failures.push("Fleet insurance summary Required leaf missing");
   else {
     if (!found.required?.includes("reverse_link")) failures.push("Fleet insurance summary must require reverse_link");
+    if (!found.required?.includes("connectivity")) failures.push("Fleet insurance summary must require connectivity");
     if (found.route_hint !== "/fleet/units/:id") failures.push("Fleet insurance summary route must be canonical unit profile");
   }
   if (!self.split("// P19-")[0].includes(EXACT_HEADER)) failures.push("exact Fleet insurance summary reverse header missing");
+  if (!self.split("// P19-")[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet insurance summary connectivity header missing");
   if (/"guard"\s*:\s*"scripts\/verify-unit-insurance-linked-policies\.mjs"/.test(feed)) failures.push("manual feed duplicates insurance summary ownership");
   return failures;
 }
@@ -161,6 +165,8 @@ function selftest() {
     ["reverse", originalRequired.replace(/("id": "unit\.profile\.insurance_summary"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"'), originalFeed, originalSelf],
     ["route", originalRequired.replace(/("id": "unit\.profile\.insurance_summary"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"'), originalFeed, originalSelf],
     ["header", originalRequired, originalFeed, originalSelf.replace(EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity"))],
+    ["connectivity", originalRequired.replace(/("id": "unit\.profile\.insurance_summary"[\s\S]{0,260})"connectivity"/, '$1"connectivity_MISSING"'), originalFeed, originalSelf],
+    ["connectivity-header", originalRequired, originalFeed, originalSelf.replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "unit"))],
     ["feed", originalRequired, `[{"guard":"scripts/verify-unit-insurance-linked-policies.mjs"}]`, originalSelf],
   ];
   for (const [name, required, feed, self] of evidenceMutations) {
