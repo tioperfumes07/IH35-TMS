@@ -2223,18 +2223,6 @@
       "leafRe": "^(payments\\.receive|accounting\\.parity\\.vendor_credits_page|accounting\\.panel\\.(trk_bulk_register|detail))$"
     },
     {
-      "task": "VERTICAL-REVERSE-LINK-FLEET-REMAINDER",
-      "pr": "this PR",
-      "guard": "scripts/verify-fleet-reverse-link-remainder.mjs",
-      "modules": [
-        "fleet"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^(unit\\.profile\\.documents|unit\\.edit\\.quick_availability|trailer\\.profile\\.(assignment|maintenance|insurance_claims_reverse|documents))$"
-    },
-    {
       "task": "VERTICAL-REVERSE-LINK-COMPLIANCE-HOS",
       "pr": "this PR",
       "guard": "scripts/verify-compliance-hos-profile-reverse.mjs",
