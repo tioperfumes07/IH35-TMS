@@ -1338,6 +1338,8 @@ export type JournalEntry = {
   credit_total_cents?: number;
   /** ACCT-F18 — bank txn stamped via matched_journal_entry_id (Law §9 reverse). */
   matched_bank_transaction_id?: string | null;
+  /** ACCT-F5720 — merchant/description for the matched bank hop (id stays for the EntityLink). */
+  matched_bank_transaction_description?: string | null;
   postings?: JournalEntryPosting[];
   created_at: string;
   updated_at: string;
