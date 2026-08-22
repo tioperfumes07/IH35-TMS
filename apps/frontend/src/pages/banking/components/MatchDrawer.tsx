@@ -28,6 +28,7 @@ const VARIANCE_HELD_NOTE = "Variance posting pending balanced-JE proof (Tier-1)"
 type Props = {
   open: boolean;
   bankTransactionId: string | null;
+  bankTransactionLabel?: string | null;
   operatingCompanyId: string;
   onClose: () => void;
   // HELD banking-categorize wiring: lets a host page (e.g. BankingTransactionsDesignView's row Action
@@ -69,7 +70,7 @@ function kindBadgeClassName() {
   return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
-export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose, onAccepted }: Props) {
+export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, operatingCompanyId, onClose, onAccepted }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [searchAll, setSearchAll] = useState(false);
@@ -169,7 +170,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
             <EntityLink
               kind="bank_transaction"
               id={candidatesQuery.data?.bank_transaction_id ?? bankTransactionId}
-              label="View transaction →"
+              label={bankTransactionLabel?.trim() || "Bank transaction"}
             />
           </p>
         ) : null}
