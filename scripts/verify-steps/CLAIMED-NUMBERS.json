@@ -1,4 +1,9 @@
 {
+  "4289": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-payments-create-customer-deactivated-fallback"
+  },
   "4288": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-3",
