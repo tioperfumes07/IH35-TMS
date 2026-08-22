@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["driver","load","connectivity","reverse_link"],"leafRe":"^misc\\.trip_profit$","task":"CLS-DISPATCH-TRIP-PROFIT-DRIVER-LINK"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["misc.trip_profit"],"task":"DISP-F5866-TRIP-PROFIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const files = {
   service: "apps/backend/src/dispatch/load-profitability.service.ts",
   api: "apps/frontend/src/lib/loadProfit.ts",
   page: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
+  matrix: "docs/specs/scoreboard/modules/dispatch.required.json",
+  self: "scripts/verify-trip-profitability-driver-link.mjs",
 };
+const HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["misc.trip_profit"],"task":"DISP-F5866-TRIP-PROFIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 const checks = [
   ["settlement query driver FK", "service", /s\.driver_id::text AS driver_id/, false],
   ["profitability projection driver FK", "service", /t\.driver_id/, false],
@@ -18,9 +21,15 @@ const checks = [
 const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 function audit(sources) {
-  return checks
+  const failures = checks
     .filter(([, key, pattern, forbidden]) => forbidden ? pattern.test(sources[key]) : !pattern.test(sources[key]))
     .map(([name]) => name);
+  try {
+    const leaf = JSON.parse(sources.matrix).leaves?.find((item) => item.id === "misc.trip_profit");
+    if (!leaf?.required?.includes("reverse_link")) failures.push("exact Required reverse ownership");
+  } catch { failures.push("dispatch Required matrix parses"); }
+  if (!sources.self.split("\n").includes(HEADER)) failures.push("exact Built annotation");
+  return failures;
 }
 
 const failures = audit(original);
@@ -39,7 +48,13 @@ if (process.argv.includes("--selftest")) {
     if (audit(mutated).includes(name)) caught += 1;
     else throw new Error(`selftest failed to catch: ${name}`);
   }
-  console.log(`verify-trip-profitability-driver-link SELFTEST PASS — ${caught}/${checks.length} exact trip-driver mutations detected`);
+  const missingRequired = { ...original, matrix: original.matrix.replace('"id": "misc.trip_profit"', '"id": "misc.trip_profit.removed"') };
+  if (!audit(missingRequired).includes("exact Required reverse ownership")) throw new Error("selftest failed to catch Required loss");
+  caught += 1;
+  const wrongHeader = { ...original, self: original.self.replace('"leaves":["misc.trip_profit"]', '"leaves":["misc.layover"]') };
+  if (!audit(wrongHeader).includes("exact Built annotation")) throw new Error("selftest failed to catch header drift");
+  caught += 1;
+  console.log(`verify-trip-profitability-driver-link SELFTEST PASS — ${caught}/${checks.length + 2} runtime/matrix/header mutations detected`);
   process.exit(0);
 }
 
