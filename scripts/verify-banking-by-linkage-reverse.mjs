@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.banking"],"task":"DISP-F5856-LOAD-BANKING-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * Banking Full Audit LINKAGE-REV FAIL 22 — by-linkage reverse API must have UI callers.
  * EntityLink kind="load" must keep `/dispatch/loads/:id` → Dispatch board (never a bank-feed stub).
@@ -11,6 +12,20 @@
  * Codex's lane (Lists/Customers/Vendors) and is routed, not built, by this guard's author.
  */
 import fs from "node:fs";
+
+const MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-banking-by-linkage-reverse.mjs";
+
+function evidenceFailures(matrixSource, selfSource) {
+  const failures = [];
+  const leaf = JSON.parse(matrixSource).leaves?.find((candidate) => candidate.id === "load.banking");
+  if (!leaf?.required?.includes("reverse_link")) failures.push(`${MATRIX}: load.banking must require reverse_link`);
+  const annotations = selfSource.split("\n").filter((line) => line.includes("@matrix-built"));
+  if (!annotations.includes('/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.banking"],"task":"DISP-F5856-LOAD-BANKING-REVERSE-EXACT-LEAF","vertical":"column-wave"} */')) {
+    failures.push(`${SELF}: Built annotation must credit only load.banking:reverse_link`);
+  }
+  return failures;
+}
 
 export function run(root = process.cwd()) {
   const failures = [];
@@ -212,10 +227,21 @@ if (process.argv.includes("--selftest")) {
   ) {
     throw new Error("FAIL fail: dropping customer_id from backend route should trip");
   }
+  const matrixSource = fs.readFileSync(MATRIX, "utf8");
+  const selfSource = fs.readFileSync(SELF, "utf8");
+  const matrix = JSON.parse(matrixSource);
+  const leaf = matrix.leaves.find((candidate) => candidate.id === "load.banking");
+  leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+  if (!evidenceFailures(JSON.stringify(matrix), selfSource).some((failure) => failure.includes("must require reverse_link"))) {
+    throw new Error("FAIL fail: dropping load.banking Required reverse_link should trip");
+  }
+  if (!evidenceFailures(matrixSource, selfSource.replace('"leaves":["load.banking"]', '"leaves":["load.detail"]')).some((failure) => failure.includes("Built annotation"))) {
+    throw new Error("FAIL fail: changing exact load.banking Built leaf should trip");
+  }
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-by-linkage-reverse --selftest OK");
 } else {
-  const f = run();
+  const f = run().concat(evidenceFailures(fs.readFileSync(MATRIX, "utf8"), fs.readFileSync(SELF, "utf8")));
   if (f.length) {
     console.error(f.join("\n"));
     process.exit(1);
