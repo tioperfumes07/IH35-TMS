@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["customers","dispatch","maintenance"],"cols":["load"],"leafRe":"^(md\\.transaction_list|dispatch\\.modal\\.load_create|wo\\.create)$","task":"VERTICAL-LOAD-ALL-MODULES-REMAINDER","vertical":"all-module-remainder"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.reserve"],"task":"DISP-F5867-PLANNING-RESERVE-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const FILES = {
@@ -17,11 +18,15 @@ const FILES = {
   dispatchApi: "apps/frontend/src/api/dispatch.ts",
   dispatchRoute: "apps/backend/src/dispatch/loads.routes.ts",
   bookLoadService: "apps/backend/src/dispatch/book-load.service.ts",
+  dispatchPage: "apps/frontend/src/pages/Dispatch.tsx",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
   woForm: "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
   woPicker: "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
   woRoute: "apps/backend/src/maintenance/work-orders.routes.ts",
   woTable: "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+  self: "scripts/verify-load-column-all-module-remainder.mjs",
 };
+const RESERVE_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.reserve"],"task":"DISP-F5867-PLANNING-RESERVE-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const matrix = (source, key, failures) => {
@@ -70,6 +75,12 @@ export function verify(source) {
   need("dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id", "dispatch create must validate within company scope");
   need("bookLoadService", "INSERT INTO mdata.loads", "dispatch create must persist the canonical load row");
   need("bookLoad", "onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);", "dispatch creator must trigger canonical reload after success");
+  if (!required(dispatch, "planning.reserve").includes("reverse_link")) failures.push("dispatch planning.reserve must retain exact reverse_link Required");
+  need("manifest", 'path="/dispatch/book-load"', "Reserve a Load route must remain mounted");
+  need("dispatchPage", 'searchParams.get("book_load") !== "1"', "Reserve a Load deep link must open the canonical creator");
+  need("dispatchPage", "void loadsQuery.refetch();", "Reserve a Load parent must reload canonical mdata.loads after create");
+  need("bookLoad", 'data-testid="book-load-edit-header-load-link"', "reloaded/edit load must expose its canonical reverse drill");
+  if (!source.self.split("\n").includes(RESERVE_HEADER)) failures.push("planning.reserve exact Built annotation drifted");
 
   if (!required(maintenance, "wo.create").includes("load")) failures.push("maintenance:wo.create must retain exact load Required");
   need("woPicker", '<EntityPicker\n                kind="load"', "WO creator must use the canonical load picker");
@@ -93,6 +104,9 @@ if (process.argv.includes("--selftest")) {
     ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", 'kind="load"'], ["customerPage", "name={r.source_load_number}"],
     ["legalMatrix", '"id": "matters.create"'], ["dispatchMatrix", '"id": "dispatch.modal.load_create"'],
     ["bookLoad", "const payload = await createDispatchLoad({"], ["bookLoad", "operating_company_id: operatingCompanyId"],
+    ["dispatchMatrix", '"id": "planning.reserve"'], ["manifest", 'path="/dispatch/book-load"'],
+    ["dispatchPage", 'searchParams.get("book_load") !== "1"'], ["dispatchPage", "void loadsQuery.refetch();"],
+    ["bookLoad", 'data-testid="book-load-edit-header-load-link"'], ["self", '"leaves":["planning.reserve"]'],
     ["dispatchApi", '"/api/v1/dispatch/loads", { method: "POST", body: payload }'], ["dispatchRoute", 'app.post("/api/v1/dispatch/loads"'],
     ["dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id"], ["bookLoadService", "INSERT INTO mdata.loads"],
     ["maintenanceMatrix", '"id": "wo.create"'], ["woPicker", 'dataField="load_id"'], ["woForm", "load_id: values.load_id || undefined"],
