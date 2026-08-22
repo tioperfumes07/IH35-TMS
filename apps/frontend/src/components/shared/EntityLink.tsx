@@ -46,6 +46,7 @@ export type EntityKind =
   | "sales_tax_return"
   | "fixed_asset"
   | "finance_loan"
+  | "lease_contract"
   | "insurance_policy"
   | "dvir"
   | "maintenance_inspection"
@@ -341,6 +342,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/cash-advances?advance_id=${id}`;
     case "finance_loan":
       return `/finance/amortization?loan_id=${id}`;
+    case "lease_contract":
+      return `/accounting/leases/${id}`;
     case "expense":
       return `/accounting/expenses/${id}`;
     case "bank_transaction":

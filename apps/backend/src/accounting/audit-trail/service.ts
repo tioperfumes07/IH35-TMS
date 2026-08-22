@@ -78,6 +78,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "fixed_asset";
     case "loan":
       return "finance_loan";
+    case "lease_contract":
+      return "lease_contract";
     default:
       return sourceType?.trim() || null;
   }

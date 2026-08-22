@@ -57,6 +57,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
     case "loan":
     case "finance_loan":
       return "finance_loan";
+    case "lease_contract":
+      return "lease_contract";
     case "expense":
       return "expense";
     case "settlement":
