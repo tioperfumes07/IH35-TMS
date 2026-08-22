@@ -317,7 +317,13 @@ export async function sendDraftInvoice(
         i.total_cents::bigint AS total_cents,
         i.customer_notes,
         i.internal_notes,
-        c.customer_name::text AS customer_name,
+        -- ACCT-F5786 — mdata.customers' customers_select RLS excludes a deactivated customer for a
+        -- non-bypass reader. A plain JOIN here dropped the WHOLE row, so a deactivated customer's
+        -- invoice never reached even i.ar_email_snapshot (which lives on accounting.invoices itself,
+        -- not gated by customers RLS at all) — a real transmission address could exist and still
+        -- never be read. Same class as ACCT-F5611/5767/5768/5784/5785: LEFT JOIN + the existing
+        -- same-company label resolver, customers_select untouched.
+        COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id))::text AS customer_name,
         COALESCE(
           NULLIF(TRIM(c.ap_email), ''),
           NULLIF(TRIM(c.billing_email), ''),
@@ -325,7 +331,7 @@ export async function sendDraftInvoice(
           NULLIF(TRIM(i.ar_email_snapshot), '')
         ) AS customer_email
       FROM accounting.invoices i
-      JOIN mdata.customers c
+      LEFT JOIN mdata.customers c
         ON c.id = i.customer_id
        AND c.operating_company_id = i.operating_company_id
        AND c.operating_company_id = $2::uuid
