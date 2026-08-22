@@ -12,7 +12,9 @@ import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
   type PrepaidAssetListItem, type PrepaidAssetDetail, type PrepaidAmortRow,
 } from "../../api/prepaid-expenses";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -177,8 +179,27 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
     purchase_date: companyToday(),
     start_date: companyToday(),
     periods: "12", total_amount_dollars: null as number | null,
+    asset_account_id: "" as string,
+    payment_account_id: "" as string,
+    expense_account_id: "" as string,
   });
   const [error, setError] = useState<string | null>(null);
+
+  const accountsQuery = useQuery({
+    queryKey: ["prepaid-expenses", "accounts", companyId],
+    queryFn: () => listCatalogAccounts({ operating_company_id: companyId, postable_only: true }),
+    enabled: Boolean(companyId),
+  });
+  const accounts = accountsQuery.data?.accounts ?? [];
+  const accountOptions = useMemo(
+    () =>
+      accounts.map((a) => ({
+        value: a.id,
+        label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
+        type: a.account_type ?? undefined,
+      })),
+    [accounts],
+  );
 
   const mutation = useMutation({
     mutationFn: () => createPrepaidExpense({
@@ -189,17 +210,21 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
       start_date: form.start_date,
       periods: Number(form.periods),
       total_amount_cents: Math.round((form.total_amount_dollars ?? 0) * 100),
+      asset_account_id: form.asset_account_id || undefined,
+      payment_account_id: form.payment_account_id || undefined,
+      expense_account_id: form.expense_account_id || undefined,
     }),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (e: unknown) => setError(e instanceof Error ? e.message : "Failed to create."),
   });
 
-  const valid = form.description.trim() && form.purchase_date && form.start_date
-    && Number(form.periods) > 0 && (form.total_amount_dollars ?? 0) > 0;
+  const valid = Boolean(form.description.trim() && form.purchase_date && form.start_date
+    && Number(form.periods) > 0 && (form.total_amount_dollars ?? 0) > 0
+    && form.asset_account_id && form.payment_account_id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-900">New Prepaid Expense</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
@@ -245,9 +270,54 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
                 value={form.periods} onChange={(e) => setForm({ ...form, periods: e.target.value })} />
             </div>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-0.5">Prepaid asset GL *</label>
+            <ReferenceSelect
+              value={form.asset_account_id || null}
+              onChange={(v) => setForm({ ...form, asset_account_id: v ?? "" })}
+              options={accountOptions}
+              createKind="account"
+              operatingCompanyId={companyId}
+              placeholder="Select prepaid asset account"
+              loading={accountsQuery.isLoading}
+              onOptionCreated={() => void accountsQuery.refetch()}
+              id="prepaid-create-asset-account"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-0.5">Payment GL (cash or A/P) *</label>
+            <ReferenceSelect
+              value={form.payment_account_id || null}
+              onChange={(v) => setForm({ ...form, payment_account_id: v ?? "" })}
+              options={accountOptions}
+              createKind="account"
+              operatingCompanyId={companyId}
+              placeholder="Select payment account"
+              loading={accountsQuery.isLoading}
+              onOptionCreated={() => void accountsQuery.refetch()}
+              id="prepaid-create-payment-account"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization expense GL</label>
+            <ReferenceSelect
+              value={form.expense_account_id || null}
+              onChange={(v) => setForm({ ...form, expense_account_id: v ?? "" })}
+              options={accountOptions}
+              createKind="account"
+              operatingCompanyId={companyId}
+              placeholder="Select expense account"
+              loading={accountsQuery.isLoading}
+              onOptionCreated={() => void accountsQuery.refetch()}
+              id="prepaid-create-expense-account"
+            />
+          </div>
           {(form.total_amount_dollars ?? 0) > 0 && Number(form.periods) > 0 && (
             <p className="text-xs text-gray-500 rounded-sm bg-gray-50 px-2 py-1">
-              Monthly: {fmtCents(Math.floor((form.total_amount_dollars ?? 0) * 100 / Number(form.periods)))} (GL posting GATED — flag OFF)
+              Monthly: {fmtCents(Math.floor((form.total_amount_dollars ?? 0) * 100 / Number(form.periods)))}
+              {form.asset_account_id && form.payment_account_id
+                ? " · purchase posts Dr prepaid asset / Cr payment when posting is ON"
+                : " · pick prepaid asset GL and payment GL (required while posting is ON)"}
             </p>
           )}
         </div>
