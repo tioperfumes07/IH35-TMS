@@ -634,15 +634,15 @@
   "progress": "39 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
-    "pass_count": 4,
+    "pass_count": 5,
     "total_count": 5,
-    "progress": 80,
-    "prod_verified": false,
+    "progress": 100,
+    "prod_verified": true,
     "slices": [
       {
         "key": "hop.revenue",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "9 standing revenue-recognition latch posting(s)"
       },
       {
         "key": "hop.invoice",
@@ -652,17 +652,17 @@
       {
         "key": "hop.gl",
         "holds": true,
-        "evidence": "1895 live journal entr(ies)"
+        "evidence": "2026 live journal entr(ies)"
       },
       {
         "key": "scenario.coa",
         "holds": true,
-        "evidence": "189 account(s) in the chart"
+        "evidence": "193 account(s) in the chart"
       },
       {
         "key": "scenario.ap",
         "holds": true,
-        "evidence": "5 open (non-voided) bill(s)"
+        "evidence": "8 open (non-voided) bill(s)"
       }
     ]
   }
