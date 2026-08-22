@@ -1876,24 +1876,6 @@
       "leafRe": "^(unit\\.profile\\.identity|audit\\.trail|report\\.geofence_reconciliation)$"
     },
     {
-      "task": "LINK-F5139-PRIMARY-ROSTER-RECORD-REVERSE-LINKS",
-      "pr": "this PR",
-      "guard": "scripts/verify-primary-roster-record-reverse-links.mjs",
-      "modules": [
-        "settlements",
-        "vendors",
-        "maintenance"
-      ],
-      "cols": [
-        "ap_bill",
-        "work_order",
-        "liability",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^(cash_advances|detail\\.ap\\.bills|wo\\.console\\.list)$"
-    },
-    {
       "task": "LINK-F5143-DOCUMENT-IDENTITY-DEEP-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-document-identity-deep-links.mjs",
