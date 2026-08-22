@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
@@ -140,6 +140,20 @@ function PostingEntityLink({
   return <EntityLink kind={kind} id={id} label={label ?? entityLabel(null, id, "Record")} />;
 }
 
+function postingDocumentNoun(type: string | null | undefined) {
+  switch ((type ?? "").trim().toLowerCase()) {
+    case "customer_payment":
+    case "payment":
+      return "Invoice Payment";
+    case "expense":
+      return "Expense";
+    case "bill_payment":
+      return "Bill Payment";
+    default:
+      return "Source";
+  }
+}
+
 export function PostingLineagePage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -235,7 +249,11 @@ export function PostingLineagePage() {
                 <PostingEntityLink
                   type={row.linked_object_entity_kind ?? row.linked_object_type}
                   id={row.linked_object_id}
-                  label={entityLabel(row.linked_object_display_id, row.linked_object_id, "Linked object")}
+                  label={visibleDocumentLabel(
+                    row.linked_object_display_id,
+                    row.linked_object_id,
+                    postingDocumentNoun(row.linked_object_entity_kind ?? row.linked_object_type),
+                  )}
                 />
               </>
             ) : null}
@@ -319,7 +337,11 @@ export function PostingLineagePage() {
             <PostingEntityLink
               type={submitted.sourceType}
               id={submitted.sourceId}
-              label={entityLabel(rows[0]?.source_transaction_display_id, submitted.sourceId, "Source")}
+              label={visibleDocumentLabel(
+                rows[0]?.source_transaction_display_id,
+                submitted.sourceId,
+                postingDocumentNoun(submitted.sourceType),
+              )}
             />
           </div>
           <div className="mt-1 text-xs text-slate-600">

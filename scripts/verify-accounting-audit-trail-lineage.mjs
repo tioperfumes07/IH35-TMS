@@ -43,14 +43,20 @@ if (!/src_bill\.bill_number/.test(serviceSource) || !/src_exp\.expense_number/.t
 if (!/accounting\.payments src_pay/.test(serviceSource)) {
   fail("source display resolver must join accounting.payments for customer_payment (live 0cec933: customer_payment / Source transaction — not visible)");
 }
-if (!/CASE WHEN jp\.source_transaction_type = 'expense' THEN 'Expense'/.test(serviceSource)) {
-  fail("null expense_number must fall back to the word Expense, not a UUID tombstone");
+if (!/CASE WHEN jp\.source_transaction_type = 'expense' AND src_exp\.id IS NOT NULL[\s\S]*?'Expense ' \|\| src_exp\.transaction_date::text/.test(serviceSource)) {
+  fail("null expense_number must fall back to a dated human expense label, not a UUID tombstone");
 }
 if (!/CASE WHEN jp\.source_transaction_type = 'customer_payment' THEN 'Invoice Payment'/.test(serviceSource)) {
   fail("null payment display_id must fall back to Invoice Payment, not Source transaction — not visible");
 }
 if (!/src_fueltx\.display_label/.test(serviceSource)) {
   fail("source display resolver must keep fuel_event transaction_reference join (Codex ACCT-F5726)");
+}
+if (!/accounting\.payments link_pay/.test(serviceSource) || !/link_pay\.display_id/.test(serviceSource)) {
+  fail("linked customer_payment must resolve its human payment display_id");
+}
+if (!/accounting\.expenses link_exp/.test(serviceSource) || !/'Expense ' \|\| link_exp\.transaction_date::text/.test(serviceSource)) {
+  fail("linked expense must resolve expense_number or a dated human expense label");
 }
 if (/entityLabel\(\s*null\s*,\s*row\.source_transaction_id/.test(pageSource)) {
   fail("AccountingAuditTrailPage must not entityLabel(null, source_transaction_id) — use display_id");
@@ -80,11 +86,13 @@ if (/<select[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = serviceSource.replace("$2::text IN ('payment', 'customer_payment')", "REMOVED_PAYMENT_ALIAS");
-  if (planted.includes("$2::text IN ('payment', 'customer_payment')")) {
-    fail("--selftest could not plant missing payment alias");
+  const planted = serviceSource
+    .replace("accounting.payments link_pay", "REMOVED_LINKED_PAYMENT")
+    .replace("accounting.expenses link_exp", "REMOVED_LINKED_EXPENSE");
+  if (/accounting\.payments link_pay|accounting\.expenses link_exp/.test(planted)) {
+    fail("--selftest could not plant missing linked-object resolvers");
   }
-  console.log("verify:accounting-audit-trail-lineage --selftest plant would FAIL — OK");
+  console.log("verify:accounting-audit-trail-lineage --selftest linked-object plant would FAIL — OK");
 }
 
 console.log("verify:accounting-audit-trail-lineage — OK");
