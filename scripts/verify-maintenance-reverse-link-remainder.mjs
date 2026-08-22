@@ -3,7 +3,7 @@
  * Maintenance reverse_link remainder — Built for list/detail EntityLink surfaces.
  * Create/source/modal chrome honesty-dropped in required.json.
  *
- * @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^(in_transit\\.promote_to_wo|arriving_soon\\.convert_to_wo|driver_reports\\.queue|severe_repairs\\.convert_to_wo|defects\\.convert_to_wo|pre_flight_dvir\\.queue|pm\\.auto_engine\\.run|fault_drafts\\.review|warranty\\.create_claim|maintenance\\.panel\\.road_service_active|maintenance\\.modal\\.work_order_detail)$","task":"VERTICAL-REVERSE-LINK-maintenance-remainder","vertical":"column-wave"}
+ * @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["warranty.create_claim","maintenance.panel.road_service_active"],"task":"MAINT-F5891-REVERSE-REMAINDER-EXACT","vertical":"class-sweep"}
  *
  * Self-test: node scripts/verify-maintenance-reverse-link-remainder.mjs --selftest
  */
@@ -16,6 +16,10 @@ const LABEL = "verify-maintenance-reverse-link-remainder";
 const ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
 const API = "apps/frontend/src/api/maintenance.ts";
 const TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/maintenance.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-maintenance-reverse-link-remainder.mjs";
+const HEADER = ' * @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["warranty.create_claim","maintenance.panel.road_service_active"],"task":"MAINT-F5891-REVERSE-REMAINDER-EXACT","vertical":"class-sweep"}';
 
 const CHECKS = [
   { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
@@ -150,6 +154,31 @@ function run(root = ROOT) {
   return fails;
 }
 
+function evidence(source = {
+  matrix: fs.readFileSync(path.join(ROOT, MATRIX), "utf8"),
+  feed: fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+  self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+}) {
+  const failures = [];
+  let matrix;
+  try { matrix = JSON.parse(source.matrix); } catch (error) { failures.push(`maintenance matrix must parse: ${error.message}`); }
+  for (const [id, route] of [
+    ["warranty.create_claim", "/maintenance/warranty-claims"],
+    ["maintenance.panel.road_service_active", "surface://pages/maintenance/components/RoadServiceActivePanel.tsx"],
+  ]) {
+    const leaf = matrix?.leaves?.find((candidate) => candidate.id === id);
+    if (!leaf?.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
+    if (leaf?.route_hint !== route) failures.push(`${id} must name mounted route ${route}`);
+  }
+  const annotationBlock = source.self.split('import fs from "node:fs";')[0];
+  if (!annotationBlock.includes(HEADER)) failures.push("exact two-leaf matrix header must remain present");
+  try {
+    const feed = JSON.parse(source.feed);
+    if (feed.entries?.some((entry) => entry.guard === SELF)) failures.push("manual feed must not duplicate exact in-guard ownership");
+  } catch (error) { failures.push(`wire sprint feed must parse: ${error.message}`); }
+  return failures;
+}
+
 if (process.argv.includes("--selftest")) {
   const live = run();
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".maint-reverse-selftest-"));
@@ -177,10 +206,39 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
     process.exit(1);
   }
+  const source = {
+    matrix: fs.readFileSync(path.join(ROOT, MATRIX), "utf8"),
+    feed: fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+    self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+  };
+  if (evidence(source).length) throw new Error(`live evidence failed: ${evidence(source).join("; ")}`);
+  for (const [id, route] of [
+    ["warranty.create_claim", "/maintenance/warranty-claims"],
+    ["maintenance.panel.road_service_active", "surface://pages/maintenance/components/RoadServiceActivePanel.tsx"],
+  ]) {
+    const idToken = `"id": "${id}"`;
+    const start = source.matrix.indexOf(idToken);
+    const end = source.matrix.indexOf("\n    {", start + idToken.length);
+    const block = source.matrix.slice(start, end < 0 ? source.matrix.length : end);
+    for (const [token, replacement] of [
+      [idToken, `"id": "${id}.broken"`],
+      ['"reverse_link"', '"reverse_link_broken"'],
+      [`"route_hint": "${route}"`, '"route_hint": "broken"'],
+    ]) {
+      const changed = source.matrix.slice(0, start) + block.replace(token, replacement) + source.matrix.slice(end < 0 ? source.matrix.length : end);
+      if (!evidence({ ...source, matrix: changed }).length) throw new Error(`matrix mutation survived: ${id} ${token}`);
+    }
+  }
+  const brokenHeader = HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"');
+  if (!evidence({ ...source, self: source.self.replace(HEADER, brokenHeader) }).length) throw new Error("header mutation survived");
+  const feed = JSON.parse(source.feed);
+  feed.entries.unshift({ guard: SELF, modules: ["maintenance"], cols: ["reverse_link"], leafRe: ".*" });
+  if (!evidence({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
+  console.log(`${LABEL} SELFTEST PASS (8 evidence mutations)`);
   process.exit(0);
 }
 
-const fails = run();
+const fails = [...run(), ...evidence()];
 if (fails.length) {
   console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
   process.exit(1);
