@@ -33,6 +33,8 @@ export type RawPosting = {
   amount_cents: number;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
+  /** Human document id (bill_number / invoice display_id / …). Never a UUID. */
+  reference: string | null;
   // CA-05 QBO-parity additions (all read-only, derived):
   payee: string | null; // from the source transaction (bill→vendor, invoice→customer); null when unresolved
   split_account: string | null; // the contra account(s); "-Split-" when the JE touches >1 other account
@@ -109,7 +111,10 @@ export function buildRegisterRows(
         ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
         : "Journal Entry",
       source_transaction_type: p.source_transaction_type ?? null,
-      reference: p.source_transaction_id ?? null,
+      // ACCT-REGISTER-REF-IS-SOURCE-UUID: Ref No. is a human document id from already-joined
+      // source rows. Never copy source_transaction_id (UUID) here — EntityLink tombstones it as
+      // "Journal entry — not visible" on every register row.
+      reference: p.reference ?? null,
       payee: p.payee ?? null,
       memo: p.memo ?? null,
       description: p.description ?? null,
@@ -212,6 +217,18 @@ export async function getAccountRegister(
             --   bill_payment has no clean direct party link → honest NULL (not fabricated).
             COALESCE(bv.vendor_name, ev.vendor_name, ic.customer_name, pc.customer_name,
                      NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')) AS payee,
+            -- Human Ref No. from the same source joins as payee. bills.display_id is near-dead;
+            -- bill_number is the live identity (JE source-link resolver, same convention).
+            -- Honest NULL when no human id exists — never source_transaction_id.
+            COALESCE(
+              NULLIF(btrim(b.bill_number), ''),
+              NULLIF(btrim(inv.display_id), ''),
+              NULLIF(btrim(pay.display_id), ''),
+              NULLIF(btrim(ex.expense_number), ''),
+              NULLIF(btrim(ds.display_id), ''),
+              NULLIF(btrim(bpay.bill_number), ''),
+              NULLIF(btrim(btx_lbl.display_label), '')
+            ) AS reference,
             sp.split_account
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
@@ -240,6 +257,19 @@ export async function getAccountRegister(
          ON p.source_transaction_type = 'settlement' AND ds.id::text = p.source_transaction_id
         AND ds.operating_company_id = p.operating_company_id
        LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id AND dr.operating_company_id = p.operating_company_id
+       LEFT JOIN accounting.bill_payments bpp
+         ON p.source_transaction_type = 'bill_payment' AND bpp.id::text = p.source_transaction_id
+        AND bpp.operating_company_id = p.operating_company_id
+       LEFT JOIN accounting.bills bpay
+         ON bpay.id = bpp.bill_id AND bpay.operating_company_id = p.operating_company_id
+       LEFT JOIN LATERAL (
+         SELECT COALESCE(NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')) AS display_label
+           FROM banking.bank_transactions bt
+          WHERE p.source_transaction_type = 'bank_categorization'
+            AND bt.id::text = p.source_transaction_id
+            AND bt.operating_company_id = p.operating_company_id
+          LIMIT 1
+       ) btx_lbl ON true
        LEFT JOIN LATERAL (
          SELECT CASE WHEN count(*) = 0 THEN NULL
                      WHEN count(*) = 1 THEN max(sa.account_name)
