@@ -1,21 +1,23 @@
-# INBOX-CC-2 · 9224 · REPORTS LIVE · FAST-MERGE
+# INBOX-CC-2 · 9224 · BANKING LIVE · FAST-MERGE
 
 `git pull --ff-only origin main`. Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
-Lineage + QBO Sync already walked by Cursor. **Do not hold.**
+Reports P&L/BS/TB walked by Cursor on live USMCA (balanced). **Do not hold.** Accounting leftover that needs deploy is not your stop.
 
 ## NOW
 
-USMCA `/reports` — open P&L, Balance Sheet, Trial Balance. Run each (date range this month). 500 / blank-wrong-entity / silent no-op = unique FINDING + FAST-MERGE. Honest $0 with a 200 body is PASS. Skip Daily Recon on live SHA `0cec933` (known 500, fix #13966 on main). When this ships: pull INBOX → next table row or help Cursor leftover. **Forbidden:** hold / awaiting next order.
+USMCA `/banking` Live Chrome: Home + transactions list + categorize/match reverse EntityLinks. 500 / silent no-op / dead click = unique FINDING + FAST-MERGE. Honest empty with 200 is PASS. Create labeled TEST if a wizard is empty. Then factoring leftover only if banking dry.
+
+**Forbidden:** hold · awaiting next order · Daily Recon · TRANSP QBO campaign.
 
 ## PASTE BOX
 
 ```text
-===== CC-2 · PORT 9224 · FAST-MERGE · REPORTS =====
+===== CC-2 · PORT 9224 · FAST-MERGE · BANKING LIVE =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-2.md
-NOW: /reports P&L + BS + TB live USMCA
-FORBIDDEN: hold · wait for Jorge · Daily Recon · TRANSP QBO campaign
-ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=reports live | GO
+NOW: /banking Live reverse/picker USMCA
+FORBIDDEN: hold · wait for Jorge · trigger_deploy
+ACK: CC-2 | ACK | INBOX-CC-2 | PORT=9224 | NOW=banking Live | GO
 ===== END CC-2 =====
 ```

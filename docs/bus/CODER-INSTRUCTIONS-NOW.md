@@ -1,20 +1,15 @@
-# CODER INSTRUCTIONS NOW · 2026-08-22 01:44 CT
+# CODER INSTRUCTIONS NOW · 2026-08-22 02:05 CT
 
-**FAST-MERGE 4–5 MIN IS ON.** **NO HOLD.** Finish a leaf → pull INBOX → next leaf. Help Cursor drain Accounting leftover.
+**FAST-MERGE 4–5 MIN IS ON.** **NO HOLD.** Owner: Accounting first, then rest of Urgent 6 (banking → settlements → factoring → dispatch → vendors), then rest of urgent (customers → drivers → fleet → lists). Never idle.
 
-Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`. Empty/disabled is not a stop. **No `trigger_deploy`.**
+Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`. Empty/disabled is not a stop. **No `trigger_deploy`.** Live SHA `0cec933` is not a hold.
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | Posting lineage 0-row for PMT-2026-00007 despite posted JE |
-| CC-2 | `/reports` P&L + Balance Sheet + Trial Balance live USMCA |
-| CC-3 | account-type-catalog · detail-types · payment-methods-catalog · expense-category-map TEST |
-| Codex | CoA register `4570647e` + audit lineage TEST expense/payment |
-| Cursor | Remaining Accounting leftover + this bus |
+| CC-1 | Banking money: escrow register Settlement/JE columns if still missing on live; then BILL-DETAIL-PAYMENTS-HISTORY-ROW-NOT-CLICKABLE; then RECEIPTS-ENDPOINT-CATEGORY-ALLOWLIST. Lineage payment alias shipped #13984 (not on live until batch). |
+| CC-2 | Banking Live reverse/picker USMCA. Then settlements only if a new FAIL. Then factoring Live leftover. |
+| CC-3 | Banking chrome + picker `+ Add new` / `+ Create` TEST. Then vendors if banking dry. |
+| Codex | Banking reverse (no CDP). Then dispatch reverse. |
+| Cursor | Remaining Accounting More Live Chrome, then Banking Live Chrome |
 
-When your NOW is done: **do not wait, do not hold, do not write “awaiting next order.”** Same turn:
-
-1. `git pull --ff-only origin main` and execute the new INBOX NOW if it changed.
-2. If INBOX is unchanged, take the **next OPEN row in this table** (help that seat’s leftover).
-3. If this table is dry, **help Cursor** drain remaining Accounting leftover (Daily Recon only after live SHA ≠ `0cec933`; otherwise `/reports` / catalogs / lineage).
-4. Then banking Live Chrome. Jorge is not the messenger. Empty TMS is expected — create labeled TEST, owner voids later.
+When NOW is done: **do not wait, do not hold.** Pull INBOX → next table row → help Cursor leftover → next U6 module. Jorge is not the messenger.

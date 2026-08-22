@@ -1,13 +1,11 @@
-# STATUS-NOW · 2026-08-22 01:44 CT
+# STATUS-NOW · 2026-08-22 02:05 CT
 
-FAST-MERGE 4MIN **ON**. Live SHA `0cec933`. Accounting **NOT CERTIFIED**. Seats **GO** — no hold.
+FAST-MERGE **ON**. Live `0cec933`. Accounting **NOT CERTIFIED** (Daily Recon 500 + lineage #13984 not live). Owner: Accounting More leftover → Urgent 6 banking→…→vendors → rest of urgent customers/drivers/fleet/lists. **No hold.**
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | Posting lineage 0-row for PMT-2026-00007 despite posted JE · FAST-MERGE |
-| CC-2 | `/reports` P&L + BS + TB live USMCA · FAST-MERGE |
-| CC-3 | Catalog leftover: account-type / detail-types / payment-methods / expense-category-map TEST · FAST-MERGE |
-| Codex | CoA register `4570647e` + audit lineage TEST expense/payment · FAST-MERGE |
-| Cursor | Accounting leftover + bus · FAST-MERGE |
-
-Daily Recon 500 on this SHA (#13966 on main). No Render kick.
+| CC-1 | Banking money: escrow JE/settlement · bill-detail payments row · receipts allowlist |
+| CC-2 | `/banking` Live reverse/picker |
+| CC-3 | `/banking` chrome + picker TEST then vendors |
+| Codex | Banking reverse then dispatch reverse |
+| Cursor | Accounting More leftover then Banking Live |
