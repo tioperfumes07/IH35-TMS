@@ -79,7 +79,7 @@ export function collectFailures(opts = {}) {
     if (/readOnly/.test(list)) {
       failures.push(`${LIST_PAGE}: must not pass readOnly — owner seed path`);
     }
-    if (!/PostingTemplateModal/.test(list)) {
+    if (!/<PostingTemplateModal\b/.test(list)) {
       failures.push(`${LIST_PAGE}: must mount PostingTemplateModal (debit/credit CoA pickers)`);
     }
     if (!/searchParams\.get\("create"\) !== "1"/.test(list) && !/get\("create"\) === "1"/.test(list)) {
@@ -88,8 +88,8 @@ export function collectFailures(opts = {}) {
     if (!/setModalOpen\(true\)/.test(list)) {
       failures.push(`${LIST_PAGE}: must setModalOpen(true) for create path`);
     }
-    if (!/postingTemplatesCatalogClient/.test(list)) {
-      failures.push(`${LIST_PAGE}: must use postingTemplatesCatalogClient → catalogs.posting_templates`);
+    if (!/<PostingTemplateModal[\s\S]{0,500}?client=\{postingTemplatesCatalogClient\}/.test(list)) {
+      failures.push(`${LIST_PAGE}: mounted PostingTemplateModal must receive postingTemplatesCatalogClient → catalogs.posting_templates`);
     }
     if (!/title="Posting Templates"/.test(list) && !/displayName="Posting Templates"/.test(list)) {
       failures.push(`${LIST_PAGE}: must keep visible Posting Templates title (verify-acct-templates-subnav)`);
@@ -109,6 +109,12 @@ export function collectFailures(opts = {}) {
     }
     if (!/debit_account_id/.test(modal) || !/credit_account_id/.test(modal)) {
       failures.push(`${MODAL}: submit payload must carry debit_account_id + credit_account_id metadata`);
+    }
+    if (!/mode\s*===\s*"create"[\s\S]{0,100}?client\.create\(operatingCompanyId,\s*body\)/.test(modal)) {
+      failures.push(`${MODAL}: create mode must persist through the company-scoped catalog client`);
+    }
+    if (!/await\s+client\.create\([\s\S]{0,700}?onSaved\(\)/.test(modal)) {
+      failures.push(`${MODAL}: successful canonical create must notify the list to reload`);
     }
     if (!/POSTING_TEMPLATE_SOURCE_CODES/.test(modal) || !/fuel_event/.test(modal)) {
       failures.push(`${MODAL}: must document PostingSourceType + fuel_event template codes`);
@@ -133,9 +139,7 @@ function selftest() {
     fs.mkdirSync(path.join(goodRoot, "apps/frontend/src/pages/lists/accounting"), { recursive: true });
     fs.mkdirSync(path.join(goodRoot, "scripts"), { recursive: true });
 
-    fs.writeFileSync(
-      path.join(goodRoot, BACKEND_INDEX),
-      `
+    const goodIndex = `
 registerLegacyAccountingCatalogRoutes(app, {
   tableName: "posting_templates",
   urlSegment: "posting-templates",
@@ -147,11 +151,8 @@ registerLegacyAccountingCatalogRoutes(app, {
   }),
   validate: async () => null,
 });
-`
-    );
-    fs.writeFileSync(
-      path.join(goodRoot, LIST_PAGE),
-      `import { PostingTemplateModal } from "./PostingTemplateModal";
+`;
+    const goodList = `import { PostingTemplateModal } from "./PostingTemplateModal";
 import { postingTemplatesCatalogClient } from "../../../api/catalogs-accounting";
 export function PostingTemplatesListPage() {
   if (searchParams.get("create") !== "1") return null;
@@ -162,29 +163,60 @@ export function PostingTemplatesListPage() {
       <PostingTemplateModal client={postingTemplatesCatalogClient} />
     </>
   );
-}`
-    );
-    fs.writeFileSync(
-      path.join(goodRoot, MODAL),
-      `import { listCatalogAccounts } from "../../../api/catalog-accounts";
+}`;
+    const goodModal = `import { listCatalogAccounts } from "../../../api/catalog-accounts";
 export const POSTING_TEMPLATE_SOURCE_CODES = [{ value: "fuel_event" }];
-export function PostingTemplateModal() {
+export async function PostingTemplateModal({ mode, client, operatingCompanyId, onSaved }) {
   listCatalogAccounts({ postable_only: true });
+  const body = { metadata: { debit_account_id: "x", credit_account_id: "y" } };
+  if (mode === "create") await client.create(operatingCompanyId, body);
+  onSaved();
   return <ReferenceSelect createKind="account" metadata={{ debit_account_id: "x", credit_account_id: "y" }} />;
-}`
-    );
+}`;
+    const resetFixtures = () => {
+      fs.writeFileSync(path.join(goodRoot, BACKEND_INDEX), goodIndex);
+      fs.writeFileSync(path.join(goodRoot, LIST_PAGE), goodList);
+      fs.writeFileSync(path.join(goodRoot, MODAL), goodModal);
+    };
+    resetFixtures();
     fs.writeFileSync(path.join(goodRoot, WIRED_GUARD), "// stub\n");
 
     if (collectFailures({ root: goodRoot, skipWiredGuard: true }).length) {
       failures.push("good fixture rejected");
     }
 
-    fs.writeFileSync(
-      path.join(goodRoot, BACKEND_INDEX),
-      `registerLegacyAccountingCatalogRoutes(app, { tableName: "posting_templates", readOnly: true, entityScoped: true });`
-    );
-    if (!collectFailures({ root: goodRoot, skipWiredGuard: true }).some((f) => /readOnly/.test(f))) {
-      failures.push("readOnly regression not caught");
+    const mutations = [
+      [BACKEND_INDEX, /urlSegment: "posting-templates",/, 'urlSegment: "posting-templates",\n  readOnly: true,', /readOnly/, "writable registration"],
+      [BACKEND_INDEX, /entityScoped: true/, "entityScoped: false", /entityScoped/, "entity scope"],
+      [BACKEND_INDEX, /requiredMetadata: \["debit_account_id", "credit_account_id"\]/, 'requiredMetadata: ["debit_account_id"]', /requiredMetadata/, "required metadata"],
+      [BACKEND_INDEX, /credit_account_id: String\(metadata\.credit_account_id\),/, "", /createMapper/, "credit mapping"],
+      [BACKEND_INDEX, /validate: async/, "validate: () =>", /validate/, "same-company validation"],
+      [LIST_PAGE, /<PostingTemplateModal/, "{/* removed mount */}<ImportedPostingTemplateModal", /must mount/, "mounted modal"],
+      [LIST_PAGE, /searchParams\.get\("create"\) !== "1"/, 'searchParams.get("seed") !== "1"', /\?create=1/, "deep-link create"],
+      [LIST_PAGE, /setModalOpen\(true\)/, "setModalOpen(false)", /setModalOpen/, "open transition"],
+      [LIST_PAGE, /client=\{postingTemplatesCatalogClient\}/, "client={someOtherClient}", /must receive postingTemplatesCatalogClient/, "canonical client prop"],
+      [LIST_PAGE, /title="Posting Templates"/, 'title="Templates"', /visible Posting Templates title/, "visible title"],
+      [MODAL, /postable_only: true/, "postable_only: false", /postable_only/, "postable account scope"],
+      [MODAL, /createKind="account"/, 'createKind="vendor"', /createKind=account/, "account nested create"],
+      [MODAL, /credit_account_id: "y"/g, 'credit_account_key: "y"', /debit_account_id \+ credit_account_id/, "credit payload FK"],
+      [MODAL, /mode === "create"/, 'mode === "preview"', /create mode must persist/, "create persistence"],
+      [MODAL, /onSaved\(\)/, "onSavedDisabled()", /notify the list to reload/, "reload notification"],
+      [MODAL, /fuel_event/, "fuel_record", /fuel_event template codes/, "consumer source code"],
+    ];
+    for (const [rel, needle, replacement, expected, label] of mutations) {
+      resetFixtures();
+      const file = path.join(goodRoot, rel);
+      const before = fs.readFileSync(file, "utf8");
+      const after = before.replace(needle, replacement);
+      if (after === before) {
+        failures.push(`${label} plant did not mutate fixture`);
+        continue;
+      }
+      fs.writeFileSync(file, after);
+      const planted = collectFailures({ root: goodRoot, skipWiredGuard: true });
+      if (!planted.some((failure) => expected.test(failure))) {
+        failures.push(`${label} regression not caught (${planted.join(" | ") || "no failures"})`);
+      }
     }
   } finally {
     fs.rmSync(goodRoot, { recursive: true, force: true });
