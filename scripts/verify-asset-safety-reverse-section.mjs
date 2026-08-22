@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5909-ASSET-SAFETY-REVERSE-EXACT","vertical":"class-sweep"} */
 /**
  * GUARD: unit and trailer profiles show the asset's safety records (SAF-F17 / Law §9 reverse linkage).
  *
@@ -35,6 +36,10 @@ const DOT_ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
 const DVIR_ROUTE = "apps/backend/src/safety/dvir.routes.ts";
 const INCIDENTS_ROUTE = "apps/backend/src/safety/incidents.routes.ts";
 const FILES = [SECTION, ARCHIVED_DOT_PAGE, UNIT_PAGE, TRAILER_PAGE, API, ACCIDENTS_ROUTE, DOT_ROUTE, DVIR_ROUTE, INCIDENTS_ROUTE];
+const MATRIX = "docs/specs/scoreboard/modules/fleet.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-asset-safety-reverse-section.mjs";
+const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.safety_reverse","trailer.profile.safety_reverse"],"task":"FLEET-F5909-ASSET-SAFETY-REVERSE-EXACT","vertical":"class-sweep"} */';
 const LABEL = "verify-asset-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -51,6 +56,9 @@ const REQUIRED_READS = [
 export function assertAssetSafetyReverse(sources) {
   const src = {};
   for (const rel of FILES) src[rel] = stripComments(sources?.[rel] ?? read(rel));
+  src[MATRIX] = sources?.[MATRIX] ?? read(MATRIX);
+  src[FEED] = sources?.[FEED] ?? read(FEED);
+  src[SELF] = sources?.[SELF] ?? read(SELF);
   const problems = [];
 
   // 1. All four record types are read by the section.
@@ -161,11 +169,29 @@ export function assertAssetSafetyReverse(sources) {
     }
   }
 
+  let matrix;
+  try { matrix = JSON.parse(src[MATRIX]); } catch (error) { problems.push(`Fleet matrix parse: ${error.message}`); }
+  for (const [id, route] of [["unit.profile.safety_reverse", "/fleet/units/:id"], ["trailer.profile.safety_reverse", "/fleet/trailers/:id"]]) {
+    const leaf = matrix?.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("reverse_link")) problems.push(`${id} must require reverse_link`);
+    if (leaf?.route_hint !== route) problems.push(`${id} must name mounted route ${route}`);
+  }
+  if (!src[SELF].split('import fs from "node:fs";')[0].includes(HEADER)) problems.push("exact Fleet asset-safety header missing");
+  try { if (JSON.parse(src[FEED]).entries?.some((entry) => entry.guard === SELF)) problems.push("manual feed duplicates Fleet asset-safety ownership"); }
+  catch (error) { problems.push(`feed parse: ${error.message}`); }
+
   return problems;
 }
 
+const mutateLeaf = (source, id, mutate) => {
+  const parsed = JSON.parse(source);
+  const leaf = parsed.leaves.find((row) => row.id === id);
+  mutate(leaf);
+  return JSON.stringify(parsed);
+};
+
 if (SELFTEST) {
-  const live = Object.fromEntries(FILES.map((rel) => [rel, read(rel)]));
+  const live = Object.fromEntries([...FILES, MATRIX, FEED, SELF].map((rel) => [rel, read(rel)]));
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
@@ -340,6 +366,28 @@ if (SELFTEST) {
     },
     "EntityLink-only"
   );
+  for (const [id, route] of [["unit.profile.safety_reverse", "/fleet/units/:id"], ["trailer.profile.safety_reverse", "/fleet/trailers/:id"]]) {
+    expectCaught(
+      `${id}-required-id`,
+      { ...live, [MATRIX]: mutateLeaf(live[MATRIX], id, (leaf) => { leaf.id += ".broken"; }) },
+      `${id} must require reverse_link`
+    );
+    expectCaught(
+      `${id}-route`,
+      { ...live, [MATRIX]: mutateLeaf(live[MATRIX], id, (leaf) => { leaf.route_hint = "/broken"; }) },
+      `${id} must name mounted route ${route}`
+    );
+  }
+  expectCaught(
+    "exact-header",
+    { ...live, [SELF]: live[SELF].replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) },
+    "exact Fleet asset-safety header missing"
+  );
+  expectCaught(
+    "duplicate-feed",
+    { ...live, [FEED]: JSON.stringify({ entries: [{ guard: SELF }] }) },
+    "manual feed duplicates Fleet asset-safety ownership"
+  );
 
   // The corrected shape must NOT be flagged — false positives burn trust as fast as misses.
   const liveProblems = assertAssetSafetyReverse(live);
@@ -350,7 +398,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 20 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 26/26 runtime/evidence defects caught, live sources clean`);
   process.exit(0);
 }
 
