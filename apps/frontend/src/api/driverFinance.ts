@@ -16,6 +16,8 @@ export type SettlementListRow = {
   load_count: number;
   /** P14 settlements load reverse-link: the actual ids behind load_count (same COALESCE/JOIN rule). */
   load_ids?: string[];
+  /** Company-scoped human labels aligned to the canonical load ids. */
+  load_links?: Array<{ id: string; label: string }>;
   gross_pay: number;
   deductions_total: number;
   net_pay: number;
