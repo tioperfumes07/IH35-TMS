@@ -16,23 +16,18 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const failures = [];
+const checks = [];
 
 function read(relPath) {
   try {
     return readFileSync(resolve(ROOT, relPath), "utf8");
   } catch {
-    failures.push(`MISSING FILE: ${relPath}`);
     return "";
   }
 }
 
 function requireMatch(relPath, pattern, description) {
-  const content = read(relPath);
-  if (!content) return;
-  if (!pattern.test(content)) {
-    failures.push(`${relPath}: ${description}`);
-  }
+  checks.push({ relPath, pattern, description });
 }
 
 // 1. EntityLink: cash_advance kind resolves to a real route (no dead link).
@@ -184,9 +179,34 @@ requireMatch(
   "settlement detail lines must project l.load_number — SettlementDetailPage reads line.load_number and renders a raw uuid without it (LV-SETTLEMENT-LOAD-FK)"
 );
 
+function audit(overrides = {}) {
+  const failures = [];
+  for (const { relPath, pattern, description } of checks) {
+    const content = overrides[relPath] ?? read(relPath);
+    if (!content) failures.push(`MISSING FILE: ${relPath}`);
+    else if (!pattern.test(content)) failures.push(`${relPath}: ${description}`);
+  }
+  return failures;
+}
+
+const failures = audit();
 if (failures.length > 0) {
   console.error("FAIL verify-driver-settlements-domain-linkage:");
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
+}
+if (process.argv.includes("--selftest")) {
+  const live = Object.fromEntries([...new Set(checks.map(({ relPath }) => relPath))].map((relPath) => [relPath, read(relPath)]));
+  for (const { relPath, pattern, description } of checks) {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    const planted = live[relPath].replace(new RegExp(pattern.source, flags), "/* planted SETL-F5819 defect */");
+    const expected = `${relPath}: ${description}`;
+    if (planted === live[relPath] || !audit({ ...live, [relPath]: planted }).includes(expected)) {
+      console.error(`FAIL verify-driver-settlements-domain-linkage selftest: plant escaped — ${description}`);
+      process.exit(1);
+    }
+  }
+  console.log(`PASS verify-driver-settlements-domain-linkage selftest — ${checks.length}/${checks.length} production defects rejected`);
+  process.exit(0);
 }
 console.log("PASS verify-driver-settlements-domain-linkage");
