@@ -111,14 +111,25 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         l.status,
         l.created_at,
         l.updated_at,
-        c.payment_terms_id,
-        c.ar_email,
-        c.ar_phone,
+        COALESCE(c.payment_terms_id, c2.payment_terms_id) AS payment_terms_id,
+        COALESCE(c.ar_email, c2.ar_email) AS ar_email,
+        COALESCE(c.ar_phone, c2.ar_phone) AS ar_phone,
         pt.terms_name AS payment_terms_label,
         pt.days_until_due AS payment_terms_days
       FROM mdata.loads l
-      JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
-      LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+      -- ACCT-F5788 — mdata.customers' customers_select RLS excludes a deactivated customer for a
+      -- non-bypass reader, and a plain JOIN here threw a misleading load_not_found (the load DOES
+      -- exist; only its customer's active/inactive status changed) -- blocking legitimate invoicing
+      -- for a load whose customer was archived after booking. Same class as ACCT-F5611/5767/5768/
+      -- 5784/5785/5786/5787: LEFT JOIN + the existing full-row resolver (mdata.get_customer_same_
+      -- company, ACCT-F5787) via a LATERAL fallback gated on "c.id IS NULL", customers_select
+      -- untouched.
+      LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT * FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id)
+        WHERE c.id IS NULL
+      ) c2 ON true
+      LEFT JOIN catalogs.payment_terms pt ON pt.id = COALESCE(c.payment_terms_id, c2.payment_terms_id)
       WHERE l.id = $1
         AND l.operating_company_id = $2::uuid
       LIMIT 1
