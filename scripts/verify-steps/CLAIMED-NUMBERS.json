@@ -1,4 +1,9 @@
 {
+  "4337": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-chargebacks-fees-advance-amount-column"
+  },
   "4333": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
