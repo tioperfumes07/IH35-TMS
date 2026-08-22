@@ -100,6 +100,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "finance_loan";
     case "prepaid_purchase":
       return "prepaid_asset";
+    case "fuel_event":
+      return "fuel_transaction";
     default:
       return sourceType?.trim() || null;
   }
@@ -176,7 +178,8 @@ export async function listAccountingAuditTrail(
           src_bill.bill_number,
           src_bill.display_id,
           src_exp.expense_number,
-          src_banktx.display_label
+          src_banktx.display_label,
+          src_fueltx.display_label
         ) AS source_transaction_display_id,
         jp.source_transaction_line_id,
         jp.account_id::text AS account_id,
@@ -218,6 +221,14 @@ export async function listAccountingAuditTrail(
           AND bt.operating_company_id = jp.operating_company_id
         LIMIT 1
       ) src_banktx ON true
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
+        FROM fuel.fuel_transactions ft
+        WHERE jp.source_transaction_type = 'fuel_event'
+          AND ft.id::text = jp.source_transaction_id
+          AND ft.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_fueltx ON true
       WHERE ${where.join(" AND ")}
       ORDER BY COALESCE(je.created_at, pb.created_at, now()) DESC, jp.id DESC
       LIMIT $${values.length}
@@ -308,7 +319,8 @@ export async function listAccountingSourceLineage(
           src_bill.bill_number,
           src_bill.display_id,
           src_exp.expense_number,
-          src_banktx.display_label
+          src_banktx.display_label,
+          src_fueltx.display_label
         ) AS source_transaction_display_id,
         jp.source_transaction_line_id,
         tsl.linked_object_type,
@@ -353,6 +365,14 @@ export async function listAccountingSourceLineage(
           AND bt.operating_company_id = jp.operating_company_id
         LIMIT 1
       ) src_banktx ON true
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
+        FROM fuel.fuel_transactions ft
+        WHERE jp.source_transaction_type = 'fuel_event'
+          AND ft.id::text = jp.source_transaction_id
+          AND ft.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) src_fueltx ON true
       LEFT JOIN accounting.invoices link_inv
         ON tsl.linked_object_type = 'invoice'
        AND link_inv.id::text = tsl.linked_object_id

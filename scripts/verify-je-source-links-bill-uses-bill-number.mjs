@@ -49,8 +49,8 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: FILE,
       mutate: (text) =>
         text.replace(
-          "COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label)",
-          "COALESCE(src_inv.display_id, src_bill.display_id, src_banktx.display_label)"
+          /COALESCE\(src_inv\.display_id, src_bill\.display_id, src_bill\.bill_number, ([^)]+)\)/,
+          "COALESCE(src_inv.display_id, src_bill.display_id, $1)"
         ),
     },
     {

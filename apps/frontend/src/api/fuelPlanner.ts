@@ -202,6 +202,7 @@ export function getFuelTransactions(
   params: {
     limit?: number;
     offset?: number;
+    transaction_id?: string;
     driver_id?: string;
     unit_id?: string;
     load_id?: string;
@@ -213,6 +214,7 @@ export function getFuelTransactions(
   const search = new URLSearchParams({ operating_company_id: companyId });
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   if (params.offset !== undefined) search.set("offset", String(params.offset));
+  if (params.transaction_id) search.set("transaction_id", params.transaction_id);
   if (params.driver_id) search.set("driver_id", params.driver_id);
   if (params.unit_id) search.set("unit_id", params.unit_id);
   if (params.load_id) search.set("load_id", params.load_id);
