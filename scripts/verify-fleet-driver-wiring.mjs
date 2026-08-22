@@ -2,6 +2,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["driver"],"leafRe":"^(roster\\.row\\.edit_unit|unit\\.profile\\.(driver_assign|quick_assign)|unit\\.edit\\.quick_availability|fleet\\.modal\\.quick_assign)$","task":"LINK-F5168-FLEET-DRIVER-ASSIGN-WIRING"} */
 /** @matrix-built {"modules":["fleet"],"cols":["driver"],"leafRe":"^(transfers\\.in_progress|map\\.redirect)$","task":"LINK-F5168-FLEET-DRIVER-TRANSFERS-MAP-WIRING"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.quick_assign"],"task":"FLEET-F5915-QUICK-ASSIGN-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.driver_assign","unit.profile.quick_assign","unit.edit.quick_availability","transfers.in_progress","map.redirect"],"task":"FLEET-F5944-DRIVER-ASSIGNMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical driver-column sweep (2026-08-14): 7 genuine fleet leaves.
  * roster.row.edit_unit/unit.edit.quick_availability share EditVehicleModal.tsx's real
@@ -23,6 +24,8 @@ const REQUIRED = "docs/specs/scoreboard/modules/fleet.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-fleet-driver-wiring.mjs";
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.quick_assign"],"task":"FLEET-F5915-QUICK-ASSIGN-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_LEAVES = ["unit.profile.driver_assign", "unit.profile.quick_assign", "unit.edit.quick_availability", "transfers.in_progress", "map.redirect"];
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.driver_assign","unit.profile.quick_assign","unit.edit.quick_availability","transfers.in_progress","map.redirect"],"task":"FLEET-F5944-DRIVER-ASSIGNMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 const CHECKS = [
   ["apps/frontend/src/components/fleet/EditVehicleModal.tsx", /\{ key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" \}/],
@@ -50,10 +53,12 @@ export function audit(files) {
     if (!pattern.test(files[file] || "")) failures.push(`${file}: missing real driver_id/EntityLink kind="driver" wiring`);
   }
   let leaf;
+  const connectivityRows = new Map();
   const visit = (value) => {
     if (Array.isArray(value)) value.forEach(visit);
     else if (value && typeof value === "object") {
       if (value.id === "unit.profile.quick_assign" && Array.isArray(value.required)) leaf = value;
+      if (CONNECTIVITY_LEAVES.includes(value.id) && Array.isArray(value.required)) connectivityRows.set(value.id, value);
       Object.values(value).forEach(visit);
     }
   };
@@ -64,6 +69,8 @@ export function audit(files) {
     if (leaf.route_hint !== "/fleet/units/:id") failures.push(`${REQUIRED}: quick assign must mount on canonical unit profile`);
   }
   if (!files[SELF].split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push(`${SELF}: exact quick-assign reverse header missing`);
+  for (const id of CONNECTIVITY_LEAVES) if (!connectivityRows.get(id)?.required?.includes("connectivity")) failures.push(`${REQUIRED}: ${id} must require connectivity`);
+  if (!files[SELF].split("/**\n * OWNER-")[0].includes(CONNECTIVITY_HEADER)) failures.push(`${SELF}: exact driver-assignment connectivity header missing`);
   if (/"guard"\s*:\s*"scripts\/verify-fleet-driver-wiring\.mjs"/.test(files[FEED])) failures.push(`${FEED}: manual feed duplicates quick-assign reverse ownership`);
   return failures;
 }
@@ -99,12 +106,21 @@ if (process.argv.includes("--selftest")) {
     ["reverse", REQUIRED, /("id": "unit\.profile\.quick_assign"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"'],
     ["route", REQUIRED, /("id": "unit\.profile\.quick_assign"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"'],
     ["header", SELF, EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["connectivity-header", SELF, CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "driver")],
     ["feed", FEED, /\[\s*/, `[\n  {"guard":"scripts/verify-fleet-driver-wiring.mjs"},`],
   ];
   for (const [name, file, pattern, replacement] of evidence) {
     const mutated = { ...good, [file]: good[file].replace(pattern, replacement) };
     if (mutated[file] === good[file] || audit(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — ${name} evidence mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const id of CONNECTIVITY_LEAVES) {
+    const mutated = { ...good, [REQUIRED]: good[REQUIRED].replace(`"id": "${id}"`, `"id": "${id}_MISSING"`) };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${id} connectivity mutation escaped`);
       process.exit(1);
     }
     caught++;
