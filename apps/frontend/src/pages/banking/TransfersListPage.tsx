@@ -65,19 +65,21 @@ export function TransfersListPage() {
     if (!companyId || !groupId) return;
     void getIntercompanyTransferGroup(groupId, companyId)
       .then((detail) => {
-        const lines = detail.legs
-          .map(
-            (leg) =>
-              `${leg.intercompany_leg ?? "leg"} · ${entityLabel(
-                (leg as { entity_code?: string }).entity_code,
-                leg.operating_company_id,
-                "Entity",
-              )} · ${formatMoney(Number(leg.amount_cents))} · ${entityLabel(null, leg.id, "Leg")}`
-          )
-          .join("\n");
         setInfoModal({
-          title: `Intercompany group ${detail.group_id}`,
-          body: lines || "(no legs)",
+          title: "Intercompany transfer group",
+          body: detail.legs.length > 0 ? (
+            <div className="space-y-2 text-xs text-slate-800">
+              {detail.legs.map((leg) => (
+                <div key={leg.id} className="flex flex-wrap items-center gap-2">
+                  <span>{leg.intercompany_leg ?? "leg"}</span>
+                  <span>· {(leg as { entity_code?: string }).entity_code || "Entity"}</span>
+                  <span>· {formatMoney(Number(leg.amount_cents))}</span>
+                  <span>·</span>
+                  <EntityLink kind="transfer" id={leg.id} label={entityLabel(leg.reference_number || leg.memo, leg.id, "Transfer")} />
+                </div>
+              ))}
+            </div>
+          ) : "(no legs)",
         });
       })
       .catch((error) => pushToast(userFacingApiError(error, "Failed to load intercompany legs"), "error"));
@@ -203,7 +205,7 @@ export function TransfersListPage() {
                 if (row.intercompany_transfer_group_id) openIntercompanyGroup(row.intercompany_transfer_group_id);
               }}
             >
-              {row.intercompany_leg ?? "group"} · {entityLabel(null, row.intercompany_transfer_group_id, "Intercompany group")}
+              {row.intercompany_leg ?? "group"} · {row.counterparty_code || "Intercompany"}
             </button>
           ) : (
             <span className="text-xs text-slate-500">—</span>

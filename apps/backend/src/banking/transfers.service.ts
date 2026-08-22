@@ -661,6 +661,7 @@ export async function listTransfers(input: {
           fa.account_name AS from_coa_name,
           ta.account_name AS to_coa_name,
           je.memo AS journal_entry_memo,
+          counterparty.code AS counterparty_code,
           ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
           ${TRANSFER_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_label
         FROM banking.transfers t
@@ -679,6 +680,8 @@ export async function listTransfers(input: {
         LEFT JOIN accounting.journal_entries je
           ON je.id = t.journal_entry_id
          AND je.operating_company_id = t.operating_company_id
+        LEFT JOIN org.companies counterparty
+          ON counterparty.id = t.counterparty_company_id
         WHERE ${whereSql}
         ORDER BY t.transfer_date DESC, t.created_at DESC
         LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -697,12 +700,15 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
         SELECT
           t.*,
           je.memo AS journal_entry_memo,
+          counterparty.code AS counterparty_code,
           ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
           ${TRANSFER_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_label
         FROM banking.transfers t
         LEFT JOIN accounting.journal_entries je
           ON je.id = t.journal_entry_id
          AND je.operating_company_id = t.operating_company_id
+        LEFT JOIN org.companies counterparty
+          ON counterparty.id = t.counterparty_company_id
         WHERE t.id = $1
           AND t.operating_company_id = $2::uuid
         LIMIT 1
