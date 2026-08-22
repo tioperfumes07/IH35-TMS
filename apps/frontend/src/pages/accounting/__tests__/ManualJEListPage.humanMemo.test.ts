@@ -44,6 +44,14 @@ describe("ManualJEListPage humanMemo", () => {
     expect(humanMemo(`Reversal of ${uuid}`)).toBe("Journal entry — not visible");
   });
 
+  it("keeps the reversal reason and drops the uuid for Reversal of journal entry <uuid>:", () => {
+    expect(
+      humanMemo(
+        `Reversal of journal entry ${uuid}: ACCT-F5674: JE was posted onto a VOIDED sample bank transaction`,
+      ),
+    ).toBe("Reversal of journal entry: ACCT-F5674: JE was posted onto a VOIDED sample bank transaction");
+  });
+
   it("falls back to the generic Record label for an unrecognized memo shape", () => {
     expect(humanMemo(`Something new ${uuid} happened`)).toBe("Something new Record — not visible happened");
   });

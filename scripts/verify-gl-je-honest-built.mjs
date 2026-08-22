@@ -104,6 +104,9 @@ const jeList = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounti
 if (!/listJournalEntries/.test(jeList) || !/kind=["']journal_entry["']/.test(jeList)) {
   failures.push("ManualJEListPage must list JE + EntityLink journal_entry");
 }
+if (!/Reversal of journal entry \[0-9a-f\]\{8\}/.test(jeList)) {
+  failures.push("humanMemo must strip Reversal of journal entry <uuid> (live 0cec933 Record tombstone class)");
+}
 
 const jeModal = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/accounting/ManualJEModal.tsx"), "utf8");
 if (!/createJournalEntry/.test(jeModal)) {

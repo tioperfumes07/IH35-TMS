@@ -18,16 +18,7 @@ import { EntityLink, type EntityKind } from "../../../components/shared/EntityLi
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
-
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
-}
-
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-function humanMemo(memo: string | null | undefined): string {
-  if (!memo) return "—";
-  return memo.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
-}
+import { humanMemo } from "../ManualJEListPage";
 
 /** LST-F105: page chrome must not lead with a bare UUID fragment as the JE identity. */
 function journalEntryChromeLabel(entry: {

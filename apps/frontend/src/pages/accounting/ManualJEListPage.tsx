@@ -57,7 +57,13 @@ export function humanMemo(
   resolvedDisplayId?: string | null
 ): string {
   if (!memo) return "—";
-  let result = memo;
+  // Live 0cec933: "Reversal of journal entry <uuid>: ACCT-F5674…" fell through to
+  // "… Record — not visible …" because the known pattern was only "Reversal of <uuid>".
+  // Keep the operator-readable reason; drop only the uuid span (never paint the uuid).
+  let result = memo.replace(
+    /Reversal of journal entry [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+    "Reversal of journal entry",
+  );
   for (const { re, noun } of KNOWN_MEMO_ID_PATTERNS) {
     result = result.replace(re, (whole) => {
       const uuid = whole.match(UUID_RE)?.[0] ?? "";
