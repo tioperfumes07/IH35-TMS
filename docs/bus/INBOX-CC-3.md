@@ -1,6 +1,6 @@
 # INBOX-CC-3 · 9225 · PICKER · 12:32 CT · LEGAL THEN LISTS · FAST-MERGE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`.
+`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **16:55 CT**. Cursor certifies U6 then 14 — **you keep `/legal` then `/lists`**. Do not open `/banking*` `/dispatch`.
 
 You already closed insurance policy vendor picker (#14323). **Stay on legal pickers** so you do not collide with Cursor on `/maintenance` `/safety/home`.
 

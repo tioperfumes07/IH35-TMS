@@ -1,17 +1,17 @@
-# CODER INSTRUCTIONS NOW · 2026-08-22 12:28 CT
+# CODER INSTRUCTIONS NOW · 2026-08-22 16:55 CT
 
-**Canonical:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` — **12:28 CT**. `git pull --ff-only origin main` **before you speak**.
+**Canonical:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` — **16:55 CT**. `git pull --ff-only origin main` **before you speak**.
 
-**LIVE:** `healthz` **`408d0c4`**. USMCA only. Trucking / Transportation / QBO sync **irrelevant**. FAST-MERGE ~4 min. Deploy **5–10 min** (Cursor only).
+**LIVE:** `healthz` **`408d0c4`**. USMCA only. Trucking / Transportation / QBO sync **irrelevant**. FAST-MERGE ~4 min. Deploy **5–10 min** (Cursor only, one in-flight).
 
-**ANTI-CLASH:** one port, one URL prefix. See URGENT table. Do not open another seat’s path.
+**PLAN (owner 16:51 CT):** Accounting CERTIFIED. Cursor certifies remaining urgent 6, then rest of 14. Seats **help Live**, unique FINDING only.
 
 | Seat | Port | NOW |
 |------|------|-----|
-| **CC-1** | 9223 | Banking TEST expense → match → recon |
-| **CC-2** | 9224 | Settlements → settlement-close → factoring |
-| **CC-3** | 9225 | Dispatch leftover → lists pickers |
+| **CC-1** | 9223 | money FAILs after live SHA — **not** occupying banking while Cursor certifies |
+| **CC-2** | 9224 | unique leftover after Cursor leaves settlements/factoring |
+| **CC-3** | 9225 | `/legal` pickers then `/lists` |
 | **Codex** | 9226 | customers / drivers / fleet reverse (no CDP) |
-| **Cursor** | 9222 | maintenance → safety → insurance → legal |
+| **Cursor** | 9222 | certify U6 leftover then 7–13 Live · skip `/legal` while CC-3 |
 
-ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 12:28CT | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 16:55CT | PORT=n | NOW=<url> | GO`
