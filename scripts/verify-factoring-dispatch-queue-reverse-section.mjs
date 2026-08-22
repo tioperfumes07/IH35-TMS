@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring","dispatch"],"cols":["reverse_link"],"leafRe":"^dispatch\\.queue$","task":"LINK-F5179-factoring-dispatch-queue-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["dispatch.queue"],"task":"FACT-F5837-DISPATCH-QUEUE-REVERSE-EXACT-LEAF"} */
 /**
  * GUARD: a customer's and a load's own pages can jump into the dispatch factoring queue pre-scoped
  * to them, and the queue page + its backend route both honor the deep link
@@ -29,7 +29,9 @@ const QUEUE_PAGE = "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx";
 const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx";
 const SECTION = "apps/frontend/src/components/customers/CustomerFactoringQueueReverseSection.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
-const FILES = [ROUTES, QUEUE_PAGE, FACTORING_TAB, SECTION, CUSTOMER_DETAIL];
+const SELF = "scripts/verify-factoring-dispatch-queue-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [ROUTES, QUEUE_PAGE, FACTORING_TAB, SECTION, CUSTOMER_DETAIL, SELF, REQUIRED];
 const LABEL = "verify-factoring-dispatch-queue-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -44,6 +46,15 @@ export function assertFactoringDispatchQueueReverse(sources) {
   const factoringTab = src[FACTORING_TAB];
   const section = src[SECTION];
   const customerDetail = src[CUSTOMER_DETAIL];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["dispatch\.queue"\],"task":"FACT-F5837-DISPATCH-QUEUE-REVERSE-EXACT-LEAF"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own only factoring:dispatch.queue reverse_link`);
+  }
+  if (!/"id": "dispatch\.queue"[\s\S]{0,350}"required": \[[\s\S]{0,250}"reverse_link"/.test(required)) {
+    problems.push(`${REQUIRED}: dispatch.queue must remain a Required reverse_link leaf`);
+  }
 
   if (!/customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: querySchema must accept optional customer_id`);
@@ -123,6 +134,8 @@ function selftest() {
       import { CustomerFactoringQueueReverseSection } from "../components/customers/CustomerFactoringQueueReverseSection";
       <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
     `,
+    [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["dispatch.queue"],"task":"FACT-F5837-DISPATCH-QUEUE-REVERSE-EXACT-LEAF"} */`,
+    [REQUIRED]: `{"leaves":[{"id": "dispatch.queue", "required": ["customer", "load", "connectivity", "reverse_link"]}]}`,
   };
   const goodProblems = assertFactoringDispatchQueueReverse(good);
   if (goodProblems.length) {
@@ -143,6 +156,8 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("customer_id=${encodeURIComponent(customerId)}", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringQueueReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
+    { ...good, [SELF]: good[SELF].replace('"modules":["factoring"]', '"modules":["factoring","dispatch"]') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('"reverse_link"', '"qbo_chrome"') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFactoringDispatchQueueReverse(mutated).length === 0) {
