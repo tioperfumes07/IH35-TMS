@@ -349,11 +349,11 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         // (mdata.resolve_customer_label_same_company) rather than adding a new function or touching
         // customers_select. Active-customer creation/selection is completely unaffected: this only
         // runs as a fallback when the primary RLS-scoped read already found nothing.
-        const fallback = await client.query<{ label: string | null }>(
+        const fallback = await client.query(
           `SELECT mdata.resolve_customer_label_same_company($1::uuid, $2::uuid) AS label`,
           [body.data.customer_id, query.data.operating_company_id]
         );
-        customerExists = Boolean(fallback.rows[0]?.label);
+        customerExists = Boolean((fallback.rows[0] as { label?: string | null } | undefined)?.label);
       }
       if (!customerExists) return { code: 404 as const, error: "customer_not_found" };
 
