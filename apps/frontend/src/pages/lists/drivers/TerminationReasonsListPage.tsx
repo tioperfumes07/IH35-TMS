@@ -17,6 +17,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -69,6 +70,8 @@ function toInitial(row: DriverTerminationReason | null): FormState {
 
 export function TerminationReasonsListPage() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
   const [modalOpen, setModalOpen] = useState(false);
@@ -77,7 +80,7 @@ export function TerminationReasonsListPage() {
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (org-wide catalog; no opco gate).
   useCreateQueryParam({
-    companyId: "_",
+    companyId,
     onOpenCreate: () => {
       setConflictError(null);
       setActiveRow(null);
@@ -86,12 +89,13 @@ export function TerminationReasonsListPage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["driver-termination-reasons"],
-    queryFn: () => listDriverTerminationReasons(true),
+    queryKey: ["driver-termination-reasons", companyId],
+    queryFn: () => listDriverTerminationReasons(companyId, true),
+    enabled: Boolean(companyId),
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: CreateDriverTerminationReasonInput) => createDriverTerminationReason(payload),
+    mutationFn: (payload: CreateDriverTerminationReasonInput) => createDriverTerminationReason(companyId, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
       setModalOpen(false);
@@ -102,7 +106,7 @@ export function TerminationReasonsListPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateDriverTerminationReasonInput }) =>
-      updateDriverTerminationReason(id, payload),
+      updateDriverTerminationReason(companyId, id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
       setModalOpen(false);
@@ -112,7 +116,7 @@ export function TerminationReasonsListPage() {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: (id: string) => deactivateDriverTerminationReason(id),
+    mutationFn: (id: string) => deactivateDriverTerminationReason(companyId, id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
       setModalOpen(false);

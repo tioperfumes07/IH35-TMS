@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["catalog.drivers.termination_reasons.list","catalog.drivers.termination_reasons.create"],"task":"LISTS-F5963-TERMINATION-REASON-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 // verify:driver-termination-reasons-per-entity
 //
 // Locks the per-entity conversion of catalogs.driver_termination_reasons (owner ruling 2026-07-24;
@@ -19,13 +20,25 @@ const MIG = "db/migrations/202607890000_driver_termination_reasons_per_entity.sq
 const HELD = "db/migrations/.held-migrations.json";
 const ROUTE = "apps/backend/src/mdata/driver-safety-events.routes.ts";
 const RETURNING = "apps/backend/src/mdata/driver-returning-detection.routes.ts";
-const FILES = [MIG, HELD, ROUTE, RETURNING];
+const API = "apps/frontend/src/api/catalogs.ts";
+const PAGE = "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/lists.required.json";
+const FILES = [MIG, HELD, ROUTE, RETURNING, API, PAGE, MATRIX];
 
 const readDisk = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
 export function assertDriverTerminationReasonsPerEntity(sources) {
   const get = (rel) => sources?.[rel] ?? readDisk(rel);
   const errs = [];
+
+  let matrix;
+  try { matrix = JSON.parse(get(MATRIX)); } catch (error) { return [`Lists matrix invalid: ${error.message}`]; }
+  for (const suffix of ["list", "create"]) {
+    const id = `catalog.drivers.termination_reasons.${suffix}`;
+    const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
+    if (!leaf?.required?.includes("connectivity")) errs.push(`${id} must require connectivity`);
+    if (leaf?.route_hint !== "/lists/drivers/termination-reasons") errs.push(`${id} route must remain mounted`);
+  }
 
   const mig = get(MIG);
   if (!/DO NOT RUN ON PROD/i.test(mig)) errs.push("migration 202607890000 missing the 'DO NOT RUN ON PROD' held marker");
@@ -51,6 +64,25 @@ export function assertDriverTerminationReasonsPerEntity(sources) {
   if (!/resolveOperatingCompanyId/.test(returning) || !/set_config\('app\.operating_company_id'/.test(returning))
     errs.push("returning-driver detection must set the entity GUC (its termination-reason JOIN is per-entity + FORCE RLS)");
 
+  const api = get(API);
+  for (const token of [
+    "listDriverTerminationReasons(operatingCompanyId: string",
+    "createDriverTerminationReason(operatingCompanyId: string",
+    "updateDriverTerminationReason(operatingCompanyId: string",
+    "deactivateDriverTerminationReason(operatingCompanyId: string",
+    "reactivateDriverTerminationReason(operatingCompanyId: string",
+    "operating_company_id: operatingCompanyId",
+  ]) if (!api.includes(token)) errs.push(`frontend API must explicitly scope ${token}`);
+  const page = get(PAGE);
+  for (const token of [
+    "const { selectedCompanyId } = useCompanyContext()",
+    "listDriverTerminationReasons(companyId, true)",
+    "createDriverTerminationReason(companyId, payload)",
+    "updateDriverTerminationReason(companyId, id, payload)",
+    "deactivateDriverTerminationReason(companyId, id)",
+    "enabled: Boolean(companyId)",
+  ]) if (!page.includes(token)) errs.push(`Lists page must bind selected company: ${token}`);
+
   return errs;
 }
 
@@ -71,6 +103,9 @@ if (SELFTEST) {
   expectCaught("route-insert-unscoped", { ...live, [ROUTE]: live[ROUTE].replace(/INSERT INTO catalogs\.driver_termination_reasons \(operating_company_id, /g, "INSERT INTO catalogs.driver_termination_reasons (") }, "catalog INSERT must write operating_company_id");
   expectCaught("returning-guc-removed", { ...live, [RETURNING]: live[RETURNING].replace(/set_config\('app\.operating_company_id'/g, "set_config('app.other'") }, "returning-driver detection must set the entity GUC");
   expectCaught("mig-force-rls-removed", { ...live, [MIG]: live[MIG].replace(/FORCE ROW LEVEL SECURITY/g, "no rls") }, "FORCE ROW LEVEL SECURITY");
+  expectCaught("api-company-dropped", { ...live, [API]: live[API].replace("listDriverTerminationReasons(operatingCompanyId: string", "listDriverTerminationReasons(") }, "frontend API must explicitly scope");
+  expectCaught("page-company-dropped", { ...live, [PAGE]: live[PAGE].replace("listDriverTerminationReasons(companyId, true)", "listDriverTerminationReasons(true)") }, "Lists page must bind selected company");
+  expectCaught("matrix-leaf-dropped", { ...live, [MATRIX]: live[MATRIX].replace('"id": "catalog.drivers.termination_reasons.list"', '"id": "catalog.drivers.termination_reasons.list.broken"') }, "must require connectivity");
 
   const liveProblems = assertDriverTerminationReasonsPerEntity(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
@@ -80,7 +115,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -90,4 +125,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — driver_termination_reasons per-entity (migration + catalog CRUD + driver-scoped referencing consistent).`);
+console.log(`${LABEL} OK — driver_termination_reasons selected-company Lists CRUD + driver-scoped references + exact cells consistent.`);

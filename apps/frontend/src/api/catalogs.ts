@@ -406,33 +406,38 @@ export type UpdateDriverTerminationReasonInput = Partial<{
   severity: DriverTerminationSeverity;
 }>;
 
-export function listDriverTerminationReasons(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ reasons: DriverTerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons${query}`);
+export function listDriverTerminationReasons(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ reasons: DriverTerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons?${query.toString()}`);
 }
 
-export function createDriverTerminationReason(payload: CreateDriverTerminationReasonInput) {
-  return apiRequest<{ reason: DriverTerminationReason }>("/api/v1/catalogs/driver-termination-reasons", {
+export function createDriverTerminationReason(operatingCompanyId: string, payload: CreateDriverTerminationReasonInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons?${query.toString()}`, {
     method: "POST",
     body: payload,
   });
 }
 
-export function updateDriverTerminationReason(id: string, payload: UpdateDriverTerminationReasonInput) {
-  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}`, {
+export function updateDriverTerminationReason(operatingCompanyId: string, id: string, payload: UpdateDriverTerminationReasonInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}?${query.toString()}`, {
     method: "PATCH",
     body: payload,
   });
 }
 
-export function deactivateDriverTerminationReason(id: string) {
-  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/deactivate`, {
+export function deactivateDriverTerminationReason(operatingCompanyId: string, id: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/deactivate?${query.toString()}`, {
     method: "POST",
   });
 }
 
-export function reactivateDriverTerminationReason(id: string) {
-  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/reactivate`, {
+export function reactivateDriverTerminationReason(operatingCompanyId: string, id: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/reactivate?${query.toString()}`, {
     method: "POST",
   });
 }
