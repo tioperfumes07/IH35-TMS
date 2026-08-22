@@ -1749,21 +1749,6 @@
       "leafRe": "^(unit\\.profile\\.current_load|tab\\.daily_prediction|liabilities\\.list)$"
     },
     {
-      "task": "LINK-F5149-ROSTER-REFERENCE-IDENTITY-LINKS",
-      "pr": "this PR",
-      "guard": "scripts/verify-roster-reference-identity-links.mjs",
-      "modules": [
-        "customers",
-        "vendors",
-        "lists",
-        "users"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(preferred|watch|factored))|hub\\.names_search|detail)$"
-    },
-    {
       "task": "LINK-F5150-OPERATIONAL-QUEUE-WORKFLOW-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-operational-queue-workflow-links.mjs",

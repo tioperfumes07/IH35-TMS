@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^home\\.roster$","task":"LINK-F5149-ROSTER-REFERENCE-IDENTITY-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["home.roster"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["vendors"],"cols":["connectivity"],"leaves":["home.roster"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["hub.names_search"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["users"],"cols":["connectivity"],"leaves":["detail"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -12,7 +15,16 @@ const FILES = {
   vendorMatrix: "docs/specs/scoreboard/modules/vendors.required.json",
   listsMatrix: "docs/specs/scoreboard/modules/lists.required.json",
   usersMatrix: "docs/specs/scoreboard/modules/users.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-roster-reference-identity-links.mjs",
 };
+
+const EXACT_HEADERS = [
+  '/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["home.roster"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["vendors"],"cols":["connectivity"],"leaves":["home.roster"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["hub.names_search"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["users"],"cols":["connectivity"],"leaves":["detail"],"task":"CLASS-F5918-ROSTER-IDENTITY-CONNECTIVITY-EXACT","vertical":"class-sweep"} */',
+];
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -50,6 +62,9 @@ export function verify(source) {
   failures.push(...matrixLeaf(source, "vendorMatrix", "home.roster", "/vendors", false));
   failures.push(...matrixLeaf(source, "listsMatrix", "hub.names_search", "/lists/names", false));
   failures.push(...matrixLeaf(source, "usersMatrix", "detail", "/users/:id", false));
+  const preamble = source.self.split("import fs from")[0];
+  for (const header of EXACT_HEADERS) if (!preamble.includes(header)) failures.push(`exact connectivity header missing: ${header}`);
+  if (/"guard"\s*:\s*"scripts\/verify-roster-reference-identity-links\.mjs"/.test(source.feed)) failures.push("manual feed duplicates roster identity connectivity ownership");
   return failures;
 }
 
@@ -80,6 +95,11 @@ if (process.argv.includes("--self-test")) {
     ["vendorMatrix", '"id": "home.roster"', '"id": "home.roster.broken"'],
     ["listsMatrix", '"id": "hub.names_search"', '"id": "hub.names_search.broken"'],
     ["usersMatrix", '"id": "detail"', '"id": "detail.broken"'],
+    ["self", EXACT_HEADERS[0], EXACT_HEADERS[0].replace("connectivity", "reverse_link")],
+    ["self", EXACT_HEADERS[1], EXACT_HEADERS[1].replace("connectivity", "reverse_link")],
+    ["self", EXACT_HEADERS[2], EXACT_HEADERS[2].replace("connectivity", "reverse_link")],
+    ["self", EXACT_HEADERS[3], EXACT_HEADERS[3].replace("connectivity", "reverse_link")],
+    ["feed", "[", `[{"guard":"scripts/verify-roster-reference-identity-links.mjs"},`],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
