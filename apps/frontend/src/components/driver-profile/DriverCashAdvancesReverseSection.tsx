@@ -85,9 +85,12 @@ export function DriverCashAdvancesReverseSection({
               const id = String((r as Record<string, unknown>).id ?? "");
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-                  <span className="font-semibold text-slate-700">
-                    {entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")}
-                  </span>
+                  <EntityLink
+                    kind="cash_advance_request"
+                    id={id}
+                    label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")}
+                    className="font-semibold text-slate-700"
+                  />
                   <span className="ml-2 text-gray-600">
                     {money((r as Record<string, unknown>).requested_amount_cents)} — {String((r as Record<string, unknown>).status ?? "pending")}
                   </span>
