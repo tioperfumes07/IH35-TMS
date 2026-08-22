@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5882-ROSTER-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^(home\\.roster|home\\.create_unit|roster\\.kind\\.(all|trucks)|roster\\.filter\\.(type|status_active|status_inshop|status_oos)|roster\\.bulk\\.(status|type|inactivate)|roster\\.row\\.edit_unit)$","task":"LINK-F5167-FLEET-ROSTER-UNIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^fleet\\.modal\\.(edit_vehicle|create_unit|quick_assign)$","task":"LINK-F5167-FLEET-UNIT-MODALS"} */
 /**
@@ -25,8 +26,20 @@ const FILES = {
   quickAssignRoute: "apps/backend/src/assignments/quicksave.routes.ts",
   assignmentSchema: "db/migrations/0221_cap9_vehicle_driver_assignments.sql",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
+  self: "scripts/verify-fleet-unit-roster-modals.mjs",
 };
 const LABEL = "verify-fleet-unit-roster-modals";
+const REVERSE_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5882-ROSTER-REVERSE-EXACT","vertical":"class-sweep"} */';
+const REVERSE_LEAVES = [
+  "home.roster",
+  "home.create_unit",
+  "home.create_trailer",
+  "roster.bulk.status",
+  "roster.bulk.type",
+  "roster.bulk.inactivate",
+  "roster.row.edit_unit",
+  "roster.row.edit_trailer",
+];
 
 export function audit(src) {
   const failures = [];
@@ -68,6 +81,18 @@ export function audit(src) {
   if (!/const truckBulkMutation = useMutation\(\{/.test(src.table)) {
     failures.push(`${FILES.table}: roster.bulk.* must have a real truck-scoped bulk mutation`);
   }
+  if (!/const trailerBulkMutation = useMutation\(\{/.test(src.table) || !/equipmentIds: trailers\.map\(\(row\) => row\.id\)/.test(src.table)) {
+    failures.push(`${FILES.table}: roster.bulk.* must apply to selected trailer ids through the canonical mutation`);
+  }
+  if (!/if \(patch\.status\) trailerPatch\.status = patch\.status/.test(src.table)) {
+    failures.push(`${FILES.table}: roster.bulk.status must forward the selected status to trailer rows`);
+  }
+  if (!/if \(patch\.equipment_type\)/.test(src.table) || !/else if \(patch\.vehicle_type\)/.test(src.table)) {
+    failures.push(`${FILES.table}: roster.bulk.type must normalize unit/trailer type changes`);
+  }
+  if (!/Promise\.allSettled\([\s\S]{0,500}?`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate`[\s\S]{0,80}?method: "POST"/.test(src.table) || /method:\s*["']DELETE["']/.test(src.table)) {
+    failures.push(`${FILES.table}: roster.bulk.inactivate must retain rows through canonical soft-deactivate endpoints`);
+  }
   if (!/function fleetProfilePath\(row: FleetRow\): string \{/.test(src.table)) {
     failures.push(`${FILES.table}: home.roster rows must link to the real unit's own profile path`);
   }
@@ -77,8 +102,14 @@ export function audit(src) {
   if (!/return createUnit\(\{/.test(src.createUnit)) {
     failures.push(`${FILES.createUnit}: fleet.modal.create_unit must call the canonical createUnit`);
   }
+  if (!/return createEquipment\(\{/.test(src.createTrailer)) {
+    failures.push(`${FILES.createTrailer}: home.create_trailer must call canonical createEquipment`);
+  }
   if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editVehicle)) {
     failures.push(`${FILES.editVehicle}: fleet.modal.edit_vehicle must patch the real edited unit in the selected company`);
+  }
+  if (!/open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/.test(src.table)) {
+    failures.push(`${FILES.table}: roster.row.edit_trailer must open the real trailer edit modal`);
   }
   if (!/equipmentKind: "truck" \| "trailer"/.test(src.quickAssign)) {
     failures.push(`${FILES.quickAssign}: fleet.modal.quick_assign must genuinely support truck (unit) targets`);
@@ -127,6 +158,12 @@ export function audit(src) {
       failures.push(`${rel}: must still expose the closed company Combobox (Select company)`);
     }
   }
+  for (const id of REVERSE_LEAVES) {
+    if (!required.leaves?.find((entry) => entry.id === id)?.required?.includes("reverse_link")) {
+      failures.push(`${FILES.required}: ${id} must require reverse_link`);
+    }
+  }
+  if (!src.self.split("\n").includes(REVERSE_HEADER)) failures.push(`${FILES.self}: exact roster reverse Built header missing`);
   return failures;
 }
 
@@ -146,10 +183,16 @@ if (process.argv.includes("--selftest")) {
     ["status-filter-helper", "tablePage", /function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/, "function removedFleetStatusFilter(row: UnifiedUnitRow, status: string): boolean {"],
     ["status-filter-apply", "tablePage", /if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/, "if (false) return false"],
     ["bulk-mutation", "table", /const truckBulkMutation = useMutation\(\{/, "const truckBulkMutationUnused = useMutation({"],
+    ["trailer-bulk-mutation", "table", /const trailerBulkMutation = useMutation\(\{/, "const trailerBulkMutationUnused = useMutation({"],
+    ["bulk-status", "table", /if \(patch\.status\) trailerPatch\.status = patch\.status/, "if (false) trailerPatch.status = patch.status"],
+    ["bulk-type", "table", /if \(patch\.equipment_type\)/, "if (false)"],
+    ["bulk-inactivate", "table", /`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate`/, "`/api/v1/mdata/${resource}/${row.id}/delete`"],
     ["profile-path-fn", "table", /function fleetProfilePath\(row: FleetRow\): string \{/, "function fleetProfilePathUnused(row: FleetRow): string {"],
     ["edit-unit-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={false}"],
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
+    ["create-trailer-call", "createTrailer", /return createEquipment\(\{/, "return createSomethingElse({"],
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
+    ["edit-trailer-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, "open={false}"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
     ["quick-assign-source", "quickAssignRoute", /'manual_override'/, "'quicksave'"],
     ["quick-assign-source-contract", "assignmentSchema", /'manual_override'/, "'removed_override'"],
@@ -188,7 +231,19 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  for (const id of REVERSE_LEAVES) {
+    const mutated = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  const wrongHeader = { ...good, self: good.self.replace(REVERSE_HEADER, `${REVERSE_HEADER}.broken`) };
+  if (audit(wrongHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — exact reverse header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + REVERSE_LEAVES.length + 1} mutations detected`);
   process.exit(0);
 }
 
