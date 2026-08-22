@@ -546,22 +546,22 @@
       {
         "key": "hop.book",
         "holds": true,
-        "evidence": "28 load(s) booked with a customer and a rate"
+        "evidence": "31 load(s) booked with a customer and a rate"
       },
       {
         "key": "hop.dispatch",
         "holds": true,
-        "evidence": "19 load(s) dispatched or beyond"
+        "evidence": "21 load(s) dispatched or beyond"
       },
       {
         "key": "hop.deliver",
         "holds": true,
-        "evidence": "8 delivery stop(s) with a captured departure"
+        "evidence": "10 delivery stop(s) with a captured departure"
       },
       {
         "key": "hop.pod_bol",
         "holds": true,
-        "evidence": "3 POD/BOL document(s) linked to a load"
+        "evidence": "11 POD/BOL document(s) linked to a load"
       }
     ]
   }
