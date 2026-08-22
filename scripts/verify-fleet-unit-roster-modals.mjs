@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5882-ROSTER-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5931-ROSTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^(home\\.roster|home\\.create_unit|roster\\.kind\\.(all|trucks)|roster\\.filter\\.(type|status_active|status_inshop|status_oos)|roster\\.bulk\\.(status|type|inactivate)|roster\\.row\\.edit_unit)$","task":"LINK-F5167-FLEET-ROSTER-UNIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^fleet\\.modal\\.(edit_vehicle|create_unit|quick_assign)$","task":"LINK-F5167-FLEET-UNIT-MODALS"} */
 /**
@@ -30,6 +31,7 @@ const FILES = {
 };
 const LABEL = "verify-fleet-unit-roster-modals";
 const REVERSE_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5882-ROSTER-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5931-ROSTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const REVERSE_LEAVES = [
   "home.roster",
   "home.create_unit",
@@ -159,11 +161,14 @@ export function audit(src) {
     }
   }
   for (const id of REVERSE_LEAVES) {
-    if (!required.leaves?.find((entry) => entry.id === id)?.required?.includes("reverse_link")) {
+    const leaf = required.leaves?.find((entry) => entry.id === id);
+    if (!leaf?.required?.includes("reverse_link")) {
       failures.push(`${FILES.required}: ${id} must require reverse_link`);
     }
+    if (!leaf?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
   if (!src.self.split("\n").includes(REVERSE_HEADER)) failures.push(`${FILES.self}: exact roster reverse Built header missing`);
+  if (!src.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact roster connectivity Built header missing`);
   return failures;
 }
 
@@ -243,7 +248,24 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — exact reverse header mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + REVERSE_LEAVES.length + 1} mutations detected`);
+  const wrongConnectivityHeader = { ...good, self: good.self.replace(CONNECTIVITY_HEADER, `${CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongConnectivityHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — exact connectivity header mutation escaped`);
+    process.exit(1);
+  }
+  for (const id of REVERSE_LEAVES) {
+    const marker = `"id": "${id}"`;
+    const start = good.required.indexOf(marker);
+    const end = good.required.indexOf("\n    },", start);
+    const block = good.required.slice(start, end);
+    const changed = block.replace(/,?\n\s*"connectivity"/, "");
+    const mutated = { ...good, required: `${good.required.slice(0, start)}${changed}${good.required.slice(end)}` };
+    if (start < 0 || end < 0 || changed === block || audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Required connectivity mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + (REVERSE_LEAVES.length * 2) + 2} mutations detected`);
   process.exit(0);
 }
 
