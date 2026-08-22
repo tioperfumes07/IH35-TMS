@@ -141,6 +141,26 @@ export function PendingSettlementDeductionsPanel() {
               {" · "}
               <span className="text-slate-700">{row.reason?.trim() || row.deduction_type}</span>{" "}
               <StatusBadge status={row.status} />
+              {/* LINK-F5187-style reverse drill: the API already returns load_id/load_number and
+                  applied_to_settlement_id/_display_id (see SettlementDeductionListRow) but this row
+                  discarded both, leaving no drill from a deduction back to the load that caused it
+                  or the settlement it landed on. */}
+              {row.load_id ? (
+                <>
+                  {" · "}
+                  <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
+                </>
+              ) : null}
+              {row.applied_to_settlement_id ? (
+                <>
+                  {" · "}
+                  <EntityLink
+                    kind="settlement"
+                    id={row.applied_to_settlement_id}
+                    label={entityLabel(row.applied_to_settlement_display_id, row.applied_to_settlement_id, "Settlement")}
+                  />
+                </>
+              ) : null}
             </span>
             <span className="shrink-0 font-semibold text-red-700">
               {formatUsdCents(row.remaining_balance_cents ?? row.amount_cents)}
