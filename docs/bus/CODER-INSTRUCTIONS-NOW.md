@@ -10,7 +10,7 @@ FAST-MERGE ~4 min. Deploy: Cursor lead, 5–10 min **and** 5–10 PRs, **one** i
 | Seat | Current (OPEN) | Hops |
 |------|----------------|------|
 | Cursor 9222 | banking | TEST expense → Match → recon Accept |
-| CC-1 9223 | accounting leftover | unique money FAIL — no TESTs remake → then factoring |
+| CC-1 9223 | accounting OPEN | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. 1–12 Live Chrome. Then factoring |
 | CC-2 9224 | settlements **CERTIFIED** omit | Codex reverse assist (no CDP). Do not remake Close |
 | CC-3 9225 | legal | pickers then `/lists` |
 | Codex 9226 | customers reverse | no CDP → then drivers → fleet |
