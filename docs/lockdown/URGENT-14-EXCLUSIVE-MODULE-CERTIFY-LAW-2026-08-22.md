@@ -28,6 +28,8 @@ CREATE-TEST-THEN-VOID: empty TMS is expected; create labeled TEST; owner voids a
 
 **Stamp:** exclusive owner OUTBOX `CERTIFIED | MODULE=<id> | LIVE_SHA=<healthz> | hops=<one line>`. **Only Cursor** copies that into the table below after the SHA matches live `healthz`. Clicked ≠ CERTIFIED.
 
+**After CERTIFIED:** drop that module from `SESSION-ANNOUNCE` hops, INBOX NOW, and session bullets. Do not recertify. Canonical announce: `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`.
+
 Live proof is **this pull’s** `healthz/shallow`, not chat.
 
 ---
@@ -40,7 +42,7 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 |---|--------|-----------------|------------------------------------------|--------|
 | 1 | accounting | CC-1 | `/accounting` leftover money FAIL only — **do not remake TESTs** | OPEN |
 | 2 | banking | Cursor | `/banking` — TEST expense → **Match** → recon **Accept** → ledger | OPEN |
-| 3 | settlements | CC-2 | `/driver-finance` `/settlements` `/cash-advances` — **do not remake Close** | OPEN |
+| 3 | settlements | CC-2 | `/driver-finance` `/settlements` `/cash-advances` — **do not remake Close** | CERTIFIED LIVE_SHA=b6980d6 |
 | 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | OPEN |
 | 5 | dispatch | Cursor after banking CERTIFIED | `/dispatch` — **do not remake Book Load** | OPEN |
 | 6 | vendors | Cursor after dispatch | `/vendors` | OPEN |

@@ -111,5 +111,11 @@ Forbidden: saying yes to “includes all” when only chrome or only money was b
 
 One seat, one **current** module, Fully-Wired 1–12, Live Chrome last. HOLD forbidden. Do not steal another seat’s URL prefix. Unique FINDING only. Next work = next row on **your** list. Live SHA = `healthz/shallow`.
 
+## 12. SESSION ANNOUNCE — CURRENT-LAW + OPEN HOPS (owner-locked 2026-08-22)
+
+**Canonical:** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`
+
+Every new session, every coder: brief CURRENT-LAW bullets + **only OPEN hops for your seat**. Once a module is CERTIFIED (exclusive table + matching `healthz`), **do not bring it up again as work.**
+
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

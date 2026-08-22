@@ -29,6 +29,7 @@ const POINTERS = [
       "SEARCH BEFORE YOU ASK",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
       "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+      "SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
     ],
   },
   {
@@ -39,6 +40,7 @@ const POINTERS = [
       "SEARCH BEFORE YOU ASK",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
       "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+      "SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
     ],
   },
   {
@@ -47,6 +49,7 @@ const POINTERS = [
       "STANDING-SESSION-DIRECTIVE.md",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
       "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+      "SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
     ],
   },
   {
@@ -55,11 +58,18 @@ const POINTERS = [
       "STANDING-SESSION-DIRECTIVE.md",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
       "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+      "SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
     ],
   },
   {
     rel: "AGENTS.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md", "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md"],
+    mustInclude: [
+      "STANDING-SESSION-DIRECTIVE.md",
+      "SEARCH BEFORE YOU ASK",
+      "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+      "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+      "SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
+    ],
   },
 ];
 
@@ -99,6 +109,19 @@ export function assertStandingDirectivePresent(root = ROOT) {
     }
     if (!/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22/i.test(body) || !/EXCLUSIVE MODULE/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include URGENT 14 EXCLUSIVE MODULE CERTIFY law`);
+    }
+    if (!/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22/i.test(body) || !/OPEN hops/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include SESSION ANNOUNCE CURRENT-LAW + OPEN hops`);
+    }
+  }
+
+  const announceLaw = "docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md";
+  if (!fs.existsSync(path.join(root, announceLaw))) {
+    problems.push(`MISSING ${announceLaw}`);
+  } else {
+    const al = fs.readFileSync(path.join(root, announceLaw), "utf8");
+    if (!/CURRENT-LAW/i.test(al) || !/omit CERTIFIED|Omit CERTIFIED/i.test(al)) {
+      problems.push(`${announceLaw}: must lock CURRENT-LAW announce + omit CERTIFIED`);
     }
   }
 

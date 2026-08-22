@@ -16,4 +16,6 @@ Reload every session until all 14 modules are CERTIFIED.
 - FAST-MERGE ~4 min. Deploy 5–10 min **and** 5–10 PRs, one in-flight. CC never `trigger_deploy`.
 - Live SHA = `healthz/shallow` `version`.
 
+Every new session: print CURRENT-LAW + OPEN hops from `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`. Omit CERTIFIED.
+
 Presence: `scripts/verify-standing-directive-present.mjs` (step 2374).
