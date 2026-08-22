@@ -20,7 +20,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
-  if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route)) failures.push("list schema must accept driver_id");
+  if (!/const listQuerySchema = z\.object\(\{[\s\S]{0,220}driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route)) failures.push("list schema must accept driver_id");
   if (!/filters\.push\(`t\.driver_id = \$\$\{values\.length\}::uuid`\)/.test(s.route)) failures.push("list SQL must filter driver_id");
   if (!/filters\?\.driver_id\) params\.set\("driver_id", filters\.driver_id\)/.test(s.hook)) failures.push("hook must forward driver_id");
   if (!/filters\?\.unit_id\) params\.set\("unit_id", filters\.unit_id\)/.test(s.hook)) failures.push("hook must forward unit_id");
@@ -44,13 +44,13 @@ function audit(s) {
     failures.push("bill label join must be entity-scoped");
   }
   if (!/bill_number\?: string \| null/.test(s.hook)) failures.push("ticket response type must expose bill label");
-  if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
+  if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/<ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
   for (const kind of ["unit", "driver", "vendor"]) {
     if (!new RegExp(`<EntityLink(?:OrTombstone)?[^>]+kind=["']${kind}["']`).test(s.list)) failures.push(`ticket list must use canonical EntityLink kind=${kind}`);
   }
   if (!/AS vendor_ok/.test(s.route) || !/AS unit_ok/.test(s.route) || !/AS driver_ok/.test(s.route) ||
-      !/linked_entity_not_in_operating_company/.test(s.route)) {
+      (s.route.match(/linked_entity_not_in_operating_company/g) ?? []).length < 3) {
     failures.push("create writer must validate vendor, unit, and optional driver against the operating company before insert");
   }
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ driver_id: id \}\}/.test(s.driverProfile)) failures.push("driver profile must mount reverse section");
@@ -62,14 +62,29 @@ function audit(s) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
+    ["driver schema", { ...source, route: source.route.replace(/const listQuerySchema = z\.object\(\{[\s\S]{0,220}driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "const listQuerySchema = z.object({ driver_id: z.never()") }],
     ["route", { ...source, route: source.route.replace("filters.push(`t.driver_id = $${values.length}::uuid`)", "void values") }],
     ["hook", { ...source, hook: source.hook.replace('params.set("driver_id", filters.driver_id)', 'params.set("unit_id", filters.driver_id)') }],
+    ["unit route", { ...source, route: source.route.replace("filters.push(`t.unit_id = $${values.length}::uuid`)", "void unitFilter") }],
+    ["unit hook", { ...source, hook: source.hook.replace('params.set("unit_id", filters.unit_id)', 'params.set("driver_id", filters.unit_id)') }],
+    ["vendor route", { ...source, route: source.route.replace("filters.push(`t.vendor_id = $${values.length}::uuid`)", "void vendorFilter") }],
+    ["vendor hook", { ...source, hook: source.hook.replace('params.set("vendor_id", filters.vendor_id)', 'params.set("driver_id", filters.vendor_id)') }],
+    ["work-order route", { ...source, route: source.route.replace("filters.push(`t.wo_id = $${values.length}::uuid`)", "void workOrderFilter") }],
+    ["work-order hook", { ...source, hook: source.hook.replace('params.set("wo_id", filters.wo_id)', 'params.set("driver_id", filters.wo_id)') }],
+    ["reverse reader", { ...source, section: source.section.replace("useRoadServiceTickets(filter)", "useRoadServiceTickets()") }],
+    ["ticket target kind", { ...source, section: source.section.replace(/kind=["']road_service_ticket["']/, 'kind="work_order"') }],
+    ["ticket target id", { ...source, section: source.section.replace("id={ticket.id}", "id={ticket.wo_id}") }],
     ["driver mount", { ...source, driverProfile: source.driverProfile.replace("<RoadServiceReverseSection", "<div") }],
     ["unit mount", { ...source, unitProfile: source.unitProfile.replace("<RoadServiceReverseSection", "<div") }],
     ["vendor mount", { ...source, vendorProfile: source.vendorProfile.replace("<RoadServiceReverseSection", "<div") }],
     ["work-order mount", { ...source, workOrderDetail: source.workOrderDetail.replace("<RoadServiceReverseSection", "<div") }],
     ["canonical unit drill", { ...source, list: source.list.replace(/kind="unit"/, 'kind="load"') }],
+    ["canonical driver drill", { ...source, list: source.list.replace(/kind="driver"/, 'kind="load"') }],
+    ["canonical vendor drill", { ...source, list: source.list.replace(/kind="vendor"/, 'kind="customer"') }],
+    ["writer vendor membership", { ...source, route: source.route.replace(/AS vendor_ok/, "AS supplier_ok") }],
     ["writer unit membership", { ...source, route: source.route.replace(/AS unit_ok/, "AS asset_ok") }],
+    ["writer driver membership", { ...source, route: source.route.replace(/AS driver_ok/, "AS operator_ok") }],
+    ["writer cross-company rejection", { ...source, route: source.route.replace(/linked_entity_not_in_operating_company/, "invalid_link") }],
     ["reverse unit", { ...source, section: source.section.replace('kind="unit"', 'kind="load"') }],
     ["reverse vendor", { ...source, section: source.section.replace('kind="vendor"', 'kind="customer"') }],
     ["reverse work order", { ...source, section: source.section.replace('kind="work_order"', 'kind="unit"') }],
@@ -77,6 +92,9 @@ if (process.argv.includes("--selftest")) {
     ["bill label producer", { ...source, route: source.route.replace("b.bill_number AS bill_number", "NULL::text AS bill_number") }],
     ["bill join scope", { ...source, route: source.route.replace("b.operating_company_id = $1::uuid", "TRUE") }],
     ["bill response label", { ...source, hook: source.hook.replace("bill_number?: string | null", "bill_label_missing?: string | null") }],
+    ["reverse errors", { ...source, hook: source.hook.replace("isError: listQuery.isError", "isError: false") }],
+    ["reverse error surface", { ...source, section: source.section.replace("<ListErrorBanner", "<MissingErrorBanner") }],
+    ["deep-link highlight", { ...source, list: source.list.replace("highlightedTicketId === row.id", "false") }],
   ];
   for (const [name, changed] of mutations) {
     if (audit(changed).length === 0) {
@@ -84,7 +102,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — route, hook, and mount mutations detected`);
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} production-source mutations detected`);
   process.exit(0);
 }
 
