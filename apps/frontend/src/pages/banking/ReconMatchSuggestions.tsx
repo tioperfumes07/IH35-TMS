@@ -1,7 +1,24 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { bankMatch, getReconcileSuggestions, type ObligationType, type ReconcileSuggestion } from "../../api/banking";
+import {
+  bankMatch,
+  getReconcileSuggestions,
+  type ObligationType,
+  type ReconcileSuggestion,
+  type ReconcileSuggestionType,
+} from "../../api/banking";
 import { useToast } from "../../components/Toast";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { userFacingApiError } from "../../lib/api-error-message";
+
+const SUGGESTION_ENTITY_KIND: Record<ReconcileSuggestionType, EntityKind> = {
+  load: "load",
+  settlement: "settlement",
+  fuel: "fuel_transaction",
+  work_order: "work_order",
+  ar_invoice: "invoice",
+  bill: "bill",
+  factoring_batch: "factoring_batch",
+};
 
 export function ReconMatchSuggestions(props: {
   companyId: string;
@@ -45,16 +62,26 @@ export function ReconMatchSuggestions(props: {
             }}
           />
         ) : (
-          <button
+          <div
             key={`${suggestion.obligation_id}-${suggestion.obligation_type}`}
-            type="button"
-            disabled={props.disabled}
-            title="Apply this match"
-            onClick={() => props.onAccept(suggestion.obligation_type as ObligationType, suggestion.obligation_id)}
-            className="rounded-sm bg-slate-100 px-1 text-[10px] text-slate-700 enabled:hover:bg-slate-100 disabled:opacity-50"
+            className="flex items-center gap-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-700"
           >
-            {suggestion.label} ({Math.round(suggestion.confidence * 100)}%)
-          </button>
+            <EntityLink
+              kind={SUGGESTION_ENTITY_KIND[suggestion.obligation_type]}
+              id={suggestion.obligation_id}
+              label={suggestion.label}
+            />
+            <span>({Math.round(suggestion.confidence * 100)}%)</span>
+            <button
+              type="button"
+              disabled={props.disabled}
+              title="Apply this match"
+              onClick={() => props.onAccept(suggestion.obligation_type as ObligationType, suggestion.obligation_id)}
+              className="rounded-sm bg-slate-200 px-1 text-[9px] enabled:hover:bg-slate-300 disabled:opacity-50"
+            >
+              Apply
+            </button>
+          </div>
         )
       )}
     </div>
@@ -64,9 +91,12 @@ export function ReconMatchSuggestions(props: {
 function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disabled?: boolean; onApply: () => void }) {
   return (
     <div className="flex items-center gap-1 rounded-sm border border-slate-300 bg-slate-100 px-1 py-px text-[10px] text-slate-700">
-      <span className="rounded-sm bg-[#1F2A44] px-1 text-[9px] font-semibold uppercase tracking-wide text-white">
-        Factoring ({props.suggestion.batch_number ?? "batch"})
-      </span>
+      <EntityLink
+        kind="factoring_batch"
+        id={props.suggestion.obligation_id}
+        label={`Factoring ${props.suggestion.batch_number ?? "batch"}`}
+        className="rounded-sm bg-[#1F2A44] px-1 text-[9px] font-semibold uppercase tracking-wide text-white"
+      />
       <span>({Math.round(props.suggestion.confidence * 100)}%)</span>
       <button
         type="button"

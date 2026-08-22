@@ -25,6 +25,7 @@ const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace
 const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
 const MATCH_DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
 const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx";
+const RECON_SUGGESTIONS = "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
@@ -99,6 +100,9 @@ const CHECKS = [
   { name: "obligation reconcile bank rows drill to exact transactions", file: OBLIGATION_RECON, pattern: /kind="bank_transaction"\s+id=\{row\.id\}[\s\S]{0,220}row\.description\?\.trim\(\)[\s\S]{0,120}row\.merchant_name\?\.trim\(\)/ },
   { name: "obligation reconcile targets drill by scoped label outside buttons", file: OBLIGATION_RECON, pattern: /obligations\.map\(\(o\) => \(\s+<div[\s\S]{0,1200}kind=\{OBLIGATION_ENTITY_KIND\[o\.obligation_type\]\}[\s\S]{0,160}id=\{o\.obligation_id\}[\s\S]{0,160}label=\{o\.label\}/ },
   { name: "obligation reconcile displays both dates through shared formatter", file: OBLIGATION_RECON, pattern: /formatDateUS\(row\.transaction_date\)[\s\S]{0,3000}formatDateUS\(o\.event_date\)/ },
+  { name: "reconcile suggestions map every kind to mounted drills", file: RECON_SUGGESTIONS, pattern: /const SUGGESTION_ENTITY_KIND: Record<ReconcileSuggestionType, EntityKind> = \{[\s\S]{0,400}load: "load"[\s\S]{0,400}settlement: "settlement"[\s\S]{0,400}fuel: "fuel_transaction"[\s\S]{0,400}work_order: "work_order"[\s\S]{0,400}ar_invoice: "invoice"[\s\S]{0,400}bill: "bill"[\s\S]{0,400}factoring_batch: "factoring_batch"/ },
+  { name: "ordinary reconcile suggestion separates drill from apply", file: RECON_SUGGESTIONS, pattern: /kind=\{SUGGESTION_ENTITY_KIND\[suggestion\.obligation_type\]\}[\s\S]{0,160}id=\{suggestion\.obligation_id\}[\s\S]{0,160}label=\{suggestion\.label\}[\s\S]{0,500}<button[\s\S]{0,300}props\.onAccept/ },
+  { name: "factoring reconcile suggestion separates drill from apply", file: RECON_SUGGESTIONS, pattern: /kind="factoring_batch"\s+id=\{props\.suggestion\.obligation_id\}[\s\S]{0,180}props\.suggestion\.batch_number[\s\S]{0,500}<button[\s\S]{0,180}onClick=\{props\.onApply\}/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
