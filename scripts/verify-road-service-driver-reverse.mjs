@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^road_service\\.active$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\.detail$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\.profile\\.maintenance$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^detail\\.profile$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["road_service.active"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.detail"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leaves":["detail.profile"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-road-service-driver-reverse";
@@ -15,7 +15,19 @@ const files = {
   unitProfile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
   vendorProfile: "apps/frontend/src/pages/VendorDetail.tsx",
   workOrderDetail: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+  maintenanceMatrix: "docs/specs/scoreboard/modules/maintenance.required.json",
+  driversMatrix: "docs/specs/scoreboard/modules/drivers.required.json",
+  fleetMatrix: "docs/specs/scoreboard/modules/fleet.required.json",
+  vendorsMatrix: "docs/specs/scoreboard/modules/vendors.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+  self: "scripts/verify-road-service-driver-reverse.mjs",
 };
+const HEADERS = [
+  '/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["road_service.active"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.detail"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leaves":["detail.profile"],"task":"CLASS-F5892-ROAD-SERVICE-REVERSE-EXACT","vertical":"class-sweep"} */',
+];
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 function audit(s) {
@@ -57,6 +69,24 @@ function audit(s) {
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ unit_id: id \}\}/.test(s.unitProfile)) failures.push("unit profile must mount reverse section");
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ vendor_id: vendor\.id \}\}/.test(s.vendorProfile)) failures.push("vendor profile must mount reverse section");
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ wo_id: id \}\}/.test(s.workOrderDetail)) failures.push("work-order detail must mount reverse section");
+  for (const [key, id, route] of [
+    ["maintenanceMatrix", "road_service.active", "/maintenance/road-service"],
+    ["driversMatrix", "profiles.detail", "/drivers/:id/profile"],
+    ["fleetMatrix", "unit.profile.maintenance", "/fleet/units/:id"],
+    ["vendorsMatrix", "detail.profile", "/vendors/:id"],
+  ]) {
+    let matrix;
+    try { matrix = JSON.parse(s[key]); } catch (error) { failures.push(`${key} must parse: ${error.message}`); continue; }
+    const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
+    if (!leaf?.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
+    if (leaf?.route_hint !== route) failures.push(`${id} must name mounted route ${route}`);
+  }
+  const annotationBlock = s.self.split('import fs from "node:fs";')[0];
+  for (const header of HEADERS) if (!annotationBlock.includes(header)) failures.push(`missing exact matrix header: ${header}`);
+  try {
+    const feed = JSON.parse(s.feed);
+    if (feed.entries?.some((entry) => entry.guard === files.self)) failures.push("manual feed must not duplicate exact in-guard ownership");
+  } catch (error) { failures.push(`wire sprint feed must parse: ${error.message}`); }
   return failures;
 }
 
@@ -102,7 +132,34 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} production-source mutations detected`);
+  for (const [key, id, route] of [
+    ["maintenanceMatrix", "road_service.active", "/maintenance/road-service"],
+    ["driversMatrix", "profiles.detail", "/drivers/:id/profile"],
+    ["fleetMatrix", "unit.profile.maintenance", "/fleet/units/:id"],
+    ["vendorsMatrix", "detail.profile", "/vendors/:id"],
+  ]) {
+    const idToken = `"id": "${id}"`;
+    const start = source[key].indexOf(idToken);
+    const end = source[key].indexOf("\n    {", start + idToken.length);
+    const block = source[key].slice(start, end < 0 ? source[key].length : end);
+    for (const [token, replacement] of [
+      [idToken, `"id": "${id}.broken"`],
+      ['"reverse_link"', '"reverse_link_broken"'],
+      [`"route_hint": "${route}"`, '"route_hint": "broken"'],
+    ]) {
+      const changedBlock = block.replace(token, replacement);
+      const changed = source[key].slice(0, start) + changedBlock + source[key].slice(end < 0 ? source[key].length : end);
+      if (!audit({ ...source, [key]: changed }).length) throw new Error(`matrix mutation survived: ${id} ${token}`);
+    }
+  }
+  for (const header of HEADERS) {
+    const broken = header.replace('"vertical":"class-sweep"', '"vertical":"broken"');
+    if (!audit({ ...source, self: source.self.replace(header, broken) }).length) throw new Error("header mutation survived");
+  }
+  const feed = JSON.parse(source.feed);
+  feed.entries.unshift({ guard: files.self, modules: ["maintenance"], cols: ["reverse_link"], leafRe: ".*" });
+  if (!audit({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
+  console.log(`${LABEL} SELFTEST PASS — 50/50 production/evidence mutations detected`);
   process.exit(0);
 }
 
