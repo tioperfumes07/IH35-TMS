@@ -23,7 +23,9 @@ function audit(s) {
     !/export type LinkedBankTransactionRow[\s\S]{0,700}matched_journal_entry_memo: string \| null/.test(s.api) ||
     !/apiRequest<\{ rows: LinkedBankTransactionRow\[\]; total_count: number \}>/.test(s.api)
   ) failures.push("typed panel JE fields missing");
-  if (!/kind="journal_entry"/.test(s.panel) || !/row\.matched_journal_entry_id/.test(s.panel)) failures.push("canonical conditional JE drill missing");
+  if (!/row\.matched_journal_entry_id\s*\?\s*\([\s\S]{0,260}?kind="journal_entry"[\s\S]{0,160}?id=\{row\.matched_journal_entry_id\}/.test(s.panel)) {
+    failures.push("canonical conditional JE drill missing");
+  }
   if (!/query\.isError/.test(s.panel) || !/linked-bank-transactions-empty/.test(s.panel)) failures.push("honest panel states missing");
   const mounts = { driver: "driver_id", load: "load_id", unit: "unit_id", trailer: "trailer_id", vendor: "vendor_id", customer: "customer_id" };
   for (const [key, kind] of Object.entries(mounts)) if (!new RegExp(`LinkedBankTransactionsPanel[\\s\\S]{0,180}kind: ["']${kind}["']`).test(s[key])) failures.push(`${key} shared panel mount missing`);
@@ -39,11 +41,15 @@ if (process.argv.includes("--selftest")) {
     ["typed-je-memo", "api", /matched_journal_entry_memo: string \| null;/g, "matched_journal_entry_memo: null;"],
     ["typed-return", "api", /apiRequest<\{ rows: LinkedBankTransactionRow\[\]; total_count: number \}>/g, "apiRequest<{ rows: unknown[]; total_count: number }>"] ,
     ["drill", "panel", /kind="journal_entry"/g, 'kind="bank_transaction"'],
+    ["drill-id", "panel", /id=\{row\.matched_journal_entry_id\}/g, "id={row.id}"],
+    ["error-state", "panel", /query\.isError/g, "query.isSuccess"],
+    ["empty-state", "panel", /linked-bank-transactions-empty/g, "linked-bank-transactions-loading"],
     ["driver", "driver", /kind: "driver_id"/g, 'kind: "unit_id"'],
     ["load", "load", /kind: "load_id"/g, 'kind: "unit_id"'],
     ["unit", "unit", /kind: "unit_id"/g, 'kind: "load_id"'],
     ["trailer", "trailer", /kind: "trailer_id"/g, 'kind: "unit_id"'],
     ["vendor", "vendor", /kind: "vendor_id"/g, 'kind: "unit_id"'],
+    ["customer", "customer", /kind: "customer_id"/g, 'kind: "unit_id"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
