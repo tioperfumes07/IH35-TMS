@@ -46,7 +46,7 @@ Jorge is **not** the messenger.
 
 **Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **kicking Render after each merge**.
 
-**Production deploy is not in this loop.** autoDeploy is OFF on purpose. Merging every 4 minutes is fine. Deploying every 4 minutes 502s the API for the whole deploy (~3 min). Measured 2026-08-21: 9 deploys / 90 min, median gap 5.9 min — shorter than a deploy. **Deploy main every 5–10 merged PRs (default 5, never wait past 10) or on demand (Jorge / Cursor lead).** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`. Never `trigger_deploy` because healthz SHA lags `origin/main` after one merge.
+**Production deploy is not in this loop.** autoDeploy is OFF on purpose. Merging every 4 minutes is fine. Deploying after **each** merge 502s the API for the whole deploy (~3 min). Measured 2026-08-21: 9 deploys / 90 min, median gap 5.9 min — shorter than a deploy. **Cursor lead deploys every 5–10 minutes and every 5–10 merged PRs (default 5, never wait past 10) or on demand (Jorge).** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md` · `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`. Never `trigger_deploy` because healthz SHA lags `origin/main` after one merge.
 
 ---
 
