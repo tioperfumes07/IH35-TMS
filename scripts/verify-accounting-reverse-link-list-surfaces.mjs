@@ -32,6 +32,15 @@ const DEDUCTION_ROUTE = "apps/backend/src/driver-finance/deductions.routes.ts";
 const DEDUCTION_PANEL = "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx";
 
 const CHECKS = [
+  { name: "Owned-asset disposal stores canonical unit id", file: "apps/backend/src/accounting/owned-asset-disposal.service.ts", pattern: /linked_object_type:\s*"unit",\s*linked_object_id:\s*asset\.unit_uuid/ },
+  { name: "Audit lineage labels linked unit", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_unit\.unit_number[\s\S]*?mdata\.units link_unit/ },
+  { name: "Audit linked-unit join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_unit\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE source labels linked unit", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_unit\.unit_number[\s\S]*?mdata\.units link_unit/ },
+  { name: "JE linked-unit join is company scoped", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_unit\.operating_company_id = \$2::uuid/ },
+  { name: "Unit EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "unit":\s*return `\/fleet\/units\/\$\{id\}`;/ },
+  { name: "Audit Trail drills linked unit", file: AUDIT_TRAIL, pattern: /case "unit":\s*return "unit";/ },
+  { name: "Posting Lineage drills linked unit", file: POSTING_LINEAGE, pattern: /case "unit":\s*return "unit";/ },
+  { name: "JE Detail drills linked unit", file: JE_DETAIL, pattern: /case "unit":\s*return "unit";/ },
   { name: "Revenue recognition stores canonical load id", file: "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts", pattern: /linked_object_type:\s*"load",\s*linked_object_id:\s*input\.load_id/ },
   { name: "Audit lineage labels linked load", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_load\.load_number[\s\S]*?mdata\.loads link_load/ },
   { name: "Audit linked-load join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_load\.operating_company_id = jp\.operating_company_id/ },
