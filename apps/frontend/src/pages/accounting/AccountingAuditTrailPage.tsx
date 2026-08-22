@@ -43,6 +43,11 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "payment";
     case "bill_payment":
       return "bill_payment";
+    case "driver_advance":
+    case "cash_advance":
+      return "cash_advance";
+    case "transfer":
+      return "transfer";
     case "expense":
       return "expense";
     case "settlement":
