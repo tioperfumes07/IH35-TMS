@@ -32,6 +32,17 @@ const DEDUCTION_ROUTE = "apps/backend/src/driver-finance/deductions.routes.ts";
 const DEDUCTION_PANEL = "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx";
 
 const CHECKS = [
+  { name: "Settlement poster stores canonical settlement id", file: "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts", pattern: /linked_object_type:\s*"driver_settlement",\s*linked_object_id:\s*input\.settlementId/ },
+  { name: "Audit API canonicalizes driver settlement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "driver_settlement":\s*return "settlement";/ },
+  { name: "Audit lineage labels driver settlement", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_settlement\.display_id[\s\S]*?driver_finance\.driver_settlements link_settlement/ },
+  { name: "Audit settlement label join is company scoped", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /link_settlement\.operating_company_id = jp\.operating_company_id/ },
+  { name: "JE source canonicalizes driver settlement", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /linked_object_type = 'driver_settlement' THEN 'settlement'/ },
+  { name: "JE source labels driver settlement", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_settlement\.display_id[\s\S]*?driver_finance\.driver_settlements link_settlement/ },
+  { name: "JE settlement label join is company scoped", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /link_settlement\.operating_company_id = \$2::uuid/ },
+  { name: "Settlement EntityLink owns exact route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "settlement":\s*return `\/driver-finance\/settlements\?settlement_id=\$\{id\}`;/ },
+  { name: "Audit Trail drills driver settlement", file: AUDIT_TRAIL, pattern: /case "driver_settlement":\s*return "settlement";/ },
+  { name: "Posting Lineage drills driver settlement", file: POSTING_LINEAGE, pattern: /case "driver_settlement":\s*return "settlement";/ },
+  { name: "JE Detail drills driver settlement", file: JE_DETAIL, pattern: /case "driver_settlement":\s*return "settlement";/ },
   { name: "Settlement poster stores canonical deduction id", file: "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts", pattern: /linked_object_type:\s*"driver_settlement_deduction",\s*linked_object_id:\s*line\.deduction_id/ },
   { name: "Deduction reader accepts exact id", file: DEDUCTION_ROUTE, pattern: /deduction_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/ },
   { name: "Deduction reader scopes exact id", file: DEDUCTION_ROUTE, pattern: /where\.push\(`d\.id = \$\$\{values\.length\}::uuid`\)/ },
