@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^(cash_advances|deductions|disputes)$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^escrow_record\\.list$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["escrow_record.list"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-driver-finance-reverse-leaves";
@@ -11,7 +11,15 @@ const files = {
   disputeHook: "apps/frontend/src/hooks/useSettlementDisputes.ts",
   banking: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
   safety: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
+  driversMatrix: "docs/specs/scoreboard/modules/drivers.required.json",
+  safetyMatrix: "docs/specs/scoreboard/modules/safety.required.json",
+  self: "scripts/verify-driver-finance-reverse-leaves.mjs",
 };
+const REQUIRED = { driversMatrix: ["cash_advances", "deductions", "disputes"], safetyMatrix: ["escrow_record.list"] };
+const HEADERS = [
+  '/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["escrow_record.list"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */',
+];
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 function audit(s) {
@@ -48,6 +56,13 @@ function audit(s) {
   if (!/dataTestId="escrow-records-filter-driver"/.test(s.safety) || !/allowCreate=\{false\}/.test(s.safety) || !/setDriverFilter/.test(s.safety)) {
     failures.push("safety escrow list EntityPicker driver filter missing");
   }
+  for (const [key, ids] of Object.entries(REQUIRED)) {
+    try {
+      const matrix = JSON.parse(s[key]);
+      for (const id of ids) if (!matrix.leaves?.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`${key}:${id} must require reverse_link`);
+    } catch { failures.push(`${key} must parse`); }
+  }
+  for (const header of HEADERS) if (!s.self.split("\n").includes(header)) failures.push(`exact Built header missing: ${header}`);
   return failures;
 }
 
@@ -96,7 +111,24 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(LABEL + " SELFTEST PASS — " + mutations.length + "/" + mutations.length + " production-source mutations detected");
+  let caught = mutations.length;
+  for (const [key, ids] of Object.entries(REQUIRED)) for (const id of ids) {
+    const candidate = { ...source, [key]: source[key].replace(`"id": "${id}"`, `"id": "${id}.removed"`) };
+    if (!audit(candidate).some((failure) => failure.includes(`${key}:${id}`))) {
+      console.error(`${LABEL} SELFTEST FAIL — Required mutation escaped: ${key}:${id}`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const header of HEADERS) {
+    const candidate = { ...source, self: source.self.replace(header, `${header}.removed`) };
+    if (!audit(candidate).some((failure) => failure.includes("exact Built header missing"))) {
+      console.error(`${LABEL} SELFTEST FAIL — header mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length + 6} production/evidence mutations detected`);
   process.exit(0);
 }
 
