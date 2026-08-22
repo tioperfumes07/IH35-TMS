@@ -542,7 +542,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
-      const filters: string[] = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
+      // ACCT-F5789 — EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL ("archived_at IS NULL") used to be
+      // unconditional, directly contradicting the status=inactive branch's own "deactivated_at IS NOT
+      // NULL" filter (archived_at and deactivated_at are stamped together by the same deactivate-
+      // customer write path, confirmed live) — status=inactive could never return a row regardless of
+      // real data, compounding the same RLS contradiction fixed for vendors (ACCT-F5768). Skip it only
+      // for the explicit inactive request; every other status value keeps the exclusion unchanged.
+      const filters: string[] = status === "inactive" ? [] : [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       let searchContainsIdx: number | null = null;
@@ -571,21 +577,37 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         filters.push(`customer_type = $${values.length}`);
       }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+
+      // ACCT-F5789 — customers_select's RLS policy requires deactivated_at IS NULL for any
+      // non-bypass reader, which directly contradicts status=inactive's own deactivated_at IS NOT
+      // NULL filter above — route that ONE branch through the same-company-scoped SECURITY DEFINER
+      // resolver (mirrors mdata.list_vendors_same_company / ACCT-F5768's exact security shape);
+      // every other status value keeps reading mdata.customers directly, unchanged.
+      const fromClause = status === "inactive" ? "mdata.list_customers_same_company($1::uuid)" : "mdata.customers";
+      const fromValues = status === "inactive" ? [resolvedOperatingCompanyId, ...values] : values;
+      const shift = status === "inactive" ? 1 : 0;
+      const shiftedWhereClause =
+        shift > 0 ? whereClause.replace(/\$(\d+)/g, (_m, n) => `$${Number(n) + shift}`) : whereClause;
+
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.customers ${whereClause}`,
-        values
+        `SELECT count(*)::int AS total FROM ${fromClause} ${shiftedWhereClause}`,
+        fromValues
       );
-      values.push(limit);
-      values.push(offset);
+      fromValues.push(limit);
+      fromValues.push(offset);
+      // Shift the search-relevance ORDER BY's own placeholder refs by the same amount as the WHERE
+      // clause above — they were captured before status=inactive's extra leading $1 was prepended.
+      const shiftedSearchContainsIdx = searchContainsIdx !== null ? searchContainsIdx + shift : null;
+      const shiftedSearchPrefixIdx = searchPrefixIdx !== null ? searchPrefixIdx + shift : null;
       const orderClause =
-        searchContainsIdx && searchPrefixIdx
+        shiftedSearchContainsIdx && shiftedSearchPrefixIdx
           ? `
           ORDER BY
             CASE
-              WHEN customer_code ILIKE $${searchPrefixIdx} THEN 400
-              WHEN customer_name ILIKE $${searchPrefixIdx} THEN 300
-              WHEN customer_code ILIKE $${searchContainsIdx} THEN 250
-              WHEN customer_name ILIKE $${searchContainsIdx} THEN 200
+              WHEN customer_code ILIKE $${shiftedSearchPrefixIdx} THEN 400
+              WHEN customer_name ILIKE $${shiftedSearchPrefixIdx} THEN 300
+              WHEN customer_code ILIKE $${shiftedSearchContainsIdx} THEN 250
+              WHEN customer_name ILIKE $${shiftedSearchContainsIdx} THEN 200
               ELSE 100
             END DESC,
             created_at DESC
@@ -594,13 +616,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT ${CUSTOMER_SELECT_COLUMNS}
-          FROM mdata.customers
-          ${whereClause}
+          FROM ${fromClause}
+          ${shiftedWhereClause}
           ${orderClause}
-          LIMIT $${values.length - 1}
-          OFFSET $${values.length}
+          LIMIT $${fromValues.length - 1}
+          OFFSET $${fromValues.length}
         `,
-        values
+        fromValues
       );
       const mapped = res.rows.map((row) => mapCustomerRow(row, canReadTaxId(authUser.role)));
       const customerIds = mapped.map((row) => String(row["id"] ?? ""));
