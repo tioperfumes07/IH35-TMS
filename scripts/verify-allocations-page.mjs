@@ -68,6 +68,48 @@ function assertAllocationsPage() {
       manifest,
     })
   );
+  errors.push(
+    ...assertCreatePath({
+      panel: read("apps/frontend/src/components/allocation/BillAllocationPanel.tsx"),
+      routes: read("apps/backend/src/accounting/bills.routes.ts"),
+    })
+  );
+  return errors;
+}
+
+/** Re-allocation must remain a selected-company POST into the canonical append/supersede ledger. */
+export function assertCreatePath({ panel, routes }) {
+  const errors = [];
+  if (!/new URLSearchParams\(\{ operating_company_id: companyId \}\)/.test(panel)) {
+    errors.push("BillAllocationPanel must scope re-allocation to the selected operating company");
+  }
+  if (!/\/api\/v1\/accounting\/bills\/\$\{billId\}\/allocate\?\$\{params\.toString\(\)\}/.test(panel)) {
+    errors.push("BillAllocationPanel must POST to the canonical bill allocate route");
+  }
+  if (!/method:\s*"POST"/.test(panel) || !/body:\s*JSON\.stringify\(body\)/.test(panel)) {
+    errors.push("BillAllocationPanel must submit the selected allocation method/assets as JSON");
+  }
+  const route = routes.match(/app\.post\("\/api\/v1\/accounting\/bills\/:id\/allocate"[\s\S]*?return \{ rows: billAllocation\.rows \};\n\s*\}\);/)?.[0] ?? "";
+  if (!route) {
+    errors.push("backend canonical POST /accounting/bills/:id/allocate handler missing");
+    return errors;
+  }
+  if (!/assertCompanyMembership\([^,]+,\s*query\.data\.operating_company_id\)/.test(route) ||
+      !/withCompanyScope\([^,]+,\s*query\.data\.operating_company_id/.test(route)) {
+    errors.push("allocation POST must authorize and execute inside the selected company scope");
+  }
+  if (!/FROM accounting\.bills[\s\S]{0,180}?operating_company_id = \$2::uuid/.test(route)) {
+    errors.push("allocation POST must resolve the source bill in the selected company");
+  }
+  if (!/FROM mdata\.assets[\s\S]{0,160}?tenant_id = \$1[\s\S]{0,120}?id = ANY\(\$2::uuid\[\]\)/.test(route)) {
+    errors.push("allocation POST must resolve every selected asset in the selected company");
+  }
+  if (!/UPDATE accounting\.bill_unit_allocation[\s\S]{0,220}?superseded_reason = 'reallocate'[\s\S]{0,180}?bill_id = \$1[\s\S]{0,100}?tenant_id = \$2/.test(route)) {
+    errors.push("re-allocation must supersede only the bill's active same-company allocation rows");
+  }
+  if (!/INSERT INTO accounting\.bill_unit_allocation\s*\([\s\S]{0,300}?tenant_id,[\s\S]*?bill_id,[\s\S]*?asset_id,[\s\S]*?allocation_method,[\s\S]*?allocation_pct,[\s\S]*?allocated_amount_cents/.test(route)) {
+    errors.push("allocation POST must persist the canonical company/bill/asset allocation row");
+  }
   return errors;
 }
 
@@ -124,6 +166,8 @@ function selftest() {
     billDetail: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx"),
     entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
     manifest: read("apps/frontend/src/routes/manifest.tsx"),
+    panel: read("apps/frontend/src/components/allocation/BillAllocationPanel.tsx"),
+    routes: read("apps/backend/src/accounting/bills.routes.ts"),
   };
   const without = (key, pattern) => assertLinkage({ ...live, [key]: live[key].replace(pattern, "") });
 
@@ -166,12 +210,30 @@ function selftest() {
     }
   }
 
+  const createCases = [
+    ["selected-company query", "panel", /new URLSearchParams\(\{ operating_company_id: companyId \}\)/, /selected operating company/],
+    ["canonical POST URL", "panel", /\/api\/v1\/accounting\/bills\/\$\{billId\}\/allocate\?\$\{params\.toString\(\)\}/, /canonical bill allocate route/],
+    ["POST method", "panel", /method:\s*"POST"/, /submit the selected allocation/],
+    ["company scope wrapper", "routes", /withCompanyScope\(String\(user\.uuid\), query\.data\.operating_company_id/g, /authorize and execute inside/],
+    ["same-company bill", "routes", /AND operating_company_id = \$2::uuid/g, /source bill in the selected company/],
+    ["same-company assets", "routes", /WHERE tenant_id = \$1/g, /every selected asset in the selected company/],
+    ["supersede reason", "routes", /superseded_reason = 'reallocate'/g, /supersede only/],
+    ["canonical insert", "routes", /INSERT INTO accounting\.bill_unit_allocation/g, /persist the canonical/],
+  ];
+  for (const [name, key, pattern, expected] of createCases) {
+    const mutated = { panel: live.panel, routes: live.routes, [key]: live[key].replace(pattern, "") };
+    const found = assertCreatePath(mutated);
+    if (!found.some((error) => expected.test(error))) {
+      problems.push(`planted create regression "${name}" was NOT caught — assertion is ineffective`);
+    }
+  }
+
   if (problems.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const p of problems) console.error("  •", p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — live sources clean; ${cases.length} planted regression caught`);
+  console.log(`${LABEL} SELFTEST PASS — live sources clean; ${cases.length + createCases.length} planted regressions caught`);
 }
 
 /** Re-runs the duplicate-mount assertion against an index.ts that DOES manually register. */
