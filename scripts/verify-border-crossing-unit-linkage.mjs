@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch","fleet"],"cols":["unit","connectivity","picker_law"],"leafRe":"^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history|unit\\.profile\\.border_crossings_reverse)$","task":"THEATER-BORDER-CROSSING-UNIT-LEAFRE"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.border_crossings_reverse"],"task":"FLEET-F5911-BORDER-CROSSING-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.border_crossings_reverse"],"task":"FLEET-F5942-BORDER-CROSSING-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 // LINK-THEATER-01 narrowing (2026-08-14) + inventory close (2026-08-19): real tracked leaves are
 // dispatch.wizard.border_crossing_wizard_page, queues.border_history, and
 // unit.profile.border_crossings_reverse (UnitBorderCrossingsReverseSection mounted on VehicleProfilePage).
@@ -23,6 +24,7 @@ const files = {
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.border_crossings_reverse"],"task":"FLEET-F5911-BORDER-CROSSING-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.border_crossings_reverse"],"task":"FLEET-F5942-BORDER-CROSSING-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 function fleetLeaf(text) {
   const matrix = JSON.parse(text);
   let found;
@@ -62,9 +64,11 @@ function audit(s) {
   if (!leaf) failures.push("fleet.required.json missing unit.profile.border_crossings_reverse leaf for the mounted reverse section");
   else {
     if (!leaf.required?.includes("reverse_link")) failures.push("fleet border-crossing leaf must require reverse_link");
+    if (!leaf.required?.includes("connectivity")) failures.push("fleet border-crossing leaf must require connectivity");
     if (leaf.route_hint !== "/fleet/units/:id") failures.push("fleet border-crossing leaf must mount on canonical unit profile route");
   }
   if (!s.self.split('import fs from "node:fs";')[0].includes(EXACT_HEADER)) failures.push("exact Fleet border-crossing reverse Built header missing");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet border-crossing connectivity Built header missing");
   if (/"guard"\s*:\s*"scripts\/verify-border-crossing-unit-linkage\.mjs"/.test(s.feed)) failures.push("manual feed duplicates border-crossing guard ownership");
   if (!/u\.id::text AS unit_id[\s\S]{0,80}u\.unit_number/.test(s.detectorHistory)
       || !/LEFT JOIN mdata\.units u/.test(s.detectorHistory)
@@ -96,6 +100,8 @@ if (process.argv.includes("--selftest")) {
     ["exact-reverse", "fleetRequired", source.fleetRequired, mutateFleetLeaf(source.fleetRequired, (leaf) => { leaf.required = leaf.required.filter((col) => col !== "reverse_link"); })],
     ["exact-route", "fleetRequired", source.fleetRequired, mutateFleetLeaf(source.fleetRequired, (leaf) => { leaf.route_hint = "/fleet/trailers/:id"; })],
     ["exact-header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["exact-connectivity", "fleetRequired", source.fleetRequired, mutateFleetLeaf(source.fleetRequired, (leaf) => { leaf.required = leaf.required.filter((col) => col !== "connectivity"); })],
+    ["connectivity-header", "self", CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "unit")],
     ["duplicate-feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-border-crossing-unit-linkage.mjs"},`],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
