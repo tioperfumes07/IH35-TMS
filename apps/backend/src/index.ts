@@ -369,9 +369,6 @@ import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes
 import { registerDriverOperationsDepthRoutes } from "./master-data/drivers/operations-depth/routes.js";
 import { registerCustomerFreeTimeDetentionRoutes } from "./master-data/customers/free-time-detention.routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
-import { registerRecurringTemplateDetailRoutes } from "./accounting/recurring-template-detail.routes.js";
-import { registerPeriodCloseDetailRoutes } from "./accounting/period-close-detail.routes.js";
-import { registerScheduleRowDetailRoutes } from "./accounting/schedule-row-detail.routes.js";
 import { registerDriverReimbursementDetailRoutes } from "./accounting/driver-reimbursement-detail.routes.js";
 import { registerCashFlowRoutes } from "./accounting/cash-flow.routes.js";
 import { registerCashForecastRoutes } from "./accounting/cash-forecast.routes.js";
@@ -1144,11 +1141,17 @@ async function main() {
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
   await registerAccountingRoutes(app);
-  // ACCT-F5726 — exact reverse readers are standalone route files, not part of accounting/index.ts.
-  // Without explicit registration their FE detail routes mounted but every API call returned 404.
-  await registerRecurringTemplateDetailRoutes(app);
-  await registerPeriodCloseDetailRoutes(app);
-  await registerScheduleRowDetailRoutes(app);
+  // ACCT-F5726 / DUPLICATE-ROUTE-BOOT-CRASH — only driver-reimbursement-detail is mounted here.
+  // registerAccountingRoutes() above runs @fastify/autoload over this directory with
+  // matchFilter /\.routes\.(ts|js)$/, so any accounting route file that has a
+  // `export default fp(...)` is ALREADY mounted by it. recurring-template-detail,
+  // period-close-detail and schedule-row-detail all export that default, so registering them
+  // again here threw `Method 'GET' already declared for route` inside main() BEFORE app.listen(),
+  // as an unhandled rejection: the process stayed alive but never listened, so every instance sat
+  // RUNNING/ready=false and Render cancelled the deploy at its 15-minute health-check limit.
+  // driver-reimbursement-detail.routes.ts has NO default export, so autoload skips it and it
+  // genuinely does need this explicit mount — that is the 404 the original fix was chasing.
+  // Adding a new accounting route file: give it `export default fp(...)` and add NOTHING here.
   await registerDriverReimbursementDetailRoutes(app);
   // 0441-mod10: explicit mount — accounting autoload alone left these as silent orphans in route audits.
   await registerCashFlowRoutes(app);
