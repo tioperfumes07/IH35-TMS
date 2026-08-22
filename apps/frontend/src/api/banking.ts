@@ -325,6 +325,7 @@ export type Transfer = {
   /** BANK-DOM-05: joins initiator+counterparty legs when set. */
   intercompany_transfer_group_id?: string | null;
   counterparty_company_id?: string | null;
+  counterparty_code?: string | null;
   intercompany_leg?: "initiator" | "counterparty" | string | null;
   revoked_at: string | null;
   revoked_reason: string | null;
