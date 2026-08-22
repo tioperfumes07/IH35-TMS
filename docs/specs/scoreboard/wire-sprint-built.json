@@ -1632,24 +1632,6 @@
       "leafRe": "^(damage|trailer|cargo|incident|driver|load|profile|create)"
     },
     {
-      "task": "ACCIDENT-DRIVER-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-accident-driver-reverse.mjs",
-      "modules": [
-        "safety",
-        "drivers",
-        "dispatch"
-      ],
-      "cols": [
-        "driver",
-        "load",
-        "connectivity",
-        "reverse_link",
-        "picker_law"
-      ],
-      "leafRe": "^(accident|driver|load|profile|detail|create)"
-    },
-    {
       "task": "TRAINING-RECORD-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-training-record-driver-reverse.mjs",
