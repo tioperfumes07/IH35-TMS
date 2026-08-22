@@ -36,6 +36,17 @@ const routeSources = [
   "apps/frontend/src/router/route-manifest.ts",
 ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
 
+function auditChildren(runner = spawnSync) {
+  const failures = [];
+  for (const guard of COMPOSED) {
+    for (const args of [[], ["--selftest"]]) {
+      const result = runner(process.execPath, [`scripts/${guard}`, ...args], { encoding: "utf8" });
+      if (result.status !== 0) failures.push(`${guard}${args.length ? " --selftest" : ""} failed:\n${result.stdout ?? ""}${result.stderr ?? ""}`);
+    }
+  }
+  return failures;
+}
+
 if (process.argv.includes("--selftest")) {
   const target = reverseLeaves.find((leaf) => leaf.module === "dispatch" && leaf.route === "/dispatch/assignment-history");
   const mutated = routeSources.replace('path="/dispatch/assignment-history"', 'path="/dispatch/assignment-history-removed"');
@@ -44,15 +55,25 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-wave-b-reverse-link-all-modules SELFTEST FAIL — removed reverse route was not detected");
     process.exit(1);
   }
-  console.log("verify-wave-b-reverse-link-all-modules SELFTEST PASS — removed reverse route detected");
+  let rejected = 1;
+  for (const targetGuard of COMPOSED) {
+    const plantedRunner = (_node, args) => ({
+      status: args[0] === `scripts/${targetGuard}` && args[1] === "--selftest" ? 1 : 0,
+      stdout: "",
+      stderr: "planted child selftest failure",
+    });
+    if (!auditChildren(plantedRunner).some((failure) => failure.startsWith(`${targetGuard} --selftest failed:`))) {
+      console.error(`verify-wave-b-reverse-link-all-modules SELFTEST FAIL — ${targetGuard} failure was not propagated`);
+      process.exit(1);
+    }
+    rejected += 1;
+  }
+  console.log(`verify-wave-b-reverse-link-all-modules SELFTEST PASS — ${rejected}/${COMPOSED.length + 1} route/child defects rejected`);
   process.exit(0);
 }
 
 const failures = auditConnectivity(routeSources, [...reverseLeaves, ...collectRequiredConnectivity()]);
-for (const guard of COMPOSED) {
-  const result = spawnSync(process.execPath, [`scripts/${guard}`], { encoding: "utf8" });
-  if (result.status !== 0) failures.push(`${guard} failed:\n${result.stdout}${result.stderr}`);
-}
+failures.push(...auditChildren());
 // LINK-F5171 (2026-08-14): honest per-leaf sweep dropped 123 false-blanket reverse_link Required
 // markings (376 -> 252, real gaps stay Required). Floor corrected to match — same class of fix as
 // LINK-F5168's driver-column floor correction. Never raise this back toward 300 to "cover" a future
@@ -62,4 +83,4 @@ if (failures.length) {
   console.error(`verify-wave-b-reverse-link-all-modules FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`verify-wave-b-reverse-link-all-modules PASS — ${reverseLeaves.length} reverse-link leaves + 14 canonical guards`);
+console.log(`verify-wave-b-reverse-link-all-modules PASS — ${reverseLeaves.length} reverse-link leaves + 14 canonical guards and selftests`);
