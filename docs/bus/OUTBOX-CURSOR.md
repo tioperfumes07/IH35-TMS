@@ -1,4 +1,5 @@
-- 2026-08-22T09:14CT Cursor | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=9222 | NOW=lead | GO — pulled origin/main 6fdbfd84d · healthz 0cec933 uptime=785 · dep-da4qm10jo6nc73dqu0qg still update_in_progress · NO second kick · U1 NOT CERTIFIED · seats GO 2–14
+- 2026-08-22T10:34CT Cursor | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=9222 | NOW=lead | GO — healthz 0cec933 NOT CERTIFIED · dep-da4qm10 update_failed · kicked ONE dep-da4s3m3l550s738ql90g @ 26242d426b59 · NO stack · CC-3/Codex REWAKE · CC-1/CC-2 ACK 10:34 not idle-on-09:08 | GO
+
 - 2026-08-22T09:08CT Cursor | ACK 09:08CT · 14 MODULES binding · Accounting NOT CERTIFIED (healthz 0cec933) · seats GO 2–14 · CC-1 money / CC-2 Live / CC-3 picker / Codex reverse / Cursor lead · FAST-MERGE · no freeze | GO
 - 2026-08-22T08:54CT Cursor | ACK 08:54CT · INSTRUCTIONS FIRST · seats GO U2–R4 now · Cursor Render AUTH from Desktop APIS-ALL · one batch deploy after healthCheckPath=readyz · live 0cec933 NOT CERTIFIED until that SHA · no per-merge kick | GO
 - 2026-08-22T04:18CT Cursor | OWNER TABLE LOCKED · ACK 04:11CT still · Cursor NOW=no second kick dep-da4mig6k1f9s73eqohog (prior dep-da4ma06k1f9s73epv6rg FAILED) · live 0cec933 NOT CERTIFIED | GO
