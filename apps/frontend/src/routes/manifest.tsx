@@ -286,6 +286,7 @@ const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQue
 const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
 const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/LoansAdvancesPage").then((m) => ({ default: m.LoansAdvancesPage })));
 const AccountingLeaseDetailPage = React.lazy(() => import("../pages/accounting/AccountingLeaseDetailPage").then((m) => ({ default: m.AccountingLeaseDetailPage })));
+const AccountingRecurringTemplateDetailPage = React.lazy(() => import("../pages/accounting/AccountingRecurringTemplateDetailPage").then((m) => ({ default: m.AccountingRecurringTemplateDetailPage })));
 const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
@@ -4175,6 +4176,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
         <Route path="/accounting/leases/:id" element={<ProtectedRoute><AccountingLeaseDetailPage /></ProtectedRoute>} />
+        <Route path="/accounting/recurring-templates/:id" element={<ProtectedRoute><AccountingRecurringTemplateDetailPage /></ProtectedRoute>} />
         {/* Accounting PR 3/6 — FH-7 §3.14 Allocations tab: read-only rollup of bill_unit_allocation. */}
         <Route path="/accounting/allocations" element={<ProtectedRoute><AllocationsPage /></ProtectedRoute>} />
         {/* FIN-23 — QBO reconcile / modify captures (read-only, behind QBO_RECONCILE_UI_ENABLED). */}
