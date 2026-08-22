@@ -181,7 +181,7 @@ export function ManualJEListPage() {
             <EntityLink
               kind="bank_transaction"
               id={entry.matched_bank_transaction_id}
-              label={entityLabel(null, entry.matched_bank_transaction_id, "Bank transaction")}
+              label={entityLabel(entry.matched_bank_transaction_description, entry.matched_bank_transaction_id, "Bank transaction")}
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
