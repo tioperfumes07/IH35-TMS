@@ -37,11 +37,14 @@ export function auditLoadColumn(sources, leaves) {
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
   // dropped `load`+`reverse_link` from unit.profile.trip_cost (a ZIP-only estimator with no
   // load select/create/reverse drill — the leaf never should have claimed a load dependency it
-  // didn't have). Re-verified against the live required.json files, not board prose: 131 total /
-  // 97 P10 / 18 modules, all three floors now hold exactly at the honest count. This floor may
+  // didn't have). #13510 then removed the same false load/reverse inflation from
+  // `unit.edit.quick_availability`: it patches unit availability/default-driver attributes and owns
+  // no load picker, payload FK, or reverse relationship. Re-verified against the current
+  // required.json files, not board prose: 130 total / 97 P10 / 18 modules, all three floors now
+  // hold exactly at the honest count. This floor may
   // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
   // load leaf actually being built.
-  if (leaves.length < 131) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  if (leaves.length < 130) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   if (new Set(leaves.map((leaf) => leaf.module)).size < 18) failures.push("load module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical load FK/link contract missing`);
@@ -52,10 +55,12 @@ const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, f
 if (process.argv.includes("--selftest")) {
   const plantedP10Leaf = leaves.find((leaf) => P10.has(leaf.module));
   if (!auditLoadColumn(sources, leaves.filter((leaf) => leaf !== plantedP10Leaf)).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  const plantedAllModuleLeaf = leaves.find((leaf) => !P10.has(leaf.module));
+  if (!plantedAllModuleLeaf || !auditLoadColumn(sources, leaves.filter((leaf) => leaf !== plantedAllModuleLeaf)).some((failure) => failure.includes("all-module load inventory"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — all-module inventory mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"] = mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"].replaceAll('kind="load"', 'kind="unit"');
   if (!auditLoadColumn(mutated, leaves).some((failure) => failure.includes("DispatcherActiveLoadsPanel"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
-  console.log("verify-wave-a-load-all-modules SELFTEST PASS — P10 and all-module mutations detected"); process.exit(0);
+  console.log("verify-wave-a-load-all-modules SELFTEST PASS — P10 inventory, all-module inventory, and canonical drill mutations detected"); process.exit(0);
 }
 const failures = auditLoadColumn(sources, leaves);
 for (const guard of composed) { if (!fs.existsSync(path.join(ROOT, "scripts", guard))) continue; const result = spawnSync(process.execPath, [path.join(ROOT, "scripts", guard)], { encoding: "utf8" }); if (result.status !== 0) failures.push(`${guard}: composed guard failed\n${result.stdout}${result.stderr}`); }

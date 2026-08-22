@@ -14,7 +14,11 @@ import fs from "node:fs";
 const checks = [
   ["pre-settlement first-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.first_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.first_load_number\}/],
   ["pre-settlement last-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.last_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.last_load_number\}/],
-  ["banking matched-load drill", "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx", /<EntityLink kind="load" id=\{t\.matched_load_id\}/],
+  // BANK-F5765 — the old assertion pointed at BankingPlaidConnectionsPanel's connection-management
+  // shell and a retired `t.matched_load_id` row shape. The mounted transaction register now resolves
+  // categorization_load_id OR matched_load_id into one canonical id/number pair, then renders that
+  // exact pair as the operator's load drill. Keep id + human label bounded inside one JSX tag.
+  ["banking resolved-load drill", "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", /<EntityLink[^>]{0,180}?kind="load"[^>]{0,180}?id=\{tx\.resolved_load_id\}[^>]{0,220}?label=\{entityLabel\(tx\.resolved_load_number,\s*tx\.resolved_load_id,\s*"Load"\)\}/],
   ["expense create load FK", "apps/frontend/src/components/expenses/recordExpenseSubmit.ts", /values\.loadId\s*\?\s*\{\s*load_id:\s*values\.loadId\s*\}/],
   ["insurance claim create load FK", "apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /load_id:\s*form\.load_id\s*\|\|\s*null/],
   ["border crossing create load FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /load_id:\s*form\.loadId\s*\|\|\s*undefined/],
