@@ -31,8 +31,14 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "bill";
     case "customer_payment":
     case "payment":
-    case "bill_payment":
       return "payment";
+    case "bill_payment":
+      return "bill_payment";
+    case "driver_advance":
+    case "cash_advance":
+      return "cash_advance";
+    case "transfer":
+      return "transfer";
     case "expense":
       return "expense";
     case "settlement":
@@ -180,7 +186,7 @@ export function PostingLineagePage() {
               <>
                 {" / "}
                 <PostingEntityLink
-                  type={row.linked_object_type}
+                  type={row.linked_object_entity_kind ?? row.linked_object_type}
                   id={row.linked_object_id}
                   label={entityLabel(null, row.linked_object_id, "Linked object")}
                 />
