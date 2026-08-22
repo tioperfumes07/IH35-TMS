@@ -820,11 +820,23 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           jep.id AS journal_entry_posting_id,
           jep.line_sequence,
           jep.source_transaction_type,
+          CASE
+            WHEN jep.source_transaction_type IN ('customer_payment', 'payment') THEN 'payment'
+            WHEN jep.source_transaction_type = 'bill_payment' THEN 'bill_payment'
+            WHEN jep.source_transaction_type = 'driver_advance' THEN 'cash_advance'
+            ELSE jep.source_transaction_type
+          END AS source_entity_kind,
           jep.source_transaction_id,
           jep.source_transaction_line_id,
           jep.posting_batch_id::text,
           tsl.id AS source_link_id,
           tsl.linked_object_type,
+          CASE
+            WHEN tsl.linked_object_type IN ('customer_payment', 'payment') THEN 'payment'
+            WHEN tsl.linked_object_type = 'bill_payment' THEN 'bill_payment'
+            WHEN tsl.linked_object_type = 'driver_advance' THEN 'cash_advance'
+            ELSE tsl.linked_object_type
+          END AS linked_object_entity_kind,
           tsl.linked_object_id,
           tsl.relationship_role,
           tsl.created_at::text AS source_link_created_at,
