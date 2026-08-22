@@ -2,6 +2,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5882-ROSTER-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5931-ROSTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["roster.kind.all","roster.filter.type"],"task":"FLEET-F5945-ROSTER-FILTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.status_change","trailer.edit","fleet.modal.edit_vehicle","fleet.modal.create_unit","fleet.modal.status_change"],"task":"FLEET-F5950-STATUS-EDIT-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^(home\\.roster|home\\.create_unit|roster\\.kind\\.(all|trucks)|roster\\.filter\\.(type|status_active|status_inshop|status_oos)|roster\\.bulk\\.(status|type|inactivate)|roster\\.row\\.edit_unit)$","task":"LINK-F5167-FLEET-ROSTER-UNIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^fleet\\.modal\\.(edit_vehicle|create_unit|quick_assign)$","task":"LINK-F5167-FLEET-UNIT-MODALS"} */
 /**
@@ -25,6 +26,8 @@ const FILES = {
   editTrailer: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
   editVehicle: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
+  trailerPage: "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+  statusModal: "apps/frontend/src/components/trailer-profile/StatusChangeModal.tsx",
   quickAssignRoute: "apps/backend/src/assignments/quicksave.routes.ts",
   assignmentSchema: "db/migrations/0221_cap9_vehicle_driver_assignments.sql",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
@@ -35,6 +38,8 @@ const REVERSE_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_
 const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["home.roster","home.create_unit","home.create_trailer","roster.bulk.status","roster.bulk.type","roster.bulk.inactivate","roster.row.edit_unit","roster.row.edit_trailer"],"task":"FLEET-F5931-ROSTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const FILTER_CONNECTIVITY_LEAVES = ["roster.kind.all", "roster.filter.type"];
 const FILTER_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["roster.kind.all","roster.filter.type"],"task":"FLEET-F5945-ROSTER-FILTER-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const MODAL_CONNECTIVITY_LEAVES = ["trailer.status_change", "trailer.edit", "fleet.modal.edit_vehicle", "fleet.modal.create_unit", "fleet.modal.status_change"];
+const MODAL_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.status_change","trailer.edit","fleet.modal.edit_vehicle","fleet.modal.create_unit","fleet.modal.status_change"],"task":"FLEET-F5950-STATUS-EDIT-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const REVERSE_LEAVES = [
   "home.roster",
   "home.create_unit",
@@ -174,6 +179,18 @@ export function audit(src) {
   if (!src.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact roster connectivity Built header missing`);
   for (const id of FILTER_CONNECTIVITY_LEAVES) if (!required.leaves?.find((entry) => entry.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   if (!src.self.split("\n").includes(FILTER_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact roster filter connectivity Built header missing`);
+  for (const id of MODAL_CONNECTIVITY_LEAVES) {
+    if (!required.leaves?.find((entry) => entry.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
+  }
+  if (!src.self.split("\n").includes(MODAL_CONNECTIVITY_HEADER)) failures.push(`${FILES.self}: exact Fleet status/edit modal connectivity header missing`);
+  if (!/<StatusChangeModal[\s\S]{0,220}open=\{statusModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,100}companyId=\{companyId\}/.test(src.trailerPage) ||
+      !/putTrailerStatus\(trailerId, companyId, body\)/.test(src.statusModal)) {
+    failures.push(`${FILES.statusModal}: trailer.status_change/fleet.modal.status_change must mount from the trailer route and save the scoped trailer`);
+  }
+  if (!/<EditTrailerModal[\s\S]{0,220}open=\{editModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,120}operatingCompanyId=\{companyId\}/.test(src.trailerPage) ||
+      !/patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/.test(src.editTrailer)) {
+    failures.push(`${FILES.editTrailer}: trailer.edit must mount from the trailer route and patch the scoped trailer`);
+  }
   return failures;
 }
 
@@ -207,6 +224,10 @@ if (process.argv.includes("--selftest")) {
     ["quick-assign-source", "quickAssignRoute", /'manual_override'/, "'quicksave'"],
     ["quick-assign-source-contract", "assignmentSchema", /'manual_override'/, "'removed_override'"],
     ["quick-assign-visible-error", "quickAssign", /setError\(cause instanceof Error \? cause\.message : "Couldn't assign this driver\. Try again\."\)/, "setError(null)"],
+    ["status-modal-mount", "trailerPage", /<StatusChangeModal[\s\S]{0,220}open=\{statusModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,100}companyId=\{companyId\}/, "<StatusChangeModal open={false}"],
+    ["status-modal-save", "statusModal", /putTrailerStatus\(trailerId, companyId, body\)/, "putTrailerStatus(trailerId, '', body)"],
+    ["edit-trailer-mount", "trailerPage", /<EditTrailerModal[\s\S]{0,220}open=\{editModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,120}operatingCompanyId=\{companyId\}/, "<EditTrailerModal open={false}"],
+    ["edit-trailer-save", "editTrailer", /patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/, "patchTrailer(trailerId, '', patchPayload)"],
     ["filter-reverse-applicability", "required", /"id": "roster\.filter\.type",\n\s+"removed": \[\n\s+"reverse_link"\n\s+\]/, '"id": "roster.filter.type",\n          "removed": []'],
     ["filter-reverse-count", "required", /"leaves_touched": 33/, '"leaves_touched": 25'],
     ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
@@ -282,7 +303,19 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + (REVERSE_LEAVES.length * 2) + FILTER_CONNECTIVITY_LEAVES.length + 3} mutations detected`);
+  for (const id of MODAL_CONNECTIVITY_LEAVES) {
+    const mutated = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — modal connectivity Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
+  const wrongModalHeader = { ...good, self: good.self.replace(MODAL_CONNECTIVITY_HEADER, `${MODAL_CONNECTIVITY_HEADER}.broken`) };
+  if (audit(wrongModalHeader).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — exact modal connectivity header mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + (REVERSE_LEAVES.length * 2) + FILTER_CONNECTIVITY_LEAVES.length + 3 + MODAL_CONNECTIVITY_LEAVES.length + 1} mutations detected`);
   process.exit(0);
 }
 
