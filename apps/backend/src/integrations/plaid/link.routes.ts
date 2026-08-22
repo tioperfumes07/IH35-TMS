@@ -616,6 +616,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.is_credit,
           bt.matched_load_id,
           matched_load.load_number AS matched_load_number,
+          COALESCE(bt.categorization_load_id, bt.matched_load_id)::text AS resolved_load_id,
+          COALESCE(l.load_number, matched_load.load_number) AS resolved_load_number,
           bt.matched_bill_id,
           -- ACCT-F5153 (OWNER-EXECUTION-PLAN §2 money-cells sweep): matched_bill_id was selected but
           -- never joined to a human label, so the FE could only ever render a raw UUID or drop the

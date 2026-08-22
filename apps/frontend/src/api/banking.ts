@@ -73,6 +73,9 @@ export type PlaidBankTransaction = {
   matched_load_id: string | null;
   /** BANK-F5662: load_number joined alongside matched_load_id (per-account register labels). */
   matched_load_number?: string | null;
+  /** One canonical display pair for register drills; categorization takes precedence over match. */
+  resolved_load_id?: string | null;
+  resolved_load_number?: string | null;
   matched_bill_id: string | null;
   /** ACCT-F5153: bill.bill_number joined alongside matched_bill_id so the FE can render a real
    * EntityLink label instead of a raw UUID or dropping the reference. */

@@ -1075,15 +1075,11 @@ export function BankingTransactionsDesignView({
                         label={entityLabel(tx.categorization_driver_name, tx.categorization_driver_id, "Driver")}
                       />
                     ) : null}
-                    {tx.categorization_load_id || tx.matched_load_id ? (
+                    {tx.resolved_load_id ? (
                       <EntityLink
                         kind="load"
-                        id={tx.categorization_load_id || tx.matched_load_id}
-                        label={entityLabel(
-                          tx.categorization_load_id ? tx.categorization_load_number : tx.matched_load_number,
-                          tx.categorization_load_id || tx.matched_load_id,
-                          "Load"
-                        )}
+                        id={tx.resolved_load_id}
+                        label={entityLabel(tx.resolved_load_number, tx.resolved_load_id, "Load")}
                       />
                     ) : null}
                     {tx.matched_settlement_id ? (
@@ -1202,12 +1198,12 @@ export function BankingTransactionsDesignView({
           className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
           cellClass: "truncate text-gray-700",
           render: (tx) =>
-            tx.categorization_load_id || tx.matched_load_id ? (
+            tx.resolved_load_id ? (
               <span onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                 <EntityLink
                   kind="load"
-                  id={tx.categorization_load_id || tx.matched_load_id!}
-                  label={entityLabel(tx.categorization_load_number, tx.categorization_load_id || tx.matched_load_id, "Load")}
+                  id={tx.resolved_load_id}
+                  label={entityLabel(tx.resolved_load_number, tx.resolved_load_id, "Load")}
                 />
               </span>
             ) : (
