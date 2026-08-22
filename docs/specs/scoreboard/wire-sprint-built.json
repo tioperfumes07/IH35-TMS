@@ -1699,22 +1699,6 @@
       "leafRe": "^(vendors\\.create|md\\.vendor_details)$"
     },
     {
-      "task": "DRIVER-REPORT-DRIVER-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-driver-report-driver-reverse.mjs",
-      "modules": [
-        "driver-hub",
-        "maintenance",
-        "drivers"
-      ],
-      "cols": [
-        "driver",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^(driver|report|maintenance|profile|detail|create)"
-    },
-    {
       "task": "DRIVER-REPORT-LOAD-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-driver-report-load-reverse.mjs",
