@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["md.customer_details","customers.modal.customer_drill","customers.modal.customer_edit","customers.modal.fmcsaverification"],"task":"CUST-F5922-MODAL-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * Customers qbo_chrome — leaf-specific Built for the 17 leaves only "claimed" by the broad
  * verify-cursor-vertical-qbo-picker-modules.mjs sweep (leafRe: ^(chrome|customers|detail|home|list|
@@ -52,6 +53,16 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-qbo-chrome-leaves";
+const REQUIRED = "docs/specs/scoreboard/modules/customers.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-customers-qbo-chrome-leaves.mjs";
+const EXACT_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["md.customer_details","customers.modal.customer_drill","customers.modal.customer_edit","customers.modal.fmcsaverification"],"task":"CUST-F5922-MODAL-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const EXACT_ROUTES = new Map([
+  ["md.customer_details", "/customers?tab=customer_details"],
+  ["customers.modal.customer_drill", "surface://components/customers/CustomerDrillModal.tsx"],
+  ["customers.modal.customer_edit", "surface://components/customers/CustomerEditModal.tsx"],
+  ["customers.modal.fmcsaverification", "surface://components/customers/FMCSAVerificationModal.tsx"],
+]);
 
 const CHECKS = [
   { name: "list.view_master_detail / list.create: Customers.tsx real Modal variant=drawer create + ActionButton", file: "apps/frontend/src/pages/Customers.tsx", pattern: /<Modal variant="drawer" open=\{createOpen\}[\s\S]*title="Create Customer"/ },
@@ -83,8 +94,25 @@ function runChecks(root = ROOT) {
   return fails;
 }
 
+function runEvidence(requiredSrc, selfSrc, feedSrc) {
+  const fails = [];
+  const required = JSON.parse(requiredSrc);
+  for (const [id, route] of EXACT_ROUTES) {
+    const leaf = required.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("connectivity")) fails.push(`${REQUIRED}: ${id} must require connectivity`);
+    if (leaf?.route_hint !== route) fails.push(`${REQUIRED}: ${id} must name route ${route}`);
+  }
+  if (!selfSrc.split("/**\n * Customers")[0].includes(EXACT_HEADER)) fails.push(`${SELF}: exact modal/detail connectivity header missing`);
+  if (/"guard"\s*:\s*"scripts\/verify-customers-qbo-chrome-leaves\.mjs"/.test(feedSrc)) fails.push(`${FEED}: manual feed duplicates exact modal/detail connectivity`);
+  return fails;
+}
+
 function selftest() {
   const live = runChecks();
+  const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
+  const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+  const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
+  const evidenceLive = runEvidence(requiredGood, selfGood, feedGood);
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".customers-qbo-chrome-selftest-"));
   try {
     for (const c of CHECKS) {
@@ -105,12 +133,41 @@ function selftest() {
     console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
     process.exit(1);
   }
+  if (evidenceLive.length) {
+    console.error(`${LABEL} SELFTEST FAIL evidence:\n- ${evidenceLive.join("\n- ")}`);
+    process.exit(1);
+  }
+  let evidenceCaught = 0;
+  for (const id of EXACT_ROUTES.keys()) {
+    const mutated = requiredGood.replace(`"id": "${id}"`, `"id": "${id}.broken"`);
+    if (mutated === requiredGood || runEvidence(mutated, selfGood, feedGood).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    evidenceCaught++;
+  }
+  for (const [name, selfMutated, feedMutated] of [
+    ["header", selfGood.replace(EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")), feedGood],
+    ["feed", selfGood, feedGood.replace("[", `[{"guard":"scripts/verify-customers-qbo-chrome-leaves.mjs"},`)],
+  ]) {
+    if (runEvidence(requiredGood, selfMutated, feedMutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name} evidence mutation escaped`);
+      process.exit(1);
+    }
+    evidenceCaught++;
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${evidenceCaught} exact connectivity evidence mutations detected`);
   process.exit(0);
 }
 
 if (process.argv.includes("--selftest")) selftest();
 
 const fails = runChecks();
+fails.push(...runEvidence(
+  fs.readFileSync(path.join(ROOT, REQUIRED), "utf8"),
+  fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+  fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+));
 if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
