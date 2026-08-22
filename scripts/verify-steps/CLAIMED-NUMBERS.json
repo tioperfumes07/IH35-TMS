@@ -1,79 +1,4 @@
 {
-  "4305": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-from-load-customer-left-join"
-  },
-  "4301": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-submission-queue-customer-vendor-left-join"
-  },
-  "4297": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-invoice-send-customer-left-join"
-  },
-  "4293": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-payments-detail-customer-left-join"
-  },
-  "4289": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-payments-create-customer-deactivated-fallback"
-  },
-  "4288": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-create-save-disabled-reason"
-  },
-  "4286": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-coa-create-account-type-enum-conversion"
-  },
-  "4285": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-vendors-list-inactive-status-same-company"
-  },
-  "4281": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-vendor-detail-route-readable-when-deactivated"
-  },
-  "4278": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-customer-create-required-field-error-has-toast"
-  },
-  "4277": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-receipts-scope-includes-vendor-invoice-category"
-  },
-  "4273": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-posting-lineage-page-source-type-datalist"
-  },
-  "4274": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-audit-append-event-source-not-uuid-cast"
-  },
-  "4269": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-statements-settings-not-phantom-empty"
-  },
-  "4265": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-chargebacks-fees-view-real-cents-columns"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3154,6 +3079,196 @@
     "claimed_by": "cc-1",
     "purpose": "verify-tonu-coa-additive-and-flag-gated"
   },
+  "4206": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-safety-incidents-cluster-trailer-column"
+  },
+  "4208": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-invoice-create-modal-customer-entitylink"
+  },
+  "4209": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-banking-driver-escrow-uses-accounting-escrow-source"
+  },
+  "4213": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-parts-inventory-purchase-on-conflict-matches-index"
+  },
+  "4214": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-scheduled-reports-crash-resilience"
+  },
+  "4217": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-customer-payment-posts-with-zero-applications"
+  },
+  "4221": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-21",
+    "purpose": "verify-je-source-links-bill-uses-bill-number"
+  },
+  "4225": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-db-pool-budget"
+  },
+  "4229": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-migration-verification-readonly"
+  },
+  "4233": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-account-register-reference-not-uuid"
+  },
+  "4234": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-driver-planner-leave-requests-label-honest"
+  },
+  "4237": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-je-list-memo-resolves-source-name"
+  },
+  "4238": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-combobox-anchor-motion-reposition (renumbered off colliding 4127, see LST-ORPH-04-DUPLICATE-4127 fix)"
+  },
+  "4241": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-banking-escrow-register-settlement-je-link"
+  },
+  "4245": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-reconciliation-workspace-matched-labels-not-null"
+  },
+  "4249": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-factoring-recourse-view-real-cents-columns"
+  },
+  "4253": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-reconciliation-unmatch-clears-all-six-kinds"
+  },
+  "4257": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-parts-invoice-links-void-not-delete"
+  },
+  "4258": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-customer-shipping-country-nullable"
+  },
+  "4261": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-audit-trigger-coverage-abandonment-chargebacks-settlement-disputes"
+  },
+  "4265": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-chargebacks-fees-view-real-cents-columns"
+  },
+  "4269": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-statements-settings-not-phantom-empty"
+  },
+  "4273": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-posting-lineage-page-source-type-datalist"
+  },
+  "4274": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-audit-append-event-source-not-uuid-cast"
+  },
+  "4277": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-receipts-scope-includes-vendor-invoice-category"
+  },
+  "4278": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customer-create-required-field-error-has-toast"
+  },
+  "4281": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-detail-route-readable-when-deactivated"
+  },
+  "4285": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendors-list-inactive-status-same-company"
+  },
+  "4286": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-coa-create-account-type-enum-conversion"
+  },
+  "4288": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-create-save-disabled-reason"
+  },
+  "4289": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-payments-create-customer-deactivated-fallback"
+  },
+  "4293": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-payments-detail-customer-left-join"
+  },
+  "4297": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-send-customer-left-join"
+  },
+  "4301": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-submission-queue-customer-vendor-left-join"
+  },
+  "4302": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-banking-split-customer-reverse"
+  },
+  "4304": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-chargeback-invoice-customer-reverse"
+  },
+  "4305": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-from-load-customer-left-join"
+  },
+  "4306": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-vendor-work-orders-canonical-reverse"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -5138,105 +5253,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1213,
-  "4209": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-banking-driver-escrow-uses-accounting-escrow-source"
-  },
-  "4206": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-safety-incidents-cluster-trailer-column"
-  },
-  "4213": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-parts-inventory-purchase-on-conflict-matches-index"
-  },
-  "4208": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-invoice-create-modal-customer-entitylink"
-  },
-  "4214": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-scheduled-reports-crash-resilience"
-  },
-  "4217": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-customer-payment-posts-with-zero-applications"
-  },
-  "4221": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-21",
-    "purpose": "verify-je-source-links-bill-uses-bill-number"
-  },
-  "4225": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-db-pool-budget"
-  },
-  "4229": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-migration-verification-readonly"
-  },
-  "4233": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-account-register-reference-not-uuid"
-  },
-  "4234": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-driver-planner-leave-requests-label-honest"
-  },
-  "4237": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-je-list-memo-resolves-source-name"
-  },
-  "4241": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-banking-escrow-register-settlement-je-link"
-  },
-  "4238": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-combobox-anchor-motion-reposition (renumbered off colliding 4127, see LST-ORPH-04-DUPLICATE-4127 fix)"
-  },
-  "4245": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-reconciliation-workspace-matched-labels-not-null"
-  },
-  "4249": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-factoring-recourse-view-real-cents-columns"
-  },
-  "4253": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-reconciliation-unmatch-clears-all-six-kinds"
-  },
-  "4257": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-parts-invoice-links-void-not-delete"
-  },
-  "4258": {
-    "claimed_by": "cc-3",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-customer-shipping-country-nullable"
-  },
-  "4261": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-22",
-    "purpose": "verify-audit-trigger-coverage-abandonment-chargebacks-settlement-disputes"
-  }
+  "total_claimed": 1213
 }
