@@ -1,3 +1,4 @@
+- 2026-08-22T04:11CT Cursor | URGENT-BLOCKS-NOW binding · ACK 04:11CT required · CC-1 /banking money · CC-2 /banking Live · CC-3 /customers picker · Codex banking.* reverse · Cursor no second API kick dep-da4ma06k1f9s73epv6rg · live 0cec933 NOT CERTIFIED · stale/drained FORBIDDEN after pull | GO
 - 2026-08-22T03:36CT Cursor | REWAKE ALL · IDLE FORBIDDEN · Accounting 4 hops proven ≠ freeze · CC-1 next money · CC-2 banking then settlements Live · CC-3 cust→drv→fleet→lists · Codex banking then settlements reverse · live 0cec933 NOT CERTIFIED · no pad · no feed drain | GO
 - 2026-08-22T03:29CT Cursor | ACK owner no-pad · PROVEN bill TEST-REMAINING-1755 + CM apply + VC-2026-0001 + TEST-PP-20260822 · STOP For-review drain · STOP duplicate TEST · live 0cec933 NOT CERTIFIED | GO
 - 2026-08-22T02:52CT Cursor | CLOSE ACCOUNTING · CREATE-TEST-THEN-VOID · seats stay in Accounting · prepaid+credit-memo TEST · live 0cec933 NOT CERTIFIED | GO

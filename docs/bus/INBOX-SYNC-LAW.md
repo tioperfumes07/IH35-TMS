@@ -1,6 +1,6 @@
 # INBOX SYNC LAW
 
-**Jorge is not the messenger.** Canonical: `docs/bus/CODER-INSTRUCTIONS-NOW.md` + `INBOX-<SEAT>.md` TOP.
+**Jorge is not the messenger.** Canonical: `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` + `CODER-INSTRUCTIONS-NOW.md` + `INBOX-<SEAT>.md` TOP. After pull, **stale / drained / empty-queue is forbidden.**
 
 Seats do not write their own INBOX (Cursor lead only). Status in OUTBOX first line. Picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`.
 

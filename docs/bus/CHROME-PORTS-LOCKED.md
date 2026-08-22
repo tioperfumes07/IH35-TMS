@@ -9,9 +9,11 @@ Every working seat **must** attach a debug Chrome (MCP / CDP) on **its assigned 
 | **CC-1** | **9223** | Money live create/post proof |
 | **CC-2** | **9224** | Box 4 Live stamps (PROD-VERIFIED) |
 | **CC-3** | **9225** | Built / qbo_chrome / picker live |
-| **Codex** | **9226** | Reverse + connectivity live drill |
+| **Codex** | **9226** | Reverse drill **only after** code reverse (INBOX-NOW: no CDP theater) |
 | Devin-A | 9227 | **PARKED — do not start** |
 | Spare | 9228 · 9229 | Overflow only; announce on OUTBOX |
+
+**NOW URLs:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (2026-08-22 04:11 CT). Stale/drained after `git pull` is a defect.
 
 Target: `https://app.ih35dispatch.com` · USMCA. **Open one leaf URL, prove it, CLOSE THE TAB.** Never leave `/program/matrix` open. Never `refetchIntervalInBackground` Live-Chrome on the scoreboard. Unattended matrix polling starved prod (Mac 24.162.56.21, ~223 KB/response). Client fix #13335; seats must still close old tabs.
 
