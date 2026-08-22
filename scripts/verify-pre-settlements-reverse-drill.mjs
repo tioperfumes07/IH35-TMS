@@ -7,6 +7,7 @@
  *
  * Self-test: node scripts/verify-pre-settlements-reverse-drill.mjs --selftest
  * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["settlements.detail","settlement_close"],"task":"SETL-F5835"}
  */
 import fs from "node:fs";
 
@@ -31,9 +32,21 @@ const F = {
   loadSettlement: "apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx",
   dispatch: "apps/frontend/src/pages/Dispatch.tsx",
   drivers: "apps/frontend/src/pages/Drivers.tsx",
+  settlementsPage: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+  driverSettlements: "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
+  matrix: "docs/specs/scoreboard/modules/settlements.required.json",
+  self: "scripts/verify-pre-settlements-reverse-drill.mjs",
 };
 
 const CHECKS = [
+  { name: "exact detail/close reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.detail","settlement_close"\],"task":"SETL-F5835"\}$/m },
+  { name: "settlement detail selected-company read", file: F.detail, pattern: /queryKey: \["driver-finance", "settlement-detail", settlementId, companyId\][\s\S]{0,160}getSettlement\(settlementId!, companyId\)[\s\S]{0,100}enabled: Boolean\(settlementId && companyId\)/ },
+  { name: "settlement detail route-param mount", file: F.settlementsPage, pattern: /selectedSettlementId = searchParams\.get\("settlement_id"\)[\s\S]{0,10000}selectedSettlementId && activeTab === "settlements"[\s\S]{0,1500}<SettlementDetailPage \/>/ },
+  { name: "driver profile exact settlement return", file: F.driverSettlements, pattern: /kind="settlement"\s+id=\{row\.settlement_id\}[\s\S]{0,160}entityLabel\(row\.week_ending \|\| null, row\.settlement_id, "Settlement"\)/ },
+  { name: "settlement close route mounted", file: F.manifest, pattern: /path="\/driver-finance\/settlement-close"[\s\S]{0,180}<SettlementCloseArrivalPage \/>/ },
+  { name: "settlement close company-scoped list", file: F.close, pattern: /listOpenPreSettlements\(companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\)/ },
+  { name: "settlement close company-driver detail", file: F.close, pattern: /getPreSettlementForDriver\(String\(selectedDriverId\), companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\) && Boolean\(selectedDriverId\)/ },
+  { name: "settlement close exact settlement return", file: F.close, pattern: /kind="settlement"\s+id=\{settlement\.id\}\s+label=\{entityLabel\(settlement\.display_id, settlement\.id, "Settlement"\)\}/ },
   { name: "escrow driver drill", file: F.escrow, pattern: /kind="driver" id=\{row\.driver_id\} label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/ },
   { name: "escrow load drill", file: F.escrow, pattern: /kind="load" id=\{row\.load_id\} label=\{entityLabel\(row\.load_number, row\.load_id, "Load"\)\}/ },
   { name: "escrow bans manual load navigation", file: F.escrow, banned: /navigate\(`\/dispatch\/loads\// },
@@ -69,9 +82,19 @@ function readSources() {
 }
 
 export function collectFailures(sources) {
-  return CHECKS.filter((check) =>
+  const failures = CHECKS.filter((check) =>
     check.banned ? check.banned.test(sources[check.file]) : !check.pattern.test(sources[check.file])
   ).map((check) => check.name);
+  try {
+    const matrix = JSON.parse(sources[F.matrix]);
+    for (const id of ["settlements.detail", "settlement_close"]) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) failures.push(`exact Required ownership: ${id}:reverse_link`);
+    }
+  } catch {
+    failures.push("settlements Required matrix parses");
+  }
+  return failures;
 }
 
 const sources = readSources();
@@ -89,11 +112,15 @@ if (process.argv.includes("--selftest")) {
       : original.replace(check.pattern, "/* planted SETL-F5795 linkage defect */");
     if (planted === original || !collectFailures({ ...sources, [check.file]: planted }).includes(check.name)) inert.push(check.name);
   }
+  for (const id of ["settlements.detail", "settlement_close"]) {
+    const planted = sources[F.matrix].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
+    if (planted === sources[F.matrix] || !collectFailures({ ...sources, [F.matrix]: planted }).includes(`exact Required ownership: ${id}:reverse_link`)) inert.push(`matrix ${id}`);
+  }
   if (inert.length) {
     console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent settlement linkage plants`);
+  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length + 2}/${CHECKS.length + 2} independent settlement linkage plants`);
   process.exit(0);
 }
 
