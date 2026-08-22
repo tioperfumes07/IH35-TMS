@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"],"task":"FLEET-F5933-DOCUMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -45,8 +46,12 @@ function verify(source) {
   for (const [key, id] of requiredReverseLeaves) {
     if (!leaf(source, key, id)?.required?.includes("reverse_link")) failures.push(`${key} ${id} must require reverse_link`);
   }
+  for (const id of ["unit.profile.documents", "trailer.profile.documents"]) {
+    if (!leaf(source, "fleetMatrix", id)?.required?.includes("connectivity")) failures.push(`fleetMatrix ${id} must require connectivity`);
+  }
   need("self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"]', "Drivers documents must have exact reverse Built ownership");
   need("self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"]', "Fleet document leaves must have exact reverse Built ownership");
+  need("self", '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"]', "Fleet document leaves must have exact connectivity Built ownership");
   return failures;
 }
 const source = read();
@@ -71,6 +76,7 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["fleetMatrix", '"id": "trailer.profile.documents"', '"id": "trailer.profile.documents.broken"'],
     ["self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"]', '"modules":["drivers"],"cols":["connectivity"],"leaves":["profiles.documents"]'],
     ["self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"]', '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"]'],
+    ["self", '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"]', '"modules":["fleet"],"cols":["unit"],"leaves":["unit.profile.documents","trailer.profile.documents"]'],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);
