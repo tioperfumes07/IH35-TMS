@@ -1,3 +1,4 @@
+- 2026-08-22T09:08CT Cursor | ACK 09:08CT · 14 MODULES binding · Accounting NOT CERTIFIED (healthz 0cec933) · seats GO 2–14 · CC-1 money / CC-2 Live / CC-3 picker / Codex reverse / Cursor lead · FAST-MERGE · no freeze | GO
 - 2026-08-22T08:54CT Cursor | ACK 08:54CT · INSTRUCTIONS FIRST · seats GO U2–R4 now · Cursor Render AUTH from Desktop APIS-ALL · one batch deploy after healthCheckPath=readyz · live 0cec933 NOT CERTIFIED until that SHA · no per-merge kick | GO
 - 2026-08-22T04:18CT Cursor | OWNER TABLE LOCKED · ACK 04:11CT still · Cursor NOW=no second kick dep-da4mig6k1f9s73eqohog (prior dep-da4ma06k1f9s73epv6rg FAILED) · live 0cec933 NOT CERTIFIED | GO
 - 2026-08-22T04:11CT Cursor | URGENT-BLOCKS-NOW binding · ACK 04:11CT required · CC-1 /banking money · CC-2 /banking Live · CC-3 /customers picker · Codex banking.* reverse · Cursor no second API kick dep-da4ma06k1f9s73epv6rg · live 0cec933 NOT CERTIFIED · stale/drained FORBIDDEN after pull | GO
