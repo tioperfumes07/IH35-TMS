@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(settlements\\.disputes|liabilities\\.list)$","task":"LINK-F5173-driver-settlement-finance-reverse"} */
+/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["settlements.disputes","liabilities.list"],"task":"SETL-F5833"} */
 /**
  * GUARD: the driver's own profile shows settlement disputes and liabilities charged to them
  * (LINK-F5171 reverse_link sweep gaps settlements:disputes / settlements:liabilities.list).
@@ -27,8 +27,9 @@ const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const DISPUTES_TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/settlements.required.json";
+const SELF = "scripts/verify-driver-settlement-finance-reverse-section.mjs";
 const CLAIMED_LEAVES = ["settlements.disputes", "liabilities.list"];
-const FILES = [SECTION, DRIVER_PROFILE, ENTITY_LINK, DISPUTES_TAB, MATRIX];
+const FILES = [SECTION, DRIVER_PROFILE, ENTITY_LINK, DISPUTES_TAB, SELF, MATRIX];
 const LABEL = "verify-driver-settlement-finance-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -42,6 +43,9 @@ export function assertDriverSettlementFinanceReverse(sources) {
   const profile = src[DRIVER_PROFILE];
   const entityLink = src[ENTITY_LINK];
   const disputesTab = src[DISPUTES_TAB];
+  if (!/^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.disputes","liabilities\.list"\],"task":"SETL-F5833"\} \*\/$/m.test(src[SELF])) {
+    problems.push(`${SELF}: exact two-leaf Built annotation missing`);
+  }
   try {
     const matrix = JSON.parse(src[MATRIX]);
     for (const id of CLAIMED_LEAVES) {
@@ -105,6 +109,7 @@ function selftest() {
   }
 
   const plants = [
+    [SELF, /^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.disputes","liabilities\.list"\],"task":"SETL-F5833"\} \*\/$/m, "@matrix-built removed"],
     [SECTION, /driver_id:\s*driverId/, "driver_id: undefined"],
     [SECTION, /getLiabilitiesByDriver\(driverId, operatingCompanyId\)/, "getLiabilitiesByDriver(driverId, '')"],
     [SECTION, /\["settlement-disputes", "reverse-driver", operatingCompanyId, driverId\]/, '["settlement-disputes"]'],
