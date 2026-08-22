@@ -1,3 +1,5 @@
+- 2026-08-22T05:42Z CC-1 | ACCT-F5757 SHIPPED (PR #13936, merge --admin, no CI wait) | closed a stale board row -- LV-EXPENSES-UNAUDITED-AND-ACTORLESS was already fixed (ACT-F5413) and never marked | live-confirmed 23/23 recent expenses actor-stamped | NEXT=continuing to next OPEN money SQL row | GO
+
 - 2026-08-22T05:35Z CC-1 | ACCT-F5756 SHIPPED (PR #13931, merge --admin, no CI wait) | parts-invoice-links DELETE is now an atomic void, not a physical delete | picked up next OPEN money/WORM SQL row (INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE) | NEXT=next OPEN money SQL on the board | GO
   Gate 0 -> push -> claim (migration 202612980000 + verify-step 4257 in one claim PR) -> merge --admin
   -> real fix PR -> merge --admin -> Neon (already applied before the PR even opened) -> OUTBOX. No
