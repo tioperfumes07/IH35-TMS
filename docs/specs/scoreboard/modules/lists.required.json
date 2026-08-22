@@ -2445,7 +2445,7 @@
     {
       "id": "catalog.reference.mexico_states.list",
       "tab": "Reference",
-      "sub": "US States",
+      "sub": "Mexico States",
       "route_hint": "/lists/reference/mexico-states",
       "required": [
         "connectivity"
