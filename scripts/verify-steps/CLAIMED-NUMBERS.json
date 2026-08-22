@@ -1,4 +1,9 @@
 {
+  "4301": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-submission-queue-customer-vendor-left-join"
+  },
   "4297": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
