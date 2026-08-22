@@ -1,3 +1,4 @@
+/** @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leaves":["home"],"task":"DOCS-F5902-HOME-REVERSE-EXACT","vertical":"class-sweep"} */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -15,8 +16,12 @@ const legacyDocumentsPage = read("apps/frontend/src/pages/Documents.tsx");
 const frontendApi = read("apps/frontend/src/api/docs.ts");
 const completion = read("docs/module-completion/docs.json");
 const board = read("docs/audit/GUARD-WORKORDERS.md");
+const matrix = read("docs/specs/scoreboard/modules/docs.required.json");
+const feed = read("docs/specs/scoreboard/wire-sprint-built.json");
+const self = read("scripts/verify-docs-entity-labels.mjs");
+const HEADER = '/** @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leaves":["home"],"task":"DOCS-F5902-HOME-REVERSE-EXACT","vertical":"class-sweep"} */';
 
-const source = { filesRoute, foundationRoute, labelHelper, frontendPage, legacyDocumentsPage, frontendApi, completion, board };
+const source = { filesRoute, foundationRoute, labelHelper, frontendPage, legacyDocumentsPage, frontendApi, completion, board, matrix, feed, self };
 
 function verify(candidate) {
   const failures = [];
@@ -47,6 +52,14 @@ function verify(candidate) {
   if (!/FIXED DEPLOYED \(Codex Live 2026-08-16\):\*\* `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`/.test(candidate.board)) {
     failures.push("docs legacy split-deploy blocker must remain closed with exact deployed evidence");
   }
+  let docsMatrix;
+  try { docsMatrix = JSON.parse(candidate.matrix); } catch (error) { failures.push(`Docs matrix parse: ${error.message}`); }
+  const home = docsMatrix?.leaves?.find((leaf) => leaf.id === "home");
+  if (!home?.required?.includes("reverse_link")) failures.push("docs home must require reverse_link");
+  if (home?.route_hint !== "/docs") failures.push("docs home must name mounted route /docs");
+  if (!candidate.self.split('import { readFileSync }')[0].includes(HEADER)) failures.push("exact docs home header missing");
+  try { if (JSON.parse(candidate.feed).entries?.some((entry) => entry.guard === "scripts/verify-docs-entity-labels.mjs" && entry.cols?.includes("reverse_link"))) failures.push("manual feed duplicates exact Docs reverse ownership"); }
+  catch (error) { failures.push(`feed parse: ${error.message}`); }
   return failures;
 }
 
@@ -67,6 +80,11 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     { file: "legacyDocumentsPage", token: "return firstLink.entity_label ?" },
     { file: "completion", token: "USMCA LIVE PASS after frontend deploy #7821" },
     { file: "board", token: "FIXED DEPLOYED (Codex Live 2026-08-16):** `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`" },
+    { file: "matrix", token: '"id": "home"' },
+    { file: "matrix", token: '"reverse_link"' },
+    { file: "matrix", token: '"route_hint": "/docs"' },
+    { file: "self", token: HEADER },
+    { file: "feed", token: '"entries": [' },
   ];
   mutations.forEach(({ file, token }, index) => {
     const mutated = { ...source, [file]: source[file].replace(token, "BROKEN_DOCS_ENTITY_LABEL_WIRING") };
