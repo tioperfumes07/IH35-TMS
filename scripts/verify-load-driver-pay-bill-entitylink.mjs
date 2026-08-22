@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\\.drawer\\.driver_pay$","task":"LINK-F5171-LOAD-DRIVER-PAY-BILL-DRILL","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.driver_pay"],"task":"DISP-F5858-LOAD-DRIVER-PAY-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * LINK-F5171 — load.drawer.driver_pay reverse: driver bills on the load drawer must be
  * drill-through, not plain entityLabel text with no link at all.
@@ -21,13 +21,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-driver-pay-bill-entitylink";
 const TARGET = "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-load-driver-pay-bill-entitylink.mjs";
+const HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.driver_pay"],"task":"DISP-F5858-LOAD-DRIVER-PAY-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 
 // Comments (including the explanatory one naming kind="bill" as forbidden) must be stripped before
 // scanning for JSX usage — otherwise the comment's OWN citation of the forbidden pattern trips the
 // forbidden-pattern check against itself.
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 
-function audit(src) {
+function audit(src, matrix, self) {
   const failures = [];
   const code = stripComments(src);
   if (!/from ["'].*EntityLink["']/.test(code) && !/from ["']\.\.\/shared\/EntityLink["']/.test(code)) {
@@ -58,22 +61,35 @@ function audit(src) {
       `${TARGET}: must keep the comment explaining driver_finance.driver_bills != accounting.bills (why kind="bill" is forbidden here)`
     );
   }
+  try {
+    const leaf = JSON.parse(matrix).leaves?.find((item) => item.id === "load.drawer.driver_pay");
+    if (!leaf?.required?.includes("reverse_link")) {
+      failures.push(`${MATRIX}: load.drawer.driver_pay must require reverse_link`);
+    }
+  } catch {
+    failures.push(`${MATRIX}: Required matrix must parse`);
+  }
+  if (!self.split("\n").includes(HEADER)) {
+    failures.push(`${SELF}: Built annotation must own exactly load.drawer.driver_pay:reverse_link`);
+  }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const good = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
-  if (audit(good).length) {
-    console.error(`${LABEL} SELFTEST FAIL — live file should pass:`, audit(good));
+  const matrix = fs.readFileSync(path.join(ROOT, MATRIX), "utf8");
+  const self = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+  if (audit(good, matrix, self).length) {
+    console.error(`${LABEL} SELFTEST FAIL — live files should pass:`, audit(good, matrix, self));
     process.exit(1);
   }
   const brokenBillLink = good.replace(/kind=["']settlement["']/, 'kind="bill"');
-  if (!audit(brokenBillLink).length) {
+  if (!audit(brokenBillLink, matrix, self).length) {
     console.error(`${LABEL} SELFTEST FAIL — planted kind="bill" regression not caught`);
     process.exit(1);
   }
   const droppedDriverLink = good.replace(/kind=["']driver["']/, 'kind="unit"');
-  if (!audit(droppedDriverLink).length) {
+  if (!audit(droppedDriverLink, matrix, self).length) {
     console.error(`${LABEL} SELFTEST FAIL — planted dropped-driver-link regression not caught`);
     process.exit(1);
   }
@@ -85,16 +101,32 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — comment-drop mutation anchor not found, re-anchor`);
     process.exit(1);
   }
-  if (!audit(droppedComment).length) {
+  if (!audit(droppedComment, matrix, self).length) {
     console.error(`${LABEL} SELFTEST FAIL — planted comment-drop regression not caught`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest OK`);
+  const missingRequired = JSON.parse(matrix);
+  const leaf = missingRequired.leaves.find((item) => item.id === "load.drawer.driver_pay");
+  leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+  if (!audit(good, JSON.stringify(missingRequired), self).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted Required-matrix regression not caught`);
+    process.exit(1);
+  }
+  const wrongHeader = self.replace('"leaves":["load.drawer.driver_pay"]', '"leaves":["load.drawer.factoring"]');
+  if (!audit(good, matrix, wrongHeader).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted exact-header regression not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK — 5/5 runtime/matrix/header defects rejected`);
   process.exit(0);
 }
 
 const src = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
-const failures = audit(src);
+const failures = audit(
+  src,
+  fs.readFileSync(path.join(ROOT, MATRIX), "utf8"),
+  fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+);
 if (failures.length) {
   console.error(`${LABEL} FAIL:`);
   for (const f of failures) console.error(" -", f);
