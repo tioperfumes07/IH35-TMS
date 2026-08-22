@@ -615,6 +615,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.pending,
           bt.is_credit,
           bt.matched_load_id,
+          matched_load.load_number AS matched_load_number,
           bt.matched_bill_id,
           -- ACCT-F5153 (OWNER-EXECUTION-PLAN §2 money-cells sweep): matched_bill_id was selected but
           -- never joined to a human label, so the FE could only ever render a raw UUID or drop the
@@ -712,6 +713,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN mdata.loads l
           ON l.id = bt.categorization_load_id
          AND l.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.loads matched_load
+          ON matched_load.id = bt.matched_load_id
+         AND matched_load.operating_company_id = bt.operating_company_id
         LEFT JOIN catalogs.classes cls
           ON cls.id = bt.categorization_class_id
          AND cls.operating_company_id = bt.operating_company_id

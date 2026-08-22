@@ -1079,7 +1079,11 @@ export function BankingTransactionsDesignView({
                       <EntityLink
                         kind="load"
                         id={tx.categorization_load_id || tx.matched_load_id}
-                        label={entityLabel(tx.categorization_load_number, tx.categorization_load_id || tx.matched_load_id, "Load")}
+                        label={entityLabel(
+                          tx.categorization_load_id ? tx.categorization_load_number : tx.matched_load_number,
+                          tx.categorization_load_id || tx.matched_load_id,
+                          "Load"
+                        )}
                       />
                     ) : null}
                     {tx.matched_settlement_id ? (
