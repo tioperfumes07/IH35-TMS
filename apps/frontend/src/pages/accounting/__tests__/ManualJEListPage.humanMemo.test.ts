@@ -40,6 +40,34 @@ describe("ManualJEListPage humanMemo", () => {
     );
   });
 
+  // LV-JE-MEMO-RECORD-NOT-VISIBLE (229-row residual) — void-cancel-executors.ts writes 3 more
+  // "Void reversal of X" shapes this list never covered before: expense, bill payment, and
+  // customer_payment (memo says "payment"). Plus settlement-posting.service.ts's own
+  // "Void reversal of settlement ... posting" shape.
+  it("labels a Void reversal of expense memo", () => {
+    expect(humanMemo(`Void reversal of expense ${uuid}: owner_void_all_usmca_test`)).toBe(
+      "Expense — not visible: owner_void_all_usmca_test"
+    );
+  });
+
+  it("labels a Void reversal of bill payment memo (not swallowed by the bare 'bill' pattern)", () => {
+    expect(humanMemo(`Void reversal of bill payment ${uuid}: owner_void_all_usmca_test`)).toBe(
+      "Bill payment — not visible: owner_void_all_usmca_test"
+    );
+  });
+
+  it("labels a Void reversal of payment (customer_payment) memo", () => {
+    expect(humanMemo(`Void reversal of payment ${uuid}: owner_void_all_usmca_test`)).toBe(
+      "Payment — not visible: owner_void_all_usmca_test"
+    );
+  });
+
+  it("labels a Void reversal of settlement posting memo", () => {
+    expect(humanMemo(`Void reversal of settlement ${uuid} posting: owner_void_all_usmca_test`)).toBe(
+      "Settlement — not visible posting: owner_void_all_usmca_test"
+    );
+  });
+
   it("labels a self-referential Reversal of <je> memo", () => {
     expect(humanMemo(`Reversal of ${uuid}`)).toBe("Journal entry — not visible");
   });
