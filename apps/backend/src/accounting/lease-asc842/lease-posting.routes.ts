@@ -246,8 +246,13 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
       );
       if (contract.rows.length === 0) return null;
       const assets = await client.query(
-        `SELECT lal.id::text, lal.fixed_asset_id::text, lal.unit_uuid::text, lal.allocated_cost_cents::text
+        `SELECT lal.id::text, lal.fixed_asset_id::text, lal.unit_uuid::text, lal.allocated_cost_cents::text,
+                fa.asset_number, fa.name AS fixed_asset_name, u.unit_number
            FROM accounting.lease_asset_line lal
+           LEFT JOIN accounting.fixed_assets fa
+             ON fa.id = lal.fixed_asset_id AND fa.operating_company_id = lal.operating_company_id
+           LEFT JOIN mdata.units u
+             ON u.id = lal.unit_uuid AND u.operating_company_id = lal.operating_company_id
           WHERE lal.operating_company_id = $1::uuid AND lal.lease_contract_id = $2::uuid AND lal.is_active = true
           ORDER BY lal.created_at ASC`,
         [opco, params.data.lease_id]

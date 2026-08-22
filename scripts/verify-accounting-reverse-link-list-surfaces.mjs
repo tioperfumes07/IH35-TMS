@@ -17,6 +17,7 @@ const AUDIT_TRAIL = "apps/frontend/src/pages/accounting/AccountingAuditTrailPage
 const POSTING_LINEAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.tsx";
 const JE_DETAIL = "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx";
 const AMORTIZATION = "apps/frontend/src/pages/finance/AmortizationPage.tsx";
+const LEASE_DETAIL = "apps/frontend/src/pages/accounting/AccountingLeaseDetailPage.tsx";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -65,6 +66,17 @@ const CHECKS = [
   { name: "Amortization accepts finance-loan deep link", file: AMORTIZATION, pattern: /searchParams\.get\("loan_id"\)/ },
   { name: "Amortization scopes deep-linked schedule read", file: AMORTIZATION, pattern: /getLoanSchedule\(requestedLoanId, companyId\)/ },
   { name: "Amortization persists selected loan in URL", file: AMORTIZATION, pattern: /next\.set\("loan_id", id\)/ },
+  { name: "Audit API canonicalizes lease contract", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "lease_contract":\s*return "lease_contract";/ },
+  { name: "JE source API canonicalizes lease contract", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'lease_contract' THEN 'lease_contract'/ },
+  { name: "EntityLink owns lease-contract route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "lease_contract":\s*return `\/accounting\/leases\/\$\{id\}`;/ },
+  { name: "Lease detail route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/leases\/:id"[\s\S]*?<AccountingLeaseDetailPage/ },
+  { name: "Lease detail uses scoped exact reader", file: LEASE_DETAIL, pattern: /getAccountingLeaseDetail\(id, companyId\)/ },
+  { name: "Lease detail drills fixed asset", file: LEASE_DETAIL, pattern: /kind="fixed_asset" id=\{row\.fixed_asset_id\}/ },
+  { name: "Lease detail drills unit", file: LEASE_DETAIL, pattern: /kind="unit" id=\{row\.unit_uuid\}/ },
+  { name: "Lease detail drills journal entries", file: LEASE_DETAIL, pattern: /kind="journal_entry"/ },
+  { name: "Lease backend resolves human asset labels", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /fa\.asset_number, fa\.name AS fixed_asset_name, u\.unit_number/ },
+  { name: "Lease backend scopes fixed-asset join", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /fa\.id = lal\.fixed_asset_id AND fa\.operating_company_id = lal\.operating_company_id/ },
+  { name: "Lease backend scopes unit join", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /u\.id = lal\.unit_uuid AND u\.operating_company_id = lal\.operating_company_id/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },

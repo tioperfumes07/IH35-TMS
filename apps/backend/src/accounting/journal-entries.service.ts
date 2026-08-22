@@ -827,6 +827,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN jep.source_transaction_type IN ('prepaid_asset', 'prepaid_amortization') THEN 'prepaid_asset'
             WHEN jep.source_transaction_type IN ('fixed_asset', 'fixed_asset_depreciation') THEN 'fixed_asset'
             WHEN jep.source_transaction_type = 'loan' THEN 'finance_loan'
+            WHEN jep.source_transaction_type = 'lease_contract' THEN 'lease_contract'
             ELSE jep.source_transaction_type
           END AS source_entity_kind,
           jep.source_transaction_id,
@@ -841,6 +842,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type IN ('prepaid_asset', 'prepaid_amortization') THEN 'prepaid_asset'
             WHEN tsl.linked_object_type IN ('fixed_asset', 'fixed_asset_depreciation') THEN 'fixed_asset'
             WHEN tsl.linked_object_type = 'loan' THEN 'finance_loan'
+            WHEN tsl.linked_object_type = 'lease_contract' THEN 'lease_contract'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
