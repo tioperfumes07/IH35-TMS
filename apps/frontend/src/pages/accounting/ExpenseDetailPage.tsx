@@ -1,5 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { humanMemo } from "./ManualJEListPage";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getExpense, voidExpense, type ExpenseDetailLine } from "../../api/accounting";
@@ -20,6 +21,15 @@ import { useState } from "react";
 
 function money(cents: number | string | null | undefined) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function expenseHumanNumber(number: unknown): string | null {
+  const n = typeof number === "string" ? number.trim() : "";
+  return n !== "" ? n : null;
+}
+
+function expenseListLabel(number: unknown): string {
+  return expenseHumanNumber(number) ?? "No expense #";
 }
 
 function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn" {
@@ -77,7 +87,7 @@ export function ExpenseDetailPage() {
   const lines = detailQuery.data?.lines ?? [];
   if (!expense) return <div className="p-4 text-sm text-red-600">Expense not found.</div>;
 
-  const displayId = entityLabel(expense.expense_number, expense.id, "Expense");
+  const displayId = expenseListLabel(expense.expense_number);
 
   const lineColumns: Array<ParityColumn<ExpenseDetailLine>> = [
     { key: "line_sequence", label: "Line", sortable: true, render: (line) => line.line_sequence },
@@ -234,7 +244,7 @@ export function ExpenseDetailPage() {
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Expense #</span>
-          <span className="text-sm text-gray-900">{expense.expense_number ?? "—"}</span>
+          <span className="text-sm text-gray-900">{expenseListLabel(expense.expense_number)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
@@ -254,11 +264,11 @@ export function ExpenseDetailPage() {
             <EntityLink
               kind="journal_entry"
               id={expense.journal_entry_id}
-              label={
-                expense.journal_entry_date
-                  ? `${formatDateUS(expense.journal_entry_date)}${expense.journal_entry_memo ? ` — ${expense.journal_entry_memo}` : ""}`
-                  : entityLabel(expense.journal_entry_memo ?? null, expense.journal_entry_id, "Journal entry")
-              }
+              label={humanMemo(
+                expense.journal_entry_memo,
+                expense.id,
+                expenseHumanNumber(expense.expense_number) ?? "Expense",
+              )}
             />
           </DataPanelRow>
         ) : null}

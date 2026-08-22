@@ -14,12 +14,10 @@
  *     EntityLink kind="journal_entry" for row.earn_journal_entry_id, backed by
  *     revenue-leakage.service.ts.
  *   - expenses.list (ExpensesListPage.tsx): real per-row EntityLink kind="expense" with
- *     entityLabel(expense_number, id, "Expense") -- never a raw uuid.
+ *     expenseListLabel (document # or "No expense #") -- never a raw uuid and never a false
+ *     "Expense — not visible" tombstone on a row the operator is looking at.
  *   - expenses.detail (ExpenseDetailPage.tsx): the page's own canonical identity resolved via
- *     entityLabel(expense.expense_number, expense.id, "Expense") -- a detail page does not
- *     self-link, it resolves its own identity honestly, which is the correct evidence shape
- *     for a detail leaf (mirrors the list-vs-detail EntityLink-vs-entityLabel pattern used
- *     throughout this codebase's other verified leaves).
+ *     expenseListLabel -- a detail page does not self-link; empty numbers say "No expense #".
  *
  * Two SIBLING leaves on the same pages were investigated and were false-Required for gl_je
  * (LV-MATRIX-THREE-HONEST-BUILT-GAPS / Box3 floor 2026-08-17):
@@ -76,13 +74,16 @@ export function checkAll(readFile) {
   }
 
   const expensesList = read(FILES.expensesList);
-  if (!/EntityLink kind="expense"[\s\S]{0,20}id=\{r\.id\}[\s\S]{0,60}entityLabel\(r\.expense_number, r\.id, "Expense"\)/.test(expensesList)) {
-    failures.push(`${FILES.expensesList}: list row must EntityLink kind="expense" with entityLabel(expense_number, id, "Expense")`);
+  if (!/EntityLink kind="expense"[\s\S]{0,20}id=\{r\.id\}[\s\S]{0,80}expenseListLabel\(r\.expense_number\)/.test(expensesList)) {
+    failures.push(`${FILES.expensesList}: list row must EntityLink kind="expense" with expenseListLabel (visible row, not tombstone)`);
+  }
+  if (!/No expense #/.test(expensesList) || !/humanMemo\(/.test(expensesList)) {
+    failures.push(`${FILES.expensesList}: must keep No expense # + humanMemo for empty numbers / JE UUID memos`);
   }
 
   const expensesDetail = read(FILES.expensesDetail);
-  if (!/entityLabel\(expense\.expense_number, expense\.id, "Expense"\)/.test(expensesDetail)) {
-    failures.push(`${FILES.expensesDetail}: detail page must resolve its own identity via entityLabel(expense_number, id, "Expense")`);
+  if (!/expenseListLabel\(expense\.expense_number\)/.test(expensesDetail)) {
+    failures.push(`${FILES.expensesDetail}: detail page must resolve its own identity via expenseListLabel (visible expense, not tombstone)`);
   }
 
   // Guard against re-inflation: the two sibling leaves this PR deliberately did NOT tag must stay
@@ -175,12 +176,12 @@ if (process.argv.includes("--selftest")) {
     {
       name: "expenses list drops expense EntityLink",
       file: FILES.expensesList,
-      mutate: (s) => s.replace('<EntityLink kind="expense" id={r.id} label={entityLabel(r.expense_number, r.id, "Expense")} />', "null"),
+      mutate: (s) => s.replace('<EntityLink kind="expense" id={r.id} label={expenseListLabel(r.expense_number)} />', "null"),
     },
     {
       name: "expenses detail drops its own identity resolution",
       file: FILES.expensesDetail,
-      mutate: (s) => s.replace('entityLabel(expense.expense_number, expense.id, "Expense")', '"Expense"'),
+      mutate: (s) => s.replaceAll("expenseListLabel(expense.expense_number)", '"Expense"'),
     },
     {
       name: "trk_bulk_register falsely Requires gl_je again",

@@ -21,6 +21,7 @@ import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { humanMemo } from "./ManualJEListPage";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
@@ -39,6 +40,16 @@ function payeeOf(row: ExpenseListRow): string {
   if (row.vendor_name) return row.vendor_name;
   const name = `${row.driver_first_name ?? ""} ${row.driver_last_name ?? ""}`.trim();
   return name || "—";
+}
+
+/** Visible list row is not "not visible" — empty expense_number is a missing document #, same as Bills. */
+function expenseHumanNumber(number: unknown): string | null {
+  const n = typeof number === "string" ? number.trim() : "";
+  return n !== "" ? n : null;
+}
+
+function expenseListLabel(number: unknown): string {
+  return expenseHumanNumber(number) ?? "No expense #";
 }
 
 function StatusPill({ status }: { status: ExpenseListStatus }) {
@@ -217,7 +228,7 @@ export function ExpensesListPage() {
       key: "expense_number",
       label: "Expense #",
       sortable: true,
-      render: (r) => <EntityLink kind="expense" id={r.id} label={entityLabel(r.expense_number, r.id, "Expense")} />,
+      render: (r) => <EntityLink kind="expense" id={r.id} label={expenseListLabel(r.expense_number)} />,
     },
     { key: "transaction_date", label: "Date", sortable: true, render: (r) => <span className="text-gray-700">{formatDateUS(r.transaction_date)}</span> },
     {
@@ -292,7 +303,11 @@ export function ExpensesListPage() {
         <EntityLink
           kind="journal_entry"
           id={r.journal_entry_id ?? undefined}
-          label={r.journal_entry_id ? entityLabel(r.journal_entry_memo, r.journal_entry_id, "Journal entry") : undefined}
+          label={
+            r.journal_entry_id
+              ? humanMemo(r.journal_entry_memo, r.id, expenseHumanNumber(r.expense_number) ?? "Expense")
+              : undefined
+          }
         />
       ),
     },
@@ -344,7 +359,7 @@ export function ExpensesListPage() {
           }`}
           onClick={(event) => {
             event.stopPropagation();
-            setVoidTarget({ id: r.id, displayId: entityLabel(r.expense_number, r.id, "Expense") });
+            setVoidTarget({ id: r.id, displayId: expenseListLabel(r.expense_number) });
             setVoidOpen(true);
           }}
         >
@@ -527,7 +542,7 @@ export function ExpensesListPage() {
                   {g.count}×
                   {g.members.slice(0, 3).map((m) => (
                     <span key={m.id} className="ml-2 inline-block">
-                      <EntityLink kind="expense" id={m.id} label={entityLabel(m.expense_number, m.id, "Expense")} />
+                      <EntityLink kind="expense" id={m.id} label={expenseListLabel(m.expense_number)} />
                     </span>
                   ))}
                 </li>
@@ -539,11 +554,7 @@ export function ExpensesListPage() {
           <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
             Deep-link expense{" "}
             <span className="font-semibold">
-              {entityLabel(
-                rows.find((r) => r.id === highlightedExpenseId)?.expense_number,
-                highlightedExpenseId,
-                "Expense",
-              )}
+              {expenseListLabel(rows.find((r) => r.id === highlightedExpenseId)?.expense_number)}
             </span>
             {rows.some((r) => r.id === highlightedExpenseId)
               ? " — highlighted in the list below."
