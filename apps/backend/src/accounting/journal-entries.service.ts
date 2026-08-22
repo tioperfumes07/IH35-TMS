@@ -842,6 +842,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN jep.source_transaction_type = 'loan' THEN 'finance_loan'
             WHEN jep.source_transaction_type = 'lease_contract' THEN 'lease_contract'
             WHEN jep.source_transaction_type = 'recurring_template' THEN 'recurring_template'
+            WHEN jep.source_transaction_type = 'period_close' THEN 'period_close'
             ELSE jep.source_transaction_type
           END AS source_entity_kind,
           jep.source_transaction_id,
@@ -858,6 +859,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type = 'loan' THEN 'finance_loan'
             WHEN tsl.linked_object_type = 'lease_contract' THEN 'lease_contract'
             WHEN tsl.linked_object_type = 'recurring_template' THEN 'recurring_template'
+            WHEN tsl.linked_object_type = 'period_close' THEN 'period_close'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
