@@ -5153,5 +5153,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
     "purpose": "verify-parts-invoice-links-void-not-delete"
+  },
+  "4258": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-customer-shipping-country-nullable"
   }
 }
