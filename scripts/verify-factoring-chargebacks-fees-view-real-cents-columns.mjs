@@ -25,10 +25,18 @@ const MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
 const LABEL = "verify-factoring-chargebacks-fees-view-real-cents-columns";
 
 function latestChargebacksFeesViewMigration() {
+  // Match migrations that DEFINE the view (CREATE [OR REPLACE] VIEW views.factoring_chargebacks_fees),
+  // not just any migration that mentions the view name in passing — e.g. a later migration's dependency
+  // comment or a `SELECT ... FROM views.factoring_chargebacks_fees` read. ACCT-F5761's migration
+  // (202613020000, factoring_statements_settings) sorts after this view's real defining migration
+  // (202613010000, ACCT-F5760) and references the view by name in both a comment and a SELECT — a naive
+  // "last file that mentions the string" selector wrongly picked 202613020000, which never redefines
+  // factor_fee_amount/statement_reference/chargeback_amount at all, producing a false "reverted" failure
+  // against a migration that was never supposed to carry those columns in the first place.
   const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql"));
   const matches = files.filter((f) => {
     const src = fs.readFileSync(path.join(MIGRATIONS_DIR, f), "utf8");
-    return /factoring_chargebacks_fees/.test(src);
+    return /CREATE\s+(OR\s+REPLACE\s+)?VIEW\s+views\.factoring_chargebacks_fees\b/i.test(src);
   });
   matches.sort();
   return matches[matches.length - 1] ?? null;
