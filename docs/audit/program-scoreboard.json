@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-22T09:41:11-05:00",
-    "sourceSha": "3b89bd652",
+    "generatedAt": "2026-08-22T11:19:27-05:00",
+    "sourceSha": "1ccd803b4",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2121,
+    "ledgerRows": 2125,
     "failOpen": 0,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "ChatGpt-Codex-1- fix(reverse): DISP-F5859 exact factoring leaf",
+      "number": 14273,
+      "title": "FINDING: DEPLOY-CONFIRMED-VENDOR-404-FIX-LIVE-50085 LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:42 AM CT",
-      "url": "",
-      "sha": "a04b696f5",
-      "committedAtIso": "2026-08-22T09:42:15-05:00"
-    },
-    {
-      "number": 14221,
-      "title": "FINDING: OUTBOX-CC-2-50081-STATUS LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14221",
-      "sha": "413bbc6f2",
-      "committedAtIso": "2026-08-22T09:42:09-05:00"
-    },
-    {
-      "number": 14220,
-      "title": "FINDING: MAINT-SAFETY-INSURANCE-LEGAL-REFRESH-50081 LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14220",
-      "sha": "3b89bd652",
-      "committedAtIso": "2026-08-22T09:41:11-05:00"
+      "mergedAtCt": "08/22/2026, 11:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14273",
+      "sha": "1ccd803b4",
+      "committedAtIso": "2026-08-22T11:19:27-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "Claude-3- CC3-DRIVERS-PAYRATE-PICKER-LIVE-PROOF-20260822-2020: real fresh /drivers picker R=W proof",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:39 AM CT",
+      "mergedAtCt": "08/22/2026, 11:17 AM CT",
       "url": "",
-      "sha": "fa6ca24b8",
-      "committedAtIso": "2026-08-22T14:39:53Z"
+      "sha": "d238937a1",
+      "committedAtIso": "2026-08-22T11:17:03-05:00"
+    },
+    {
+      "number": 14271,
+      "title": "FINDING: FLEET-F5882-ROSTER-EIGHT-REVERSE-LEAVES-LACK-EXACT-OWNER",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 11:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14271",
+      "sha": "488bc207b",
+      "committedAtIso": "2026-08-22T11:13:56-05:00"
+    },
+    {
+      "number": 14269,
+      "title": "FINDING: CLASS-F5881-FLEET-REVERSE-33-OF-33-PAINTED-BY-P31-BLANKET",
+      "state": "merged",
+      "mergedAtCt": "08/22/2026, 11:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14269",
+      "sha": "069710e01",
+      "committedAtIso": "2026-08-22T11:09:55-05:00"
     },
     {
       "number": 0,
-      "title": "ChatGpt-Codex-1- fix(reverse): DISP-F5858 exact driver-pay leaf",
+      "title": "Claude-3- CC3-CUSTOMERS-PICKER-LIVE-PROOF-20260822-2015: real fresh /customers picker R=W proof (theater-stop response)",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:38 AM CT",
+      "mergedAtCt": "08/22/2026, 11:09 AM CT",
       "url": "",
-      "sha": "e048883f7",
-      "committedAtIso": "2026-08-22T09:38:49-05:00"
+      "sha": "ee54f4bfd",
+      "committedAtIso": "2026-08-22T11:09:45-05:00"
     },
     {
-      "number": 14218,
-      "title": "FINDING: OUTBOX-CC-2-50080-STATUS LANE: NON-FINANCIAL",
+      "number": 14268,
+      "title": "FINDING: FACTORING-CENTS-INVOICE-CUSTOMER-REVERSE-LIVE-VERIFIED LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14218",
-      "sha": "d8b1f4d0f",
-      "committedAtIso": "2026-08-22T09:38:43-05:00"
+      "mergedAtCt": "08/22/2026, 11:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14268",
+      "sha": "ac0dc24d5",
+      "committedAtIso": "2026-08-22T11:07:20-05:00"
     },
     {
-      "number": 14217,
-      "title": "FINDING: LISTS-REFRESH-50080 LANE: NON-FINANCIAL",
+      "number": 14267,
+      "title": "FINDING: CLASS-F5880-OPERATING-REPORT-REVERSE-BUILT-CREDITS-THREE-NONAPPLICABLE-OR-DUPLICATE-LEAVES",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14217",
-      "sha": "4c8078cca",
-      "committedAtIso": "2026-08-22T09:37:47-05:00"
+      "mergedAtCt": "08/22/2026, 11:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14267",
+      "sha": "7adc8d497",
+      "committedAtIso": "2026-08-22T11:05:31-05:00"
     },
     {
-      "number": 0,
-      "title": "ChatGpt-Codex-1- fix(reverse): CLASS-F5857 exact embedded assignment leaves",
+      "number": 14266,
+      "title": "FINDING: RLS-DEACTIVATED-CLASS-BOUNDARY-CHECK LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:34 AM CT",
-      "url": "",
-      "sha": "c3dee361b",
-      "committedAtIso": "2026-08-22T09:34:53-05:00"
+      "mergedAtCt": "08/22/2026, 11:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14266",
+      "sha": "4a82842b8",
+      "committedAtIso": "2026-08-22T11:04:53-05:00"
     },
     {
-      "number": 14215,
-      "title": "FINDING: OUTBOX-CC-2-50079-STATUS LANE: NON-FINANCIAL",
+      "number": 14265,
+      "title": "FINDING: CUSTOMERS-LIST-CREATE-MD-TABS-REVERSE-LINK-UNOWNED LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14215",
-      "sha": "5ed333e39",
-      "committedAtIso": "2026-08-22T09:34:46-05:00"
+      "mergedAtCt": "08/22/2026, 11:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14265",
+      "sha": "c93f280ac",
+      "committedAtIso": "2026-08-22T11:03:57-05:00"
     },
     {
-      "number": 14214,
-      "title": "FINDING: FLEET-REFRESH-50079 LANE: NON-FINANCIAL",
+      "number": 14264,
+      "title": "FINDING: OUTBOX-CC-2-50084-STATUS LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 09:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14214",
-      "sha": "6aa725816",
-      "committedAtIso": "2026-08-22T09:33:50-05:00"
+      "mergedAtCt": "08/22/2026, 11:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14264",
+      "sha": "4ec207b76",
+      "committedAtIso": "2026-08-22T11:03:15-05:00"
     }
   ]
 }
