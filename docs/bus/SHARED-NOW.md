@@ -1,3 +1,3 @@
-# SHARED BUS · 2026-08-22 00:07 CT
+# SHARED-NOW · 2026-08-22 12:05 CT
 
-FAST-MERGE ON. GO = your INBOX. USMCA only. No deploy kick. No idle on healthz.
+See `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. Accounting CERTIFIED. After-14. FAST-MERGE.

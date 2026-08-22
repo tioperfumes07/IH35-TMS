@@ -1,11 +1,8 @@
-===== ALL SEATS · 2026-08-22 10:34 CT · 14 MODULES · FAST-MERGE · NEVER IDLE =====
+===== ALL SEATS · 2026-08-22 12:05 CT · AFTER-14 · FAST-MERGE =====
 PULL: git pull --ff-only origin main
 CANONICAL: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md
-USMCA: https://app.ih35dispatch.com · 5c854333-6ea5-4faa-af31-67cb272fef80
-LIVE: healthz 0cec933 → Accounting NOT CERTIFIED → GO 2–14 now
-DEPLOY: dep-da4qm10 update_failed · replacement dep-da4s3m3l550s738ql90g · no stack · no coder trigger_deploy
-ORDER: accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists → maintenance → safety → insurance → legal
-AFTER 14: /tasks /home /compliance /cash-flow /fuel /inventory /users
-CC-1 9223 money · CC-2 9224 Live · CC-3 9225 REWAKE pickers · Codex 9226 REWAKE reverse · Cursor 9222 lead
-ACK: SEAT | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=n | NOW=<url> | GO
+LIVE: healthz 58044c6 · Accounting CERTIFIED · 1–14 done this session (CC-1/CC-2)
+NOW: after-14 /tasks /home /compliance /cash-flow /fuel /inventory /users
+CC-1 9223 money leftover · CC-2 9224 Live · CC-3 9225 pickers /fuel NO DEVIATION · Codex 9226 reverse · Cursor 9222 lead
+ACK: SEAT | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=n | NOW=<url> | GO
 ===== END ALL SEATS =====

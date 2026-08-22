@@ -13,7 +13,7 @@ Every working seat **must** attach a debug Chrome (MCP / CDP) on **its assigned 
 | Devin-A | 9227 | **PARKED — do not start** |
 | Spare | 9228 · 9229 | Overflow only; announce on OUTBOX |
 
-**NOW URLs:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (2026-08-22 **10:34 CT** · 14 modules). Stale/09:08-closed/04:11CT/drained after `git pull` is a defect.
+**NOW URLs:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (2026-08-22 **12:05 CT** · after-14). Stale 10:34 CT / 0cec933 / 09:08-closed after `git pull` is a defect.
 
 Target: `https://app.ih35dispatch.com` · USMCA. **Open one leaf URL, prove it, CLOSE THE TAB.** Never leave `/program/matrix` open. Never `refetchIntervalInBackground` Live-Chrome on the scoreboard. Unattended matrix polling starved prod (Mac 24.162.56.21, ~223 KB/response). Client fix #13335; seats must still close old tabs.
 

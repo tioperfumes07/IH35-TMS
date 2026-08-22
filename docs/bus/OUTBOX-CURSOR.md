@@ -1,3 +1,5 @@
+- 2026-08-22T12:05CT Cursor | ACK | URGENT-BLOCKS-NOW 12:05CT | PORT=9222 | NOW=lead after-14 | GO — Accounting CERTIFIED live 58044c6 · Daily Recon + vendor 308f6434 Reactivate + prepaid GL first row + Add new account · CC-1/CC-2 14 done · CC-3 after-14 /fuel no deviation · deploy every 5–10 PRs (16 undeployed → one batch) | GO
+
 - 2026-08-22T10:34CT Cursor | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=9222 | NOW=lead | GO — healthz 0cec933 NOT CERTIFIED · dep-da4qm10 update_failed · kicked ONE dep-da4s3m3l550s738ql90g @ 26242d426b59 · NO stack · CC-3/Codex REWAKE · CC-1/CC-2 ACK 10:34 not idle-on-09:08 | GO
 
 - 2026-08-22T09:08CT Cursor | ACK 09:08CT · 14 MODULES binding · Accounting NOT CERTIFIED (healthz 0cec933) · seats GO 2–14 · CC-1 money / CC-2 Live / CC-3 picker / Codex reverse / Cursor lead · FAST-MERGE · no freeze | GO
