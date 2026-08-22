@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\.documents$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\.profile\\.documents|trailer\\.profile\\.documents)$","task":"CLASS-F5879-DOCUMENT-IDENTITY-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -46,9 +45,8 @@ function verify(source) {
   for (const [key, id] of requiredReverseLeaves) {
     if (!leaf(source, key, id)?.required?.includes("reverse_link")) failures.push(`${key} ${id} must require reverse_link`);
   }
-  need("self", '"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$"', "Docs home must have exact reverse Built ownership");
-  need("self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\\\.documents$"', "Drivers documents must have exact reverse Built ownership");
-  need("self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"', "Fleet document leaves must have exact reverse Built ownership");
+  need("self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"]', "Drivers documents must have exact reverse Built ownership");
+  need("self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"]', "Fleet document leaves must have exact reverse Built ownership");
   return failures;
 }
 const source = read();
@@ -71,9 +69,8 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["drivers", '"id": "profiles.documents"', '"id": "profiles.documents.broken"'],
     ["fleetMatrix", '"id": "unit.profile.documents"', '"id": "unit.profile.documents.broken"'],
     ["fleetMatrix", '"id": "trailer.profile.documents"', '"id": "trailer.profile.documents.broken"'],
-    ["self", '"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$"', '"modules":["docs"],"cols":["connectivity"],"leafRe":"^home$"'],
-    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\\\.documents$"', '"modules":["drivers"],"cols":["connectivity"],"leafRe":"^profiles\\\\.documents$"'],
-    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"', '"modules":["fleet"],"cols":["connectivity"],"leafRe":"^(unit\\\\.profile\\\\.documents|trailer\\\\.profile\\\\.documents)$"'],
+    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"]', '"modules":["drivers"],"cols":["connectivity"],"leaves":["profiles.documents"]'],
+    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"]', '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"]'],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);

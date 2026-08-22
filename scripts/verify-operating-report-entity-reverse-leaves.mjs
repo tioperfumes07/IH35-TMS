@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\.profit_per_truck$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\.profile\\.maintenance$","task":"CLASS-F5880-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
@@ -47,9 +47,9 @@ const failures = (candidate) => {
     if (!required(candidate, key, id).includes("reverse_link")) found.push(`${key} ${id} must require reverse_link`);
   }
   const headers = [
-    '"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\\\.profit_per_truck$"',
-    '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$"',
-    '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"',
+    '"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"]',
+    '"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"]',
+    '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"]',
   ];
   const annotationBlock = candidate.self.split("\n").slice(0, 4).join("\n");
   for (const header of headers) if (!annotationBlock.includes(header)) found.push(`exact Built header missing: ${header}`);
@@ -77,9 +77,9 @@ if (process.argv.includes("--self-test")) {
     ["reportsMatrix", '"id": "report.profit_per_truck"', '"id": "report.profit_per_truck.broken"'],
     ["driversMatrix", '"id": "settlements"', '"id": "settlements.broken"'],
     ["fleetMatrix", '"id": "unit.profile.maintenance"', '"id": "unit.profile.maintenance.broken"'],
-    ["self", '"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\\\.profit_per_truck$"', '"modules":["reports"],"cols":["connectivity"],"leafRe":"^report\\\\.profit_per_truck$"'],
-    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^settlements$"', '"modules":["drivers"],"cols":["connectivity"],"leafRe":"^settlements$"'],
-    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"', '"modules":["fleet"],"cols":["connectivity"],"leafRe":"^unit\\\\.profile\\\\.maintenance$"'],
+    ["self", '"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"]', '"modules":["reports"],"cols":["connectivity"],"leaves":["report.profit_per_truck"]'],
+    ["self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"]', '"modules":["drivers"],"cols":["connectivity"],"leaves":["settlements"]'],
+    ["self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"]', '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.maintenance"]'],
   ];
   for (const [key, before, after] of evidenceMutations) {
     if (!sources[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);
