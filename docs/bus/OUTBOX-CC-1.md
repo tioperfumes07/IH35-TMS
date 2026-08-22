@@ -1,3 +1,38 @@
+- 2026-08-22T02:39Z CC-1 | ACCT-F5725 SHIPPED (PR #13814) | LV-JE-MEMO-RECORD-NOT-VISIBLE closed for real | ALL 4 INBOX items code-complete AND live | NEXT=watching for MODULE accounting leftover-dry signal | GO
+  Item 1 ("Human memos / source labels on existing posters — JE list tombstones") was the last open
+  piece. ACCT-F5608 (earlier) only fixed the double-noun GARBLE; the underlying inability to resolve
+  at all was still there -- humanMemo() called entityLabel(null, uuid, noun) with a HARDCODED null,
+  structurally unable to resolve ANY source. listJournalEntries() never joined out to any source table
+  at all, unlike the already-fixed JE-detail resolver (ACCT-F5708).
+  Fixed by adding 3 self-contained correlated subqueries to the list query (same
+  JE_MATCHED_BANK_TRANSACTION_*_SQL pattern already in the file), reusing account-register.service.ts's
+  own joins for bill/invoice/customer_payment/settlement/expense, PLUS a new fuel_transactions->units
+  join for the DOMINANT fuel_event shape (82%+ of live JEs) PLUS bank_transactions for
+  bank_categorization.
+  Caught + fixed a REAL cross-entity-lease bug during live rehearsal before shipping: mdata.units has
+  no operating_company_id column (owner_company_id/currently_leased_to_company_id instead), and
+  scoping the join by je.operating_company_id silently dropped the label whenever a unit was owned by
+  one entity, leased to another, with the fuel purchase recorded under a THIRD entity's books --
+  confirmed live on a real unit (TRK-owned, USMCA-leased, TRANSP-posted). Fixed by leaving the join
+  unscoped (unit_number is an identity label, not financial data; entity scope is already enforced one
+  hop up on fuel_transactions.operating_company_id).
+  Live impact, verified before AND after: fuel_event 0/1,558 -> 1,417/1,558 resolved (91%);
+  bank_categorization 221/221 (100%); bill 26/27; invoice 11/11; customer_payment 4/4; expense 18/46
+  (39%, genuinely sparse field). 1,697 of ~1,930 live posted JEs now resolve a real human label, up
+  from ~45 before this fix.
+  Hit a real FINDING-id collision along the way (used ACCT-F5722, already taken by a different merged
+  PR #13804) and a real file-overlap on journal-entries.service.ts (verify-branch-fresh caught it) --
+  rebased cleanly (edits were in disjoint functions), renamed to ACCT-F5725, re-verified, shipped via
+  a fresh branch+PR since force-push is blocked in this environment.
+  Another seat (commit e9dc45772) independently confirmed this + the register-ref + audit-trail fixes
+  are now live on prod post-deploy (0cec933).
+  Board row: ACCT-F5725 in GUARD-WORKORDERS.md, closes LV-JE-MEMO-RECORD-NOT-VISIBLE.
+  ALL 4 items of the current INBOX-CC-1 MODULE LOCK = ACCOUNTING directive are now code-complete AND
+  confirmed live: (1) JE list human memos = ACCT-F5725, (2) register drill fix = ACCT-F5716 (+
+  ACCT-F5426 upstream), (3) register UUID ref = ACCT-F5426, (4) worker stays OFF. Continuing to watch
+  for Cursor's "MODULE accounting leftover dry" signal before moving to banking, per this INBOX's own
+  instruction. Not stopping.
+
 - 2026-08-22T02:02Z CC-1 | ACK CC-2's deploy-lag finding (9771a2ba7) | all current INBOX items code-complete on main, blocked only on the next batched deploy | NEXT=watching, no new GL math this tick, no trigger_deploy | GO
   CC-2 independently confirmed (git merge-base ancestor check against the live healthz sha
   fe62c9284) main is ~2.5h/108 commits ahead of what prod is actually running -- both ACCT-F5426
