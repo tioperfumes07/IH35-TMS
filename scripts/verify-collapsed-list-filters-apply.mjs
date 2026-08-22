@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","drivers","finance","fleet","insurance","legal","lists","maintenance","reports","safety","settlements","vendors"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_(search|range|gear)$","task":"CLS-FILTER-GEAR-APPLY","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["lists"],"cols":["connectivity","qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"LINK-F5170-LISTS-TOOLBAR-FILTER-APPLY","vertical":"column-wave"} */
-/** @matrix-built {"modules":["customers","docs","factoring","fleet","maintenance","tasks","vendors"],"cols":["connectivity","qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists","customers","docs","factoring","fleet","maintenance","tasks","vendors"],"cols":["connectivity","qbo_chrome"],"leaves":["chrome.toolbar_filter"],"task":"CLASS-F5952-TOOLBAR-FILTER-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +13,12 @@ const ALLOWED_LOCAL_DRAFT = new Map([
 ]);
 const INVENTORY = "scripts/collapsed-list-filters-apply-inventory.json";
 const SIDEBAR = "apps/frontend/src/components/layout/sidebar-config.ts";
+const SELF = "scripts/verify-collapsed-list-filters-apply.mjs";
+const FILTER_EXACT_HEADER = '/** @matrix-built {"modules":["lists","customers","docs","factoring","fleet","maintenance","tasks","vendors"],"cols":["connectivity","qbo_chrome"],"leaves":["chrome.toolbar_filter"],"task":"CLASS-F5952-TOOLBAR-FILTER-EXACT","vertical":"class-sweep"} */';
+
+function auditExactHeader(source) {
+  return source.split("\n").includes(FILTER_EXACT_HEADER) ? [] : ["exact eight-module toolbar-filter Built header missing"];
+}
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -201,6 +206,10 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — portal Cancel regression escaped");
     process.exit(1);
   }
+  if (!auditExactHeader(fs.readFileSync(path.join(ROOT, SELF), "utf8").replace(FILTER_EXACT_HEADER, `${FILTER_EXACT_HEADER}.broken`)).length) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — exact toolbar-filter header mutation escaped");
+    process.exit(1);
+  }
   console.log("verify-collapsed-list-filters-apply SELFTEST PASS — missing actions, exemption abuse, FilterPopover silent-apply, portal ownership detected");
   process.exit(0);
 }
@@ -211,7 +220,7 @@ const portalFailures = auditPortalOwnership(
   sources["components/table/CollapsedListFilters.tsx"] ?? "",
   sources["pages/reports/runners/RunnerFilters.tsx"] ?? "",
 );
-const failures = [...result.failures, ...popoverFailures, ...portalFailures];
+const failures = [...result.failures, ...popoverFailures, ...portalFailures, ...auditExactHeader(fs.readFileSync(path.join(ROOT, SELF), "utf8"))];
 if (failures.length) {
   console.error(`verify-collapsed-list-filters-apply FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
