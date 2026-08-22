@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.late$","task":"CLS-DISPATCH-LATE-ARRIVALS-FK-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.late"],"task":"DISP-F5852-LATE-QUEUE-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * verify-late-arrivals-error-entitylink.mjs
  *
@@ -18,9 +18,11 @@ const LABEL = "verify-late-arrivals-error-entitylink";
 const PAGE = "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx";
 const TEST = "apps/frontend/src/pages/dispatch/__tests__/LateArrivalsPage.test.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-late-arrivals-error-entitylink.mjs";
 
-/** @param {{ page: string, test: string, entityLink: string }} src */
-export function checkSources({ page, test, entityLink }) {
+/** @param {{ page: string, test: string, entityLink: string, matrix: string, self: string }} src */
+export function checkSources({ page, test, entityLink, matrix, self }) {
   const failures = [];
 
   if (!page.includes('from "../../components/shared/ListErrorBanner"')) {
@@ -67,11 +69,21 @@ export function checkSources({ page, test, entityLink }) {
   if (!test.includes("No late arrivals right now")) {
     failures.push(`${TEST}: must assert emptyText is not shown on error`);
   }
+  const leaf = JSON.parse(matrix).leaves?.find((candidate) => candidate.id === "queues.late");
+  if (!leaf?.required?.includes("reverse_link")) {
+    failures.push(`${MATRIX}: queues.late must require reverse_link`);
+  }
+  const annotationLines = self.split("\n").filter((line) => line.includes("@matrix-built"));
+  if (!annotationLines.includes('/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.late"],"task":"DISP-F5852-LATE-QUEUE-REVERSE-EXACT-LEAF","vertical":"column-wave"} */')) {
+    failures.push(`${SELF}: Built annotation must credit only queues.late:reverse_link`);
+  }
 
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
+  const matrix = fs.readFileSync(path.join(ROOT, MATRIX), "utf8");
+  const self = fs.readFileSync(path.join(ROOT, SELF), "utf8");
   const badPage = `
     import { Link } from "react-router-dom";
     const loads = lateQ.data?.loads ?? [];
@@ -99,30 +111,44 @@ if (process.argv.includes("--selftest")) {
     expect(unitLink.getAttribute("href")).toBe("/fleet/units/unit-1");
     late-arrival-load-l1
   `;
-  if (checkSources({ page: badPage, test: "", entityLink: goodEntity }).length === 0) {
+  if (checkSources({ page: badPage, test: "", entityLink: goodEntity, matrix, self }).length === 0) {
     console.error(`${LABEL} --selftest FAIL: bad fixture accepted`);
     process.exit(1);
   }
-  const goodFails = checkSources({ page: goodPage, test: goodTest, entityLink: goodEntity });
+  const goodFails = checkSources({ page: goodPage, test: goodTest, entityLink: goodEntity, matrix, self });
   if (goodFails.length) {
     console.error(`${LABEL} --selftest FAIL: good fixture rejected:\n${goodFails.join("\n")}`);
     process.exit(1);
   }
   for (const kind of ["customer", "driver", "unit"]) {
     const mutated = goodPage.replace(new RegExp(`<EntityLink kind="${kind}"[^\\n]+\\n`), "");
-    if (!checkSources({ page: mutated, test: goodTest, entityLink: goodEntity }).some((failure) => failure.includes(`kind="${kind}"`))) {
+    if (!checkSources({ page: mutated, test: goodTest, entityLink: goodEntity, matrix, self }).some((failure) => failure.includes(`kind="${kind}"`))) {
       console.error(`${LABEL} --selftest FAIL: removing ${kind} FK link did not trip the guard`);
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest OK`);
+  const missingRequired = JSON.parse(matrix);
+  const lateLeaf = missingRequired.leaves.find((candidate) => candidate.id === "queues.late");
+  lateLeaf.required = lateLeaf.required.filter((column) => column !== "reverse_link");
+  if (!checkSources({ page: goodPage, test: goodTest, entityLink: goodEntity, matrix: JSON.stringify(missingRequired), self }).some((failure) => failure.includes("must require reverse_link"))) {
+    console.error(`${LABEL} --selftest FAIL: removed Required reverse_link escaped`);
+    process.exit(1);
+  }
+  const wrongSelf = self.replace('"leaves":["queues.late"]', '"leaves":["queues.detention"]');
+  if (!checkSources({ page: goodPage, test: goodTest, entityLink: goodEntity, matrix, self: wrongSelf }).some((failure) => failure.includes("Built annotation"))) {
+    console.error(`${LABEL} --selftest FAIL: wrong exact Built leaf escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK — runtime plus exact Required/header plants detected`);
   process.exit(0);
 }
 
 const page = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
 const test = fs.readFileSync(path.join(ROOT, TEST), "utf8");
 const entityLink = fs.readFileSync(path.join(ROOT, ENTITY_LINK), "utf8");
-const failures = checkSources({ page, test, entityLink });
+const matrix = fs.readFileSync(path.join(ROOT, MATRIX), "utf8");
+const self = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+const failures = checkSources({ page, test, entityLink, matrix, self });
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);
