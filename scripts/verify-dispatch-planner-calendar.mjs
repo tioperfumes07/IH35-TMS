@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^planning\\.(calendar|loads|timeline)$","task":"CLS-DISPATCH-PLANNER-CUSTOMER-FK-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.calendar"],"task":"DISP-F5847-PLANNER-CALENDAR-REVERSE-EXACT-LEAF"} */
 /** Block B21-D4: Dispatch planner calendar week view with drag-drop reschedule + HOS overlay. */
 import fs from "node:fs";
 
 const files = {
+  self: "scripts/verify-dispatch-planner-calendar.mjs",
+  matrix: "docs/specs/scoreboard/modules/dispatch.required.json",
   page: "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
   pageTest: "apps/frontend/src/pages/dispatch/__tests__/PlannerCalendarPage.test.tsx",
   routes: "apps/backend/src/dispatch/planner.routes.ts",
@@ -21,8 +23,16 @@ const has = (needle) => (source) => source.includes(needle);
 const matches = (pattern) => (source) => pattern.test(source);
 const remove = (needle) => (source) => source.replaceAll(needle, "__PLANTED_DISPATCH_PLANNER_DEFECT__");
 const removeTests = (source) => source.replace(/\bit\(/g, "__PLANTED_TEST__(");
+const removeRequired = (id, column) => (source) => {
+  const matrix = JSON.parse(source);
+  const leaf = matrix.leaves.find((candidate) => candidate.id === id);
+  leaf.required = leaf.required.filter((candidate) => candidate !== column);
+  return JSON.stringify(matrix);
+};
 
 const contracts = [
+  ["planner calendar exact reverse Built ownership", "self", matches(/^\/\*\* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["planning\.calendar"\],"task":"DISP-F5847-PLANNER-CALENDAR-REVERSE-EXACT-LEAF"\} \*\/$/m), (source) => source.replace(/^\/\*\* @matrix-built .*$/m, "/** planted broad Built claim */")],
+  ["planner calendar Required reverse ownership", "matrix", (source) => { try { return JSON.parse(source).leaves.find((leaf) => leaf.id === "planning.calendar")?.required?.includes("reverse_link"); } catch { return false; } }, removeRequired("planning.calendar", "reverse_link")],
   ["planner page identity", "page", has("dispatch-planner-calendar-page"), remove("dispatch-planner-calendar-page")],
   ["HOS overlay control", "page", has("HOS overlay"), remove("HOS overlay")],
   ["drag-drop reschedule", "page", has("DndContext"), remove("DndContext")],
