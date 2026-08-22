@@ -28,6 +28,8 @@ const OBLIGATION_RECON = "apps/frontend/src/pages/banking/BankingObligationRecon
 const RECON_SUGGESTIONS = "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx";
 const BANK_RECON = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
 const SPLIT_MODAL = "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx";
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
+const ITEMS_LIST = "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx";
 const RECORD_TRANSFER = "apps/frontend/src/pages/banking/RecordTransferModal.tsx";
 const RECORD_CC_PAYMENT = "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
@@ -124,6 +126,9 @@ const CHECKS = [
   { name: "categorization deduction load exact human drill", file: VIEW, pattern: /kind="load"\s+id=\{links\.deduction_load_id\}[\s\S]{0,180}entityLabel\(links\.deduction_load_number, links\.deduction_load_id, "Load"\)/ },
   { name: "categorization journal entry human projection", file: CATEGORIZATION_ROUTES, pattern: /bt\.matched_journal_entry_id::text AS matched_journal_entry_id,\s+matched_je\.memo AS matched_journal_entry_memo[\s\S]{0,4500}LEFT JOIN accounting\.journal_entries matched_je\s+ON matched_je\.id = bt\.matched_journal_entry_id\s+AND matched_je\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorization journal entry exact human drill", file: VIEW, pattern: /kind="journal_entry"\s+id=\{matchedJournalEntryId\}[\s\S]{0,180}entityLabel\(links\?\.matched_journal_entry_memo, matchedJournalEntryId, "Journal entry"\)/ },
+  { name: "catalog item canonical exact route", file: ENTITY_LINK, pattern: /\| "catalog_item"[\s\S]*case "catalog_item":\s+return `\/catalogs\/items\?item_id=\$\{id\}`/ },
+  { name: "catalog item deep link exact company-scoped read", file: ITEMS_LIST, pattern: /deepLinkItemId = searchParams\.get\("item_id"\)[\s\S]{0,500}itemsCatalogClient\.get\(String\(deepLinkItemId\), companyId\)[\s\S]{0,700}setSelectedRow\(deepLinkItemQuery\.data\)[\s\S]{0,120}setModalOpen\(true\)/ },
+  { name: "categorization item exact human drill", file: VIEW, pattern: /links\?\.item_id \? \([\s\S]{0,260}kind="catalog_item"[\s\S]{0,120}id=\{links\.item_id\}[\s\S]{0,160}entityLabel\(links\.item_name, links\.item_id, "Item"\)/ },
   { name: "company account join explicitly scoped", file: PLAID, pattern: /JOIN banking\.bank_accounts ba\s+ON ba\.id = bt\.bank_account_id\s+AND ba\.operating_company_id = bt\.operating_company_id/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
