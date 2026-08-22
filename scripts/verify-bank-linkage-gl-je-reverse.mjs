@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["banking","accounting","drivers","dispatch","fleet","vendors","customers"],"cols":["bank","gl_je","driver","unit","trailer","load","vendor","customer","connectivity"],"leafRe":"^unit\\.profile\\.bank_txns$|^trailer\\.profile\\.bank_txns$|^profiles\\.detail$|^detail\\.profile$|^customers\\.detail\\.profile$","task":"THEATER-BANK-LINKAGE-GL-JE-LEAFRE","vertical":"column-wave"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.bank_txns","trailer.profile.bank_txns"],"task":"FLEET-F5912-BANK-TRANSACTIONS-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.bank_txns","trailer.profile.bank_txns"],"task":"FLEET-F5943-BANK-TRANSACTIONS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 const LABEL = "verify-bank-linkage-gl-je-reverse";
 const files = {
@@ -19,6 +20,7 @@ const files = {
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.bank_txns","trailer.profile.bank_txns"],"task":"FLEET-F5912-BANK-TRANSACTIONS-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.bank_txns","trailer.profile.bank_txns"],"task":"FLEET-F5943-BANK-TRANSACTIONS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const FLEET_LEAVES = new Map([
   ["unit.profile.bank_txns", "/fleet/units/:id"],
   ["trailer.profile.bank_txns", "/fleet/trailers/:id"],
@@ -68,10 +70,12 @@ function audit(s) {
     if (!row) failures.push(`Fleet Required leaf missing: ${id}`);
     else {
       if (!row.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
+      if (!row.required?.includes("connectivity")) failures.push(`${id} must require connectivity`);
       if (row.route_hint !== route) failures.push(`${id} must mount on ${route}`);
     }
   }
   if (!s.self.split('import fs from "node:fs";')[0].includes(EXACT_HEADER)) failures.push("exact Fleet bank reverse header missing");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet bank connectivity header missing");
   if (/"guard"\s*:\s*"scripts\/verify-bank-linkage-gl-je-reverse\.mjs"/.test(s.feed)) failures.push("manual feed duplicates bank reverse ownership");
   return failures;
 }
@@ -100,6 +104,9 @@ if (process.argv.includes("--selftest")) {
     ["unit-route", "fleetRequired", source.fleetRequired, mutateFleetRow(source.fleetRequired, "unit.profile.bank_txns", (row) => { row.route_hint = "/fleet/trailers/:id"; })],
     ["trailer-route", "fleetRequired", source.fleetRequired, mutateFleetRow(source.fleetRequired, "trailer.profile.bank_txns", (row) => { row.route_hint = "/fleet/units/:id"; })],
     ["exact-header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
+    ["unit-connectivity", "fleetRequired", source.fleetRequired, mutateFleetRow(source.fleetRequired, "unit.profile.bank_txns", (row) => { row.required = row.required.filter((col) => col !== "connectivity"); })],
+    ["trailer-connectivity", "fleetRequired", source.fleetRequired, mutateFleetRow(source.fleetRequired, "trailer.profile.bank_txns", (row) => { row.required = row.required.filter((col) => col !== "connectivity"); })],
+    ["connectivity-header", "self", CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "bank")],
     ["duplicate-feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-bank-linkage-gl-je-reverse.mjs"},`],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
