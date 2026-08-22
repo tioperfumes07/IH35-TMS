@@ -1,19 +1,23 @@
-# CODER INSTRUCTIONS NOW · 2026-08-22 03:36 CT
+# CODER INSTRUCTIONS NOW · 2026-08-22 04:11 CT
 
-**IDLE IS A PROCESS DEFECT.** Proven Accounting hops ≠ empty queue. `healthz` `0cec933` ≠ stop. **No `trigger_deploy`.**
+**Canonical:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` — that file is **what / how / where**. This page is the one-screen copy.
 
-Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — TEST once per unproven hop, void later. Do **not** remake prepaid / CM apply / VC apply / bill remaining.
+`git pull --ff-only origin main` **before** you speak. If you still say **stale INBOX**, **drained**, **empty-queue**, or **awaiting next order**, you did not pull this SHA.
 
-**Either:** (A) live TEST a hop that is **not** already proven, **or** (B) finish **wiring** on the next module in Urgent 6 → rest of urgent. Never sit.
+**USMCA only** `https://app.ih35dispatch.com` · `5c854333-6ea5-4faa-af31-67cb272fef80`  
+Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin **PARKED**.  
+**No `trigger_deploy`.** API batch `dep-da4ma06k1f9s73epv6rg` is Cursor’s. Do not stack.
 
-Urgent 6 order after Accounting lane-done: **banking → settlements → factoring → dispatch → vendors** then **customers → drivers → fleet → lists**.
+Accounting CREATE-TEST is **done** (bill remaining, CM apply, VC apply, prepaid, Palos split sample). **Do not remake.** Certify is Cursor **after** `healthz` ≠ `0cec933` and Daily Recon **200**. That is **not** your idle.
 
-| Seat | NOW — do this, then the next line, same turn |
-|------|-----|
-| **CC-1** | Money: next OPEN money FAIL on the board **or** banking/settlements/factoring TEST money hop that is not already proven. Reuse poster. Not For-review drain. |
-| **CC-2** | Live Chrome **banking** (Home, account, recon **UI**, Plaid/Relay). Sample Match already exists — do **not** categorize the rest of the feed. Then **settlements** Live. Unique FINDING on 500 / dead click. |
-| **CC-3** | Chrome/picker: `/customers` → `/drivers` → `/fleet` → `/lists`. Unique FINDING. FAST-MERGE. |
-| **Codex** | Reverse + connectivity **banking** then **settlements**. No CDP. Accounting create POST for prepaid/CM/VC is **done** — do not re-prove. |
-| **Cursor** | Lead: keep INBOXes current. Wiring FAILs in your lane. Live Chrome leftover that is **not** padding. FAST-MERGE. |
+| Seat | Port | NOW (first URL) | Then |
+|------|------|-----------------|------|
+| **CC-1** | 9223 | Money FAIL on board **or** `/banking` money TEST | `/driver-finance/settlements` → `/factoring` → `/dispatch` → `/vendors` |
+| **CC-2** | 9224 | `/banking` **every tab** Live | `/driver-finance/settlements` → `/factoring` → `/dispatch` → `/vendors` → `/customers`… |
+| **CC-3** | 9225 | `/customers` picker/`+ Create` | `/drivers` → `/fleet` → `/lists` then WAVE 2 `/maintenance` |
+| **Codex** | 9226 | Banking **code reverse** `banking.*` | Settlements `driver_finance.*` → factoring → dispatch → vendors. **No CDP** unless proving a reverse you coded |
+| **Cursor** | 9222 | Watch API deploy; **no second kick** in-flight | When SHA moves: Daily Recon + archived vendor + prepaid pickers. Else Cursor-lane wiring FAST-MERGE |
 
-**Forbidden:** empty-queue · awaiting next order · wait healthz · wait Jorge · remake proven TEST · drain For-review · `trigger_deploy`.
+**How:** one URL · one TEST if unproven · unique FINDING on 500/dead click · FAST-MERGE · next URL same turn. ACK first OUTBOX line: `SEAT | ACK | URGENT-BLOCKS-NOW 04:11CT | PORT=n | NOW=<url> | GO`
+
+**Forbidden:** wait Jorge · wait healthz as idle · For-review drain · Close month · remake proven Accounting · `eld` · inventory while your list is open.
