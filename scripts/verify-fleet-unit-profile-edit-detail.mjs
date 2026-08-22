@@ -6,9 +6,15 @@
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): VehicleProfilePage.tsx's 20
  * unit.profile.* sections and EditVehicleModal.tsx's 8 unit.edit.* tabs are all genuinely
- * self-referential to THIS unit (fetchUnitProfile(id,...)/patchUnit(id/unitId,...) — the page's own
- * :id route param). UnitDetail.tsx's 6 unit.detail.* tabs are the same self-referential pattern.
- * trailer.profile.assignment genuinely shows the real attached truck's unit_id via EntityLink.
+ * self-referential to THIS unit (fetchUnitProfile(id,...)/patchUnit(id/unitId, companyId, ...) —
+ * the page's own :id route param). UnitDetail.tsx's 6 unit.detail.* tabs are the same
+ * self-referential pattern. trailer.profile.assignment genuinely shows the real attached truck's
+ * unit_id via EntityLink.
+ *
+ * patchUnit(id, operatingCompanyId, body) gained its companyId parameter in PR #13510
+ * (fix(fleet): scope all unit saves to selected company) — both call sites here were already
+ * correctly updated by that PR, this guard's literal patterns just weren't (LST-ORPH-04 sweep,
+ * 2026-08-22).
  *
  * Self-test: node scripts/verify-fleet-unit-profile-edit-detail.mjs --selftest
  */
@@ -30,7 +36,7 @@ export function audit(src) {
   if (!/fetchUnitProfile\(id, companyId/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.* sections must all be fed by a real fetchUnitProfile(id, ...) query`);
   }
-  if (!/patchUnit\(id, \{/.test(src.profile)) {
+  if (!/patchUnit\(id, companyId, \{/.test(src.profile)) {
     failures.push(`${FILES.profile}: profile-level unit edits (e.g. QBO mapping) must patch the real unit id`);
   }
   if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(src.profile)) {
@@ -57,7 +63,7 @@ export function audit(src) {
   if ((src.profile.match(/unitId=\{id\}/g) || []).length < 10) {
     failures.push(`${FILES.profile}: unit.profile.* reverse-drill sections must be self-referentially scoped via unitId={id}`);
   }
-  if (!/patchUnit\(unitId!, patchPayload\)/.test(src.editModal)) {
+  if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: unit.edit.* tabs must all patch the real edited unit's own id`);
   }
   if (!/<UnitPermitsTab unitId=\{id\}/.test(src.unitDetail) || !/<UnitFinanceLinkageTab unitId=\{id\}/.test(src.unitDetail)) {
@@ -89,7 +95,7 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["profile-query", "profile", /fetchUnitProfile\(id, companyId(?:, signal)?\)/g, "fetchSomethingElse(id, companyId)"],
-    ["profile-patch", "profile", /patchUnit\(id, \{/, "patchSomethingElse(id, {"],
+    ["profile-patch", "profile", /patchUnit\(id, companyId, \{/, "patchSomethingElse(id, companyId, {"],
     ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
     ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
@@ -98,7 +104,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
-    ["edit-modal-patch", "editModal", /patchUnit\(unitId!, patchPayload\)/, "patchUnit(undefined, patchPayload)"],
+    ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
     ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
