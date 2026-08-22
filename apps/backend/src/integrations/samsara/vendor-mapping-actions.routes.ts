@@ -101,6 +101,7 @@ async function appendResolutionAudit(
     vendor_id: params.vendorId,
     samsara_driver_id: params.samsaraDriverId,
     actor_user_uuid: params.actorUserUuid,
+    operating_company_id: params.operatingCompanyId,
     ...(params.deprecatedVendorIds ? { deprecated_vendor_ids: params.deprecatedVendorIds } : {}),
   };
 
@@ -111,10 +112,10 @@ async function appendResolutionAudit(
         $2::text,
         $3::jsonb,
         $4::uuid,
-        $5::uuid
+        $5::text
       )
     `,
-    ["vendor_mapping_resolution", "info", JSON.stringify(payload), params.operatingCompanyId, params.actorUserUuid],
+    ["vendor_mapping_resolution", "info", JSON.stringify(payload), params.actorUserUuid, "samsara-vendor-mapping"],
   );
 }
 
