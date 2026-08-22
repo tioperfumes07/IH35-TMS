@@ -63,6 +63,7 @@ const SOURCE_ROUTES: Readonly<Record<string, (id: string) => string>> = {
   "banking.intercompany_transfer_groups": (id) => `/banking/transfers?group_id=${id}`,
   "banking.transfers": (id) => `/banking/transfers?transfer_id=${id}`,
   "driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`,
+  "driver_finance.cash_advance_requests": (id) => `/driver-finance/cash-advance-requests?request_id=${id}`,
 };
 
 function sourceLink(ev: SpineEvent): string | null {
