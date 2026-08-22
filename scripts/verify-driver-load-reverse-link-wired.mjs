@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link","connectivity"],"task":"WAVE-B-driver-load-reverse-link","leafRe":"^(docs\\.pod|load\\.drawer\\.documents)$"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["docs.pod"],"task":"DISP-F5854-POD-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 // CLASS-WAVE B (reverse_link/connectivity) — Wave-B investigation (2026-08-12) found these two
 // reverse-link families already fully built in code but never tagged in
 // docs/specs/scoreboard/wire-sprint-built.json, so the module matrix showed them red despite the
@@ -19,6 +19,8 @@ import fs from "node:fs";
 
 const CASH_ADVANCES_ROUTES = "apps/backend/src/cash-advances/cash-advances.routes.ts";
 const POD_ROUTES = "apps/backend/src/dispatch/pod.routes.ts";
+const MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
+const SELF = "scripts/verify-driver-load-reverse-link-wired.mjs";
 
 function fail(msg) {
   console.error(`FAIL verify-driver-load-reverse-link-wired: ${msg}`);
@@ -45,9 +47,20 @@ function checkPod(src) {
   }
 }
 
+function checkEvidence(matrixSource, selfSource) {
+  const leaf = JSON.parse(matrixSource).leaves?.find((candidate) => candidate.id === "docs.pod");
+  if (!leaf?.required?.includes("reverse_link")) fail(`${MATRIX}: docs.pod must require reverse_link`);
+  const annotations = selfSource.split("\n").filter((line) => line.includes("@matrix-built"));
+  if (!annotations.includes('/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["docs.pod"],"task":"DISP-F5854-POD-REVERSE-EXACT-LEAF","vertical":"column-wave"} */')) {
+    fail(`${SELF}: Built annotation must credit only docs.pod:reverse_link`);
+  }
+}
+
 function selftest() {
   const originalCash = fs.readFileSync(CASH_ADVANCES_ROUTES, "utf8");
   const originalPod = fs.readFileSync(POD_ROUTES, "utf8");
+  const originalMatrix = fs.readFileSync(MATRIX, "utf8");
+  const originalSelf = fs.readFileSync(SELF, "utf8");
   let probesProven = 0;
 
   {
@@ -64,6 +77,32 @@ function selftest() {
     process.exitCode = undefined;
     if (!caught) {
       console.error("SELFTEST INERT: removing the driver_id cash-advances filter was not caught.");
+      process.exit(1);
+    }
+    probesProven++;
+  }
+
+  {
+    const matrix = JSON.parse(originalMatrix);
+    const leaf = matrix.leaves.find((candidate) => candidate.id === "docs.pod");
+    leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+    checkEvidence(JSON.stringify(matrix), originalSelf);
+    const caught = process.exitCode === 1;
+    process.exitCode = undefined;
+    if (!caught) {
+      console.error("SELFTEST INERT: removing docs.pod Required reverse_link was not caught.");
+      process.exit(1);
+    }
+    probesProven++;
+  }
+
+  {
+    const mutated = originalSelf.replace('"leaves":["docs.pod"]', '"leaves":["load.drawer.documents"]');
+    checkEvidence(originalMatrix, mutated);
+    const caught = process.exitCode === 1;
+    process.exitCode = undefined;
+    if (mutated === originalSelf || !caught) {
+      console.error("SELFTEST INERT: changing the exact Built leaf was not caught.");
       process.exit(1);
     }
     probesProven++;
@@ -96,6 +135,7 @@ if (process.argv.includes("--selftest")) {
 } else {
   checkCashAdvances(fs.readFileSync(CASH_ADVANCES_ROUTES, "utf8"));
   checkPod(fs.readFileSync(POD_ROUTES, "utf8"));
+  checkEvidence(fs.readFileSync(MATRIX, "utf8"), fs.readFileSync(SELF, "utf8"));
   if (process.exitCode !== 1) {
     console.log("PASS verify-driver-load-reverse-link-wired — driver->cash-advances and load->POD-documents reverse reads (Wave-B reverse_link/connectivity) confirmed wired.");
   }
