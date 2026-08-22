@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["customers","vendors"],"cols":["customer","vendor"],"leafRe":"^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(all|preferred|watch|active|inactive|factored)|create|sync|filters)|md\\.(transaction_list|customer_details|coi_requests|new_transaction|tasks)|customers\\.panel\\.customers_sync|vendors\\.panel\\.vendors_sync)$","task":"LINK-F5165-CUSTOMERS-LIST-MASTER-DETAIL"} */
 /** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["list.view_list","list.view_master_detail","list.segment.preferred","list.segment.watch","list.segment.factored","list.segment.active","list.segment.inactive","list.create","md.transaction_list","md.coi_requests","md.new_transaction","md.tasks"],"task":"CUST-F5919-LIST-MASTER-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["list.segment.all","list.filters"],"task":"CUST-F5920-ALL-FILTERS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * OWNER-EXECUTION-PLAN vertical customer-column sweep (2026-08-14): the customers module's own
  * list/master-detail surfaces are all genuinely customer-record-scoped (Customers.tsx +
@@ -30,6 +31,8 @@ const FILES = {
 };
 const LABEL = "verify-customers-list-master-detail";
 const EXACT_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["list.view_list","list.view_master_detail","list.segment.preferred","list.segment.watch","list.segment.factored","list.segment.active","list.segment.inactive","list.create","md.transaction_list","md.coi_requests","md.new_transaction","md.tasks"],"task":"CUST-F5919-LIST-MASTER-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const FILTER_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["list.segment.all","list.filters"],"task":"CUST-F5920-ALL-FILTERS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const FILTER_LEAVES = new Map([["list.segment.all", "/customers?listTab=all"], ["list.filters", "/customers"]]);
 const EXACT_LEAVES = new Map([
   ["list.view_list", "/customers"], ["list.view_master_detail", "/customers"],
   ["list.segment.preferred", "/customers?listTab=preferred"], ["list.segment.watch", "/customers?listTab=watch"],
@@ -46,6 +49,12 @@ export function audit(src) {
   }
   if (!/customer\.deactivated_at != null/.test(src.customers) || !/customer\.deactivated_at == null/.test(src.customers)) {
     failures.push(`${FILES.customers}: active/inactive segments must filter real customer.deactivated_at`);
+  }
+  if (!/raw === "all"/.test(src.customers) || !/else params\.set\("listTab", next\)/.test(src.customers)) {
+    failures.push(`${FILES.customers}: all segment must be URL-backed by listTab=all`);
+  }
+  if (!/useStagedListFilters\(\{[\s\S]*?applied: \{ listTab, rosterType, rosterCreditStatus \}/.test(src.customers)) {
+    failures.push(`${FILES.customers}: roster filters must stage canonical segment/type/status state`);
   }
   if (!/c\.quality_overall_flag === "preferred"/.test(src.customers)) {
     failures.push(`${FILES.customers}: preferred segment must filter real quality_overall_flag`);
@@ -107,7 +116,13 @@ export function audit(src) {
     if (!leaf?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
     if (leaf?.route_hint !== route) failures.push(`${FILES.required}: ${id} must name route ${route}`);
   }
+  for (const [id, route] of FILTER_LEAVES) {
+    const leaf = required.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
+    if (leaf?.route_hint !== route) failures.push(`${FILES.required}: ${id} must name route ${route}`);
+  }
   if (!src.self.split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push(`${FILES.self}: exact Customers connectivity header missing`);
+  if (!src.self.split("/**\n * OWNER-")[0].includes(FILTER_HEADER)) failures.push(`${FILES.self}: exact Customers all/filter header missing`);
   if (/"guard"\s*:\s*"scripts\/verify-customers-list-master-detail\.mjs"/.test(src.feed)) failures.push(`${FILES.feed}: manual feed duplicates Customers connectivity ownership`);
   return failures;
 }
@@ -135,6 +150,9 @@ if (process.argv.includes("--selftest")) {
     ["create-call", "customers", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
     ["active-filter", "customers", /customer\.deactivated_at == null/g, "false"],
+    ["all-segment", "customers", /raw === "all"/, "false"],
+    ["all-segment-url", "customers", /else params\.set\("listTab", next\)/, 'else params.set("tab", next)'],
+    ["roster-staged-filters", "customers", /applied: \{ listTab, rosterType, rosterCreditStatus \}/, "applied: { listTab }"],
     ["preferred-filter", "customers", /c\.quality_overall_flag === "preferred"/g, "false"],
     ["watch-filter", "customers", /c\.quality_overall_flag === "caution"/g, "false"],
     ["factored-filter", "customers", /Boolean\(c\.factoring_company_vendor_id\)/g, "false"],
@@ -182,8 +200,16 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  for (const id of FILTER_LEAVES.keys()) {
+    const mutated = { ...good, required: good.required.replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (mutated.required === good.required || audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Filter Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+  }
   for (const [name, key, before, after] of [
     ["header", "self", EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")],
+    ["filter-header", "self", FILTER_HEADER, FILTER_HEADER.replace("connectivity", "reverse_link")],
     ["feed", "feed", "[", `[{"guard":"scripts/verify-customers-list-master-detail.mjs"},`],
   ]) {
     const mutated = { ...good, [key]: good[key].replace(before, after) };
