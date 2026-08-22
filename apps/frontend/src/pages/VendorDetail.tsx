@@ -470,6 +470,18 @@ export function VendorDetailPage() {
 
   if (vendorQuery.isLoading) return <div className="text-sm text-gray-500">Loading vendor...</div>;
   if (vendorQuery.isError) {
+    if (vendorQuery.error instanceof ApiError && vendorQuery.error.status === 404) {
+      return (
+        <div className="space-y-3">
+          <div className="text-sm text-slate-700" role="alert">
+            This vendor is archived or is not available in the selected company. Historical transactions remain preserved.
+          </div>
+          <Button variant="secondary" onClick={() => navigate("/vendors")}>
+            Back to Vendors
+          </Button>
+        </div>
+      );
+    }
     return <ListErrorBanner message="Failed to load vendor details." onRetry={() => void vendorQuery.refetch()} />;
   }
   if (!vendorQuery.data) {
