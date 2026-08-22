@@ -79,13 +79,11 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             c.free_time_pickup_minutes,
             c.free_time_delivery_minutes,
             pt.days_until_due AS credit_terms_days
-          FROM mdata.customers c
+          FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           LEFT JOIN mdata.vendors fv
             ON fv.id = c.factoring_company_vendor_id
            AND fv.operating_company_id = c.operating_company_id
-          WHERE c.id = $1
-            AND c.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [customerId, operatingCompanyId]

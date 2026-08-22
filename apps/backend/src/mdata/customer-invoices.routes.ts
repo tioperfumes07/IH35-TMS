@@ -51,7 +51,7 @@ export async function registerCustomerInvoicesRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const custRes = await client.query<{ id: string }>(
-        `SELECT id FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
         [customerId, operatingCompanyId]
       );
       if (!custRes.rows[0]) return { notFound: true as const };

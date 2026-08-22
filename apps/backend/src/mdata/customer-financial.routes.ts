@@ -23,7 +23,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerCustomerFinancialSummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers/:id/financial-summary", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id/financial-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -42,9 +42,7 @@ export async function registerCustomerFinancialSummaryRoutes(app: FastifyInstanc
       const cust = await client.query<{ id: string }>(
         `
           SELECT id
-          FROM mdata.customers
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+          FROM mdata.get_customer_same_company($1::uuid, $2::uuid)
           LIMIT 1
         `,
         [customerId, companyId]

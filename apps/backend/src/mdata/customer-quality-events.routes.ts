@@ -170,13 +170,18 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       // Set the GUC so the LEFT JOIN on the per-entity reasons catalog resolves under FORCE RLS.
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
 
+      // CUST-F5974 — quality events are permanent history. customers_select intentionally hides
+      // deactivated rows, so a plain parent lookup (and the redundant parent JOIN below) made an
+      // archived customer's immutable history disappear. Validate the exact same-company parent
+      // through the existing narrow SECURITY DEFINER resolver; the event query remains pinned to
+      // that validated customer id and never broadens to another entity.
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
         [parsedParams.data.customer_id, companyId]
       );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };
 
-      const filters = ["e.customer_id = $1", "c.operating_company_id = $2::uuid"];
+      const filters = ["e.customer_id = $1"];
       if (!parsedQuery.data.include_voided) filters.push("e.voided_at IS NULL");
       const res = await client.query(
         `
@@ -189,7 +194,6 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
             e.voided_at, e.voided_by_user_id, vu.email AS voided_by_user_email, e.void_reason,
             e.created_at, e.updated_at
           FROM mdata.customer_quality_events e
-          JOIN mdata.customers c ON c.id = e.customer_id
           LEFT JOIN catalogs.customer_quality_event_reasons r ON r.id = e.reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           LEFT JOIN mdata.loads rl

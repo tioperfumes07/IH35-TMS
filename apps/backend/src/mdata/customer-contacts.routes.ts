@@ -89,10 +89,7 @@ async function ensureCustomerExists(
   const res = await client.query(
     `
       SELECT id
-      FROM mdata.customers
-      WHERE id = $1
-        AND operating_company_id = $2::uuid
-        AND deactivated_at IS NULL
+      FROM mdata.get_customer_same_company($1::uuid, $2::uuid)
       LIMIT 1
     `,
     [customerId, operatingCompanyId]
