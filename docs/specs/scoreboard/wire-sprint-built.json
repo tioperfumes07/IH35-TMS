@@ -1665,33 +1665,6 @@
       "leafRe": "^unit\\.detail\\.finance_linkage$"
     },
     {
-      "task": "BANK-LINKAGE-GL-JE-REVERSE",
-      "pr": "this PR",
-      "guard": "scripts/verify-bank-linkage-gl-je-reverse.mjs",
-      "modules": [
-        "banking",
-        "accounting",
-        "drivers",
-        "dispatch",
-        "fleet",
-        "vendors",
-        "customers"
-      ],
-      "cols": [
-        "bank",
-        "gl_je",
-        "driver",
-        "unit",
-        "trailer",
-        "load",
-        "vendor",
-        "customer",
-        "connectivity",
-        "reverse_link"
-      ],
-      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns|profiles\\.detail|detail\\.profile|banking\\.panel\\.linked_bank_transactions|load\\.banking)$"
-    },
-    {
       "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-embedded-assignment-reverse-links.mjs",
