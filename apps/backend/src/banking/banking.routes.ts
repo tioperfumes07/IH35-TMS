@@ -369,6 +369,11 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               -- subledger /accounting/escrow already reads correctly. driver_id is only meaningful for
               -- holder_type='driver' rows (this account-level register can also carry vendor/factor
               -- reserve postings); honestly NULL rather than mislabeling a non-driver holder.
+              -- BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK — settlement_id/journal_entry_id
+              -- were entirely absent from this query, even though ep.source_id/linked_journal_entry_id
+              -- are populated on real rows and the frontend (DriverEscrowTabContent.tsx) was already
+              -- correctly written to render an EntityLink for both — it never got the chance. Same
+              -- CASE/join shape escrow-visualizer.routes.ts already uses in this same schema.
               SELECT
                 ep.id,
                 ep.posted_at::date AS txn_date,
@@ -376,11 +381,17 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 (ep.amount_cents::numeric / 100) AS amount,
                 ep.posting_type AS category,
                 'synced'::text AS status,
-                CASE WHEN ea.holder_type = 'driver' THEN ea.holder_id::text ELSE NULL END AS driver_id
+                CASE WHEN ea.holder_type = 'driver' THEN ea.holder_id::text ELSE NULL END AS driver_id,
+                CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
+                ep.linked_journal_entry_id::text AS journal_entry_id,
+                je.memo AS journal_entry_memo
               FROM accounting.escrow_postings ep
               JOIN accounting.escrow_accounts ea
                 ON ea.id = ep.escrow_account_id
                AND ea.operating_company_id = ep.operating_company_id
+              LEFT JOIN accounting.journal_entries je
+                ON je.id = ep.linked_journal_entry_id
+               AND je.operating_company_id = ep.operating_company_id
               WHERE ep.operating_company_id = $1::uuid
               ORDER BY ep.posted_at DESC
               LIMIT $2 OFFSET $3
