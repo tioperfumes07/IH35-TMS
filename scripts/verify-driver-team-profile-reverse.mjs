@@ -1,34 +1,52 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","drivers"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^(catalog\.drivers\.teams\.list|profiles\.detail)$","task":"VERTICAL-REVERSE-LINK-DRIVER-TEAMS"} */
 import fs from "node:fs";
 
-const profile = fs.readFileSync("apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "utf8");
-const reverse = fs.readFileSync("apps/frontend/src/components/driver-profile/DriverTeamsReverseSection.tsx", "utf8");
-const list = fs.readFileSync("apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", "utf8");
+const FILES = {
+  profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  reverse: "apps/frontend/src/components/driver-profile/DriverTeamsReverseSection.tsx",
+  list: "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx",
+  matrix: "docs/specs/scoreboard/modules/lists.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
+};
+const source = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
-function failures(reverseSource = reverse, listSource = list, profileSource = profile) {
-  return [
-    ["profile mount", profileSource.includes('<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}')],
-    ["company-scoped roster", reverseSource.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')],
-    ["both driver slots", reverseSource.includes("team.primary_driver_id === driverId") && reverseSource.includes("team.secondary_driver_id === driverId")],
-    ["exact team drill", reverseSource.includes('kind="driver_team"') && reverseSource.includes("id={team.id}")],
-    ["deep link honored", listSource.includes('searchParams.get("team_id")') && listSource.includes("candidate.id === teamId")],
+function failures(s = source) {
+  const found = [
+    ["profile mount", s.profile.includes('<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}')],
+    ["company-scoped roster", s.reverse.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')],
+    ["both driver slots", /team\.primary_driver_id === driverId \|\| team\.secondary_driver_id === driverId/.test(s.reverse)],
+    ["exact team drill", s.reverse.includes('kind="driver_team"') && s.reverse.includes("id={team.id}")],
+    ["deep link honored", s.list.includes('searchParams.get("team_id")') && s.list.includes("candidate.id === teamId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
+  const matrix = JSON.parse(s.matrix);
+  if (!matrix.leaves.find((leaf) => leaf.id === "catalog.drivers.teams.list")?.required?.includes("reverse_link")) found.push("Lists Required reverse cell missing");
+  const feed = JSON.parse(s.feed);
+  if ((feed.entries ?? []).some((entry) => entry.guard === FILES.self && entry.cols?.includes("reverse_link"))) found.push("duplicate manual reverse feed remains");
+  return found;
 }
 
 if (process.argv.includes("--selftest")) {
-  const badReverse = reverse.replace('kind="driver_team"', 'kind="driver"');
-  const badList = list.replace("candidate.id === teamId", "candidate.id === companyId");
-  const checks = [
-    failures(badReverse, list, profile).includes("exact team drill"),
-    failures(reverse, badList, profile).includes("deep link honored"),
+  if (failures().length) throw new Error(`baseline failed: ${failures().join("; ")}`);
+  const mutations = [
+    ["profile", '<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}', '<DriverTeamsReverseSection driverId={id} operatingCompanyId={undefined}'],
+    ["reverse", 'listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })', 'listMdataDriverTeams({ is_active: "true" })'],
+    ["reverse", "team.primary_driver_id === driverId || team.secondary_driver_id === driverId", "false"],
+    ["reverse", 'kind="driver_team"', 'kind="driver"'],
+    ["list", "candidate.id === teamId", "candidate.id === companyId"],
+    ["matrix", '"id": "catalog.drivers.teams.list"', '"id": "catalog.drivers.teams.list.broken"'],
   ];
-  if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-driver-team-profile-reverse selftest PASS — 2/2 membership/target mutations red");
+  for (const [key, before, after] of mutations) {
+    if (!source[key].includes(before)) throw new Error(`fixture missing: ${key}`);
+    if (!failures({ ...source, [key]: source[key].replace(before, after) }).length) throw new Error(`mutation survived: ${key}`);
+  }
+  const feed = JSON.parse(source.feed);
+  feed.entries.unshift({ task: "BROKEN", guard: FILES.self, modules: ["lists"], cols: ["reverse_link"], leafRe: "^catalog" });
+  if (!failures({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
+  console.log("verify-driver-team-profile-reverse selftest PASS — 8/8 runtime/evidence mutations red");
   process.exit(0);
 }
 
-const missing = failures();
+const missing = failures(source);
 if (missing.length) {
   console.error(`verify-driver-team-profile-reverse FAIL — ${missing.join(", ")}`);
   process.exit(1);
