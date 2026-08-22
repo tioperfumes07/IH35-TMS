@@ -23,9 +23,13 @@ const CHECKS = [
   { name: "ManualJEList EntityLink", file: "apps/frontend/src/pages/accounting/ManualJEListPage.tsx", pattern: /EntityLink/ },
   { name: "AuditTrail EntityLink", file: "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx", pattern: /EntityLink/ },
   { name: "AuditTrail bill-payment canonical kind", file: AUDIT_TRAIL, pattern: /case "bill_payment":\s*return "bill_payment";/ },
+  { name: "AuditTrail driver-advance canonical drill", file: AUDIT_TRAIL, pattern: /case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/ },
+  { name: "AuditTrail transfer canonical drill", file: AUDIT_TRAIL, pattern: /case "transfer":\s*return "transfer";/ },
   { name: "Audit API bill-payment canonical kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "bill_payment":\s*return "bill_payment";/ },
+  { name: "Audit API driver-advance canonical kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "driver_advance":\s*return "cash_advance";/ },
+  { name: "Audit API transfer canonical kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "transfer":\s*return "transfer";/ },
   { name: "Audit API emits canonical source kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /source_entity_kind:\s*accountingSourceEntityKind/ },
-  { name: "Audit client carries canonical source kind", file: "apps/frontend/src/api/accounting.ts", pattern: /source_entity_kind:\s*string \| null/ },
+  { name: "Audit client carries canonical source kind", file: "apps/frontend/src/api/accounting.ts", pattern: /export type AccountingAuditTrailEvent = \{[\s\S]*?source_transaction_type:\s*string \| null;\s*source_entity_kind:\s*string \| null;[\s\S]*?\n\};/ },
   { name: "Audit Trail consumes canonical source kind", file: AUDIT_TRAIL, pattern: /type=\{row\.source_entity_kind \?\? row\.source_transaction_type\}/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
@@ -75,6 +79,17 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — bill-payment wrong-route mutation red`);
+  const deadAdvanceDrill = auditTrail.replace(/case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/, 'case "cash_advance":\n      return "cash_advance";');
+  if (/case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/.test(deadAdvanceDrill)) {
+    console.error(`${LABEL} SELFTEST FAIL — driver-advance dead-drill mutation stayed green`);
+    process.exit(1);
+  }
+  const deadTransferDrill = auditTrail.replace(/case "transfer":\s*return "transfer";/, "");
+  if (/case "transfer":\s*return "transfer";/.test(deadTransferDrill)) {
+    console.error(`${LABEL} SELFTEST FAIL — transfer dead-drill mutation stayed green`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — driver-advance and transfer dead-drill mutations red`);
   process.exit(0);
 }
 

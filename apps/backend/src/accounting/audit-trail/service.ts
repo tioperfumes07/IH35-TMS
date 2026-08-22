@@ -64,6 +64,10 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "payment";
     case "bill_payment":
       return "bill_payment";
+    case "driver_advance":
+      return "cash_advance";
+    case "transfer":
+      return "transfer";
     default:
       return sourceType?.trim() || null;
   }

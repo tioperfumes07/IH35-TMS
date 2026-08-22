@@ -1899,6 +1899,7 @@ export type AccountingAuditTrailEvent = {
   memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string | null;
+  source_entity_kind: string | null;
   source_transaction_id: string | null;
   source_transaction_line_id: string | null;
   account_id: string;
