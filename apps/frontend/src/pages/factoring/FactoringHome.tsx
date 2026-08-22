@@ -235,6 +235,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const loanIdFromUrl = searchParams.get("loan_id")?.trim() ?? "";
 
   const EMPTY_FILTERS = {
     customerId: "",
@@ -360,6 +361,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const selectedEquipmentLoan = (equipmentLoansQuery.data?.rows ?? []).find(
     (row) => String(row.id) === selectedLoanId
   );
+  useEffect(() => {
+    if (!loanIdFromUrl || selectedLoanId === loanIdFromUrl) return;
+    const requestedLoan = (equipmentLoansQuery.data?.rows ?? []).find(
+      (row) => String(row.id) === loanIdFromUrl
+    );
+    if (requestedLoan) setSelectedLoanId(String(requestedLoan.id));
+  }, [equipmentLoansQuery.data?.rows, loanIdFromUrl, selectedLoanId]);
   const invoices = recourseQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
