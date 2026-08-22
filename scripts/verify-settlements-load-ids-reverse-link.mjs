@@ -48,15 +48,24 @@ export function collectFailures(src = source) {
     if (!/load_ids:\s*Array\.isArray\(row\.load_ids\)/.test(block)) {
       failures.push(`${routesPath}: ${name} response must map load_ids`);
     }
+    if (!/jsonb_agg\(jsonb_build_object\('id', linked\.load_id::text, 'label', l\.load_number\)/.test(block) || !/l\.operating_company_id = s\.operating_company_id/.test(block)) {
+      failures.push(`${routesPath}: ${name} must project company-scoped human load links`);
+    }
+    if (!/load_links:\s*Array\.isArray\(row\.load_links\)/.test(block)) {
+      failures.push(`${routesPath}: ${name} response must map human load links`);
+    }
   }
-  if (!/settlement\.load_ids[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{id\}/.test(src.panel)) {
-    failures.push(`${panelPath}: must drill each settlement.load_ids value as kind=load`);
+  if (!/settlement\.load_links[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{link\.id\}[\s\S]{0,160}entityLabel\(link\.label, link\.id, "Load"\)/.test(src.panel)) {
+    failures.push(`${panelPath}: must drill each settlement.load_links row with its human label`);
   }
-  if (!/row\.load_ids[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{id\}/.test(src.table)) {
-    failures.push(`${tablePath}: Loads column must drill each row.load_ids value as kind=load`);
+  if (!/row\.load_links[\s\S]{0,500}?kind="load"[\s\S]{0,120}?id=\{link\.id\}[\s\S]{0,160}entityLabel\(link\.label, link\.id, "Load"\)/.test(src.table)) {
+    failures.push(`${tablePath}: Loads column must drill each row.load_links value with its human label`);
   }
   if (!/load_ids\?:\s*string\[\]/.test(src.api)) {
     failures.push(`${apiTypePath}: SettlementListRow no longer declares load_ids`);
+  }
+  if (!/load_links\?:\s*Array<\{ id: string; label: string \}>/.test(src.api)) {
+    failures.push(`${apiTypePath}: SettlementListRow must declare human load links`);
   }
   return failures;
 }
@@ -72,9 +81,14 @@ if (process.argv.includes("--selftest")) {
     ["driver producer", "routes", /array_agg\(DISTINCT COALESCE\(db\.load_id, sl\.load_id\)\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "array_agg(NULL)" : match],
     ["general mapper", "routes", /load_ids:\s*Array\.isArray\(row\.load_ids\)/, "load_ids: false"],
     ["driver mapper", "routes", /load_ids:\s*Array\.isArray\(row\.load_ids\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "load_ids: false" : match],
-    ["pre-settlements panel", "panel", /kind="load"\s+id=\{id\}/, 'kind="settlement" id={id}'],
-    ["settlements table", "table", /kind="load"\s+id=\{id\}/, 'kind="settlement" id={id}'],
+    ["general human producer", "routes", /jsonb_agg\(jsonb_build_object\('id', linked\.load_id::text, 'label', l\.load_number\)/, "jsonb_agg(jsonb_build_object('id', linked.load_id::text, 'label', NULL)"],
+    ["driver human producer", "routes", /jsonb_agg\(jsonb_build_object\('id', linked\.load_id::text, 'label', l\.load_number\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "jsonb_agg(jsonb_build_object('id', linked.load_id::text, 'label', NULL)" : match],
+    ["general human mapper", "routes", /load_links:\s*Array\.isArray\(row\.load_links\)/, "load_links: false"],
+    ["driver human mapper", "routes", /load_links:\s*Array\.isArray\(row\.load_links\)/g, (match, offset, text) => offset === text.lastIndexOf(match) ? "load_links: false" : match],
+    ["pre-settlements panel", "panel", /entityLabel\(link\.label, link\.id, "Load"\)/, 'entityLabel(null, link.id, "Load")'],
+    ["settlements table", "table", /entityLabel\(link\.label, link\.id, "Load"\)/, 'entityLabel(null, link.id, "Load")'],
     ["API type", "api", /load_ids\?:\s*string\[\]/, "load_count?: number"],
+    ["human API type", "api", /load_links\?:\s*Array<\{ id: string; label: string \}>/, "load_links?: never"],
   ];
   const escaped = [];
   for (const [name, key, pattern, replacement] of mutations) {

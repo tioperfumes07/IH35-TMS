@@ -209,7 +209,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
-            ) AS load_ids
+            ) AS load_ids,
+            (
+              SELECT COALESCE(
+                jsonb_agg(jsonb_build_object('id', linked.load_id::text, 'label', l.load_number) ORDER BY l.load_number),
+                '[]'::jsonb
+              )
+              FROM (
+                SELECT DISTINCT COALESCE(db.load_id, sl.load_id) AS load_id
+                FROM driver_finance.settlement_lines sl
+                LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+                WHERE sl.settlement_id = s.id
+                  AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+              ) linked
+              JOIN mdata.loads l
+                ON l.id = linked.load_id
+               AND l.operating_company_id = s.operating_company_id
+            ) AS load_links
           FROM views.driver_settlement_with_debt v
           -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
           -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
@@ -231,6 +247,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
             load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
+            load_links: Array.isArray(row.load_links)
+              ? (row.load_links as Array<{ id?: unknown; label?: unknown }>).map((link) => ({
+                  id: String(link.id ?? ""),
+                  label: String(link.label ?? ""),
+                })).filter((link) => Boolean(link.id))
+              : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
             // LINK-F5187: debt.source_liabilities already carries the real driver_finance.driver_liabilities
@@ -329,7 +351,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
-            ) AS load_ids
+            ) AS load_ids,
+            (
+              SELECT COALESCE(
+                jsonb_agg(jsonb_build_object('id', linked.load_id::text, 'label', l.load_number) ORDER BY l.load_number),
+                '[]'::jsonb
+              )
+              FROM (
+                SELECT DISTINCT COALESCE(db.load_id, sl.load_id) AS load_id
+                FROM driver_finance.settlement_lines sl
+                LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+                WHERE sl.settlement_id = s.id
+                  AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+              ) linked
+              JOIN mdata.loads l
+                ON l.id = linked.load_id
+               AND l.operating_company_id = s.operating_company_id
+            ) AS load_links
           FROM views.driver_settlement_with_debt v
           -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
           -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
@@ -349,6 +387,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
             load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
+            load_links: Array.isArray(row.load_links)
+              ? (row.load_links as Array<{ id?: unknown; label?: unknown }>).map((link) => ({
+                  id: String(link.id ?? ""),
+                  label: String(link.label ?? ""),
+                })).filter((link) => Boolean(link.id))
+              : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
             // LINK-F5187: same fix as the company-wide list above — thread the real liability ids

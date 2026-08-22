@@ -6,6 +6,7 @@ import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(value: number) {
   return formatUsd(value);
@@ -55,17 +56,15 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
               {/* P14 settlements load reverse-link: real per-load EntityLinks when the ids are
                   present (current API), falling back to the honest plain count if an older cached
                   response still only carries load_count. */}
-              {(settlement.load_ids ?? []).length > 0 ? (
+              {(settlement.load_links ?? []).length > 0 ? (
                 <>
                   <span className="text-gray-400">·</span>
-                  {(settlement.load_ids ?? []).map((id, idx) => (
+                  {(settlement.load_links ?? []).map((link) => (
                     <EntityLink
-                      key={id}
+                      key={link.id}
                       kind="load"
-                      id={id}
-                      label={
-                        (settlement.load_ids?.length ?? 0) > 1 ? `load #${idx + 1}` : "load →"
-                      }
+                      id={link.id}
+                      label={entityLabel(link.label, link.id, "Load")}
                       className="text-xs text-gray-500 hover:underline"
                     />
                   ))}

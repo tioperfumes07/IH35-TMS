@@ -85,16 +85,16 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         sortValue: (row) => Number(row.load_count ?? 0),
         cellClass: "tabular-nums",
         render: (row) => {
-          const ids = row.load_ids ?? [];
-          if (ids.length > 0) {
+          const links = row.load_links ?? [];
+          if (links.length > 0) {
             return (
               <span className="flex flex-wrap items-center gap-1">
-                {ids.map((id, idx) => (
+                {links.map((link) => (
                   <EntityLink
-                    key={id}
+                    key={link.id}
                     kind="load"
-                    id={id}
-                    label={ids.length > 1 ? `#${idx + 1}` : String(row.load_count ?? ids.length)}
+                    id={link.id}
+                    label={entityLabel(link.label, link.id, "Load")}
                     className="tabular-nums text-slate-700 hover:underline"
                   />
                 ))}
