@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-22T03:13:58-05:00",
-    "sourceSha": "c3c1ecfc3",
+    "generatedAt": "2026-08-22T03:50:45-05:00",
+    "sourceSha": "e09d6d962",
     "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2099,
+    "ledgerRows": 2102,
     "failOpen": 0,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 14036,
-      "title": "FINDING: ACCOUNTING-CREATE-TEST-CYCLES-50059",
+      "number": 14060,
+      "title": "FINDING: BANKING-LIVE-CHROME-50062",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14036",
-      "sha": "c3c1ecfc3",
-      "committedAtIso": "2026-08-22T03:13:58-05:00"
+      "mergedAtCt": "08/22/2026, 03:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14060",
+      "sha": "e09d6d962",
+      "committedAtIso": "2026-08-22T03:50:45-05:00"
     },
     {
-      "number": 14035,
-      "title": "FINDING: ACCT-F5774-MAIN-ACCOUNTING-SUBNAV-MISSING-VENDOR-MARKER-BREAK",
+      "number": 14058,
+      "title": "FINDING: BANK-F5782 remove Wave-B connectivity theater",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14035",
-      "sha": "cab660434",
-      "committedAtIso": "2026-08-22T03:10:47-05:00"
+      "mergedAtCt": "08/22/2026, 03:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14058",
+      "sha": "4f1cf3d1c",
+      "committedAtIso": "2026-08-22T03:50:33-05:00"
     },
     {
-      "number": 14034,
-      "title": "FINDING: ACCOUNTING-CREATE-TEST-ACK LANE: NON-FINANCIAL",
+      "number": 14059,
+      "title": "FINDING: ACCT-F5782-HOP-REVENUE-NO-PROBE LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14034",
-      "sha": "7a5f20fc7",
-      "committedAtIso": "2026-08-22T03:07:51-05:00"
+      "mergedAtCt": "08/22/2026, 03:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14059",
+      "sha": "d58b89e54",
+      "committedAtIso": "2026-08-22T03:50:31-05:00"
     },
     {
-      "number": 14033,
-      "title": "FINDING: ACCT-F5773-THREE-CREATORS-POST-CANONICAL-PERSISTENCE-UNRATCHETED",
+      "number": 14057,
+      "title": "FINDING: ACCT-F5781 ratchet Re-allocate persistence",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14033",
-      "sha": "803831ff9",
-      "committedAtIso": "2026-08-22T03:04:43-05:00"
+      "mergedAtCt": "08/22/2026, 03:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14057",
+      "sha": "9e175322f",
+      "committedAtIso": "2026-08-22T03:44:55-05:00"
     },
     {
-      "number": 14032,
-      "title": "FINDING: ACCT-F5772",
+      "number": 14056,
+      "title": "FINDING: ACCT-F5777-CONFIRM-SHIPPED-OUTBOX",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14032",
-      "sha": "9097c83ca",
-      "committedAtIso": "2026-08-22T03:04:34-05:00"
+      "mergedAtCt": "08/22/2026, 03:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14056",
+      "sha": "61de373c2",
+      "committedAtIso": "2026-08-22T03:43:08-05:00"
     },
     {
-      "number": 14031,
-      "title": "FINDING: BANK-F5772-MATCHED-BILL-GUARD-CROSS-READER-FALSE-GREEN",
+      "number": 14055,
+      "title": "FINDING: BUS-REWAKE-IDLE-FORBIDDEN",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 03:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14031",
-      "sha": "d90c31c6e",
-      "committedAtIso": "2026-08-22T03:00:49-05:00"
+      "mergedAtCt": "08/22/2026, 03:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14055",
+      "sha": "245326384",
+      "committedAtIso": "2026-08-22T03:42:12-05:00"
     },
     {
-      "number": 14029,
-      "title": "FINDING: ACCT-F5768-BOARD LANE: NON-FINANCIAL",
+      "number": 14054,
+      "title": "FINDING: ACCT-F5777-DEPLOY-LAG-CONFIRM",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 02:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14029",
-      "sha": "a2f828ed8",
-      "committedAtIso": "2026-08-22T02:59:07-05:00"
+      "mergedAtCt": "08/22/2026, 03:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14054",
+      "sha": "1d9b05825",
+      "committedAtIso": "2026-08-22T03:42:07-05:00"
     },
     {
-      "number": 14028,
-      "title": "FINDING: LST-F8799 LANE: NON-FINANCIAL",
+      "number": 14053,
+      "title": "FINDING: ACCT-F5780 posting template guard import masking",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 02:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14028",
-      "sha": "727dd727c",
-      "committedAtIso": "2026-08-22T02:58:58-05:00"
+      "mergedAtCt": "08/22/2026, 03:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14053",
+      "sha": "3088fbde9",
+      "committedAtIso": "2026-08-22T03:40:59-05:00"
     },
     {
-      "number": 14027,
-      "title": "FINDING: ACCT-F5768 LANE: FINANCIAL",
+      "number": 14052,
+      "title": "FINDING: ACCT-F5777-BOARD LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 02:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14027",
-      "sha": "efaaa9839",
-      "committedAtIso": "2026-08-22T02:57:31-05:00"
+      "mergedAtCt": "08/22/2026, 03:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14052",
+      "sha": "dd94ec519",
+      "committedAtIso": "2026-08-22T03:36:12-05:00"
     },
     {
-      "number": 14026,
-      "title": "FINDING: BUS-ACCT-CREATE-TEST-CLOSE",
+      "number": 14050,
+      "title": "FINDING: ACCOUNTING-LEFTOVER-DRY-SHIPPED-OUTBOX",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 02:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14026",
-      "sha": "334ac545a",
-      "committedAtIso": "2026-08-22T02:56:33-05:00"
+      "mergedAtCt": "08/22/2026, 03:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14050",
+      "sha": "e3c6591af",
+      "committedAtIso": "2026-08-22T03:34:11-05:00"
     }
   ]
 }
