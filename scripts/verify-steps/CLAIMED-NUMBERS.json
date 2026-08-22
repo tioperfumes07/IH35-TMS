@@ -1,4 +1,9 @@
 {
+  "4340": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-fleet-catalog-display-name-key"
+  },
   "4330": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-3",
@@ -5308,5 +5313,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1215
+  "total_claimed": 1216
 }
