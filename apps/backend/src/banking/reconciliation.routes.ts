@@ -529,7 +529,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       const loads = await client
         .query(
           `
-            SELECT id, created_at::date AS event_date, 'load'::text AS event_type
+            SELECT id, created_at::date AS event_date, 'load'::text AS event_type,
+                   COALESCE(NULLIF(TRIM(load_number), ''), 'Load') AS display_label
             FROM mdata.loads
             WHERE operating_company_id = $1::uuid
               AND created_at::date BETWEEN $2 AND $3
@@ -546,7 +547,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         ? await client
             .query(
               `
-                SELECT id, created_at::date AS event_date, 'bill'::text AS event_type
+                SELECT id, created_at::date AS event_date, 'bill'::text AS event_type,
+                       COALESCE(NULLIF(TRIM(bill_number), ''), 'Bill') AS display_label
                 FROM accounting.bills
                 WHERE operating_company_id = $1::uuid
                   AND created_at::date BETWEEN $2 AND $3
@@ -565,7 +567,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         ? await client
             .query(
               `
-                SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type
+                SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type,
+                       'Settlement'::text AS display_label
                 FROM driver_pay.settlements
                 WHERE operating_company_id = $1::uuid
                   AND created_at::date BETWEEN $2 AND $3
@@ -580,7 +583,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           ? await client
               .query(
                 `
-                  SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type
+                  SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type,
+                         COALESCE(NULLIF(TRIM(display_id), ''), 'Settlement') AS display_label
                   FROM driver_finance.driver_settlements
                   WHERE operating_company_id = $1::uuid
                     AND created_at::date BETWEEN $2 AND $3

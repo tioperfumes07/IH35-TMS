@@ -29,7 +29,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { userFacingApiError } from "../../lib/api-error-message";
 
-type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
+type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement"; display_label: string };
 
 function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
   switch (eventType) {
@@ -596,7 +596,7 @@ export function ReconciliationWorkspacePage() {
                     <EntityLink
                       kind={candidateEntityKind(event.event_type)}
                       id={event.id}
-                      label={entityLabel(null, event.id, event.event_type === "load" ? "Load" : event.event_type === "bill" ? "Bill" : "Settlement")}
+                      label={entityLabel(event.display_label, event.id, event.event_type === "load" ? "Load" : event.event_type === "bill" ? "Bill" : "Settlement")}
                     />
                   </div>
                   <div className="text-xs text-gray-600">{formatDateUS(event.event_date)}</div>
