@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getAccountingRecurringTemplate } from "../../api/accountingRecurringTemplate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -21,7 +21,19 @@ export function AccountingRecurringTemplateDetailPage() {
   const row = query.data;
   const fields = row ? Object.entries(row.template_payload).filter(([, value]) => value !== null && typeof value !== "object") : [];
   return (
-    <AccountingSubNavWrapper title={row ? `${label(row.kind)} template` : "Recurring template"} subtitle="Materialization schedule and canonical source payload">
+    <AccountingSubNavWrapper
+      title={row ? `${label(row.kind)} template` : "Recurring template"}
+      subtitle="Materialization schedule and canonical source payload"
+      actions={(
+        <Link
+          to="/accounting/bills/recurring"
+          data-testid="recurring-template-reverse-drill"
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+        >
+          Back to recurring bills
+        </Link>
+      )}
+    >
       {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select an operating company to view this template.</p> : null}
       {query.isError ? <ListErrorState title="Couldn't load recurring template" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
       {query.isPending && companyId ? <p className="text-sm text-slate-500">Loading recurring template…</p> : null}
