@@ -40,7 +40,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
 | Cursor | 9222 | banking | `/banking` labeled TEST expense → For review **Match** same $ → `/banking/reconciliation` **Accept** → ledger. Do not drain For-review. Do not Close period with 0 sessions. **Then** dispatch leftover (do not remake Book Load) → vendors → maint → safety → insurance |
-| CC-1 | 9223 | accounting | `/accounting` leftover unique **500 / dead click / silent no-op** only. Do not remake TESTs. Empty leftover → `/factoring` unique FINDING |
+| CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden |
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
 | CC-3 | 9225 | legal | `/legal` pickers (`+ Add new` first row → wizard → R=W). Then `/lists` |
 | Codex | 9226 | customers | reverse `mdata.customers` (SQL/GET). **No CDP.** Then drivers → fleet/`mdata.units` |
