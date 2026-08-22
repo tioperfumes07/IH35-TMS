@@ -1173,551 +1173,15 @@ async function main() {
   await registerPayrollAggregatedRoutes(app);
   await registerUsmcaActivationRoutes(app);
 
-  // preDeploy ci-boot-api-smoke waits 90s for GET /api/v1/health. That route is a no-op AFTER
-  // listen(). ~20 in-process workers (QBO CDC/inbound startup ticks) ran BEFORE listen and
-  // starved the event loop, so smoke died at ~86s and every deploy since 07ae74c failed
-  // pre_deploy. Boot smoke already sets IH35_BOOT_API_SMOKE=true — skip workers, listen, pass.
+  // Render healthCheckPath cannot bind until listen(). Starting ~20 in-process workers BEFORE
+  // listen starves the event loop: pre_deploy smoke dies ~86s AND rolling updates sit in
+  // update_in_progress then update_failed while prod keeps the old SHA. Bind first, then workers.
+  // IH35_BOOT_API_SMOKE=true still skips workers (GitHub CI boot smokes).
   const bootApiSmoke = process.env.IH35_BOOT_API_SMOKE === "true";
   if (bootApiSmoke) {
     app.log.info("[STARTUP] IH35_BOOT_API_SMOKE — skipping in-process workers so listen() can answer health");
   }
 
-  if (!bootApiSmoke) {
-  try {
-    initializeAccountingCrons(app);
-    app.log.info("[STARTUP] accounting cron suite initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] accounting cron suite failed");
-  }
-
-  try {
-    // FLT-01: monthly asset-depreciation batch; per-entity FIXED_ASSET_AUTOPOST_ENABLED stays OFF
-    // unless Jorge explicitly enables it. Each eligible asset receives an append-only run receipt.
-    initializeDepreciationAutopostCron(app);
-    app.log.info("[STARTUP] depreciation-autopost cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
-  }
-
-  try {
-    await initializeQboHistoricalImportRunner(app);
-    app.log.info("[STARTUP] qbo-forensic-runner initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-forensic-runner failed");
-    (app as unknown as { forensicRunnerStatus?: string }).forensicRunnerStatus = "failed";
-  }
-
-  try {
-    await initializeQboSyncQueueRunner(app);
-    app.log.info("[STARTUP] qbo-sync-runner initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-sync-runner failed");
-  }
-
-  try {
-    initializeQboInboundSyncCron(app);
-    app.log.info("[STARTUP] qbo-inbound-sync initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-inbound-sync failed");
-  }
-
-  try {
-    initializeQboCdcPollCron(app);
-    app.log.info("[STARTUP] qbo-cdc-poll initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-cdc-poll failed");
-  }
-
-  try {
-    initializeRecurringTemplatesCron(app);
-    app.log.info("[STARTUP] recurring-templates cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] recurring-templates cron failed");
-  }
-
-  // GAP-20 / HOLD-FOR-JORGE: the recurring-bill-templates generator (accounting.recurring_bill_templates
-  // -> creates a real accounting.bills AP row on every due template, daily at 06:00 CT) was fully built
-  // (table + generator.service.ts + this worker) but never started -- the FE pages that create templates
-  // were also unrouted until this change. Bill CREATION here is unconditional (not gated by the
-  // BILL_GL_POSTING_ENABLED flag, which only gates the SEPARATE auto-post-to-GL sub-step inside
-  // generateFromTemplate). Starting this daily job therefore makes the server autonomously write
-  // accounting.bills rows for any active template -- a financial-cluster write with no per-action human
-  // confirmation. Per CLAUDE.md SS1.4 (never enable money-moving/posting automation without explicit
-  // owner OK) this ships OFF by default behind an explicit opt-in env var; Jorge decides when to flip it.
-  if (process.env.RECURRING_BILL_GENERATOR_CRON_ENABLED === "true") {
-    try {
-      initializeRecurringBillGeneratorWorker(app);
-      app.log.info("[STARTUP] recurring-bill-generator-worker initialized (RECURRING_BILL_GENERATOR_CRON_ENABLED=true)");
-    } catch (error) {
-      app.log.error({ err: error }, "[STARTUP] recurring-bill-generator-worker failed");
-    }
-  } else {
-    app.log.info("[STARTUP] recurring-bill-generator-worker NOT started (RECURRING_BILL_GENERATOR_CRON_ENABLED != 'true' -- default OFF, HOLD-FOR-JORGE)");
-  }
-
-  try {
-    await initializeQboTokenRefreshCron(app);
-    app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-token-refresh-cron failed");
-  }
-
-  try {
-    initializeCashAdvanceRequestExpiryCron(app);
-    app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
-  }
-
-  try {
-    initializeChatConfirmationEscalationCron(app);
-    app.log.info("[STARTUP] chat-confirmation-escalation-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] chat-confirmation-escalation-cron failed");
-  }
-
-  try {
-    initializeSamsaraHealthCheckCron(app);
-    app.log.info("[STARTUP] samsara-health-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
-  }
-
-  try {
-    // RELAY-FUEL-INGEST-1 (doc 21 Part A gap 1): the cron was defined but never registered. It is
-    // gated by RELAY_FUEL_INGEST_CRON_ENABLED (env, default true) AND the per-entity RELAY_FUEL_INGEST_ENABLED
-    // flag (default OFF), so wiring it here is a no-op until the owner sets the key + flips the flag. Staging
-    // ingest only — writes integrations.relay_fuel_transactions*, no GL, no accounting.* / fuel.* write.
-    initializeRelayFuelIngestCron(app);
-    app.log.info("[STARTUP] relay-fuel-ingest-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] relay-fuel-ingest-cron failed");
-  }
-
-  try {
-    initializeModelLifecycleMonitorCron(app);
-    app.log.info("[STARTUP] model-lifecycle-monitor-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] model-lifecycle-monitor-cron failed");
-  }
-
-  try {
-    initializeSamsaraWebhookProjectionCron(app);
-    app.log.info("[STARTUP] samsara-webhook-projection-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-webhook-projection-cron failed");
-  }
-
-  try {
-    initializeSamsaraRemoteCountCollectorCron(app);
-    app.log.info("[STARTUP] samsara-remote-count-collector-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-remote-count-collector-cron failed");
-  }
-
-  try {
-    initializeSamsaraPositionsCron(app);
-    app.log.info("[STARTUP] samsara-positions-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-positions-cron failed");
-  }
-
-  try {
-    initializeReeferHoursPollCron(app);
-    app.log.info("[STARTUP] reefer-hours-poll-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] reefer-hours-poll-cron failed");
-  }
-
-  try {
-    if (isFeatureDisabled("samsara_master_sync")) {
-      app.log.warn("[STARTUP] samsara-master-sync-cron disabled by required env checks");
-    } else {
-      initializeSamsaraMasterSyncCron(app);
-      app.log.info("[STARTUP] samsara-master-sync-cron initialized");
-    }
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-master-sync-cron failed");
-  }
-
-  try {
-    initializeSamsaraHosPullCron(app);
-    app.log.info("[STARTUP] samsara-hos-pull-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] samsara-hos-pull-cron failed");
-  }
-
-  try {
-    initializeFuelGpsMatchCron(app);
-    initializeBankReconAutoMatchCron(app);
-    app.log.info("[STARTUP] fuel-gps-match-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");
-  }
-
-  try {
-    initializeLovesCardImportCron(app);
-    app.log.info("[STARTUP] loves-card-import-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] loves-card-import-cron failed");
-  }
-
-  try {
-    initializeReconCron(app);
-    app.log.info("[STARTUP] recon-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] recon-cron failed");
-  }
-
-  try {
-    initializeAuditChainVerifyCron(app);
-    app.log.info("[STARTUP] audit-chain-verify-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] audit-chain-verify-cron failed");
-  }
-
-  try {
-    initializePlaidDailySyncCron(app);
-    initializePlaidDailyRefreshCron(app);
-    app.log.info("[STARTUP] plaid-daily-sync-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] plaid-daily-sync-cron failed");
-  }
-
-  try {
-    initializeDriverSettlementAutoPayCron(app);
-    app.log.info("[STARTUP] driver-settlement-auto-pay-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] driver-settlement-auto-pay-cron failed");
-  }
-
-  try {
-    initializeGeofenceBreachDetectorCron(app);
-    app.log.info("[STARTUP] geofence-breach-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
-  }
-
-  try {
-    // P8C-K driver scheduler leave crons — each self-gates OFF unless its env flag is set to "true".
-    initializeDriverLeaveAdvanceReminderCron(app);
-    initializeDriverLeaveBalanceRolloverCron(app);
-    initializeDriverLeavePendingEscalationCron(app);
-    app.log.info("[STARTUP] driver-leave scheduler crons initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] driver-leave scheduler crons failed");
-  }
-
-  try {
-    initializeDriverVendorMappingWorker(app);
-    initializeSamsaraPositionPollWorker(app);
-    initializeGeofenceReconciliationWorker(app);
-    initializeAnomalyDetectorWorker(app);
-    initializeFuelFraudDetectorWorker(app);
-    initializeDataSovereigntyDailySync(app);
-    app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");
-  }
-
-  try {
-    initializeBorderCrossingDetectorWorker(app);
-    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
-  }
-
-  try {
-    initializeVehicleDriverPairingWorker(app);
-    app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
-  }
-
-  try {
-    initializeLayoverDetectorWorker(app);
-    app.log.info("[STARTUP] layover-detector-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] layover-detector-worker failed");
-  }
-
-  try {
-    initializeActiveDriverSetRecomputeWorker(app);
-    app.log.info("[STARTUP] active-driver-set-recompute worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] active-driver-set-recompute worker failed");
-  }
-
-  try {
-    initializeDriverActive30dWorker(app);
-    app.log.info("[STARTUP] driver-active-30d worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] driver-active-30d worker failed");
-  }
-
-  try {
-    initializeAutoStatusSwitchWorker(app);
-    app.log.info("[STARTUP] auto-status-switch-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] auto-status-switch-worker failed");
-  }
-
-  try {
-    initializeCap14CargoSensorWorker(app);
-    app.log.info("[STARTUP] cap-14-cargo-sensor-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] cap-14-cargo-sensor-worker failed");
-  }
-
-  try {
-    initializeBookingGapAggregatorWorker(app);
-    app.log.info("[STARTUP] booking-gap aggregator worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
-  }
-
-  try {
-    cron.schedule(
-      "*/30 * * * *",
-      async () => {
-        await withLuciaBypass(async (client) => {
-          const companies = await client.query<{ id: string }>(
-            `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
-          );
-          for (const company of companies.rows) {
-            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
-            const result = await runAnomalyDetectionForTenant(client, company.id);
-            app.log.info(
-              { operating_company_id: company.id, scanned: result.scanned, inserted: result.inserted },
-              "[STARTUP] anomaly detector run complete"
-            );
-          }
-        });
-      },
-      {
-      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
-    );
-    app.log.info("[STARTUP] anomaly-detector-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] anomaly-detector-cron failed");
-  }
-
-  try {
-    initializeLegalMattersReminderCron(app);
-    app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
-  }
-
-  try {
-    initializeInsurancePaymentReminderCron(app);
-    app.log.info("[STARTUP] insurance-payment-reminder-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] insurance-payment-reminder-cron failed");
-  }
-
-  try {
-    initializeInsuranceLateFeeCron(app);
-    app.log.info("[STARTUP] insurance-late-fee-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] insurance-late-fee-cron failed");
-  }
-
-  try {
-    initializeFactoringPacketSweepCron(app);
-    app.log.info("[STARTUP] factoring-packet-sweep-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] factoring-packet-sweep-cron failed");
-  }
-
-  try {
-    initializeSafetyRemindersCron(app);
-    app.log.info("[STARTUP] safety-reminders-cron initialized");
-
-    initializeIntegrityAlertEngineCron(app);
-    app.log.info("[STARTUP] integrity-alert-engine-cron initialized");
-
-    initializeDocumentAlertEngineCron(app);
-    app.log.info("[STARTUP] document-alert-engine-cron initialized");
-
-    initializeDaRandomPoolDrawWorker(app);
-    app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
-
-    initializeDamageContinuityWorker(app);
-    app.log.info("[STARTUP] damage-continuity-worker initialized");
-
-    initializeCertExpiryMonitor(app);
-    initializeSamsaraCacheWarmer(app);
-    app.log.info("[STARTUP] samsara-cache-warmer initialized");
-    initializeSearchIndexerIncremental(app);
-    app.log.info("[STARTUP] cert-expiry-monitor initialized");
-
-    initializeLoanPaymentReminder(app);
-    app.log.info("[STARTUP] loan-payment-reminder initialized");
-
-    initializePmAutoEngineCron(app);
-    app.log.info("[STARTUP] pm-auto-engine-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
-  }
-
-  try {
-    await initializeMasterDataSyncCron(app);
-    app.log.info("[STARTUP] qbo-master-data-sync-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-master-data-sync-cron failed");
-  }
-
-  try {
-    initializeQboSyncAlertsCron(app);
-    app.log.info("[STARTUP] qbo-sync-alerts-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-sync-alerts-cron failed");
-  }
-
-  try {
-    initializeQboSyncDriftScheduler(app);
-    app.log.info("[STARTUP] qbo-sync-drift-scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-sync-drift-scheduler failed");
-  }
-
-  try {
-    initializeQboRemoteCountCollectorCron(app);
-    app.log.info("[STARTUP] qbo-remote-count-collector-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-remote-count-collector-cron failed");
-  }
-
-  try {
-    initializeReconciliationWorkerCron(app);
-    app.log.info("[STARTUP] reconciliation-worker-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] reconciliation-worker-cron failed");
-  }
-
-  try {
-    initializeEmailCron(app);
-    app.log.info("[STARTUP] email-cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] email-cron failed");
-  }
-
-  try {
-    initializeReportsRoleScheduler(app);
-    app.log.info("[STARTUP] reports-role-scheduler initialized");
-    initializeScheduledReportsEmailer(app);
-    app.log.info("[STARTUP] scheduled-reports-emailer initialized");
-    initializeScheduledReportsWorker(app);
-    app.log.info("[STARTUP] scheduled-reports-worker (canonical, reporting.scheduled_reports) initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] reports-role-scheduler failed");
-  }
-
-  try {
-    initializeErrorDigestCron(app);
-    app.log.info("[STARTUP] error-digest scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
-  }
-
-  try {
-    // FINDING H5-3 — nightly R2-evidence presence reconcile (read-only; default OFF via
-    // EVIDENCE_PRESENCE_RECONCILE_ENABLED). Fail-loud CRITICAL alarm on any evidence object missing in R2.
-    initializeEvidencePresenceReconcileCron(app);
-    app.log.info("[STARTUP] evidence-presence reconcile scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] evidence-presence reconcile scheduler failed");
-  }
-
-  try {
-    initializeIdempotencyCleanupCron(app);
-    app.log.info("[STARTUP] idempotency-cleanup cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] idempotency-cleanup cron failed");
-  }
-
-  try {
-    registerScenarioCertifyCron(app);
-    app.log.info("[STARTUP] scenario-certify cron initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] scenario-certify cron failed");
-  }
-
-  try {
-    initializeDailyTaskAlertsCron(app);
-    app.log.info("[STARTUP] daily-task-alerts cron initialized");
-    initializeTodaysAttentionWorker(app);
-    app.log.info("[STARTUP] todays-attention worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
-  }
-
-  try {
-    initializeAdminJobsWorker(app);
-    app.log.info("[STARTUP] admin-jobs-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
-  }
-
-  try {
-    initializeLateArrivalAggregatorWorker(app);
-    app.log.info("[STARTUP] late-arrival aggregator worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] late-arrival aggregator worker failed");
-  }
-
-  try {
-    initializeCustomerRelationshipScorerWorker(app);
-    app.log.info("[STARTUP] customer-relationship scorer worker initialized");
-    initializeDriverRetentionScorerWorker(app);
-    app.log.info("[STARTUP] driver-retention scorer worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] customer-relationship scorer worker failed");
-  }
-
-  try {
-    initializeDriverScoringAggregatorWorker(app);
-    app.log.info("[STARTUP] driver-scoring aggregator worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] driver-scoring aggregator worker failed");
-  }
-
-  try {
-    initializeQboCustomersPushScheduler(app);
-    app.log.info("[STARTUP] qbo-customers-push scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-customers-push scheduler failed");
-  }
-
-  try {
-    initializeQboVendorsPushScheduler(app);
-    app.log.info("[STARTUP] qbo-vendors-push scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-vendors-push scheduler failed");
-  }
-
-  try {
-    initializeQboAccountsPushScheduler(app);
-    app.log.info("[STARTUP] qbo-accounts-push scheduler initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-accounts-push scheduler failed");
-  }
-
-  try {
-    initializeQboSyncWorker(app);
-    app.log.info("[STARTUP] qbo-sync-run-worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-sync-run-worker failed");
-  }
-
-  try {
-    initializeQboOutboxDispatcher(app);
-    app.log.info("[STARTUP] qbo-outbox-dispatcher initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] qbo-outbox-dispatcher failed");
-  }
-  }
 
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
@@ -1738,11 +1202,547 @@ async function main() {
     assertNoDuplicateFastifyRoutes(app);
 
     await app.listen({ port, host });
+    app.log.info({ port, host }, "Server started");
+    if (!bootApiSmoke) {
+    try {
+      initializeAccountingCrons(app);
+      app.log.info("[STARTUP] accounting cron suite initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] accounting cron suite failed");
+    }
+
+    try {
+      // FLT-01: monthly asset-depreciation batch; per-entity FIXED_ASSET_AUTOPOST_ENABLED stays OFF
+      // unless Jorge explicitly enables it. Each eligible asset receives an append-only run receipt.
+      initializeDepreciationAutopostCron(app);
+      app.log.info("[STARTUP] depreciation-autopost cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
+    }
+
+    try {
+      await initializeQboHistoricalImportRunner(app);
+      app.log.info("[STARTUP] qbo-forensic-runner initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-forensic-runner failed");
+      (app as unknown as { forensicRunnerStatus?: string }).forensicRunnerStatus = "failed";
+    }
+
+    try {
+      await initializeQboSyncQueueRunner(app);
+      app.log.info("[STARTUP] qbo-sync-runner initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-sync-runner failed");
+    }
+
+    try {
+      initializeQboInboundSyncCron(app);
+      app.log.info("[STARTUP] qbo-inbound-sync initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-inbound-sync failed");
+    }
+
+    try {
+      initializeQboCdcPollCron(app);
+      app.log.info("[STARTUP] qbo-cdc-poll initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-cdc-poll failed");
+    }
+
+    try {
+      initializeRecurringTemplatesCron(app);
+      app.log.info("[STARTUP] recurring-templates cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] recurring-templates cron failed");
+    }
+
+    // GAP-20 / HOLD-FOR-JORGE: the recurring-bill-templates generator (accounting.recurring_bill_templates
+    // -> creates a real accounting.bills AP row on every due template, daily at 06:00 CT) was fully built
+    // (table + generator.service.ts + this worker) but never started -- the FE pages that create templates
+    // were also unrouted until this change. Bill CREATION here is unconditional (not gated by the
+    // BILL_GL_POSTING_ENABLED flag, which only gates the SEPARATE auto-post-to-GL sub-step inside
+    // generateFromTemplate). Starting this daily job therefore makes the server autonomously write
+    // accounting.bills rows for any active template -- a financial-cluster write with no per-action human
+    // confirmation. Per CLAUDE.md SS1.4 (never enable money-moving/posting automation without explicit
+    // owner OK) this ships OFF by default behind an explicit opt-in env var; Jorge decides when to flip it.
+    if (process.env.RECURRING_BILL_GENERATOR_CRON_ENABLED === "true") {
+      try {
+        initializeRecurringBillGeneratorWorker(app);
+        app.log.info("[STARTUP] recurring-bill-generator-worker initialized (RECURRING_BILL_GENERATOR_CRON_ENABLED=true)");
+      } catch (error) {
+        app.log.error({ err: error }, "[STARTUP] recurring-bill-generator-worker failed");
+      }
+    } else {
+      app.log.info("[STARTUP] recurring-bill-generator-worker NOT started (RECURRING_BILL_GENERATOR_CRON_ENABLED != 'true' -- default OFF, HOLD-FOR-JORGE)");
+    }
+
+    try {
+      await initializeQboTokenRefreshCron(app);
+      app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-token-refresh-cron failed");
+    }
+
+    try {
+      initializeCashAdvanceRequestExpiryCron(app);
+      app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
+    }
+
+    try {
+      initializeChatConfirmationEscalationCron(app);
+      app.log.info("[STARTUP] chat-confirmation-escalation-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] chat-confirmation-escalation-cron failed");
+    }
+
+    try {
+      initializeSamsaraHealthCheckCron(app);
+      app.log.info("[STARTUP] samsara-health-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
+    }
+
+    try {
+      // RELAY-FUEL-INGEST-1 (doc 21 Part A gap 1): the cron was defined but never registered. It is
+      // gated by RELAY_FUEL_INGEST_CRON_ENABLED (env, default true) AND the per-entity RELAY_FUEL_INGEST_ENABLED
+      // flag (default OFF), so wiring it here is a no-op until the owner sets the key + flips the flag. Staging
+      // ingest only — writes integrations.relay_fuel_transactions*, no GL, no accounting.* / fuel.* write.
+      initializeRelayFuelIngestCron(app);
+      app.log.info("[STARTUP] relay-fuel-ingest-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] relay-fuel-ingest-cron failed");
+    }
+
+    try {
+      initializeModelLifecycleMonitorCron(app);
+      app.log.info("[STARTUP] model-lifecycle-monitor-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] model-lifecycle-monitor-cron failed");
+    }
+
+    try {
+      initializeSamsaraWebhookProjectionCron(app);
+      app.log.info("[STARTUP] samsara-webhook-projection-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-webhook-projection-cron failed");
+    }
+
+    try {
+      initializeSamsaraRemoteCountCollectorCron(app);
+      app.log.info("[STARTUP] samsara-remote-count-collector-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-remote-count-collector-cron failed");
+    }
+
+    try {
+      initializeSamsaraPositionsCron(app);
+      app.log.info("[STARTUP] samsara-positions-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-positions-cron failed");
+    }
+
+    try {
+      initializeReeferHoursPollCron(app);
+      app.log.info("[STARTUP] reefer-hours-poll-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] reefer-hours-poll-cron failed");
+    }
+
+    try {
+      if (isFeatureDisabled("samsara_master_sync")) {
+        app.log.warn("[STARTUP] samsara-master-sync-cron disabled by required env checks");
+      } else {
+        initializeSamsaraMasterSyncCron(app);
+        app.log.info("[STARTUP] samsara-master-sync-cron initialized");
+      }
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-master-sync-cron failed");
+    }
+
+    try {
+      initializeSamsaraHosPullCron(app);
+      app.log.info("[STARTUP] samsara-hos-pull-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] samsara-hos-pull-cron failed");
+    }
+
+    try {
+      initializeFuelGpsMatchCron(app);
+      initializeBankReconAutoMatchCron(app);
+      app.log.info("[STARTUP] fuel-gps-match-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");
+    }
+
+    try {
+      initializeLovesCardImportCron(app);
+      app.log.info("[STARTUP] loves-card-import-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] loves-card-import-cron failed");
+    }
+
+    try {
+      initializeReconCron(app);
+      app.log.info("[STARTUP] recon-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] recon-cron failed");
+    }
+
+    try {
+      initializeAuditChainVerifyCron(app);
+      app.log.info("[STARTUP] audit-chain-verify-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] audit-chain-verify-cron failed");
+    }
+
+    try {
+      initializePlaidDailySyncCron(app);
+      initializePlaidDailyRefreshCron(app);
+      app.log.info("[STARTUP] plaid-daily-sync-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] plaid-daily-sync-cron failed");
+    }
+
+    try {
+      initializeDriverSettlementAutoPayCron(app);
+      app.log.info("[STARTUP] driver-settlement-auto-pay-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] driver-settlement-auto-pay-cron failed");
+    }
+
+    try {
+      initializeGeofenceBreachDetectorCron(app);
+      app.log.info("[STARTUP] geofence-breach-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
+    }
+
+    try {
+      // P8C-K driver scheduler leave crons — each self-gates OFF unless its env flag is set to "true".
+      initializeDriverLeaveAdvanceReminderCron(app);
+      initializeDriverLeaveBalanceRolloverCron(app);
+      initializeDriverLeavePendingEscalationCron(app);
+      app.log.info("[STARTUP] driver-leave scheduler crons initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] driver-leave scheduler crons failed");
+    }
+
+    try {
+      initializeDriverVendorMappingWorker(app);
+      initializeSamsaraPositionPollWorker(app);
+      initializeGeofenceReconciliationWorker(app);
+      initializeAnomalyDetectorWorker(app);
+      initializeFuelFraudDetectorWorker(app);
+      initializeDataSovereigntyDailySync(app);
+      app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");
+    }
+
+    try {
+      initializeBorderCrossingDetectorWorker(app);
+      app.log.info("[STARTUP] border-crossing-detector-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
+    }
+
+    try {
+      initializeVehicleDriverPairingWorker(app);
+      app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
+    }
+
+    try {
+      initializeLayoverDetectorWorker(app);
+      app.log.info("[STARTUP] layover-detector-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] layover-detector-worker failed");
+    }
+
+    try {
+      initializeActiveDriverSetRecomputeWorker(app);
+      app.log.info("[STARTUP] active-driver-set-recompute worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] active-driver-set-recompute worker failed");
+    }
+
+    try {
+      initializeDriverActive30dWorker(app);
+      app.log.info("[STARTUP] driver-active-30d worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] driver-active-30d worker failed");
+    }
+
+    try {
+      initializeAutoStatusSwitchWorker(app);
+      app.log.info("[STARTUP] auto-status-switch-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] auto-status-switch-worker failed");
+    }
+
+    try {
+      initializeCap14CargoSensorWorker(app);
+      app.log.info("[STARTUP] cap-14-cargo-sensor-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cap-14-cargo-sensor-worker failed");
+    }
+
+    try {
+      initializeBookingGapAggregatorWorker(app);
+      app.log.info("[STARTUP] booking-gap aggregator worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
+    }
+
+    try {
+      cron.schedule(
+        "*/30 * * * *",
+        async () => {
+          await withLuciaBypass(async (client) => {
+            const companies = await client.query<{ id: string }>(
+              `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+            );
+            for (const company of companies.rows) {
+              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
+              const result = await runAnomalyDetectionForTenant(client, company.id);
+              app.log.info(
+                { operating_company_id: company.id, scanned: result.scanned, inserted: result.inserted },
+                "[STARTUP] anomaly detector run complete"
+              );
+            }
+          });
+        },
+        {
+        maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
+      );
+      app.log.info("[STARTUP] anomaly-detector-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] anomaly-detector-cron failed");
+    }
+
+    try {
+      initializeLegalMattersReminderCron(app);
+      app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
+    }
+
+    try {
+      initializeInsurancePaymentReminderCron(app);
+      app.log.info("[STARTUP] insurance-payment-reminder-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] insurance-payment-reminder-cron failed");
+    }
+
+    try {
+      initializeInsuranceLateFeeCron(app);
+      app.log.info("[STARTUP] insurance-late-fee-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] insurance-late-fee-cron failed");
+    }
+
+    try {
+      initializeFactoringPacketSweepCron(app);
+      app.log.info("[STARTUP] factoring-packet-sweep-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] factoring-packet-sweep-cron failed");
+    }
+
+    try {
+      initializeSafetyRemindersCron(app);
+      app.log.info("[STARTUP] safety-reminders-cron initialized");
+
+      initializeIntegrityAlertEngineCron(app);
+      app.log.info("[STARTUP] integrity-alert-engine-cron initialized");
+
+      initializeDocumentAlertEngineCron(app);
+      app.log.info("[STARTUP] document-alert-engine-cron initialized");
+
+      initializeDaRandomPoolDrawWorker(app);
+      app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
+
+      initializeDamageContinuityWorker(app);
+      app.log.info("[STARTUP] damage-continuity-worker initialized");
+
+      initializeCertExpiryMonitor(app);
+      initializeSamsaraCacheWarmer(app);
+      app.log.info("[STARTUP] samsara-cache-warmer initialized");
+      initializeSearchIndexerIncremental(app);
+      app.log.info("[STARTUP] cert-expiry-monitor initialized");
+
+      initializeLoanPaymentReminder(app);
+      app.log.info("[STARTUP] loan-payment-reminder initialized");
+
+      initializePmAutoEngineCron(app);
+      app.log.info("[STARTUP] pm-auto-engine-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
+    }
+
+    try {
+      await initializeMasterDataSyncCron(app);
+      app.log.info("[STARTUP] qbo-master-data-sync-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-master-data-sync-cron failed");
+    }
+
+    try {
+      initializeQboSyncAlertsCron(app);
+      app.log.info("[STARTUP] qbo-sync-alerts-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-sync-alerts-cron failed");
+    }
+
+    try {
+      initializeQboSyncDriftScheduler(app);
+      app.log.info("[STARTUP] qbo-sync-drift-scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-sync-drift-scheduler failed");
+    }
+
+    try {
+      initializeQboRemoteCountCollectorCron(app);
+      app.log.info("[STARTUP] qbo-remote-count-collector-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-remote-count-collector-cron failed");
+    }
+
+    try {
+      initializeReconciliationWorkerCron(app);
+      app.log.info("[STARTUP] reconciliation-worker-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] reconciliation-worker-cron failed");
+    }
+
+    try {
+      initializeEmailCron(app);
+      app.log.info("[STARTUP] email-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] email-cron failed");
+    }
+
+    try {
+      initializeReportsRoleScheduler(app);
+      app.log.info("[STARTUP] reports-role-scheduler initialized");
+      initializeScheduledReportsEmailer(app);
+      app.log.info("[STARTUP] scheduled-reports-emailer initialized");
+      initializeScheduledReportsWorker(app);
+      app.log.info("[STARTUP] scheduled-reports-worker (canonical, reporting.scheduled_reports) initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] reports-role-scheduler failed");
+    }
+
+    try {
+      initializeErrorDigestCron(app);
+      app.log.info("[STARTUP] error-digest scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
+    }
+
+    try {
+      // FINDING H5-3 — nightly R2-evidence presence reconcile (read-only; default OFF via
+      // EVIDENCE_PRESENCE_RECONCILE_ENABLED). Fail-loud CRITICAL alarm on any evidence object missing in R2.
+      initializeEvidencePresenceReconcileCron(app);
+      app.log.info("[STARTUP] evidence-presence reconcile scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] evidence-presence reconcile scheduler failed");
+    }
+
+    try {
+      initializeIdempotencyCleanupCron(app);
+      app.log.info("[STARTUP] idempotency-cleanup cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] idempotency-cleanup cron failed");
+    }
+
+    try {
+      registerScenarioCertifyCron(app);
+      app.log.info("[STARTUP] scenario-certify cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] scenario-certify cron failed");
+    }
+
+    try {
+      initializeDailyTaskAlertsCron(app);
+      app.log.info("[STARTUP] daily-task-alerts cron initialized");
+      initializeTodaysAttentionWorker(app);
+      app.log.info("[STARTUP] todays-attention worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
+    }
+
+    try {
+      initializeAdminJobsWorker(app);
+      app.log.info("[STARTUP] admin-jobs-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
+    }
+
+    try {
+      initializeLateArrivalAggregatorWorker(app);
+      app.log.info("[STARTUP] late-arrival aggregator worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] late-arrival aggregator worker failed");
+    }
+
+    try {
+      initializeCustomerRelationshipScorerWorker(app);
+      app.log.info("[STARTUP] customer-relationship scorer worker initialized");
+      initializeDriverRetentionScorerWorker(app);
+      app.log.info("[STARTUP] driver-retention scorer worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] customer-relationship scorer worker failed");
+    }
+
+    try {
+      initializeDriverScoringAggregatorWorker(app);
+      app.log.info("[STARTUP] driver-scoring aggregator worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] driver-scoring aggregator worker failed");
+    }
+
+    try {
+      initializeQboCustomersPushScheduler(app);
+      app.log.info("[STARTUP] qbo-customers-push scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-customers-push scheduler failed");
+    }
+
+    try {
+      initializeQboVendorsPushScheduler(app);
+      app.log.info("[STARTUP] qbo-vendors-push scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-vendors-push scheduler failed");
+    }
+
+    try {
+      initializeQboAccountsPushScheduler(app);
+      app.log.info("[STARTUP] qbo-accounts-push scheduler initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-accounts-push scheduler failed");
+    }
+
+    try {
+      initializeQboSyncWorker(app);
+      app.log.info("[STARTUP] qbo-sync-run-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-sync-run-worker failed");
+    }
+
+    try {
+      initializeQboOutboxDispatcher(app);
+      app.log.info("[STARTUP] qbo-outbox-dispatcher initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] qbo-outbox-dispatcher failed");
+    }
+    }
     if (!bootApiSmoke && process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
       startOutboxProcessor();
       app.log.info("Outbox processor started");
     }
-    app.log.info({ port, host }, "Server started");
     if (!bootApiSmoke) {
       setTimeout(() => {
         warmSystemModuleMatrixAtBoot({
