@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T19:10:24-05:00",
-    "sourceSha": "7bba78167",
+    "generatedAt": "2026-08-21T20:10:11-05:00",
+    "sourceSha": "36581d2cb",
     "deployedSha": "fe62c92",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2064,
+    "ledgerRows": 2072,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 13758,
-      "title": "FINDING: ACCT-F5712 — System audit cash-advance request deep link",
+      "number": 0,
+      "title": "FINDING: OUTBOX-CC-2 status update, accounting sweep row 50032, module near-exhausted",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13758",
-      "sha": "8056c3789",
-      "committedAtIso": "2026-08-21T19:10:27-05:00"
+      "mergedAtCt": "08/21/2026, 08:11 PM CT",
+      "url": "",
+      "sha": "e0ffd80b3",
+      "committedAtIso": "2026-08-21T20:11:16-05:00"
     },
     {
-      "number": 13759,
-      "title": "FINDING: customers detail.billing reverse_link real PASS, closes customers column sweep",
+      "number": 13804,
+      "title": "FINDING: ACCT-F5722 — Schedule-row reverse detail class",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13759",
-      "sha": "7bba78167",
-      "committedAtIso": "2026-08-21T19:10:24-05:00"
+      "mergedAtCt": "08/21/2026, 08:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13804",
+      "sha": "d5a3d0acb",
+      "committedAtIso": "2026-08-21T20:10:17-05:00"
     },
     {
-      "number": 13757,
-      "title": "FINDING: INBOX-CC-3-ITEMS-1-2-CLOSED LANE: NON-FINANCIAL",
+      "number": 13803,
+      "title": "FINDING: accounting bills.detail/expenses.detail/audit_trail/vendor_credits/reallocate/schedule reverse_link + bills.create.* picker_law real PASS",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13757",
-      "sha": "3708fcc6e",
-      "committedAtIso": "2026-08-21T19:09:46-05:00"
+      "mergedAtCt": "08/21/2026, 08:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13803",
+      "sha": "36581d2cb",
+      "committedAtIso": "2026-08-21T20:10:11-05:00"
+    },
+    {
+      "number": 13802,
+      "title": "FINDING: URGENT-6-CHROME-SWEEP-COMPLETE LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13802",
+      "sha": "f822defa4",
+      "committedAtIso": "2026-08-21T20:09:08-05:00"
+    },
+    {
+      "number": 13801,
+      "title": "FINDING: ACCT-F5722",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13801",
+      "sha": "2898284f8",
+      "committedAtIso": "2026-08-21T20:06:18-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): SEAT-LOCKSTEP-ACCOUNTING-NOW — all seats on accounting until dry",
+      "title": "FINDING: OUTBOX-CC-2 status update, accounting reverse_link sweep continuing",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:09 PM CT",
+      "mergedAtCt": "08/21/2026, 08:04 PM CT",
       "url": "",
-      "sha": "f2f97b8e2",
-      "committedAtIso": "2026-08-21T19:09:24-05:00"
+      "sha": "dfb7374fa",
+      "committedAtIso": "2026-08-21T20:04:10-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 status update, customers picker_law row 50023 ACK",
+      "number": 13800,
+      "title": "FINDING: ACCT-F5721 — Fiscal-year close reverse detail surface",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:07 PM CT",
-      "url": "",
-      "sha": "ac24eb820",
-      "committedAtIso": "2026-08-21T19:07:57-05:00"
+      "mergedAtCt": "08/21/2026, 08:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13800",
+      "sha": "2a6de540b",
+      "committedAtIso": "2026-08-21T20:04:05-05:00"
     },
     {
-      "number": 13755,
-      "title": "FINDING: customers detail.quality.create_event picker_law PASS + registry-honesty on 5 closed-enum leaves",
+      "number": 13799,
+      "title": "FINDING: accounting bills/expenses/invoices/payments.receive list reverse_link real PASS + bill_payments.list honest-zero",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13755",
-      "sha": "f7e985bc2",
-      "committedAtIso": "2026-08-21T19:07:29-05:00"
+      "mergedAtCt": "08/21/2026, 08:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13799",
+      "sha": "0b6722633",
+      "committedAtIso": "2026-08-21T20:03:16-05:00"
     },
     {
-      "number": 13754,
-      "title": "FINDING: BANK-F5707 — System audit intercompany group deep link",
+      "number": 13798,
+      "title": "FINDING: DISPATCH-PLANNER-LEAVE-REQUESTS-BOARD-CLOSE LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13754",
-      "sha": "59c40ddaa",
-      "committedAtIso": "2026-08-21T19:06:29-05:00"
+      "mergedAtCt": "08/21/2026, 08:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13798",
+      "sha": "920d5b748",
+      "committedAtIso": "2026-08-21T20:01:31-05:00"
     },
     {
-      "number": 13753,
-      "title": "FINDING: DRIVER-SAVE-PATH-SPOTCHECK-OUTBOX LANE: NON-FINANCIAL",
+      "number": 13797,
+      "title": "FINDING: DISPATCH-PLANNER-LEAVE-REQUESTS-LABEL-FIXED LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13753",
-      "sha": "82e2200f5",
-      "committedAtIso": "2026-08-21T19:04:47-05:00"
-    },
-    {
-      "number": 13752,
-      "title": "FINDING: CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP-NARROWED LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13752",
-      "sha": "8727236e3",
-      "committedAtIso": "2026-08-21T19:03:02-05:00"
-    },
-    {
-      "number": 13748,
-      "title": "FINDING: System Audit Trail emitted reconciliation-session source records but rendered them as dead text even though the exact workspace target is mounted.",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 07:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13748",
-      "sha": "a4725a494",
-      "committedAtIso": "2026-08-21T19:01:24-05:00"
+      "mergedAtCt": "08/21/2026, 08:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13797",
+      "sha": "72f3e9005",
+      "committedAtIso": "2026-08-21T20:00:09-05:00"
     }
   ]
 }
