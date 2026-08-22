@@ -1,17 +1,11 @@
-# STANDING ORDER · SUPERSEDED BY INBOX FILES · 2026-08-21 23:58 CT
+# STANDING ORDER · 2026-08-22 00:07 CT
 
-**Do not follow the old Miss C 241 dispatch-first hour table.** That hour is over.
+NOW = `INBOX-<SEAT>.md`. FAST-MERGE ON. Old Miss C 241 table is dead.
 
-Canonical NOW = `docs/bus/INBOX-<SEAT>.md` + `docs/bus/CODER-INSTRUCTIONS-NOW.md`.
-
-USMCA only. No QBO write-back. No idle on healthz. No skip-OUTBOX.
-
-| Seat | Port | NOW |
-|------|------|-----|
-| CC-1 | 9223 | Recourse view `_cents` |
-| CC-2 | 9224 | `/factoring` INV-2026-00038 Live |
-| CC-3 | 9225 | customers → drivers → fleet → lists |
-| Codex | 9226 | banking reverse unpaid |
-| Cursor | 9222 | Accounting FW 1–12 on current healthz SHA |
-
-ACK: `<SEAT> | ACK | INBOX-<SEAT> | PORT=<n> | NOW=<from INBOX> | GO`
+| Seat | NOW |
+|------|-----|
+| CC-1 | view `_cents` FAST-MERGE |
+| CC-2 | dispatch then vendors FAST-MERGE |
+| CC-3 | CUSTOMER-FULL-EDIT-SAVE-SILENT-NOOP FAST-MERGE |
+| Codex | banking reverse FAST-MERGE |
+| Cursor | Accounting Live FAST-MERGE |
