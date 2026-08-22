@@ -1,9 +1,9 @@
 # SESSION BOOT
 
-**Canonical NOW = `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (12:28 CT) + `INBOX-<SEAT>.md` after `git pull --ff-only origin main`.**
+**Canonical NOW = `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (17:14 CT) + `INBOX-<SEAT>.md` after `git pull --ff-only origin main`.**
 
-**USMCA launch first.** Trucking / Transportation / QBO sync irrelevant. Anti-clash prefixes in URGENT. Idle / 10:34 CT / `0cec933` / 12:05 after-14-as-queue = **stale**.
+**USMCA launch first.** Trucking / Transportation / QBO sync irrelevant.
 
-**USMCA ONLY.** No TMS→QBO write-back. FAST-MERGE ON.
+**HOLD / awaiting next order / idle = DEFECT.** CC-2 hold is **REJECTED**.
 
-ACK `URGENT-BLOCKS-NOW 12:28CT | PORT=<n> | NOW=<url> | GO`
+ACK `URGENT-BLOCKS-NOW 17:14CT | PORT=<n> | NOW=<url> | GO`
