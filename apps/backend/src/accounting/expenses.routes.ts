@@ -311,7 +311,14 @@ export async function queryExpensesList(
         je.memo                                       AS journal_entry_memo,
         e.linked_work_order_uuid::text               AS linked_work_order_uuid,
         e.created_at                                 AS created_at,
-        v.vendor_name                                AS vendor_name,
+        -- ACCT-EXPENSES-VENDOR-DEACTIVATED-TOMBSTONE: mdata.vendors' RLS policy hard-excludes any
+        -- row with deactivated_at IS NOT NULL for a non-bypass reader, so a plain join silently
+        -- returns NULL for vendor_name even when e.vendor_uuid is a perfectly valid FK — the vendor
+        -- just went inactive since. Same class already fixed for invoices/ap-aging/parts-inventory
+        -- (mdata.resolve_vendor_label_same_company, migration 202612780000) — this surface was the
+        -- swept gap (confirmed absent from verify-deactivated-counterparty-resolver-coverage.mjs's
+        -- own coverage list).
+        COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id)) AS vendor_name,
         dr.first_name                                AS driver_first_name,
         dr.last_name                                 AS driver_last_name,
         l.load_number                                AS load_number,
@@ -463,7 +470,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ${hasUnitId ? "e.unit_id::text" : "NULL::text"} AS unit_id,
             ${hasTrailerId ? "e.trailer_id::text" : "NULL::text"} AS trailer_id,
             ${hasWorkOrderId ? "e.linked_work_order_uuid::text" : "NULL::text"} AS linked_work_order_uuid,
-            v.vendor_name                                AS vendor_name,
+            -- ACCT-EXPENSES-VENDOR-DEACTIVATED-TOMBSTONE: mdata.vendors' RLS policy hard-excludes any
+        -- row with deactivated_at IS NOT NULL for a non-bypass reader, so a plain join silently
+        -- returns NULL for vendor_name even when e.vendor_uuid is a perfectly valid FK — the vendor
+        -- just went inactive since. Same class already fixed for invoices/ap-aging/parts-inventory
+        -- (mdata.resolve_vendor_label_same_company, migration 202612780000) — this surface was the
+        -- swept gap (confirmed absent from verify-deactivated-counterparty-resolver-coverage.mjs's
+        -- own coverage list).
+        COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id)) AS vendor_name,
             dr.first_name                                AS driver_first_name,
             dr.last_name                                 AS driver_last_name,
             l.load_number                                AS load_number,

@@ -25,6 +25,11 @@
  *     row — vendor_id via the same safe-cast b.vendor_uuid the JOIN predicate already uses, so a
  *     deactivated vendor's bills still group under their own vendor instead of collapsing into
  *     "__unknown_vendor__".
+ *  4. ACCT-F5714-REMAINDER — expenses.routes.ts's list AND detail queries both COALESCE
+ *     vendor_name with the resolver. This surface was the confirmed-absent gap: every other
+ *     vendor-bearing reader (invoices, ap-aging, parts-inventory) already had it, expenses.routes.ts
+ *     never did, so any expense whose vendor had since been deactivated silently tombstoned
+ *     "Vendor — not visible" even though the FK was perfectly valid.
  */
 import { readFileSync } from "node:fs";
 
@@ -69,6 +74,19 @@ if (!/COALESCE\(\s*v\.id::text,\s*CASE WHEN b\.vendor_uuid[\s\S]*?AS vendor_id/.
   );
 }
 
+const expensesPath = "apps/backend/src/accounting/expenses.routes.ts";
+const expensesSrc = readFileSync(expensesPath, "utf8");
+
+const expensesVendorMatches = [
+  ...expensesSrc.matchAll(/COALESCE\(v\.vendor_name,\s*mdata\.resolve_vendor_label_same_company\(e\.vendor_uuid,\s*e\.operating_company_id\)\)\s*AS\s*vendor_name/g),
+];
+if (expensesVendorMatches.length < 2) {
+  failures.push(
+    `${expensesPath}: expected 2 vendor_name selects (list + detail) COALESCEd with ` +
+      `mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id) — found ${expensesVendorMatches.length}`
+  );
+}
+
 if (failures.length > 0) {
   console.error("verify-deactivated-counterparty-resolver-coverage: FAIL");
   for (const f of failures) console.error(`  - ${f}`);
@@ -77,6 +95,7 @@ if (failures.length > 0) {
 
 console.log(
   "verify-deactivated-counterparty-resolver-coverage: OK — transaction-register (fuel/invoice/bill arms), " +
-    "invoices.routes.ts search filter, and ap-aging.service.ts (vendor_name + vendor_id) all resolve a " +
-    "deactivated counterparty via the canonical same-company resolvers"
+    "invoices.routes.ts search filter, ap-aging.service.ts (vendor_name + vendor_id), and " +
+    "expenses.routes.ts (list + detail vendor_name) all resolve a deactivated counterparty via the " +
+    "canonical same-company resolvers"
 );
