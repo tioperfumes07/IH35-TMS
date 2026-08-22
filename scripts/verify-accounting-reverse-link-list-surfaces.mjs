@@ -18,6 +18,8 @@ const POSTING_LINEAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.t
 const JE_DETAIL = "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx";
 const AMORTIZATION = "apps/frontend/src/pages/finance/AmortizationPage.tsx";
 const LEASE_DETAIL = "apps/frontend/src/pages/accounting/AccountingLeaseDetailPage.tsx";
+const RECURRING_DETAIL = "apps/frontend/src/pages/accounting/AccountingRecurringTemplateDetailPage.tsx";
+const RECURRING_ROUTE = "apps/backend/src/accounting/recurring-template-detail.routes.ts";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -77,6 +79,17 @@ const CHECKS = [
   { name: "Lease backend resolves human asset labels", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /fa\.asset_number, fa\.name AS fixed_asset_name, u\.unit_number/ },
   { name: "Lease backend scopes fixed-asset join", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /fa\.id = lal\.fixed_asset_id AND fa\.operating_company_id = lal\.operating_company_id/ },
   { name: "Lease backend scopes unit join", file: "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", pattern: /u\.id = lal\.unit_uuid AND u\.operating_company_id = lal\.operating_company_id/ },
+  { name: "Audit API canonicalizes recurring template", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "recurring_template":\s*return "recurring_template";/ },
+  { name: "JE source API canonicalizes recurring template", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'recurring_template' THEN 'recurring_template'/ },
+  { name: "EntityLink owns recurring-template route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "recurring_template":\s*return `\/accounting\/recurring-templates\/\$\{id\}`;/ },
+  { name: "Recurring template detail route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/recurring-templates\/:id"[\s\S]*?<AccountingRecurringTemplateDetailPage/ },
+  { name: "Recurring template detail uses scoped exact reader", file: RECURRING_DETAIL, pattern: /getAccountingRecurringTemplate\(id, companyId\)/ },
+  { name: "Recurring template backend explicitly scopes company and id", file: RECURRING_ROUTE, pattern: /WHERE rt\.operating_company_id = \$1::uuid AND rt\.id = \$2::uuid/ },
+  { name: "Recurring template backend verifies membership", file: RECURRING_ROUTE, pattern: /assertCompanyMembership\(user\.uuid, opco\)/ },
+  { name: "Recurring template is read-only", file: RECURRING_ROUTE, pattern: /app\.get\("\/api\/v1\/accounting\/recurring-templates\/:id"/ },
+  { name: "Audit Trail drills recurring template", file: AUDIT_TRAIL, pattern: /case "recurring_template":\s*return "recurring_template";/ },
+  { name: "Posting Lineage drills recurring template", file: POSTING_LINEAGE, pattern: /case "recurring_template":\s*return "recurring_template";/ },
+  { name: "JE Detail drills recurring template", file: JE_DETAIL, pattern: /case "recurring_template":\s*return "recurring_template";/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },
