@@ -52,6 +52,15 @@ function categoryLabel(t: PlaidBankTransaction) {
 }
 
 function matchedLabel(t: PlaidBankTransaction) {
+  if (t.matched_kind === "transfer" && t.matched_transfer_id) {
+    return (
+      <EntityLink
+        kind="transfer"
+        id={t.matched_transfer_id}
+        label={entityLabel(t.matched_transfer_label, t.matched_transfer_id, "Transfer")}
+      />
+    );
+  }
   if (t.matched_kind === "load" && t.matched_load_id) {
     return <EntityLink kind="load" id={t.matched_load_id} label={entityLabel(null, t.matched_load_id, "Load")} />;
   }

@@ -336,6 +336,14 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           je.memo AS matched_journal_entry_memo,
           bt.matched_transfer_id::text AS matched_transfer_id,
           COALESCE(NULLIF(TRIM(transfer.reference_number), ''), NULLIF(TRIM(transfer.memo), '')) AS matched_transfer_label,
+          CASE
+            WHEN bt.matched_transfer_id IS NOT NULL THEN 'transfer'
+            WHEN bt.matched_journal_entry_id IS NOT NULL THEN 'je'
+            WHEN bt.matched_load_id IS NOT NULL THEN 'load'
+            WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
+            WHEN bt.matched_bill_id IS NOT NULL THEN 'bill'
+            ELSE NULL
+          END AS matched_kind,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
