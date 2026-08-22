@@ -12,6 +12,7 @@ alwaysApply: true
 3. `docs/specs/DELIVERY-METHOD-LOCKED.md`
 4. `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — 12-item fully-wired list (Live Chrome last)
 5. `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` — until all 14 CERTIFIED; one seat one module; HOLD forbidden
+6. `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md` — first reply CURRENT-LAW + OPEN hops; omit CERTIFIED
 
 Cascade = auditor on active slice only. Claude Coder = money/Neon. Cursor = screens/janitor.  
 NO holds · NO `JORGE-APPROVED` · merge on green with proof.

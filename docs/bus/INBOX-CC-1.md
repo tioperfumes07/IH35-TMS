@@ -1,10 +1,13 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
-**Cite:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
+**Announce:** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`  
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-CURRENT MODULE: **accounting** leftover money FAIL only.  
-NOW: `https://app.ih35dispatch.com/accounting` — unique 500 / dead click / silent no-op. **Do not remake TESTs.** Then **factoring** `/factoring`.
+Print CURRENT-LAW + OPEN hops every new session. Omit CERTIFIED. HOLD = defect. Idle = defect.
+
+CURRENT MODULE: **accounting** leftover (not CERTIFIED until leftover unique FINDING empty)  
+NOW: `https://app.ih35dispatch.com/accounting`  
+HOPS: unique **500 / dead click / silent no-op** only. **Do not remake TESTs.** Empty leftover → `/factoring` unique FINDING.
 
 FORBIDDEN: `/banking*` · HOLD · `trigger_deploy` · new GL math.
 

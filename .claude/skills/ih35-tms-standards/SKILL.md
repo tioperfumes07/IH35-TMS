@@ -7,7 +7,7 @@ description: The durable operating standards for the IH35-TMS repository — per
 
 # IH35-TMS — Operating Standards
 
-**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§10 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS · CREATE-TEST-THEN-VOID `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · §10 FULLY WIRED · **URGENT 14 exclusive** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`),
+**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§10 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS · CREATE-TEST-THEN-VOID `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · §10 FULLY WIRED · **URGENT 14 exclusive** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` · **session announce** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`),
 `docs/specs/OWNER-QUALITY-COMPACT.md` (ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED · Claude.docx permanized),
 `docs/specs/DELIVERY-METHOD-LOCKED.md`, and `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` before other work.
 Cursor = screens/janitor; Claude Coder = money/Neon;

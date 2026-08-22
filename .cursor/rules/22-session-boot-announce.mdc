@@ -13,7 +13,7 @@ On the **first assistant reply of every new conversation** (fresh chat / new age
 NEW SESSION · rules autoloaded · tiered model in force (Rule 12) · continuous mode (Rule 32)
 ```
 
-Optional one-liner after that: active block / master-plan reminder if known. Do **not** skip this on the first turn.
+Immediately after that line, paste **CURRENT-LAW + MY HOPS** from `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md` (brief bullets). **Omit CERTIFIED modules.** Then execute `docs/bus/INBOX-<SEAT>.md` TOP. Do **not** skip this on the first turn.
 
 **Continuous mode (Rule 32):** never pause/idle after merges, PRs, Neon apply, or green CI — keep writing the next ranked FAIL in the same turn.
 

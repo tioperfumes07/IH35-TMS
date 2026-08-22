@@ -8,6 +8,7 @@ alwaysApply: true
 Before any other work, treat as already loaded:
 
 - `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` — **until all 14 CERTIFIED**
+- `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md` — print CURRENT-LAW + OPEN hops; omit CERTIFIED
 - `docs/bus/SESSION-BOOT-MANDATE.md`
 - `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP only)
 - `docs/bus/SEAT-COMMS-LAW.md` (stale INBOX → ping Cursor)
