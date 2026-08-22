@@ -14,8 +14,17 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { generatePresignedDownloadUrl } from "../storage/r2-client.js";
 
+// ACCT-F5766 — the product's own normal expense/bill attachment upload flow writes category
+// 'vendor_invoice' (confirmed live: 2 of 3 real expense attachments on Neon prod carry it, the other
+// 1 carries 'receipt'), but this allowlist only ever matched 'receipt' for entity_type IN
+// ('expense','bill') — so a real, correctly-uploaded vendor-invoice attachment never appeared in
+// /accounting/receipts even though the generic attachments endpoint (documents/attachments.service.ts's
+// listAttachments, which has no category filter) correctly returns it. Added 'vendor_invoice' to close
+// the gap; every other CHECK-constraint-valid category (bol/pod/dvir/vendor_estimate/etc.) is a
+// dispatch/safety/maintenance document, not an expense/bill receipt equivalent, so is intentionally
+// NOT added without live evidence it is actually used here.
 const RECEIPT_SCOPE_SQL = `(
-  (a.entity_type IN ('expense','bill') AND a.category = 'receipt')
+  (a.entity_type IN ('expense','bill') AND a.category = ANY('{receipt,vendor_invoice}'::text[]))
   OR (a.entity_type = 'payment' AND a.category = ANY('{check_image,ach_confirmation,wire_confirmation,deposit_slip,receipt}'::text[]))
 )`;
 
