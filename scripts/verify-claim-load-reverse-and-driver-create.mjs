@@ -48,8 +48,21 @@ export function computeFailures(sources) {
   if (!/parsed\.data\.load_id/.test(claimRoutes)) {
     errors.push("claim.routes.ts GET list must filter by parsed.data.load_id");
   }
+  if (!/withCompanyScope\(user\.uuid,\s*parsed\.data\.operating_company_id/.test(claimRoutes)) {
+    errors.push("claim.routes.ts GET list must execute inside the selected operating company scope");
+  }
+  if (!/values(?:\s*:\s*unknown\[\])?\s*=\s*\[parsed\.data\.operating_company_id\]/.test(claimRoutes) ||
+      !/filters\s*=\s*\[\s*["'`]tenant_id = \$1::uuid["'`]\s*\]/.test(claimRoutes)) {
+    errors.push("claim.routes.ts GET list must seed the query with the selected operating company predicate");
+  }
+  if (!/if\s*\(parsed\.data\.load_id\)\s*\{[\s\S]{0,180}?values\.push\(parsed\.data\.load_id\)[\s\S]{0,180}?filters\.push\(`load_id = \$\$\{values\.length\}::uuid`\)/.test(claimRoutes)) {
+    errors.push("claim.routes.ts GET list must bind load_id as a UUID query parameter");
+  }
   if (!/\.replace\(\/\^load_id\/,\s*["']c\.load_id["']\)/.test(claimRoutes)) {
     errors.push("claim.routes.ts GET list must scope load_id to c.load_id (tenant-scoped column, not a bare identifier)");
+  }
+  if (!/LEFT JOIN mdata\.loads cload[\s\S]{0,120}?cload\.id = c\.load_id[\s\S]{0,120}?cload\.operating_company_id = \$\{scope\}/.test(claimRoutes)) {
+    errors.push("claim.routes.ts claim rows must resolve load labels through a same-company mdata.loads join");
   }
 
   // 2) Frontend API client
@@ -59,6 +72,9 @@ export function computeFailures(sources) {
   if (!/function listInsuranceClaims\([\s\S]{0,300}?load_id\?:\s*string/.test(insuranceApi)) {
     errors.push("api/insurance.ts listInsuranceClaims params must accept load_id?: string");
   }
+  if (!/return insuranceClaimsApi\.list\(params\)/.test(insuranceApi)) {
+    errors.push("api/insurance.ts listInsuranceClaims must forward the typed load filter to insuranceClaimsApi.list");
+  }
 
   // 3) Reverse-section Filter union. Window is generous (not just load_id's own union member) because
   // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 legitimately adds a 4th trailer_id member to the same union
@@ -67,6 +83,21 @@ export function computeFailures(sources) {
   if (!/type Filter =[\s\S]{0,600}?\{\s*load_id:\s*string;[\s\S]{0,120}?\}/.test(reverseSection)) {
     errors.push("InsuranceClaimsReverseSection Filter union must accept { load_id: string }");
   }
+  if (!/queryKey:\s*\["insurance-claims",\s*"reverse",\s*operatingCompanyId,\s*filter\]/.test(reverseSection) ||
+      !/insuranceClaimsApi\.list\(\{\s*operating_company_id:\s*operatingCompanyId,\s*\.\.\.filter,?\s*\}\)/.test(reverseSection)) {
+    errors.push("InsuranceClaimsReverseSection query identity and GET must include company plus the exact reverse filter");
+  }
+  if (!/enabled:\s*canView\s*&&\s*Boolean\(operatingCompanyId\)\s*&&\s*Boolean\(Object\.values\(filter\)\[0\]\)/.test(reverseSection)) {
+    errors.push("InsuranceClaimsReverseSection must not issue an unscoped or empty-id reverse read");
+  }
+  if (!/["']load_id["'] in filter[\s\S]{0,100}?["']insurance_claims_load["']/.test(reverseSection) ||
+      !/const openId = String\(Object\.values\(filter\)\[0\] \?\? ["']["']\)/.test(reverseSection) ||
+      !/<EntityLink kind=\{openKind\} id=\{openId\}/.test(reverseSection)) {
+    errors.push("InsuranceClaimsReverseSection must drill from the exact load filter into the scoped claims route");
+  }
+  if (!/claims\.map\(\(claim\) => \([\s\S]{0,240}?<li key=\{claim\.id\}[\s\S]{0,240}?kind=["']claim["'][\s\S]{0,120}?id=\{claim\.id\}[\s\S]{0,160}?entityLabel\(claim\.claim_number, claim\.id, ["']Claim["']\)/.test(reverseSection)) {
+    errors.push("InsuranceClaimsReverseSection must drill each returned claim by canonical id with a human claim-number label");
+  }
 
   // 4) Load Detail mounts the reverse panel
   if (!/InsuranceClaimsReverseSection/.test(loadDetailDrawer)) {
@@ -74,6 +105,9 @@ export function computeFailures(sources) {
   }
   if (!/filter=\{\{\s*load_id:\s*load\.id\s*\}\}/.test(loadDetailDrawer)) {
     errors.push("LoadDetailDrawer claims reverse must filter by load_id: load.id");
+  }
+  if (!/operatingCompanyId=\{load\.operating_company_id\}[\s\S]{0,160}?filter=\{\{\s*load_id:\s*load\.id\s*\}\}[\s\S]{0,160}?data-testid=["']load-detail-insurance-claims["']/.test(loadDetailDrawer)) {
+    errors.push("LoadDetailDrawer must bind the claims reverse panel to the loaded row's company and id");
   }
 
   // 5) ClaimCreateModal driver picker — nested create via gold pattern (Rule 21 / PLUS-DRIVER-SYSTEM).
@@ -91,6 +125,9 @@ export function computeFailures(sources) {
       'ClaimCreateModal driver field must use DriverPickerWithCreate shell="drawer" (preferred) or Combobox + CreateDriverModal shell="drawer" — never a bare <select>',
     );
   }
+  if (!/DriverPickerWithCreate[\s\S]{0,260}?operatingCompanyId=\{operatingCompanyId\}[\s\S]{0,160}?value=\{form\.driver_id \|\| null\}[\s\S]{0,160}?onChange=\{\(next\) => updateField\(["']driver_id["'], next \?\? ["']["']\)\}/.test(claimCreate)) {
+    errors.push("ClaimCreateModal driver picker must read the selected company and write the selected canonical driver id");
+  }
   if (/<select[\s\S]{0,200}?value=\{form\.driver_id\}/.test(claimCreate)) {
     errors.push("ClaimCreateModal driver field regressed to a bare <select> — must use nested-create gold pattern");
   }
@@ -102,72 +139,39 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function goodFixture() {
-  return {
-    claimShared: `
-      load_id: z.string().uuid().optional(),
-    `,
-    claimRoutes: `
-      if (PARSED_DATA_LOAD_ID_MARKER) {
-        values.push(PARSED_DATA_LOAD_ID_MARKER);
-        filters.push(\`load_id = $\${values.length}::uuid\`);
-      }
-      const scopedFilters = filters.map((f) =>
-        f.replace(/^load_id/, "c.load_id"),
-      );
-    `.replaceAll("PARSED_DATA_LOAD_ID_MARKER", "parsed.data.load_id"),
-    insuranceApi: `
-      list(params: {
-        operating_company_id: string;
-        LIST_LOAD_ID_MARKER
-      }) {}
-      export function listInsuranceClaims(params: {
-        operating_company_id: string;
-        FN_LOAD_ID_MARKER
-      }) {}
-    `
-      .replace("LIST_LOAD_ID_MARKER", "load_id?: string;")
-      .replace("FN_LOAD_ID_MARKER", "load_id?: string;"),
-    reverseSection: `
-      type Filter =
-        | { driver_id: string; unit_id?: never; load_id?: never }
-        | { load_id: string; driver_id?: never; unit_id?: never };
-    `,
-    loadDetailDrawer: `
-      import { INSURANCE_CLAIMS_REVERSE_SECTION_MARKER } from "../insurance/InsuranceClaimsReverseSection";
-      <INSURANCE_CLAIMS_REVERSE_SECTION_MARKER filter={{ load_id: load.id }} />
-    `.replaceAll("INSURANCE_CLAIMS_REVERSE_SECTION_MARKER", "InsuranceClaimsReverseSection"),
-    claimCreate: `
-      import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
-      <DriverPickerWithCreate operatingCompanyId={id} value={form.driver_id || null} shell="drawer" />
-    `,
-  };
-}
-
 function selftest() {
-  const good = goodFixture();
+  const good = loadSources();
   const goodFails = computeFailures(good);
   if (goodFails.length !== 0) {
-    console.error(`${LABEL} selftest FAIL: good fixture rejected:`, goodFails);
+    console.error(`${LABEL} selftest FAIL: production sources rejected:`, goodFails);
     process.exit(1);
   }
 
   const cases = [
-    ["claimShared", (f) => { f.claimShared = ""; }, "listClaimsQuerySchema must accept optional load_id"],
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replaceAll("parsed.data.load_id", "parsed.data.nope"); }, "GET list must filter by parsed.data.load_id"],
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('"c.load_id"', '"load_id"'); }, "scope load_id to c.load_id"],
+    ["claimShared", (f) => { f.claimShared = f.claimShared.replace("load_id: z.string().uuid().optional()", "load_id: z.string().optional()"); }, "listClaimsQuerySchema must accept optional load_id"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("withCompanyScope(user.uuid, parsed.data.operating_company_id", "withCompanyScope(user.uuid, user.operating_company_id"); }, "selected operating company scope"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("const values: unknown[] = [parsed.data.operating_company_id]", "const values: unknown[] = []"); }, "seed the query with the selected operating company"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("values.push(parsed.data.load_id);", "values.push(parsed.data.driver_id);"); }, "bind load_id as a UUID query parameter"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('.replace(/^load_id/, "c.load_id")', '.replace(/^load_id/, "load_id")'); }, "scope load_id to c.load_id"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("AND cload.operating_company_id = ${scope}", "AND cload.operating_company_id IS NOT NULL"); }, "same-company mdata.loads join"],
     ["insuranceApi", (f) => { f.insuranceApi = f.insuranceApi.replace(/(export function listInsuranceClaims\(params: \{[\s\S]*?)load_id\?: string;/, "$1"); }, "listInsuranceClaims params must accept load_id"],
-    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("load_id: string", "loadId: string"); }, "Filter union must accept { load_id: string }"],
-    ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replaceAll("InsuranceClaimsReverseSection", "SomethingElse"); }, "must mount InsuranceClaimsReverseSection"],
-    ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replace("load_id: load.id", "unit_id: load.id"); }, "must filter by load_id: load.id"],
+    ["insuranceApi", (f) => { f.insuranceApi = f.insuranceApi.replace("return insuranceClaimsApi.list(params);", "return insuranceClaimsApi.list({ operating_company_id: params.operating_company_id });"); }, "must forward the typed load filter"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("| { load_id: string", "| { loadId: string"); }, "Filter union must accept { load_id: string }"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace('queryKey: ["insurance-claims", "reverse", operatingCompanyId, filter]', 'queryKey: ["insurance-claims", "reverse", operatingCompanyId]'); }, "query identity and GET must include company"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("enabled: canView && Boolean(operatingCompanyId) && Boolean(Object.values(filter)[0])", "enabled: canView"); }, "must not issue an unscoped or empty-id reverse read"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replaceAll('"insurance_claims_load"', '"insurance_claims_unit"'); }, "drill from the exact load filter"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("id={claim.id}", "id={claim.load_id}"); }, "drill each returned claim by canonical id"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace('entityLabel(claim.claim_number, claim.id, "Claim")', 'entityLabel(claim.id, claim.id, "Claim")'); }, "human claim-number label"],
+    ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replaceAll("filter={{ load_id: load.id }}", "filter={{ unit_id: load.id }}"); }, "must filter by load_id: load.id"],
+    ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replace(/(<InsuranceClaimsReverseSection\s+)operatingCompanyId=\{load\.operating_company_id\}/, "$1operatingCompanyId={operatingCompanyId}"); }, "loaded row's company and id"],
     ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('shell="drawer"', ""); }, "DriverPickerWithCreate shell=\"drawer\""],
-    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace("DriverPickerWithCreate", "BareDriverSelect"); }, "DriverPickerWithCreate shell=\"drawer\""],
+    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('onChange={(next) => updateField("driver_id", next ?? "")}', 'onChange={() => {}}'); }, "write the selected canonical driver id"],
     ["claimCreate", (f) => { f.claimCreate += `\n<select value={form.driver_id} />`; }, "regressed to a bare <select>"],
   ];
 
   const problems = [];
   for (const [key, mutate, expectFragment] of cases) {
-    const fixture = goodFixture();
+    const fixture = { ...good };
     mutate(fixture);
     const failures = computeFailures(fixture);
     if (!failures.some((msg) => msg.includes(expectFragment))) {
@@ -180,7 +184,18 @@ function selftest() {
     for (const p of problems) console.error("  •", p);
     process.exit(1);
   }
-  console.log(`✓ ${LABEL} --selftest OK — good fixture passes; ${cases.length} planted regressions all caught`);
+  console.log(`✓ ${LABEL} --selftest OK — production sources pass; ${cases.length} source-injected regressions all caught`);
+}
+
+function loadSources() {
+  return {
+    claimShared: read("apps/backend/src/insurance/claim.shared.ts"),
+    claimRoutes: read("apps/backend/src/insurance/claim.routes.ts"),
+    insuranceApi: read("apps/frontend/src/api/insurance.ts"),
+    reverseSection: read("apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx"),
+    loadDetailDrawer: read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
+    claimCreate: read("apps/frontend/src/components/insurance/ClaimCreateModal.tsx"),
+  };
 }
 
 function main() {
@@ -189,14 +204,7 @@ function main() {
     return;
   }
 
-  const sources = {
-    claimShared: read("apps/backend/src/insurance/claim.shared.ts"),
-    claimRoutes: read("apps/backend/src/insurance/claim.routes.ts"),
-    insuranceApi: read("apps/frontend/src/api/insurance.ts"),
-    reverseSection: read("apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx"),
-    loadDetailDrawer: read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
-    claimCreate: read("apps/frontend/src/components/insurance/ClaimCreateModal.tsx"),
-  };
+  const sources = loadSources();
 
   const failures = computeFailures(sources);
   if (failures.length > 0) {
