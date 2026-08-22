@@ -102,7 +102,13 @@ for (const f of [
 const idxSrc = read("apps/backend/src/index.ts");
 check(
   /IH35_BOOT_API_SMOKE === "true"/.test(idxSrc) && /skipping in-process workers/.test(idxSrc),
-  "index.ts: IH35_BOOT_API_SMOKE must skip in-process workers before listen (preDeploy 90s gate)."
+  "index.ts: IH35_BOOT_API_SMOKE must skip in-process workers (GitHub CI boot smoke)."
+);
+const listenIdx = idxSrc.indexOf("await app.listen(");
+const cronsIdx = idxSrc.indexOf("initializeAccountingCrons(");
+check(
+  listenIdx >= 0 && cronsIdx > listenIdx,
+  "index.ts: in-process workers must start AFTER app.listen so Render health can bind (update_failed class).",
 );
 check(
   idxSrc.includes("setTimeout") && idxSrc.includes("warmSystemModuleMatrixAtBoot"),

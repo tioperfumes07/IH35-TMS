@@ -65,6 +65,22 @@ function assertConfigured() {
   if (!/buildFilter:/.test(backendBlock) || !/ignoredPaths:/.test(backendBlock) || !/docs\/bus\/\*\*/.test(backendBlock)) {
     errors.push("render.yaml ih35-tms-backend must ignore docs/bus/** (OUTBOX pings) not all docs/**");
   }
+  if (!/healthCheckPath:\s*\/api\/v1\/healthz\/readyz/.test(backendBlock)) {
+    errors.push("render.yaml ih35-tms-backend must set healthCheckPath: /api/v1/healthz/readyz");
+  }
+  const indexTsPath = path.join(ROOT, "apps/backend/src/index.ts");
+  if (!fs.existsSync(indexTsPath)) {
+    errors.push("apps/backend/src/index.ts missing");
+  } else {
+    const indexTs = fs.readFileSync(indexTsPath, "utf8");
+    const listenIdx = indexTs.indexOf("await app.listen(");
+    const cronsIdx = indexTs.indexOf("initializeAccountingCrons(");
+    if (listenIdx < 0 || cronsIdx < 0 || cronsIdx < listenIdx) {
+      errors.push(
+        "apps/backend/src/index.ts: initializeAccountingCrons must run AFTER app.listen (Render rolling-update health bind; recurring update_failed)",
+      );
+    }
+  }
   for (const key of REQUIRED_KEYS) {
     const keyPattern = new RegExp(`-\\s*key:\\s*${key}\\b`);
     if (!keyPattern.test(backendBlock)) {
