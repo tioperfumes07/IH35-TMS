@@ -33,8 +33,21 @@ if (!/\bAS reference\b/.test(svc)) {
   failures.push(`${svcPath}: SQL no longer aliases a human reference column`);
 }
 
+// ACCT-REGISTER-SOURCEROUTE-UUID-REGRESSION: reference became a human document id here, but
+// AccountRegisterPage.tsx's drill-through onRowClick kept calling sourceRoute(...) with it —
+// every route sourceRoute builds (invoice/bill/payment/expense/settlement) expects the real
+// entity UUID, not its display id, so every row click silently 404'd/misrouted the moment
+// `reference` stopped being a UUID. AccountRegisterRow must carry the raw id separately.
+if (!/source_transaction_id:\s*p\.source_transaction_id\s*\?\?\s*null/.test(svc)) {
+  failures.push(`${svcPath}: AccountRegisterRow no longer preserves source_transaction_id separately from the now-human reference — drill-through routing has no raw id to use`);
+}
+
 const pagePath = "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx";
 const src = readFileSync(pagePath, "utf8");
+
+if (!/onRowClick=\{\(r\)\s*=>\s*navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)\}/.test(src)) {
+  failures.push(`${pagePath}: onRowClick no longer calls sourceRoute(..., r.source_transaction_id) — check it wasn't reverted to the now-human r.reference`);
+}
 
 // Isolate the "reference" column's own object literal (up to the next top-level `{ key:` sibling)
 // so this guard cannot be satisfied by the unrelated audit-history journal_entry_id column that
