@@ -76,6 +76,8 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
     case "fixed_asset":
     case "fixed_asset_depreciation":
       return "fixed_asset";
+    case "loan":
+      return "finance_loan";
     default:
       return sourceType?.trim() || null;
   }

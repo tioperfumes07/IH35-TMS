@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -58,6 +59,8 @@ export function AmortizationPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_AMORTIZATION_FLAG, companyId);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedLoanId = searchParams.get("loan_id");
 
   const [loans, setLoans] = useState<AmortLoan[]>([]);
   const [schedule, setSchedule] = useState<AmortRow[]>([]);
@@ -80,6 +83,18 @@ export function AmortizationPage() {
         setLoadError(err instanceof Error ? err.message : "Failed to load loans");
       });
   }, [enabled, companyId]);
+
+  useEffect(() => {
+    if (!enabled || !companyId || !requestedLoanId) return;
+    setSelected(requestedLoanId);
+    setLoadError(null);
+    getLoanSchedule(requestedLoanId, companyId)
+      .then((r) => setSchedule(r.schedule))
+      .catch((err: unknown) => {
+        setSchedule([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load amortization schedule");
+      });
+  }, [enabled, companyId, requestedLoanId]);
 
   async function onCreate() {
     // Recheck on submit — never trust only the disabled attribute (defense in depth: a stale
@@ -107,15 +122,11 @@ export function AmortizationPage() {
     } finally { setBusy(false); }
   }
 
-  async function openSchedule(id: string) {
+  function openSchedule(id: string) {
     setSelected(id);
-    setLoadError(null);
-    try {
-      setSchedule((await getLoanSchedule(id, companyId)).schedule);
-    } catch (err: unknown) {
-      setSchedule([]);
-      setLoadError(err instanceof Error ? err.message : "Failed to load amortization schedule");
-    }
+    const next = new URLSearchParams(searchParams);
+    next.set("loan_id", id);
+    setSearchParams(next, { replace: true });
   }
 
   const header = (

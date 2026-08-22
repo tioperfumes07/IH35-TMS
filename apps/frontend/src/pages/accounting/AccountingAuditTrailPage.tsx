@@ -54,6 +54,9 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
     case "fixed_asset":
     case "fixed_asset_depreciation":
       return "fixed_asset";
+    case "loan":
+    case "finance_loan":
+      return "finance_loan";
     case "expense":
       return "expense";
     case "settlement":

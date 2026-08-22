@@ -16,6 +16,7 @@ const LABEL = "verify-accounting-reverse-link-list-surfaces";
 const AUDIT_TRAIL = "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx";
 const POSTING_LINEAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.tsx";
 const JE_DETAIL = "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx";
+const AMORTIZATION = "apps/frontend/src/pages/finance/AmortizationPage.tsx";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -55,6 +56,15 @@ const CHECKS = [
   { name: "Posting Lineage drills depreciation", file: POSTING_LINEAGE, pattern: /case "fixed_asset":\s*case "fixed_asset_depreciation":\s*return "fixed_asset";/ },
   { name: "JE source API canonicalizes amortization", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type IN \('prepaid_asset', 'prepaid_amortization'\) THEN 'prepaid_asset'/ },
   { name: "JE source API canonicalizes depreciation", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type IN \('fixed_asset', 'fixed_asset_depreciation'\) THEN 'fixed_asset'/ },
+  { name: "Audit API canonicalizes finance loan", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /case "loan":\s*return "finance_loan";/ },
+  { name: "JE source API canonicalizes finance loan", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'loan' THEN 'finance_loan'/ },
+  { name: "EntityLink owns finance-loan route", file: "apps/frontend/src/components/shared/EntityLink.tsx", pattern: /case "finance_loan":\s*return `\/finance\/amortization\?loan_id=\$\{id\}`;/ },
+  { name: "Audit Trail drills finance loan", file: AUDIT_TRAIL, pattern: /case "loan":\s*case "finance_loan":\s*return "finance_loan";/ },
+  { name: "Posting Lineage drills finance loan", file: POSTING_LINEAGE, pattern: /case "loan":\s*case "finance_loan":\s*return "finance_loan";/ },
+  { name: "JE Detail drills finance loan", file: JE_DETAIL, pattern: /case "loan":\s*case "finance_loan":\s*return "finance_loan";/ },
+  { name: "Amortization accepts finance-loan deep link", file: AMORTIZATION, pattern: /searchParams\.get\("loan_id"\)/ },
+  { name: "Amortization scopes deep-linked schedule read", file: AMORTIZATION, pattern: /getLoanSchedule\(requestedLoanId, companyId\)/ },
+  { name: "Amortization persists selected loan in URL", file: AMORTIZATION, pattern: /next\.set\("loan_id", id\)/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },
