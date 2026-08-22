@@ -205,9 +205,9 @@ export type ReconciliationWorkspacePayload = {
   matched_transactions: PlaidBankTransaction[];
   unmatched_transactions: PlaidBankTransaction[];
   candidates: {
-    loads: Array<{ id: string; event_date: string; event_type: "load" }>;
-    bills: Array<{ id: string; event_date: string; event_type: "bill" }>;
-    settlements: Array<{ id: string; event_date: string; event_type: "settlement" }>;
+    loads: Array<{ id: string; event_date: string; event_type: "load"; display_label: string }>;
+    bills: Array<{ id: string; event_date: string; event_type: "bill"; display_label: string }>;
+    settlements: Array<{ id: string; event_date: string; event_type: "settlement"; display_label: string }>;
   };
   summary: {
     statement_balance_cents: number;
