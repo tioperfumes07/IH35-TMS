@@ -210,7 +210,10 @@ export async function listWorkqueueInvoices(
       LEFT JOIN factoring.batch b
         ON i.id = ANY(b.invoice_ids)
         AND b.tenant_id = i.operating_company_id
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but fa was not
+      -- -- fa.factor_fee_cents is projected directly, and fa.id feeds the chargeback/recourse joins.
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                                 AND fa.operating_company_id = i.operating_company_id
       LEFT JOIN mdata.vendors fv            ON fv.id = fa.factoring_company_vendor_id
                                             AND fv.operating_company_id = $1::uuid
       -- Recourse view: join on factoring_advance_id (the invoice-level FK)

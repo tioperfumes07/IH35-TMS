@@ -231,7 +231,8 @@ export async function openLoadBookendedSettlement(
 
 export async function aggregateSettlementTotals(
   client: DbClient,
-  settlementId: string
+  settlementId: string,
+  operatingCompanyId: string
 ): Promise<{
   gross_pay: number;
   deductions_total: number;
@@ -328,7 +329,11 @@ export async function aggregateSettlementTotals(
         -- mechanism. That is a separate open row, not silently folded in here.
         SELECT COALESCE(db.load_id, sl.load_id) AS load_id, l.load_number, l.created_at
           FROM driver_finance.settlement_lines sl
+          -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): sl is pinned to one settlement by the WHERE
+          -- below, but the settlement row itself (and the operating_company_id everything downstream
+          -- trusts, including the mdata.loads join two lines down) was resolved by bare id.
           JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+                                                    AND ds.operating_company_id = $2::uuid
           LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           JOIN mdata.loads l ON l.id = COALESCE(db.load_id, sl.load_id)
                              AND l.operating_company_id = ds.operating_company_id
@@ -353,7 +358,7 @@ export async function aggregateSettlementTotals(
        WHERE s.id = $1::uuid
          AND b.first_id IS NOT NULL
     `,
-    [settlementId]
+    [settlementId, operatingCompanyId]
   );
 
   return { gross_pay: gross, deductions_total: deductions, reimbursements_total: reimbursements, net_pay: net };
@@ -550,7 +555,7 @@ async function closeLoadBookendedSettlementForDriver(
     });
   }
 
-  const totals = await aggregateSettlementTotals(client, settlementId);
+  const totals = await aggregateSettlementTotals(client, settlementId, opts.operatingCompanyId);
 
   await emitOutbox(client, "driver_finance.settlement.payment_due", {
     settlement_id: settlementId,

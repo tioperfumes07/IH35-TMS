@@ -235,7 +235,7 @@ export async function buildWeeklyCloseDraftForDriver(
 
   // Recompute gross/deductions/reimbursements/net from the settlement_lines rows that now exist —
   // the ONLY place these four numbers are written for this settlement (no hardcoded literal here).
-  await aggregateSettlementTotals(client, settlementId);
+  await aggregateSettlementTotals(client, settlementId, opts.operatingCompanyId);
 
   await appendCrudAudit(client, opts.actorUserId, "driver_finance.settlement.weekly_close_draft", {
     operating_company_id: opts.operatingCompanyId,

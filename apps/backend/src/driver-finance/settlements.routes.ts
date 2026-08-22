@@ -160,7 +160,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         where.push(`s.driver_id = $${values.length}::uuid`);
       }
       const countRes = await client.query(
-        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE ${where.join(" AND ")}`,
+        // CLS-JOIN-ENTITY-UNSCOPED: `where[0]` is always "s.operating_company_id = $1::uuid" (set
+        // unconditionally above), so this is already scoped at runtime -- the static entity-scope
+        // guard cannot see a predicate assembled through a JS array, only literal SQL text, so a
+        // redundant AND s.operating_company_id = $1::uuid is added here directly so the guard (and
+        // the next reader) can see the same fact the array already enforces.
+        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND ${where.join(" AND ")}`,
         values
       );
       values.push(q.limit, q.offset);
@@ -206,7 +211,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_ids
           FROM views.driver_settlement_with_debt v
-          JOIN driver_finance.driver_settlements s ON s.id = v.id
+          -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
+          -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
+          -- directly on the join so it is visible as literal SQL, not only assembled JS.
+          JOIN driver_finance.driver_settlements s ON s.id = v.id AND s.operating_company_id = $1::uuid
           WHERE ${where.join(" AND ")}
           ORDER BY v.period_start DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -272,7 +280,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
       }
       const countRes = await client.query(
-        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE ${where.join(" AND ")}`,
+        // CLS-JOIN-ENTITY-UNSCOPED: `where[0]` is always "s.operating_company_id = $1::uuid" (set
+        // unconditionally above), so this is already scoped at runtime -- the static entity-scope
+        // guard cannot see a predicate assembled through a JS array, only literal SQL text, so a
+        // redundant AND s.operating_company_id = $1::uuid is added here directly so the guard (and
+        // the next reader) can see the same fact the array already enforces.
+        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND ${where.join(" AND ")}`,
         values
       );
       values.push(query.data.limit, query.data.offset);
@@ -318,7 +331,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_ids
           FROM views.driver_settlement_with_debt v
-          JOIN driver_finance.driver_settlements s ON s.id = v.id
+          -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
+          -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
+          -- directly on the join so it is visible as literal SQL, not only assembled JS.
+          JOIN driver_finance.driver_settlements s ON s.id = v.id AND s.operating_company_id = $1::uuid
           WHERE ${where.join(" AND ")}
           ORDER BY v.period_start DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}
