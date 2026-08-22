@@ -214,12 +214,22 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `
             SELECT
               cf.*,
+              inv.invoice_id,
+              inv.invoice_display_id,
               inv.customer_id,
+              inv.customer_name,
               COUNT(*) OVER()::int AS _total_count
             FROM views.factoring_chargebacks_fees cf
             LEFT JOIN LATERAL (
-              SELECT i.customer_id
+              SELECT
+                i.id::text AS invoice_id,
+                i.display_id AS invoice_display_id,
+                i.customer_id::text AS customer_id,
+                c.customer_name
               FROM accounting.invoices i
+              LEFT JOIN mdata.customers c
+                ON c.id = i.customer_id
+               AND c.operating_company_id = i.operating_company_id
               WHERE i.factoring_advance_id = cf.factoring_advance_id
                 AND i.operating_company_id = cf.operating_company_id
                 AND i.status <> 'void'

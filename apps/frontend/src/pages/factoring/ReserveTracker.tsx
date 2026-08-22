@@ -135,6 +135,16 @@ const HISTORY_COLUMNS: Array<ParityColumn<FactoringReserveBalanceHistoryEntry>> 
 const CHARGEBACK_COLUMNS: Array<ParityColumn<FactoringChargebackFeeRow>> = [
   { key: "created_at", label: "Date", sortable: true, render: (row) => fmtD(row.created_at) },
   {
+    key: "invoice_id",
+    label: "Invoice",
+    render: (row) => row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} /> : "—",
+  },
+  {
+    key: "customer_id",
+    label: "Customer",
+    render: (row) => row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : "—",
+  },
+  {
     key: "factoring_advance_id",
     label: "Advance",
     render: (row) => (
