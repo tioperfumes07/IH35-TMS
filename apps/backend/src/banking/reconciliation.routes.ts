@@ -439,33 +439,63 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         matched_expense_id: string | null;
         matched_transfer_id: string | null;
         matched_journal_entry_id: string | null;
+        matched_load_number: string | null;
+        matched_bill_number: string | null;
+        matched_settlement_display_id: string | null;
+        matched_expense_number: string | null;
+        matched_transfer_label: string | null;
+        matched_journal_entry_memo: string | null;
         notes: string | null;
       }>(
         `
           SELECT
-            id,
-            bank_account_id,
-            transaction_date,
-            posted_date,
-            amount_cents,
-            description,
-            merchant_name,
-            plaid_category,
-            pending,
-            is_credit,
-            reconciliation_cleared,
-            matched_load_id,
-            matched_bill_id,
-            matched_settlement_id,
-            matched_expense_id,
-            matched_transfer_id,
-            matched_journal_entry_id,
-            notes
-          FROM banking.bank_transactions
-          WHERE bank_account_id = $1
-            AND operating_company_id = $2::uuid
-            AND transaction_date BETWEEN $3 AND $4
-          ORDER BY transaction_date DESC, created_at DESC
+            bt.id,
+            bt.bank_account_id,
+            bt.transaction_date,
+            bt.posted_date,
+            bt.amount_cents,
+            bt.description,
+            bt.merchant_name,
+            bt.plaid_category,
+            bt.pending,
+            bt.is_credit,
+            bt.reconciliation_cleared,
+            bt.matched_load_id,
+            load.load_number AS matched_load_number,
+            bt.matched_bill_id,
+            bill.bill_number AS matched_bill_number,
+            bt.matched_settlement_id,
+            settlement.display_id AS matched_settlement_display_id,
+            bt.matched_expense_id,
+            expense.expense_number AS matched_expense_number,
+            bt.matched_transfer_id,
+            COALESCE(NULLIF(TRIM(transfer.reference_number), ''), NULLIF(TRIM(transfer.memo), '')) AS matched_transfer_label,
+            bt.matched_journal_entry_id,
+            je.memo AS matched_journal_entry_memo,
+            bt.notes
+          FROM banking.bank_transactions bt
+          LEFT JOIN mdata.loads load
+            ON load.id = bt.matched_load_id
+           AND load.operating_company_id = bt.operating_company_id
+          LEFT JOIN accounting.bills bill
+            ON bill.id = bt.matched_bill_id
+           AND bill.operating_company_id = bt.operating_company_id
+          LEFT JOIN driver_finance.driver_settlements settlement
+            ON settlement.id = bt.matched_settlement_id
+           AND settlement.operating_company_id = bt.operating_company_id
+          LEFT JOIN accounting.expenses expense
+            ON expense.id = bt.matched_expense_id
+           AND expense.operating_company_id = bt.operating_company_id
+          LEFT JOIN banking.transfers transfer
+            ON transfer.id = bt.matched_transfer_id
+           AND transfer.operating_company_id = bt.operating_company_id
+          LEFT JOIN accounting.journal_entries je
+            ON je.id = bt.matched_journal_entry_id
+           AND je.operating_company_id = bt.operating_company_id
+          WHERE bt.bank_account_id = $1
+            AND bt.operating_company_id = $2::uuid
+            AND bt.transaction_date BETWEEN $3 AND $4
+          ORDER BY bt.transaction_date DESC, bt.created_at DESC
         `,
         [session.bank_account_id, companyId, session.period_start, session.period_end]
       );
