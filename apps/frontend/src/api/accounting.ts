@@ -654,6 +654,7 @@ export type ExpenseListRow = {
   work_order_display_id: string | null;
   /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
   matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_description?: string | null;
   trailer_id: string | null;
   trailer_display_id: string | null;
 };

@@ -306,7 +306,7 @@ export function ExpensesListPage() {
           <EntityLink
             kind="bank_transaction"
             id={r.matched_bank_transaction_id}
-            label={entityLabel(null, r.matched_bank_transaction_id, "Bank transaction")}
+            label={entityLabel(r.matched_bank_transaction_description, r.matched_bank_transaction_id, "Bank transaction")}
           />
         ) : (
           <span className="text-gray-400">—</span>
