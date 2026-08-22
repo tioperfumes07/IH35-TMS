@@ -1,3 +1,4 @@
+- 2026-08-21T19:43CT Cursor | VERIFY SEATS · ACK owner CC-3 released · NEXT=factoring→dispatch→vendors chrome (#13774 banking #13779 settlements already merged) · REJECT CC-2 customers/drivers/fleet/lists · CC-1/Codex stay accounting · Live=BLOCKED healthz fe62c92 · no Render kick | GO
 - 2026-08-21T19:32CT Cursor | SHIP #13772 ACCT-F5426 register human Ref No. · NOW=CC-1 JE human memos · escrow h1 in-flight · Accounting NOT CERTIFIED · Live=BLOCKED · no Render kick | GO
 - 2026-08-21T19:07CT Cursor | OWNER LOCKSTEP · ALL SEATS NOW=ACCOUNTING until leftover dry then banking→… | CC-1 register UUID · CC-2 acct reverse · CC-3 acct picker · Codex acct reverse · Cursor Live Chrome acct | Live=BLOCKED · no Render kick | GO
 - 2026-08-21T18:56CT Cursor | OWNER: categorize is not a coder job · NOW=honest labels+wiring (register UUID ref, expense_number) · Live Chrome U6 · Live=BLOCKED · no Render kick | GO
