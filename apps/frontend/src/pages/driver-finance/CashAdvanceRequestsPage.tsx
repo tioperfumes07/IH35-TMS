@@ -46,6 +46,7 @@ export function CashAdvanceRequestsPage() {
   // LV-DRIVER-FINANCE-CASH-ADVANCE-REQUESTS-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const requestIdFromUrl = searchParams.get("request_id")?.trim() ?? "";
 
   function patchListSearchParam(next: { driverId: string }) {
     const nextParams = new URLSearchParams(searchParams);
@@ -119,6 +120,11 @@ export function CashAdvanceRequestsPage() {
     queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, effectiveDriverId),
     enabled: Boolean(companyId),
   });
+  const exactRequestQuery = useQuery({
+    queryKey: ["driver-finance", "cash-advance-requests", "exact", companyId, requestIdFromUrl],
+    queryFn: () => cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl),
+    enabled: Boolean(companyId && requestIdFromUrl),
+  });
 
   const approveMut = useMutation({
     mutationFn: async (row: CashAdvanceRequestRow) => {
@@ -156,7 +162,13 @@ export function CashAdvanceRequestsPage() {
     },
   });
 
-  const rows = pendingQuery.data?.requests ?? [];
+  const rows = useMemo(() => {
+    const pending = pendingQuery.data?.requests ?? [];
+    const exact = exactRequestQuery.data?.request;
+    if (!exact || !requestIdFromUrl) return pending;
+    const exactId = String(exact.id ?? "");
+    return pending.some((row) => String(row.id ?? "") === exactId) ? pending : [exact, ...pending];
+  }, [pendingQuery.data?.requests, exactRequestQuery.data?.request, requestIdFromUrl]);
   const busyId = approveMut.variables ? String((approveMut.variables as CashAdvanceRequestRow).id ?? "") : "";
   const escalateBusyId = escalateMut.variables ? String((escalateMut.variables as CashAdvanceRequestRow).id ?? "") : "";
 
@@ -388,6 +400,11 @@ export function CashAdvanceRequestsPage() {
           emptyText="No pending requests."
           storageKey="cash-advance-requests"
           exportFilename="cash-advance-requests"
+          rowClassName={(row) =>
+            requestIdFromUrl && String(row.id ?? "") === requestIdFromUrl
+              ? "bg-slate-100 ring-1 ring-slate-400"
+              : ""
+          }
           rowActions={(row) => {
             const id = String(row.id ?? "");
             const above = Boolean(row.is_above_policy);
