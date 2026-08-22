@@ -31,6 +31,7 @@ export function PendingSettlementDeductionsPanel() {
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5187 — EntityPicker must write ?driver_id= (not local-only filter state).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const requestedDeductionId = searchParams.get("deduction_id")?.trim() ?? "";
 
   function patchSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -64,12 +65,13 @@ export function PendingSettlementDeductionsPanel() {
   const effectiveDriverId = applied.driverId.trim() || undefined;
 
   const query = useQuery({
-    queryKey: ["driver-finance", "settlement-deductions", selectedCompanyId, effectiveDriverId],
+    queryKey: ["driver-finance", "settlement-deductions", selectedCompanyId, effectiveDriverId, requestedDeductionId],
     queryFn: () =>
       listSettlementDeductions(selectedCompanyId!, {
         driver_id: effectiveDriverId,
+        deduction_id: requestedDeductionId || undefined,
         // Open recoveries only — applied/voided stay out of the working queue.
-        status: "pending",
+        status: requestedDeductionId ? undefined : "pending",
         limit: 200,
       }),
     enabled: Boolean(selectedCompanyId),

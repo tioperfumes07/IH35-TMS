@@ -10,6 +10,7 @@ const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() })
 // FAIL-DD2 — list filters. `status` is a free string (column is not a DB enum).
 const listDeductionsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  deduction_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   status: z.string().trim().min(1).max(40).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
@@ -73,11 +74,15 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
       if (!user) return;
       const query = listDeductionsQuerySchema.safeParse(req.query ?? {});
       if (!query.success) return validationError(reply, query.error);
-      const { operating_company_id, driver_id, status, limit, offset } = query.data;
+      const { operating_company_id, deduction_id, driver_id, status, limit, offset } = query.data;
 
       const rows = await withCompany(user.uuid, operating_company_id, async (client) => {
         const values: unknown[] = [operating_company_id];
         const where = ["d.operating_company_id = $1::uuid"];
+        if (deduction_id) {
+          values.push(deduction_id);
+          where.push(`d.id = $${values.length}::uuid`);
+        }
         if (driver_id) {
           values.push(driver_id);
           where.push(`d.driver_id = $${values.length}`);

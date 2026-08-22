@@ -483,9 +483,10 @@ export type SettlementDeductionListRow = {
 
 export function listSettlementDeductions(
   companyId: string,
-  filters?: { driver_id?: string; status?: string; limit?: number }
+  filters?: { deduction_id?: string; driver_id?: string; status?: string; limit?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters?.deduction_id) params.set("deduction_id", filters.deduction_id);
   if (filters?.driver_id) params.set("driver_id", filters.driver_id);
   if (filters?.status) params.set("status", filters.status);
   if (filters?.limit != null) params.set("limit", String(filters.limit));

@@ -77,8 +77,9 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "expense";
     case "settlement":
     case "driver_settlement":
-    case "driver_settlement_deduction":
       return "settlement";
+    case "driver_settlement_deduction":
+      return "settlement_deduction";
     case "journal_entry":
       return "journal_entry";
     case "load":

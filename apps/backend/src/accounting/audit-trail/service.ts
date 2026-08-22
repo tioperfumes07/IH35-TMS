@@ -154,6 +154,10 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
       return "period_close";
     case "dispute_disbursement":
       return "settlement_dispute";
+    case "driver_settlement":
+      return "settlement";
+    case "driver_settlement_deduction":
+      return "settlement_deduction";
     case "prepaid_amortization_row":
     case "depreciation_schedule_row":
     case "loan_amortization_row":
@@ -353,7 +357,13 @@ export async function listAccountingSourceLineage(
         jp.source_transaction_line_id,
         tsl.linked_object_type,
         tsl.linked_object_id,
-        COALESCE(link_inv.display_id, link_bill.bill_number, link_bill.display_id, link_dispute.dispute_description) AS linked_object_display_id,
+        COALESCE(
+          link_inv.display_id,
+          link_bill.bill_number,
+          link_bill.display_id,
+          link_dispute.dispute_description,
+          link_deduction.display_label
+        ) AS linked_object_display_id,
         tsl.relationship_role,
         jp.account_id::text AS account_id,
         a.account_number,
@@ -386,6 +396,14 @@ export async function listAccountingSourceLineage(
         ON tsl.linked_object_type = 'dispute_disbursement'
        AND link_dispute.id::text = tsl.linked_object_id
        AND link_dispute.operating_company_id = jp.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(NULLIF(btrim(d.reason), ''), initcap(replace(d.deduction_type, '_', ' '))) AS display_label
+        FROM driver_finance.driver_settlement_deductions d
+        WHERE tsl.linked_object_type = 'driver_settlement_deduction'
+          AND d.id::text = tsl.linked_object_id
+          AND d.operating_company_id = jp.operating_company_id
+        LIMIT 1
+      ) link_deduction ON true
       WHERE jp.operating_company_id = $1::uuid
         AND jp.source_transaction_type = $2::text
         AND jp.source_transaction_id = $3::text
