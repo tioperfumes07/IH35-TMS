@@ -3,8 +3,6 @@
  * Insurance reverse_link — Built for detail/gap surfaces with EntityLink.
  * Create/modal/wizard/parity create sites honesty-dropped (create chrome ≠ reverse drill).
  *
- * @matrix-built {"modules":["insurance"],"cols":["reverse_link"],"leafRe":"^(policies\\.detail|coverage_gaps)$","task":"VERTICAL-REVERSE-LINK-insurance-detail","vertical":"column-wave"}
- *
  * Self-test: node scripts/verify-insurance-reverse-link-detail-surfaces.mjs --selftest
  */
 import fs from "node:fs";
