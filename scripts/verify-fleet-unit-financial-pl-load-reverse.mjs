@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5916-FINANCIAL-PL-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5938-FINANCIAL-PL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * verify-fleet-unit-financial-pl-load-reverse.mjs
  * FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING
@@ -22,6 +23,7 @@ const REQUIRED = "docs/specs/scoreboard/modules/fleet.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-fleet-unit-financial-pl-load-reverse.mjs";
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5916-FINANCIAL-PL-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.financial_pl"],"task":"FLEET-F5938-FINANCIAL-PL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -101,9 +103,11 @@ function analyze(overrides = {}) {
   if (!leaf) failures.push("Fleet financial P&L Required leaf missing");
   else {
     if (!leaf.required.includes("reverse_link")) failures.push("Fleet financial P&L must require reverse_link");
+    if (!leaf.required.includes("connectivity")) failures.push("Fleet financial P&L must require connectivity");
     if (leaf.route_hint !== "/fleet/units/:id") failures.push("Fleet financial P&L must mount on canonical unit profile");
   }
   if (!self.split("/**\n * verify-")[0].includes(EXACT_HEADER)) failures.push("exact Fleet financial P&L reverse header missing");
+  if (!self.split("/**\n * verify-")[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet financial P&L connectivity header missing");
   if (/"guard"\s*:\s*"scripts\/verify-fleet-unit-financial-pl-load-reverse\.mjs"/.test(feed)) failures.push("manual feed duplicates financial P&L reverse ownership");
 
   return failures;
@@ -136,6 +140,8 @@ function selftest() {
     ["Required reverse removed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"') }],
     ["Required route changed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"') }],
     ["exact header removed", { self: read(SELF).replace(EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")) }],
+    ["Required connectivity removed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,260})"connectivity"/, '$1"connectivity_MISSING"') }],
+    ["connectivity header removed", { self: read(SELF).replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "load")) }],
     ["duplicate feed inserted", { feed: `[{"guard":"scripts/verify-fleet-unit-financial-pl-load-reverse.mjs"}]` }],
   ];
   for (const [name, overrides] of mutations) {
