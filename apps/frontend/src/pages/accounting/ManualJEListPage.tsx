@@ -227,7 +227,7 @@ export function ManualJEListPage() {
             <EntityLink
               kind="bank_transaction"
               id={entry.matched_bank_transaction_id}
-              label={entityLabel(entry.matched_bank_transaction_description, entry.matched_bank_transaction_id, "Bank transaction")}
+              label={visibleDocumentLabel(entry.matched_bank_transaction_description, entry.matched_bank_transaction_id, "Bank transaction")}
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
@@ -240,7 +240,7 @@ export function ManualJEListPage() {
         alwaysVisible: true,
         render: (entry) =>
           entry.reversed_by_je_id ? (
-            <span className="text-xs text-gray-500" title={`Reversed by ${entityLabel(null, entry.reversed_by_je_id, "Journal entry")}`}>
+            <span className="text-xs text-gray-500" title={`Reversed by ${visibleDocumentLabel(null, entry.reversed_by_je_id, "Journal entry")}`}>
               Reversed
             </span>
           ) : user?.role === "Owner" && entry.status === "posted" ? (
