@@ -9,6 +9,7 @@
  * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["settlements.detail","settlement_close"],"task":"SETL-F5835"}
  * @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.pre_settlement","dispatch.panel.pre_settlement"],"task":"DISP-F5868-PRE-SETTLEMENT-REVERSE-EXACT-LEAVES","vertical":"column-wave"}
+ * @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["pre_settlements"],"task":"DRV-F5928-SETTLEMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"}
  */
 import fs from "node:fs";
 
@@ -37,6 +38,8 @@ const F = {
   driverSettlements: "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
   matrix: "docs/specs/scoreboard/modules/settlements.required.json",
   dispatchMatrix: "docs/specs/scoreboard/modules/dispatch.required.json",
+  driversMatrix: "docs/specs/scoreboard/modules/drivers.required.json",
+  feed: "docs/specs/scoreboard/wire-sprint-built.json",
   self: "scripts/verify-pre-settlements-reverse-drill.mjs",
 };
 
@@ -98,6 +101,24 @@ export function collectFailures(sources) {
     failures.push("settlements Required matrix parses");
   }
   try {
+    const matrix = JSON.parse(sources[F.driversMatrix]);
+    const leaf = matrix.leaves?.find((item) => item.id === "pre_settlements");
+    if (!leaf?.required?.includes("connectivity")) failures.push("exact Drivers ownership: pre_settlements:connectivity");
+    if (leaf?.route_hint !== "/drivers/pre-settlements") failures.push("exact Drivers route: pre_settlements");
+  } catch {
+    failures.push("drivers Required matrix parses");
+  }
+  if (!sources[F.self].split("import fs")[0].includes(' * @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["pre_settlements"],"task":"DRV-F5928-SETTLEMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"}')) failures.push("exact Drivers pre-settlements header");
+  try {
+    const duplicates = (JSON.parse(sources[F.feed]).entries ?? []).filter((row) =>
+      row.guard === "scripts/verify-pre-settlements-reverse-drill.mjs" &&
+      row.modules?.includes("drivers") && row.cols?.includes("connectivity")
+    );
+    if (duplicates.length) failures.push("manual feed duplicates Drivers pre-settlements connectivity");
+  } catch {
+    failures.push("wire sprint feed parses");
+  }
+  try {
     const matrix = JSON.parse(sources[F.dispatchMatrix]);
     for (const id of ["load.drawer.pre_settlement", "dispatch.panel.pre_settlement"]) {
       const leaf = matrix.leaves?.find((item) => item.id === id);
@@ -131,6 +152,14 @@ if (process.argv.includes("--selftest")) {
   for (const id of ["load.drawer.pre_settlement", "dispatch.panel.pre_settlement"]) {
     const planted = sources[F.dispatchMatrix].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
     if (planted === sources[F.dispatchMatrix] || !collectFailures({ ...sources, [F.dispatchMatrix]: planted }).includes(`exact dispatch Required ownership: ${id}:reverse_link`)) inert.push(`dispatch matrix ${id}`);
+  }
+  for (const [key, before, after, expected] of [
+    [F.driversMatrix, '"id": "pre_settlements"', '"id": "pre_settlements.removed"', "exact Drivers ownership: pre_settlements:connectivity"],
+    [F.self, '"modules":["drivers"],"cols":["connectivity"],"leaves":["pre_settlements"]', '"modules":["drivers"],"cols":["customer"],"leaves":["pre_settlements"]', "exact Drivers pre-settlements header"],
+    [F.feed, '"entries": [', '"entries": [{"guard":"scripts/verify-pre-settlements-reverse-drill.mjs","modules":["drivers"],"cols":["connectivity"]},', "manual feed duplicates Drivers pre-settlements connectivity"],
+  ]) {
+    const planted = sources[key].replace(before, after);
+    if (planted === sources[key] || !collectFailures({ ...sources, [key]: planted }).includes(expected)) inert.push(expected);
   }
   if (inert.length) {
     console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);

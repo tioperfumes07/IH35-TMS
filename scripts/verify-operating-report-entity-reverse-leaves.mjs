@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["settlements"],"task":"DRV-F5928-SETTLEMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"],"task":"CLASS-F5904-OPERATING-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 
 import fs from "node:fs";
@@ -13,6 +14,7 @@ const sources = {
   driversMatrix: fs.readFileSync("docs/specs/scoreboard/modules/drivers.required.json", "utf8"),
   fleetMatrix: fs.readFileSync("docs/specs/scoreboard/modules/fleet.required.json", "utf8"),
   self: fs.readFileSync("scripts/verify-operating-report-entity-reverse-leaves.mjs", "utf8"),
+  feed: fs.readFileSync("docs/specs/scoreboard/wire-sprint-built.json", "utf8"),
 };
 
 function required(source, key, id) {
@@ -46,13 +48,18 @@ const failures = (candidate) => {
   for (const [key, id] of cells) {
     if (!required(candidate, key, id).includes("reverse_link")) found.push(`${key} ${id} must require reverse_link`);
   }
+  const driverSettlement = JSON.parse(candidate.driversMatrix).leaves.find((leaf) => leaf.id === "settlements");
+  if (!driverSettlement?.required?.includes("connectivity")) found.push("driversMatrix settlements must require connectivity");
+  if (driverSettlement?.route_hint !== "/drivers/settlements") found.push("driversMatrix settlements route must be /drivers/settlements");
   const headers = [
     '"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"]',
     '"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"]',
+    '"modules":["drivers"],"cols":["connectivity"],"leaves":["settlements"]',
     '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"]',
   ];
-  const annotationBlock = candidate.self.split("\n").slice(0, 4).join("\n");
+  const annotationBlock = candidate.self.split("\n").slice(0, 5).join("\n");
   for (const header of headers) if (!annotationBlock.includes(header)) found.push(`exact Built header missing: ${header}`);
+  if (/"guard"\s*:\s*"scripts\/verify-operating-report-entity-reverse-leaves\.mjs"/.test(candidate.feed)) found.push("manual feed duplicates operating-report exact ownership");
   return found;
 };
 
@@ -79,7 +86,9 @@ if (process.argv.includes("--self-test")) {
     ["fleetMatrix", '"id": "unit.profile.maintenance"', '"id": "unit.profile.maintenance.broken"'],
     ["self", '"modules":["reports"],"cols":["reverse_link"],"leaves":["report.profit_per_truck"]', '"modules":["reports"],"cols":["connectivity"],"leaves":["report.profit_per_truck"]'],
     ["self", '"modules":["drivers"],"cols":["reverse_link"],"leaves":["settlements"]', '"modules":["drivers"],"cols":["connectivity"],"leaves":["settlements"]'],
+    ["self", '"modules":["drivers"],"cols":["connectivity"],"leaves":["settlements"]', '"modules":["drivers"],"cols":["customer"],"leaves":["settlements"]'],
     ["self", '"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.maintenance"]', '"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.maintenance"]'],
+    ["feed", "[", `[{"guard":"scripts/verify-operating-report-entity-reverse-leaves.mjs"},`],
   ];
   for (const [key, before, after] of evidenceMutations) {
     if (!sources[key].includes(before)) throw new Error(`self-test fixture missing: ${key}`);
