@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -45,6 +45,7 @@ export function TransfersListPage() {
   const transferGlFlag = useFeatureFlag("TRANSFER_GL_POSTING_ENABLED", companyId || undefined);
   const [searchParams] = useSearchParams();
   const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
+  const deepLinkGroupId = searchParams.get("group_id")?.trim() || "";
 
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
@@ -59,6 +60,32 @@ export function TransfersListPage() {
   const [revokeTarget, setRevokeTarget] = useState<Transfer | null>(null);
 
   const canRevoke = auth.user?.role === "Owner";
+
+  const openIntercompanyGroup = useCallback((groupId: string) => {
+    if (!companyId || !groupId) return;
+    void getIntercompanyTransferGroup(groupId, companyId)
+      .then((detail) => {
+        const lines = detail.legs
+          .map(
+            (leg) =>
+              `${leg.intercompany_leg ?? "leg"} · ${entityLabel(
+                (leg as { entity_code?: string }).entity_code,
+                leg.operating_company_id,
+                "Entity",
+              )} · ${formatMoney(Number(leg.amount_cents))} · ${entityLabel(null, leg.id, "Leg")}`
+          )
+          .join("\n");
+        setInfoModal({
+          title: `Intercompany group ${detail.group_id}`,
+          body: lines || "(no legs)",
+        });
+      })
+      .catch((error) => pushToast(userFacingApiError(error, "Failed to load intercompany legs"), "error"));
+  }, [companyId, pushToast]);
+
+  useEffect(() => {
+    if (deepLinkGroupId) openIntercompanyGroup(deepLinkGroupId);
+  }, [deepLinkGroupId, openIntercompanyGroup]);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],
@@ -173,25 +200,7 @@ export function TransfersListPage() {
               className="text-xs text-slate-800 underline"
               data-testid="transfer-intercompany-group-link"
               onClick={() => {
-                if (!companyId || !row.intercompany_transfer_group_id) return;
-                void getIntercompanyTransferGroup(row.intercompany_transfer_group_id, companyId)
-                  .then((detail) => {
-                    const lines = detail.legs
-                      .map(
-                        (leg) =>
-                          `${leg.intercompany_leg ?? "leg"} · ${entityLabel(
-                            (leg as { entity_code?: string }).entity_code,
-                            leg.operating_company_id,
-                            "Entity",
-                          )} · ${formatMoney(Number(leg.amount_cents))} · ${entityLabel(null, leg.id, "Leg")}`
-                      )
-                      .join("\n");
-                    setInfoModal({
-                      title: `Intercompany group ${detail.group_id}`,
-                      body: lines || "(no legs)",
-                    });
-                  })
-                  .catch((error) => pushToast(userFacingApiError(error, "Failed to load intercompany legs"), "error"));
+                if (row.intercompany_transfer_group_id) openIntercompanyGroup(row.intercompany_transfer_group_id);
               }}
             >
               {row.intercompany_leg ?? "group"} · {entityLabel(null, row.intercompany_transfer_group_id, "Intercompany group")}
@@ -262,7 +271,7 @@ export function TransfersListPage() {
         ),
       },
     ],
-    [accountNameMap, canRevoke, revokingId, companyId, pushToast, queryClient],
+    [accountNameMap, canRevoke, revokingId, companyId, pushToast, queryClient, openIntercompanyGroup],
   );
 
   return (

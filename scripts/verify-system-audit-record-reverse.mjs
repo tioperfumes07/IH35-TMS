@@ -8,6 +8,7 @@ const files = {
   routes: read("apps/backend/src/audit/audit-events-list.routes.ts"),
   history: read("apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx"),
   page: read("apps/frontend/src/pages/audit/AuditTrailPage.tsx"),
+  transfers: read("apps/frontend/src/pages/banking/TransfersListPage.tsx"),
   driver: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
   unit: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
   trailer: read("apps/frontend/src/pages/fleet/TrailerProfilePage.tsx"),
@@ -59,6 +60,7 @@ function failures(s = files) { return [
   ["customer-payment subject uses the canonical payment route", s.page.includes('customer_payment: "payment"')],
   ["bank transaction and settlement sources use canonical query targets", s.page.includes('"banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`') && s.page.includes('"driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`')],
   ["reconciliation-session source uses mounted workspace target", s.page.includes('"banking.reconciliation_sessions": (id) => `/banking/reconciliation-workspace?session_id=${id}`')],
+  ["intercompany-group source opens the canonical group detail", s.page.includes('"banking.intercompany_transfer_groups": (id) => `/banking/transfers?group_id=${id}`') && s.transfers.includes('searchParams.get("group_id")') && s.transfers.includes("openIntercompanyGroup(deepLinkGroupId)")],
   ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -96,10 +98,13 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, page: files.page.replace('/accounting/journal-entries/${id}', '/accounting/bills/${id}') }).includes("journal-entry subject and source use the canonical record route"),
     failures({ ...files, page: files.page.replace('/banking/transactions?txn_id=${id}', '/banking/transactions') }).includes("bank transaction and settlement sources use canonical query targets"),
     failures({ ...files, page: files.page.replace('/banking/reconciliation-workspace?session_id=${id}', '/banking/reconciliation-workspace') }).includes("reconciliation-session source uses mounted workspace target"),
+    failures({ ...files, page: files.page.replace('/banking/transfers?group_id=${id}', '/banking/transfers') }).includes("intercompany-group source opens the canonical group detail"),
+    failures({ ...files, transfers: files.transfers.replace('searchParams.get("group_id")', 'searchParams.get("transfer_id")') }).includes("intercompany-group source opens the canonical group detail"),
+    failures({ ...files, transfers: files.transfers.replace("openIntercompanyGroup(deepLinkGroupId)", "openIntercompanyGroup('')") }).includes("intercompany-group source opens the canonical group detail"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 34/34 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 37/37 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
