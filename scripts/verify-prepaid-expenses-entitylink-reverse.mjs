@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-prepaid-expenses-entitylink-reverse";
 const PREPAID_PAGE = "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx";
+const PREPAID_API = "apps/frontend/src/api/prepaid-expenses.ts";
+const PREPAID_ROUTES = "apps/backend/src/accounting/prepaid-expenses.routes.ts";
 const JE_DETAIL = "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 
@@ -16,9 +18,11 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-export function assertPrepaidExpensesEntitylinkReverse() {
+export function assertPrepaidExpensesEntitylinkReverse(candidate = null) {
   const errors = [];
-  const prepaid = read(PREPAID_PAGE);
+  const prepaid = candidate?.prepaid ?? read(PREPAID_PAGE);
+  const api = candidate?.api ?? read(PREPAID_API);
+  const routes = candidate?.routes ?? read(PREPAID_ROUTES);
   const jeDetail = read(JE_DETAIL);
   const entityLink = read(ENTITY_LINK);
 
@@ -38,7 +42,6 @@ export function assertPrepaidExpensesEntitylinkReverse() {
   if (!/asset_account_number/.test(prepaid) || !/asset_account_name/.test(prepaid)) {
     errors.push(`${PREPAID_PAGE}: must render asset_account_number/name from detail API`);
   }
-  const routes = read("apps/backend/src/accounting/prepaid-expenses.routes.ts");
   if (!/purchase_je_memo/.test(routes) || !/journal_entry_memo/.test(routes)) {
     errors.push("prepaid-expenses.routes.ts: detail/schedule must JOIN journal_entries for memo/date labels");
   }
@@ -54,16 +57,39 @@ export function assertPrepaidExpensesEntitylinkReverse() {
   if (!entityLink.includes("prepaid_asset") || !/\/accounting\/prepaid-expenses\?asset_id=/.test(entityLink)) {
     errors.push(`${ENTITY_LINK}: must resolve prepaid_asset → /accounting/prepaid-expenses?asset_id=`);
   }
+  if (!prepaid.includes("createPrepaidExpense({") || !prepaid.includes("operating_company_id: companyId")) {
+    errors.push(`${PREPAID_PAGE}: Create must invoke the selected-company prepaid writer`);
+  }
+  if (!api.includes('apiRequest<PrepaidAssetDetail>("/api/v1/accounting/prepaid-expenses", { method: "POST", body })')) {
+    errors.push(`${PREPAID_API}: create must POST its body to the canonical route`);
+  }
+  if (!routes.includes('app.post("/api/v1/accounting/prepaid-expenses"') || !routes.includes("INSERT INTO accounting.prepaid_assets") || !routes.includes("INSERT INTO accounting.prepaid_amortization_rows")) {
+    errors.push(`${PREPAID_ROUTES}: create must persist the canonical asset and schedule rows`);
+  }
   return errors;
 }
 
 function selftest() {
-  const errors = assertPrepaidExpensesEntitylinkReverse();
+  const source = { prepaid: read(PREPAID_PAGE), api: read(PREPAID_API), routes: read(PREPAID_ROUTES) };
+  const errors = assertPrepaidExpensesEntitylinkReverse(source);
   if (errors.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  ${errors.join("\n  ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  const mutations = [
+    ["prepaid", "createPrepaidExpense({"],
+    ["prepaid", "operating_company_id: companyId"],
+    ["api", '{ method: "POST", body }'],
+    ["routes", 'app.post("/api/v1/accounting/prepaid-expenses"'],
+    ["routes", "INSERT INTO accounting.prepaid_assets"],
+    ["routes", "INSERT INTO accounting.prepaid_amortization_rows"],
+  ];
+  for (const [key, token] of mutations) {
+    const mutated = { ...source, [key]: source[key].replace(token, "BROKEN_PREPAID_CREATE_PATH") };
+    if (mutated[key] === source[key]) throw new Error(`${LABEL}: selftest fixture drifted for ${token}`);
+    if (assertPrepaidExpensesEntitylinkReverse(mutated).length === 0) throw new Error(`${LABEL}: mutation escaped for ${token}`);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} create-path mutations rejected`);
 }
 
 if (process.argv.includes("--selftest")) {

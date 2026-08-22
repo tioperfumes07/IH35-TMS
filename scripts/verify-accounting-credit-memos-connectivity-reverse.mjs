@@ -23,13 +23,18 @@ function verify(candidate) {
   need("page", "getCreditMemo(companyId, selectedCreditMemoId!)", "detail read must carry company scope and selected id");
   need("page", 'dataTestId="credit-memos-filter-customer"', "list must expose the canonical customer filter picker");
   need("page", 'createKind="customer"', "creator must use the canonical customer create/select path");
+  need("page", "createCreditMemo(companyId", "Save must invoke the scoped credit-memo creator");
   need("page", "customer_id: createCustomerId as string", "creator must submit the selected customer FK");
   need("page", '<EntityLink kind="customer" id={row.customer_id}', "list rows must drill to their customer");
   need("page", 'kind="customer"\n                    id={creditMemo.customer_id}', "detail must drill to its customer");
   need("page", '<EntityLink kind="invoice" id={application.invoice_id}', "applications must reverse-drill to credited invoices");
   need("api", "operating_company_id: operatingCompanyId", "list API must encode operating company scope");
+  need("api", '`/api/v1/accounting/credit-memos?operating_company_id=${encodeURIComponent(operatingCompanyId)}`', "create API must POST to the canonical scoped credit-memos route");
+  need("api", '{ method: "POST", body: payload }', "create API must submit its payload with POST");
   need("api", "/credit-memos/${encodeURIComponent(creditMemoId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}", "detail API must encode id and company scope");
   need("backend", 'const conditions: string[] = ["cm.operating_company_id = $1::uuid"]', "backend list must predicate credit memos by company");
+  need("backend", 'app.post("/api/v1/accounting/credit-memos"', "backend must mount the canonical credit-memo create route");
+  need("backend", "INSERT INTO accounting.credit_memos", "credit-memo create must persist to the canonical table");
   need("backend", "c.operating_company_id = cm.operating_company_id", "customer label join must be same-company");
   need("backend", "AND cm.operating_company_id = $2::uuid", "detail row must be explicitly company-scoped");
   need("backend", "AND i.operating_company_id = cma.operating_company_id", "invoice reverse join must be same-company");
@@ -60,13 +65,18 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["page", "getCreditMemo(companyId, selectedCreditMemoId!)"],
     ["page", 'dataTestId="credit-memos-filter-customer"'],
     ["page", 'createKind="customer"'],
+    ["page", "createCreditMemo(companyId"],
     ["page", "customer_id: createCustomerId as string"],
     ["page", '<EntityLink kind="customer" id={row.customer_id}'],
     ["page", 'kind="customer"\n                    id={creditMemo.customer_id}'],
     ["page", '<EntityLink kind="invoice" id={application.invoice_id}'],
     ["api", "operating_company_id: operatingCompanyId"],
+    ["api", '`/api/v1/accounting/credit-memos?operating_company_id=${encodeURIComponent(operatingCompanyId)}`'],
+    ["api", '{ method: "POST", body: payload }'],
     ["api", "/credit-memos/${encodeURIComponent(creditMemoId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
     ["backend", 'const conditions: string[] = ["cm.operating_company_id = $1::uuid"]'],
+    ["backend", 'app.post("/api/v1/accounting/credit-memos"'],
+    ["backend", "INSERT INTO accounting.credit_memos"],
     ["backend", "c.operating_company_id = cm.operating_company_id"],
     ["backend", "AND cm.operating_company_id = $2::uuid"],
     ["backend", "AND i.operating_company_id = cma.operating_company_id"],
