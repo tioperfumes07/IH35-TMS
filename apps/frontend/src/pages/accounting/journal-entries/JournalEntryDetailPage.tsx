@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsdCents as money } from "../../../lib/money";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";

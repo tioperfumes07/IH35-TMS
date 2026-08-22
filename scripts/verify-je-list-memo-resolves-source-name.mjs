@@ -72,6 +72,28 @@ function failures(sources) {
     out.push(`${PAGE}: expected 2 call sites (Memo column render + journalEntryListLabel) threading the resolved fields — found ${memoCallCount}`);
   }
 
+  // (5) bill_payment resolves through the bill it paid (no display id of its own) — the 229-row
+  // residual's largest remaining backend gap, closed by a second-hop join.
+  if (!/LEFT JOIN accounting\.bill_payments bpp\s*\n\s*ON src\.t = 'bill_payment'/.test(service)) {
+    out.push(`${SERVICE}: bill_payment source resolution join (accounting.bill_payments bpp) is missing`);
+  }
+  if (!/bpay\.display_id,\s*bpay\.bill_number/.test(service)) {
+    out.push(`${SERVICE}: reference_display_id COALESCE no longer includes bpay.display_id/bpay.bill_number (the bill_payment's underlying bill)`);
+  }
+
+  // (6) frontend covers the 3 void-reversal shapes discovered live (229-row residual) that the
+  // original 8-pattern list missed: expense, bill payment, and payment (customer_payment).
+  for (const needle of [
+    "Void reversal of bill payment",
+    "Void reversal of expense",
+    "Void reversal of payment",
+    "Void reversal of settlement",
+  ]) {
+    if (!page.includes(needle)) {
+      out.push(`${PAGE}: KNOWN_MEMO_ID_PATTERNS no longer covers "${needle}"`);
+    }
+  }
+
   return out;
 }
 
@@ -82,10 +104,13 @@ function read(rel) {
 function selftest() {
   const goodService = `
     const JE_SOURCE_TRANSACTION_TYPE_SQL = \`(SELECT ...)\`;
-    const JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL = \`(SELECT ...)\`;
+    const JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL = \`(SELECT
+      bpay.display_id, bpay.bill_number,
     SELECT
       \${JE_SOURCE_TRANSACTION_TYPE_SQL} AS source_transaction_type,
       \${JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL} AS source_transaction_display_id,
+    LEFT JOIN accounting.bill_payments bpp
+      ON src.t = 'bill_payment' AND bpp.id::text = src.sid
     LEFT JOIN mdata.units ftu
       ON ftu.id = ft.unit_id
   `;
@@ -99,6 +124,10 @@ export function humanMemo(
 }
 render: (entry) => humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id)
 const memo = entry.memo?.trim() ? humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id) : "";
+{ re: /Void reversal of bill payment .../gi, noun: "Bill payment" },
+{ re: /Void reversal of expense .../gi, noun: "Expense" },
+{ re: /Void reversal of payment .../gi, noun: "Payment" },
+{ re: /Void reversal of settlement .../gi, noun: "Settlement" },
   `;
 
   const cases = [
@@ -129,6 +158,31 @@ const memo = entry.memo?.trim() ? humanMemo(entry.memo, entry.source_transaction
         "render: (entry) => humanMemo(entry.memo)"
       ),
       wantMin: 1,
+    },
+    {
+      name: "bill_payment join removed -> error",
+      service: goodService.replace(
+        "LEFT JOIN accounting.bill_payments bpp\n      ON src.t = 'bill_payment' AND bpp.id::text = src.sid",
+        ""
+      ),
+      page: goodPage,
+      wantMin: 1,
+    },
+    {
+      name: "bill_payment display-id fallback dropped from COALESCE -> error",
+      service: goodService.replace("bpay.display_id, bpay.bill_number,\n", ""),
+      page: goodPage,
+      wantMin: 1,
+    },
+    {
+      name: "void-reversal expense/bill-payment/payment/settlement patterns removed -> error",
+      service: goodService,
+      page: goodPage
+        .replace('{ re: /Void reversal of bill payment .../gi, noun: "Bill payment" },\n', "")
+        .replace('{ re: /Void reversal of expense .../gi, noun: "Expense" },\n', "")
+        .replace('{ re: /Void reversal of payment .../gi, noun: "Payment" },\n', "")
+        .replace('{ re: /Void reversal of settlement .../gi, noun: "Settlement" },\n', ""),
+      wantMin: 4,
     },
   ];
   let failed = 0;
