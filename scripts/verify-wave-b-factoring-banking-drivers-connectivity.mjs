@@ -15,40 +15,43 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-wave-b-factoring-banking-drivers-connectivity";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
+const mountedRoute = (route, component) => new RegExp(
+  `path="${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,220}<${component}\\b`
+);
 
 const CHECKS = [
   // factoring
-  { name: "factoring submit route", file: MANIFEST, pattern: /path="\/factoring\/submit"/ },
-  { name: "factoring batches/new route", file: MANIFEST, pattern: /path="\/factoring\/batches\/new"/ },
-  { name: "factoring factors route", file: MANIFEST, pattern: /path="\/factoring\/factors"/ },
-  { name: "factoring reserves route", file: MANIFEST, pattern: /path="\/factoring\/reserves"/ },
-  { name: "faro import route", file: MANIFEST, pattern: /path="\/factoring\/faro-import"/ },
-  { name: "accounting factoring list route", file: MANIFEST, pattern: /path="\/accounting\/factoring"/ },
-  { name: "factor recon route", file: MANIFEST, pattern: /path="\/accounting\/factor-reconciliation"/ },
-  { name: "banking factoring entry route", file: MANIFEST, pattern: /path="\/banking\/factoring"/ },
-  { name: "submission queue drills", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /EntityLink/ },
-  { name: "batch wizard drills", file: "apps/frontend/src/pages/factoring/BatchWizard.tsx", pattern: /EntityLink/ },
-  { name: "faro import drills", file: "apps/frontend/src/pages/factoring/FaroImportPage.tsx", pattern: /EntityLink/ },
+  { name: "factoring submit route", file: MANIFEST, pattern: mountedRoute("/factoring/submit", "SubmissionQueue") },
+  { name: "factoring batches/new route", file: MANIFEST, pattern: mountedRoute("/factoring/batches/new", "BatchWizard") },
+  { name: "factoring factors route", file: MANIFEST, pattern: mountedRoute("/factoring/factors", "FactorAdmin") },
+  { name: "factoring reserves route", file: MANIFEST, pattern: mountedRoute("/factoring/reserves", "ReserveDashboard") },
+  { name: "faro import route", file: MANIFEST, pattern: mountedRoute("/factoring/faro-import", "FaroImportPage") },
+  { name: "accounting factoring list route", file: MANIFEST, pattern: mountedRoute("/accounting/factoring", "FactoringListPage") },
+  { name: "factor recon route", file: MANIFEST, pattern: mountedRoute("/accounting/factor-reconciliation", "FactorReconciliationPage") },
+  { name: "banking factoring entry route", file: MANIFEST, pattern: /path="\/banking\/factoring"[\s\S]{0,220}<BankingHomePage initialTab="factoring"/ },
+  { name: "submission queue invoice+customer drills", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{item\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{item\.customer_id\}/ },
+  { name: "batch wizard invoice+customer drills", file: "apps/frontend/src/pages/factoring/BatchWizard.tsx", pattern: /kind="invoice" id=\{invoice\.id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{invoice\.customer_id\}/ },
+  { name: "faro import invoice+customer drills", file: "apps/frontend/src/pages/factoring/FaroImportPage.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{row\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{row\.customer_id\}/ },
   // banking
-  { name: "banking reconciliation route", file: MANIFEST, pattern: /path="\/banking\/reconciliation"/ },
-  { name: "banking driver escrow route", file: MANIFEST, pattern: /path="\/banking\/driver-escrow"/ },
-  { name: "banking relay route", file: MANIFEST, pattern: /path="\/banking\/relay"/ },
-  { name: "banking reports route", file: MANIFEST, pattern: /path="\/banking\/reports"/ },
-  { name: "statement import route", file: MANIFEST, pattern: /path="\/banking\/statement-import"/ },
-  { name: "plaid connections route", file: MANIFEST, pattern: /path="\/banking\/plaid-connections"/ },
-  { name: "banking settings route", file: MANIFEST, pattern: /path="\/banking\/settings"/ },
-  { name: "bank recon workspace drills", file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", pattern: /EntityLink/ },
-  { name: "banking home drills", file: "apps/frontend/src/pages/banking/BankingHome.tsx", pattern: /EntityLink/ },
+  { name: "banking reconciliation route", file: MANIFEST, pattern: mountedRoute("/banking/reconciliation", "BankReconciliationPage") },
+  { name: "banking driver escrow route", file: MANIFEST, pattern: /path="\/banking\/driver-escrow"[\s\S]{0,220}<BankingHomePage initialTab="driver_escrow"/ },
+  { name: "banking relay route", file: MANIFEST, pattern: /path="\/banking\/relay"[\s\S]{0,220}<BankingHomePage initialTab="relay_card"/ },
+  { name: "banking reports route", file: MANIFEST, pattern: /path="\/banking\/reports"[\s\S]{0,220}<BankingHomePage initialTab="reports"/ },
+  { name: "statement import route", file: MANIFEST, pattern: /path="\/banking\/statement-import"[\s\S]{0,220}<BankingHomePage initialTab="statement_import"/ },
+  { name: "plaid connections route", file: MANIFEST, pattern: /path="\/banking\/plaid-connections"[\s\S]{0,220}<BankingHomePage initialTab="plaid_connections"/ },
+  { name: "banking settings route", file: MANIFEST, pattern: /path="\/banking\/settings"[\s\S]{0,220}<BankingHomePage initialTab="settings"/ },
+  { name: "bank recon workspace exact reverse drills", file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", pattern: /kind="load"[\s\S]{0,100}id=\{tx\.matched_load_id\}[\s\S]{0,2500}kind="journal_entry" id=\{tx\.matched_journal_entry_id\}/ },
+  { name: "banking home factoring advance drill", file: "apps/frontend/src/pages/banking/BankingHome.tsx", pattern: /kind="factoring_advance"[\s\S]{0,100}id=\{row\.id\}/ },
   // drivers
-  { name: "drivers home route", file: MANIFEST, pattern: /path="\/drivers"/ },
-  { name: "drivers cash advances route", file: MANIFEST, pattern: /path="\/drivers\/cash-advances"/ },
-  { name: "drivers permits route", file: MANIFEST, pattern: /path="\/drivers\/permits"/ },
-  { name: "pay rate templates route", file: MANIFEST, pattern: /path="\/drivers\/pay-rate-templates"/ },
-  { name: "drivers deductions route", file: MANIFEST, pattern: /path="\/drivers\/deductions"/ },
-  { name: "team splits route", file: MANIFEST, pattern: /path="\/drivers\/team-splits"/ },
-  { name: "drivers disputes route", file: MANIFEST, pattern: /path="\/drivers\/disputes"/ },
-  { name: "drivers leave route", file: MANIFEST, pattern: /path="\/drivers\/leave"/ },
-  { name: "settlement dispute list drills", file: "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx", pattern: /EntityLink/ },
+  { name: "drivers home route", file: MANIFEST, pattern: mountedRoute("/drivers", "DriversPage") },
+  { name: "drivers cash advances route", file: MANIFEST, pattern: /path="\/drivers\/cash-advances"[\s\S]{0,220}<DriversSubtabRoute subnav="cash_advances"/ },
+  { name: "drivers permits route", file: MANIFEST, pattern: /path="\/drivers\/permits"[\s\S]{0,220}<DriversSubtabRoute subnav="permits"/ },
+  { name: "pay rate templates route", file: MANIFEST, pattern: /path="\/drivers\/pay-rate-templates"[\s\S]{0,220}<DriversSubtabRoute subnav="pay_rate_templates"/ },
+  { name: "drivers deductions route", file: MANIFEST, pattern: /path="\/drivers\/deductions"[\s\S]{0,220}<DriversSubtabRoute subnav="deductions"/ },
+  { name: "team splits route", file: MANIFEST, pattern: /path="\/drivers\/team-splits"[\s\S]{0,220}<DriversSubtabRoute subnav="team_splits"/ },
+  { name: "drivers disputes route", file: MANIFEST, pattern: /path="\/drivers\/disputes"[\s\S]{0,220}<DriversSubtabRoute subnav="disputes"/ },
+  { name: "drivers leave route", file: MANIFEST, pattern: /path="\/drivers\/leave"[\s\S]{0,220}<DriversSubtabRoute subnav="leave"/ },
+  { name: "settlement dispute driver+settlement drills", file: "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx", pattern: /kind="driver"[\s\S]{0,100}id=\{row\.driver_id\}[\s\S]{0,500}kind="settlement"[\s\S]{0,100}id=\{row\.settlement_id\}/ },
 ];
 
 function checkAll(readFile) {
@@ -65,12 +68,25 @@ function checkAll(readFile) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const fail = checkAll(() => "POISON");
-  if (!fail.length) {
-    console.error(`${LABEL} --selftest FAIL`);
+  const sources = new Map([...new Set(CHECKS.map((check) => check.file))].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
+  const failures = [];
+  for (const check of CHECKS) {
+    const original = sources.get(check.file);
+    const planted = original.replace(check.pattern, "/* planted exact connectivity defect */");
+    if (planted === original) {
+      failures.push(`${check.name}: plant did not match live source`);
+      continue;
+    }
+    const found = checkAll((file) => file === check.file ? planted : sources.get(file));
+    if (!found.some((failure) => failure.startsWith(`${check.name}:`))) {
+      failures.push(`${check.name}: independent plant escaped`);
+    }
+  }
+  if (failures.length) {
+    console.error(`${LABEL} --selftest FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (poison trips ${fail.length})`);
+  console.log(`${LABEL} --selftest PASS (${CHECKS.length}/${CHECKS.length} exact plants rejected)`);
   process.exit(0);
 }
 
