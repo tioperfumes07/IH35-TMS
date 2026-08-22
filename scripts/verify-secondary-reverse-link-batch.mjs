@@ -5,7 +5,6 @@
  * @matrix-built {"modules":["home"],"cols":["reverse_link"],"leafRe":"^hub\\.driver_reporting$","task":"VERTICAL-REVERSE-LINK-secondary-home","vertical":"column-wave"}
  * @matrix-built {"modules":["compliance"],"cols":["reverse_link"],"leafRe":"^(property_tax\\.(list|detail)|form2290|fleet\\.hos_board|tab\\.hos_tracker)$","task":"VERTICAL-REVERSE-LINK-secondary-compliance","vertical":"column-wave"}
  * @matrix-built {"modules":["finance"],"cols":["reverse_link"],"leafRe":"^nav\\.ar_ap_aging$","task":"VERTICAL-REVERSE-LINK-secondary-finance","vertical":"column-wave"}
- * @matrix-built {"modules":["docs"],"cols":["reverse_link"],"leafRe":"^home$","task":"VERTICAL-REVERSE-LINK-secondary-docs","vertical":"column-wave"}
  * @matrix-built {"modules":["program"],"cols":["reverse_link"],"leafRe":"^(legacy\\.board|program\\.parity\\.legacy_audit_scoreboard_page)$","task":"VERTICAL-REVERSE-LINK-secondary-program","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-secondary-reverse-link-batch.mjs --selftest
