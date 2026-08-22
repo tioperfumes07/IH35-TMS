@@ -338,7 +338,24 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         `,
         [body.data.customer_id, query.data.operating_company_id]
       );
-      if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" };
+      let customerExists = Boolean(customerRes.rows[0]);
+      if (!customerExists) {
+        // ACCT-F5784 — mdata.customers' customers_select RLS policy excludes deactivated_at IS NOT
+        // NULL rows for a non-bypass reader, so a real, same-company customer whose record was later
+        // archived became invisible here and every open invoice they were ever billed on could no
+        // longer receive a payment (customer_not_found on a perfectly valid, unpaid invoice). Same
+        // defect class already fixed for invoices list/count/detail (ACCT-F5611) and for vendors
+        // (ACCT-F5767/5768) — reuse the SAME existing SECURITY DEFINER resolver ACCT-F5611 shipped
+        // (mdata.resolve_customer_label_same_company) rather than adding a new function or touching
+        // customers_select. Active-customer creation/selection is completely unaffected: this only
+        // runs as a fallback when the primary RLS-scoped read already found nothing.
+        const fallback = await client.query<{ label: string | null }>(
+          `SELECT mdata.resolve_customer_label_same_company($1::uuid, $2::uuid) AS label`,
+          [body.data.customer_id, query.data.operating_company_id]
+        );
+        customerExists = Boolean(fallback.rows[0]?.label);
+      }
+      if (!customerExists) return { code: 404 as const, error: "customer_not_found" };
 
       // Deposit-to must be a catalogs.accounts UUID for this entity (GL cash/bank/UF). Never a
       // free-text bank slug — posting treats the value as catalogs.accounts.id.
