@@ -87,6 +87,18 @@ if (expensesVendorMatches.length < 2) {
   );
 }
 
+const vendorCreditsPath = "apps/backend/src/accounting/vendor-credits.routes.ts";
+const vendorCreditsSrc = readFileSync(vendorCreditsPath, "utf8");
+const vendorCreditsResolverMatches = [
+  ...vendorCreditsSrc.matchAll(/COALESCE\(\s*v\.vendor_name,\s*mdata\.resolve_vendor_label_same_company\(/g),
+];
+if (vendorCreditsResolverMatches.length < 2) {
+  failures.push(
+    `${vendorCreditsPath}: expected 2 vendor_name selects (list + detail) COALESCEd with ` +
+      `mdata.resolve_vendor_label_same_company — found ${vendorCreditsResolverMatches.length}`
+  );
+}
+
 if (failures.length > 0) {
   console.error("verify-deactivated-counterparty-resolver-coverage: FAIL");
   for (const f of failures) console.error(`  - ${f}`);
@@ -95,7 +107,7 @@ if (failures.length > 0) {
 
 console.log(
   "verify-deactivated-counterparty-resolver-coverage: OK — transaction-register (fuel/invoice/bill arms), " +
-    "invoices.routes.ts search filter, ap-aging.service.ts (vendor_name + vendor_id), and " +
-    "expenses.routes.ts (list + detail vendor_name) all resolve a deactivated counterparty via the " +
-    "canonical same-company resolvers"
+    "invoices.routes.ts search filter, ap-aging.service.ts (vendor_name + vendor_id), " +
+    "expenses.routes.ts (list + detail vendor_name), and vendor-credits.routes.ts (list + detail vendor_name) " +
+    "all resolve a deactivated counterparty via the canonical same-company resolvers"
 );

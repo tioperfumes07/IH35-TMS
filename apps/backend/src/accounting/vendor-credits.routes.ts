@@ -76,7 +76,17 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         `SELECT
            vc.id,
            vc.vendor_id,
-           v.vendor_name,
+           COALESCE(
+             v.vendor_name,
+             mdata.resolve_vendor_label_same_company(
+               CASE
+                 WHEN vc.vendor_id ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+                 THEN vc.vendor_id::uuid
+                 ELSE NULL
+               END,
+               vc.operating_company_id
+             )
+           ) AS vendor_name,
            vc.display_id,
            vc.status,
            vc.issue_date,
@@ -116,7 +126,17 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         `SELECT
            vc.id,
            vc.vendor_id,
-           v.vendor_name,
+           COALESCE(
+             v.vendor_name,
+             mdata.resolve_vendor_label_same_company(
+               CASE
+                 WHEN vc.vendor_id ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+                 THEN vc.vendor_id::uuid
+                 ELSE NULL
+               END,
+               vc.operating_company_id
+             )
+           ) AS vendor_name,
            vc.display_id,
            vc.status,
            vc.issue_date,

@@ -6,11 +6,11 @@
 
 `git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
-**NOW:**
-1. Register UUID ref **FIXED (PR #13772)** on main — not live until batch deploy. Next: JE memo/source-link human labels (do not weaken UUID tombstones).
-2. JE source-link human labels on live SHA after batch deploy (ACCT-F5708 on main, not `fe62c92`).
-3. Expenses list: **Vendor — not visible** — Neon USMCA 7 expenses have `vendor_uuid` NULL (honest empty payee). Remaining tombstones = UUID-shaped vendor_name or grouped UI, not a missing join. Confirm live after deploy; do not Match/Categorize.
-4. Worker OFF. Cron stagger still allowed as code-only if it does not leave Accounting.
+**NOW (fastest Accounting Live path — not new GL math):**
+1. Human memos / source labels on **existing posters** (JE list tombstones). Do **not** write new GL math, do **not** flip posting flags ON, do **not** backfill historical QBO docs.
+2. Open **#13780** (register drill vs human Ref) — locked-guards/pass-7 red is yours; do not leave it.
+3. Register UUID ref **FIXED (PR #13772)** — not live until batch deploy.
+4. Worker OFF.
 
 ## PASTE BOX
 
@@ -22,8 +22,8 @@ LAW: lockstep module=accounting until leftover dry · FAST-MERGE 4MIN
 FORBIDDEN: categorize/match · settlements/factoring this tick · trigger_deploy · worker ON
 
 NOW:
-  1) JE/bill human source labels (register UUID = #13772 on main)
-  2) expense vendor tombstones — 7 USMCA rows vendor_uuid NULL (honest)
+  1) JE human memos on existing posters (NOT new GL, NOT flag ON, NOT backfill)
+  2) #13780 register drill red — fix locked-guards
 THEN: wait Cursor “MODULE accounting leftover dry” before banking.
 
 ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=ACCOUNTING register+JE+vendor join | GO
