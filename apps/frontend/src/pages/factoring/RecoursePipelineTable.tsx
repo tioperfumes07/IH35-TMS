@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { visibleDocumentLabel } from "../../lib/entity-label";
 import { useMemo } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -73,7 +73,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
             <EntityLink
               kind="factoring_advance"
               id={row.factoring_advance_id}
-              label={invoice !== "" ? invoice : "No invoice #"}
+              label={visibleDocumentLabel(invoice || null, row.factoring_advance_id, "No invoice #")}
             />
           );
         }
@@ -87,10 +87,10 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
             <EntityLink
               kind="customer"
               id={row.customer_id}
-              label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+              label={visibleDocumentLabel(row.customer_name, row.customer_id, "No customer name")}
             />
           ) : (
-            entityLabel(row.customer_name, null, "Customer")
+            visibleDocumentLabel(row.customer_name, null, "No customer name")
           ),
       },
       {

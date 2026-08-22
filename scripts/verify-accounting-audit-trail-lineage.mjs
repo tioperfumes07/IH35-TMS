@@ -52,6 +52,12 @@ if (!/src_fueltx\.display_label/.test(serviceSource)) {
 if (/entityLabel\(\s*null\s*,\s*row\.source_transaction_id/.test(pageSource)) {
   fail("AccountingAuditTrailPage must not entityLabel(null, source_transaction_id) — use display_id");
 }
+if (/entityLabel\(\s*row\.source_transaction_display_id/.test(pageSource)) {
+  fail("AccountingAuditTrailPage Source must use visibleDocumentLabel — UUID display_id was tombstoning live rows as Expense — not visible");
+}
+if (!pageSource.includes("visibleDocumentLabel(")) {
+  fail("AccountingAuditTrailPage must use visibleDocumentLabel for Source / lineage document numbers");
+}
 if (pageSource.includes('"Source transaction"')) {
   fail("AccountingAuditTrailPage must not use generic Source transaction noun — type-specific + SQL display_id");
 }

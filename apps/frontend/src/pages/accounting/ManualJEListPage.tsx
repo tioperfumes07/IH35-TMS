@@ -17,7 +17,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { visibleDocumentLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
@@ -63,7 +63,8 @@ const KNOWN_MEMO_ID_PATTERNS: Array<{ re: RegExp; noun: string }> = [
 // memo text matches the JE's own resolved source id, pass the REAL name to entityLabel() instead of
 // the previously-hardcoded null, so it can actually resolve instead of always tombstoning. A UUID
 // that doesn't match (or when no resolution exists — bill_payment/driver_advance sources, or no
-// typed source at all) falls through to the original, unchanged behavior.
+  // typed source at all) falls through to visibleDocumentLabel(noun) — never "— not visible"
+  // on a JE the operator is already looking at (ACCT-F5743).
 export function humanMemo(
   memo: string | null | undefined,
   resolvedSourceId?: string | null,
@@ -81,12 +82,12 @@ export function humanMemo(
     result = result.replace(re, (whole) => {
       const uuid = whole.match(UUID_RE)?.[0] ?? "";
       const name = resolvedSourceId && uuid.toLowerCase() === resolvedSourceId.toLowerCase() ? resolvedDisplayId : null;
-      return entityLabel(name, uuid, noun);
+      return visibleDocumentLabel(name, uuid, noun);
     });
   }
   return result.replace(UUID_RE, (uuid) => {
     const name = resolvedSourceId && uuid.toLowerCase() === resolvedSourceId.toLowerCase() ? resolvedDisplayId : null;
-    return entityLabel(name, uuid, "Record");
+    return visibleDocumentLabel(name, uuid, "Record");
   });
 }
 

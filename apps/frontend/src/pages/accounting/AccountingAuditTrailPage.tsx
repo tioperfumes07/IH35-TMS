@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { visibleDocumentLabel } from "../../lib/entity-label";
 import {
   getAccountingSourceLineage,
   listAccountingAuditTrail,
@@ -157,7 +157,7 @@ function PostingEntityLink({
   if (!kind || !id) {
     return <>{label ?? id ?? ""}</>;
   }
-  return <EntityLink kind={kind} id={id} label={label ?? entityLabel(null, id, "Record")} />;
+  return <EntityLink kind={kind} id={id} label={label ?? visibleDocumentLabel(null, id, "Record")} />;
 }
 
 export function AccountingAuditTrailPage() {
@@ -239,7 +239,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.source_entity_kind ?? row.source_transaction_type}
                   id={row.source_transaction_id}
-                  label={entityLabel(
+                  label={visibleDocumentLabel(
                     row.source_transaction_display_id,
                     row.source_transaction_id,
                     sourceAuditNoun(row.source_transaction_type),
@@ -300,7 +300,7 @@ export function AccountingAuditTrailPage() {
   const lineageColumns = useMemo<ParityColumn<AccountingSourceLineageRow>[]>(
     () => [
       { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => fmtDate(row.occurred_at) },
-      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? entityLabel(row.memo, row.journal_entry_id, "Journal entry") : undefined} /> },
+      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? visibleDocumentLabel(row.memo, row.journal_entry_id, "Journal entry") : undefined} /> },
       {
         key: "account_number",
         label: "Account",
@@ -325,7 +325,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.linked_object_type}
                   id={row.linked_object_id}
-                  label={entityLabel(row.linked_object_display_id, row.linked_object_id, "Linked object")}
+                  label={visibleDocumentLabel(row.linked_object_display_id, row.linked_object_id, "Linked object")}
                 />
               </>
             ) : null}
@@ -431,7 +431,7 @@ export function AccountingAuditTrailPage() {
             <PostingEntityLink
               type={lineageKey.source_transaction_type}
               id={lineageKey.source_transaction_id}
-              label={entityLabel(
+              label={visibleDocumentLabel(
                 lineageRows?.[0]?.source_transaction_display_id,
                 lineageKey.source_transaction_id,
                 sourceAuditNoun(lineageKey.source_transaction_type),
