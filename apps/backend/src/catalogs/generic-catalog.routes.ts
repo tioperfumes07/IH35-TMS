@@ -178,6 +178,10 @@ export const dispatchLumperProvidersCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.lumper_providers has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 /**
@@ -213,6 +217,10 @@ export const accidentTypesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.accident_types has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
@@ -235,6 +243,10 @@ export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.workplace_incident_types has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const leaveTypesCatalogConfig: GenericCatalogConfig = {
@@ -257,6 +269,10 @@ export const leaveTypesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.leave_types has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const cashAdvanceTypesCatalogConfig: GenericCatalogConfig = {
@@ -279,6 +295,11 @@ export const cashAdvanceTypesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CASH-ADVANCE-TYPES-500: catalogs.cash_advance_types has a real `updated_at` (hasUpdatedAt
+  // stays true so the Lists card SELECT keeps working) but NO created_by_user_id/updated_by_user_id
+  // columns at all — writing them 500'd every Create/Edit with a raw Postgres 42703 surfaced
+  // straight to the operator ("column \"updated_by_user_id\" of relation ... does not exist").
+  hasAuditUserColumns: false,
 };
 
 export const pmIntervalsCatalogConfig: GenericCatalogConfig = {
@@ -301,6 +322,10 @@ export const pmIntervalsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.pm_intervals has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const repairLocationsCatalogConfig: GenericCatalogConfig = {
@@ -323,6 +348,10 @@ export const repairLocationsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.repair_locations has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const workOrderTemplatesCatalogConfig: GenericCatalogConfig = {
@@ -345,6 +374,10 @@ export const workOrderTemplatesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.work_order_templates has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const airBagCatalogCatalogConfig: GenericCatalogConfig = {
@@ -367,6 +400,10 @@ export const airBagCatalogCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.air_bag_catalog has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const batteryCatalogCatalogConfig: GenericCatalogConfig = {
@@ -389,6 +426,10 @@ export const batteryCatalogCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.battery_catalog has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const tireCatalogCatalogConfig: GenericCatalogConfig = {
@@ -411,6 +452,10 @@ export const tireCatalogCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.tire_catalog has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const trailerPartsCatalogConfig: GenericCatalogConfig = {
@@ -433,6 +478,10 @@ export const trailerPartsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.trailer_parts has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const truckPartsCatalogConfig: GenericCatalogConfig = {
@@ -455,6 +504,10 @@ export const truckPartsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.truck_parts has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const defStationsCatalogConfig: GenericCatalogConfig = {
@@ -477,6 +530,10 @@ export const defStationsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.def_stations has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const fuelStationsCatalogConfig: GenericCatalogConfig = {
@@ -499,6 +556,10 @@ export const fuelStationsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.fuel_stations has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const relayAccountsCatalogConfig: GenericCatalogConfig = {
@@ -521,6 +582,10 @@ export const relayAccountsCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.relay_accounts has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const tollProvidersCatalogConfig: GenericCatalogConfig = {
@@ -543,6 +608,10 @@ export const tollProvidersCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.toll_providers has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const loadTrailerEquipmentCatalogConfig: GenericCatalogConfig = {
@@ -565,6 +634,10 @@ export const loadTrailerEquipmentCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.load_trailer_equipment has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const mxCustomsBrokersCatalogConfig: GenericCatalogConfig = {
@@ -587,6 +660,10 @@ export const mxCustomsBrokersCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.mx_customs_brokers has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 export const vendorTypesCatalogConfig: GenericCatalogConfig = {
@@ -757,6 +834,10 @@ export const detailTypesCatalogConfig: GenericCatalogConfig = {
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
   hasDeactivatedAt: false,
+  // LST-CATALOG-AUDIT-COLUMNS-500: catalogs.detail_types has updated_at but no created_by_user_id/
+  // updated_by_user_id columns -- writing them unconditionally 500'd every Create/Edit with a
+  // raw Postgres 42703 surfaced straight to the operator. See GenericCatalogConfig.hasAuditUserColumns.
+  hasAuditUserColumns: false,
 };
 
 /**

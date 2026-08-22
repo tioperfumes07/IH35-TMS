@@ -41,11 +41,20 @@ export type GenericCatalogConfig = {
   /** Whether the physical table carries a deactivated_at column for soft-delete audit. */
   hasDeactivatedAt: boolean;
   /**
-   * Whether the physical table carries `updated_at` (and typically `updated_by_user_id`).
-   * Default true. Global taxonomies like catalogs.account_types / audit_event_types only have
-   * created_at — selecting t.updated_at 500s the Lists card (LST Account Types load fail).
+   * Whether the physical table carries `updated_at`. Default true. Global taxonomies like
+   * catalogs.account_types / audit_event_types only have created_at — selecting t.updated_at
+   * 500s the Lists card (LST Account Types load fail).
    */
   hasUpdatedAt?: boolean;
+  /**
+   * Whether the physical table carries `created_by_user_id` / `updated_by_user_id`. Defaults to
+   * `hasUpdatedAt`'s value (the common shape) — but the two CAN diverge: catalogs.cash_advance_types
+   * has a real `updated_at` column with no accompanying `_by_user_id` audit columns at all. Writing
+   * them unconditionally there 500s every Create/Edit with a raw `column "updated_by_user_id" of
+   * relation "cash_advance_types" does not exist` (42703) surfaced straight to the operator
+   * (LST-CASH-ADVANCE-TYPES-500). Set explicitly to false for any catalog missing these columns.
+   */
+  hasAuditUserColumns?: boolean;
   codeRegex?: RegExp;
   readOnly?: boolean;
   /**
@@ -167,6 +176,7 @@ export function createCatalogRoutes(
     .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
   const hasUpdatedAt = config.hasUpdatedAt !== false;
+  const hasAuditUserColumns = config.hasAuditUserColumns ?? hasUpdatedAt;
   const selectColumns = [
     "t.id",
     ...config.allowedColumns.map((column) => {
@@ -282,7 +292,7 @@ export function createCatalogRoutes(
           const insertValues: unknown[] = [];
           const placeholders: string[] = [];
           let paramIndex = 1;
-          if (hasUpdatedAt) {
+          if (hasAuditUserColumns) {
             insertColumns.push("created_by_user_id", "updated_by_user_id");
             insertValues.push(authUser.uuid, authUser.uuid);
             placeholders.push(`$${paramIndex++}`, `$${paramIndex++}`);
@@ -371,6 +381,8 @@ export function createCatalogRoutes(
           }
           if (hasUpdatedAt) {
             add("updated_at", new Date().toISOString());
+          }
+          if (hasAuditUserColumns) {
             add("updated_by_user_id", authUser.uuid);
           }
           values.push(parsedParams.data.id);
@@ -414,25 +426,21 @@ export function createCatalogRoutes(
         if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
 
         const result = await withCurrentUser(authUser.uuid, async (client) => {
+          // Build the SET clause from independent flags — hasUpdatedAt and hasAuditUserColumns can
+          // diverge (see GenericCatalogConfig.hasAuditUserColumns), so neither is safe to bundle
+          // into a single all-or-nothing ternary branch.
+          const softDeleteSetParts = [`${softCol} = false`];
+          if (config.hasDeactivatedAt) softDeleteSetParts.push("deactivated_at = now()");
+          if (hasUpdatedAt) softDeleteSetParts.push("updated_at = now()");
+          if (hasAuditUserColumns) softDeleteSetParts.push("updated_by_user_id = $2");
           const res = await client.query(
-            hasUpdatedAt
-              ? `
-              UPDATE catalogs.${config.tableName}
-              SET ${softCol} = false,
-                  ${config.hasDeactivatedAt ? "deactivated_at = now()," : ""}
-                  updated_at = now(),
-                  updated_by_user_id = $2
-              WHERE id = $1
-              RETURNING id, code
             `
-              : `
               UPDATE catalogs.${config.tableName}
-              SET ${softCol} = false
-                  ${config.hasDeactivatedAt ? ", deactivated_at = now()" : ""}
+              SET ${softDeleteSetParts.join(", ")}
               WHERE id = $1
               RETURNING id, code
             `,
-            hasUpdatedAt ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
+            hasAuditUserColumns ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
           );
           if (res.rows.length === 0) return null;
           await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_deactivated`, {
@@ -462,25 +470,19 @@ export function createCatalogRoutes(
       if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
 
       const restored = await withCurrentUser(authUser.uuid, async (client) => {
+        // Same independent-flags SET-clause build as the soft-delete route above.
+        const restoreSetParts = [`${softCol} = true`];
+        if (config.hasDeactivatedAt) restoreSetParts.push("deactivated_at = NULL");
+        if (hasUpdatedAt) restoreSetParts.push("updated_at = now()");
+        if (hasAuditUserColumns) restoreSetParts.push("updated_by_user_id = $2");
         const res = await client.query(
-          hasUpdatedAt
-            ? `
-            UPDATE catalogs.${config.tableName}
-            SET ${softCol} = true,
-                ${config.hasDeactivatedAt ? "deactivated_at = NULL," : ""}
-                updated_at = now(),
-                updated_by_user_id = $2
-            WHERE id = $1
-            RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
           `
-            : `
             UPDATE catalogs.${config.tableName}
-            SET ${softCol} = true
-                ${config.hasDeactivatedAt ? ", deactivated_at = NULL" : ""}
+            SET ${restoreSetParts.join(", ")}
             WHERE id = $1
             RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
           `,
-          hasUpdatedAt ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
+          hasAuditUserColumns ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
         );
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
