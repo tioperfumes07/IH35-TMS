@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T20:10:11-05:00",
-    "sourceSha": "36581d2cb",
-    "deployedSha": "fe62c92",
+    "generatedAt": "2026-08-21T21:04:02-05:00",
+    "sourceSha": "145211f0f",
+    "deployedSha": "0cec933",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2072,
+    "ledgerRows": 2076,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 status update, accounting sweep row 50032, module near-exhausted",
+      "number": 13829,
+      "title": "FINDING: accounting payment_methods_catalog/new_account+class_drawer/loan_application picker_law real PASS, closes the sweep",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:11 PM CT",
-      "url": "",
-      "sha": "e0ffd80b3",
-      "committedAtIso": "2026-08-21T20:11:16-05:00"
-    },
-    {
-      "number": 13804,
-      "title": "FINDING: ACCT-F5722 — Schedule-row reverse detail class",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13804",
-      "sha": "d5a3d0acb",
-      "committedAtIso": "2026-08-21T20:10:17-05:00"
-    },
-    {
-      "number": 13803,
-      "title": "FINDING: accounting bills.detail/expenses.detail/audit_trail/vendor_credits/reallocate/schedule reverse_link + bills.create.* picker_law real PASS",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13803",
-      "sha": "36581d2cb",
-      "committedAtIso": "2026-08-21T20:10:11-05:00"
-    },
-    {
-      "number": 13802,
-      "title": "FINDING: URGENT-6-CHROME-SWEEP-COMPLETE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13802",
-      "sha": "f822defa4",
-      "committedAtIso": "2026-08-21T20:09:08-05:00"
-    },
-    {
-      "number": 13801,
-      "title": "FINDING: ACCT-F5722",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13801",
-      "sha": "2898284f8",
-      "committedAtIso": "2026-08-21T20:06:18-05:00"
+      "mergedAtCt": "08/21/2026, 09:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13829",
+      "sha": "145211f0f",
+      "committedAtIso": "2026-08-21T21:04:02-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: OUTBOX-CC-2 status update, accounting reverse_link sweep continuing",
+      "title": "FINDING: OUTBOX-CC-2 status update, accounting create-forms sweep row 50035",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:04 PM CT",
+      "mergedAtCt": "08/21/2026, 08:58 PM CT",
       "url": "",
-      "sha": "dfb7374fa",
-      "committedAtIso": "2026-08-21T20:04:10-05:00"
+      "sha": "7bf9c8e3c",
+      "committedAtIso": "2026-08-21T20:58:44-05:00"
     },
     {
-      "number": 13800,
-      "title": "FINDING: ACCT-F5721 — Fiscal-year close reverse detail surface",
+      "number": 13828,
+      "title": "FINDING: accounting expenses/invoices/payments/JE create picker_law + je.list reverse_link real PASS",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13800",
-      "sha": "2a6de540b",
-      "committedAtIso": "2026-08-21T20:04:05-05:00"
+      "mergedAtCt": "08/21/2026, 08:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13828",
+      "sha": "3fe264646",
+      "committedAtIso": "2026-08-21T20:58:11-05:00"
     },
     {
-      "number": 13799,
-      "title": "FINDING: accounting bills/expenses/invoices/payments.receive list reverse_link real PASS + bill_payments.list honest-zero",
+      "number": 13823,
+      "title": "ChatGpt-Codex-1- fix(accounting): ACCT-F5727 driver reimbursement reverse",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13799",
-      "sha": "0b6722633",
-      "committedAtIso": "2026-08-21T20:03:16-05:00"
+      "mergedAtCt": "08/21/2026, 08:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13823",
+      "sha": "aed61cd60",
+      "committedAtIso": "2026-08-21T20:57:47-05:00"
     },
     {
-      "number": 13798,
-      "title": "FINDING: DISPATCH-PLANNER-LEAVE-REQUESTS-BOARD-CLOSE LANE: NON-FINANCIAL",
+      "number": 13827,
+      "title": "FINDING: REST-OF-URGENT-DRIVERS-AND-LISTS-CATALOG-FIX-SUMMARY LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13798",
-      "sha": "920d5b748",
-      "committedAtIso": "2026-08-21T20:01:31-05:00"
+      "mergedAtCt": "08/21/2026, 08:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13827",
+      "sha": "a21a5e85a",
+      "committedAtIso": "2026-08-21T20:56:54-05:00"
     },
     {
-      "number": 13797,
-      "title": "FINDING: DISPATCH-PLANNER-LEAVE-REQUESTS-LABEL-FIXED LANE: NON-FINANCIAL",
+      "number": 13825,
+      "title": "FINDING: CC2-TICK-13822",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13797",
-      "sha": "72f3e9005",
-      "committedAtIso": "2026-08-21T20:00:09-05:00"
+      "mergedAtCt": "08/21/2026, 08:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13825",
+      "sha": "1d7006561",
+      "committedAtIso": "2026-08-21T20:56:26-05:00"
+    },
+    {
+      "number": 13824,
+      "title": "FINDING: LST-CATALOG-AUDIT-COLUMNS-500 LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13824",
+      "sha": "13d680bc9",
+      "committedAtIso": "2026-08-21T20:55:22-05:00"
+    },
+    {
+      "number": 13822,
+      "title": "FINDING: ACCT-F5727",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13822",
+      "sha": "702175a2e",
+      "committedAtIso": "2026-08-21T20:54:49-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: OUTBOX-CC-2 ACK 20:43 CT not-leftover-dry, proceeding to sweep remaining leaves",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:50 PM CT",
+      "url": "",
+      "sha": "5f5160057",
+      "committedAtIso": "2026-08-21T20:50:06-05:00"
+    },
+    {
+      "number": 13821,
+      "title": "ChatGpt-Codex-1- fix(accounting): ACCT-F5726 mount reverse readers",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 08:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13821",
+      "sha": "2d5b06d4c",
+      "committedAtIso": "2026-08-21T20:48:12-05:00"
     }
   ]
 }
