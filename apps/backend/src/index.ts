@@ -369,6 +369,9 @@ import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes
 import { registerDriverOperationsDepthRoutes } from "./master-data/drivers/operations-depth/routes.js";
 import { registerCustomerFreeTimeDetentionRoutes } from "./master-data/customers/free-time-detention.routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
+import { registerRecurringTemplateDetailRoutes } from "./accounting/recurring-template-detail.routes.js";
+import { registerPeriodCloseDetailRoutes } from "./accounting/period-close-detail.routes.js";
+import { registerScheduleRowDetailRoutes } from "./accounting/schedule-row-detail.routes.js";
 import { registerCashFlowRoutes } from "./accounting/cash-flow.routes.js";
 import { registerCashForecastRoutes } from "./accounting/cash-forecast.routes.js";
 import { registerFinanceHubRoutes } from "./accounting/finance-hub.routes.js";
@@ -1140,6 +1143,11 @@ async function main() {
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
   await registerAccountingRoutes(app);
+  // ACCT-F5726 — exact reverse readers are standalone route files, not part of accounting/index.ts.
+  // Without explicit registration their FE detail routes mounted but every API call returned 404.
+  await registerRecurringTemplateDetailRoutes(app);
+  await registerPeriodCloseDetailRoutes(app);
+  await registerScheduleRowDetailRoutes(app);
   // 0441-mod10: explicit mount — accounting autoload alone left these as silent orphans in route audits.
   await registerCashFlowRoutes(app);
   await registerCashForecastRoutes(app);
