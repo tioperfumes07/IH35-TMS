@@ -157,6 +157,7 @@ const CHECKS = [
   { name: "Recurring template detail route mounted", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/recurring-templates\/:id"[\s\S]*?<AccountingRecurringTemplateDetailPage/ },
   { name: "Recurring template backend route mounted", file: "apps/backend/src/index.ts", pattern: /await registerRecurringTemplateDetailRoutes\(app\)/ },
   { name: "Recurring template detail uses scoped exact reader", file: RECURRING_DETAIL, pattern: /getAccountingRecurringTemplate\(id, companyId\)/ },
+  { name: "Recurring template detail reverse-drills to recurring bills", file: RECURRING_DETAIL, pattern: /<Link[\s\S]*?to="\/accounting\/bills\/recurring"[\s\S]*?data-testid="recurring-template-reverse-drill"[\s\S]*?>[\s\S]*?Back to recurring bills/ },
   { name: "Recurring template backend explicitly scopes company and id", file: RECURRING_ROUTE, pattern: /WHERE rt\.operating_company_id = \$1::uuid AND rt\.id = \$2::uuid/ },
   { name: "Recurring template backend verifies membership", file: RECURRING_ROUTE, pattern: /assertCompanyMembership\(user\.uuid, opco\)/ },
   { name: "Recurring template is read-only", file: RECURRING_ROUTE, pattern: /app\.get\("\/api\/v1\/accounting\/recurring-templates\/:id"/ },
