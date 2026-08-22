@@ -419,9 +419,19 @@ export async function listAccountingSourceLineage(
           AND d.operating_company_id = jp.operating_company_id
         LIMIT 1
       ) link_deduction ON true
-      WHERE jp.operating_company_id = $1::uuid
-        AND jp.source_transaction_type = $2::text
-        AND jp.source_transaction_id = $3::text
+      WHERE (
+        (
+          jp.operating_company_id = $1::uuid
+          AND jp.source_transaction_type = $2::text
+          AND jp.source_transaction_id = $3::text
+        )
+        OR (
+          $2::text IN ('payment', 'customer_payment')
+          AND jp.source_transaction_type IN ('payment', 'customer_payment')
+          AND jp.source_transaction_id = $3::text
+          AND jp.operating_company_id = $1::uuid
+        )
+      )
       ORDER BY je.created_at DESC, jp.id DESC
       LIMIT $4::int
     `,

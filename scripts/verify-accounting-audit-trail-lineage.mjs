@@ -25,6 +25,9 @@ if (!routeSource.includes("/api/v1/accounting/audit-trail/source-lineage")) {
 if (!/jp\.source_transaction_type = \$2::text/.test(serviceSource)) {
   fail("lineage query must filter by source_transaction_type");
 }
+if (!serviceSource.includes("$2::text IN ('payment', 'customer_payment')")) {
+  fail("lineage query must alias UI type payment to stored customer_payment (PMT 0-row)");
+}
 if (!/jp\.source_transaction_id = \$3::text/.test(serviceSource)) {
   fail("lineage query must filter by source_transaction_id");
 }
@@ -74,6 +77,14 @@ if (!/<SelectCombobox[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageS
 }
 if (/<select[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
   fail("audit trail account filter must not regress to a native account-ID select");
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = serviceSource.replace("$2::text IN ('payment', 'customer_payment')", "REMOVED_PAYMENT_ALIAS");
+  if (planted.includes("$2::text IN ('payment', 'customer_payment')")) {
+    fail("--selftest could not plant missing payment alias");
+  }
+  console.log("verify:accounting-audit-trail-lineage --selftest plant would FAIL — OK");
 }
 
 console.log("verify:accounting-audit-trail-lineage — OK");
