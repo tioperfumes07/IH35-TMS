@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^(home|profiles\\.(list|create|detail|documents)|pre_settlements|cash_advances|permits|deductions|team_splits|disputes)$","task":"LINK-F5168-DRIVERS-MODULE-CORE-WIRING"} */
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^drivers\\.modal\\.(add_training|create_driver|send_message|suspend_confirm|terminate_confirm|w8ben|driver_import|settlement_dispute)$","task":"LINK-F5168-DRIVERS-MODALS-WIRING"} */
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.modal.add_training","drivers.modal.create_driver","drivers.modal.send_message","drivers.modal.suspend_confirm","drivers.modal.terminate_confirm","drivers.modal.w8ben","drivers.modal.driver_import","drivers.modal.settlement_dispute"],"task":"DRV-F5923-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^(drivers\\.panel\\.(pending_settlement_deductions|driver_dqf)|drivers\\.wizard\\.onboarding_wizard_page|drivers\\.parity\\.(create_driver|driver_picker_with_create))$","task":"LINK-F5168-DRIVERS-PANELS-WIZARD-WIRING"} */
 /**
  * OWNER-EXECUTION-PLAN vertical driver-column sweep (2026-08-14): 24 genuine drivers-module leaves —
@@ -17,6 +18,20 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-drivers-module-driver-wiring";
+const REQUIRED = "docs/specs/scoreboard/modules/drivers.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-drivers-module-driver-wiring.mjs";
+const EXACT_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.modal.add_training","drivers.modal.create_driver","drivers.modal.send_message","drivers.modal.suspend_confirm","drivers.modal.terminate_confirm","drivers.modal.w8ben","drivers.modal.driver_import","drivers.modal.settlement_dispute"],"task":"DRV-F5923-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const MODAL_ROUTES = new Map([
+  ["drivers.modal.add_training", "surface://components/drivers/AddTrainingModal.tsx"],
+  ["drivers.modal.create_driver", "surface://components/drivers/CreateDriverModal.tsx"],
+  ["drivers.modal.send_message", "surface://components/drivers/SendMessageModal.tsx"],
+  ["drivers.modal.suspend_confirm", "surface://components/drivers/SuspendConfirmModal.tsx"],
+  ["drivers.modal.terminate_confirm", "surface://components/drivers/TerminateConfirmModal.tsx"],
+  ["drivers.modal.w8ben", "surface://components/drivers/W8BenModal.tsx"],
+  ["drivers.modal.driver_import", "surface://pages/drivers/DriverImportModal.tsx"],
+  ["drivers.modal.settlement_dispute", "surface://pages/drivers/SettlementDisputeModal.tsx"],
+]);
 
 const CHECKS = [
   ["apps/frontend/src/pages/Drivers.tsx", /kind="driver" id=\{isUuid\(row\.driver_id\) \? row\.driver_id : null\}/],
@@ -50,11 +65,21 @@ export function audit(files) {
   for (const [file, pattern] of CHECKS) {
     if (!pattern.test(files[file] || "")) failures.push(`${file}: missing real driver_id/EntityLink kind="driver" wiring`);
   }
+  if (files[REQUIRED]) {
+    const required = JSON.parse(files[REQUIRED]);
+    for (const [id, route] of MODAL_ROUTES) {
+      const leaf = required.leaves?.find((row) => row.id === id);
+      if (!leaf?.required?.includes("connectivity")) failures.push(`${REQUIRED}: ${id} must require connectivity`);
+      if (leaf?.route_hint !== route) failures.push(`${REQUIRED}: ${id} must name route ${route}`);
+    }
+  }
+  if (files[SELF] && !files[SELF].split("/**\n * OWNER-")[0].includes(EXACT_HEADER)) failures.push(`${SELF}: exact driver modal connectivity header missing`);
+  if (files[FEED] && /"guard"\s*:\s*"scripts\/verify-drivers-module-driver-wiring\.mjs"/.test(files[FEED])) failures.push(`${FEED}: manual feed duplicates exact driver modal connectivity`);
   return failures;
 }
 
 function loadFiles(root) {
-  const uniqueFiles = [...new Set(CHECKS.map(([f]) => f))];
+  const uniqueFiles = [...new Set([...CHECKS.map(([f]) => f), REQUIRED, FEED, SELF])];
   return Object.fromEntries(uniqueFiles.map((f) => [f, fs.readFileSync(path.join(root, f), "utf8")]));
 }
 
@@ -73,6 +98,25 @@ if (process.argv.includes("--selftest")) {
     }
     if (audit(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — ${file}: mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const id of MODAL_ROUTES.keys()) {
+    const mutated = { ...good, [REQUIRED]: good[REQUIRED].replace(`"id": "${id}"`, `"id": "${id}.broken"`) };
+    if (mutated[REQUIRED] === good[REQUIRED] || audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — Required mutation escaped: ${id}`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const [name, key, before, after] of [
+    ["header", SELF, EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")],
+    ["feed", FEED, "[", `[{"guard":"scripts/verify-drivers-module-driver-wiring.mjs"},`],
+  ]) {
+    const mutated = { ...good, [key]: good[key].replace(before, after) };
+    if (mutated[key] === good[key] || audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name} evidence mutation escaped`);
       process.exit(1);
     }
     caught++;
