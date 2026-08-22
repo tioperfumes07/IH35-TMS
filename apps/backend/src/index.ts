@@ -1753,7 +1753,7 @@ async function main() {
           info: (obj, msg) => app.log.info(obj, msg),
           warn: (obj, msg) => app.log.warn(obj, msg),
         });
-      }, 30_000);
+      }, 0);
     }
 
     // LEGAL-SEED-01: provision the per-entity legal template library for every active entity on

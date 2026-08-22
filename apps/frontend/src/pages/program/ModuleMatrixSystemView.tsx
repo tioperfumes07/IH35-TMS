@@ -148,7 +148,10 @@ async function fetchSystemMatrix(): Promise<SystemPayload> {
   if (!json || json.scope !== "system" || !json.system) {
     throw new SystemMatrixHttpError(502, "Malformed system matrix payload");
   }
-  writeClientLastGood(json);
+  const honesty = json.meta?.honesty ?? "";
+  if (!honesty.includes("REQUIRED-SEED")) {
+    writeClientLastGood(json);
+  }
   return json;
 }
 
@@ -310,7 +313,11 @@ export function ModuleMatrixSystemView() {
     queryKey: ["program", "module-matrix", "scope", "system"],
     queryFn: fetchSystemMatrix,
     placeholderData: () => readClientLastGood() ?? buildSystemMatrixRequiredFallback(),
-    refetchInterval: (q) => (q.state.status === "error" ? 60_000 : POLL_MS),
+    refetchInterval: (q) => {
+      const honesty = (q.state.data as SystemPayload | undefined)?.meta?.honesty ?? "";
+      if (honesty.includes("REQUIRED-SEED")) return 8_000;
+      return q.state.status === "error" ? 8_000 : POLL_MS;
+    },
     refetchIntervalInBackground: false,
     staleTime: 300_000,
     retry: 1,
@@ -320,11 +327,14 @@ export function ModuleMatrixSystemView() {
   const hasLastGoodNumbers = Boolean(
     sys && ((sys.builtCells ?? 0) > 0 || (sys.liveCells ?? 0) > 0 || (sys.boxAbl?.builtPct ?? 0) > 0),
   );
+  const buildingFeed =
+    !hasLastGoodNumbers && Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED"));
   const fallbackFeed =
     !hasLastGoodNumbers &&
+    !buildingFeed &&
     (data?.meta?.probeSource === "committed_fallback" ||
       data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true);
-  const apiLive = Boolean(data?.system) && !fallbackFeed && !isError;
+  const apiLive = Boolean(data?.system) && !fallbackFeed && !buildingFeed && !isError;
   const ok = Boolean(data?.system);
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
@@ -461,7 +471,12 @@ export function ModuleMatrixSystemView() {
 
   return (
     <>
-      {fallbackFeed || (isFetched && isError && !hasLastGoodNumbers) ? (
+      {buildingFeed ? (
+        <div className="banner" data-testid="module-matrix-system-building">
+          <b>Scoreboard is computing in the background — the API is up.</b> You are seeing Required
+          cell counts only until the worker finishes. This is not a 502 and not launch truth.
+        </div>
+      ) : fallbackFeed || (isFetched && isError && !hasLastGoodNumbers) ? (
         <div className="banner" data-testid="module-matrix-system-unavailable">
           <b>API FEED UNAVAILABLE — showing Required skeleton.</b> Could not load{" "}
           <code>GET /api/v1/program/module-matrix?scope=system</code>

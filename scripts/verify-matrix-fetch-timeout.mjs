@@ -19,6 +19,7 @@
  * Self-test: node scripts/verify-matrix-fetch-timeout.mjs --selftest
  */
 import fs from "node:fs";
+import path from "node:path";
 
 const LABEL = "verify-matrix-fetch-timeout";
 const PREVIEW = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
@@ -88,6 +89,9 @@ function failures(sources) {
   if (!/Promise\.all\(/.test(svc) || !/computeSystemModuleMatrix/.test(svc)) {
     out.push("module-matrix.service: system rollup must Promise.all modules + computeSystemModuleMatrix");
   }
+  if (!/module-matrix-system-building/.test(system) || !/REQUIRED-SEED/.test(system)) {
+    out.push("ModuleMatrixSystemView: must show building banner for REQUIRED-SEED (not API FEED UNAVAILABLE)");
+  }
   if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
     out.push("ModuleMatrixSystemView: missing buildSystemMatrixRequiredFallback (API 502 must still paint Required)");
   }
@@ -105,6 +109,28 @@ function failures(sources) {
   }
   if (!/warmSystemModuleMatrixAtBoot/.test(svc)) {
     out.push("module-matrix.service: boot warm required so first matrix request is not a cold 4.5MB freeze");
+  }
+  if (!/kickMatrixComputeOffThread/.test(svc) || !/new Worker\(/.test(svc)) {
+    out.push("module-matrix.service: full projection must run in worker_threads (PROD-MATRIX-REQUEST-PATH-FREEZE)");
+  }
+  if (!fs.existsSync(path.join(process.cwd(), "apps/backend/src/program/module-matrix.worker.ts"))) {
+    out.push("missing apps/backend/src/program/module-matrix.worker.ts — projection has no off-thread entry");
+  }
+  const sysWrapStart = svc.indexOf("export async function buildSystemModuleMatrix(");
+  const sysWrapEnd = svc.indexOf("export async function computeSystemModuleMatrix(");
+  if (sysWrapStart === -1 || sysWrapEnd === -1 || sysWrapEnd < sysWrapStart) {
+    out.push("module-matrix.service: could not split buildSystemModuleMatrix from computeSystemModuleMatrix");
+  } else {
+    const sysWrap = svc.slice(sysWrapStart, sysWrapEnd);
+    if (/return systemInflight/.test(sysWrap) || /systemInflight = computeSystemModuleMatrix/.test(sysWrap)) {
+      out.push("module-matrix.service: buildSystemModuleMatrix must not await computeSystemModuleMatrix on the HTTP thread");
+    }
+    if (!/computeSystemModuleMatrix\(userUuid, true\)/.test(sysWrap) && !/seedOnly/.test(sysWrap)) {
+      out.push("module-matrix.service: cold system rollup must return required-maps seed (seedOnly), not the ledger projection");
+    }
+  }
+  if (!/REQUIRED-SEED/.test(svc)) {
+    out.push("module-matrix.service: required-seed honesty string missing — FE cannot tell building from a 502");
   }
   const indexSrc = fs.readFileSync("apps/backend/src/index.ts", "utf8");
   if (!/warmSystemModuleMatrixAtBoot/.test(indexSrc)) {
@@ -153,13 +179,9 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       mutate: (text) => text.replace("POLL_MS = 300_000", "POLL_MS = 30_000"),
     },
     {
-      name: "last-good placeholder dropped",
+      name: "building banner dropped",
       file: SYSTEM_VIEW,
-      mutate: (text) =>
-        text.replace(
-          "placeholderData: () => readClientLastGood() ?? buildSystemMatrixRequiredFallback()",
-          "placeholderData: buildSystemMatrixRequiredFallback",
-        ),
+      mutate: (text) => text.replace("module-matrix-system-building", "module-matrix-system-unavailable-x"),
     },
   ];
   const escaped = [];

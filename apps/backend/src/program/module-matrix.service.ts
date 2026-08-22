@@ -14,6 +14,7 @@ import { execSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { Worker, isMainThread } from "node:worker_threads";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import {
   accumulateTierBucket,
@@ -1334,16 +1335,105 @@ async function persistModuleLastGood(cacheKey: string, payload: ModuleMatrixPayl
 }
 
 /**
- * MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS — `scope=module&module=<x>` used to await the full
- * synchronous leaf×column projection directly on the request path with only a plain 5-min TTL
- * cache and NO fallback: a cold cache (fresh deploy, or simply idle >5 min with no `scope=system`
- * poll to piggyback on) meant every request blocked on the entire computation, with no inflight
- * dedup either (a thundering herd of concurrent requests for the same module each redid the full
- * work). `buildSystemModuleMatrix` already solved this exact class of problem for itself
- * (`systemCache`/`systemInflight`/`SYSTEM_LAST_GOOD_PATH`, see the "cold 4.5MB sync freeze" comment
- * on `warmSystemModuleMatrixAtBoot`) — this wrapper applies the identical stale-while-revalidate +
- * inflight-dedup + disk-persisted-last-good pattern per module instead of leaving it unprotected.
+ * PROD-MATRIX-REQUEST-PATH-FREEZE (live 2026-08-22): awaiting leaf×column on a cold cache
+ * blocked Node's single thread (cron "missed execution", PID recycle, Render 502 HTML).
+ * Request path NEVER awaits computeModuleMatrixUncached — worker_thread only.
+ * Cold miss returns Required-maps seed (cheap JSON), not a hang.
  */
+async function computeModuleMatrixRequiredOnly(moduleId: string): Promise<ModuleMatrixPayload> {
+  const required = await loadRequiredMap(moduleId);
+  const moduleBucket = emptyTierBucket();
+  const groupBuckets = new Map<string, ReturnType<typeof emptyTierBucket>>();
+  const colGroup = new Map(required.columns.map((c) => [c.id, c.group || "other"]));
+  const leaves = required.leaves.map((leaf) => {
+    const req = new Set(leaf.required);
+    const cells: Record<string, MatrixCell> = {};
+    for (const col of required.columns) {
+      if (!req.has(col.id)) {
+        cells[col.id] = {
+          state: "na",
+          audited: false,
+          built: false,
+          live: false,
+          done: false,
+          tier: "na",
+        };
+        continue;
+      }
+      moduleBucket.unauditedCells += 1;
+      const g = colGroup.get(col.id) ?? "other";
+      if (!groupBuckets.has(g)) groupBuckets.set(g, emptyTierBucket());
+      groupBuckets.get(g)!.unauditedCells += 1;
+      cells[col.id] = {
+        state: "unaudited",
+        audited: false,
+        built: false,
+        live: false,
+        done: false,
+        tier: "unaudited",
+      };
+    }
+    return {
+      id: leaf.id,
+      tab: leaf.tab,
+      ...(leaf.sub ? { sub: leaf.sub } : {}),
+      route_hint: leaf.route_hint,
+      required: leaf.required,
+      cells,
+    };
+  });
+  moduleBucket.requiredCells =
+    moduleBucket.liveCells +
+    moduleBucket.builtOnlyCells +
+    moduleBucket.probeOnlyCells +
+    moduleBucket.auditedOnlyCells +
+    moduleBucket.unauditedCells;
+  assertTierTallyConsistent(moduleBucket, `${moduleId}:required-seed`);
+  const tierMetrics = finalizeTierMetrics(moduleBucket);
+  const groupRollups: MatrixGroupRollup[] = sortGroupRollups(
+    [...groupBuckets.entries()].map(([group, bucket]) => {
+      bucket.requiredCells =
+        bucket.liveCells +
+        bucket.builtOnlyCells +
+        bucket.probeOnlyCells +
+        bucket.auditedOnlyCells +
+        bucket.unauditedCells;
+      assertTierTallyConsistent(bucket, `${moduleId}:required-seed:${group}`);
+      return { group, label: groupLabel(group), ...finalizeTierMetrics(bucket) };
+    }),
+  );
+  return {
+    module: required.module,
+    entity_default: required.entity_default,
+    sample: false,
+    generatedAt: new Date().toISOString(),
+    meta: {
+      requiredSource: `docs/specs/scoreboard/modules/${moduleId}.required.json`,
+      auditedSources: [],
+      doneSources: [],
+      honesty:
+        "REQUIRED-SEED — full ledger projection runs in a worker_thread. Not an API outage. Built/Live stay 0 until last-good lands.",
+      tipSha: tipSha(),
+      probeSource: "committed_stale",
+      feedNote: "worker_thread building last-good; this response did not parse AUDIT-COVERAGE-LIVE.md",
+    },
+    columns: required.columns,
+    leaves,
+    groupRollups,
+    metrics: {
+      leafCount: required.leaves.length,
+      colCount: required.columns.length,
+      ...tierMetrics,
+      doneCells: 0,
+      auditedPct: 0,
+      builtPct: 0,
+      closedCells: 0,
+      modalLeafCount: required.leaves.filter((lf) => isModalishLeaf(lf)).length,
+      clickedCells: 0,
+    },
+  };
+}
+
 export async function buildModuleMatrix(moduleId: string, userUuid?: string): Promise<ModuleMatrixPayload> {
   const now = Date.now();
   const cacheKey = `${moduleId}:${userUuid ? "neon_live" : "committed_stale"}`;
@@ -1352,37 +1442,22 @@ export async function buildModuleMatrix(moduleId: string, userUuid?: string): Pr
     return hit.payload;
   }
 
-  const runCompute = (): Promise<ModuleMatrixPayload> => {
-    let inflight = moduleMatrixInflight.get(cacheKey);
-    if (!inflight) {
-      inflight = computeModuleMatrixUncached(moduleId, cacheKey).finally(() => {
-        moduleMatrixInflight.delete(cacheKey);
-      });
-      moduleMatrixInflight.set(cacheKey, inflight);
-    }
-    return inflight;
-  };
+  kickMatrixComputeOffThread();
 
-  // Stale-while-revalidate: an in-memory hit just expired (still holds the last payload we ever
-  // computed for this key) — serve it immediately and refresh in the background instead of
-  // blocking this request on a fresh computation.
+  // Stale-while-revalidate: serve last full payload immediately; worker refreshes.
   if (hit) {
-    void runCompute();
+    kickMatrixComputeOffThread();
     return hit.payload;
   }
 
-  // No in-memory cache at all (fresh deploy / restarted process) — fall back to the disk-persisted
-  // last-good snapshot so a cold process doesn't block the FIRST request on the full computation.
   const lastGood = await readModuleLastGood(cacheKey);
   if (lastGood) {
     moduleMatrixCache.set(cacheKey, { atMs: now - MATRIX_CACHE_MS, payload: lastGood });
-    void runCompute();
+    kickMatrixComputeOffThread();
     return lastGood;
   }
 
-  // Genuinely nothing cached anywhere (first-ever request for this module on this box) — no choice
-  // but to await the real computation, same as before, but deduped against concurrent callers.
-  return runCompute();
+  return computeModuleMatrixRequiredOnly(moduleId);
 }
 
 async function computeModuleMatrixUncached(moduleId: string, cacheKey: string): Promise<ModuleMatrixPayload> {
@@ -1873,42 +1948,32 @@ async function loadMatrixModuleOrder(): Promise<Array<{ id: string; label: strin
 export async function buildSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
   const probeScope = userUuid ? "neon_live" : "committed_stale";
   const now = Date.now();
+  kickMatrixComputeOffThread();
   if (systemCache && systemCache.probeScope === probeScope && now - systemCache.atMs < MATRIX_CACHE_MS) {
     return systemCache.payload;
   }
-  // Stale-while-revalidate: first successful rollup stays on screen; refresh in background.
   if (systemCache && systemCache.probeScope === probeScope) {
-    if (!systemInflight) {
-      systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
-        systemInflight = null;
-      });
-    }
+    kickMatrixComputeOffThread();
     return systemCache.payload;
   }
   const lastGood = await readSystemLastGood();
   if (lastGood) {
     systemCache = { atMs: now - MATRIX_CACHE_MS, probeScope, payload: lastGood };
-    if (!systemInflight) {
-      systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
-        systemInflight = null;
-      });
-    }
+    kickMatrixComputeOffThread();
     return lastGood;
   }
-  if (systemInflight) return systemInflight;
-  systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
-    systemInflight = null;
-  });
-  return systemInflight;
+  return computeSystemModuleMatrix(userUuid, true);
 }
 
-async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
+export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = false): Promise<SystemModuleMatrixPayload> {
   const now = Date.now();
   const probeScope = userUuid ? "neon_live" : "committed_stale";
 
-  // Warm ledger + Clicked OUTBOX once — GitHub raw, not 29× Contents API inside the FE abort.
-  await loadLedgerRows();
-  await loadOutboxClickedKeys();
+  if (!seedOnly) {
+    // Warm ledger + Clicked OUTBOX once — never on the HTTP seed path.
+    await loadLedgerRows();
+    await loadOutboxClickedKeys();
+  }
 
   const order = await loadMatrixModuleOrder();
   const modules: SystemModuleMatrixRow[] = [];
@@ -1934,7 +1999,10 @@ async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModul
   const boards = await Promise.all(
     order.map(async (entry) => {
       try {
-        const board = await buildModuleMatrix(entry.id, userUuid);
+        const cacheKey = `${entry.id}:${userUuid ? "neon_live" : "committed_stale"}`;
+        const board = seedOnly
+          ? await computeModuleMatrixRequiredOnly(entry.id)
+          : await computeModuleMatrixUncached(entry.id, cacheKey);
         return { entry, board };
       } catch {
         return { entry, board: null as ModuleMatrixPayload | null };
@@ -2110,20 +2178,58 @@ async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModul
     },
   };
 
+  if (seedOnly) {
+    payload.meta.honesty =
+      "REQUIRED-SEED — full ledger projection runs in a worker_thread. Not an API outage. Built/Live stay 0 until last-good lands.";
+    return payload;
+  }
+
   systemCache = { atMs: now, probeScope, payload };
   // Fire-and-forget: never delay the response for the last-good disk write.
   void persistSystemLastGood(payload);
   return payload;
 }
 
-/** Fire after listen — never await on the request path. Fills last-good so /program/matrix is not a cold 4.5MB sync freeze. */
+let matrixWorker: Worker | null = null;
+let matrixWorkerLog: { info?: (obj: unknown, msg: string) => void; warn?: (obj: unknown, msg: string) => void } | undefined;
+
+/** HTTP thread must never run computeSystemModuleMatrix(full). Spawn at most one worker. */
+export function kickMatrixComputeOffThread(): void {
+  if (!isMainThread) return;
+  if (matrixWorker) return;
+  try {
+    matrixWorker = new Worker(new URL("./module-matrix.worker.js", import.meta.url));
+  } catch (err) {
+    matrixWorkerLog?.warn?.({ err }, "[matrix] worker spawn failed — serving required-seed only");
+    return;
+  }
+  matrixWorker.on("message", (msg: { ok?: boolean; error?: string }) => {
+    if (msg?.ok) {
+      matrixWorkerLog?.info?.({}, "[matrix] worker last-good ready");
+      void readSystemLastGood().then((p) => {
+        if (!p) return;
+        systemCache = { atMs: Date.now(), probeScope: p.meta.probeSource ?? "committed_stale", payload: p };
+      });
+    } else {
+      matrixWorkerLog?.warn?.({ err: msg?.error }, "[matrix] worker projection failed");
+    }
+  });
+  matrixWorker.on("error", (err) => {
+    matrixWorkerLog?.warn?.({ err }, "[matrix] worker error");
+    matrixWorker = null;
+  });
+  matrixWorker.on("exit", () => {
+    matrixWorker = null;
+  });
+}
+
+/** Fire after listen — worker_thread only. Same-thread buildSystemModuleMatrix used to freeze healthz. */
 export function warmSystemModuleMatrixAtBoot(log?: {
   info?: (obj: unknown, msg: string) => void;
   warn?: (obj: unknown, msg: string) => void;
 }): void {
-  void buildSystemModuleMatrix()
-    .then(() => log?.info?.({}, "[matrix] boot cache warm"))
-    .catch((err: unknown) => log?.warn?.({ err }, "[matrix] boot cache warm failed"));
+  matrixWorkerLog = log;
+  kickMatrixComputeOffThread();
 }
 
 /** Test helper — clear request cache between assertions. */
