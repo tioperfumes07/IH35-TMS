@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(cash_advances|settlements\\.(drawer\\.(advance_detail|liability_detail)|modal\\.(mark_disbursed|hold_deduction|liability_breakdown)|panel\\.pay_run_close))$","task":"LINK-F5185-settlements-reverse-cluster"} */
+/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["cash_advances","settlements.drawer.advance_detail","settlements.drawer.liability_detail","settlements.modal.mark_disbursed","settlements.modal.hold_deduction","settlements.modal.liability_breakdown","settlements.panel.pay_run_close"],"task":"SETL-F5832"} */
 /**
  * GUARD: closes all 7 of the original open LINK-F5171 settlements reverse_link leaves
  * (settlements:disputes/liabilities.list were already closed in PR #6740).
@@ -47,6 +47,7 @@ const SETTLEMENT_FINANCE_SECTION = "apps/frontend/src/components/driver-profile/
 const LIABILITIES_HOME = "apps/frontend/src/pages/liabilities/LiabilitiesHome.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/settlements.required.json";
+const SELF = "scripts/verify-driver-cash-advances-settlement-modal-reverse-section.mjs";
 const CLAIMED_LEAVES = [
   "cash_advances",
   "settlements.drawer.advance_detail",
@@ -70,6 +71,7 @@ const FILES = [
   SETTLEMENT_FINANCE_SECTION,
   LIABILITIES_HOME,
   ENTITY_LINK,
+  SELF,
   MATRIX,
 ];
 const LABEL = "verify-driver-cash-advances-settlement-modal-reverse-section";
@@ -94,6 +96,9 @@ export function assertSettlementsClusterReverse(sources) {
   const settlementFinanceSection = src[SETTLEMENT_FINANCE_SECTION];
   const liabilitiesHome = src[LIABILITIES_HOME];
   const entityLink = src[ENTITY_LINK];
+  if (!/^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["cash_advances","settlements\.drawer\.advance_detail","settlements\.drawer\.liability_detail","settlements\.modal\.mark_disbursed","settlements\.modal\.hold_deduction","settlements\.modal\.liability_breakdown","settlements\.panel\.pay_run_close"\],"task":"SETL-F5832"\} \*\/$/m.test(src[SELF])) {
+    problems.push(`${SELF}: exact seven-leaf Built annotation missing`);
+  }
   try {
     const matrix = JSON.parse(src[MATRIX]);
     for (const id of CLAIMED_LEAVES) {
@@ -222,6 +227,7 @@ export function assertSettlementsClusterReverse(sources) {
 
 function selftest() {
   const good = {
+    [SELF]: `/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["cash_advances","settlements.drawer.advance_detail","settlements.drawer.liability_detail","settlements.modal.mark_disbursed","settlements.modal.hold_deduction","settlements.modal.liability_breakdown","settlements.panel.pay_run_close"],"task":"SETL-F5832"} */`,
     [CAR_SERVICE]: `
       let where = \`r.operating_company_id = $1::uuid AND r.status IN ('pending', 'under_review')\`;
       if (filter.driverId) {
@@ -313,6 +319,7 @@ function selftest() {
   }
 
   const mutations = [
+    { ...good, [SELF]: "@matrix-built removed" },
     { ...good, [CAR_SERVICE]: good[CAR_SERVICE].replace("where += ` AND r.driver_id = $${args.length}::uuid`;", "") },
     { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driver_id: z.string().uuid().optional(),\n      });", "});") },
     { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driverId: parsed.data.driver_id,", "") },
@@ -358,6 +365,7 @@ function selftest() {
     process.exit(1);
   }
   const productionPlants = [
+    [SELF, /^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["cash_advances","settlements\.drawer\.advance_detail","settlements\.drawer\.liability_detail","settlements\.modal\.mark_disbursed","settlements\.modal\.hold_deduction","settlements\.modal\.liability_breakdown","settlements\.panel\.pay_run_close"\],"task":"SETL-F5832"\} \*\/$/m, "@matrix-built removed"],
     [CAR_SERVICE, /AND r\.driver_id = \$/, "AND r.driver_id = NULLIF($"],
     [CAR_ROUTES, /driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "driver_id: z.never()"],
     [CAR_ROUTES, /driverId:\s*parsed\.data\.driver_id/, "driverId: undefined"],
