@@ -499,20 +499,24 @@ export function ReconciliationWorkspacePage() {
               {visibleTransactions.map((tx) => {
                 const matched = transactionIsMatched(tx);
                 return (
-                  <button
+                  <div
                     key={tx.id}
-                    type="button"
-                    onClick={() => setSelectedTransactionId(tx.id)}
                     className={`w-full px-2 py-2 text-left ${
                       selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
                     } border-b border-gray-100`}
                   >
-                    <div className="flex items-center justify-between text-xs text-gray-600">
-                      <span>{formatDateUS(tx.transaction_date)}</span>
-                      <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
-                    </div>
-                    <div className="truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</div>
-                    <div className="text-sm text-gray-700">{money(Number(tx.amount_cents))}</div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTransactionId(tx.id)}
+                      className="block w-full text-left"
+                    >
+                      <span className="flex items-center justify-between text-xs text-gray-600">
+                        <span>{formatDateUS(tx.transaction_date)}</span>
+                        <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
+                      </span>
+                      <span className="block truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</span>
+                      <span className="block text-sm text-gray-700">{money(Number(tx.amount_cents))}</span>
+                    </button>
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
                         {/* BANK-F5744 — plaid/link.routes.ts already joins matched_load_number/
@@ -561,7 +565,7 @@ export function ReconciliationWorkspacePage() {
                         ) : null}
                       </div>
                     ) : null}
-                  </button>
+                  </div>
                 );
               })}
             </div>
