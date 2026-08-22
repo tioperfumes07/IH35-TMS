@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^submit\\.queue$","task":"LINK-F5181-factoring-submit-queue-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["submit.queue"],"task":"FACT-F5841-SUBMIT-QUEUE-REVERSE-EXACT-LEAF"} */
 /**
  * GUARD: a customer's and a load's own pages can jump into the factoring submission queue
  * pre-scoped to them, and both the backend route + SubmissionQueue.tsx honor the deep link
@@ -31,7 +31,9 @@ const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.t
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const SECTION = "apps/frontend/src/components/customers/CustomerFactoringSubmitQueueReverseSection.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
-const FILES = [SERVICE, ROUTES, QUEUE_PAGE, FACTORING_TAB, ENTITY_LINK, SECTION, CUSTOMER_DETAIL];
+const SELF = "scripts/verify-factoring-submit-queue-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [SERVICE, ROUTES, QUEUE_PAGE, FACTORING_TAB, ENTITY_LINK, SECTION, CUSTOMER_DETAIL, SELF, REQUIRED];
 const LABEL = "verify-factoring-submit-queue-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -48,6 +50,21 @@ export function assertFactoringSubmitQueueReverse(sources) {
   const entityLink = src[ENTITY_LINK];
   const section = src[SECTION];
   const customerDetail = src[CUSTOMER_DETAIL];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["submit\.queue"\],"task":"FACT-F5841-SUBMIT-QUEUE-REVERSE-EXACT-LEAF"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own only the exact submit-queue reverse leaf`);
+  }
+  let requiredLeaves = [];
+  try {
+    requiredLeaves = JSON.parse(required).leaves ?? [];
+  } catch {
+    problems.push(`${REQUIRED}: must remain valid JSON`);
+  }
+  if (!requiredLeaves.find((leaf) => leaf.id === "submit.queue")?.required?.includes("reverse_link")) {
+    problems.push(`${REQUIRED}: submit.queue must remain a Required reverse_link leaf`);
+  }
 
   if (!/customerFilter\s*=\s*`AND i\.customer_id/.test(service)) {
     problems.push(`${SERVICE}: SQL must filter by customer_id server-side when provided`);
@@ -141,6 +158,8 @@ function selftest() {
       import { CustomerFactoringSubmitQueueReverseSection } from "../components/customers/CustomerFactoringSubmitQueueReverseSection";
       <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
     `,
+    [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["submit.queue"],"task":"FACT-F5841-SUBMIT-QUEUE-REVERSE-EXACT-LEAF"} */`,
+    [REQUIRED]: `{"leaves":[{"id":"submit.queue","required":["reverse_link"]}]}`,
   };
   const goodProblems = assertFactoringSubmitQueueReverse(good);
   if (goodProblems.length) {
@@ -164,6 +183,8 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace('kind="invoice"', 'kind="factoring_submit_queue_customer"') },
     { ...good, [SECTION]: good[SECTION].replace("id={item.invoice_id}", "id={customerId}") },
     { ...good, [SECTION]: good[SECTION].replace("name={item.display_id}", "name={item.invoice_id}") },
+    { ...good, [SELF]: good[SELF].replace('"leaves":["submit.queue"]', '"leafRe":".*"') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('"reverse_link"', '"qbo_chrome"') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFactoringSubmitQueueReverse(mutated).length === 0) {
