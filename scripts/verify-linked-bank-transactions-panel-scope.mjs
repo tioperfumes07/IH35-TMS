@@ -23,6 +23,20 @@ function mutateByLinkage(source, from, to) {
   return source.replace(handler, handler.replace(from, to));
 }
 
+/**
+ * The empty-state paragraph's *condition* is what must never fire on error/pending — not a fixed
+ * string. Later hops (e.g. the split-line reverse query) legitimately AND more clauses into it
+ * (`splitQuery.isSuccess && ... && splitRows.length === 0`), which a rigid substring match would
+ * reject as a false regression. Isolate the JSX conditional guarding the empty-state testid and
+ * assert its required tokens are present, in any order/composition.
+ */
+function emptyStateCondition(source) {
+  const marker = 'data-testid="linked-bank-transactions-empty"';
+  const idx = source.indexOf(marker);
+  if (idx < 0) return "";
+  return source.slice(Math.max(0, idx - 400), idx);
+}
+
 function verify(r, a, p, accounting = accountingMatrix, banking = bankingMatrix) {
   const failures = [];
   const handler = byLinkageHandler(r);
@@ -34,7 +48,11 @@ function verify(r, a, p, accounting = accountingMatrix, banking = bankingMatrix)
   if (!a.includes("rows: LinkedBankTransactionRow[]")) failures.push("API still erases the reverse-row contract");
   if (p.includes("as LinkageRow[]")) failures.push("panel still casts an untyped API response");
   if (!p.includes('kind="bank_transaction"') || !p.includes('kind="journal_entry"')) failures.push("mounted reverse drills are missing");
-  if (!p.includes("query.isError") || !p.includes("query.isSuccess && rows.length === 0")) failures.push("panel conflates fetch failure with an empty reverse set");
+  if (!p.includes("query.isError")) failures.push("panel conflates fetch failure with an empty reverse set");
+  const emptyCondition = emptyStateCondition(p);
+  if (!emptyCondition.includes("isSuccess") || !emptyCondition.includes("rows.length === 0")) {
+    failures.push("panel conflates fetch failure with an empty reverse set");
+  }
   for (const [module, matrix] of [["accounting", accounting], ["banking", banking]]) {
     try {
       const leaf = JSON.parse(matrix).leaves?.find((item) => item.id === "banking.panel.linked_bank_transactions");
@@ -55,10 +73,26 @@ if (process.argv.includes("--selftest")) {
     [mutateByLinkage(route, "bt.operating_company_id = $1::uuid", "TRUE"), api, panel, accountingMatrix, bankingMatrix],
     [mutateByLinkage(route, "AND bt.voided_at IS NULL", "AND TRUE"), api, panel, accountingMatrix, bankingMatrix],
     [route, api.replace("rows: LinkedBankTransactionRow[]", "rows: Array<Record<string, unknown>>"), panel, accountingMatrix, bankingMatrix],
-    [route, api, panel.replace('kind="journal_entry"', 'kind="account"'), accountingMatrix, bankingMatrix],
-    [route, api, panel.replace('kind="bank_transaction"', 'kind="load"'), accountingMatrix, bankingMatrix],
+    // .replaceAll (not .replace): the panel now mounts each drill kind twice (main row list +
+    // split-line list from the later split-query hop) — a first-occurrence-only replace would
+    // leave the second copy intact and the mutation would silently escape detection.
+    [route, api, panel.replaceAll('kind="journal_entry"', 'kind="account"'), accountingMatrix, bankingMatrix],
+    [route, api, panel.replaceAll('kind="bank_transaction"', 'kind="load"'), accountingMatrix, bankingMatrix],
     [route, api, panel.replace("query.isError", "query.isPending"), accountingMatrix, bankingMatrix],
-    [route, api, panel.replace("query.isSuccess && rows.length === 0", "rows.length === 0"), accountingMatrix, bankingMatrix],
+    [
+      route,
+      api,
+      (() => {
+        const mutated = panel.replace(
+          "query.isSuccess && splitQuery.isSuccess && rows.length === 0 && splitRows.length === 0",
+          "rows.length === 0 && splitRows.length === 0",
+        );
+        if (mutated === panel) throw new Error("selftest fixture drifted: empty-state isSuccess gate");
+        return mutated;
+      })(),
+      accountingMatrix,
+      bankingMatrix,
+    ],
     [route, api, `${panel}\nas LinkageRow[]`, accountingMatrix, bankingMatrix],
     [route, api, panel, accountingMatrix.replace('"id": "banking.panel.linked_bank_transactions"', '"id": "banking.panel.linked_bank_transactions.removed"'), bankingMatrix],
     [route, api, panel, accountingMatrix, bankingMatrix.replace('"id": "banking.panel.linked_bank_transactions"', '"id": "banking.panel.linked_bank_transactions.removed"')],

@@ -1,3 +1,4 @@
+Codex | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=9226 | NOW=banking.* reverse | GO
 Cursor→Codex | 2026-08-22T02:52CT CLOSE ACCOUNTING · NOW=prepaid/credit-memo/vendor-credit create POST + reverse · CREATE-TEST-THEN-VOID · no CDP | GO
 Cursor→Codex | 2026-08-22T02:34CT REJECT empty-queue · NOW=vendors_select deactivated GET + More reverse · pull origin/main | GO
 Codex | LIVE PASS | CDP 9226 (existing foreground window, no new/background Chrome) | leaf=settlements:liabilities.list:reverse_link | drill=liabilities → View Detail (PEDRO ABRAHAM LOPEZ COLLADO, CA-2026-0003) | Settlement History (reverse-link) section renders honest HOLD disclosure not fake data; "Caused by" field correctly tombstones (not visible) instead of fabricating a link | tab closed after one drill per owner instruction | GO
