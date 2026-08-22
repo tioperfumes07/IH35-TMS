@@ -67,13 +67,16 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
         label: "Invoice",
         sortable: true,
         cellClass: "font-medium text-gray-900",
-        render: (row) => (
-          <EntityLink
-            kind="factoring_advance"
-            id={row.factoring_advance_id}
-            label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")}
-          />
-        ),
+        render: (row) => {
+          const invoice = typeof row.invoice_reference === "string" ? row.invoice_reference.trim() : "";
+          return (
+            <EntityLink
+              kind="factoring_advance"
+              id={row.factoring_advance_id}
+              label={invoice !== "" ? invoice : "No invoice #"}
+            />
+          );
+        }
       },
       {
         key: "customer_name",

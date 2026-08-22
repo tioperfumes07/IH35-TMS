@@ -46,6 +46,12 @@ function assertMigrated(src) {
   if (!src.includes("EntityLink")) {
     errors.push(`${PAGE}: must keep the EntityLink to the factoring advance in the Invoice column`);
   }
+  if (!src.includes("No invoice #")) {
+    errors.push(`${PAGE}: Invoice column must use No invoice # for a visible empty document number (not Advance tombstone)`);
+  }
+  if (/entityLabel\(row\.invoice_reference,\s*row\.factoring_advance_id,\s*"Advance"\)/.test(src)) {
+    errors.push(`${PAGE}: Invoice column must not tombstone a visible row as Advance — not visible`);
+  }
   if (!/<EntityLink[^>]*kind=["']customer["'][\s\S]{0,240}?row\.customer_id/.test(src)) {
     errors.push(`${PAGE}: customer column must use EntityLink kind="customer" id={row.customer_id} when present`);
   }
@@ -82,7 +88,7 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
-      { key: "invoice_reference", label: "Invoice", render: (row) => <EntityLink kind="factoring_advance" id={row.factoring_advance_id} /> },
+      { key: "invoice_reference", label: "Invoice", render: (row) => <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.invoice_reference || "No invoice #"} /> },
       { key: "customer_name", label: "Customer", render: (row) => <EntityLink kind="customer" id={row.customer_id} label={row.customer_name} /> },
       { key: "advance_amount", label: "Advance" },
       { key: "reserve_amount", label: "Reserve" },
