@@ -91,6 +91,11 @@ export function accountingSourceEntityKind(sourceType: string | null | undefined
     case "depreciation_schedule_row":
     case "loan_amortization_row":
       return sourceType?.trim() || null;
+    case "factoring_customer_payment":
+    case "factoring_chargeback":
+    case "factoring_reserve_release":
+    case "factoring_default_interest":
+      return "factoring_advance";
     default:
       return sourceType?.trim() || null;
   }
