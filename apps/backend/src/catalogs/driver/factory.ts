@@ -243,10 +243,24 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
 
       const availableBooleans = await resolveBooleans(client);
-      const boolInsertCols = availableBooleans.length ? `, ${availableBooleans.join(", ")}` : "";
-      const boolInsertPlaceholders = availableBooleans.map((_, i) => `$${8 + i}`).join(", ");
-      const boolInsertValues = availableBooleans.map((c) =>
-        declaredBooleans.includes(c) ? Boolean((b as Record<string, unknown>)[c]) : (b as Record<string, unknown>)[c] ?? null
+      // CC3-DEDUCTRAIL-01: declaredBooleans are zod `.default(false)` so they are ALWAYS present in
+      // `b`; declaredEnums (e.g. default_recovery_rail) are zod `.optional()` with NO default, so an
+      // unset one is genuinely `undefined` in `b`. The old code inserted every available column
+      // unconditionally, falling back to `?? null` for an unset enum -- an EXPLICIT NULL in a
+      // positional INSERT overrides the column's own SQL DEFAULT (catalogs.driver_deduction_types.
+      // default_recovery_rail DEFAULT 'ask', migration 202609310000), so every create hit a real
+      // NOT NULL violation (23502) instead of falling through to the owner-authored 'ask' default.
+      // Insertable columns must mirror the PATCH handler's own `if (!(col in b)) continue` presence
+      // check a few lines below: always insert declared booleans (never undefined), only insert a
+      // declared enum when the operator actually chose a value, and omit it entirely otherwise so
+      // Postgres applies its own DEFAULT.
+      const insertableOptional = availableBooleans.filter(
+        (c) => declaredBooleans.includes(c) || c in b
+      );
+      const boolInsertCols = insertableOptional.length ? `, ${insertableOptional.join(", ")}` : "";
+      const boolInsertPlaceholders = insertableOptional.map((_, i) => `$${8 + i}`).join(", ");
+      const boolInsertValues = insertableOptional.map((c) =>
+        declaredBooleans.includes(c) ? Boolean((b as Record<string, unknown>)[c]) : (b as Record<string, unknown>)[c]
       );
       const res = await client.query(
         `
