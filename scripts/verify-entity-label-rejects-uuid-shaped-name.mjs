@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
+/** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
 /** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["secondary.assignments"],"task":"DISP-F5864-SECONDARY-ASSIGNMENTS-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
