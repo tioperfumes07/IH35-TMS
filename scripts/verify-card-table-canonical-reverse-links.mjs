@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["dispatch","maintenance","vendors","inventory"],"cols":["vendor","unit","load","connectivity","reverse_link"],"leafRe":"^(home\\.(kanban|round_trips)|arriving_soon\\.convert_to_wo|in_transit\\.promote_to_wo|detail\\.profile|parts\\.roster|parts_inventory\\.record_purchase|vendors\\.create)$","task":"LINK-F5133-CARD-TABLE-CANONICAL-REVERSE-LINKS","vertical":"class-sweep"}
+ * @matrix-built {"modules":["dispatch","maintenance","vendors","inventory"],"cols":["reverse_link"],"leaves":["home.kanban","home.round_trips","arriving_soon.convert_to_wo","in_transit.promote_to_wo","detail.profile","parts.roster"],"task":"CLASS-F5845-CARD-TABLE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}
  * Cards, tables, and vendor reverse panels must use the canonical drill resolver.
  */
 import fs from "node:fs";
 
 const LABEL = "verify-card-table-canonical-reverse-links";
 const FILES = {
+  self: "scripts/verify-card-table-canonical-reverse-links.mjs",
+  dispatchMatrix: "docs/specs/scoreboard/modules/dispatch.required.json",
+  maintenanceMatrix: "docs/specs/scoreboard/modules/maintenance.required.json",
+  vendorsMatrix: "docs/specs/scoreboard/modules/vendors.required.json",
+  inventoryMatrix: "docs/specs/scoreboard/modules/inventory.required.json",
   resolver: "apps/frontend/src/components/shared/EntityLink.tsx",
   kanban: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
   roundTrips: "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
@@ -21,6 +26,26 @@ const read = (file) => fs.readFileSync(file, "utf8");
 
 function check(sources) {
   const failures = [];
+  if (!/^ \* @matrix-built \{"modules":\["dispatch","maintenance","vendors","inventory"\],"cols":\["reverse_link"\],"leaves":\["home\.kanban","home\.round_trips","arriving_soon\.convert_to_wo","in_transit\.promote_to_wo","detail\.profile","parts\.roster"\],"task":"CLASS-F5845-CARD-TABLE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"\}$/m.test(sources.self)) {
+    failures.push(`${FILES.self}: exact six-leaf reverse-only Built annotation missing`);
+  }
+  const applicability = {
+    dispatchMatrix: ["home.kanban", "home.round_trips"],
+    maintenanceMatrix: ["arriving_soon.convert_to_wo", "in_transit.promote_to_wo"],
+    vendorsMatrix: ["detail.profile"],
+    inventoryMatrix: ["parts.roster"],
+  };
+  for (const [key, ids] of Object.entries(applicability)) {
+    let leaves = [];
+    try {
+      leaves = JSON.parse(sources[key]).leaves ?? [];
+    } catch {
+      failures.push(`${FILES[key]}: Required matrix must parse`);
+    }
+    for (const id of ids) {
+      if (!leaves.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`${FILES[key]}: ${id} must require reverse_link`);
+    }
+  }
   const expects = [
     ["resolver", /case "inventory_part":[\s\S]{0,100}\/inventory\?part_id=/, "inventory-part route"],
     ["resolver", /case "parts_inventory":[\s\S]{0,120}\/maintenance\/parts-inventory\?part_inventory_id=/, "parts-inventory route"],
@@ -47,7 +72,7 @@ function check(sources) {
 
 const sources = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, read(file)]));
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
     ["resolver", 'case "inventory_part"', 'case "inventory_part_removed"'],
     ["resolver", 'case "parts_inventory"', 'case "parts_inventory_removed"'],
@@ -72,11 +97,27 @@ if (process.argv.includes("--self-test")) {
     const mutated = { ...sources, [key]: sources[key].split(needle).join(replacement) };
     if (check(mutated).length === 0) missed.push(`${key}: planted defect escaped (${needle})`);
   }
+  const headerMutant = { ...sources, self: sources.self.replace(/^ \* @matrix-built .*$/m, " * planted broad Built claim") };
+  if (check(headerMutant).length === 0) missed.push("self: Built annotation plant escaped");
+  const applicability = {
+    dispatchMatrix: ["home.kanban", "home.round_trips"],
+    maintenanceMatrix: ["arriving_soon.convert_to_wo", "in_transit.promote_to_wo"],
+    vendorsMatrix: ["detail.profile"],
+    inventoryMatrix: ["parts.roster"],
+  };
+  for (const [key, ids] of Object.entries(applicability)) {
+    for (const id of ids) {
+      const matrix = JSON.parse(sources[key]);
+      const leaf = matrix.leaves.find((candidate) => candidate.id === id);
+      leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+      if (check({ ...sources, [key]: JSON.stringify(matrix) }).length === 0) missed.push(`${key}: ${id} Required plant escaped`);
+    }
+  }
   if (missed.length) {
     console.error(`${LABEL} SELFTEST FAIL\n${missed.join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} planted defects rejected`);
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length + 7} planted runtime/evidence defects rejected`);
   process.exit(0);
 }
 
