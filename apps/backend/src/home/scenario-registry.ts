@@ -206,13 +206,42 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     },
   },
   {
+    // ACCT-F5782 — this dot had NO probe at all (unlike every sibling hop.*/scenario.*), so it always
+    // rendered "no count probe (resolved at request time)" no matter what the data said: a structural
+    // never-measured state, not a genuine failure. The delivery revenue latch this hop actually
+    // describes (event 1 of DISP-01, revrec-delivery-posting/poster.service.ts) is a SEPARATE feature
+    // from the read-only ASC-606 "revenue-contracts" preview in revenue-recognition.routes.ts (which
+    // has no POST route and posts nothing) — verified by reading both files so the probe measures the
+    // right thing. Traced the real posting table (accounting.load_revenue_recognition_postings) and
+    // confirmed live on prod it has genuinely posted: 9 standing 'earn' events for USMCA
+    // (5c854333-6ea5-4faa-af31-67cb272fef80), 1 for TRANSP (91e0bf0a-133f-4ce8-a734-2586cfa66d96).
+    // "Standing" here mirrors standingLatchJePredicate (poster.service.ts) exactly: the posting itself
+    // is not voided AND its linked JE is not voided/reversed — a reversed latch must not count as
+    // revenue still on the books.
     key: "hop.revenue",
     title: "Revenue recognition latch",
     lane: "money",
     trigger: "Delivery evidence exists and the entity flag is ON",
     je: "DR Unbilled Revenue / CR Line-Haul Income",
     spec_ref: "WIRE-05",
-    sources: ["lib.feature_flag_overrides", "accounting.journal_entries"],
+    sources: ["lib.feature_flag_overrides", "accounting.load_revenue_recognition_postings", "accounting.journal_entries"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM accounting.load_revenue_recognition_postings r
+         WHERE r.event = 'earn'
+           AND r.voided_at IS NULL
+           AND EXISTS (
+             SELECT 1 FROM accounting.journal_entries je
+              WHERE je.id = r.journal_entry_id
+                AND je.operating_company_id = r.operating_company_id
+                AND je.voided_at IS NULL
+                AND je.reversed_by_je_id IS NULL
+           )
+           AND ($1::uuid IS NULL OR r.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} standing revenue-recognition latch posting(s)`,
+    },
   },
   {
     key: "hop.invoice",
