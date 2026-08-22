@@ -17,7 +17,12 @@
  * genuinely absent — never silently dropping the existing plain-text fallback for a row missing the
  * FK (append-only-safe: rows without journal_entry_id keep their old, honest behavior).
  */
-import { readFileSync } from "node:fs";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+const { readFileSync } = fs;
 
 const failures = [];
 
@@ -77,6 +82,48 @@ if (!refColMatch) {
   if (!/r\.reference \?\? "—"/.test(refCol)) {
     failures.push(`${pagePath}: the honest plain-text fallback for rows with no journal_entry_id is gone`);
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const plants = [
+    [svcPath, "raw source id", "source_transaction_id: p.source_transaction_id ?? null", "source_transaction_id: null", "preserves source_transaction_id"],
+    [svcPath, "bill human reference", "NULLIF(btrim(b.bill_number), '')", "NULL", "human reference no longer COALESCE bill_number"],
+    [svcPath, "expense human fallback", "CASE WHEN p.source_transaction_type = 'expense' THEN 'Expense' END", "NULL", "expense Ref No. no longer falls back"],
+    [pagePath, "row source route", "navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))", "navigate(sourceRoute(r.source_transaction_type, r.reference))", "onRowClick no longer calls sourceRoute"],
+    [pagePath, "JE kind", 'kind="journal_entry"', 'kind="bill"', "reference column no longer renders an EntityLink"],
+    [pagePath, "JE id binding", "id={r.journal_entry_id}", "id={r.source_transaction_id}", "EntityLink no longer binds"],
+    [pagePath, "honest fallback", 'r.reference ?? "—"', 'r.reference ?? r.journal_entry_id', "honest plain-text fallback"],
+  ];
+  let caught = 0;
+  for (const [file, name, needle, replacement, expected] of plants) {
+    const original = file === svcPath ? svc : src;
+    if (!original.includes(needle)) {
+      console.error(`verify-account-register-ref-no-journal-entry-link --selftest FAIL — plant missing: ${name}`);
+      process.exit(1);
+    }
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "acct-register-ref-"));
+    try {
+      for (const rel of ["apps/backend/src/accounting", "apps/frontend/src/pages/accounting", "scripts"]) {
+        fs.mkdirSync(path.join(fixture, rel), { recursive: true });
+      }
+      fs.writeFileSync(path.join(fixture, svcPath), file === svcPath ? original.replace(needle, replacement) : svc);
+      fs.writeFileSync(path.join(fixture, pagePath), file === pagePath ? original.replace(needle, replacement) : src);
+      fs.copyFileSync(process.argv[1], path.join(fixture, "scripts/verify-account-register-ref-no-journal-entry-link.mjs"));
+      const result = spawnSync(process.execPath, ["scripts/verify-account-register-ref-no-journal-entry-link.mjs"], {
+        cwd: fixture,
+        encoding: "utf8",
+      });
+      if (result.status === 0 || !`${result.stdout}${result.stderr}`.includes(expected)) {
+        console.error(`verify-account-register-ref-no-journal-entry-link --selftest FAIL — plant escaped: ${name}`);
+        process.exit(1);
+      }
+      caught += 1;
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  }
+  console.log(`verify-account-register-ref-no-journal-entry-link --selftest PASS — ${caught}/${plants.length} independent register mutations caught`);
+  process.exit(0);
 }
 
 if (failures.length > 0) {
