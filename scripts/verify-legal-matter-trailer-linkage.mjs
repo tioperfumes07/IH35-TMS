@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["legal","fleet"],"cols":["trailer","connectivity","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^trailer\\.profile\\.legal_reverse$","task":"THEATER-LEGAL-MATTER-TRAILER-LEAFRE","vertical":"column-wave"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5910-LEGAL-MATTERS-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5941-LEGAL-MATTERS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-legal-matter-trailer-linkage";
@@ -19,6 +20,7 @@ const files = {
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5910-LEGAL-MATTERS-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.legal_reverse","trailer.profile.legal_reverse"],"task":"FLEET-F5941-LEGAL-MATTERS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const mutateLeaf = (text, id, mutate) => {
   const parsed = JSON.parse(text);
   const leaf = parsed.leaves.find((row) => row.id === id);
@@ -48,9 +50,11 @@ function audit(s) {
   for (const [id, route] of [["unit.profile.legal_reverse", "/fleet/units/:id"], ["trailer.profile.legal_reverse", "/fleet/trailers/:id"]]) {
     const leaf = matrix?.leaves?.find((row) => row.id === id);
     if (!leaf?.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
+    if (!leaf?.required?.includes("connectivity")) failures.push(`${id} must require connectivity`);
     if (leaf?.route_hint !== route) failures.push(`${id} must name mounted route ${route}`);
   }
   if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER)) failures.push("exact Fleet legal-reverse header missing");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet legal connectivity header missing");
   try { if (JSON.parse(s.feed).entries?.some((entry) => entry.guard === files.self)) failures.push("manual feed duplicates Fleet legal ownership"); }
   catch (error) { failures.push(`feed parse: ${error.message}`); }
   return failures;
@@ -71,6 +75,7 @@ if (process.argv.includes("--selftest")) {
     ["api", "api", /params\.equipment_id = filters\.equipment_id/, "params.unit_id = filters.equipment_id"],
     ["matter-drill", "reverseSection", /id=\{id\}/, "id={null}"],
     ["header", "self", new RegExp(HEADER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')],
+    ["connectivity-header", "self", new RegExp(CONNECTIVITY_HEADER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), CONNECTIVITY_HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')],
     ["feed", "feed", /^.*$/s, JSON.stringify({ entries: [{ guard: files.self }] })],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
@@ -84,6 +89,7 @@ if (process.argv.includes("--selftest")) {
   for (const id of ["unit.profile.legal_reverse", "trailer.profile.legal_reverse"]) {
     matrixMutations.push({ ...source, matrix: mutateLeaf(source.matrix, id, (leaf) => { leaf.id += ".broken"; }) });
     matrixMutations.push({ ...source, matrix: mutateLeaf(source.matrix, id, (leaf) => { leaf.route_hint = "/broken"; }) });
+    matrixMutations.push({ ...source, matrix: mutateLeaf(source.matrix, id, (leaf) => { leaf.required = leaf.required.filter((column) => column !== "connectivity"); }) });
   }
   matrixMutations.forEach((mutation, index) => { if (!audit(mutation).length) { console.error(`${LABEL} SELFTEST FAIL — matrix mutation ${index + 1} escaped`); process.exit(1); } });
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length + matrixMutations.length}/${mutations.length + matrixMutations.length} runtime/evidence mutations detected`);
