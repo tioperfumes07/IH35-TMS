@@ -43,6 +43,24 @@ describe("accounting source lineage filters", () => {
     expect(sql).toContain("jp.source_transaction_type IN ('payment', 'customer_payment')");
   });
 
+  it("resolves linked payment and expense objects to human labels", async () => {
+    const query = vi.fn(async () => ({ rows: [] }));
+    await listAccountingSourceLineage(
+      { query },
+      {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        source_transaction_type: "expense",
+        source_transaction_id: "expense-1001",
+        limit: 100,
+      },
+    );
+    const sql = String(query.mock.calls[0]?.[0] ?? "");
+    expect(sql).toContain("accounting.payments link_pay");
+    expect(sql).toContain("link_pay.display_id");
+    expect(sql).toContain("accounting.expenses link_exp");
+    expect(sql).toContain("'Expense ' || link_exp.transaction_date::text");
+  });
+
   // LINEAGE-ROUTE-OMITS-JE-MEMO — accounting.journal_entries has no number/ref/doc column; memo IS
   // the JE's human identity. The source-lineage query used to omit it entirely (grep -c memo == 0),
   // so InvoiceDetailPage's lineage chips had no name to render and hardcoded entityLabel(null, jeId, …).

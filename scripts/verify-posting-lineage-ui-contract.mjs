@@ -51,5 +51,14 @@ if (/entityLabel\(\s*null\s*,\s*row\.journal_entry_id/.test(pageText)) {
 if (/entityLabel\(\s*null\s*,\s*row\.linked_object_id/.test(pageText)) {
   fail("PostingLineagePage linked object must use linked_object_display_id, not UUID tombstone");
 }
+if (!pageText.includes("visibleDocumentLabel(")) {
+  fail("Posting lineage source and reverse-object links must render human document labels");
+}
+if (/entityLabel\(rows\[0\]\?\.source_transaction_display_id/.test(pageText)) {
+  fail("Posting lineage source must not regress to a not-visible tombstone for a mounted record");
+}
+if (/entityLabel\(row\.linked_object_display_id/.test(pageText)) {
+  fail("Posting lineage reverse object must not regress to a not-visible tombstone for a mounted record");
+}
 
 console.log("verify:posting-lineage-ui-contract — OK");
