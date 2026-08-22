@@ -1,75 +1,82 @@
 #!/usr/bin/env node
-/**
- * verify-factoring-home-canonical-factor-profile — guard against dual-path regression.
- *
- * FactoringHome KPI uses getFactoringSummary (canonical factoring.factor / linkage identity).
- * The profile panel MUST use the same factoring.factor source (listFactors + updateFactor),
- * not mdata.vendors vendor-notes lookup — otherwise live shows "ACTIVE FACTOR Faro" plus
- * "No factor configured" on the same page.
- */
+/** Ratchet: Factoring Home reads, resolves, displays, and updates one canonical factoring.factor row. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-home-canonical-factor-profile";
-const PAGE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+const paths = {
+  page: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+  api: "apps/frontend/src/api/factoring.ts",
+  profile: "apps/frontend/src/lib/factorProfile.ts",
+  panel: "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx",
+};
+const source = Object.fromEntries(Object.entries(paths).map(([key, rel]) => [key, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 
-function read(rel) {
-  const full = path.join(ROOT, rel);
-  if (!fs.existsSync(full)) {
-    console.error(`[${LABEL}] FAIL: missing ${rel}`);
-    process.exit(1);
+export function collectFailures(src = source) {
+  const failures = [];
+  const requireText = (key, token, message) => { if (!src[key].includes(token)) failures.push(message); };
+  const forbid = (key, pattern, message) => { if (pattern.test(src[key])) failures.push(message); };
+
+  forbid("page", /activeFactorVendor|parseVendorNotes|serializeVendorNotes|updateVendor\s*\(/, "Factoring profile must never use the mdata vendor-notes dual path");
+  requireText("page", 'queryKey: ["factoring", "factors", companyId]', "factor reader cache must be selected-company scoped");
+  requireText("page", "queryFn: () => listFactors(companyId).then((res) => res.factors)", "profile must read canonical factors for the selected company");
+  requireText("page", "resolveActiveFactorFromSummary(summary, factorsQuery.data ?? [])", "profile must resolve the canonical summary identity against canonical factor rows");
+  requireText("page", "<FactoringProfilePanel\n            factor={activeFactor}", "mounted profile panel must receive the resolved factor row");
+  requireText("page", "setProfileEditForm(factorToProfileForm(activeFactor))", "edit form must hydrate from that same resolved row");
+  requireText("page", "await updateFactor(activeFactor.id, companyId, {", "save must patch that same factor id inside the selected company");
+  requireText("page", 'queryKey: ["factoring", "factors", companyId]', "save/read invalidation must retain selected-company identity");
+  requireText("page", "No factor configured. Activate a factor to manage its profile.", "honest no-factor state must remain visible");
+
+  requireText("api", "operating_company_id: companyId, active_only: options.active_only", "factor list API must send selected company scope");
+  requireText("api", "`/api/v1/factoring/factors/${encodeURIComponent(factorId)}`", "factor update API must address the canonical factor id");
+  requireText("api", "operating_company_id: companyId,\n      ...body", "factor update body must carry selected company scope");
+  requireText("profile", "const profileId = summary?.active_factor_profile_id?.trim()", "resolver must prefer canonical active_factor_profile_id");
+  requireText("profile", "factors.find((factor) => factor.id === profileId)", "resolver must match canonical profile id to factor.id");
+  requireText("panel", "parseRemittanceDetails(factor.remittance_details)", "panel must render canonical factor remittance details");
+  requireText("panel", "{factor.name} · primary factoring company on file", "panel must display the resolved factor name");
+  requireText("panel", "rateToPctString(factor.advance_rate)", "panel must display the resolved factor advance rate");
+  return failures;
+}
+
+function selftest() {
+  const baseline = collectFailures();
+  if (baseline.length) throw new Error(`clean baseline red: ${baseline.join("; ")}`);
+  const mutations = [
+    ["page", 'queryKey: ["factoring", "factors", companyId]', 'queryKey: ["factoring", "factors"]'],
+    ["page", "listFactors(companyId)", "listFactors(\"wrong-company\")"],
+    ["page", "resolveActiveFactorFromSummary(summary, factorsQuery.data ?? [])", "resolveActiveFactorFromSummary(null, factorsQuery.data ?? [])"],
+    ["page", "factor={activeFactor}", "factor={factorsQuery.data?.[0]}"],
+    ["page", "factorToProfileForm(activeFactor)", "factorToProfileForm(factorsQuery.data![0])"],
+    ["page", "updateFactor(activeFactor.id, companyId", "updateFactor(summary!.active_factor_id!, companyId"],
+    ["api", "operating_company_id: companyId, active_only: options.active_only", "active_only: options.active_only"],
+    ["api", "encodeURIComponent(factorId)", "encodeURIComponent(companyId)"],
+    ["api", "operating_company_id: companyId,\n      ...body", "...body"],
+    ["profile", "summary?.active_factor_profile_id?.trim()", "summary?.active_factor_name?.trim()"],
+    ["profile", "factor.id === profileId", "factor.name === profileId"],
+    ["panel", "factor.remittance_details", "null"],
+    ["panel", "{factor.name} · primary factoring company on file", "Unknown factor"],
+    ["panel", "rateToPctString(factor.advance_rate)", "rateToPctString(0)"],
+  ];
+  let rejected = 0;
+  for (const [key, needle, replacement] of mutations) {
+    if (!source[key].includes(needle)) throw new Error(`plant target missing in ${key}: ${needle}`);
+    const planted = { ...source, [key]: source[key].split(needle).join(replacement) };
+    if (collectFailures(planted).length) rejected += 1;
   }
-  return fs.readFileSync(full, "utf8");
+  if (rejected !== mutations.length) throw new Error(`rejected ${rejected}/${mutations.length} plants`);
+  console.log(`[${LABEL}] --selftest PASS: rejected ${rejected}/${mutations.length} canonical factor identity plants`);
 }
 
-function pass(msg) {
-  console.log(`[${LABEL}] PASS: ${msg}`);
-}
-
-function fail(msg) {
-  console.error(`[${LABEL}] FAIL: ${msg}`);
+try {
+  if (process.argv.includes("--selftest")) selftest();
+  else {
+    const failures = collectFailures();
+    if (failures.length) throw new Error(failures.join("; "));
+    console.log(`[${LABEL}] PASS: one selected-company factoring.factor row powers read, profile, edit, and save`);
+  }
+} catch (error) {
+  console.error(`[${LABEL}] FAIL: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }
-
-const src = read(PAGE);
-
-if (src.includes("activeFactorVendor")) {
-  fail(`${PAGE} must not resolve profile via activeFactorVendor (mdata.vendors dual-path)`);
-}
-pass("no activeFactorVendor vendor-notes gate");
-
-if (!src.includes("listFactors")) {
-  fail(`${PAGE} must load active factor profile via listFactors`);
-}
-pass("listFactors wired for canonical factor profile");
-
-if (!src.includes("updateFactor")) {
-  fail(`${PAGE} must persist profile edits via updateFactor (factoring.factor)`);
-}
-pass("updateFactor wired for profile save");
-
-if (/updateVendor\s*\(/.test(src)) {
-  fail(`${PAGE} must not save factoring profile via updateVendor`);
-}
-pass("no updateVendor profile save");
-
-// Gate on the loaded factoring.factor row (activeFactor), not a summary-only boolean that
-// rendered an empty notes-based panel while KPI already showed Faro (#4211 / FACT-kpi-vs-profile).
-if (!/\{activeFactor \?/.test(src) && !/activeFactor \? \(/.test(src)) {
-  fail(`${PAGE} must gate profile panel on activeFactor (canonical factoring.factor row)`);
-}
-pass("profile visibility follows loaded factoring.factor row");
-
-if (/parseVendorNotes|serializeVendorNotes/.test(src)) {
-  fail(`${PAGE} must not parse/serialize vendor notes for factor profile`);
-}
-pass("no vendor-notes profile path");
-
-if (!src.includes("No factor configured")) {
-  fail(`${PAGE} must retain empty-state copy for companies with no active factor`);
-}
-pass("empty-state copy present");
-
-console.log(`\n[${LABEL}] ALL CHECKS PASSED`);
