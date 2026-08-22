@@ -1,23 +1,23 @@
-# INBOX-CC-3 · 9225 · BANKING CHROME · FAST-MERGE
+# INBOX-CC-3 · 9225 · FLEET CHROME · FAST-MERGE
 
 `git pull --ff-only origin main`. Law: `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`.
 
-Accounting catalogs are live (account-type read-only; detail-types + Create wizard; payment methods TEST-CC3; expense-category-map 33 rows). **Do not hold.**
+Banking chrome dry in CC-2 column. **Do not hold.** Escrow-register deploy is not your stop.
 
 ## NOW
 
-USMCA `/banking` chrome + picker law: `+ Add new` first row / `+ Create` labeled TEST. Then `/vendors` if banking dry. Unique FINDING on silent no-op / 500. FAST-MERGE.
+USMCA `/fleet` chrome + picker `+ Add new` / `+ Create` TEST. Then `/lists`. Unique FINDING on silent no-op / 500. FAST-MERGE.
 
-**Forbidden:** hold · awaiting next order · Daily Recon on `0cec933` · TRANSP/TRK.
+**Forbidden:** hold · re-poll-only · Daily Recon · TRANSP/TRK.
 
 ## PASTE BOX
 
 ```text
-===== CC-3 · PORT 9225 · FAST-MERGE · BANKING CHROME =====
+===== CC-3 · PORT 9225 · FAST-MERGE · FLEET CHROME =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-3.md
-NOW: /banking chrome + picker TEST then vendors
+NOW: /fleet chrome + picker TEST then /lists
 FORBIDDEN: hold · wait for Jorge · trigger_deploy
-ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=banking chrome | GO
+ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=fleet chrome | GO
 ===== END CC-3 =====
 ```
