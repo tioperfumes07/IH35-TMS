@@ -16,6 +16,9 @@ const LABEL = "verify-banking-reverse-link-list-surfaces";
 const VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
 const HOME = "apps/frontend/src/pages/banking/BankingHome.tsx";
 const ROUTES = "apps/frontend/src/routes/manifest.tsx";
+const API = "apps/frontend/src/api/banking.ts";
+const PLAID = "apps/backend/src/integrations/plaid/link.routes.ts";
+const TRANSFERS = "apps/frontend/src/pages/banking/TransfersListPage.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
@@ -30,6 +33,12 @@ const CHECKS = [
   { name: "list settlement drill", file: VIEW, pattern: /kind="settlement"\s+id=\{tx\.matched_settlement_id\}/ },
   { name: "list bill drill", file: VIEW, pattern: /kind="bill"\s+id=\{tx\.matched_bill_id\}/ },
   { name: "list journal entry drill", file: VIEW, pattern: /kind="journal_entry"\s+id=\{tx\.matched_journal_entry_id\}/ },
+  { name: "bank transaction transfer id contract", file: API, pattern: /matched_transfer_id\?: string \| null;[\s\S]{0,120}matched_transfer_label\?: string \| null;/ },
+  { name: "per-account transfer reverse read", file: PLAID, pattern: /bt\.matched_transfer_id::text AS matched_transfer_id,[\s\S]{0,180}AS matched_transfer_label/ },
+  { name: "company transfer reverse read", file: PLAID, pattern: /bt\.matched_transfer_id::text AS matched_transfer_id,[\s\S]{0,180}AS matched_transfer_label[\s\S]{0,1800}WHEN bt\.matched_transfer_id IS NOT NULL THEN 'transfer'/ },
+  { name: "transfer label join company scoped", file: PLAID, pattern: /LEFT JOIN banking\.transfers transfer\s+ON transfer\.id = bt\.matched_transfer_id\s+AND transfer\.operating_company_id = bt\.operating_company_id/g },
+  { name: "list transfer drill", file: VIEW, pattern: /kind="transfer"\s+id=\{tx\.matched_transfer_id\}[\s\S]{0,160}tx\.matched_transfer_label/ },
+  { name: "transfer exact deep link read", file: TRANSFERS, pattern: /const deepLinkTransferId = searchParams\.get\("transfer_id"\)[\s\S]{0,5000}getTransfer\(deepLinkTransferId, companyId\)/ },
   { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
   { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
   { name: "categorize load drill", file: VIEW, pattern: /kind="load" id=\{links\.load_id\}[\s\S]{0,120}links\.load_number/ },

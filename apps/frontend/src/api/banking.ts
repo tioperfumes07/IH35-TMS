@@ -87,6 +87,9 @@ export type PlaidBankTransaction = {
   matched_journal_entry_id?: string | null;
   /** Human label for the matched JE (memo) — same ACCT-F5153 convention as matched_bill_number. */
   matched_journal_entry_memo?: string | null;
+  /** Canonical transfer stamped by transfer recognition; returned with a human reference/memo label. */
+  matched_transfer_id?: string | null;
+  matched_transfer_label?: string | null;
   institution_name?: string | null;
   account_name?: string | null;
   account_mask?: string | null;

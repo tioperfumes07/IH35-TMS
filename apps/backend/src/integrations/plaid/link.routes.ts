@@ -334,6 +334,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           settlement.display_id AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           je.memo AS matched_journal_entry_memo,
+          bt.matched_transfer_id::text AS matched_transfer_id,
+          COALESCE(NULLIF(TRIM(transfer.reference_number), ''), NULLIF(TRIM(transfer.memo), '')) AS matched_transfer_label,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
@@ -349,6 +351,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.journal_entries je
           ON je.id = bt.matched_journal_entry_id
          AND je.operating_company_id = bt.operating_company_id
+        LEFT JOIN banking.transfers transfer
+          ON transfer.id = bt.matched_transfer_id
+         AND transfer.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY bt.transaction_date DESC, bt.created_at DESC
         LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -610,6 +615,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- as "Journal entry — not visible" even when fully resolvable. The by-linkage sibling
           -- endpoint already returns matched_journal_entry_memo; mirror it here.
           je.memo AS matched_journal_entry_memo,
+          bt.matched_transfer_id::text AS matched_transfer_id,
+          COALESCE(NULLIF(TRIM(transfer.reference_number), ''), NULLIF(TRIM(transfer.memo), '')) AS matched_transfer_label,
           bt.notes,
           bt.created_at,
           bt.source,
@@ -638,6 +645,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           ba.account_name,
           ba.account_mask,
           CASE
+            WHEN bt.matched_transfer_id IS NOT NULL THEN 'transfer'
             WHEN bt.matched_journal_entry_id IS NOT NULL THEN 'je'
             WHEN bt.matched_load_id IS NOT NULL THEN 'load'
             WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
@@ -697,6 +705,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.journal_entries je
           ON je.id = bt.matched_journal_entry_id
          AND je.operating_company_id = bt.operating_company_id
+        LEFT JOIN banking.transfers transfer
+          ON transfer.id = bt.matched_transfer_id
+         AND transfer.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}
