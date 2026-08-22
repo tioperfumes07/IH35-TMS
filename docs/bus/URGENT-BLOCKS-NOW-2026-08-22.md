@@ -1,6 +1,6 @@
-# URGENT BLOCKS NOW · 2026-08-22 09:08 CT · BINDING · 14 MODULES
+# URGENT BLOCKS NOW · 2026-08-22 10:34 CT · BINDING · 14 MODULES
 
-**This file is the NOW.** `git pull --ff-only origin main`. If your INBOX disagrees with **09:08 CT**, this file wins.
+**This file is the NOW.** `git pull --ff-only origin main`. If your INBOX disagrees with **10:34 CT**, this file wins.
 
 Claiming **stale** / **drained** / **empty-queue** / **awaiting next order** / **waiting Cursor** / **waiting healthz** / **Accounting already certified** after this pull is a **process defect**.
 
@@ -16,7 +16,7 @@ Switcher **must** show USMCA. No Trucking. No Transportation. **No QBO sync. No 
 
 **Law:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · Fully-Wired 1–12 · `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md` · USMCA-only until launch.
 
-**Render:** Cursor only, Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd`. **No `trigger_deploy` from CC-1/2/3/Codex.** One batch deploy. Do not stack. Live API **`0cec933` is not a seat idle.**
+**Render:** Cursor only, Desktop `/Users/jorgemunoz/Desktop/APIS-ALL-05-29-2026.rtfd`. **No `trigger_deploy` from CC-1/2/3/Codex.** Measured 10:34 CT: live `healthz` **`0cec933`** (uptime ~5602s). Prior batch `dep-da4qm10jo6nc73dqu0qg` **update_failed**. Replacement **one** kick `dep-da4s3m3l550s738ql90g` commit `26242d426b59`. **Do not stack.** Idle / “09:08 sequence closed” / “awaiting next order” after this pull is a **process defect**.
 
 ---
 
@@ -48,7 +48,7 @@ CREATE-TEST hops are **proven** — **do not remake:**
 | Bank split sample | Palos Garza `f9cc15bf-…` |
 | Sales-tax agency | CC-2 TEST agency (do not duplicate) |
 
-**CERTIFY:** Cursor Live Chrome **only** when `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` **≠** `0cec933` **and** authenticated Daily Recon **200**, then Daily Recon click + archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999` + prepaid Create GL pickers. **Measured 09:08 CT: still `0cec933` → Accounting is NOT CERTIFIED.** That is **not** a reason for other seats to stop. They execute **U2 onward** now.
+**CERTIFY:** Cursor Live Chrome **only** when `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` **≠** `0cec933` **and** authenticated Daily Recon **200**, then Daily Recon click + archived vendor `308f6434-0a51-4109-953e-c86ffb1f0999` + prepaid Create GL pickers. **Measured 10:34 CT: still `0cec933` → Accounting is NOT CERTIFIED.** Unauthenticated recon is **401**. That is **not** a seat idle. Execute **#2–#14 now**; after-14 if your 14 URLs were already opened **this pull**.
 
 ---
 
@@ -163,7 +163,7 @@ Prove with SQL/GET/guard. Canonical tables. Forward **and** reverse. Memo-only U
 
 ### Cursor · 9222 · LEAD + CERTIFY + WIRING
 
-1. Keep this file + INBOXes = **09:08 CT**. Seats that say 04:11 CT **did not pull**.
+1. Keep this file + INBOXes = **10:34 CT**. Seats that say **09:08 sequence closed** / **04:11 CT** / **awaiting next order** **did not pull**.
 2. Render: one in-flight deploy max. **No second kick.** When `healthz` ≠ `0cec933`: Daily Recon 200 + archived vendor + prepaid pickers → then stamp Accounting certify **only if those pass**.
 3. Cursor-lane wiring FAILs (EVEN steps). FAST-MERGE.
 4. After U1 certify attempt: same Live leftover as CC-2 on unpaid 2–14.
@@ -174,5 +174,5 @@ Prove with SQL/GET/guard. Canonical tables. Forward **and** reverse. Memo-only U
 ## ACK (first OUTBOX line after pull)
 
 ```text
-<SEAT> | ACK | URGENT-BLOCKS-NOW 09:08CT | PORT=<n> | NOW=<first URL in your INBOX> | GO
+<SEAT> | ACK | URGENT-BLOCKS-NOW 10:34CT | PORT=<n> | NOW=<first URL in your INBOX> | GO
 ```
