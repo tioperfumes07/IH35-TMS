@@ -222,6 +222,7 @@ export function ReconciliationWorkspacePage() {
   // 0441-mod8: wire Auto-Match → existing bank-recon auto_matched_candidates worklist
   // (BankReconciliationPage accept/reject). No new scoring/GL — session period + account only.
   const session = workspaceQuery.data?.session;
+  const bankAccountLabel = workspaceQuery.data?.bank_account_label || "Bank account";
   const canOpenAutoMatchSuggestions = Boolean(
     sessionId &&
       companyId &&
@@ -264,7 +265,7 @@ export function ReconciliationWorkspacePage() {
       <PageHeader
         backHref="/banking"
         title="Reconciliation Workspace"
-        subtitle={effectiveBankAccountId ? entityLabel(null, effectiveBankAccountId, "Bank account") : ""}
+        subtitle={effectiveBankAccountId ? bankAccountLabel : ""}
         actions={
           <div className="flex items-center gap-2">
             <ActionButton
@@ -342,7 +343,7 @@ export function ReconciliationWorkspacePage() {
             orientation,
             bodyHtml: `
               <h1>Bank reconciliation</h1>
-              <div class="meta">${esc(entityLabel(null, effectiveBankAccountId, "Bank account"))} · ${esc(
+              <div class="meta">${esc(bankAccountLabel)} · ${esc(
                 session?.period_start ? formatDateUS(session.period_start) : "—",
               )} → ${esc(session?.period_end ? formatDateUS(session.period_end) : "—")} · ${esc(
                 orientation,

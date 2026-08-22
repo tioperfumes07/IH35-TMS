@@ -24,6 +24,7 @@ const ACCOUNT_DETAIL = "apps/frontend/src/pages/banking/BankAccountDetail.tsx";
 const RECON_WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
 const CATEGORIZATION_ROUTES = "apps/backend/src/banking/categorization.routes.ts";
+const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
@@ -78,6 +79,11 @@ const CHECKS = [
   { name: "reconciliation uses canonical match classifier", file: RECON_WORKSPACE, pattern: /transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)[\s\S]*transactionIsMatched\(tx\)/ },
   { name: "reconciliation transfer reverse drill", file: RECON_WORKSPACE, pattern: /kind="transfer" id=\{tx\.matched_transfer_id\}[\s\S]{0,180}tx\.matched_transfer_label/ },
   { name: "reconciliation journal entry reverse drill", file: RECON_WORKSPACE, pattern: /kind="journal_entry" id=\{tx\.matched_journal_entry_id\}[\s\S]{0,180}tx\.matched_journal_entry_memo/ },
+  { name: "reconciliation server all-kind partition", file: RECON_ROUTES, pattern: /const hasPersistedMatch = \(row:[\s\S]{0,400}row\.matched_transfer_id \|\| row\.matched_journal_entry_id[\s\S]{0,180}transactions\.filter\(hasPersistedMatch\)[\s\S]{0,180}!hasPersistedMatch\(row\)/ },
+  { name: "reconciliation summary all-kind compatibility", file: RECON_ROUTES, pattern: /matched_transfer_id\?: string \| null;[\s\S]{0,100}matched_journal_entry_id\?: string \| null;[\s\S]{0,800}t\.matched_transfer_id \|\| t\.matched_journal_entry_id/ },
+  { name: "reconciliation complete reads all match FKs", file: RECON_ROUTES, pattern: /matched_expense_id,\s+matched_transfer_id, matched_journal_entry_id\s+FROM banking\.bank_transactions/ },
+  { name: "reconciliation account label read company scoped", file: RECON_ROUTES, pattern: /FROM banking\.bank_accounts\s+WHERE id = \$1::uuid AND operating_company_id = \$2::uuid[\s\S]{0,500}bank_account_label:/ },
+  { name: "reconciliation chrome uses resolved account label", file: RECON_WORKSPACE, pattern: /const bankAccountLabel = workspaceQuery\.data\?\.bank_account_label[\s\S]{0,5000}subtitle=\{effectiveBankAccountId \? bankAccountLabel[\s\S]*esc\(bankAccountLabel\)/ },
   { name: "linked panel deduction human label projection", file: CATEGORIZATION_ROUTES, pattern: /COALESCE\(NULLIF\(TRIM\(ded\.deduction_type\), ''\), 'Driver deduction'\) AS deduction_label/ },
   { name: "linked panel deduction label join is company scoped", file: CATEGORIZATION_ROUTES, pattern: /LEFT JOIN driver_finance\.driver_settlement_deductions ded[\s\S]{0,180}ded\.operating_company_id = bt\.operating_company_id/ },
   { name: "linked panel deduction exact reverse drill", file: LINKED_PANEL, pattern: /row\.deduction_id \? \([\s\S]{0,300}kind="settlement_deduction"[\s\S]{0,120}id=\{row\.deduction_id\}[\s\S]{0,300}row\.deduction_label/ },

@@ -201,6 +201,7 @@ export type ReconciliationSession = {
 
 export type ReconciliationWorkspacePayload = {
   session: ReconciliationSession;
+  bank_account_label: string;
   matched_transactions: PlaidBankTransaction[];
   unmatched_transactions: PlaidBankTransaction[];
   candidates: {
