@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting"],"cols":["reverse_link"],"leafRe":"^(customers|vendors)$","task":"ROSTER-REVERSE-LINK-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^(home\\.roster|list\\.view_(list|master_detail)|list\\.segment\\.(preferred|watch|factored))$","task":"ROSTER-REVERSE-LINK-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^(home\\.roster|list\\.view_(list|master_detail))$","task":"ROSTER-REVERSE-LINK-LEAVES","vertical":"column-wave"} */
-/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":"^hub\\.names_search$","task":"ROSTER-REVERSE-LINK-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["accounting"],"cols":["reverse_link"],"leaves":["customers","vendors"],"task":"CLASS-F5870-ROSTER-REVERSE-EXACT-APPLICABLE-LEAVES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["home.roster","list.view_list","list.view_master_detail","list.segment.preferred","list.segment.watch","list.segment.factored"],"task":"CLASS-F5870-ROSTER-REVERSE-EXACT-APPLICABLE-LEAVES","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const LABEL = "verify-roster-reverse-link-leaves";
@@ -15,7 +13,18 @@ const files = {
   vendorList: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
   vendorSidebar: "apps/frontend/src/pages/vendors/VendorListSidebar.tsx",
   names: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx",
+  accountingMatrix: "docs/specs/scoreboard/modules/accounting.required.json",
+  customersMatrix: "docs/specs/scoreboard/modules/customers.required.json",
+  self: "scripts/verify-roster-reverse-link-leaves.mjs",
 };
+const REQUIRED = {
+  accountingMatrix: ["customers", "vendors"],
+  customersMatrix: ["home.roster", "list.view_list", "list.view_master_detail", "list.segment.preferred", "list.segment.watch", "list.segment.factored"],
+};
+const HEADERS = [
+  '/** @matrix-built {"modules":["accounting"],"cols":["reverse_link"],"leaves":["customers","vendors"],"task":"CLASS-F5870-ROSTER-REVERSE-EXACT-APPLICABLE-LEAVES","vertical":"class-sweep"} */',
+  '/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["home.roster","list.view_list","list.view_master_detail","list.segment.preferred","list.segment.watch","list.segment.factored"],"task":"CLASS-F5870-ROSTER-REVERSE-EXACT-APPLICABLE-LEAVES","vertical":"class-sweep"} */',
+];
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 function audit(s) {
@@ -46,6 +55,13 @@ function audit(s) {
     failures.push("names canonical entity drills missing");
   }
   if (!/searchQuery\.isError/.test(s.names) || !/emptyText="No results\. Try a search term\."/.test(s.names)) failures.push("names honest states missing");
+  for (const [key, ids] of Object.entries(REQUIRED)) {
+    try {
+      const matrix = JSON.parse(s[key]);
+      for (const id of ids) if (!matrix.leaves?.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`${key}:${id} must require reverse_link`);
+    } catch { failures.push(`${key} must parse`); }
+  }
+  for (const header of HEADERS) if (!s.self.split("\n").includes(header)) failures.push(`exact Built header missing: ${header}`);
   return failures;
 }
 
@@ -72,7 +88,18 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  let caught = mutations.length;
+  for (const [key, ids] of Object.entries(REQUIRED)) for (const id of ids) {
+    const candidate = { ...source, [key]: source[key].replace(`"id": "${id}"`, `"id": "${id}.removed"`) };
+    if (!audit(candidate).some((failure) => failure.includes(`${key}:${id}`))) throw new Error(`Required mutation escaped: ${key}:${id}`);
+    caught += 1;
+  }
+  for (const header of HEADERS) {
+    const candidate = { ...source, self: source.self.replace(header, `${header}.removed`) };
+    if (!audit(candidate).some((failure) => failure.includes("exact Built header missing"))) throw new Error("header mutation escaped");
+    caught += 1;
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${mutations.length + 10} runtime/matrix/header mutations detected`);
   process.exit(0);
 }
 
