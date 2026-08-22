@@ -4,8 +4,8 @@ import ExcelJS from "exceljs";
 import { z } from "zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mapSpreadsheetRows, normalizeHeaderKey, parseSpreadsheetBuffer } from "./excel-uploader.js";
-import { createCatalogRoutes } from "./generic-catalog.factory.js";
-import { fleetEquipmentTypesCatalogConfig } from "./generic-catalog.routes.js";
+import { createCatalogRoutes, type GenericCatalogConfig } from "./generic-catalog.factory.js";
+import { cashAdvanceTypesCatalogConfig, fleetEquipmentTypesCatalogConfig } from "./generic-catalog.routes.js";
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("INSERT INTO catalogs.excel_upload_jobs")) {
@@ -302,5 +302,127 @@ describe.sequential("generic catalog framework", () => {
   it("parseSpreadsheetBuffer rejects parsed legacy xls files", async () => {
     const ole = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
     await expect(parseSpreadsheetBuffer(ole, "legacy.xls")).rejects.toThrow("unsupported_file_type");
+  });
+});
+
+// LST-CATALOG-AUDIT-COLUMNS-500 — catalogs.cash_advance_types (and 19 sibling catalogs) has a real
+// `updated_at` column but NO created_by_user_id/updated_by_user_id columns at all. The factory used
+// to write those columns unconditionally whenever hasUpdatedAt was true, which 500'd every
+// Create/Edit/Void/Restore on those catalogs with a raw Postgres 42703
+// ("column ... does not exist") surfaced straight to the operator. Live-reproduced 2026-08-22 on
+// the real Cash Advance Types edit form before this fix. Asserts the generated SQL for the fixed
+// catalog never references the audit-user columns, and — as a control — that the DEFAULT catalog
+// (hasAuditUserColumns unset) still does, so a regression that re-couples the two flags is caught
+// either way.
+describe.sequential("generic catalog framework — hasAuditUserColumns", () => {
+  const apps: Array<ReturnType<typeof Fastify>> = [];
+  // queryMock is the SAME shared mock the first describe block above uses (module-level, wired
+  // through the "../auth/db.js" mock). Restore its original big-switch implementation after every
+  // test here so this block can never leak state into the first block regardless of run order.
+  const originalQueryImpl = queryMock.getMockImplementation();
+
+  afterEach(async () => {
+    await Promise.all(apps.splice(0).map((app) => app.close()));
+    if (originalQueryImpl) queryMock.mockImplementation(originalQueryImpl);
+  });
+
+  async function buildAppFor(config: GenericCatalogConfig, sqlLog: string[]) {
+    const mockQuery = vi.fn(async (sql: string) => {
+      sqlLog.push(sql);
+      if (sql.includes("SELECT id FROM catalogs.")) return { rows: [] }; // no code conflict
+      if (sql.trim().startsWith("INSERT INTO")) {
+        return { rows: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", code: "TEST", display_name: "Test", is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] };
+      }
+      if (sql.trim().startsWith("UPDATE")) {
+        return { rows: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", code: "TEST", display_name: "Test", is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] };
+      }
+      return { rows: [] };
+    });
+    const app = Fastify();
+    await app.register(multipart);
+    apps.push(app);
+    app.addHook("preHandler", async (req) => {
+      (req as { user?: { uuid: string; role: string } }).user = {
+        uuid: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        role: "Owner",
+      };
+    });
+    // withCurrentUser's client (mocked at module level) always calls the shared queryMock, so
+    // route this test's queries through it by swapping its implementation for the duration —
+    // restored in afterEach above, regardless of which test runs.
+    queryMock.mockImplementation(mockQuery as typeof queryMock);
+    createCatalogRoutes(app, config, { mode: "all" });
+    return app;
+  }
+
+  it("fixed catalog (hasAuditUserColumns: false): CREATE never references the audit-user columns", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(cashAdvanceTypesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/driver/cash-advance-types?operating_company_id=${TEST_OPCO}`,
+      payload: { code: "ROUTE2", display_name: "Route advance 2" },
+    });
+    expect(response.statusCode).toBe(201);
+    const insertSql = sqlLog.find((s) => s.trim().startsWith("INSERT INTO"));
+    expect(insertSql).toBeDefined();
+    expect(insertSql).not.toContain("created_by_user_id");
+    expect(insertSql).not.toContain("updated_by_user_id");
+  });
+
+  it("fixed catalog (hasAuditUserColumns: false): UPDATE never references updated_by_user_id, but keeps updated_at", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(cashAdvanceTypesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/catalogs/driver/cash-advance-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?operating_company_id=${TEST_OPCO}`,
+      payload: { description: "updated" },
+    });
+    expect(response.statusCode).toBe(200);
+    const updateSql = sqlLog.find((s) => s.trim().startsWith("UPDATE"));
+    expect(updateSql).toBeDefined();
+    expect(updateSql).not.toContain("updated_by_user_id");
+    expect(updateSql).toContain("updated_at");
+  });
+
+  it("fixed catalog (hasAuditUserColumns: false): DELETE (soft-archive) never references updated_by_user_id", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(cashAdvanceTypesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/catalogs/driver/cash-advance-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?operating_company_id=${TEST_OPCO}`,
+    });
+    expect(response.statusCode).toBe(200);
+    const deleteSql = sqlLog.find((s) => s.trim().startsWith("UPDATE") && s.includes("is_active = false"));
+    expect(deleteSql).toBeDefined();
+    expect(deleteSql).not.toContain("updated_by_user_id");
+  });
+
+  it("fixed catalog (hasAuditUserColumns: false): RESTORE never references updated_by_user_id", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(cashAdvanceTypesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/driver/cash-advance-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/restore?operating_company_id=${TEST_OPCO}`,
+    });
+    expect(response.statusCode).toBe(200);
+    const restoreSql = sqlLog.find((s) => s.trim().startsWith("UPDATE") && s.includes("is_active = true"));
+    expect(restoreSql).toBeDefined();
+    expect(restoreSql).not.toContain("updated_by_user_id");
+  });
+
+  it("REGRESSION CONTROL — default catalog (hasAuditUserColumns unset) still writes the audit-user columns", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildAppFor(fleetEquipmentTypesCatalogConfig, sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/fleet/equipment-types?operating_company_id=${TEST_OPCO}`,
+      payload: { code: "CTRL", display_name: "Control" },
+    });
+    expect(response.statusCode).toBe(201);
+    const insertSql = sqlLog.find((s) => s.trim().startsWith("INSERT INTO"));
+    expect(insertSql).toBeDefined();
+    expect(insertSql).toContain("created_by_user_id");
+    expect(insertSql).toContain("updated_by_user_id");
   });
 });
