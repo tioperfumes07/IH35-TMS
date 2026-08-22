@@ -48,7 +48,14 @@ export function assertGate({ service }) {
   } else {
     const gateIdx = body.search(/isEnabled\([\s\S]{0,120}?SETTLEMENT_GL_POSTING_FLAG_KEY/);
     const offIdx = body.search(/if\s*\(\s*!\s*flagOn\s*\)\s*return\s+null/);
-    const postIdx = body.search(/createJournalEntry\s*\(/);
+    // ACCT-F5676 (#13264) switched the real call site from createJournalEntry(...) to
+    // createJournalEntryOnClient(...) (reuses the caller's own open transaction — see this file's own
+    // header comment) but this guard's anchor was never updated, so it stopped finding the post
+    // entirely: "createJournalEntry" is a literal PREFIX of "createJournalEntryOnClient", and the old
+    // regex required "(" immediately after "createJournalEntry" with only whitespace between — which
+    // "OnClient(" is not. The gate-before-post property itself was never broken; the guard just went
+    // blind to its own anchor. Accept either spelling.
+    const postIdx = body.search(/createJournalEntry(?:OnClient)?\s*\(/);
     if (gateIdx < 0) errors.push(`${SERVICE}: createCorrectiveJournalEntry does not resolve isEnabled(..., SETTLEMENT_GL_POSTING_FLAG_KEY, ...)`);
     if (offIdx < 0) errors.push(`${SERVICE}: does not return null (post nothing) when the flag is OFF`);
     if (postIdx < 0) errors.push(`${SERVICE}: could not locate createJournalEntry(...) (guard anchor)`);
@@ -87,6 +94,9 @@ function selftest() {
       `  if (!flagOn) return null;\n  return je.id;\n}\nexport function next(){}` }, wantMin: 1 },
     { name: "no OFF return → error", in: { service: good.replace("if (!flagOn) return null;", "") }, wantMin: 1 },
     { name: "missing import → error", in: { service: good.replace(/import \{ isEnabled \}[^\n]*\n/, "") }, wantMin: 1 },
+    // Regression guard for THIS fix: createJournalEntryOnClient(...) (the real, current call shape
+    // since ACCT-F5676) must be recognized as a valid post anchor, not just the bare form.
+    { name: "OnClient variant recognized → 0", in: { service: good.replace("createJournalEntry({}, {})", "createJournalEntryOnClient(client, {})") }, want: 0 },
   ];
   let failed = 0;
   for (const c of cases) {
