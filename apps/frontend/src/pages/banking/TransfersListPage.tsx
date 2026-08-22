@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -56,7 +56,7 @@ export function TransfersListPage() {
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
   const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [infoModal, setInfoModal] = useState<{ title: string; body: string } | null>(null);
+  const [infoModal, setInfoModal] = useState<{ title: string; body: ReactNode } | null>(null);
   const [revokeTarget, setRevokeTarget] = useState<Transfer | null>(null);
 
   const canRevoke = auth.user?.role === "Owner";
@@ -236,17 +236,26 @@ export function TransfersListPage() {
                   .then((detail) => {
                     setInfoModal({
                       title: `Transfer ${detail.transfer.id}`,
-                      body: [
-                        `Type: ${detail.transfer.transfer_type}`,
-                        `Amount: ${formatMoney(Number(detail.transfer.amount_cents))}`,
-                        `Memo: ${detail.transfer.memo || "-"}`,
-                        `TMS JE: ${
-                          detail.transfer.journal_entry_id ||
-                          "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
-                        }`,
-                        `Bank txn: ${detail.transfer.matched_bank_transaction_id || "none"}`,
-                        `QBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`,
-                      ].join("\n"),
+                      body: (
+                        <div className="space-y-1 text-xs text-slate-800">
+                          <p>Type: {detail.transfer.transfer_type}</p>
+                          <p>Amount: {formatMoney(Number(detail.transfer.amount_cents))}</p>
+                          <p>Memo: {detail.transfer.memo || "-"}</p>
+                          <p>
+                            TMS JE:{" "}
+                            {detail.transfer.journal_entry_id ? (
+                              <EntityLink kind="journal_entry" id={detail.transfer.journal_entry_id} label={entityLabel(detail.transfer.journal_entry_memo, detail.transfer.journal_entry_id, "Journal entry")} />
+                            ) : "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"}
+                          </p>
+                          <p>
+                            Bank txn:{" "}
+                            {detail.transfer.matched_bank_transaction_id ? (
+                              <EntityLink kind="bank_transaction" id={detail.transfer.matched_bank_transaction_id} label={entityLabel(detail.transfer.matched_bank_transaction_label, detail.transfer.matched_bank_transaction_id, "Bank transaction")} />
+                            ) : "none"}
+                          </p>
+                          <p>QBO JE: {detail.transfer.qbo_journal_entry_id || "pending"}</p>
+                        </div>
+                      ),
                     });
                   })
                   .catch((error) => pushToast(userFacingApiError(error, "Failed to load transfer detail"), "error"));
@@ -465,7 +474,9 @@ export function TransfersListPage() {
         }}
       />
       <Modal open={Boolean(infoModal)} onClose={() => setInfoModal(null)} title={infoModal?.title ?? "Detail"}>
-        <pre className="whitespace-pre-wrap text-xs text-slate-800">{infoModal?.body}</pre>
+        {typeof infoModal?.body === "string" ? (
+          <pre className="whitespace-pre-wrap text-xs text-slate-800">{infoModal.body}</pre>
+        ) : infoModal?.body}
       </Modal>
       <VoidReasonModal
         open={Boolean(revokeTarget)}
