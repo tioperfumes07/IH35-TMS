@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.panel.auto_deduction_policies","drivers.modal.assign_truck","profiles.drawer.equipment_qualification","profiles.drawer.safety_event","profiles.drawer.background_check","profiles.drawer.medical_card","teams.create","drivers.panel.team_split_config"],"task":"DRV-F5927-DRAWER-PANEL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
  * Drivers qbo_chrome — leaf-specific Built for 13 of the 16 leaves only "claimed" by the broad
  * verify-cursor-vertical-qbo-picker-modules.mjs sweep (leafRe: ^(cash_advances|chrome|deductions|
@@ -72,6 +73,17 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-drivers-qbo-chrome-leaves";
+const REQUIRED = "docs/specs/scoreboard/modules/drivers.required.json";
+const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
+const SELF = "scripts/verify-drivers-qbo-chrome-leaves.mjs";
+const EXACT_HEADER = '/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.panel.auto_deduction_policies","drivers.modal.assign_truck","profiles.drawer.equipment_qualification","profiles.drawer.safety_event","profiles.drawer.background_check","profiles.drawer.medical_card","teams.create","drivers.panel.team_split_config"],"task":"DRV-F5927-DRAWER-PANEL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
+const EXACT_ROUTES = new Map([
+  ["drivers.panel.auto_deduction_policies", "/drivers/auto-deduction-policies"],
+  ["drivers.modal.assign_truck", "surface://components/driver-profile/AssignTruckModal.tsx"],
+  ["profiles.drawer.equipment_qualification", "/drivers/:id"], ["profiles.drawer.safety_event", "/drivers/:id"],
+  ["profiles.drawer.background_check", "/drivers/:id"], ["profiles.drawer.medical_card", "/drivers/:id"],
+  ["teams.create", "/drivers"], ["drivers.panel.team_split_config", "/drivers/team-splits"],
+]);
 
 const CHECKS = [
   {
@@ -150,8 +162,24 @@ function runChecks(root = ROOT) {
   return fails;
 }
 
+function runEvidence(requiredSrc, selfSrc, feedSrc) {
+  const fails = [];
+  const required = JSON.parse(requiredSrc);
+  for (const [id, route] of EXACT_ROUTES) {
+    const leaf = required.leaves?.find((row) => row.id === id);
+    if (!leaf?.required?.includes("connectivity")) fails.push(`${REQUIRED}: ${id} must require connectivity`);
+    if (leaf?.route_hint !== route) fails.push(`${REQUIRED}: ${id} must name route ${route}`);
+  }
+  if (!selfSrc.split("/**\n * Drivers")[0].includes(EXACT_HEADER)) fails.push(`${SELF}: exact Drivers drawer/panel connectivity header missing`);
+  if (/"guard"\s*:\s*"scripts\/verify-drivers-qbo-chrome-leaves\.mjs"/.test(feedSrc)) fails.push(`${FEED}: manual feed duplicates exact Drivers drawer/panel connectivity`);
+  return fails;
+}
+
 function selftest() {
   const live = runChecks();
+  const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
+  const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
+  const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".drivers-qbo-chrome-selftest-"));
   try {
     for (const c of CHECKS) {
@@ -172,12 +200,29 @@ function selftest() {
     console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
     process.exit(1);
   }
+  const evidenceFailures = runEvidence(requiredGood, selfGood, feedGood);
+  for (const id of EXACT_ROUTES.keys()) {
+    const mutated = requiredGood.replace(`"id": "${id}"`, `"id": "${id}.broken"`);
+    if (mutated === requiredGood || runEvidence(mutated, selfGood, feedGood).length === 0) evidenceFailures.push(`${id}: Required mutation escaped`);
+  }
+  if (runEvidence(requiredGood, selfGood.replace(EXACT_HEADER, EXACT_HEADER.replace("connectivity", "reverse_link")), feedGood).length === 0) evidenceFailures.push("header mutation escaped");
+  if (runEvidence(requiredGood, selfGood, feedGood.replace("[", `[{"guard":"scripts/verify-drivers-qbo-chrome-leaves.mjs"},`)).length === 0) evidenceFailures.push("feed mutation escaped");
+  if (evidenceFailures.length) {
+    console.error(`${LABEL} SELFTEST FAIL evidence:\n- ${evidenceFailures.join("\n- ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${EXACT_ROUTES.size + 2} exact connectivity evidence mutations detected`);
   process.exit(0);
 }
 
 if (process.argv.includes("--selftest")) selftest();
 
 const fails = runChecks();
+fails.push(...runEvidence(
+  fs.readFileSync(path.join(ROOT, REQUIRED), "utf8"),
+  fs.readFileSync(path.join(ROOT, SELF), "utf8"),
+  fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+));
 if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
