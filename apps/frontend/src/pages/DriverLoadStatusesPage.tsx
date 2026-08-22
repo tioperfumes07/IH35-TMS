@@ -20,6 +20,7 @@ import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
 const createSchema = z.object({
   code: z
@@ -74,6 +75,8 @@ type StatusFormState = ReturnType<typeof emptyForm>;
 
 export function DriverLoadStatusesPage() {
   const auth = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const canManage = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -87,12 +90,14 @@ export function DriverLoadStatusesPage() {
   const [searchParams] = useSearchParams();
 
   const statusesQuery = useQuery({
-    queryKey: ["catalogs", "driver-load-statuses", includeInactive],
-    queryFn: () => listDriverLoadStatuses(includeInactive).then((result) => result.statuses),
+    queryKey: ["catalogs", "driver-load-statuses", companyId, includeInactive],
+    queryFn: () => listDriverLoadStatuses(companyId, includeInactive).then((result) => result.statuses),
+    enabled: Boolean(companyId),
   });
 
   const createMutation = useMutation({
-    mutationFn: createDriverLoadStatus,
+    mutationFn: (payload: Parameters<typeof createDriverLoadStatus>[1]) =>
+      createDriverLoadStatus(companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "driver-load-statuses"] });
       setAddOpen(false);
@@ -102,8 +107,8 @@ export function DriverLoadStatusesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof updateDriverLoadStatus>[1] }) =>
-      updateDriverLoadStatus(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof updateDriverLoadStatus>[2] }) =>
+      updateDriverLoadStatus(companyId, id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "driver-load-statuses"] });
       setEditOpen(false);

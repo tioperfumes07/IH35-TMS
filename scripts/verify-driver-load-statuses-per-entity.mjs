@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["catalog.drivers.driver_load_statuses.list","catalog.drivers.driver_load_statuses.create"],"task":"LISTS-F5962-DRIVER-LOAD-STATUS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 // verify:driver-load-statuses-per-entity
 //
 // Locks the per-entity conversion of catalogs.driver_load_statuses (owner ruling 2026-07-24, companion
@@ -19,13 +20,25 @@ const MIG = "db/migrations/202607870000_driver_load_statuses_per_entity.sql";
 const HELD = "db/migrations/.held-migrations.json";
 const ROUTE = "apps/backend/src/catalogs/driver-load-statuses.routes.ts";
 const REGISTRY = "apps/backend/src/catalogs/catalog-registry.routes.ts";
-const FILES = [MIG, HELD, ROUTE, REGISTRY];
+const API = "apps/frontend/src/api/catalogs.ts";
+const PAGE = "apps/frontend/src/pages/DriverLoadStatusesPage.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/lists.required.json";
+const FILES = [MIG, HELD, ROUTE, REGISTRY, API, PAGE, MATRIX];
 
 const readDisk = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
 export function assertDriverLoadStatusesPerEntity(sources) {
   const get = (rel) => sources?.[rel] ?? readDisk(rel);
   const errs = [];
+
+  let matrix;
+  try { matrix = JSON.parse(get(MATRIX)); } catch (error) { return [`Lists matrix invalid: ${error.message}`]; }
+  for (const suffix of ["list", "create"]) {
+    const id = `catalog.drivers.driver_load_statuses.${suffix}`;
+    const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
+    if (!leaf?.required?.includes("connectivity")) errs.push(`${id} must require connectivity`);
+    if (leaf?.route_hint !== "/lists/drivers/driver-load-statuses") errs.push(`${id} route must remain mounted`);
+  }
 
   const mig = get(MIG);
   if (!/DO NOT RUN ON PROD/i.test(mig)) errs.push("migration 202607870000 is missing the 'DO NOT RUN ON PROD' held marker");
@@ -54,6 +67,22 @@ export function assertDriverLoadStatusesPerEntity(sources) {
   if (!/resolveOperatingCompanyId/.test(registry)) errs.push("catalog-registry must resolve the caller's company");
   if (!/set_config\('app\.operating_company_id'/.test(registry)) errs.push("catalog-registry must set the entity GUC before reading per-entity catalogs");
 
+  const api = get(API);
+  for (const token of [
+    "listDriverLoadStatuses(operatingCompanyId: string",
+    "createDriverLoadStatus(operatingCompanyId: string",
+    "updateDriverLoadStatus(operatingCompanyId: string",
+    'operating_company_id: operatingCompanyId',
+  ]) if (!api.includes(token)) errs.push(`frontend API must explicitly scope ${token}`);
+  const page = get(PAGE);
+  for (const token of [
+    "const { selectedCompanyId } = useCompanyContext()",
+    "listDriverLoadStatuses(companyId, includeInactive)",
+    "createDriverLoadStatus(companyId, payload)",
+    "updateDriverLoadStatus(companyId, id, payload)",
+    "enabled: Boolean(companyId)",
+  ]) if (!page.includes(token)) errs.push(`Lists page must bind selected company: ${token}`);
+
   return errs;
 }
 
@@ -74,6 +103,9 @@ if (SELFTEST) {
   expectCaught("registry-guc-removed", { ...live, [REGISTRY]: live[REGISTRY].replace(/set_config\('app\.operating_company_id'/g, "set_config('app.other'") }, "catalog-registry must set the entity GUC");
   expectCaught("mig-force-rls-removed", { ...live, [MIG]: live[MIG].replace(/FORCE ROW LEVEL SECURITY/g, "no rls") }, "FORCE ROW LEVEL SECURITY");
   expectCaught("mig-phase-dropped", { ...live, [MIG]: live[MIG].replace("SELECT v_seed, code, name, description, phase, sort_order, is_active", "SELECT v_seed, code, name, description, sort_order, is_active") }, "carry the NOT NULL phase");
+  expectCaught("api-company-dropped", { ...live, [API]: live[API].replace("listDriverLoadStatuses(operatingCompanyId: string", "listDriverLoadStatuses(") }, "frontend API must explicitly scope");
+  expectCaught("page-company-dropped", { ...live, [PAGE]: live[PAGE].replace("listDriverLoadStatuses(companyId, includeInactive)", "listDriverLoadStatuses(includeInactive)") }, "Lists page must bind selected company");
+  expectCaught("matrix-leaf-dropped", { ...live, [MATRIX]: live[MATRIX].replace('"id": "catalog.drivers.driver_load_statuses.list"', '"id": "catalog.drivers.driver_load_statuses.list.broken"') }, "must require connectivity");
 
   const liveProblems = assertDriverLoadStatusesPerEntity(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
@@ -83,7 +115,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -93,4 +125,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — driver_load_statuses per-entity (migration + route + registry GUC consistent).`);
+console.log(`${LABEL} OK — driver_load_statuses selected-company frontend + scoped route/registry/migration + exact Lists cells consistent.`);

@@ -246,17 +246,20 @@ export function updateLineItemTemplate(id: string, payload: UpdateLineItemTempla
   return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-line-items/${id}`, { method: "PATCH", body: payload });
 }
 
-export function listDriverLoadStatuses(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ statuses: DriverLoadStatus[] }>(`/api/v1/catalogs/driver-load-statuses${query}`);
+export function listDriverLoadStatuses(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ statuses: DriverLoadStatus[] }>(`/api/v1/catalogs/driver-load-statuses?${query.toString()}`);
 }
 
-export function createDriverLoadStatus(payload: CreateDriverLoadStatusInput) {
-  return apiRequest<{ status: DriverLoadStatus }>("/api/v1/catalogs/driver-load-statuses", { method: "POST", body: payload });
+export function createDriverLoadStatus(operatingCompanyId: string, payload: CreateDriverLoadStatusInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ status: DriverLoadStatus }>(`/api/v1/catalogs/driver-load-statuses?${query.toString()}`, { method: "POST", body: payload });
 }
 
-export function updateDriverLoadStatus(id: string, payload: UpdateDriverLoadStatusInput) {
-  return apiRequest<{ status: DriverLoadStatus }>(`/api/v1/catalogs/driver-load-statuses/${id}`, { method: "PATCH", body: payload });
+export function updateDriverLoadStatus(operatingCompanyId: string, id: string, payload: UpdateDriverLoadStatusInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ status: DriverLoadStatus }>(`/api/v1/catalogs/driver-load-statuses/${id}?${query.toString()}`, { method: "PATCH", body: payload });
 }
 
 export function listCatalogRegistry() {
