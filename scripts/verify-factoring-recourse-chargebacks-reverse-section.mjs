@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^home\\.(recourse_pipeline|chargebacks_fees)$","task":"LINK-F5180-factoring-recourse-chargebacks-reverse"} */
+/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.recourse_pipeline","home.chargebacks_fees"],"task":"FACT-F5838-RECOURSE-CHARGEBACKS-REVERSE-EXACT-LEAVES"} */
 /**
  * GUARD: a customer's (and, for recourse, a load's) own page can jump into the factoring recourse
  * pipeline / chargebacks-fees tables pre-scoped to them, and both backend routes + FactoringHome.tsx
@@ -30,7 +30,9 @@ const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.t
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const SECTION = "apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
-const FILES = [ROUTES, HOME, FACTORING_TAB, ENTITY_LINK, SECTION, CUSTOMER_DETAIL];
+const SELF = "scripts/verify-factoring-recourse-chargebacks-reverse-section.mjs";
+const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
+const FILES = [ROUTES, HOME, FACTORING_TAB, ENTITY_LINK, SECTION, CUSTOMER_DETAIL, SELF, REQUIRED];
 const LABEL = "verify-factoring-recourse-chargebacks-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -46,6 +48,22 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
   const entityLink = src[ENTITY_LINK];
   const section = src[SECTION];
   const customerDetail = src[CUSTOMER_DETAIL];
+  const self = src[SELF];
+  const required = src[REQUIRED];
+
+  if (!/^\/\*\* @matrix-built \{"modules":\["factoring"\],"cols":\["reverse_link"\],"leaves":\["home\.recourse_pipeline","home\.chargebacks_fees"\],"task":"FACT-F5838-RECOURSE-CHARGEBACKS-REVERSE-EXACT-LEAVES"\} \*\/$/m.test(self)) {
+    problems.push(`${SELF}: Built annotation must own the two exact recourse/chargebacks reverse leaves`);
+  }
+  let requiredLeaves = [];
+  try {
+    requiredLeaves = JSON.parse(required).leaves ?? [];
+  } catch {
+    problems.push(`${REQUIRED}: must remain valid JSON`);
+  }
+  for (const leaf of ["home.recourse_pipeline", "home.chargebacks_fees"]) {
+    const entry = requiredLeaves.find((candidate) => candidate.id === leaf);
+    if (!entry?.required?.includes("reverse_link")) problems.push(`${REQUIRED}: ${leaf} must remain a Required reverse_link leaf`);
+  }
 
   if (!/recourseQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: recourseQuerySchema must accept optional customer_id`);
@@ -135,6 +153,8 @@ function selftest() {
       import { CustomerFactoringRecourseReverseSection } from "../components/customers/CustomerFactoringRecourseReverseSection";
       <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
     `,
+    [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.recourse_pipeline","home.chargebacks_fees"],"task":"FACT-F5838-RECOURSE-CHARGEBACKS-REVERSE-EXACT-LEAVES"} */`,
+    [REQUIRED]: `{"leaves":[{"id": "home.recourse_pipeline", "required": ["reverse_link"]},{"id": "home.chargebacks_fees", "required": ["reverse_link"]}]}`,
   };
   const goodProblems = assertFactoringRecourseChargebacksReverse(good);
   if (goodProblems.length) {
@@ -156,6 +176,9 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("getFactoringChargebacksFees(operatingCompanyId, customerId);", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringRecourseReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
+    { ...good, [SELF]: good[SELF].replace('"leaves":["home.recourse_pipeline","home.chargebacks_fees"]', '"leafRe":"^home.*$"') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('"id": "home.recourse_pipeline", "required": ["reverse_link"]', '"id": "home.recourse_pipeline", "required": ["customer"]') },
+    { ...good, [REQUIRED]: good[REQUIRED].replace('"id": "home.chargebacks_fees", "required": ["reverse_link"]', '"id": "home.chargebacks_fees", "required": ["customer"]') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFactoringRecourseChargebacksReverse(mutated).length === 0) {
