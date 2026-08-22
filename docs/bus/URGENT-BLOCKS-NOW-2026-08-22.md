@@ -1,6 +1,6 @@
-# URGENT BLOCKS NOW · 2026-08-22 12:28 CT · BINDING · ANTI-CLASH
+# URGENT BLOCKS NOW · 2026-08-22 16:55 CT · BINDING · CURSOR CERTIFIES U6 THEN 14
 
-**This file is the NOW.** `git pull --ff-only origin main`. 12:05 CT / after-14-as-queue / “14 done so idle” is **stale**.
+**This file is the NOW.** `git pull --ff-only origin main`. 12:28 CT anti-clash (banking exclusive to CC-1) is **stale**. Owner 16:51 CT: Accounting already CERTIFIED; **Cursor finishes certifying the rest of the urgent 6, then the rest of the 14.**
 
 | App | Entity | Company UUID |
 |-----|--------|----------------|
@@ -8,49 +8,49 @@
 
 **Trucking · Transportation · QBO sync = irrelevant** until USMCA is launched. No TMS→QBO write-back. Law: `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`.
 
-**Ports (HARD — one seat, one port, never share a URL prefix):** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin **PARKED**. Close the tab after the hop.
+**Ports (HARD):** Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin **PARKED**. Close the tab after the hop.
 
-**FAST-MERGE ON** (~4–5 min): gate 0 → push → PR → merge `--admin` → Neon if money → OUTBOX → **your next assigned URL**. Never idle.
+**FAST-MERGE ON.** Deploy: Cursor lead, every **5–10 minutes** and every **5–10 merged PRs**, **one in-flight**. Live still **`408d0c4`** until the in-flight batch lands. **Never wait past 10** undeployed PRs.
 
-**Deploy:** Cursor lead only. Every **5–10 minutes** and every **5–10 merged PRs** (never wait past 10). One in-flight. Never per-merge.
+**CREATE-TEST-THEN-VOID.** Do **not** remake Accounting TESTs. Unique FINDING only on **500 / dead click / silent no-op**.
 
-**CREATE-TEST-THEN-VOID.** Do **not** remake Accounting TESTs (`TEST-REMAINING-1755`, CM-2026-0002/0003, VC-2026-0001, `TEST-PP-20260822`, Palos Garza `f9cc15bf-…`). Unique FINDING only on **500 / dead click / silent no-op**. After launch: void TESTs and clean.
-
----
-
-## Live probe (Cursor 9222 · healthz **`408d0c4`** · readyz 200 · 12:28 CT)
-
-All 14 **mounted** (no 500 / no login bounce). Settlements URL is **`/driver-finance/settlements`** (not `/settlements`). Insurance URL is **`/safety/insurance`** (Insurance Dashboard live; coverage gaps **44**). `/insurance` redirects into Safety home — do not file that as a crash.
-
-| # | Module | Live now | Still needed to **certify** (this pass) | Who |
-|---|--------|----------|------------------------------------------|-----|
-| 1 | Accounting | CERTIFIED (U1 hops). Do not remake TESTs. | Unique leftover only | **nobody unless unique FAIL** |
-| 2 | Banking | Home mounts | TEST **expense → match → reconcile → ledger** (labeled TEST DATA) | **CC-1 only** |
-| 3 | Settlements | `Driver Settlements` mounts | Close / pay-run / leftover tabs — unique FINDING | **CC-2 only** |
-| 4 | Factoring | Faro home mounts | Recourse / batch leftover — unique FINDING | **CC-2 after #3** |
-| 5 | Dispatch | Board mounts | Unique FINDING only. Do **not** remake Book Load | **CC-3 only** |
-| 6 | Vendors | Roster mounts. Inactive **(11)** already proven | Unique FINDING only. Do **not** re-click Inactive as work | **skip unless unique FAIL** |
-| 7 | Customers | Roster mounts. Inactive **13** already proven | Reverse F+R (no CDP) | **Codex only** |
-| 8 | Drivers | Roster mounts | Reverse F+R (no CDP) | **Codex only** |
-| 9 | Fleet | Roster mounts | Reverse F+R (no CDP) | **Codex only** |
-| 10 | Lists | Hub mounts | Picker leftover `+ Add new` first row | **CC-3 after #5** |
-| 11 | Maintenance | Mounts | Unique FINDING / leftover Live | **Cursor 9222** |
-| 12 | Safety | `/safety/home` mounts | Unique FINDING | **Cursor 9222** |
-| 13 | Insurance | `/safety/insurance` dashboard live (44 gaps) | Claims / lawsuits leftover unique FINDING | **Cursor 9222** |
-| 14 | Legal | Mounts | Unique FINDING | **Cursor 9222** |
+Certify = Fully-Wired **1–12** with **Live Chrome last**. Clicked ≠ CERTIFIED.
 
 ---
 
-## ANTI-CLASH (crash prevention)
+## Live probe (Cursor 9222 · healthz **`408d0c4`** · 16:55 CT)
+
+`origin/main` is ahead of live (BANK-F5850 recon Accept, SETL-F5900 Close settlement, ACCT-F5901 Advance column on main — **not** on live until healthz ≠ `408d0c4`).
+
+| # | Module | Live now | Still needed to **certify** | Who |
+|---|--------|----------|------------------------------|-----|
+| 1 | Accounting | **CERTIFIED** (U1 hops). Do not remake TESTs. | Unique leftover only | nobody unless unique FAIL |
+| 2 | Banking | Home + For review/Categorized + recon dates (USMCA FREIGHT 08/01–08/22). **Do not Close period** with 0 sessions. | TEST match + recon Accept after BANK-F5850 live · ledger | **Cursor 9222 certify** · CC-1 money FAILs only |
+| 3 | Settlements | List mounts (Pedro S-20260816-0168). Close page mounts. | Close settlement after SETL-F5900 live | **Cursor certify** · CC-2 unique leftover |
+| 4 | Factoring | Faro home + Chargebacks `$1,794.50` Advance link live | Recourse leftover unique FINDING | **Cursor certify** · CC-2 unique leftover |
+| 5 | Dispatch | Board mounts · `+ Book Load` present. **Do not remake Book Load** | Unique FINDING only | **Cursor certify** · CC-3 unique leftover |
+| 6 | Vendors | Roster 119 · Inactive **11** already proven | Unique FINDING only | **Cursor certify** |
+| 7 | Customers | Roster 25 · Inactive **13** already proven | Reverse F+R (Codex) + Cursor Live leftover | **Codex reverse** · Cursor Live |
+| 8 | Drivers | Roster mounts (prior) | Reverse + Live leftover | **Codex** · Cursor Live |
+| 9 | Fleet | Roster mounts (prior) | Reverse + Live leftover | **Codex** · Cursor Live |
+| 10 | Lists | Hub mounts | Picker leftover | **CC-3** after legal hop |
+| 11 | Maintenance | Active WO + WO-T151 detail proven | Unique leftover | Cursor after U6 |
+| 12 | Safety | `/safety/home` + accidents proven | Unique leftover | Cursor |
+| 13 | Insurance | Dashboard + claims/lawsuits proven. **Do not open Policies** if CC-3 on them | Unique leftover | Cursor |
+| 14 | Legal | Mounts. **CC-3 owns `/legal` pickers this turn** | Unique leftover after CC-3 | Cursor after CC-3 |
+
+---
+
+## ANTI-CLASH (16:55 CT)
 
 | Seat | Port | YOU MAY OPEN | YOU MAY NOT OPEN |
 |------|------|----------------|------------------|
-| **CC-1** | 9223 | `/banking` `/banking/reconciliation` `/banking/transactions` `/accounting/expenses` (TEST expense only) | `/dispatch` `/factoring` `/driver-finance/*` `/lists` `/maintenance` `/safety*` `/legal` `/vendors` `/customers` `/drivers` `/fleet` |
-| **CC-2** | 9224 | `/driver-finance/settlements` `/driver-finance/settlement-close` `/cash-advances` `/factoring` | `/banking*` `/dispatch` `/lists` `/maintenance` `/safety*` `/legal` `/accounting` (except if CC-1 pings a money FAIL) |
-| **CC-3** | 9225 | `/dispatch` `/lists` (pickers) | `/banking*` `/driver-finance/*` `/factoring` `/maintenance` `/safety*` `/legal` · no Inactive vendors tab |
-| **Codex** | 9226 | SQL/GET/guard on `mdata.customers` `mdata.drivers` `mdata.units` | **No CDP.** No `/banking` chrome. Do not re-author ACCT-F5793 |
-| **Cursor** | 9222 | `/maintenance` `/safety` `/safety/insurance` `/legal` · lead · deploy | `/banking*` while CC-1 is on it · `/driver-finance/*` · `/dispatch` · `/factoring` |
+| **Cursor** | 9222 | remaining U6 certify then 7–13 Live · **not `/legal` while CC-3 is there** | do not stack a second Render kick |
+| **CC-1** | 9223 | money FAILs (BANK-F5850 / SETL-F5900 after live SHA) | **do not occupy `/banking*` while Cursor certifies** |
+| **CC-2** | 9224 | unique FINDING leftover on settlements/factoring **after Cursor leaves the URL** | `/banking*` `/dispatch` `/legal` |
+| **CC-3** | 9225 | `/legal` pickers then `/lists` | `/banking*` `/driver-finance/*` `/dispatch` this turn |
+| **Codex** | 9226 | SQL/GET reverse customers/drivers/fleet | **No CDP** |
 
-One URL → prove → **close the tab**. Never two seats on the same path. File FAILs to the owning OUTBOX (money → CC-1, picker → CC-3, Live crash → CC-2) **and** OUTBOX-CURSOR.
+One URL → prove → **close the tab**. File FAILs to owning OUTBOX **and** OUTBOX-CURSOR.
 
-ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 12:28CT | PORT=n | NOW=<your first URL> | GO`
+ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 16:55CT | PORT=n | NOW=<url> | GO`
