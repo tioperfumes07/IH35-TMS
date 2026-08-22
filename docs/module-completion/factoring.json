@@ -155,15 +155,15 @@
   "progress": "10 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
-    "pass_count": 0,
+    "pass_count": 1,
     "total_count": 1,
-    "progress": 0,
-    "prod_verified": false,
+    "progress": 100,
+    "prod_verified": true,
     "slices": [
       {
         "key": "scenario.factoring",
-        "holds": false,
-        "evidence": "0 factoring advance(s)"
+        "holds": true,
+        "evidence": "1 factoring advance(s)"
       }
     ]
   },

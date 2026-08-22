@@ -647,22 +647,22 @@
       {
         "key": "hop.invoice",
         "holds": true,
-        "evidence": "11 live invoice(s) sent or paid"
+        "evidence": "4 live invoice(s) sent or paid"
       },
       {
         "key": "hop.gl",
         "holds": true,
-        "evidence": "1833 live journal entr(ies)"
+        "evidence": "1895 live journal entr(ies)"
       },
       {
         "key": "scenario.coa",
         "holds": true,
-        "evidence": "158 account(s) in the chart"
+        "evidence": "189 account(s) in the chart"
       },
       {
         "key": "scenario.ap",
         "holds": true,
-        "evidence": "43 open (non-voided) bill(s)"
+        "evidence": "5 open (non-voided) bill(s)"
       }
     ]
   }
