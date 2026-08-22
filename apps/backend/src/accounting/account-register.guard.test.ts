@@ -32,6 +32,14 @@ describe("account-register service guard", () => {
     expect(svc).toMatch(/source_transaction_type = 'customer_payment'/); // payment→customer
   });
 
+  it("projects a human reference, never source_transaction_id", () => {
+    expect(svc).not.toMatch(/reference:\s*p\.source_transaction_id/);
+    expect(svc).toMatch(/NULLIF\(btrim\(b\.bill_number\)/);
+    expect(svc).toMatch(/AS reference/);
+    expect(svc).toContain("accounting.bill_payments");
+    expect(svc).toContain("banking.bank_transactions");
+  });
+
   it("has no stub / placeholder strings", () => {
     expect(svc).not.toMatch(/TODO|FIXME|coming soon|not implemented/i);
   });

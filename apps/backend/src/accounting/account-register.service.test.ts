@@ -12,6 +12,7 @@ function posting(over: Partial<RawPosting>): RawPosting {
     amount_cents: 0,
     source_transaction_type: null,
     source_transaction_id: null,
+    reference: null,
     payee: null,
     split_account: null,
     class_name: null,
@@ -55,14 +56,24 @@ describe("account register — running-balance math", () => {
 
   it("labels the row type from the source transaction, defaulting to Journal Entry", () => {
     const { rows } = buildRegisterRows(0, "debit", [
-      posting({ source_transaction_type: "invoice", source_transaction_id: "INV-1" }),
+      posting({ source_transaction_type: "invoice", source_transaction_id: "INV-1", reference: "INV-1" }),
       posting({ source_transaction_type: null }),
-      posting({ source_transaction_type: "bill_payment", source_transaction_id: "BP-9" }),
+      posting({ source_transaction_type: "bill_payment", source_transaction_id: "BP-9", reference: "BP-9" }),
     ]);
     expect(rows[0].type).toBe("Invoice");
     expect(rows[0].reference).toBe("INV-1");
     expect(rows[1].type).toBe("Journal Entry");
     expect(rows[2].type).toBe("Bill Payment");
+  });
+
+  it("never copies a UUID source_transaction_id into Ref No.", () => {
+    const uuid = "8c199b5f-0000-4000-8000-000000000001";
+    const { rows } = buildRegisterRows(0, "debit", [
+      posting({ source_transaction_type: "bill", source_transaction_id: uuid, reference: "WAVE3-TEST-INV-0001" }),
+      posting({ source_transaction_type: "bill", source_transaction_id: uuid, reference: null }),
+    ]);
+    expect(rows[0].reference).toBe("WAVE3-TEST-INV-0001");
+    expect(rows[1].reference).toBeNull();
   });
 
   it("opening balance carries through an empty period", () => {

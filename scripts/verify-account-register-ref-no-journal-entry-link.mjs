@@ -21,6 +21,18 @@ import { readFileSync } from "node:fs";
 
 const failures = [];
 
+const svcPath = "apps/backend/src/accounting/account-register.service.ts";
+const svc = readFileSync(svcPath, "utf8");
+if (/reference:\s*p\.source_transaction_id/.test(svc)) {
+  failures.push(`${svcPath}: Ref No. still copies source_transaction_id (UUID) — EntityLink tombstones it`);
+}
+if (!/NULLIF\(btrim\(b\.bill_number\)/.test(svc)) {
+  failures.push(`${svcPath}: human reference no longer COALESCE bill_number`);
+}
+if (!/\bAS reference\b/.test(svc)) {
+  failures.push(`${svcPath}: SQL no longer aliases a human reference column`);
+}
+
 const pagePath = "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx";
 const src = readFileSync(pagePath, "utf8");
 
