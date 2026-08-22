@@ -1381,11 +1381,13 @@ export type JournalEntrySourceLink = {
   journal_entry_posting_id: string;
   line_sequence: number;
   source_transaction_type: string | null;
+  source_entity_kind: string | null;
   source_transaction_id: string | null;
   source_transaction_line_id: string | null;
   posting_batch_id: string | null;
   source_link_id: string | null;
   linked_object_type: string | null;
+  linked_object_entity_kind: string | null;
   linked_object_id: string | null;
   relationship_role: string | null;
   source_link_created_at: string | null;

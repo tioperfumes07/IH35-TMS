@@ -54,8 +54,12 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "invoice";
     case "customer_payment":
     case "payment":
-    case "bill_payment":
       return "payment";
+    case "bill_payment":
+      return "bill_payment";
+    case "driver_advance":
+    case "cash_advance":
+      return "cash_advance";
     case "bill":
       return "bill";
     case "expense":
@@ -128,8 +132,8 @@ function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
   const out: Array<{ key: string; type: string; id: string; displayId: string | null }> = [];
   for (const row of rows) {
     const candidates: Array<{ type: string | null; id: string | null; displayId: string | null }> = [
-      { type: row.source_transaction_type, id: row.source_transaction_id, displayId: row.source_transaction_display_id },
-      { type: row.linked_object_type, id: row.linked_object_id, displayId: row.linked_object_display_id },
+      { type: row.source_entity_kind ?? row.source_transaction_type, id: row.source_transaction_id, displayId: row.source_transaction_display_id },
+      { type: row.linked_object_entity_kind ?? row.linked_object_type, id: row.linked_object_id, displayId: row.linked_object_display_id },
     ];
     for (const candidate of candidates) {
       if (!candidate.type || !candidate.id) continue;

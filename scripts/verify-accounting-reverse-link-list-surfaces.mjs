@@ -15,6 +15,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accounting-reverse-link-list-surfaces";
 const AUDIT_TRAIL = "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx";
 const POSTING_LINEAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.tsx";
+const JE_DETAIL = "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx";
 
 const CHECKS = [
   { name: "BillPaymentsList EntityLink", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /EntityLink/ },
@@ -39,6 +40,13 @@ const CHECKS = [
   { name: "Lineage API emits canonical linked-object kind", file: "apps/backend/src/accounting/audit-trail/service.ts", pattern: /linked_object_entity_kind:\s*accountingSourceEntityKind\(row\.linked_object_type/ },
   { name: "Lineage client carries canonical linked-object kind", file: "apps/frontend/src/api/accounting.ts", pattern: /export type AccountingSourceLineageRow = \{[\s\S]*?linked_object_type:\s*string \| null;\s*linked_object_entity_kind:\s*string \| null;/ },
   { name: "Posting Lineage consumes canonical linked-object kind", file: POSTING_LINEAGE, pattern: /type=\{row\.linked_object_entity_kind \?\? row\.linked_object_type\}/ },
+  { name: "JE source API canonicalizes bill payment", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'bill_payment' THEN 'bill_payment'/ },
+  { name: "JE source API canonicalizes driver advance", file: "apps/backend/src/accounting/journal-entries.service.ts", pattern: /jep\.source_transaction_type = 'driver_advance' THEN 'cash_advance'/ },
+  { name: "JE source client carries canonical kinds", file: "apps/frontend/src/api/accounting.ts", pattern: /export type JournalEntrySourceLink = \{[\s\S]*?source_entity_kind:\s*string \| null;[\s\S]*?linked_object_entity_kind:\s*string \| null;/ },
+  { name: "JE detail bill-payment canonical drill", file: JE_DETAIL, pattern: /case "bill_payment":\s*return "bill_payment";/ },
+  { name: "JE detail driver-advance canonical drill", file: JE_DETAIL, pattern: /case "driver_advance":\s*case "cash_advance":\s*return "cash_advance";/ },
+  { name: "JE detail consumes source canonical kind", file: JE_DETAIL, pattern: /type:\s*row\.source_entity_kind \?\? row\.source_transaction_type/ },
+  { name: "JE detail consumes linked-object canonical kind", file: JE_DETAIL, pattern: /type:\s*row\.linked_object_entity_kind \?\? row\.linked_object_type/ },
   { name: "BillDetailPanel EntityLink", file: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx", pattern: /EntityLink/ },
   { name: "ExpensesListPage EntityLink", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /EntityLink/ },
   { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },
