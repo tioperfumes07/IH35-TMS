@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["reverse_link","connectivity"],"task":"WAVE-B-customer-reverse-link","leafRe":"^(detail\\.(contracts|coi)|md\\.coi_requests)$"} */
+/** @matrix-built {"modules":["customers"],"cols":["reverse_link","connectivity"],"leaves":["md.coi_requests","detail.coi"],"task":"CUST-F5873-COI-REVERSE-CONNECTIVITY-EXACT-LEAVES","vertical":"column-wave"} */
 // CLASS-WAVE B (reverse_link/connectivity) — Wave-B investigation (2026-08-12) found these three
 // reverse-link families already fully built in code but never tagged in
 // docs/specs/scoreboard/wire-sprint-built.json, so the module matrix showed them red despite the
@@ -19,6 +19,11 @@ const CONTRACT_TAB = "apps/frontend/src/components/customers/CustomerContractsTa
 const COI_TAB = "apps/frontend/src/pages/customers/CoiTab.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const CUSTOMERS_PAGE = "apps/frontend/src/pages/Customers.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
+const SELF = "scripts/verify-customer-reverse-link-wired.mjs";
+const CLAIMED_LEAVES = ["md.coi_requests", "detail.coi"];
+const CLAIMED_COLS = ["connectivity", "reverse_link"];
+const EXACT_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["reverse_link","connectivity"],"leaves":["md.coi_requests","detail.coi"],"task":"CUST-F5873-COI-REVERSE-CONNECTIVITY-EXACT-LEAVES","vertical":"column-wave"} */';
 
 function fail(msg) {
   console.error(`FAIL verify-customer-reverse-link-wired: ${msg}`);
@@ -52,6 +57,25 @@ function checkFrontend(sources) {
   }
 }
 
+function checkEvidence(sources) {
+  try {
+    const matrix = JSON.parse(sources[MATRIX]);
+    for (const id of CLAIMED_LEAVES) for (const col of CLAIMED_COLS) {
+      if (!matrix.leaves?.find((leaf) => leaf.id === id)?.required?.includes(col)) fail(`exact Required ownership: ${id}:${col}`);
+    }
+  } catch {
+    fail(`${MATRIX}: must parse.`);
+  }
+  if (!sources[SELF].split("\n").includes(EXACT_HEADER)) fail(`${SELF}: exact Built header missing.`);
+}
+
+function removeRequiredCell(raw, id, col) {
+  const matrix = JSON.parse(raw);
+  const leaf = matrix.leaves.find((item) => item.id === id);
+  leaf.required = leaf.required.filter((requiredCol) => requiredCol !== col);
+  return JSON.stringify(matrix);
+}
+
 function selftest() {
   const cases = [
     [CONTRACT_ROUTES, checkContracts, "WHERE c.customer_id = $1", "WHERE 1=1 /* customer_id filter removed */"],
@@ -78,7 +102,7 @@ function selftest() {
     probesProven++;
   }
   const frontend = Object.fromEntries(
-    [CONTRACT_TAB, COI_TAB, CUSTOMER_DETAIL, CUSTOMERS_PAGE].map((file) => [file, fs.readFileSync(file, "utf8")]),
+    [CONTRACT_TAB, COI_TAB, CUSTOMER_DETAIL, CUSTOMERS_PAGE, MATRIX, SELF].map((file) => [file, fs.readFileSync(file, "utf8")]),
   );
   for (const [file, needle] of [
     [CONTRACT_TAB, "listCustomerContracts(customerId, operatingCompanyId"],
@@ -100,6 +124,28 @@ function selftest() {
     }
     probesProven++;
   }
+  checkEvidence(frontend);
+  process.exitCode = undefined;
+  for (const id of CLAIMED_LEAVES) for (const col of CLAIMED_COLS) {
+    const mutated = { ...frontend, [MATRIX]: removeRequiredCell(frontend[MATRIX], id, col) };
+    checkEvidence(mutated);
+    const caught = process.exitCode === 1;
+    process.exitCode = undefined;
+    if (!caught) {
+      console.error(`SELFTEST INERT: removing ${id}:${col} ownership was not caught.`);
+      process.exit(1);
+    }
+    probesProven++;
+  }
+  const headerMutant = { ...frontend, [SELF]: frontend[SELF].replace(EXACT_HEADER, `${EXACT_HEADER}.removed`) };
+  checkEvidence(headerMutant);
+  const headerCaught = process.exitCode === 1;
+  process.exitCode = undefined;
+  if (!headerCaught) {
+    console.error("SELFTEST INERT: removing exact Built header was not caught.");
+    process.exit(1);
+  }
+  probesProven++;
   console.log(`PASS verify-customer-reverse-link-wired --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -111,6 +157,7 @@ if (process.argv.includes("--selftest")) {
   checkFrontend(Object.fromEntries(
     [CONTRACT_TAB, COI_TAB, CUSTOMER_DETAIL, CUSTOMERS_PAGE].map((file) => [file, fs.readFileSync(file, "utf8")]),
   ));
+  checkEvidence(Object.fromEntries([MATRIX, SELF].map((file) => [file, fs.readFileSync(file, "utf8")])));
   if (process.exitCode !== 1) {
     console.log("PASS verify-customer-reverse-link-wired — exact customer contracts/COI reverse reads and mounted surfaces confirmed wired.");
   }
