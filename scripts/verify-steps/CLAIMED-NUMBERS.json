@@ -5158,5 +5158,10 @@
     "claimed_by": "cc-3",
     "claimed_at": "2026-08-22",
     "purpose": "verify-customer-shipping-country-nullable"
+  },
+  "4261": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-22",
+    "purpose": "verify-audit-trigger-coverage-abandonment-chargebacks-settlement-disputes"
   }
 }
