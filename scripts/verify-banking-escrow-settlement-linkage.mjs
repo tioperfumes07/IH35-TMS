@@ -6,6 +6,11 @@
  * (`/accounting/escrow?holder_id=`) as the canonical books surface. Banking
  * Driver Escrow (`/banking/driver-escrow`) remains reachable as a second hop
  * (Rule 07 never-delete) — typically via Accounting Escrow cross-link.
+ *
+ * ACCT-F5703 moved the timeline from the stale driver_finance.escrow_ledger
+ * snapshot to accounting.escrow_postings, the canonical GL-linked subledger.
+ * A settlement link is therefore present only when source_type identifies a
+ * driver settlement; source_id is the canonical settlement FK in that case.
  */
 import fs from "node:fs";
 
@@ -25,8 +30,15 @@ export function run(root = process.cwd()) {
     ? fs.readFileSync(`${root}/apps/frontend/src/pages/accounting/EscrowPage.tsx`, "utf8")
     : "";
 
-  if (!routes.includes("settlement_id::text AS settlement_id")) {
-    failures.push("escrow-visualizer timeline must SELECT settlement_id from escrow_ledger");
+  if (
+    !/CASE\s+WHEN\s+ep\.source_type\s*=\s*'driver_settlement'\s+THEN\s+ep\.source_id::text\s+ELSE\s+NULL\s+END\s+AS\s+settlement_id/i.test(
+      routes
+    ) ||
+    !/JOIN\s+accounting\.escrow_postings\s+ep/i.test(routes)
+  ) {
+    failures.push(
+      "escrow-visualizer timeline must project driver-settlement source_id from canonical accounting.escrow_postings"
+    );
   }
   if (!api.includes("settlement_id?:") && !api.includes("settlement_id?: string")) {
     failures.push("EscrowDriverTimelineRow must expose settlement_id");
@@ -70,7 +82,8 @@ if (process.argv.includes("--selftest")) {
   };
   mk(
     "apps/backend/src/banking/escrow-visualizer.routes.ts",
-    `settlement_id::text AS settlement_id\n`
+    `SELECT CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id\n` +
+      `FROM accounting.escrow_accounts ea JOIN accounting.escrow_postings ep ON ep.escrow_account_id = ea.id\n`
   );
   mk("apps/frontend/src/api/banking.ts", `settlement_id?: string | null;\n`);
   mk(
@@ -88,6 +101,15 @@ if (process.argv.includes("--selftest")) {
   if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
   mk("apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", "x\n");
   if (!run(tmp).length) throw new Error("FAIL fail");
+  mk(
+    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+    `kind="settlement"\nbanking-escrow-settlement-link\n`
+  );
+  mk(
+    "apps/backend/src/banking/escrow-visualizer.routes.ts",
+    `SELECT NULL::text AS settlement_id FROM accounting.escrow_accounts ea\n`
+  );
+  if (!run(tmp).length) throw new Error("settlement projection mutation escaped");
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-escrow-settlement-linkage --selftest OK");
 } else {
