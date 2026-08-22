@@ -26,8 +26,17 @@ function assertAll(srcs) {
     if (/jeId\.slice\(0,\s*8\)/.test(src) || /journal_entry_id\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: invoice JE still UUID-slices`);
     }
-    if (file.endsWith("MaintenanceShopHubPage.tsx") && !/entityLabel\(row\.financial_label, row\.financial_id, "Expense"\)/.test(src)) {
-      problems.push(`${file}: expense drill must use the producer's financial label`);
+    if (
+      file.endsWith("MaintenanceShopHubPage.tsx") &&
+      !/visibleDocumentLabel\(row\.financial_label, row\.financial_id, "No expense #"\)/.test(src)
+    ) {
+      problems.push(`${file}: expense drill must use visibleDocumentLabel — empty expense_number is No expense #, not Expense — not visible`);
+    }
+    if (
+      file.endsWith("MaintenanceShopHubPage.tsx") &&
+      !/visibleDocumentLabel\(row\.financial_label, row\.financial_id, "No bill #"\)/.test(src)
+    ) {
+      problems.push(`${file}: bill drill must use visibleDocumentLabel — empty bill_number is No bill #, not Record — not visible`);
     }
     if (file.endsWith("maintenance-shop.service.ts") && !/e\.expense_number AS financial_label/.test(src)) {
       problems.push(`${file}: expense query must project canonical expense_number`);
@@ -45,7 +54,7 @@ if (SELFTEST) {
   const srcs = read();
   const mutations = [
     [FILES[2], /entityLabel\(rows\.find[\s\S]*?highlightedBillId,\s*"Bill"\)/, "highlightedBillId.slice(0, 8)"],
-    [FILES[1], 'entityLabel(row.financial_label, row.financial_id, "Expense")', 'entityLabel(null, row.financial_id, "Expense")'],
+    [FILES[1], 'visibleDocumentLabel(row.financial_label, row.financial_id, "No expense #")', 'entityLabel(row.financial_label, row.financial_id, "Expense")'],
     [FILES[3], "e.expense_number AS financial_label", "NULL::text AS financial_label"],
   ];
   for (const [file, pattern, replacement] of mutations) {

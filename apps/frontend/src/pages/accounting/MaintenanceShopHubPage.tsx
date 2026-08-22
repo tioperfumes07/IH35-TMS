@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { getMaintenanceShopHub, type MaintenanceShopHubRow } from "../../api/maintenance-shop";
@@ -91,13 +91,13 @@ export function MaintenanceShopHubPage() {
             <EntityLink
               kind="bill"
               id={row.financial_id}
-              label={entityLabel(row.financial_label, row.financial_id, "Record")}
+              label={visibleDocumentLabel(row.financial_label, row.financial_id, "No bill #")}
             />
           ) : (
             <EntityLink
               kind="expense"
               id={row.financial_id}
-              label={entityLabel(row.financial_label, row.financial_id, "Expense")}
+              label={visibleDocumentLabel(row.financial_label, row.financial_id, "No expense #")}
             />
           ),
       },
