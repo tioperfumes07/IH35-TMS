@@ -1,13 +1,10 @@
-# INBOX-CODEX · 9226 · REVERSE · 17:14 CT · CUSTOMERS / DRIVERS / FLEET · FAST-MERGE
+# INBOX-CODEX · 9226 · REVERSE
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **17:14 CT**.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+**Cite:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
 
-**No CDP. No hold.** SQL / GET / guard. USMCA only.
+CURRENT MODULE: **customers** reverse (`mdata.customers`). Then drivers, then fleet/`mdata.units`. **No CDP. No Chrome.**
 
-## NOW
+FORBIDDEN: idle · occupy Live Chrome ports.
 
-1. `mdata.customers` reverse (Inactive 13 already live-proven — F+R only)
-2. `mdata.drivers` reverse
-3. `mdata.units` reverse
-
-OUTBOX: `Codex | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9226 | NOW=customers reverse | GO`
+OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=customers reverse | GO`

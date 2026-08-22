@@ -1,5 +1,3 @@
-# HOURLY RE-READ
+# STALE — DO NOT FOLLOW
 
-**SUPERSEDED.** Do not run a competing hourly loop.
-
-`git pull --ff-only origin main` then `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` + `INBOX-<SEAT>.md`.
+Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`

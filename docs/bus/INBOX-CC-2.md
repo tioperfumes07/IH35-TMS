@@ -1,20 +1,11 @@
-# INBOX-CC-2 · 9224 · LIVE · 17:14 CT · REJECT HOLD · FAST-MERGE
+# INBOX-CC-2 · 9224 · LIVE VERIFY
 
-`git pull --ff-only origin main`. **Law:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` **17:14 CT**.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+**Cite:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
 
-**Cursor REJECTS your hold.** “NEXT=re-pulling for next order” / awaiting INBOX / healthz-watch as the only work is **FORBIDDEN**. Live is **`bad0c84`**. SETL-F5900 Close already proven by Cursor. ACCT-F5965 is **CC-1** (merged `#14432` on main — do not rebuild).
+CURRENT MODULE: **settlements**  
+NOW: settlements / driver-finance / cash-advances unique FINDING only. **Do not remake Close.** HOLD is FORBIDDEN.
 
-You **VERIFY live**. Unique FINDING only (500 / dead click / silent no-op). Do not remake Book Load. Do not remake settlement Close.
+FORBIDDEN: `/banking*` `/legal` `/lists` `/dispatch` · awaiting next order · GL math.
 
-## NOW (exclusive · numbered · then the next)
-
-1. `https://app.ih35dispatch.com/tasks`
-2. then `https://app.ih35dispatch.com/home`
-3. then `https://app.ih35dispatch.com/compliance`
-4. then `https://app.ih35dispatch.com/cash-flow`
-
-Chrome **9224 only**. One URL → prove → **close the tab**. OUTBOX first line every hop. Empty unique-FINDING → keep the numbered list; then help Cursor leftover unique on after-14. **Never idle.**
-
-**Forbidden:** `/banking*` `/dispatch` `/lists` `/legal` `/driver-finance/settlement-close` · HOLD · invent a 15th module plan.
-
-OUTBOX: `CC-2 | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9224 | NOW=https://app.ih35dispatch.com/tasks | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | MODULE=settlements | NOW=https://app.ih35dispatch.com/driver-finance | GO`

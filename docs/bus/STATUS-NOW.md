@@ -1,13 +1,14 @@
-# STATUS-NOW · 2026-08-22 17:14 CT
+# STATUS-NOW
 
-FAST-MERGE **ON**. Live **`bad0c84`**. **REJECT CC-2 HOLD.** Certify remaining U6 then rest of 14.
+**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-| Seat | Port | NOW |
-|------|------|-----|
-| CC-1 | 9223 | ACCT-F5965 board FIXED if merged · next OPEN money |
-| CC-2 | 9224 | `/tasks` — **not holding** |
-| CC-3 | 9225 | `/legal` |
-| Codex | 9226 | customers reverse |
-| Cursor | 9222 | `/banking/transactions` match |
+| Seat | MODULE NOW |
+|------|------------|
+| Cursor 9222 | banking |
+| CC-1 9223 | accounting leftover money |
+| CC-2 9224 | settlements |
+| CC-3 9225 | legal |
+| Codex 9226 | customers reverse |
+| Devin | PARKED |
 
-ACK: `SEAT | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`

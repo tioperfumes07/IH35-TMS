@@ -28,6 +28,7 @@ const POINTERS = [
       "alwaysApply",
       "SEARCH BEFORE YOU ASK",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+      "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
     ],
   },
   {
@@ -37,19 +38,28 @@ const POINTERS = [
       "DELIVERY-METHOD-LOCKED.md",
       "SEARCH BEFORE YOU ASK",
       "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+      "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
     ],
   },
   {
     rel: ".claude/skills/ih35-tms-standards/SKILL.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
+    mustInclude: [
+      "STANDING-SESSION-DIRECTIVE.md",
+      "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+      "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+    ],
   },
   {
     rel: ".cursor/rules/00-always-read-first.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
+    mustInclude: [
+      "STANDING-SESSION-DIRECTIVE.md",
+      "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
+      "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md",
+    ],
   },
   {
     rel: "AGENTS.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK", "CREATE-TEST-THEN-VOID-LAW-2026-08-22.md", "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md"],
   },
 ];
 
@@ -87,6 +97,19 @@ export function assertStandingDirectivePresent(root = ROOT) {
     if (!/CREATE-TEST-THEN-VOID/i.test(body) || !/CREATE-TEST-THEN-VOID-LAW-2026-08-22/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include CREATE-TEST-THEN-VOID law pointer`);
     }
+    if (!/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22/i.test(body) || !/EXCLUSIVE MODULE/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include URGENT 14 EXCLUSIVE MODULE CERTIFY law`);
+    }
+  }
+
+  const exclusiveLaw = "docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md";
+  if (!fs.existsSync(path.join(root, exclusiveLaw))) {
+    problems.push(`MISSING ${exclusiveLaw}`);
+  } else {
+    const el = fs.readFileSync(path.join(root, exclusiveLaw), "utf8");
+    if (!/one seat|Exclusive owner/i.test(el) || !/HOLD/i.test(el)) {
+      problems.push(`${exclusiveLaw}: must lock exclusive owner + HOLD forbidden`);
+    }
   }
 
   for (const p of POINTERS) {
@@ -117,7 +140,7 @@ if (SELFTEST) {
     fs.mkdirSync(path.join(tmpRoot, ".cursor", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".windsurf", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".claude", "skills", "ih35-tms-standards"), { recursive: true });
-    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n## 6. SEARCH BEFORE YOU ASK\n## 7. PLACEHOLDER test data\nCREATE-TEST-THEN-VOID-LAW-2026-08-22.md CREATE-TEST-THEN-VOID\n");
+    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n## 6. SEARCH BEFORE YOU ASK\n## 7. PLACEHOLDER test data\nCREATE-TEST-THEN-VOID-LAW-2026-08-22.md CREATE-TEST-THEN-VOID\nURGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md EXCLUSIVE MODULE\n");
     fs.writeFileSync(path.join(tmpRoot, DELIVERY), "# delivery stub\n");
     // Broken pointer — missing STANDING reference
     fs.writeFileSync(

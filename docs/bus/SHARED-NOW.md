@@ -1,3 +1,4 @@
-# SHARED-NOW · 2026-08-22 12:05 CT
+# STALE — DO NOT FOLLOW
 
-See `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md`. Accounting CERTIFIED. After-14. FAST-MERGE.
+Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
+Seat: `docs/bus/INBOX-<SEAT>.md`

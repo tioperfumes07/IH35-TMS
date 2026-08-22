@@ -1,9 +1,9 @@
 # SESSION BOOT
 
-**Canonical NOW = `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (17:14 CT) + `INBOX-<SEAT>.md` after `git pull --ff-only origin main`.**
+**Canonical until all 14 CERTIFIED:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-**USMCA launch first.** Trucking / Transportation / QBO sync irrelevant.
+Then `git pull --ff-only origin main` → `docs/bus/INBOX-<SEAT>.md` TOP.
 
-**HOLD / awaiting next order / idle = DEFECT.** CC-2 hold is **REJECTED**.
+USMCA only. HOLD / awaiting next order = DEFECT.
 
-ACK `URGENT-BLOCKS-NOW 17:14CT | PORT=<n> | NOW=<url> | GO`
+ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`

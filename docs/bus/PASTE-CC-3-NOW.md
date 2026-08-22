@@ -1,7 +1,5 @@
-===== CC-3 · PORT 9225 · 17:14 CT · PICKER · NEVER IDLE =====
-cd /Users/jorgemunoz/IH35-TMS-clean
-git pull --ff-only origin main
-NOW: https://app.ih35dispatch.com/legal then /lists
-FORBIDDEN: /banking* /dispatch /maintenance /safety · HOLD
-ACK: CC-3 | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=9225 | NOW=https://app.ih35dispatch.com/legal | GO
-===== END CC-3 =====
+===== CC-3 9225 =====
+Law: docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md
+MODULE=legal NOW=https://app.ih35dispatch.com/legal
+ACK: CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO
+===== END =====

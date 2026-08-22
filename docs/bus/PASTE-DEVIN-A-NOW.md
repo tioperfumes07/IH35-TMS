@@ -1,3 +1,3 @@
-===== DEVIN-A · PARKED =====
-Do not run. NOW is URGENT-BLOCKS-NOW 12:05 CT for Cursor/CC/Codex only.
-===== END DEVIN-A =====
+# PARKED / STALE
+
+Devin is PARKED. Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`

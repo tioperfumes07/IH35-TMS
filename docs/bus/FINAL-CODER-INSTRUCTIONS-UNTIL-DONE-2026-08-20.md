@@ -1,5 +1,3 @@
-# SUPERSEDED · 2026-08-22 12:05 CT
+# STALE — DO NOT FOLLOW
 
-This 2026-08-20 scoreboard-deadline packet is **not** the NOW.
-
-**NOW:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` + `INBOX-<SEAT>.md` + `docs/bus/FAST-MERGE-4MIN-LAW.md`.
+Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`

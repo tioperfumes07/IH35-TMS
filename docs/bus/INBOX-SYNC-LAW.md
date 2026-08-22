@@ -1,7 +1,9 @@
 # INBOX SYNC LAW
 
-**Jorge is not the messenger.** Canonical: `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` + `CODER-INSTRUCTIONS-NOW.md` + `INBOX-<SEAT>.md` TOP. After pull, **stale / drained / empty-queue is forbidden.**
+**SINGLE CHANNEL:** `docs/bus/` in git. Jorge is not the messenger.
 
-Seats do not write their own INBOX (Cursor lead only). Status in OUTBOX first line. Picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`.
+**Canonical NOW:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` + `INBOX-<SEAT>.md` TOP.
 
-INBOX TOP names the current module on **your column**. After that module’s your-column bar, **you** advance to the next name in URGENT 6 → rest of 10 → WAVE 2 — do not idle waiting for a new INBOX. Cursor rewrites INBOX when seats stall. Devin is PARKED.
+Seats do not write their own INBOX (Cursor lead only). OUTBOX first line every hop. Money FAIL → `OUTBOX-CC-1.md`. Picker FAIL → `OUTBOX-CC-3.md`. Live-verify FAIL → `OUTBOX-CC-2.md`. Plus `OUTBOX-CURSOR.md`.
+
+HOLD / empty-queue as idle = forbidden. Next = next row on **your** exclusive list.
