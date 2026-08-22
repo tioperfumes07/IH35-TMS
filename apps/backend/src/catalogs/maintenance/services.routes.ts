@@ -9,6 +9,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { calculateServiceEta } from "./eta-calculator.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -147,7 +148,14 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
         [d.operating_company_id, d.service_code, d.service_name, d.service_category, d.applies_to_type, d.interval_miles ?? null, d.interval_months ?? null, d.interval_hours ?? null, d.is_safety_critical, d.typical_duration_hours ?? null, d.typical_cost_cents, d.compliance_ref ?? null, d.is_active]
       );
-      return res.rows[0];
+      const row = res.rows[0];
+      await appendCrudAudit(client, user.uuid, "mdata.maintenance_services.created", {
+        resource_id: (row as { id?: string } | undefined)?.id,
+        resource_type: "mdata.maintenance_services",
+        service_code: d.service_code,
+        operating_company_id: d.operating_company_id,
+      });
+      return row;
     });
     return reply.code(201).send(created);
   });

@@ -15,3 +15,7 @@ USMCA only. Trucking / Transportation / QBO sync **irrelevant**. No `trigger_dep
 Chrome **9223 only**. Close the tab after each hop.
 
 OUTBOX: `CC-1 | ACK | URGENT-BLOCKS-NOW 16:55CT | PORT=9223 | NOW=board money FAIL after live SHA | GO`
+
+## CODEX HANDOFF · 2026-08-22 · LISTS-PARTS-MASTER-CANONICAL-TABLE-MISSING
+
+OPEN schema/migration row in `docs/audit/GUARD-WORKORDERS.md`. `mdata.maintenance_parts` is absent; `parts.routes.ts` returns `503 parts_master_not_provisioned`, blocking Required `catalog.maintenance.parts_catalog.create:connectivity`. Reconcile the enhanced master shape with `catalogs.parts` / `maintenance.parts_inventory`; one canonical company-scoped RLS/audit/void-not-delete model, no duplicate fact tables. `BLOCKS=LISTS-F5967 parts_catalog.create`.

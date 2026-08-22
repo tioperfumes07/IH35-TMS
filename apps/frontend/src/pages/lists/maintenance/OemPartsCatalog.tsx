@@ -15,6 +15,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ListsSubNav } from "../ListsSubNav";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function formatCost(value: string | null) {
   if (!value) return "—";
@@ -155,6 +156,8 @@ function OemPartsCreateModal({
 }
 
 export function OemPartsCatalog() {
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -163,7 +166,7 @@ export function OemPartsCatalog() {
 
   // LST-F5218 — Lists hub ?create=1 must open OEM part create modal.
   useCreateQueryParam({
-    companyId: "_",
+    companyId,
     onOpenCreate: () => setModalOpen(true),
   });
 
@@ -171,16 +174,19 @@ export function OemPartsCatalog() {
     queryKey: ["lists", "oem-parts", search, brandFilter, categoryFilter, fleetOnly],
     queryFn: () =>
       oemPartsCatalogClient.list({
+        operating_company_id: companyId,
         q: search || undefined,
         brand: brandFilter || undefined,
         category: categoryFilter || undefined,
         fleet_only: fleetOnly,
       }),
+    enabled: Boolean(companyId),
   });
 
   const brandsQuery = useQuery({
     queryKey: ["lists", "oem-parts", "brands"],
-    queryFn: () => oemPartsCatalogClient.brands(),
+    queryFn: () => oemPartsCatalogClient.brands(companyId),
+    enabled: Boolean(companyId),
   });
 
   const rows = query.data?.rows ?? [];
