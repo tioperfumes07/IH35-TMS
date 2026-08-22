@@ -57,22 +57,38 @@ if (process.argv.includes("--selftest")) {
     ["advance-drill", "drivers", /kind="driver"/g, 'kind="vendor"'],
     ["advance-scope", "drivers", /cashAdvanceRequestsOfficeApi\.list\(selectedCompanyId!\)/g, "cashAdvanceRequestsOfficeApi.list('')"],
     ["advance-table-binding", "drivers", /columns=\{debtAlertColumns\}/g, "columns={[]}"],
+    ["advance-tab-binding", "drivers", /subnavTab === "cash_advances"/g, 'subnavTab === "removed"'],
     ["deduction-drill", "deductions", /kind="driver"/g, 'kind="vendor"'],
+    ["deduction-scope", "deductions", /listSettlementDeductions\(selectedCompanyId!/g, "listSettlementDeductions(undefined!"],
+    ["deduction-error", "deductions", /query\.isError/g, "false"],
     ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
     ["deduction-list-filter", "deductions", /dataTestId="settlement-deductions-filter-driver"/g, 'dataTestId="x"'],
+    ["deduction-filter-no-create", "deductions", /allowCreate=\{false\}/g, "allowCreate"],
+    ["deduction-filter-state", "deductions", /setDriverFilter/g, "dropDriverFilter"],
     // The replacement must NOT contain "setSearchParams" as a substring — "setSearchParamsNOPE"
     // still matches /setSearchParams/, so the check's .test() stayed true and this mutation was a
     // silent no-op against its own audit() clause. Found live: this mutation never actually
     // changed what the guard detects.
     ["deduction-url-write", "deductions", /setSearchParams/g, "handleUrlSync"],
     ["dispute-scope", "disputeHook", /operating_company_id: companyId/g, "operating_company_id: ''"],
+    ["dispute-error-contract", "disputeHook", /isError: listQuery\.isError/g, "isError: false"],
+    ["dispute-success-contract", "disputeHook", /isSuccess: listQuery\.isSuccess/g, "isSuccess: false"],
     ["dispute-state", "disputes", /Could not load settlement disputes\./g, "Loading"],
+    ["dispute-empty", "disputes", /No settlement disputes found\./g, "No rows"],
+    ["dispute-driver-drill", "disputes", /kind="driver"/g, 'kind="vendor"'],
     ["dispute-drill", "disputes", /kind="settlement"/g, 'kind="driver"'],
     ["bank-route", "banking", /navigate\([^\n]*rowDriverId[^\n]*\)/g, "navigate('/drivers')"],
+    ["bank-scope", "banking", /getEscrowDriverBalances\(operatingCompanyId\)/g, "getEscrowDriverBalances('')"],
+    ["bank-error", "banking", /listState\.isError/g, "false"],
     ["bank-state", "banking", /No escrow ledger rows found for this filter\./g, "Loading"],
+    ["safety-driver-kind", "safety", /kind="driver"/g, 'kind="vendor"'],
     ["safety-drill", "safety", /id=\{row\.id \|\| null\}/g, "id={null}"],
     ["safety-scope", "safety", /listEscrowRecords\(operatingCompanyId\)/g, "listEscrowRecords('')"],
+    ["safety-error", "safety", /escrowQuery\.isError/g, "false"],
+    ["safety-empty", "safety", /No escrow records available for the selected company\./g, "No rows"],
     ["safety-list-filter", "safety", /dataTestId="escrow-records-filter-driver"/g, 'dataTestId="x"'],
+    ["safety-filter-no-create", "safety", /allowCreate=\{false\}/g, "allowCreate"],
+    ["safety-filter-state", "safety", /setDriverFilter/g, "dropDriverFilter"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
@@ -81,7 +97,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(LABEL + " SELFTEST PASS — " + mutations.length + " mutations detected");
+  console.log(LABEL + " SELFTEST PASS — " + mutations.length + "/" + mutations.length + " production-source mutations detected");
   process.exit(0);
 }
 
