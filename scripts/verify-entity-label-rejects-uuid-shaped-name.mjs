@@ -2,7 +2,7 @@
 /** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
 /** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
-/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^secondary\\.assignments$","task":"CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["secondary.assignments"],"task":"DISP-F5864-SECONDARY-ASSIGNMENTS-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.overview"],"task":"DISP-F5862-HOME-OVERVIEW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.list"],"task":"DISP-F5863-HOME-LIST-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^fault_drafts\\.review$","task":"MAINT-FAULT-DRAFTS-TOMBSTONE"} */
@@ -35,6 +35,7 @@ const DISPATCH_MATRIX = "docs/specs/scoreboard/modules/dispatch.required.json";
 const SELF = "scripts/verify-entity-label-rejects-uuid-shaped-name.mjs";
 const OVERVIEW_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.overview"],"task":"DISP-F5862-HOME-OVERVIEW-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 const HOME_LIST_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["home.list"],"task":"DISP-F5863-HOME-LIST-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
+const ASSIGNMENTS_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["secondary.assignments"],"task":"DISP-F5864-SECONDARY-ASSIGNMENTS-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -1892,6 +1893,13 @@ function auditOverviewBuilt(matrixSrc, selfSrc) {
     problems.push(`${DISPATCH_MATRIX}: Required matrix must parse for home.list`);
   }
   if (!selfSrc.split("\n").includes(HOME_LIST_HEADER)) problems.push(`${SELF}: exact home.list Built annotation drifted`);
+  try {
+    const leaf = JSON.parse(matrixSrc).leaves?.find((item) => item.id === "secondary.assignments");
+    if (!leaf?.required?.includes("reverse_link")) problems.push(`${DISPATCH_MATRIX}: secondary.assignments must require reverse_link`);
+  } catch {
+    problems.push(`${DISPATCH_MATRIX}: Required matrix must parse for secondary.assignments`);
+  }
+  if (!selfSrc.split("\n").includes(ASSIGNMENTS_HEADER)) problems.push(`${SELF}: exact secondary.assignments Built annotation drifted`);
   return problems;
 }
 
@@ -2034,6 +2042,12 @@ ORDER BY w.opened_at DESC NULLS LAST`;
   }
   if (!auditOverviewBuilt(matrix, self.replace('"leaves":["home.list"]', '"leaves":["home.kanban"]')).length) {
     failures.push("selftest: home.list exact Built header drift NOT detected");
+  }
+  if (!auditOverviewBuilt(matrix.replace('"id": "secondary.assignments"', '"id": "secondary.assignments.removed"'), self).length) {
+    failures.push("selftest: secondary.assignments Required removal NOT detected");
+  }
+  if (!auditOverviewBuilt(matrix, self.replace('"leaves":["secondary.assignments"]', '"leaves":["secondary.pre_settlements"]')).length) {
+    failures.push("selftest: secondary.assignments exact Built header drift NOT detected");
   }
 
   if (failures.length) {
