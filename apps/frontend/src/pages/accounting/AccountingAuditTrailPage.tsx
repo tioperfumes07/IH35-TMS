@@ -18,6 +18,7 @@ import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner"
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES } from "../../lib/accounting-source-transaction-types";
 import { formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
@@ -351,8 +352,14 @@ export function AccountingAuditTrailPage() {
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={staged.draft.sourceType}
             onChange={(e) => staged.setDraft({ ...staged.draft, sourceType: e.target.value })}
-            placeholder="invoice | bill | payment"
+            placeholder="e.g. customer_payment, bill, invoice"
+            list="audit-trail-source-types"
           />
+          <datalist id="audit-trail-source-types">
+            {KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
         </label>
         <label className="text-xs text-slate-600">
           Source id

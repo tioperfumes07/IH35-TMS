@@ -11,6 +11,18 @@ import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner"
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES } from "../../lib/accounting-source-transaction-types";
+
+// BUS-ACCT-LEFTOVER — this page's own free-text "Source type" input previously carried the placeholder
+// "invoice | bill | payment" as its ONLY guidance. journal_entry_postings.source_transaction_type is
+// matched with a strict equality WHERE clause (accounting/audit-trail/service.ts's
+// listAccountingSourceLineage) — there is no "payment"/"customer_payment" aliasing on the read side, so
+// a user following the placeholder's own example (typing "payment") gets a real, silent 0-row result
+// for a transaction that DOES have posting lineage (proven live: PMT-2026-00007 / c85cc5dd-1499-407a-
+// 8e18-ad5cfe5fb86c has 2 real posting rows, both correctly source_transaction_type='customer_payment').
+// Kept as free text (a brand-new source type can land before this list is updated), but backed by a
+// <datalist> of the shared, live-measured values (see lib/accounting-source-transaction-types.ts) so
+// the correct spelling is one keystroke away instead of guessed.
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -263,8 +275,14 @@ export function PostingLineagePage() {
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
-            placeholder="invoice | bill | payment"
+            placeholder="e.g. customer_payment, bill, invoice"
+            list="posting-lineage-source-types"
           />
+          <datalist id="posting-lineage-source-types">
+            {KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
         </label>
         <label className="text-xs text-slate-600">
           Source transaction id
