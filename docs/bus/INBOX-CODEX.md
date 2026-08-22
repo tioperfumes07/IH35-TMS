@@ -1,8 +1,8 @@
 # INBOX-CODEX · 9226 · MODULE LOCK = ACCOUNTING
 
-**FORBIDDEN:** 340-guard loop, fake PASS on Checking session, Render deploy, Chrome CDP.
+**LEAD 2026-08-21 19:43 CT — OWNER released CC-3 only.** Codex stays on ACCOUNTING reverse. Do not follow CC-3 into factoring/dispatch chrome. No CDP.
 
-**LEAD 2026-08-21 19:07 CT — OWNER: all seats on one module until finished.** **NOW MODULE = ACCOUNTING.** System-wide reverse waits.
+**FORBIDDEN:** 340-guard loop, fake PASS on Checking session, Render deploy, Chrome CDP.
 
 ## PASTE BOX
 

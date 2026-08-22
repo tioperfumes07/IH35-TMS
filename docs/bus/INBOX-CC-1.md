@@ -2,7 +2,9 @@
 
 `git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
-**LEAD 2026-08-21 19:07 CT — OWNER: all seats on one module until finished.** **NOW MODULE = ACCOUNTING.** Do not jump to settlement close / banking categorize. Categorize is not a coder job.
+**LEAD 2026-08-21 19:43 CT — OWNER released CC-3 only.** You stay on ACCOUNTING. Do not copy CC-3 into factoring/settlements/banking money.
+
+`git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
 **NOW:**
 1. Register UUID ref **FIXED (PR #13772)** on main — not live until batch deploy. Next: JE memo/source-link human labels (do not weaken UUID tombstones).
