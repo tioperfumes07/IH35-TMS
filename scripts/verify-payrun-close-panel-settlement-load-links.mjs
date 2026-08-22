@@ -21,30 +21,60 @@ import { readFileSync } from "node:fs";
 const panelPath = "apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx";
 const pagePath = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
 
-const panelSrc = readFileSync(panelPath, "utf8");
-const pageSrc = readFileSync(pagePath, "utf8");
+const source = { panel: readFileSync(panelPath, "utf8"), page: readFileSync(pagePath, "utf8") };
 
-const failures = [];
+export function collectFailures(src = source) {
+  const failures = [];
+  if (!/settlementDisplayId\?\??:\s*string\s*\|\s*null/.test(src.panel)) {
+    failures.push(`${panelPath}: no longer declares a settlementDisplayId prop`);
+  }
+  if (!/settlementLoadIds\?\??:\s*\{\s*id:\s*string;\s*number:\s*string\s*\|\s*null\s*\}\[\]/.test(src.panel)) {
+    failures.push(`${panelPath}: no longer declares a settlementLoadIds prop`);
+  }
+  if (!/kind="settlement"[\s\S]{0,100}?id=\{settlementId\}[\s\S]{0,140}?entityLabel\(settlementDisplayId \?\? null, settlementId, "Settlement"\)/.test(src.panel)) {
+    failures.push(`${panelPath}: settlement drill must bind settlementId + settlementDisplayId`);
+  }
+  if (!/settlementLoadIds\.map\(\(load\)[\s\S]{0,180}?kind="load"[\s\S]{0,100}?id=\{load\.id\}[\s\S]{0,120}?entityLabel\(load\.number, load\.id, "Load"\)/.test(src.panel)) {
+    failures.push(`${panelPath}: Loads-in-cycle must bind each load id + human number`);
+  }
+  if (!/<PayRunClosePanel[\s\S]{0,400}?settlementDisplayId=\{settlementDisplayId\}/.test(src.page)) {
+    failures.push(`${pagePath}: PayRunClosePanel is no longer passed settlementDisplayId={settlementDisplayId}`);
+  }
+  if (!/<PayRunClosePanel[\s\S]{0,400}?settlementLoadIds=\{settlementLoadIds\}/.test(src.page)) {
+    failures.push(`${pagePath}: PayRunClosePanel is no longer passed settlementLoadIds={settlementLoadIds}`);
+  }
+  return failures;
+}
 
-if (/entityLabel\(\s*null\s*,\s*settlementId\s*,\s*"Settlement"\s*\)/.test(panelSrc)) {
-  failures.push(`${panelPath}: Settlement EntityLink reverted to entityLabel(null, settlementId, "Settlement") — always renders "Settlement — not visible"`);
-}
-if (!/settlementDisplayId\?\??:\s*string\s*\|\s*null/.test(panelSrc)) {
-  failures.push(`${panelPath}: no longer declares a settlementDisplayId prop`);
-}
-if (!/settlementLoadIds\?\??:\s*\{\s*id:\s*string;\s*number:\s*string\s*\|\s*null\s*\}\[\]/.test(panelSrc)) {
-  failures.push(`${panelPath}: no longer declares a settlementLoadIds prop`);
-}
-if (!/kind="load"/.test(panelSrc)) {
-  failures.push(`${panelPath}: no longer renders a Loads-in-cycle EntityLink kind="load"`);
+if (process.argv.includes("--selftest")) {
+  const baseline = collectFailures();
+  if (baseline.length) {
+    console.error(`verify-payrun-close-panel-settlement-load-links SELFTEST FAIL — good sources rejected: ${baseline.join(" | ")}`);
+    process.exit(1);
+  }
+  const mutations = [
+    ["display prop", "panel", /settlementDisplayId\?: string \| null;/, "settlementLabel?: string;"],
+    ["loads prop", "panel", /settlementLoadIds\?: \{ id: string; number: string \| null \}\[\];/, "loadCount?: number;"],
+    ["settlement id", "panel", /id=\{settlementId\}/, "id={companyId}"],
+    ["settlement label", "panel", /entityLabel\(settlementDisplayId \?\? null, settlementId, "Settlement"\)/, 'entityLabel(null, settlementId, "Settlement")'],
+    ["load id", "panel", /id=\{load\.id\}/, "id={settlementId}"],
+    ["load label", "panel", /entityLabel\(load\.number, load\.id, "Load"\)/, 'entityLabel(null, load.id, "Load")'],
+    ["parent display threading", "page", /(<PayRunClosePanel[\s\S]{0,400}?)settlementDisplayId=\{settlementDisplayId\}/, "$1settlementDisplayId={null}"],
+    ["parent load threading", "page", /(<PayRunClosePanel[\s\S]{0,400}?)settlementLoadIds=\{settlementLoadIds\}/, "$1settlementLoadIds={[]}"],
+  ];
+  const escaped = [];
+  for (const [name, key, pattern, replacement] of mutations) {
+    const planted = { ...source, [key]: source[key].replace(pattern, replacement) };
+    if (planted[key] === source[key] || collectFailures(planted).length === 0) escaped.push(name);
+  }
+  if (escaped.length) {
+    console.error(`verify-payrun-close-panel-settlement-load-links SELFTEST FAIL — escaped: ${escaped.join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`verify-payrun-close-panel-settlement-load-links SELFTEST PASS — ${mutations.length}/${mutations.length} plants rejected`);
 }
 
-if (!/<PayRunClosePanel[\s\S]{0,400}?settlementDisplayId=\{settlementDisplayId\}/.test(pageSrc)) {
-  failures.push(`${pagePath}: PayRunClosePanel is no longer passed settlementDisplayId={settlementDisplayId}`);
-}
-if (!/<PayRunClosePanel[\s\S]{0,400}?settlementLoadIds=\{settlementLoadIds\}/.test(pageSrc)) {
-  failures.push(`${pagePath}: PayRunClosePanel is no longer passed settlementLoadIds={settlementLoadIds}`);
-}
+const failures = collectFailures();
 
 if (failures.length > 0) {
   console.error("verify-payrun-close-panel-settlement-load-links: FAIL");
