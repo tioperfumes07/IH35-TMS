@@ -1589,7 +1589,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink
                     kind="journal_entry"
                     id={matchedJournalEntryId}
-                    label="TMS Journal Entry"
+                    label={entityLabel(links?.matched_journal_entry_memo, matchedJournalEntryId, "Journal entry")}
                     data-testid="bank-tx-categorization-je-link"
                   />
                 ) : null}
