@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["system"],"cols":["reverse_link"],"leafRe":"^audit\\.trail$","task":"VERTICAL-REVERSE-LINK-SYSTEM-AUDIT-RECORD"} */
+/** @matrix-built {"modules":["system"],"cols":["reverse_link"],"leaves":["audit.trail"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
@@ -23,8 +23,12 @@ const files = {
   vendorRoute: read("apps/backend/src/mdata/vendors.routes.ts"),
   driverRoute: read("apps/backend/src/mdata/drivers.routes.ts"),
   unitRoute: read("apps/backend/src/mdata/units.routes.ts"),
+  matrix: read("docs/specs/scoreboard/modules/system.required.json"),
+  feed: read("docs/specs/scoreboard/wire-sprint-built.json"),
+  self: read("scripts/verify-system-audit-record-reverse.mjs"),
 };
-function failures(s = files) { return [
+const HEADER = '/** @matrix-built {"modules":["system"],"cols":["reverse_link"],"leaves":["audit.trail"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */';
+function failures(s = files) { const found = [
   ["company-scoped exact audit filter", s.routes.includes("audit_event_id: z.string().uuid().optional()") && s.routes.includes("e.uuid = $${values.length}::uuid") && s.api.includes('search.set("audit_event_id", params.auditEventId)')],
   ["profile row exact drill", s.history.includes('kind="audit_event"') && s.history.includes("id={row.id}")],
   ["system page honors exact record", s.page.includes('searchParams.get("audit_event_id")') && s.page.includes("listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })") && s.page.includes('data-testid="audit-trail-exact-event"')],
@@ -64,7 +68,17 @@ function failures(s = files) { return [
   ["intercompany-group source opens the canonical group detail", s.page.includes('"banking.intercompany_transfer_groups": (id) => `/banking/transfers?group_id=${id}`') && s.transfers.includes('searchParams.get("group_id")') && s.transfers.includes("openIntercompanyGroup(deepLinkGroupId)")],
   ["cash-advance request source hydrates the exact scoped row", s.page.includes('"driver_finance.cash_advance_requests": (id) => `/driver-finance/cash-advance-requests?request_id=${id}`') && s.cashAdvanceRequests.includes('searchParams.get("request_id")') && s.cashAdvanceRequests.includes("cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)") && s.cashAdvanceRequests.includes('String(row.id ?? "") === requestIdFromUrl')],
   ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
-].filter(([, ok]) => !ok).map(([name]) => name); }
+].filter(([, ok]) => !ok).map(([name]) => name);
+  let matrix;
+  try { matrix = JSON.parse(s.matrix); } catch (error) { found.push(`System matrix parse: ${error.message}`); }
+  const leaf = matrix?.leaves?.find((candidate) => candidate.id === "audit.trail");
+  if (!leaf?.required?.includes("reverse_link")) found.push("audit.trail must require reverse_link");
+  if (leaf?.route_hint !== "/audit/trail") found.push("audit.trail must name mounted route /audit/trail");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact System audit header missing");
+  try { if (JSON.parse(s.feed).entries?.some((entry) => entry.guard === "scripts/verify-system-audit-record-reverse.mjs")) found.push("manual feed duplicates exact System ownership"); }
+  catch (error) { found.push(`feed parse: ${error.message}`); }
+  return found;
+}
 if (process.argv.includes("--selftest")) {
   const checks = [
     failures({ ...files, routes: files.routes.replace("e.uuid = $${values.length}::uuid", "TRUE") }).includes("company-scoped exact audit filter"),
@@ -108,9 +122,13 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, cashAdvanceRequests: files.cashAdvanceRequests.replace("cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)", "cashAdvanceRequestsOfficeApi.listPending(companyId)") }).includes("cash-advance request source hydrates the exact scoped row"),
     failures({ ...files, cashAdvanceRequests: files.cashAdvanceRequests.replace('String(row.id ?? "") === requestIdFromUrl', 'String(row.id ?? "") === ""') }).includes("cash-advance request source hydrates the exact scoped row"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
+    failures({ ...files, matrix: files.matrix.replace('"id": "audit.trail"', '"id": "audit.trail.broken"') }).includes("audit.trail must require reverse_link"),
+    failures({ ...files, matrix: files.matrix.replace('"route_hint": "/audit/trail"', '"route_hint": "/broken"') }).includes("audit.trail must name mounted route /audit/trail"),
+    failures({ ...files, self: files.self.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) }).includes("exact System audit header missing"),
+    failures({ ...files, feed: JSON.stringify({ entries: [{ guard: "scripts/verify-system-audit-record-reverse.mjs" }] }) }).includes("manual feed duplicates exact System ownership"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 41/41 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 45/45 runtime/evidence mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

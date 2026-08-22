@@ -2336,18 +2336,6 @@
       "leafRe": "^dispatch\\.modal\\.save_load_template$"
     },
     {
-      "task": "VERTICAL-REVERSE-LINK-SYSTEM-AUDIT-RECORD",
-      "pr": "this PR",
-      "guard": "scripts/verify-system-audit-record-reverse.mjs",
-      "modules": [
-        "system"
-      ],
-      "cols": [
-        "reverse_link"
-      ],
-      "leafRe": "^audit\\.trail$"
-    },
-    {
       "task": "LINK-F5170-CUSTOMER-PICKER-CANONICAL-LABELS",
       "pr": "this PR",
       "guard": "scripts/verify-customer-picker-canonical-labels.mjs",
