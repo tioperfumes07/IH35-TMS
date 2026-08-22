@@ -30,7 +30,7 @@ export function verify(source) {
   need("submit", 'kind="invoice"', "factoring submission queue must drill to invoices");
   need("submit", 'kind="customer"', "factoring submission queue must drill to customers");
   need("wizard", 'kind="invoice"', "factoring batch wizard must drill to selected invoices");
-  need("factors", 'kind="factoring_advance"', "factor admin must drill to canonical batches");
+  need("factors", '<EntityLink kind="factoring_batch" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />', "factor admin must drill each row to its canonical batch id with a human batch label");
   need("faro", 'kind="customer"', "Faro import must drill to canonical customers");
   need("factorList", 'kind="factoring_advance"', "accounting factoring list must drill to advances");
   need("factorDetail", 'kind="invoice"', "accounting factoring detail must drill to invoices");
@@ -61,7 +61,7 @@ if (process.argv.includes("--self-test")) {
     ["submit", 'kind="invoice"', 'kind="load"'],
     ["submit", 'kind="customer"', 'kind="vendor"'],
     ["wizard", 'kind="invoice"', 'kind="load"'],
-    ["factors", 'kind="factoring_advance"', 'kind="invoice"'],
+    ["factors", '<EntityLink kind="factoring_batch" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />', '<EntityLink kind="factoring_batch" id={row.customer_id} label={entityLabel(undefined, row.customer_id, "Batch")} />'],
     ["faro", 'kind="customer"', 'kind="vendor"'],
     ["factorList", 'kind="factoring_advance"', 'kind="invoice"'],
     ["factorDetail", 'kind="invoice"', 'kind="load"'],
