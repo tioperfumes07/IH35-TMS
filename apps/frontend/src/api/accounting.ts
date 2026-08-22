@@ -2415,6 +2415,9 @@ export type RegisterTransaction = {
   amount_out_cents: number;
   status: string | null;
   detail_path: string | null;
+  /** ACCT-F5982 — real GL journal entry this row posted to, when one exists (bank/invoice/bill only;
+   *  fuel/settlement rows honestly have no single JE of their own — see transaction-register.routes.ts). */
+  journal_entry_id: string | null;
 };
 
 export type TransactionRegisterResponse = {
