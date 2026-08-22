@@ -601,7 +601,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ded.load_id::text AS deduction_load_id,
             deduction_load.load_number AS deduction_load_number,
             bt.split_mode,
-            bt.matched_journal_entry_id::text AS matched_journal_entry_id
+            bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+            matched_je.memo AS matched_journal_entry_memo
           FROM banking.bank_transactions bt
           -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): bt is scoped by the WHERE, but every dimension
           -- it categorises INTO was resolved on a bare id. This is the bank-categorization surface — the
@@ -628,6 +629,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads deduction_load
             ON deduction_load.id = ded.load_id
            AND deduction_load.operating_company_id = bt.operating_company_id
+          LEFT JOIN accounting.journal_entries matched_je
+            ON matched_je.id = bt.matched_journal_entry_id
+           AND matched_je.operating_company_id = bt.operating_company_id
           WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
           LIMIT 1
         `,

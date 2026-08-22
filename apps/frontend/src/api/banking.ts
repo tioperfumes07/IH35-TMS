@@ -591,6 +591,7 @@ export type BankCategorizationLinks = {
   split_mode: string | null;
   /** Set when BANK_FEED_GL_POSTING_ENABLED ran and the bank-feed poster stamped a TMS JE back-pointer. */
   matched_journal_entry_id: string | null;
+  matched_journal_entry_memo: string | null;
 };
 
 export function getBankTransactionCategorizationLinks(transactionId: string, companyId: string) {
