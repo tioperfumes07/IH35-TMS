@@ -1,4 +1,9 @@
 {
+  "4288": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-create-save-disabled-reason"
+  },
   "4286": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-3",
