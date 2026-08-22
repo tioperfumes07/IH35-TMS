@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["load","connectivity","reverse_link","picker_law"],"leafRe":"^queues\\.in_transit(\\.create)?$|^load\\.detail$","task":"THEATER-INTRANSIT-LOAD-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["load","connectivity","picker_law"],"leafRe":"^queues\\.in_transit(\\.create)?$|^load\\.detail$","task":"THEATER-INTRANSIT-LOAD-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-intransit-issue-load-linkage";
 const files = {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^queues\\.in_transit$|^unit\\.profile\\.driver_assign$","task":"THEATER-INTRANSIT-UNIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["unit","connectivity"],"leafRe":"^queues\\.in_transit$","task":"THEATER-INTRANSIT-UNIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^unit\\.profile\\.driver_assign$","task":"THEATER-INTRANSIT-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-intransit-issue-unit-linkage";
 const files = {

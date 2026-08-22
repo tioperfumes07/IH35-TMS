@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.in_transit$","task":"CLS-DISPATCH-INTRANSIT-UNIT-LINK"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.in_transit"],"task":"DISP-F5853-INTRANSIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
  * Block B21-D2: Dispatch arch tab parity phase 1 — At-Risk, In-Transit Issues, Assignment History.
  */
@@ -16,6 +16,8 @@ const files = {
   sidebar: "apps/frontend/src/components/layout/sidebar-config.ts",
   dispatchApi: "apps/frontend/src/api/dispatch.ts",
   archDesign: "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+  matrix: "docs/specs/scoreboard/modules/dispatch.required.json",
+  self: "scripts/verify-dispatch-arch-tab-parity.mjs",
 };
 const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const dispatchFlyout = (source) => source.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
@@ -26,6 +28,18 @@ const remove = (needle) => (source) => source.replaceAll(needle, "__PLANTED_DISP
 const contracts = [
   ["at-risk page identity", "atRiskPage", hasAll("dispatch-at-risk-page"), remove("dispatch-at-risk-page")],
   ["in-transit create flow", "intransitPage", hasAll("+ Create Issue"), remove("+ Create Issue")],
+  [
+    "in-transit canonical load drill",
+    "intransitPage",
+    matches(/<EntityLinkOrTombstone kind="load" id=\{issue\.load_id\} name=\{issue\.load_number\} noun="Load"/),
+    remove('<EntityLinkOrTombstone kind="load" id={issue.load_id} name={issue.load_number} noun="Load"'),
+  ],
+  [
+    "in-transit canonical driver drill",
+    "intransitPage",
+    matches(/<EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/),
+    remove('<EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_name} noun="Driver"'),
+  ],
   [
     "in-transit canonical unit drill",
     "intransitPage",
@@ -47,6 +61,23 @@ const contracts = [
   ["assignment-history Dispatch flyout link", "sidebar", (source) => dispatchFlyout(source).includes("/dispatch/assignment-history"), remove("/dispatch/assignment-history")],
   ["at-risk frontend API export", "dispatchApi", hasAll("listAtRiskDispatchLoads"), remove("listAtRiskDispatchLoads")],
   ["architecture guard registration", "archDesign", hasAll("verify:dispatch-arch-tab-parity"), remove("verify:dispatch-arch-tab-parity")],
+  [
+    "in-transit Required reverse ownership",
+    "matrix",
+    (source) => JSON.parse(source).leaves?.find((leaf) => leaf.id === "queues.in_transit")?.required?.includes("reverse_link"),
+    (source) => {
+      const matrix = JSON.parse(source);
+      const leaf = matrix.leaves.find((candidate) => candidate.id === "queues.in_transit");
+      leaf.required = leaf.required.filter((column) => column !== "reverse_link");
+      return JSON.stringify(matrix);
+    },
+  ],
+  [
+    "exact in-transit Built annotation",
+    "self",
+    (source) => source.split("\n").filter((line) => line.includes("@matrix-built")).includes('/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.in_transit"],"task":"DISP-F5853-INTRANSIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */'),
+    (source) => source.replace('"leaves":["queues.in_transit"]', '"leaves":["queues.late"]'),
+  ],
 ];
 
 function audit(sources) {
