@@ -12,7 +12,6 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -30,6 +29,11 @@ const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: 
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function advanceListLabel(displayId: unknown): string {
+  const n = typeof displayId === "string" ? displayId.trim() : "";
+  return n !== "" ? n : "No advance #";
 }
 
 function statusPill(status: FactoringAdvance["status"]) {
@@ -105,7 +109,7 @@ export function FactoringListPage() {
           <EntityLink
             kind="factoring_advance"
             id={row.id}
-            label={entityLabel(row.display_id, row.id, "Advance")}
+            label={advanceListLabel(row.display_id)}
           />
         ),
       },
