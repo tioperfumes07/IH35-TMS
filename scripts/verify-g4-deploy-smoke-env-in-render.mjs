@@ -51,6 +51,11 @@ function assertConfigured() {
       "render.yaml: preDeployCommand must NOT run ci:boot-*-smoke (those stay in GitHub CI; they 90s-fail docs deploys)",
     );
   }
+  if (/db:verify:critical-runtime/.test(preDeployLine)) {
+    errors.push(
+      "render.yaml: preDeployCommand must be db:migrate only — db:verify:critical-runtime in preDeploy delayed PORT bind and caused Render update_failed",
+    );
+  }
   if (!fs.existsSync(CI_YML)) {
     errors.push(".github/workflows/ci.yml missing");
   } else {
@@ -75,9 +80,15 @@ function assertConfigured() {
     const indexTs = fs.readFileSync(indexTsPath, "utf8");
     const listenIdx = indexTs.indexOf("await app.listen(");
     const cronsIdx = indexTs.indexOf("initializeAccountingCrons(");
+    const bootAssertIdx = indexTs.indexOf("await assertMigrationDriftBootGuard(");
     if (listenIdx < 0 || cronsIdx < 0 || cronsIdx < listenIdx) {
       errors.push(
         "apps/backend/src/index.ts: initializeAccountingCrons must run AFTER app.listen (Render rolling-update health bind; recurring update_failed)",
+      );
+    }
+    if (bootAssertIdx < 0 || bootAssertIdx < listenIdx) {
+      errors.push(
+        "apps/backend/src/index.ts: assertMigrationDriftBootGuard must run AFTER app.listen (Neon query must not delay PORT bind)",
       );
     }
   }
