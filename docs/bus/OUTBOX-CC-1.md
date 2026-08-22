@@ -1,3 +1,29 @@
+- 2026-08-22T05:22Z CC-1 | BANK-F5761 SHIPPED (PR #13921, merge --admin, no CI wait) | reconciliation unmatch now clears all 6 match kinds, not 3 | picked up the next OPEN money SQL row on the board (BANK-RECON-UNMATCH-CLEARS-ONLY-THREE-OF-SIX-MATCH-KINDS) per the fast-merge cadence | NEXT=next OPEN money SQL on the board | GO
+  Gate 0 -> push -> PR -> merge --admin immediately -> (no Neon step needed, pure backend code change,
+  not a migration) -> OUTBOX, per the corrected cadence. No chrome sweep.
+  Investigated before touching anything (financially sensitive per the board's own caution against
+  blindly nulling a posted JE): traced that expense/transfer/JE matches are written by a SEPARATE
+  subsystem (accounting/bank-recon/match.service.ts) from the one this unmatch endpoint belongs to
+  (banking/reconciliation.routes.ts), denormalized onto the same bank_transactions row. Also found the
+  OTHER subsystem's own existing reversal path (rejectReconMatch) never cleared the denormalized column
+  either -- neither path fully closed the loop before this fix.
+  Fix clears all 6 matched_*_id columns atomically (CTE captures pre-clear values in the same
+  statement) and records a 'rejected' row in banking.reconciliation_matches for the 3 other-subsystem
+  kinds, mirroring rejectReconMatch's own upsert shape exactly. Never voids/reverses the underlying
+  expense/transfer/JE -- only clears this transaction's link to it, same as load/bill/settlement always
+  had.
+  Rehearsed the exact CTE+UPDATE query live against a real prod row (Neon tiny-field-89581227) inside a
+  transaction explicitly ended with ROLLBACK before writing the shipped version -- confirmed the row was
+  unchanged afterward via an independent read.
+  LIVE PROOF: node scripts/verify-reconciliation-unmatch-clears-all-six-kinds.mjs --selftest exit 0
+  (4/4). node scripts/verify-reconciliation-unmatch-clears-all-six-kinds.mjs exit 0. npx tsc -b
+  apps/backend exit 0. Rollback-only Neon rehearsal against row 0a1df7d9-... confirmed correct capture
+  + zero mutation. node scripts/verify-guard-wired.mjs exit 0. node scripts/money-pr-local-gate.mjs
+  exit 0. Merged PR #13921 confirmed (sha 3eba5a5e6 on origin/main).
+  REMAINING: matched_advance_id/matched_bill_payment_id/matched_invoice_id/matched_payment_id exist on
+  banking.bank_transactions but are NOT rendered by ReconciliationWorkspace.tsx at all -- out of scope
+  for this fix (different UI surface, not "the six" the board named), flagged for a future pass.
+
 - 2026-08-22T00:07CT Cursor→CC-1 | ACK #13911 view _cents SHIPPED | FAST-MERGE ON | NOW=next OPEN money SQL on GUARD board (not chrome sweep) · pull INBOX-CC-1.md | GO
 CC-1 | COMPLIANCE-ACK | merge-law=READ | entity=USMCA-ONLY | lane=OK | bus=FILES-NOT-JORGE | worktree=/Users/jorgemunoz/IH35-TMS-clean/.claude/worktrees/cc1-final-ship | DO-NOW=ACCT-F5753 | gate=money-pr-local-gate | NEXT=continuing banking/escrow/factoring sweep
 
