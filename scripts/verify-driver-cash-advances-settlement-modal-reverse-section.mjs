@@ -45,6 +45,7 @@ const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage
 const SETTLEMENT_DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
 const SETTLEMENT_FINANCE_SECTION = "apps/frontend/src/components/driver-profile/DriverSettlementFinanceReverseSection.tsx";
 const LIABILITIES_HOME = "apps/frontend/src/pages/liabilities/LiabilitiesHome.tsx";
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/settlements.required.json";
 const CLAIMED_LEAVES = [
   "cash_advances",
@@ -68,6 +69,7 @@ const FILES = [
   SETTLEMENT_DETAIL,
   SETTLEMENT_FINANCE_SECTION,
   LIABILITIES_HOME,
+  ENTITY_LINK,
   MATRIX,
 ];
 const LABEL = "verify-driver-cash-advances-settlement-modal-reverse-section";
@@ -91,6 +93,7 @@ export function assertSettlementsClusterReverse(sources) {
   const settlementDetail = src[SETTLEMENT_DETAIL];
   const settlementFinanceSection = src[SETTLEMENT_FINANCE_SECTION];
   const liabilitiesHome = src[LIABILITIES_HOME];
+  const entityLink = src[ENTITY_LINK];
   try {
     const matrix = JSON.parse(src[MATRIX]);
     for (const id of CLAIMED_LEAVES) {
@@ -151,6 +154,12 @@ export function assertSettlementsClusterReverse(sources) {
   }
   if (!/kind="cash_advance"/.test(driverSection)) {
     problems.push(`${DRIVER_SECTION}: disbursed advance rows must EntityLink kind=cash_advance`);
+  }
+  if (!/kind="cash_advance_request"[\s\S]{0,100}id=\{id\}[\s\S]{0,180}entityLabel\(\(r as Record<string, unknown>\)\.display_id as string \| null, id, "Request"\)/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: pending request rows must drill exact request ids with human labels`);
+  }
+  if (!/case "cash_advance_request":[\s\S]{0,100}cash-advance-requests\?request_id=\$\{id\}/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: cash_advance_request must resolve to the canonical exact request route`);
   }
   if (!/import\s*\{\s*DriverCashAdvancesReverseSection\s*\}/.test(driverProfile)) {
     problems.push(`${DRIVER_PROFILE}: must import DriverCashAdvancesReverseSection`);
@@ -243,8 +252,10 @@ function selftest() {
     [DRIVER_SECTION]: `
       cashAdvanceRequestsOfficeApi.listPending(operatingCompanyId, driverId)
       listCashAdvances(operatingCompanyId, { driver_id: driverId }).then((r) => r.advances)
+      <EntityLink kind="cash_advance_request" id={id} label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")} />
       kind="cash_advance"
     `,
+    [ENTITY_LINK]: `case "cash_advance_request": return \`/driver-finance/cash-advance-requests?request_id=\${id}\`;`,
     [DRIVER_PROFILE]: `
       import { DriverCashAdvancesReverseSection } from "../../components/driver-profile/DriverCashAdvancesReverseSection";
       <SettlementsSection settlements={aggregate.settlements ?? {}} driverId={id} />
@@ -298,7 +309,9 @@ function selftest() {
     { ...good, [CA_HOME]: good[CA_HOME].replace("onMarkDisbursed={() => setMarkDisbursedOpen(true)}", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("cashAdvanceRequestsOfficeApi.listPending(operatingCompanyId, driverId)", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("{ driver_id: driverId }", "{}") },
+    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace('id={id} label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")}', 'id={driverId} label="Request"') },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace('kind="cash_advance"', "") },
+    { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace("cash-advance-requests?request_id=${id}", "cash-advance-requests") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverCashAdvancesReverseSection }", "// removed") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("<DriverCashAdvancesReverseSection operatingCompanyId={companyId} driverId={id} />", "") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("<SettlementsSection settlements={aggregate.settlements ?? {}} driverId={id} />", "") },

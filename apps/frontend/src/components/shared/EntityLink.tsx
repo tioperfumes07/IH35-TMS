@@ -41,6 +41,7 @@ export type EntityKind =
   | "lawsuit"
   | "matter"
   | "cash_advance"
+  | "cash_advance_request"
   | "account"
   | "prepaid_asset"
   | "sales_tax_return"
@@ -357,6 +358,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/liabilities?liability_id=${id}`;
     case "cash_advance":
       return `/cash-advances?advance_id=${id}`;
+    case "cash_advance_request":
+      return `/driver-finance/cash-advance-requests?request_id=${id}`;
     case "finance_loan":
       return `/finance/amortization?loan_id=${id}`;
     case "lease_contract":
