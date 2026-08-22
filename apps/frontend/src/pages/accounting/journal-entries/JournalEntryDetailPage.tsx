@@ -117,6 +117,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "finance_loan";
     case "prepaid_purchase":
       return "prepaid_asset";
+    case "fuel_event":
+      return "fuel_transaction";
     default:
       return null;
   }

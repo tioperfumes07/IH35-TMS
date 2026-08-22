@@ -71,6 +71,9 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkLoadId = searchParams.get("load_id");
   const deepLinkTrailerId = searchParams.get("trailer_id");
+  // ACCT-F5725: accounting fuel_event source ids are canonical fuel_transactions.id values.
+  // Keep this exact-id deep link independent from the operator's staged entity filters.
+  const deepLinkTransactionId = searchParams.get("transaction_id") ?? undefined;
   const [driverPickerId, setDriverPickerId] = useState("");
   const [unitPickerId, setUnitPickerId] = useState("");
   const [loadPickerId, setLoadPickerId] = useState("");
@@ -170,6 +173,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       effectiveUnitId,
       effectiveLoadId,
       effectiveTrailerId,
+      deepLinkTransactionId,
     ],
     queryFn: () =>
       getFuelTransactions(companyId, {
@@ -178,6 +182,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         unit_id: effectiveUnitId,
         load_id: effectiveLoadId,
         trailer_id: effectiveTrailerId,
+        transaction_id: deepLinkTransactionId,
       }),
     enabled: Boolean(companyId) && tab === "history",
   });

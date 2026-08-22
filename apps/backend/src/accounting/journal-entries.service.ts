@@ -936,6 +936,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN jep.source_transaction_type IN ('factoring_customer_payment', 'factoring_chargeback', 'factoring_reserve_release', 'factoring_default_interest') THEN 'factoring_advance'
             WHEN jep.source_transaction_type = 'loan_payment' THEN 'finance_loan'
             WHEN jep.source_transaction_type = 'prepaid_purchase' THEN 'prepaid_asset'
+            WHEN jep.source_transaction_type = 'fuel_event' THEN 'fuel_transaction'
             ELSE jep.source_transaction_type
           END AS source_entity_kind,
           jep.source_transaction_id,
@@ -957,6 +958,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             WHEN tsl.linked_object_type IN ('factoring_customer_payment', 'factoring_chargeback', 'factoring_reserve_release', 'factoring_default_interest') THEN 'factoring_advance'
             WHEN tsl.linked_object_type = 'loan_payment' THEN 'finance_loan'
             WHEN tsl.linked_object_type = 'prepaid_purchase' THEN 'prepaid_asset'
+            WHEN tsl.linked_object_type = 'fuel_event' THEN 'fuel_transaction'
             ELSE tsl.linked_object_type
           END AS linked_object_entity_kind,
           tsl.linked_object_id,
@@ -969,7 +971,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           -- bank-recon/match.service.ts). Reading display_id alone meant this JE source-link resolver
           -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
           -- though the href it builds from source_transaction_id was already correct.
-          COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label) AS source_transaction_display_id,
+          COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label) AS source_transaction_display_id,
           COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
@@ -989,6 +991,14 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             AND bt.operating_company_id = $2::uuid
           LIMIT 1
         ) src_banktx ON true
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(NULLIF(ft.transaction_reference, ''), 'Fuel purchase ' || ft.transaction_at::date::text) AS display_label
+          FROM fuel.fuel_transactions ft
+          WHERE jep.source_transaction_type = 'fuel_event'
+            AND ft.id::text = jep.source_transaction_id
+            AND ft.operating_company_id = $2::uuid
+          LIMIT 1
+        ) src_fueltx ON true
         LEFT JOIN accounting.invoices link_inv
           ON tsl.linked_object_type = 'invoice'
           AND link_inv.id::text = tsl.linked_object_id

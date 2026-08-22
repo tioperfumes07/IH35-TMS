@@ -18,6 +18,7 @@ const listFuelTransactionsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  transaction_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   // EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337) — trailer_id is a real, populated
@@ -132,6 +133,10 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
 
       const values: unknown[] = [q.operating_company_id];
       const filters: string[] = ["ft.operating_company_id = $1::uuid", "ft.archived_at IS NULL"];
+      if (q.transaction_id) {
+        values.push(q.transaction_id);
+        filters.push(`ft.id = $${values.length}::uuid`);
+      }
       if (q.driver_id) {
         values.push(q.driver_id);
         filters.push(`ft.driver_id = $${values.length}`);
