@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.expenses_reverse","trailer.profile.assignment","trailer.profile.maintenance","trailer.profile.expenses_reverse"],"task":"CLASS-F5881-TRAILER-PROFILE-REVERSE-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.profile.maintenance"],"task":"FLEET-F5937-TRAILER-MAINTENANCE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +19,7 @@ const BUILT_FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-trailer-profile-sections-complete.mjs";
 
 const EXACT_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.expenses_reverse","trailer.profile.assignment","trailer.profile.maintenance","trailer.profile.expenses_reverse"],"task":"CLASS-F5881-TRAILER-PROFILE-REVERSE-EXACT","vertical":"class-sweep"} */';
+const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["trailer.profile.maintenance"],"task":"FLEET-F5937-TRAILER-MAINTENANCE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const EXACT_LEAVES = [
   "unit.profile.expenses_reverse",
   "trailer.profile.assignment",
@@ -31,7 +33,9 @@ function evidenceProblems(source) {
   for (const id of EXACT_LEAVES) {
     if (!matrix.leaves.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`missing Required reverse cell ${id}`);
   }
+  if (!matrix.leaves.find((leaf) => leaf.id === "trailer.profile.maintenance")?.required?.includes("connectivity")) failures.push("missing Required connectivity cell trailer.profile.maintenance");
   if (!source.self.split("\n").includes(EXACT_HEADER)) failures.push("exact Fleet reverse Built header missing");
+  if (!source.self.split("\n").includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet trailer maintenance connectivity header missing");
   const feed = JSON.parse(source.feed);
   if ((feed.entries ?? []).some((entry) => entry.guard === SELF && entry.cols?.includes("reverse_link"))) {
     failures.push("legacy trailer-profile manual feed still paints reverse leaves");
@@ -205,10 +209,14 @@ function selftest() {
   if (!evidenceProblems({ ...evidence, self: evidence.self.replace(EXACT_HEADER, `${EXACT_HEADER}.broken`) }).length) {
     throw new Error("exact header mutation survived");
   }
+  const connectivityMatrix = JSON.parse(evidence.matrix);
+  connectivityMatrix.leaves.find((leaf) => leaf.id === "trailer.profile.maintenance").required = connectivityMatrix.leaves.find((leaf) => leaf.id === "trailer.profile.maintenance").required.filter((column) => column !== "connectivity");
+  if (!evidenceProblems({ ...evidence, matrix: JSON.stringify(connectivityMatrix) }).length) throw new Error("trailer maintenance connectivity Required mutation survived");
+  if (!evidenceProblems({ ...evidence, self: evidence.self.replace(CONNECTIVITY_HEADER, `${CONNECTIVITY_HEADER}.broken`) }).length) throw new Error("trailer maintenance connectivity header mutation survived");
   const feed = JSON.parse(evidence.feed);
   feed.entries.unshift({ task: "P31-BROKEN", guard: SELF, modules: ["fleet"], cols: ["reverse_link"], leafRe: "^unit\\." });
   if (!evidenceProblems({ ...evidence, feed: JSON.stringify(feed) }).length) throw new Error("legacy feed mutation survived");
-  console.log(`verify:trailer-profile-sections-complete SELFTEST PASS — ${cases.length - 1 + EXACT_LEAVES.length + 2} planted defects rejected`);
+  console.log(`verify:trailer-profile-sections-complete SELFTEST PASS — ${cases.length - 1 + EXACT_LEAVES.length + 4} planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
