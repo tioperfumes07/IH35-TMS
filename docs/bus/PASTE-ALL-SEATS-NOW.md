@@ -1,8 +1,8 @@
-===== ALL SEATS · COLD TERMINAL · 12:11 CT =====
+===== ALL SEATS · 17:14 CT · REJECT HOLD · PULL THEN ACK =====
 Folder: /Users/jorgemunoz/IH35-TMS-clean
-Paste the matching file into each NEW Claude (not the old Developer-folder chats):
-  CC-1 9223 → docs/bus/PASTE-CC-1-NOW.md
-  CC-2 9224 → docs/bus/PASTE-CC-2-NOW.md
-  CC-3 9225 → docs/bus/PASTE-CC-3-NOW.md
-THEN: git pull --ff-only origin main · ACK OUTBOX · GO after-14
+git pull --ff-only origin main
+Read: docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md (17:14 CT) then YOUR INBOX.
+CC-2 HOLD IS REJECTED. Awaiting next order is a defect.
+Paste seat file if cold start: PASTE-CC-1-NOW.md / PASTE-CC-2-NOW.md / PASTE-CC-3-NOW.md / PASTE-CODEX-NOW.md
+ACK: SEAT | ACK | URGENT-BLOCKS-NOW 17:14CT | PORT=n | NOW=<url> | GO
 ===== END ALL SEATS =====
