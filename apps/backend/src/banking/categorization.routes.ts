@@ -599,6 +599,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ded.deduction_type AS deduction_type,
             ded.bucket_id::text AS deduction_bucket_id,
             ded.load_id::text AS deduction_load_id,
+            deduction_load.load_number AS deduction_load_number,
             bt.split_mode,
             bt.matched_journal_entry_id::text AS matched_journal_entry_id
           FROM banking.bank_transactions bt
@@ -624,6 +625,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           LEFT JOIN driver_finance.driver_settlement_deductions ded
             ON ded.id = bt.categorization_deduction_id
            AND ded.operating_company_id = bt.operating_company_id
+          LEFT JOIN mdata.loads deduction_load
+            ON deduction_load.id = ded.load_id
+           AND deduction_load.operating_company_id = bt.operating_company_id
           WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
           LIMIT 1
         `,

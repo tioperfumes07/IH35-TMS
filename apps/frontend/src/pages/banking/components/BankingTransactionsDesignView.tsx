@@ -1576,7 +1576,11 @@ export function BankingTransactionsDesignView({
                     {links.deduction_load_id ? (
                       <>
                         {" "}
-                        · <EntityLink kind="load" id={links.deduction_load_id} label="Deduction load" />
+                        · <EntityLink
+                          kind="load"
+                          id={links.deduction_load_id}
+                          label={entityLabel(links.deduction_load_number, links.deduction_load_id, "Load")}
+                        />
                       </>
                     ) : null}
                   </span>
