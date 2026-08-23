@@ -67,6 +67,10 @@ export function collectProblems(src) {
   if (!src.includes("month={month}") || !src.includes("<QBImportTab")) {
     problems.push(`${PAGE}: QB Import must receive the Form month/year, not a disconnected local period`);
   }
+  const applyChunk = src.split("onApplyTotal")[1] ?? "";
+  if (!applyChunk.includes("setDirty(true)")) {
+    problems.push(`${PAGE}: Apply to Line 20 must setDirty so Generate PDF cannot silently print a stale total`);
+  }
   return problems;
 }
 
@@ -85,6 +89,8 @@ const good = `
   pushToast("Create / Load Draft before autosave", "error");
   month={month}
   <QBImportTab
+  onApplyTotal={(total) => {
+  setDirty(true);
 `;
 const bad = `
   if (!detailQuery.data?.report) {
