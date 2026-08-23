@@ -385,6 +385,7 @@ export async function buildUnitAggregate(
       FROM maintenance.work_orders w
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
         AND w.status NOT IN ('complete', 'completed', 'cancelled')
     `,
     [unitId, operatingCompanyId]
@@ -434,6 +435,7 @@ export async function buildUnitAggregate(
                                AND v.operating_company_id = w.operating_company_id
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
         AND w.status IN ('complete', 'completed')
       ORDER BY w.updated_at DESC NULLS LAST
       LIMIT 1
