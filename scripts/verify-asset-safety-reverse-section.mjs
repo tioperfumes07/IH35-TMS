@@ -110,6 +110,15 @@ export function assertAssetSafetyReverse(sources) {
   if (!/ds\.trailer_id = \$/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: GET dvir has no trailer_id filter — a trailer's DVIRs stay unreachable.`);
   }
+  if (!/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: exact-driver reverse must validate an owned or actively authorized driver parent.`);
+  }
+  if (!/label_dca\.company_id = ds\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true[\s\S]{0,160}label_dca\.deactivated_at IS NULL/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: DVIR driver labels must preserve active selected-company authorization.`);
+  }
+  if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: an invalid exact driver must not render as a legitimate empty DVIR history.`);
+  }
   if (!/wo\.display_id AS follow_up_wo_display_id/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: DVIR list does not project the follow-up work-order display identity.`);
   }
@@ -260,6 +269,21 @@ if (SELFTEST) {
     "dvir-trailer-filter-removed",
     { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/ds\.trailer_id = \$\$\{idx\+\+\}/g, "TRUE") },
     "has no trailer_id filter"
+  );
+  expectCaught(
+    "dvir-driver-parent-authorization-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/dca\.is_authorized = true/, "TRUE") },
+    "actively authorized driver parent"
+  );
+  expectCaught(
+    "dvir-driver-label-authorization-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/label_dca\.is_authorized = true/, "TRUE") },
+    "labels must preserve active selected-company authorization"
+  );
+  expectCaught(
+    "dvir-driver-parent-404-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)") },
+    "must not render as a legitimate empty DVIR history"
   );
   expectCaught(
     "dvir-wo-label-projection-removed",
