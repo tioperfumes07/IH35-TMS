@@ -1709,6 +1709,8 @@ export const ROUTES = React.Children.toArray(
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
           <Route path="training/programs" element={<TrainingProgramsTab />} />
           <Route path="training/records" element={<TrainingRecordsTab />} />
+          {/* Parent /safety/training used to miss both leaves and fall through the app catch-all to /home. */}
+          <Route path="training" element={<Navigate to="/safety/training/programs" replace />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
           <Route path="eld/audit-trail" element={<EldAuditTrailViewer />} />
           <Route path="hos/exceptions" element={<HosExceptionsPage />} />

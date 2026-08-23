@@ -1,4 +1,6 @@
+Cursor | UNIQUE-FINDING | MODULE=safety leftover | SAF-TRAINING-PARENT-DUMP-HOME | hops=/safety/training silently dumped to /home (catch-all); canonical /safety/training/programs + /records OK no 500 · no remake TESTs · no +Create · no recertify 11-13 | FIX=Navigate parent → /safety/training/programs | LIVE_SHA=a9e8d63 | NEXT=stamp Codex/CC-3 CERTIFIED only on healthz match | GO
 Cursor | CERTIFIED | MODULE=maintenance | LIVE_SHA=a9e8d63 | hops=home · active-wos · driver-reports · existing TEST WO-T151-IS-08-23-2026-0002-PEND0 9d1c21f3 · pre-flight-dvir · settings · inspections · warranty-claims · pm-schedule · kanban · no remake WO · no +Create Bill/Expense · no unit/driver steal | NEXT=safety | GO
+
 Cursor | CERTIFIED | MODULE=safety | LIVE_SHA=a9e8d63 | hops=/safety/home · /accidents · /safety-events · /csa-score · /integrity-alerts · no remake TESTs · no +Create | NEXT=insurance | GO
 Cursor | CERTIFIED | MODULE=insurance | LIVE_SHA=a9e8d63 | hops=/insurance → /safety/insurance · /safety/insurance/claims · no remake TESTs · no +Create · no /legal steal | NEXT=lead stamp Codex/CC-3 | GO
 Cursor | DISPATCH-ALL-SEATS | NONSTOP | LIVE_SHA=a9e8d63 | U6 1-6 omit · Cursor 11-13 CERTIFIED omit · CC-3 CERTIFY lists then legal TODAY · Codex CERTIFY customers→drivers→fleet TODAY reverse SQL · CC-2 help Codex · CC-1 unique FINDING | HOLD=defect | GO

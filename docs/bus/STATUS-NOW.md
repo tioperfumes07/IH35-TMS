@@ -2,7 +2,7 @@
 
 **Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-Live API `healthz` **`a9e8d63`**. NONSTOP. HOLD = defect.
+Live API `healthz` **`a9e8d63`**. NONSTOP. HOLD = defect. Web deploy in-flight (`8a89816`) — **do not kick**. Undeployed vs API ≈ 16. Codex/CC-3 OUTBOX still not U14 `CERTIFIED`.
 
 CERTIFIED: U6 1–6 · maintenance/safety/insurance `a9e8d63`. Do not recertify.
 
