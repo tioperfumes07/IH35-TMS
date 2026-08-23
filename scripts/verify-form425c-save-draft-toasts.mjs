@@ -25,6 +25,9 @@ export function collectProblems(src) {
   if (!src.includes("Could not open that report")) {
     problems.push(`${PAGE}: History Open without reporting_month must toast, not silent tab switch`);
   }
+  if (!src.includes("reporting month is invalid")) {
+    problems.push(`${PAGE}: History Open with an unparseable reporting_month must toast, not switch tabs onto the wrong period`);
+  }
   if (!src.includes("Opened report in Form 425C")) {
     problems.push(`${PAGE}: History Open must toast when a report loads`);
   }
@@ -79,6 +82,7 @@ const good = `
   pushToast("Create / Load Draft before saving", "error");
   pushToast("Draft saved", "success");
   pushToast("Could not open that report", "error");
+  pushToast("Could not open that report — reporting month is invalid", "error");
   pushToast("Opened report in Form 425C", "success");
   pushToast("Create / Load Draft before generating the filing package", "error");
   pushToast("Create / Load Draft before importing from Banking", "error");
