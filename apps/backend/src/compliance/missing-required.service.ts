@@ -62,7 +62,19 @@ const PRESENCE_SQL: Record<string, string> = {
                   WHERE fl.entity_type = 'driver' AND fl.entity_id = d.id AND fl.deleted_at IS NULL
                     AND f.operating_company_id = $2::uuid AND f.deleted_at IS NULL
                     AND f.upload_completed_at IS NOT NULL AND c.code = 'tax_form')) AS w9
-    FROM mdata.drivers d WHERE d.id = $1::uuid AND d.operating_company_id = $2::uuid
+    FROM mdata.drivers d
+    WHERE d.id = $1::uuid
+      AND (
+        d.operating_company_id = $2::uuid
+        OR EXISTS (
+          SELECT 1
+          FROM mdata.driver_company_authorizations missing_required_dca
+          WHERE missing_required_dca.driver_id = d.id
+            AND missing_required_dca.company_id = $2::uuid
+            AND missing_required_dca.is_authorized = true
+            AND missing_required_dca.deactivated_at IS NULL
+        )
+      )
   `,
   unit: `
     SELECT
