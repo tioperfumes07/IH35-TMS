@@ -1,12 +1,12 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**GUARD 0045Z · MAIN RED · NO IDLE · do not work verify-branch-fresh**
+**REJECT IDLE. U14 exclusive unchanged. Nested-box #14490 shipped.**
 
 CURRENT MODULE: **banking**  
-NOW: `verify:no-nested-box` FAIL on `BankingObligationReconcilePage.tsx` (inner `article`/`div` framed inside `section`). Flatten inner rows. Do **not** confuse with `verify:no-nested-box-PATTERN` (passes).
+NOW: `https://app.ih35dispatch.com/banking/transactions` labeled TEST expense → For review **Match same $** → `/banking/reconciliation` **Accept** → ledger. Do not drain For-review. Do not Close period with 0 sessions.
 
-THEN: `/banking` TEST expense → Match same $ → recon Accept. Do not drain For-review.
+THEN only after banking CERTIFIED: dispatch leftover (no remake Book Load) → vendors → maint → safety → insurance.
 
-FORBIDDEN: another seat’s prefix · CC deploy · `verify-branch-fresh`.
+FORBIDDEN: another seat’s prefix · remake Accounting TESTs · CC deploy.
 
-OUTBOX: `Cursor | ACK | GUARD-0045Z | PORT=9222 | NOW=nested-box flatten obligation recon | GO`
+OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=banking | NOW=https://app.ih35dispatch.com/banking/transactions | GO`

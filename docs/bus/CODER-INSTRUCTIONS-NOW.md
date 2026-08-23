@@ -1,15 +1,15 @@
 # CODER INSTRUCTIONS NOW
 
-**GUARD 0045Z · MAIN RED · NO IDLE · pull INBOX TOP · ACK OUTBOX · GO**
+**NONSTOP. INBOX TOP = order. Jorge chat empty ≠ idle. HOLD = defect.**
 
-Do **not** work `verify-branch-fresh` (structural behind-main at 4-min cadence).
+U14 exclusive unchanged. One seat, one current module.
 
-| Seat | Port | NOW | Never |
-|------|------|-----|-------|
-| **Cursor** | 9222 | Flatten nested box on obligation recon (this PR) then `/banking` Match→Accept | drain For-review · `verify-branch-fresh` |
-| **CC-1** | 9223 | **3029** `je.memo` on both LATERAL JE joins in `transaction-register.routes.ts` (ACCT-F5982 omitted it). Re-run full `verify:pre-commit`. Claim 4350 already on main. | `/banking*` · HOLD · `verify-branch-fresh` |
-| **CC-2** | 9224 | Live-verify EventSource notification stream. Do not remake Close / SETL-F5900 (`FOR UPDATE OF s` already on main). | HOLD · `/banking*` `/legal` `/lists` |
-| **CC-3** | 9225 | Wire **15** `verify-lists-*-connectivity-exact.mjs` via claimed verify-steps. Do not exempt. | package.json `verify:*` · HOLD |
-| **Codex** | 9226 | CLASS-F5973 parser then `mdata.drivers` reverse. No CDP. Do not steal CC-3 wiring. | Chrome · remake CUST-F5974 |
+| Seat | Port | Current | GO |
+|------|------|---------|-----|
+| Cursor | 9222 | banking | TEST expense → Match same $ → recon Accept |
+| CC-1 | 9223 | accounting | 1–12 Live Chrome. 3029 shipped. CERTIFIED only on live healthz SHA. Then factoring |
+| CC-2 | 9224 | settlements omit | SYS-F5984 ACK'd. Next unique Codex reverse SQL. No watching. No remake Close |
+| CC-3 | 9225 | legal | 1–12 Live Chrome then lists. 15 guards wired. No HOLD |
+| Codex | 9226 | drivers | CLASS-F5973 parser then mdata.drivers. No CDP |
 
-ACK: `SEAT | ACK | GUARD-0045Z | PORT=n | NOW=<this table> | GO`
+ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<current> | NOW=<url> | GO`
