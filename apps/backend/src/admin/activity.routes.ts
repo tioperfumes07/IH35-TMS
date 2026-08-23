@@ -13,6 +13,12 @@ const querySchema = z.object({
   actor_user_id: z.string().uuid().optional(),
   action: z.string().trim().min(1).max(200).optional(),
   entity_type: z.string().trim().min(1).max(200).optional(),
+  // ADMIN-ACTIVITY-F1 — exact-match complement to entity_type (which is substring/ILIKE): a caller
+  // deep-linking to "this one record's audit history" (e.g. ExpenseCategoryMapPage's "View audit"
+  // link) needs to scope to a single payload.entity_id, not just a type. Added alongside the fix
+  // that makes ActivityLogPage.tsx actually read its own URL query params (previously silently
+  // ignored — every "View audit" click showed the generic unfiltered last-100 rows instead).
+  entity_id: z.string().trim().min(1).max(200).optional(),
   since: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -76,6 +82,10 @@ export async function registerAdminActivityRoutes(app: FastifyInstance) {
       if (parsed.data.entity_type) {
         values.push(`%${parsed.data.entity_type}%`);
         where.push(`COALESCE(e.payload->>'entity_type','') ILIKE $${values.length}`);
+      }
+      if (parsed.data.entity_id) {
+        values.push(parsed.data.entity_id);
+        where.push(`e.payload->>'entity_id' = $${values.length}`);
       }
       if (sinceIso) {
         values.push(sinceIso);

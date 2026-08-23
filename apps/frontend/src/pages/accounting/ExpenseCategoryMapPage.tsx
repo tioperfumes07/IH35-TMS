@@ -140,8 +140,12 @@ export function ExpenseCategoryMapPage() {
       key: "audit",
       label: "Audit",
       render: (row) => (
+        {/* ADMIN-ACTIVITY-F1 — action/entity_id are the params ActivityLogPage actually reads;
+            event_class/resource_id (the previous names) were never consumed by that page at all,
+            so this link silently landed on the generic unfiltered activity log instead of this
+            row's own history. */}
         <Link
-          to={`/admin/activity?event_class=expense_category_map_change&resource_id=${encodeURIComponent(row.id)}`}
+          to={`/admin/activity?action=expense_category_map_change&entity_id=${encodeURIComponent(row.id)}`}
           className="text-slate-700 hover:underline"
         >
           View audit
