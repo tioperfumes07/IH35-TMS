@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { listTeamSplitConfigs } from "../../hooks/useTeamSplits";
 
@@ -22,7 +23,14 @@ export function DriverTeamSplitConfigReverseSection({
         <h2 className="text-sm font-semibold text-slate-900">Team split configurations</h2>
         <EntityLink kind="driver_team_splits_filter" id={driverId} label="Open team splits" className="text-xs font-semibold text-slate-700 hover:underline" />
       </div>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Team split configurations unavailable.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load team split configurations"
+          status={0}
+          message={(query.error as Error | null)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && configs.length === 0 ? <p className="mt-2 text-xs text-gray-500">No team split configuration includes this driver.</p> : null}
       <ul className="mt-2 space-y-1">
