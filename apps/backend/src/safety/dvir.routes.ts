@@ -177,7 +177,16 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
           -- names were not. A DVIR is a DOT compliance record — the driver and unit on it are the record.
           -- mdata.units has NO operating_company_id; it uses the owner/leased pair (CLAUDE.md §4).
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
-                                   AND d.operating_company_id = ds.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ds.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations safety_dvir_detail_dca
+                                       WHERE safety_dvir_detail_dca.driver_id = d.id
+                                         AND safety_dvir_detail_dca.company_id = ds.operating_company_id
+                                         AND safety_dvir_detail_dca.is_authorized = true
+                                         AND safety_dvir_detail_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           WHERE ds.id = $1
