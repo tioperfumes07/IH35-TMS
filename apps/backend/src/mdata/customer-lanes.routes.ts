@@ -70,6 +70,15 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
 
     return withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      // CUST-F6119: child-only lane reads returned lanes:[] for an unknown/other-company customer.
+      // Use the canonical same-company resolver before distinguishing true zero lane history.
+      const customer = await client.query(
+        `SELECT id
+           FROM mdata.get_customer_same_company($1::uuid, $2::uuid)
+          LIMIT 1`,
+        [parsedParams.data.customer_id, parsedQuery.data.operating_company_id]
+      );
+      if (customer.rowCount === 0) return reply.code(404).send({ error: "mdata_customer_not_found" });
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const rowsRes = await client.query(
         `

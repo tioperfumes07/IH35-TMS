@@ -17,6 +17,7 @@ const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
 const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
 const LATE_ARRIVAL_CARD = "apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx";
 const RELATIONSHIP_SCORE = "apps/frontend/src/components/customers/CustomerRelationshipScore.tsx";
+const CUSTOMER_LANES_ROUTES = "apps/backend/src/mdata/customer-lanes.routes.ts";
 const REQUIRED = "docs/specs/scoreboard/modules/customers.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-customer-detail-page-self-referential.mjs";
@@ -56,7 +57,9 @@ const CHECKS = [
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id, operatingCompanyId!\)/],
 ];
 
-export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "", relationshipSrc = "") {
+const customerLanesRoutes = fs.readFileSync(path.join(ROOT, CUSTOMER_LANES_ROUTES), "utf8");
+
+export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "", relationshipSrc = "", lanesRoutesSrc = customerLanesRoutes) {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
@@ -89,6 +92,19 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   }
   if (!/relationshipScoreQuery\.isError[\s\S]{0,300}onRetry=\{\(\) => void relationshipScoreQuery\.refetch\(\)\}/.test(src) || (relationshipSrc && !/<ListErrorState[\s\S]{0,180}onRetry=\{onRetry\}/.test(relationshipSrc))) {
     failures.push(`${RELATIONSHIP_SCORE}: failed relationship-score GET must expose exact-query retry`);
+  }
+  const lanesStart = lanesRoutesSrc.indexOf('app.get("/api/v1/mdata/customers/:customer_id/lanes"');
+  const lanesRoute = lanesStart < 0 ? "" : lanesRoutesSrc.slice(lanesStart, lanesStart + 2400);
+  const parentIndex = lanesRoute.indexOf("FROM mdata.get_customer_same_company");
+  const childIndex = lanesRoute.indexOf("FROM mdata.customer_lanes");
+  if (!/mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\)/.test(lanesRoute)) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: lanes reverse GET must resolve the parent customer in the selected company`);
+  }
+  if (!/if \(customer\.rowCount === 0\) return reply\.code\(404\)\.send\(\{ error: "mdata_customer_not_found" \}\)/.test(lanesRoute)) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: lanes reverse GET must return honest customer-not-found before empty lanes`);
+  }
+  if (parentIndex < 0 || childIndex < 0 || parentIndex > childIndex) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: parent customer scope must precede lane children`);
   }
   for (const [query, title] of [["usStatesQuery", "Couldn't load billing states"], ["qualityReasonsQuery", "Couldn't load quality reasons"]]) {
     const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
@@ -136,6 +152,17 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   caught++;
+  for (const [name, mutated] of [
+    ["customer scope", customerLanesRoutes.replace("mdata.get_customer_same_company($1::uuid, $2::uuid)", "mdata.customers")],
+    ["customer 404", customerLanesRoutes.replace('return reply.code(404).send({ error: "mdata_customer_not_found" })', "return { lanes: [] }")],
+    ["parent check", customerLanesRoutes.replace("if (customer.rowCount === 0)", "if (false)")],
+  ]) {
+    if (mutated === customerLanesRoutes || !audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood, mutated).some((f) => f.includes(CUSTOMER_LANES_ROUTES))) {
+      console.error(`${LABEL} SELFTEST FAIL — lanes ${name} mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
   const detailCompanyMutated = good.replace("getCustomerDetail(id, selectedCompanyId!)", "getCustomerDetail(id)");
   if (detailCompanyMutated === good || !audit(detailCompanyMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("root detail GET"))) {
     console.error(`${LABEL} SELFTEST FAIL — root detail selected-company mutation escaped`);
