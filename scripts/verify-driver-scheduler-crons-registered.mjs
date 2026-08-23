@@ -83,6 +83,18 @@ if (!routes.includes(`"/api/v1/driver/scheduler/balance"`)) {
   if (/req\.params/.test(body)) failures.push("routes: driver balance must NOT read a driver_id from params");
 }
 
+const officeBalanceStart = routes.indexOf('app.get("/api/v1/safety/scheduler/balance/:driver_id"');
+const officeBalanceEnd = routes.indexOf('// Office Leave Balances tab', officeBalanceStart);
+const officeBalance = officeBalanceStart >= 0 && officeBalanceEnd > officeBalanceStart
+  ? routes.slice(officeBalanceStart, officeBalanceEnd)
+  : "";
+if (!/rateLimit: \{ max: 60, timeWindow: "1 minute" \}/.test(officeBalance)) failures.push("routes: office exact-driver balance GET must be rate-limited");
+if (!/dca\.company_id = \$2::uuid[\s\S]{0,180}dca\.is_authorized = true[\s\S]{0,180}dca\.deactivated_at IS NULL/.test(officeBalance)) failures.push("routes: office exact-driver balance must validate owner or active authorization before seeding balance");
+const parentRejectIndex = officeBalance.indexOf("if (!parent.rows[0])");
+const balanceCallIndex = officeBalance.indexOf("getLeaveBalance(client");
+if (parentRejectIndex < 0 || balanceCallIndex <= parentRejectIndex) failures.push("routes: office exact-driver balance must reject invalid parent before getLeaveBalance can seed a row");
+if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(officeBalance)) failures.push("routes: office exact-driver balance must return honest invalid-parent 404");
+
 // ── 4. PWA api wrapper ───────────────────────────────────────────────────────────
 const pwaApi = read("apps/driver-pwa/src/api/scheduler.ts");
 if (!pwaApi.includes("export function getMyLeaveBalance")) {
@@ -97,5 +109,28 @@ if (failures.length > 0) {
   console.error(`${LABEL} — FAILED`);
   for (const f of failures) console.error(`  ✗ ${f}`);
   process.exit(1);
+}
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    (x) => x.replace("dca.is_authorized = true", "TRUE"),
+    (x) => x.replace("if (!parent.rows[0])", "if (false)"),
+    (x) => x.replace("if (!result.found) return reply.code(404)", "if (false) return reply.code(404)"),
+    (x) => x.replace('rateLimit: { max: 60, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }'),
+  ];
+  for (const mutate of mutations) {
+    const broken = mutate(officeBalance);
+    const brokenChecks = [
+      /rateLimit: \{ max: 60, timeWindow: "1 minute" \}/.test(broken),
+      /dca\.company_id = \$2::uuid[\s\S]{0,180}dca\.is_authorized = true[\s\S]{0,180}dca\.deactivated_at IS NULL/.test(broken),
+      broken.indexOf("if (!parent.rows[0])") >= 0 && broken.indexOf("getLeaveBalance(client") > broken.indexOf("if (!parent.rows[0])"),
+      /if \(!result\.found\) return reply\.code\(404\)/.test(broken),
+    ];
+    if (broken === officeBalance || brokenChecks.every(Boolean)) {
+      console.error(`${LABEL} — SELFTEST FAILED: planted office-balance defect escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} — SELFTEST OK (4 office-balance defects caught)`);
+  process.exit(0);
 }
 console.log(`${LABEL} — OK (3 crons registered + default-OFF gated, driver balance route + PWA wrapper present)`);

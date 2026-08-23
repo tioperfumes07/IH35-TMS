@@ -312,7 +312,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return result.assignment;
   });
 
-  app.get("/api/v1/safety/scheduler/balance/:driver_id", async (req, reply) => {
+  app.get("/api/v1/safety/scheduler/balance/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -321,10 +321,30 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.extend({ year: z.coerce.number().int().optional() }).safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const year = parsedQuery.data.year ?? new Date().getUTCFullYear();
-    const bal = await withCompanyScope(user.uuid, parsedQuery.data.operating_company_id, (client) =>
-      getLeaveBalance(client, parsedQuery.data.operating_company_id, parsedParams.data.driver_id, year)
-    );
-    return { balance: bal, year };
+    const result = await withCompanyScope(user.uuid, parsedQuery.data.operating_company_id, async (client) => {
+      const parent = await client.query(
+        `SELECT 1 FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1`,
+        [parsedParams.data.driver_id, parsedQuery.data.operating_company_id]
+      );
+      if (!parent.rows[0]) return { found: false, balance: null };
+      const balance = await getLeaveBalance(client, parsedQuery.data.operating_company_id, parsedParams.data.driver_id, year);
+      return { found: true, balance };
+    });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { balance: result.balance, year };
   });
 
   // Office Leave Balances tab — per-driver allocated/used/remaining for the plan year.
