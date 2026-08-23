@@ -331,7 +331,10 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.get("/api/v1/safety/internal-fines", async (req, reply) => {
+  app.get(
+    "/api/v1/safety/internal-fines",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     // SAF-F16: `driver_id` is filtered in SQL, not by the caller. The company list is capped at
@@ -339,7 +342,28 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     // moment the company crosses 500 — a reverse view that quietly under-reports is worse than none.
     const query = internalFinesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
-    const fines = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      if (query.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+           FROM mdata.drivers d
+           WHERE d.id = $1::uuid
+             AND d.archived_at IS NULL
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
+          [query.data.driver_id, query.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false as const, rows: [] };
+      }
       const values: unknown[] = [query.data.operating_company_id];
       let driverFilter = "";
       if (query.data.driver_id) {
@@ -362,7 +386,16 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           LEFT JOIN catalogs.internal_fine_reasons r ON r.id = f.reason_id
           LEFT JOIN mdata.drivers d
             ON d.id = f.driver_id
-           AND d.operating_company_id = f.operating_company_id
+           AND (
+             d.operating_company_id = f.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+               WHERE label_dca.driver_id = d.id
+                 AND label_dca.company_id = f.operating_company_id
+                 AND label_dca.is_authorized = true
+                 AND label_dca.deactivated_at IS NULL
+             )
+           )
           WHERE f.operating_company_id = $1::uuid
           ${driverFilter}
           ${loadFilter}
@@ -371,10 +404,12 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { found: true as const, rows: res.rows };
     });
-    return { fines };
-  });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { fines: result.rows };
+    },
+  );
 
   /**
    * SAF-F12 — dispute an internal fine (pending/approved -> disputed), reason required.
