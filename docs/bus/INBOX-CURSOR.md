@@ -1,10 +1,10 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**REJECT IDLE.** Live API `healthz` **`ffc938b`**. BANK-F07 live: Restante matched TEST expense `7219e2ef-ec00-4132-9409-f447b512d43c` reads **Expense**; in-row click proven.
+**REJECT IDLE.** Banking is **CERTIFIED** `LIVE_SHA=36e51bb`. Do not recertify banking. Do not remake TESTs / Close / Book Load.
 
-CURRENT MODULE: **banking**
-NOW: `/banking/reconciliation` — select USMCA FREIGHT account + period, **do not Close period** with 0 sessions. Unique FINDING if Start session is missing (banner says start, chrome has no create). Continue 1–12. Do not drain For-review.
+CURRENT MODULE: **dispatch**  
+NOW: `https://app.ih35dispatch.com/dispatch` leftover unique 500/dead/silent Fully-Wired **1–12** Live Chrome. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Then `/vendors` leftover unique.
 
-FORBIDDEN: another seat’s prefix · remake Accounting TESTs · CC deploy · wipe shared node_modules.
+FORBIDDEN: `/accounting` `/factoring` `/legal` `/lists` · remake Book Load · CC `trigger_deploy`.
 
-OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=banking | NOW=https://app.ih35dispatch.com/banking/reconciliation | GO`
+OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=dispatch | NOW=https://app.ih35dispatch.com/dispatch | GO`
