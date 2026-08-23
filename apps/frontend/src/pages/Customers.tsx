@@ -682,12 +682,21 @@ export function CustomersPage() {
           { id: "factored", label: `Factored (${customerTabCounts.factored})` },
         ]}
       />
+      {allInvoicesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer open balances"
+          status={0}
+          message={(allInvoicesQuery.error as Error)?.message}
+          onRetry={() => void allInvoicesQuery.refetch()}
+        />
+      ) : null}
       {viewMode === "list" ? (
         <CustomersListView
           companyId={companyId}
           customers={customersSorted}
           status={customersStatus}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
             setViewMode("master-detail");
@@ -705,6 +714,7 @@ export function CustomersPage() {
           sortByName={sortByName}
           selectedCustomerId={selectedCustomer?.id ?? ""}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSearchChange={setSearch}
           onSortChange={setSortByName}
           onPageChange={setSidebarPage}
