@@ -90,6 +90,13 @@ export function audit(src) {
       !/qbo_class_id: qboClassTmsId \|\| null/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.qbo_mapping must retain USMCA TMS class connectivity while gating QBO vendor mapping to TRANSP`);
   }
+  if (!/classesQuery\.isError[\s\S]{0,240}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: failed TMS class catalog read must expose exact retry`);
+  }
+  if (!/value=\{qboClassTmsId\} disabled=\{classesQuery\.isError\}/.test(src.profile) ||
+      !/disabled=\{!id \|\| !companyId \|\| classesQuery\.isError\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: failed TMS class catalog read must disable selection and save`);
+  }
   if (!/profileQuery\.isPending \? ["']Loading…["'] : String\(entityLabel/.test(src.profile)) {
     failures.push(`${FILES.profile}: loading state must not render a false Unit — not visible identity`);
   }
@@ -117,7 +124,7 @@ export function audit(src) {
   if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: failed canonical unit reads must expose exact retry`);
   }
-  if (!/disabled=\{saveMutation\.isPending \|\| profileQuery\.isError \|\| !unitId\}/.test(src.editModal)) {
+  if (!/disabled=\{saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId\}/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: failed canonical unit reads must disable destructive patch saves`);
   }
   if (!/<UnitPermitsTab unitId=\{id\}/.test(src.unitDetail) || !/<UnitFinanceLinkageTab unitId=\{id\}/.test(src.unitDetail)) {
@@ -176,6 +183,9 @@ if (process.argv.includes("--selftest")) {
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
     ["profile-class-control", "profile", /<SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
     ["profile-class-write", "profile", /qbo_class_id: qboClassTmsId \|\| null/, "qbo_class_id: null"],
+    ["profile-class-retry", "profile", /onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["profile-class-select-gate", "profile", /value=\{qboClassTmsId\} disabled=\{classesQuery\.isError\}/, "value={qboClassTmsId}"],
+    ["profile-class-save-gate", "profile", /!id \|\| !companyId \|\| classesQuery\.isError/, "!id || !companyId"],
     ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
     ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
@@ -185,7 +195,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
     ["edit-modal-read-retry", "editModal", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
-    ["edit-modal-save-gate", "editModal", /saveMutation\.isPending \|\| profileQuery\.isError \|\| !unitId/, "saveMutation.isPending || !unitId"],
+    ["edit-modal-save-gate", "editModal", /saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId/, "saveMutation.isPending || !unitId"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
     ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
