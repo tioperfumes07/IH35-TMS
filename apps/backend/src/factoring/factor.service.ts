@@ -791,13 +791,21 @@ export async function listFactorBatchHistoryForCustomer(
         b.funded_at::text,
         b.total_face_cents::bigint,
         b.expected_advance_cents::bigint,
-        b.expected_fee_cents::bigint
+        b.expected_fee_cents::bigint,
+        -- FACT-F5986 — SQLSTATE 42P10 ("for SELECT DISTINCT, ORDER BY expressions must appear in
+        -- select list"): b.submitted_at and b.funded_at were both individually selected, but
+        -- Postgres does not treat COALESCE(a, b) as "appearing in select list" just because a and b
+        -- do — the ORDER BY expression itself must be projected. Projecting the same COALESCE as its
+        -- own column (rather than re-deriving it in JS after the fact) keeps the sort key identical
+        -- to what the query intends and lets DISTINCT + ORDER BY agree; it cannot change which rows
+        -- are distinct since it is a pure function of two columns already in the SELECT list.
+        COALESCE(b.submitted_at, b.funded_at) AS sort_key
       FROM factoring.batch b
       JOIN accounting.invoices i ON i.id = ANY(b.invoice_ids)
       WHERE b.tenant_id = $1::uuid
         AND i.operating_company_id = $1::uuid
         AND i.customer_id = $2::uuid
-      ORDER BY COALESCE(b.submitted_at, b.funded_at) DESC NULLS LAST, b.batch_number DESC
+      ORDER BY sort_key DESC NULLS LAST, b.batch_number DESC
       LIMIT 200
     `,
     [tenantId, customerId]
