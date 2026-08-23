@@ -164,6 +164,26 @@ function PanelEmpty(message: string) {
   );
 }
 
+// DISPATCH-OVERVIEW-PANEL-ISERROR-SWALLOWED: five panels below checked isLoading but never
+// isError, so a failed fetch fell through to the PanelEmpty branch — a false all-clear
+// indistinguishable from "genuinely nothing to review" on a dispatcher-facing home dashboard.
+function PanelError(message: string, onRetry: () => void) {
+  return (
+    <DataPanelRow>
+      <span style={{ color: colors.crit.strong, fontSize: typography.bodyTextSmall }}>
+        {message}{" "}
+        <button
+          type="button"
+          onClick={onRetry}
+          style={{ color: colors.crit.strong, textDecoration: "underline", cursor: "pointer" }}
+        >
+          Retry
+        </button>
+      </span>
+    </DataPanelRow>
+  );
+}
+
 export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   const today = new Date().toISOString().slice(0, 10);
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
@@ -330,6 +350,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="Round-trip exposure" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
           {exposureLoadsQ.isLoading ? (
             <PanelLoading />
+          ) : exposureLoadsQ.isError ? (
+            PanelError("Couldn't load round-trip exposure.", () => void exposureLoadsQ.refetch())
           ) : exposureLoads.length === 0 ? (
             PanelEmpty("No in-transit or dispatched loads.")
           ) : (
@@ -348,6 +370,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="At-Risk queue" viewAllHref="/dispatch/at-risk" accentColor={colors.crit.strong}>
           {atRiskQ.isLoading ? (
             <PanelLoading />
+          ) : atRiskQ.isError ? (
+            PanelError("Couldn't load at-risk loads.", () => void atRiskQ.refetch())
           ) : atRiskLoads.length === 0 ? (
             PanelEmpty("No at-risk loads right now.")
           ) : (
@@ -366,6 +390,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="Detention board" viewAllHref="/dispatch/detention" accentColor={colors.warn.strong}>
           {detentionQ.isLoading ? (
             <PanelLoading />
+          ) : detentionQ.isError ? (
+            PanelError("Couldn't load detention board.", () => void detentionQ.refetch())
           ) : detentionEvents.length === 0 ? (
             PanelEmpty("No active detention events.")
           ) : (
@@ -384,6 +410,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="Border crossings" viewAllHref="/dispatch/border-crossing" accentColor={colors.info.strong}>
           {borderQ.isLoading ? (
             <PanelLoading />
+          ) : borderQ.isError ? (
+            PanelError("Couldn't load border crossings.", () => void borderQ.refetch())
           ) : borderEvents.length === 0 ? (
             PanelEmpty("No border crossings in the last 7 days.")
           ) : (
@@ -408,6 +436,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="Out-of-service" viewAllHref="/dispatch/in-transit-issues" accentColor={colors.crit.strong}>
           {oosLoadsQ.isLoading ? (
             <PanelLoading />
+          ) : oosLoadsQ.isError ? (
+            PanelError("Couldn't load out-of-service loads.", () => void oosLoadsQ.refetch())
           ) : oosLoads.length === 0 ? (
             PanelEmpty("No dispatch-blocked units on active loads.")
           ) : (
