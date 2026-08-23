@@ -139,6 +139,16 @@ const CHECKS = [
     pattern: /const documents = await listAttachments\(user\.uuid, \{\s*operatingCompanyId: companyId,\s*entityType: "customer",\s*entityId: customerId,\s*\}\);/,
   },
   {
+    name: "customer financial reverse failure remains visible",
+    file: DETAIL,
+    pattern: /if \(props\.error\) return <ListErrorBanner message="Failed to load customer financial overview\." onRetry=\{props\.onRetry\} \/>;/,
+  },
+  {
+    name: "customer financial reverse failure can retry exact GET",
+    file: DETAIL,
+    pattern: /<CustomerFinancialOverviewSection[^>]*onRetry=\{\(\) => void financialSummaryQuery\.refetch\(\)\} \/>/,
+  },
+  {
     name: "archived customer invoice history validates through same-company resolver",
     file: CUSTOMER_INVOICES_ROUTE,
     pattern: /SELECT id FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) LIMIT 1/,

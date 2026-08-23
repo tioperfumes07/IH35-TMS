@@ -260,9 +260,11 @@ function CustomerFinancialOverviewSection(props: {
   summary: CustomerFinancialSummary | undefined;
   loading: boolean;
   error: boolean;
+  onRetry: () => void;
 }) {
   if (props.loading) return <div className="text-xs text-gray-500">Loading financial overview…</div>;
-  if (props.error || !props.summary) return null;
+  if (props.error) return <ListErrorBanner message="Failed to load customer financial overview." onRetry={props.onRetry} />;
+  if (!props.summary) return null;
 
   const chartData = props.summary.revenue_by_month.map((r) => ({
     month: r.month,
@@ -1213,7 +1215,7 @@ export function CustomerDetailPage() {
         </>
       ) : null}
 
-      <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
+      <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 
       <SecondaryNavTabs
         tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
