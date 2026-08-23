@@ -33,9 +33,9 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 10 | USERS | `users` | `/users` | **CC-3** DONE -- found+fixed USERS-F1 (Change Role modal label mismatch); All/Active/Pending/Deactivated tabs all live, real data; Create User role select consistent |
 | 11 | HOME | `home` | `/home` | **CC-3** DONE -- found+fixed DISPATCH-F2 (late-arrivals sample-data leak + count mismatch); Attention/KPI/Weekly-revenue/Work-orders/Fleet-Snapshot/Vendor-Mapping-Integrity/Filings-Compliance sections all live, real data |
 | 12 | FUEL | `fuel` | `/fuel` | **CC-3** DONE -- unique-clean (Home/Planner/Relay inbox/Settings/Expense mapping/History & savings/Loves prices/Compliance all live, honest empty/not-synced states throughout, Settings values match Planner display, Expense mapping forward-links 5/5 GL categories) |
-| 13 | DOCS | `docs` | `/docs` | **CC-3** claiming now |
-| 14 | HELP | `help` | `/help` | next free |
-| 15 | PROGRAM | `program` | `/program` | next free |
+| 13 | DOCS | `docs` | `/docs` | **CC-3** DONE -- unique-clean (All Entities/Drivers/Customers/Vendors/Units/Equipment filter tabs, real forward-linked entity names, native-browser PDF preview confirmed, Missing Required 57 / Expiring 30 days 0 honest counters) |
+| 14 | HELP | `help` | `/help` | **CC-3** DONE -- unique-clean (frontend-only per CLAUDE.md; category groups + one real article opened + search for "settlement" returned real ranked results) |
+| 15 | PROGRAM | `program` | `/program` | **CC-3** claiming now |
 | 16 | SYSTEM | `system` | `/system` | next free |
 
 Empty unique-FINDING on your claimed row → next **unclaimed** row in this table. Never idle. Never a 17th invented queue.
