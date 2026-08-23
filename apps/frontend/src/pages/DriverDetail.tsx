@@ -1807,6 +1807,7 @@ export function DriverDetailPage() {
         >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Equipment type</label>
+            {equipmentTypesQuery.isError ? <ListErrorState status={0} message="Equipment types could not be loaded." onRetry={() => void equipmentTypesQuery.refetch()} /> : null}
             {/*
               LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.equipment_types
               (inline create seeds one per_loaded_mile Base rate line item). Options keyed by id.
@@ -1821,6 +1822,7 @@ export function DriverDetailPage() {
               operatingCompanyId={String(driver?.operating_company_id ?? companyId)}
               placeholder={equipmentTypesQuery.isLoading ? "Loading equipment types…" : "Select equipment type"}
               loading={equipmentTypesQuery.isLoading}
+              disabled={equipmentTypesQuery.isError}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["equipment-types-for-driver-detail"] });
                 void queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
@@ -1848,7 +1850,7 @@ export function DriverDetailPage() {
             <Button type="button" variant="secondary" onClick={() => setAddQualificationOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" loading={addQualificationMutation.isPending}>
+            <Button type="submit" loading={addQualificationMutation.isPending} disabled={equipmentTypesQuery.isError}>
               Save
             </Button>
           </div>
@@ -1899,6 +1901,7 @@ export function DriverDetailPage() {
             {safetyForm.event_type === "termination" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Termination reason</label>
+                {terminationReasonsQuery.isError ? <ListErrorState status={0} message="Termination reasons could not be loaded." onRetry={() => void terminationReasonsQuery.refetch()} /> : null}
                 {/*
                   LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.driver_termination_reasons.
                   Options keyed by UUID (termination_reason_id). Severity on create comes from the form row.
@@ -1920,6 +1923,7 @@ export function DriverDetailPage() {
                   createExtras={{ severity: safetyForm.severity }}
                   placeholder="Select reason"
                   loading={terminationReasonsQuery.isLoading}
+                  disabled={terminationReasonsQuery.isError}
                   onOptionCreated={() => {
                     void queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
                   }}
