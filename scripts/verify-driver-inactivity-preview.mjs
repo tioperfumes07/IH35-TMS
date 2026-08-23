@@ -44,6 +44,8 @@ if (svcSource) {
   if (!/vehicle_driver_assignments/.test(svcSource)) failures.push(`${SVC}: driving sweep must read telematics.vehicle_driver_assignments (last_drove_at), not login`);
   if (!/CURRENTLY_DRIVING|OVER_21_DAYS|NEVER_ON_RECORD/.test(svcSource)) failures.push(`${SVC}: must bucket CURRENTLY_DRIVING / DROVE_WITHIN_21 / OVER_21_DAYS / NEVER_ON_RECORD`);
   if (!/coverage/.test(svcSource) || !/trustworthy/.test(svcSource)) failures.push(`${SVC}: driving sweep must carry a coverage guard (earliest history + trustworthy flag)`);
+  if (!/login_preview_dca\.driver_id = d\.id[\s\S]{0,180}login_preview_dca\.company_id = \$1::uuid[\s\S]{0,180}login_preview_dca\.is_authorized = true[\s\S]{0,120}login_preview_dca\.deactivated_at IS NULL/.test(svcSource)) failures.push(`${SVC}: login preview must include active company-authorized shared drivers`);
+  if (!/driving_preview_dca\.driver_id = d\.id[\s\S]{0,180}driving_preview_dca\.company_id = \$1::uuid[\s\S]{0,180}driving_preview_dca\.is_authorized = true[\s\S]{0,120}driving_preview_dca\.deactivated_at IS NULL/.test(svcSource)) failures.push(`${SVC}: driving preview must include active company-authorized shared drivers`);
 }
 if (routeSource) {
   if (!/\.get\(/.test(routeSource) || /\.(post|put|patch|delete)\(/i.test(routeSource)) {
@@ -77,7 +79,17 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   });
-  console.log("verify:driver-inactivity-preview SELFTEST PASS — 3/3 planted defects rejected");
+  const serviceMutations = [
+    svc.replace("login_preview_dca.is_authorized = true", "login_preview_dca.is_authorized = false"),
+    svc.replace("driving_preview_dca.is_authorized = true", "driving_preview_dca.is_authorized = false"),
+  ];
+  serviceMutations.forEach((mutated, index) => {
+    if (mutated === svc || evaluate(mutated, route).length === 0) {
+      console.error(`verify:driver-inactivity-preview SELFTEST FAIL — shared-driver mutation ${index + 1} stayed green`);
+      process.exit(1);
+    }
+  });
+  console.log("verify:driver-inactivity-preview SELFTEST PASS — 5/5 planted defects rejected");
   process.exit(0);
 }
 
