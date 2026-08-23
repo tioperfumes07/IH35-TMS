@@ -158,17 +158,36 @@ function isSafetyMutationAllowed(role: string) {
 }
 
 export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/incidents", async (req, reply) => {
+  app.get("/api/v1/safety/incidents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const params: unknown[] = [query.data.operating_company_id, query.data.incident_type];
       const filters: string[] = ["i.operating_company_id = $1::uuid", "i.incident_type = $2"];
 
       if (query.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+           FROM mdata.drivers d
+           WHERE d.id = $1::uuid
+             AND d.archived_at IS NULL
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
+          [query.data.driver_id, query.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false as const, rows: [] };
         params.push(query.data.driver_id);
         filters.push(`i.driver_id = $${params.length}`);
       }
@@ -222,7 +241,16 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           FROM safety.incidents i
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
-           AND d.operating_company_id = i.operating_company_id
+           AND (
+             d.operating_company_id = i.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+               WHERE label_dca.driver_id = d.id
+                 AND label_dca.company_id = i.operating_company_id
+                 AND label_dca.is_authorized = true
+                 AND label_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mdata.customers c
             ON c.id = i.claimant_customer_id
            AND c.operating_company_id = i.operating_company_id
@@ -246,11 +274,13 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `,
         params
       );
-      return res.rows;
+      return { found: true as const, rows: res.rows };
     });
 
-    return { incidents: rows };
-  });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { incidents: result.rows };
+    },
+  );
 
   app.get("/api/v1/safety/incidents/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);

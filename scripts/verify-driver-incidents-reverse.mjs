@@ -20,6 +20,9 @@ function audit(s = files) {
   const failures = [];
   if (!/kind="driver"/.test(s.create) || !/driver_id: form\.driverId \|\| null/.test(s.create)) failures.push("driver picker payload");
   if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(s.routes) || !/i\.driver_id = \$\$\{params\.length\}/.test(s.routes)) failures.push("exact driver route filter");
+  if (!/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(s.routes)) failures.push("owned/authorized driver parent");
+  if (!/label_dca\.company_id = i\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true/.test(s.routes)) failures.push("authorized shared-driver label");
+  if (!/if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(s.routes)) failures.push("honest invalid driver parent");
   if (!incidentRows.every((pattern) => pattern.test(s.reverse)) || !/driver_id: driverId/.test(s.reverse)) failures.push("all incident reverse filters");
   if (!/kind=\{openKind\}/.test(s.reverse) || !/EntityLinkOrTombstone kind=\{kind\}/.test(s.reverse) || !/EntityLinkOrTombstone kind="load"/.test(s.reverse) || !/row\.id == null \? null : String\(row\.id\)/.test(s.reverse) || !/name=\{row\.load_number\}/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/onRetry=\{\(\) => void query\.refetch\(\)\}/.test(s.reverse) || !/are linked to this driver/.test(s.reverse)) failures.push("drills, tombstones, or honest states");
   if (!/DriverIncidentsReverseSection operatingCompanyId=\{operatingCompanyId\} driverId=\{driverId\}/.test(s.profile)) failures.push("shared driver reverse mount");
@@ -32,6 +35,9 @@ if (process.argv.includes("--selftest")) {
     ["payload", { ...files, create: files.create.replaceAll("driver_id: form.driverId || null", "driver_id: null") }],
     ["schema", { ...files, routes: files.routes.replace("driver_id: z.string", "wrong_id: z.string") }],
     ["filter", { ...files, routes: files.routes.replace("i.driver_id = $${params.length}", "TRUE") }],
+    ["parent auth", { ...files, routes: files.routes.replace("dca.is_authorized = true", "TRUE") }],
+    ["label auth", { ...files, routes: files.routes.replace("label_dca.is_authorized = true", "TRUE") }],
+    ["parent 404", { ...files, routes: files.routes.replace(/if \(!result\.found\)\s*return reply\.code\(404\)/, "if (false) return reply.code(404)") }],
     ["damage", { ...files, reverse: files.reverse.replace('{ kind: "damage_report", label: "Damage reports", openKind: "damage_reports_driver" }', '{ kind: "other", label: "Damage reports", openKind: "damage_reports_driver" }') }],
     ["interchange", { ...files, reverse: files.reverse.replace('{ kind: "trailer_interchange", label: "Trailer interchanges", openKind: "trailer_interchanges_driver" }', '{ kind: "other", label: "Trailer interchanges", openKind: "trailer_interchanges_driver" }') }],
     ["claim", { ...files, reverse: files.reverse.replace('{ kind: "cargo_claim", label: "Cargo claims", openKind: "cargo_claims_driver" }', '{ kind: "other", label: "Cargo claims", openKind: "cargo_claims_driver" }') }],
