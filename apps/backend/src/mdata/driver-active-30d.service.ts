@@ -20,7 +20,16 @@ const ACTIVITY_PREDICATE = `
       SELECT 1
         FROM mdata.loads l
        WHERE l.soft_deleted_at IS NULL
-         AND l.operating_company_id = d.operating_company_id
+         AND (
+           l.operating_company_id = d.operating_company_id
+           OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations load_activity_dca
+             WHERE load_activity_dca.driver_id = d.id
+               AND load_activity_dca.company_id = l.operating_company_id
+               AND load_activity_dca.is_authorized = true
+               AND load_activity_dca.deactivated_at IS NULL
+           )
+         )
          AND (l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id)
          AND COALESCE(l.updated_at, l.created_at) >= now() - ($1 || ' days')::interval
     )
@@ -28,7 +37,16 @@ const ACTIVITY_PREDICATE = `
       SELECT 1
         FROM telematics.vehicle_driver_assignments a
        WHERE a.driver_id = d.id
-         AND a.operating_company_id = d.operating_company_id
+         AND (
+           a.operating_company_id = d.operating_company_id
+           OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations telematics_activity_dca
+             WHERE telematics_activity_dca.driver_id = d.id
+               AND telematics_activity_dca.company_id = a.operating_company_id
+               AND telematics_activity_dca.is_authorized = true
+               AND telematics_activity_dca.deactivated_at IS NULL
+           )
+         )
          AND (
            a.ended_at IS NULL
            OR COALESCE(a.ended_at, a.started_at) >= now() - ($1 || ' days')::interval
