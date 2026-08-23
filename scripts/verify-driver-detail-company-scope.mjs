@@ -64,7 +64,10 @@ function verify(source) {
   const canonicalDriverAuthorization = /FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/;
   need(canonicalDriverAuthorization.test(dispatchHosHandler), "dispatch HOS status must preserve active selected-company authorization visibility");
   need(canonicalDriverAuthorization.test(dispatchDrugHandler), "dispatch drug status must preserve active selected-company authorization visibility");
-  need(canonicalDriverAuthorization.test(source.medicalBackend), "medical-card reverse GET must validate driver ownership or active authorization");
+  need(canonicalDriverAuthorization.test(source.medicalBackend) &&
+    (source.medicalBackend.match(/(?<!_)dca\.is_authorized = true/g) ?? []).length === 2,
+    "both medical-card reverse GET shapes must validate driver ownership or active authorization");
+  need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card optional exact filter must distinguish invalid parent from true empty cards");
   need(/if \(!cards\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card reverse GET must distinguish invalid parent from true empty cards");
   need(canonicalDriverAuthorization.test(source.dqfBackend), "DQF reverse GET must validate driver ownership or active authorization");
   need(/if \(!items\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.dqfBackend), "DQF reverse GET must distinguish invalid parent from true empty items");

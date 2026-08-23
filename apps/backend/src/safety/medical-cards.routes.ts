@@ -83,7 +83,27 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
     if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
-    const cards = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      if (company.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1 FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND d.archived_at IS NULL
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1 FROM mdata.driver_company_authorizations dca
+                   WHERE dca.driver_id = d.id
+                     AND dca.company_id = $2::uuid
+                     AND dca.is_authorized = true
+                     AND dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
+          [company.data.driver_id, company.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false, cards: [] };
+      }
       const values: unknown[] = [company.data.operating_company_id];
       const driverFilter = company.data.driver_id
         ? (values.push(company.data.driver_id), `AND mc.driver_id = $${values.length}::uuid`)
@@ -96,7 +116,16 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           FROM safety.medical_cards mc
           JOIN mdata.drivers d
             ON d.id = mc.driver_id
-           AND d.operating_company_id = mc.operating_company_id
+           AND (
+             d.operating_company_id = mc.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                WHERE label_dca.driver_id = d.id
+                  AND label_dca.company_id = mc.operating_company_id
+                  AND label_dca.is_authorized = true
+                  AND label_dca.deactivated_at IS NULL
+             )
+           )
           WHERE mc.operating_company_id = $1::uuid
             AND mc.voided_at IS NULL
             ${driverFilter}
@@ -105,9 +134,10 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>));
+      return { found: true, cards: res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>)) };
     });
-    return { cards };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { cards: result.cards };
   });
 
   app.get("/api/v1/safety/medical-cards/drivers/:driver_id", RL_READ, async (req, reply) => {
