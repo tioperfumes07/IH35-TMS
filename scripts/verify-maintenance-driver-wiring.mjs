@@ -26,6 +26,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
+  ["apps/backend/src/maintenance/pre-flight-dvir.routes.ts", /dr\.id = s\.driver_id[\s\S]{0,520}preflight_dvir_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_dvir_dca\.company_id = s\.operating_company_id[\s\S]{0,180}preflight_dvir_dca\.is_authorized = true[\s\S]{0,180}preflight_dvir_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /row\.driver_id[\s\S]{0,120}<EntityLink[\s\S]{0,80}kind="driver"[\s\S]{0,80}id=\{row\.driver_id\}[\s\S]{0,100}label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/],
 ];
 
@@ -70,4 +71,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — maintenance's 13 driver-scoped WO/queue leaves are real`);
+console.log(`${LABEL} PASS — maintenance's driver-scoped WO/queue leaves preserve canonical ids and active-authorized human labels`);
