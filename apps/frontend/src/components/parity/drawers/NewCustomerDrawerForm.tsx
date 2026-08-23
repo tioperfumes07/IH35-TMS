@@ -132,6 +132,14 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
           onRetry={() => void paymentTermsQuery.refetch()}
         />
       ) : null}
+      {customersQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load parent customer choices"
+          status={0}
+          message={(customersQuery.error as Error)?.message}
+          onRetry={() => void customersQuery.refetch()}
+        />
+      ) : null}
       <CustomerProfileForm
         values={values}
         onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
@@ -154,7 +162,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
         <ActionButton type="button" onClick={onClose}>
           Cancel
         </ActionButton>
-        <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !operatingCompanyId}>
+        <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || customersQuery.isError || !operatingCompanyId}>
           {createMutation.isPending ? "Saving..." : "Save"}
         </ActionButton>
       </div>
