@@ -262,9 +262,9 @@ export function DriverDetailPage() {
   });
 
   const qualificationsQuery = useQuery({
-    queryKey: ["driver-qualifications", id, showInactiveQualifications],
-    queryFn: () => listDriverQualifications(id, showInactiveQualifications).then((result) => result.qualifications),
-    enabled: Boolean(id),
+    queryKey: ["driver-qualifications", id, companyId, showInactiveQualifications],
+    queryFn: () => listDriverQualifications(id, companyId, showInactiveQualifications).then((result) => result.qualifications),
+    enabled: Boolean(id && companyId),
   });
 
   const companiesQuery = useQuery({
@@ -273,9 +273,9 @@ export function DriverDetailPage() {
   });
 
   const companyAuthQuery = useQuery({
-    queryKey: ["driver-company-authorizations", id],
-    queryFn: () => listDriverCompanyAuthorizations(id).then((result) => result.authorizations),
-    enabled: Boolean(id),
+    queryKey: ["driver-company-authorizations", id, companyId],
+    queryFn: () => listDriverCompanyAuthorizations(id, companyId).then((result) => result.authorizations),
+    enabled: Boolean(id && companyId),
   });
 
   const equipmentTypesQuery = useQuery({
@@ -294,9 +294,9 @@ export function DriverDetailPage() {
   });
 
   const historyQuery = useQuery({
-    queryKey: ["driver-rate-history", id, selectedQualificationId, selectedLineItemId],
-    queryFn: () => getDriverQualificationRateHistory(id, selectedQualificationId),
-    enabled: historyModalOpen && Boolean(id) && Boolean(selectedQualificationId),
+    queryKey: ["driver-rate-history", id, companyId, selectedQualificationId, selectedLineItemId],
+    queryFn: () => getDriverQualificationRateHistory(id, selectedQualificationId, companyId),
+    enabled: historyModalOpen && Boolean(id) && Boolean(companyId) && Boolean(selectedQualificationId),
   });
 
   const driver = driverQuery.data;
@@ -353,13 +353,13 @@ export function DriverDetailPage() {
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
 
   const safetyEventsQuery = useQuery({
-    queryKey: ["driver-safety-events", id, showVoidedSafetyEvents],
-    queryFn: () => listSafetyEvents(id, showVoidedSafetyEvents).then((result) => result.events),
-    enabled: Boolean(id) && canViewSafetyFile && activeTab === "Safety File",
+    queryKey: ["driver-safety-events", id, companyId, showVoidedSafetyEvents],
+    queryFn: () => listSafetyEvents(id, companyId, showVoidedSafetyEvents).then((result) => result.events),
+    enabled: Boolean(id && companyId) && canViewSafetyFile && activeTab === "Safety File",
   });
   const terminationReasonsQuery = useQuery({
-    queryKey: ["driver-termination-reasons"],
-    queryFn: () => listTerminationReasons(false).then((result) => result.reasons),
+    queryKey: ["driver-termination-reasons", companyId],
+    queryFn: () => listTerminationReasons(companyId, false).then((result) => result.reasons),
     enabled: canViewSafetyFile && isOwner && activeTab === "Safety File",
   });
   const qboLinkageHistoryQuery = useQuery({
@@ -1361,6 +1361,14 @@ export function DriverDetailPage() {
             </div>
           </div>
           <div className="space-y-2">
+            {qualificationsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load driver qualifications"
+                status={qualificationsQuery.error instanceof ApiError ? qualificationsQuery.error.status : 0}
+                message={qualificationsQuery.error instanceof Error ? qualificationsQuery.error.message : undefined}
+                onRetry={() => void qualificationsQuery.refetch()}
+              />
+            ) : null}
             {qualifications.map((qualification) => (
               <div
                 key={qualification.id}
@@ -1468,7 +1476,7 @@ export function DriverDetailPage() {
                 ) : null}
               </div>
             ))}
-            {qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
+            {!qualificationsQuery.isError && qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
           {driver?.operating_company_id ? (
             <DriverEquipmentTransfersReverseSection
@@ -1518,6 +1526,14 @@ export function DriverDetailPage() {
 
               <div className="space-y-2">
                 {safetyEventsQuery.isLoading ? <div className="text-sm text-gray-500">Loading safety events...</div> : null}
+                {safetyEventsQuery.isError ? (
+                  <ListErrorState
+                    title="Couldn't load driver safety events"
+                    status={safetyEventsQuery.error instanceof ApiError ? safetyEventsQuery.error.status : 0}
+                    message={safetyEventsQuery.error instanceof Error ? safetyEventsQuery.error.message : undefined}
+                    onRetry={() => void safetyEventsQuery.refetch()}
+                  />
+                ) : null}
                 {safetyEvents.map((event) => {
                   const expanded = expandedSafetyEventId === event.id;
                   const isVoided = Boolean(event.voided_at);
@@ -1574,7 +1590,7 @@ export function DriverDetailPage() {
                     </div>
                   );
                 })}
-                {safetyEventsListState.isEmpty ? (
+                {!safetyEventsQuery.isError && safetyEventsListState.isEmpty ? (
                   <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
                 ) : null}
               </div>
@@ -1626,6 +1642,13 @@ export function DriverDetailPage() {
             <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
             {legalMattersForDriverQuery.isLoading ? (
               <p className="text-sm text-gray-500">Loading…</p>
+            ) : legalMattersForDriverQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load linked legal matters"
+                status={legalMattersForDriverQuery.error instanceof ApiError ? legalMattersForDriverQuery.error.status : 0}
+                message={legalMattersForDriverQuery.error instanceof Error ? legalMattersForDriverQuery.error.message : undefined}
+                onRetry={() => void legalMattersForDriverQuery.refetch()}
+              />
             ) : (
               <ul className="space-y-2">
                 {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
@@ -1642,7 +1665,7 @@ export function DriverDetailPage() {
                 ))}
               </ul>
             )}
-            {legalMattersListState.isEmpty ? (
+            {!legalMattersForDriverQuery.isError && legalMattersListState.isEmpty ? (
               <p className="text-sm text-gray-500">No linked matters.</p>
             ) : null}
           </div>
@@ -1674,7 +1697,21 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="space-y-3">
-          {companies.map((company) => {
+          {companiesQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load accessible operating companies"
+              status={companiesQuery.error instanceof ApiError ? companiesQuery.error.status : 0}
+              message={companiesQuery.error instanceof Error ? companiesQuery.error.message : undefined}
+              onRetry={() => void companiesQuery.refetch()}
+            />
+          ) : companyAuthQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load driver company authorizations"
+              status={companyAuthQuery.error instanceof ApiError ? companyAuthQuery.error.status : 0}
+              message={companyAuthQuery.error instanceof Error ? companyAuthQuery.error.message : undefined}
+              onRetry={() => void companyAuthQuery.refetch()}
+            />
+          ) : companies.map((company) => {
             const existing = authorizations.find((authorization) => authorization.company_id === company.id);
             const rowNotes = authorizationNotesByCompany[company.id] ?? existing?.notes ?? "";
             return (
@@ -1741,7 +1778,7 @@ export function DriverDetailPage() {
               </div>
             );
           })}
-          {companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
+          {!companiesQuery.isError && !companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
         </div>
       ) : null}
 
@@ -1770,6 +1807,7 @@ export function DriverDetailPage() {
         >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Equipment type</label>
+            {equipmentTypesQuery.isError ? <ListErrorState status={0} message="Equipment types could not be loaded." onRetry={() => void equipmentTypesQuery.refetch()} /> : null}
             {/*
               LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.equipment_types
               (inline create seeds one per_loaded_mile Base rate line item). Options keyed by id.
@@ -1784,6 +1822,7 @@ export function DriverDetailPage() {
               operatingCompanyId={String(driver?.operating_company_id ?? companyId)}
               placeholder={equipmentTypesQuery.isLoading ? "Loading equipment types…" : "Select equipment type"}
               loading={equipmentTypesQuery.isLoading}
+              disabled={equipmentTypesQuery.isError}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["equipment-types-for-driver-detail"] });
                 void queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
@@ -1811,7 +1850,7 @@ export function DriverDetailPage() {
             <Button type="button" variant="secondary" onClick={() => setAddQualificationOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" loading={addQualificationMutation.isPending}>
+            <Button type="submit" loading={addQualificationMutation.isPending} disabled={equipmentTypesQuery.isError}>
               Save
             </Button>
           </div>
@@ -1862,6 +1901,7 @@ export function DriverDetailPage() {
             {safetyForm.event_type === "termination" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Termination reason</label>
+                {terminationReasonsQuery.isError ? <ListErrorState status={0} message="Termination reasons could not be loaded." onRetry={() => void terminationReasonsQuery.refetch()} /> : null}
                 {/*
                   LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.driver_termination_reasons.
                   Options keyed by UUID (termination_reason_id). Severity on create comes from the form row.
@@ -1883,6 +1923,7 @@ export function DriverDetailPage() {
                   createExtras={{ severity: safetyForm.severity }}
                   placeholder="Select reason"
                   loading={terminationReasonsQuery.isLoading}
+                  disabled={terminationReasonsQuery.isError}
                   onOptionCreated={() => {
                     void queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
                   }}

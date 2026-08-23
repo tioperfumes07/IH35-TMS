@@ -25,6 +25,7 @@ import { customerTypesCatalogClient } from "../../api/catalogs-customers";
 import type { CustomerType, MilesBasis } from "../../types/api";
 import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../parity/EntityPicker";
+import { ListErrorState } from "../ListErrorState";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -583,6 +584,14 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           />
           <div className="block text-sm">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Customer category</span>
+            {customerTypeCatalogQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load customer categories"
+                status={0}
+                message={(customerTypeCatalogQuery.error as Error)?.message}
+                onRetry={() => void customerTypeCatalogQuery.refetch()}
+              />
+            ) : null}
             <ReferenceSelect
               value={values.customer_type_id || null}
               onChange={(next) => onPatch({ customer_type_id: next ?? "" })}
@@ -590,6 +599,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               createKind="customer_type"
               operatingCompanyId={operatingCompanyId}
               placeholder="Select category"
+              disabled={customerTypeCatalogQuery.isError}
               onOptionCreated={() => void customerTypeCatalogQuery.refetch()}
             />
           </div>
@@ -686,6 +696,14 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           />
           <div className="block text-sm md:col-span-2" data-testid="customer-default-income-account">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Default income account</span>
+            {incomeAccountsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load income accounts"
+                status={0}
+                message={(incomeAccountsQuery.error as Error)?.message}
+                onRetry={() => void incomeAccountsQuery.refetch()}
+              />
+            ) : null}
             <ReferenceSelect
               options={incomeAccountOptions}
               value={values.default_income_account_id || null}
@@ -693,6 +711,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               createKind="account"
               operatingCompanyId={operatingCompanyId}
               placeholder="— None —"
+              disabled={incomeAccountsQuery.isError}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({
                   queryKey: ["catalog-accounts", "income-for-customer-default", operatingCompanyId],

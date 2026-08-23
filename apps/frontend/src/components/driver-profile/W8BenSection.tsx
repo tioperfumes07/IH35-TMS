@@ -17,9 +17,11 @@ function fmt(value: unknown) {
  */
 export function W8BenSection({
   w8ben,
+  unavailable = false,
   onCapture,
 }: {
   w8ben: Record<string, unknown>;
+  unavailable?: boolean;
   onCapture?: () => void;
 }) {
   const status = String(w8ben.status ?? "missing");
@@ -46,7 +48,9 @@ export function W8BenSection({
         </button>
       </div>
 
-      {onFile ? (
+      {unavailable ? <p className="mt-3 text-xs font-medium text-red-700">W-8BEN data could not be loaded.</p> : null}
+
+      {!unavailable && onFile ? (
         <>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Legal name" value={w8ben.full_legal_name} />
@@ -72,11 +76,11 @@ export function W8BenSection({
             ) : null}
           </p>
         </>
-      ) : (
+      ) : !unavailable ? (
         <p className="mt-3 text-xs text-red-700">
           No W-8BEN on file. Required at hire for foreign (B-1) drivers — capture the certificate.
         </p>
-      )}
+      ) : null}
     </section>
   );
 }

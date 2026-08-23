@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { buildDriverProfilePdfSections, renderDriverProfilePdf } from "./driver-profile-pdf-renderer.service.js";
 
@@ -22,7 +23,13 @@ export async function registerDriverPdfExportRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const pdf = await withCurrentUser(authUser.uuid, async (client) => {
-      const aggregate = await buildDriverAggregate(client, params.data.id, query.data.operating_company_id);
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        query.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      const aggregate = await buildDriverAggregate(client, params.data.id, scopedCompanyId);
       if (!aggregate) return null;
       const built = buildDriverProfilePdfSections(aggregate);
       return renderDriverProfilePdf({ lastName: built.lastName, htmlSections: built.htmlSections });

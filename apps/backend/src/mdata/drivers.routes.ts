@@ -1349,9 +1349,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     // scoped by-id read below is the canonical fast path; dedicated aggregate consumers opt in.
     const parsedAggregateQuery = driverAggregateQuerySchema.safeParse(req.query ?? {});
     if (parsedAggregateQuery.success) {
-      const aggregate = await withCurrentUser(authUser.uuid, async (client) =>
-        buildDriverAggregate(client, parsedParams.data.id, parsedAggregateQuery.data.operating_company_id)
-      );
+      const aggregate = await withCurrentUser(authUser.uuid, async (client) => {
+        const scopedCompanyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          parsedAggregateQuery.data.operating_company_id
+        );
+        if (!scopedCompanyId) return null;
+        return buildDriverAggregate(client, parsedParams.data.id, scopedCompanyId);
+      });
       if (!aggregate) return reply.code(404).send({ error: "mdata_driver_not_found" });
       return aggregate;
     }

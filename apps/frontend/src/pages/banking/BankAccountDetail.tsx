@@ -19,7 +19,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -38,7 +38,7 @@ function matchedTransactionLinks(row: PlaidBankTransaction) {
     row.matched_load_id ? <EntityLink key="load" kind="load" id={row.matched_load_id} label={entityLabel(row.matched_load_number ?? null, row.matched_load_id, "Load")} /> : null,
     row.matched_bill_id ? <EntityLink key="bill" kind="bill" id={row.matched_bill_id} label={entityLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")} /> : null,
     row.matched_settlement_id ? <EntityLink key="settlement" kind="settlement" id={row.matched_settlement_id} label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")} /> : null,
-    row.matched_expense_id ? <EntityLink key="expense" kind="expense" id={row.matched_expense_id} label={entityLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")} /> : null,
+    row.matched_expense_id ? <EntityLink key="expense" kind="expense" id={row.matched_expense_id} label={visibleDocumentLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")} /> : null,
     row.matched_journal_entry_id ? <EntityLink key="je" kind="journal_entry" id={row.matched_journal_entry_id} label={entityLabel(row.matched_journal_entry_memo ?? null, row.matched_journal_entry_id, "Journal entry")} /> : null,
   ].filter(Boolean);
   return links.length ? <div className="flex flex-wrap gap-1">{links}</div> : "No";

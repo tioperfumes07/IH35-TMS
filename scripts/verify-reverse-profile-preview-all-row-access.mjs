@@ -17,6 +17,9 @@ const FILES = {
   templateApi: "apps/frontend/src/api/dispatch.ts",
   templateService: "apps/backend/src/dispatch/dispatch-refinements.service.ts",
   entityLink: "apps/frontend/src/components/shared/EntityLink.tsx",
+  cargoClaims: "apps/frontend/src/components/safety/CustomerCargoClaimsReverseSection.tsx",
+  customerNotify: "apps/frontend/src/components/dispatch/CustomerNotifyReverseSection.tsx",
+  dispatcherSafety: "apps/frontend/src/components/safety/DispatcherSafetyEventsReverseBlock.tsx",
 };
 const sources = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -37,6 +40,10 @@ const checks = [
   ["templateLibrary", /CappedListNotice shown=\{rows\.length\}[\s\S]{0,180}total=\{q\.data\?\.total \?\? null\}/, "template library discloses any unfiltered server cap"],
   ["templateLibrary", /CappedListNotice shown=\{templates\.length\} limit=\{500\}[\s\S]{0,100}total=\{q\.data\?\.total \?\? null\}/, "load-template picker discloses its catalog cap"],
   ["entityLink", /case "load_template":[\s\S]{0,100}return `\/dispatch\/planner\?panel=templates&template_id=\$\{id\}`/, "exact load-template EntityLink targets the mounted planner route"],
+  ["templateReverse", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "customer template failure retries exact query"],
+  ["cargoClaims", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "customer cargo-claim failure retries exact query"],
+  ["customerNotify", /preferences\.refetch\(\)[\s\S]{0,300}log\.refetch\(\)/, "customer notification failures retry exact independent queries"],
+  ["dispatcherSafety", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "dispatcher safety failure retries exact query"],
 ];
 
 function failures(candidate) {
@@ -57,6 +64,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["templateLibrary", '<CappedListNotice shown={rows.length}', '<div data-removed-notice={rows.length}'],
     ["templateLibrary", '<CappedListNotice shown={templates.length}', '<div data-removed-picker-notice={templates.length}'],
     ["entityLink", "/dispatch/planner?panel=templates&template_id=", "/dispatch/planning/calendar?panel=templates&template_id="],
+    ["templateReverse", "query.refetch()", "retryRemoved()"],
+    ["cargoClaims", "query.refetch()", "retryRemoved()"],
+    ["customerNotify", "preferences.refetch()", "retryRemoved()"],
+    ["dispatcherSafety", "query.refetch()", "retryRemoved()"],
   ];
   const escaped = [];
   for (const [key, needle, replacement] of mutations) {

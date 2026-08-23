@@ -1,9 +1,11 @@
-export function PerformanceScorecardSection({ scorecard }: { scorecard: Record<string, unknown> | null }) {
+export function PerformanceScorecardSection({ scorecard, unavailable = false }: { scorecard: Record<string, unknown> | null; unavailable?: boolean }) {
   if (!scorecard) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-800">Performance scorecard</h2>
-        <p className="mt-2 text-xs text-gray-500">No Samsara safety data for the last 30 days.</p>
+        <p className={`mt-2 text-xs ${unavailable ? "text-red-700" : "text-gray-500"}`}>
+          {unavailable ? "Performance data could not be loaded." : "No Samsara safety data for the last 30 days."}
+        </p>
       </section>
     );
   }

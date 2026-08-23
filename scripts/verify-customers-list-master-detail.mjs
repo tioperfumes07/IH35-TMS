@@ -21,6 +21,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   customers: "apps/frontend/src/pages/Customers.tsx",
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  profileForm: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
+  editModal: "apps/frontend/src/components/customers/CustomerEditModal.tsx",
+  drillModal: "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
   sidebar: "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
   coi: "apps/frontend/src/pages/customers/CoiTab.tsx",
   sync: "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
@@ -49,6 +52,12 @@ export function audit(src) {
   }
   if (!/customer\.deactivated_at != null/.test(src.customers) || !/customer\.deactivated_at == null/.test(src.customers)) {
     failures.push(`${FILES.customers}: active/inactive segments must filter real customer.deactivated_at`);
+  }
+  if (!/customersQuery\.isError \|\| inactiveCustomersQuery\.isError/.test(src.customers)) {
+    failures.push(`${FILES.customers}: active and inactive roster GET failures must both block the shared list`);
+  }
+  if (!/Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/.test(src.customers)) {
+    failures.push(`${FILES.customers}: shared roster failure retry must refetch both company-scoped roster reads`);
   }
   if (!/raw === "all"/.test(src.customers) || !/else params\.set\("listTab", next\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: all segment must be URL-backed by listTab=all`);
@@ -101,6 +110,27 @@ export function audit(src) {
   if (!/bulkUpdate\(\{ domain: "mdata", resource: "customers"/.test(src.listView)) {
     failures.push(`${FILES.listView}: list.view_list bulk actions must target the real mdata.customers resource`);
   }
+  if (!/billingSummaryError=\{drillSummaryQuery\.isError/.test(src.listView) || !/onRetryBillingSummary=\{\(\) => void drillSummaryQuery\.refetch\(\)\}/.test(src.listView) || !/<ListErrorState[\s\S]{0,280}onRetry=\{onRetryBillingSummary\}/.test(src.drillModal)) {
+    failures.push(`${FILES.listView}: customer drill billing-summary failure must expose exact-query retry instead of zero dollars`);
+  }
+  if (!/customerTypeCatalogQuery\.isError/.test(src.profileForm) ||
+      !/onRetry=\{\(\) => void customerTypeCatalogQuery\.refetch\(\)\}/.test(src.profileForm) ||
+      !/disabled=\{customerTypeCatalogQuery\.isError\}/.test(src.profileForm)) {
+    failures.push(`${FILES.profileForm}: customer-category catalog failure must expose exact retry and disable its selector`);
+  }
+  if (!/incomeAccountsQuery\.isError/.test(src.profileForm) ||
+      !/onRetry=\{\(\) => void incomeAccountsQuery\.refetch\(\)\}/.test(src.profileForm) ||
+      !/disabled=\{incomeAccountsQuery\.isError\}/.test(src.profileForm)) {
+    failures.push(`${FILES.profileForm}: default-income catalog failure must expose exact retry and disable its selector`);
+  }
+  if (!/paymentTermsQuery\.isError[\s\S]{0,320}paymentTermsQuery\.refetch\(\)/.test(src.editModal) ||
+      !/parentCandidatesQuery\.isError[\s\S]{0,320}parentCandidatesQuery\.refetch\(\)/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: payment-term and parent-customer read failures must expose independent exact retries`);
+  }
+  if (!/!paymentTermsQuery\.isError && !parentCandidatesQuery\.isError \? \([\s\S]{0,120}<CustomerProfileForm/.test(src.editModal) ||
+      !/disabled=\{saving \|\| paymentTermsQuery\.isError \|\| parentCandidatesQuery\.isError/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed supporting reads must hide the false-empty form and disable save`);
+  }
   if (!/CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(src.sidebar)) {
     failures.push(`${FILES.sidebar}: home.roster rows must link to the real customer's own record`);
   }
@@ -131,6 +161,9 @@ function loadSrc(root) {
   return {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
+    profileForm: fs.readFileSync(path.join(root, FILES.profileForm), "utf8"),
+    editModal: fs.readFileSync(path.join(root, FILES.editModal), "utf8"),
+    drillModal: fs.readFileSync(path.join(root, FILES.drillModal), "utf8"),
     sidebar: fs.readFileSync(path.join(root, FILES.sidebar), "utf8"),
     coi: fs.readFileSync(path.join(root, FILES.coi), "utf8"),
     vendors: fs.readFileSync(path.join(root, FILES.vendors), "utf8"),
@@ -150,6 +183,8 @@ if (process.argv.includes("--selftest")) {
     ["create-call", "customers", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
     ["active-filter", "customers", /customer\.deactivated_at == null/g, "false"],
+    ["inactive-roster-error", "customers", /customersQuery\.isError \|\| inactiveCustomersQuery\.isError/g, "customersQuery.isError"],
+    ["combined-roster-retry", "customers", /Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/, "customersQuery.refetch()"],
     ["all-segment", "customers", /raw === "all"/, "false"],
     ["all-segment-url", "customers", /else params\.set\("listTab", next\)/, 'else params.set("tab", next)'],
     ["roster-staged-filters", "customers", /applied: \{ listTab, rosterType, rosterCreditStatus \}/, "applied: { listTab }"],
@@ -178,6 +213,15 @@ if (process.argv.includes("--selftest")) {
       "companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null",
     ],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "customers"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
+    ["billing-summary-retry", "listView", /onRetryBillingSummary=\{\(\) => void drillSummaryQuery\.refetch\(\)\}/, "onRetryBillingSummary={() => undefined}"],
+    ["customer-category-retry", "profileForm", /onRetry=\{\(\) => void customerTypeCatalogQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["customer-category-gate", "profileForm", /disabled=\{customerTypeCatalogQuery\.isError\}/, "disabled={false}"],
+    ["income-account-retry", "profileForm", /onRetry=\{\(\) => void incomeAccountsQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["income-account-gate", "profileForm", /disabled=\{incomeAccountsQuery\.isError\}/, "disabled={false}"],
+    ["edit-payment-term-retry", "editModal", /onRetry=\{\(\) => void paymentTermsQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-parent-retry", "editModal", /onRetry=\{\(\) => void parentCandidatesQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-form-error-gate", "editModal", /!paymentTermsQuery\.isError && !parentCandidatesQuery\.isError/, "true"],
+    ["edit-save-error-gate", "editModal", /paymentTermsQuery\.isError \|\| parentCandidatesQuery\.isError \|\| /, ""],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
     ["responsive-stack", "customers", /className="flex flex-col gap-3 xl:flex-row"/, 'className="flex gap-3"'],
     ["responsive-sidebar", "sidebar", /min-w-0 max-w-none/, "min-w-[300px] max-w-[560px]"],

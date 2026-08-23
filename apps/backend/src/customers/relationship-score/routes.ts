@@ -14,11 +14,11 @@ const paramsSchema = z.object({
 });
 
 const singleQuerySchema = z.object({
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const atRiskQuerySchema = z.object({
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(250).default(50),
 });
 

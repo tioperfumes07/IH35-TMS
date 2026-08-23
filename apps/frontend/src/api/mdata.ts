@@ -957,9 +957,12 @@ export function getDriverApVendor(driverId: string, operatingCompanyId: string) 
   );
 }
 
-export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ qualifications: DriverQualification[] }>(`/api/v1/mdata/drivers/${driverId}/qualifications${query}`);
+export function listDriverQualifications(driverId: string, operatingCompanyId: string, includeInactive?: boolean) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ qualifications: DriverQualification[] }>(
+    `/api/v1/mdata/drivers/${driverId}/qualifications?${query.toString()}`
+  );
 }
 
 export function createDriverQualification(
@@ -1010,9 +1013,10 @@ export function reactivateQualification(driverId: string, qualificationId: strin
   });
 }
 
-export function getDriverQualificationRateHistory(driverId: string, qualificationId: string) {
+export function getDriverQualificationRateHistory(driverId: string, qualificationId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ line_items: DriverQualificationRateHistoryLineItem[] }>(
-    `/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rate-history`
+    `/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rate-history?${query.toString()}`
   );
 }
 
@@ -1045,8 +1049,11 @@ export function changeDriverQualificationRate(
   });
 }
 
-export function listDriverCompanyAuthorizations(driverId: string) {
-  return apiRequest<{ authorizations: DriverCompanyAuthorization[] }>(`/api/v1/mdata/drivers/${driverId}/company-authorizations`);
+export function listDriverCompanyAuthorizations(driverId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ authorizations: DriverCompanyAuthorization[] }>(
+    `/api/v1/mdata/drivers/${driverId}/company-authorizations?${query.toString()}`
+  );
 }
 
 export function upsertDriverCompanyAuthorization(
@@ -1063,14 +1070,18 @@ export function upsertDriverCompanyAuthorization(
   });
 }
 
-export function listTerminationReasons(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons${query}`);
+export function listTerminationReasons(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons?${query}`);
 }
 
-export function listSafetyEvents(driverId: string, includeVoided = false) {
-  const query = includeVoided ? "?include_voided=true" : "";
-  return apiRequest<{ events: SafetyEvent[] }>(`/api/v1/mdata/drivers/${driverId}/safety-events${query}`);
+export function listSafetyEvents(driverId: string, operatingCompanyId: string, includeVoided = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeVoided) query.set("include_voided", "true");
+  return apiRequest<{ events: SafetyEvent[] }>(
+    `/api/v1/mdata/drivers/${driverId}/safety-events?${query.toString()}`
+  );
 }
 
 export function createSafetyEvent(
@@ -1218,9 +1229,9 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   });
 }
 
-export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null) {
+export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string) {
   const query = new URLSearchParams();
-  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  query.set("operating_company_id", operatingCompanyId);
   const qs = query.toString();
   return apiRequest<CustomerRelationshipScore>(
     `/api/v1/customers/${customerUuid}/relationship-score${qs ? `?${qs}` : ""}`
@@ -1228,11 +1239,11 @@ export function getCustomerRelationshipScore(customerUuid: string, operatingComp
 }
 
 export function listAtRiskCustomerRelationshipScores(params: {
-  operating_company_id?: string | null;
+  operating_company_id: string;
   limit?: number;
-} = {}) {
+}) {
   const query = new URLSearchParams();
-  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  query.set("operating_company_id", params.operating_company_id);
   if (params.limit) query.set("limit", String(params.limit));
   const qs = query.toString();
   return apiRequest<{ operating_company_id: string; count: number; customers: AtRiskCustomerRelationshipScore[] }>(
@@ -1262,9 +1273,11 @@ export function reactivateCustomer(id: string) {
   return updateCustomer(id, { deactivated_at: null });
 }
 
-export function getCustomerDetail(id: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
-  return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail${query}`);
+export function getCustomerDetail(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ customer: CustomerDetailFull }>(
+    `/api/v1/mdata/customers/${id}/detail?${query.toString()}`
+  );
 }
 
 export type CustomerFinancialSummary = {
@@ -1285,15 +1298,17 @@ export function getCustomerFinancialSummary(customerId: string, operatingCompany
   return apiRequest<CustomerFinancialSummary>(`/api/v1/mdata/customers/${customerId}/financial-summary?${q}`);
 }
 
-export function verifyCustomerFmcsa(id: string) {
-  return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa`, { method: "POST" });
+export function verifyCustomerFmcsa(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa?${query.toString()}`, { method: "POST" });
 }
 
 export function listCustomerQualityEventReasons(
+  operatingCompanyId: string,
   eventType?: CustomerQualityEvent["event_type"],
   includeInactive = false
 ) {
-  const query = new URLSearchParams();
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (eventType) query.set("event_type", eventType);
   if (includeInactive) query.set("include_inactive", "true");
   const qs = query.toString();
@@ -1302,11 +1317,17 @@ export function listCustomerQualityEventReasons(
   );
 }
 
-export function listCustomerQualityEvents(customerId: string, includeVoided = false) {
-  const query = includeVoided ? "?include_voided=true" : "";
-  return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events${query}`);
+export function listCustomerQualityEvents(customerId: string, operatingCompanyId: string, includeVoided = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeVoided) query.set("include_voided", "true");
+  return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events?${query}`);
 }
 
+// CUST-F5995 — create/void/update never sent the caller's SELECTED operating company (CustomerDetail.tsx
+// derives it from the loaded customer record, same as every other mutation on that page, e.g.
+// deactivateCustomerContact). Without it, the backend resolved the caller's DEFAULT company instead,
+// so create could silently target the wrong entity after a company switch, and void/update had no
+// company binding at all. All three now accept it as an optional query param, same as the GET siblings.
 export function createCustomerQualityEvent(
   customerId: string,
   body: {
@@ -1321,13 +1342,21 @@ export function createCustomerQualityEvent(
     related_load_id?: string;
     related_invoice_id?: string;
     document_ids?: string[];
-  }
+  },
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events`, { method: "POST", body });
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events${q}`, { method: "POST", body });
 }
 
-export function voidCustomerQualityEvent(customerId: string, eventId: string, voidReason: string) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}/void`, {
+export function voidCustomerQualityEvent(
+  customerId: string,
+  eventId: string,
+  voidReason: string,
+  operatingCompanyId?: string | null
+) {
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}/void${q}`, {
     method: "PATCH",
     body: { void_reason: voidReason },
   });
@@ -1336,18 +1365,20 @@ export function voidCustomerQualityEvent(customerId: string, eventId: string, vo
 export function updateCustomerQualityEvent(
   customerId: string,
   eventId: string,
-  body: { details?: string | null; document_ids?: string[] | null; dollar_impact_amount?: number | null }
+  body: { details?: string | null; document_ids?: string[] | null; dollar_impact_amount?: number | null },
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}`, {
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}${q}`, {
     method: "PATCH",
     body,
   });
 }
 
-export function listCustomerContacts(customerId: string, includeInactive = false, operatingCompanyId?: string | null) {
+export function listCustomerContacts(customerId: string, includeInactive: boolean, operatingCompanyId: string) {
   const query = new URLSearchParams();
   if (includeInactive) query.set("include_inactive", "true");
-  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  query.set("operating_company_id", operatingCompanyId);
   const qs = query.toString();
   return apiRequest<{ contacts: CustomerContact[] }>(`/api/v1/mdata/customers/${customerId}/contacts${qs ? `?${qs}` : ""}`);
 }
@@ -1364,9 +1395,9 @@ export function createCustomerContact(
     is_primary?: boolean;
     notes?: string;
   },
-  operatingCompanyId?: string | null
+  operatingCompanyId: string
 ) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts${query}`, { method: "POST", body: payload });
 }
 
@@ -1383,24 +1414,24 @@ export function updateCustomerContact(
     is_primary: boolean;
     notes: string | null;
   }>,
-  operatingCompanyId?: string | null
+  operatingCompanyId: string
 ) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "PATCH",
     body: payload,
   });
 }
 
-export function deactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+export function deactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId: string) {
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "DELETE",
   });
 }
 
-export function reactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+export function reactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId: string) {
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}/reactivate${query}`, {
     method: "POST",
   });
@@ -1518,6 +1549,83 @@ export function listVendors(params: CompanyScopedListParams = {}) {
 export function getVendor(id: string, operatingCompanyId?: string | null) {
   const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
   return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}${query}`);
+}
+
+// ORPH-003 — mdata.vendor_payment_methods (migration 202613110000): structured payment-method records,
+// replacing buildAchDisplay()'s notes-text "ach" heuristic. See
+// docs/specs/CURSOR-AUDIT-2026-07-15/modules/15-CUSTOMERS-VENDORS.md §5 item 5.
+export type VendorPaymentMethod = {
+  id: string;
+  operating_company_id: string;
+  vendor_id: string;
+  method_type: "ach" | "check" | "wire" | "other";
+  bank_name: string | null;
+  // Last 4 digits only -- never a full account/routing number (DB-enforced, see the migration's CHECK).
+  account_mask: string | null;
+  is_primary: boolean;
+  notes: string | null;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  deactivated_at: string | null;
+  void_reason: string | null;
+  voided_by_user_id: string | null;
+};
+
+export function listVendorPaymentMethods(vendorId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ payment_methods: VendorPaymentMethod[] }>(
+    `/api/v1/mdata/vendors/${vendorId}/payment-methods?${query}`
+  );
+}
+
+export function createVendorPaymentMethod(
+  vendorId: string,
+  body: {
+    operating_company_id: string;
+    method_type: VendorPaymentMethod["method_type"];
+    bank_name?: string;
+    account_mask?: string;
+    is_primary?: boolean;
+    notes?: string;
+  }
+) {
+  return apiRequest<VendorPaymentMethod>(`/api/v1/mdata/vendors/${vendorId}/payment-methods`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateVendorPaymentMethod(
+  vendorId: string,
+  methodId: string,
+  operatingCompanyId: string,
+  body: {
+    method_type?: VendorPaymentMethod["method_type"];
+    bank_name?: string | null;
+    account_mask?: string | null;
+    is_primary?: boolean;
+    notes?: string | null;
+  }
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<VendorPaymentMethod>(`/api/v1/mdata/vendors/${vendorId}/payment-methods/${methodId}?${query}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidVendorPaymentMethod(
+  vendorId: string,
+  methodId: string,
+  operatingCompanyId: string,
+  voidReason: string
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<VendorPaymentMethod>(
+    `/api/v1/mdata/vendors/${vendorId}/payment-methods/${methodId}/void?${query}`,
+    { method: "POST", body: { void_reason: voidReason } }
+  );
 }
 
 export type CreateVendorInput = {

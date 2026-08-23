@@ -176,7 +176,12 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     if (!user) return;
     const driverId = await resolveDriverIdForUser(user.uuid);
     if (!driverId) return reply.code(404).send({ error: "driver_not_found_for_user" });
+    // Keep the inbound PWA queue symmetric with the outbound queue: driver ids can participate in
+    // multiple companies, so filtering by driver alone leaks another entity's pending transfers.
+    const operatingCompanyId = await resolveOperatingCompanyForUser(user.uuid);
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
     return listTransfers(user.uuid, {
+      operating_company_id: operatingCompanyId,
       status: "pending_to_confirm",
       to_driver_id: driverId,
     });

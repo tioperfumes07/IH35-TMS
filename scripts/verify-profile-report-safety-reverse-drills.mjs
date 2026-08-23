@@ -11,6 +11,11 @@ const sources = {
   deadhead: fs.readFileSync("apps/frontend/src/pages/reports/DeadheadReportPage.tsx", "utf8"),
   loadSafety: fs.readFileSync("apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx", "utf8"),
   driverFines: fs.readFileSync("apps/frontend/src/components/safety/DriverFinesReverseSection.tsx", "utf8"),
+  driverReports: fs.readFileSync("apps/frontend/src/components/maintenance/DriverReportsReverseSection.tsx", "utf8"),
+  driverIssues: fs.readFileSync("apps/frontend/src/components/dispatch/DriverInTransitIssuesReverseSection.tsx", "utf8"),
+  driverTempCover: fs.readFileSync("apps/frontend/src/components/safety/DriverTempCoverReverseSection.tsx", "utf8"),
+  driverTransfers: fs.readFileSync("apps/frontend/src/components/dispatch/DriverEquipmentTransfersReverseSection.tsx", "utf8"),
+  driverHos: fs.readFileSync("apps/frontend/src/components/safety/DriverHosViolationsReverseSection.tsx", "utf8"),
   events: fs.readFileSync("apps/frontend/src/pages/safety/SafetyEventsPage.tsx", "utf8"),
   fines: fs.readFileSync("apps/frontend/src/pages/safety/InternalFinesPage.tsx", "utf8"),
   entityLink: fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8"),
@@ -30,6 +35,12 @@ const checks = [
   ["fines", /String\(row\.id \?\? ""\) === linkedFineId \? "bg-slate-100/, "linked internal fine is visibly highlighted"],
   ["entityLink", /case "safety_event":[\s\S]*?safety-events\?event_id=\$\{id\}/, "safety-event resolver carries event_id"],
   ["entityLink", /case "internal_fine":[\s\S]*?internal-fines\?fine_id=\$\{id\}/, "internal-fine resolver carries fine_id"],
+  ["driverReports", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver reports failure retries exact query"],
+  ["driverIssues", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver in-transit failure retries exact query"],
+  ["driverTempCover", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver temporary coverage failure retries exact query"],
+  ["driverTransfers", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver transfer failure retries exact query"],
+  ["driverHos", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver HOS failure retries exact query"],
+  ["driverFines", /<ListErrorState[\s\S]{0,180}civilQuery\.refetch\(\)[\s\S]{0,240}<ListErrorState[\s\S]{0,180}internalQuery\.refetch\(\)/, "driver fine failures retry their exact sources"],
 ];
 
 const failures = (candidate) => checks

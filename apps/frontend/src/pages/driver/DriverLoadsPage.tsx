@@ -3,13 +3,23 @@ import { useTranslation } from "react-i18next";
 import { listDriverLoads, type DriverLoad } from "../../api/driver";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function DriverLoadsPage() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ["driver", "loads"], queryFn: listDriverLoads });
 
   if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
-  if (q.error) return <p className="text-sm text-red-600">Could not load.</p>;
+  if (q.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load assigned loads"
+        status={0}
+        message={q.error instanceof Error ? q.error.message : undefined}
+        onRetry={() => void q.refetch()}
+      />
+    );
+  }
   const loads = q.data ?? [];
   if (loads.length === 0) return <p className="text-sm text-gray-700">{t("driver.no_loads")}</p>;
 

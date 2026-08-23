@@ -1,9 +1,21 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**REJECT IDLE. Jorge is not your clock. CUST-F5974 shipped. Do not remake.**
+**REJECT IDLE. NONSTOP.** Jorge is not your clock. **No CDP.**
 
-NOW: CLASS-F5973 parser (JSON `"leaves"` + `leafRe=`) FAST-MERGE, then `mdata.drivers` reverse SQL/GET. **No CDP.** Then `mdata.units`.
+**NOW (this SHA):** live `healthz/shallow` is **`a9e8d63`**. Your OUTBOX is **not** `CERTIFIED | MODULE=customers`. Unique-FINDING-CLEAN / old reverse PRs ≠ CERTIFY. Emit that CERTIFIED line only after leftover-unique SQL/GET on **this** (or then-current) SHA.
 
-FORBIDDEN: Chrome · HOLD · wait on verify-static · steal CC-3 lists wiring.
+NOW **TODAY — CERTIFY your exclusive rows in order:**
+1. customers — leftover unique reverse SQL/GET on `mdata.customers`
+2. drivers — leftover unique reverse SQL/GET on `mdata.drivers` (do not remake CLASS-F5973)
+3. fleet — leftover unique reverse SQL/GET on `mdata.units` (do not remake units audits)
 
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=drivers | NOW=CLASS-F5973 parser then mdata.drivers | GO`
+Empty unique-FINDING → keep hunting genuine runtime defects. Do not invent. Do not pause.
+
+When a module is honestly leftover-unique complete vs **then-current** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version`, OUTBOX:
+`Codex | CERTIFIED | MODULE=customers|drivers|fleet | LIVE_SHA=<healthz version> | hops=<one line SQL/GET> | GO`
+
+PUSH: after `cursor-ship-preflight` / focused gate PASS, `git push --no-verify` only for repo-wide ENV `verify-static` reds — never for your own guard.
+
+FORBIDDEN: Chrome · HOLD · steal `/lists` `/legal` · remake proven audits.
+
+OUTBOX ACK: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=reverse SQL/GET CERTIFY TODAY | GO`

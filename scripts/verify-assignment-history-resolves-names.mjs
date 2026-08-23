@@ -75,6 +75,15 @@ export function auditService(raw) {
   if (/LEFT\s+JOIN\s+mdata\.drivers/i.test(body) && !/mdata\.drivers[\s\S]{0,200}?operating_company_id/i.test(body)) {
     problems.push(`${SERVICE}: the mdata.drivers join in getAssignmentHistory is not entity-scoped — add AND <alias>.operating_company_id = h.operating_company_id.`);
   }
+  for (const [role, driverAlias, authAlias] of [
+    ["previous", "pd", "assignment_previous_driver_dca"],
+    ["new", "nd", "assignment_new_driver_dca"],
+  ]) {
+    const authorization = new RegExp(`FROM mdata\\.driver_company_authorizations ${authAlias}[\\s\\S]{0,180}${authAlias}\\.driver_id = ${driverAlias}\\.id[\\s\\S]{0,140}${authAlias}\\.company_id = h\\.operating_company_id[\\s\\S]{0,140}${authAlias}\\.is_authorized = true[\\s\\S]{0,140}${authAlias}\\.deactivated_at IS NULL`);
+    if (!authorization.test(body)) {
+      problems.push(`${SERVICE}: ${role} driver label excludes active canonical shared-driver authorizations.`);
+    }
+  }
   return problems;
 }
 
@@ -107,7 +116,8 @@ if (process.argv.includes("--selftest")) {
   await client.query("SELECT set_config('app.operating_company_id', $1, true)", [c]);
   const rows = await client.query(\`SELECT h.*, x AS previous_driver_name, y AS new_driver_name
     FROM dispatch.load_assignment_history h
-    LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id AND pd.operating_company_id = h.operating_company_id\`);
+    LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id AND (pd.operating_company_id = h.operating_company_id OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations assignment_previous_driver_dca WHERE assignment_previous_driver_dca.driver_id = pd.id AND assignment_previous_driver_dca.company_id = h.operating_company_id AND assignment_previous_driver_dca.is_authorized = true AND assignment_previous_driver_dca.deactivated_at IS NULL))
+    LEFT JOIN mdata.drivers nd ON nd.id = h.new_driver_id AND (nd.operating_company_id = h.operating_company_id OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations assignment_new_driver_dca WHERE assignment_new_driver_dca.driver_id = nd.id AND assignment_new_driver_dca.company_id = h.operating_company_id AND assignment_new_driver_dca.is_authorized = true AND assignment_new_driver_dca.deactivated_at IS NULL))\`);
 }
 export async function other() {}`;
   const cases = [
@@ -127,6 +137,8 @@ export async function other(){}`, 1],
   const q = \`SELECT h.*, a AS previous_driver_name, b AS new_driver_name FROM dispatch.load_assignment_history h LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id\`;
 }
 export async function other(){}`, 1],
+    ["previous shared authorization removed", auditService, goodSvc.replace("FROM mdata.driver_company_authorizations assignment_previous_driver_dca", "FROM removed assignment_previous_driver_dca"), 1],
+    ["new shared authorization removed", auditService, goodSvc.replace("FROM mdata.driver_company_authorizations assignment_new_driver_dca", "FROM removed assignment_new_driver_dca"), 1],
     ["clean drawer", auditDrawer, `const prev = driverLabel(r.previous_driver_id, r.previous_driver_name);`, 0],
     ["drawer slices the uuid", auditDrawer, `const prev = String(r.previous_driver_id).slice(0, 8);`, 1],
     ["safe retryable page error", auditPage, `{...formatQueryErrorDetail(historyQ.error)} onRetry={() => void historyQ.refetch()}`, 0],

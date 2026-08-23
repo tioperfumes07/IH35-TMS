@@ -33,6 +33,8 @@ const FILES = {
   editModal: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
   assignment: "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx",
+  missingRequired: "apps/frontend/src/components/compliance/MissingRequiredChip.tsx",
+  backhaul: "apps/frontend/src/components/reports/BackhaulSuggestionsWidget.tsx",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
   self: "scripts/verify-fleet-unit-profile-edit-detail.mjs",
 };
@@ -42,7 +44,7 @@ const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["con
 const PROFILE_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const PROFILE_CONNECTIVITY = new Map([
   ["unit.profile.identity", /data-testid="vp-section-1-identity"[\s\S]{0,220}<IdentityStatusHeader[\s\S]{0,120}unitId=\{id\}/],
-  ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,160}<LiveTelemetrySection/],
+  ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,520}<LiveTelemetrySection/],
   ["unit.profile.current_load", /data-testid="vp-section-4-load"[\s\S]{0,180}<CurrentLoadSection[\s\S]{0,120}unitId=\{id\}/],
   ["unit.profile.trip_cost", /data-testid="vp-section-4-load"[\s\S]{0,500}<TripCostCalculator unitId=\{id\} companyId=\{companyId\}/],
   ["unit.profile.maintenance", /data-testid="vp-section-5-maintenance"[\s\S]{0,360}<MaintenanceSnapshotSection[\s\S]{0,220}unitId=\{id\}/],
@@ -90,6 +92,13 @@ export function audit(src) {
       !/qbo_class_id: qboClassTmsId \|\| null/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.qbo_mapping must retain USMCA TMS class connectivity while gating QBO vendor mapping to TRANSP`);
   }
+  if (!/classesQuery\.isError[\s\S]{0,240}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: failed TMS class catalog read must expose exact retry`);
+  }
+  if (!/value=\{qboClassTmsId\} disabled=\{classesQuery\.isError\}/.test(src.profile) ||
+      !/disabled=\{!id \|\| !companyId \|\| classesQuery\.isError\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: failed TMS class catalog read must disable selection and save`);
+  }
   if (!/profileQuery\.isPending \? ["']Loading…["'] : String\(entityLabel/.test(src.profile)) {
     failures.push(`${FILES.profile}: loading state must not render a false Unit — not visible identity`);
   }
@@ -99,6 +108,12 @@ export function audit(src) {
   if (!/profileQuery\.isError[\s\S]{0,160}<ListErrorState/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit profile outage must be explicit ListErrorState + retry`);
   }
+  if (!/faultSummaryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: active-fault reverse-read failure must be visible and retryable`);
+  }
+  if (!/telemetryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: live-telemetry refresh failure must be visible and retryable instead of silently falling back`);
+  }
   if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
     failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
   }
@@ -107,6 +122,12 @@ export function audit(src) {
   }
   if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: unit.edit.* tabs must all patch the real edited unit's own id`);
+  }
+  if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed canonical unit reads must expose exact retry`);
+  }
+  if (!/disabled=\{saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId\}/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed canonical unit reads must disable destructive patch saves`);
   }
   if (!/<UnitPermitsTab unitId=\{id\}/.test(src.unitDetail) || !/<UnitFinanceLinkageTab unitId=\{id\}/.test(src.unitDetail)) {
     failures.push(`${FILES.unitDetail}: unit.detail.* tabs must be self-referentially scoped via unitId={id}`);
@@ -121,6 +142,16 @@ export function audit(src) {
   if (!/unitQuery\.isError[\s\S]{0,220}<ListErrorState/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: unit identity outage must be explicit and retryable`);
   if (!/unit\?\.unit_id \?[\s\S]{0,120}EntityLinkOrTombstone[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}[\s\S]{0,80}name=\{unit\.unit_number\}/.test(src.assignment)) {
     failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real or tombstoned attached-unit drill`);
+  }
+  if (!/query\.isError[\s\S]{0,500}role="alert"[\s\S]{0,500}onClick=\{\(\) => void query\.refetch\(\)\}/.test(src.missingRequired) ||
+      !/!query\.isSuccess \|\| !query\.data/.test(src.missingRequired)) {
+    failures.push(`${FILES.missingRequired}: required-document GET failure must be visible and exactly retryable before the loading/absence gate`);
+  }
+  if (!/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,260}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(src.backhaul)) {
+    failures.push(`${FILES.backhaul}: backhaul GET failure must expose exact retry`);
+  }
+  if (!/!query\.isLoading && !query\.isError && suggestions\.length === 0/.test(src.backhaul)) {
+    failures.push(`${FILES.backhaul}: failed backhaul GET must not render a false no-profitable-lanes empty state`);
   }
   for (const id of CONNECTIVITY_LEAVES) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
@@ -164,12 +195,19 @@ if (process.argv.includes("--selftest")) {
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
     ["profile-class-control", "profile", /<SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
     ["profile-class-write", "profile", /qbo_class_id: qboClassTmsId \|\| null/, "qbo_class_id: null"],
+    ["profile-class-retry", "profile", /onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["profile-class-select-gate", "profile", /value=\{qboClassTmsId\} disabled=\{classesQuery\.isError\}/, "value={qboClassTmsId}"],
+    ["profile-class-save-gate", "profile", /!id \|\| !companyId \|\| classesQuery\.isError/, "!id || !companyId"],
     ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
     ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
+    ["profile-fault-error", "profile", /onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["profile-telemetry-error", "profile", /onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
+    ["edit-modal-read-retry", "editModal", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-modal-save-gate", "editModal", /saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId/, "saveMutation.isPending || !unitId"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
     ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
@@ -178,6 +216,10 @@ if (process.argv.includes("--selftest")) {
     ["unit-detail-task-label", "unitDetail", /targetLabel=\{unitLabel\}/, 'targetLabel="Unit"'],
     ["unit-detail-error", "unitDetail", /unitQuery\.isError/, "false"],
     ["assignment-link", "assignment", /unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/, 'kind="trailer" id={unit.trailer_id}'],
+    ["missing-required-error", "missingRequired", /query\.isError/, "false"],
+    ["missing-required-retry", "missingRequired", /onClick=\{\(\) => void query\.refetch\(\)\}/, "onClick={undefined}"],
+    ["backhaul-retry", "backhaul", /onRetry=\{\(\) => void query\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["backhaul-false-empty", "backhaul", /!query\.isLoading && !query\.isError && suggestions\.length === 0/, "!query.isLoading && suggestions.length === 0"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

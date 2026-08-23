@@ -39,6 +39,7 @@ import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import {
   createIsolatedOperatingCompany,
   deactivateIsolatedOperatingCompany,
@@ -121,11 +122,21 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
         // it raises "cannot insert a non-DEFAULT value". Leaving it to the database is not a
         // workaround, it is the point: the A/R subledger balance this test asserts on is maintained
         // by the column itself as payments apply, so nothing here can fake the subledger side moving.
+        // ACCT-DOM-02-TZ — issue_date is bound to the same companyBusinessDate() this file's own
+        // as_of_date uses (below), not SQL CURRENT_DATE. CURRENT_DATE resolves in the CI Postgres
+        // server's own default timezone (UTC), while getArAgingReport's as-of clamp reconstructs
+        // "today" in America/Chicago (the same convention every real issue_date-writing route —
+        // invoices.routes.ts, credit-memos.routes.ts, vendor-credits.routes.ts — already uses via
+        // `body.data.issue_date ?? companyBusinessDate()`). For ~5h/day (UTC has rolled to the next
+        // calendar day, Chicago has not — live at 2026-08-23T02:xx UTC), CURRENT_DATE outran the
+        // as-of clamp and `issue_date <= $2::date` excluded a same-day, wholly-unpaid invoice —
+        // subledger read $0 against a real $1,200 control balance, a false CLS-SUBLEDGER-GL-DARK-
+        // TIEOUT flag on a test fixture bug, not the report under test.
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
             subtotal_cents, tax_cents, total_cents, status, source_load_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent',$6::uuid)`,
-        [invoiceId, companyId, customerId, `INV-2026-${String(++invoiceSeq).padStart(5, "0")}`, INVOICE_CENTS, loadId]
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$7::date,$7::date,$5,0,$5,'sent',$6::uuid)`,
+        [invoiceId, companyId, customerId, `INV-2026-${String(++invoiceSeq).padStart(5, "0")}`, INVOICE_CENTS, loadId, companyBusinessDate()]
       );
       await db.query(
         `INSERT INTO accounting.invoice_lines
@@ -163,7 +174,11 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
       url: `/api/v1/customers/${customerId}/payments?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(userId, "Owner") },
       payload: {
-        received_at: new Date().toISOString().slice(0, 10),
+        // ACCT-DOM-02-TZ — same companyBusinessDate() as issue_date/as_of_date above, not the raw
+        // UTC date: p.payment_date feeds the same as-of-dated aging reconstruction (ar-aging.
+        // service.ts's `p.payment_date <= $2::date`), so a UTC-vs-Chicago day mismatch here would
+        // silently drop the payment application on the same ~5h/day boundary.
+        received_at: companyBusinessDate(),
         amount_cents: amountCents,
         payment_method: "ach",
         applications: [{ invoice_id: invoiceId, amount_cents: amountCents }],
@@ -187,7 +202,7 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     const report = await getSubledgerGlControlRecReport({
       userId,
       operating_company_id: companyId,
-      as_of_date: new Date().toISOString().slice(0, 10),
+      as_of_date: companyBusinessDate(),
     });
     const row = report.rows.find((r) => r.role === "ar_control");
     if (!row) throw new Error("tie-out report returned no ar_control row");

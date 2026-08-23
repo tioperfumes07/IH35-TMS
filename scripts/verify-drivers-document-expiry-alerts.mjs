@@ -31,6 +31,23 @@ function fail(msg) {
   process.exit(1);
 }
 
+function verifySharedDriverVisibility(service) {
+  const aliases = ["inbox_dca", "cdl_dca", "medical_dca", "training_dca", "dqf_dca", "file_dca", "hazmat_dca"];
+  const failures = [];
+  for (const alias of aliases) {
+    for (const needle of [
+      `mdata.driver_company_authorizations ${alias}`,
+      `${alias}.driver_id = d.id`,
+      `${alias}.company_id = $1::uuid`,
+      `${alias}.is_authorized = true`,
+      `${alias}.deactivated_at IS NULL`,
+    ]) {
+      if (!service.includes(needle)) failures.push(`shared-driver visibility missing ${needle}`);
+    }
+  }
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const service = read(paths.service);
@@ -60,6 +77,7 @@ function main() {
 
   if (!service.includes("evaluateDocumentAlertsForTenant")) failures.push("Evaluator service required");
   if (!service.includes("dispatchDocumentAlertNotifications")) failures.push("Notification dispatch required");
+  failures.push(...verifySharedDriverVisibility(service));
   if (!routes.includes("/api/v1/drivers/document-alerts/inbox")) failures.push("Inbox route required");
   if (!routes.includes("/api/v1/drivers/document-alert-rules")) failures.push("Rules route required");
   if (!cron.includes("document_alert_engine_cron")) failures.push("Scheduled cron required");
@@ -78,6 +96,14 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail("FAILED");
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const aliases = ["inbox_dca", "cdl_dca", "medical_dca", "training_dca", "dqf_dca", "file_dca", "hazmat_dca"];
+    const mutations = aliases.map((alias) => service.replace(`${alias}.is_authorized = true`, `${alias}.is_authorized = false`));
+    const escaped = mutations.filter((source) => verifySharedDriverVisibility(source).length === 0);
+    if (escaped.length > 0) fail(`SELFTEST: ${escaped.length}/${mutations.length} shared-driver mutations escaped`);
+    console.log(`[verify-drivers-document-expiry-alerts] SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
   }
 
   console.log("[verify-drivers-document-expiry-alerts] OK");

@@ -41,6 +41,7 @@ function audit(s) {
   if (!/<CardLink href=\{`\/vendors\/\$\{vendor\.id\}`\}/.test(s.vendorSidebar)) failures.push("vendor profile anchor missing");
   if (!/qualitySegment[\s\S]{0,240}"preferred"[\s\S]{0,120}"watch"[\s\S]{0,120}"factored"/.test(s.customers)) failures.push("customer segment routing missing");
   if (!/customersQuery\.isError/.test(s.customers) || !/No customers found\./.test(s.customerSidebar) || !/No customers match this filter\./.test(s.customerList)) failures.push("customer honest states missing");
+  if (!/atRiskQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void atRiskQuery\.refetch\(\)\}/.test(s.customerList)) failures.push("customer relationship reverse-read failure must be visible and retryable");
   if (!/vendorsQuery\.isError/.test(s.vendors) || !/No vendors found\./.test(s.vendorSidebar) || !/No vendors found\./.test(s.vendorList)) failures.push("vendor honest states missing");
   if (!/searchNamesMaster\(\{[\s\S]{0,100}operatingCompanyId: companyId/.test(s.names)) failures.push("names roster company scope missing");
   // label={label} (a local var computed via entityLabel(row.display_name, row.entity_id, noun) a few
@@ -76,6 +77,7 @@ if (process.argv.includes("--selftest")) {
     ["customer-anchor", "customerSidebar", /\/customers\/\$\{customer\.id\}/g, "/customers"],
     ["vendor-anchor", "vendorSidebar", /\/vendors\/\$\{vendor\.id\}/g, "/vendors"],
     ["customer-empty", "customerSidebar", /No customers found\./g, "Loading"],
+    ["customer-health-error", "customerList", /onRetry=\{\(\) => void atRiskQuery\.refetch\(\)\}/g, "onRetry={undefined}"],
     ["vendor-empty", "vendorSidebar", /No vendors found\./g, "Loading"],
     ["names-scope", "names", /operatingCompanyId: companyId/g, "operatingCompanyId: ''"],
     ["names-drill", "names", /id=\{row\.entity_id\}/g, "id={undefined}"],

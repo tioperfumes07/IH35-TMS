@@ -3,6 +3,7 @@ import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 export function UnitInTransitIssuesReverseSection({ operatingCompanyId, unitId }: { operatingCompanyId: string; unitId: string }) {
   const query = useQuery({
@@ -19,7 +20,7 @@ export function UnitInTransitIssuesReverseSection({ operatingCompanyId, unitId }
         <EntityLink kind="intransit_issues_unit" id={unitId} label="Open issue queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading in-transit issues…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load in-transit issues for this unit.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Could not load in-transit issues for this unit." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No in-transit issues linked to this unit.</p> : null}
       {rows.length ? (
         <ul className="space-y-2">

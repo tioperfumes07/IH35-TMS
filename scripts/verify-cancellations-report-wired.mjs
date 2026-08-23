@@ -7,12 +7,13 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(join(root, path), "utf8");
 const route = read("apps/backend/src/dispatch/cancellations-report.routes.ts");
+const analytics = read("apps/backend/src/dispatch/load-cancellations-analytics.routes.ts");
 const index = read("apps/backend/src/index.ts");
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 const subnav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
 const page = read("apps/frontend/src/pages/reports/CancellationsReportPage.tsx");
 
-function failures(routeSource = route, pageSource = page) {
+function failures(routeSource = route, pageSource = page, analyticsSource = analytics) {
   return [
     ["backend route path", /\/api\/v1\/dispatch\/cancellations-report/.test(routeSource)],
     ["company scope", routeSource.includes("withCompanyScope") && routeSource.includes("FROM dispatch.load_cancellations")],
@@ -21,6 +22,8 @@ function failures(routeSource = route, pageSource = page) {
     ["subnav link", /href: "\/reports\/cancellations"/.test(subnav)],
     ["all four groupings", ["by_reason", "by_driver", "by_customer", "by_date"].every((value) => routeSource.includes(`${value}:`) && pageSource.includes(value))],
     ["driver canonical key lineage", routeSource.includes('by_driver: groupBy(rows, (r) => r.driver_id ?? "unassigned"')],
+    ["report driver active company authorization", /driver_company_authorizations cancellation_report_driver_dca[\s\S]{0,360}cancellation_report_driver_dca\.company_id = lc\.operating_company_id[\s\S]{0,180}cancellation_report_driver_dca\.is_authorized = true[\s\S]{0,180}cancellation_report_driver_dca\.deactivated_at IS NULL/.test(routeSource)],
+    ["analytics driver active company authorization", /driver_company_authorizations cancellation_analytics_driver_dca[\s\S]{0,360}cancellation_analytics_driver_dca\.company_id = lc\.operating_company_id[\s\S]{0,180}cancellation_analytics_driver_dca\.is_authorized = true[\s\S]{0,180}cancellation_analytics_driver_dca\.deactivated_at IS NULL/.test(analyticsSource)],
     ["customer canonical key lineage", routeSource.includes('by_customer: groupBy(rows, (r) => r.customer_id ?? "unknown"')],
     ["driver typed mapping", pageSource.includes('prop: "by_driver" as const') && pageSource.includes('entityKind: "driver" as const')],
     ["customer typed mapping", pageSource.includes('prop: "by_customer" as const') && pageSource.includes('entityKind: "customer" as const')],
@@ -53,9 +56,15 @@ if (process.argv.includes("--selftest")) {
     ["customer typed mapping", page.replace('entityKind: "customer" as const', "entityKind: null")],
     ["shared EntityLink renderer", page.replace("<EntityLink kind={entityKind}", "<span data-kind={entityKind}")],
     ["sentinel safety", page.replace("!entityKind || !UUID_KEY.test(row.key)", "false")],
+    ["report driver active company authorization", route.replace("cancellation_report_driver_dca.is_authorized = true", "cancellation_report_driver_dca.is_authorized = false")],
+    ["analytics driver active company authorization", analytics.replace("cancellation_analytics_driver_dca.is_authorized = true", "cancellation_analytics_driver_dca.is_authorized = false")],
   ];
   for (const [expected, source] of mutations) {
-    const problems = expected.includes("key lineage") ? failures(source, page) : failures(route, source);
+    const problems = expected === "analytics driver active company authorization"
+      ? failures(route, page, source)
+      : expected.includes("key lineage") || expected === "report driver active company authorization"
+        ? failures(source, page, analytics)
+        : failures(route, source, analytics);
     if (!problems.includes(expected)) throw new Error(`planted ${expected} defect escaped`);
   }
   console.log(`verify-cancellations-report-wired SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);

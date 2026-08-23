@@ -39,8 +39,8 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | banking | `/banking` labeled TEST expense → For review **Match** same $ → `/banking/reconciliation` **Accept** → ledger. Do not drain For-review. Do not Close period with 0 sessions. **Then** dispatch leftover (do not remake Book Load) → vendors → maint → safety → insurance |
-| CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden |
-| CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
-| CC-3 | 9225 | legal | `/legal` pickers (`+ Add new` first row → wizard → R=W). Then `/lists` |
-| Codex | 9226 | drivers | CLASS-F5973 **parser** (JSON `leaves` + `leafRe`) then reverse `mdata.drivers` SQL/GET. **No CDP.** Then fleet/`mdata.units`. CUST-F5974 already shipped #14483 |
+| Cursor | 9222 | *(maint+safety+insurance CERTIFIED — omit)* | Rows 11–13 CERTIFIED `a9e8d63`. Do **not** recertify. Lead: FAST-MERGE + copy CERTIFIED from Codex/CC-3 OUTBOX when `healthz` matches. Unique FINDING only. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` |
+| CC-1 | 9223 | *(accounting+factoring CERTIFIED — omit)* | Do **not** recertify accounting/factoring (`c11bdab`). Unique FINDING only. **No** `/banking*` `/maintenance` `/legal` `/lists`. HOLD forbidden. NONSTOP |
+| CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Help Codex **CERTIFY customers→drivers→fleet TODAY** reverse SQL/GET (no CDP). Unique FINDING only. **No** `/lists` `/legal` `/banking*` |
+| CC-3 | 9225 | lists then legal | **TODAY:** Fully-Wired **1–12** Live Chrome on `/lists` then `/legal`. Unique FINDING = 500/dead/silent. Empty → keep hunting, never idle. OUTBOX `CERTIFIED \| MODULE=lists\|legal \| LIVE_SHA=<healthz> \| hops=<one line>`. No 25min wait. No `trigger_deploy`. Do not remake TESTs |
+| Codex | 9226 | customers then drivers then fleet | **TODAY:** reverse SQL/GET Fully-Wired leftover unique on customers → drivers → fleet. **No CDP.** Do not remake proven audits. OUTBOX `CERTIFIED \| MODULE=<id> \| LIVE_SHA=<healthz> \| hops=<one line>` so Cursor can stamp. NONSTOP |

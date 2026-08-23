@@ -23,11 +23,11 @@ export type FmcsaLookupResult = {
   cached_until: string;
 };
 
-export function lookupFmcsa(body: { type: FmcsaLookupType; value: string }) {
+export function lookupFmcsa(body: { type: FmcsaLookupType; value: string; operating_company_id: string }) {
   return apiRequest<FmcsaLookupResult>("/api/v1/catalogs/fmcsa/lookup", { method: "POST", body });
 }
 
-export function linkFmcsaLookupToCustomer(customerId: string, lookupId: string) {
+export function linkFmcsaLookupToCustomer(customerId: string, lookupId: string, operatingCompanyId: string) {
   return apiRequest<{
     customer: {
       id: string;
@@ -35,11 +35,14 @@ export function linkFmcsaLookupToCustomer(customerId: string, lookupId: string) 
       fmcsa_lookup_id: string;
       fmcsa_authority_status_at_verification: string | null;
     };
-  }>(`/api/v1/mdata/customers/${customerId}/fmcsa-link`, { method: "POST", body: { lookup_id: lookupId } });
+  }>(`/api/v1/mdata/customers/${customerId}/fmcsa-link`, {
+    method: "POST",
+    body: { lookup_id: lookupId, operating_company_id: operatingCompanyId },
+  });
 }
 
-export function listFmcsaLookups(params?: { limit?: number; offset?: number }) {
-  const query = new URLSearchParams();
+export function listFmcsaLookups(operatingCompanyId: string, params?: { limit?: number; offset?: number }) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const qs = query.toString();

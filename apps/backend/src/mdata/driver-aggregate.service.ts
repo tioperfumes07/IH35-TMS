@@ -90,7 +90,7 @@ export async function buildDriverAggregate(
     driver_employment_status_label: referenceFk.driver_employment_status_label,
   };
 
-  const medicalRes = await withSavepoint(
+  const medicalRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_medical",
     () =>
@@ -105,9 +105,10 @@ export async function buildDriverAggregate(
       LIMIT 1
     `,
         [driverId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
+  const medical_card_unavailable = medicalRes.unavailable;
   const medRow = medicalRes.rows[0];
   const medExp = (medRow?.expiry_date as string) ?? (driver.dot_medical_expires_at as string | null);
   const medDays = daysUntil(medExp);
@@ -122,7 +123,7 @@ export async function buildDriverAggregate(
     medical_card_status_id: driver.medical_card_status_id ?? null,
   };
 
-  const drugRes = await withSavepoint(
+  const drugRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_drug",
     () =>
@@ -137,10 +138,10 @@ export async function buildDriverAggregate(
       LIMIT 1
     `,
         [driverId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
-  const poolRes = await withSavepoint(
+  const poolRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_pool",
     () =>
@@ -150,12 +151,14 @@ export async function buildDriverAggregate(
       FROM safety.random_pool
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND voided_at IS NULL
         AND status NOT IN ('missed', 'excused')
     `,
         [driverId, operatingCompanyId]
-      ),
-    { rows: [{ c: 0 }] }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [{ c: 0 }], unavailable: true as const }
   );
+  const drug_program_unavailable = drugRes.unavailable || poolRes.unavailable;
   const lastTest = drugRes.rows[0];
   const drug_program = {
     in_random_pool: Number(poolRes.rows[0]?.c ?? 0) > 0,
@@ -166,6 +169,7 @@ export async function buildDriverAggregate(
   };
 
   let hos: Record<string, unknown> | null = null;
+  let hos_unavailable = false;
   try {
     const clocks = await getCurrentClocks(client, operatingCompanyId, driverId);
     const latestRes = await client.query<{ duty_status: string; started_at: string }>(
@@ -219,6 +223,7 @@ export async function buildDriverAggregate(
     }
   } catch {
     hos = null;
+    hos_unavailable = true;
   }
 
   const defaultTruckRes = await client.query(
@@ -263,7 +268,7 @@ export async function buildDriverAggregate(
           FROM mdata.load_stops ls WHERE ls.load_id = l.id ORDER BY ls.sequence_number DESC LIMIT 1
         ) AS delivery
       FROM mdata.loads l
-      WHERE l.assigned_primary_driver_id = $1::uuid
+      WHERE (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
@@ -274,6 +279,7 @@ export async function buildDriverAggregate(
   );
 
   let performance_scorecard: Record<string, unknown> | null = null;
+  let performance_scorecard_unavailable = false;
   try {
     const perfRes = await withSavepoint(
       client,
@@ -361,6 +367,7 @@ export async function buildDriverAggregate(
     }
   } catch {
     performance_scorecard = null;
+    performance_scorecard_unavailable = true;
   }
 
   const settlementsRes = await withSavepoint(
@@ -427,7 +434,7 @@ export async function buildDriverAggregate(
     lifetime_with_company: Number(settlementRow.lifetime_with_company ?? 0),
   };
 
-  const trainingRes = await withSavepoint(
+  const trainingRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_training",
     () =>
@@ -446,9 +453,10 @@ export async function buildDriverAggregate(
           LIMIT 50
         `,
         [driverId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
+  const training_records_unavailable = trainingRes.unavailable;
   const training_records = trainingRes.rows.map((row) => {
     const days = daysUntil(row.expiration_date as string | null);
     let status: "green" | "yellow" | "red" | "gray" = complianceColor(days);
@@ -477,39 +485,10 @@ export async function buildDriverAggregate(
     visa_b1: { status: driver.visa_b1_status ?? driver.visa_type ?? null },
   };
 
-  const documentsRes = await withSavepoint(
-    client,
-    "driver_agg_docs",
-    () =>
-      client.query(
-        `
-          SELECT
-            f.id::text AS file_id,
-            f.original_filename AS name,
-            fc.code AS category,
-            f.expiration_date::text AS expiration_date,
-            f.created_at::text AS uploaded_at,
-            f.r2_key AS url
-          FROM docs.file_links fl
-          JOIN docs.files f ON f.id = fl.file_id
-          LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
-          WHERE fl.entity_type = 'driver'
-            AND fl.entity_id = $1::uuid
-            AND fl.deleted_at IS NULL
-            AND f.deleted_at IS NULL
-            AND f.upload_completed_at IS NOT NULL
-            AND f.operating_company_id = $2::uuid
-          ORDER BY f.created_at DESC
-        `,
-        [driverId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
-  );
-
   // W-8BEN — IRS foreign-status certificate (B-1 drivers). At-hire capture + yearly renewal
   // (IH35 policy) surfaced against the latest active certificate. Degrades gracefully if the
   // table is absent (pre-migration branch copy).
-  const w8benRes = await withSavepoint(
+  const w8benRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_w8ben",
     () =>
@@ -533,9 +512,10 @@ export async function buildDriverAggregate(
           LIMIT 1
         `,
         [driverId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
+  const w8ben_unavailable = w8benRes.unavailable;
   const w8benRow = w8benRes.rows[0] ?? null;
   let w8ben: Record<string, unknown>;
   if (w8benRow) {
@@ -561,8 +541,11 @@ export async function buildDriverAggregate(
     driver,
     license,
     medical_card,
+    medical_card_unavailable,
     drug_program,
+    drug_program_unavailable,
     hos,
+    hos_unavailable,
     current_assignment: {
       default_truck: mapTruck(defaultTruckRes.rows[0]),
       currently_driving_truck: mapTruck(currentTruckRes.rows[0], {
@@ -571,10 +554,12 @@ export async function buildDriverAggregate(
       current_load: loadRes.rows[0] ?? null,
     },
     performance_scorecard,
+    performance_scorecard_unavailable,
     settlements,
     training_records,
+    training_records_unavailable,
     border_credentials,
     w8ben,
-    documents: documentsRes.rows,
+    w8ben_unavailable,
   };
 }

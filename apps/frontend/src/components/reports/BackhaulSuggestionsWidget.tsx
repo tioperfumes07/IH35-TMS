@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { ListErrorState } from "../ListErrorState";
 
 type BackhaulSuggestion = {
   origin_city: string;
@@ -52,8 +53,15 @@ export function BackhaulSuggestionsWidget({
         Truck {unitNumber} is empty near {location}. Best lanes from lane-profitability cache:
       </p>
       {query.isLoading ? <p className="mt-2 text-xs text-gray-600">Loading suggestions…</p> : null}
-      {query.isError ? <p className="mt-2 text-xs text-red-600">Unable to load backhaul suggestions.</p> : null}
-      {!query.isLoading && suggestions.length === 0 ? (
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load backhaul suggestions"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
+      {!query.isLoading && !query.isError && suggestions.length === 0 ? (
         <p className="mt-2 text-xs text-gray-600">No profitable lanes found originating near this location.</p>
       ) : null}
       {suggestions.length > 0 ? (

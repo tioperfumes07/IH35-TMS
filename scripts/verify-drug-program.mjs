@@ -9,6 +9,7 @@ const migrationPath = path.resolve(ROOT, "db/migrations/0270_safety_drug_program
 const dispatchRoutesPath = path.resolve(ROOT, "apps/backend/src/dispatch/loads.routes.ts");
 const dispatchBookPath = path.resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
 const safetyRoutesPath = path.resolve(ROOT, "apps/backend/src/safety/drug-program.routes.ts");
+const driverAggregatePath = path.resolve(ROOT, "apps/backend/src/mdata/driver-aggregate.service.ts");
 
 function readIfExists(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
@@ -32,6 +33,10 @@ if (!safetyRoutes.includes("/api/v1/safety/drug-program/random-pools")) failures
 if (!safetyRoutes.includes("/api/v1/safety/drug-program/clearinghouse-queries"))
   failures.push("missing_clearinghouse_query_route");
 
+const driverAggregate = readIfExists(driverAggregatePath);
+const activePoolPattern = /FROM safety\.random_pool\s+WHERE driver_id = \$1::uuid\s+AND operating_company_id = \$2::uuid\s+AND voided_at IS NULL\s+AND status NOT IN \('missed', 'excused'\)/;
+if (!activePoolPattern.test(driverAggregate)) failures.push("driver_aggregate_random_pool_must_exclude_voided_rows");
+
 const dispatchRoutes = readIfExists(dispatchRoutesPath);
 if (!dispatchRoutes.includes("/api/v1/dispatch/drivers/:driver_id/drug-status"))
   failures.push("missing_dispatch_driver_drug_status_route");
@@ -45,6 +50,16 @@ if (failures.length > 0) {
   console.error("verify:drug-program FAILED");
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutated = driverAggregate.replace("AND voided_at IS NULL\n        AND status NOT IN ('missed', 'excused')", "AND status NOT IN ('missed', 'excused')");
+  if (activePoolPattern.test(mutated)) {
+    console.error("verify:drug-program SELFTEST FAILED — void-filter mutation stayed green");
+    process.exit(1);
+  }
+  console.log("verify:drug-program SELFTEST PASS — void-filter mutation rejected");
+  process.exit(0);
 }
 
 console.log("verify:drug-program OK");

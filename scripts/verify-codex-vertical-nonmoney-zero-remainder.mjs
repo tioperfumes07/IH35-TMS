@@ -98,7 +98,10 @@ const PROTECTED = new Set([
   "connectivity\tmaintenance:maintenance.modal.triage",
   "connectivity\tmaintenance:maintenance.panel.road_service_active",
   "connectivity\tmaintenance:maintenance.panel.wotime_tracking",
-  "reverse_link\taccounting:unit.detail.finance_linkage", // CC-1 accounting/money surface.
+  // CLASS-F5973-TRUE-REMAINDER-ACCOUNTING-UNIT-FINANCE — retired. accounting:unit.detail.
+  // finance_linkage:reverse_link is now exact-owned: verify-unit-finance-gl-je-reverse.mjs checks
+  // BOTH fleet.required.json's and accounting.required.json's copies of this cross-module leaf
+  // (same real implementation, same GET endpoint — never a second, duplicate build).
 ]);
 
 const CLOSED_CLAIM_IDS = [

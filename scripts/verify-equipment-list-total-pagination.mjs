@@ -19,18 +19,33 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/backend/src/mdata/equipment.routes.ts";
+const API_TARGET = "apps/frontend/src/api/mdata.ts";
 
-export function check(src) {
+export function check(src, apiSrc) {
   const failures = [];
 
   // Isolate the GET list handler (not GET-by-id / status-change / deactivate).
-  const listStart = src.indexOf('app.get("/api/v1/mdata/equipment"');
+  const listRoute = /app\.get\(\s*"\/api\/v1\/mdata\/equipment"/g;
+  const listStart = listRoute.exec(src)?.index ?? -1;
   if (listStart < 0) {
     failures.push('GET /api/v1/mdata/equipment list handler missing');
     return failures;
   }
   const listEnd = src.indexOf('app.post("/api/v1/mdata/equipment"', listStart);
   const listSrc = listEnd > listStart ? src.slice(listStart, listEnd) : src.slice(listStart);
+
+  const schemaStart = src.indexOf("const listQuerySchema = z.object({");
+  const schemaEnd = src.indexOf("const idParamSchema", schemaStart);
+  const schemaSrc = schemaStart >= 0 && schemaEnd > schemaStart ? src.slice(schemaStart, schemaEnd) : "";
+  if (!/operating_company_id:\s*z\.string\(\)\.uuid\(\)\s*,/.test(schemaSrc)) {
+    failures.push("GET /mdata/equipment must require the selected operating_company_id");
+  }
+  if (
+    !/export type ListEquipmentParams\s*=\s*\{[\s\S]*?operating_company_id:\s*string;/.test(apiSrc) ||
+    !/listEquipment\([\s\S]*?qs\.set\("operating_company_id",\s*params\.operating_company_id\)/.test(apiSrc)
+  ) {
+    failures.push("listEquipment must require and serialize the selected operating company");
+  }
 
   if (!/count\(\*\)\s*::int\s+AS\s+total\s+FROM\s+mdata\.equipment/i.test(listSrc)) {
     failures.push(
@@ -88,12 +103,17 @@ export function check(src) {
 
 export function run() {
   const src = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
-  return check(src);
+  const apiSrc = fs.readFileSync(path.join(ROOT, API_TARGET), "utf8");
+  return check(src, apiSrc);
 }
 
 if (process.argv.includes("--selftest")) {
   const good = `
-    app.get("/api/v1/mdata/equipment", async (req, reply) => {
+    const listQuerySchema = z.object({ operating_company_id: z.string().uuid(), });
+    const idParamSchema = z.object({ id: z.string().uuid() });
+    app.get(
+      "/api/v1/mdata/equipment",
+      async (req, reply) => {
       const countRes = await client.query(\`SELECT count(*)::int AS total
          FROM mdata.equipment
          WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)\${optionalAnd}\`);
@@ -106,6 +126,13 @@ if (process.argv.includes("--selftest")) {
       return { equipment: result.rows, total: result.total, limit, offset, has_more: offset + result.rows.length < result.total };
     });
     app.post("/api/v1/mdata/equipment", async () => {});
+  `;
+  const goodApi = `
+    export type ListEquipmentParams = { operating_company_id: string; };
+    export function listEquipment(params: ListEquipmentParams) {
+      const qs = new URLSearchParams();
+      qs.set("operating_company_id", params.operating_company_id);
+    }
   `;
   const badBare = `
     app.get("/api/v1/mdata/equipment", async () => {
@@ -131,10 +158,18 @@ if (process.argv.includes("--selftest")) {
     app.post("/api/v1/mdata/equipment", async () => {});
   `;
   const checks = [
-    ["total+has_more+static-scope shape passes", check(good).length === 0],
-    ["bare { equipment } is caught", check(badBare).length > 0],
-    ["dynamic-only scope (filters.push) is caught", check(badDynamicOnly).length > 0],
-    ["phantom operating_company_id is caught", check(badPhantomCol).length > 0],
+    ["total+has_more+static-scope shape passes", check(good, goodApi).length === 0],
+    ["bare { equipment } is caught", check(badBare, goodApi).length > 0],
+    ["dynamic-only scope (filters.push) is caught", check(badDynamicOnly, goodApi).length > 0],
+    ["phantom operating_company_id is caught", check(badPhantomCol, goodApi).length > 0],
+    [
+      "optional selected-company schema is caught",
+      check(good.replace("operating_company_id: z.string().uuid(),", "operating_company_id: z.string().uuid().optional(),"), goodApi).length > 0,
+    ],
+    [
+      "frontend omission is caught",
+      check(good, goodApi.replace('qs.set("operating_company_id", params.operating_company_id);', "void params;")).length > 0,
+    ],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {

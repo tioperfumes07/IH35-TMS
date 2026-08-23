@@ -52,6 +52,7 @@ const PROFILE_ROUTES = new Map([
 const CHECKS = [
   ["apps/frontend/src/pages/Drivers.tsx", /kind="driver" id=\{isUuid\(row\.driver_id\) \? row\.driver_id : null\}/],
   ["apps/frontend/src/pages/drivers/DriversListPage.tsx", /listDrivers\(\{ operating_company_id: companyId, status: "All", search, limit: pageSize, offset: page \* pageSize \}\)/],
+  ["apps/frontend/src/pages/drivers/DriversListPage.tsx", /dqfQ\.isError[\s\S]{0,220}Couldn't load driver DQF summaries[\s\S]{0,220}onRetry=\{\(\) => void dqfQ\.refetch\(\)\}/],
   ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", /driver_id: created\.id,/],
   ["apps/frontend/src/pages/drivers/DriverProfilePage.tsx", /function fetchDriverProfile\(driverId: string, operatingCompanyId: string\)/],
   ["apps/frontend/src/pages/drivers/operations/DocumentsVaultView.tsx", /type Props = \{ driverId: string; operatingCompanyId: string \};/],
@@ -71,6 +72,8 @@ const CHECKS = [
   ["apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{driverId\}[\s\S]*?name=\{session\.driver_name\}[\s\S]*?noun="Driver"/],
   ["apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{id\}[\s\S]*?name=\{driverName\}[\s\S]*?noun="Driver"/],
   ["apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{driverId\}[\s\S]*?name=\{driverName\}[\s\S]*?noun="Driver"/],
+  ["apps/frontend/src/pages/drivers/MessagesInboxPage.tsx", /threadQuery\.isError[\s\S]{0,220}Couldn't load message thread[\s\S]{0,220}onRetry=\{\(\) => void threadQuery\.refetch\(\)\}/],
+  ["apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx", /query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/],
   ["apps/frontend/src/api/onboarding.ts", /driver_name: string \| null;/],
   ["apps/backend/src/safety/onboarding.routes.ts", /LEFT JOIN mdata\.drivers driver[\s\S]*?driver\.operating_company_id = session\.operating_company_id/],
   ["apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx", /kind="driver"/],

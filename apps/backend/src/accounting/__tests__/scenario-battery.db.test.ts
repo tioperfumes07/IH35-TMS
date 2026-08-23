@@ -127,9 +127,16 @@ run("cross-module scenario battery (real engine)", () => {
   });
 
   it("SCENARIO 5 — cargo claim incident links to an insurance claim", async () => {
-    const inc = randomUUID(); const claim = randomUUID();
+    const inc = randomUUID(); const claim = randomUUID(); const reason = randomUUID();
     await tx(async () => {
-      await db.query(`INSERT INTO safety.incidents (id,operating_company_id,incident_type,status,driver_id,unit_id,load_id,claimant_customer_id,incident_at,reported_at) VALUES ($1::uuid,$2::uuid,'cargo_claim','open',$3::uuid,$4::uuid,$5::uuid,$6::uuid,now(),now())`,[inc,companyId,id.driver,id.unit,id.load,id.customer]);
+      // P44 (202612511800): safety.incidents_cargo_claim_reason_required now demands a real
+      // claim_reason_id (FK-scoped to this same isolated company) on every cargo_claim row. This
+      // isolated test company has no pre-seeded catalogs.cargo_claim_reasons row, so insert one
+      // fresh rather than picking any existing row system-wide (the exact class of cross-company
+      // fixture bug SYS-F5988 fixed in the sibling settlement-pdf-e2e suite — never SELECT a
+      // shared/global row with no operating_company_id scope in a fixture that then FKs it).
+      await db.query(`INSERT INTO catalogs.cargo_claim_reasons (id,operating_company_id,reason_code,display_name) VALUES ($1::uuid,$2::uuid,$3,'Battery Test Reason')`,[reason,companyId,`BATTERY-${s}`]);
+      await db.query(`INSERT INTO safety.incidents (id,operating_company_id,incident_type,status,driver_id,unit_id,load_id,claimant_customer_id,claim_reason_id,incident_at,reported_at) VALUES ($1::uuid,$2::uuid,'cargo_claim','open',$3::uuid,$4::uuid,$5::uuid,$6::uuid,$7::uuid,now(),now())`,[inc,companyId,id.driver,id.unit,id.load,id.customer,reason]);
       await db.query(`INSERT INTO insurance.claim (id,tenant_id,claim_number,policy_id,accident_date,reported_date,driver_id,load_id,fault,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5::uuid,$6::uuid,'undetermined','open')`,[claim,companyId,`CARGO-${s}`,id.policy,id.driver,id.load]);
       await db.query(`UPDATE safety.incidents SET insurance_claim_id=$1::uuid, auto_created_claim_id=$1::uuid WHERE id=$2::uuid`,[claim,inc]);
     });

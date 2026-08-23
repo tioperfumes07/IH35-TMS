@@ -29,6 +29,17 @@ export function audit(src) {
     /value=\{counters\.outOfService\}/,
   ];
   for (const pattern of required) if (!pattern.test(src)) failures.push(`missing counter contract: ${pattern.source}`);
+  const recovery = [
+    /listState\.isError[\s\S]*rowsQuery\.refetch\(\)[\s\S]*listState\.isEmpty/,
+    /kpisQuery\.isError[\s\S]*kpisQuery\.refetch\(\)/,
+    /totalRowsQuery\.isError[\s\S]*totalRowsQuery\.refetch\(\)/,
+    /fleetLocationQuery\.isError[\s\S]*fleetLocationQuery\.refetch\(\)/,
+    /maintStatusQuery\.isError[\s\S]*maintStatusQuery\.refetch\(\)/,
+    /async function exportLocationHos\(\)[\s\S]*await downloadFleetLocationHosXlsx\(operatingCompanyId\)[\s\S]*setLocationHosExportError\("Location \+ HOS export failed\.[\s\S]*data-testid="fleet-location-hos-export-error"[\s\S]*onClick=\{\(\) => void exportLocationHos\(\)\}[\s\S]*Retry/,
+  ];
+  if (/downloadFleetLocationHosXlsx\(operatingCompanyId\)\.catch\(\(\) => undefined\)/.test(src))
+    failures.push("fleet Location + HOS export still swallows download failures");
+  for (const pattern of recovery) if (!pattern.test(src)) failures.push(`missing exact fleet feed recovery: ${pattern.source}`);
   return failures;
 }
 
@@ -39,6 +50,14 @@ if (process.argv.includes("--selftest")) {
     source.replaceAll('softDeleteFilter === "active" && r.deactivated_at != null', 'false'),
     source.replace('rowMatchesFleetStatus(r, "OutOfService")', 'r.status === "OutOfService"'),
     source.replace('value={counters.total}', 'value={kpis.total_units}'),
+    source.replace('onRetry={() => void rowsQuery.refetch()}', ''),
+    source.replace('onRetry={() => void kpisQuery.refetch()}', ''),
+    source.replace('onRetry={() => void totalRowsQuery.refetch()}', ''),
+    source.replace('onRetry={() => void fleetLocationQuery.refetch()}', ''),
+    source.replace('onRetry={() => void maintStatusQuery.refetch()}', ''),
+    source.replace('setLocationHosExportError("Location + HOS export failed. Check the fleet feed and try again.");', ''),
+    source.replace('data-testid="fleet-location-hos-export-error"', ''),
+    source.replace('onClick={() => void exportLocationHos()}>\n              Retry', '>\n              Retry'),
   ];
   for (const [index, mutated] of mutations.entries()) {
     if (mutated === source || audit(mutated).length === 0) throw new Error(`planted defect ${index + 1} escaped`);

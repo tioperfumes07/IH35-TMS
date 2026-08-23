@@ -651,7 +651,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) tr ON true
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.operating_company_id = l.operating_company_id
+                                   AND (d.operating_company_id = l.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations dispatch_list_driver_dca
+                                     WHERE dispatch_list_driver_dca.driver_id = d.id
+                                       AND dispatch_list_driver_dca.company_id = l.operating_company_id
+                                       AND dispatch_list_driver_dca.is_authorized = true
+                                       AND dispatch_list_driver_dca.deactivated_at IS NULL
+                                   ))
           LEFT JOIN views.units_with_dispatch_status uds ON uds.id = l.assigned_unit_id
           LEFT JOIN views.drivers_with_hos_status dhs ON dhs.id = l.assigned_primary_driver_id
           LEFT JOIN mdata.loads ml ON ml.id = l.id
@@ -767,13 +773,25 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
-                                    AND sd.operating_company_id = l.operating_company_id
+                                    AND (sd.operating_company_id = l.operating_company_id OR EXISTS (
+                                      SELECT 1 FROM mdata.driver_company_authorizations dispatch_detail_secondary_dca
+                                      WHERE dispatch_detail_secondary_dca.driver_id = sd.id
+                                        AND dispatch_detail_secondary_dca.company_id = l.operating_company_id
+                                        AND dispatch_detail_secondary_dca.is_authorized = true
+                                        AND dispatch_detail_secondary_dca.deactivated_at IS NULL
+                                    ))
           -- Entity predicates copied from the already-correct sibling at mdata/loads.routes.ts:636 —
           -- drivers scope on operating_company_id, but mdata.units has NO such column (§4): it is scoped
           -- by the owner/leased PAIR, and the live case that exposed this is exactly a TRK-owned unit
           -- leased to USMCA, which a bare owner_company_id predicate would have dropped.
           LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
-                                    AND pd.operating_company_id = l.operating_company_id
+                                    AND (pd.operating_company_id = l.operating_company_id OR EXISTS (
+                                      SELECT 1 FROM mdata.driver_company_authorizations dispatch_detail_primary_dca
+                                      WHERE dispatch_detail_primary_dca.driver_id = pd.id
+                                        AND dispatch_detail_primary_dca.company_id = l.operating_company_id
+                                        AND dispatch_detail_primary_dca.is_authorized = true
+                                        AND dispatch_detail_primary_dca.deactivated_at IS NULL
+                                    ))
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           -- trip_type lives on mdata.loads, not on the view (see the SELECT note above). Same id, so this
@@ -912,7 +930,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/units/:unit_id/insurance-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/units/:unit_id/insurance-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
@@ -938,7 +956,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/drivers/:driver_id/hos-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/drivers/:driver_id/hos-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
@@ -950,9 +968,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const driverRes = await client.query<{ id: string }>(
         `
           SELECT id::text AS id
-          FROM mdata.drivers
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.driver_id, operatingCompanyId]
@@ -1005,9 +1033,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const driverRes = await client.query<{ id: string }>(
         `
           SELECT id::text AS id
-          FROM mdata.drivers
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.driver_id, operatingCompanyId]
@@ -1600,7 +1638,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- show Driver + HOS even with no load. (The old join used the load's driver, which is
           -- null for an unloaded truck.)
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
-                                     AND ud.operating_company_id = $1::uuid
+                                     AND (ud.operating_company_id = $1::uuid OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations awaiting_unit_driver_dca
+                                       WHERE awaiting_unit_driver_dca.driver_id = ud.id
+                                         AND awaiting_unit_driver_dca.company_id = $1::uuid
+                                         AND awaiting_unit_driver_dca.is_authorized = true
+                                         AND awaiting_unit_driver_dca.deactivated_at IS NULL
+                                     ))
           -- A truck can retain its assigned trailer while awaiting the next load. The previous
           -- hardcoded NULL hid that real reverse relationship on every awaiting-truck row.
           LEFT JOIN LATERAL (

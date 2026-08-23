@@ -138,7 +138,16 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
           FROM safety.safety_events e
           LEFT JOIN mdata.drivers d
             ON d.id = e.subject_driver_id
-           AND d.operating_company_id = e.operating_company_id
+           AND (
+             d.operating_company_id = e.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations safety_events_list_dca
+               WHERE safety_events_list_dca.driver_id = d.id
+                 AND safety_events_list_dca.company_id = e.operating_company_id
+                 AND safety_events_list_dca.is_authorized = true
+                 AND safety_events_list_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mdata.units u
             ON u.id = e.subject_unit_id
            AND (u.owner_company_id = e.operating_company_id
@@ -224,7 +233,16 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
           FROM safety.safety_events e
           LEFT JOIN mdata.drivers d
             ON d.id = e.subject_driver_id
-           AND d.operating_company_id = e.operating_company_id
+           AND (
+             d.operating_company_id = e.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations safety_events_detail_dca
+               WHERE safety_events_detail_dca.driver_id = d.id
+                 AND safety_events_detail_dca.company_id = e.operating_company_id
+                 AND safety_events_detail_dca.is_authorized = true
+                 AND safety_events_detail_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mdata.units u
             ON u.id = e.subject_unit_id
            AND (u.owner_company_id = e.operating_company_id

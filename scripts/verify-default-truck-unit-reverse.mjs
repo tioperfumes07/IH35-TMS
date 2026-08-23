@@ -17,6 +17,7 @@ function audit(s) {
   if (!/app\.post\("\/api\/v1\/mdata\/drivers\/:id\/default-truck"[\s\S]{0,1200}assertDriverScope\(client, params\.data\.id[\s\S]{0,300}assertUnitScope\(client, body\.data\.unit_id/.test(s.route)) failures.push("forward writer driver/unit scope checks missing");
   if (!/\/api\/v1\/mdata\/units\/:id\/default-drivers[\s\S]{0,2200}vda\.unit_id = \$1::uuid[\s\S]{0,180}vda\.operating_company_id = \$2::uuid[\s\S]{0,180}vda\.ended_at IS NULL/.test(s.route)) failures.push("exact active unit reverse route missing");
   if (!/listUnitDefaultDrivers\(unitId, operatingCompanyId\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active default driver assigned to this unit/.test(s.reverse)) failures.push("honest unit reverse states missing");
+  if (!/<ListErrorState[\s\S]{0,260}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(s.reverse)) failures.push("failed unit reverse must expose exact-query retry");
   if (!/kind="driver"/.test(s.reverse)) failures.push("reverse rows must drill to driver");
   if (!/UnitDefaultDriversReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.profile)) failures.push("vehicle profile mount missing");
   if (!/UnitDefaultDriversReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.detail)) failures.push("secondary unit detail mount missing");
@@ -33,6 +34,7 @@ if (process.argv.includes("--selftest")) {
     ["company", "route", /(\/api\/v1\/mdata\/units\/:id\/default-drivers[\s\S]{0,2400})vda\.operating_company_id = \$2::uuid/, "$1TRUE"],
     ["active", "route", /(\/api\/v1\/mdata\/units\/:id\/default-drivers[\s\S]{0,2600})vda\.ended_at IS NULL/, "$1TRUE"],
     ["reverse", "reverse", /listUnitDefaultDrivers\(unitId, operatingCompanyId\)/, "listUnitDefaultDrivers(operatingCompanyId, operatingCompanyId)"],
+    ["retry", "reverse", /onRetry=\{\(\) => void query\.refetch\(\)\}/, "onRetry={() => undefined}"],
     ["drill", "reverse", /kind="driver"/, 'kind="unit"'],
     ["profile", "profile", /UnitDefaultDriversReverseSection/g, "MissingDefaultDrivers"],
     ["detail", "detail", /UnitDefaultDriversReverseSection/g, "MissingDefaultDrivers"],

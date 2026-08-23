@@ -564,11 +564,19 @@ export function CustomersPage() {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId, rosterType, rosterCreditStatus]);
 
-  // AUTO-13: honest error state instead of a blank list when the customers fetch 500s.
-  if (customersQuery.isError) {
+  // CUST-F6058: both roster reads feed the same list. A failed inactive-roster GET used to
+  // fall through because this branch only inspected customersQuery, so Inactive/All looked
+  // legitimately empty after a 500. Keep the two reads recoverable as one roster operation.
+  if (customersQuery.isError || inactiveCustomersQuery.isError) {
+    const rosterError = customersQuery.error ?? inactiveCustomersQuery.error;
     return (
       <div className="p-3">
-        <ListErrorState title="Couldn't load customers" status={0} message={(customersQuery.error as Error)?.message} onRetry={() => void customersQuery.refetch()} />
+        <ListErrorState
+          title="Couldn't load customers"
+          status={0}
+          message={(rosterError as Error)?.message}
+          onRetry={() => void Promise.all([customersQuery.refetch(), inactiveCustomersQuery.refetch()])}
+        />
       </div>
     );
   }
@@ -674,12 +682,21 @@ export function CustomersPage() {
           { id: "factored", label: `Factored (${customerTabCounts.factored})` },
         ]}
       />
+      {allInvoicesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer open balances"
+          status={0}
+          message={(allInvoicesQuery.error as Error)?.message}
+          onRetry={() => void allInvoicesQuery.refetch()}
+        />
+      ) : null}
       {viewMode === "list" ? (
         <CustomersListView
           companyId={companyId}
           customers={customersSorted}
           status={customersStatus}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
             setViewMode("master-detail");
@@ -697,6 +714,7 @@ export function CustomersPage() {
           sortByName={sortByName}
           selectedCustomerId={selectedCustomer?.id ?? ""}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSearchChange={setSearch}
           onSortChange={setSortByName}
           onPageChange={setSidebarPage}
@@ -760,10 +778,21 @@ export function CustomersPage() {
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <h3 className="mb-2 text-sm font-semibold text-gray-900">Financial summary</h3>
-                  <p className="text-sm text-gray-600">Open balance</p>
-                  <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
-                  <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
-                  <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
+                  {summaryQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load customer financial summary"
+                      status={0}
+                      message={(summaryQuery.error as Error)?.message}
+                      onRetry={() => void summaryQuery.refetch()}
+                    />
+                  ) : (
+                    <div data-testid="customer-financial-summary-values">
+                      <p className="text-sm text-gray-600">Open balance</p>
+                      <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
+                      <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
+                      <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
+                    </div>
+                  )}
                 </section>
               </div>
 
@@ -915,6 +944,14 @@ export function CustomersPage() {
               {createFieldErrors.email}
             </span>
           ) : null}
+          {paymentTermsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load payment terms"
+              status={0}
+              message={(paymentTermsQuery.error as Error)?.message}
+              onRetry={() => void paymentTermsQuery.refetch()}
+            />
+          ) : null}
           <CustomerProfileForm
             values={createValues}
             onPatch={(patch) => setCreateValues((current) => ({ ...current, ...patch }))}
@@ -934,7 +971,7 @@ export function CustomersPage() {
             <ActionButton type="button" onClick={() => setCreateOpen(false)}>
               Cancel
             </ActionButton>
-            <ActionButton type="submit" disabled={createMutation.isPending || !companyId}>
+            <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !companyId}>
               {createMutation.isPending ? "Saving..." : "Save"}
             </ActionButton>
           </div>

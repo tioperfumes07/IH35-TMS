@@ -21,6 +21,7 @@ const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
 const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
 const CONTACTS_ROUTE = "apps/backend/src/mdata/customer-contacts.routes.ts";
 const CUSTOMER_ROUTE = "apps/backend/src/mdata/customers.routes.ts";
+const CUSTOMER_LIST_ROUTE = "apps/backend/src/customers/list.routes.ts";
 const FINANCIAL_ROUTE = "apps/backend/src/mdata/customer-financial.routes.ts";
 const CUSTOMER_INVOICES_ROUTE = "apps/backend/src/mdata/customer-invoices.routes.ts";
 const CONTACTS_POLICY_MIGRATION = "db/migrations/202613100000_cust_f5974_archived_customer_contacts_read_scope.sql";
@@ -33,6 +34,11 @@ const CLAIMED_LEAVES = ["detail.profile", "detail.billing", "detail.quality"];
 const EXACT_HEADER = ' * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["detail.profile","detail.billing","detail.quality"],"task":"CUST-F5872-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"}';
 
 const CHECKS = [
+  {
+    name: "authorized tax-id decryption failures propagate",
+    file: CUSTOMER_ROUTE,
+    pattern: /if \(includeTaxId && row\.tax_id_encrypted\) \{\s*taxId = decrypt\(row\.tax_id_encrypted as Buffer\);\s*\}/,
+  },
   { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
   { name: "driver EntityLink", file: DETAIL, pattern: /kind="driver"/ },
   { name: "unit EntityLink", file: DETAIL, pattern: /kind="unit"/ },
@@ -94,6 +100,21 @@ const CHECKS = [
     pattern: /SELECT \$\{CUSTOMER_SELECT_COLUMNS\} FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) LIMIT 1/,
   },
   {
+    name: "customer detail reverse GETs require selected-company query",
+    file: CUSTOMER_ROUTE,
+    pattern: /const detailQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),\s*\}\)/,
+  },
+  {
+    name: "canonical customer list GET requires selected-company query",
+    file: CUSTOMER_LIST_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,360}operating_company_id: z\.string\(\)\.uuid\(\),/,
+  },
+  {
+    name: "canonical customer list GET scopes SQL to selected company",
+    file: CUSTOMER_LIST_ROUTE,
+    pattern: /app\.get\("\/api\/v1\/customers"[\s\S]{0,1500}resolveOperatingCompanyId\(client, authUser\.uuid, operating_company_id\)[\s\S]{0,700}operating_company_id = \$1::uuid/,
+  },
+  {
     name: "archived customer detail profile uses same-company full-row resolver",
     file: CUSTOMER_ROUTE,
     pattern: /FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) c\s+LIMIT 1/,
@@ -107,6 +128,26 @@ const CHECKS = [
     name: "archived customer contacts validate parent through same-company resolver",
     file: CONTACTS_ROUTE,
     pattern: /FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\)\s+LIMIT 1/,
+  },
+  {
+    name: "customer contact GET and mutations require selected-company query",
+    file: CONTACTS_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,320}operating_company_id: z\.string\(\)\.uuid\(\),[\s\S]{0,180}const opcoQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/,
+  },
+  {
+    name: "customer contact create resolves query company not body fallback",
+    file: CONTACTS_ROUTE,
+    pattern: /app\.post<\{ Params: \{ customer_id: string \} \}>[\s\S]{0,900}const parsedQuery = opcoQuerySchema\.safeParse\(req\.query \?\? \{\}\);[\s\S]{0,700}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "customer contact update resolves query company not body fallback",
+    file: CONTACTS_ROUTE,
+    pattern: /app\.patch<\{ Params: \{ customer_id: string; id: string \} \}>[\s\S]{0,1100}const parsedQuery = opcoQuerySchema\.safeParse\(req\.query \?\? \{\}\);[\s\S]{0,700}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "customer contact clients require selected company",
+    file: MDATA_API,
+    pattern: /listCustomerContacts\(customerId: string, includeInactive: boolean, operatingCompanyId: string\)[\s\S]{0,1500}createCustomerContact\([\s\S]{0,500}operatingCompanyId: string[\s\S]{0,900}updateCustomerContact\([\s\S]{0,600}operatingCompanyId: string/,
   },
   {
     name: "archived customer contacts SELECT policy resolves parent in pinned company",
@@ -134,6 +175,21 @@ const CHECKS = [
     pattern: /app\.get\("\/api\/v1\/mdata\/customers\/:id\/financial-summary", \{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/,
   },
   {
+    name: "customer financial document reverse read carries selected company scope",
+    file: FINANCIAL_ROUTE,
+    pattern: /const documents = await listAttachments\(user\.uuid, \{\s*operatingCompanyId: companyId,\s*entityType: "customer",\s*entityId: customerId,\s*\}\);/,
+  },
+  {
+    name: "customer financial reverse failure remains visible",
+    file: DETAIL,
+    pattern: /if \(props\.error\) return <ListErrorBanner message="Failed to load customer financial overview\." onRetry=\{props\.onRetry\} \/>;/,
+  },
+  {
+    name: "customer financial reverse failure can retry exact GET",
+    file: DETAIL,
+    pattern: /<CustomerFinancialOverviewSection[^>]*onRetry=\{\(\) => void financialSummaryQuery\.refetch\(\)\} \/>/,
+  },
+  {
     name: "archived customer invoice history validates through same-company resolver",
     file: CUSTOMER_INVOICES_ROUTE,
     pattern: /SELECT id FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) LIMIT 1/,
@@ -144,9 +200,39 @@ const CHECKS = [
     pattern: /const filters = \["e\.customer_id = \$1"\]/,
   },
   {
+    name: "quality event GET requires selected company query",
+    file: QUALITY_EVENTS_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{\s*operating_company_id: uuidSchema,/,
+  },
+  {
+    name: "quality event GET resolves selected company",
+    file: QUALITY_EVENTS_ROUTE,
+    pattern: /app\.get\("\/api\/v1\/mdata\/customers\/:customer_id\/quality-events"[\s\S]{0,1600}resolveOperatingCompanyId\([\s\S]{0,180}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "quality event frontend GET carries selected company",
+    file: MDATA_API,
+    pattern: /listCustomerQualityEvents\(customerId: string, operatingCompanyId: string,[\s\S]{0,260}operating_company_id: operatingCompanyId/,
+  },
+  {
+    name: "quality history query keys and enables by selected company",
+    file: DETAIL,
+    pattern: /queryKey: \["customer-quality-events", id, operatingCompanyId, showVoidedQuality\][\s\S]{0,260}listCustomerQualityEvents\(id, operatingCompanyId!, showVoidedQuality\)[\s\S]{0,160}enabled: Boolean\(id && operatingCompanyId\)/,
+  },
+  {
     name: "parent customer drill preserves nullable canonical label for tombstone handling",
     file: DETAIL,
     pattern: /kind="customer"\s+id=\{customer\.parent_customer_id\}\s+name=\{customer\.parent_customer_name\}\s+noun="Customer"[\s\S]{0,240}data-testid="customer-parent-record-link"/,
+  },
+  {
+    name: "parent customer candidate GET failure exposes exact retry",
+    file: DETAIL,
+    pattern: /parentCandidatesQuery\.isError[\s\S]{0,500}title="Couldn't load parent customer choices"[\s\S]{0,500}parentCandidatesQuery\.refetch\(\)/,
+  },
+  {
+    name: "customer SAFER reverse GET failure exposes exact retry",
+    file: DETAIL,
+    pattern: /saferStatusQuery\.isError[\s\S]{0,500}title="Couldn't load customer SAFER status"[\s\S]{0,500}saferStatusQuery\.refetch\(\)/,
   },
   { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
@@ -198,6 +284,24 @@ const CHECKS = [
 
 const FORBIDDEN = [
   {
+    name: "tax-id decryption failure must not masquerade as missing tax ID",
+    file: CUSTOMER_ROUTE,
+    pattern: /try \{[\s\S]{0,120}taxId = decrypt\([\s\S]{0,120}catch \{\s*taxId = null;/,
+    mutate: (source) => source.replace(
+      "taxId = decrypt(row.tax_id_encrypted as Buffer);",
+      "try { taxId = decrypt(row.tax_id_encrypted as Buffer); } catch { taxId = null; }",
+    ),
+  },
+  {
+    name: "customer financial document failures must not become false-empty history",
+    file: FINANCIAL_ROUTE,
+    pattern: /listAttachments\(user\.uuid, \{[\s\S]{0,220}entityId: customerId,[\s\S]{0,80}\}\)\.catch\(\(\) => \[\]\)/,
+    mutate: (source) => source.replace(
+      'entityId: customerId,\n      });',
+      'entityId: customerId,\n      }).catch(() => []);',
+    ),
+  },
+  {
     name: "archived customer quality parent must not use RLS-hidden plain lookup",
     file: QUALITY_EVENTS_ROUTE,
     pattern: /app\.get\("\/api\/v1\/mdata\/customers\/:customer_id\/quality-events"[\s\S]{0,2200}SELECT id FROM mdata\.customers WHERE id = \$1 AND operating_company_id = \$2::uuid LIMIT 1/,
@@ -243,7 +347,7 @@ const FORBIDDEN = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, CONTACTS_ROUTE, CUSTOMER_ROUTE, FINANCIAL_ROUTE, CUSTOMER_INVOICES_ROUTE, CONTACTS_POLICY_MIGRATION, QUALITY_EVENTS_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX, SELF].map((file) => [
+    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, CONTACTS_ROUTE, CUSTOMER_ROUTE, CUSTOMER_LIST_ROUTE, FINANCIAL_ROUTE, CUSTOMER_INVOICES_ROUTE, CONTACTS_POLICY_MIGRATION, QUALITY_EVENTS_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX, SELF].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),

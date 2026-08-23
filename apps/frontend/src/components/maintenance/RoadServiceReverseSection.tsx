@@ -19,7 +19,7 @@ export function RoadServiceReverseSection({
   contextLabel,
   "data-testid": testId = "road-service-reverse-section",
 }: Props) {
-  const { tickets, isLoading, isError } = useRoadServiceTickets(filter);
+  const { tickets, isLoading, isError, refetch } = useRoadServiceTickets(filter);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
@@ -27,7 +27,7 @@ export function RoadServiceReverseSection({
         <h2 className="text-sm font-semibold text-slate-900">Road Service</h2>
         <span className="text-xs text-gray-500">{isLoading ? "Loading…" : tickets.length}</span>
       </div>
-      {isError ? <ListErrorBanner message={`Couldn't load road-service tickets for ${contextLabel}.`} /> : null}
+      {isError ? <ListErrorBanner message={`Couldn't load road-service tickets for ${contextLabel}.`} onRetry={() => void refetch()} /> : null}
       {!isLoading && !isError && tickets.length === 0 ? (
         <p className="text-xs text-gray-500">No road-service tickets linked to {contextLabel}.</p>
       ) : null}

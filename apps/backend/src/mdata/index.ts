@@ -23,6 +23,7 @@ import { registerUnitBulkUpdateRoutes } from "./unit-bulk-update.routes.js";
 import { registerVendorBulkRoutes } from "./vendors-bulk.routes.js";
 import { registerUnitsRoutes } from "./units.routes.js";
 import { registerVendorRoutes } from "./vendors.routes.js";
+import { registerVendorPaymentMethodRoutes } from "./vendor-payment-methods.routes.js";
 
 export async function registerMdataRoutes(app: FastifyInstance) {
   await registerDriverRoutes(app);
@@ -42,6 +43,7 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerCustomerFinancialSummaryRoutes(app);
   await registerCustomerInvoicesRoutes(app);
   await registerVendorRoutes(app);
+  await registerVendorPaymentMethodRoutes(app);
   await registerVendorBulkRoutes(app);
   await registerLocationRoutes(app);
   await registerLoadRoutes(app);

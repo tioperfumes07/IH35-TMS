@@ -485,7 +485,18 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
             SELECT 1
             FROM mdata.drivers d
             WHERE d.identity_user_id = $1
-              AND ($2::uuid IS NULL OR d.operating_company_id = $2::uuid)
+              AND (
+                $2::uuid IS NULL
+                OR d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations user_detail_dca
+                  WHERE user_detail_dca.driver_id = d.id
+                    AND user_detail_dca.company_id = $2::uuid
+                    AND user_detail_dca.is_authorized = true
+                    AND user_detail_dca.deactivated_at IS NULL
+                )
+              )
           ) AS has_driver_record
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id ?? null]

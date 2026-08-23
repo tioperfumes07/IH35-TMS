@@ -43,7 +43,19 @@ export async function previewDriverInactivity(client: PoolClient, operatingCompa
             (u.last_login_at IS NOT NULL AND u.last_login_at < now() - ($2 || ' days')::interval) AS over_21
        FROM mdata.drivers d
        LEFT JOIN identity.users u ON u.id = d.identity_user_id
-      WHERE d.operating_company_id = $1::uuid AND d.deactivated_at IS NULL AND d.status = 'Active'
+      WHERE (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations login_preview_dca
+                WHERE login_preview_dca.driver_id = d.id
+                  AND login_preview_dca.company_id = $1::uuid
+                  AND login_preview_dca.is_authorized = true
+                  AND login_preview_dca.deactivated_at IS NULL
+              )
+            )
+        AND d.deactivated_at IS NULL
+        AND d.status = 'Active'
       ORDER BY u.last_login_at ASC NULLS FIRST`,
     [operatingCompanyId, INACTIVITY_THRESHOLD_DAYS]
   );
@@ -123,7 +135,19 @@ export async function previewDriverDrivingInactivity(client: PoolClient, operati
             (a.last_drove_at IS NOT NULL AND a.last_drove_at < now() - ($2 || ' days')::interval) AS over_21
        FROM mdata.drivers d
        LEFT JOIN asg a ON a.driver_id = d.id
-      WHERE d.operating_company_id = $1::uuid AND d.deactivated_at IS NULL AND d.status = 'Active'
+      WHERE (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations driving_preview_dca
+                WHERE driving_preview_dca.driver_id = d.id
+                  AND driving_preview_dca.company_id = $1::uuid
+                  AND driving_preview_dca.is_authorized = true
+                  AND driving_preview_dca.deactivated_at IS NULL
+              )
+            )
+        AND d.deactivated_at IS NULL
+        AND d.status = 'Active'
       ORDER BY a.last_drove_at ASC NULLS FIRST`,
     [operatingCompanyId, INACTIVITY_THRESHOLD_DAYS]
   );

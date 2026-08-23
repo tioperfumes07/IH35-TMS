@@ -477,3 +477,101 @@ describe.sequential("generic catalog framework — hasAuditUserColumns", () => {
     expect(insertColumnList).not.toContain("updated_at");
   });
 });
+
+// CLS-CATALOG-MUTATION-RLS-SILENT-404 — PATCH/DELETE/restore on every entity-scoped generic
+// catalog used plain withCurrentUser with a bare `WHERE id = $1` UPDATE. catalogs.* tables carry
+// a FORCE RLS `company_scope` policy requiring `operating_company_id =
+// current_setting('app.operating_company_id', true)`; only withCompanyScope (used by CREATE)
+// sets that GUC. A session that never sets it has the setting NULL, so the RLS predicate is
+// always false and the UPDATE silently matches zero rows regardless of id -- a real row reads
+// back as a false catalog_<table>_not_found. Live-reproduced 2026-08-22 on fuel.def_stations:
+// Edit surfaced "Failed to save catalog row: catalog_def_stations_not_found" in the form, and
+// Archive failed the exact same way with ZERO toast/error at all (a true silent no-op) -- for a
+// row visibly present in the table one paint earlier. These assertions catch a regression back to
+// plain withCurrentUser by checking for the one thing only withCompanyScope's real implementation
+// (apps/backend/src/catalogs/fleet/shared.ts) does: issue `set_config('app.operating_company_id',
+// ...)` before the mutation, and by checking the UPDATE's own WHERE clause carries the belt-and-
+// suspenders operating_company_id predicate.
+describe.sequential("generic catalog framework — entity-scoped mutations set company scope (CLS-CATALOG-MUTATION-RLS-SILENT-404)", () => {
+  const apps: Array<ReturnType<typeof Fastify>> = [];
+  const originalQueryImpl = queryMock.getMockImplementation();
+
+  afterEach(async () => {
+    await Promise.all(apps.splice(0).map((app) => app.close()));
+    if (originalQueryImpl) queryMock.mockImplementation(originalQueryImpl);
+  });
+
+  async function buildScopedApp(sqlLog: string[]) {
+    const mockQuery = vi.fn(async (sql: string) => {
+      sqlLog.push(sql);
+      if (sql.includes("set_config")) return { rows: [{ set_config: "" }] };
+      if (sql.includes("SELECT id FROM catalogs.")) return { rows: [] }; // no code conflict
+      if (sql.trim().startsWith("UPDATE")) {
+        return {
+          rows: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", code: "CTRL", display_name: "Control", is_active: true }],
+        };
+      }
+      return { rows: [] };
+    });
+    const app = Fastify();
+    await app.register(multipart);
+    apps.push(app);
+    app.addHook("preHandler", async (req) => {
+      (req as { user?: { uuid: string; role: string } }).user = { uuid: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", role: "Owner" };
+    });
+    queryMock.mockImplementation(mockQuery as typeof queryMock);
+    createCatalogRoutes(app, fleetEquipmentTypesCatalogConfig, { mode: "all" });
+    return app;
+  }
+
+  it("PATCH sets app.operating_company_id before the UPDATE and scopes the WHERE clause", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildScopedApp(sqlLog);
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?operating_company_id=${TEST_OPCO}`,
+      payload: { description: "updated" },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(sqlLog.some((s) => s.includes("set_config") && s.includes("app.operating_company_id"))).toBe(true);
+    const updateSql = sqlLog.find((s) => s.trim().startsWith("UPDATE"));
+    expect(updateSql).toContain("operating_company_id = $");
+  });
+
+  it("DELETE (Archive) sets app.operating_company_id before the UPDATE and scopes the WHERE clause", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildScopedApp(sqlLog);
+    const response = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?operating_company_id=${TEST_OPCO}`,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(sqlLog.some((s) => s.includes("set_config") && s.includes("app.operating_company_id"))).toBe(true);
+    const deleteSql = sqlLog.find((s) => s.trim().startsWith("UPDATE") && s.includes("is_active = false"));
+    expect(deleteSql).toContain("operating_company_id = $");
+  });
+
+  it("POST restore sets app.operating_company_id before the UPDATE and scopes the WHERE clause", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildScopedApp(sqlLog);
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/restore?operating_company_id=${TEST_OPCO}`,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(sqlLog.some((s) => s.includes("set_config") && s.includes("app.operating_company_id"))).toBe(true);
+    const restoreSql = sqlLog.find((s) => s.trim().startsWith("UPDATE") && s.includes("is_active = true"));
+    expect(restoreSql).toContain("operating_company_id = $");
+  });
+
+  it("PATCH without operating_company_id 400s instead of silently matching zero rows under RLS", async () => {
+    const sqlLog: string[] = [];
+    const app = await buildScopedApp(sqlLog);
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      payload: { description: "updated" },
+    });
+    expect(response.statusCode).toBe(400);
+  });
+});

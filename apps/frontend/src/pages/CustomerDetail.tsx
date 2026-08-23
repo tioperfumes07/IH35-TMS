@@ -97,6 +97,7 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../components/ListErrorState";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -260,9 +261,11 @@ function CustomerFinancialOverviewSection(props: {
   summary: CustomerFinancialSummary | undefined;
   loading: boolean;
   error: boolean;
+  onRetry: () => void;
 }) {
   if (props.loading) return <div className="text-xs text-gray-500">Loading financial overview…</div>;
-  if (props.error || !props.summary) return null;
+  if (props.error) return <ListErrorBanner message="Failed to load customer financial overview." onRetry={props.onRetry} />;
+  if (!props.summary) return null;
 
   const chartData = props.summary.revenue_by_month.map((r) => ({
     month: r.month,
@@ -480,14 +483,14 @@ export function CustomerDetailPage() {
 
   const detailQuery = useQuery({
     queryKey: ["customer-detail", id, selectedCompanyId ?? "none"],
-    queryFn: () => getCustomerDetail(id, selectedCompanyId).then((result) => result.customer),
-    enabled: Boolean(id),
+    queryFn: () => getCustomerDetail(id, selectedCompanyId!).then((result) => result.customer),
+    enabled: Boolean(id && selectedCompanyId),
   });
   const operatingCompanyId = detailQuery.data?.operating_company_id ?? null;
 
   const contactsQuery = useQuery({
     queryKey: ["customer-contacts", id, includeInactiveContacts, operatingCompanyId],
-    queryFn: () => listCustomerContacts(id, includeInactiveContacts, operatingCompanyId).then((result) => result.contacts),
+    queryFn: () => listCustomerContacts(id, includeInactiveContacts, operatingCompanyId!).then((result) => result.contacts),
     enabled: Boolean(id && operatingCompanyId),
   });
   const billingSummaryQuery = useQuery({
@@ -565,19 +568,19 @@ export function CustomerDetailPage() {
     queryFn: () => listUsStates().then((result) => result.states),
   });
   const qualityEventsQuery = useQuery({
-    queryKey: ["customer-quality-events", id, showVoidedQuality],
-    queryFn: () => listCustomerQualityEvents(id, showVoidedQuality).then((result) => result.events),
-    enabled: Boolean(id),
+    queryKey: ["customer-quality-events", id, operatingCompanyId, showVoidedQuality],
+    queryFn: () => listCustomerQualityEvents(id, operatingCompanyId!, showVoidedQuality).then((result) => result.events),
+    enabled: Boolean(id && operatingCompanyId),
   });
   const qualityReasonsQuery = useQuery({
-    queryKey: ["customer-quality-reasons", qualityForm.event_type],
-    queryFn: () => listCustomerQualityEventReasons(qualityForm.event_type).then((result) => result.reasons),
-    enabled: qualityModalOpen,
+    queryKey: ["customer-quality-reasons", operatingCompanyId, qualityForm.event_type],
+    queryFn: () => listCustomerQualityEventReasons(operatingCompanyId!, qualityForm.event_type).then((result) => result.reasons),
+    enabled: Boolean(qualityModalOpen && operatingCompanyId),
   });
   const fmcsaHistoryQuery = useQuery({
     queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
-    queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
-    enabled: fmcsaHistoryOpen,
+    queryFn: () => listFmcsaLookups(operatingCompanyId!, { limit: 25 }).then((res) => res.lookups),
+    enabled: fmcsaHistoryOpen && Boolean(operatingCompanyId),
   });
   // TMS Loads tab — reuse the shared loads list endpoint (mdata.loads), scoped to this customer +
   // operating company. Lazy: only fetches once the Loads tab is opened. No new backend.
@@ -769,7 +772,7 @@ export function CustomerDetailPage() {
   });
 
   const verifyFmcsaMutation = useMutation({
-    mutationFn: () => verifyCustomerFmcsa(id),
+    mutationFn: () => verifyCustomerFmcsa(id, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -816,7 +819,7 @@ export function CustomerDetailPage() {
   });
 
   const createContactMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload, operatingCompanyId),
+    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -829,7 +832,7 @@ export function CustomerDetailPage() {
 
   const updateContactMutation = useMutation({
     mutationFn: ({ contactId, payload }: { contactId: string; payload: Parameters<typeof updateCustomerContact>[2] }) =>
-      updateCustomerContact(id, contactId, payload, operatingCompanyId),
+      updateCustomerContact(id, contactId, payload, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -840,7 +843,7 @@ export function CustomerDetailPage() {
   });
 
   const deactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId, operatingCompanyId),
+    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -849,7 +852,7 @@ export function CustomerDetailPage() {
   });
 
   const reactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId, operatingCompanyId),
+    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -859,16 +862,20 @@ export function CustomerDetailPage() {
 
   const createQualityEventMutation = useMutation({
     mutationFn: () =>
-      createCustomerQualityEvent(id, {
-        event_type: qualityForm.event_type,
-        event_date: qualityForm.event_date,
-        reason_id: qualityForm.reason_id || undefined,
-        severity: qualityForm.severity,
-        summary: qualityForm.summary,
-        details: qualityForm.details || undefined,
-        dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
-        days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
-      }),
+      createCustomerQualityEvent(
+        id,
+        {
+          event_type: qualityForm.event_type,
+          event_date: qualityForm.event_date,
+          reason_id: qualityForm.reason_id || undefined,
+          severity: qualityForm.severity,
+          summary: qualityForm.summary,
+          details: qualityForm.details || undefined,
+          dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
+          days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
+        },
+        operatingCompanyId
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -890,7 +897,8 @@ export function CustomerDetailPage() {
   });
 
   const voidQualityEventMutation = useMutation({
-    mutationFn: ({ eventId, reason }: { eventId: string; reason: string }) => voidCustomerQualityEvent(id, eventId, reason),
+    mutationFn: ({ eventId, reason }: { eventId: string; reason: string }) =>
+      voidCustomerQualityEvent(id, eventId, reason, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -902,7 +910,8 @@ export function CustomerDetailPage() {
   });
 
   const updateQualityEventMutation = useMutation({
-    mutationFn: ({ eventId, details }: { eventId: string; details: string }) => updateCustomerQualityEvent(id, eventId, { details }),
+    mutationFn: ({ eventId, details }: { eventId: string; details: string }) =>
+      updateCustomerQualityEvent(id, eventId, { details }, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       pushToast("Quality event updated", "success");
@@ -1181,10 +1190,20 @@ export function CustomerDetailPage() {
         ) : null}
       </div>
 
+      {saferStatusQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer SAFER status"
+          status={0}
+          message={saferStatusQuery.error instanceof Error ? saferStatusQuery.error.message : undefined}
+          onRetry={() => void saferStatusQuery.refetch()}
+        />
+      ) : null}
+
       <CustomerRelationshipScore
         score={relationshipScoreQuery.data}
         loading={relationshipScoreQuery.isLoading}
         error={relationshipScoreQuery.isError ? "Could not load relationship score." : null}
+        onRetry={() => void relationshipScoreQuery.refetch()}
       />
 
       {operatingCompanyId ? (
@@ -1213,7 +1232,7 @@ export function CustomerDetailPage() {
         </>
       ) : null}
 
-      <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
+      <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 
       <SecondaryNavTabs
         tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
@@ -1238,6 +1257,9 @@ export function CustomerDetailPage() {
             <Field label="Tax ID (EIN)" value={hydratedForm.tax_id} onChange={(value) => setForm((current) => ({ ...current, tax_id: value }))} disabled={!editMode} />
             <div className="mb-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Billing State</label>
+              {usStatesQuery.isError ? (
+                <ListErrorState title="Couldn't load billing states" status={0} message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined} onRetry={() => void usStatesQuery.refetch()} />
+              ) : null}
               <Combobox
                 options={(usStatesQuery.data ?? []).map((state) => ({
                   value: state.code,
@@ -1257,7 +1279,14 @@ export function CustomerDetailPage() {
           <DataPanel title="Relationships">
             <div className="mb-2 flex flex-col gap-1" data-testid="customer-parent-select">
               <label className="text-xs font-semibold text-gray-600">Parent customer</label>
-              {editMode && operatingCompanyId ? (
+              {editMode && operatingCompanyId && parentCandidatesQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load parent customer choices"
+                  status={0}
+                  message={parentCandidatesQuery.error instanceof Error ? parentCandidatesQuery.error.message : undefined}
+                  onRetry={() => void parentCandidatesQuery.refetch()}
+                />
+              ) : editMode && operatingCompanyId ? (
                 <ReferenceSelect
                   options={parentCustomerOptions}
                   value={hydratedForm.parent_customer_id || null}
@@ -1327,13 +1356,21 @@ export function CustomerDetailPage() {
           <DataPanel title="Payment Terms">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Assigned term</label>
+              {paymentTermsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load payment terms"
+                  status={0}
+                  message={paymentTermsQuery.error instanceof Error ? paymentTermsQuery.error.message : undefined}
+                  onRetry={() => void paymentTermsQuery.refetch()}
+                />
+              ) : null}
               <ReferenceSelect
                 value={hydratedForm.payment_terms_id || null}
                 onChange={(nextValue) => setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }))}
                 options={paymentTermOptions}
                 createKind="payment_term"
                 operatingCompanyId={operatingCompanyId ?? ""}
-                disabled={!editMode}
+                disabled={!editMode || paymentTermsQuery.isError}
                 placeholder="Select terms"
                 onOptionCreated={() => void paymentTermsQuery.refetch()}
               />
@@ -1739,7 +1776,9 @@ export function CustomerDetailPage() {
             </div>
             <div className="space-y-2">
               {qualityEventsQuery.isLoading ? <div className="text-xs text-gray-500">Loading events...</div> : null}
-              {qualityEvents.map((event) => (
+              {qualityEventsQuery.isError ? (
+                <ListErrorState title="Couldn't load customer quality history" status={0} message={qualityEventsQuery.error instanceof Error ? qualityEventsQuery.error.message : undefined} onRetry={() => void qualityEventsQuery.refetch()} />
+              ) : qualityEvents.map((event) => (
                 <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
@@ -1838,6 +1877,14 @@ export function CustomerDetailPage() {
 
       {activeTab === "Loads" ? (
         <DataPanel title="Loads">
+          {customerLoadsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load customer loads"
+              status={0}
+              message={customerLoadsQuery.error instanceof Error ? customerLoadsQuery.error.message : undefined}
+              onRetry={() => void customerLoadsQuery.refetch()}
+            />
+          ) : (
           <ParityTable<DispatchLoadRow>
             rows={customerLoads}
             rowKey={(load) => load.id}
@@ -1912,6 +1959,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </DataPanel>
       ) : null}
 
@@ -1988,6 +2036,9 @@ export function CustomerDetailPage() {
 
       {activeTab === "Contacts" ? (
         <DataPanel title={`Contacts (${contacts.length})`}>
+          {contactsQuery.isError ? (
+            <ListErrorState title="Couldn't load customer contacts" status={0} message={contactsQuery.error instanceof Error ? contactsQuery.error.message : undefined} onRetry={() => void contactsQuery.refetch()} />
+          ) : (
           <ParityTable<CustomerContact>
             rows={contacts}
             rowKey={(contact) => contact.id}
@@ -2088,6 +2139,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </DataPanel>
       ) : null}
 
@@ -2222,6 +2274,19 @@ export function CustomerDetailPage() {
                   </p>
                   {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                    {/* CUST-MONEY-F6057A — a settled GET failure left paymentInvoicesQuery.data
+                        undefined, so openInvoicesForPayment (derived from `?? []`) was empty and
+                        `.isEmpty` was false (a settled ERROR, not empty) — neither branch here
+                        rendered anything: a fetch failure looked like a silent, unexplained blank
+                        list with no invoices to apply payment to and no way to retry. */}
+                    {openInvoicesListState.isError ? (
+                      <ListErrorState
+                        title="Couldn't load open invoices"
+                        status={0}
+                        message={paymentInvoicesQuery.error instanceof Error ? paymentInvoicesQuery.error.message : undefined}
+                        onRetry={() => void paymentInvoicesQuery.refetch()}
+                      />
+                    ) : null}
                     {openInvoicesListState.isEmpty ? <p className="text-gray-500">No open invoices.</p> : null}
                     {openInvoicesForPayment.map((inv: Invoice) => (
                       <div key={inv.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
@@ -2398,6 +2463,21 @@ export function CustomerDetailPage() {
               </button>
             </div>
             {/* CUST-F3560: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar. */}
+            {/* CUST-MONEY-F6057A — ParityTable has no error slot of its own: recentInvoicesQuery.data
+                falls back to [] on a settled GET failure (line ~1036), so a real 500/network error
+                rendered silently as "No invoices yet for this customer." — masquerading a fetch
+                failure as an honest empty history. Render the shared ListErrorState + Retry instead
+                of the table when the query has actually errored (house pattern used 8+ times
+                elsewhere in this same file); the table (with its own honest loading/empty states)
+                renders only once the query has settled without an error. */}
+            {recentInvoicesListState.isError ? (
+              <ListErrorState
+                title="Couldn't load recent invoices"
+                status={0}
+                message={recentInvoicesQuery.error instanceof Error ? recentInvoicesQuery.error.message : undefined}
+                onRetry={() => void recentInvoicesQuery.refetch()}
+              />
+            ) : (
             <ParityTable<Invoice>
               rows={recentInvoices}
               rowKey={(invoice) => invoice.id}
@@ -2439,6 +2519,7 @@ export function CustomerDetailPage() {
                 },
               ]}
             />
+            )}
           </div>
         </div>
         </div>
@@ -2447,6 +2528,9 @@ export function CustomerDetailPage() {
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 text-sm text-gray-600">Customer lane pricing definitions</div>
+          {lanesQuery.isError ? (
+            <ListErrorState title="Couldn't load customer lanes" status={0} message={lanesQuery.error instanceof Error ? lanesQuery.error.message : undefined} onRetry={() => void lanesQuery.refetch()} />
+          ) : (
           <ParityTable<CustomerLane>
             rows={customerLanes}
             rowKey={(lane) => lane.id}
@@ -2540,6 +2624,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </div>
       ) : null}
 
@@ -2759,6 +2844,9 @@ export function CustomerDetailPage() {
                 catalogs.customer_quality_event_reasons (entityScoped factory; same table the reasons
                 query reads). event_type/severity come from the form via createExtras.
               */}
+              {qualityReasonsQuery.isError ? (
+                <ListErrorState title="Couldn't load quality reasons" status={0} message={qualityReasonsQuery.error instanceof Error ? qualityReasonsQuery.error.message : undefined} onRetry={() => void qualityReasonsQuery.refetch()} />
+              ) : null}
               {operatingCompanyId ? (
                 <ReferenceSelect
                   value={qualityForm.reason_id || null}
@@ -2783,6 +2871,7 @@ export function CustomerDetailPage() {
                     severity: qualityForm.severity,
                   }}
                   loading={qualityReasonsQuery.isLoading}
+                  disabled={qualityReasonsQuery.isError}
                   placeholder="Select reason"
                   onOptionCreated={(opt) => {
                     setQualityForm((current) => ({ ...current, reason_id: opt.value }));
@@ -2938,7 +3027,9 @@ export function CustomerDetailPage() {
       <Modal open={fmcsaHistoryOpen} onClose={() => setFmcsaHistoryOpen(false)} title="FMCSA Verification History">
         <div className="space-y-2">
           {fmcsaHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading verification history...</div> : null}
-          {(fmcsaHistoryQuery.data ?? []).map((lookup) => (
+          {fmcsaHistoryQuery.isError ? (
+            <ListErrorState title="Couldn't load FMCSA verification history" status={0} message={fmcsaHistoryQuery.error instanceof Error ? fmcsaHistoryQuery.error.message : undefined} onRetry={() => void fmcsaHistoryQuery.refetch()} />
+          ) : (fmcsaHistoryQuery.data ?? []).map((lookup) => (
             <div key={lookup.lookup_id} className="rounded-sm border border-gray-200 p-2 text-sm">
               <div className="flex items-center justify-between">
                 <strong>{lookup.legal_name ?? "Unknown carrier"}</strong>
@@ -2949,7 +3040,7 @@ export function CustomerDetailPage() {
               </div>
             </div>
           ))}
-          {fmcsaHistoryListState.isEmpty ? (
+          {!fmcsaHistoryQuery.isError && fmcsaHistoryListState.isEmpty ? (
             <div className="text-sm text-gray-500">No FMCSA verifications found for this company.</div>
           ) : null}
         </div>
@@ -2986,6 +3077,7 @@ export function CustomerDetailPage() {
         open={fmcsaModalOpen}
         onClose={() => setFmcsaModalOpen(false)}
         customerId={customer.id}
+        operatingCompanyId={operatingCompanyId!}
         initialUsdot={hydratedForm.dot_number}
         initialMc={hydratedForm.mc_number}
         onApplyToCustomer={(fmcsaResult) => {

@@ -21,7 +21,14 @@ let recordedSql: string[] = [];
 let recordedCalls: Array<{ sql: string; values?: unknown[] }> = [];
 vi.mock("../auth/db.js", () => ({
   withCurrentUser: async (_uuid: string, fn: (c: unknown) => Promise<unknown>) =>
-    fn({ query: async (sql: string, values?: unknown[]) => { recordedSql.push(sql); recordedCalls.push({ sql, values }); return { rows: [] }; } }),
+    fn({ query: async (sql: string, values?: unknown[]) => {
+      recordedSql.push(sql);
+      recordedCalls.push({ sql, values });
+      if (sql.includes("FROM org.companies c") && sql.includes("org.user_accessible_company_ids()")) {
+        return { rows: [{ authorized: 1 }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    } }),
 }));
 
 const INACTIVITY_PAYLOAD = { mode: "login", drivers: [], generated_at: "2026-06-18T00:00:00.000Z" };

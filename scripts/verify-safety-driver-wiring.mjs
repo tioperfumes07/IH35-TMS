@@ -52,6 +52,24 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/components/IntegrityAlertDetailDrawer.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx", /kind=\{anomaly\.subject_type\}/],
   ["apps/frontend/src/pages/safety/drug-alcohol/TestSchedulingPanel.tsx", /kind="driver"/],
+  ["apps/backend/src/safety/events/safety-events.routes.ts", /safety_events_list_dca[\s\S]*?safety_events_list_dca\.driver_id = d\.id[\s\S]*?safety_events_list_dca\.company_id = e\.operating_company_id[\s\S]*?safety_events_list_dca\.is_authorized = true[\s\S]*?safety_events_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/events/safety-events.routes.ts", /safety_events_detail_dca[\s\S]*?safety_events_detail_dca\.driver_id = d\.id[\s\S]*?safety_events_detail_dca\.company_id = e\.operating_company_id[\s\S]*?safety_events_detail_dca\.is_authorized = true[\s\S]*?safety_events_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/dvir.routes.ts", /safety_dvir_detail_dca[\s\S]*?safety_dvir_detail_dca\.driver_id = d\.id[\s\S]*?safety_dvir_detail_dca\.company_id = ds\.operating_company_id[\s\S]*?safety_dvir_detail_dca\.is_authorized = true[\s\S]*?safety_dvir_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/incidents.routes.ts", /incident_detail_dca\.driver_id = d\.id[\s\S]{0,180}incident_detail_dca\.company_id = i\.operating_company_id[\s\S]{0,180}incident_detail_dca\.is_authorized = true[\s\S]{0,180}incident_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/dot-inspection-events.routes.ts", /dot_inspection_list_dca\.driver_id = d\.id[\s\S]{0,180}dot_inspection_list_dca\.company_id = e\.operating_company_id[\s\S]{0,180}dot_inspection_list_dca\.is_authorized = true[\s\S]{0,180}dot_inspection_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/drug-program.routes.ts", /drug_tests_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_tests_list_dca\.company_id = t\.operating_company_id[\s\S]{0,180}drug_tests_list_dca\.is_authorized = true[\s\S]{0,180}drug_tests_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/drug-program.routes.ts", /random_pool_list_dca\.driver_id = d\.id[\s\S]{0,180}random_pool_list_dca\.company_id = p\.operating_company_id[\s\S]{0,180}random_pool_list_dca\.is_authorized = true[\s\S]{0,180}random_pool_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/integrity-alerts.routes.ts", /integrity_alerts_list_dca\.driver_id = d\.id[\s\S]{0,180}integrity_alerts_list_dca\.company_id = ia\.operating_company_id[\s\S]{0,180}integrity_alerts_list_dca\.is_authorized = true[\s\S]{0,180}integrity_alerts_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/integrity-alerts.routes.ts", /integrity_alerts_detail_dca\.driver_id = d\.id[\s\S]{0,180}integrity_alerts_detail_dca\.company_id = ia\.operating_company_id[\s\S]{0,180}integrity_alerts_detail_dca\.is_authorized = true[\s\S]{0,180}integrity_alerts_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/reminders.routes.ts", /reminders_list_dca\.driver_id = d\.id[\s\S]{0,180}reminders_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}reminders_list_dca\.is_authorized = true[\s\S]{0,180}reminders_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/onboarding.routes.ts", /onboarding_detail_dca\.driver_id = driver\.id[\s\S]{0,180}onboarding_detail_dca\.company_id = session\.operating_company_id[\s\S]{0,180}onboarding_detail_dca\.is_authorized = true[\s\S]{0,180}onboarding_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scoring/scoring.service.ts", /scoring_leaderboard_dca\.driver_id = d\.id[\s\S]{0,180}scoring_leaderboard_dca\.company_id = s\.operating_company_id[\s\S]{0,180}scoring_leaderboard_dca\.is_authorized = true[\s\S]{0,180}scoring_leaderboard_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scoring/scoring.service.ts", /scoring_trend_dca\.driver_id = d\.id[\s\S]{0,180}scoring_trend_dca\.company_id = s\.operating_company_id[\s\S]{0,180}scoring_trend_dca\.is_authorized = true[\s\S]{0,180}scoring_trend_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/drug-program.routes.ts", /clearinghouse_list_dca\.driver_id = d\.id[\s\S]{0,180}clearinghouse_list_dca\.company_id = q\.operating_company_id[\s\S]{0,180}clearinghouse_list_dca\.is_authorized = true[\s\S]{0,180}clearinghouse_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /leave_balances_dca\.driver_id = d\.id[\s\S]{0,180}leave_balances_dca\.company_id = \$1::uuid[\s\S]{0,180}leave_balances_dca\.is_authorized = true[\s\S]{0,180}leave_balances_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /pending_leave_dca\.driver_id = d\.id[\s\S]{0,180}pending_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}pending_leave_dca\.is_authorized = true[\s\S]{0,180}pending_leave_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /all_leave_dca\.driver_id = d\.id[\s\S]{0,180}all_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}all_leave_dca\.is_authorized = true[\s\S]{0,180}all_leave_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /leave_detail_dca\.driver_id = d\.id[\s\S]{0,180}leave_detail_dca\.company_id = \$1::uuid[\s\S]{0,180}leave_detail_dca\.is_authorized = true[\s\S]{0,180}leave_detail_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
@@ -95,4 +113,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — safety's 43 driver-scoped file/training/HOS/incident/claim/fine/scheduler leaves are real`);
+console.log(`${LABEL} PASS — safety's driver-scoped UI leaves and shared-driver GET labels are real`);

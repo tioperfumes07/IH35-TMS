@@ -53,6 +53,11 @@ export function collectProblems(root = ROOT) {
   if (!/app\.get\("\/api\/v1\/safety\/medical-cards", RL_READ/.test(sources.medical) ||
       !/mc\.driver_id = \$\$\{values\.length\}::uuid/.test(sources.medical)) failures.push("medical-card read must provide company-scoped exact-driver reverse filtering");
   if (!/JOIN mdata\.drivers d[\s\S]*d\.operating_company_id = mc\.operating_company_id/.test(sources.medical)) failures.push("medical-card read must resolve labels through an entity-scoped driver join");
+  if (!/label_dca\.company_id = mc\.operating_company_id[\s\S]{0,180}label_dca\.is_authorized = true[\s\S]{0,180}label_dca\.deactivated_at IS NULL/.test(sources.medical)) failures.push("medical-card list must resolve authorized shared-driver labels");
+  if ((sources.medical.match(/(?<!_)dca\.company_id = \$2::uuid/g) ?? []).length !== 2 ||
+      (sources.medical.match(/(?<!_)dca\.is_authorized = true/g) ?? []).length !== 2 ||
+      (sources.medical.match(/(?<!_)dca\.deactivated_at IS NULL/g) ?? []).length !== 2) failures.push("both medical-card exact reads must validate owned or authorized driver parent");
+  if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(sources.medical)) failures.push("medical-card exact list filter must distinguish invalid parent from true empty cards");
   if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.medical)) failures.push("medical-card writer must validate the driver belongs to the selected company");
   if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter");
   if (!/DriverPickerWithCreate[\s\S]*dataField="medical-card-driver"/.test(sources.medicalSection)) failures.push("medical-card creator must use the canonical company-scoped driver picker");
@@ -82,12 +87,15 @@ function selftest() {
     const mutations = [
       [REL.background, "d.operating_company_id = bc.operating_company_id", "TRUE"],
       [REL.background, "bc.driver_id = $${values.length}::uuid", "TRUE"],
-      [REL.background, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.background, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
       [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string)", "listSafetyBackgroundChecks(companyId: string)"],
       [REL.section, 'dataField="background-check-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<BackgroundChecksSection", "<MissingBackgroundChecksSection"],
       [REL.driver, '<BackgroundChecksSection operatingCompanyId={companyId} driverId={id}', '<BackgroundChecksSection operatingCompanyId={companyId} driverId={undefined}'],
       [REL.medical, "d.operating_company_id = mc.operating_company_id", "TRUE"],
+      [REL.medical, "label_dca.is_authorized = true", "TRUE"],
+      [REL.medical, "dca.is_authorized = true", "TRUE"],
+      [REL.medical, 'if (!result.found) return reply.code(404)', 'if (false) return reply.code(404)'],
       [REL.medical, "mc.driver_id = $${values.length}::uuid", "TRUE"],
       [REL.medical, 'app.get("/api/v1/safety/medical-cards", RL_READ', 'app.get("/api/v1/safety/medical-cards", {}'],
       [REL.api, "listSafetyMedicalCards(companyId: string, driverId?: string)", "listSafetyMedicalCards(companyId: string)"],
@@ -95,9 +103,9 @@ function selftest() {
       [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
       [REL.training, 'app.post("/api/v1/safety/training-records", RL_WRITE', 'app.post("/api/v1/safety/training-records", {}'],
-      [REL.training, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.training, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
       [REL.dq, 'app.post("/api/v1/safety/driver-qualification/items", RL_WRITE', 'app.post("/api/v1/safety/driver-qualification/items", {}'],
-      [REL.dq, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.dq, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
@@ -119,4 +127,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 18/18 mutations killed" : ""}`);
+console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 21/21 mutations killed" : ""}`);

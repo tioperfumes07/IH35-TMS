@@ -291,6 +291,14 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-2-telemetry">
+            {telemetryQuery.isError ? (
+              <ListErrorState
+                title="Couldn't refresh live telemetry"
+                status={0}
+                message={(telemetryQuery.error as Error)?.message}
+                onRetry={() => void telemetryQuery.refetch()}
+              />
+            ) : null}
             <LiveTelemetrySection samsara={telemetry?.samsara ?? null} latestPosition={telemetry?.latest_position ?? null} />
           </div>
           <div data-testid="vp-section-3-driver">
@@ -312,6 +320,14 @@ export function VehicleProfilePage() {
             <TripCostCalculator unitId={id} companyId={companyId} unitNumber={unit?.unit_number != null ? String(unit.unit_number) : null} />
           </div>
           <div data-testid="vp-section-5-maintenance">
+            {faultSummaryQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load active fault summary"
+                status={0}
+                message={(faultSummaryQuery.error as Error)?.message}
+                onRetry={() => void faultSummaryQuery.refetch()}
+              />
+            ) : null}
             <MaintenanceSnapshotSection
               openWoCount={profile.open_wo_count}
               nextPmDue={profile.next_pm_due}
@@ -522,6 +538,14 @@ export function VehicleProfilePage() {
 
       {profile ? <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">
         <div className="text-xs font-semibold text-gray-600">{qboAvailable ? "QBO mapping" : "Asset classification"}</div>
+        {classesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load TMS classes"
+            status={0}
+            message={(classesQuery.error as Error)?.message}
+            onRetry={() => void classesQuery.refetch()}
+          />
+        ) : null}
         {qboAvailable ? <label className="block text-xs text-gray-600">
           QBO vendor (ownership / lease entity)
           <div className="mt-1">
@@ -539,7 +563,7 @@ export function VehicleProfilePage() {
         </label> : null}
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
-          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value={qboClassTmsId} disabled={classesQuery.isError} onChange={(e) => setQboClassTmsId(e.target.value)}>
             <option value="">None</option>
             {(classesQuery.data?.classes ?? []).map((c) => (
               <option key={c.id} value={c.id}>
@@ -549,7 +573,7 @@ export function VehicleProfilePage() {
             ))}
           </SelectCombobox>
         </label>
-        <Button size="sm" disabled={!id || !companyId} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+        <Button size="sm" disabled={!id || !companyId || classesQuery.isError} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
           Save
         </Button>
       </div> : null}

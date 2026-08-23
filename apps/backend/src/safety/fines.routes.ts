@@ -107,7 +107,29 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const q = query.data;
 
-    const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+      if (q.subject_driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+             FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND d.archived_at IS NULL
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                    FROM mdata.driver_company_authorizations dca
+                   WHERE dca.driver_id = d.id
+                     AND dca.company_id = $2::uuid
+                     AND dca.is_authorized = true
+                     AND dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
+          [q.subject_driver_id, q.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false, rows: [] };
+      }
       // SAF-F18: qualify every filter with cf. — the driver-name LEFT JOIN below adds mdata.drivers,
       // which shares operating_company_id / deactivated_at, so unqualified columns would be ambiguous.
       const filters = ["cf.operating_company_id = $1::uuid", "cf.deactivated_at IS NULL"];
@@ -161,7 +183,17 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           FROM safety.civil_fines cf
           LEFT JOIN mdata.drivers d
             ON d.id = cf.subject_driver_id
-           AND d.operating_company_id = cf.operating_company_id
+           AND (
+             d.operating_company_id = cf.operating_company_id
+             OR EXISTS (
+               SELECT 1
+                 FROM mdata.driver_company_authorizations label_dca
+                WHERE label_dca.driver_id = d.id
+                  AND label_dca.company_id = cf.operating_company_id
+                  AND label_dca.is_authorized = true
+                  AND label_dca.deactivated_at IS NULL
+             )
+           )
           -- mdata.units has NO operating_company_id — scope by owner OR current lessee.
           LEFT JOIN mdata.units u
             ON u.id = cf.related_unit_id
@@ -180,9 +212,10 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { found: true, rows: res.rows };
     });
-    return { fines: rows };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { fines: result.rows };
   });
 
   app.get("/api/v1/safety/fines/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -206,7 +239,17 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
          FROM safety.civil_fines cf
          LEFT JOIN mdata.drivers d
            ON d.id = cf.subject_driver_id
-          AND d.operating_company_id = cf.operating_company_id
+          AND (
+            d.operating_company_id = cf.operating_company_id
+            OR EXISTS (
+              SELECT 1
+                FROM mdata.driver_company_authorizations label_dca
+               WHERE label_dca.driver_id = d.id
+                 AND label_dca.company_id = cf.operating_company_id
+                 AND label_dca.is_authorized = true
+                 AND label_dca.deactivated_at IS NULL
+            )
+          )
          LEFT JOIN mdata.units u
            ON u.id = cf.related_unit_id
           AND (u.owner_company_id = cf.operating_company_id OR u.currently_leased_to_company_id = cf.operating_company_id)

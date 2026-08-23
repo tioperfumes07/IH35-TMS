@@ -78,28 +78,38 @@ export async function buildEquipmentAggregate(
     assigned_driver = driverRes.rows[0] ?? null;
   }
   let attached_to_unit = null;
-  let current_load = null;
   if (unitId) {
     const unitRes = await client.query(
       `SELECT id::text AS unit_id, unit_number, vin FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
       [unitId, operatingCompanyId]
     );
     attached_to_unit = unitRes.rows[0] ?? null;
-    const loadRes = await client.query(
-      `
-        SELECT l.id::text AS load_id, l.load_number, l.status::text
-        FROM mdata.loads l
-        WHERE l.assigned_unit_id = $1::uuid
-          AND l.operating_company_id = $2::uuid
-          AND l.soft_deleted_at IS NULL
-          AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
-        ORDER BY l.updated_at DESC
-        LIMIT 1
-      `,
-      [unitId, operatingCompanyId]
-    );
-    current_load = loadRes.rows[0] ?? null;
   }
+
+  // A power unit can pull different trailers across loads, so assigned_unit_id cannot prove this
+  // trailer's current load. Resolve the most recent canonical trailer assignment per load and only
+  // expose an active load whose latest history row still points at this equipment record.
+  const currentLoadRes = await client.query(
+    `
+      SELECT l.id::text AS load_id, l.load_number, l.status::text
+      FROM mdata.loads l
+      JOIN LATERAL (
+        SELECT lah.new_trailer_id
+        FROM dispatch.load_assignment_history lah
+        WHERE lah.load_id = l.id
+          AND lah.operating_company_id = l.operating_company_id
+        ORDER BY lah.assigned_at DESC, lah.created_at DESC
+        LIMIT 1
+      ) latest_trailer ON latest_trailer.new_trailer_id = $1::uuid
+      WHERE l.operating_company_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
+      ORDER BY l.updated_at DESC
+      LIMIT 1
+    `,
+    [equipmentId, operatingCompanyId]
+  );
+  const current_load = currentLoadRes.rows[0] ?? null;
 
   // P31 reverse linkage: trailer assignment is persisted on load_assignment_history, not on
   // mdata.loads. Return recent loads from that canonical FK so a trailer profile can navigate back
@@ -144,8 +154,9 @@ export async function buildEquipmentAggregate(
     : null;
 
   let samsara_telemetry: Record<string, unknown> | null = null;
+  let samsara_telemetry_unavailable = false;
   if (isReefer && unitId) {
-    const telRes = await withSavepoint(
+    const telRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
       client,
       "eq_agg_reefer_tel",
       () =>
@@ -159,9 +170,10 @@ export async function buildEquipmentAggregate(
             LIMIT 1
           `,
           [unitId, operatingCompanyId]
-        ),
-      { rows: [] as Array<Record<string, unknown>> }
+        ).then((result) => ({ ...result, unavailable: false as const })),
+      { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
     );
+    samsara_telemetry_unavailable = telRes.unavailable;
     const raw = telRes.rows[0]?.raw_payload;
     if (raw && typeof raw === "object") {
       samsara_telemetry = { source: "samsara", payload: raw };
@@ -191,6 +203,7 @@ export async function buildEquipmentAggregate(
         SELECT ps.label, ps.next_due_odometer::int
         FROM maintenance.pm_alerts pa
         JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id
+                                        AND ps.operating_company_id = pa.operating_company_id
         WHERE pa.unit_id = $1::uuid
           AND pa.operating_company_id = $2::uuid
           AND pa.state IN ('open', 'acknowledged')
@@ -272,7 +285,7 @@ export async function buildEquipmentAggregate(
     plates: platesRes.rows,
   };
 
-  const documentsRes = await withSavepoint(
+  const documentsRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "eq_agg_docs",
     () =>
@@ -296,9 +309,10 @@ export async function buildEquipmentAggregate(
           ORDER BY f.created_at DESC
         `,
         [equipmentId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
+  const documents_unavailable = documentsRes.unavailable;
 
   return {
     equipment,
@@ -307,9 +321,11 @@ export async function buildEquipmentAggregate(
     loads: loadsRes.rows,
     reefer,
     samsara_telemetry,
+    samsara_telemetry_unavailable,
     maintenance,
     compliance,
     documents: documentsRes.rows,
+    documents_unavailable,
     plates: platesRes.rows,
   };
 }

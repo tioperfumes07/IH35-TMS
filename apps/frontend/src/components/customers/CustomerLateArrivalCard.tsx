@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { ListErrorState } from "../ListErrorState";
 
 type LateArrivalEntityDetail = {
   entity_id: string;
@@ -56,7 +57,20 @@ export function CustomerLateArrivalCard({ operatingCompanyId, customerId }: Prop
     );
   }
 
-  if (query.isError || !query.data) {
+  if (query.isError) {
+    return (
+      <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3">
+        <ListErrorState
+          title="Couldn't load late-arrival rate"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (!query.data) {
     return (
       <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">
         No late-arrival data for this period.

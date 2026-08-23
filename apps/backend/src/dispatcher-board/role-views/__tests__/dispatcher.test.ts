@@ -15,6 +15,15 @@ describe("dispatcher home role view (GAP-66)", () => {
     expect(src).toContain("mdata.detention_requests");
   });
 
+  it("keeps active authorized shared-driver labels on selected-company loads", () => {
+    const src = readFileSync(servicePath, "utf8");
+    expect(src).toContain("FROM mdata.driver_company_authorizations dispatcher_home_dca");
+    expect(src).toContain("dispatcher_home_dca.driver_id = dr.id");
+    expect(src).toContain("dispatcher_home_dca.company_id = l.operating_company_id");
+    expect(src).toContain("dispatcher_home_dca.is_authorized = true");
+    expect(src).toContain("dispatcher_home_dca.deactivated_at IS NULL");
+  });
+
   it("surfaces read-only load→invoice reverse linkage on active loads (gap-21 residual)", () => {
     const src = readFileSync(servicePath, "utf8");
     expect(src).toMatch(/accounting\.invoices\s+i/);

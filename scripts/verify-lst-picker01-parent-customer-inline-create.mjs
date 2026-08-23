@@ -74,6 +74,12 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (!/validateCustomerProfileForCreate/.test(drawer)) {
       problems.push(`${DRAWER}: inline customer create must use validateCustomerProfileForCreate`);
     }
+    if (!/customersQuery\.isError[\s\S]{0,500}<ListErrorState[\s\S]{0,300}customersQuery\.refetch\(\)/.test(drawer)) {
+      problems.push(`${DRAWER}: failed parent-customer read must expose exact retry`);
+    }
+    if (!/type="submit" disabled=\{[^}]*customersQuery\.isError[^}]*\}/.test(drawer)) {
+      problems.push(`${DRAWER}: inline customer create must fail closed while parent choices are unavailable`);
+    }
   }
 
   // Canonical create path must remain mdata.customers (not QBO mirror).
@@ -144,13 +150,25 @@ if (process.argv.includes("--selftest")) {
     (s) => s.replace(/<CustomerProfileForm\s/, "<LegacyMiniForm "),
     "CustomerProfileForm"
   );
+  expectCaught(
+    "drawer-parent-retry-removed",
+    DRAWER,
+    (s) => s.replace("customersQuery.refetch()", "parentRetryRemoved()"),
+    "exact retry"
+  );
+  expectCaught(
+    "drawer-parent-fail-closed-removed",
+    DRAWER,
+    (s) => s.replace(" || customersQuery.isError || !operatingCompanyId", " || !operatingCompanyId"),
+    "fail closed"
+  );
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — 6 planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {

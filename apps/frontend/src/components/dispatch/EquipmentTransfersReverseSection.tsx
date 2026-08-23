@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 type Transfer = { uuid: string; status: string; transfer_location: string; from_driver_uuid: string | null; to_driver_uuid: string | null; from_driver_name?: string | null; to_driver_name?: string | null };
 
@@ -14,7 +15,14 @@ export function EquipmentTransfersReverseSection({ companyId, equipmentId }: { c
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Equipment transfers</h3>
-      {query.isError ? <p className="mt-2 text-sm text-red-700">Equipment transfers could not be loaded.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load equipment transfers"
+          status={0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading equipment transfers…</p> : null}
       {!query.isLoading && !query.isError && (query.data?.requests ?? []).length === 0 ? <p className="mt-2 text-sm text-gray-500">No equipment transfers are linked to this trailer.</p> : null}
       <div className="mt-2 space-y-2">

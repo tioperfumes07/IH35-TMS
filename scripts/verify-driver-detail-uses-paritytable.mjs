@@ -35,6 +35,12 @@ function assertMigrated(src) {
   if (!/driverQuery\.isError[\s\S]{0,420}<ListErrorState[\s\S]{0,420}driverQuery\.refetch\(\)/.test(src)) {
     errors.push(`${PAGE}: driver detail failure must render retryable ListErrorState before not-found`);
   }
+  if (!/qualificationsQuery\.isError[\s\S]{0,500}title="Couldn't load driver qualifications"[\s\S]{0,500}qualificationsQuery\.refetch\(\)/.test(src)) {
+    errors.push(`${PAGE}: equipment qualifications reverse GET failure must render retryable ListErrorState`);
+  }
+  if (!/!qualificationsQuery\.isError\s*&&\s*qualificationsListState\.isEmpty/.test(src)) {
+    errors.push(`${PAGE}: failed equipment qualifications reverse GET must not render as an empty relationship`);
+  }
   for (const rawFallback of ["item.created_by_user_email || item.created_by_user_id", "event.voided_by_user_email || event.voided_by_user_id", "Last updated by {driver.updated_by_user_id}"]) {
     if (src.includes(rawFallback)) errors.push(`${PAGE}: raw UUID display fallback remains: ${rawFallback}`);
   }
@@ -105,6 +111,8 @@ function selftest() {
     <span>Corrected</span>
     <ListErrorState title="Couldn't load rate history" status={0} onRetry={() => {}} />
     {driverQuery.isError ? <ListErrorState onRetry={() => void driverQuery.refetch()} /> : null}
+    {qualificationsQuery.isError ? <ListErrorState title="Couldn't load driver qualifications" onRetry={() => void qualificationsQuery.refetch()} /> : null}
+    {!qualificationsQuery.isError && qualificationsListState.isEmpty ? <p>No qualifications found for this driver.</p> : null}
     <ParityTable
       storageKey="driver-rate-history"
       tableTestId="driver-rate-history-table"
@@ -141,6 +149,18 @@ function selftest() {
   for (const [key, from, to] of mutations) {
     if (!live[key].includes(from) || !assertUpdater({ ...live, [key]: live[key].replace(from, to) }).length) {
       console.error(`${LABEL} --selftest FAIL updater mutation: ${key} ${from}`);
+      process.exit(1);
+    }
+  }
+  const pageMutations = [
+    ["qualifications error", /qualificationsQuery\.isError/, "false"],
+    ["qualifications retry", /qualificationsQuery\.refetch\(\)/, "Promise.resolve()"],
+    ["qualifications empty gate", /!qualificationsQuery\.isError\s*&&\s*qualificationsListState\.isEmpty/, "qualificationsListState.isEmpty"],
+  ];
+  for (const [name, pattern, replacement] of pageMutations) {
+    const changed = live.page.replace(pattern, replacement);
+    if (changed === live.page || assertMigrated(changed).length === 0) {
+      console.error(`${LABEL} --selftest FAIL ${name} mutation`);
       process.exit(1);
     }
   }

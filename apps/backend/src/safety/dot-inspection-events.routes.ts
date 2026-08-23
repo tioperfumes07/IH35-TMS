@@ -85,7 +85,13 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
           JOIN mdata.units u ON u.id = e.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = e.driver_id
-                                   AND d.operating_company_id = e.operating_company_id
+                                   AND (d.operating_company_id = e.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations dot_inspection_list_dca
+                                     WHERE dot_inspection_list_dca.driver_id = d.id
+                                       AND dot_inspection_list_dca.company_id = e.operating_company_id
+                                       AND dot_inspection_list_dca.is_authorized = true
+                                       AND dot_inspection_list_dca.deactivated_at IS NULL
+                                   ))
           LEFT JOIN latest_followup f ON f.dot_inspection_event_id = e.id
           ${stateFilter}
           ORDER BY e.departed_at DESC

@@ -519,8 +519,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     return names.size;
   }, [dispatchLoadsQuery.data?.loads]);
   const availableCount = useMemo(
-    () => Math.max(activeCount - onLoadsCount - onLeaveCount, 0),
-    [activeCount, onLoadsCount, onLeaveCount]
+    () => dispatchLoadsQuery.isError ? null : Math.max(activeCount - onLoadsCount - onLeaveCount, 0),
+    [activeCount, dispatchLoadsQuery.isError, onLoadsCount, onLeaveCount]
   );
   // NO-WINDOW / FAIL-S2 — this counted an ALLOWLIST of three statuses (presettle/acked/locked), so any
   // settlement in a status outside that list vanished from the KPI. It is not hypothetical: live settlements
@@ -592,7 +592,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             Available has no dedicated segment yet — Active is the closest honest destination (not silent dead). */}
         <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers?status=active" />
         <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} to="/dispatch?view=loads" />
-        <KpiCard label="Available" number={String(availableCount)} accent={colors.info.strong} to="/drivers?status=active" />
+        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers?status=active" />
         <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers?status=on_leave" />
         <KpiCard label="Settle Due" number={String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
         <KpiCard label="Drivers Owe" number={formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
@@ -871,7 +871,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               </DataPanelRow>
               <DataPanelRow>
                 <span>Available drivers</span>
-                <span>{availableCount}</span>
+                <span>{availableCount ?? "—"}</span>
               </DataPanelRow>
             </DataPanel>
           ) : null}
@@ -909,19 +909,21 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span></DataPanelRow>
               </DataPanel>
               <DataPanel
-                title={`Active Drivers · Samsara ${samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
+                title={`Active Drivers · Samsara ${samsaraHealthQuery.isError ? "unavailable" : samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
                 accentColor={colors.info.strong}
               >
-                {activeDriverLoadRows.map((row) => (
+                {dispatchLoadsQuery.isError ? <ListErrorState status={0} message="Active driver movement could not be loaded." onRetry={() => void dispatchLoadsQuery.refetch()} /> : null}
+                {samsaraHealthQuery.isError ? <ListErrorState status={0} message="Samsara health could not be loaded." onRetry={() => void samsaraHealthQuery.refetch()} /> : null}
+                {!dispatchLoadsQuery.isError ? activeDriverLoadRows.map((row) => (
                   <DataPanelRow key={row.driver_id ?? `${row.driver_name}-${row.route}`}>
                     <span>
                       <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.stage} · {row.route}
                     </span>
                     <span>{row.eta}</span>
                   </DataPanelRow>
-                ))}
-                {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
-                <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow>
+                )) : null}
+                {!dispatchLoadsQuery.isError && activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
+                {!samsaraHealthQuery.isError ? <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow> : null}
               </DataPanel>
               <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
                 {permitExpirationRows.map((row) => (

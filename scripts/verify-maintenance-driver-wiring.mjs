@@ -26,7 +26,17 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
+  ["apps/backend/src/maintenance/pre-flight-dvir.routes.ts", /dr\.id = s\.driver_id[\s\S]{0,520}preflight_dvir_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_dvir_dca\.company_id = s\.operating_company_id[\s\S]{0,180}preflight_dvir_dca\.is_authorized = true[\s\S]{0,180}preflight_dvir_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /row\.driver_id[\s\S]{0,120}<EntityLink[\s\S]{0,80}kind="driver"[\s\S]{0,80}id=\{row\.driver_id\}[\s\S]{0,100}label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/],
+  ["apps/backend/src/maintenance/defects.routes.ts", /defects_list_dca\.driver_id = d\.id[\s\S]{0,180}defects_list_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}defects_list_dca\.is_authorized = true[\s\S]{0,180}defects_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/defects.routes.ts", /defects_detail_dca\.driver_id = d\.id[\s\S]{0,180}defects_detail_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}defects_detail_dca\.is_authorized = true[\s\S]{0,180}defects_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/road-service/tickets.routes.ts", /road_service_list_dca\.driver_id = d\.id[\s\S]{0,180}road_service_list_dca\.company_id = \$1::uuid[\s\S]{0,180}road_service_list_dca\.is_authorized = true[\s\S]{0,180}road_service_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/work-orders.routes.ts", /work_orders_list_dca\.driver_id = d\.id[\s\S]{0,180}work_orders_list_dca\.company_id = w\.operating_company_id[\s\S]{0,180}work_orders_list_dca\.is_authorized = true[\s\S]{0,180}work_orders_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/work-orders.routes.ts", /work_orders_detail_dca\.driver_id = d\.id[\s\S]{0,180}work_orders_detail_dca\.company_id = w\.operating_company_id[\s\S]{0,180}work_orders_detail_dca\.is_authorized = true[\s\S]{0,180}work_orders_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/driver-reports.routes.ts", /driver_reports_list_dca\.driver_id = d\.id[\s\S]{0,180}driver_reports_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}driver_reports_list_dca\.is_authorized = true[\s\S]{0,180}driver_reports_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/dashboard.routes.ts", /intransit_queue_dca\.driver_id = d\.id[\s\S]{0,180}intransit_queue_dca\.company_id = i\.operating_company_id[\s\S]{0,180}intransit_queue_dca\.is_authorized = true[\s\S]{0,180}intransit_queue_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/pre-flight/routes.ts", /preflight_defects_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_defects_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}preflight_defects_dca\.is_authorized = true[\s\S]{0,180}preflight_defects_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/severe-repair-estimate.service.ts", /severe_repair_driver_dca\.driver_id = d\.id[\s\S]{0,180}severe_repair_driver_dca\.company_id = e\.operating_company_id[\s\S]{0,180}severe_repair_driver_dca\.is_authorized = true[\s\S]{0,180}severe_repair_driver_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
@@ -70,4 +80,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — maintenance's 13 driver-scoped WO/queue leaves are real`);
+console.log(`${LABEL} PASS — maintenance's driver-scoped WO/queue leaves preserve canonical ids and active-authorized human labels`);

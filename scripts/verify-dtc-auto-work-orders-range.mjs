@@ -28,6 +28,7 @@ function failures(source = live) {
     ["shared visible rows", source.card.includes("const visibleRows = rows.slice(0, 10)") && source.card.includes("const totalCount = query.data?.total_count ?? rows.length")],
     ["compact exact range", source.card.includes('data-testid="dtc-auto-work-orders-compact-range"') && source.card.includes("Showing {visibleRows.length} of {totalCount} open DTC work orders")],
     ["full exact range", source.card.includes('data-testid="dtc-auto-work-orders-range"') && source.card.includes("totalCount > visibleRows.length")],
+    ["GET failure is explicit and retryable", source.card.includes("if (query.isError)") && source.card.includes("Couldn't load DTC auto-created work orders") && source.card.includes("onRetry={() => void query.refetch()}")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -39,13 +40,15 @@ if (process.argv.includes("--selftest")) {
     { ...live, card: live.card.replace("const visibleRows = rows.slice(0, 10)", "const visibleRows = rows") },
     { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-compact-range"', 'data-testid="missing-range"') },
     { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-range"', 'data-testid="missing-range"') },
+    { ...live, card: live.card.replace("if (query.isError)", "if (false)") },
+    { ...live, card: live.card.replace("onRetry={() => void query.refetch()}", "onRetry={undefined}") },
   ];
   const escaped = mutations.map((source, index) => failures(source).length ? null : index + 1).filter(Boolean);
   if (escaped.length) {
     console.error(`verify-dtc-auto-work-orders-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 6/6 mutations red");
+  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 8/8 mutations red");
   process.exit(0);
 }
 
@@ -54,4 +57,4 @@ if (missing.length) {
   console.error(`verify-dtc-auto-work-orders-range FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
-console.log("verify-dtc-auto-work-orders-range PASS — compact and full DTC reverse cards expose exact totals");
+console.log("verify-dtc-auto-work-orders-range PASS — DTC reverse card exposes exact totals and retryable GET failures");

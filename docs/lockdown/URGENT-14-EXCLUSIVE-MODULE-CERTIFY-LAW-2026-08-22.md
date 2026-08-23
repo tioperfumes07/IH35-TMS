@@ -40,19 +40,19 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 
 | # | Module | Exclusive owner | URL prefix (do not enter another seat’s) | Status |
 |---|--------|-----------------|------------------------------------------|--------|
-| 1 | accounting | CC-1 | `/accounting` leftover money FAIL only — **do not remake TESTs** | OPEN |
-| 2 | banking | Cursor | `/banking` — TEST expense → **Match** → recon **Accept** → ledger | OPEN |
+| 1 | accounting | CC-1 | `/accounting` leftover money FAIL only — **do not remake TESTs** | CERTIFIED LIVE_SHA=c11bdab |
+| 2 | banking | Cursor | `/banking` — TEST expense → **Match** → recon **Accept** → ledger | CERTIFIED LIVE_SHA=36e51bb |
 | 3 | settlements | CC-2 | `/driver-finance` `/settlements` `/cash-advances` — **do not remake Close** | CERTIFIED LIVE_SHA=b6980d6 |
-| 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | OPEN |
-| 5 | dispatch | Cursor after banking CERTIFIED | `/dispatch` — **do not remake Book Load** | OPEN |
-| 6 | vendors | Cursor after dispatch | `/vendors` | OPEN |
+| 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | CERTIFIED LIVE_SHA=c11bdab |
+| 5 | dispatch | Cursor after banking CERTIFIED | `/dispatch` — **do not remake Book Load** | CERTIFIED LIVE_SHA=39472f2 |
+| 6 | vendors | Cursor after dispatch | `/vendors` | CERTIFIED LIVE_SHA=627d7d0 |
 | 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | OPEN |
 | 8 | drivers | Codex after customers | reverse `mdata.drivers` — **no CDP** | OPEN |
 | 9 | fleet | Codex after drivers | reverse `mdata.units` — **no CDP** | OPEN |
 | 10 | lists | CC-3 after legal | `/lists` pickers | OPEN |
-| 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | OPEN |
-| 12 | safety | Cursor after maintenance | `/safety` leftover unique | OPEN |
-| 13 | insurance | Cursor after safety | `/insurance` leftover unique | OPEN |
+| 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
+| 12 | safety | Cursor after maintenance | `/safety` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
+| 13 | insurance | Cursor after safety | `/insurance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 14 | legal | CC-3 | `/legal` pickers | OPEN |
 
 **Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence.

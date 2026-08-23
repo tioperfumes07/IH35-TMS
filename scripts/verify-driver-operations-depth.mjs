@@ -58,10 +58,18 @@ for (const subView of SUB_VIEWS) {
 
 // Routes file registers all 12 sub-views + exports the register fn
 const routes = read(`${BACKEND_DIR}/routes.ts`);
+const shared = read(`${BACKEND_DIR}/shared.ts`);
 contains(`${BACKEND_DIR}/routes.ts`, routes, [
   { pattern: /registerDriverOperationsDepthRoutes/, label: "routes register export" },
   { pattern: /\/api\/drivers\/:uuid\/operations\/\$\{subView\.slug\}/, label: "operations route template" },
   { pattern: /assertDriverScope/, label: "driver tenant scope guard" },
+  { pattern: /resolveOperatingCompanyId\([\s\S]{0,180}query\.data\.operating_company_id/, label: "requested company membership resolution" },
+]);
+contains(`${BACKEND_DIR}/shared.ts`, shared, [
+  { pattern: /FROM mdata\.driver_company_authorizations operations_depth_dca/, label: "shared-driver canonical authorization" },
+  { pattern: /operations_depth_dca\.company_id = \$2::uuid/, label: "shared-driver selected-company scope" },
+  { pattern: /operations_depth_dca\.is_authorized = true/, label: "shared-driver active authorization" },
+  { pattern: /operations_depth_dca\.deactivated_at IS NULL/, label: "shared-driver non-deactivated authorization" },
 ]);
 for (const subView of SUB_VIEWS) {
   contains(`${BACKEND_DIR}/routes.ts`, routes, [
@@ -128,6 +136,11 @@ contains(`${PAGE_DIR}/AccidentHistoryView.tsx`, accidentPage, [
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "accident load renders human label over canonical id" },
   { pattern: /key:\s*"vendor_name"[\s\S]*idKey:\s*"vendor_id"/, label: "accident vendor renders human label over canonical id" },
 ]);
+const permitSvc = read(`${BACKEND_DIR}/permit-history.service.ts`);
+contains(`${BACKEND_DIR}/permit-history.service.ts`, permitSvc, [
+  { pattern: /FROM mdata\.driver_company_authorizations permit_cdl_dca[\s\S]{0,260}permit_cdl_dca\.company_id = \$2::uuid[\s\S]{0,180}permit_cdl_dca\.is_authorized = true[\s\S]{0,180}permit_cdl_dca\.deactivated_at IS NULL/, label: "CDL rows preserve active authorized shared drivers" },
+  { pattern: /FROM mdata\.driver_company_authorizations permit_hazmat_dca[\s\S]{0,260}permit_hazmat_dca\.company_id = \$2::uuid[\s\S]{0,180}permit_hazmat_dca\.is_authorized = true[\s\S]{0,180}permit_hazmat_dca\.deactivated_at IS NULL/, label: "hazmat rows preserve active authorized shared drivers" },
+]);
 contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
   { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
@@ -167,6 +180,11 @@ if (process.argv.includes("--selftest")) {
     ["documents producer scope", documentsSvc.replaceAll("AND f.operating_company_id = $2::uuid", "AND f.id IS NOT NULL"), (source) => (source.match(documentsScopePredicate) ?? []).length >= 2],
     ["shared unresolved related drill", operationsTable.replace("<EntityLinkOrTombstone", "<EntityLink"), /<EntityLinkOrTombstone[\s\S]{0,160}kind=\{column\.entityKind\}/],
     ["maintenance raw UUID label", maintenanceSvc.replace("NULLIF(TRIM(u.unit_number), '') AS unit_number", "COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number"), /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/],
+    ["requested company membership", routes.replace("resolveOperatingCompanyId(", "trustOperatingCompanyId("), /resolveOperatingCompanyId\([\s\S]{0,180}query\.data\.operating_company_id/],
+    ["shared-driver authorization", shared.replace("FROM mdata.driver_company_authorizations operations_depth_dca", "FROM mdata.drivers operations_depth_dca"), /FROM mdata\.driver_company_authorizations operations_depth_dca/],
+    ["shared-driver active status", shared.replace("operations_depth_dca.is_authorized = true", "operations_depth_dca.is_authorized = false"), /operations_depth_dca\.is_authorized = true/],
+    ["permit CDL shared driver", permitSvc.replace("FROM mdata.driver_company_authorizations permit_cdl_dca", "FROM mdata.drivers permit_cdl_dca"), /FROM mdata\.driver_company_authorizations permit_cdl_dca/],
+    ["permit hazmat shared driver", permitSvc.replace("permit_hazmat_dca.is_authorized = true", "permit_hazmat_dca.is_authorized = false"), /permit_hazmat_dca\.is_authorized = true/],
   ];
   const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {

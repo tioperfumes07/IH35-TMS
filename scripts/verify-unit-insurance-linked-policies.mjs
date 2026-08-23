@@ -53,7 +53,10 @@ function checkBackend(src) {
     fail(`${BACKEND_FILE}: lookupLinkedPolicies() no longer filters on the real a.unit_id FK — the whole point of this fix is NOT gating on the legacy text-match helper.`);
   }
   if (!src.includes("linked_policies: linkedPolicies.map(")) {
-    fail(`${BACKEND_FILE}: insurance_summary no longer includes linked_policies.`);
+    if (!src.includes("linked_policies: linkedPolicyRead.policies.map(")) fail(`${BACKEND_FILE}: insurance_summary no longer includes linked_policies.`);
+  }
+  if (!src.includes("linked_policies_unavailable: linkedPolicyRead.unavailable")) {
+    fail(`${BACKEND_FILE}: linked-policy SQL failure no longer remains distinct from an empty relationship.`);
   }
 }
 
@@ -66,6 +69,9 @@ function checkFrontend(src) {
   }
   if (!/!us && !mx && linked\.length === 0/.test(src)) {
     fail(`${FRONTEND_FILE}: empty-state condition no longer accounts for linked_policies — a unit with only a real linked policy (no legacy text fields) would show the false "No US or MX policy" message again.`);
+  }
+  if (!src.includes("linked_policies_unavailable?: boolean") || !src.includes("Linked insurance policies could not be loaded.") || !/linkedUnavailable \? \(/.test(src)) {
+    fail(`${FRONTEND_FILE}: linked-policy read failure must render visibly before the legitimate empty state.`);
   }
   if (!/policy_id:\s*string/.test(src) || !/<EntityLinkOrTombstone kind="insurance_policy" id=\{policy\.policy_id\}/.test(src)) {
     fail(`${FRONTEND_FILE}: linked policies must drill by canonical policy_id.`);
@@ -144,6 +150,8 @@ function selftest() {
   for (const [name, mutated] of [
     ["policy-drill", originalFrontend.replace('kind="insurance_policy"', 'kind="unit"')],
     ["coverage-gap-drill", originalFrontend.replace('id={unitId}', 'id={policy.policy_id}')],
+    ["failure-copy", originalFrontend.replace("Linked insurance policies could not be loaded.", "No policy." )],
+    ["failure-branch", originalFrontend.replace("linkedUnavailable ? (", "false ? (")],
   ]) {
     let caught = false;
     try {
@@ -154,6 +162,23 @@ function selftest() {
     }
     if (mutated === originalFrontend || !caught) {
       console.error(`SELFTEST INERT: ${name} mutation was not caught.`);
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  {
+    const mutated = originalBackend.replace("linked_policies_unavailable: linkedPolicyRead.unavailable", "linked_policies_unavailable: false");
+    let caught = false;
+    try {
+      checkBackend(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (mutated === originalBackend || !caught) {
+      console.error("SELFTEST INERT: linked-policy failure marker mutation was not caught.");
       process.exitCode = 1;
       return;
     }

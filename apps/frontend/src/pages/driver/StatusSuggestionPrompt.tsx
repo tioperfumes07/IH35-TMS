@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDriverStatusSuggestions, respondDriverStatusSuggestion } from "../../api/driver";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const SNOOZE_MS = 5 * 60 * 1000;
 
@@ -28,6 +29,17 @@ export function StatusSuggestionPrompt() {
     return suggestions.find((item) => now >= (snoozedUntilById[item.id] ?? 0)) ?? null;
   }, [query.data?.suggestions, snoozedUntilById]);
 
+  if (query.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load status suggestions"
+        status={0}
+        message={query.error instanceof Error ? query.error.message : undefined}
+        onRetry={() => void query.refetch()}
+        className="border-b border-slate-200 bg-slate-100"
+      />
+    );
+  }
   if (!active) return null;
 
   return (

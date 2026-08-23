@@ -63,6 +63,14 @@ export function DriverHosDetailPage() {
         }
       />
 
+      {driverQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load driver identity"
+          {...formatQueryErrorDetail(driverQuery.error)}
+          onRetry={() => void driverQuery.refetch()}
+        />
+      ) : null}
+
       {!operatingCompanyId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
           Select an operating company to view HOS details.

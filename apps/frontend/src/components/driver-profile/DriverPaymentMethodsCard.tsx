@@ -6,6 +6,7 @@ import {
   type DriverPaymentMethod,
 } from "../../api/driverPaymentMethods";
 import { useAuth } from "../../auth/useAuth";
+import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 function canManage(role: string | undefined) {
@@ -237,16 +238,29 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
       ) : null}
 
       <div className="mt-3">
-        <ParityTable<DriverPaymentMethod>
-          columns={columns}
-          rows={methods}
-          rowKey={(m) => m.id}
-          loading={methodsQuery.isLoading}
-          emptyText="No payment methods on file."
-          storageKey="driver-payment-methods-card"
-          exportFilename="driver-payment-methods"
-          tableTestId="driver-payment-methods-card-table"
-        />
+        {/* DRV-MONEY-F6106 — a failed GET was silently rendering as "No payment methods on file.",
+            a false-empty state on a money-bearing surface (an Owner/Administrator could conclude
+            a driver has no payment method on file and take action on that wrong assumption, while
+            the "+ Create method" action stayed available with no indication the list was broken). */}
+        {methodsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load payment methods"
+            status={0}
+            message={(methodsQuery.error as Error | null)?.message}
+            onRetry={() => void methodsQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<DriverPaymentMethod>
+            columns={columns}
+            rows={methods}
+            rowKey={(m) => m.id}
+            loading={methodsQuery.isLoading}
+            emptyText="No payment methods on file."
+            storageKey="driver-payment-methods-card"
+            exportFilename="driver-payment-methods"
+            tableTestId="driver-payment-methods-card-table"
+          />
+        )}
       </div>
     </section>
   );

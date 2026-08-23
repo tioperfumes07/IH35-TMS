@@ -77,7 +77,13 @@ const COMPLETED_STOPS_CTE = `
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
                            AND c.operating_company_id = l.operating_company_id
     LEFT JOIN mdata.drivers d ON d.id = sa.driver_id
-                         AND d.operating_company_id = sa.operating_company_id
+                         AND (d.operating_company_id = sa.operating_company_id OR EXISTS (
+                           SELECT 1 FROM mdata.driver_company_authorizations late_arrival_analytics_dca
+                            WHERE late_arrival_analytics_dca.driver_id = d.id
+                              AND late_arrival_analytics_dca.company_id = sa.operating_company_id
+                              AND late_arrival_analytics_dca.is_authorized = true
+                              AND late_arrival_analytics_dca.deactivated_at IS NULL
+                         ))
     LEFT JOIN LATERAL (
       SELECT
         NULLIF(trim(p.city), '') AS origin_city,

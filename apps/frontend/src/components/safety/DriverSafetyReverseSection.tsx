@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import {
   getComplaints,
   getDotInspections,
@@ -51,6 +52,7 @@ function SectionShell({
   isLoading,
   isError,
   errorText,
+  onRetry,
   emptyText,
   count,
   children,
@@ -72,6 +74,7 @@ function SectionShell({
   isLoading: boolean;
   isError: boolean;
   errorText: string;
+  onRetry: () => void;
   emptyText: string;
   count: number;
   children: React.ReactNode;
@@ -91,7 +94,7 @@ function SectionShell({
         />
       </div>
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {isError ? <p className="text-sm text-red-600">{errorText}</p> : null}
+      {isError ? <ListErrorState status={0} message={errorText} onRetry={onRetry} /> : null}
       {!isLoading && !isError && count === 0 ? <p className="text-sm text-gray-500">{emptyText}</p> : null}
       {count > 0 ? <ul className="space-y-2">{children}</ul> : null}
     </div>
@@ -212,6 +215,7 @@ export function DriverSafetyReverseSection({
         isLoading={trainingQuery.isLoading}
         isError={trainingQuery.isError}
         errorText="Failed to load this driver's training records."
+        onRetry={() => void trainingQuery.refetch()}
         emptyText="No training records for this driver."
         count={trainingRecords.length}
       >
@@ -237,6 +241,7 @@ export function DriverSafetyReverseSection({
         isLoading={accidentsQuery.isLoading}
         isError={accidentsQuery.isError}
         errorText="Failed to load this driver's accidents."
+        onRetry={() => void accidentsQuery.refetch()}
         emptyText="No accident reports for this driver."
         count={accidents.length}
       >
@@ -260,6 +265,7 @@ export function DriverSafetyReverseSection({
         isLoading={hosViolationsQuery.isLoading}
         isError={hosViolationsQuery.isError}
         errorText="Failed to load this driver's HOS violations."
+        onRetry={() => void hosViolationsQuery.refetch()}
         emptyText="No HOS violations for this driver."
         count={hosViolations.length}
       >
@@ -289,6 +295,7 @@ export function DriverSafetyReverseSection({
         isLoading={dotInspectionsQuery.isLoading}
         isError={dotInspectionsQuery.isError}
         errorText="Failed to load this driver's DOT inspections."
+        onRetry={() => void dotInspectionsQuery.refetch()}
         emptyText="No DOT inspections for this driver."
         count={dotInspections.length}
       >
@@ -318,6 +325,7 @@ export function DriverSafetyReverseSection({
         isLoading={civilFinesQuery.isLoading}
         isError={civilFinesQuery.isError}
         errorText="Failed to load this driver's external fines."
+        onRetry={() => void civilFinesQuery.refetch()}
         emptyText="No external fines for this driver."
         count={civilFines.length}
       >
@@ -347,6 +355,7 @@ export function DriverSafetyReverseSection({
         isLoading={internalFinesQuery.isLoading}
         isError={internalFinesQuery.isError}
         errorText="Failed to load this driver's internal fines."
+        onRetry={() => void internalFinesQuery.refetch()}
         emptyText="No internal fines for this driver."
         count={internalFines.length}
       >
@@ -388,6 +397,7 @@ export function DriverSafetyReverseSection({
           isLoading={complaintsQuery.isLoading}
           isError={complaintsQuery.isError}
           errorText="Failed to load this driver's complaints."
+          onRetry={() => void complaintsQuery.refetch()}
           emptyText="No complaints involving this driver."
           count={complaints.length}
         >
@@ -421,6 +431,7 @@ export function DriverSafetyReverseSection({
         isLoading={testsQuery.isLoading}
         isError={testsQuery.isError}
         errorText="Failed to load this driver's drug & alcohol tests."
+        onRetry={() => void testsQuery.refetch()}
         emptyText="No drug or alcohol tests recorded for this driver."
         count={tests.length}
       >

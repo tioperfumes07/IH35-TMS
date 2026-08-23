@@ -131,7 +131,13 @@ async function listIntegrityAlertsHandler(
         FROM safety.integrity_alerts ia
         LEFT JOIN mdata.drivers d
           ON d.id = ia.subject_driver_id
-         AND d.operating_company_id = ia.operating_company_id
+         AND (d.operating_company_id = ia.operating_company_id OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations integrity_alerts_list_dca
+           WHERE integrity_alerts_list_dca.driver_id = d.id
+             AND integrity_alerts_list_dca.company_id = ia.operating_company_id
+             AND integrity_alerts_list_dca.is_authorized = true
+             AND integrity_alerts_list_dca.deactivated_at IS NULL
+         ))
         LEFT JOIN mdata.units u
           ON u.id = ia.subject_unit_id
          AND (u.owner_company_id = ia.operating_company_id
@@ -292,7 +298,13 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
            FROM safety.integrity_alerts ia
            LEFT JOIN mdata.drivers d
              ON d.id = ia.subject_driver_id
-            AND d.operating_company_id = ia.operating_company_id
+            AND (d.operating_company_id = ia.operating_company_id OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations integrity_alerts_detail_dca
+              WHERE integrity_alerts_detail_dca.driver_id = d.id
+                AND integrity_alerts_detail_dca.company_id = ia.operating_company_id
+                AND integrity_alerts_detail_dca.is_authorized = true
+                AND integrity_alerts_detail_dca.deactivated_at IS NULL
+            ))
            LEFT JOIN mdata.units u
              ON u.id = ia.subject_unit_id
             AND (u.owner_company_id = ia.operating_company_id

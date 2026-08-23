@@ -35,6 +35,8 @@ const ROOT = process.cwd();
 const SRC = join(ROOT, "apps/backend/src");
 const BASELINE_PATH = "scripts/caller-scoped-guc-membership-baseline.json";
 const LABEL = "verify-caller-scoped-guc-membership";
+const UNIT_ROUTES_PATH = join(ROOT, "apps/backend/src/mdata/units.routes.ts");
+const UNIT_PDF_ROUTES_PATH = join(ROOT, "apps/backend/src/mdata/unit-pdf-export.routes.ts");
 
 /** set_config('app.operating_company_id', …) together with the argument list that follows it. */
 const GUC_CALL = /set_config\(\s*['"`]app\.operating_company_id['"`][\s\S]{0,400}?\)\s*;/g;
@@ -97,6 +99,29 @@ export function auditSource(src, label) {
   return found;
 }
 
+function unitAggregateRouteFailures(src) {
+  const start = src.indexOf('app.get("/api/v1/mdata/units/:id"');
+  if (start < 0) return ["missing unit aggregate route"];
+  const route = src.slice(start, start + 2200);
+  const resolvesCallerCompany =
+    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*parsedQuery\.data\.operating_company_id\s*\)/.test(route);
+  const passesResolvedCompany = /buildUnitAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(route);
+  return [
+    !resolvesCallerCompany ? "unit aggregate must membership-resolve caller company" : null,
+    !passesResolvedCompany ? "unit aggregate must receive only the resolved company" : null,
+  ].filter(Boolean);
+}
+
+function unitPdfAggregateRouteFailures(src) {
+  const resolvesCallerCompany =
+    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*query\.data\.operating_company_id\s*\)/.test(src);
+  const passesResolvedCompany = /buildUnitAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(src);
+  return [
+    !resolvesCallerCompany ? "unit PDF export must membership-resolve caller company" : null,
+    !passesResolvedCompany ? "unit PDF export must receive only the resolved company" : null,
+  ].filter(Boolean);
+}
+
 if (process.argv.includes("--selftest")) {
   const cases = [
     ["gated by assertCompanyMembership", `app.post("/a", async () => { await assertCompanyMembership(c,u,query.data.operating_company_id); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); });`, 0],
@@ -113,8 +138,65 @@ if (process.argv.includes("--selftest")) {
     const got = auditSource(src, "t.routes.ts").length;
     if (got !== expect) { bad++; console.error(`  selftest FAIL: ${name} — expected ${expect}, got ${got}`); }
   }
+  const unitRoutes = readFileSync(UNIT_ROUTES_PATH, "utf8");
+  const goodUnitFailures = unitAggregateRouteFailures(unitRoutes);
+  if (goodUnitFailures.length) {
+    bad++;
+    console.error(`  selftest FAIL: production unit aggregate rejected — ${goodUnitFailures.join(", ")}`);
+  }
+  const unitMutations = [
+    [
+      "unit resolver removed",
+      unitRoutes.replace(
+        "parsedQuery.data.operating_company_id\n      );",
+        "authUser.defaultCompanyId\n      );"
+      ),
+      "membership-resolve caller company",
+    ],
+    [
+      "caller company passed to builder",
+      unitRoutes.replace(
+        "buildUnitAggregate(client, parsedParams.data.id, scopedCompanyId)",
+        "buildUnitAggregate(client, parsedParams.data.id, parsedQuery.data.operating_company_id)"
+      ),
+      "receive only the resolved company",
+    ],
+  ];
+  for (const [name, mutant, expected] of unitMutations) {
+    if (mutant === unitRoutes || !unitAggregateRouteFailures(mutant).some((failure) => failure.includes(expected))) {
+      bad++;
+      console.error(`  selftest FAIL: ${name} mutation escaped`);
+    }
+  }
+  const unitPdfRoutes = readFileSync(UNIT_PDF_ROUTES_PATH, "utf8");
+  const goodUnitPdfFailures = unitPdfAggregateRouteFailures(unitPdfRoutes);
+  if (goodUnitPdfFailures.length) {
+    bad++;
+    console.error(`  selftest FAIL: production unit PDF export rejected — ${goodUnitPdfFailures.join(", ")}`);
+  }
+  const unitPdfMutations = [
+    [
+      "unit PDF resolver removed",
+      unitPdfRoutes.replace("query.data.operating_company_id\n      );", "authUser.defaultCompanyId\n      );"),
+      "membership-resolve caller company",
+    ],
+    [
+      "caller company passed to unit PDF builder",
+      unitPdfRoutes.replace(
+        "buildUnitAggregate(client, params.data.id, scopedCompanyId)",
+        "buildUnitAggregate(client, params.data.id, query.data.operating_company_id)"
+      ),
+      "receive only the resolved company",
+    ],
+  ];
+  for (const [name, mutant, expected] of unitPdfMutations) {
+    if (mutant === unitPdfRoutes || !unitPdfAggregateRouteFailures(mutant).some((failure) => failure.includes(expected))) {
+      bad++;
+      console.error(`  selftest FAIL: ${name} mutation escaped`);
+    }
+  }
   if (bad) { console.error(`${LABEL} --selftest: ${bad} case(s) failed`); process.exit(1); }
-  console.log(`${LABEL} --selftest: ${cases.length} cases pass`);
+  console.log(`${LABEL} --selftest: ${cases.length + unitMutations.length + unitPdfMutations.length} cases pass`);
   process.exit(0);
 }
 
@@ -125,6 +207,16 @@ for (const f of walk(SRC)) {
   current.push(...auditSource(src, relative(ROOT, f)));
 }
 const currentKeys = [...new Set(current.map((c) => c.key))].sort();
+const unitAggregateFailures = unitAggregateRouteFailures(readFileSync(UNIT_ROUTES_PATH, "utf8"));
+if (unitAggregateFailures.length) {
+  console.error(`FAIL ${LABEL} — indirect caller-scoped unit aggregate:\n  - ${unitAggregateFailures.join("\n  - ")}`);
+  process.exit(1);
+}
+const unitPdfAggregateFailures = unitPdfAggregateRouteFailures(readFileSync(UNIT_PDF_ROUTES_PATH, "utf8"));
+if (unitPdfAggregateFailures.length) {
+  console.error(`FAIL ${LABEL} — indirect caller-scoped unit PDF aggregate:\n  - ${unitPdfAggregateFailures.join("\n  - ")}`);
+  process.exit(1);
+}
 
 if (process.argv.includes("--write-baseline")) {
   writeFileSync(join(ROOT, BASELINE_PATH), `${JSON.stringify(currentKeys, null, 2)}\n`);

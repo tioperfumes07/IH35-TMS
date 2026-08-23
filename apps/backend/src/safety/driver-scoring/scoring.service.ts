@@ -311,7 +311,13 @@ export async function listPeriodLeaderboard(
       FROM safety.driver_safety_scores s
       JOIN mdata.drivers d
         ON d.id = s.driver_uuid
-       AND d.operating_company_id = s.operating_company_id
+       AND (d.operating_company_id = s.operating_company_id OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations scoring_leaderboard_dca
+         WHERE scoring_leaderboard_dca.driver_id = d.id
+           AND scoring_leaderboard_dca.company_id = s.operating_company_id
+           AND scoring_leaderboard_dca.is_authorized = true
+           AND scoring_leaderboard_dca.deactivated_at IS NULL
+       ))
       WHERE s.operating_company_id = $1::uuid
         AND s.period_start = $2::date
         AND s.period_end = $3::date
@@ -361,7 +367,13 @@ export async function listDriverTrend(
       FROM safety.driver_safety_scores s
       JOIN mdata.drivers d
         ON d.id = s.driver_uuid
-       AND d.operating_company_id = s.operating_company_id
+       AND (d.operating_company_id = s.operating_company_id OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations scoring_trend_dca
+         WHERE scoring_trend_dca.driver_id = d.id
+           AND scoring_trend_dca.company_id = s.operating_company_id
+           AND scoring_trend_dca.is_authorized = true
+           AND scoring_trend_dca.deactivated_at IS NULL
+       ))
       WHERE s.operating_company_id = $1::uuid
         AND s.driver_uuid = $2::uuid
       ORDER BY s.period_end DESC

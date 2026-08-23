@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["queues.in_transit"],"task":"DISP-F5853-INTRANSIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["secondary.assignments"],"task":"DRV-F6206-ASSIGNMENT-HISTORY-SHARED-DRIVER-LABELS","vertical":"column-wave"} */
 /**
  * Block B21-D2: Dispatch arch tab parity phase 1 — At-Risk, In-Transit Issues, Assignment History.
  */
@@ -52,6 +53,24 @@ const contracts = [
   ["in-transit API route", "routes", hasAll("/api/v1/dispatch/intransit-issues"), remove("/api/v1/dispatch/intransit-issues")],
   ["assignment-history API route", "routes", hasAll("/api/v1/dispatch/assignment-history"), remove("/api/v1/dispatch/assignment-history")],
   ["assignment-history canonical service table", "service", hasAll("dispatch.load_assignment_history"), remove("dispatch.load_assignment_history")],
+  [
+    "assignment-history previous shared-driver label",
+    "service",
+    matches(/FROM mdata\.driver_company_authorizations assignment_previous_driver_dca[\s\S]{0,180}assignment_previous_driver_dca\.driver_id = pd\.id[\s\S]{0,140}assignment_previous_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}assignment_previous_driver_dca\.is_authorized = true[\s\S]{0,140}assignment_previous_driver_dca\.deactivated_at IS NULL/),
+    remove("assignment_previous_driver_dca.is_authorized = true"),
+  ],
+  [
+    "assignment-history new shared-driver label",
+    "service",
+    matches(/FROM mdata\.driver_company_authorizations assignment_new_driver_dca[\s\S]{0,180}assignment_new_driver_dca\.driver_id = nd\.id[\s\S]{0,140}assignment_new_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}assignment_new_driver_dca\.is_authorized = true[\s\S]{0,140}assignment_new_driver_dca\.deactivated_at IS NULL/),
+    remove("assignment_new_driver_dca.is_authorized = true"),
+  ],
+  [
+    "in-transit authorized shared-driver label",
+    "service",
+    matches(/FROM mdata\.driver_company_authorizations intransit_issue_driver_dca[\s\S]{0,180}intransit_issue_driver_dca\.driver_id = d\.id[\s\S]{0,140}intransit_issue_driver_dca\.company_id = i\.operating_company_id[\s\S]{0,140}intransit_issue_driver_dca\.is_authorized = true[\s\S]{0,140}intransit_issue_driver_dca\.deactivated_at IS NULL/),
+    remove("intransit_issue_driver_dca.is_authorized = true"),
+  ],
   ["backend route registration", "index", hasAll("registerDispatchArchTabsRoutes"), remove("registerDispatchArchTabsRoutes")],
   ["at-risk mounted manifest route", "manifest", hasAll('path="/dispatch/at-risk"'), remove('path="/dispatch/at-risk"')],
   ["in-transit mounted manifest route", "manifest", hasAll('path="/dispatch/in-transit-issues"'), remove('path="/dispatch/in-transit-issues"')],

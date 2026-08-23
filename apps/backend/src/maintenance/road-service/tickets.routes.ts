@@ -126,7 +126,16 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
            AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
           LEFT JOIN mdata.drivers d
             ON d.id = t.driver_id
-           AND d.operating_company_id = $1::uuid
+           AND (
+             d.operating_company_id = $1::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations road_service_list_dca
+               WHERE road_service_list_dca.driver_id = d.id
+                 AND road_service_list_dca.company_id = $1::uuid
+                 AND road_service_list_dca.is_authorized = true
+                 AND road_service_list_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN maintenance.work_orders w
             ON w.id = t.wo_id
            AND w.operating_company_id = $1::uuid

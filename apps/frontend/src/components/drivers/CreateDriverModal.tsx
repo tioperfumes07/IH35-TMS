@@ -16,6 +16,7 @@ import {
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
+import { ListErrorState } from "../ListErrorState";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -213,10 +214,21 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     }
     return map;
   }, [fileCategoriesQuery.data]);
+  const pendingDocEntries = Object.entries(pendingDocs) as Array<[PendingDriverDocKey, File]>;
+  const hasPendingDocs = pendingDocEntries.length > 0;
+  const missingPendingDocCategory = pendingDocEntries.find(([key]) => {
+    const code = DRIVER_CREATE_DOC_CATEGORY_CODES[key];
+    return !categoryIdByCode.has(code);
+  });
+  const pendingDocCategoriesUnavailable =
+    hasPendingDocs &&
+    (fileCategoriesQuery.isError || !fileCategoriesQuery.isSuccess || Boolean(missingPendingDocCategory));
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(true);
   const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
   const [returningCheckLoading, setReturningCheckLoading] = useState(false);
+  const [returningCheckError, setReturningCheckError] = useState<unknown>(null);
+  const [returningCheckRetry, setReturningCheckRetry] = useState(0);
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
@@ -268,6 +280,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     setShowMexicanIdentity(true);
     setShowVisaEmergency(true);
     setReturningDetection(null);
+    setReturningCheckError(null);
     setOverrideReturningWarning(false);
     setRehireAction("rehire");
     setSelectedPriorDriverId(null);
@@ -291,21 +304,24 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       setReturningDetection(null);
       setOverrideReturningWarning(false);
       setReturningCheckLoading(false);
+      setReturningCheckError(null);
       return;
     }
 
     let cancelled = false;
     setReturningCheckLoading(true);
+    setReturningCheckError(null);
     const timeout = window.setTimeout(async () => {
       try {
         const result = await checkReturningDriver(hasCurp ? curp : undefined, hasCdlPair ? cdlNumber : undefined, hasCdlPair ? cdlState : undefined);
         if (cancelled) return;
         setReturningDetection(result.returning_driver ? result : null);
         if (!result.returning_driver) setOverrideReturningWarning(false);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setReturningDetection(null);
           setOverrideReturningWarning(false);
+          setReturningCheckError(error);
         }
       } finally {
         if (!cancelled) setReturningCheckLoading(false);
@@ -316,7 +332,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, form.curp, form.cdl_number, form.cdl_state]);
+  }, [open, form.curp, form.cdl_number, form.cdl_state, returningCheckRetry]);
 
   const usStatesQuery = useQuery({
     queryKey: ["catalogs", "us-states"],
@@ -403,6 +419,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         ? "Acknowledge the returning-driver detection above to enable Save."
         : overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId
           ? 'Select the prior driver record to link, or choose "Treat as a new hire" instead.'
+          : pendingDocCategoriesUnavailable
+            ? "Document categories are unavailable. Retry the category list or remove the staged files before saving."
+          : returningCheckError
+            ? "Returning-driver identity check failed. Retry it before saving this driver."
           : returningCheckLoading
             ? "Checking for a matching returning-driver record…"
             : undefined;
@@ -556,10 +576,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   const runDriverCreateSave = useCallback(
     (mode: "default" | "add_another") => {
+      if (pendingDocCategoriesUnavailable) {
+        pushToast("Document categories are unavailable. Retry before saving staged files.", "error");
+        return;
+      }
+      if (returningCheckError) {
+        pushToast("Returning-driver identity check failed. Retry before saving.", "error");
+        return;
+      }
       saveModeRef.current = mode;
       void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
     },
-    [form, submitDriverCreate]
+    [form, pendingDocCategoriesUnavailable, pushToast, returningCheckError, submitDriverCreate]
   );
 
   useEffect(() => {
@@ -608,6 +636,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           <>
           <div className="col-span-full flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Operating Company</label>
+            {companiesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load operating companies"
+                status={0}
+                message={companiesQuery.error instanceof Error ? companiesQuery.error.message : undefined}
+                onRetry={() => void companiesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <Combobox
               dataField="operating_company_id"
               options={(companiesQuery.data ?? []).map((company) => ({
@@ -666,6 +703,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ))}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL State</label>
+            {usStatesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load US states"
+                status={0}
+                message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined}
+                onRetry={() => void usStatesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <Combobox
               dataField="cdl_state"
               options={(usStatesQuery.data ?? []).map((state) => ({
@@ -851,6 +897,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 ))}
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">MX State</label>
+                  {mexicoStatesQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load Mexico states"
+                      status={0}
+                      message={mexicoStatesQuery.error instanceof Error ? mexicoStatesQuery.error.message : undefined}
+                      onRetry={() => void mexicoStatesQuery.refetch()}
+                      className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                    />
+                  ) : null}
                   <Combobox
                     dataField="mx_state"
                     options={(mexicoStatesQuery.data ?? []).map((state) => ({
@@ -978,6 +1033,29 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               Stage the required hiring documents here. They upload to the saved driver record after Save.
               Pre-employment drug screen must be acknowledged before create.
             </p>
+            {hasPendingDocs && fileCategoriesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load document categories"
+                status={fileCategoriesQuery.error instanceof ApiError ? fileCategoriesQuery.error.status : 0}
+                message={userFacingApiError(fileCategoriesQuery.error, "Document categories are unavailable")}
+                onRetry={() => void fileCategoriesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
+            {hasPendingDocs && fileCategoriesQuery.isPending ? (
+              <p className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" role="status">
+                Loading document categories before staged files can be saved…
+              </p>
+            ) : null}
+            {hasPendingDocs && fileCategoriesQuery.isSuccess && missingPendingDocCategory ? (
+              <ListErrorState
+                title="Document category unavailable"
+                status={0}
+                message={`The ${DRIVER_CREATE_DOC_CATEGORY_CODES[missingPendingDocCategory[0]]} category is missing from the active catalog.`}
+                onRetry={() => void fileCategoriesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <label className="flex items-start gap-2 text-sm text-slate-800">
               <input
                 type="checkbox"
@@ -1082,6 +1160,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </div>
           ) : null}
 
+          {wizardStep === 4 && returningCheckError ? (
+            <div className="col-span-full">
+              <ListErrorState
+                title="Couldn't check for a returning driver"
+                status={returningCheckError instanceof ApiError ? returningCheckError.status : 0}
+                message={userFacingApiError(returningCheckError, "Returning-driver identity check failed")}
+                onRetry={() => setReturningCheckRetry((value) => value + 1)}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            </div>
+          ) : null}
+
           <div className="col-span-full space-y-1">
           <div className="flex flex-wrap justify-between gap-2">
             <Button
@@ -1123,6 +1213,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       rehireAction === "rehire" &&
                       terminatedMatches.length > 0 &&
                       !selectedPriorDriverId) ||
+                    pendingDocCategoriesUnavailable ||
+                    Boolean(returningCheckError) ||
                     returningCheckLoading
                   }
                   title={saveDisabledReason}

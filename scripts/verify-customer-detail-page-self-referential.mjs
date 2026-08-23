@@ -15,6 +15,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
 const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
+const LATE_ARRIVAL_CARD = "apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx";
+const RELATIONSHIP_SCORE = "apps/frontend/src/components/customers/CustomerRelationshipScore.tsx";
+const CUSTOMER_LANES_ROUTES = "apps/backend/src/mdata/customer-lanes.routes.ts";
 const REQUIRED = "docs/specs/scoreboard/modules/customers.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-customer-detail-page-self-referential.mjs";
@@ -35,11 +38,11 @@ const EXACT_ROUTES = new Map([
 const CHECKS = [
   ["profile", /updateCustomer\(id, \{/],
   ["contacts", /queryKey: \["customer-contacts", id,/],
-  ["contacts.create", /createCustomerContact\(id, payload, operatingCompanyId\)/],
+  ["contacts.create", /createCustomerContact\(id, payload, operatingCompanyId!\)/],
   ["billing", /queryKey: \["customer-billing-summary", id,/],
   ["billing.record_payment", /recordCustomerPayment\(id, selectedCompanyId \?\? "", \{/],
   ["quality", /queryKey: \["customer-quality-events", id,/],
-  ["quality.create_event", /createCustomerQualityEvent\(id, \{/],
+  ["quality.create_event", /createCustomerQualityEvent\(\s*id,\s*\{/],
   ["lanes", /queryKey: \["customer-lanes", id,/],
   ["lanes.create", /createCustomerLane\(id, operatingCompanyId!, payload\)/],
   ["documents", /<DocumentsTab entityType="customer" entityId=\{customer\.id\}/],
@@ -51,14 +54,30 @@ const CHECKS = [
   ["pnl", /queryKey: \["customer-pnl", id,/],
   ["audit", /<EntityAuditHistoryTab operatingCompanyId=\{operatingCompanyId \?\? ""\} entityType="customer" entityId=\{customer\.id\}/],
   ["edit", /await updateCustomer\(id, \{/],
-  ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id\)/],
+  ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id, operatingCompanyId!\)/],
 ];
 
-export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "") {
+const customerLanesRoutes = fs.readFileSync(path.join(ROOT, CUSTOMER_LANES_ROUTES), "utf8");
+
+export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "", relationshipSrc = "", lanesRoutesSrc = customerLanesRoutes) {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
   }
+  if (!/queryFn: \(\) => getCustomerDetail\(id, selectedCompanyId!\)/.test(src) ||
+      !/enabled: Boolean\(id && selectedCompanyId\)/.test(src)) {
+    failures.push(`${FILE}: root detail GET must wait for and send selected company`);
+  }
+  if (!/customerLoadsQuery\.isError[\s\S]{0,500}title="Couldn't load customer loads"[\s\S]{0,500}customerLoadsQuery\.refetch\(\)/.test(src)) {
+    failures.push(`${FILE}: customer loads reverse GET failure must reach ParityTable with exact-query retry`);
+  }
+  for (const [query, title] of [["contactsQuery", "Couldn't load customer contacts"], ["lanesQuery", "Couldn't load customer lanes"], ["qualityEventsQuery", "Couldn't load customer quality history"], ["fmcsaHistoryQuery", "Couldn't load FMCSA verification history"]]) {
+    const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${query} reverse GET failure must render exact-query retry`);
+  }
+  if (!/!fmcsaHistoryQuery\.isError\s*&&\s*fmcsaHistoryListState\.isEmpty/.test(src)) failures.push(`${FILE}: FMCSA failed GET must not render as empty history`);
+  if (!/listFmcsaLookups\(operatingCompanyId!, \{ limit: 25 \}\)/.test(src)) failures.push(`${FILE}: FMCSA history GET must use the selected operating company`);
+  if (!/<FMCSAVerificationModal[\s\S]{0,180}operatingCompanyId=\{operatingCompanyId!\}/.test(src)) failures.push(`${FILE}: FMCSA lookup/link modal must receive selected operating company`);
   // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
   if (fmcsaSrc) {
     if (!/data-testid=["']fmcsa-verify-flat["']/.test(fmcsaSrc)) {
@@ -67,6 +86,39 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
     if (/rounded-sm border border-gray-200 p-3/.test(fmcsaSrc)) {
       failures.push(`${FMCSA_MODAL}: must not nest bordered cards (box-in-box)`);
     }
+  }
+  if (lateArrivalSrc && !/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(lateArrivalSrc)) {
+    failures.push(`${LATE_ARRIVAL_CARD}: detail late-arrival failure must expose exact-query retry`);
+  }
+  if (!/relationshipScoreQuery\.isError[\s\S]{0,300}onRetry=\{\(\) => void relationshipScoreQuery\.refetch\(\)\}/.test(src) || (relationshipSrc && !/<ListErrorState[\s\S]{0,180}onRetry=\{onRetry\}/.test(relationshipSrc))) {
+    failures.push(`${RELATIONSHIP_SCORE}: failed relationship-score GET must expose exact-query retry`);
+  }
+  const lanesStart = lanesRoutesSrc.indexOf('app.get("/api/v1/mdata/customers/:customer_id/lanes"');
+  const lanesRoute = lanesStart < 0 ? "" : lanesRoutesSrc.slice(lanesStart, lanesStart + 2400);
+  const parentIndex = lanesRoute.indexOf("FROM mdata.get_customer_same_company");
+  const childIndex = lanesRoute.indexOf("FROM mdata.customer_lanes");
+  if (!/mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\)/.test(lanesRoute)) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: lanes reverse GET must resolve the parent customer in the selected company`);
+  }
+  if (!/if \(customer\.rowCount === 0\) return reply\.code\(404\)\.send\(\{ error: "mdata_customer_not_found" \}\)/.test(lanesRoute)) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: lanes reverse GET must return honest customer-not-found before empty lanes`);
+  }
+  if (parentIndex < 0 || childIndex < 0 || parentIndex > childIndex) {
+    failures.push(`${CUSTOMER_LANES_ROUTES}: parent customer scope must precede lane children`);
+  }
+  for (const [query, title] of [["usStatesQuery", "Couldn't load billing states"], ["qualityReasonsQuery", "Couldn't load quality reasons"]]) {
+    const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${query} catalog failure must expose exact-query retry`);
+  }
+  // CUST-MONEY-F6057A — recent-invoices and open-invoices-for-payment failures collapsed into
+  // "no invoices" instead of an honest error+retry; checks the DERIVED listState's isError (not the
+  // raw query) since both render sites gate on recentInvoicesListState/openInvoicesListState.
+  for (const [state, query, title] of [
+    ["recentInvoicesListState", "recentInvoicesQuery", "Couldn't load recent invoices"],
+    ["openInvoicesListState", "paymentInvoicesQuery", "Couldn't load open invoices"],
+  ]) {
+    const pattern = new RegExp(`${state}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${state} money GET failure must render exact-query retry, not a false empty`);
   }
   if (requiredSrc) {
     const required = JSON.parse(requiredSrc);
@@ -87,11 +139,52 @@ if (process.argv.includes("--selftest")) {
   const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
   const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
   const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
-  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood).length) {
-    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood, requiredGood, selfGood, feedGood).join("\n- ")}`);
+  const lateArrivalGood = fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8");
+  const relationshipGood = fs.readFileSync(path.join(ROOT, RELATIONSHIP_SCORE), "utf8");
+  let caught = 0;
+  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).length) {
+    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).join("\n- ")}`);
     process.exit(1);
   }
-  let caught = 0;
+  const relationshipMutated = good.replace("relationshipScoreQuery.refetch()", "retryRemoved()");
+  if (relationshipMutated === good || !audit(relationshipMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("relationship-score GET"))) {
+    console.error(`${LABEL} SELFTEST FAIL — relationship-score retry mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  for (const [name, mutated] of [
+    ["customer scope", customerLanesRoutes.replace("mdata.get_customer_same_company($1::uuid, $2::uuid)", "mdata.customers")],
+    ["customer 404", customerLanesRoutes.replace('return reply.code(404).send({ error: "mdata_customer_not_found" })', "return { lanes: [] }")],
+    ["parent check", customerLanesRoutes.replace("if (customer.rowCount === 0)", "if (false)")],
+  ]) {
+    if (mutated === customerLanesRoutes || !audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood, mutated).some((f) => f.includes(CUSTOMER_LANES_ROUTES))) {
+      console.error(`${LABEL} SELFTEST FAIL — lanes ${name} mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  const detailCompanyMutated = good.replace("getCustomerDetail(id, selectedCompanyId!)", "getCustomerDetail(id)");
+  if (detailCompanyMutated === good || !audit(detailCompanyMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("root detail GET"))) {
+    console.error(`${LABEL} SELFTEST FAIL — root detail selected-company mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  for (const query of ["usStatesQuery", "qualityReasonsQuery"]) {
+    const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${query} catalog failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${query} catalog retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const [state, query] of [["recentInvoicesListState", "recentInvoicesQuery"], ["openInvoicesListState", "paymentInvoicesQuery"]]) {
+    const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${state} money GET failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${state} money retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
   for (const [name, pattern] of CHECKS) {
     const mutated = good.replace(new RegExp(pattern.source, `${pattern.flags}g`), "REMOVED");
     if (mutated === good) {
@@ -109,6 +202,29 @@ if (process.argv.includes("--selftest")) {
     '\n<div className="rounded-sm border border-gray-200 p-3" />\n';
   if (!audit(good, fmcsaPlanted).some((f) => f.includes("box-in-box") || f.includes("fmcsa-verify-flat"))) {
     console.error(`${LABEL} SELFTEST FAIL — fmcsa box-in-box mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  for (const query of ["contactsQuery", "lanesQuery", "qualityEventsQuery", "fmcsaHistoryQuery"]) {
+    const mutated = good.replace(new RegExp(`${query}\\.refetch\\(\\)`), "Promise.resolve()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).some((f) => f.includes(`${query} reverse GET failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${query} retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  const loadsErrorMutated = good.replace(
+    /customerLoadsQuery\.refetch\(\)/,
+    "Promise.resolve()",
+  );
+  if (loadsErrorMutated === good || !audit(loadsErrorMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).some((f) => f.includes("customer loads reverse GET failure"))) {
+    console.error(`${LABEL} SELFTEST FAIL — customer loads error/retry mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const lateArrivalMutated = lateArrivalGood.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
+  if (lateArrivalMutated === lateArrivalGood || audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalMutated).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — late-arrival retry mutation escaped`);
     process.exit(1);
   }
   caught++;
@@ -140,6 +256,8 @@ const failures = audit(
   fs.readFileSync(path.join(ROOT, REQUIRED), "utf8"),
   fs.readFileSync(path.join(ROOT, SELF), "utf8"),
   fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+  fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8"),
+  fs.readFileSync(path.join(ROOT, RELATIONSHIP_SCORE), "utf8"),
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);

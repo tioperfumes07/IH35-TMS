@@ -64,6 +64,7 @@ import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
 import { DriverLateArrivalCard } from "../../components/drivers/DriverLateArrivalCard";
 import { resolveApiUrl } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
 
 interface LayoverSummary {
   total_layovers: number;
@@ -75,7 +76,7 @@ interface LayoverSummary {
 function LayoverSummaryCard({ driverId, companyId }: { driverId: string; companyId: string }) {
   const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
   const to = new Date().toISOString().slice(0, 10);
-  const { data, isLoading } = useQuery<{ data: LayoverSummary[] }>({
+  const { data, isLoading, isError, refetch } = useQuery<{ data: LayoverSummary[] }>({
     queryKey: ["driver-layovers-summary", driverId, companyId],
     queryFn: async () => {
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(companyId)}&driver=${encodeURIComponent(driverId)}&from=${from}&to=${to}`),
@@ -105,7 +106,12 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
           className="text-xs font-semibold text-slate-700 hover:underline"
         />
       </div>
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+          Failed to load driver layovers.
+          <button type="button" className="ml-2 underline" onClick={() => void refetch()}>Retry</button>
+        </div>
+      ) : isLoading ? (
         <p className="text-xs text-gray-400">Loading...</p>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -135,15 +141,20 @@ export type DriverProfileAggregate = {
   driver: Record<string, unknown>;
   license: Record<string, unknown>;
   medical_card: Record<string, unknown>;
+  medical_card_unavailable?: boolean;
   drug_program: Record<string, unknown>;
+  drug_program_unavailable?: boolean;
   hos: Record<string, unknown> | null;
+  hos_unavailable?: boolean;
   current_assignment: Record<string, unknown>;
   performance_scorecard?: Record<string, unknown> | null;
+  performance_scorecard_unavailable?: boolean;
   settlements?: Record<string, unknown>;
   training_records?: Array<Record<string, unknown>>;
+  training_records_unavailable?: boolean;
   border_credentials?: Record<string, unknown>;
   w8ben?: Record<string, unknown>;
-  documents?: Array<Record<string, unknown>>;
+  w8ben_unavailable?: boolean;
 };
 
 function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
@@ -235,6 +246,17 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
   }
 
+  if (profileQ.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load driver profile"
+        status={0}
+        message={(profileQ.error as Error)?.message}
+        onRetry={() => void profileQ.refetch()}
+      />
+    );
+  }
+
   if (!driver || !aggregate) {
     return (
       <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">
@@ -278,7 +300,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         backHref="/drivers?subtab=profiles"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <DriverDqfComplianceChip summary={summary} />
+            {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
             <StatusBadge status={driver.status} />
             {driver.status !== "Terminated" ? (
               <button
@@ -328,14 +350,22 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <LicenseSection license={aggregate.license} />
       </div>
       <div data-testid="dp-section-3-medical">
-        <MedicalCardSection medical={aggregate.medical_card} />
+        <MedicalCardSection medical={aggregate.medical_card} unavailable={aggregate.medical_card_unavailable === true} />
         <MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-4-drug">
-        <DrugProgramSection drug={aggregate.drug_program} />
+        <DrugProgramSection drug={aggregate.drug_program} unavailable={aggregate.drug_program_unavailable === true} />
       </div>
       <div data-testid="dp-section-5-hos">
-        <HOSStatusSection hos={hos} />
+        {hosQ.isError ? (
+          <ListErrorState
+            title="Couldn't refresh HOS status"
+            status={0}
+            message={(hosQ.error as Error)?.message}
+            onRetry={() => void hosQ.refetch()}
+          />
+        ) : null}
+        <HOSStatusSection hos={hos} unavailable={aggregate.hos_unavailable === true} />
         <EntityLink
           kind="compliance_hos_driver"
           id={id}
@@ -368,7 +398,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       <DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />
 
       <div data-testid="dp-section-7-performance">
-        <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
+        <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} unavailable={aggregate.performance_scorecard_unavailable === true} />
       </div>
       <div data-testid="dp-section-late-arrival">
         <DriverLateArrivalCard driverId={id} operatingCompanyId={companyId} />
@@ -407,6 +437,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
         <TrainingRecordsSection
           records={aggregate.training_records ?? []}
+          unavailable={aggregate.training_records_unavailable === true}
           onAddTraining={() => setAddTrainingOpen(true)}
         />
       </div>
@@ -426,7 +457,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </div>
       <div data-testid="dp-section-w8ben">
-        <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} onCapture={() => setW8benOpen(true)} />
+        <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} unavailable={aggregate.w8ben_unavailable === true} onCapture={() => setW8benOpen(true)} />
       </div>
       <W8BenModal
         open={w8benOpen}
@@ -449,43 +480,52 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {/* B-A3: DQF summary tiles — checklist below has no status/expiry filter yet; honest disabled
           (no guess-route to a nearest Safety/Docs page). */}
-      <KpiStrip>
-        <KpiCard
-          label="Checklist items"
-          number={String(summary.itemCount)}
-          accent={colors.drivers.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
+      {itemsQ.isError ? (
+        <ListErrorState
+          title="Couldn't load DQF summary"
+          status={0}
+          message={(itemsQ.error as Error)?.message}
+          onRetry={() => void itemsQ.refetch()}
         />
-        <KpiCard
-          label="Present"
-          number={String(summary.presentCount)}
-          accent={colors.positive.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Missing"
-          number={String(summary.missingCount)}
-          accent={colors.warn.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Expired"
-          number={String(summary.expiredCount)}
-          accent={colors.crit.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Expiry alerts"
-          number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
-          accent={colors.info.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-      </KpiStrip>
+      ) : (
+        <KpiStrip>
+          <KpiCard
+            label="Checklist items"
+            number={String(summary.itemCount)}
+            accent={colors.drivers.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Present"
+            number={String(summary.presentCount)}
+            accent={colors.positive.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Missing"
+            number={String(summary.missingCount)}
+            accent={colors.warn.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Expired"
+            number={String(summary.expiredCount)}
+            accent={colors.crit.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Expiry alerts"
+            number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
+            accent={colors.info.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+        </KpiStrip>
+      )}
 
       {/*
         RESTORED (2026-07-27). This section was DELETED by #366 on 2026-06-02 — a §7 additive-only
@@ -505,7 +545,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
         <p className="mb-3 text-xs text-slate-600">
           Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
-          File status: <span className="font-medium text-slate-800">{summary.label}</span>.
+          File status:{" "}
+          {itemsQ.isError ? (
+            <span className="font-medium text-red-700">Could not be loaded.</span>
+          ) : (
+            <span className="font-medium text-slate-800">{summary.label}</span>
+          )}
         </p>
         {/* Flat inside one frame — the inner bordered cells the 2026-06 original used are a
             box-within-box, which verify-no-nested-box now forbids (QBO/NetSuite: one frame, flat

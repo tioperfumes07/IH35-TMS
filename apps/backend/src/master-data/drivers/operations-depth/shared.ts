@@ -40,8 +40,9 @@ export function buildResult<T>(rows: T[], total: number, page: number, page_size
 }
 
 /**
- * Confirm the driver belongs to the active operating company before returning any
- * operational depth data. Returns the driver id when in-scope, otherwise null.
+ * Confirm the driver belongs to, or has an active canonical authorization for, the active
+ * operating company before returning any operational depth data. Returns the driver id when
+ * in-scope, otherwise null.
  * RLS is still enforced at the row level; this is the explicit tenant gate.
  */
 export async function assertDriverScope(
@@ -52,9 +53,19 @@ export async function assertDriverScope(
   const res = await client.query<{ id: string }>(
     `
       SELECT id::text
-      FROM mdata.drivers
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations operations_depth_dca
+            WHERE operations_depth_dca.driver_id = d.id
+              AND operations_depth_dca.company_id = $2::uuid
+              AND operations_depth_dca.is_authorized = true
+              AND operations_depth_dca.deactivated_at IS NULL
+          )
+        )
       LIMIT 1
     `,
     [driverUuid, operatingCompanyId]

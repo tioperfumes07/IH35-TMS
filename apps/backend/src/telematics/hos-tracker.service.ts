@@ -197,7 +197,17 @@ export async function getHosDailyRoster(
        u.unit_number
      FROM telematics.vehicle_driver_assignments a
      JOIN mdata.drivers d ON d.id = a.driver_id
-                          AND d.operating_company_id = $1::uuid
+                          AND d.archived_at IS NULL
+                          AND (
+                            d.operating_company_id = $1::uuid
+                            OR EXISTS (
+                              SELECT 1 FROM mdata.driver_company_authorizations hos_roster_dca
+                              WHERE hos_roster_dca.driver_id = d.id
+                                AND hos_roster_dca.company_id = $1::uuid
+                                AND hos_roster_dca.is_authorized = true
+                                AND hos_roster_dca.deactivated_at IS NULL
+                            )
+                          )
      LEFT JOIN mdata.units u ON u.id = a.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
      WHERE a.operating_company_id = $1::uuid AND a.ended_at IS NULL AND a.driver_id IS NOT NULL

@@ -24,7 +24,20 @@ export async function runDriverRetentionScorerTick(): Promise<{ drivers_scored: 
     for (const company of companies.rows) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const drivers = await client.query<{ id: string }>(
-        `SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`,
+        `SELECT id::text AS id
+           FROM mdata.drivers d
+          WHERE (
+            d.operating_company_id = $1::uuid
+            OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations retention_worker_dca
+              WHERE retention_worker_dca.driver_id = d.id
+                AND retention_worker_dca.company_id = $1::uuid
+                AND retention_worker_dca.is_authorized = true
+                AND retention_worker_dca.deactivated_at IS NULL
+            )
+          )
+            AND d.deactivated_at IS NULL
+            AND d.archived_at IS NULL`,
         [company.id]
       );
       for (const driver of drivers.rows) {

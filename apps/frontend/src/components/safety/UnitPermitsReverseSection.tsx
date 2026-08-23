@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyPermits } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
-import { ListErrorBanner } from "../shared/ListErrorBanner";
+import { ListErrorState } from "../ListErrorState";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Props = {
@@ -28,7 +28,9 @@ export function UnitPermitsReverseSection({
         <h3 className="text-sm font-semibold text-slate-900">Permits</h3>
         <span className="text-xs text-gray-500">{query.isLoading ? "Loading…" : permits.length}</span>
       </div>
-      {query.isError ? <ListErrorBanner message="Couldn't load permits for this unit." /> : null}
+      {query.isError ? (
+        <ListErrorState status={0} message="Couldn't load permits for this unit." onRetry={() => void query.refetch()} />
+      ) : null}
       {!query.isLoading && !query.isError && permits.length === 0 ? (
         <p className="text-xs text-gray-500">No permits linked to this unit.</p>
       ) : null}

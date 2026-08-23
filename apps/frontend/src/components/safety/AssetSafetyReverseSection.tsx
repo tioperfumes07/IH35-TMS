@@ -10,6 +10,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 import { entityLabel } from "../../lib/entity-label";
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
@@ -85,6 +86,7 @@ function SectionShell({
   isLoading,
   isError,
   errorText,
+  onRetry,
   emptyText,
   count,
   children,
@@ -110,6 +112,7 @@ function SectionShell({
   isLoading: boolean;
   isError: boolean;
   errorText: string;
+  onRetry: () => void;
   emptyText: string;
   count: number;
   children: React.ReactNode;
@@ -129,7 +132,7 @@ function SectionShell({
         />
       </div>
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {isError ? <p className="text-sm text-red-600">{errorText}</p> : null}
+      {isError ? <ListErrorState title={errorText} status={0} onRetry={onRetry} /> : null}
       {!isLoading && !isError && count === 0 ? <p className="text-sm text-gray-500">{emptyText}</p> : null}
       {count > 0 ? <ul className="space-y-2">{children}</ul> : null}
     </div>
@@ -165,6 +168,7 @@ function IncidentsBlock({
       isLoading={query.isLoading}
       isError={query.isError}
       errorText={`Failed to load ${kind.title.toLowerCase()} for this ${assetKind}.`}
+      onRetry={() => void query.refetch()}
       emptyText={`No ${kind.title.toLowerCase()} for this ${assetKind}.`}
       count={rows.length}
     >
@@ -255,6 +259,7 @@ export function AssetSafetyReverseSection({
         isLoading={accidentsQuery.isLoading}
         isError={accidentsQuery.isError}
         errorText={`Failed to load accidents for this ${contextLabel}.`}
+        onRetry={() => void accidentsQuery.refetch()}
         emptyText={`No accidents recorded for this ${contextLabel}.`}
         count={accidents.length}
       >
@@ -296,6 +301,7 @@ export function AssetSafetyReverseSection({
         isLoading={inspectionsQuery.isLoading}
         isError={inspectionsQuery.isError}
         errorText={`Failed to load DOT inspections for this ${contextLabel}.`}
+        onRetry={() => void inspectionsQuery.refetch()}
         emptyText={`No DOT inspections for this ${contextLabel}.`}
         count={inspections.length}
       >
@@ -326,6 +332,7 @@ export function AssetSafetyReverseSection({
         isLoading={dvirQuery.isLoading}
         isError={dvirQuery.isError}
         errorText={`Failed to load DVIRs for this ${contextLabel}.`}
+        onRetry={() => void dvirQuery.refetch()}
         emptyText={`No DVIRs for this ${contextLabel}.`}
         count={dvirs.length}
       >

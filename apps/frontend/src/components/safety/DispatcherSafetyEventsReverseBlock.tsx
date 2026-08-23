@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { listDispatcherSafetyEventsByRelatedEntity } from "../../api/identity";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -35,7 +36,7 @@ export function DispatcherSafetyEventsReverseBlock({
         {events.length ? <span className="ml-2 text-xs font-normal text-gray-600">({events.length})</span> : null}
       </h3>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load dispatcher safety events.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Could not load dispatcher safety events." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="text-sm text-gray-500">None linked.</p> : null}
       {events.map((event) => (
         <article key={event.id} className="px-2 py-1.5 text-sm">

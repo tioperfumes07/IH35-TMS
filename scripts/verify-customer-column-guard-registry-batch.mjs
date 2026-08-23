@@ -8,6 +8,7 @@ const REQUIRED = [
   "verify-cargo-claim-customer-reverse.mjs", "verify-cashflow-predicted-customer-entitylink.mjs",
   "verify-customer-detail-page-self-referential.mjs", "verify-customer-entity-picker-kind.mjs",
   "verify-customer-inline-surface-linkage.mjs", "verify-customer-notify-linkage.mjs",
+  "verify-customer-reclassification-history-scope.mjs",
   "verify-customer-reverse-link-wired.mjs", "verify-customers-list-master-detail.mjs",
   "verify-customers-reverse-link-detail.mjs", "verify-dispatch-customer-queues-and-load-drawer.mjs",
   "verify-legal-customer-contract-reverse.mjs", "verify-lists-customer-search-and-create.mjs",
@@ -29,4 +30,4 @@ if (process.argv.includes("--selftest")) {
 }
 const problems = failures(classifyGuards());
 if (problems.length) { console.error(`${LABEL} FAIL\n${problems.join("\n")}`); process.exit(1); }
-console.log(`${LABEL} PASS — 14 customer-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 15 customer-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);

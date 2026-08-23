@@ -15,10 +15,11 @@ const listQuerySchema = z.object({
   event_type: eventTypeSchema.optional(),
   event_at_from: z.string().datetime().optional(),
   event_at_to: z.string().datetime().optional(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const createEquipmentLogBodySchema = z.object({
   equipment_id: z.string().uuid(),
@@ -214,14 +215,20 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       // Entity scope (USMCA cross-entity leak fix): mdata.equipment_log has NO company column and its
       // RLS is role-scoped, so a bare `WHERE id = $1` lets an Owner read another entity's equipment
-      // history by id. This route joins mdata.equipment, scoped by the owner/leased pair (mirrors the
-      // list endpoint above); resolve the company from the caller's context.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      // history by id. Resolve the explicitly selected company, not the account default: otherwise a
+      // valid USMCA activity drill silently 404s whenever that user's default company is different.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(

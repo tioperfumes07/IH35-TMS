@@ -43,7 +43,7 @@ const CHECKS = [
   ["apps/backend/src/assignments/quicksave.routes.ts", /INSERT INTO telematics\.vehicle_driver_assignments[\s\S]{0,220}'manual_override', true/],
   ["apps/backend/src/assignments/quicksave.routes.ts", /UPDATE mdata\.units[\s\S]{0,100}SET assigned_driver_id = \$3::uuid[\s\S]{0,160}owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/],
   ["apps/backend/src/assignments/quicksave.routes.ts", /appendCrudAudit\(client, user\.uuid, "assignments\.quicksave_truck"/],
-  ["apps/backend/src/mdata/unit-aggregate.service.ts", /FROM telematics\.vehicle_driver_assignments vda[\s\S]{0,180}vda\.unit_id = \$1::uuid[\s\S]{0,100}vda\.operating_company_id = \$2::uuid[\s\S]{0,100}vda\.is_default = true[\s\S]{0,80}vda\.ended_at IS NULL/],
+  ["apps/backend/src/mdata/unit-aggregate.service.ts", /FROM telematics\.vehicle_driver_assignments vda[\s\S]{0,500}aggregate_default_dca\.company_id = vda\.operating_company_id[\s\S]{0,180}aggregate_default_dca\.is_authorized = true[\s\S]{0,300}vda\.unit_id = \$1::uuid[\s\S]{0,100}vda\.operating_company_id = \$2::uuid[\s\S]{0,100}vda\.is_default = true[\s\S]{0,80}vda\.ended_at IS NULL/],
   ["apps/frontend/src/components/vehicle-profile/DriverAssignmentSection.tsx", /EntityLinkOrTombstone kind="driver" id=\{String\(defaultDriver\.id\)\} name=\{defaultDriver\.name\}/],
 ];
 

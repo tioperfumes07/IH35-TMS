@@ -10,8 +10,10 @@ const qualificationIdParamSchema = z.object({ id: z.string().uuid(), qual_id: z.
 const qualificationRateHistoryParamSchema = z.object({ id: z.string().uuid(), qual_id: z.string().uuid() });
 const companyAuthorizationIdParamSchema = z.object({ id: z.string().uuid(), auth_id: z.string().uuid() });
 const listQualificationsQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
   include_inactive: z.enum(["true", "false"]).optional(),
 });
+const qualificationHistoryQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const payRateChangeReasonSchema = z.enum([
@@ -95,14 +97,41 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     const parsedQuery = listQualificationsQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       // XE-IDOR fix (financial read leak): driver pay rates were keyed by driver_id ONLY. mdata.*
       // RLS is role-scoped, NOT entity-scoped, so a foreign driver id exposed another operating
       // company's negotiated pay rates. Resolve the caller's operating company and JOIN
       // mdata.drivers on operating_company_id so this can only ever return the caller's own
       // entity's qualifications (the pay-rate query below is transitively scoped by these ids).
-      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
-      if (!companyId) return { qualifications: [] };
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!companyId) return { found: false as const, qualifications: [] };
+
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1
+        `,
+        [parsed.data.id, companyId]
+      );
+      if (parent.rowCount === 0) return { found: false as const, qualifications: [] };
 
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const qualificationsRes = await client.query(
@@ -118,7 +147,6 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             et.code AS equipment_type_code,
             et.name AS equipment_type_name
           FROM mdata.driver_equipment_qualifications dq
-          JOIN mdata.drivers d ON d.id = dq.driver_id AND d.operating_company_id = $2::uuid
           JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
           WHERE dq.driver_id = $1
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
@@ -175,6 +203,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       }
 
       return {
+        found: true as const,
         qualifications: qualificationsRes.rows.map((row) => ({
           id: row.id,
           equipment_type_id: row.equipment_type_id,
@@ -190,6 +219,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         })),
       };
     });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { qualifications: result.qualifications };
   });
 
   app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
@@ -363,7 +394,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     const parsedBody = updateQualificationSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -408,23 +439,45 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string; qual_id: string } }>(
     "/api/v1/mdata/drivers/:id/qualifications/:qual_id/rate-history",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
       if (!authUser) return;
       const parsedParams = qualificationRateHistoryParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+      const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
+        const companyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          parsedQuery.data.operating_company_id
+        );
+        if (!companyId) return reply.code(404).send({ error: "driver_qualification_not_found" });
         const qualificationRes = await client.query(
           `
-            SELECT id, equipment_type_id
-            FROM mdata.driver_equipment_qualifications
-            WHERE id = $1
-              AND driver_id = $2
-              AND deactivated_at IS NULL
+            SELECT dq.id, dq.equipment_type_id
+            FROM mdata.driver_equipment_qualifications dq
+            JOIN mdata.drivers d
+              ON d.id = dq.driver_id
+             AND (
+               d.operating_company_id = $3::uuid
+               OR EXISTS (
+                 SELECT 1
+                 FROM mdata.driver_company_authorizations qualification_history_dca
+                 WHERE qualification_history_dca.driver_id = d.id
+                   AND qualification_history_dca.company_id = $3::uuid
+                   AND qualification_history_dca.is_authorized = true
+                   AND qualification_history_dca.deactivated_at IS NULL
+               )
+             )
+            WHERE dq.id = $1
+              AND dq.driver_id = $2
+              AND dq.deactivated_at IS NULL
             LIMIT 1
           `,
-          [parsedParams.data.qual_id, parsedParams.data.id]
+          [parsedParams.data.qual_id, parsedParams.data.id, companyId]
         );
         if (qualificationRes.rows.length === 0) return reply.code(404).send({ error: "driver_qualification_not_found" });
 
@@ -842,8 +895,38 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsed = idParamSchema.safeParse(req.params ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!companyId) return { found: false as const, authorizations: [] };
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations selected_dca
+                WHERE selected_dca.driver_id = d.id
+                  AND selected_dca.company_id = $2::uuid
+                  AND selected_dca.is_authorized = true
+                  AND selected_dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1
+        `,
+        [parsed.data.id, companyId]
+      );
+      if (parent.rowCount === 0) return { found: false as const, authorizations: [] };
       const res = await client.query(
         `
           SELECT
@@ -865,9 +948,10 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             AND dca.deactivated_at IS NULL
           ORDER BY c.legal_name
         `,
-        [parsed.data.id]
+        [parsed.data.id, companyId]
       );
       return {
+        found: true as const,
         authorizations: res.rows.map((row) => ({
           id: row.id,
           company_id: row.company_id,
@@ -884,6 +968,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         })),
       };
     });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { authorizations: result.authorizations };
   });
 
   app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations", async (req, reply) => {

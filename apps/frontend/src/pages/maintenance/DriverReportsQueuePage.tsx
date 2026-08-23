@@ -41,6 +41,8 @@ export function DriverReportsQueuePage({
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
   const staged = useStagedListFilters({
     applied: {
       statusFilter,
@@ -49,6 +51,7 @@ export function DriverReportsQueuePage({
     },
     empty: { statusFilter: "" as const, driverId: "", loadId: "" },
     onApply: (next) => {
+      setPage(1);
       setStatusFilter(next.statusFilter);
       setDriverPickerId(next.driverId);
       setLoadPickerId(next.loadId);
@@ -69,13 +72,15 @@ export function DriverReportsQueuePage({
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
   const q = useQuery({
-    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, effectiveDriverId, effectiveLoadId],
+    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, effectiveDriverId, effectiveLoadId, page],
     queryFn: () =>
       listDriverReports({
         operating_company_id: operatingCompanyId,
         status: statusFilter || undefined,
         driver_id: effectiveDriverId,
         load_id: effectiveLoadId,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -175,6 +180,7 @@ export function DriverReportsQueuePage({
           onRetry={() => void q.refetch()}
         />
       ) : (
+      <>
       <ParityTable<DriverReportRow>
         columns={columns}
         rows={rows}
@@ -185,6 +191,8 @@ export function DriverReportsQueuePage({
         storageKey="maint-damage-reports"
         exportFilename="driver-reports"
         rowActions={rowActions}
+        pageSize={rows.length || pageSize}
+        hidePager
         filterBar={
           <div data-driver-reports-filter-toolbar="collapsed">
             <CollapsedListFilters
@@ -238,6 +246,14 @@ export function DriverReportsQueuePage({
           </div>
         }
       />
+      {q.data && q.data.total_count > 0 ? (
+        <div className="flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="driver-reports-server-pager">
+          <span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, q.data.total_count)} of {q.data.total_count}</span>
+          <Button size="sm" variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <Button size="sm" variant="secondary" disabled={page * pageSize >= q.data.total_count} onClick={() => setPage((current) => current + 1)}>Next</Button>
+        </div>
+      ) : null}
+      </>
       )}
     </div>
   );

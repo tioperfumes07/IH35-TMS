@@ -20,7 +20,24 @@ function read(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
 }
 
+function selftest() {
+  const plantedMissingParent =
+    'path="training/programs" element={<TrainingProgramsTab />} path="training/records" element={<TrainingRecordsTab />}';
+  if (/path="training"[\s\S]{0,80}Navigate to="\/safety\/training\/programs"/.test(plantedMissingParent)) {
+    throw new Error("SELFTEST FAILED: planted missing /safety/training Navigate was not a fail case");
+  }
+  const plantedFixed = `${plantedMissingParent}\n<Route path="training" element={<Navigate to="/safety/training/programs" replace />} />`;
+  if (!/path="training"[\s\S]{0,80}Navigate to="\/safety\/training\/programs"/.test(plantedFixed)) {
+    throw new Error("SELFTEST FAILED: planted /safety/training Navigate did not match");
+  }
+}
+
 function main() {
+  if (process.argv.includes("--selftest")) {
+    selftest();
+    console.log("verify:safety-meetings-training-wire --selftest OK");
+    return;
+  }
   const failures = [];
   const meetingsPage = read(paths.meetingsPage);
   const programsPage = read(paths.programsPage);
@@ -81,6 +98,13 @@ function main() {
   }
   if (!manifest.includes('path="training/records"') || !manifest.includes("<TrainingRecordsTab")) {
     failures.push("manifest must route training/records to TrainingRecordsTab under /safety");
+  }
+  if (
+    !/path="training"[\s\S]{0,80}Navigate to="\/safety\/training\/programs"/.test(manifest)
+  ) {
+    failures.push(
+      "manifest must Navigate /safety/training (parent, no leaf) to /safety/training/programs — not the app catch-all /home"
+    );
   }
 
   if (!meetingsTab.includes("SafetyMeetingsPage")) {

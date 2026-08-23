@@ -63,7 +63,16 @@ const MESSAGE_SELECT = `
     concat_ws(' ', d.first_name, d.last_name) AS driver_name
   FROM mdata.driver_profile_messages m
   JOIN mdata.drivers d ON d.id = m.driver_id
-                       AND d.operating_company_id = m.operating_company_id
+                       AND (
+                         d.operating_company_id = m.operating_company_id
+                         OR EXISTS (
+                           SELECT 1 FROM mdata.driver_company_authorizations select_dca
+                           WHERE select_dca.driver_id = d.id
+                             AND select_dca.company_id = m.operating_company_id
+                             AND select_dca.is_authorized = true
+                             AND select_dca.deactivated_at IS NULL
+                         )
+                       )
 `;
 
 export async function listDriverMessageThread(
@@ -123,7 +132,16 @@ export async function listOfficeInbox(
           AND m.created_by IS NOT NULL
           AND m.created_by = d.identity_user_id
       ) uc ON true
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations inbox_dca
+            WHERE inbox_dca.driver_id = d.id
+              AND inbox_dca.company_id = $1::uuid
+              AND inbox_dca.is_authorized = true
+              AND inbox_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
         AND d.archived_at IS NULL
       ORDER BY lm.created_at DESC
@@ -170,6 +188,44 @@ export async function listDriverPwaMessages(client: Queryable, driverId: string)
   return res.rows.map((row) => mapMessageRow(row as Record<string, unknown>));
 }
 
+/**
+ * DRV-F6179 — the PWA GET (listDriverPwaMessages, DRV-F6178) returns messages from every company
+ * the driver is authorized for, home or shared, but the write endpoints (reply / mark-read) always
+ * derived the acting company from the driver's HOME company alone. A shared driver marking a
+ * non-home-company message read got a 404 (dead click); replying silently inserted the reply into
+ * the wrong (home-company) thread instead of erroring. This asserts the SAME predicate the SELECT
+ * side and markMessageRead already encode (home company OR an active canonical authorization)
+ * BEFORE a write is allowed to target a non-home company. Throws `driver_company_not_authorized`.
+ */
+export async function assertDriverActingCompany(
+  client: Queryable,
+  driverId: string,
+  operatingCompanyId: string
+): Promise<void> {
+  const res = await client.query(
+    `
+      SELECT 1
+      FROM mdata.drivers d
+      WHERE d.id = $1
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations acting_dca
+            WHERE acting_dca.driver_id = d.id
+              AND acting_dca.company_id = $2::uuid
+              AND acting_dca.is_authorized = true
+              AND acting_dca.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1
+    `,
+    [driverId, operatingCompanyId]
+  );
+  if (res.rows.length === 0) {
+    throw new Error("driver_company_not_authorized");
+  }
+}
+
 export async function markMessageRead(
   client: Queryable,
   messageId: string,
@@ -182,7 +238,17 @@ export async function markMessageRead(
       SET read_at = COALESCE(read_at, now()),
           read_by = COALESCE(read_by, $3::uuid)
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $2::uuid AND m.id = $1::uuid
+      WHERE (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations read_dca
+            WHERE read_dca.driver_id = d.id
+              AND read_dca.company_id = $2::uuid
+              AND read_dca.is_authorized = true
+              AND read_dca.deactivated_at IS NULL
+          )
+        )
+        AND m.id = $1::uuid
         AND m.operating_company_id = $2::uuid
         AND m.driver_id = d.id
       RETURNING
@@ -251,7 +317,19 @@ export async function deliverDriverProfileMessage(
   }
 
   const driverRes = await client.query<{ phone: string | null; email: string | null; identity_user_id: string | null }>(
-    `SELECT phone, email, identity_user_id::text FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid`,
+    `SELECT phone, email, identity_user_id::text
+     FROM mdata.drivers d
+     WHERE d.id = $1
+       AND (
+         d.operating_company_id = $2::uuid
+         OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations delivery_dca
+           WHERE delivery_dca.driver_id = d.id
+             AND delivery_dca.company_id = $2::uuid
+             AND delivery_dca.is_authorized = true
+             AND delivery_dca.deactivated_at IS NULL
+         )
+       )`,
     [input.driverId, input.operatingCompanyId]
   );
   const driver = driverRes.rows[0];

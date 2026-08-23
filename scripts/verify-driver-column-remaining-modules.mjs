@@ -43,6 +43,8 @@ const CHECKS = [
   ["apps/frontend/src/components/tasks/TaskSubjectLink.tsx", /driver: "driver",/],
   // EntityPicker kinds include load (tasks + docs upload) — still require driver in the union.
   ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "customer" \| "vendor" \| "driver" \| "unit" \| "load"\}/],
+  ["apps/backend/src/tasks/task.routes.ts", /FROM mdata\.driver_company_authorizations task_list_subject_dca[\s\S]{0,180}task_list_subject_dca\.driver_id = subject_driver\.id[\s\S]{0,140}task_list_subject_dca\.company_id = t\.operating_company_id[\s\S]{0,140}task_list_subject_dca\.is_authorized = true[\s\S]{0,140}task_list_subject_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/tasks/task.routes.ts", /FROM mdata\.driver_company_authorizations task_calendar_subject_dca[\s\S]{0,180}task_calendar_subject_dca\.driver_id = subject_driver\.id[\s\S]{0,140}task_calendar_subject_dca\.company_id = t\.operating_company_id[\s\S]{0,140}task_calendar_subject_dca\.is_authorized = true[\s\S]{0,140}task_calendar_subject_dca\.deactivated_at IS NULL/],
   // docs: home, tab.all, tab.driver, upload, table.entity_link
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "driver":/],
   ["apps/frontend/src/components/documents/UploadModal.tsx", /type StandaloneLinkType = "driver" \| "unit" \| "vendor" \| "customer" \| "load";[\s\S]{0,500}function standaloneLinkToPickerKind\(type: StandaloneLinkType\): EntityPickerKind \{\s*return type;\s*\}/],

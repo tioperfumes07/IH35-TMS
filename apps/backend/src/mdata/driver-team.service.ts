@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertDriverQualifiedForLoad } from "../dispatch/driver-qualification.service.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 export type TeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
@@ -101,7 +102,7 @@ async function getTeam(client: Queryable, teamId: string, operatingCompanyId: st
 
 export async function listDriverTeams(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT
@@ -110,9 +111,17 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                             AND pd.operating_company_id = t.operating_company_id
+                             AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                  AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                             ))
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
-                             AND cd.operating_company_id = t.operating_company_id
+                             AND (cd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations cd_dca
+                                WHERE cd_dca.driver_id = cd.id AND cd_dca.company_id = t.operating_company_id
+                                  AND cd_dca.is_authorized = true AND cd_dca.deactivated_at IS NULL
+                             ))
         WHERE t.operating_company_id = $1::uuid
         ORDER BY t.is_active DESC, t.created_at DESC
       `,
@@ -124,7 +133,7 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
 
 export async function getDriverTeam(userId: string, operatingCompanyId: string, teamId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const teamRes = await client.query(
       `
         SELECT
@@ -133,9 +142,17 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                             AND pd.operating_company_id = t.operating_company_id
+                             AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                  AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                             ))
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
-                             AND cd.operating_company_id = t.operating_company_id
+                             AND (cd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations cd_dca
+                                WHERE cd_dca.driver_id = cd.id AND cd_dca.company_id = t.operating_company_id
+                                  AND cd_dca.is_authorized = true AND cd_dca.deactivated_at IS NULL
+                             ))
         WHERE t.id = $2
           AND t.operating_company_id = $1::uuid
         LIMIT 1
@@ -155,7 +172,11 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
          AND load.operating_company_id = split.operating_company_id
         JOIN mdata.drivers driver
           ON driver.id = split.driver_id
-         AND driver.operating_company_id = split.operating_company_id
+         AND (driver.operating_company_id = split.operating_company_id OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations history_dca
+            WHERE history_dca.driver_id = driver.id AND history_dca.company_id = split.operating_company_id
+              AND history_dca.is_authorized = true AND history_dca.deactivated_at IS NULL
+         ))
         WHERE split.team_id = $1
           AND split.operating_company_id = $2::uuid
         ORDER BY split.computed_at DESC
@@ -184,7 +205,13 @@ export async function createTeam(
   if (input.primary_driver_id === input.co_driver_id) throw new Error("E_PRIMARY_AND_CO_MUST_DIFFER");
   const shares = normalizeShares(input.split_method, input.primary_share_pct, input.co_share_pct);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // DRV-F6002 — this GUC drove FORCED RLS for every write below with NO proof the authenticated
+    // user actually belongs to input.operating_company_id: a caller-supplied UUID for a company the
+    // user has no membership in was installed as-is (same class as DRV-F6001, which fixed this pair
+    // of functions' sibling READ entry points — listDriverTeams/getDriverTeam, both already routed
+    // through setScopedCompanyContext above). This function posts real driver-team money (settlement
+    // split config / load assignment / split computation), making it the higher-severity half.
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await assertDriverCompany(client, input.primary_driver_id, input.operating_company_id);
     await assertDriverCompany(client, input.co_driver_id, input.operating_company_id);
     await assertNotInOtherActiveTeam(client, input.primary_driver_id);
@@ -249,7 +276,13 @@ export async function updateTeamSplit(
 ) {
   const shares = normalizeShares(input.split_method, input.primary_share_pct, input.co_share_pct);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // DRV-F6002 — this GUC drove FORCED RLS for every write below with NO proof the authenticated
+    // user actually belongs to input.operating_company_id: a caller-supplied UUID for a company the
+    // user has no membership in was installed as-is (same class as DRV-F6001, which fixed this pair
+    // of functions' sibling READ entry points — listDriverTeams/getDriverTeam, both already routed
+    // through setScopedCompanyContext above). This function posts real driver-team money (settlement
+    // split config / load assignment / split computation), making it the higher-severity half.
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const current = await getTeam(client, input.team_id, input.operating_company_id);
     const inProgressRes = await client.query(
       `
@@ -327,7 +360,13 @@ export async function deactivateTeam(
 ) {
   if (!input.reason?.trim()) throw new Error("E_REASON_REQUIRED");
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // DRV-F6002 — this GUC drove FORCED RLS for every write below with NO proof the authenticated
+    // user actually belongs to input.operating_company_id: a caller-supplied UUID for a company the
+    // user has no membership in was installed as-is (same class as DRV-F6001, which fixed this pair
+    // of functions' sibling READ entry points — listDriverTeams/getDriverTeam, both already routed
+    // through setScopedCompanyContext above). This function posts real driver-team money (settlement
+    // split config / load assignment / split computation), making it the higher-severity half.
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await getTeam(client, input.team_id, input.operating_company_id);
     const inProgressRes = await client.query(
       `
@@ -378,7 +417,13 @@ export async function assignTeamToLoad(
   input: { operating_company_id: string; load_id: string; team_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // DRV-F6002 — this GUC drove FORCED RLS for every write below with NO proof the authenticated
+    // user actually belongs to input.operating_company_id: a caller-supplied UUID for a company the
+    // user has no membership in was installed as-is (same class as DRV-F6001, which fixed this pair
+    // of functions' sibling READ entry points — listDriverTeams/getDriverTeam, both already routed
+    // through setScopedCompanyContext above). This function posts real driver-team money (settlement
+    // split config / load assignment / split computation), making it the higher-severity half.
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const team = await getTeam(client, input.team_id, input.operating_company_id);
     if (!team.is_active) throw new Error("E_TEAM_NOT_ACTIVE");
 
@@ -430,7 +475,13 @@ export async function assignTeamToLoad(
 
 export async function computeTeamLoadSplit(userId: string, input: { operating_company_id: string; load_id: string }) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // DRV-F6002 — this GUC drove FORCED RLS for every write below with NO proof the authenticated
+    // user actually belongs to input.operating_company_id: a caller-supplied UUID for a company the
+    // user has no membership in was installed as-is (same class as DRV-F6001, which fixed this pair
+    // of functions' sibling READ entry points — listDriverTeams/getDriverTeam, both already routed
+    // through setScopedCompanyContext above). This function posts real driver-team money (settlement
+    // split config / load assignment / split computation), making it the higher-severity half.
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const loadRes = await client.query(
       `
         SELECT id, operating_company_id, team_id, assigned_primary_driver_id, rate_total_cents

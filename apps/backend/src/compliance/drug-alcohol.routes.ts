@@ -124,7 +124,13 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
           JOIN compliance.drug_alcohol_random_draws d ON d.id = s.draw_id
           LEFT JOIN mdata.drivers dr
             ON dr.id = s.driver_id
-           AND dr.operating_company_id = d.operating_company_id
+           AND (dr.operating_company_id = d.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations drug_draw_list_dca
+             WHERE drug_draw_list_dca.driver_id = dr.id
+               AND drug_draw_list_dca.company_id = d.operating_company_id
+               AND drug_draw_list_dca.is_authorized = true
+               AND drug_draw_list_dca.deactivated_at IS NULL
+           ))
           WHERE d.operating_company_id = $1::uuid
           ORDER BY s.created_at DESC
           LIMIT 100
@@ -180,7 +186,13 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
           FROM compliance.drug_alcohol_test_results t
           LEFT JOIN mdata.drivers d
             ON d.id = t.driver_id
-           AND d.operating_company_id = t.operating_company_id
+           AND (d.operating_company_id = t.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations drug_results_list_dca
+             WHERE drug_results_list_dca.driver_id = d.id
+               AND drug_results_list_dca.company_id = t.operating_company_id
+               AND drug_results_list_dca.is_authorized = true
+               AND drug_results_list_dca.deactivated_at IS NULL
+           ))
           WHERE t.operating_company_id = $1::uuid
           ORDER BY t.test_date DESC, t.created_at DESC
           LIMIT 200

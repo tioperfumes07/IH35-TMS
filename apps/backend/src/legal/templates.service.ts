@@ -13,8 +13,20 @@ const variableDefinitionSchema = z.object({
   description: z.string().trim().max(500).optional(),
 });
 
+// CC3-LEGAL-LEASE-VARSCHEMA-500-20260822: `fields` used to be required with no default, so
+// `variableSchemaSchema.parse({})` threw an uncaught ZodError for any template whose form is
+// driven by a bespoke wizard instead of the generic flat variable-interpolation model (lease_to_own,
+// truck_lease -- both seeded with variable_schema = {}, no `fields` key at all, since their real
+// form fields are hardcoded in LeaseToOwnCreatorModal.tsx / the truck-lease equivalent, never meant
+// to flow through validateFilledVariablesAgainstSchema's flat-field required-check). That exception
+// propagated out of createContractInstance uncaught, was not one of the 3 error messages the route's
+// catch block maps to a specific status, and fell through to a raw 500 legal_contract_create_failed
+// with no error surfaced in the UI at all (a silent failure from the operator's perspective: no
+// toast, no banner, "Save draft" just did nothing). A template with no declared fields has zero
+// required variables, not a malformed schema -- default to {} so validation trivially passes instead
+// of crashing.
 const variableSchemaSchema = z.object({
-  fields: z.record(z.string().trim().min(1).max(120), variableDefinitionSchema),
+  fields: z.record(z.string().trim().min(1).max(120), variableDefinitionSchema).default({}),
 });
 
 export const legalTemplateDraftSchema = z.object({

@@ -31,6 +31,14 @@ function fail(msg) {
   process.exit(1);
 }
 
+function portalFailureTruthProblems(source) {
+  const failures = [];
+  if (!/portalQ\.isError[\s\S]{0,500}Couldn't load applicant portal link[\s\S]{0,300}portalQ\.refetch\(\)/.test(source)) {
+    failures.push("Applicant portal GET failure must expose an exact retry");
+  }
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const routes = read(paths.routes);
@@ -60,6 +68,7 @@ function main() {
   if (!applicationPage.includes("ApplicationPage")) failures.push("ApplicationPage required");
   if (!applicationPage.includes("fcra_notice")) failures.push("ApplicationPage must show FCRA compliance notice");
   if (!pipelinePage.includes("ApplicantsPipelinePage")) failures.push("ApplicantsPipelinePage required");
+  failures.push(...portalFailureTruthProblems(pipelinePage));
   if (!pipelinePage.includes('kind="driver" id={row.converted_driver_id}')) {
     failures.push("Converted applicant name must drill canonical driver identity");
   }
@@ -83,12 +92,21 @@ function main() {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-application-portal");
   }
 
+  if (process.argv.includes("--selftest")) {
+    const mutation = pipelinePage.replace("portalQ.refetch()", "portalRetryRemoved()");
+    if (mutation === pipelinePage || portalFailureTruthProblems(mutation).length === 0) {
+      failures.push("Applicant portal retry-removal mutation escaped the guard");
+    }
+  }
+
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail("FAILED");
   }
 
-  console.log("[verify-drivers-application-portal] OK");
+  console.log(process.argv.includes("--selftest")
+    ? "[verify-drivers-application-portal] SELFTEST OK — portal retry mutation caught"
+    : "[verify-drivers-application-portal] OK");
 }
 
 main();

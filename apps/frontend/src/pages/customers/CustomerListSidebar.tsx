@@ -30,6 +30,7 @@ type Props = {
   sortByName: "name_asc" | "name_desc";
   selectedCustomerId: string;
   openByCustomerId: Map<string, number>;
+  openBalancesAvailable: boolean;
   onSearchChange: (value: string) => void;
   onSortChange: (value: "name_asc" | "name_desc") => void;
   onPageChange: (page: number) => void;
@@ -47,6 +48,7 @@ export function CustomerListSidebar({
   sortByName,
   selectedCustomerId,
   openByCustomerId,
+  openBalancesAvailable,
   onSearchChange,
   onSortChange,
   onPageChange,
@@ -138,7 +140,9 @@ export function CustomerListSidebar({
                         <span title={customer.name} className="single-line-name">{customer.name}</span>
                       </CardLink>
                     </td>
-                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByCustomerId.get(customer.id) ?? 0)}</td>
+                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">
+                      {openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"}
+                    </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${rating.className}`}>{rating.label}</span>
                     </td>

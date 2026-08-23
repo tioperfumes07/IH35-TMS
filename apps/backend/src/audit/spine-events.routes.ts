@@ -140,7 +140,14 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
       LEFT JOIN mdata.drivers d
         ON el.subject_type = 'driver'
        AND d.id = el.subject_id
-       AND d.operating_company_id = el.operating_company_id
+       AND d.archived_at IS NULL
+       AND (d.operating_company_id = el.operating_company_id OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations spine_driver_dca
+         WHERE spine_driver_dca.driver_id = d.id
+           AND spine_driver_dca.company_id = el.operating_company_id
+           AND spine_driver_dca.is_authorized = true
+           AND spine_driver_dca.deactivated_at IS NULL
+       ))
       LEFT JOIN mdata.units un
         ON el.subject_type = 'unit'
        AND un.id = el.subject_id

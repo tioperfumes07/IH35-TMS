@@ -7,6 +7,7 @@ import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../component
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
@@ -111,6 +112,8 @@ function buildUnitsUrl(operatingCompanyId: string, typeFilter: string, includeIn
 
 export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, showMaintenanceColumns = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [locationHosExportError, setLocationHosExportError] = useState<string | null>(null);
+  const [isExportingLocationHos, setIsExportingLocationHos] = useState(false);
   const typeFilter = parseFleetTypeFilter(searchParams);
   const kindFilter = searchParams.get("kind") ?? "";
   const rawStatus = searchParams.get("status");
@@ -215,6 +218,19 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       m[r.id] = { odometer_mi: r.odometer_mi, next_due_odometer: r.next_due_odometer, open_wo_count: r.open_wo_count };
     return m;
   }, [maintStatusQuery.data]);
+
+  async function exportLocationHos() {
+    setLocationHosExportError(null);
+    setIsExportingLocationHos(true);
+    try {
+      await downloadFleetLocationHosXlsx(operatingCompanyId);
+    } catch {
+      // FLEET-F6114: the old fire-and-forget catch made a failed export a silent dead click.
+      setLocationHosExportError("Location + HOS export failed. Check the fleet feed and try again.");
+    } finally {
+      setIsExportingLocationHos(false);
+    }
+  }
 
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
   // LV-FLEET-SEARCH-NO-FILTER follow-up: bind search to ?q= so Live/CDP can prove filter without
@@ -360,6 +376,11 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         />
       </div>
 
+      {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}
+      {totalRowsQuery.isError ? <ListErrorState status={0} message="The all-type fleet count could not be loaded." onRetry={() => void totalRowsQuery.refetch()} /> : null}
+      {fleetLocationQuery.isError ? <ListErrorState status={0} message="Fleet location and HOS data could not be loaded." onRetry={() => void fleetLocationQuery.refetch()} /> : null}
+      {showMaintenanceColumns && maintStatusQuery.isError ? <ListErrorState status={0} message="Fleet maintenance status could not be loaded." onRetry={() => void maintStatusQuery.refetch()} /> : null}
+
       <div
         className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
         data-fleet-page-filter-toolbar="collapsed"
@@ -407,12 +428,19 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           type="button"
           className="ml-auto rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           title="Current location + assigned driver + Hours of Service for all reporting vehicles (Samsara)"
-          onClick={() => {
-            void downloadFleetLocationHosXlsx(operatingCompanyId).catch(() => undefined);
-          }}
+          onClick={() => void exportLocationHos()}
+          disabled={isExportingLocationHos}
         >
-          Export Location + HOS (Excel)
+          {isExportingLocationHos ? "Exporting…" : "Export Location + HOS (Excel)"}
         </button>
+        {locationHosExportError ? (
+          <span role="alert" className="flex items-center gap-2 text-xs text-red-700" data-testid="fleet-location-hos-export-error">
+            {locationHosExportError}
+            <button type="button" className="font-semibold underline" onClick={() => void exportLocationHos()}>
+              Retry
+            </button>
+          </span>
+        ) : null}
         {hasActiveFilter ? (
           <button
             type="button"
@@ -427,7 +455,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         ) : null}
       </div>
 
-      {listState.isEmpty ? (
+      {listState.isError ? (
+        <ListErrorState status={0} message="The company fleet roster could not be loaded." onRetry={() => void rowsQuery.refetch()} />
+      ) : listState.isEmpty ? (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">

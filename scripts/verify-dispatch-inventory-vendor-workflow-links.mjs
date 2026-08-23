@@ -40,6 +40,8 @@ export function verify(source) {
   need("transfers", "operating_company_id=${encodeURIComponent(companyId)}", "equipment-transfer reads must remain explicitly company scoped");
   need("layover", 'kind="driver"', "layover history must reverse-drill to its driver profile");
   need("layover", "operatingCompanyId={operatingCompanyId}", "layover history must pass explicit company scope to its data panel");
+  need("layover", "driverQuery.isError", "layover history must distinguish driver identity GET failure from a missing label");
+  need("layover", "onRetry={() => void driverQuery.refetch()}", "layover driver identity failure must retry the exact scoped query");
   need("assignments", 'kind="work_order"', "assignment trail must drill to work orders");
   need("assignments", 'kind="unit"', "assignment trail must drill to units");
   need("assignments", 'kind="vendor"', "assignment trail must drill to vendors");
@@ -78,6 +80,8 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["transfers", "operating_company_id=${encodeURIComponent(companyId)}", "operating_company_id="],
     ["layover", 'kind="driver"', 'kind="load"'],
     ["layover", "operatingCompanyId={operatingCompanyId}", "operatingCompanyId={undefined}"],
+    ["layover", "driverQuery.isError", "driverQuery.isSuccess"],
+    ["layover", "onRetry={() => void driverQuery.refetch()}", "onRetry={undefined}"],
     ["assignments", 'kind="work_order"', 'kind="unit"'],
     ["assignments", 'kind="unit"', 'kind="driver"'],
     ["assignments", 'kind="vendor"', 'kind="customer"'],

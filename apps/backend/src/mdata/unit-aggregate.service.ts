@@ -123,8 +123,8 @@ async function lookupLinkedPolicies(
   client: DbClient,
   operatingCompanyId: string,
   unitId: string
-): Promise<LinkedPolicyRow[]> {
-  const res = await withSavepoint(
+): Promise<{ policies: LinkedPolicyRow[]; unavailable: boolean }> {
+  const res = await withSavepoint<{ rows: LinkedPolicyRow[]; unavailable: boolean }>(
     client,
     "unit_aggregate_linked_policies",
     () =>
@@ -148,10 +148,10 @@ async function lookupLinkedPolicies(
           ORDER BY (p.status = 'active') DESC, p.expiry_date DESC
         `,
         [operatingCompanyId, unitId]
-      ),
-    { rows: [] as LinkedPolicyRow[] }
+      ).then((result) => ({ ...result, unavailable: false })),
+    { rows: [], unavailable: true }
   );
-  return res.rows;
+  return { policies: res.rows, unavailable: res.unavailable };
 }
 
 async function mapDriverRow(row: Record<string, unknown> | undefined, extra?: Record<string, unknown>) {
@@ -243,7 +243,13 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                          AND d.operating_company_id = vda.operating_company_id
+                          AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
+                            SELECT 1 FROM mdata.driver_company_authorizations aggregate_default_dca
+                             WHERE aggregate_default_dca.driver_id = d.id
+                               AND aggregate_default_dca.company_id = vda.operating_company_id
+                               AND aggregate_default_dca.is_authorized = true
+                               AND aggregate_default_dca.deactivated_at IS NULL
+                          ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -259,7 +265,13 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                          AND d.operating_company_id = vda.operating_company_id
+                          AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
+                            SELECT 1 FROM mdata.driver_company_authorizations aggregate_current_dca
+                             WHERE aggregate_current_dca.driver_id = d.id
+                               AND aggregate_current_dca.company_id = vda.operating_company_id
+                               AND aggregate_current_dca.is_authorized = true
+                               AND aggregate_current_dca.deactivated_at IS NULL
+                          ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
@@ -328,7 +340,7 @@ export async function buildUnitAggregate(
       WHERE l.assigned_unit_id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
-        AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed')
+        AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
       ORDER BY l.updated_at DESC
       LIMIT 1
     `,
@@ -373,6 +385,7 @@ export async function buildUnitAggregate(
       FROM maintenance.work_orders w
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
         AND w.status NOT IN ('complete', 'completed', 'cancelled')
     `,
     [unitId, operatingCompanyId]
@@ -384,6 +397,7 @@ export async function buildUnitAggregate(
       SELECT ps.label, ps.next_due_odometer::int, ps.last_service_odometer::int
       FROM maintenance.pm_alerts pa
       JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id
+                                      AND ps.operating_company_id = pa.operating_company_id
       WHERE pa.unit_id = $1::uuid
         AND pa.operating_company_id = $2::uuid
         AND pa.state IN ('open', 'acknowledged')
@@ -414,13 +428,14 @@ export async function buildUnitAggregate(
         w.updated_at::text AS date,
         NULL::int AS odometer,
         w.total_actual_cost AS cost,
-        w.external_vendor_id::text AS vendor_id,
+        COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id,
         v.vendor_name AS vendor
       FROM maintenance.work_orders w
-      LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
+      LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id)
                                AND v.operating_company_id = w.operating_company_id
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
         AND w.status IN ('complete', 'completed')
       ORDER BY w.updated_at DESC NULLS LAST
       LIMIT 1
@@ -625,6 +640,7 @@ export async function buildUnitAggregate(
       FROM maintenance.work_orders w
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
       ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
       LIMIT 10
     `,
@@ -642,7 +658,13 @@ export async function buildUnitAggregate(
         NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.unit_photos p
       LEFT JOIN mdata.drivers d ON d.id = p.uploaded_by_driver_id
-                               AND d.operating_company_id = p.operating_company_id
+                               AND (d.operating_company_id = p.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations photo_dca
+                                  WHERE photo_dca.driver_id = d.id
+                                    AND photo_dca.company_id = p.operating_company_id
+                                    AND photo_dca.is_authorized = true
+                                    AND photo_dca.deactivated_at IS NULL
+                               ))
       WHERE p.unit_id = $1::uuid
         AND p.operating_company_id = $2::uuid
         AND p.archived_at IS NULL
@@ -729,7 +751,7 @@ export async function buildUnitAggregate(
     (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
 
   const unitNumber = unit.unit_number != null ? String(unit.unit_number) : null;
-  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicies] = await Promise.all([
+  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicyRead] = await Promise.all([
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.us_insurance_policy_number as string | null),
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.mx_insurance_policy_number as string | null),
     lookupLinkedPolicies(client, operatingCompanyId, unitId),
@@ -777,7 +799,7 @@ export async function buildUnitAggregate(
       // Real FK-linked policies (insurance.policy_unit) — never gated on the legacy text fields
       // above, so a policy attached through the Insurance module is visible here even when nobody
       // has hand-typed a matching policy number into this unit's legacy us_/mx_insurance_* columns.
-      linked_policies: linkedPolicies.map((p) => ({
+      linked_policies: linkedPolicyRead.policies.map((p) => ({
         policy_id: p.policy_id,
         number: p.policy_number,
         carrier: p.insurer_name,
@@ -786,6 +808,7 @@ export async function buildUnitAggregate(
         coverage_type: p.coverage_type,
         status: p.status,
       })),
+      linked_policies_unavailable: linkedPolicyRead.unavailable,
     },
     total_ownership_cost: {
       purchase_price_cents,

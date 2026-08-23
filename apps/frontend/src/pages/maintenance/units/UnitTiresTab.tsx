@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { TireWearProjectionChart } from "../../../components/maintenance/TireWearProjectionChart";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type TreadMeasurement = {
   uuid: string;
@@ -82,7 +83,10 @@ export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
         <p className="text-xs text-gray-500">Loading tire wear data...</p>
       ) : null}
 
-      {positions.length === 0 ? (
+      {measurementsQ.isError ? <ListErrorState status={0} message="Tire measurements could not be loaded." onRetry={() => void measurementsQ.refetch()} /> : null}
+      {projectionsQ.isError ? <ListErrorState status={0} message="Tire wear projections could not be loaded." onRetry={() => void projectionsQ.refetch()} /> : null}
+
+      {positions.length === 0 && !measurementsQ.isLoading && !measurementsQ.isError && !projectionsQ.isError ? (
         <p className="text-xs text-gray-500">No tread measurements recorded for this unit yet.</p>
       ) : (
         <>

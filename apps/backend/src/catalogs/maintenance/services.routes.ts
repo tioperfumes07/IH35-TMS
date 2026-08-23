@@ -27,6 +27,26 @@ const etaQuerySchema = z.object({
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
+const updateSchema = z
+  .object({
+    operating_company_id: z.string().uuid(),
+    service_code: z.string().trim().min(1).max(60).optional(),
+    service_name: z.string().trim().min(1).max(200).optional(),
+    service_category: z.string().trim().min(1).max(80).optional(),
+    applies_to_type: z.enum(["truck", "trailer", "reefer", "all"]).optional(),
+    interval_miles: z.number().int().positive().nullable().optional(),
+    interval_months: z.number().int().positive().nullable().optional(),
+    interval_hours: z.number().int().positive().nullable().optional(),
+    is_safety_critical: z.boolean().optional(),
+    typical_duration_hours: z.number().nonnegative().nullable().optional(),
+    typical_cost_cents: z.number().int().nonnegative().optional(),
+    compliance_ref: z.string().trim().max(120).nullable().optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).some((k) => k !== "operating_company_id"), {
+    message: "at least one field is required",
+  });
+
 const createSchema = z.object({
   operating_company_id: z.string().uuid(),
   service_code: z.string().trim().min(1).max(60),
@@ -158,5 +178,77 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
       return row;
     });
     return reply.code(201).send(created);
+  });
+
+  // CLOSURE-11-EDIT — this catalog shipped list+create only; there was never a way to fix a typo
+  // or retire an obsolete service once created (no PATCH/DELETE route existed at all, and the
+  // frontend rendered no Edit/Archive control for a real, reachable, non-empty table — live-
+  // confirmed 2026-08-23 via read_page: zero action buttons in the accessibility tree for any
+  // row). Mirrors the create route's withCompany scoping (sets app.operating_company_id before
+  // the query, matching this table's FORCE RLS `maintenance_services_company` policy) plus an
+  // explicit operating_company_id predicate in the UPDATE itself as belt-and-suspenders.
+  app.patch("/api/v1/catalogs/maintenance/services-catalog/:id", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!["Owner", "Administrator", "Manager", "Mechanic"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const body = updateSchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const d = body.data;
+
+    const updated = await withCompany(user.uuid, d.operating_company_id, async (client) => {
+      if (d.service_code !== undefined) {
+        const conflict = await client.query(
+          "SELECT id FROM mdata.maintenance_services WHERE operating_company_id = $1::uuid AND service_code = $2 AND id <> $3 LIMIT 1",
+          [d.operating_company_id, d.service_code, params.data.id]
+        );
+        if (conflict.rows.length > 0) return { error: "maintenance_service_code_conflict" as const };
+      }
+
+      const fields: string[] = [];
+      const values: unknown[] = [];
+      const add = (name: string, value: unknown) => {
+        values.push(value);
+        fields.push(`${name} = $${values.length}`);
+      };
+      if (d.service_code !== undefined) add("service_code", d.service_code);
+      if (d.service_name !== undefined) add("service_name", d.service_name);
+      if (d.service_category !== undefined) add("service_category", d.service_category);
+      if (d.applies_to_type !== undefined) add("applies_to_type", d.applies_to_type);
+      if (d.interval_miles !== undefined) add("interval_miles", d.interval_miles);
+      if (d.interval_months !== undefined) add("interval_months", d.interval_months);
+      if (d.interval_hours !== undefined) add("interval_hours", d.interval_hours);
+      if (d.is_safety_critical !== undefined) add("is_safety_critical", d.is_safety_critical);
+      if (d.typical_duration_hours !== undefined) add("typical_duration_hours", d.typical_duration_hours);
+      if (d.typical_cost_cents !== undefined) add("typical_cost_cents", d.typical_cost_cents);
+      if (d.compliance_ref !== undefined) add("compliance_ref", d.compliance_ref);
+      if (d.is_active !== undefined) add("is_active", d.is_active);
+      add("updated_at", new Date().toISOString());
+      values.push(params.data.id);
+      const idPlaceholder = `$${values.length}`;
+      values.push(d.operating_company_id);
+      const companyPlaceholder = `$${values.length}`;
+
+      const res = await client.query(
+        `UPDATE mdata.maintenance_services SET ${fields.join(", ")} WHERE id = ${idPlaceholder} AND operating_company_id = ${companyPlaceholder} RETURNING *`,
+        values
+      );
+      if (res.rows.length === 0) return { error: "maintenance_service_not_found" as const };
+      const row = res.rows[0];
+      await appendCrudAudit(client, user.uuid, "mdata.maintenance_services.updated", {
+        resource_id: (row as { id?: string }).id,
+        resource_type: "mdata.maintenance_services",
+        service_code: (row as { service_code?: string }).service_code,
+        operating_company_id: d.operating_company_id,
+      });
+      return { row };
+    });
+
+    if ("error" in updated) {
+      if (updated.error === "maintenance_service_not_found") return reply.code(404).send({ error: updated.error });
+      return reply.code(409).send({ error: updated.error });
+    }
+    return updated.row;
   });
 }

@@ -214,7 +214,17 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
           JOIN mdata.loads l ON l.id = p.load_id
                             AND l.operating_company_id = p.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = p.driver_id
-                                   AND d.operating_company_id = p.operating_company_id
+                                   AND (
+                                     d.operating_company_id = p.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1
+                                       FROM mdata.driver_company_authorizations pod_review_driver_dca
+                                       WHERE pod_review_driver_dca.driver_id = d.id
+                                         AND pod_review_driver_dca.company_id = p.operating_company_id
+                                         AND pod_review_driver_dca.is_authorized = true
+                                         AND pod_review_driver_dca.deactivated_at IS NULL
+                                     )
+                                   )
           WHERE ${filters.join(" AND ")}
           ORDER BY p.created_at DESC
           LIMIT $${values.length}

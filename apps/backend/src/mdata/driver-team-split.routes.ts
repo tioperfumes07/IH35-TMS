@@ -63,6 +63,11 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 function mapServiceError(error: unknown) {
   const msg = String((error as Error)?.message ?? "unknown_error");
+  // DRV-F6002 — setScopedCompanyContext throws this (with .statusCode = 403 already attached) when
+  // the authenticated user has no membership in the requested operating_company_id; without this
+  // mapping it fell through to the generic 500 below, hiding a real authorization failure as a
+  // server error instead of the 403 every other membership-gated route in this codebase returns.
+  if (msg.includes("forbidden_company_membership")) return { code: 403, error: "forbidden_company_membership" };
   if (msg.includes("E_TEAM_NOT_FOUND")) return { code: 404, error: "E_TEAM_NOT_FOUND" };
   if (msg.includes("E_LOAD_NOT_FOUND")) return { code: 404, error: "E_LOAD_NOT_FOUND" };
   if (msg.includes("E_LOAD_NOT_TEAM_ASSIGNED")) return { code: 409, error: "E_LOAD_NOT_TEAM_ASSIGNED" };

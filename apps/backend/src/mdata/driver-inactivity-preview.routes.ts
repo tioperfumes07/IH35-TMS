@@ -5,6 +5,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { previewDriverInactivity, previewDriverDrivingInactivity } from "./driver-inactivity-preview.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -27,11 +28,18 @@ export async function registerDriverInactivityPreviewRoutes(app: FastifyInstance
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const oc = parsed.data.operating_company_id;
 
-    const preview = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
-      return previewDriverInactivity(client, oc);
-    });
-    return reply.send(preview);
+    try {
+      const preview = await withCurrentUser(user.uuid, async (client) => {
+        await setScopedCompanyContext(client, user.uuid, oc);
+        return previewDriverInactivity(client, oc);
+      });
+      return reply.send(preview);
+    } catch (error) {
+      if ((error as Error).message === "forbidden_company_membership") {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw error;
+    }
   });
 
   // THE sweep: inactivity by DRIVING (vehicle_driver_assignment recency), per Jorge's rule. Read-only.
@@ -42,10 +50,17 @@ export async function registerDriverInactivityPreviewRoutes(app: FastifyInstance
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const oc = parsed.data.operating_company_id;
 
-    const preview = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
-      return previewDriverDrivingInactivity(client, oc);
-    });
-    return reply.send(preview);
+    try {
+      const preview = await withCurrentUser(user.uuid, async (client) => {
+        await setScopedCompanyContext(client, user.uuid, oc);
+        return previewDriverDrivingInactivity(client, oc);
+      });
+      return reply.send(preview);
+    } catch (error) {
+      if ((error as Error).message === "forbidden_company_membership") {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw error;
+    }
   });
 }

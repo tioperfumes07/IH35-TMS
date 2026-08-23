@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmDriverArrivalPrompt, dismissDriverArrivalPrompt, listDriverArrivalPrompts } from "../../api/driver";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const REPROMPT_AFTER_MS = 5 * 60 * 1000;
 
@@ -32,6 +33,17 @@ export function ArrivalPrompt() {
     return prompts.find((prompt) => now >= (snoozedUntilByPrompt[prompt.id] ?? 0)) ?? null;
   }, [promptsQuery.data?.prompts, snoozedUntilByPrompt]);
 
+  if (promptsQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load arrival checks"
+        status={0}
+        message={promptsQuery.error instanceof Error ? promptsQuery.error.message : undefined}
+        onRetry={() => void promptsQuery.refetch()}
+        className="border-b border-slate-200 bg-slate-100"
+      />
+    );
+  }
   if (!activePrompt) return null;
 
   return (

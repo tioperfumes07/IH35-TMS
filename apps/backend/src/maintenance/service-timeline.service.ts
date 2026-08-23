@@ -304,39 +304,35 @@ async function fetchAccidentEvents(
   input: { operating_company_id: string; unit_id: string }
 ): Promise<ServiceTimelineEvent[]> {
   if (!(await relationExists(client, "safety.accident_reports"))) return [];
-  try {
-    const res = await client.query<{
-      id: string;
-      status: string | null;
-      accident_at: string | null;
-      description: string | null;
-    }>(
-      `
-        SELECT
-          ar.id::text,
-          ar.status,
-          ar.accident_at::text,
-          ar.description
-        FROM safety.accident_reports ar
-        WHERE ar.operating_company_id = $1::uuid
-          AND ar.unit_id = $2
-        ORDER BY ar.accident_at DESC NULLS LAST
-        LIMIT 200
-      `,
-      [input.operating_company_id, input.unit_id]
-    );
-    return res.rows.map((row) => ({
-      id: row.id,
-      event_type: "accident" as const,
-      occurred_at: row.accident_at ?? new Date(0).toISOString(),
-      title: "Accident report",
-      subtitle: row.description,
-      status: row.status,
-      detail_path: resolveServiceTimelineDetailPath("accident", row.id),
-    }));
-  } catch {
-    return [];
-  }
+  const res = await client.query<{
+    id: string;
+    status: string | null;
+    accident_at: string | null;
+    description: string | null;
+  }>(
+    `
+      SELECT
+        ar.id::text,
+        ar.status,
+        ar.accident_at::text,
+        ar.description
+      FROM safety.accident_reports ar
+      WHERE ar.operating_company_id = $1::uuid
+        AND ar.unit_id = $2
+      ORDER BY ar.accident_at DESC NULLS LAST
+      LIMIT 200
+    `,
+    [input.operating_company_id, input.unit_id]
+  );
+  return res.rows.map((row) => ({
+    id: row.id,
+    event_type: "accident" as const,
+    occurred_at: row.accident_at ?? new Date(0).toISOString(),
+    title: "Accident report",
+    subtitle: row.description,
+    status: row.status,
+    detail_path: resolveServiceTimelineDetailPath("accident", row.id),
+  }));
 }
 
 export async function aggregateServiceTimeline(

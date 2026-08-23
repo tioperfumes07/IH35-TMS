@@ -26,7 +26,17 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                 AND d.operating_company_id = l.operating_company_id
+                                 AND (
+                                   d.operating_company_id = l.operating_company_id
+                                   OR EXISTS (
+                                     SELECT 1
+                                     FROM mdata.driver_company_authorizations at_risk_driver_dca
+                                     WHERE at_risk_driver_dca.driver_id = d.id
+                                       AND at_risk_driver_dca.company_id = l.operating_company_id
+                                       AND at_risk_driver_dca.is_authorized = true
+                                       AND at_risk_driver_dca.deactivated_at IS NULL
+                                   )
+                                 )
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, city, state
           FROM mdata.load_stops
@@ -114,7 +124,17 @@ export async function listIntransitIssues(
         LEFT JOIN mdata.units u ON u.id = i.unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = i.driver_id
-                                 AND d.operating_company_id = i.operating_company_id
+                                 AND (
+                                   d.operating_company_id = i.operating_company_id
+                                   OR EXISTS (
+                                     SELECT 1
+                                     FROM mdata.driver_company_authorizations intransit_issue_driver_dca
+                                     WHERE intransit_issue_driver_dca.driver_id = d.id
+                                       AND intransit_issue_driver_dca.company_id = i.operating_company_id
+                                       AND intransit_issue_driver_dca.is_authorized = true
+                                       AND intransit_issue_driver_dca.deactivated_at IS NULL
+                                   )
+                                 )
         WHERE ${clauses.join(" AND ")}
         ORDER BY i.reported_at DESC
         LIMIT 200
@@ -173,9 +193,29 @@ export async function listAssignmentHistoryGlobal(
         FROM dispatch.load_assignment_history h
         JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id
-                                  AND pd.operating_company_id = l.operating_company_id
+                                  AND (
+                                    pd.operating_company_id = l.operating_company_id
+                                    OR EXISTS (
+                                      SELECT 1
+                                      FROM mdata.driver_company_authorizations assignment_previous_driver_dca
+                                      WHERE assignment_previous_driver_dca.driver_id = pd.id
+                                        AND assignment_previous_driver_dca.company_id = l.operating_company_id
+                                        AND assignment_previous_driver_dca.is_authorized = true
+                                        AND assignment_previous_driver_dca.deactivated_at IS NULL
+                                    )
+                                  )
         LEFT JOIN mdata.drivers nd ON nd.id = h.new_driver_id
-                                  AND nd.operating_company_id = l.operating_company_id
+                                  AND (
+                                    nd.operating_company_id = l.operating_company_id
+                                    OR EXISTS (
+                                      SELECT 1
+                                      FROM mdata.driver_company_authorizations assignment_new_driver_dca
+                                      WHERE assignment_new_driver_dca.driver_id = nd.id
+                                        AND assignment_new_driver_dca.company_id = l.operating_company_id
+                                        AND assignment_new_driver_dca.is_authorized = true
+                                        AND assignment_new_driver_dca.deactivated_at IS NULL
+                                    )
+                                  )
         LEFT JOIN mdata.units pu ON pu.id = h.previous_unit_id
                                 AND COALESCE(pu.currently_leased_to_company_id, pu.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.units nu ON nu.id = h.new_unit_id

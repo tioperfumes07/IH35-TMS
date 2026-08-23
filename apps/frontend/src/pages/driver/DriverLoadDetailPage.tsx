@@ -7,6 +7,7 @@ import { titleize } from "../../lib/titleize";
 import { useState } from "react";
 import { ReportIssueModal } from "./ReportIssueModal";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function DriverLoadDetailPage() {
   const { id } = useParams();
@@ -20,7 +21,17 @@ export function DriverLoadDetailPage() {
 
   if (!id) return null;
   if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
-  if (q.error || !q.data) return <p className="text-sm text-red-600">Not found.</p>;
+  if (q.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load assigned load"
+        status={0}
+        message={q.error instanceof Error ? q.error.message : undefined}
+        onRetry={() => void q.refetch()}
+      />
+    );
+  }
+  if (!q.data) return <p className="text-sm text-red-600">Load not found.</p>;
   const load = q.data;
 
   return (

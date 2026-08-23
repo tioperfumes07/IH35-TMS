@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../../auth/db.js";
+import { resolveOperatingCompanyId } from "../../../auth/operating-company-scope.js";
 import { requireAuth } from "../../../auth/session-middleware.js";
 import { assertDriverScope, type OperationsPagingOpts, type OperationsResult, type Queryable } from "./shared.js";
 import { getDriverDebtHistory } from "./debt-history.service.js";
@@ -63,12 +64,16 @@ export async function registerDriverOperationsDepthRoutes(app: FastifyInstance) 
       }
 
       const result = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-          query.data.operating_company_id,
-        ]);
-        const driverId = await assertDriverScope(client, params.data.uuid, query.data.operating_company_id);
+        const operatingCompanyId = await resolveOperatingCompanyId(
+          client,
+          user.uuid,
+          query.data.operating_company_id
+        );
+        if (!operatingCompanyId) return null;
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        const driverId = await assertDriverScope(client, params.data.uuid, operatingCompanyId);
         if (!driverId) return null;
-        return subView.loader(client, params.data.uuid, query.data.operating_company_id, {
+        return subView.loader(client, params.data.uuid, operatingCompanyId, {
           page: query.data.page,
           page_size: query.data.page_size,
         });

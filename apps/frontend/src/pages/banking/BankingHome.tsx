@@ -725,7 +725,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <Link to="/banking/reconcile" className="text-xs font-medium text-slate-700 hover:underline">
                   Open Reconcile Queue
                 </Link>
-                <Link to="/banking/reconciliation" className="text-xs font-medium text-slate-700 hover:underline">
+                <Link to="/banking/reconciliation-workspace" className="text-xs font-medium text-slate-700 hover:underline">
                   Open Workspace
                 </Link>
               </div>

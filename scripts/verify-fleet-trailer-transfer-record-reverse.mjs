@@ -17,6 +17,9 @@ function audit(s = files) {
   if (!s.page.includes('get("transfer_id")') || !s.page.includes('&transfer_id=${encodeURIComponent(transferId)}')) failures.push("queue does not consume and forward exact transfer id");
   if (!s.route.includes('transfer_id: z.string().uuid().optional()') || !s.route.includes("q.data.transfer_id")) failures.push("route does not validate and forward transfer id");
   if (!/if \(requestUuid\)[\s\S]{0,1800}r\.operating_company_id = \$1::uuid[\s\S]{0,120}r\.uuid = \$2::uuid/.test(s.service)) failures.push("producer lacks exact entity-scoped transfer lookup");
+  const fromSharedScopes = s.service.match(/request_from_dca\.driver_id = fd\.id AND request_from_dca\.company_id = r\.operating_company_id\s+AND request_from_dca\.is_authorized = true AND request_from_dca\.deactivated_at IS NULL/g) ?? [];
+  const toSharedScopes = s.service.match(/request_to_dca\.driver_id = td\.id AND request_to_dca\.company_id = r\.operating_company_id\s+AND request_to_dca\.is_authorized = true AND request_to_dca\.deactivated_at IS NULL/g) ?? [];
+  if (fromSharedScopes.length !== 5 || toSharedScopes.length !== 5) failures.push("all five transfer request GET shapes must preserve authorized shared-driver labels");
   if (!/listPendingForDriver\(client, operatingCompanyId, driverUuid, direction, equipmentUuid, requestUuid\)/.test(s.service)) failures.push("authenticated producer wrapper drops transfer id");
   if (!s.manifest.includes('path="/dispatch/equipment-transfers"')) failures.push("target route is not mounted");
   return failures;
@@ -31,6 +34,8 @@ if (process.argv.includes("--selftest")) {
     ["service", "r.operating_company_id = $1::uuid", "TRUE"],
     ["service", "r.uuid = $2::uuid", "TRUE"],
     ["service", "equipmentUuid, requestUuid", "equipmentUuid, undefined"],
+    ["service", "request_from_dca.is_authorized = true", "request_from_dca.is_authorized = false"],
+    ["service", "request_to_dca.deactivated_at IS NULL", "request_to_dca.deactivated_at IS NOT NULL"],
     ["manifest", 'path="/dispatch/equipment-transfers"', 'path="/dispatch/equipment-transfers-dead"'],
   ];
   const escaped = mutations.filter(([key, needle, replacement]) => {

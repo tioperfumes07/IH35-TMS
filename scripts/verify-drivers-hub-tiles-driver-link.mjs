@@ -86,6 +86,15 @@ export function assertGuard({ dispatchApi, driversPage }) {
   if (!activeDriversTile || !/EntityLink/.test(activeDriversTile)) {
     errs.push(`${DRIVERS_PAGE}: the Active Drivers · Samsara tile must wrap the driver name in <EntityLink kind="driver" .../>, not render it as bare text`);
   }
+  if (!/dispatchLoadsQuery\.isError[\s\S]*dispatchLoadsQuery\.refetch\(\)/.test(page)) {
+    errs.push(`${DRIVERS_PAGE}: failed dispatch movement GET must expose exact recovery`);
+  }
+  if (!/samsaraHealthQuery\.isError[\s\S]*samsaraHealthQuery\.refetch\(\)/.test(page)) {
+    errs.push(`${DRIVERS_PAGE}: failed Samsara health GET must expose exact recovery`);
+  }
+  if (!/dispatchLoadsQuery\.isError \? null : Math\.max/.test(page) || !/availableCount == null \? "—"/.test(page)) {
+    errs.push(`${DRIVERS_PAGE}: failed dispatch feed must not publish a fabricated availability count`);
+  }
 
   return errs;
 }
@@ -130,6 +139,10 @@ function selftest() {
   `;
   const decoys = decoyRosterConditional + decoyDebtAlert;
   const goodPage = decoys + `
+    const availableCount = dispatchLoadsQuery.isError ? null : Math.max(1, 0);
+    const availability = availableCount == null ? "—" : String(availableCount);
+    {dispatchLoadsQuery.isError ? <ListErrorState onRetry={() => void dispatchLoadsQuery.refetch()} /> : null}
+    {samsaraHealthQuery.isError ? <ListErrorState onRetry={() => void samsaraHealthQuery.refetch()} /> : null}
     const activeDriverLoadRows = useMemo(() => {
       const byDriver = new Map();
       for (const load of loads) {

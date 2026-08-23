@@ -85,7 +85,16 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
-                                   AND d.operating_company_id = ds.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ds.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations defects_list_dca
+                                       WHERE defects_list_dca.driver_id = d.id
+                                         AND defects_list_dca.company_id = ds.operating_company_id
+                                         AND defects_list_dca.is_authorized = true
+                                         AND defects_list_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           LEFT JOIN maintenance.work_orders wo ON wo.id = dd.follow_up_wo_id
@@ -139,7 +148,16 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
-                                   AND d.operating_company_id = ds.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ds.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations defects_detail_dca
+                                       WHERE defects_detail_dca.driver_id = d.id
+                                         AND defects_detail_dca.company_id = ds.operating_company_id
+                                         AND defects_detail_dca.is_authorized = true
+                                         AND defects_detail_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           LEFT JOIN maintenance.work_orders wo ON wo.id = dd.follow_up_wo_id

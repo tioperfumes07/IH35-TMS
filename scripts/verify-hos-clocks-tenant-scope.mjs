@@ -41,8 +41,8 @@ if (!service.includes("e.operating_company_id = $1::uuid") || !service.includes(
 if (!setsTenantGuc(routes)) {
   failures.push(`apps/backend/src/telematics/hos.routes.ts: routes must set tenant context — ${TENANT_GUC_HINT}`);
 }
-if (!routes.includes("WHERE id = $1::uuid") || !routes.includes("operating_company_id = $2::uuid")) {
-  failures.push("apps/backend/src/telematics/hos.routes.ts: driver lookup must enforce tenant scope");
+if (!/WHERE d\.id = \$1::uuid[\s\S]{0,650}d\.operating_company_id = \$2::uuid[\s\S]{0,500}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(routes)) {
+  failures.push("apps/backend/src/telematics/hos.routes.ts: driver lookup must enforce owner-or-active-authorization tenant scope");
 }
 if (!dispatchRoutes.includes("getCurrentClocks(client, operatingCompanyId")) {
   failures.push("apps/backend/src/dispatch/loads.routes.ts: dispatch hos endpoint must use HOS clock service");

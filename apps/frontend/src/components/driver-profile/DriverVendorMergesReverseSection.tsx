@@ -3,6 +3,7 @@ import { listDriverVendorMerges } from "../../api/data-infra";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 // LINK-F5171/LINK-F5183 — factoring:home.vendor_merges reverse gap, driver side. driver_id is a
 // real FK on mdata.driver_vendor_merges with a pre-built index
@@ -37,7 +38,14 @@ export function DriverVendorMergesReverseSection({
           className="text-xs font-semibold text-slate-700 hover:underline"
         />
       </div>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Vendor merges unavailable.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load vendor merges"
+          status={0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && merges.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No vendor merges for this driver.</p>

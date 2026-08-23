@@ -3,11 +3,16 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+
+const historyQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
 
 const reclassifyBodySchema = z.object({
   classification: z.string().trim().min(1).max(200),
@@ -266,7 +271,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/vendors/:id/flag-duplicate
-  app.post("/api/v1/vendors/:id/flag-duplicate", async (req, reply) => {
+  app.post("/api/v1/vendors/:id/flag-duplicate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -314,25 +319,39 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/customers/:id/reclassification-history
-  app.get("/api/v1/customers/:id/reclassification-history", async (req, reply) => {
+  app.get("/api/v1/customers/:id/reclassification-history", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
     const params = idParamSchema.safeParse(req.params);
     if (!params.success) return sendValidation(reply, params.error);
+    const query = historyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidation(reply, query.error);
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        user.uuid,
+        query.data.operating_company_id
+      );
+      if (!companyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       const res = await client.query(
-        `SELECT id, action, classification_before, classification_after,
-                qbo_id, reason, actor_user_id, occurred_at
-         FROM mdata.entity_reclassification_log
-         WHERE entity_table = 'mdata.customers' AND entity_id = $1
-         ORDER BY occurred_at DESC LIMIT 100`,
-        [params.data.id]
+        `SELECT l.id, l.action, l.classification_before, l.classification_after,
+                l.qbo_id, l.reason, l.actor_user_id, l.occurred_at
+           FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c
+           JOIN mdata.entity_reclassification_log l
+             ON l.entity_id = c.id
+            AND l.entity_table = 'mdata.customers'
+            AND (l.operating_company_id = $2::uuid OR l.operating_company_id IS NULL)
+          ORDER BY l.occurred_at DESC
+          LIMIT 100`,
+        [params.data.id, companyId]
       );
       return res.rows;
     });
 
+    if (!rows) return reply.code(400).send({ error: "operating_company_id_required" });
     return reply.send({ history: rows });
   });
 

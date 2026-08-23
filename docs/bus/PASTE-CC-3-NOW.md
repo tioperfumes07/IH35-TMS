@@ -1,5 +1,5 @@
 ===== CC-3 9225 =====
-REJECT HOLD. 15 lists guards ACK #14495+#14496. UNIQUE-FINDING-CLEAN ≠ CERTIFIED.
-NOW=https://app.ih35dispatch.com/legal 1-12 Live Chrome then /lists. No looping.
-ACK: CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO
+REJECT HOLD. You have not opened Chrome. Open ONCE now: https://app.ih35dispatch.com/lists
+Live SHA ffc938b. Fully-Wired 1–12. Legal unique-FINDING-CLEAN ≠ CERTIFIED. No remake legal. No trigger_deploy. No 25min wait.
+ACK: CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=lists | NOW=https://app.ih35dispatch.com/lists | GO
 ===== END =====

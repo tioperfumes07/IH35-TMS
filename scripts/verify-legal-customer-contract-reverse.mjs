@@ -8,6 +8,7 @@ const sources = {
   lease: fs.readFileSync("apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx", "utf8"),
   customer: fs.readFileSync("apps/frontend/src/components/customers/CustomerContractsTab.tsx", "utf8"),
   writer: fs.readFileSync("apps/backend/src/legal/contracts.service.ts", "utf8"),
+  contracts: fs.readFileSync("apps/backend/src/customer-contracts/customer-contract.routes.ts", "utf8"),
   page: fs.readFileSync("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", "utf8"),
 };
 const checks = [
@@ -23,6 +24,7 @@ const checks = [
   ["customer", /signer_type: "customer", signer_entity_id: customerId/, "customer reverse read filters canonical FK"],
   ["customer", /kind="legal_contract"[\s\S]{0,80}id=\{contract\.id\}/, "customer reverse row drills to selected contract"],
   ["customer", /Couldn't load this customer's legal contracts[\s\S]*legalContractsQuery\.refetch\(\)/, "customer reverse failure is retryable"],
+  ["contracts", /LEFT JOIN docs\.files f ON f\.id = c\.file_id\s+AND f\.operating_company_id = c\.operating_company_id\s+AND f\.deleted_at IS NULL/g, "both customer contract reads scope file metadata to contract company"],
   ["page", /onSaved=\{async \(contractId\)[\s\S]*setSearchParams\(\{ contract_id: contractId \}\)/, "lease R=W selects persisted detail"],
 ];
 
@@ -32,6 +34,9 @@ function failures(candidate) {
   for (const [key, pattern, label] of checks) {
     if (label.includes("must not keep")) {
       if (pattern.test(candidate[key])) found.push(label);
+    } else if (label === "both customer contract reads scope file metadata to contract company") {
+      const matches = candidate[key].match(pattern) ?? [];
+      if (matches.length !== 2) found.push(label);
     } else if (!pattern.test(candidate[key])) {
       found.push(label);
     }

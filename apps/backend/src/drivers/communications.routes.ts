@@ -38,6 +38,28 @@ export async function registerDriverCommunicationsRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, operatingCompanyId);
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1
+        `,
+        [driverId, operatingCompanyId]
+      );
+      if (parent.rowCount === 0) return null;
       return listDriverCommunications(client as Queryable, {
         operatingCompanyId,
         driverId,
@@ -46,6 +68,8 @@ export async function registerDriverCommunicationsRoutes(app: FastifyInstance) {
         offset,
       });
     });
+
+    if (!result) return reply.code(404).send({ error: "mdata_driver_not_found" });
 
     return reply.send({
       driver_id: driverId,

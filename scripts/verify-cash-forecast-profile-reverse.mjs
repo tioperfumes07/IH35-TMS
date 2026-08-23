@@ -17,7 +17,7 @@ const source = Object.fromEntries(Object.entries(paths).map(([key, file]) => [ke
 
 const checks = [
   ["route accepts party UUID filter", "route", /party_ref_id: z\.string\(\)\.uuid\(\)\.optional\(\)/],
-  ["route binds party UUID predicate", "route", /values\.push\(q\.data\.party_ref_id\)[\s\S]{0,100}party_ref_id = \$\$\{values\.length\}::uuid/],
+  ["route binds validated party identity to the canonical TEXT snapshot column", "route", /values\.push\(q\.data\.party_ref_id\)[\s\S]{0,260}party_ref_id = \$\$\{values\.length\}::text/],
   ["route accepts unit external identity filter", "route", /ref_external_id: z\.string\(\)[^\n]*\.optional\(\)/],
   ["route binds unit external identity predicate", "route", /values\.push\(q\.data\.ref_external_id\)[\s\S]{0,100}ref_external_id = \$\$\{values\.length\}/],
   ["route accepts exact entry UUID", "route", /entry_id: z\.string\(\)\.uuid\(\)\.optional\(\)/],
@@ -39,7 +39,11 @@ const checks = [
 ];
 
 function audit(sources) {
-  return checks.filter(([, key, pattern]) => !pattern.test(sources[key])).map(([message]) => message);
+  const failures = checks.filter(([, key, pattern]) => !pattern.test(sources[key])).map(([message]) => message);
+  if (/party_ref_id = \$\$\{values\.length\}::uuid/.test(sources.route)) {
+    failures.push("route never compares the TEXT party snapshot column with a UUID parameter");
+  }
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -55,7 +59,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} production-source defects caught`);
+  const uuidMutation = source.route.replace(
+    /party_ref_id = \$\$\{values\.length\}::text/,
+    () => 'party_ref_id = $${values.length}::uuid'
+  );
+  if (!audit({ ...source, route: uuidMutation }).includes("route never compares the TEXT party snapshot column with a UUID parameter")) {
+    console.error(`${LABEL} SELFTEST FAIL — production text-to-uuid mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${checks.length + 1}/${checks.length + 1} production-source defects caught`);
   process.exit(0);
 }
 

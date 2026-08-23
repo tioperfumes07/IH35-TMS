@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiRequest } from "../api/client";
+import { apiRequest, resolveApiUrl } from "../api/client";
 
 export type UserNotification = {
   id: string;
@@ -102,7 +102,16 @@ export function useNotifications(options?: { pollIntervalMs?: number; enableStre
   useEffect(() => {
     if (!enableStream) return;
     try {
-      const es = new EventSource("/api/v1/notifications/stream", { withCredentials: true });
+      // CC3-NOTIFICATIONS-EVENTSOURCE-WRONG-ORIGIN-20260822: EventSource ignores buildUrl()'s
+      // split-host routing when given a bare relative path -- the browser resolves it against
+      // window.location.origin, which on prod is the STATIC SPA HOST (app.ih35dispatch.com),
+      // not the real API host (api.ih35dispatch.com). Every other network call in this app goes
+      // through apiRequest()/buildUrl() for exactly this reason; EventSource can't use fetch's
+      // wrapper, so it needs the same resolution via the already-exported resolveApiUrl() helper.
+      // Without this, the stream 404s/503s against the SPA host in a connect/error/reconnect loop
+      // that silently self-heals via the 30s poll fallback -- so push notifications never actually
+      // worked in prod and nothing ever surfaced the failure.
+      const es = new EventSource(resolveApiUrl("/api/v1/notifications/stream"), { withCredentials: true });
       streamRef.current = es;
       es.onmessage = () => {
         void refresh();

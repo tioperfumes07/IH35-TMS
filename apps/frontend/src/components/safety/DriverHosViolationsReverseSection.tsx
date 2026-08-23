@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { listHosViolations } from "../../api/safetyV64";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -12,7 +13,7 @@ export function DriverHosViolationsReverseSection({ operatingCompanyId, driverId
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="text-sm font-semibold text-gray-800">HOS violations</h3>
-      {query.isError ? <p className="mt-2 text-sm text-red-700">HOS violations could not be loaded.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="HOS violations could not be loaded." onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading HOS violations…</p> : null}
       {!query.isLoading && !query.isError && (query.data?.hos_violations ?? []).length === 0 ? <p className="mt-2 text-sm text-gray-500">No HOS violations are linked to this driver.</p> : null}
       <div className="mt-2 space-y-2">

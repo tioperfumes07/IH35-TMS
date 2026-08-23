@@ -138,7 +138,17 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
                               AND c.operating_company_id = l.operating_company_id
         JOIN mdata.load_stops ls ON ls.id = de.stop_id
         LEFT JOIN mdata.drivers d ON d.id = de.driver_id
-                                 AND d.operating_company_id = de.operating_company_id
+                                 AND (
+                                   d.operating_company_id = de.operating_company_id
+                                   OR EXISTS (
+                                     SELECT 1
+                                     FROM mdata.driver_company_authorizations detention_board_driver_dca
+                                     WHERE detention_board_driver_dca.driver_id = d.id
+                                       AND detention_board_driver_dca.company_id = de.operating_company_id
+                                       AND detention_board_driver_dca.is_authorized = true
+                                       AND detention_board_driver_dca.deactivated_at IS NULL
+                                   )
+                                 )
         LEFT JOIN mdata.units u ON u.id = de.unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = de.operating_company_id
         WHERE de.operating_company_id = $1::uuid

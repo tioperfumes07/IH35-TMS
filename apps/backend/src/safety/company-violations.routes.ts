@@ -157,18 +157,42 @@ function canResolve(role: string) {
 export async function registerSafetyCompanyViolationsRoutes(
   app: FastifyInstance,
 ) {
-  app.get("/api/v1/safety/company-violations", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const query = companyViolationListQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
+  app.get(
+    "/api/v1/safety/company-violations",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = companyViolationListQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
 
-    const rows = await withCompanyScope(
-      user.uuid,
-      query.data.operating_company_id,
-      async (client) => {
-        const res = await client.query(
-          `
+      const result = await withCompanyScope(
+        user.uuid,
+        query.data.operating_company_id,
+        async (client) => {
+          if (query.data.driver_id) {
+            const parent = await client.query(
+              `SELECT 1
+             FROM mdata.drivers md
+             WHERE md.id = $1::uuid
+               AND md.archived_at IS NULL
+               AND (
+                 md.operating_company_id = $2::uuid
+                 OR EXISTS (
+                   SELECT 1 FROM mdata.driver_company_authorizations dca
+                   WHERE dca.driver_id = md.id
+                     AND dca.company_id = $2::uuid
+                     AND dca.is_authorized = true
+                     AND dca.deactivated_at IS NULL
+                 )
+               )
+             LIMIT 1`,
+              [query.data.driver_id, query.data.operating_company_id],
+            );
+            if (!parent.rows[0]) return { found: false as const, rows: [] };
+          }
+          const res = await client.query(
+            `
           -- SAF-F29: related ids come from the JOIN TABLES, never the retired jsonb columns.
           -- Aggregated as arrays so the response shape stays a single row per violation while the
           -- underlying relationships are real FKs that can be queried in reverse (driver -> its
@@ -178,7 +202,17 @@ export async function registerSafetyCompanyViolationsRoutes(
                             WHERE d.violation_id = cv.id AND d.is_active), '{}') AS related_driver_ids,
                  COALESCE((SELECT jsonb_object_agg(d.driver_id::text, NULLIF(trim(concat_ws(' ', md.first_name, md.last_name)), ''))
                            FROM safety.company_violation_drivers d
-                           JOIN mdata.drivers md ON md.id = d.driver_id AND md.operating_company_id = cv.operating_company_id
+                           JOIN mdata.drivers md ON md.id = d.driver_id
+                            AND (
+                              md.operating_company_id = cv.operating_company_id
+                              OR EXISTS (
+                                SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                                WHERE label_dca.driver_id = md.id
+                                  AND label_dca.company_id = cv.operating_company_id
+                                  AND label_dca.is_authorized = true
+                                  AND label_dca.deactivated_at IS NULL
+                              )
+                            )
                            WHERE d.violation_id = cv.id AND d.is_active), '{}'::jsonb) AS related_driver_labels,
                  COALESCE((SELECT array_agg(u.unit_id) FROM safety.company_violation_units u
                             WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,
@@ -203,13 +237,20 @@ export async function registerSafetyCompanyViolationsRoutes(
           ORDER BY cv.reported_date DESC, cv.created_at DESC
           LIMIT 500
         `,
-          [query.data.operating_company_id, query.data.driver_id ?? null, query.data.unit_id ?? null],
-        );
-        return res.rows;
-      },
-    );
-    return { company_violations: rows };
-  });
+            [
+              query.data.operating_company_id,
+              query.data.driver_id ?? null,
+              query.data.unit_id ?? null,
+            ],
+          );
+          return { found: true as const, rows: res.rows };
+        },
+      );
+      if (!result.found)
+        return reply.code(404).send({ error: "mdata_driver_not_found" });
+      return { company_violations: result.rows };
+    },
+  );
 
   app.get(
     "/api/v1/safety/company-violations/:id",
@@ -237,7 +278,17 @@ export async function registerSafetyCompanyViolationsRoutes(
                            WHERE d.violation_id = cv.id AND d.is_active), '{}') AS related_driver_ids,
                 COALESCE((SELECT jsonb_object_agg(d.driver_id::text, NULLIF(trim(concat_ws(' ', md.first_name, md.last_name)), ''))
                           FROM safety.company_violation_drivers d
-                          JOIN mdata.drivers md ON md.id = d.driver_id AND md.operating_company_id = cv.operating_company_id
+                          JOIN mdata.drivers md ON md.id = d.driver_id
+                           AND (
+                             md.operating_company_id = cv.operating_company_id
+                             OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                               WHERE label_dca.driver_id = md.id
+                                 AND label_dca.company_id = cv.operating_company_id
+                                 AND label_dca.is_authorized = true
+                                 AND label_dca.deactivated_at IS NULL
+                             )
+                           )
                           WHERE d.violation_id = cv.id AND d.is_active), '{}'::jsonb) AS related_driver_labels,
                 COALESCE((SELECT array_agg(u.unit_id) FROM safety.company_violation_units u
                            WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,

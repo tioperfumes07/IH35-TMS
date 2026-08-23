@@ -23,6 +23,8 @@ function audit(s) {
   if ((s.service.match(/related_driver_name/g) ?? []).length < 2 || (s.service.match(/LEFT JOIN mdata\.drivers\s+d\s+ON d\.id\s+= m\.related_driver_id/g) ?? []).length < 2) failures.push("list/detail payloads must resolve driver label");
   if (!/kind="driver"[\s\S]{0,160}matter\.related_driver_id[\s\S]{0,160}related_driver_name/.test(s.detail)) failures.push("matter detail must drill to canonical driver");
   if (!/legalMattersApi\.list\([\s\S]{0,160}\{ related_driver_id: id \}/.test(s.driver)) failures.push("primary driver detail must request exact matter reverse set");
+  if (!/legalMattersForDriverQuery\.isError[\s\S]{0,500}title="Couldn't load linked legal matters"[\s\S]{0,500}legalMattersForDriverQuery\.refetch\(\)/.test(s.driver)) failures.push("primary driver detail must disclose failed reverse GET and offer exact retry");
+  if (!/!legalMattersForDriverQuery\.isError\s*&&\s*legalMattersListState\.isEmpty/.test(s.driver)) failures.push("primary driver detail must not render failed reverse GET as an empty matter set");
   if (!/filter=\{\{ related_driver_id: id \}\}/.test(s.profile)) failures.push("driver profile must mount exact matter reverse set");
   if (!/\{ related_driver_id: string;/.test(s.reverse) || !/related_driver_id\?: string/.test(s.api)) failures.push("shared reverse/API must retain driver filter");
   return failures;
@@ -37,6 +39,9 @@ if (process.argv.includes("--selftest")) {
     ["filter", "service", /where\.push\(`m\.related_driver_id = \$\$\{values\.length\}`\)/, "where.push(`TRUE`)"],
     ["detail", "detail", /kind="driver"/, 'kind="unit"'],
     ["primary reverse", "driver", /\{ related_driver_id: id \}/, "{ unit_id: id }"],
+    ["primary reverse error", "driver", /legalMattersForDriverQuery\.isError/, "false"],
+    ["primary reverse retry", "driver", /legalMattersForDriverQuery\.refetch\(\)/, "Promise.resolve()"],
+    ["primary reverse empty gate", "driver", /!legalMattersForDriverQuery\.isError\s*&&\s*legalMattersListState\.isEmpty/, "legalMattersListState.isEmpty"],
     ["profile reverse", "profile", /filter=\{\{ related_driver_id: id \}\}/, "filter={{ unit_id: id }}"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

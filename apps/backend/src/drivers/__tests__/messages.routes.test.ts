@@ -6,18 +6,20 @@ const COMPANY = "11111111-1111-4111-8111-111111111111";
 const DRIVER = "22222222-2222-4222-8222-222222222222";
 const MESSAGE = "33333333-3333-4333-8333-333333333333";
 
-const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit, mockRequireDriverSession } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockWithLuciaBypass, mockAppendCrudAudit, mockRequireDriverSession } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
     fn({ query })
   );
+  const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => Promise<unknown>) => fn({ query }));
   const appendCrudAudit = vi.fn(async () => undefined);
   const requireDriverSession = vi.fn(async () => true);
-  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit, mockRequireDriverSession: requireDriverSession };
+  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockWithLuciaBypass: withLuciaBypass, mockAppendCrudAudit: appendCrudAudit, mockRequireDriverSession: requireDriverSession };
 });
 
 vi.mock("../../auth/db.js", () => ({
   withCurrentUser: mockWithCurrentUser,
+  withLuciaBypass: mockWithLuciaBypass,
 }));
 
 // Cross-tenant guard: exercised in dedicated membership tests; here it is a no-op so route logic (not membership) is under test.
@@ -228,10 +230,6 @@ describe("drivers messages routes (A24-10)", () => {
 
   it("GET /api/v1/driver/messages returns driver PWA inbox", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("operating_company_id::text FROM mdata.drivers")) {
-        return { rows: [{ operating_company_id: COMPANY }], rowCount: 1 };
-      }
-      if (sql.includes("set_config")) return { rows: [], rowCount: 0 };
       if (sql.includes("ORDER BY m.created_at ASC")) {
         return {
           rows: [
@@ -261,5 +259,9 @@ describe("drivers messages routes (A24-10)", () => {
     const res = await app.inject({ method: "GET", url: "/api/v1/driver/messages" });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).messages).toHaveLength(1);
+    expect(mockWithLuciaBypass).toHaveBeenCalledWith(expect.any(Function), {
+      actorUserId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    });
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("set_config"))).toBe(false);
   });
 });

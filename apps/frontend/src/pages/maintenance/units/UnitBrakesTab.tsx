@@ -107,7 +107,10 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
         <p className="text-xs text-gray-500">Loading brake wear data...</p>
       ) : null}
 
-      {positions.length === 0 && !latestQ.isLoading ? (
+      {latestQ.isError ? <ListErrorState status={0} message="Brake measurements could not be loaded." onRetry={() => void latestQ.refetch()} /> : null}
+      {projectionsQ.isError ? <ListErrorState status={0} message="Brake wear projections could not be loaded." onRetry={() => void projectionsQ.refetch()} /> : null}
+
+      {positions.length === 0 && !latestQ.isLoading && !latestQ.isError && !projectionsQ.isError ? (
         <p className="rounded-sm border border-dashed border-gray-300 p-4 text-xs text-gray-500">
           No brake lining measurements recorded for this unit.
         </p>

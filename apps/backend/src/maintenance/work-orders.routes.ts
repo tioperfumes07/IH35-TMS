@@ -512,7 +512,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.equipment e
              ON e.id = w.equipment_id
             AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = w.operating_company_id
-           LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.drivers d ON d.id = w.driver_id
+                                      AND (
+                                        d.operating_company_id = w.operating_company_id
+                                        OR EXISTS (
+                                          SELECT 1 FROM mdata.driver_company_authorizations work_orders_list_dca
+                                          WHERE work_orders_list_dca.driver_id = d.id
+                                            AND work_orders_list_dca.company_id = w.operating_company_id
+                                            AND work_orders_list_dca.is_authorized = true
+                                            AND work_orders_list_dca.deactivated_at IS NULL
+                                        )
+                                      )
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
           WHERE ${where.join(" AND ")}
@@ -560,7 +570,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.equipment e
              ON e.id = w.equipment_id
             AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = w.operating_company_id
-           LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.drivers d ON d.id = w.driver_id
+                                      AND (
+                                        d.operating_company_id = w.operating_company_id
+                                        OR EXISTS (
+                                          SELECT 1 FROM mdata.driver_company_authorizations work_orders_detail_dca
+                                          WHERE work_orders_detail_dca.driver_id = d.id
+                                            AND work_orders_detail_dca.company_id = w.operating_company_id
+                                            AND work_orders_detail_dca.is_authorized = true
+                                            AND work_orders_detail_dca.deactivated_at IS NULL
+                                        )
+                                      )
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id

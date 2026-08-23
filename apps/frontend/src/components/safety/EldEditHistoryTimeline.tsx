@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
+import { ListErrorState } from "../ListErrorState";
 
 export type EldEditHistoryEntry = {
   id: string;
@@ -69,6 +70,17 @@ export function EldEditHistoryTimeline({
 
   if (isLoading) {
     return <p className="text-sm text-gray-500">Loading ELD edit history…</p>;
+  }
+
+  if (!isControlled && historyQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load ELD edit history"
+        status={0}
+        message={(historyQuery.error as Error)?.message}
+        onRetry={() => void historyQuery.refetch()}
+      />
+    );
   }
 
   if (edits.length === 0) {

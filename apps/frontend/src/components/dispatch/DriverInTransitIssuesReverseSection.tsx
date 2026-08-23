@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
@@ -19,7 +20,7 @@ export function DriverInTransitIssuesReverseSection({ operatingCompanyId, driver
         <EntityLink kind="intransit_issues_driver" id={driverId} label="Open issue queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading in-transit issues…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load in-transit issues for this driver.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Could not load in-transit issues for this driver." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No in-transit issues linked to this driver.</p> : null}
       {rows.length ? (
         <ul className="space-y-2">

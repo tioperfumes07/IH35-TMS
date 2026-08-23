@@ -123,7 +123,16 @@ export async function listOpenDocumentAlertEvents(client: QueryableClient, opera
       FROM safety.document_alert_events e
       JOIN safety.document_alert_rules r ON r.id = e.rule_id
       LEFT JOIN mdata.drivers d ON d.id = e.driver_id
-                                AND d.operating_company_id = $1::uuid
+                                AND (
+                                  d.operating_company_id = $1::uuid
+                                  OR EXISTS (
+                                    SELECT 1 FROM mdata.driver_company_authorizations inbox_dca
+                                    WHERE inbox_dca.driver_id = d.id
+                                      AND inbox_dca.company_id = $1::uuid
+                                      AND inbox_dca.is_authorized = true
+                                      AND inbox_dca.deactivated_at IS NULL
+                                  )
+                                )
       WHERE e.operating_company_id = $1::uuid
         AND e.event_status = 'open'
       ORDER BY e.days_until_expiry ASC, e.detected_at DESC
@@ -151,7 +160,16 @@ async function loadExpiryCandidates(
           d.cdl_expires_at::text AS expiry_date,
           (d.cdl_expires_at - CURRENT_DATE)::int AS days_until_expiry
         FROM mdata.drivers d
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (
+            d.operating_company_id = $1::uuid
+            OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations cdl_dca
+              WHERE cdl_dca.driver_id = d.id
+                AND cdl_dca.company_id = $1::uuid
+                AND cdl_dca.is_authorized = true
+                AND cdl_dca.deactivated_at IS NULL
+            )
+          )
           AND d.cdl_expires_at IS NOT NULL
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
@@ -182,7 +200,16 @@ async function loadExpiryCandidates(
           ORDER BY expiry_date DESC
           LIMIT 1
         ) mc ON true
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (
+            d.operating_company_id = $1::uuid
+            OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations medical_dca
+              WHERE medical_dca.driver_id = d.id
+                AND medical_dca.company_id = $1::uuid
+                AND medical_dca.is_authorized = true
+                AND medical_dca.deactivated_at IS NULL
+            )
+          )
           AND COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NOT NULL
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
@@ -205,7 +232,16 @@ async function loadExpiryCandidates(
           (tr.expiry_date - CURRENT_DATE)::int AS days_until_expiry
         FROM safety.training_records tr
         JOIN mdata.drivers d ON d.id = tr.driver_id
-                             AND d.operating_company_id = $1::uuid
+                             AND (
+                               d.operating_company_id = $1::uuid
+                               OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations training_dca
+                                 WHERE training_dca.driver_id = d.id
+                                   AND training_dca.company_id = $1::uuid
+                                   AND training_dca.is_authorized = true
+                                   AND training_dca.deactivated_at IS NULL
+                               )
+                             )
         WHERE tr.operating_company_id = $1::uuid
           AND tr.expiry_date IS NOT NULL
           AND tr.voided_at IS NULL
@@ -230,7 +266,16 @@ async function loadExpiryCandidates(
           (q.expiry_date - CURRENT_DATE)::int AS days_until_expiry
         FROM safety.driver_qualification_files q
         JOIN mdata.drivers d ON d.id = q.driver_id
-                             AND d.operating_company_id = $1::uuid
+                             AND (
+                               d.operating_company_id = $1::uuid
+                               OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations dqf_dca
+                                 WHERE dqf_dca.driver_id = d.id
+                                   AND dqf_dca.company_id = $1::uuid
+                                   AND dqf_dca.is_authorized = true
+                                   AND dqf_dca.deactivated_at IS NULL
+                               )
+                             )
         WHERE q.operating_company_id = $1::uuid
           AND q.expiry_date IS NOT NULL
           AND q.voided_at IS NULL
@@ -256,7 +301,16 @@ async function loadExpiryCandidates(
         FROM docs.file_links fl
         JOIN docs.files f ON f.id = fl.file_id
         JOIN mdata.drivers d ON d.id = fl.entity_id
-                             AND d.operating_company_id = $1::uuid
+                             AND (
+                               d.operating_company_id = $1::uuid
+                               OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations file_dca
+                                 WHERE file_dca.driver_id = d.id
+                                   AND file_dca.company_id = $1::uuid
+                                   AND file_dca.is_authorized = true
+                                   AND file_dca.deactivated_at IS NULL
+                               )
+                             )
         WHERE fl.entity_type = 'driver'
           AND fl.deleted_at IS NULL
           AND f.deleted_at IS NULL
@@ -304,7 +358,16 @@ async function loadExpiryCandidates(
           d.hazmat_endorsement_expires_at::text AS expiry_date,
           (d.hazmat_endorsement_expires_at - CURRENT_DATE)::int AS days_until_expiry
         FROM mdata.drivers d
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (
+            d.operating_company_id = $1::uuid
+            OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations hazmat_dca
+              WHERE hazmat_dca.driver_id = d.id
+                AND hazmat_dca.company_id = $1::uuid
+                AND hazmat_dca.is_authorized = true
+                AND hazmat_dca.deactivated_at IS NULL
+            )
+          )
           AND d.hazmat_endorsement_expires_at IS NOT NULL
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL

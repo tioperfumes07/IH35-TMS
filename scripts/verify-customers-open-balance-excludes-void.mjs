@@ -30,6 +30,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-open-balance-excludes-void";
 const TARGET_REL = "apps/frontend/src/pages/Customers.tsx";
+const LIST_REL = "apps/frontend/src/pages/customers/CustomersListView.tsx";
+const SIDEBAR_REL = "apps/frontend/src/pages/customers/CustomerListSidebar.tsx";
+const DRILL_REL = "apps/frontend/src/components/customers/CustomerDrillModal.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -72,12 +75,45 @@ export function assertOpenByCustomerExcludesVoid(source) {
   return errors;
 }
 
+export function assertOpenBalanceFailureTruth(sources) {
+  const errors = [];
+  const page = sources[TARGET_REL];
+  const list = sources[LIST_REL];
+  const sidebar = sources[SIDEBAR_REL];
+  const drill = sources[DRILL_REL];
+  if (!/allInvoicesQuery\.isError[\s\S]*Couldn't load customer open balances[\s\S]*allInvoicesQuery\.refetch\(\)/.test(page)) {
+    errors.push("all-invoices failure must expose an exact retry before balance consumers");
+  }
+  if ((page.match(/openBalancesAvailable=\{!allInvoicesQuery\.isError\}/g) ?? []).length !== 2) {
+    errors.push("both list and master-detail consumers must receive open-balances availability");
+  }
+  if (!list.includes("open_balance: number | null") || !list.includes('row.open_balance == null ? <span className="text-gray-500">Unavailable</span>')) {
+    errors.push("customer list must render unavailable, never $0, when the rollup GET failed");
+  }
+  if (!list.includes('c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)')) {
+    errors.push("customer CSV export must preserve unavailable, never fabricate $0");
+  }
+  if (!list.includes('disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}')) {
+    errors.push("balance-dependent filter chips must disable while the rollup is unavailable");
+  }
+  if (!sidebar.includes('openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"')) {
+    errors.push("master-detail sidebar must render unavailable, never $0, on rollup failure");
+  }
+  if (!drill.includes('openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)')) {
+    errors.push("customer quick-view must render unavailable, never $0, on rollup failure");
+  }
+  return errors;
+}
+
 function selftest() {
   const problems = [];
   const live = read(TARGET_REL);
+  const sources = Object.fromEntries([TARGET_REL, LIST_REL, SIDEBAR_REL, DRILL_REL].map((rel) => [rel, read(rel)]));
 
   const liveErrors = assertOpenByCustomerExcludesVoid(live);
   if (liveErrors.length) problems.push(`live source rejected: ${liveErrors.join("; ")}`);
+  const failureTruthErrors = assertOpenBalanceFailureTruth(sources);
+  if (failureTruthErrors.length) problems.push(`live failure truth rejected: ${failureTruthErrors.join("; ")}`);
 
   const cases = [
     [
@@ -116,13 +152,32 @@ function selftest() {
       problems.push(`planted regression "${name}" was NOT caught — assertion is ineffective`);
     }
   }
+  for (const [file, needle, expectFragment] of [
+    [TARGET_REL, "allInvoicesQuery.isError", "exact retry"],
+    [TARGET_REL, "openBalancesAvailable={!allInvoicesQuery.isError}", "both list and master-detail"],
+    [LIST_REL, "open_balance: number | null", "customer list"],
+    [LIST_REL, 'c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)', "CSV export"],
+    [LIST_REL, 'disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}', "filter chips"],
+    [SIDEBAR_REL, 'openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"', "sidebar"],
+    [DRILL_REL, 'openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)', "quick-view"],
+  ]) {
+    const mutatedSources = { ...sources, [file]: sources[file].replace(needle, "BROKEN_OPEN_BALANCE_FAILURE_TRUTH") };
+    if (mutatedSources[file] === sources[file]) {
+      problems.push(`failure-truth mutation setup failed for ${file}: ${needle}`);
+      continue;
+    }
+    const found = assertOpenBalanceFailureTruth(mutatedSources);
+    if (!found.some((error) => error.includes(expectFragment))) {
+      problems.push(`failure-truth mutation was not caught for ${file}: ${needle}`);
+    }
+  }
 
   if (problems.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const p of problems) console.error("  •", p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — live source clean; ${cases.length} planted regressions caught`);
+  console.log(`${LABEL} SELFTEST PASS — live source clean; ${cases.length + 7} planted regressions caught`);
 }
 
 function main() {
@@ -132,6 +187,7 @@ function main() {
   }
 
   const errors = assertOpenByCustomerExcludesVoid(read(TARGET_REL));
+  errors.push(...assertOpenBalanceFailureTruth(Object.fromEntries([TARGET_REL, LIST_REL, SIDEBAR_REL, DRILL_REL].map((rel) => [rel, read(rel)]))));
   if (errors.length) {
     console.error(`${LABEL} FAILED\n- ${errors.join("\n- ")}`);
     process.exit(1);

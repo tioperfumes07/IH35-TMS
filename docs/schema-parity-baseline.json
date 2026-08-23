@@ -8105,6 +8105,22 @@
       "vin",
       "year"
     ],
+    "mdata.vendor_payment_methods": [
+      "account_mask",
+      "bank_name",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "id",
+      "is_primary",
+      "method_type",
+      "notes",
+      "operating_company_id",
+      "updated_at",
+      "vendor_id",
+      "void_reason",
+      "voided_by_user_id"
+    ],
     "mdata.vendors": [
       "account_number",
       "address_line1",

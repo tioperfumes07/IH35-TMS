@@ -154,7 +154,17 @@ const DRIVER_DAY_SUMMARY_SQL = `
           FROM all_drivers ad
           JOIN mdata.drivers d
             ON d.id = ad.driver_id
-           AND d.operating_company_id = $1::uuid
+           AND d.archived_at IS NULL
+           AND (
+             d.operating_company_id = $1::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations day_summary_dca
+               WHERE day_summary_dca.driver_id = d.id
+                 AND day_summary_dca.company_id = $1::uuid
+                 AND day_summary_dca.is_authorized = true
+                 AND day_summary_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mileage m ON m.driver_id = ad.driver_id
           LEFT JOIN duty dt ON dt.driver_id = ad.driver_id
           LEFT JOIN fuel_stops fs ON fs.driver_id = ad.driver_id

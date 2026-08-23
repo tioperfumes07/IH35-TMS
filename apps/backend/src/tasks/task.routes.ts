@@ -164,7 +164,18 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           AND subject_unit.id = t.subject_id
           AND COALESCE(subject_unit.currently_leased_to_company_id, subject_unit.owner_company_id) = t.operating_company_id
         LEFT JOIN mdata.drivers subject_driver ON t.subject_type = 'driver'
-          AND subject_driver.id = t.subject_id AND subject_driver.operating_company_id = t.operating_company_id
+          AND subject_driver.id = t.subject_id
+          AND (
+            subject_driver.operating_company_id = t.operating_company_id
+            OR EXISTS (
+              SELECT 1
+              FROM mdata.driver_company_authorizations task_list_subject_dca
+              WHERE task_list_subject_dca.driver_id = subject_driver.id
+                AND task_list_subject_dca.company_id = t.operating_company_id
+                AND task_list_subject_dca.is_authorized = true
+                AND task_list_subject_dca.deactivated_at IS NULL
+            )
+          )
         LEFT JOIN mdata.customers subject_customer ON t.subject_type = 'customer'
           AND subject_customer.id = t.subject_id AND subject_customer.operating_company_id = t.operating_company_id
         LEFT JOIN maintenance.work_orders subject_wo ON t.subject_type IN ('maintenance_order', 'work_order')
@@ -252,7 +263,18 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           AND subject_unit.id = COALESCE(t.subject_id, primary_link.subject_id)
           AND COALESCE(subject_unit.currently_leased_to_company_id, subject_unit.owner_company_id) = t.operating_company_id
         LEFT JOIN mdata.drivers subject_driver ON COALESCE(t.subject_type, primary_link.subject_type) = 'driver'
-          AND subject_driver.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_driver.operating_company_id = t.operating_company_id
+          AND subject_driver.id = COALESCE(t.subject_id, primary_link.subject_id)
+          AND (
+            subject_driver.operating_company_id = t.operating_company_id
+            OR EXISTS (
+              SELECT 1
+              FROM mdata.driver_company_authorizations task_calendar_subject_dca
+              WHERE task_calendar_subject_dca.driver_id = subject_driver.id
+                AND task_calendar_subject_dca.company_id = t.operating_company_id
+                AND task_calendar_subject_dca.is_authorized = true
+                AND task_calendar_subject_dca.deactivated_at IS NULL
+            )
+          )
         LEFT JOIN mdata.customers subject_customer ON COALESCE(t.subject_type, primary_link.subject_type) = 'customer'
           AND subject_customer.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_customer.operating_company_id = t.operating_company_id
         LEFT JOIN maintenance.work_orders subject_wo ON COALESCE(t.subject_type, primary_link.subject_type) IN ('maintenance_order', 'work_order')

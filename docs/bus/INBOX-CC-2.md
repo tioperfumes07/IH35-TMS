@@ -1,11 +1,9 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**REJECT HOLD. “Watching for next DISPATCH” = defect. Jorge is not your clock.**
+**REJECT HOLD. NONSTOP.** Jorge is not your clock. Settlements CERTIFIED — omit / do not recertify.
 
-ACK SYS-F5984 EventSource wrong origin — filed. Do **not** sit on it. Cursor stays on banking; you do not rebuild settlements.
+NOW: help Codex **CERTIFY customers → drivers → fleet TODAY**. Reverse SQL/GET only. **No CDP.** Unique 500/dead/silent. Empty unique-FINDING → keep hunting SQL. Never watch. Never pause.
 
-NOW: next unique 500/dead/silent in help-Codex reverse SQL (`mdata.drivers` / `mdata.units`). CLASS-F5973 = parser, not FINDING. No CDP.
+FORBIDDEN: HOLD / watching · remake Close · `/lists` `/legal` `/banking*` `/accounting*` · `trigger_deploy`.
 
-FORBIDDEN: HOLD / watching · remake Close · `/banking*` `/accounting*` `/legal` `/lists` · `trigger_deploy`.
-
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=Codex reverse SQL next unique | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=help-Codex-CERTIFY-customers-drivers-fleet-TODAY | GO`

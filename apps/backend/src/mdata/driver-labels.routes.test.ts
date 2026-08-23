@@ -45,8 +45,12 @@ describe("GET /api/v1/mdata/driver-labels", () => {
     expect(assertMembership).toHaveBeenCalledWith("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", COMPANY);
     const selectCall = query.mock.calls.find(([sql]) => String(sql).includes("FROM mdata.drivers"));
     expect(String(selectCall?.[0])).toMatch(/d\.operating_company_id = \$1::uuid/);
+    expect(String(selectCall?.[0])).toMatch(/label_dca\.driver_id = d\.id/);
+    expect(String(selectCall?.[0])).toMatch(/label_dca\.company_id = \$1::uuid/);
+    expect(String(selectCall?.[0])).toMatch(/label_dca\.is_authorized = true/);
+    expect(String(selectCall?.[0])).toMatch(/label_dca\.deactivated_at IS NULL/);
     expect(String(selectCall?.[0])).toMatch(/d\.id = ANY\(\$2::uuid\[\]\)/);
-    expect(String(selectCall?.[0])).not.toMatch(/archived_at|deactivated_at/);
+    expect(String(selectCall?.[0])).not.toMatch(/d\.archived_at/);
     expect(selectCall?.[1]).toEqual([COMPANY, [DRIVER]]);
   });
 

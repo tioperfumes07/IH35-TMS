@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 function companyPickerLabel(c: MyCompany): string {
@@ -130,7 +131,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create trailer"), "error"),
   });
 
-  const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending;
+  const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending && !companiesQuery.isError;
 
   return (
     <ParityDrawer
@@ -159,6 +160,9 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
           if (canSubmit) createMutation.mutate();
         }}
       >
+        {companiesQuery.isError ? (
+          <ListErrorState title="Couldn't load company choices" status={0} message={(companiesQuery.error as Error)?.message} onRetry={() => void companiesQuery.refetch()} />
+        ) : null}
         <FieldSet title="Identity">
           <FormField label="Equipment Number" name="equipment_number">
             <input

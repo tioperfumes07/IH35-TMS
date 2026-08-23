@@ -95,7 +95,18 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       await pgClient.query("SET ROLE ih35_app");
       await pgClient.query("SET LOCAL app.bypass_rls = 'lucia'");
 
-      const customerExisting = await pgClient.query<{ id: string }>(`SELECT id FROM mdata.customers WHERE deactivated_at IS NULL LIMIT 1`);
+      // BUG: this used to select ANY customer system-wide with no operating_company_id filter --
+      // on a shared/seeded DB that can pick a customer belonging to a DIFFERENT company than this
+      // test's own `companyId`, and the load insert below is scoped to `companyId` -- triggering
+      // mdata.loads_customer_same_company_fk (202612512000) the moment a cross-company customer
+      // wins the LIMIT 1 race. That failure aborts this suite's beforeAll transaction and, since
+      // CI runs every backend test against one shared Postgres, poisons every OTHER test file's
+      // shared fixtures for the rest of the run (the cascade of unrelated 503s/wrong-values seen
+      // alongside this error is a symptom of THIS root cause, not independent regressions).
+      const customerExisting = await pgClient.query<{ id: string }>(
+        `SELECT id FROM mdata.customers WHERE deactivated_at IS NULL AND operating_company_id = $1::uuid LIMIT 1`,
+        [companyId]
+      );
       if (customerExisting.rows[0]?.id) {
         customerId = String(customerExisting.rows[0].id);
       } else {

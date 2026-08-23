@@ -127,7 +127,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.drug_test t
           LEFT JOIN mdata.drivers d
             ON d.id = t.driver_id
-           AND d.operating_company_id = t.operating_company_id
+           AND (d.operating_company_id = t.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations drug_tests_list_dca
+             WHERE drug_tests_list_dca.driver_id = d.id
+               AND drug_tests_list_dca.company_id = t.operating_company_id
+               AND drug_tests_list_dca.is_authorized = true
+               AND drug_tests_list_dca.deactivated_at IS NULL
+           ))
           WHERE t.operating_company_id = $1::uuid
             AND t.voided_at IS NULL
           ORDER BY t.test_date DESC, t.created_at DESC
@@ -312,7 +318,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.random_pool p
           LEFT JOIN mdata.drivers d
             ON d.id = p.driver_id
-           AND d.operating_company_id = p.operating_company_id
+           AND (d.operating_company_id = p.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations random_pool_list_dca
+             WHERE random_pool_list_dca.driver_id = d.id
+               AND random_pool_list_dca.company_id = p.operating_company_id
+               AND random_pool_list_dca.is_authorized = true
+               AND random_pool_list_dca.deactivated_at IS NULL
+           ))
           WHERE p.operating_company_id = $1::uuid
             AND p.voided_at IS NULL
           ORDER BY p.selected_at DESC, p.created_at DESC
@@ -392,7 +404,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.clearinghouse_query q
           LEFT JOIN mdata.drivers d
             ON d.id = q.driver_id
-           AND d.operating_company_id = q.operating_company_id
+           AND (d.operating_company_id = q.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations clearinghouse_list_dca
+             WHERE clearinghouse_list_dca.driver_id = d.id
+               AND clearinghouse_list_dca.company_id = q.operating_company_id
+               AND clearinghouse_list_dca.is_authorized = true
+               AND clearinghouse_list_dca.deactivated_at IS NULL
+           ))
           WHERE q.operating_company_id = $1::uuid
             AND q.voided_at IS NULL
           ORDER BY q.queried_at DESC
@@ -476,7 +494,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.get("/api/v1/safety/drug-program/drivers/:driver_id/drug-status", async (req, reply) => {
+  app.get("/api/v1/safety/drug-program/drivers/:driver_id/drug-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -485,6 +503,24 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
 
     const status = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const parent = await client.query(
+        `SELECT 1 FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
+           AND (
+             d.operating_company_id = $2::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations dca
+               WHERE dca.driver_id = d.id
+                 AND dca.company_id = $2::uuid
+                 AND dca.is_authorized = true
+                 AND dca.deactivated_at IS NULL
+             )
+           )
+         LIMIT 1`,
+        [params.data.driver_id, company.data.operating_company_id]
+      );
+      if (!parent.rows[0]) return null;
       const latestTestRes = await client.query(
         `
           SELECT *
@@ -524,6 +560,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
       };
     });
 
+    if (!status) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return status;
   });
 }

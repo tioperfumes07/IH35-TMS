@@ -79,6 +79,14 @@ export function assertAssetSafetyReverse(sources) {
   if (!src[SECTION].includes("unit_id: assetId") || !src[SECTION].includes("trailer_id: assetId")) {
     problems.push(`${SECTION}: reads are not scoped to the asset (expected both \`unit_id: assetId\` and \`trailer_id: assetId\`).`);
   }
+  for (const queryName of ["query", "accidentsQuery", "inspectionsQuery", "dvirQuery"]) {
+    if (!new RegExp(`onRetry=\\{\\(\\) => void ${queryName}\\.refetch\\(\\)\\}`).test(src[SECTION])) {
+      problems.push(`${SECTION}: ${queryName} failed reverse GET must expose its exact retry.`);
+    }
+  }
+  if (!/isError \? <ListErrorState title=\{errorText\} status=\{0\} onRetry=\{onRetry\} \/>/.test(src[SECTION])) {
+    problems.push(`${SECTION}: shared safety reverse error shell must render its retry action.`);
+  }
 
   // 2. Mounted on BOTH profile pages, with the right asset kind.
   for (const [page, kind, label] of [
@@ -101,6 +109,15 @@ export function assertAssetSafetyReverse(sources) {
   }
   if (!/ds\.trailer_id = \$/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: GET dvir has no trailer_id filter — a trailer's DVIRs stay unreachable.`);
+  }
+  if (!/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: exact-driver reverse must validate an owned or actively authorized driver parent.`);
+  }
+  if (!/label_dca\.company_id = ds\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true[\s\S]{0,160}label_dca\.deactivated_at IS NULL/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: DVIR driver labels must preserve active selected-company authorization.`);
+  }
+  if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: an invalid exact driver must not render as a legitimate empty DVIR history.`);
   }
   if (!/wo\.display_id AS follow_up_wo_display_id/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: DVIR list does not project the follow-up work-order display identity.`);
@@ -214,6 +231,11 @@ if (SELFTEST) {
     "does not read DVIRs"
   );
   expectCaught(
+    "dvir-retry-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/onRetry=\{\(\) => void dvirQuery\.refetch\(\)\}/, "onRetry={() => undefined}") },
+    "dvirQuery failed reverse GET must expose its exact retry"
+  );
+  expectCaught(
     "dot-response-key-drift",
     { ...live, [SECTION]: live[SECTION].replace(/data\?\.dot_inspections/g, "data?.inspections") },
     "reads the wrong DOT response key"
@@ -247,6 +269,21 @@ if (SELFTEST) {
     "dvir-trailer-filter-removed",
     { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/ds\.trailer_id = \$\$\{idx\+\+\}/g, "TRUE") },
     "has no trailer_id filter"
+  );
+  expectCaught(
+    "dvir-driver-parent-authorization-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/dca\.is_authorized = true/, "TRUE") },
+    "actively authorized driver parent"
+  );
+  expectCaught(
+    "dvir-driver-label-authorization-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/label_dca\.is_authorized = true/, "TRUE") },
+    "labels must preserve active selected-company authorization"
+  );
+  expectCaught(
+    "dvir-driver-parent-404-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)") },
+    "must not render as a legitimate empty DVIR history"
   );
   expectCaught(
     "dvir-wo-label-projection-removed",
@@ -412,7 +449,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 29/29 runtime/evidence defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 30/30 runtime/evidence defects caught, live sources clean`);
   process.exit(0);
 }
 

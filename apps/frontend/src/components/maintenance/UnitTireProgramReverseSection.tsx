@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../shared/EntityLink";
 import { getMaintenanceTireLayout } from "../../api/maintenance";
+import { ListErrorState } from "../ListErrorState";
 
 export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { operatingCompanyId: string; unitId: string }) {
   const query = useQuery({
@@ -16,7 +17,7 @@ export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { 
         <EntityLink kind="tire_program_unit" id={unitId} label="Open Tire Program" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading mounted tires…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load mounted tires for this unit.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Could not load mounted tires for this unit." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && mounted.length === 0 ? <p className="text-sm text-gray-500">No tire records mounted to this unit.</p> : null}
       {mounted.length ? <ul className="grid gap-2 md:grid-cols-2">{mounted.map((position) => {
         const record = position.record!;

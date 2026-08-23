@@ -25,6 +25,20 @@ function fail(message) {
   process.exit(1);
 }
 
+function verifySharedDriverLabel(service) {
+  const failures = [];
+  for (const needle of [
+    "FROM mdata.driver_company_authorizations dispatcher_home_dca",
+    "dispatcher_home_dca.driver_id = dr.id",
+    "dispatcher_home_dca.company_id = l.operating_company_id",
+    "dispatcher_home_dca.is_authorized = true",
+    "dispatcher_home_dca.deactivated_at IS NULL",
+  ]) {
+    if (!service.includes(needle)) failures.push(`active-load shared-driver label missing ${needle}`);
+  }
+  return failures;
+}
+
 function main() {
   const service = read(paths.backendService);
   const routes = read(paths.backendRoutes);
@@ -40,6 +54,7 @@ function main() {
   if (!service.includes("l.dispatcher_user_id = $1::uuid")) failures.push("dispatcher service must scope loads by dispatcher user");
   if (!service.includes("mdata.detention_requests")) failures.push("dispatcher service must read pending detention approvals");
   if (!service.includes("mdata.driver_profile_messages")) failures.push("dispatcher service must read inbound queue");
+  failures.push(...verifySharedDriverLabel(service));
 
   if (!routes.includes('app.get("/api/v1/dispatcher-board/home"')) failures.push("backend route /api/v1/dispatcher-board/home missing");
   if (!routes.includes("canReadDispatcherHome")) failures.push("dispatcher route must gate allowed office roles");
@@ -64,6 +79,19 @@ function main() {
   if (failures.length > 0) {
     failures.forEach((entry) => console.error(` - ${entry}`));
     fail(failures.join("; "));
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      service.replace("FROM mdata.driver_company_authorizations dispatcher_home_dca", "FROM mdata.drivers dispatcher_home_dca"),
+      service.replace("dispatcher_home_dca.driver_id = dr.id", "dispatcher_home_dca.driver_id = l.id"),
+      service.replace("dispatcher_home_dca.company_id = l.operating_company_id", "dispatcher_home_dca.company_id = dr.operating_company_id"),
+      service.replace("dispatcher_home_dca.is_authorized = true", "dispatcher_home_dca.is_authorized = false"),
+      service.replace("dispatcher_home_dca.deactivated_at IS NULL", "dispatcher_home_dca.deactivated_at IS NOT NULL"),
+    ];
+    const escaped = mutations.filter((candidate) => verifySharedDriverLabel(candidate).length === 0);
+    if (escaped.length > 0) fail(`SELFTEST: ${escaped.length}/${mutations.length} planted defects escaped`);
+    console.log(`verify:dispatcher-home SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
   }
 
   console.log("verify:dispatcher-home PASS");

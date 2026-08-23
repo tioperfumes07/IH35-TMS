@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fleet","accounting"],"cols":["unit","ap_bill","expense","gl_je","connectivity"],"leaves":["unit.detail.finance_linkage"],"task":"UNIT-FINANCE-LINKAGE-GL-JE","vertical":"column-wave"} */
 /** @matrix-built {"modules":["fleet","accounting"],"cols":["reverse_link"],"leaves":["unit.detail.finance_linkage"],"task":"FLEET-F5917-FINANCE-LINKAGE-REVERSE-EXACT","vertical":"class-sweep"} */
-// ACCT-F5984 — accounting.required.json carries its own copy of this exact leaf (same id, same
-// route_hint, same required columns) but no guard had ever checked THAT module's registry entry —
-// only fleet.required.json was verified, so a regression to the accounting-side matrix entry could
-// ship silently. Extended to check both registries against the SAME underlying source files (the
-// component/service checks below are module-agnostic — there is only one UnitFinanceLinkageTab.tsx).
 import fs from "node:fs";
 const LABEL = "verify-unit-finance-gl-je-reverse";
 const files = {
@@ -13,6 +8,13 @@ const files = {
   api: "apps/frontend/src/api/accounting.ts",
   view: "apps/frontend/src/pages/units/UnitFinanceLinkageTab.tsx",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
+  // CLASS-F5973-TRUE-REMAINDER-ACCOUNTING-UNIT-FINANCE — accounting.required.json carries its OWN
+  // registry copy of this same cross-module leaf (same real surface, same GET endpoint, same
+  // UnitFinanceLinkageTab.tsx — see that leaf's own "note"). Only fleet's copy was ever checked
+  // here, leaving accounting:unit.detail.finance_linkage:reverse_link genuinely unowned even though
+  // the underlying implementation this guard already proves is the SAME implementation. Checking it
+  // too (not a second, duplicate implementation — there is only one) is what lets the exact
+  // PROTECTED key retire from verify-codex-vertical-nonmoney-zero-remainder.mjs.
   requiredAccounting: "docs/specs/scoreboard/modules/accounting.required.json",
   feed: "docs/specs/scoreboard/wire-sprint-built.json",
   self: "scripts/verify-unit-finance-gl-je-reverse.mjs",
@@ -30,19 +32,31 @@ function audit(s) {
   if (!/b\.journal_entry_id/.test(s.view) || !/e\.journal_entry_id/.test(s.view)) failures.push("conditional source JE rendering missing");
   if (!/linkedMoneyQuery\.isError/.test(s.view) || !/No bills or expenses stamp/.test(s.view)) failures.push("honest reverse states missing");
   if (!/EntityLink kind="bill" id=\{b\.id\}/.test(s.view) || !/kind="expense"[\s\S]{0,80}id=\{e\.id\}/.test(s.view)) failures.push("canonical bill/expense source drills missing");
-  let leaf;
-  const visit = (value) => {
-    if (Array.isArray(value)) value.forEach(visit);
-    else if (value && typeof value === "object") {
-      if (value.id === "unit.detail.finance_linkage" && Array.isArray(value.required)) leaf = value;
-      Object.values(value).forEach(visit);
-    }
+  const findLeaf = (json) => {
+    let leaf;
+    const visit = (value) => {
+      if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") {
+        if (value.id === "unit.detail.finance_linkage" && Array.isArray(value.required)) leaf = value;
+        Object.values(value).forEach(visit);
+      }
+    };
+    visit(JSON.parse(json));
+    return leaf;
   };
-  visit(JSON.parse(s.required));
-  if (!leaf) failures.push("Fleet unit finance linkage Required leaf missing");
+  const fleetLeaf = findLeaf(s.required);
+  if (!fleetLeaf) failures.push("Fleet unit finance linkage Required leaf missing");
   else {
-    if (!leaf.required.includes("reverse_link")) failures.push("Fleet unit finance linkage must require reverse_link");
-    if (leaf.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Fleet unit finance linkage route must name the canonical finance tab");
+    if (!fleetLeaf.required.includes("reverse_link")) failures.push("Fleet unit finance linkage must require reverse_link");
+    if (fleetLeaf.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Fleet unit finance linkage route must name the canonical finance tab");
+  }
+  // CLASS-F5973-TRUE-REMAINDER-ACCOUNTING-UNIT-FINANCE — same check, accounting's own registry copy
+  // of this identical cross-module leaf.
+  const acctLeaf = findLeaf(s.requiredAccounting);
+  if (!acctLeaf) failures.push("Accounting unit finance linkage Required leaf missing");
+  else {
+    if (!acctLeaf.required.includes("reverse_link")) failures.push("Accounting unit finance linkage must require reverse_link");
+    if (acctLeaf.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Accounting unit finance linkage route must name the canonical finance tab");
   }
   let leafAcct;
   const visitAcct = (value) => {
@@ -82,17 +96,11 @@ if (process.argv.includes("--selftest")) {
     ["leaf", "required", /"unit\.detail\.finance_linkage"/, '"unit.detail.finance_linkage_MISSING"'],
     ["reverse", "required", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,300})"reverse_link"/, '$1"reverse_link_MISSING"'],
     ["route", "required", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,200})"\/fleet\/units\/:id\/detail\?tab=finance"/, '$1"/fleet/units/:id"'],
-    ["leaf-acct", "requiredAccounting", /"unit\.detail\.finance_linkage"/, '"unit.detail.finance_linkage_MISSING"'],
-    // accounting.required.json's copy of this leaf carries a long `note` field (~950 chars) between
-    // `id` and `required`/`route_hint` — a {0,300}-style window (the shape that bit this exact
-    // guard class before, see memory "Regex guard windows too small") would silently miss the real
-    // text and report a false PASS. Widened well past the observed distance.
-    // Non-greedy: a greedy {0,1600} window walks PAST this leaf's own required array and matches a
-    // LATER, unrelated leaf's "reverse_link"/route_hint instead (dense JSON packs leaves close
-    // together) -- the mutation then corrupts the wrong leaf while THIS leaf stays untouched, so
-    // audit() finds no failure and the selftest false-fails. Non-greedy stops at the nearest match.
-    ["reverse-acct", "requiredAccounting", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,1600}?)"reverse_link"/, '$1"reverse_link_MISSING"'],
-    ["route-acct", "requiredAccounting", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,1600}?)"\/fleet\/units\/:id\/detail\?tab=finance"/, '$1"/fleet/units/:id"'],
+    ["acct-leaf", "requiredAccounting", /"unit\.detail\.finance_linkage"/, '"unit.detail.finance_linkage_MISSING"'],
+    // accounting.required.json's leaf carries a much longer "note" field than fleet's between "id"
+    // and "reverse_link"/route_hint (~960 chars) — a wider window than the fleet mutations above.
+    ["acct-reverse", "requiredAccounting", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,1200})"reverse_link"/, '$1"reverse_link_MISSING"'],
+    ["acct-route", "requiredAccounting", /("id": "unit\.detail\.finance_linkage"[\s\S]{0,1100})"\/fleet\/units\/:id\/detail\?tab=finance"/, '$1"/fleet/units/:id"'],
     ["header", "self", EXACT_HEADER, EXACT_HEADER.replace("reverse_link", "connectivity")],
     ["feed", "feed", /\[\s*/, `[\n  {"guard":"scripts/verify-unit-finance-gl-je-reverse.mjs"},`],
   ];

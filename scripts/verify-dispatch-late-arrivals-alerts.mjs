@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["queues.late"],"task":"DRV-F6201-LATE-ARRIVAL-SHARED-DRIVER-LABEL","vertical":"column-wave"} */
 /**
  * Block B21-D6: Dispatch alerts late-arrivals endpoint + UI card drill-down.
  */
@@ -10,6 +11,7 @@ const ROOT = process.cwd();
 const paths = {
   routes: path.join(ROOT, "apps/backend/src/dispatch/alerts.routes.ts"),
   service: path.join(ROOT, "apps/backend/src/dispatch/late-arrivals.service.ts"),
+  analyticsService: path.join(ROOT, "apps/backend/src/dispatch/analytics/late-arrival.service.ts"),
   index: path.join(ROOT, "apps/backend/src/index.ts"),
   alertsPage: path.join(ROOT, "apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx"),
   drilldown: path.join(ROOT, "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx"),
@@ -19,6 +21,9 @@ const paths = {
   dispatchPage: path.join(ROOT, "apps/frontend/src/pages/Dispatch.tsx"),
   loadsRoute: path.join(ROOT, "apps/backend/src/mdata/loads.routes.ts"),
 };
+
+const sharedDriverScope = /FROM mdata\.driver_company_authorizations late_arrivals_list_dca[\s\S]{0,180}late_arrivals_list_dca\.driver_id = d\.id[\s\S]{0,140}late_arrivals_list_dca\.company_id = l\.operating_company_id[\s\S]{0,140}late_arrivals_list_dca\.is_authorized = true[\s\S]{0,140}late_arrivals_list_dca\.deactivated_at IS NULL/;
+const analyticsSharedDriverScope = /driver_company_authorizations late_arrival_analytics_dca[\s\S]{0,360}late_arrival_analytics_dca\.driver_id = d\.id[\s\S]{0,180}late_arrival_analytics_dca\.company_id = sa\.operating_company_id[\s\S]{0,180}late_arrival_analytics_dca\.is_authorized = true[\s\S]{0,180}late_arrival_analytics_dca\.deactivated_at IS NULL/;
 
 function read(filePath) {
   if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
@@ -33,6 +38,7 @@ function fail(msg) {
 function main() {
   const routes = read(paths.routes);
   const service = read(paths.service);
+  const analyticsService = read(paths.analyticsService);
   const index = read(paths.index);
   const alertsPage = read(paths.alertsPage);
   const drilldown = read(paths.drilldown);
@@ -48,6 +54,12 @@ function main() {
   }
   if (!service.includes("DISPATCH_LATE_ARRIVAL_GRACE_MINUTES")) {
     failures.push("late-arrivals.service must read grace threshold env");
+  }
+  if (!sharedDriverScope.test(service)) {
+    failures.push("late-arrivals driver label must admit active canonical selected-company authorization");
+  }
+  if (!analyticsSharedDriverScope.test(analyticsService)) {
+    failures.push("late-arrival analytics driver label must admit active canonical selected-company authorization");
   }
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
@@ -78,6 +90,26 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail(failures.join("; "));
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      service.replace("late_arrivals_list_dca.is_authorized = true", "late_arrivals_list_dca.is_authorized = false"),
+      service.replace("late_arrivals_list_dca.deactivated_at IS NULL", "late_arrivals_list_dca.deactivated_at IS NOT NULL"),
+      service.replace("late_arrivals_list_dca.company_id = l.operating_company_id", "late_arrivals_list_dca.company_id = d.operating_company_id"),
+    ];
+    for (const [index, mutated] of mutations.entries()) {
+      if (mutated === service || sharedDriverScope.test(mutated)) fail(`shared-driver mutation ${index + 1} escaped`);
+    }
+    const analyticsMutations = [
+      analyticsService.replace("late_arrival_analytics_dca.is_authorized = true", "late_arrival_analytics_dca.is_authorized = false"),
+      analyticsService.replace("late_arrival_analytics_dca.deactivated_at IS NULL", "late_arrival_analytics_dca.deactivated_at IS NOT NULL"),
+    ];
+    for (const [index, mutated] of analyticsMutations.entries()) {
+      if (mutated === analyticsService || analyticsSharedDriverScope.test(mutated)) fail(`analytics shared-driver mutation ${index + 1} escaped`);
+    }
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 5/5 shared-driver mutations red");
+    return;
   }
 
   console.log("verify:dispatch-late-arrivals-alerts PASS");

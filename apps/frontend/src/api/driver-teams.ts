@@ -66,8 +66,9 @@ export function listMdataDriverTeams(params: {
   return apiRequest<{ teams: MdataDriverTeam[] }>(`/api/v1/mdata/driver-teams?${query.toString()}`);
 }
 
-export function getMdataDriverTeam(id: string) {
-  return apiRequest<MdataDriverTeam>(`/api/v1/mdata/driver-teams/${id}`);
+export function getMdataDriverTeam(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MdataDriverTeam>(`/api/v1/mdata/driver-teams/${id}?${query.toString()}`);
 }
 
 export function createMdataDriverTeam(body: MdataDriverTeamCreateBody) {

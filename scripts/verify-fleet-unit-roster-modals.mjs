@@ -168,6 +168,17 @@ export function audit(src) {
       failures.push(`${rel}: must still expose the closed company Combobox (Select company)`);
     }
   }
+  for (const [key, rel] of [["createUnit", FILES.createUnit], ["createTrailer", FILES.createTrailer], ["editTrailer", FILES.editTrailer], ["editVehicle", FILES.editVehicle]]) {
+    const body = src[key];
+    if (!/companiesQuery\.isError[\s\S]{0,500}title="Couldn't load company choices"[\s\S]{0,500}companiesQuery\.refetch\(\)/.test(body)) {
+      failures.push(`${rel}: failed company roster GET must render an exact retry instead of an empty picker`);
+    }
+    const failsClosedDirectly = /disabled=\{[^}]*companiesQuery\.isError/.test(body);
+    const failsClosedViaCanSubmit = /const canSubmit =[^;\n]*!companiesQuery\.isError/.test(body) && /disabled=\{!canSubmit\}/.test(body);
+    if (!failsClosedDirectly && !failsClosedViaCanSubmit) {
+      failures.push(`${rel}: create/save must fail closed while the company roster GET is failed`);
+    }
+  }
   for (const id of REVERSE_LEAVES) {
     const leaf = required.leaves?.find((entry) => entry.id === id);
     if (!leaf?.required?.includes("reverse_link")) {
@@ -217,6 +228,10 @@ if (process.argv.includes("--selftest")) {
     ["profile-path-fn", "table", /function fleetProfilePath\(row: FleetRow\): string \{/, "function fleetProfilePathUnused(row: FleetRow): string {"],
     ["edit-unit-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={false}"],
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
+    ["create-unit-company-error", "createUnit", /companiesQuery\.isError/, "false"],
+    ["create-trailer-company-retry", "createTrailer", /companiesQuery\.refetch\(\)/, "Promise.resolve()"],
+    ["edit-trailer-company-fail-closed", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={profileQuery.isError}"],
+    ["edit-vehicle-company-error", "editVehicle", /companiesQuery\.isError/, "false"],
     ["create-trailer-call", "createTrailer", /return createEquipment\(\{/, "return createSomethingElse({"],
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
     ["edit-trailer-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, "open={false}"],

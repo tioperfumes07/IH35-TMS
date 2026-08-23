@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -97,6 +98,14 @@ export function DriverLeaveBalancesPage() {
         </Link>
       </div>
       {policyQuery.isLoading ? <div className="text-sm text-gray-500">Loading policy…</div> : null}
+      {policyQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load leave policy"
+          status={0}
+          message="The company leave policy is temporarily unavailable."
+          onRetry={() => void policyQuery.refetch()}
+        />
+      ) : null}
       {policyQuery.data ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="grid gap-2 md:grid-cols-2">
@@ -121,9 +130,12 @@ export function DriverLeaveBalancesPage() {
       ) : null}
       {balancesQuery.isLoading ? <div className="text-sm text-gray-500">Loading driver balances…</div> : null}
       {balancesQuery.isError ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-          Could not load driver leave balances. Confirm a leave policy exists for this company.
-        </div>
+        <ListErrorState
+          title="Couldn't load driver leave balances"
+          status={0}
+          message="The company-scoped balance roster is temporarily unavailable."
+          onRetry={() => void balancesQuery.refetch()}
+        />
       ) : null}
       {!balancesQuery.isLoading && !balancesQuery.isError ? (
         rows.length === 0 ? (
