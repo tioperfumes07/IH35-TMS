@@ -57,6 +57,16 @@ export function collectProblems(src) {
   if (!formTab.includes("checking the box does not attach a document")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Part 8 checkboxes must toast instead of silently pretending a file was attached");
   }
+  const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
+  if (qbTab.includes("useState(new Date().getMonth())")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Month/Year must be the Form period, not a silent local picker");
+  }
+  if (!qbTab.includes("qbDateInPeriod") || !qbTab.includes("month/year filter excluded pasted rows")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Parse must filter to selected month/year and toast when the filter drops all rows");
+  }
+  if (!src.includes("month={month}") || !src.includes("<QBImportTab")) {
+    problems.push(`${PAGE}: QB Import must receive the Form month/year, not a disconnected local period`);
+  }
   return problems;
 }
 
@@ -73,6 +83,8 @@ const good = `
   pushToast("Draft saved — generating filing PDF", "success");
   pushToast("Draft saved — marking filed", "success");
   pushToast("Create / Load Draft before autosave", "error");
+  month={month}
+  <QBImportTab
 `;
 const bad = `
   if (!detailQuery.data?.report) {

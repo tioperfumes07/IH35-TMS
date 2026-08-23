@@ -1,6 +1,16 @@
 import { INCOME_TYPES, XFER_KW } from "./constants";
 import type { BankAccount, QBParsedLine } from "../types";
 
+/** Month is 0-based (JS Date). Unknown date formats are out-of-period (fail closed). */
+export function qbDateInPeriod(dateStr: string, month: number, year: number): boolean {
+  const s = String(dateStr).trim();
+  const iso = /^(\d{4})-(\d{2})/.exec(s);
+  if (iso) return Number(iso[1]) === year && Number(iso[2]) === month + 1;
+  const us = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
+  if (us) return Number(us[3]) === year && Number(us[1]) === month + 1;
+  return false;
+}
+
 export function parseQBText(raw: string, bankAccounts: BankAccount[]): QBParsedLine[] {
   const results: QBParsedLine[] = [];
   const lines = raw
