@@ -227,6 +227,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
   const [returningCheckLoading, setReturningCheckLoading] = useState(false);
+  const [returningCheckError, setReturningCheckError] = useState<unknown>(null);
+  const [returningCheckRetry, setReturningCheckRetry] = useState(0);
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
@@ -278,6 +280,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     setShowMexicanIdentity(true);
     setShowVisaEmergency(true);
     setReturningDetection(null);
+    setReturningCheckError(null);
     setOverrideReturningWarning(false);
     setRehireAction("rehire");
     setSelectedPriorDriverId(null);
@@ -301,21 +304,24 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       setReturningDetection(null);
       setOverrideReturningWarning(false);
       setReturningCheckLoading(false);
+      setReturningCheckError(null);
       return;
     }
 
     let cancelled = false;
     setReturningCheckLoading(true);
+    setReturningCheckError(null);
     const timeout = window.setTimeout(async () => {
       try {
         const result = await checkReturningDriver(hasCurp ? curp : undefined, hasCdlPair ? cdlNumber : undefined, hasCdlPair ? cdlState : undefined);
         if (cancelled) return;
         setReturningDetection(result.returning_driver ? result : null);
         if (!result.returning_driver) setOverrideReturningWarning(false);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setReturningDetection(null);
           setOverrideReturningWarning(false);
+          setReturningCheckError(error);
         }
       } finally {
         if (!cancelled) setReturningCheckLoading(false);
@@ -326,7 +332,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, form.curp, form.cdl_number, form.cdl_state]);
+  }, [open, form.curp, form.cdl_number, form.cdl_state, returningCheckRetry]);
 
   const usStatesQuery = useQuery({
     queryKey: ["catalogs", "us-states"],
@@ -415,6 +421,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ? 'Select the prior driver record to link, or choose "Treat as a new hire" instead.'
           : pendingDocCategoriesUnavailable
             ? "Document categories are unavailable. Retry the category list or remove the staged files before saving."
+          : returningCheckError
+            ? "Returning-driver identity check failed. Retry it before saving this driver."
           : returningCheckLoading
             ? "Checking for a matching returning-driver record…"
             : undefined;
@@ -572,10 +580,14 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         pushToast("Document categories are unavailable. Retry before saving staged files.", "error");
         return;
       }
+      if (returningCheckError) {
+        pushToast("Returning-driver identity check failed. Retry before saving.", "error");
+        return;
+      }
       saveModeRef.current = mode;
       void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
     },
-    [form, pendingDocCategoriesUnavailable, pushToast, submitDriverCreate]
+    [form, pendingDocCategoriesUnavailable, pushToast, returningCheckError, submitDriverCreate]
   );
 
   useEffect(() => {
@@ -1148,6 +1160,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </div>
           ) : null}
 
+          {wizardStep === 4 && returningCheckError ? (
+            <div className="col-span-full">
+              <ListErrorState
+                title="Couldn't check for a returning driver"
+                status={returningCheckError instanceof ApiError ? returningCheckError.status : 0}
+                message={userFacingApiError(returningCheckError, "Returning-driver identity check failed")}
+                onRetry={() => setReturningCheckRetry((value) => value + 1)}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            </div>
+          ) : null}
+
           <div className="col-span-full space-y-1">
           <div className="flex flex-wrap justify-between gap-2">
             <Button
@@ -1190,6 +1214,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       terminatedMatches.length > 0 &&
                       !selectedPriorDriverId) ||
                     pendingDocCategoriesUnavailable ||
+                    Boolean(returningCheckError) ||
                     returningCheckLoading
                   }
                   title={saveDisabledReason}
