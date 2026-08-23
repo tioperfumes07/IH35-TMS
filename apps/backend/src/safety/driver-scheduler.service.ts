@@ -1046,8 +1046,24 @@ export async function listTempAssignments(client: QueryableClient, operatingComp
         cd.first_name || ' ' || cd.last_name AS cover_driver_name
       FROM safety.temp_unit_assignments t
       LEFT JOIN mdata.units u ON u.id = t.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = t.operating_company_id
-      LEFT JOIN mdata.drivers pd ON pd.id = t.primary_driver_id AND pd.operating_company_id = t.operating_company_id
-      LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id AND cd.operating_company_id = t.operating_company_id
+      LEFT JOIN mdata.drivers pd ON pd.id = t.primary_driver_id AND (
+        pd.operating_company_id = t.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+           WHERE pd_dca.driver_id = pd.id
+             AND pd_dca.company_id = t.operating_company_id
+             AND pd_dca.is_authorized = true
+             AND pd_dca.deactivated_at IS NULL
+        )
+      )
+      LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id AND (
+        cd.operating_company_id = t.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations cd_dca
+           WHERE cd_dca.driver_id = cd.id
+             AND cd_dca.company_id = t.operating_company_id
+             AND cd_dca.is_authorized = true
+             AND cd_dca.deactivated_at IS NULL
+        )
+      )
       WHERE t.operating_company_id = $1::uuid
         AND t.voided_at IS NULL
         AND ($2::uuid IS NULL OR t.primary_driver_id = $2::uuid OR t.cover_driver_id = $2::uuid)
