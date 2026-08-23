@@ -45,8 +45,8 @@ export function audit(src) {
   if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editTrailer)) {
     failures.push(`${FILES.editTrailer}: failed canonical trailer reads must expose exact retry`);
   }
-  if (!/disabled=\{profileQuery\.isError\}/.test(src.editTrailer)) {
-    failures.push(`${FILES.editTrailer}: failed canonical trailer reads must disable destructive patch saves`);
+  if (!/disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/.test(src.editTrailer)) {
+    failures.push(`${FILES.editTrailer}: failed canonical trailer or company reads must disable destructive patch saves`);
   }
   if (!/equipmentKind === "truck" \? "truck" : "trailer"/.test(src.quickAssign)) {
     failures.push(`${FILES.quickAssign}: must genuinely branch copy/target on truck|trailer kind`);
@@ -115,7 +115,8 @@ if (process.argv.includes("--selftest")) {
     ["create-type", "createTrailer", /equipment_type: draft\.equipment_type/, "equipment_type: undefined"],
     ["edit-patch", "editTrailer", /mutationFn: \(\) => patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/, "mutationFn: () => Promise.resolve()"],
     ["edit-read-retry", "editTrailer", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
-    ["edit-save-gate", "editTrailer", /disabled=\{profileQuery\.isError\}/, "disabled={false}"],
+    ["edit-save-profile-gate", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={companiesQuery.isError}"],
+    ["edit-save-company-gate", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={profileQuery.isError}"],
     ["quick-assign-branch", "quickAssign", /equipmentKind === "truck" \? "truck" : "trailer"/, '"trailer"'],
     ["reefer-field", "reefer", /equipment_number\?:\s*string \| null/, "equipment_id?: string | null"],
     ["reefer-id", "reefer", /attached_trailer_id\?:\s*string \| null/, "attached_trailer_ref?: string | null"],
