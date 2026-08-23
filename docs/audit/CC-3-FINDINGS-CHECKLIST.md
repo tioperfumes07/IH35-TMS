@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6251-WO-CLASS-LABEL-DROPS-AUTHORIZED-SHARED-DRIVER` — Codex fleet/maintenance reverse SQL/GET — FIXED this PR; WO two-section class derivation resolves the selected driver through home or active authorization; maintenance driver guard mutation-proves it.
+
 - ☑ `DRV-F6250-LOAD-SETTLEMENT-SUMMARY-NULLS-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; load drawer settlement summary resolves its canonical driver FK through home or active selected-company authorization; dedicated guard mutation-proves it.
 
 - ☑ `DRV-F6249-SAFETY-CREDENTIAL-CREATORS-REJECT-AUTHORIZED-SHARED-DRIVERS` — Codex vertical driver-column sweep — FIXED this PR across training, medical card, background check, and qualification creators; all now match their canonical authorized-driver reads and reverse surfaces.
