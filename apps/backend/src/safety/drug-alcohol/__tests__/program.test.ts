@@ -57,6 +57,9 @@ describe("listEnrollments", () => {
       "co-1",
       true,
     ]);
+    const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(callSql).toContain("driver_company_authorizations da_enrollment_label_dca");
+    expect(callSql).toContain("da_enrollment_label_dca.company_id = e.operating_company_id");
   });
 });
 
@@ -116,6 +119,8 @@ describe("listTestRecords", () => {
     expect(result).toEqual(rows);
     const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(callSql).toContain("result = $2");
+    expect(callSql).toContain("driver_company_authorizations da_test_label_dca");
+    expect(callSql).toContain("da_test_label_dca.company_id = t.operating_company_id");
   });
 });
 
