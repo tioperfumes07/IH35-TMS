@@ -119,7 +119,13 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id
-                                    AND dr.operating_company_id = ds.operating_company_id
+                                    AND (dr.operating_company_id = ds.operating_company_id OR EXISTS (
+                                      SELECT 1 FROM mdata.driver_company_authorizations preflight_defects_dca
+                                      WHERE preflight_defects_dca.driver_id = dr.id
+                                        AND preflight_defects_dca.company_id = ds.operating_company_id
+                                        AND preflight_defects_dca.is_authorized = true
+                                        AND preflight_defects_dca.deactivated_at IS NULL
+                                    ))
           WHERE ${filters.join(" AND ")}
           ORDER BY
             CASE ${severityExpr} WHEN 'major' THEN 0 WHEN 'minor' THEN 1 ELSE 2 END,

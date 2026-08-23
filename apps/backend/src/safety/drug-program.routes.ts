@@ -127,7 +127,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.drug_test t
           LEFT JOIN mdata.drivers d
             ON d.id = t.driver_id
-           AND d.operating_company_id = t.operating_company_id
+           AND (d.operating_company_id = t.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations drug_tests_list_dca
+             WHERE drug_tests_list_dca.driver_id = d.id
+               AND drug_tests_list_dca.company_id = t.operating_company_id
+               AND drug_tests_list_dca.is_authorized = true
+               AND drug_tests_list_dca.deactivated_at IS NULL
+           ))
           WHERE t.operating_company_id = $1::uuid
             AND t.voided_at IS NULL
           ORDER BY t.test_date DESC, t.created_at DESC
@@ -312,7 +318,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.random_pool p
           LEFT JOIN mdata.drivers d
             ON d.id = p.driver_id
-           AND d.operating_company_id = p.operating_company_id
+           AND (d.operating_company_id = p.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations random_pool_list_dca
+             WHERE random_pool_list_dca.driver_id = d.id
+               AND random_pool_list_dca.company_id = p.operating_company_id
+               AND random_pool_list_dca.is_authorized = true
+               AND random_pool_list_dca.deactivated_at IS NULL
+           ))
           WHERE p.operating_company_id = $1::uuid
             AND p.voided_at IS NULL
           ORDER BY p.selected_at DESC, p.created_at DESC

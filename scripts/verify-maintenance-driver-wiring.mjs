@@ -35,6 +35,7 @@ const CHECKS = [
   ["apps/backend/src/maintenance/work-orders.routes.ts", /work_orders_detail_dca\.driver_id = d\.id[\s\S]{0,180}work_orders_detail_dca\.company_id = w\.operating_company_id[\s\S]{0,180}work_orders_detail_dca\.is_authorized = true[\s\S]{0,180}work_orders_detail_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/maintenance/driver-reports.routes.ts", /driver_reports_list_dca\.driver_id = d\.id[\s\S]{0,180}driver_reports_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}driver_reports_list_dca\.is_authorized = true[\s\S]{0,180}driver_reports_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/maintenance/dashboard.routes.ts", /intransit_queue_dca\.driver_id = d\.id[\s\S]{0,180}intransit_queue_dca\.company_id = i\.operating_company_id[\s\S]{0,180}intransit_queue_dca\.is_authorized = true[\s\S]{0,180}intransit_queue_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/pre-flight/routes.ts", /preflight_defects_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_defects_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}preflight_defects_dca\.is_authorized = true[\s\S]{0,180}preflight_defects_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
