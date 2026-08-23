@@ -110,6 +110,14 @@ function ThreadPane({
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-4" data-testid="inbox-thread">
         {threadQuery.isLoading ? <p className="text-sm text-gray-500">Loading thread…</p> : null}
+        {threadQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load message thread"
+            status={0}
+            message={(threadQuery.error as Error)?.message}
+            onRetry={() => void threadQuery.refetch()}
+          />
+        ) : null}
         {messages.map((msg: DriverInboxMessage) => (
           <div
             key={msg.id}
@@ -131,7 +139,7 @@ function ThreadPane({
             </div>
           </div>
         ))}
-        {!threadQuery.isLoading && messages.length === 0 ? (
+        {!threadQuery.isLoading && !threadQuery.isError && messages.length === 0 ? (
           <p className="text-sm text-gray-500">No messages in this thread yet.</p>
         ) : null}
       </div>
