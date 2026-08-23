@@ -312,15 +312,23 @@ async function upsertSamsaraAssignment(
 
   // Driver handoff: keep exactly ONE open assignment per unit = the current driver. Before inserting the
   // current open assignment, end any other open one on this unit (the board reads the open assignment).
+  // FLEET-CROSS-ENTITY-STALE-ASSIGNMENT-2026-08-23: unit_id is the canonical cross-entity identifier
+  // (mdata.units row is shared; operating_company_id on the assignment reflects which entity's Samsara
+  // feed reported it). A unit re-leased from company A to company B keeps reconciling under B going
+  // forward, but the OLD open row under A was previously left untouched — scoping this close to
+  // `operating_company_id = $1` only closed handoffs WITHIN the same entity, so A's fleet/HOS board kept
+  // showing a driver "currently assigned" to a unit that had already moved to B. Close ANY other entity's
+  // open assignment on this unit_id too, not just this entity's — the one-open-assignment-per-unit
+  // invariant the comment above already claims to hold must hold across entities, since a physical unit
+  // can only be actively staffed under one entity at a time.
   if (!assignment.ended_at) {
     await client.query(
       `
         UPDATE telematics.vehicle_driver_assignments
         SET ended_at = now()
-        WHERE operating_company_id = $1::uuid
-          AND unit_id = $2::uuid
+        WHERE unit_id = $2::uuid
           AND ended_at IS NULL
-          AND samsara_assignment_id IS DISTINCT FROM $3
+          AND (operating_company_id != $1::uuid OR samsara_assignment_id IS DISTINCT FROM $3)
       `,
       [operatingCompanyId, local.unit_id, assignment.samsara_assignment_id]
     );
