@@ -99,6 +99,22 @@ if (vendorCreditsResolverMatches.length < 2) {
   );
 }
 
+// CLS-DEACTIVATED-PLAIN-JOIN-CUSTOMERS-VENDORS class-sweep pickup (2026-08-22) — invoice-render's
+// factor-vendor lookup was a bare INNER JOIN on mdata.vendors (no resolver fallback at all, not
+// even a LEFT JOIN): the moment the factoring-company vendor is deactivated, vendors_select RLS
+// drops the row entirely, silently blanking advance_rate_pct/reserve_pct/vendor_name off a
+// customer-facing invoice document (live-checked 2026-08-22: 1/1 currently-linked invoice's factor
+// vendor is not deactivated today — no live incident, but the same RLS mechanism as every other
+// site this guard covers applies here identically the moment one is).
+const invoiceRenderPath = "apps/backend/src/accounting/invoice-render.routes.ts";
+const invoiceRenderSrc = readFileSync(invoiceRenderPath, "utf8");
+if (!/LEFT JOIN mdata\.vendors v ON v\.id = fa\.factoring_company_vendor_id/.test(invoiceRenderSrc)) {
+  failures.push(`${invoiceRenderPath}: factor-vendor lookup is no longer a LEFT JOIN — a deactivated factoring-company vendor would drop the whole advance_rate_pct/reserve_pct/vendor_name row again`);
+}
+if (!/COALESCE\(v\.vendor_name,\s*mdata\.resolve_vendor_label_same_company\(fa\.factoring_company_vendor_id,\s*fa\.operating_company_id\)\)\s*AS vendor_name/.test(invoiceRenderSrc)) {
+  failures.push(`${invoiceRenderPath}: factor vendor_name no longer COALESCEs with mdata.resolve_vendor_label_same_company`);
+}
+
 if (failures.length > 0) {
   console.error("verify-deactivated-counterparty-resolver-coverage: FAIL");
   for (const f of failures) console.error(`  - ${f}`);
@@ -108,6 +124,7 @@ if (failures.length > 0) {
 console.log(
   "verify-deactivated-counterparty-resolver-coverage: OK — transaction-register (fuel/invoice/bill arms), " +
     "invoices.routes.ts search filter, ap-aging.service.ts (vendor_name + vendor_id), " +
-    "expenses.routes.ts (list + detail vendor_name), and vendor-credits.routes.ts (list + detail vendor_name) " +
+    "expenses.routes.ts (list + detail vendor_name), vendor-credits.routes.ts (list + detail vendor_name), " +
+    "and invoice-render.routes.ts (factor vendor_name + advance/reserve pct) " +
     "all resolve a deactivated counterparty via the canonical same-company resolvers"
 );

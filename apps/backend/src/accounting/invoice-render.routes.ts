@@ -92,9 +92,17 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       if (invoice.factoring_advance_id) {
         const factorRes = await client.query(
           `
-            SELECT fa.advance_rate_pct, fa.reserve_pct, v.vendor_name
+            SELECT fa.advance_rate_pct, fa.reserve_pct,
+                   COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(fa.factoring_company_vendor_id, fa.operating_company_id)) AS vendor_name
             FROM accounting.factoring_advances fa
-            JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $2::uuid
+            -- CLS-DEACTIVATED-PLAIN-JOIN-CUSTOMERS-VENDORS: a plain JOIN here silently drops the
+            -- whole row (and with it advance_rate_pct/reserve_pct, not just the name) the moment
+            -- the factoring-company vendor is deactivated -- vendors_select RLS excludes
+            -- deactivated_at IS NOT NULL rows outside the lucia bypass, so this factor's real,
+            -- still-correct advance/reserve terms would silently vanish off a customer-facing
+            -- invoice document. LEFT JOIN + the same resolver used elsewhere in this file keeps
+            -- the row and the percentages; only the vendor_name needs the COALESCE fallback.
+            LEFT JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $2::uuid
             -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): fa itself was read by bare id -- this
             -- feeds the advance/reserve percentages rendered on a customer-facing invoice document.
             WHERE fa.id = $1
