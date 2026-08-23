@@ -21,6 +21,13 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
+  const authorizedDriverJoin = (alias) => new RegExp(
+    `FROM mdata\\.driver_company_authorizations ${alias}[\\s\\S]{0,180}` +
+    `${alias}\\.driver_id = d\\.id[\\s\\S]{0,140}` +
+    `${alias}\\.company_id = ubc\\.operating_company_id[\\s\\S]{0,140}` +
+    `${alias}\\.is_authorized = true[\\s\\S]{0,140}` +
+    `${alias}\\.deactivated_at IS NULL`
+  );
   if (!/<EntityPicker[\s\S]{0,160}kind="driver"/.test(s.wizard)) failures.push("wizard canonical driver picker missing");
   if (!/driver_id:\s*form\.driverId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward driver FK");
   if (!/FROM mdata\.drivers[\s\S]{0,220}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}archived_at IS NULL/.test(s.writer)) failures.push("writer active tenant driver validation missing");
@@ -29,6 +36,9 @@ function audit(s) {
   if (!/driver_id: driverId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact driver and show errors");
   if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/DriverBorderCrossingsReverseSection[\s\S]{0,160}driverId=\{id\}/.test(s.profile)) failures.push("driver profile reverse mount missing");
+  if (!authorizedDriverJoin("border_wizard_list_dca").test(s.writer)) failures.push("wizard read must resolve authorized shared-driver label");
+  if (!authorizedDriverJoin("border_history_list_dca").test(s.historyRoute)) failures.push("history list must resolve authorized shared-driver label");
+  if (!authorizedDriverJoin("border_history_detail_dca").test(s.historyRoute)) failures.push("history detail must resolve authorized shared-driver label");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -43,6 +53,9 @@ if (process.argv.includes("--selftest")) {
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
     ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="driver"'],
     ["mount", "profile", /DriverBorderCrossingsReverseSection/g, "MissingDriverBorderReverse"],
+    ["wizard shared driver", "writer", /border_wizard_list_dca\.is_authorized = true/, "border_wizard_list_dca.is_authorized = false"],
+    ["history list shared driver", "historyRoute", /border_history_list_dca\.company_id = ubc\.operating_company_id/, "border_history_list_dca.company_id = d.operating_company_id"],
+    ["history detail shared driver", "historyRoute", /border_history_detail_dca\.deactivated_at IS NULL/, "border_history_detail_dca.deactivated_at IS NOT NULL"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
