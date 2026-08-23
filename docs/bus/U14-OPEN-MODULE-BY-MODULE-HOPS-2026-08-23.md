@@ -19,7 +19,9 @@ Law: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` · `do
 
 ---
 
-## CC-3 · PORT 9225 · Chrome · **lists CERTIFIED 01385f7** · module 14 legal only
+## CC-3 · PORT 9225 · Chrome · **lists+legal CERTIFIED 01385f7** · leftover POST-U14 (compliance)
+
+Do **not** recertify lists or legal. Leftover `/compliance` then next unclaimed POST row. Never idle.
 
 **Forbidden prefixes:** `/customers` `/drivers` `/fleet` `/banking*` `/dispatch` `/cash-flow` `/finance` `/425c` `/driver-hub`
 

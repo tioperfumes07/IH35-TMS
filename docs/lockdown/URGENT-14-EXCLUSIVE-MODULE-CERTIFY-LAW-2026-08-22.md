@@ -53,7 +53,7 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 | 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 12 | safety | Cursor after maintenance | `/safety` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 13 | insurance | Cursor after safety | `/insurance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
-| 14 | legal | CC-3 after lists CERTIFIED | `/legal` pickers — separate CERTIFIED line | OPEN |
+| 14 | legal | CC-3 after lists CERTIFIED | `/legal` pickers — separate CERTIFIED line | CERTIFIED LIVE_SHA=01385f7 |
 
 **Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence. Cascade/Devin = re-walk Fully-Wired 1–12 on CERTIFIED modules vs **current** healthz (AUDIT-PASS or unique FINDING; never restamp the table). Devin-A = finish `docs/audit/scenario-trackers/certified-u14/`.
 
