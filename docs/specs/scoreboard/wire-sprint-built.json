@@ -2371,6 +2371,14 @@
       "leafRe": "^reporting$",
       "guard": "scripts/verify-driver-hub-surfaces-pack.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "DISP-F6281-MDATA-LOAD-CREATE-TRAILER-EQUIPMENT-NOT-NULL",
+      "modules": ["dispatch"],
+      "cols": ["trailer"],
+      "leafRe": "^planning\\.reserve$",
+      "guard": "scripts/verify-mdata-load-create-trailer-equipment-default.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
