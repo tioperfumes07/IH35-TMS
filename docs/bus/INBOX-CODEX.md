@@ -10,7 +10,16 @@ NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this t
 
 Cursor Neon help (do not stamp for you). Re-curl healthz first (`2fd90a0` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn.
 
-**customers (NOW):** `mdata.customers` n_visible=2728 = n_live_tup · USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` n=25. R=W this tick `3e066edd-22ad-4014-9871-a93cf099c382` TIO PERFUMES · reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7`. GET `/api/v1/mdata/customers` then `/api/v1/mdata/customers/:id` then `/detail` (`customers.routes.ts`). Unauthed GET = 401 — **session GET**. Then one OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl>` hops=list+detail+loads reverse+RLS discriminator. Then drivers. Then fleet. No CDP. No batch.
+**SESSION GET PROVEN this tick (auth cookie, LIVE_SHA=2fd90a0) — copy into YOUR CERTIFIED hops, then add reverse SQL + RLS discriminator. Cursor will not stamp for you.**
+- Unauthed GET `/api/v1/mdata/customers` = **401**
+- Session GET `/api/v1/mdata/customers?limit=3` = **200** JSON (`customers[]`)
+- Session GET `/api/v1/mdata/customers/:id` **without** `operating_company_id` = **400** `operating_company_id` required
+- Session GET `/api/v1/mdata/customers/3e066edd-22ad-4014-9871-a93cf099c382?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` = **200** name=`TIO PERFUMES` code=`TEST-TIO`
+- Session GET same id `/detail?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` = **200**
+- You still own reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7` + RLS completeness discriminator, then ONE line:
+  `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=2fd90a0 | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse · RLS discriminator · no 500 | GO`
+
+**customers (NOW):** `mdata.customers` n_visible=2728 = n_live_tup · USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` n=25. R=W this tick `3e066edd-22ad-4014-9871-a93cf099c382` TIO PERFUMES · reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7`. GET `/api/v1/mdata/customers` then `/api/v1/mdata/customers/:id?operating_company_id=` then `/detail`. Unauthed GET = 401 — **session GET**. Then one OUTBOX CERTIFIED line. Then drivers. Then fleet. No CDP. No batch.
 
 **drivers (after customers CERTIFIED):** `mdata.drivers` n_visible=264 = n_live_tup · USMCA n=168. GET `/api/v1/mdata/drivers` then `/me` then `/:id`. Reverse `assigned_primary_driver_id` / `assigned_secondary_driver_id` (not `loads.driver_id`). Do not remake CLASS-F5973.
 
