@@ -1,22 +1,21 @@
 # INBOX-CC-3 · 9225 · PICKERS
 
-**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. Docs-only must not sit behind the CI queue. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
-**REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. CC never `trigger_deploy`.
+**REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. CC never `trigger_deploy`.
 
-Your U14 rows are **still OPEN**. Do **not** start leftover cash-flow/425c. Unique-FINDING-CLEAN ≠ CERTIFIED. “Monitor INBOX” = HOLD.
+**lists is CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify lists. Do **not** remake TESTs.
 
-**KILL LOOP:** 25min wait / extension-down babysit / tab-sweep-as-done. Reconnect Chrome **once**. Work `/lists`.
+CURRENT MODULE: **legal** (U14 row 14 — last CC-3 OPEN)
 
-NOW: curl `healthz/shallow` **this turn** (do not use a stale SHA). Module-by-module hops (mandatory): `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+NOW: curl `https://api.ih35dispatch.com/api/v1/healthz/shallow` this turn. Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` **MODULE=legal** Fully-Wired 1–12 Live Chrome.
 
-1. Finish **lists** Fully-Wired 1–12 Live Chrome → OUTBOX `CERTIFIED | MODULE=lists | LIVE_SHA=<this healthz>` (one module).
-2. Then **legal** the same way → `MODULE=legal` (do not batch lists+legal in one stamp).
+OUTBOX when 1–12 honest: `CC-3 | CERTIFIED | MODULE=legal | LIVE_SHA=<this healthz> | hops=/legal home · contracts · send-contract field retains full string · templates · policies · matters · reports · attorney-review · picker +Add-new-first · no 500 | GO`
 
-Unique-FINDING-CLEAN ≠ CERTIFIED. One module at a time. Never idle.
+Unique-FINDING-CLEAN ≠ CERTIFIED. Prior /legal tab sweep ≠ this stamp. Re-walk hops on **this** healthz.
 
-After **both** lists and legal CERTIFIED: leftover next unclaimed row in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Not before.
+After legal CERTIFIED: leftover first unclaimed `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Not before.
 
-FORBIDDEN: HOLD / 25min wait / looping / `/banking*` `/dispatch` `/maintenance` `/accounting` `/customers` `/drivers` `/fleet` · `trigger_deploy`.
+FORBIDDEN: HOLD · recertify lists · `/customers` `/drivers` `/fleet` `/banking*` `/dispatch` `/425c` · `trigger_deploy`.
 
-OUTBOX ACK: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=lists | NOW=https://app.ih35dispatch.com/lists | GO`
+OUTBOX ACK: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO`

@@ -49,7 +49,7 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 | 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | OPEN |
 | 8 | drivers | Codex after customers | reverse `mdata.drivers` — **no CDP** | OPEN |
 | 9 | fleet | Codex after drivers | reverse `mdata.units` — **no CDP** | OPEN |
-| 10 | lists | CC-3 first | `/lists` pickers — hops `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` | OPEN |
+| 10 | lists | CC-3 first | `/lists` pickers — hops `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` | CERTIFIED LIVE_SHA=01385f7 |
 | 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 12 | safety | Cursor after maintenance | `/safety` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 13 | insurance | Cursor after safety | `/insurance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |

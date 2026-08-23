@@ -4,9 +4,9 @@
 
 **REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. **No CDP.**
 
-Your U14 rows are **still OPEN**. Do **not** start leftover cash-flow/425c until customers → drivers → fleet are CERTIFIED.
+lists is Cursor-stamped CERTIFIED (CC-3). **Your three rows are still OPEN.** CC-3 is on `/legal` — do not steal it.
 
-NOW **TODAY — CERTIFY one module at a time** (reverse SQL/GET). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn. Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
 1. `MODULE=customers` → OUTBOX CERTIFIED line (this healthz SHA + hops). Then
 2. `MODULE=drivers` (do not remake CLASS-F5973). Then
