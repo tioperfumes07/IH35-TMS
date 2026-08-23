@@ -1697,7 +1697,14 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="space-y-3">
-          {companyAuthQuery.isError ? (
+          {companiesQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load accessible operating companies"
+              status={companiesQuery.error instanceof ApiError ? companiesQuery.error.status : 0}
+              message={companiesQuery.error instanceof Error ? companiesQuery.error.message : undefined}
+              onRetry={() => void companiesQuery.refetch()}
+            />
+          ) : companyAuthQuery.isError ? (
             <ListErrorState
               title="Couldn't load driver company authorizations"
               status={companyAuthQuery.error instanceof ApiError ? companyAuthQuery.error.status : 0}
@@ -1771,7 +1778,7 @@ export function DriverDetailPage() {
               </div>
             );
           })}
-          {!companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
+          {!companiesQuery.isError && !companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
         </div>
       ) : null}
 
