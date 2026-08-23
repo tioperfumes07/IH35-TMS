@@ -9,6 +9,7 @@ const FILES = {
   api: "apps/frontend/src/api/mdata.ts",
   profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
   backend: "apps/backend/src/mdata/drivers.routes.ts",
+  profileBackend: "apps/backend/src/mdata/driver-profile.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -21,6 +22,15 @@ function verify(source) {
   need(/companyAuthQuery\.isError[\s\S]{0,500}title="Couldn't load driver company authorizations"[\s\S]{0,500}companyAuthQuery\.refetch\(\)/.test(source.detail), "DriverDetail must fail closed and offer exact retry when company authorization reverse GET fails");
   need(/companiesQuery\.isError[\s\S]{0,500}title="Couldn't load accessible operating companies"[\s\S]{0,500}companiesQuery\.refetch\(\)/.test(source.detail), "DriverDetail must disclose and offer exact retry when accessible-company GET fails");
   need(/!companiesQuery\.isError\s*&&\s*!companyAuthQuery\.isError\s*&&\s*companiesListState\.isEmpty/.test(source.detail), "DriverDetail must not portray either failed company relationship GET as an empty set");
+  need(/listDriverCompanyAuthorizations\(id, companyId\)/.test(source.detail), "DriverDetail company-authorizations GET must send selected companyId");
+  need(/queryKey: \["driver-company-authorizations", id, companyId\]/.test(source.detail), "company-authorization query key must include selected companyId");
+  need(/export function listDriverCompanyAuthorizations\(driverId: string, operatingCompanyId: string\)/.test(source.api), "company-authorization API must require operatingCompanyId");
+
+  const authRouteStart = source.profileBackend.indexOf('app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations"');
+  const authRouteEnd = source.profileBackend.indexOf('app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations"', authRouteStart);
+  const authHandler = authRouteStart >= 0 && authRouteEnd > authRouteStart ? source.profileBackend.slice(authRouteStart, authRouteEnd) : "";
+  need(/parsedQuery\.data\.operating_company_id/.test(authHandler), "company-authorization backend must resolve the selected company");
+  need(/JOIN mdata\.drivers d[\s\S]{0,120}d\.operating_company_id = \$2::uuid/.test(authHandler), "company-authorization backend must gate the parent driver to selected company");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -69,6 +79,17 @@ if (process.argv.includes("--selftest")) {
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.isError/, "false", "accessible company error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.refetch\(\)/, "Promise.resolve()", "accessible company retry") },
     { key: "detail", text: replaceOrFail(source.detail, /!companiesQuery\.isError\s*&&\s*!companyAuthQuery\.isError\s*&&\s*companiesListState\.isEmpty/, "companiesListState.isEmpty", "company relationship empty gate") },
+    { key: "detail", text: replaceOrFail(source.detail, /listDriverCompanyAuthorizations\(id, companyId\)/, "listDriverCompanyAuthorizations(id)", "company authorization selected-company call") },
+    { key: "api", text: replaceOrFail(source.api, /listDriverCompanyAuthorizations\(driverId: string, operatingCompanyId: string\)/, "listDriverCompanyAuthorizations(driverId: string)", "company authorization required company API") },
+    {
+      key: "profileBackend",
+      text: replaceOrFail(
+        source.profileBackend,
+        /(\/api\/v1\/mdata\/drivers\/:id\/company-authorizations[\s\S]{0,2200})d\.operating_company_id = \$2::uuid/,
+        "$1TRUE",
+        "company authorization parent driver scope"
+      ),
+    },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
     { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },

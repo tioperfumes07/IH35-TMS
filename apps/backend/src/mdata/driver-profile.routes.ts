@@ -859,8 +859,16 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsed = idParamSchema.safeParse(req.params ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!companyId) return reply.code(404).send({ error: "mdata_driver_not_found" });
       const res = await client.query(
         `
           SELECT
@@ -876,13 +884,16 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             c.short_name AS company_short_name,
             u.email AS authorized_by_user_email
           FROM mdata.driver_company_authorizations dca
+          JOIN mdata.drivers d
+            ON d.id = dca.driver_id
+           AND d.operating_company_id = $2::uuid
           JOIN org.companies c ON c.id = dca.company_id
           LEFT JOIN identity.users u ON u.id = dca.authorized_by_user_id
           WHERE dca.driver_id = $1
             AND dca.deactivated_at IS NULL
           ORDER BY c.legal_name
         `,
-        [parsed.data.id]
+        [parsed.data.id, companyId]
       );
       return {
         authorizations: res.rows.map((row) => ({

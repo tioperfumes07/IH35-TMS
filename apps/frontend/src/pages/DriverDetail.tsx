@@ -273,9 +273,9 @@ export function DriverDetailPage() {
   });
 
   const companyAuthQuery = useQuery({
-    queryKey: ["driver-company-authorizations", id],
-    queryFn: () => listDriverCompanyAuthorizations(id).then((result) => result.authorizations),
-    enabled: Boolean(id),
+    queryKey: ["driver-company-authorizations", id, companyId],
+    queryFn: () => listDriverCompanyAuthorizations(id, companyId).then((result) => result.authorizations),
+    enabled: Boolean(id && companyId),
   });
 
   const equipmentTypesQuery = useQuery({
