@@ -11,6 +11,7 @@ const FILES = {
   backend: "apps/backend/src/mdata/drivers.routes.ts",
   profileBackend: "apps/backend/src/mdata/driver-profile.routes.ts",
   safetyBackend: "apps/backend/src/mdata/driver-safety-events.routes.ts",
+  communicationsBackend: "apps/backend/src/drivers/communications.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -47,6 +48,8 @@ function verify(source) {
   need(/parsedQuery\.data\.operating_company_id/.test(safetyHandler), "safety-event backend must resolve the selected company");
   need(/SELECT 1[\s\S]{0,180}FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(safetyHandler), "safety-event backend must prove canonical active driver authorization before listing children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(safetyHandler), "safety-event backend must distinguish an unauthorized/missing parent from a legitimate empty event list");
+  need(/FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(source.communicationsBackend), "communications GET must validate canonical driver ownership or authorization before listing messages");
+  need(/if \(!result\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.communicationsBackend), "communications GET must distinguish a missing/unauthorized parent from a true empty log");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -95,6 +98,8 @@ if (process.argv.includes("--selftest")) {
     { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /dca\.is_authorized = true/, "TRUE", "safety-event active company authorization") },
     { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /dca\.deactivated_at IS NULL/, "TRUE", "safety-event non-deactivated authorization") },
     { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "safety-event missing parent response") },
+    { key: "communicationsBackend", text: replaceOrFail(source.communicationsBackend, /dca\.is_authorized = true/, "TRUE", "communications active company authorization") },
+    { key: "communicationsBackend", text: replaceOrFail(source.communicationsBackend, /if \(!result\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "communications missing parent response") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.isError/, "false", "accessible company error disclosure") },
