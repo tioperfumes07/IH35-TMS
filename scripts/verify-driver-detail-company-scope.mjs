@@ -12,6 +12,8 @@ const FILES = {
   profileBackend: "apps/backend/src/mdata/driver-profile.routes.ts",
   safetyBackend: "apps/backend/src/mdata/driver-safety-events.routes.ts",
   communicationsBackend: "apps/backend/src/drivers/communications.routes.ts",
+  hosBackend: "apps/backend/src/telematics/hos.routes.ts",
+  dispatchBackend: "apps/backend/src/dispatch/loads.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -50,6 +52,14 @@ function verify(source) {
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(safetyHandler), "safety-event backend must distinguish an unauthorized/missing parent from a legitimate empty event list");
   need(/FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(source.communicationsBackend), "communications GET must validate canonical driver ownership or authorization before listing messages");
   need(/if \(!result\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.communicationsBackend), "communications GET must distinguish a missing/unauthorized parent from a true empty log");
+  need(/FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(source.hosBackend), "driver HOS timeline must preserve active selected-company authorization visibility");
+  const dispatchHosStart = source.dispatchBackend.indexOf('app.get("/api/v1/dispatch/drivers/:driver_id/hos-status"');
+  const dispatchDrugStart = source.dispatchBackend.indexOf('app.get("/api/v1/dispatch/drivers/:driver_id/drug-status"');
+  const dispatchHosHandler = source.dispatchBackend.slice(dispatchHosStart, dispatchDrugStart);
+  const dispatchDrugHandler = source.dispatchBackend.slice(dispatchDrugStart, source.dispatchBackend.indexOf('app.', dispatchDrugStart + 20));
+  const canonicalDriverAuthorization = /FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/;
+  need(canonicalDriverAuthorization.test(dispatchHosHandler), "dispatch HOS status must preserve active selected-company authorization visibility");
+  need(canonicalDriverAuthorization.test(dispatchDrugHandler), "dispatch drug status must preserve active selected-company authorization visibility");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -100,6 +110,9 @@ if (process.argv.includes("--selftest")) {
     { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "safety-event missing parent response") },
     { key: "communicationsBackend", text: replaceOrFail(source.communicationsBackend, /dca\.is_authorized = true/, "TRUE", "communications active company authorization") },
     { key: "communicationsBackend", text: replaceOrFail(source.communicationsBackend, /if \(!result\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "communications missing parent response") },
+    { key: "hosBackend", text: replaceOrFail(source.hosBackend, /dca\.is_authorized = true/, "TRUE", "HOS active company authorization") },
+    { key: "dispatchBackend", text: replaceOrFail(source.dispatchBackend, /(\/api\/v1\/dispatch\/drivers\/:driver_id\/hos-status[\s\S]{0,1800})dca\.is_authorized = true/, "$1TRUE", "dispatch HOS active company authorization") },
+    { key: "dispatchBackend", text: replaceOrFail(source.dispatchBackend, /(\/api\/v1\/dispatch\/drivers\/:driver_id\/drug-status[\s\S]{0,1800})dca\.is_authorized = true/, "$1TRUE", "dispatch drug active company authorization") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.isError/, "false", "accessible company error disclosure") },
