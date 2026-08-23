@@ -28,6 +28,13 @@ export function auditService(src) {
   if (!/FROM mdata\.drivers d[\s\S]{0,200}?d\.operating_company_id = \$2/.test(src)) {
     problems.push(`${SERVICE}: must entity-scope SELECT mdata.drivers before UPDATE assigned_primary_driver_id`);
   }
+  for (const token of [
+    "FROM mdata.driver_company_authorizations reassign_driver_dca",
+    "reassign_driver_dca.driver_id = d.id",
+    "reassign_driver_dca.company_id = $2::uuid",
+    "reassign_driver_dca.is_authorized = true",
+    "reassign_driver_dca.deactivated_at IS NULL",
+  ]) if (!src.includes(token)) problems.push(`${SERVICE}: missing shared-driver membership ${token}`);
   return problems;
 }
 
@@ -60,9 +67,25 @@ function selftest() {
     FROM mdata.drivers d
     WHERE d.id = $1::uuid
       AND d.operating_company_id = $2::uuid
+    OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations reassign_driver_dca
+      WHERE reassign_driver_dca.driver_id = d.id
+      AND reassign_driver_dca.company_id = $2::uuid
+      AND reassign_driver_dca.is_authorized = true
+      AND reassign_driver_dca.deactivated_at IS NULL)
     if (!driverExists.rows[0]) throw new Error("E_DRIVER_NOT_FOUND");
   `;
   if (auditService(goodSvc).length) failures.push(`svc good: ${auditService(goodSvc)}`);
+  const sharedMutations = [
+    ["source", "FROM mdata.driver_company_authorizations reassign_driver_dca", "FROM mdata.drivers reassign_driver_dca"],
+    ["identity", "reassign_driver_dca.driver_id = d.id", "reassign_driver_dca.driver_id IS NULL"],
+    ["company", "reassign_driver_dca.company_id = $2::uuid", "reassign_driver_dca.company_id = d.operating_company_id"],
+    ["authorization", "reassign_driver_dca.is_authorized = true", "reassign_driver_dca.is_authorized = false"],
+    ["deactivation", "reassign_driver_dca.deactivated_at IS NULL", "reassign_driver_dca.deactivated_at IS NOT NULL"],
+  ];
+  for (const [label, before, after] of sharedMutations) {
+    const mutated = goodSvc.replace(before, after);
+    if (mutated === goodSvc || auditService(mutated).length === 0) failures.push(`shared ${label} mutation stayed green`);
+  }
   if (!auditService("UPDATE mdata.loads").some((p) => p.includes("E_DRIVER_NOT_FOUND"))) {
     failures.push("svc bad not detected");
   }
@@ -83,7 +106,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS`);
+  console.log(`${LABEL}: selftest PASS — ${sharedMutations.length}/${sharedMutations.length} shared-driver mutations rejected`);
 }
 
 function main() {

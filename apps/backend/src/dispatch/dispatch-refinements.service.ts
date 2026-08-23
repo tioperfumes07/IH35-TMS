@@ -99,7 +99,17 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
           SELECT d.id::text AS id
           FROM mdata.drivers d
           WHERE d.id = $1::uuid
-            AND d.operating_company_id = $2::uuid
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations reassign_driver_dca
+                WHERE reassign_driver_dca.driver_id = d.id
+                  AND reassign_driver_dca.company_id = $2::uuid
+                  AND reassign_driver_dca.is_authorized = true
+                  AND reassign_driver_dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [input.new_driver_id, input.operating_company_id]
