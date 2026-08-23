@@ -14,6 +14,25 @@ type Props = {
   isRunning: boolean;
 };
 
+// LV-REPORT-RUNNER-REQUIRED-FILTER-NO-INDICATOR-2026-08-23 — every filter type below renders its
+// label via this helper. requiredMissing() already disables "Run report" until a required filter
+// (e.g. driver_select on Driver pay history) is filled, but the label itself never told the operator
+// WHY the button stayed disabled — confirmed live: selecting nothing left "Run report" silently
+// disabled with zero visual cue. Centralizing the label render so every filter type (date_range,
+// month_picker, unit_select, driver_select, company fallback) gets the same required marker.
+function FilterLabel({ filter }: { filter: RunnerFilter }) {
+  return (
+    <div className="mb-1 text-xs font-semibold text-slate-600">
+      {filter.label}
+      {filter.required ? (
+        <span className="ml-0.5 text-red-600" aria-hidden="true">
+          *
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function todayMinus(days: number) {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -82,7 +101,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             if (filter.type === "date_range") {
               return (
                 <div key={filter.key} className="md:col-span-2 xl:col-span-2">
-                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <FilterLabel filter={filter} />
                   <div className="flex items-center gap-2">
                     <DatePicker className="" value={String(draft.from ?? "")} onChange={(next) => staged.setDraft({ ...draft, from: next })} />
                     <span className="text-slate-500">to</span>
@@ -94,7 +113,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             if (filter.type === "month_picker") {
               return (
                 <label key={filter.key} className="block">
-                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <FilterLabel filter={filter} />
                   <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
                 </label>
               );
@@ -102,7 +121,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             if (filter.type === "unit_select") {
               return (
                 <label key={filter.key} className="block" data-testid={`runner-filter-unit-${filter.key}`}>
-                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <FilterLabel filter={filter} />
                   <EntityPicker
                     kind="unit"
                     operatingCompanyId={selectedCompanyId ?? ""}
@@ -121,7 +140,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             if (filter.type === "driver_select") {
               return (
                 <label key={filter.key} className="block" data-testid={`runner-filter-driver-${filter.key}`}>
-                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <FilterLabel filter={filter} />
                   <EntityPicker
                     kind="driver"
                     operatingCompanyId={selectedCompanyId ?? ""}
@@ -141,7 +160,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             if (!showCompany) return null;
             return (
               <label key={filter.key} className="block">
-                <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                <FilterLabel filter={filter} />
                 <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
