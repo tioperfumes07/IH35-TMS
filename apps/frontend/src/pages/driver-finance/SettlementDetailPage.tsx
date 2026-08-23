@@ -20,8 +20,10 @@ import {
   type OpenDriverBill,
 } from "../../api/driverFinance";
 import { formatUsdCents } from "../../lib/money";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
@@ -234,6 +236,28 @@ export function SettlementDetailPage() {
       <div className="space-y-3">
         <PageHeader title="Settlement Detail" subtitle="Select a settlement from list view" />
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">No settlement selected.</div>
+      </div>
+    );
+  }
+
+  // DETAILQUERY-SILENT-FALSE-EMPTY: detailQuery drives every dollar figure on this page (lines,
+  // earnings, extra, reimbursements, deductions, totals) via `settlement = detailQuery.data ?? {}`
+  // — a failed fetch previously fell through to that `{}` fallback and rendered exactly like a
+  // genuine $0.00 settlement with no lines, indistinguishable from "nothing owed" (the same class
+  // already fixed for the smaller sibling paymentEventsQuery under
+  // LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE / PR #4956). Fail fast here instead of threading
+  // isError through hundreds of lines of derived state — same early-return shape as the
+  // !settlementId guard above.
+  if (detailQuery.isError) {
+    return (
+      <div className="space-y-3">
+        <BackButton label="Driver Settlements" />
+        <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
+        <ListErrorState
+          title="Couldn't load this settlement"
+          {...formatQueryErrorDetail(detailQuery.error)}
+          onRetry={() => void detailQuery.refetch()}
+        />
       </div>
     );
   }
