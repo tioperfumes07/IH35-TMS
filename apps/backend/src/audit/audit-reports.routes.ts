@@ -71,7 +71,13 @@ function auditSubjectJoins(alias: string) {
     LEFT JOIN mdata.drivers audit_driver
       ON ${alias}.subject_type = 'driver'
      AND audit_driver.id = ${alias}.subject_id
-     AND audit_driver.operating_company_id = ${alias}.operating_company_id
+     AND (audit_driver.operating_company_id = ${alias}.operating_company_id OR EXISTS (
+       SELECT 1 FROM mdata.driver_company_authorizations audit_driver_dca
+       WHERE audit_driver_dca.driver_id = audit_driver.id
+         AND audit_driver_dca.company_id = ${alias}.operating_company_id
+         AND audit_driver_dca.is_authorized = true
+         AND audit_driver_dca.deactivated_at IS NULL
+     ))
     LEFT JOIN mdata.units audit_unit
       ON ${alias}.subject_type = 'unit'
      AND audit_unit.id = ${alias}.subject_id
