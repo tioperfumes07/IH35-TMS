@@ -50,6 +50,10 @@ function assert(files) {
     problems.push(`${SVC}: load-driver label must admit active canonical selected-company authorization`);
   }
 
+  if (!/FROM mdata\.driver_company_authorizations trip_pairing_eld_driver_dca[\s\S]{0,180}trip_pairing_eld_driver_dca\.driver_id = d\.id[\s\S]{0,140}trip_pairing_eld_driver_dca\.company_id = a\.operating_company_id[\s\S]{0,140}trip_pairing_eld_driver_dca\.is_authorized = true[\s\S]{0,140}trip_pairing_eld_driver_dca\.deactivated_at IS NULL/.test(svc)) {
+    problems.push(`${SVC}: ELD fallback driver label must admit active canonical assignment-company authorization`);
+  }
+
   // Precedence: the load's dispatch assignment wins, telematics is the fallback.
   if (!/loadDrv\s*\?\?\s*eldDrv/.test(svc)) {
     problems.push(
@@ -87,6 +91,12 @@ if (SELFTEST) {
     [SVC]: files[SVC].replace("trip_pairing_load_driver_dca.is_authorized = true", "trip_pairing_load_driver_dca.is_authorized = false"),
   };
   checks.push(["shared-driver authorization removed", assert(noSharedDriver).some((p) => /active canonical/.test(p))]);
+
+  const noSharedEldDriver = {
+    ...files,
+    [SVC]: files[SVC].replace("trip_pairing_eld_driver_dca.is_authorized = true", "trip_pairing_eld_driver_dca.is_authorized = false"),
+  };
+  checks.push(["shared ELD-driver authorization removed", assert(noSharedEldDriver).some((p) => /ELD fallback driver/.test(p))]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);
   if (failed.length) {
