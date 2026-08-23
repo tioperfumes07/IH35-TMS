@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6226-FUEL-SAVINGS-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; registered runner guard + typecheck pending.
+
 - ☑ `DRV-F6225-TRIP-PAIRING-ELD-FALLBACK-NULLS-AUTHORIZED-SHARED-DRIVER` — Codex drivers/fleet reverse SQL/GET — FIXED this PR; registered trip-pairing guard + typecheck pending.
 
 - ☑ `DRV-F6224-DISPATCHER-HOME-INCOMING-MESSAGES-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; registered dispatcher-home guard + typecheck pending.

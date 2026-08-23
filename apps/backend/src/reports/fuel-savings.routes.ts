@@ -23,7 +23,17 @@ export async function registerFuelSavingsRoutes(app: FastifyInstance) {
             COALESCE(s.lost_savings_ytd, 0)::numeric(14,2) AS missed_savings_dollars
           FROM views.fuel_savings_summary s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-                                    AND d.operating_company_id = $1::uuid
+                                    AND (
+                                      d.operating_company_id = s.operating_company_id
+                                      OR EXISTS (
+                                        SELECT 1
+                                        FROM mdata.driver_company_authorizations fuel_savings_driver_dca
+                                        WHERE fuel_savings_driver_dca.driver_id = d.id
+                                          AND fuel_savings_driver_dca.company_id = s.operating_company_id
+                                          AND fuel_savings_driver_dca.is_authorized = true
+                                          AND fuel_savings_driver_dca.deactivated_at IS NULL
+                                      )
+                                    )
           WHERE s.operating_company_id = $1::uuid
           ORDER BY COALESCE(s.savings_ytd, 0) DESC
         `,
