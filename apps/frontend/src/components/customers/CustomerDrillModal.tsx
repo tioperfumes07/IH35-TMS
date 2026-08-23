@@ -6,7 +6,7 @@ import { formatUsdCents } from "../../lib/money";
 type Props = {
   open: boolean;
   customer: Customer | null;
-  openBalanceCents?: number;
+  openBalanceCents?: number | null;
   overdueCents?: number;
   billingSummaryLoading?: boolean;
   billingSummaryError?: Error | null;
@@ -54,7 +54,7 @@ export function CustomerDrillModal({ open, customer, openBalanceCents = 0, overd
         <div className="grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2">
           <div>
             <p className="text-xs font-semibold text-gray-600">Open balance</p>
-            <p className="text-lg font-semibold text-gray-900">{fmtMoney(openBalanceCents)}</p>
+            <p className="text-lg font-semibold text-gray-900">{openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-600">Overdue payment</p>
