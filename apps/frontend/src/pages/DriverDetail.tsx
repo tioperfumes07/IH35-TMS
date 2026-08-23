@@ -358,8 +358,8 @@ export function DriverDetailPage() {
     enabled: Boolean(id) && canViewSafetyFile && activeTab === "Safety File",
   });
   const terminationReasonsQuery = useQuery({
-    queryKey: ["driver-termination-reasons"],
-    queryFn: () => listTerminationReasons(false).then((result) => result.reasons),
+    queryKey: ["driver-termination-reasons", companyId],
+    queryFn: () => listTerminationReasons(companyId, false).then((result) => result.reasons),
     enabled: canViewSafetyFile && isOwner && activeTab === "Safety File",
   });
   const qboLinkageHistoryQuery = useQuery({
