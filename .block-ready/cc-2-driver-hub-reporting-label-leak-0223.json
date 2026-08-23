@@ -1,0 +1,27 @@
+{
+  "block_id": "cc-2-driver-hub-reporting-label-leak-0223",
+  "status": "GUARD",
+  "classification": "NON-FINANCIAL",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-FINDING on the assigned mdata reverse SQL/GET lane. Live Chrome pass on /driver-hub/reporting found LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's own finding-tracking id hardcoded into the live 'By load' section heading (a residual label leak from the already-correct 2026-08-16 economic fix, missed by three prior source-only re-checks). Fixed the JSX literal; left the id in non-user-facing code comments/test label. No backend change -- the by_load aggregate was already correct.",
+  "branch": "cc-2/driver-hub-reporting-label-leak-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "src",
+  "allowed_files": [
+    "apps/frontend/src/pages/home/DriverHubReportingPage.tsx",
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-driver-hub-reporting-label-leak-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "live", "assert": "npx vitest run apps/frontend/src/pages/home/DriverHubReportingPage.test.tsx exit 0 (2/2 PASS)" },
+    { "kind": "route", "value": "apps/frontend/src/pages/home/DriverHubReportingPage.tsx", "note": "line ~312 heading literal changed from the hardcoded finding-id string to plain 'By load'" },
+    { "kind": "design", "spec": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md", "sections": ["item 8 chrome law: no internal ids in user-facing copy"] }
+  ],
+  "linkage": "N/A -- text-only JSX heading fix, no schema/FK/migration change. Underlying driver_finance.cash_advance_requests.load_id / driver_advances.load_id linkage was already correct per prior PR #7824.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "NON-FINANCIAL, self-merge on green per owner law."
+}
