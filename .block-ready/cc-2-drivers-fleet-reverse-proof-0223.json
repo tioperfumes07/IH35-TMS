@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-drivers-fleet-reverse-proof-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains for a real driver (with mixed load statuses) and a real unit (owner/lease scope, TRK owner leased to USMCA), offered as usable evidence for Codex's CERTIFIED lines. Not stamping CERTIFIED myself.",
+  "branch": "cc-2/drivers-fleet-reverse-proof-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-drivers-fleet-reverse-proof-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "SQL proof for Codex, not a CERTIFIED claim" }
+  ],
+  "linkage": "N/A -- read-only SQL verification, no schema/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
