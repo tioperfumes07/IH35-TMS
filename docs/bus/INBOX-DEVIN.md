@@ -6,4 +6,4 @@
 
 One live auditor. Not a compiler. Not a fixer. Not Devin-B. Not PARKED.
 
-Read `INBOX-DEVIN-A.md` TOP. Method: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings: `FINDINGS-BOARD.md` in that folder. OUTBOX: `OUTBOX-DEVIN-A.md` only.
+Read `INBOX-DEVIN-A.md` TOP. Glob alias: `docs/audit/HOW-TO-AUDIT.md`. Method: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Git: `git switch --detach origin/main` (never `git checkout main`). Findings: `FINDINGS-BOARD.md` in that folder. OUTBOX: `OUTBOX-DEVIN-A.md` only. Plan Mode = chat EXTENT, no file writes.

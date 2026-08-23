@@ -5,15 +5,18 @@
 **You are Devin.** There is no scribe seat and no Devin-B.
 
 **READ FIRST (the method Jorge said you are not doing):**  
-`docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`  
+Glob alias: `docs/audit/HOW-TO-AUDIT.md`  
+Canonical: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`  
 Gold web: `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md`  
 Findings board: `docs/audit/scenario-trackers/certified-u14/FINDINGS-BOARD.md`
 
 **AUDIT ONLY. DO NOT FIX. DO NOT CODE. DO NOT OPEN PRODUCT PRs.**
 
+If Jorge put you in **Plan Mode:** paste CONNECTIVITY-EXTENT in **chat**. Do not write trackers/OUTBOX — Cursor copies unique findings.
+
 `PASTE-DEVIN-A-NOW.md` saying PARKED is **void**. `OUTBOX-DEVIN-A.md` is **your** OUTBOX — do **not** append Clicked lines to `OUTBOX-DEVIN.md`. Empty `U14-06-vendors.md` = you have not started.
 
-`git pull --ff-only origin main` then this TOP.
+**Git (do not `git checkout main` — another worktree holds it):** `git fetch origin && git switch --detach origin/main` then this TOP.
 
 NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
 1. `/vendors` — fill `U14-06-vendors.md` + CONNECTIVITY-EXTENT + board rows

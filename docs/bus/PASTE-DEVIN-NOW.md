@@ -1,28 +1,61 @@
-# PASTE INTO DEVIN  ·  2026-08-23
+# PASTE INTO DEVIN · PLAN MODE · 2026-08-23
 
-Jorge typed **devin-**. Same job as Devin-A. You are the **auditor**. Not a scribe. Not Devin-B. PARKED is void.
+Jorge typed **devin-**. You are Devin-A. **AUDIT ONLY. PLAN MODE = no file writes, no PRs, no apps/, no fix, no recertify.**
+
+Your last glob `**/HOW-TO-AUDIT*` failed because the clone was **detached on an old SHA** (`3d7befea2`) that does not have the HOW-TO. `git checkout main` **fails** when another worktree already has `main` (`~/IH35-TMS-audit-main`).
+
+**Do this exact git (verified):**
 
 ```text
-git fetch origin && git checkout main && git pull --ff-only origin main
+cd ~/IH35-TMS-devin-a-audit
+git remote -v
+# must be github.com/tioperfumes07/IH35-TMS.git — if not, STOP, wrong clone
 
-READ IN THIS ORDER (do not skip 2):
-1. docs/bus/INBOX-DEVIN-A.md
-2. docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md
-3. docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md
-4. docs/audit/scenario-trackers/certified-u14/FINDINGS-BOARD.md
+git fetch origin
+git switch --detach origin/main
+```
 
-YOU ARE Devin. Tab “Devin A” = this inbox. File is on origin/main.
+**Prove the files exist (all on origin/main today):**
 
-AUDIT ONLY. No apps/ PRs. No recertify. No /legal /lists /customers /drivers /fleet.
+```text
+ls docs/audit/HOW-TO-AUDIT.md
+ls docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md
+ls docs/bus/INBOX-DEVIN-A.md
+ls docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md
+```
 
-NOW = /vendors
-Fill docs/audit/scenario-trackers/certified-u14/U14-06-vendors.md
-Prepend CONNECTIVITY-EXTENT on docs/bus/OUTBOX-DEVIN-A.md  (NOT OUTBOX-DEVIN.md)
-ACK without EXTENT = you are not auditing.
-Chrome down → SQL/GET same hops. LIVE_CHROME=BLOCKED is allowed. Idle is not.
+If `ls` fails, you are not on `origin/main`. Do not glob from `3d7befea2`.
 
-Then /maintenance /safety /insurance. Lawsuit hops from claim UI only.
+**READ (do not skip 2):**
+1. `docs/bus/INBOX-DEVIN-A.md`
+2. `docs/audit/HOW-TO-AUDIT.md` → then the canonical HOW-TO it points at
+3. `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md` (H01–H22)
+4. `docs/audit/scenario-trackers/certified-u14/FINDINGS-BOARD.md`
 
-First OUTBOX line:
-Devin-A | ACK | METHOD=HOW-TO-AUDIT-AND-FILE-FINDINGS | NOW=/vendors | GO
+`curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `LIVE_SHA=version`
+
+**YOUR FOUR ONLY:** `/vendors` → `/maintenance` → `/safety` → `/insurance`  
+Lawsuit hops from **claim/safety/unit UI only**. Never occupy `/legal` `/lists` `/customers` `/drivers` `/fleet`. Never steal Cascade URLs.
+
+Hunt **unique** only: HTTP 500 · dead click · silent no-op · missing reverse on a gold hop · money hop with no JE and no honest FLAG-OFF. Empty TMS = UNVERIFIED not PASS. Chrome down → SQL/GET; `LIVE_CHROME=BLOCKED` is allowed; idle is not.
+
+**Plan Mode: paste this block in CHAT per module** (Cursor files the board). ACK-only is rejected.
+
+```text
+Devin-A | PLAN | CONNECTIVITY-EXTENT | MODULE=vendors | LIVE_SHA=
+EDGES_PROVEN:
+EDGES_MISSING:
+EDGES_DEAD:
+EDGES_SILENT:
+GL_POSTS:
+FINDINGS: none | id · class=500|dead|silent|missing-reverse · URL/SQL · OWNER=Cursor|CC-1|CC-3|Codex
+VERDICT: AUDIT-PASS | FINDING | UNVERIFIED
+NEXT=/maintenance
+GO
+```
+
+First line, then immediately the vendors EXTENT:
+
+```text
+Devin-A | ACK | PLAN-MODE | NO-WRITES | METHOD=HOW-TO-AUDIT | NOW=/vendors | GO
 ```
