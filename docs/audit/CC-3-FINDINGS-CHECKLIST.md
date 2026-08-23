@@ -102,7 +102,7 @@
 
 - ☑ `CUST-F6182-NOTIFY-GUARD-REJECTS-INDEPENDENT-RETRY-STATES` — Codex customers reverse SQL/GET — FIXED this PR; guard normal + planted-defect selftest pending.
 
-- ☑ `CUST-F6183-CUSTOMER-SEARCH-COUNT-QUERY-500` — CC-3 customer non-money mutation/entity-scope lane — FIXED this PR; live-reproduced 42P18 on prod Postgres (buggy shape) + confirmed fixed shape clean; 4 live-Postgres integration tests + ratcheting guard + backend typecheck; every `search=` query on `GET /api/v1/mdata/customers` (every kind="customer" EntityPicker app-wide) was silently 500ing with zero visible error, hiding real customers behind "+ Add new" — live-found via the Legal Lease-to-Own creator's Lessee-customer picker. Live=PENDING-DEPLOY.
+- ☑ `CUST-F6183-CUSTOMER-SEARCH-COUNT-QUERY-500` — CC-3 customer non-money mutation/entity-scope lane — MERGED (`15fc3b545`); live-reproduced 42P18 on prod Postgres (buggy shape) + confirmed fixed shape clean; 4 live-Postgres integration tests + ratcheting guard + backend typecheck; every `search=` query on `GET /api/v1/mdata/customers` (every kind="customer" EntityPicker app-wide) was silently 500ing with zero visible error, hiding real customers behind "+ Add new" — live-found via the Legal Lease-to-Own creator's Lessee-customer picker. FIXED + LIVE-VERIFIED on prod healthz `1f67799`: same repro (search "TC") now returns real match "TC Freight LLC", both network calls 200.
 
 > **★★★ HARD STANDING RULE — OWNER-LOCKED 2026-08-07. PERMANENT. ENFORCEABLE. APPLIES TO EVERY LANE.**
 >
