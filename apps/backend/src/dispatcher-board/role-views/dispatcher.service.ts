@@ -199,7 +199,17 @@ async function loadActiveLoads(
       JOIN mdata.customers c ON c.id = l.customer_id
                             AND c.operating_company_id = l.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
-                                AND dr.operating_company_id = l.operating_company_id
+                                AND (
+                                  dr.operating_company_id = l.operating_company_id
+                                  OR EXISTS (
+                                    SELECT 1
+                                    FROM mdata.driver_company_authorizations dispatcher_home_dca
+                                    WHERE dispatcher_home_dca.driver_id = dr.id
+                                      AND dispatcher_home_dca.company_id = l.operating_company_id
+                                      AND dispatcher_home_dca.is_authorized = true
+                                      AND dispatcher_home_dca.deactivated_at IS NULL
+                                  )
+                                )
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
