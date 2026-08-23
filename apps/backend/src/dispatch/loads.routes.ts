@@ -912,7 +912,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/units/:unit_id/insurance-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/units/:unit_id/insurance-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
@@ -938,7 +938,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/drivers/:driver_id/hos-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/drivers/:driver_id/hos-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
@@ -950,9 +950,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const driverRes = await client.query<{ id: string }>(
         `
           SELECT id::text AS id
-          FROM mdata.drivers
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.driver_id, operatingCompanyId]
@@ -1005,9 +1015,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const driverRes = await client.query<{ id: string }>(
         `
           SELECT id::text AS id
-          FROM mdata.drivers
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.driver_id, operatingCompanyId]
