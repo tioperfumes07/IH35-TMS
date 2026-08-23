@@ -2,12 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getDriverHos, type HosSnapshot } from "../../api/driver";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function DriverHosPage() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ["driver", "hos"], queryFn: getDriverHos });
   if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
-  if (q.error || !q.data) return <p className="text-sm text-red-600">HOS unavailable.</p>;
+  if (q.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load HOS status"
+        status={0}
+        message={q.error instanceof Error ? q.error.message : undefined}
+        onRetry={() => void q.refetch()}
+      />
+    );
+  }
+  if (!q.data) return <p className="text-sm text-gray-600">No HOS snapshot is available.</p>;
   const snap = q.data;
   return (
     <div className="space-y-2">
