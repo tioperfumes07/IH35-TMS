@@ -133,7 +133,20 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const filters = ["d.operating_company_id = $1::uuid"];
+      // This GET is also the canonical source for maintenance work-order driver pickers. Preserve
+      // home-company master rows and active authorized shared drivers; mutation routes below remain
+      // home-company scoped so roster visibility never expands edit/void authority.
+      const filters = [`(
+        d.operating_company_id = $1::uuid
+        OR EXISTS (
+          SELECT 1
+          FROM mdata.driver_company_authorizations maintenance_roster_dca
+          WHERE maintenance_roster_dca.driver_id = d.id
+            AND maintenance_roster_dca.company_id = $1::uuid
+            AND maintenance_roster_dca.is_authorized = true
+            AND maintenance_roster_dca.deactivated_at IS NULL
+        )
+      )`];
       if (!query.data.include_voided) filters.push("d.deactivated_at IS NULL");
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
