@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import { fetchRenditions } from "../../api/property-tax";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 type Form2290Filing = {
   id: string;
@@ -40,8 +41,15 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
           className="text-xs text-slate-700 hover:underline"
         />
       </div>
-      {propertyTaxQ.isError || form2290Q.isError ? <p className="mt-2 text-xs text-red-700">Tax filing history could not be loaded.</p> : null}
-      {!propertyTaxQ.isLoading && !form2290Q.isLoading && renditions.length === 0 && filings.length === 0 ? (
+      {propertyTaxQ.isError || form2290Q.isError ? (
+        <ListErrorState
+          title="Couldn't load tax filing history"
+          status={0}
+          message={(propertyTaxQ.error as Error | null)?.message ?? (form2290Q.error as Error | null)?.message}
+          onRetry={() => void Promise.all([propertyTaxQ.refetch(), form2290Q.refetch()])}
+        />
+      ) : null}
+      {!propertyTaxQ.isLoading && !form2290Q.isLoading && !propertyTaxQ.isError && !form2290Q.isError && renditions.length === 0 && filings.length === 0 ? (
         <p className="mt-2 text-xs text-slate-500">No property-tax or Form 2290 filings reference this unit.</p>
       ) : null}
       <div className="mt-2 space-y-1 text-xs">
