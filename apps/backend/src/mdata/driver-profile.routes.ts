@@ -239,10 +239,19 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         // against it.
         const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
         if (!companyId) return reply.code(400).send({ error: "operating_company_unresolved" });
-        const driverRes = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
-          parsedParams.data.id,
-          companyId,
-        ]);
+        const driverRes = await client.query(
+          `SELECT d.id FROM mdata.drivers d
+            WHERE d.id = $1
+              AND (d.operating_company_id = $2::uuid OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations qualification_create_dca
+                 WHERE qualification_create_dca.driver_id = d.id
+                   AND qualification_create_dca.company_id = $2::uuid
+                   AND qualification_create_dca.is_authorized = true
+                   AND qualification_create_dca.deactivated_at IS NULL
+              ))
+            LIMIT 1`,
+          [parsedParams.data.id, companyId]
+        );
         if (driverRes.rows.length === 0) return reply.code(404).send({ error: "mdata_driver_not_found" });
 
         const equipmentTypeRes = await client.query(`SELECT id, code, name FROM catalogs.equipment_types WHERE id = $1 LIMIT 1`, [
