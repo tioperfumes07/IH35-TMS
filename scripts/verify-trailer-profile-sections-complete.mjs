@@ -143,8 +143,11 @@ export function problems(
   if (/const maintUnitId = unitId/.test(service)) {
     failures.push("trailer maintenance must not be gated through the currently attached unit");
   }
-  if (!/FROM mdata\.loads l[\s\S]{0,120}?l\.assigned_unit_id = \$1::uuid[\s\S]{0,120}?l\.operating_company_id = \$2::uuid/.test(service)) {
-    failures.push("attached trailer context must resolve the current load through canonical assigned_unit_id with company scope");
+  if (!/FROM mdata\.loads l[\s\S]{0,160}?JOIN LATERAL \([\s\S]{0,180}?FROM dispatch\.load_assignment_history lah[\s\S]{0,180}?lah\.operating_company_id = l\.operating_company_id[\s\S]{0,180}?latest_trailer\.new_trailer_id = \$1::uuid[\s\S]{0,180}?l\.operating_company_id = \$2::uuid/.test(service)) {
+    failures.push("trailer current load must resolve from the latest company-scoped canonical trailer assignment");
+  }
+  if (/WHERE l\.assigned_unit_id = \$1::uuid/.test(service)) {
+    failures.push("trailer current load must not be inferred from the attached power unit");
   }
 
   // CREATE-PATH-TRIP #6343 — trailer profile must mount fuel + expense reverse (list filters #6340).
@@ -211,7 +214,9 @@ function selftest() {
     ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 0],
     ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
     ["trailer WO FK regressed to unit", page, service.replaceAll("w.equipment_id = $1::uuid", "w.unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
-    ["current-load unit FK regressed", page, service.replace("l.assigned_unit_id = $1::uuid", "l.assigned_primary_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["current-load trailer FK removed", page, service.replace("latest_trailer.new_trailer_id = $1::uuid", "latest_trailer.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["current-load company scope removed", page, service.replace("lah.operating_company_id = l.operating_company_id", "TRUE"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["current-load regressed to power unit", page, service.replace("latest_trailer.new_trailer_id = $1::uuid", "TRUE\n        AND l.assigned_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
     ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), assignment, 1],
     ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, assignment, 1],
     ["aggregate timeout removed", page.replace("AbortSignal.timeout(15_000)", "undefined"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
