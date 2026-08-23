@@ -38,6 +38,15 @@ function assert(files) {
   if (!/useNavigate/.test(page) || !page.includes('onClick={() => navigate(`/drivers/${row.driver_id}`)}')) {
     problems.push(`${PAGE}: live driver link must explicitly navigate to the canonical driver profile`);
   }
+  if (!/policyQuery\.isError[\s\S]*onRetry=\{\(\) => void policyQuery\.refetch\(\)\}/.test(page)) {
+    problems.push(`${PAGE}: failed company policy GET must expose its exact retry`);
+  }
+  if (!/balancesQuery\.isError[\s\S]*onRetry=\{\(\) => void balancesQuery\.refetch\(\)\}/.test(page)) {
+    problems.push(`${PAGE}: failed company balance GET must expose its exact retry`);
+  }
+  if (/Confirm a leave policy exists/.test(page)) {
+    problems.push(`${PAGE}: transport failures must not be misdiagnosed as missing policy configuration`);
+  }
   if (/\b(amber|emerald|yellow)-\d{2,3}\b/.test(page)) {
     problems.push(`${PAGE}: §7 nonfinancial — no amber/emerald/yellow status classes on Leave Balances`);
   }
@@ -109,7 +118,7 @@ if (SELFTEST) {
   }
   const plantedAmber = {
     ...files,
-    [PAGE]: files[PAGE].replace("border-slate-200 bg-slate-50", "border-amber-200 bg-amber-50"),
+    [PAGE]: `${files[PAGE]}\nconst plantedPaletteDefect = "text-amber-600";`,
   };
   const caughtAmber = assert(plantedAmber);
   if (!caughtAmber.some((p) => /amber|§7/i.test(p))) {
@@ -123,6 +132,22 @@ if (SELFTEST) {
   const caughtDeadLink = assert(plantedDeadLink);
   if (!caughtDeadLink.some((p) => /explicitly navigate/i.test(p))) {
     console.error("SELFTEST FAIL — planted dead driver link not caught");
+    process.exit(1);
+  }
+  const plantedPolicyRetry = {
+    ...files,
+    [PAGE]: files[PAGE].replace("onRetry={() => void policyQuery.refetch()}", ""),
+  };
+  if (!assert(plantedPolicyRetry).some((p) => /policy GET.*exact retry/i.test(p))) {
+    console.error("SELFTEST FAIL — planted policy retry defect not caught");
+    process.exit(1);
+  }
+  const plantedBalancesRetry = {
+    ...files,
+    [PAGE]: files[PAGE].replace("onRetry={() => void balancesQuery.refetch()}", ""),
+  };
+  if (!assert(plantedBalancesRetry).some((p) => /balance GET.*exact retry/i.test(p))) {
+    console.error("SELFTEST FAIL — planted balances retry defect not caught");
     process.exit(1);
   }
   const live = assert(files);
