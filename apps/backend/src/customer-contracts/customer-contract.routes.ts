@@ -66,9 +66,12 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
       if (!custCheck.rows[0]) return reply.code(404).send({ error: "customer_not_found" });
 
       if (body.data.file_id) {
+        // CUST-F5999 — this check previously validated the file exists/undeleted with NO company
+        // scope, so a caller could persist another entity's docs.files id onto this company's
+        // contract row. Bind it to the resolved operating company, same as the GET routes' join.
         const fileCheck = await client.query<{ id: string }>(
-          `SELECT id FROM docs.files WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
-          [body.data.file_id]
+          `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2::uuid AND deleted_at IS NULL LIMIT 1`,
+          [body.data.file_id, body.data.operating_company_id]
         );
         if (!fileCheck.rows[0]) return reply.code(404).send({ error: "file_not_found" });
       }
@@ -204,6 +207,17 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
       );
       if (!existing.rows[0]) return reply.code(404).send({ error: "contract_not_found" });
       const prev = existing.rows[0];
+
+      // CUST-F5999 — supersede accepted file_id with NO validation at all (not existence, not
+      // company scope), so a caller could persist any UUID — including another entity's document —
+      // straight onto the new contract row. Validate it the exact same way create does.
+      if (body.data.file_id) {
+        const fileCheck = await client.query<{ id: string }>(
+          `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2::uuid AND deleted_at IS NULL LIMIT 1`,
+          [body.data.file_id, body.data.operating_company_id]
+        );
+        if (!fileCheck.rows[0]) return reply.code(404).send({ error: "file_not_found" });
+      }
 
       await client.query(
         `UPDATE customer.contract SET is_active = false WHERE id = $1`,
