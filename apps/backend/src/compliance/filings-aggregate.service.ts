@@ -194,7 +194,17 @@ async function loadClearinghouseItems(client: DbClient, operatingCompanyId: stri
         ORDER BY queried_at DESC
         LIMIT 1
       ) cq ON true
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations filings_clearinghouse_dca
+            WHERE filings_clearinghouse_dca.driver_id = d.id
+              AND filings_clearinghouse_dca.company_id = $1::uuid
+              AND filings_clearinghouse_dca.is_authorized = true
+              AND filings_clearinghouse_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
         AND (cq.expires_at IS NULL OR cq.expires_at <= CURRENT_DATE + INTERVAL '60 days')
       ORDER BY cq.expires_at ASC NULLS FIRST
@@ -230,7 +240,17 @@ async function loadMvrItems(client: DbClient, operatingCompanyId: string, entity
         ORDER BY created_at DESC
         LIMIT 1
       ) mvr ON true
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations filings_mvr_dca
+            WHERE filings_mvr_dca.driver_id = d.id
+              AND filings_mvr_dca.company_id = $1::uuid
+              AND filings_mvr_dca.is_authorized = true
+              AND filings_mvr_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
         AND (mvr.expiry_date IS NULL OR mvr.expiry_date <= CURRENT_DATE + INTERVAL '60 days')
       ORDER BY mvr.expiry_date ASC NULLS FIRST

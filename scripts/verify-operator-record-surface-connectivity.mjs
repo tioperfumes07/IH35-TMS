@@ -71,6 +71,18 @@ export function verify(source) {
   need("propertyTax", 'data-testid="property-tax-detail"', "property-tax detail must remain rendered");
   need("form2290", "export function Form2290Filings", "Form 2290 operator surface must remain implemented");
   need("filings", 'drill_through: "/compliance/form-2290"', "Form 2290 aggregate row must drill into its canonical surface");
+  for (const token of [
+    "driver_company_authorizations filings_clearinghouse_dca",
+    "filings_clearinghouse_dca.driver_id = d.id",
+    "filings_clearinghouse_dca.company_id = $1::uuid",
+    "filings_clearinghouse_dca.is_authorized = true",
+    "filings_clearinghouse_dca.deactivated_at IS NULL",
+    "driver_company_authorizations filings_mvr_dca",
+    "filings_mvr_dca.driver_id = d.id",
+    "filings_mvr_dca.company_id = $1::uuid",
+    "filings_mvr_dca.is_authorized = true",
+    "filings_mvr_dca.deactivated_at IS NULL",
+  ]) need("filings", token, `filings dashboard must retain shared-driver eligibility: ${token}`);
   for (const route of ["/compliance", "/compliance/property-tax", "/compliance/property-tax/:id", "/compliance/form-2290"]) need("routes", `path="${route}"`, `compliance route ${route} must remain mounted`);
 
   for (const route of ["/safety/insurance", "/safety/insurance/policies", "/safety/insurance/type-catalog", "/safety/insurance/coverage-gaps"]) need("insurance", `to="${route}"`, `insurance navigation must expose ${route}`);
@@ -138,6 +150,10 @@ if (process.argv.includes("--self-test")) {
   const mutations = [
     ["compliance", "<SummaryCards", "<BrokenSummary"], ["propertyTax", 'data-testid="property-tax-list"', 'data-testid="broken"'],
     ["form2290", "export function Form2290Filings", "function Broken2290"], ["filings", 'drill_through: "/compliance/form-2290"', 'drill_through: "/safety/permits"'],
+    ["filings", "driver_company_authorizations filings_clearinghouse_dca", "driver_company_authorizations broken_clearinghouse_dca"],
+    ["filings", "filings_clearinghouse_dca.is_authorized = true", "filings_clearinghouse_dca.is_authorized = false"],
+    ["filings", "driver_company_authorizations filings_mvr_dca", "driver_company_authorizations broken_mvr_dca"],
+    ["filings", "filings_mvr_dca.deactivated_at IS NULL", "filings_mvr_dca.deactivated_at IS NOT NULL"],
     ["insurance", 'to="/safety/insurance/policies"', 'to="/broken"'], ["insuranceTypes", "<ParityTable", "<BrokenTable"],
     ["inventoryTabs", 'to: "/inventory/assignments"', 'to: "/broken"'], ["inventoryAssignments", "getPartsAssignmentsPage", "brokenAssignmentsPage"],
     ["inventoryAssignments", 'kind="work_order"', 'kind="broken"'],
