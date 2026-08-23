@@ -427,10 +427,10 @@ export async function buildUnitAggregate(
         w.updated_at::text AS date,
         NULL::int AS odometer,
         w.total_actual_cost AS cost,
-        w.external_vendor_id::text AS vendor_id,
+        COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id,
         v.vendor_name AS vendor
       FROM maintenance.work_orders w
-      LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
+      LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id)
                                AND v.operating_company_id = w.operating_company_id
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
