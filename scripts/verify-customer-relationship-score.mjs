@@ -53,6 +53,16 @@ const routes = read("apps/backend/src/customers/relationship-score/routes.ts");
 contains("apps/backend/src/customers/relationship-score/routes.ts", routes, [
   { pattern: /\/api\/v1\/customers\/:uuid\/relationship-score/, label: "single-customer score route" },
   { pattern: /\/api\/v1\/customers\/relationship-scores\/at-risk/, label: "at-risk list route" },
+  { pattern: /const singleQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/, label: "single score requires selected company" },
+  { pattern: /const atRiskQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/, label: "at-risk scores require selected company" },
+]);
+
+const frontendApi = read("apps/frontend/src/api/mdata.ts");
+contains("apps/frontend/src/api/mdata.ts", frontendApi, [
+  { pattern: /getCustomerRelationshipScore\(customerUuid: string, operatingCompanyId: string\)/, label: "single score client requires selected company" },
+  { pattern: /listAtRiskCustomerRelationshipScores\(params: \{\s*operating_company_id: string;/, label: "at-risk client requires selected company" },
+  { pattern: /query\.set\("operating_company_id", operatingCompanyId\)/, label: "single score client always sends selected company" },
+  { pattern: /query\.set\("operating_company_id", params\.operating_company_id\)/, label: "at-risk client always sends selected company" },
 ]);
 
 read("apps/backend/src/customers/relationship-score/__tests__/scorer.test.ts");
@@ -115,6 +125,37 @@ const ci = read(".github/workflows/ci.yml");
 contains(".github/workflows/ci.yml", ci, [
   { pattern: /verify:customer-relationship-score/, label: "CI verify step" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    [routes, "operating_company_id: z.string().uuid(),", "operating_company_id: z.string().uuid().optional(),", "single score requires selected company"],
+    [routes, "const atRiskQuerySchema = z.object({\n  operating_company_id: z.string().uuid(),", "const atRiskQuerySchema = z.object({\n  operating_company_id: z.string().uuid().optional(),", "at-risk scores require selected company"],
+    [frontendApi, "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string)", "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null)", "single score client requires selected company"],
+    [frontendApi, "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id: string;", "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id?: string | null;", "at-risk client requires selected company"],
+  ];
+  let caught = 0;
+  for (const [source, before, after, label] of mutations) {
+    const mutated = source.replace(before, after);
+    if (mutated === source) {
+      console.error(`verify:customer-relationship-score SELFTEST FAIL — mutation anchor missing: ${label}`);
+      process.exit(1);
+    }
+    const pattern = label === "single score requires selected company"
+      ? /const singleQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/
+      : label === "at-risk scores require selected company"
+        ? /const atRiskQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/
+        : label === "single score client requires selected company"
+          ? /getCustomerRelationshipScore\(customerUuid: string, operatingCompanyId: string\)/
+          : /listAtRiskCustomerRelationshipScores\(params: \{\s*operating_company_id: string;/;
+    if (pattern.test(mutated)) {
+      console.error(`verify:customer-relationship-score SELFTEST FAIL — mutation escaped: ${label}`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  console.log(`verify:customer-relationship-score SELFTEST — PASS (${caught} planted mutations caught)`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:customer-relationship-score — FAILED");
