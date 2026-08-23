@@ -97,6 +97,7 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../components/ListErrorState";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -1840,6 +1841,14 @@ export function CustomerDetailPage() {
 
       {activeTab === "Loads" ? (
         <DataPanel title="Loads">
+          {customerLoadsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load customer loads"
+              status={0}
+              message={customerLoadsQuery.error instanceof Error ? customerLoadsQuery.error.message : undefined}
+              onRetry={() => void customerLoadsQuery.refetch()}
+            />
+          ) : (
           <ParityTable<DispatchLoadRow>
             rows={customerLoads}
             rowKey={(load) => load.id}
@@ -1914,6 +1923,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </DataPanel>
       ) : null}
 
