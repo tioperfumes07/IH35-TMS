@@ -754,7 +754,6 @@
       "surface_path": "components/parity/drawers/NewClassDrawerForm.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -767,7 +766,6 @@
       "surface_path": "components/parity/drawers/NewServiceDrawerForm.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -1769,6 +1767,24 @@
     "picker_law_new_catalog_entry_exemption_2026_08_21": {
       "finding": "CC-3-PICKER-LAW-NEW-CATALOG-ENTRY-CANDIDATES",
       "note": "3 accounting picker_law leaves \u2014 accounting.drawer.new_account_drawer_form, new_class_drawer_form, new_service_drawer_form \u2014 audited via direct component read (NewAccountDrawerForm.tsx / NewClassDrawerForm.tsx / NewServiceDrawerForm.tsx). Each creates a NEW chart-of-accounts/class/service catalog row (name, type, code fields); there is no existing entity to reference, so no EntityPicker/ReferenceSelect/Combobox is expected by design, same class as maintenance's documented parts.vendor_default exemption ('Parts are NOT a linkable entity'). Currently credited only by the broad verify-cursor-vertical-qbo-picker-modules.mjs module-loop sweep (theater-shape, never opens these files) \u2014 this note documents WHY that is an acceptable non-gap, not a guessed removal of the picker_law requirement from these leaves."
+    },
+    "picker_law_new_account_correction_2026_08_22": {
+      "finding": "CC1-CORRECTS-CC3-NEW-ACCOUNT-DRAWER-PICKER-LAW",
+      "note": "CORRECTS the new_account_drawer_form third of the 2026-08-21 entry above: that note said 'there is no existing entity to reference' for all 3 drawer leaves, grouping new_account_drawer_form with new_class/new_service. That premise is wrong for accounts specifically \u2014 direct read of NewAccountDrawerForm.tsx shows it delegates to AccountDrawer.tsx (pages/lists/accounting/AccountDrawer.tsx), which has a REAL 'Parent account' ReferenceSelect (allowAddNew, writes to catalogs.accounts, the same table the picker reads \u2014 line ~518, comment cites 'LST-PICKER-01: dual-path close vs NewAccountDrawerForm (guard 1884)') plus a real 'Detail Type' ReferenceSelect (createKind='detail_type', cascaded from Account Type). Both are genuine picker_law-compliant pickers, not absent. Confirmed already CI-registered and passing: scripts/verify-steps/1884-verify-lst-picker01-new-account-parent-inline-create.mjs (ran directly, PASS) \u2014 this was NOT theater and NOT unguarded, the earlier audit simply didn't find guard 1884. accounting.drawer.new_account_drawer_form's picker_law Required stays as-is (correctly required, correctly built, correctly guarded \u2014 no drop). new_class_drawer_form and new_service_drawer_form remain correctly exempted (independently re-verified: both delegate to AccountingCatalogModal, which has zero EntityPicker/ReferenceSelect \u2014 only a generic fixed-enum SelectCombobox for metadata fields like billable-type, not an entity-reference picker; Class/Service are genuinely flat catalog rows with no parent-entity FK). The 2026-08-21 note documented this reasoning but never actually removed picker_law from the required arrays, leaving the matrix internally inconsistent with its own conclusion (still claiming Required while calling it a non-gap) \u2014 this entry closes that gap by applying the drop for the two leaves where it's genuinely justified.",
+      "drops": [
+        {
+          "id": "accounting.drawer.new_class_drawer_form",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "accounting.drawer.new_service_drawer_form",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
     }
   }
 }

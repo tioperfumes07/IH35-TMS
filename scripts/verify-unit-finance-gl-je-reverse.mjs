@@ -58,6 +58,24 @@ function audit(s) {
     if (!acctLeaf.required.includes("reverse_link")) failures.push("Accounting unit finance linkage must require reverse_link");
     if (acctLeaf.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Accounting unit finance linkage route must name the canonical finance tab");
   }
+  let leafAcct;
+  const visitAcct = (value) => {
+    if (Array.isArray(value)) value.forEach(visitAcct);
+    else if (value && typeof value === "object") {
+      if (value.id === "unit.detail.finance_linkage" && Array.isArray(value.required)) leafAcct = value;
+      Object.values(value).forEach(visitAcct);
+    }
+  };
+  visitAcct(JSON.parse(s.requiredAccounting));
+  if (!leafAcct) failures.push("Accounting unit finance linkage Required leaf missing");
+  else {
+    // Object-level checks (not regex-window text scans) — accounting.required.json's copy of this
+    // leaf carries a long descriptive `note` field between `id` and `required`/`route_hint`, so a
+    // narrow text-proximity regex would silently pass a broken leaf (known landmine class, see
+    // memory: "Regex guard windows too small"). Parsed-object field access has no window to miss.
+    if (!leafAcct.required.includes("reverse_link")) failures.push("Accounting unit finance linkage must require reverse_link");
+    if (leafAcct.route_hint !== "/fleet/units/:id/detail?tab=finance") failures.push("Accounting unit finance linkage route must name the canonical finance tab");
+  }
   if (!s.self.split('import fs from "node:fs";')[0].includes(EXACT_HEADER)) failures.push("exact Fleet finance-linkage reverse header missing");
   if (/"guard"\s*:\s*"scripts\/verify-unit-finance-gl-je-reverse\.mjs"/.test(s.feed)) failures.push("manual feed duplicates unit finance-linkage ownership");
   return failures;
