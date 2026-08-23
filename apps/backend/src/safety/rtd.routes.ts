@@ -217,7 +217,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
     return { cases };
   });
 
-  app.get("/api/v1/safety/rtd/drivers/:driver_id/case", async (req, reply) => {
+  app.get("/api/v1/safety/rtd/drivers/:driver_id/case", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -226,6 +226,24 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
 
     const payload = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const parent = await client.query(
+        `SELECT 1 FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
+           AND (
+             d.operating_company_id = $2::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations dca
+               WHERE dca.driver_id = d.id
+                 AND dca.company_id = $2::uuid
+                 AND dca.is_authorized = true
+                 AND dca.deactivated_at IS NULL
+             )
+           )
+         LIMIT 1`,
+        [params.data.driver_id, company.data.operating_company_id]
+      );
+      if (!parent.rows[0]) return { found: false as const, rtdCase: null };
       const res = await client.query<RtdCaseRow>(
         `
           SELECT
@@ -258,10 +276,11 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
         [company.data.operating_company_id, params.data.driver_id]
       );
       const row = res.rows[0];
-      return row ? enrichRtdCase(row) : null;
+      return { found: true as const, rtdCase: row ? enrichRtdCase(row) : null };
     });
 
-    return { case: payload };
+    if (!payload.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { case: payload.rtdCase };
   });
 
   app.post("/api/v1/safety/rtd/cases", async (req, reply) => {

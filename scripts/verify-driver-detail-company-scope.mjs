@@ -16,6 +16,8 @@ const FILES = {
   dispatchBackend: "apps/backend/src/dispatch/loads.routes.ts",
   medicalBackend: "apps/backend/src/safety/medical-cards.routes.ts",
   dqfBackend: "apps/backend/src/safety/driver-qualification.routes.ts",
+  rtdBackend: "apps/backend/src/safety/rtd.routes.ts",
+  drugProgramBackend: "apps/backend/src/safety/drug-program.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -66,6 +68,10 @@ function verify(source) {
   need(/if \(!cards\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card reverse GET must distinguish invalid parent from true empty cards");
   need(canonicalDriverAuthorization.test(source.dqfBackend), "DQF reverse GET must validate driver ownership or active authorization");
   need(/if \(!items\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.dqfBackend), "DQF reverse GET must distinguish invalid parent from true empty items");
+  need(canonicalDriverAuthorization.test(source.rtdBackend), "RTD reverse GET must validate driver ownership or active authorization");
+  need(/if \(!payload\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.rtdBackend), "RTD reverse GET must distinguish invalid parent from valid driver without a case");
+  need(canonicalDriverAuthorization.test(source.drugProgramBackend), "drug-program status GET must validate driver ownership or active authorization");
+  need(/if \(!status\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.drugProgramBackend), "drug-program status GET must reject invalid parent instead of fabricating unblocked status");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -123,6 +129,10 @@ if (process.argv.includes("--selftest")) {
     { key: "medicalBackend", text: replaceOrFail(source.medicalBackend, /if \(!cards\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "medical-card missing parent response") },
     { key: "dqfBackend", text: replaceOrFail(source.dqfBackend, /dca\.is_authorized = true/, "TRUE", "DQF active company authorization") },
     { key: "dqfBackend", text: replaceOrFail(source.dqfBackend, /if \(!items\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "DQF missing parent response") },
+    { key: "rtdBackend", text: replaceOrFail(source.rtdBackend, /dca\.is_authorized = true/, "TRUE", "RTD active company authorization") },
+    { key: "rtdBackend", text: replaceOrFail(source.rtdBackend, /if \(!payload\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "RTD missing parent response") },
+    { key: "drugProgramBackend", text: replaceOrFail(source.drugProgramBackend, /dca\.is_authorized = true/, "TRUE", "drug-program active company authorization") },
+    { key: "drugProgramBackend", text: replaceOrFail(source.drugProgramBackend, /if \(!status\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "drug-program missing parent response") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.isError/, "false", "accessible company error disclosure") },
