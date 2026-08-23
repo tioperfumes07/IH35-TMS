@@ -53,7 +53,16 @@ export async function getDriverPermitHistory(
         d.updated_at::text AS created_at
       FROM mdata.drivers d
       WHERE d.id = $1::uuid
-        AND d.operating_company_id = $2::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations permit_cdl_dca
+            WHERE permit_cdl_dca.driver_id = d.id
+              AND permit_cdl_dca.company_id = $2::uuid
+              AND permit_cdl_dca.is_authorized = true
+              AND permit_cdl_dca.deactivated_at IS NULL
+          )
+        )
         AND (d.cdl_number IS NOT NULL OR d.cdl_expires_at IS NOT NULL)
 
       UNION ALL
@@ -85,7 +94,16 @@ export async function getDriverPermitHistory(
         d.updated_at::text AS created_at
       FROM mdata.drivers d
       WHERE d.id = $1::uuid
-        AND d.operating_company_id = $2::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations permit_hazmat_dca
+            WHERE permit_hazmat_dca.driver_id = d.id
+              AND permit_hazmat_dca.company_id = $2::uuid
+              AND permit_hazmat_dca.is_authorized = true
+              AND permit_hazmat_dca.deactivated_at IS NULL
+          )
+        )
         AND (d.endorsement_h IS TRUE OR d.hazmat_endorsement_expires_at IS NOT NULL)
     )
   `;
