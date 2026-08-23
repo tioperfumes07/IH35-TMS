@@ -30,6 +30,13 @@ function lastServiceVendorFailures(unitSource, consumerSource) {
   return failures;
 }
 
+function unitMaintenanceVoidFailures(unitSource) {
+  const failures = [];
+  if (!/FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\)/.test(unitSource)) failures.push("unit aggregate open-work-order counts exclude voided rows");
+  if (!/COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL\s+AND w\.status IN \('complete', 'completed'\)/.test(unitSource)) failures.push("unit aggregate last-service read excludes voided rows");
+  return failures;
+}
+
 const routeStart = routes.indexOf('app.get("/api/v1/mdata/units/:id"');
 if (routeStart < 0) {
   console.error("verify:aggregate-shape-route FAIL: missing GET /api/v1/mdata/units/:id route");
@@ -69,6 +76,11 @@ if (lastServiceVendorMissing.length > 0) {
   console.error(`verify:aggregate-shape-route FAIL: missing canonical last-service vendor chain: ${lastServiceVendorMissing.join(", ")}`);
   process.exit(1);
 }
+const unitMaintenanceVoidMissing = unitMaintenanceVoidFailures(aggregate);
+if (unitMaintenanceVoidMissing.length > 0) {
+  console.error(`verify:aggregate-shape-route FAIL: voided maintenance rows remain visible: ${unitMaintenanceVoidMissing.join(", ")}`);
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const unscoped = "JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id";
@@ -79,12 +91,14 @@ if (process.argv.includes("--selftest")) {
     lastServiceVendorFailures(aggregate.replace("COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id", "w.external_vendor_id::text AS vendor_id"), maintenanceSnapshot),
     lastServiceVendorFailures(aggregate.replace("v.id = COALESCE(w.external_vendor_id, w.vendor_id)", "v.id = w.external_vendor_id"), maintenanceSnapshot),
     lastServiceVendorFailures(aggregate, maintenanceSnapshot.replace('kind="vendor"', 'kind="vendor_removed"')),
+    unitMaintenanceVoidFailures(aggregate.replace(/(FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\))/, "$1$2")),
+    unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
   ];
   if (mutations.some((failures) => failures.length === 0)) {
     console.error("verify:aggregate-shape-route SELFTEST FAIL: a PM schedule company-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify:aggregate-shape-route SELFTEST PASS — 5/5 aggregate scope/vendor-chain mutations red");
+  console.log("verify:aggregate-shape-route SELFTEST PASS — 7/7 aggregate scope/vendor/void mutations red");
   process.exit(0);
 }
 
