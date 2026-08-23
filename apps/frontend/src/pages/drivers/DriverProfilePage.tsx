@@ -135,7 +135,9 @@ export type DriverProfileAggregate = {
   driver: Record<string, unknown>;
   license: Record<string, unknown>;
   medical_card: Record<string, unknown>;
+  medical_card_unavailable?: boolean;
   drug_program: Record<string, unknown>;
+  drug_program_unavailable?: boolean;
   hos: Record<string, unknown> | null;
   hos_unavailable?: boolean;
   current_assignment: Record<string, unknown>;
@@ -143,9 +145,10 @@ export type DriverProfileAggregate = {
   performance_scorecard_unavailable?: boolean;
   settlements?: Record<string, unknown>;
   training_records?: Array<Record<string, unknown>>;
+  training_records_unavailable?: boolean;
   border_credentials?: Record<string, unknown>;
   w8ben?: Record<string, unknown>;
-  documents?: Array<Record<string, unknown>>;
+  w8ben_unavailable?: boolean;
 };
 
 function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
@@ -330,11 +333,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <LicenseSection license={aggregate.license} />
       </div>
       <div data-testid="dp-section-3-medical">
-        <MedicalCardSection medical={aggregate.medical_card} />
+        <MedicalCardSection medical={aggregate.medical_card} unavailable={aggregate.medical_card_unavailable === true} />
         <MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-4-drug">
-        <DrugProgramSection drug={aggregate.drug_program} />
+        <DrugProgramSection drug={aggregate.drug_program} unavailable={aggregate.drug_program_unavailable === true} />
       </div>
       <div data-testid="dp-section-5-hos">
         <HOSStatusSection hos={hos} unavailable={aggregate.hos_unavailable === true} />
@@ -409,6 +412,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
         <TrainingRecordsSection
           records={aggregate.training_records ?? []}
+          unavailable={aggregate.training_records_unavailable === true}
           onAddTraining={() => setAddTrainingOpen(true)}
         />
       </div>
@@ -428,7 +432,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </div>
       <div data-testid="dp-section-w8ben">
-        <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} onCapture={() => setW8benOpen(true)} />
+        <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} unavailable={aggregate.w8ben_unavailable === true} onCapture={() => setW8benOpen(true)} />
       </div>
       <W8BenModal
         open={w8benOpen}
