@@ -30,6 +30,16 @@ function isLeafSpecific(leafRe) {
     !(/^\.\*.*\.\*$/.test(value) && !/^\^\(/.test(value));
 }
 
+/** Exact JSON `leaves` arrays and narrow `leafRe` expressions are the two canonical tag shapes. */
+export function entryCoversLeaf(entry, leafId) {
+  if (Array.isArray(entry?.leaves)) {
+    return entry.leaves.length > 0 &&
+      entry.leaves.every((leaf) => typeof leaf === "string" && leaf.length > 0) &&
+      entry.leaves.includes(leafId);
+  }
+  return isLeafSpecific(entry?.leafRe) && new RegExp(entry.leafRe).test(leafId);
+}
+
 function loadEntries() {
   const entries = [];
   const feed = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/specs/scoreboard/wire-sprint-built.json"), "utf8"));
@@ -74,6 +84,21 @@ const PROTECTED = new Set([
   // payment_methods matrix-built on wave-c + payment-methods guards). Escrow reverse closed
   // ACCT-F5313 (verify-accounting-escrow-holder-reverse-link) — CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20
   // is now fully drained.
+  // CLASS-F5973 parser correction exposed these exact, genuine owner-lane gaps. They remain visible
+  // here (and stale protections fail) while their owning atomic PRs drain them; they grant no Built.
+  "connectivity\tdriver-hub:reporting", // Codex — next after the instructed drivers reverse hop.
+  "connectivity\tfuel:fuel.modal.create_fuel_transaction", // Fuel FE/create lane; off current Codex hop.
+  "connectivity\tfuel:fuel.modal.import_fuel_transactions",
+  "connectivity\tfuel:fuel.modal.upload_loves_prices",
+  "connectivity\tfuel:fuel.panel.savings",
+  "load\tfuel:fuel.modal.create_fuel_transaction",
+  "connectivity\tmaintenance:maintenance.modal.add_parts_link", // CC-3 maintenance FE lane.
+  "connectivity\tmaintenance:maintenance.modal.convert_issue_to_wo",
+  "connectivity\tmaintenance:maintenance.modal.fault_rule",
+  "connectivity\tmaintenance:maintenance.modal.triage",
+  "connectivity\tmaintenance:maintenance.panel.road_service_active",
+  "connectivity\tmaintenance:maintenance.panel.wotime_tracking",
+  "reverse_link\taccounting:unit.detail.finance_linkage", // CC-1 accounting/money surface.
 ]);
 
 const CLOSED_CLAIM_IDS = [
@@ -117,10 +142,9 @@ function loadSpecs() {
 
 function hasBuilt(entries, moduleId, leafId, column) {
   return entries.some((entry) =>
-    isLeafSpecific(entry.leafRe) &&
+    entryCoversLeaf(entry, leafId) &&
     entry.modules.includes(moduleId) &&
     entry.cols.includes(column) &&
-    new RegExp(entry.leafRe).test(leafId) &&
     fs.existsSync(path.join(ROOT, entry.file)),
   );
 }
@@ -171,8 +195,7 @@ if (SELFTEST) {
   const stripped = entries.filter((entry) => !(
     entry.modules.includes("safety") &&
     entry.cols.includes("vendor") &&
-    isLeafSpecific(entry.leafRe) &&
-    new RegExp(entry.leafRe).test("accidents.create")
+    entryCoversLeaf(entry, "accidents.create")
   ));
   const removedEvidenceProblems = collectProblems(specs, stripped);
   if (!removedEvidenceProblems.includes("vendor\tsafety:accidents.create")) {
@@ -198,7 +221,21 @@ if (SELFTEST) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — stale protected key escaped");
     process.exit(1);
   }
-  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, reopened claim, and stale protection caught");
+  const jsonLeavesEntry = {
+    modules: ["customers"],
+    cols: ["reverse_link"],
+    leaves: ["list.view_list"],
+  };
+  if (!entryCoversLeaf(jsonLeavesEntry, "list.view_list") || entryCoversLeaf(jsonLeavesEntry, "list.view_master_detail")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — exact JSON leaves parser drifted");
+    process.exit(1);
+  }
+  const shorthandEntry = { leafRe: "^list\\.view_(list|master_detail)$" };
+  if (!entryCoversLeaf(shorthandEntry, "list.view_master_detail") || entryCoversLeaf(shorthandEntry, "home.roster")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — shorthand leafRe parser drifted");
+    process.exit(1);
+  }
+  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, reopened claim, stale protection, JSON leaves, and leafRe caught");
   process.exit(0);
 }
 
