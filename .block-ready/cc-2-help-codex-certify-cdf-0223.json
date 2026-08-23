@@ -1,0 +1,29 @@
+{
+  "block_id": "cc-2-help-codex-certify-cdf-0223",
+  "status": "GUARD",
+  "classification": "NON-FINANCIAL",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + fixed FLEET-CROSS-ENTITY-STALE-ASSIGNMENT-2026-08-23: a cross-entity unit re-lease left the old entity's telematics.vehicle_driver_assignments row open, so that entity's fleet/HOS board kept showing a driver/unit it no longer operates. Widened the pre-insert close in pairing.service.ts's upsertSamsaraAssignment to close ANY other entity's open assignment on the same unit_id, not just the reconciling entity's own. Live stale row corrected via direct UPDATE (confirmed 0 remaining cross-unit overlaps system-wide). Added a static guard. Also routed a second finding (DISP-F6222, dispatch driver-eligibility HOS check silently skipping an authorized shared driver) to Cursor's dispatch write lane via board+register+OUTBOX docs rows, no code change for that one.",
+  "branch": "cc-2/help-codex-certify-cdf-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "src",
+  "allowed_files": [
+    "apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts",
+    "scripts/verify-fleet-cross-entity-assignment-close.mjs",
+    "docs/bus/OUTBOX-CC-2.md",
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    ".block-ready/cc-2-help-codex-certify-cdf-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-fleet-cross-entity-assignment-close.mjs", "wired_into": "verify-static.mjs glob (same ad-hoc convention as the module's other verify-fleet-*.mjs files)" },
+    { "kind": "live", "assert": "node scripts/verify-fleet-cross-entity-assignment-close.mjs --selftest passes; guard PASSES on the fixed tree; reverse SQL on tiny-field-89581227/br-fancy-credit-akjnd07a confirms 0 units with >1 simultaneous open telematics.vehicle_driver_assignments rows after the live data correction" },
+    { "kind": "route", "value": "apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts", "note": "upsertSamsaraAssignment's pre-insert close-prior-open-assignment step now closes across ANY operating_company_id on the same unit_id, not only the reconciling entity's own" },
+    { "kind": "design", "spec": "docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md", "sections": ["customers/drivers/fleet CERTIFY reverse SQL/GET"] }
+  ],
+  "linkage": "telematics.vehicle_driver_assignments.unit_id -> mdata.units (canonical cross-entity identifier); operating_company_id on the assignment row reflects which entity's Samsara feed reported it. No new FK/table/migration; write-path scope fix only, plus one live UPDATE ended_at correction on the pre-existing stale row.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "NON-FINANCIAL, self-merge on green per owner law once required checks pass."
+}
