@@ -156,8 +156,16 @@ export async function listPendingForDriver(
                NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
                NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
         FROM dispatch.equipment_transfer_requests r
-        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
-        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND (fd.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_from_dca
+          WHERE request_from_dca.driver_id = fd.id AND request_from_dca.company_id = r.operating_company_id
+            AND request_from_dca.is_authorized = true AND request_from_dca.deactivated_at IS NULL
+        ))
+        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND (td.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_to_dca
+          WHERE request_to_dca.driver_id = td.id AND request_to_dca.company_id = r.operating_company_id
+            AND request_to_dca.is_authorized = true AND request_to_dca.deactivated_at IS NULL
+        ))
         LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
                                    AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         WHERE r.operating_company_id = $1::uuid
@@ -179,8 +187,16 @@ export async function listPendingForDriver(
                NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
                NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
         FROM dispatch.equipment_transfer_requests r
-        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
-        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND (fd.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_from_dca
+          WHERE request_from_dca.driver_id = fd.id AND request_from_dca.company_id = r.operating_company_id
+            AND request_from_dca.is_authorized = true AND request_from_dca.deactivated_at IS NULL
+        ))
+        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND (td.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_to_dca
+          WHERE request_to_dca.driver_id = td.id AND request_to_dca.company_id = r.operating_company_id
+            AND request_to_dca.is_authorized = true AND request_to_dca.deactivated_at IS NULL
+        ))
         LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
                                    AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         WHERE r.operating_company_id = $1::uuid
@@ -205,8 +221,16 @@ export async function listPendingForDriver(
                NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
                NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
         FROM dispatch.equipment_transfer_requests r
-        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
-        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND (fd.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_from_dca
+          WHERE request_from_dca.driver_id = fd.id AND request_from_dca.company_id = r.operating_company_id
+            AND request_from_dca.is_authorized = true AND request_from_dca.deactivated_at IS NULL
+        ))
+        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND (td.operating_company_id = r.operating_company_id OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations request_to_dca
+          WHERE request_to_dca.driver_id = td.id AND request_to_dca.company_id = r.operating_company_id
+            AND request_to_dca.is_authorized = true AND request_to_dca.deactivated_at IS NULL
+        ))
         LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
                                    AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         WHERE r.operating_company_id = $1::uuid
@@ -234,10 +258,16 @@ export async function listPendingForDriver(
              NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
              NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
       FROM dispatch.equipment_transfer_requests r
-      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
-                                AND fd.operating_company_id = r.operating_company_id
-      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
-                                AND td.operating_company_id = r.operating_company_id
+      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND (fd.operating_company_id = r.operating_company_id OR EXISTS (
+        SELECT 1 FROM mdata.driver_company_authorizations request_from_dca
+        WHERE request_from_dca.driver_id = fd.id AND request_from_dca.company_id = r.operating_company_id
+          AND request_from_dca.is_authorized = true AND request_from_dca.deactivated_at IS NULL
+      ))
+      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND (td.operating_company_id = r.operating_company_id OR EXISTS (
+        SELECT 1 FROM mdata.driver_company_authorizations request_to_dca
+        WHERE request_to_dca.driver_id = td.id AND request_to_dca.company_id = r.operating_company_id
+          AND request_to_dca.is_authorized = true AND request_to_dca.deactivated_at IS NULL
+      ))
       LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
                                  AND (e.owner_company_id = r.operating_company_id
                                       OR e.currently_leased_to_company_id = r.operating_company_id)
@@ -313,10 +343,16 @@ export async function listInProgress(
              NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
              NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
       FROM dispatch.equipment_transfer_requests r
-      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
-                                AND fd.operating_company_id = r.operating_company_id
-      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
-                                AND td.operating_company_id = r.operating_company_id
+      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND (fd.operating_company_id = r.operating_company_id OR EXISTS (
+        SELECT 1 FROM mdata.driver_company_authorizations request_from_dca
+        WHERE request_from_dca.driver_id = fd.id AND request_from_dca.company_id = r.operating_company_id
+          AND request_from_dca.is_authorized = true AND request_from_dca.deactivated_at IS NULL
+      ))
+      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND (td.operating_company_id = r.operating_company_id OR EXISTS (
+        SELECT 1 FROM mdata.driver_company_authorizations request_to_dca
+        WHERE request_to_dca.driver_id = td.id AND request_to_dca.company_id = r.operating_company_id
+          AND request_to_dca.is_authorized = true AND request_to_dca.deactivated_at IS NULL
+      ))
       LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
                                  AND (e.owner_company_id = r.operating_company_id
                                       OR e.currently_leased_to_company_id = r.operating_company_id)
