@@ -110,6 +110,9 @@ export function assertVendorMergesReverse(sources) {
   if (!/listDriverVendorMerges\(operatingCompanyId,\s*\{\s*driver_id:\s*driverId\s*\}\)/.test(driverSection)) {
     problems.push(`${DRIVER_SECTION}: must query merges scoped to driverId`);
   }
+  if (!/query\.isError[\s\S]{0,420}title="Couldn't load vendor merges"[\s\S]{0,420}query\.refetch\(\)/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: failed driver-scoped merge GET must expose exact retry`);
+  }
   if (!/import\s*\{\s*DriverVendorMergesReverseSection\s*\}/.test(driverProfile)) {
     problems.push(`${DRIVER_PROFILE}: must import DriverVendorMergesReverseSection`);
   }
@@ -187,6 +190,7 @@ function selftest() {
       EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver"
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
+      query.isError title="Couldn't load vendor merges" onRetry={() => void query.refetch()}
       kind="factoring_vendor_merges_driver"
       EntityLinkOrTombstone kind="vendor" id={m.from_vendor_id} name={m.from_vendor_name} noun="Vendor"
       EntityLinkOrTombstone kind="vendor" id={m.to_vendor_id} name={m.to_vendor_name} noun="Vendor"`,
@@ -224,6 +228,7 @@ function selftest() {
     { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [HOME]: good[HOME].replace("driver_id: deepLinkDriverId ?? undefined,", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("{ driver_id: driverId }", "{}") },
+    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverVendorMergesReverseSection }", "// removed") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("driverId={id}", "") },
     { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace("{ vendor_id: vendorId }", "{}") },
