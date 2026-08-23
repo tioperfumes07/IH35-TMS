@@ -5,7 +5,7 @@ import { ParityTable, type ParityColumn } from "../components/parity/ParityTable
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
-import { listVendors, type VendorOption } from "../api/mdata";
+import { listVendors, listVendorPaymentMethods, type VendorPaymentMethod } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
@@ -56,10 +56,19 @@ function fmtMoney(cents: number | null | undefined) {
   return formatUsdCents(cents);
 }
 
-function buildAchDisplay(vendor: VendorOption) {
-  const text = parseVendorNotes(vendor.notes).publicNotes.toLowerCase();
-  if (text.includes("ach")) return "ACH on file";
-  return "—";
+// ORPH-003 — was buildAchDisplay(): string-matched "ach" anywhere in vendor.notes free text, a
+// false-positive/false-negative risk the audit named (docs/specs/CURSOR-AUDIT-2026-07-15/modules/
+// 15-CUSTOMERS-VENDORS.md §5 item 5). Renders the real mdata.vendor_payment_methods record now;
+// explicit "Not on file" per the audit's prescribed fallback, never a guess from notes text.
+function formatPaymentMethodDisplay(methods: VendorPaymentMethod[] | undefined, isLoading: boolean) {
+  if (isLoading) return "Loading…";
+  const active = (methods ?? []).filter((m) => !m.deactivated_at);
+  if (active.length === 0) return "Not on file";
+  const primary = active.find((m) => m.is_primary) ?? active[0];
+  const label = primary.method_type === "ach" ? "ACH" : primary.method_type === "wire" ? "Wire" : primary.method_type === "check" ? "Check" : "Other";
+  const maskSuffix = primary.account_mask ? ` (••${primary.account_mask})` : "";
+  const extraCount = active.length - 1;
+  return `${label} on file${maskSuffix}${extraCount > 0 ? ` +${extraCount} more` : ""}`;
 }
 
 function vendorQualityLabel(notes: string | null | undefined) {
@@ -304,6 +313,14 @@ export function VendorsPage() {
     () => parseVendorNotes(selectedVendor?.notes).publicNotes,
     [selectedVendor?.notes]
   );
+
+  // ORPH-003 — replaces the buildAchDisplay() notes-text heuristic below with the real structured
+  // payment-method record (mdata.vendor_payment_methods, migration 202613110000).
+  const vendorPaymentMethodsQuery = useQuery({
+    queryKey: ["vendors", "payment-methods", companyId, selectedVendor?.id ?? ""],
+    queryFn: () => listVendorPaymentMethods(selectedVendor!.id, companyId),
+    enabled: Boolean(companyId && selectedVendor?.id),
+  });
 
   const openByVendorId = useMemo(() => {
     const map = new Map<string, number>();
@@ -566,7 +583,7 @@ export function VendorsPage() {
                     <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
                     <p><span className="font-semibold text-gray-600">Notes:</span> {selectedVendorPublicNotes || "—"}</p>
                     <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
-                    <p className="md:col-span-2"><span className="font-semibold text-gray-600">Bill Pay ACH info:</span> {buildAchDisplay(selectedVendor)}</p>
+                    <p className="md:col-span-2"><span className="font-semibold text-gray-600">Payment method on file:</span> {formatPaymentMethodDisplay(vendorPaymentMethodsQuery.data?.payment_methods, vendorPaymentMethodsQuery.isLoading)}</p>
                   </div>
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">

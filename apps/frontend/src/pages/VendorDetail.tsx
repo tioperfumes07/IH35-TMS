@@ -50,6 +50,7 @@ import { VendorPreferredPartsReverseSection } from "./vendors/VendorPreferredPar
 import { VendorPartsInventoryReverseSection } from "./vendors/VendorPartsInventoryReverseSection";
 import { VendorMaintenanceCatalogReverseSection } from "./vendors/VendorMaintenanceCatalogReverseSection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
+import { VendorPaymentMethodsSection } from "./vendors/VendorPaymentMethodsSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { VendorBorderCrossingsReverseSection } from "../components/dispatch/VendorBorderCrossingsReverseSection";
 import { WarrantyClaimsReverseSection } from "../components/maintenance/WarrantyClaimsReverseSection";
@@ -465,6 +466,14 @@ export function VendorDetailPage() {
       user?.role === "Manager" ||
       user?.role === "Accountant" ||
       user?.role === "Mechanic",
+    [user?.role]
+  );
+
+  // ORPH-003 — matches the backend's write-role gate for mdata.vendor_payment_methods exactly
+  // (migration 202613110000's RLS write policy: Owner/Administrator only, narrower than the
+  // Manager/Accountant band above — this records how money leaves the company).
+  const canWritePaymentMethods = useMemo(
+    () => user?.role === "Owner" || user?.role === "Administrator",
     [user?.role]
   );
 
@@ -925,6 +934,7 @@ export function VendorDetailPage() {
         <VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorMergesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorPaymentMethodsSection operatingCompanyId={companyId} vendorId={vendor.id} canWrite={canWritePaymentMethods} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>
       ) : null}
