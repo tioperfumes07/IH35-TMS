@@ -48,6 +48,32 @@ function makeClient() {
 }
 
 describe("fleet-location-hos honest HOS state (no fabricated 840)", () => {
+  it("preserves actively authorized shared drivers in both current-driver sources", async () => {
+    const queries: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes("FROM mdata.units")) return { rows: [] };
+        return { rows: [] };
+      },
+    };
+
+    await getFleetLocationHosRows(client, OCI, ASOF);
+
+    const samsaraSql = queries.find((sql) => sql.includes("FROM telematics.vehicle_driver_assignments")) ?? "";
+    const loadSql = queries.find((sql) => sql.includes("FROM mdata.loads")) ?? "";
+    for (const [source, sql, alias] of [
+      ["Samsara assignment", samsaraSql, "samsara_driver_dca"],
+      ["active-load fallback", loadSql, "load_driver_dca"],
+    ] as const) {
+      expect(sql, `${source} query`).toContain(`FROM mdata.driver_company_authorizations ${alias}`);
+      expect(sql).toContain(`${alias}.driver_id = d.id`);
+      expect(sql).toContain(`${alias}.company_id = $1::uuid`);
+      expect(sql).toContain(`${alias}.is_authorized = true`);
+      expect(sql).toContain(`${alias}.deactivated_at IS NULL`);
+    }
+  });
+
   it("shows real clocks for a driver WITH events and 'unavailable'+blank for a driver WITHOUT", async () => {
     const rows = await getFleetLocationHosRows(makeClient(), OCI, ASOF);
     const a = rows.find((r) => r.unit_number === "T-A")!;
