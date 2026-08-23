@@ -109,7 +109,7 @@ export async function registerCustomerFinancialSummaryRoutes(app: FastifyInstanc
         operatingCompanyId: companyId,
         entityType: "customer",
         entityId: customerId,
-      }).catch(() => []);
+      });
 
       return {
         revenue_by_month: revenueRes.rows.map((r) => ({ month: r.ym, total_cents: Number(r.cents) })),

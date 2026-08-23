@@ -134,6 +134,11 @@ const CHECKS = [
     pattern: /app\.get\("\/api\/v1\/mdata\/customers\/:id\/financial-summary", \{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/,
   },
   {
+    name: "customer financial document reverse read carries selected company scope",
+    file: FINANCIAL_ROUTE,
+    pattern: /const documents = await listAttachments\(user\.uuid, \{\s*operatingCompanyId: companyId,\s*entityType: "customer",\s*entityId: customerId,\s*\}\);/,
+  },
+  {
     name: "archived customer invoice history validates through same-company resolver",
     file: CUSTOMER_INVOICES_ROUTE,
     pattern: /SELECT id FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) LIMIT 1/,
@@ -217,6 +222,15 @@ const CHECKS = [
 ];
 
 const FORBIDDEN = [
+  {
+    name: "customer financial document failures must not become false-empty history",
+    file: FINANCIAL_ROUTE,
+    pattern: /listAttachments\(user\.uuid, \{[\s\S]{0,220}entityId: customerId,[\s\S]{0,80}\}\)\.catch\(\(\) => \[\]\)/,
+    mutate: (source) => source.replace(
+      'entityId: customerId,\n      });',
+      'entityId: customerId,\n      }).catch(() => []);',
+    ),
+  },
   {
     name: "archived customer quality parent must not use RLS-hidden plain lookup",
     file: QUALITY_EVENTS_ROUTE,
