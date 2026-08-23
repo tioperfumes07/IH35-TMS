@@ -37,7 +37,7 @@ const EXACT_ROUTES = new Map([
 const CHECKS = [
   ["profile", /updateCustomer\(id, \{/],
   ["contacts", /queryKey: \["customer-contacts", id,/],
-  ["contacts.create", /createCustomerContact\(id, payload, operatingCompanyId\)/],
+  ["contacts.create", /createCustomerContact\(id, payload, operatingCompanyId!\)/],
   ["billing", /queryKey: \["customer-billing-summary", id,/],
   ["billing.record_payment", /recordCustomerPayment\(id, selectedCompanyId \?\? "", \{/],
   ["quality", /queryKey: \["customer-quality-events", id,/],

@@ -17,13 +17,13 @@ const listQuerySchema = z.object({
   // Entity scope: the caller passes the operating company it is viewing the customer under
   // (TRANSP ↔ TRK ↔ USMCA). Without it we fall back to the user's DEFAULT company and 404 any
   // customer opened from a non-default entity.
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 // Write/mutation handlers (DELETE, reactivate) carry no request body — accept the scope selector
 // off the query string, same as the list handler.
 const opcoQuerySchema = z.object({
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const createContactSchema = z.object({
@@ -35,8 +35,6 @@ const createContactSchema = z.object({
   department: departmentSchema.default("other"),
   is_primary: z.boolean().optional(),
   notes: z.string().trim().max(2000).optional(),
-  // Entity scope selector (not a persisted column) — see listQuerySchema.
-  operating_company_id: z.string().uuid().optional(),
 });
 
 const updateContactSchema = z
@@ -49,11 +47,8 @@ const updateContactSchema = z
     department: departmentSchema.optional(),
     is_primary: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
-    // Entity scope selector (not a persisted column) — see listQuerySchema. Excluded from the
-    // "at least one field" refine and from the UPDATE SET builder below.
-    operating_company_id: z.string().uuid().optional(),
   })
-  .refine((body) => Object.keys(body).filter((k) => k !== "operating_company_id").length > 0, {
+  .refine((body) => Object.keys(body).length > 0, {
     message: "at least one field is required",
   });
 
@@ -109,9 +104,9 @@ async function ensureCustomerInScope(
   // resolveOperatingCompanyId falls back to the user's default company — which is why callers
   // viewing a customer under a NON-default entity must pass it, or the parent-customer check
   // below 404s a customer that is perfectly valid in the requested entity.
-  requestedOpco?: string | null
+  requestedOpco: string
 ): Promise<string | null> {
-  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requestedOpco ?? null);
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requestedOpco);
   if (!operatingCompanyId) return null;
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   const ok = await ensureCustomerExists(client, customerId, operatingCompanyId);
@@ -178,13 +173,15 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = createContactSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = opcoQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
       const scopedCompanyId = await ensureCustomerInScope(
         client,
         authUser.uuid,
         parsedParams.data.customer_id,
-        parsedBody.data.operating_company_id
+        parsedQuery.data.operating_company_id
       );
       if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
@@ -268,13 +265,15 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
       const parsedBody = updateContactSchema.safeParse(req.body ?? {});
       if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+      const parsedQuery = opcoQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
         const scopedCompanyId = await ensureCustomerInScope(
           client,
           authUser.uuid,
           parsedParams.data.customer_id,
-          parsedBody.data.operating_company_id
+          parsedQuery.data.operating_company_id
         );
         if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
@@ -309,8 +308,6 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
         const fields: string[] = [];
         const values: unknown[] = [];
         for (const [key, value] of Object.entries(parsedBody.data)) {
-          // operating_company_id is a scope selector, not a column on customer_contacts.
-          if (key === "operating_company_id") continue;
           if (value !== undefined) {
             values.push(value);
             fields.push(`${key} = $${values.length}`);
