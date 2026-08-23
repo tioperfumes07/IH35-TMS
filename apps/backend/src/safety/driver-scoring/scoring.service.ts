@@ -69,7 +69,16 @@ export async function aggregateDriverCountsForPeriod(
       FROM safety.harsh_events e
       JOIN mdata.drivers d
         ON d.id = e.driver_id
-       AND d.operating_company_id = e.operating_company_id
+       AND (
+         d.operating_company_id = e.operating_company_id
+         OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations scoring_events_dca
+           WHERE scoring_events_dca.driver_id = d.id
+             AND scoring_events_dca.company_id = e.operating_company_id
+             AND scoring_events_dca.is_authorized = true
+             AND scoring_events_dca.deactivated_at IS NULL
+         )
+       )
       WHERE e.operating_company_id = $1::uuid
         AND e.driver_id IS NOT NULL
         AND e.event_at >= $2::date
@@ -137,7 +146,16 @@ export async function aggregateDriverCountsForPeriod(
            AND a.driver_id IS NOT NULL
           JOIN mdata.drivers d
             ON d.id = a.driver_id
-           AND d.operating_company_id = a.operating_company_id
+           AND (
+             d.operating_company_id = a.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations scoring_miles_dca
+               WHERE scoring_miles_dca.driver_id = d.id
+                 AND scoring_miles_dca.company_id = a.operating_company_id
+                 AND scoring_miles_dca.is_authorized = true
+                 AND scoring_miles_dca.deactivated_at IS NULL
+             )
+           )
           GROUP BY a.driver_id
         )
         SELECT driver_uuid, miles, driving_seconds FROM mileage
@@ -157,7 +175,16 @@ export async function aggregateDriverCountsForPeriod(
     `
       SELECT id::text AS id
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations scoring_active_dca
+            WHERE scoring_active_dca.driver_id = d.id
+              AND scoring_active_dca.company_id = $1::uuid
+              AND scoring_active_dca.is_authorized = true
+              AND scoring_active_dca.deactivated_at IS NULL
+          )
+        )
         AND d.status = 'Active'::mdata.driver_status
         AND d.deactivated_at IS NULL
         AND d.archived_at IS NULL
