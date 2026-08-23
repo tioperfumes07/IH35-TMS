@@ -82,6 +82,9 @@ export function run(rootDir = root) {
   if (!workspace.includes("void startReconciliationSession({")) {
     failures.push("ReconciliationWorkspace.tsx inline 'Create Session' form must call startReconciliationSession, not a disabled/no-op button");
   }
+  if (!workspace.includes("getBankingTiles") || !workspace.includes("const [pickedBankAccountId, setPickedBankAccountId]")) {
+    failures.push("ReconciliationWorkspace start form must pick a real bank tile — URL-only bank_account_hint leaves Create Session disabled");
+  }
 
   if (!bankingHome.includes('to="/banking/reconciliation-workspace"') || !/Open Workspace/.test(bankingHome)) {
     failures.push("BankingHome 'Open Workspace' must target /banking/reconciliation-workspace (not /banking/reconciliation Close-period chrome)");
@@ -170,6 +173,15 @@ if (process.argv.includes("--selftest")) {
     mutationFailures = run(temp);
     if (mutationFailures.length === 0) throw new Error("Home Open Workspace mis-route was not detected");
     write(temp, bankingHomePath, files[bankingHomePath]);
+
+    write(
+      temp,
+      workspacePath,
+      files[workspacePath].replace("const [pickedBankAccountId, setPickedBankAccountId]", "const [accountFromUrlOnly, setAccountFromUrlOnly]")
+    );
+    mutationFailures = run(temp);
+    if (mutationFailures.length === 0) throw new Error("workspace missing tile picker was not detected");
+    write(temp, workspacePath, files[workspacePath]);
 
     console.log("verify-banking-recon-start-session-wired --selftest OK");
   } finally {

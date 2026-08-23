@@ -6,6 +6,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import {
   completeReconciliationSession,
+  getBankingTiles,
+  getPlaidBankAccounts,
   getReconciliationSessions,
   getReconciliationWorkspace,
   matchReconciliationTransaction,
@@ -21,6 +23,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -117,7 +120,7 @@ export function ReconciliationWorkspacePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id") ?? "";
   const bankAccountHint = searchParams.get("bank_account_hint") ?? "";
-  const effectiveBankAccountId = bankAccountId || bankAccountHint;
+  const [pickedBankAccountId, setPickedBankAccountId] = useState("");
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -155,6 +158,29 @@ export function ReconciliationWorkspacePage() {
     queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
   });
+
+  const tilesQuery = useQuery({
+    queryKey: ["banking", "tiles", companyId],
+    queryFn: () => getBankingTiles(companyId),
+    enabled: Boolean(companyId) && !sessionId,
+  });
+  const plaidAccountsQuery = useQuery({
+    queryKey: ["banking", "plaid-accounts", companyId],
+    queryFn: () => getPlaidBankAccounts(companyId),
+    enabled: Boolean(companyId) && !sessionId,
+  });
+  const reconAccountOptions = useMemo(() => {
+    const tiles = filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId);
+    const realTiles = tiles.filter((tile) => String(tile.tile_kind) === "real");
+    if (realTiles.length > 0) {
+      return realTiles.map((tile) => ({ id: tile.id, label: tile.display_name }));
+    }
+    return (plaidAccountsQuery.data?.accounts ?? []).map((account) => ({
+      id: account.id,
+      label: entityLabel(account.account_name, account.id, "Account"),
+    }));
+  }, [companyId, plaidAccountsQuery.data?.accounts, tilesQuery.data?.tiles]);
+  const effectiveBankAccountId = bankAccountId || bankAccountHint || pickedBankAccountId;
 
   useEffect(() => {
     const matched = workspaceQuery.data?.matched_transactions ?? [];
@@ -412,7 +438,20 @@ export function ReconciliationWorkspacePage() {
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+            <SelectCombobox
+              value={effectiveBankAccountId}
+              onChange={(event) => setPickedBankAccountId(event.target.value)}
+              className="text-sm"
+              data-testid="banking-recon-workspace-account"
+            >
+              <option value="">Select bank account</option>
+              {reconAccountOptions.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.label}
+                </option>
+              ))}
+            </SelectCombobox>
             <DatePicker
               value={periodStart}
               onChange={setPeriodStart}
