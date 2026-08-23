@@ -9,6 +9,7 @@ import {
   getDailyPrediction,
   getActualVsProjected,
   addAdjustment,
+  archiveAdjustment,
 } from "./cash-flow.service.js";
 
 const companyQuerySchema = z.object({
@@ -29,6 +30,14 @@ const addAdjustmentBodySchema = z.object({
   entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   label: z.string().trim().min(1).max(500),
   amount_cents: z.number().int(),
+});
+
+const archiveAdjustmentParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+const archiveAdjustmentBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
 });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
@@ -112,5 +121,45 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
       return row;
     });
     return reply.status(201).send(result);
+  });
+
+  // CASHFLOW-ADJUSTMENT-NO-VOID-PATH: archived_at has existed on this table since it was created
+  // (202606080200_cash_flow_adjustments.sql, "ARCHIVE never DELETE"), but no route ever set it —
+  // a mistaken manual adjustment could be created but never removed. Void-not-delete.
+  app.patch("/api/v1/cash-flow/adjustments/:id/archive", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+
+    const params = archiveAdjustmentParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      return reply.status(400).send({ error: "validation_error", details: params.error.flatten() });
+    }
+    const body = archiveAdjustmentBodySchema.safeParse(req.body);
+    if (!body.success) {
+      return reply.status(400).send({ error: "validation_error", details: body.error.flatten() });
+    }
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
+      const row = await archiveAdjustment(client, params.data.id, body.data.operating_company_id);
+      if (!row) return null;
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "cash_flow_adjustment.archived",
+        {
+          record_id: row.id,
+          operating_company_id: body.data.operating_company_id,
+          entry_date: row.entry_date,
+          label: row.label,
+          amount_cents: row.amount_cents,
+        }
+      );
+      return row;
+    });
+    if (!result) {
+      return reply.status(404).send({ error: "cash_flow_adjustment_not_found" });
+    }
+    return reply.send(result);
   });
 }

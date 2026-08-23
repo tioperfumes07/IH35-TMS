@@ -6,6 +6,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import {
   getDailyPrediction,
   addCashFlowAdjustment,
+  archiveCashFlowAdjustment,
   type DailyPredictionResult,
   type SevenDayEntry,
 } from "../../../api/cashFlow";
@@ -89,6 +90,14 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     },
     onError: () => {
       setAddError("Failed to save. Please try again.");
+    },
+  });
+
+  // CASHFLOW-ADJUSTMENT-NO-VOID-PATH: the create flow had no way to undo a mistaken entry.
+  const archiveMutation = useMutation({
+    mutationFn: (adjustmentId: string) => archiveCashFlowAdjustment(adjustmentId, operatingCompanyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -372,6 +381,17 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                       <span className="ml-4 shrink-0 font-semibold text-gray-900">
                         {formatCents(item.amount_cents)}
                       </span>
+                      {item.kind === "adjustment" && item.adjustment_id ? (
+                        <button
+                          type="button"
+                          className="ml-3 shrink-0 text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
+                          disabled={archiveMutation.isPending}
+                          onClick={() => archiveMutation.mutate(item.adjustment_id!)}
+                          data-testid="cash-flow-adjustment-remove"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>

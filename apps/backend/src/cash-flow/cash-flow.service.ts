@@ -691,3 +691,36 @@ export async function addAdjustment(
   );
   return result.rows[0];
 }
+
+// ─── Archive Adjustment ─────────────────────────────────────────────────────
+// CASHFLOW-ADJUSTMENT-NO-VOID-PATH: the table has carried archived_at + a "ARCHIVE never DELETE"
+// migration comment since it was created (202606080200_cash_flow_adjustments.sql), but no route or
+// UI ever set it — a mistaken/test manual adjustment could be created but never removed. Void-not-
+// delete, RLS-scoped by operating_company_id (same predicate as every other query in this file).
+
+export async function archiveAdjustment(
+  client: Queryable,
+  id: string,
+  operatingCompanyId: string
+): Promise<AdjustmentRow | null> {
+  const result = await client.query<AdjustmentRow>(
+    `
+    UPDATE accounting.cash_flow_adjustments
+    SET archived_at = now()
+    WHERE id = $1::uuid
+      AND operating_company_id = $2::uuid
+      AND archived_at IS NULL
+    RETURNING
+      id::text,
+      operating_company_id::text,
+      entry_date::text,
+      label,
+      amount_cents::int,
+      created_by_user_id::text,
+      archived_at::text,
+      created_at::text
+    `,
+    [id, operatingCompanyId]
+  );
+  return result.rows[0] ?? null;
+}
