@@ -1390,7 +1390,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             (SELECT NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '')
              FROM mdata.drivers prior
              WHERE prior.id = mdata.drivers.prior_driver_id
-               AND prior.operating_company_id = mdata.drivers.operating_company_id
+               AND (
+                 prior.operating_company_id = $2::uuid
+                 OR EXISTS (
+                   SELECT 1
+                   FROM mdata.driver_company_authorizations flat_prior_driver_label_dca
+                   WHERE flat_prior_driver_label_dca.driver_id = prior.id
+                     AND flat_prior_driver_label_dca.company_id = $2::uuid
+                     AND flat_prior_driver_label_dca.is_authorized = true
+                     AND flat_prior_driver_label_dca.deactivated_at IS NULL
+                 )
+               )
              LIMIT 1) AS prior_driver_name,
           operating_company_id,
             qbo_vendor_id,
