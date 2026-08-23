@@ -225,9 +225,19 @@ async function assertOptionalHubExists(
   const res = await client.query(
     `
       SELECT id::text
-      FROM mdata.drivers
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations claim_write_driver_dca
+            WHERE claim_write_driver_dca.driver_id = d.id
+              AND claim_write_driver_dca.company_id = $2::uuid
+              AND claim_write_driver_dca.is_authorized = true
+              AND claim_write_driver_dca.deactivated_at IS NULL
+          )
+        )
       LIMIT 1
     `,
     [id, operatingCompanyId]

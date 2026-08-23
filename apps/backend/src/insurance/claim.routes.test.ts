@@ -89,6 +89,10 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     return { rows: [{ id: String(values?.[0]) }] };
   }
 
+  if (sql.includes("FROM mdata.drivers d")) {
+    return { rows: [{ id: String(values?.[0]) }] };
+  }
+
   if (sql.includes("INSERT INTO insurance.claim")) {
     return {
       rows: [
@@ -277,6 +281,30 @@ describe("insurance claim routes", () => {
 
   // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD — schema not yet on prod).
   describe("claim economics fields (slice 2)", () => {
+    it("POST accepts a driver actively authorized to the claim company", async () => {
+      const app = await buildApp();
+      const driverId = "66666666-6666-4666-8666-666666666666";
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/insurance/claims",
+        payload: {
+          operating_company_id: "11111111-1111-4111-8111-111111111111",
+          claim_number: "CLM-SHARED-DRIVER",
+          policy_id: "22222222-2222-4222-8222-222222222222",
+          accident_date: "2026-05-01",
+          reported_date: "2026-05-02",
+          amount_claimed_cents: 100000,
+          driver_id: driverId,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      const driverCheck = queryMock.mock.calls.find(([sql]) => sql.includes("claim_write_driver_dca"));
+      expect(driverCheck?.[0]).toContain("claim_write_driver_dca.is_authorized = true");
+      expect(driverCheck?.[0]).toContain("claim_write_driver_dca.deactivated_at IS NULL");
+      expect(driverCheck?.[1]).toEqual([driverId, "11111111-1111-4111-8111-111111111111"]);
+    });
+
     it("POST creates a claim with the full economics slice (fault/driver_responsible/trailer/deductible/recovery_rail/repair_books_treatment)", async () => {
       const app = await buildApp();
       const response = await app.inject({

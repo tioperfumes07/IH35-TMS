@@ -30,6 +30,10 @@ const CHECKS = [
   [CLAIM_ROUTES, /claim_driver_dca\.company_id = \$\{scope\}/],
   [CLAIM_ROUTES, /claim_driver_dca\.is_authorized = true/],
   [CLAIM_ROUTES, /claim_driver_dca\.deactivated_at IS NULL/],
+  [CLAIM_ROUTES, /FROM mdata\.drivers d[\s\S]{0,500}claim_write_driver_dca\.driver_id = d\.id/],
+  [CLAIM_ROUTES, /claim_write_driver_dca\.company_id = \$2::uuid/],
+  [CLAIM_ROUTES, /claim_write_driver_dca\.is_authorized = true/],
+  [CLAIM_ROUTES, /claim_write_driver_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
