@@ -60,6 +60,9 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
   }
+  if (!/customerLoadsQuery\.isError[\s\S]{0,500}title="Couldn't load customer loads"[\s\S]{0,500}customerLoadsQuery\.refetch\(\)/.test(src)) {
+    failures.push(`${FILE}: customer loads reverse GET failure must reach ParityTable with exact-query retry`);
+  }
   // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
   if (fmcsaSrc) {
     if (!/data-testid=["']fmcsa-verify-flat["']/.test(fmcsaSrc)) {
@@ -114,6 +117,15 @@ if (process.argv.includes("--selftest")) {
     '\n<div className="rounded-sm border border-gray-200 p-3" />\n';
   if (!audit(good, fmcsaPlanted).some((f) => f.includes("box-in-box") || f.includes("fmcsa-verify-flat"))) {
     console.error(`${LABEL} SELFTEST FAIL — fmcsa box-in-box mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const loadsErrorMutated = good.replace(
+    /customerLoadsQuery\.refetch\(\)/,
+    "Promise.resolve()",
+  );
+  if (loadsErrorMutated === good || !audit(loadsErrorMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).some((f) => f.includes("customer loads reverse GET failure"))) {
+    console.error(`${LABEL} SELFTEST FAIL — customer loads error/retry mutation escaped`);
     process.exit(1);
   }
   caught++;
