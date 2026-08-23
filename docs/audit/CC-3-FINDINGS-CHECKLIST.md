@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6238-ELD-AUDIT-RESOLVER-BINDS-SHARED-DRIVER-TO-HOME-INTEGRATION` — Codex drivers reverse SQL/GET — FIXED this PR; selected-company Samsara mapping/config plus active shared-driver eligibility; guard 7/7 + tests 7/7 + typecheck exit 0.
+
 - ☑ `DRV-F6237-FILINGS-DASHBOARD-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; Clearinghouse/MVR filing rosters admit active canonical shared-driver authorizations; guard 41/41 + tests 6/6 + typecheck exit 0.
 
 - ☑ `DOCS-F6236-ENTITY-LABEL-HYDRATOR-USES-PHANTOM-FLEET-SCOPE` — Codex customer/driver/fleet reverse SQL/GET — FIXED this PR; type-specific scopes remove unit/equipment 42703 and admit active shared drivers; guard 22/22.
