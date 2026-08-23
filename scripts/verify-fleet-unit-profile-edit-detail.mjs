@@ -34,6 +34,7 @@ const FILES = {
   unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
   assignment: "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx",
   missingRequired: "apps/frontend/src/components/compliance/MissingRequiredChip.tsx",
+  backhaul: "apps/frontend/src/components/reports/BackhaulSuggestionsWidget.tsx",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
   self: "scripts/verify-fleet-unit-profile-edit-detail.mjs",
 };
@@ -146,6 +147,12 @@ export function audit(src) {
       !/!query\.isSuccess \|\| !query\.data/.test(src.missingRequired)) {
     failures.push(`${FILES.missingRequired}: required-document GET failure must be visible and exactly retryable before the loading/absence gate`);
   }
+  if (!/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,260}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(src.backhaul)) {
+    failures.push(`${FILES.backhaul}: backhaul GET failure must expose exact retry`);
+  }
+  if (!/!query\.isLoading && !query\.isError && suggestions\.length === 0/.test(src.backhaul)) {
+    failures.push(`${FILES.backhaul}: failed backhaul GET must not render a false no-profitable-lanes empty state`);
+  }
   for (const id of CONNECTIVITY_LEAVES) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
@@ -211,6 +218,8 @@ if (process.argv.includes("--selftest")) {
     ["assignment-link", "assignment", /unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/, 'kind="trailer" id={unit.trailer_id}'],
     ["missing-required-error", "missingRequired", /query\.isError/, "false"],
     ["missing-required-retry", "missingRequired", /onClick=\{\(\) => void query\.refetch\(\)\}/, "onClick={undefined}"],
+    ["backhaul-retry", "backhaul", /onRetry=\{\(\) => void query\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["backhaul-false-empty", "backhaul", /!query\.isLoading && !query\.isError && suggestions\.length === 0/, "!query.isLoading && suggestions.length === 0"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
