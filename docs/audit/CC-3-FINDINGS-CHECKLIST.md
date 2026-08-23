@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6252-WF038-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex driver connectivity — FIXED this PR; dispatch auth pre-handler now admits active selected-company authorizations before Book Load/assign/quick-assign; auth-gate guard is mutation-proven.
+
 - ☑ `DRV-F6251-WO-CLASS-LABEL-DROPS-AUTHORIZED-SHARED-DRIVER` — Codex fleet/maintenance reverse SQL/GET — FIXED this PR; WO two-section class derivation resolves the selected driver through home or active authorization; maintenance driver guard mutation-proves it.
 
 - ☑ `DRV-F6250-LOAD-SETTLEMENT-SUMMARY-NULLS-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; load drawer settlement summary resolves its canonical driver FK through home or active selected-company authorization; dedicated guard mutation-proves it.

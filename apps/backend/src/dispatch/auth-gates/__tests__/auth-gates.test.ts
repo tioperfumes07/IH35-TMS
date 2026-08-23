@@ -13,11 +13,18 @@ describe("dispatch auth gates", () => {
   });
 
   it("passes active driver with no PM/DVIR issues", async () => {
+    const queries: string[] = [];
     const client = { query: async (sql: string) => {
+      queries.push(sql);
       if (sql.includes("mdata.drivers")) return { rows: [{ status: "Active", is_dispatch_blocked: false }] };
       return { rows: [] };
     }};
     const result = await checkGates({ operating_company_id: "oci", action_slug: "book_load", driver_uuid: "d1", unit_uuid: "u1" }, client);
     expect(result.pass).toBe(true);
+    const driverSql = queries.find((sql) => sql.includes("mdata.drivers")) ?? "";
+    expect(driverSql).toContain("driver_company_authorizations wf038_driver_dca");
+    expect(driverSql).toContain("wf038_driver_dca.company_id = $2::uuid");
+    expect(driverSql).toContain("wf038_driver_dca.is_authorized = true");
+    expect(driverSql).toContain("wf038_driver_dca.deactivated_at IS NULL");
   });
 });
