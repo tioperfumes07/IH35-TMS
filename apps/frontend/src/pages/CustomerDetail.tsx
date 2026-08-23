@@ -1251,6 +1251,9 @@ export function CustomerDetailPage() {
             <Field label="Tax ID (EIN)" value={hydratedForm.tax_id} onChange={(value) => setForm((current) => ({ ...current, tax_id: value }))} disabled={!editMode} />
             <div className="mb-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Billing State</label>
+              {usStatesQuery.isError ? (
+                <ListErrorState title="Couldn't load billing states" status={0} message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined} onRetry={() => void usStatesQuery.refetch()} />
+              ) : null}
               <Combobox
                 options={(usStatesQuery.data ?? []).map((state) => ({
                   value: state.code,
@@ -2806,6 +2809,9 @@ export function CustomerDetailPage() {
                 catalogs.customer_quality_event_reasons (entityScoped factory; same table the reasons
                 query reads). event_type/severity come from the form via createExtras.
               */}
+              {qualityReasonsQuery.isError ? (
+                <ListErrorState title="Couldn't load quality reasons" status={0} message={qualityReasonsQuery.error instanceof Error ? qualityReasonsQuery.error.message : undefined} onRetry={() => void qualityReasonsQuery.refetch()} />
+              ) : null}
               {operatingCompanyId ? (
                 <ReferenceSelect
                   value={qualityForm.reason_id || null}
@@ -2830,6 +2836,7 @@ export function CustomerDetailPage() {
                     severity: qualityForm.severity,
                   }}
                   loading={qualityReasonsQuery.isLoading}
+                  disabled={qualityReasonsQuery.isError}
                   placeholder="Select reason"
                   onOptionCreated={(opt) => {
                     setQualityForm((current) => ({ ...current, reason_id: opt.value }));

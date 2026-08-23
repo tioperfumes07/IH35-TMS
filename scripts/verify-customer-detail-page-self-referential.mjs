@@ -84,6 +84,10 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   if (!/relationshipScoreQuery\.isError[\s\S]{0,300}onRetry=\{\(\) => void relationshipScoreQuery\.refetch\(\)\}/.test(src) || (relationshipSrc && !/<ListErrorState[\s\S]{0,180}onRetry=\{onRetry\}/.test(relationshipSrc))) {
     failures.push(`${RELATIONSHIP_SCORE}: failed relationship-score GET must expose exact-query retry`);
   }
+  for (const [query, title] of [["usStatesQuery", "Couldn't load billing states"], ["qualityReasonsQuery", "Couldn't load quality reasons"]]) {
+    const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${query} catalog failure must expose exact-query retry`);
+  }
   if (requiredSrc) {
     const required = JSON.parse(requiredSrc);
     for (const [id, route] of EXACT_ROUTES) {
@@ -116,6 +120,14 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   caught++;
+  for (const query of ["usStatesQuery", "qualityReasonsQuery"]) {
+    const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${query} catalog failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${query} catalog retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
   for (const [name, pattern] of CHECKS) {
     const mutated = good.replace(new RegExp(pattern.source, `${pattern.flags}g`), "REMOVED");
     if (mutated === good) {
