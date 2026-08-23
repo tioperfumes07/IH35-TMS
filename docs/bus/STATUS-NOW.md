@@ -4,11 +4,11 @@
 
 | Seat | MODULE NOW |
 |------|------------|
-| Cursor 9222 | banking |
-| CC-1 9223 | accounting leftover money |
-| CC-2 9224 | settlements |
-| CC-3 9225 | legal |
-| Codex 9226 | customers reverse |
+| Cursor 9222 | dispatch leftover unique (banking CERTIFIED `36e51bb` omit) |
+| CC-1 9223 | accounting leftover money then factoring |
+| CC-2 9224 | settlements omit — unique FINDING / Codex reverse SQL only |
+| CC-3 9225 | lists |
+| Codex 9226 | customers→drivers→fleet reverse SQL (no CDP) |
 | Devin | PARKED |
 
 ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`
