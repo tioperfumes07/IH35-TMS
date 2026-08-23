@@ -44,6 +44,5 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | CC-2 | 9224 | Codex help then driver-hub | Settlements CERTIFIED — omit. Kill CI-watch. Help Codex 7–9 SQL (no CDP). Empty unique → leftover `/driver-hub` 1–12. **No** `/lists` `/legal` `/banking*` |
 | CC-3 | 9225 | legal | lists CERTIFIED LIVE_SHA=01385f7 — omit. **NOW `/legal` Fully-Wired 1–12** hops file then OUTBOX `CERTIFIED \| MODULE=legal`. Unique-CLEAN ≠ CERTIFIED. No leftover until legal stamped. No `trigger_deploy` |
 | Codex | 9226 | customers then drivers then fleet | **TODAY:** same hops file. Reverse SQL/GET. **Three** CERTIFIED lines (not one). **No CDP.** Cursor stamps when SHA=healthz |
-| Cascade | audit | CERTIFIED 1–5 | Pack `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`. No OPEN prefixes |
-| Devin | audit | CERTIFIED 6,11–13 | Same pack. Trackers `docs/audit/scenario-trackers/certified-u14/` |
-| Devin-A | trackers | fill U14-*.md | Same folder. No live prefix steal |
+| Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings board same folder. ACK≠audit. No OPEN prefixes |
+| Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors`→`/insurance`. OUTBOX-DEVIN-A. Not scribe. No Devin-B |

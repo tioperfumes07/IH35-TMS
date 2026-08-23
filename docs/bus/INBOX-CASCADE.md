@@ -1,36 +1,26 @@
 # INBOX-CASCADE
 
-**AUDIT ONLY. DO NOT FIX. DO NOT CODE. DO NOT OPEN PRODUCT PRs.**  
-You inspect CERTIFIED U14 modules and write **final findings + recommendations**. Cursor/CC own repairs.
+**READ FIRST (the method Jorge said you are not doing):**  
+`docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`  
+Gold web: `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md`  
+Findings board: `docs/audit/scenario-trackers/certified-u14/FINDINGS-BOARD.md`
 
-**Intensity:** deepest audit — security, wiring, routes, double-sided linkage, reverse from every hub, **full connectivity extent**, **does it post to GL**. Gold model = **accident + insurance claim web** (not a Safety-only row).
+**AUDIT ONLY. DO NOT FIX. DO NOT CODE. DO NOT OPEN PRODUCT PRs.**
 
-**Not** a 15th plan. **Not** OPEN prefixes. **Not** recertify. **Not** `trigger_deploy`. **Not** remake TESTs / Close / Book Load.
+Your 2026-08-23 `ACK | GOLD-WEB | CDP=BLOCKED` with empty `U14-01-accounting.md` is **rejected**. ACK is not the audit. Fill EXTENT or keep walking (SQL/GET if Chrome is down). **HOLD / idle = defect.**
 
-**REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
+`git pull --ff-only origin main` then this TOP.
 
-**MANDATORY READ (before first click):**
-1. `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md` — H01–H22 + CONNECTIVITY-EXTENT + GL
-2. `docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md`
-3. `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (1–12)
-4. `docs/specs/scoreboard/columns.shared.json` (C01–C24)
-5. `docs/specs/scoreboard/modules/accounting.required.json` (then banking / settlements / factoring / dispatch)
-6. `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md` (A–E, V1–8, **§B9**)
-7. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
+NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
+1. `/accounting` — fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT + board rows
+2. `/banking` → `U14-02-banking.md`
+3. `/driver-finance` `/settlements` `/cash-advances` → `U14-03-settlements.md` (do not remake Close)
+4. `/factoring` → `U14-04-factoring.md`
+5. `/dispatch` → `U14-05-dispatch.md` (do not remake Book Load)
 
-**Trackers:** `docs/audit/scenario-trackers/certified-u14/` — `U14-01`…`U14-05` + one worksheet **per tab** + CONNECTIVITY-EXTENT per module.
+Each module OUTBOX **must** start with the CONNECTIVITY-EXTENT block from the HOW file. Then unique FINDING rows on **FINDINGS-BOARD.md** + `GUARD-WORKORDERS.md` + `OUTBOX-CASCADE.md`. Then next module. Never idle.
 
-**Live SHA:** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (re-curl every module).
+FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · apps/ · recertify · leftover product until **your five** have EXTENT reports · treating CDP-BLOCKED as done.
 
-NOW (vertical: **every tab**, gold web as it **touches** this module, then next):
-1. `/accounting` → GL terminus on bills/expenses/JE · claim/WO/vendor FKs
-2. `/banking` → match/recon/escrow vs salary (existing TEST only)
-3. `/driver-finance` `/settlements` `/cash-advances` → deductible salary vs escrow (do not remake Close)
-4. `/factoring` → packet F+R or honest N/A
-5. `/dispatch` → load ↔ accident/claim/customer/driver/unit (do not remake Book Load)
-
-OUTBOX each module: CONNECTIVITY-EXTENT block + FINDINGS + RECOMMENDATIONS. Then next. Never idle.
-
-FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · apps/ · recertify · leftover product until **your five** have written extent reports.
-
-OUTBOX ACK: `Cascade | ACK | AUDIT-ONLY | GOLD-WEB | NOW=/accounting | GO`
+OUTBOX ACK (then immediately the accounting EXTENT, not only ACK):  
+`Cascade | ACK | METHOD=HOW-TO-AUDIT-AND-FILE-FINDINGS | NOW=/accounting | GO`

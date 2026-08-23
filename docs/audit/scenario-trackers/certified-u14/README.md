@@ -1,6 +1,6 @@
 # Certified U14 scenario trackers (audit working folder)
 
-**Owner order 2026-08-23:** Cascade + Devin audit CERTIFIED Urgent-14 modules. Devin-A finishes these files.
+**Owner order 2026-08-23:** Cascade + **Devin-A (Devin)** audit CERTIFIED Urgent-14 modules **live**. Method: `HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings: `FINDINGS-BOARD.md`. Devin-A is **not** a scribe.
 
 Pack: `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`  
 Template: `TEMPLATE.md`
