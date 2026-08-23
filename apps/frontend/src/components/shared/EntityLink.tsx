@@ -522,7 +522,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "unit_brakes_tab":
       return `/fleet/units/${id}?tab=brakes`;
     case "loads_driver_filter":
-      return `/dispatch/loads?driver=${id}`;
+      return `/dispatch/loads?driver_id=${id}`;
     case "unit_detail_finance":
       return `/fleet/units/${id}/detail?tab=finance`;
     case "fuel_card_overage_driver":

@@ -21,6 +21,8 @@ const FILES = {
   dispatch: "apps/frontend/src/pages/Dispatch.tsx",
   manifest: "apps/frontend/src/routes/manifest.tsx",
   mdataApi: "apps/frontend/src/api/mdata.ts",
+  loadsSection: "apps/frontend/src/components/driver-profile/LoadsSection.tsx",
+  entityLink: "apps/frontend/src/components/shared/EntityLink.tsx",
 };
 
 function stripComments(text) {
@@ -39,6 +41,8 @@ export function assertGuard(sources) {
   const dispatch = stripComments(sources.dispatch);
   const manifest = stripComments(sources.manifest);
   const mdataApi = stripComments(sources.mdataApi);
+  const loadsSection = stripComments(sources.loadsSection);
+  const entityLink = stripComments(sources.entityLink);
 
   if (/assign_truck=1/.test(actionBar) && !/onAssignTruck/.test(actionBar)) {
     errors.push(`${FILES.actionBar}: raw ?assign_truck=1 href without onAssignTruck handler`);
@@ -87,6 +91,18 @@ export function assertGuard(sources) {
     );
   }
 
+  // The preview and the destination must agree on the canonical driver filter. Dispatch reads
+  // `driver_id`; `?driver=` silently opened the full, unfiltered load board.
+  if (!/<EntityLink\s+kind="loads_driver_filter"\s+id=\{driverId\}/.test(loadsSection)) {
+    errors.push(`${FILES.loadsSection}: Full load history must use loads_driver_filter for the current driver`);
+  }
+  if (!/case "loads_driver_filter":\s*return `\/dispatch\/loads\?driver_id=\$\{id\}`;/.test(entityLink)) {
+    errors.push(`${FILES.entityLink}: loads_driver_filter must emit the driver_id query consumed by Dispatch`);
+  }
+  if (!/params\.get\("driver_id"\)/.test(dispatch)) {
+    errors.push(`${FILES.dispatch}: Dispatch must consume the driver_id reverse-filter query`);
+  }
+
   return errors;
 }
 
@@ -108,10 +124,12 @@ function selftest() {
     assignment: '<EntityLink kind="load" id={String(load.load_id)} label="Load" />',
     mapView: 'const focusDriverId = searchParams.get("driver"); positions.filter((p) => p.driver_uuid === focusDriverId);',
     dispatch:
-      'const { id: routeLoadId } = useParams(); const loadId = routeLoadId ?? searchParams.get("load_id"); ' +
+      'const { id: routeLoadId } = useParams(); const loadId = routeLoadId ?? searchParams.get("load_id"); const driverId = params.get("driver_id"); ' +
       "<Drawer isOpen={Boolean(loadId)} />;",
     manifest: '<Route path="/dispatch/map" element={<MapView />} />',
     mdataApi: "export function setDriverDefaultTruck() { return apiRequest(`/default-truck`",
+    loadsSection: '<EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" />',
+    entityLink: 'switch (kind) { case "loads_driver_filter": return `/dispatch/loads?driver_id=${id}`; }',
   };
   const pass = assertGuard(good);
   if (pass.length) {
@@ -141,6 +159,25 @@ function selftest() {
   const noPathParam = assertGuard({ ...good, dispatch: 'const loadId = searchParams.get("load_id"); <Drawer isOpen={Boolean(loadId)} />;' });
   if (!noPathParam.some((error) => error.includes("PATH param"))) {
     console.error(`[${LABEL}] --selftest FAIL: a searchParams-only reader was not rejected`, noPathParam);
+    process.exit(1);
+  }
+
+
+  const wrongDriverKey = assertGuard({
+    ...good,
+    entityLink: good.entityLink.replace("?driver_id=", "?driver="),
+  });
+  if (!wrongDriverKey.some((error) => error.includes("loads_driver_filter"))) {
+    console.error(`[${LABEL}] --selftest FAIL: a writer using ?driver= was not rejected`, wrongDriverKey);
+    process.exit(1);
+  }
+
+  const missingDriverReader = assertGuard({
+    ...good,
+    dispatch: good.dispatch.replace('params.get("driver_id")', 'params.get("driver")'),
+  });
+  if (!missingDriverReader.some((error) => error.includes("consume the driver_id"))) {
+    console.error(`[${LABEL}] --selftest FAIL: a Dispatch reader using the wrong driver key was not rejected`, missingDriverReader);
     process.exit(1);
   }
 
