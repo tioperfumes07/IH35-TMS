@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6210-LOAD-LIST-ROWS-NULL-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; exact dispatch home.list driver guard + typecheck pending.
+
 - ☑ `DRV-F6209-BOL-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; exact dispatch.panel.load_bol connectivity guard + typecheck pending.
 
 - ☑ `DRV-F6208-DISPATCH-SHEET-NULLS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; exact load.detail connectivity guard + typecheck pending.
