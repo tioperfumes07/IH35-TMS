@@ -16,6 +16,15 @@ const trailerDocs = fs.readFileSync("apps/frontend/src/components/trailer-profil
 const fleetMap = fs.readFileSync("docs/specs/scoreboard/modules/fleet.required.json", "utf8");
 const feed = fs.readFileSync("docs/specs/scoreboard/wire-sprint-built.json", "utf8");
 const self = fs.readFileSync("scripts/verify-fleet-reverse-link-remainder.mjs", "utf8");
+const retrySections = Object.fromEntries([
+  ["permits", "apps/frontend/src/components/safety/UnitPermitsReverseSection.tsx"],
+  ["in-transit issues", "apps/frontend/src/components/dispatch/UnitInTransitIssuesReverseSection.tsx"],
+  ["tire program", "apps/frontend/src/components/maintenance/UnitTireProgramReverseSection.tsx"],
+  ["severe repairs", "apps/frontend/src/components/maintenance/UnitSevereRepairsReverseSection.tsx"],
+  ["temporary coverage", "apps/frontend/src/components/safety/UnitTempCoverReverseSection.tsx"],
+  ["insurance lawsuits", "apps/frontend/src/components/insurance/InsuranceLawsuitsReverseSection.tsx"],
+  ["safety alerts", "apps/frontend/src/components/safety/SafetyAlertsReverseSection.tsx"],
+].map(([name, path]) => [name, fs.readFileSync(path, "utf8")]));
 const HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.insurance_claims_reverse","trailer.profile.insurance_claims_reverse"],"task":"FLEET-F5908-INSURANCE-CLAIMS-REVERSE-EXACT","vertical":"class-sweep"} */';
 const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.insurance_claims_reverse"],"task":"FLEET-F5951-UNIT-INSURANCE-CLAIMS-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 
@@ -38,6 +47,7 @@ function failures(s = {}) {
   const fm = s.fleetMap ?? fleetMap;
   const fd = s.feed ?? feed;
   const sf = s.self ?? self;
+  const rs = s.retrySections ?? retrySections;
   const found = [
     ["unit document exact drill", u.includes('kind="document" id={row.file_id}')],
     ["default-driver reverse unit drill", da.includes('EntityLinkOrTombstone') && da.includes('id={def.unit_id == null ? null : String(def.unit_id)}') && da.includes('name={def.unit_number}')],
@@ -54,6 +64,10 @@ function failures(s = {}) {
     ["trailer governed profile label", tp.includes('const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer")') && !tp.includes("equipment.equipment_number ?? id")],
     ["trailer upload governed label", td.includes('entityName={entityLabel(equipmentNumber, equipmentId, "Trailer")}') && !td.includes("equipmentNumber ?? equipmentId")],
     ["QBO mapping reverse N/A", !qboMappingRequiresReverse(fm)],
+    ...Object.entries(rs).map(([name, source]) => [
+      `${name} reverse failure retry`,
+      source.includes("<ListErrorState") && source.includes("refetch()"),
+    ]),
   ].filter(([, ok]) => !ok).map(([name]) => name);
   let matrix;
   try { matrix = JSON.parse(fm); } catch (error) { found.push(`Fleet matrix parse: ${error.message}`); }
@@ -94,6 +108,9 @@ if (process.argv.includes("--selftest")) {
     failures({ fleetMap: fleetMap.replace('"id": "unit.profile.insurance_claims_reverse"', '"id": "unit.profile.insurance_claims_reverse.connectivity-broken"') }).includes("unit.profile.insurance_claims_reverse must require connectivity"),
     failures({ self: self.replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) }).includes("exact Fleet unit insurance-claims connectivity header missing"),
     failures({ feed: JSON.stringify({ entries: [{ guard: "scripts/verify-fleet-reverse-link-remainder.mjs" }] }) }).includes("manual feed duplicates Fleet claims ownership"),
+    ...Object.entries(retrySections).map(([name, source]) => failures({
+      retrySections: { ...retrySections, [name]: source.replaceAll("refetch()", "retryRemoved()") },
+    }).includes(`${name} reverse failure retry`)),
   ];
   if (checks.some((ok) => !ok)) {
     console.error(`verify-fleet-reverse-link-remainder selftest FAIL — mutations ${checks.map((ok, index) => ok ? null : index + 1).filter(Boolean).join(", ")} stayed green`);

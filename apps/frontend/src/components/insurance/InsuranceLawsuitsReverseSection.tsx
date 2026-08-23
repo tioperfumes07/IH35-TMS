@@ -3,6 +3,7 @@ import { listInsuranceLawsuits } from "../../api/insurance";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 export function InsuranceLawsuitsReverseSection({ operatingCompanyId, filter, contextLabel }: {
   operatingCompanyId: string;
@@ -18,7 +19,7 @@ export function InsuranceLawsuitsReverseSection({ operatingCompanyId, filter, co
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="insurance-lawsuits-reverse">
       <h3 className="text-sm font-semibold text-slate-900">Insurance lawsuits</h3>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Lawsuits could not be loaded.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Lawsuits could not be loaded." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="mt-2 text-xs text-slate-500">No lawsuits reference {contextLabel}.</p> : null}
       <div className="mt-2 space-y-1 text-xs">
         {rows.map((row) => (
