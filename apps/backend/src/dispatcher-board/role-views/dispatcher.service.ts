@@ -358,13 +358,23 @@ async function loadIncomingMessageQueue(
       SELECT COUNT(DISTINCT m.id)::int AS c
       FROM mdata.driver_profile_messages m
       JOIN mdata.drivers d ON d.id = m.driver_id
-                          AND d.operating_company_id = m.operating_company_id
+                          AND (
+                            d.operating_company_id = m.operating_company_id
+                            OR EXISTS (
+                              SELECT 1
+                              FROM mdata.driver_company_authorizations dispatcher_message_dca
+                              WHERE dispatcher_message_dca.driver_id = d.id
+                                AND dispatcher_message_dca.company_id = m.operating_company_id
+                                AND dispatcher_message_dca.is_authorized = true
+                                AND dispatcher_message_dca.deactivated_at IS NULL
+                            )
+                          )
       JOIN mdata.loads l
         ON (
           l.assigned_primary_driver_id = m.driver_id
           OR l.assigned_secondary_driver_id = m.driver_id
         )
-        AND l.operating_company_id = d.operating_company_id
+        AND l.operating_company_id = m.operating_company_id
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
         AND m.read_at IS NULL
