@@ -3619,6 +3619,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-settlement-detail-page-error-state"
   },
+  "4529": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-flow-statement-reconciled-badge-honest"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -5603,5 +5608,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1257
+  "total_claimed": 1258
 }
