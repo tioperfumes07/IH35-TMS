@@ -351,21 +351,29 @@ export function createCatalogRoutes(
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
         const parsedParams = idParamSchema.safeParse(req.params ?? {});
         if (!parsedParams.success) return validationError(reply, parsedParams.error);
-        const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+        // CLS-CATALOG-MUTATION-RLS-SILENT-404: this must mirror POST's entityScoped branching —
+        // see the withCompanyScope call below for why.
+        const parsedQuery = (entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
+          req.query ?? {}
+        );
         if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
         const parsedBody = updateBodySchema.safeParse(req.body ?? {});
         if (!parsedBody.success) return validationError(reply, parsedBody.error);
         const body = parsedBody.data;
+        const operatingCompanyId = parsedQuery.data.operating_company_id as string | undefined;
 
-        const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const runUpdate = async (client: any) => {
           if ("code" in body && body.code) {
             // CLS-CATALOG-CODE-CONFLICT-COLUMN: same fix as the create-path conflict check above —
             // route through dbColumnForApiColumn instead of a bare `code` literal.
             const codeDbColumn = dbColumnForApiColumn("code", config);
-            const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 AND id <> $2 LIMIT 1`, [
-              body.code,
-              parsedParams.data.id,
-            ]);
+            const conflictSql = entityScoped
+              ? `SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 AND id <> $2 AND operating_company_id = $3::uuid LIMIT 1`
+              : `SELECT id FROM catalogs.${config.tableName} WHERE ${codeDbColumn} = $1 AND id <> $2 LIMIT 1`;
+            const conflictVals = entityScoped
+              ? [body.code, parsedParams.data.id, operatingCompanyId]
+              : [body.code, parsedParams.data.id];
+            const conflict = await client.query(conflictSql, conflictVals);
             if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
           }
 
@@ -396,12 +404,21 @@ export function createCatalogRoutes(
             add("updated_by_user_id", authUser.uuid);
           }
           values.push(parsedParams.data.id);
+          const idPlaceholder = `$${values.length}`;
+          // CLS-CATALOG-MUTATION-RLS-SILENT-404: explicit company predicate, belt-and-suspenders
+          // with the RLS policy this route must now actually satisfy (see withCompanyScope below) —
+          // a wrong-company id 404s on its own merits instead of only via RLS.
+          let companyPredicate = "";
+          if (entityScoped) {
+            values.push(operatingCompanyId);
+            companyPredicate = ` AND operating_company_id = $${values.length}::uuid`;
+          }
 
           const res = await client.query(
             `
               UPDATE catalogs.${config.tableName}
               SET ${fields.join(", ")}
-              WHERE id = $${values.length}
+              WHERE id = ${idPlaceholder}${companyPredicate}
               RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
             `,
             values
@@ -414,7 +431,19 @@ export function createCatalogRoutes(
             catalog_display_name: config.displayName,
           });
           return { row };
-        });
+        };
+
+        // CLS-CATALOG-MUTATION-RLS-SILENT-404 (live-reproduced 2026-08-22 on fuel.def_stations):
+        // this route used plain withCurrentUser with a bare `WHERE id = $1` UPDATE. Every
+        // entity-scoped catalogs.* table carries a FORCE RLS `company_scope` policy requiring
+        // `operating_company_id = current_setting('app.operating_company_id', true)` — a session
+        // that never sets that GUC has it NULL, so the RLS predicate is always false and the
+        // UPDATE silently matches zero rows regardless of id, surfacing a false
+        // catalog_<table>_not_found for a row that visibly exists. withCompanyScope sets the GUC
+        // (and asserts real company membership) exactly like the create route above.
+        const updated = entityScoped
+          ? await withCompanyScope(authUser.uuid, operatingCompanyId as string, runUpdate)
+          : await withCurrentUser(authUser.uuid, runUpdate);
 
         if ("error" in updated) {
           if (updated.error === `catalog_${config.tableName}_not_found`) return reply.code(404).send({ error: updated.error });
@@ -432,25 +461,42 @@ export function createCatalogRoutes(
         const softCol = config.softDeleteColumn;
         const parsedParams = idParamSchema.safeParse(req.params ?? {});
         if (!parsedParams.success) return validationError(reply, parsedParams.error);
-        const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+        // CLS-CATALOG-MUTATION-RLS-SILENT-404: mirror POST's entityScoped branching — see the
+        // withCompanyScope call below for why.
+        const parsedQuery = (entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
+          req.query ?? {}
+        );
         if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
+        const operatingCompanyId = parsedQuery.data.operating_company_id as string | undefined;
 
-        const result = await withCurrentUser(authUser.uuid, async (client) => {
+        const runDelete = async (client: any) => {
           // Build the SET clause from independent flags — hasUpdatedAt and hasAuditUserColumns can
           // diverge (see GenericCatalogConfig.hasAuditUserColumns), so neither is safe to bundle
           // into a single all-or-nothing ternary branch.
           const softDeleteSetParts = [`${softCol} = false`];
           if (config.hasDeactivatedAt) softDeleteSetParts.push("deactivated_at = now()");
           if (hasUpdatedAt) softDeleteSetParts.push("updated_at = now()");
-          if (hasAuditUserColumns) softDeleteSetParts.push("updated_by_user_id = $2");
+          const values: unknown[] = [parsedParams.data.id];
+          if (hasAuditUserColumns) {
+            values.push(authUser.uuid);
+            softDeleteSetParts.push(`updated_by_user_id = $${values.length}`);
+          }
+          // CLS-CATALOG-MUTATION-RLS-SILENT-404: explicit company predicate, belt-and-suspenders
+          // with the RLS policy this route must now actually satisfy (see withCompanyScope below) —
+          // a wrong-company id 404s on its own merits instead of only via RLS.
+          let companyPredicate = "";
+          if (entityScoped) {
+            values.push(operatingCompanyId);
+            companyPredicate = ` AND operating_company_id = $${values.length}::uuid`;
+          }
           const res = await client.query(
             `
               UPDATE catalogs.${config.tableName}
               SET ${softDeleteSetParts.join(", ")}
-              WHERE id = $1
+              WHERE id = $1${companyPredicate}
               RETURNING id, code
             `,
-            hasAuditUserColumns ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
+            values
           );
           if (res.rows.length === 0) return null;
           await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_deactivated`, {
@@ -460,7 +506,16 @@ export function createCatalogRoutes(
             catalog_display_name: config.displayName,
           });
           return { ok: true };
-        });
+        };
+
+        // CLS-CATALOG-MUTATION-RLS-SILENT-404 (live-reproduced 2026-08-22 on fuel.def_stations,
+        // Archive button): see the identical PATCH-route note above — plain withCurrentUser never
+        // sets app.operating_company_id, so the FORCE RLS company_scope policy silently zeroes
+        // this UPDATE regardless of id, and Archive fails with a false not-found and, worse, ZERO
+        // toast/error surfaced to the operator at all (a true silent no-op, not just a bad message).
+        const result = entityScoped
+          ? await withCompanyScope(authUser.uuid, operatingCompanyId as string, runDelete)
+          : await withCurrentUser(authUser.uuid, runDelete);
 
         if (!result) return reply.code(404).send({ error: `catalog_${config.tableName}_not_found` });
         return result;
@@ -476,23 +531,39 @@ export function createCatalogRoutes(
       const softCol = config.softDeleteColumn;
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return validationError(reply, parsedParams.error);
-      const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+      // CLS-CATALOG-MUTATION-RLS-SILENT-404: mirror POST's entityScoped branching — see the
+      // withCompanyScope call below for why.
+      const parsedQuery = (entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
+        req.query ?? {}
+      );
       if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
+      const operatingCompanyId = parsedQuery.data.operating_company_id as string | undefined;
 
-      const restored = await withCurrentUser(authUser.uuid, async (client) => {
+      const runRestore = async (client: any) => {
         // Same independent-flags SET-clause build as the soft-delete route above.
         const restoreSetParts = [`${softCol} = true`];
         if (config.hasDeactivatedAt) restoreSetParts.push("deactivated_at = NULL");
         if (hasUpdatedAt) restoreSetParts.push("updated_at = now()");
-        if (hasAuditUserColumns) restoreSetParts.push("updated_by_user_id = $2");
+        const values: unknown[] = [parsedParams.data.id];
+        if (hasAuditUserColumns) {
+          values.push(authUser.uuid);
+          restoreSetParts.push(`updated_by_user_id = $${values.length}`);
+        }
+        // CLS-CATALOG-MUTATION-RLS-SILENT-404: explicit company predicate, belt-and-suspenders
+        // with the RLS policy this route must now actually satisfy (see withCompanyScope below).
+        let companyPredicate = "";
+        if (entityScoped) {
+          values.push(operatingCompanyId);
+          companyPredicate = ` AND operating_company_id = $${values.length}::uuid`;
+        }
         const res = await client.query(
           `
             UPDATE catalogs.${config.tableName}
             SET ${restoreSetParts.join(", ")}
-            WHERE id = $1
+            WHERE id = $1${companyPredicate}
             RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
           `,
-          hasAuditUserColumns ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
+          values
         );
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
@@ -502,7 +573,14 @@ export function createCatalogRoutes(
           catalog_display_name: config.displayName,
         });
         return row;
-      });
+      };
+
+      // CLS-CATALOG-MUTATION-RLS-SILENT-404: same root cause as PATCH/DELETE above (plain
+      // withCurrentUser never sets app.operating_company_id, so FORCE RLS silently zeroes the
+      // UPDATE) — restore is the exact inverse of Archive and shares its bug.
+      const restored = entityScoped
+        ? await withCompanyScope(authUser.uuid, operatingCompanyId as string, runRestore)
+        : await withCurrentUser(authUser.uuid, runRestore);
 
       if (!restored) return reply.code(404).send({ error: `catalog_${config.tableName}_not_found` });
       return restored;
