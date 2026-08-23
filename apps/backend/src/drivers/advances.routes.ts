@@ -50,8 +50,29 @@ export async function registerDriverAdvancesRoutes(app: FastifyInstance) {
       const client = rawClient as Queryable;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
+      // DRVFIN-F6169 — a strict operating_company_id equality here false-404'd a driver with an
+      // active canonical authorization at the selected company but a DIFFERENT home company, even
+      // though the advance/account rows below are correctly selected-company scoped and would
+      // return real data. Mirrors the same home-OR-active-authorization fallback drivers.routes.ts
+      // already uses for its own GET /:id (driver_company_authorizations, is_authorized=true,
+      // deactivated_at IS NULL) — the dca RLS SELECT policy already restricts rows to
+      // user-accessible companies, so this cannot widen visibility beyond that.
       const driverRes = await client.query<{ id: string }>(
-        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        `
+          SELECT id FROM mdata.drivers
+          WHERE id = $1::uuid
+            AND (
+              operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = mdata.drivers.id
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1
+        `,
         [driverId, operatingCompanyId]
       );
       if (!driverRes.rows[0]) return { notFound: true as const };
