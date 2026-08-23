@@ -37,25 +37,46 @@ const routeChecks = (candidate) => [
   /history_dca\.company_id = \$2::uuid[\s\S]{0,160}history_dca\.is_authorized = true[\s\S]{0,160}history_dca\.deactivated_at IS NULL/.test(candidate),
   (candidate.match(/rateLimit: \{ max: 120, timeWindow: "1 minute" \}/g) ?? []).length === 2,
 ];
+const aggregateChecks = (candidate) => [
+  /aggregate_default_dca\.company_id = vda\.operating_company_id[\s\S]{0,180}aggregate_default_dca\.is_authorized = true/.test(candidate),
+  /aggregate_current_dca\.company_id = vda\.operating_company_id[\s\S]{0,180}aggregate_current_dca\.is_authorized = true/.test(candidate),
+  /photo_dca\.company_id = p\.operating_company_id[\s\S]{0,180}photo_dca\.is_authorized = true/.test(candidate),
+];
 if (routeChecks(routes).some((ok) => !ok)) {
   console.error("verify:vehicle-profile-driver-dual-tracking FAIL: default/current/history driver reads must preserve authorized labels and rate limits");
   process.exit(1);
 }
+if (aggregateChecks(aggregate).some((ok) => !ok)) {
+  console.error("verify:vehicle-profile-driver-dual-tracking FAIL: aggregate default/current/photo driver labels must preserve active authorization");
+  process.exit(1);
+}
 if (process.argv.includes("--selftest")) {
-  const mutations = [
+  const routeMutations = [
     (x) => x.replace("default_dca.is_authorized = true", "TRUE"),
     (x) => x.replace("current_dca.is_authorized = true", "TRUE"),
     (x) => x.replace("history_dca.is_authorized = true", "TRUE"),
     (x) => x.replace('rateLimit: { max: 120, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }'),
   ];
-  for (const mutate of mutations) {
+  for (const mutate of routeMutations) {
     const broken = mutate(routes);
     if (broken === routes || routeChecks(broken).every(Boolean)) {
       console.error("verify:vehicle-profile-driver-dual-tracking SELFTEST FAIL: planted defect escaped");
       process.exit(1);
     }
   }
-  console.log("verify:vehicle-profile-driver-dual-tracking SELFTEST PASS — 4 planted defects caught");
+  const aggregateMutations = [
+    (x) => x.replace("aggregate_default_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace("aggregate_current_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace("photo_dca.is_authorized = true", "TRUE"),
+  ];
+  for (const mutate of aggregateMutations) {
+    const broken = mutate(aggregate);
+    if (broken === aggregate || aggregateChecks(broken).every(Boolean)) {
+      console.error("verify:vehicle-profile-driver-dual-tracking SELFTEST FAIL: planted aggregate defect escaped");
+      process.exit(1);
+    }
+  }
+  console.log("verify:vehicle-profile-driver-dual-tracking SELFTEST PASS — 7 planted defects caught");
   process.exit(0);
 }
 console.log("verify:vehicle-profile-driver-dual-tracking PASS");
