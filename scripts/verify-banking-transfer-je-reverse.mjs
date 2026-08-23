@@ -5,6 +5,7 @@ import fs from "node:fs";
 export function run(root = process.cwd()) {
   const failures = [];
   const lookup = fs.readFileSync(`${root}/apps/backend/src/lib/transfer-tms-je-lookup.ts`, "utf8");
+  const service = fs.readFileSync(`${root}/apps/backend/src/banking/transfers.service.ts`, "utf8");
   const routes = fs.readFileSync(`${root}/apps/backend/src/banking/transfers.routes.ts`, "utf8");
   const api = fs.readFileSync(`${root}/apps/frontend/src/api/banking.ts`, "utf8");
   const transfers = fs.readFileSync(
@@ -16,6 +17,11 @@ export function run(root = process.cwd()) {
     "utf8"
   );
 
+  if (/\bt\.journal_entry_id\b/.test(service)) {
+    failures.push(
+      "BANK-F6051 — transfers.service must not JOIN t.journal_entry_id (column does not exist on banking.transfers; TMS JE is attachTransferJournalEntryIds)"
+    );
+  }
   if (!lookup.includes("journal_entry_postings") || !lookup.includes("source_transaction_type = 'transfer'")) {
     failures.push("transfer-tms-je-lookup must SELECT TMS JE via source_transaction_type=transfer");
   }
@@ -76,6 +82,7 @@ if (process.argv.includes("--selftest")) {
   const tmp = fs.mkdtempSync("/tmp/verify-banking-transfer-je-");
   const files = [
     "apps/backend/src/lib/transfer-tms-je-lookup.ts",
+    "apps/backend/src/banking/transfers.service.ts",
     "apps/backend/src/banking/transfers.routes.ts",
     "apps/frontend/src/api/banking.ts",
     "apps/frontend/src/pages/banking/TransfersListPage.tsx",
@@ -91,20 +98,21 @@ if (process.argv.includes("--selftest")) {
   if (run(tmp).length) throw new Error("production copy must pass: " + run(tmp).join("; "));
   const plants = [
     [files[0], "source_transaction_type = 'transfer'", "source_transaction_type = 'wrong'"],
+    [files[1], "FROM banking.transfers t", "FROM banking.transfers t\n        LEFT JOIN accounting.journal_entries je ON je.id = t.journal_entry_id"],
     [files[0], "linked_object_type = 'transfer'", "linked_object_type = 'wrong'"],
     [files[0], "WHERE t.operating_company_id = $1::uuid", "WHERE t.operating_company_id = $9::uuid"],
     [files[0], "WHERE operating_company_id = $1::uuid\n          AND id = ANY($2::uuid[])", "WHERE operating_company_id = $9::uuid\n          AND id = ANY($2::uuid[])"],
     [files[0], "reversal_of_line_id IS NULL", "reversal_of_line_id IS NOT NULL"],
     [files[0], "ORDER BY jep.created_at ASC", "ORDER BY jep.line_sequence ASC"],
-    [files[1], "attachTransferJournalEntryIds", "attachWrongJournalEntryIds"],
-    [files[1], "journal_entry_memo?: string | null", "journal_entry_caption?: string | null"],
-    [files[2], "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_id?: string | null", "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_key?: string | null"],
-    [files[2], "journal_entry_id?: string | null;\n  journal_entry_memo?: string | null;\n  /** BANK-F12", "journal_entry_id?: string | null;\n  journal_entry_caption?: string | null;\n  /** BANK-F12"],
-    [files[3], 'kind="journal_entry"', 'kind="transfer"'],
-    [files[3], 'entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")', 'entityLabel(null, row.journal_entry_id, "Journal entry")'],
-    [files[3], "banking-transfer-gl-posting-honesty-banner", "banking-transfer-hidden-banner"],
-    [files[3], "transfersQuery.isSuccess", "!transfersQuery.isLoading"],
-    [files[4], 'case "transfer":', 'case "wrong-transfer":'],
+    [files[2], "attachTransferJournalEntryIds", "attachWrongJournalEntryIds"],
+    [files[2], "journal_entry_memo?: string | null", "journal_entry_caption?: string | null"],
+    [files[3], "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_id?: string | null", "/** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */\n  journal_entry_key?: string | null"],
+    [files[3], "journal_entry_id?: string | null;\n  journal_entry_memo?: string | null;\n  /** BANK-F12", "journal_entry_id?: string | null;\n  journal_entry_caption?: string | null;\n  /** BANK-F12"],
+    [files[4], 'kind="journal_entry"', 'kind="transfer"'],
+    [files[4], 'entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")', 'entityLabel(null, row.journal_entry_id, "Journal entry")'],
+    [files[4], "banking-transfer-gl-posting-honesty-banner", "banking-transfer-hidden-banner"],
+    [files[4], "transfersQuery.isSuccess", "!transfersQuery.isLoading"],
+    [files[5], 'case "transfer":', 'case "wrong-transfer":'],
   ];
   let rejected = 0;
   for (const [rel, needle, replacement] of plants) {
