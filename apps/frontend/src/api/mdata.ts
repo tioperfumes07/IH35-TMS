@@ -1029,7 +1029,8 @@ export function changeDriverQualificationRate(
     effective_from?: string;
     change_reason: PayRateChangeReason;
     change_notes?: string;
-  }
+  },
+  operatingCompanyId: string
 ) {
   return apiRequest<{
     rate: {
@@ -1043,7 +1044,7 @@ export function changeDriverQualificationRate(
       change_notes: string | null;
       previous_rate_id: string | null;
     };
-  }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rates/change`, {
+  }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rates/change?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "POST",
     body,
   });
