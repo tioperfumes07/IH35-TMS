@@ -171,11 +171,11 @@ export function Form425CHome() {
       transportation: { ...DEFAULT_PROFILES.transportation },
     };
     for (const row of profilesQuery.data.profiles) {
-      merged[row.company_key] = {
-        name: row.company_name,
-        caseNumber: row.case_number,
-        petitionDate: "",
-        district: row.district,
+        merged[row.company_key] = {
+          name: row.company_name,
+          caseNumber: row.case_number,
+          petitionDate: String(row.petition_date ?? "").slice(0, 10),
+          district: row.district,
         division: row.division,
         judge: row.judge,
         ein: row.ein,
@@ -226,6 +226,9 @@ export function Form425CHome() {
         naisc_code: profiles[activeCompany].naiscCode,
         default_questionnaire_answers: Object.fromEntries(Object.entries(profiles[activeCompany].defaultAnswers).map(([k, v]) => [String(k), v])),
         bank_accounts: profiles[activeCompany].bankAccounts,
+        petition_date: /^\d{4}-\d{2}-\d{2}$/.test(profiles[activeCompany].petitionDate?.trim() ?? "")
+          ? profiles[activeCompany].petitionDate.trim()
+          : null,
       }),
     onSuccess: async () => {
       pushToast("Profile defaults saved", "success");

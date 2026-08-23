@@ -1,4 +1,9 @@
 {
+  "4501": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-send-contract-variable-row-stable-key"
+  },
   "4497": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -6,8 +11,8 @@
   },
   "4493": {
     "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-send-contract-variable-row-stable-key"
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-driver-score-events-error-state"
   },
   "4489": {
     "claimed_at": "2026-08-23",
@@ -5553,5 +5558,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1251
+  "total_claimed": 1252
 }
