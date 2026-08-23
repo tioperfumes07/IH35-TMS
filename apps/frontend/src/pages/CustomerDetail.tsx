@@ -1184,6 +1184,15 @@ export function CustomerDetailPage() {
         ) : null}
       </div>
 
+      {saferStatusQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer SAFER status"
+          status={0}
+          message={saferStatusQuery.error instanceof Error ? saferStatusQuery.error.message : undefined}
+          onRetry={() => void saferStatusQuery.refetch()}
+        />
+      ) : null}
+
       <CustomerRelationshipScore
         score={relationshipScoreQuery.data}
         loading={relationshipScoreQuery.isLoading}

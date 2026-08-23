@@ -193,6 +193,11 @@ const CHECKS = [
     file: DETAIL,
     pattern: /parentCandidatesQuery\.isError[\s\S]{0,500}title="Couldn't load parent customer choices"[\s\S]{0,500}parentCandidatesQuery\.refetch\(\)/,
   },
+  {
+    name: "customer SAFER reverse GET failure exposes exact retry",
+    file: DETAIL,
+    pattern: /saferStatusQuery\.isError[\s\S]{0,500}title="Couldn't load customer SAFER status"[\s\S]{0,500}saferStatusQuery\.refetch\(\)/,
+  },
   { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
     name: "payment application invoice EntityLinkOrTombstone",
