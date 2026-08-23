@@ -42,7 +42,7 @@ const CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["con
 const PROFILE_CONNECTIVITY_HEADER = '/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.identity","unit.profile.telemetry","unit.profile.current_load","unit.profile.trip_cost","unit.profile.maintenance","unit.profile.compliance","unit.profile.action_bar","unit.profile.audit_history"],"task":"FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
 const PROFILE_CONNECTIVITY = new Map([
   ["unit.profile.identity", /data-testid="vp-section-1-identity"[\s\S]{0,220}<IdentityStatusHeader[\s\S]{0,120}unitId=\{id\}/],
-  ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,160}<LiveTelemetrySection/],
+  ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,520}<LiveTelemetrySection/],
   ["unit.profile.current_load", /data-testid="vp-section-4-load"[\s\S]{0,180}<CurrentLoadSection[\s\S]{0,120}unitId=\{id\}/],
   ["unit.profile.trip_cost", /data-testid="vp-section-4-load"[\s\S]{0,500}<TripCostCalculator unitId=\{id\} companyId=\{companyId\}/],
   ["unit.profile.maintenance", /data-testid="vp-section-5-maintenance"[\s\S]{0,360}<MaintenanceSnapshotSection[\s\S]{0,220}unitId=\{id\}/],
@@ -101,6 +101,9 @@ export function audit(src) {
   }
   if (!/faultSummaryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/.test(src.profile)) {
     failures.push(`${FILES.profile}: active-fault reverse-read failure must be visible and retryable`);
+  }
+  if (!/telemetryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: live-telemetry refresh failure must be visible and retryable instead of silently falling back`);
   }
   if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
     failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
@@ -177,6 +180,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
     ["profile-fault-error", "profile", /onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["profile-telemetry-error", "profile", /onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
