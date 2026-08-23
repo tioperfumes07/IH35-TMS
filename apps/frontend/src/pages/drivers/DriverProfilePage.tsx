@@ -300,7 +300,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         backHref="/drivers?subtab=profiles"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <DriverDqfComplianceChip summary={summary} />
+            {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
             <StatusBadge status={driver.status} />
             {driver.status !== "Terminated" ? (
               <button
@@ -472,43 +472,52 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {/* B-A3: DQF summary tiles — checklist below has no status/expiry filter yet; honest disabled
           (no guess-route to a nearest Safety/Docs page). */}
-      <KpiStrip>
-        <KpiCard
-          label="Checklist items"
-          number={String(summary.itemCount)}
-          accent={colors.drivers.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
+      {itemsQ.isError ? (
+        <ListErrorState
+          title="Couldn't load DQF summary"
+          status={0}
+          message={(itemsQ.error as Error)?.message}
+          onRetry={() => void itemsQ.refetch()}
         />
-        <KpiCard
-          label="Present"
-          number={String(summary.presentCount)}
-          accent={colors.positive.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Missing"
-          number={String(summary.missingCount)}
-          accent={colors.warn.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Expired"
-          number={String(summary.expiredCount)}
-          accent={colors.crit.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiCard
-          label="Expiry alerts"
-          number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
-          accent={colors.info.strong}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-      </KpiStrip>
+      ) : (
+        <KpiStrip>
+          <KpiCard
+            label="Checklist items"
+            number={String(summary.itemCount)}
+            accent={colors.drivers.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Present"
+            number={String(summary.presentCount)}
+            accent={colors.positive.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Missing"
+            number={String(summary.missingCount)}
+            accent={colors.warn.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Expired"
+            number={String(summary.expiredCount)}
+            accent={colors.crit.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+          <KpiCard
+            label="Expiry alerts"
+            number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
+            accent={colors.info.strong}
+            disabled
+            disabledReason={NOT_AVAILABLE_YET}
+          />
+        </KpiStrip>
+      )}
 
       {/*
         RESTORED (2026-07-27). This section was DELETED by #366 on 2026-06-02 — a §7 additive-only
@@ -528,7 +537,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
         <p className="mb-3 text-xs text-slate-600">
           Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
-          File status: <span className="font-medium text-slate-800">{summary.label}</span>.
+          File status:{" "}
+          {itemsQ.isError ? (
+            <span className="font-medium text-red-700">Could not be loaded.</span>
+          ) : (
+            <span className="font-medium text-slate-800">{summary.label}</span>
+          )}
         </p>
         {/* Flat inside one frame — the inner bordered cells the 2026-06 original used are a
             box-within-box, which verify-no-nested-box now forbids (QBO/NetSuite: one frame, flat
