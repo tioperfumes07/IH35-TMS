@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-driver-hub-chrome-law-pass2-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Cancel/Apply confirmed; box-in-box spot-check clean across 4 surfaces. Honest not-yet-done list documented (responsive audit, Related-links click-through, Leave Requests approve/deny create-void). Not a CERTIFY claim.",
+  "branch": "cc-2/driver-hub-chrome-law-pass2-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-driver-hub-chrome-law-pass2-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "chrome-law spot-check status, no CERTIFY claim" }
+  ],
+  "linkage": "N/A -- docs-only status update.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
