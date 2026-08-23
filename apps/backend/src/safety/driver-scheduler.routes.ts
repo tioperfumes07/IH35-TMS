@@ -405,10 +405,35 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const parsed = tempAssignmentsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      listTempAssignments(client, parsed.data.operating_company_id, { driverId: parsed.data.driver_id, unitId: parsed.data.unit_id })
-    );
-    return { assignments: rows };
+    const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      if (parsed.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1 FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND d.archived_at IS NULL
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1 FROM mdata.driver_company_authorizations dca
+                   WHERE dca.driver_id = d.id
+                     AND dca.company_id = $2::uuid
+                     AND dca.is_authorized = true
+                     AND dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
+          [parsed.data.driver_id, parsed.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false, assignments: [] };
+      }
+      const assignments = await listTempAssignments(client, parsed.data.operating_company_id, {
+        driverId: parsed.data.driver_id,
+        unitId: parsed.data.unit_id,
+      });
+      return { found: true, assignments };
+    });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { assignments: result.assignments };
   });
 
   app.post("/api/v1/safety/scheduler/temp-assignments", async (req, reply) => {
