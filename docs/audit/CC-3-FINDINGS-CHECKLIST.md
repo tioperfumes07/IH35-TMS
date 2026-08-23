@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6195-DRIVER-SCORING-GETS-DROP-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; safety guard + typecheck pending.
+
 - ☑ `DRV-F6194-SAFETY-ALERT-READS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; safety guard + typecheck pending.
 
 - ☑ `DRV-F6193-SAFETY-QUEUE-READS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance+safety guards + typecheck pending.
