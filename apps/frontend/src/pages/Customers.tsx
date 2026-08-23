@@ -564,11 +564,19 @@ export function CustomersPage() {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId, rosterType, rosterCreditStatus]);
 
-  // AUTO-13: honest error state instead of a blank list when the customers fetch 500s.
-  if (customersQuery.isError) {
+  // CUST-F6058: both roster reads feed the same list. A failed inactive-roster GET used to
+  // fall through because this branch only inspected customersQuery, so Inactive/All looked
+  // legitimately empty after a 500. Keep the two reads recoverable as one roster operation.
+  if (customersQuery.isError || inactiveCustomersQuery.isError) {
+    const rosterError = customersQuery.error ?? inactiveCustomersQuery.error;
     return (
       <div className="p-3">
-        <ListErrorState title="Couldn't load customers" status={0} message={(customersQuery.error as Error)?.message} onRetry={() => void customersQuery.refetch()} />
+        <ListErrorState
+          title="Couldn't load customers"
+          status={0}
+          message={(rosterError as Error)?.message}
+          onRetry={() => void Promise.all([customersQuery.refetch(), inactiveCustomersQuery.refetch()])}
+        />
       </div>
     );
   }
