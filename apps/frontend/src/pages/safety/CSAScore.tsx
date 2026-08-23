@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -187,54 +188,67 @@ export function CSAScorePage() {
         ) : null}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {tiles.map((tile) => {
-          const trend = trendsQuery.data?.[tile.basic_category] ?? [];
-          const sparklinePoints = trend
-            .map((point) => (point.score == null ? null : Number(point.score)))
-            .filter((value): value is number => Number.isFinite(value));
-          return (
-            <div key={tile.basic_category} className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="flex items-center justify-between text-xs">
-                <div className="font-semibold text-slate-700">{tile.label}</div>
-                <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{tile.risk_band.toUpperCase()}</div>
-              </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
-                <div>
-                  <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
-                  <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
+      {currentQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load CSA BASIC scores"
+          status={0}
+          message={(currentQuery.error as Error)?.message}
+          onRetry={() => void currentQuery.refetch()}
+        />
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {tiles.map((tile) => {
+            const trend = trendsQuery.data?.[tile.basic_category] ?? [];
+            const sparklinePoints = trend
+              .map((point) => (point.score == null ? null : Number(point.score)))
+              .filter((value): value is number => Number.isFinite(value));
+            return (
+              <div key={tile.basic_category} className="rounded-sm border border-gray-200 bg-white p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="font-semibold text-slate-700">{tile.label}</div>
+                  <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{tile.risk_band.toUpperCase()}</div>
                 </div>
-                <div>
-                  <div>Percentile</div>
-                  <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_percentile)}</div>
-                </div>
-                <div>
-                  <div>Threshold</div>
-                  <div className="font-semibold text-slate-800">
-                    {tile.availability === "available" ? tile.threshold.toFixed(0) : "-"}
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                  <div>
+                    <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
+                    <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
+                  </div>
+                  <div>
+                    <div>Percentile</div>
+                    <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_percentile)}</div>
+                  </div>
+                  <div>
+                    <div>Threshold</div>
+                    <div className="font-semibold text-slate-800">
+                      {tile.availability === "available" ? tile.threshold.toFixed(0) : "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div>Projected 30d</div>
+                    <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>
+                      {tile.availability === "available" ? formatScore(tile.projected_score_30d) : "-"}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div>Projected 30d</div>
-                  <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>
-                    {tile.availability === "available" ? formatScore(tile.projected_score_30d) : "-"}
-                  </div>
+                <div className="mt-2 text-[10px] text-slate-500">
+                  {tile.availability === "requires_authenticated_carrier_sms"
+                    ? "Unavailable from public sources · authenticated carrier SMS required"
+                    : tile.availability === "not_available_from_public_source"
+                      ? "No metric available from the public source"
+                      : `Alert status: ${tile.latest_alert_status} · Trending toward alert: ${tile.trending_toward_alert ? "yes" : "no"}`}
+                </div>
+                <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
+                  {trendsQuery.isError ? (
+                    <div className="h-8 text-[10px] text-red-700">Trend unavailable — fetch failed</div>
+                  ) : (
+                    <Sparkline points={sparklinePoints} />
+                  )}
                 </div>
               </div>
-              <div className="mt-2 text-[10px] text-slate-500">
-                {tile.availability === "requires_authenticated_carrier_sms"
-                  ? "Unavailable from public sources · authenticated carrier SMS required"
-                  : tile.availability === "not_available_from_public_source"
-                    ? "No metric available from the public source"
-                    : `Alert status: ${tile.latest_alert_status} · Trending toward alert: ${tile.trending_toward_alert ? "yes" : "no"}`}
-              </div>
-              <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
-                <Sparkline points={sparklinePoints} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
