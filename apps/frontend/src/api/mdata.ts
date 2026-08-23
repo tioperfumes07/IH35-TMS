@@ -1049,8 +1049,11 @@ export function changeDriverQualificationRate(
   });
 }
 
-export function listDriverCompanyAuthorizations(driverId: string) {
-  return apiRequest<{ authorizations: DriverCompanyAuthorization[] }>(`/api/v1/mdata/drivers/${driverId}/company-authorizations`);
+export function listDriverCompanyAuthorizations(driverId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ authorizations: DriverCompanyAuthorization[] }>(
+    `/api/v1/mdata/drivers/${driverId}/company-authorizations?${query.toString()}`
+  );
 }
 
 export function upsertDriverCompanyAuthorization(
