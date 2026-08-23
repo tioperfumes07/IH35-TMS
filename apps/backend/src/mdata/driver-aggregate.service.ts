@@ -90,7 +90,7 @@ export async function buildDriverAggregate(
     driver_employment_status_label: referenceFk.driver_employment_status_label,
   };
 
-  const medicalRes = await withSavepoint(
+  const medicalRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_medical",
     () =>
@@ -123,7 +123,7 @@ export async function buildDriverAggregate(
     medical_card_status_id: driver.medical_card_status_id ?? null,
   };
 
-  const drugRes = await withSavepoint(
+  const drugRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_drug",
     () =>
@@ -141,7 +141,7 @@ export async function buildDriverAggregate(
       ).then((result) => ({ ...result, unavailable: false as const })),
     { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
-  const poolRes = await withSavepoint(
+  const poolRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_pool",
     () =>
@@ -421,7 +421,7 @@ export async function buildDriverAggregate(
             COALESCE((SELECT json_agg(w ORDER BY w.week_ending DESC) FROM weeks w), '[]'::json) AS last_4_weeks
         `,
         [driverId, operatingCompanyId]
-      ).then((result) => ({ ...result, unavailable: false as const })),
+      ),
     { rows: [{ ytd_gross: 0, ytd_deductions: 0, ytd_net: 0, lifetime_with_company: 0, last_4_weeks: [] }] }
   );
   const settlementRow = settlementsRes.rows[0] ?? {};
@@ -433,7 +433,7 @@ export async function buildDriverAggregate(
     lifetime_with_company: Number(settlementRow.lifetime_with_company ?? 0),
   };
 
-  const trainingRes = await withSavepoint(
+  const trainingRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_training",
     () =>
@@ -452,7 +452,7 @@ export async function buildDriverAggregate(
           LIMIT 50
         `,
         [driverId, operatingCompanyId]
-      ),
+      ).then((result) => ({ ...result, unavailable: false as const })),
     { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
   const training_records_unavailable = trainingRes.unavailable;
@@ -487,7 +487,7 @@ export async function buildDriverAggregate(
   // W-8BEN — IRS foreign-status certificate (B-1 drivers). At-hire capture + yearly renewal
   // (IH35 policy) surfaced against the latest active certificate. Degrades gracefully if the
   // table is absent (pre-migration branch copy).
-  const w8benRes = await withSavepoint(
+  const w8benRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "driver_agg_w8ben",
     () =>

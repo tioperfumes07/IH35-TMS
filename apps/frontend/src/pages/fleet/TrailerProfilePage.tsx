@@ -41,9 +41,11 @@ export type TrailerProfileAggregate = {
   loads: Array<Record<string, unknown>>;
   reefer: Record<string, unknown> | null;
   samsara_telemetry: Record<string, unknown> | null;
+  samsara_telemetry_unavailable?: boolean;
   maintenance: Record<string, unknown>;
   compliance: Record<string, unknown>;
   documents: Array<Record<string, unknown>>;
+  documents_unavailable?: boolean;
   plates: Array<Record<string, unknown>>;
 };
 
@@ -185,7 +187,7 @@ export function TrailerProfilePage() {
       {isReefer ? (
         <>
           <div data-testid="tp-section-4-reefer">
-            <ReeferTelemetrySection reefer={aggregate.reefer} telemetry={aggregate.samsara_telemetry} />
+            <ReeferTelemetrySection reefer={aggregate.reefer} telemetry={aggregate.samsara_telemetry} unavailable={aggregate.samsara_telemetry_unavailable === true} />
           </div>
           <TrailerReeferSection trailerId={id} companyId={companyId} />
         </>
@@ -246,6 +248,7 @@ export function TrailerProfilePage() {
           equipmentNumber={trailerLabel}
           companyId={companyId}
           documents={aggregate.documents}
+          unavailable={aggregate.documents_unavailable === true}
           onUploaded={invalidateProfile}
         />
       </div>
