@@ -31,7 +31,7 @@ git rev-parse --short origin/main
 
 If healthz ≠ `origin/main` short: audit **live** anyway; write `LIVE_SHA_LAG`. Do not idle. Do not kick Render.
 
-**No product PRs.** Devin-A may FAST-MERGE **markdown trackers only** (findings record): gate exit 0 → PR → immediately `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Cascade/Devin: OUTBOX + tracker text; Cursor merges tracker docs if needed.
+**No product PRs. No fixes.** Auditors write OUTBOX + tracker markdown. Cursor may merge tracker docs. Never `gh pr checks --watch`. Never `trigger_deploy`.
 
 ---
 
@@ -205,8 +205,7 @@ From `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md`:
 | Seat | Modules (order) | Start URL |
 |------|-----------------|-----------|
 | **Cascade** | accounting → banking → settlements → factoring → dispatch | `/accounting` |
-| **Devin** | vendors → maintenance → safety → insurance | `/vendors` |
-| **Devin-A** | fill worksheets from OUTBOX; no prefix steal | `docs/audit/scenario-trackers/certified-u14/` |
+| **Devin / Devin-A** | **one auditor** (product tab “Devin A” = Devin). vendors → maintenance → safety → insurance. Fill your own trackers as you click. **Not** a scribe. **Not** Devin-B. **No fixes.** | `/vendors` |
 
 Empty unique-FINDING → write CONNECTIVITY-EXTENT + RECOMMENDATIONS → next module in **your** column. **Do not** start leftover product (`POST-URGENT-14`) — this seat is audit-only. **Never idle** on the next **audit** module.
 
@@ -344,4 +343,4 @@ Flyout: Home, Driver Files, HOS, DOT Compliance, DOT Inspections, CSA Score, Acc
 
 `Devin | ACK | VERTICAL-AUDIT | MODULE=vendors | NOW=/vendors | FILE=docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md | GO`
 
-`Devin-A | ACK | VERTICAL-TRACKERS | NOW=docs/audit/scenario-trackers/certified-u14/ | GO`
+`Devin-A | ACK | VERTICAL-AUDIT | MODULE=vendors | NOW=/vendors | GO`
