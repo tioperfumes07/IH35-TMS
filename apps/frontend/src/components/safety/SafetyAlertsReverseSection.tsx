@@ -3,6 +3,7 @@ import { getCompanyViolations, getIntegrityAlerts, listAnomalies, type SafetyAno
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 type SubjectKind = "driver" | "unit" | "vendor" | "customer" | "invoice";
 
@@ -43,7 +44,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`safety-alerts-reverse-${subjectKind}`}>
       <h3 className="text-sm font-semibold text-slate-900">Safety alerts and violations</h3>
-      {failed ? <p className="mt-2 text-xs text-red-700">Related safety records could not be loaded.</p> : null}
+      {failed ? (
+        <ListErrorState
+          status={0}
+          message="Related safety records could not be loaded."
+          onRetry={() => void Promise.all([companyViolationQ.refetch(), integrityAlertQ.refetch(), anomalyQ.refetch()])}
+        />
+      ) : null}
       {!loading && !failed && violations.length + alerts.length + anomalies.length === 0 ? (
         <p className="mt-2 text-xs text-slate-500">No safety alerts or company violations reference this record.</p>
       ) : null}
