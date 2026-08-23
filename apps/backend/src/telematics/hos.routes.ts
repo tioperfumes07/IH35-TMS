@@ -195,10 +195,20 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
       // Confine to drivers that actually belong to this operating company.
       const driverRes = await client.query<{ id: string }>(
         `
-          SELECT id::text AS id
-          FROM mdata.drivers
-          WHERE operating_company_id = $1::uuid
-            AND id = ANY($2::uuid[])
+          SELECT d.id::text AS id
+          FROM mdata.drivers d
+          WHERE d.id = ANY($2::uuid[])
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dispatch_clock_dca
+                WHERE dispatch_clock_dca.driver_id = d.id
+                  AND dispatch_clock_dca.company_id = $1::uuid
+                  AND dispatch_clock_dca.is_authorized = true
+                  AND dispatch_clock_dca.deactivated_at IS NULL
+              )
+            )
         `,
         [query.data.operating_company_id, query.data.driver_ids]
       );
