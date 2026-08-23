@@ -378,6 +378,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               -- hardcoded null on the frontend (only settlement_id, the raw uuid, was returned). This
               -- adds the missing driver_finance.driver_settlements join for a real settlement_display_id
               -- — live-confirmed against the same 2 rows: S-20260802-0258 / S-2026-0002.
+              -- BANK-F6050 — registerToEscrowRow MUST copy settlement_display_id + journal_entry_id +
+              -- journal_entry_memo through to the table row. Selecting them here is not enough; a
+              -- mapper drop paints "Settlement — not visible" on rows whose description already has S-*.
               SELECT
                 ep.id,
                 ep.posted_at::date AS txn_date,

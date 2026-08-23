@@ -11,7 +11,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
 import { useListState } from "../../../components/list-state";
@@ -64,6 +64,12 @@ function registerToEscrowRow(row: Record<string, unknown>): Record<string, unkno
     driver_id: String(row.driver_id ?? ""),
     settlement_id: String(row.settlement_id ?? ""),
     settlement_line_id: String(row.settlement_line_id ?? ""),
+    // BANK-F6050 — register SELECT already returns settlement_display_id + JE fields (BANK-F5751);
+    // dropping them here made EntityLink call entityLabel("", uuid) → "Settlement — not visible"
+    // on live rows whose description already named S-20260802-0258 / S-2026-0002.
+    settlement_display_id: String(row.settlement_display_id ?? ""),
+    journal_entry_id: String(row.journal_entry_id ?? ""),
+    journal_entry_memo: String(row.journal_entry_memo ?? ""),
   };
 }
 
@@ -152,7 +158,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             <EntityLink
               kind="settlement"
               id={sid}
-              label={entityLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
+              label={visibleDocumentLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
               data-testid="banking-escrow-settlement-link"
             />
           );
@@ -172,7 +178,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             <EntityLink
               kind="journal_entry"
               id={jeId}
-              label={entityLabel(String(row.journal_entry_memo ?? "") || null, jeId, "Journal entry")}
+              label={visibleDocumentLabel(String(row.journal_entry_memo ?? "") || null, jeId, "Journal entry")}
               data-testid="banking-escrow-journal-entry-link"
             />
           );
