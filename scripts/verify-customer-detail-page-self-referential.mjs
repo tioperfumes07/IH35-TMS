@@ -16,6 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
 const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
 const LATE_ARRIVAL_CARD = "apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx";
+const RELATIONSHIP_SCORE = "apps/frontend/src/components/customers/CustomerRelationshipScore.tsx";
 const REQUIRED = "docs/specs/scoreboard/modules/customers.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-customer-detail-page-self-referential.mjs";
@@ -55,7 +56,7 @@ const CHECKS = [
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id\)/],
 ];
 
-export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "") {
+export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "", relationshipSrc = "") {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
@@ -80,6 +81,9 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   if (lateArrivalSrc && !/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(lateArrivalSrc)) {
     failures.push(`${LATE_ARRIVAL_CARD}: detail late-arrival failure must expose exact-query retry`);
   }
+  if (!/relationshipScoreQuery\.isError[\s\S]{0,300}onRetry=\{\(\) => void relationshipScoreQuery\.refetch\(\)\}/.test(src) || (relationshipSrc && !/<ListErrorState[\s\S]{0,180}onRetry=\{onRetry\}/.test(relationshipSrc))) {
+    failures.push(`${RELATIONSHIP_SCORE}: failed relationship-score GET must expose exact-query retry`);
+  }
   if (requiredSrc) {
     const required = JSON.parse(requiredSrc);
     for (const [id, route] of EXACT_ROUTES) {
@@ -100,11 +104,18 @@ if (process.argv.includes("--selftest")) {
   const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
   const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
   const lateArrivalGood = fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8");
-  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).length) {
+  const relationshipGood = fs.readFileSync(path.join(ROOT, RELATIONSHIP_SCORE), "utf8");
+  let caught = 0;
+  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).length) {
     console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).join("\n- ")}`);
     process.exit(1);
   }
-  let caught = 0;
+  const relationshipMutated = good.replace("relationshipScoreQuery.refetch()", "retryRemoved()");
+  if (relationshipMutated === good || !audit(relationshipMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("relationship-score GET"))) {
+    console.error(`${LABEL} SELFTEST FAIL — relationship-score retry mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
   for (const [name, pattern] of CHECKS) {
     const mutated = good.replace(new RegExp(pattern.source, `${pattern.flags}g`), "REMOVED");
     if (mutated === good) {
@@ -177,6 +188,7 @@ const failures = audit(
   fs.readFileSync(path.join(ROOT, SELF), "utf8"),
   fs.readFileSync(path.join(ROOT, FEED), "utf8"),
   fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8"),
+  fs.readFileSync(path.join(ROOT, RELATIONSHIP_SCORE), "utf8"),
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);

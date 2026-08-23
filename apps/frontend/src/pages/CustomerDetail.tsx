@@ -1197,6 +1197,7 @@ export function CustomerDetailPage() {
         score={relationshipScoreQuery.data}
         loading={relationshipScoreQuery.isLoading}
         error={relationshipScoreQuery.isError ? "Could not load relationship score." : null}
+        onRetry={() => void relationshipScoreQuery.refetch()}
       />
 
       {operatingCompanyId ? (
