@@ -376,6 +376,9 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
             onRetry={() => void profileQuery.refetch()}
           />
         ) : null}
+        {companiesQuery.isError ? (
+          <ListErrorState title="Couldn't load company choices" status={0} message={(companiesQuery.error as Error)?.message} onRetry={() => void companiesQuery.refetch()} />
+        ) : null}
 
         {!profileQuery.isError && activeTab === "Reefer" ? (
           <FieldSet title="Reefer (linked trailer)" columns={1}>
@@ -416,7 +419,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           <Button
             variant="primary"
             type="button"
-            disabled={saveMutation.isPending || profileQuery.isError || !unitId}
+            disabled={saveMutation.isPending || profileQuery.isError || companiesQuery.isError || !unitId}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
                 onClose();
