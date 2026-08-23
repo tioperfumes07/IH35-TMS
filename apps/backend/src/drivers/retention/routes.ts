@@ -38,6 +38,19 @@ export async function registerDriverRetentionRoutes(app: FastifyInstance) {
 
     return withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      // DRV-F6115: feature extraction naturally returns all-null inputs for an unknown/cross-company
+      // UUID, and scoreFeatures turns those into a valid-looking stable score of 25. Prove the exact
+      // driver belongs to this company before deriving reverse-profile retention truth.
+      const driver = await client.query(
+        `SELECT 1
+           FROM mdata.drivers
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND archived_at IS NULL
+          LIMIT 1`,
+        [params.data.uuid, query.data.operating_company_id]
+      );
+      if (driver.rowCount === 0) return reply.code(404).send({ error: "mdata_driver_not_found" });
       const score = await computeRetentionScore(client, query.data.operating_company_id, params.data.uuid);
       return reply.send(score);
     });
