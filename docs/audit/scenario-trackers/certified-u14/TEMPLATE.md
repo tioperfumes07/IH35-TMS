@@ -36,6 +36,27 @@
 | 7 Tabs/design | | |
 | 8 RLS | | |
 
+## Accident + claim gold web (this module’s participation)
+
+Read `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md`. Tick H01–H22 as TOUCHES / N/A / MISSING / DEAD / SILENT / UNVERIFIED. Reverse required on every TOUCHES hop.
+
+## CONNECTIVITY-EXTENT (mandatory)
+
+```
+CONNECTIVITY-EXTENT | MODULE= | LIVE_SHA=
+EDGES_PROVEN:
+EDGES_MISSING:
+EDGES_DEAD:
+EDGES_SILENT:
+GL_POSTS:
+MONEY_OBJECTS:
+SECURITY:
+PICKER:
+REVERSE:
+RECOMMEND:
+VERDICT:
+```
+
 ## Unique FINDING
 
 None | id + 500/dead/silent mechanism (not scoreboard)
@@ -43,7 +64,7 @@ None | id + 500/dead/silent mechanism (not scoreboard)
 ## Verdict
 
 `AUDIT-PASS | MODULE= | LIVE_SHA=`  
-or `FINDING | id= | PR=`
+or `FINDING | id=`  (**no fix PR from this seat**)
 
 ## Remaining
 

@@ -1,27 +1,36 @@
 # INBOX-CASCADE
 
-**ON THE BUS — CERTIFIED U14 AUDIT ONLY.** Not a 15th plan. Not OPEN U14 prefixes.
+**AUDIT ONLY. DO NOT FIX. DO NOT CODE. DO NOT OPEN PRODUCT PRs.**  
+You inspect CERTIFIED U14 modules and write **final findings + recommendations**. Cursor/CC own repairs.
 
-**★ FAST-MERGE ON (4 min · LAW).** Docs or unique FINDING: gate exit 0 → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never `trigger_deploy`.
+**Intensity:** deepest audit — security, wiring, routes, double-sided linkage, reverse from every hub, **full connectivity extent**, **does it post to GL**. Gold model = **accident + insurance claim web** (not a Safety-only row).
+
+**Not** a 15th plan. **Not** OPEN prefixes. **Not** recertify. **Not** `trigger_deploy`. **Not** remake TESTs / Close / Book Load.
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
-**Pack (folder + files):** `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`  
-**Trackers:** `docs/audit/scenario-trackers/certified-u14/`  
-**Hops law:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` items 1–12  
-**Live SHA:** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version`
+**MANDATORY READ (before first click):**
+1. `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md` — H01–H22 + CONNECTIVITY-EXTENT + GL
+2. `docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md`
+3. `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (1–12)
+4. `docs/specs/scoreboard/columns.shared.json` (C01–C24)
+5. `docs/specs/scoreboard/modules/accounting.required.json` (then banking / settlements / factoring / dispatch)
+6. `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md` (A–E, V1–8, **§B9**)
+7. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
 
-NOW (one module at a time, then the next, never idle):
-1. `/accounting` fill `U14-01-accounting.md`
-2. `/banking` fill `U14-02-banking.md` (Match + recon Accept on existing TEST; do not drain For-review)
-3. `/driver-finance` `/settlements` `/cash-advances` fill `U14-03-settlements.md` (do not remake Close)
-4. `/factoring` fill `U14-04-factoring.md`
-5. `/dispatch` fill `U14-05-dispatch.md` (do not remake Book Load)
+**Trackers:** `docs/audit/scenario-trackers/certified-u14/` — `U14-01`…`U14-05` + one worksheet **per tab** + CONNECTIVITY-EXTENT per module.
 
-Verdict per module: `AUDIT-PASS | MODULE= | LIVE_SHA=` **or** unique FINDING 500/dead/silent.
+**Live SHA:** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (re-curl every module).
 
-FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · recertify · HOLD · steal leftover `/cash-flow` `/425c` `/driver-hub` until **your five** trackers have a verdict.
+NOW (vertical: **every tab**, gold web as it **touches** this module, then next):
+1. `/accounting` → GL terminus on bills/expenses/JE · claim/WO/vendor FKs
+2. `/banking` → match/recon/escrow vs salary (existing TEST only)
+3. `/driver-finance` `/settlements` `/cash-advances` → deductible salary vs escrow (do not remake Close)
+4. `/factoring` → packet F+R or honest N/A
+5. `/dispatch` → load ↔ accident/claim/customer/driver/unit (do not remake Book Load)
 
-Then leftover first unclaimed row in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`.
+OUTBOX each module: CONNECTIVITY-EXTENT block + FINDINGS + RECOMMENDATIONS. Then next. Never idle.
 
-OUTBOX: `Cascade | ACK | CERTIFIED-U14-AUDIT | NOW=/accounting | GO`
+FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · apps/ · recertify · leftover product until **your five** have written extent reports.
+
+OUTBOX ACK: `Cascade | ACK | AUDIT-ONLY | GOLD-WEB | NOW=/accounting | GO`
