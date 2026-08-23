@@ -38,6 +38,27 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      // DRV-F6116: querying only the child table made an unknown/cross-company driver indistinguishable
+      // from a real driver with zero training. Prove the driver is on this company's roster first.
+      const driver = await client.query(
+        `SELECT 1
+           FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (driver.rowCount === 0) return null;
       const res = await client.query(
         `
           SELECT id::text, training_name, completed_at::text, expiry_date::text, notes
@@ -51,6 +72,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
+    if (rows === null) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return { rows };
   });
 
