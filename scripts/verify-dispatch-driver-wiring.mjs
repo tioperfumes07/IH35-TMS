@@ -60,6 +60,7 @@ const CHECKS = [
   ["apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", /kind="driver"/],
   ["apps/backend/src/dispatch/loads.routes.ts", /FROM mdata\.driver_company_authorizations dispatch_detail_secondary_dca[\s\S]{0,180}dispatch_detail_secondary_dca\.driver_id = sd\.id[\s\S]{0,140}dispatch_detail_secondary_dca\.company_id = l\.operating_company_id[\s\S]{0,140}dispatch_detail_secondary_dca\.is_authorized = true[\s\S]{0,140}dispatch_detail_secondary_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/dispatch/loads.routes.ts", /FROM mdata\.driver_company_authorizations dispatch_detail_primary_dca[\s\S]{0,180}dispatch_detail_primary_dca\.driver_id = pd\.id[\s\S]{0,140}dispatch_detail_primary_dca\.company_id = l\.operating_company_id[\s\S]{0,140}dispatch_detail_primary_dca\.is_authorized = true[\s\S]{0,140}dispatch_detail_primary_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/dispatch/load-distribution.service.ts", /load_distribution_driver_dca\.driver_id = d\.id[\s\S]{0,180}load_distribution_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,180}load_distribution_driver_dca\.is_authorized = true[\s\S]{0,180}load_distribution_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", /import \{ getDispatchAvailableDrivers, type AvailableDriverRow \} from "\.\.\/\.\.\/api\/dispatch";/],
   ["apps/frontend/src/pages/dispatch/components/QuickAssignModal.tsx", /<DriverPickerWithCreate/],
