@@ -303,7 +303,13 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           FROM safety.incidents i
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
-           AND d.operating_company_id = i.operating_company_id
+           AND (d.operating_company_id = i.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations incident_detail_dca
+             WHERE incident_detail_dca.driver_id = d.id
+               AND incident_detail_dca.company_id = i.operating_company_id
+               AND incident_detail_dca.is_authorized = true
+               AND incident_detail_dca.deactivated_at IS NULL
+           ))
           LEFT JOIN mdata.customers c
             ON c.id = i.claimant_customer_id
            AND c.operating_company_id = i.operating_company_id

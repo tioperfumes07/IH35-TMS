@@ -59,7 +59,13 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
           r.updated_at
         FROM maintenance.driver_reports r
         LEFT JOIN mdata.drivers d ON d.id = r.driver_id
-                               AND d.operating_company_id = r.operating_company_id
+                               AND (d.operating_company_id = r.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations driver_reports_list_dca
+                                 WHERE driver_reports_list_dca.driver_id = d.id
+                                   AND driver_reports_list_dca.company_id = r.operating_company_id
+                                   AND driver_reports_list_dca.is_authorized = true
+                                   AND driver_reports_list_dca.deactivated_at IS NULL
+                               ))
         LEFT JOIN mdata.loads l ON l.id = r.load_id
                              AND l.operating_company_id = r.operating_company_id
         WHERE r.operating_company_id = $1::uuid

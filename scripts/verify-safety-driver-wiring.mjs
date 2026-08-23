@@ -55,6 +55,7 @@ const CHECKS = [
   ["apps/backend/src/safety/events/safety-events.routes.ts", /safety_events_list_dca[\s\S]*?safety_events_list_dca\.driver_id = d\.id[\s\S]*?safety_events_list_dca\.company_id = e\.operating_company_id[\s\S]*?safety_events_list_dca\.is_authorized = true[\s\S]*?safety_events_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/events/safety-events.routes.ts", /safety_events_detail_dca[\s\S]*?safety_events_detail_dca\.driver_id = d\.id[\s\S]*?safety_events_detail_dca\.company_id = e\.operating_company_id[\s\S]*?safety_events_detail_dca\.is_authorized = true[\s\S]*?safety_events_detail_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/dvir.routes.ts", /safety_dvir_detail_dca[\s\S]*?safety_dvir_detail_dca\.driver_id = d\.id[\s\S]*?safety_dvir_detail_dca\.company_id = ds\.operating_company_id[\s\S]*?safety_dvir_detail_dca\.is_authorized = true[\s\S]*?safety_dvir_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/incidents.routes.ts", /incident_detail_dca\.driver_id = d\.id[\s\S]{0,180}incident_detail_dca\.company_id = i\.operating_company_id[\s\S]{0,180}incident_detail_dca\.is_authorized = true[\s\S]{0,180}incident_detail_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
