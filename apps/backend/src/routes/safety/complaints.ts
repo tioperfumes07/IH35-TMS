@@ -150,8 +150,20 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
                 TRIM(CONCAT(cu.first_name, ' ', cu.last_name)) AS complainant_user_name,
                 TRIM(CONCAT(ru.first_name, ' ', ru.last_name)) AS respondent_user_name
          FROM safety.complaints c
-         LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id AND cd.operating_company_id = c.operating_company_id
-         LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id AND rd.operating_company_id = c.operating_company_id
+         LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id AND (cd.operating_company_id = c.operating_company_id OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations complaint_complainant_driver_dca
+           WHERE complaint_complainant_driver_dca.driver_id = cd.id
+             AND complaint_complainant_driver_dca.company_id = c.operating_company_id
+             AND complaint_complainant_driver_dca.is_authorized = true
+             AND complaint_complainant_driver_dca.deactivated_at IS NULL
+         ))
+         LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id AND (rd.operating_company_id = c.operating_company_id OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations complaint_respondent_driver_dca
+           WHERE complaint_respondent_driver_dca.driver_id = rd.id
+             AND complaint_respondent_driver_dca.company_id = c.operating_company_id
+             AND complaint_respondent_driver_dca.is_authorized = true
+             AND complaint_respondent_driver_dca.deactivated_at IS NULL
+         ))
          LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id AND cc.operating_company_id = c.operating_company_id
          LEFT JOIN identity.users cu ON cu.id = c.complainant_user_id
          LEFT JOIN identity.users ru ON ru.id = c.respondent_user_id
