@@ -22,6 +22,7 @@ const FILES = {
   customers: "apps/frontend/src/pages/Customers.tsx",
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
   profileForm: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
+  editModal: "apps/frontend/src/components/customers/CustomerEditModal.tsx",
   drillModal: "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
   sidebar: "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
   coi: "apps/frontend/src/pages/customers/CoiTab.tsx",
@@ -122,6 +123,14 @@ export function audit(src) {
       !/disabled=\{incomeAccountsQuery\.isError\}/.test(src.profileForm)) {
     failures.push(`${FILES.profileForm}: default-income catalog failure must expose exact retry and disable its selector`);
   }
+  if (!/paymentTermsQuery\.isError[\s\S]{0,320}paymentTermsQuery\.refetch\(\)/.test(src.editModal) ||
+      !/parentCandidatesQuery\.isError[\s\S]{0,320}parentCandidatesQuery\.refetch\(\)/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: payment-term and parent-customer read failures must expose independent exact retries`);
+  }
+  if (!/!paymentTermsQuery\.isError && !parentCandidatesQuery\.isError \? \([\s\S]{0,120}<CustomerProfileForm/.test(src.editModal) ||
+      !/disabled=\{saving \|\| paymentTermsQuery\.isError \|\| parentCandidatesQuery\.isError/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed supporting reads must hide the false-empty form and disable save`);
+  }
   if (!/CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(src.sidebar)) {
     failures.push(`${FILES.sidebar}: home.roster rows must link to the real customer's own record`);
   }
@@ -153,6 +162,7 @@ function loadSrc(root) {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
     profileForm: fs.readFileSync(path.join(root, FILES.profileForm), "utf8"),
+    editModal: fs.readFileSync(path.join(root, FILES.editModal), "utf8"),
     drillModal: fs.readFileSync(path.join(root, FILES.drillModal), "utf8"),
     sidebar: fs.readFileSync(path.join(root, FILES.sidebar), "utf8"),
     coi: fs.readFileSync(path.join(root, FILES.coi), "utf8"),
@@ -208,6 +218,10 @@ if (process.argv.includes("--selftest")) {
     ["customer-category-gate", "profileForm", /disabled=\{customerTypeCatalogQuery\.isError\}/, "disabled={false}"],
     ["income-account-retry", "profileForm", /onRetry=\{\(\) => void incomeAccountsQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["income-account-gate", "profileForm", /disabled=\{incomeAccountsQuery\.isError\}/, "disabled={false}"],
+    ["edit-payment-term-retry", "editModal", /onRetry=\{\(\) => void paymentTermsQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-parent-retry", "editModal", /onRetry=\{\(\) => void parentCandidatesQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-form-error-gate", "editModal", /!paymentTermsQuery\.isError && !parentCandidatesQuery\.isError/, "true"],
+    ["edit-save-error-gate", "editModal", /paymentTermsQuery\.isError \|\| parentCandidatesQuery\.isError \|\| /, ""],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
     ["responsive-stack", "customers", /className="flex flex-col gap-3 xl:flex-row"/, 'className="flex gap-3"'],
     ["responsive-sidebar", "sidebar", /min-w-0 max-w-none/, "min-w-[300px] max-w-[560px]"],

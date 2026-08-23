@@ -4,6 +4,7 @@ import { listCustomers, listPaymentTermOptions, type Customer, type UpdateCustom
 import { CappedListNotice } from "../CappedListNotice";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { ListErrorState } from "../ListErrorState";
 import {
   CustomerProfileForm,
   customerToProfileValues,
@@ -97,17 +98,35 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
             {formError}
           </div>
         ) : null}
-        <CustomerProfileForm
-          values={values}
-          onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
-          operatingCompanyId={companyId}
-          mode="edit"
-          paymentTermOptions={paymentTermOptions}
-          onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
-          parentCustomerOptions={parentCustomerOptions}
-          onParentCustomerCreated={() => void parentCandidatesQuery.refetch()}
-          customerId={customer.id}
-        />
+        {paymentTermsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load payment terms"
+            status={0}
+            message={(paymentTermsQuery.error as Error)?.message}
+            onRetry={() => void paymentTermsQuery.refetch()}
+          />
+        ) : null}
+        {parentCandidatesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load parent customer choices"
+            status={0}
+            message={(parentCandidatesQuery.error as Error)?.message}
+            onRetry={() => void parentCandidatesQuery.refetch()}
+          />
+        ) : null}
+        {!paymentTermsQuery.isError && !parentCandidatesQuery.isError ? (
+          <CustomerProfileForm
+            values={values}
+            onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
+            operatingCompanyId={companyId}
+            mode="edit"
+            paymentTermOptions={paymentTermOptions}
+            onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
+            parentCustomerOptions={parentCustomerOptions}
+            onParentCustomerCreated={() => void parentCandidatesQuery.refetch()}
+            customerId={customer.id}
+          />
+        ) : null}
         <CappedListNotice
           shown={parentCustomerOptions.length}
           limit={5000}
@@ -118,7 +137,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={saving || !values.name.trim() || !values.customer_type || !values.email.trim()}>
+          <Button type="submit" disabled={saving || paymentTermsQuery.isError || parentCandidatesQuery.isError || !values.name.trim() || !values.customer_type || !values.email.trim()}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>
