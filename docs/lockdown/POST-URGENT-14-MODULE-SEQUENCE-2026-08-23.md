@@ -21,8 +21,8 @@ Canonical ids = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sideb
 | 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | **CC-2** when Codex SQL unique-empty (still help Codex 7–9 first) |
 | 4 | 425C | `form_425` | `/425c` | **Cursor** |
 | 5 | REPORTS | `reports` | `/reports` | **CC-2** (driver-hub unique-FINDING hunting empty; 2 fixes shipped, 3 modules' worth of chrome-law/create-void spot-checks clean, 2 items honestly logged open not blocking) |
-| 6 | TASKS | `tasks` | `/tasks` | next free |
-| 7 | COMPLIANCE | `compliance` | `/compliance` | next free |
+| 6 | TASKS | `tasks` | `/tasks` | **CC-3** DONE -- unique-clean (no real defect found; Task Board/My Tasks/Calendar/Team Chat/Admin Report/Daily Tasks/Service Task Catalog all live, reverse link task->chat confirmed, required-field validation honest, picker_law N/A (assignee is identity.users, no catalog create-new concept) |
+| 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** claiming now |
 | 8 | ELD | `eld` | `/eld` | next free (hidden stub — still hop the id) |
 | 9 | INVENTORY | `inventory` | `/inventory` | next free |
 | 10 | USERS | `users` | `/users` | next free |
