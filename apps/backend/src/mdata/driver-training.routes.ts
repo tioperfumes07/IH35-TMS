@@ -88,6 +88,25 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      const driver = await client.query(
+        `SELECT 1
+           FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations training_create_driver_dca
+                 WHERE training_create_driver_dca.driver_id = d.id
+                   AND training_create_driver_dca.company_id = $2::uuid
+                   AND training_create_driver_dca.is_authorized = true
+                   AND training_create_driver_dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (driver.rowCount === 0) return null;
       const res = await client.query(
         `
           INSERT INTO safety.training_records (
@@ -113,6 +132,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
       });
       return res.rows[0];
     });
+    if (row === null) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return reply.code(201).send(row);
   });
 
