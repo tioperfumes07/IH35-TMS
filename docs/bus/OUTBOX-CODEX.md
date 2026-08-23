@@ -1105,3 +1105,4 @@ Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse exact seven-l
 Codex | WORKING | FO=DISP-F6281-MDATA-LOAD-CREATE-TRAILER-EQUIPMENT-NOT-NULL | live pre-fix POST=500/23502 | guard=9/9+selftest | NEXT=FAST-MERGE then deployed TEST fixture retry | GO
 Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES/TEST-TIO · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator 2728=2728/USMCA25 · unauth 401 · no 500 | GO
 Codex | WORKING | FO=DISP-F6281-GUARD-ORPHAN-CI-REGISTRATION | claim=#15031 step=4566 | guard=9/9+normal | NEXT=FAST-MERGE then fresh board | GO
+Codex | WORKING | FO=CODEX-MERGED-FINDINGS-DISPOSITION-GUARD-ORPHAN | claim=#15034 step=4568 | NEXT=FAST-MERGE then fresh board | GO
