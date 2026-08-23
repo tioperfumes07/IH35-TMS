@@ -401,7 +401,18 @@ export function Form425CHome() {
         />
       ) : null}
 
-      {tab === "qb" ? <QBImportTab activeCompany={activeCompany} setActiveCompany={setActiveCompany} profiles={profiles} onApplyTotal={(total) => setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }))} /> : null}
+      {tab === "qb" ? (
+        <QBImportTab
+          activeCompany={activeCompany}
+          setActiveCompany={setActiveCompany}
+          month={month}
+          year={year}
+          setMonth={setMonth}
+          setYear={setYear}
+          profiles={profiles}
+          onApplyTotal={(total) => setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }))}
+        />
+      ) : null}
 
       {tab === "form" ? (
         <CurrentPeriodTab
