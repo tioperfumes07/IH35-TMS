@@ -1,3 +1,5 @@
+Codex | CERTIFIED | MODULE=fleet | LIVE_SHA=07993ac | hops=GET units list 200 · GET unit detail 200 T149 VIN 1XPCDP9X3LD649118 · unauth 401 · mdata.units 187=187 · owner/lease USMCA 44 · reverse load L-20260816-0168 · no 500 | GO
+
 Codex | CERTIFIED | MODULE=drivers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 PEDRO ABRAHAM LOPEZ COLLADO · GET reverse loads 200 · /me honest 404 unlinked owner · unauth 401 · mdata.drivers 264=264 · USMCA 168 · reverse load L-20260816-0168 + assigned unit · RLS discriminator · no 500 | GO
 
 Codex | CERTIFIED | MODULE=customers | LIVE_SHA=bd67370 | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator · no 500 | GO
