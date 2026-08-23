@@ -48,6 +48,18 @@ export function checkModal(src) {
   if (!/data-testid="driver-create-save-disabled-reason"/.test(src)) {
     failures.push(`${MODAL_FILE}: missing the inline visible disabled-reason element.`);
   }
+  if (!/catch \(error\) \{[\s\S]{0,260}setReturningCheckError\(error\)/.test(src)) {
+    failures.push(`${MODAL_FILE}: returning-driver identity failure is still swallowed.`);
+  }
+  if (!/title="Couldn't check for a returning driver"[\s\S]{0,500}setReturningCheckRetry\(\(value\) => value \+ 1\)/.test(src)) {
+    failures.push(`${MODAL_FILE}: returning-driver identity failure lacks exact retry UI.`);
+  }
+  if (!/Boolean\(returningCheckError\) \|\|\s*returningCheckLoading/.test(src)) {
+    failures.push(`${MODAL_FILE}: Save does not fail closed after returning-driver identity failure.`);
+  }
+  if (!/if \(returningCheckError\) \{[\s\S]{0,220}return;/.test(src)) {
+    failures.push(`${MODAL_FILE}: save handler lacks returning-driver failure defense.`);
+  }
   return failures;
 }
 
@@ -74,19 +86,20 @@ function staticCheck() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const badModal = `const x = 1;`;
-  if (checkModal(badModal).length !== 3) {
-    console.error(`${LABEL} SELFTEST FAIL -- missing modal wiring not caught (expected 3, got ${checkModal(badModal).length})`);
-    process.exit(1);
-  }
-  const goodModal = `
-    const saveDisabledReason = !identityStepReady ? "x" : undefined;
-    <SaveDropdown title={saveDisabledReason} />
-    <p data-testid="driver-create-save-disabled-reason">{saveDisabledReason}</p>
-  `;
-  if (checkModal(goodModal).length !== 0) {
-    console.error(`${LABEL} SELFTEST FAIL -- correct modal wiring wrongly flagged`);
-    process.exit(1);
+  const modal = fs.readFileSync(path.join(ROOT, MODAL_FILE), "utf8");
+  if (checkModal(modal).length !== 0) throw new Error(`${LABEL} selftest: production modal rejected`);
+  const modalMutations = [
+    ["swallowed identity error", "setReturningCheckError(error);", "setReturningCheckError(null);", "identity failure is still swallowed"],
+    ["identity retry", "setReturningCheckRetry((value) => value + 1)", "setReturningCheckRetry((value) => value)", "lacks exact retry UI"],
+    ["identity disabled gate", "Boolean(returningCheckError) ||\n                    returningCheckLoading", "returningCheckLoading", "Save does not fail closed"],
+    ["identity handler defense", "if (returningCheckError) {", "if (false) {", "save handler lacks"],
+  ];
+  for (const [name, needle, replacement, expected] of modalMutations) {
+    const mutated = modal.replace(needle, replacement);
+    if (mutated === modal) throw new Error(`${LABEL} selftest: could not plant ${name}`);
+    if (!checkModal(mutated).some((failure) => failure.includes(expected))) {
+      throw new Error(`${LABEL} selftest: planted ${name} escaped`);
+    }
   }
 
   const badDropdown = `type SaveDropdownProps = { disabled?: boolean };`;
@@ -103,7 +116,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS -- missing modal/dropdown halves caught, correct shapes accepted`);
+  console.log(`${LABEL} SELFTEST PASS -- ${modalMutations.length + 2} planted modal/dropdown regressions caught`);
   process.exit(0);
 }
 
