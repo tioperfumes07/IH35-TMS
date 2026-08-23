@@ -64,6 +64,7 @@ import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
 import { DriverLateArrivalCard } from "../../components/drivers/DriverLateArrivalCard";
 import { resolveApiUrl } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
 
 interface LayoverSummary {
   total_layovers: number;
@@ -243,6 +244,17 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
   if (profileQ.isLoading) {
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
+  }
+
+  if (profileQ.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load driver profile"
+        status={0}
+        message={(profileQ.error as Error)?.message}
+        onRetry={() => void profileQ.refetch()}
+      />
+    );
   }
 
   if (!driver || !aggregate) {
