@@ -13,7 +13,14 @@
     "docs/bus/OUTBOX-CC-2.md",
     "docs/audit/GUARD-WORKORDERS.md",
     "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
-    ".block-ready/cc-2-help-codex-certify-cdf-0223.json"
+    ".block-ready/cc-2-help-codex-certify-cdf-0223.json",
+    "scripts/verify-steps/4423-verify-catalog-mutation-routes-set-company-scope.mjs",
+    "scripts/verify-steps/4427-verify-maintenance-services-catalog-editable.mjs",
+    "scripts/verify-steps/4431-verify-legal-contract-signer-phone-e164.mjs",
+    "scripts/verify-steps/4435-verify-driver-detail-catalog-failure-truth.mjs",
+    "scripts/verify-steps/4439-verify-unit-wear-telemetry-failure-truth.mjs",
+    "scripts/verify-steps/4443-verify-fleet-location-hos-shared-drivers.mjs",
+    "scripts/verify-steps/4447-verify-vehicle-driver-history-shared-label.mjs"
   ],
   "acceptance": [
     { "kind": "guard", "script": "scripts/verify-fleet-cross-entity-assignment-close.mjs", "wired_into": "verify-static.mjs glob (same ad-hoc convention as the module's other verify-fleet-*.mjs files)" },
