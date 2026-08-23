@@ -45,7 +45,16 @@ export async function registerDriverRetentionRoutes(app: FastifyInstance) {
         `SELECT 1
            FROM mdata.drivers
           WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+            AND (
+              operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations retention_route_dca
+                WHERE retention_route_dca.driver_id = mdata.drivers.id
+                  AND retention_route_dca.company_id = $2::uuid
+                  AND retention_route_dca.is_authorized = true
+                  AND retention_route_dca.deactivated_at IS NULL
+              )
+            )
             AND archived_at IS NULL
           LIMIT 1`,
         [params.data.uuid, query.data.operating_company_id]

@@ -107,7 +107,16 @@ export async function listRetentionScores(
     FROM drivers.retention_scores r
     LEFT JOIN mdata.drivers d
       ON d.id = r.driver_uuid
-     AND d.operating_company_id = r.operating_company_id
+     AND (
+       d.operating_company_id = r.operating_company_id
+       OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations retention_list_dca
+         WHERE retention_list_dca.driver_id = d.id
+           AND retention_list_dca.company_id = r.operating_company_id
+           AND retention_list_dca.is_authorized = true
+           AND retention_list_dca.deactivated_at IS NULL
+       )
+     )
     WHERE r.operating_company_id = $1::uuid
   `;
   if (tier) {
