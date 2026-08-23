@@ -1,4 +1,9 @@
 {
+  "4511": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-list-excludes-sample-data"
+  },
   "4513": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
