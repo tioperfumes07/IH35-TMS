@@ -40,6 +40,13 @@ export function collectProblems(src) {
   if (!src.includes("Create / Load Draft before marking filed")) {
     problems.push(`${PAGE}: Form Mark Filed without reportId must toast, not a dead disabled button`);
   }
+  if (!src.includes("Draft saved — generating filing PDF")) {
+    problems.push(`${PAGE}: dirty Generate PDF must save first then toast, not silently print a stale PDF`);
+  }
+  const profiles = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx"), "utf8");
+  if (!profiles.includes('bankAccounts: [...draft.bankAccounts, { id: "", label: "", number: "" }]')) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Bank Accounts must + Create a new row, not a dead heading with no add");
+  }
   return problems;
 }
 
@@ -53,6 +60,7 @@ const good = `
   pushToast("Create / Load Draft before importing from Banking", "error");
   pushToast("Create / Load Draft before generating the filing PDF", "error");
   pushToast("Create / Load Draft before marking filed", "error");
+  pushToast("Draft saved — generating filing PDF", "success");
 `;
 const bad = `
   if (!detailQuery.data?.report) {

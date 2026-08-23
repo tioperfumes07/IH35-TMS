@@ -68,7 +68,21 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
       </div>
 
       <div className="rounded-sm border bg-white p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Bank Accounts</div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Bank Accounts</div>
+          <button
+            type="button"
+            className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
+            onClick={() =>
+              onChange(activeCompany, (draft) => ({
+                ...draft,
+                bankAccounts: [...draft.bankAccounts, { id: "", label: "", number: "" }],
+              }))
+            }
+          >
+            + Create
+          </button>
+        </div>
         <div className="space-y-2">
           {profile.bankAccounts.map((account, idx) => (
             <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-4">

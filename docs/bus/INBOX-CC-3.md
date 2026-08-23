@@ -6,7 +6,7 @@
 
 **lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs.
 
-**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-3-NOW.md`):** unique 500/dead/silent Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance`. Empty unique → next unclaimed leftover in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Do not hold for routing. Do not steal `/425c` `/customers` `/drivers` `/fleet`.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-3-NOW.md`):** Live **`07993ac`**. lists+legal CERTIFIED — do **not** recertify. POST-URGENT-14 16/16 DONE on origin/main — **HOLD is still a defect**. Help Codex recertify customers SQL/GET on `07993ac` (PROOF, not CERTIFIED). Same turn unique 500/dead/silent on `https://app.ih35dispatch.com/compliance`. Do not steal `/customers` `/drivers` `/fleet` `/425c`.
 
 CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`).
 
