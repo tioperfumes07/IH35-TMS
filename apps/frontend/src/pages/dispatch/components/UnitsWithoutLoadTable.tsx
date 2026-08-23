@@ -3,11 +3,13 @@ import { DataTable } from "../../../components/DataTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
+import type { DataTableErrorState } from "../../../lib/tableError";
 
 type Props = {
   rows: UnitsWithoutLoad[];
   onRowClick: (row: UnitsWithoutLoad) => void;
   loading?: boolean;
+  errorState?: DataTableErrorState;
 };
 
 function idleClass(hours: number | null) {
@@ -32,7 +34,7 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
   );
 }
 
-export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
+export function UnitsWithoutLoadTable({ rows, onRowClick, loading, errorState }: Props) {
   return (
     <DataTable
       rows={rows}
@@ -40,6 +42,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
       rowKey={(row) => row.id}
       onRowClick={onRowClick}
       loading={loading}
+      errorState={errorState}
       emptyText="All units currently have active loads."
       columns={[
         {

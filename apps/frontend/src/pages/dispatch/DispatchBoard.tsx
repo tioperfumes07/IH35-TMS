@@ -65,6 +65,7 @@ import {
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { dataTableErrorState } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { addLoadToPreSettlement, listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
@@ -1012,7 +1013,27 @@ export function DispatchBoard({
                               </td>
                             </tr>
                           ) : null}
-                          {section.placeholder && rows.length === 0 && !(section.key === "in_shop" && inShopUnitsQuery.isError) ? (
+                          {section.key === "awaiting" && unitsWithoutLoadQuery.isError ? (
+                            <tr className="border-b border-gray-100">
+                              <td colSpan={columns.length + 1} className="px-3 py-2">
+                                <ListErrorState
+                                  title="Couldn't load unassigned units"
+                                  status={(unitsWithoutLoadQuery.error as { status?: number } | null)?.status ?? 0}
+                                  message={
+                                    unitsWithoutLoadQuery.error instanceof Error
+                                      ? unitsWithoutLoadQuery.error.message
+                                      : "Unassigned-unit feed failed"
+                                  }
+                                  onRetry={() => void unitsWithoutLoadQuery.refetch()}
+                                  className="py-4"
+                                />
+                              </td>
+                            </tr>
+                          ) : null}
+                          {section.placeholder &&
+                          rows.length === 0 &&
+                          !(section.key === "in_shop" && inShopUnitsQuery.isError) &&
+                          !(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ? (
                             <tr className="border-b border-gray-100">
                               <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-400">
                                 {section.placeholder}
@@ -1093,6 +1114,7 @@ export function DispatchBoard({
           <UnitsWithoutLoadTable
             rows={unassignedUnits}
             loading={unitsWithoutLoadQuery.isLoading}
+            errorState={dataTableErrorState(unitsWithoutLoadQuery.error, () => void unitsWithoutLoadQuery.refetch())}
             onRowClick={(unit) => onBookForUnit?.(unit.id)}
           />
         </AssignmentBand>
