@@ -79,6 +79,14 @@ export function assertAssetSafetyReverse(sources) {
   if (!src[SECTION].includes("unit_id: assetId") || !src[SECTION].includes("trailer_id: assetId")) {
     problems.push(`${SECTION}: reads are not scoped to the asset (expected both \`unit_id: assetId\` and \`trailer_id: assetId\`).`);
   }
+  for (const queryName of ["query", "accidentsQuery", "inspectionsQuery", "dvirQuery"]) {
+    if (!new RegExp(`onRetry=\\{\\(\\) => void ${queryName}\\.refetch\\(\\)\\}`).test(src[SECTION])) {
+      problems.push(`${SECTION}: ${queryName} failed reverse GET must expose its exact retry.`);
+    }
+  }
+  if (!/isError \? <ListErrorState title=\{errorText\} status=\{0\} onRetry=\{onRetry\} \/>/.test(src[SECTION])) {
+    problems.push(`${SECTION}: shared safety reverse error shell must render its retry action.`);
+  }
 
   // 2. Mounted on BOTH profile pages, with the right asset kind.
   for (const [page, kind, label] of [
@@ -212,6 +220,11 @@ if (SELFTEST) {
     "record-type-dropped",
     { ...live, [SECTION]: live[SECTION].replace(/getSafetyDvirSubmissions\(/g, "noopRemoved(") },
     "does not read DVIRs"
+  );
+  expectCaught(
+    "dvir-retry-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/onRetry=\{\(\) => void dvirQuery\.refetch\(\)\}/, "onRetry={() => undefined}") },
+    "dvirQuery failed reverse GET must expose its exact retry"
   );
   expectCaught(
     "dot-response-key-drift",
@@ -412,7 +425,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 29/29 runtime/evidence defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 30/30 runtime/evidence defects caught, live sources clean`);
   process.exit(0);
 }
 
