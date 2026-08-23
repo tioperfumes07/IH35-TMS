@@ -58,6 +58,13 @@ describe("scanAllDrivers", () => {
     vi.useRealTimers();
 
     expect(query).toHaveBeenCalledOnce();
+    const sql = String(query.mock.calls[0]?.[0] ?? "");
+    expect(sql).toContain("driver_company_authorizations cert_expiry_driver_dca");
+    expect(sql).toContain("cert_expiry_driver_dca.driver_id = d.id");
+    expect(sql).toContain("cert_expiry_driver_dca.company_id = $1::uuid");
+    expect(sql).toContain("cert_expiry_driver_dca.is_authorized = true");
+    expect(sql).toContain("cert_expiry_driver_dca.deactivated_at IS NULL");
+    expect(query.mock.calls[0]?.[1]).toEqual(["11111111-1111-1111-1111-111111111111"]);
     expect(alerts.map((a) => `${a.driver_uuid}:${a.cert_type}:${a.severity}`)).toEqual([
       "d1:cdl:critical",
       "d2:cdl:warn",

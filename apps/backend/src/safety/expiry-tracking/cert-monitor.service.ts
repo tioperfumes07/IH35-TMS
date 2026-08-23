@@ -107,7 +107,17 @@ export async function scanAllDrivers(client: Queryable, operatingCompanyId: stri
         ORDER BY t.test_date DESC NULLS LAST
         LIMIT 1
       ) dt ON true
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations cert_expiry_driver_dca
+            WHERE cert_expiry_driver_dca.driver_id = d.id
+              AND cert_expiry_driver_dca.company_id = $1::uuid
+              AND cert_expiry_driver_dca.is_authorized = true
+              AND cert_expiry_driver_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
     `,
     [operatingCompanyId]
