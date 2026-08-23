@@ -163,7 +163,13 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           FROM safety.dot_inspections di
           LEFT JOIN mdata.drivers d
             ON d.id = di.driver_id
-           AND d.operating_company_id = di.operating_company_id
+           AND (d.operating_company_id = di.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations dot_inspections_list_dca
+             WHERE dot_inspections_list_dca.driver_id = d.id
+               AND dot_inspections_list_dca.company_id = di.operating_company_id
+               AND dot_inspections_list_dca.is_authorized = true
+               AND dot_inspections_list_dca.deactivated_at IS NULL
+           ))
           LEFT JOIN mdata.units u
             ON u.id = di.unit_id
            AND (u.owner_company_id = di.operating_company_id
