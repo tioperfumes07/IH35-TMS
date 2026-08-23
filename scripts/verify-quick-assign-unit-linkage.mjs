@@ -32,6 +32,7 @@ function audit(s) {
   if (!/assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/.test(s.service) || !/previous_unit_id, new_unit_id/.test(s.service)) failures.push("canonical unit FK sinks missing");
   if (!/code === "E_UNIT_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("unit rejection route mapping missing");
   if (!/l\.assigned_unit_id = \$1::uuid/.test(s.aggregate) || !/l\.operating_company_id = \$2::uuid/.test(s.aggregate)) failures.push("exact entity-scoped unit reverse query missing");
+  if (!/l\.status::text NOT IN \('delivered', 'cancelled', 'void', 'completed', 'closed'\)/.test(s.aggregate)) failures.push("unit current-load reverse must exclude every terminal load state, including closed");
   // Independently converged fix — kept this already-integrated version (also strengthened the
   // load-drill check to require EntityLinkOrTombstone explicitly, which CC-2's narrower re-anchor
   // did not touch).
@@ -60,6 +61,7 @@ if (process.argv.includes("--selftest")) {
     ["sink", "service", /assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/g, "assigned_unit_id = assigned_unit_id"],
     ["route", "routes", /code === "E_UNIT_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /l\.assigned_unit_id = \$1::uuid/g, "TRUE"],
+    ["closed-terminal", "aggregate", /, 'closed'\)/, ")"],
     ["drill", "reverse", /EntityLinkOrTombstone kind="load"/, 'EntityLinkOrTombstone kind="unit"'],
     ["label-contract", "reverse", /unitNumber:\s*string/, "unitNumber?: string"],
     ["label-consumer", "reverse", /name=\{unitNumber\}/, "name={null}"],
