@@ -65,6 +65,7 @@ const AtRiskQueuePage = React.lazy(() => import("../pages/dispatch/AtRiskQueuePa
 const FactoringQueuePage = React.lazy(() => import("../pages/dispatch/FactoringQueuePage").then((m) => ({ default: m.FactoringQueuePage })));
 const InTransitIssuesPage = React.lazy(() => import("../pages/dispatch/InTransitIssuesPage").then((m) => ({ default: m.InTransitIssuesPage })));
 const AssignmentHistoryPage = React.lazy(() => import("../pages/dispatch/AssignmentHistoryPage").then((m) => ({ default: m.AssignmentHistoryPage })));
+const OwnerOverrideLogPage = React.lazy(() => import("../pages/dispatch/OwnerOverrideLogPage").then((m) => ({ default: m.OwnerOverrideLogPage })));
 const PlannerCalendarPage = React.lazy(() => import("../pages/dispatch/PlannerCalendarPage").then((m) => ({ default: m.PlannerCalendarPage })));
 import { DispatchPlannersLayout } from "../pages/dispatch/planners/DispatchPlannersLayout";
 const UnifiedTimelinePlanner = React.lazy(() => import("../pages/dispatch/planners/UnifiedTimelinePlanner").then((m) => ({ default: m.UnifiedTimelinePlanner })));
@@ -1145,6 +1146,18 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AssignmentHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* DISPATCH-F6251-OWNER-OVERRIDE-LOG / OWNER-OVERRIDE-LOG — action_link target for the critical
+            "Owner override — driver qualification (CDL / DOT medical)" notification
+            (dispatch-override-notice.handler.ts). Route previously did not exist; "Open" silently
+            fell through the catch-all to "/". */}
+        <Route
+          path="/dispatch/owner-override-log"
+          element={
+            <ProtectedRoute>
+              <OwnerOverrideLogPage />
             </ProtectedRoute>
           }
         />

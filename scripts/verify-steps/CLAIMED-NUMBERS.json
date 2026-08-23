@@ -1,4 +1,14 @@
 {
+  "4501": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-send-contract-variable-row-stable-key"
+  },
+  "4497": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-owner-override-log-route-wired"
+  },
   "4493": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5548,5 +5558,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1250
+  "total_claimed": 1252
 }

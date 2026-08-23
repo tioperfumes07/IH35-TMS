@@ -281,7 +281,14 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           <div className="space-y-2">
             <div className="text-xs font-semibold text-gray-600">Variable values</div>
             {variableRows.map((row, index) => (
-              <div key={`${row.key}-${index}`} className="grid gap-2 md:grid-cols-[1fr_2fr_auto]">
+              // LEGAL-F6250 — key MUST NOT be derived from row.key: every keystroke into the "variable_name"
+              // input changes row.key, which changed this key on every render and forced React to unmount +
+              // remount a brand-new <input> DOM node per keystroke. The new node isn't focused, so only the
+              // very first character a user typed ever landed — everything after was silently dropped focus-
+              // lessly, with zero visible error. Index is stable across the row's lifetime (rows are only
+              // appended at the end or removed by index, never reordered), so it's the correct React key here
+              // — matches the same append-only-row pattern in RecurringBillCreate.tsx / SplitTransactionModal.tsx.
+              <div key={index} className="grid gap-2 md:grid-cols-[1fr_2fr_auto]">
                 <input
                   value={row.key}
                   onChange={(event) =>
