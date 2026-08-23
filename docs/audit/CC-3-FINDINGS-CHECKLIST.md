@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6213-GEOFENCE-DWELL-NULL-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; registered reports driver guard 6/6 + typecheck pending.
+
 - ☑ `DRV-F6212-LATE-ARRIVAL-ANALYTICS-NULL-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; registered late-arrivals guard 5/5 + typecheck pending.
 
 - ☑ `DRV-F6211-CANCELLATION-GETS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; cancellation GET guard 8/8 + typecheck pending.
