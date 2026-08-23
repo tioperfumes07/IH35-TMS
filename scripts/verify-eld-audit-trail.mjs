@@ -72,6 +72,15 @@ contains("apps/frontend/src/components/safety/EldEditHistoryTimeline.tsx", timel
   { pattern: /audit-trail\/driver/, label: "recent history API call" },
 ]);
 
+function auditTimelineRecovery(source) {
+  const problems = [];
+  if (!/!isControlled && historyQuery\.isError/.test(source)) problems.push("self-fetch failure must be distinct from controlled mode");
+  if (!/<ListErrorState[\s\S]{0,320}onRetry=\{\(\) => void historyQuery\.refetch\(\)\}/.test(source)) problems.push("self-fetch failure must expose exact-query retry");
+  if (!/historyQuery\.isError[\s\S]{0,500}if \(edits\.length === 0\)/.test(source)) problems.push("failure branch must precede the true-empty audit state");
+  return problems;
+}
+for (const problem of auditTimelineRecovery(timeline)) fail(`apps/frontend/src/components/safety/EldEditHistoryTimeline.tsx: ${problem}`);
+
 const driverDetail = read("apps/frontend/src/pages/DriverDetail.tsx");
 contains("apps/frontend/src/pages/DriverDetail.tsx", driverDetail, [
   { pattern: /ELD Edits/, label: "ELD Edits tab label" },
@@ -109,6 +118,23 @@ const ci = read(".github/workflows/ci.yml");
 contains(".github/workflows/ci.yml", ci, [
   { pattern: /verify:eld-audit-trail/, label: "verify step in CI" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["error-mode-gate", /!isControlled && historyQuery\.isError/, "historyQuery.isError"],
+    ["exact-retry", /onRetry=\{\(\) => void historyQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["failure-before-empty", /if \(!isControlled && historyQuery\.isError\)/, "if (false)"],
+  ];
+  for (const [name, pattern, replacement] of mutations) {
+    const mutated = timeline.replace(pattern, replacement);
+    if (mutated === timeline || auditTimelineRecovery(mutated).length === 0) {
+      console.error(`verify:eld-audit-trail --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:eld-audit-trail --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:eld-audit-trail — FAILED");
