@@ -1,4 +1,9 @@
 {
+  "4477": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-drivers-hub-kpi-error-state"
+  },
   "4473": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5523,5 +5528,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1246
+  "total_claimed": 1247
 }
