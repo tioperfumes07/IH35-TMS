@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["queues.late"],"task":"DRV-F6201-LATE-ARRIVAL-SHARED-DRIVER-LABEL","vertical":"column-wave"} */
 /**
  * Block B21-D6: Dispatch alerts late-arrivals endpoint + UI card drill-down.
  */
@@ -19,6 +20,8 @@ const paths = {
   dispatchPage: path.join(ROOT, "apps/frontend/src/pages/Dispatch.tsx"),
   loadsRoute: path.join(ROOT, "apps/backend/src/mdata/loads.routes.ts"),
 };
+
+const sharedDriverScope = /FROM mdata\.driver_company_authorizations late_arrivals_list_dca[\s\S]{0,180}late_arrivals_list_dca\.driver_id = d\.id[\s\S]{0,140}late_arrivals_list_dca\.company_id = l\.operating_company_id[\s\S]{0,140}late_arrivals_list_dca\.is_authorized = true[\s\S]{0,140}late_arrivals_list_dca\.deactivated_at IS NULL/;
 
 function read(filePath) {
   if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
@@ -49,6 +52,9 @@ function main() {
   if (!service.includes("DISPATCH_LATE_ARRIVAL_GRACE_MINUTES")) {
     failures.push("late-arrivals.service must read grace threshold env");
   }
+  if (!sharedDriverScope.test(service)) {
+    failures.push("late-arrivals driver label must admit active canonical selected-company authorization");
+  }
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
   }
@@ -78,6 +84,19 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail(failures.join("; "));
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      service.replace("late_arrivals_list_dca.is_authorized = true", "late_arrivals_list_dca.is_authorized = false"),
+      service.replace("late_arrivals_list_dca.deactivated_at IS NULL", "late_arrivals_list_dca.deactivated_at IS NOT NULL"),
+      service.replace("late_arrivals_list_dca.company_id = l.operating_company_id", "late_arrivals_list_dca.company_id = d.operating_company_id"),
+    ];
+    for (const [index, mutated] of mutations.entries()) {
+      if (mutated === service || sharedDriverScope.test(mutated)) fail(`shared-driver mutation ${index + 1} escaped`);
+    }
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 3/3 shared-driver mutations red");
+    return;
   }
 
   console.log("verify:dispatch-late-arrivals-alerts PASS");
