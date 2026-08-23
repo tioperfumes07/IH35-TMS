@@ -11,6 +11,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   customerId?: string;
+  operatingCompanyId: string;
   initialUsdot?: string | null;
   initialMc?: string | null;
   onApplyToCustomer?: (result: FmcsaLookupResult) => void;
@@ -32,6 +33,7 @@ export function FMCSAVerificationModal({
   open,
   onClose,
   customerId,
+  operatingCompanyId,
   initialUsdot,
   initialMc,
   onApplyToCustomer,
@@ -46,7 +48,8 @@ export function FMCSAVerificationModal({
   const displayLookupValue = useMemo(() => cleanedLookupInput(lookupType, lookupValue), [lookupType, lookupValue]);
 
   const lookupMutation = useMutation({
-    mutationFn: (payload: { type: FmcsaLookupType; value: string }) => lookupFmcsa(payload),
+    mutationFn: (payload: { type: FmcsaLookupType; value: string }) =>
+      lookupFmcsa({ ...payload, operating_company_id: operatingCompanyId }),
     onSuccess: (data) => {
       setResult(data);
       setInputError(null);
@@ -65,7 +68,7 @@ export function FMCSAVerificationModal({
   const saveMutation = useMutation({
     mutationFn: (lookupId: string) => {
       if (!customerId) throw new Error("customer_id_required");
-      return linkFmcsaLookupToCustomer(customerId, lookupId);
+      return linkFmcsaLookupToCustomer(customerId, lookupId, operatingCompanyId);
     },
     onSuccess: (data) => {
       pushToast("FMCSA verification saved on customer", "success");

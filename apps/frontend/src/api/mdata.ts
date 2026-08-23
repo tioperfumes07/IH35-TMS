@@ -1296,8 +1296,9 @@ export function getCustomerFinancialSummary(customerId: string, operatingCompany
   return apiRequest<CustomerFinancialSummary>(`/api/v1/mdata/customers/${customerId}/financial-summary?${q}`);
 }
 
-export function verifyCustomerFmcsa(id: string) {
-  return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa`, { method: "POST" });
+export function verifyCustomerFmcsa(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa?${query.toString()}`, { method: "POST" });
 }
 
 export function listCustomerQualityEventReasons(

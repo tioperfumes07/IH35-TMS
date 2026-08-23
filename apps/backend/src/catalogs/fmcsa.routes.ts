@@ -12,19 +12,19 @@ const LINK_ROLES = ["Owner", "Administrator", "Manager", "Safety"];
 const lookupBodySchema = z.object({
   type: z.enum(["usdot", "mc"]),
   value: z.string().trim().min(1).max(40),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(20),
   offset: z.coerce.number().int().min(0).default(0),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const linkParamsSchema = z.object({ id: z.string().uuid() });
 const linkBodySchema = z.object({
   lookup_id: z.string().uuid(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 type AuthUser = { uuid: string; role: string };
@@ -233,14 +233,21 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedBody.data.operating_company_id
+      );
+      if (!operatingCompanyId) return null;
       const lookupRes = await client.query(
         `
           SELECT id, authority_status
           FROM catalogs.fmcsa_lookups
           WHERE id = $1
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [parsedBody.data.lookup_id]
+        [parsedBody.data.lookup_id, operatingCompanyId]
       );
       const lookup = lookupRes.rows[0];
       if (!lookup) return null;
@@ -254,9 +261,10 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
             fmcsa_authority_status_at_verification = $3,
             updated_by_user_id = $4
           WHERE id = $1
+            AND operating_company_id = $5::uuid
           RETURNING id, fmcsa_verified_at, fmcsa_lookup_id, fmcsa_authority_status_at_verification
         `,
-        [parsedParams.data.id, lookup.id, lookup.authority_status, authUser.uuid]
+        [parsedParams.data.id, lookup.id, lookup.authority_status, authUser.uuid, operatingCompanyId]
       );
 
       const customer = customerRes.rows[0];
