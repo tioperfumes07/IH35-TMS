@@ -11,7 +11,7 @@ const listQuerySchema = z.object({
   page_size: z.coerce.number().int().min(1).max(250).default(50),
   sort: z.enum(["name", "-name"]).default("name"),
   search: z.string().trim().max(100).optional(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
