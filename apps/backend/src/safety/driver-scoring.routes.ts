@@ -32,7 +32,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerDriverScoringRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/driver-scoring", async (req, reply) => {
+  app.get("/api/v1/safety/driver-scoring", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -52,7 +52,16 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
             FROM safety.harsh_events e
             JOIN mdata.drivers event_driver
               ON event_driver.id = e.driver_id
-             AND event_driver.operating_company_id = e.operating_company_id
+             AND (
+               event_driver.operating_company_id = e.operating_company_id
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations event_dca
+                  WHERE event_dca.driver_id = event_driver.id
+                    AND event_dca.company_id = e.operating_company_id
+                    AND event_dca.is_authorized = true
+                    AND event_dca.deactivated_at IS NULL
+               )
+             )
             WHERE e.operating_company_id = $1::uuid
               AND e.driver_id IS NOT NULL
               AND e.event_at >= (now() - make_interval(days => $2::int))
@@ -68,7 +77,16 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
             FROM safety.harsh_events e
             JOIN mdata.drivers event_driver
               ON event_driver.id = e.driver_id
-             AND event_driver.operating_company_id = e.operating_company_id
+             AND (
+               event_driver.operating_company_id = e.operating_company_id
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations event_dca
+                  WHERE event_dca.driver_id = event_driver.id
+                    AND event_dca.company_id = e.operating_company_id
+                    AND event_dca.is_authorized = true
+                    AND event_dca.deactivated_at IS NULL
+               )
+             )
             WHERE e.operating_company_id = $1::uuid
               AND e.driver_id IS NOT NULL
               AND e.event_at >= (now() - make_interval(days => ($2::int * 2)))
@@ -88,7 +106,16 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           FROM mdata.drivers d
           LEFT JOIN current_window c ON c.driver_id = d.id
           LEFT JOIN prior_window p ON p.driver_id = d.id
-          WHERE d.operating_company_id = $1::uuid
+          WHERE (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations roster_dca
+                 WHERE roster_dca.driver_id = d.id
+                   AND roster_dca.company_id = $1::uuid
+                   AND roster_dca.is_authorized = true
+                   AND roster_dca.deactivated_at IS NULL
+              )
+            )
             AND d.status = 'Active'::mdata.driver_status
             AND d.deactivated_at IS NULL
             AND d.archived_at IS NULL
@@ -136,7 +163,7 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
     return { rows: scored };
   });
 
-  app.get("/api/v1/safety/driver-scoring/:driver_id/events", async (req, reply) => {
+  app.get("/api/v1/safety/driver-scoring/:driver_id/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -144,7 +171,25 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
     const params = detailParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
 
-    const events = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const parent = await client.query(
+        `SELECT 1 FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1`,
+        [params.data.driver_id, query.data.operating_company_id]
+      );
+      if (!parent.rows[0]) return { found: false, events: [] };
       const res = await client.query(
         `
           SELECT
@@ -162,7 +207,16 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           FROM safety.harsh_events e
           JOIN mdata.drivers d
             ON d.id = e.driver_id
-           AND d.operating_company_id = e.operating_company_id
+           AND (
+             d.operating_company_id = e.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                WHERE label_dca.driver_id = d.id
+                  AND label_dca.company_id = e.operating_company_id
+                  AND label_dca.is_authorized = true
+                  AND label_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mdata.units u ON u.id = e.unit_id
                                   AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           WHERE e.operating_company_id = $1::uuid
@@ -174,9 +228,9 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id, params.data.driver_id, query.data.period_days]
       );
-      return res.rows;
+      return { found: true, events: res.rows };
     });
-
-    return { events };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { events: result.events };
   });
 }
