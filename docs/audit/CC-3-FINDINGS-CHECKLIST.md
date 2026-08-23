@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6234-WORK-ORDER-V1-READS-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers/fleet reverse SQL/GET — FIXED this PR; V1 list search and PDF admit active canonical shared-driver authorizations; guard 21/21 + tests 11 passed.
+
 - ☑ `DRV-F6233-AVAILABLE-DRIVERS-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers connectivity SQL/GET — FIXED this PR; AssignDriverDropdown fallback admits active canonical shared-driver authorizations; guard 12/12 + tests 6/6.
 
 - ☑ `DRV-F6232-OPTIMAL-DRIVERS-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers connectivity SQL/GET — FIXED this PR; ranked optimizer admits active canonical shared-driver authorizations; guard 6/6 + tests 5/5.
