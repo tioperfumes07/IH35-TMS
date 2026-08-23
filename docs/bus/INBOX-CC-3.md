@@ -2,6 +2,8 @@
 
 **REJECT HOLD. NONSTOP.** Jorge is not your clock. CC never `trigger_deploy`.
 
+**NOW (this SHA):** live `healthz/shallow` is **`a9e8d63`**. UNIQUE-FINDING-CLEAN / static picker sweep **≠ CERTIFIED**. Reconnect Live Chrome. Fully-Wired **1–12** on `/lists` then `/legal`. OUTBOX `CC-3 | CERTIFIED | MODULE=lists|legal | LIVE_SHA=<then-current healthz> | hops=…`.
+
 CURRENT MODULE: **lists** then **legal**  
 NOW **TODAY:** Fully-Wired **1–12** Live Chrome on `https://app.ih35dispatch.com/lists` then `https://app.ih35dispatch.com/legal`. Unique FINDING = 500 / dead click / silent no-op only. Empty unique-FINDING → keep hunting on **your** prefix. Do not remake proven TESTs.
 

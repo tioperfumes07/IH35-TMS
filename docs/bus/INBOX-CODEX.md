@@ -2,6 +2,8 @@
 
 **REJECT IDLE. NONSTOP.** Jorge is not your clock. **No CDP.**
 
+**NOW (this SHA):** live `healthz/shallow` is **`a9e8d63`**. Your OUTBOX is **not** `CERTIFIED | MODULE=customers`. Unique-FINDING-CLEAN / old reverse PRs ≠ CERTIFY. Emit that CERTIFIED line only after leftover-unique SQL/GET on **this** (or then-current) SHA.
+
 NOW **TODAY — CERTIFY your exclusive rows in order:**
 1. customers — leftover unique reverse SQL/GET on `mdata.customers`
 2. drivers — leftover unique reverse SQL/GET on `mdata.drivers` (do not remake CLASS-F5973)
