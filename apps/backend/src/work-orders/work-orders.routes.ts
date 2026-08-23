@@ -481,7 +481,19 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               )
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
-                WHERE d.id = w.driver_id AND d.operating_company_id = w.operating_company_id AND (
+                WHERE d.id = w.driver_id
+                  AND (
+                    d.operating_company_id = w.operating_company_id
+                    OR EXISTS (
+                      SELECT 1
+                      FROM mdata.driver_company_authorizations wo_search_driver_dca
+                      WHERE wo_search_driver_dca.driver_id = d.id
+                        AND wo_search_driver_dca.company_id = w.operating_company_id
+                        AND wo_search_driver_dca.is_authorized = true
+                        AND wo_search_driver_dca.deactivated_at IS NULL
+                    )
+                  )
+                  AND (
                   COALESCE(d.first_name, '') ILIKE $${needleIdx}
                   OR COALESCE(d.last_name, '') ILIKE $${needleIdx}
                 )
@@ -1434,7 +1446,21 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       let driver: Record<string, unknown> | null = null;
       if (wo.driver_id) {
         const driverRes = await client.query(
-          `SELECT * FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          `SELECT d.*
+           FROM mdata.drivers d
+           WHERE d.id = $1
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1
+                 FROM mdata.driver_company_authorizations wo_pdf_driver_dca
+                 WHERE wo_pdf_driver_dca.driver_id = d.id
+                   AND wo_pdf_driver_dca.company_id = $2::uuid
+                   AND wo_pdf_driver_dca.is_authorized = true
+                   AND wo_pdf_driver_dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
           [wo.driver_id, query.data.operating_company_id]
         );
         driver = driverRes.rows[0] ?? null;
