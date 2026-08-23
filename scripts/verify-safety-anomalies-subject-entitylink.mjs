@@ -43,6 +43,17 @@ function assert(sources) {
       (routes.match(/i\.operating_company_id = a\.tenant_id/g) ?? []).length < 2) {
     problems.push(`${ROUTES}: human-label joins must remain tenant scoped in list and detail`);
   }
+  for (const marker of [
+    "FROM mdata.driver_company_authorizations anomaly_driver_dca",
+    "anomaly_driver_dca.driver_id = d.id",
+    "anomaly_driver_dca.company_id = a.tenant_id",
+    "anomaly_driver_dca.is_authorized = true",
+    "anomaly_driver_dca.deactivated_at IS NULL",
+  ]) {
+    if ((routes.match(new RegExp(marker.replaceAll(".", "\\."), "g")) ?? []).length < 2) {
+      problems.push(`${ROUTES}: list and detail must admit active authorized shared drivers via ${marker}`);
+    }
+  }
   return problems;
 }
 
@@ -53,12 +64,23 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL live:`, liveProblems);
     process.exit(1);
   }
-  const planted = assert({ ...live, [FE]: live[FE] + "\n{row.subject_id.slice(0, 8)}\n" });
-  if (!planted.some((p) => p.includes("UUID-slice"))) {
-    console.error(`${LABEL} SELFTEST FAIL: planted slice not caught`, planted);
-    process.exit(1);
+  const mutations = [
+    ["UUID slice", FE, (s) => s + "\n{row.subject_id.slice(0, 8)}\n", "UUID-slice"],
+    ["authorization source", ROUTES, (s) => s.replaceAll("FROM mdata.driver_company_authorizations anomaly_driver_dca", "FROM mdata.drivers anomaly_driver_dca"), "driver_company_authorizations"],
+    ["authorization driver", ROUTES, (s) => s.replaceAll("anomaly_driver_dca.driver_id = d.id", "anomaly_driver_dca.driver_id IS NULL"), "driver_id = d.id"],
+    ["authorization company", ROUTES, (s) => s.replaceAll("anomaly_driver_dca.company_id = a.tenant_id", "anomaly_driver_dca.company_id IS NULL"), "company_id = a.tenant_id"],
+    ["authorization flag", ROUTES, (s) => s.replaceAll("anomaly_driver_dca.is_authorized = true", "anomaly_driver_dca.is_authorized = false"), "is_authorized = true"],
+    ["authorization active", ROUTES, (s) => s.replaceAll("anomaly_driver_dca.deactivated_at IS NULL", "anomaly_driver_dca.deactivated_at IS NOT NULL"), "deactivated_at IS NULL"],
+  ];
+  for (const [name, file, mutate, expected] of mutations) {
+    const changed = mutate(live[file]);
+    const planted = assert({ ...live, [file]: changed });
+    if (changed === live[file] || !planted.some((p) => p.includes(expected))) {
+      console.error(`${LABEL} SELFTEST FAIL: planted ${name} not caught`, planted);
+      process.exit(1);
+    }
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
   process.exit(0);
 }
 

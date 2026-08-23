@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-insurance-driver-wiring";
+const CLAIM_ROUTES = "apps/backend/src/insurance/claim.routes.ts";
 
 const CHECKS = [
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /<EntityLinkOrTombstone kind="driver" id=\{claim\.driver_id\} name=\{claim\.driver_display_name\} noun="Driver" \/>/],
@@ -24,6 +25,11 @@ const CHECKS = [
   // EntityLinkOrTombstone's `id` prop already accepts string | null | undefined directly, so the
   // `?? undefined` coercion this line needed under the old raw EntityLink is no longer required.
   ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", /kind="driver" id=\{lawsuit\.driver_id(?: \?\? undefined)?\}/],
+  [CLAIM_ROUTES, /LEFT JOIN mdata\.drivers cdrv[\s\S]{0,1800}cdrv\.operating_company_id = \$\{scope\}[\s\S]{0,1800}FROM mdata\.driver_company_authorizations claim_driver_dca/],
+  [CLAIM_ROUTES, /claim_driver_dca\.driver_id = cdrv\.id/],
+  [CLAIM_ROUTES, /claim_driver_dca\.company_id = \$\{scope\}/],
+  [CLAIM_ROUTES, /claim_driver_dca\.is_authorized = true/],
+  [CLAIM_ROUTES, /claim_driver_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
@@ -46,14 +52,14 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   let caught = 0;
-  for (const [file, pattern] of CHECKS) {
+  for (const [index, [file, pattern]] of CHECKS.entries()) {
     const mutated = { ...good, [file]: good[file].replace(new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : pattern.flags + "g"), "REMOVED") };
     if (mutated[file] === good[file]) {
       console.error(`${LABEL} SELFTEST FAIL — ${file}: pattern did not match source, re-anchor`);
       process.exit(1);
     }
     if (audit(mutated).length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL — ${file}: mutation escaped`);
+      console.error(`${LABEL} SELFTEST FAIL — check ${index + 1} ${file}: mutation escaped`);
       process.exit(1);
     }
     caught++;
