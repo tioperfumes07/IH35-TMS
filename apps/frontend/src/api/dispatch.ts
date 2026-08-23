@@ -918,6 +918,40 @@ export function listDispatchAssignmentHistory(
   return apiRequest<{ rows: DispatchAssignmentHistoryRow[] }>(`/api/v1/dispatch/assignment-history?${q.toString()}`);
 }
 
+// DISPATCH-F6251-OWNER-OVERRIDE-LOG / OWNER-OVERRIDE-LOG — the "Owner override — driver qualification (CDL / DOT
+// medical)" critical notification (dispatch-override-notice.handler.ts) points its action_link at
+// /dispatch/owner-override-log, and the read-only WORM-audit endpoint below (registerDispatchRefinementsRoutes)
+// has existed since 2026-08-02 — but until this page/route pair, NO frontend consumer read it, so the
+// notification's "Open" CTA silently fell through the router's catch-all to "/" for every Owner, on
+// every DOT-qualification override, since the day the endpoint shipped.
+export type OwnerOverrideLogRow = {
+  id: string;
+  created_at: string;
+  event_class: string;
+  actor_user_id: string | null;
+  actor_role: string | null;
+  override_class: string | null;
+  attestation_scope: string | null;
+  override_reason: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  overridden_reasons: string[] | null;
+  cdl_expires_at: string | null;
+  medical_expiry_date: string | null;
+};
+
+export function listOwnerOverrideLog(
+  operatingCompanyId: string,
+  opts?: { limit?: number; offset?: number }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (opts?.limit) q.set("limit", String(opts.limit));
+  if (opts?.offset) q.set("offset", String(opts.offset));
+  return apiRequest<{ overrides: OwnerOverrideLogRow[]; total: number }>(
+    `/api/v1/dispatch/owner-override-log?${q.toString()}`
+  );
+}
+
 export type PlannerDriverRow = {
   id: string;
   name: string;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-send-contract-variable-row-stable-key.mjs  (LEGAL-F6236)
+ * verify-send-contract-variable-row-stable-key.mjs  (LEGAL-F6250)
  *
  * Root cause: the "Fill variables" step of the Legal "Send Contract" wizard rendered each
  * variable row's `<div>` with `key={\`${row.key}-${index}\`}` — but `row.key` IS the live value
@@ -47,7 +47,7 @@ export function checkVariableRowKeyIsStable(src) {
   const block = src.slice(mapIdx, mapIdx + 800);
   if (UNSAFE_KEY.test(block)) {
     offenders.push(
-      `${MODAL_FILE}: variable row key is derived from row.key (\`key={\\\`\\\${row.key}-\\\${index}\\\`}\`) — LEGAL-F6236 regression shape: row.key is also the live value of that row's own "variable_name" input, so every keystroke remounts the input and drops focus, silently truncating input to the first character typed`
+      `${MODAL_FILE}: variable row key is derived from row.key (\`key={\\\`\\\${row.key}-\\\${index}\\\`}\`) — LEGAL-F6250 regression shape: row.key is also the live value of that row's own "variable_name" input, so every keystroke remounts the input and drops focus, silently truncating input to the first character typed`
     );
   }
   return offenders;

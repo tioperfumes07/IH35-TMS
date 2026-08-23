@@ -281,7 +281,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           <div className="space-y-2">
             <div className="text-xs font-semibold text-gray-600">Variable values</div>
             {variableRows.map((row, index) => (
-              // LEGAL-F6xxx — key MUST NOT be derived from row.key: every keystroke into the "variable_name"
+              // LEGAL-F6250 — key MUST NOT be derived from row.key: every keystroke into the "variable_name"
               // input changes row.key, which changed this key on every render and forced React to unmount +
               // remount a brand-new <input> DOM node per keystroke. The new node isn't focused, so only the
               // very first character a user typed ever landed — everything after was silently dropped focus-

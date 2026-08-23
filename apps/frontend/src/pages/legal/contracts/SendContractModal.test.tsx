@@ -6,7 +6,7 @@ import { SendContractModal } from "./SendContractModal";
 import { legalTemplatesApi } from "../../../api/legal-templates";
 import { ToastProvider } from "../../../components/Toast";
 
-// LEGAL-F6236 — the "Fill variables" step's row-level React key was derived from row.key, which
+// LEGAL-F6250 — the "Fill variables" step's row-level React key was derived from row.key, which
 // is also the live value the row's own "variable_name" input writes on every keystroke. That
 // remounted the input on every keystroke and dropped focus, silently truncating anything typed
 // past the first character. This test types a multi-character string into that field and asserts
