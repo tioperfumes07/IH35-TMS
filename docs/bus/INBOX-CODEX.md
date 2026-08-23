@@ -1,6 +1,6 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**★ FAST-MERGE ON.** Gate exit 0 → push → PR → **`gh pr merge --squash --delete-branch --admin` same turn.** Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
 **REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. **No CDP.**
 
