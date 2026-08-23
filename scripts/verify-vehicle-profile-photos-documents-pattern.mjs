@@ -27,6 +27,19 @@ function failures({ migrationSource = migration, docsSource = docsRoute, photosS
     errors.push("unit photo reverse GET must return honest unit-not-found before empty photos");
   }
   if (parentIndex < 0 || childIndex < 0 || parentIndex > childIndex) errors.push("unit scope must be checked before photo children");
+  const docsStart = docsSource.indexOf('app.get("/api/v1/mdata/units/:id/documents"');
+  const docsGet = docsStart < 0 ? "" : docsSource.slice(docsStart, docsStart + 2400);
+  const docsParentIndex = docsGet.indexOf("FROM mdata.units");
+  const docsChildIndex = docsGet.indexOf("FROM docs.file_links");
+  if (!/owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/.test(docsGet)) {
+    errors.push("unit document reverse GET must verify owner/leased company scope");
+  }
+  if (!/if \(unit\.rowCount === 0\) return null;[\s\S]*if \(documents === null\) return reply\.code\(404\)\.send\(\{ error: "mdata_unit_not_found" \}\)/.test(docsGet)) {
+    errors.push("unit document reverse GET must return honest unit-not-found before empty documents");
+  }
+  if (docsParentIndex < 0 || docsChildIndex < 0 || docsParentIndex > docsChildIndex) {
+    errors.push("unit scope must be checked before document children");
+  }
   return errors;
 }
 
@@ -36,8 +49,15 @@ if (process.argv.includes("--selftest")) {
     photosRoute.replace("owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid", "TRUE"),
     photosRoute.replace('return reply.code(404).send({ error: "mdata_unit_not_found" })', "return { photos: [] }"),
     photosRoute.replace("if (unit.rowCount === 0) return null;", ""),
+    docsRoute.replace("owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid", "TRUE"),
+    docsRoute.replace('return reply.code(404).send({ error: "mdata_unit_not_found" })', "return { documents: [] }"),
+    docsRoute.replace("if (unit.rowCount === 0) return null;", ""),
   ];
-  if (baseline.length || mutations.some((mutant) => mutant === photosRoute || failures({ photosSource: mutant }).length === 0)) {
+  const escaped = mutations.some((mutant, index) => {
+    if (index < 3) return mutant === photosRoute || failures({ photosSource: mutant }).length === 0;
+    return mutant === docsRoute || failures({ docsSource: mutant }).length === 0;
+  });
+  if (baseline.length || escaped) {
     console.error(`verify:vehicle-profile-photos-documents-pattern selftest FAIL${baseline.length ? `: ${baseline.join("; ")}` : ""}`);
     process.exit(1);
   }
