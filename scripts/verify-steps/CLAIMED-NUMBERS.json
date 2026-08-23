@@ -1,4 +1,14 @@
 {
+  "4443": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fleet-location-hos-shared-drivers"
+  },
+  "4447": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-vehicle-driver-history-shared-label"
+  },
   "4441": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5478,5 +5488,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1238
+  "total_claimed": 1240
 }
