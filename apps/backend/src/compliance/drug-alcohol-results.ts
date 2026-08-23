@@ -171,7 +171,13 @@ export async function listOpenRtdProcesses(client: PoolClient, operatingCompanyI
       FROM compliance.return_to_duty_processes r
       LEFT JOIN mdata.drivers d
         ON d.id = r.driver_id
-       AND d.operating_company_id = r.operating_company_id
+       AND (d.operating_company_id = r.operating_company_id OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations rtd_list_dca
+         WHERE rtd_list_dca.driver_id = d.id
+           AND rtd_list_dca.company_id = r.operating_company_id
+           AND rtd_list_dca.is_authorized = true
+           AND rtd_list_dca.deactivated_at IS NULL
+       ))
       WHERE r.operating_company_id = $1::uuid
         AND r.status IN ('open', 'in_progress')
       ORDER BY r.started_at DESC

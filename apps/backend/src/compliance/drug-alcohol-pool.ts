@@ -109,7 +109,13 @@ export async function listActivePoolMembers(client: PoolClient, operatingCompany
       FROM compliance.drug_alcohol_pool_members pm
       LEFT JOIN mdata.drivers d
         ON d.id = pm.driver_id
-       AND d.operating_company_id = pm.operating_company_id
+       AND (d.operating_company_id = pm.operating_company_id OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations drug_pool_list_dca
+         WHERE drug_pool_list_dca.driver_id = d.id
+           AND drug_pool_list_dca.company_id = pm.operating_company_id
+           AND drug_pool_list_dca.is_authorized = true
+           AND drug_pool_list_dca.deactivated_at IS NULL
+       ))
       WHERE pm.operating_company_id = $1::uuid
         AND pm.removed_at IS NULL
       ORDER BY pm.added_at DESC

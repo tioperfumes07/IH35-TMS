@@ -30,6 +30,10 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", /kind="driver" id=\{row\.driverId\}/],
   ["apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/backend/src/compliance/missing-required.service.ts", /d\.id = \$1::uuid[\s\S]{0,500}missing_required_dca\.driver_id = d\.id[\s\S]{0,180}missing_required_dca\.company_id = \$2::uuid[\s\S]{0,180}missing_required_dca\.is_authorized = true[\s\S]{0,180}missing_required_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/drug-alcohol-pool.ts", /drug_pool_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_pool_list_dca\.company_id = pm\.operating_company_id[\s\S]{0,180}drug_pool_list_dca\.is_authorized = true[\s\S]{0,180}drug_pool_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/drug-alcohol-results.ts", /rtd_list_dca\.driver_id = d\.id[\s\S]{0,180}rtd_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}rtd_list_dca\.is_authorized = true[\s\S]{0,180}rtd_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/drug-alcohol.routes.ts", /drug_draw_list_dca\.driver_id = dr\.id[\s\S]{0,180}drug_draw_list_dca\.company_id = d\.operating_company_id[\s\S]{0,180}drug_draw_list_dca\.is_authorized = true[\s\S]{0,180}drug_draw_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/drug-alcohol.routes.ts", /drug_results_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_results_list_dca\.company_id = t\.operating_company_id[\s\S]{0,180}drug_results_list_dca\.is_authorized = true[\s\S]{0,180}drug_results_list_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {

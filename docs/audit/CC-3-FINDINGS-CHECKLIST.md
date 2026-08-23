@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6191-DRUG-ALCOHOL-READS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; compliance driver guard + typecheck pending.
+
 - ☑ `DRV-F6190-WORK-ORDERS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance driver guard + typecheck pending.
 
 - ☑ `DRV-F6187-MAINTENANCE-QUEUES-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance driver guard + typecheck pending.
