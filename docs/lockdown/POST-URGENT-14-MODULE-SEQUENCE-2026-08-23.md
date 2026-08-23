@@ -31,8 +31,8 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 8 | ELD | `eld` | `/eld` | **CC-3** DONE -- all 5 sub-tabs hopped live (Live Duty Status/HOS Violations/Unidentified Driving/Driver Certifications/ELD Settings); found+fixed TELEMATICS-F1 (500 on Drill-down), merged `3126097ec`; the 2 "not wired yet" tabs are honest deferred-feature disclosures, not defects |
 | 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** DONE -- unique-clean (Parts & Stock/Assignments/Purchase History all live; Record Purchase forward-links vendor by name; Assignments honestly empty with a real explanatory note; Purchase History append-only with Void not delete; +Add-new-vendor first row confirmed; Escape closes dropdown-only) |
 | 10 | USERS | `users` | `/users` | **CC-3** DONE -- found+fixed USERS-F1 (Change Role modal label mismatch); All/Active/Pending/Deactivated tabs all live, real data; Create User role select consistent |
-| 11 | HOME | `home` | `/home` | **CC-3** claiming now |
-| 12 | FUEL | `fuel` | `/fuel` | next free |
+| 11 | HOME | `home` | `/home` | **CC-3** DONE -- found+fixed DISPATCH-F2 (late-arrivals sample-data leak + count mismatch); Attention/KPI/Weekly-revenue/Work-orders/Fleet-Snapshot/Vendor-Mapping-Integrity/Filings-Compliance sections all live, real data |
+| 12 | FUEL | `fuel` | `/fuel` | **CC-3** claiming now |
 | 13 | DOCS | `docs` | `/docs` | next free |
 | 14 | HELP | `help` | `/help` | next free |
 | 15 | PROGRAM | `program` | `/program` | next free |
