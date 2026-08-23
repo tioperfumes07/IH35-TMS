@@ -471,7 +471,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     // rank 1 (PR #6316) — mirrored below with the same filter/join/display-column treatment as unit_id.
     const query = accidentsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // SAF-F26: join the driver NAME and unit NUMBER so the list drills through by name, not a raw
       // uuid. driver join is entity-scoped; the unit join is scoped by owner/lessee because mdata.units
       // has NO operating_company_id (owner_company_id / currently_leased_to_company_id). The former
@@ -480,6 +480,25 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const scopeFilters: string[] = [];
       if (query.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+           FROM mdata.drivers d
+           WHERE d.id = $1::uuid
+             AND d.archived_at IS NULL
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
+          [query.data.driver_id, query.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false as const, rows: [] };
         values.push(query.data.driver_id);
         scopeFilters.push(`AND ar.driver_id = $${values.length}`);
       }
@@ -508,7 +527,16 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           FROM safety.accident_reports ar
           LEFT JOIN mdata.drivers d
             ON d.id = ar.driver_id
-           AND d.operating_company_id = ar.operating_company_id
+           AND (
+             d.operating_company_id = ar.operating_company_id
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations label_dca
+               WHERE label_dca.driver_id = d.id
+                 AND label_dca.company_id = ar.operating_company_id
+                 AND label_dca.is_authorized = true
+                 AND label_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN mdata.units u
             ON u.id = ar.unit_id
            AND (u.owner_company_id = ar.operating_company_id
@@ -547,9 +575,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { found: true as const, rows: res.rows };
     });
-    return { accidents: rows };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { accidents: result.rows };
   });
 
   app.get("/api/v1/safety/accidents/:id", async (req, reply) => {
