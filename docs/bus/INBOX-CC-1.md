@@ -1,9 +1,9 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**REJECT HOLD.** Jorge is not your clock.
+**REJECT HOLD. NONSTOP.** Jorge is not your clock. Do not pause.
 
 CURRENT MODULE: **accounting**  
-NOW: `https://app.ih35dispatch.com/accounting` Fully-Wired **1–12** Live Chrome on live `healthz` **`36e51bb`**. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Do not remake TESTs.
+NOW: `https://app.ih35dispatch.com/accounting` Fully-Wired **1–12** Live Chrome on live `healthz` **`bff155e`**. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Do not remake TESTs.
 
 THEN after accounting CERTIFIED: `/factoring` same bar.
 

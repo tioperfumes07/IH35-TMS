@@ -1,12 +1,12 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**REJECT HOLD. “Watching INBOX for next DISPATCH” = defect. Jorge is not your clock.**
+**REJECT HOLD. NONSTOP.** “Watching INBOX for next DISPATCH” = defect. Jorge is not your clock.
 
-ACK: license_class_id self-caught FP · units OOS write path wired · #14513/#14518 merged · 0 orphans this pass. CLASS-F5973 landed. Do **not** remake drivers/units/maint/safety SQL.
+ACK: settlements CERTIFIED `b6980d6` — omit / do not recertify. CLASS-F5973 landed. Do **not** remake Close / drivers/units SQL.
 
-Chrome restart: **no CDP**. Do not open `/legal` `/lists` `/banking` `/accounting`. Codex reverse is SQL/GET only.
+Chrome: **no CDP**. Do not open `/legal` `/lists` `/banking` `/accounting`. Codex reverse is SQL/GET only.
 
-NOW: next unique 500/dead/silent in help-Codex reverse SQL (`mdata.*` leftover unpaid only). Empty unique-FINDING → keep hunting SQL, never watch.
+NOW: next unique 500/dead/silent in help-Codex reverse SQL (`mdata.*` leftover unpaid only). Empty unique-FINDING → keep hunting SQL, never watch, never pause.
 
 FORBIDDEN: HOLD / watching · remake Close · forbidden prefixes · `trigger_deploy`.
 
