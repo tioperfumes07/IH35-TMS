@@ -117,7 +117,17 @@ export async function getFleetLocationHosRows(
         trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name
       FROM telematics.vehicle_driver_assignments a
       JOIN mdata.drivers d ON d.id = a.driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (
+                             d.operating_company_id = $1::uuid
+                             OR EXISTS (
+                               SELECT 1
+                               FROM mdata.driver_company_authorizations samsara_driver_dca
+                               WHERE samsara_driver_dca.driver_id = d.id
+                                 AND samsara_driver_dca.company_id = $1::uuid
+                                 AND samsara_driver_dca.is_authorized = true
+                                 AND samsara_driver_dca.deactivated_at IS NULL
+                             )
+                           )
       WHERE a.operating_company_id = $1::uuid
         AND a.ended_at IS NULL
         AND a.driver_id IS NOT NULL
@@ -137,7 +147,17 @@ export async function getFleetLocationHosRows(
         trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name
       FROM mdata.loads l
       JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (
+                             d.operating_company_id = $1::uuid
+                             OR EXISTS (
+                               SELECT 1
+                               FROM mdata.driver_company_authorizations load_driver_dca
+                               WHERE load_driver_dca.driver_id = d.id
+                                 AND load_driver_dca.company_id = $1::uuid
+                                 AND load_driver_dca.is_authorized = true
+                                 AND load_driver_dca.deactivated_at IS NULL
+                             )
+                           )
       WHERE l.operating_company_id = $1::uuid
         AND l.assigned_unit_id IS NOT NULL
         AND l.assigned_primary_driver_id IS NOT NULL
