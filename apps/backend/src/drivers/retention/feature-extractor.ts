@@ -51,7 +51,7 @@ export async function extractRetentionFeatures(
                      FILTER (WHERE created_at >= now() - interval '90 days'), 0)::text AS m90
         FROM mdata.loads
         WHERE operating_company_id = $1::uuid
-          AND assigned_primary_driver_id = $2::uuid
+          AND (assigned_primary_driver_id = $2::uuid OR assigned_secondary_driver_id = $2::uuid)
           AND soft_deleted_at IS NULL
       `,
       [operatingCompanyId, driverUuid]
