@@ -1,3 +1,7 @@
+Cursor | DISPATCH | 2026-08-23T13:55CT | Jorge: deepest accident+claim web audit | AUDIT-ONLY no fix | GOLD=docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md | INBOX Cascade/Devin/Devin-A | paste boxes in chat | GO
+
+Cursor | DISPATCH | 2026-08-23T13:48CT | Cascade+Devin+Devin-A AUDIT-ONLY no product fix | INBOX TOP + paste Jorge | file docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md | GO
+
 Cursor | FAST-MERGE | 2026-08-23T13:41CT | Jorge: YOU ARE NOT MERGING THE 4-MIN WEEKEND METHOD | defect=gh pr merge dies on extra main worktree then stall | LAW=gate→push→PR→gh api PUT .../merge merge_method=squash SAME 15s | never checks --watch | INBOX TOP all seats | GO
 
 Cursor | DISPATCH | 2026-08-23T13:40CT | Jorge: certify U14 NOW one module at a time · SHA=healthz · deploy current | API deploy in-flight dep-da5jqjojo6nc73cpn430 commit 01385f7 (web already building — no second web kick) | hops docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md | CC-3 lists then legal separate CERTIFIED lines | Codex customers then drivers then fleet separate lines | Cascade/Devin audit CERTIFIED 1-6+11-13 pack docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md trackers docs/audit/scenario-trackers/certified-u14/ | never idle | FAST-MERGE ON | GO

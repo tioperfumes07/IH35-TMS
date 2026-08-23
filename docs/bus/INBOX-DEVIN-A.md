@@ -1,20 +1,22 @@
 # INBOX-DEVIN-A
 
-**ON THE BUS — SCENARIO TRACKERS for CERTIFIED U14.** No live prefix steal.
-
-**★ FAST-MERGE ON (4 min · LAW).** Tracker files are docs: PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`.
+**AUDIT RECORD ONLY. DO NOT FIX PRODUCT. DO NOT CODE APPS.**  
+Compile Cascade + Devin evidence into trackers and one **final findings + recommendations** pack. You do not patch the TMS.
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
+**MANDATORY READ:**
+1. `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md` — H01–H22 must appear in the compiled report
+2. `docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md`
+
 **Folder:** `docs/audit/scenario-trackers/certified-u14/`  
-**Pack:** `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`  
-**Template:** `TEMPLATE.md`  
-**Product spec (if in-app tracker gaps):** `docs/specs/scenario-tracker/IH35-SCENARIO-TRACKER-BUILD-SPEC-2026-08-05.md`
+**Template:** `TEMPLATE.md` · `VERTICAL-LEAF-WORKSHEET.md`  
+**Pack:** `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`
 
-NOW: copy `TEMPLATE.md` sections into each `U14-*.md` as Cascade/Devin OUTBOX evidence arrives. Complete every table. Do not invent PASS. If evidence missing, write `UNVERIFIED — waiting seat OUTBOX` and move to the next file that **has** evidence. Never idle.
+NOW: copy OUTBOX evidence into each `U14-*.md`. Every module must have a **CONNECTIVITY-EXTENT** block (proven / missing / dead / silent edges + **GL_POSTS**). Do not invent PASS. Missing = `UNVERIFIED — waiting seat OUTBOX`. When nine CERTIFIED modules have extent reports, write a single **FINAL FINDINGS + RECOMMENDATIONS** (H01–H22 across TMS). Never idle.
 
-FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · Chrome on another seat’s NOW URL · `trigger_deploy`.
+FORBIDDEN: `/lists` `/legal` `/customers` `/drivers` `/fleet` · live hops on Cascade/Devin NOW URLs · `trigger_deploy` · product PRs.
 
-If all nine trackers have a verdict and leftover exists: first unclaimed `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` row **only if** no other seat claimed it.
+Docs-only tracker commits: FAST-MERGE `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` — **markdown only**.
 
-OUTBOX: `Devin-A | ACK | CERTIFIED-U14-TRACKERS | NOW=docs/audit/scenario-trackers/certified-u14/ | GO`
+OUTBOX ACK: `Devin-A | ACK | AUDIT-RECORD | GOLD-WEB | NOW=docs/audit/scenario-trackers/certified-u14/ | GO`
