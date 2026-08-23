@@ -8,6 +8,7 @@ import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   open: boolean;
@@ -139,6 +140,14 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
               },
             }}
           />
+          {programsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load existing training programs"
+              status={0}
+              message={(programsQuery.error as Error)?.message}
+              onRetry={() => void programsQuery.refetch()}
+            />
+          ) : null}
         </div>
         {trainingName === "__custom__" ? (
           <div className="flex flex-col gap-1">
