@@ -13,6 +13,7 @@ const LABEL = "verify-form425c-exhibits-no-stolen-prefix";
 const PAGE = "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx";
 const HOME = "apps/frontend/src/pages/form425c/Form425CHome.tsx";
 const FORM = "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx";
+const PROFILES = "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx";
 const STOLEN_RE =
   /to[=:]\s*"\/(legal|finance|accounting|safety|maintenance|compliance|customers|drivers|fleet|lists|cash-flow|driver-hub)/;
 
@@ -52,7 +53,7 @@ export function collectProblems(src, page = PAGE) {
       problems.push(`${page}: related hops must stay on /425c?tab=history`);
     }
   }
-  if (page === FORM) {
+  if (page === FORM || page === PROFILES) {
     if (!src.includes('to="/425c/exhibits"')) {
       problems.push(`${page}: Exhibit required badge must Link to /425c/exhibits (dead span is leftover FINDING)`);
     }
@@ -117,6 +118,16 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL good form: ${goodForm.join("; ")}`);
     process.exit(1);
   }
+  const badProfiles = collectProblems(`<span>Exhibit required</span>`, PROFILES);
+  const goodProfiles = collectProblems(`<Link to="/425c/exhibits">Exhibit required</Link>`, PROFILES);
+  if (!badProfiles.some((p) => p.includes("Exhibit required badge"))) {
+    console.error(`${LABEL} --selftest FAIL: dead Profiles Exhibit required span must fail`);
+    process.exit(1);
+  }
+  if (goodProfiles.length) {
+    console.error(`${LABEL} --selftest FAIL good profiles: ${goodProfiles.join("; ")}`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
@@ -124,10 +135,12 @@ if (process.argv.includes("--selftest")) {
 const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
 const homeSrc = fs.readFileSync(path.join(ROOT, HOME), "utf8");
 const formSrc = fs.readFileSync(path.join(ROOT, FORM), "utf8");
+const profilesSrc = fs.readFileSync(path.join(ROOT, PROFILES), "utf8");
 const problems = [
   ...collectProblems(src, PAGE),
   ...collectProblems(homeSrc, HOME),
   ...collectProblems(formSrc, FORM),
+  ...collectProblems(profilesSrc, PROFILES),
 ];
 if (problems.length) {
   console.error(`${LABEL}: FAIL\n${problems.map((p) => `  - ${p}`).join("\n")}`);
