@@ -97,7 +97,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     const parsedQuery = listQualificationsQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       // XE-IDOR fix (financial read leak): driver pay rates were keyed by driver_id ONLY. mdata.*
       // RLS is role-scoped, NOT entity-scoped, so a foreign driver id exposed another operating
       // company's negotiated pay rates. Resolve the caller's operating company and JOIN
@@ -108,7 +108,29 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         authUser.uuid,
         parsedQuery.data.operating_company_id
       );
-      if (!companyId) return { qualifications: [] };
+      if (!companyId) return { found: false as const, qualifications: [] };
+
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.operating_company_id = $2::uuid
+                  AND dca.is_active = true
+              )
+            )
+          LIMIT 1
+        `,
+        [parsed.data.id, companyId]
+      );
+      if (parent.rowCount === 0) return { found: false as const, qualifications: [] };
 
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const qualificationsRes = await client.query(
@@ -124,7 +146,6 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             et.code AS equipment_type_code,
             et.name AS equipment_type_name
           FROM mdata.driver_equipment_qualifications dq
-          JOIN mdata.drivers d ON d.id = dq.driver_id AND d.operating_company_id = $2::uuid
           JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
           WHERE dq.driver_id = $1
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
@@ -181,6 +202,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       }
 
       return {
+        found: true as const,
         qualifications: qualificationsRes.rows.map((row) => ({
           id: row.id,
           equipment_type_id: row.equipment_type_id,
@@ -196,6 +218,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         })),
       };
     });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { qualifications: result.qualifications };
   });
 
   app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
