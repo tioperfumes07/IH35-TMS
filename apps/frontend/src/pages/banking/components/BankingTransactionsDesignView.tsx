@@ -29,7 +29,7 @@ import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -1115,11 +1115,13 @@ export function BankingTransactionsDesignView({
                         label={entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer")}
                       />
                     ) : null}
+                    {/* BANK-F-MATCHED-EXPENSE-EMPTY-NUMBER: TEST/TMS expenses often have null
+                        expense_number; entityLabel tombstoned a live matched row as "not visible". */}
                     {tx.matched_expense_id ? (
                       <EntityLink
                         kind="expense"
                         id={tx.matched_expense_id}
-                        label={entityLabel(tx.matched_expense_number, tx.matched_expense_id, "Expense")}
+                        label={visibleDocumentLabel(tx.matched_expense_number, tx.matched_expense_id, "Expense")}
                       />
                     ) : null}
                   </div>
