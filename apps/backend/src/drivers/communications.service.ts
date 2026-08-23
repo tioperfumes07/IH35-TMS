@@ -30,7 +30,17 @@ const COMM_SELECT = `
     m.delivery_ref,
     d.identity_user_id::text AS identity_user_id
   FROM mdata.driver_profile_messages m
-  JOIN mdata.drivers d ON d.id = m.driver_id AND d.operating_company_id = m.operating_company_id
+  JOIN mdata.drivers d ON d.id = m.driver_id
+                       AND (
+                         d.operating_company_id = m.operating_company_id
+                         OR EXISTS (
+                           SELECT 1 FROM mdata.driver_company_authorizations profile_dca
+                           WHERE profile_dca.driver_id = d.id
+                             AND profile_dca.company_id = m.operating_company_id
+                             AND profile_dca.is_authorized = true
+                             AND profile_dca.deactivated_at IS NULL
+                         )
+                       )
 `;
 
 function mapEntry(row: Record<string, unknown>): DriverCommEntry {
