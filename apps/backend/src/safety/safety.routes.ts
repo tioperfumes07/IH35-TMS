@@ -423,6 +423,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                )
              )
             WHERE tr.operating_company_id = $1::uuid
+              AND tr.voided_at IS NULL
               ${driverFilter}
             ORDER BY tr.completed_at DESC
             LIMIT 500
