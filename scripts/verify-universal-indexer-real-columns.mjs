@@ -24,6 +24,8 @@ import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SVC = "apps/backend/src/search/universal/indexer.service.ts";
+const JOB = "apps/backend/src/jobs/search-indexer-incremental.ts";
+const MIGRATION = "db/migrations/202613130000_srch_f6231_company_scoped_universal_index_shared_drivers.sql";
 const LABEL = "verify-universal-indexer-real-columns";
 
 /** Columns that do NOT exist on mdata.drivers (prod-verified) — selecting one is a parse-time failure. */
@@ -68,8 +70,51 @@ export function auditIndexer(src) {
   return problems;
 }
 
+function requirePattern(problems, src, pattern, message) {
+  if (!pattern.test(stripComments(src))) problems.push(message);
+}
+
+export function auditCompanyScope({ indexer, job, migration }) {
+  const problems = [];
+  requirePattern(
+    problems,
+    migration,
+    /UNIQUE\s*\(\s*operating_company_id\s*,\s*entity_type\s*,\s*entity_uuid\s*\)/i,
+    `${MIGRATION}: universal-search identity must include operating_company_id so one shared driver can be indexed for multiple companies.`
+  );
+  requirePattern(
+    problems,
+    indexer,
+    /ON\s+CONFLICT\s*\(\s*operating_company_id\s*,\s*entity_type\s*,\s*entity_uuid\s*\)/i,
+    `${SVC}: upsert conflict identity must be company-scoped.`
+  );
+  requirePattern(
+    problems,
+    indexer,
+    /d\.operating_company_id\s*=\s*\$1::uuid\s+OR\s+EXISTS\s*\([\s\S]*?driver_company_authorizations\s+universal_driver_dca[\s\S]*?universal_driver_dca\.driver_id\s*=\s*d\.id[\s\S]*?universal_driver_dca\.company_id\s*=\s*\$1::uuid[\s\S]*?universal_driver_dca\.is_authorized\s*=\s*true[\s\S]*?universal_driver_dca\.deactivated_at\s+IS\s+NULL/i,
+    `${SVC}: driver indexing must include active company-authorized shared drivers as well as home-company drivers.`
+  );
+  requirePattern(
+    problems,
+    indexer,
+    /DELETE\s+FROM\s+search\.universal_index\s+ui[\s\S]*?ui\.operating_company_id\s*=\s*\$1::uuid[\s\S]*?ui\.entity_type\s*=\s*'driver'[\s\S]*?driver_company_authorizations\s+universal_driver_cleanup_dca[\s\S]*?universal_driver_cleanup_dca\.is_authorized\s*=\s*true[\s\S]*?universal_driver_cleanup_dca\.deactivated_at\s+IS\s+NULL/i,
+    `${SVC}: the derived driver index must prune selected-company rows after authorization or active status is revoked.`
+  );
+  for (const [pattern, source] of [
+    [/FROM\s+mdata\.loads/i, "loads"],
+    [/FROM\s+mdata\.drivers[\s\S]*?deactivated_at\s+IS\s+NULL/i, "active driver home companies"],
+    [/FROM\s+mdata\.driver_company_authorizations[\s\S]*?is_authorized\s*=\s*true[\s\S]*?deactivated_at\s+IS\s+NULL/i, "active driver authorization companies"],
+  ]) {
+    requirePattern(problems, job, pattern, `${JOB}: incremental company discovery must include ${source}.`);
+  }
+  return problems;
+}
+
 function auditTree() {
-  return auditIndexer(readFileSync(join(ROOT, SVC), "utf8"));
+  const indexer = readFileSync(join(ROOT, SVC), "utf8");
+  const job = readFileSync(join(ROOT, JOB), "utf8");
+  const migration = readFileSync(join(ROOT, MIGRATION), "utf8");
+  return [...auditIndexer(indexer), ...auditCompanyScope({ indexer, job, migration })];
 }
 
 function selftest() {
@@ -84,11 +129,26 @@ function selftest() {
     failures.push("case4 FAIL — indexing passport_number was NOT caught");
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case5 FAIL — real source flagged: ${tree.join(" | ")}`);
+  const realIndexer = readFileSync(join(ROOT, SVC), "utf8");
+  const realJob = readFileSync(join(ROOT, JOB), "utf8");
+  const realMigration = readFileSync(join(ROOT, MIGRATION), "utf8");
+  const cases = [
+    ["case6", { indexer: realIndexer, job: realJob, migration: realMigration.replace("operating_company_id, entity_type, entity_uuid", "entity_type, entity_uuid") }],
+    ["case7", { indexer: realIndexer.replace("ON CONFLICT (operating_company_id, entity_type, entity_uuid)", "ON CONFLICT (entity_type, entity_uuid)"), job: realJob, migration: realMigration }],
+    ["case8", { indexer: realIndexer.replace("universal_driver_dca.is_authorized = true", "universal_driver_dca.is_authorized = false"), job: realJob, migration: realMigration }],
+    ["case9", { indexer: realIndexer.replace("DELETE FROM search.universal_index ui", "SELECT * FROM search.universal_index ui"), job: realJob, migration: realMigration }],
+    ["case10", { indexer: realIndexer, job: realJob.replace("FROM mdata.loads", "FROM mdata.not_loads"), migration: realMigration }],
+    ["case11", { indexer: realIndexer, job: realJob.replace("FROM mdata.drivers", "FROM mdata.not_drivers"), migration: realMigration }],
+    ["case12", { indexer: realIndexer, job: realJob.replace("FROM mdata.driver_company_authorizations", "FROM mdata.not_driver_company_authorizations"), migration: realMigration }],
+  ];
+  for (const [name, fixture] of cases) {
+    if (auditCompanyScope(fixture).length === 0) failures.push(`${name} FAIL — planted company-scope defect was NOT caught`);
+  }
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — phantom column caught, correct column clean, CDL and passport indexing caught`);
+  console.log(`${LABEL}: selftest PASS — 12/12 planted column, privacy, company-scope, eligibility, cleanup, and discovery defects caught`);
 }
 
 function main() {
@@ -98,7 +158,7 @@ function main() {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — the driver indexer selects real columns and no government identifier`);
+  console.log(`${LABEL} OK — real/private-safe columns, company-scoped identity, shared-driver eligibility, cleanup, and company discovery are ratcheted`);
 }
 
 main();

@@ -28,8 +28,7 @@ export async function indexEntity(client: DbClient, input: IndexEntityInput): Pr
         to_tsvector('english', $5),
         $6, $7, $8, NOW()
       )
-      ON CONFLICT (entity_type, entity_uuid) DO UPDATE SET
-        operating_company_id = EXCLUDED.operating_company_id,
+      ON CONFLICT (operating_company_id, entity_type, entity_uuid) DO UPDATE SET
         display_text = EXCLUDED.display_text,
         search_text = EXCLUDED.search_text,
         secondary_text = EXCLUDED.secondary_text,
@@ -93,9 +92,18 @@ export async function indexDriversForCompany(client: DbClient, operatingCompanyI
              -- numbers into a universal search index that any authorised user can query.
              COALESCE(d.employee_id_display, '') AS secondary_text
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations universal_driver_dca
+                WHERE universal_driver_dca.driver_id = d.id
+                  AND universal_driver_dca.company_id = $1::uuid
+                  AND universal_driver_dca.is_authorized = true
+                  AND universal_driver_dca.deactivated_at IS NULL
+              )
+            )
         AND d.deactivated_at IS NULL
-      LIMIT 5000
     `,
     [operatingCompanyId]
   );
@@ -112,5 +120,34 @@ export async function indexDriversForCompany(client: DbClient, operatingCompanyI
       icon: "user",
     });
   }
+
+  // The index is derived data. Remove only selected-company driver rows that no longer have a
+  // home-company or active-authorization path, after successful upserts so a transient read/write
+  // failure cannot blank the company's Cmd-K driver results first.
+  await client.query(
+    `
+      DELETE FROM search.universal_index ui
+      WHERE ui.operating_company_id = $1::uuid
+        AND ui.entity_type = 'driver'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = ui.entity_uuid
+            AND d.deactivated_at IS NULL
+            AND (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations universal_driver_cleanup_dca
+                WHERE universal_driver_cleanup_dca.driver_id = d.id
+                  AND universal_driver_cleanup_dca.company_id = $1::uuid
+                  AND universal_driver_cleanup_dca.is_authorized = true
+                  AND universal_driver_cleanup_dca.deactivated_at IS NULL
+              )
+            )
+        )
+    `,
+    [operatingCompanyId]
+  );
   return res.rows.length;
 }
