@@ -137,8 +137,10 @@ export type DriverProfileAggregate = {
   medical_card: Record<string, unknown>;
   drug_program: Record<string, unknown>;
   hos: Record<string, unknown> | null;
+  hos_unavailable?: boolean;
   current_assignment: Record<string, unknown>;
   performance_scorecard?: Record<string, unknown> | null;
+  performance_scorecard_unavailable?: boolean;
   settlements?: Record<string, unknown>;
   training_records?: Array<Record<string, unknown>>;
   border_credentials?: Record<string, unknown>;
@@ -335,7 +337,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <DrugProgramSection drug={aggregate.drug_program} />
       </div>
       <div data-testid="dp-section-5-hos">
-        <HOSStatusSection hos={hos} />
+        <HOSStatusSection hos={hos} unavailable={aggregate.hos_unavailable === true} />
         <EntityLink
           kind="compliance_hos_driver"
           id={id}
@@ -368,7 +370,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       <DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />
 
       <div data-testid="dp-section-7-performance">
-        <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
+        <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} unavailable={aggregate.performance_scorecard_unavailable === true} />
       </div>
       <div data-testid="dp-section-late-arrival">
         <DriverLateArrivalCard driverId={id} operatingCompanyId={companyId} />

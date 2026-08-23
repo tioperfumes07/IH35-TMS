@@ -166,6 +166,7 @@ export async function buildDriverAggregate(
   };
 
   let hos: Record<string, unknown> | null = null;
+  let hos_unavailable = false;
   try {
     const clocks = await getCurrentClocks(client, operatingCompanyId, driverId);
     const latestRes = await client.query<{ duty_status: string; started_at: string }>(
@@ -219,6 +220,7 @@ export async function buildDriverAggregate(
     }
   } catch {
     hos = null;
+    hos_unavailable = true;
   }
 
   const defaultTruckRes = await client.query(
@@ -274,6 +276,7 @@ export async function buildDriverAggregate(
   );
 
   let performance_scorecard: Record<string, unknown> | null = null;
+  let performance_scorecard_unavailable = false;
   try {
     const perfRes = await withSavepoint(
       client,
@@ -361,6 +364,7 @@ export async function buildDriverAggregate(
     }
   } catch {
     performance_scorecard = null;
+    performance_scorecard_unavailable = true;
   }
 
   const settlementsRes = await withSavepoint(
@@ -563,6 +567,7 @@ export async function buildDriverAggregate(
     medical_card,
     drug_program,
     hos,
+    hos_unavailable,
     current_assignment: {
       default_truck: mapTruck(defaultTruckRes.rows[0]),
       currently_driving_truck: mapTruck(currentTruckRes.rows[0], {
@@ -571,6 +576,7 @@ export async function buildDriverAggregate(
       current_load: loadRes.rows[0] ?? null,
     },
     performance_scorecard,
+    performance_scorecard_unavailable,
     settlements,
     training_records,
     border_credentials,
