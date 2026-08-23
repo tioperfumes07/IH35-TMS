@@ -1,8 +1,13 @@
 {
-  "4481": {
+  "4485": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
     "purpose": "verify-customers-search-count-query-params"
+  },
+  "4481": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-policy-claims-error-state"
   },
   "4477": {
     "claimed_at": "2026-08-23",
@@ -5533,5 +5538,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1247
+  "total_claimed": 1248
 }
