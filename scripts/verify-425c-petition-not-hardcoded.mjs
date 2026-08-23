@@ -64,6 +64,24 @@ export function checkHomeUsesResolver(src) {
   return offenders;
 }
 
+/** Profiles Save must persist petition_date. Hardcoding petitionDate: "" on GET hydrate wipes Save Defaults. */
+export function checkProfilePersistsPetitionDate(homeSrc, routeSrc) {
+  const offenders = [];
+  if (/merged\[row\.company_key\]\s*=\s*\{[^}]*petitionDate:\s*""/s.test(homeSrc)) {
+    offenders.push(`${HOME_FILE}: profile hydrate must read row.petition_date — never petitionDate: ""`);
+  }
+  if (!/row\.petition_date/.test(homeSrc)) {
+    offenders.push(`${HOME_FILE}: profile hydrate must map row.petition_date`);
+  }
+  if (!/petition_date:\s*\/\^\\d\{4\}/.test(homeSrc) && !/petition_date:/.test(homeSrc)) {
+    offenders.push(`${HOME_FILE}: Save Defaults upsert must send petition_date`);
+  }
+  if (!/INSERT INTO catalogs\.form_425c_company_profiles[\s\S]*petition_date/i.test(routeSrc)) {
+    offenders.push(`${BACKEND_ROUTE}: profile upsert INSERT must include petition_date`);
+  }
+  return offenders;
+}
+
 export function run() {
   const offenders = [];
   for (const abs of listSourceFiles(path.join(repoRoot, FRONTEND_DIR))) {
@@ -71,8 +89,10 @@ export function run() {
     offenders.push(...checkNoHardcodedLiteral(rel, fs.readFileSync(abs, "utf8")));
   }
   const homeSrc = fs.readFileSync(path.join(repoRoot, HOME_FILE), "utf8");
+  const routeSrc = fs.readFileSync(path.join(repoRoot, BACKEND_ROUTE), "utf8");
   offenders.push(...checkHomeUsesResolver(homeSrc));
-  offenders.push(...checkNoHardcodedLiteral(BACKEND_ROUTE, fs.readFileSync(path.join(repoRoot, BACKEND_ROUTE), "utf8")));
+  offenders.push(...checkNoHardcodedLiteral(BACKEND_ROUTE, routeSrc));
+  offenders.push(...checkProfilePersistsPetitionDate(homeSrc, routeSrc));
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -90,13 +110,20 @@ if (process.argv.includes("--selftest")) {
   const goodCreatePasses = checkNoHardcodedLiteral("x.tsx", goodCreate).length === 0;
   const goodHomePasses = checkHomeUsesResolver(goodHome).length === 0;
   const badHomeFails = checkHomeUsesResolver(badHome).length > 0;
+  const wipeHydrate =
+    'merged[row.company_key] = {\n          name: row.company_name,\n          petitionDate: "",\n        };';
+  const persistHydrate =
+    'merged[row.company_key] = {\n          petitionDate: String(row.petition_date ?? "").slice(0, 10),\n        };\n        petition_date: profiles[activeCompany].petitionDate,';
+  const persistInsert = "INSERT INTO catalogs.form_425c_company_profiles (\n            petition_date,\n          )";
+  const wipeFails = checkProfilePersistsPetitionDate(wipeHydrate, "INSERT INTO catalogs.form_425c_company_profiles (company_name)").length > 0;
+  const persistPasses = checkProfilePersistsPetitionDate(persistHydrate, persistInsert).length === 0;
 
-  if (badCreateFails && badAssignFails && goodCreatePasses && goodHomePasses && badHomeFails) {
+  if (badCreateFails && badAssignFails && goodCreatePasses && goodHomePasses && badHomeFails && wipeFails && persistPasses) {
     console.log("verify:425c-petition-not-hardcoded selftest OK");
     process.exit(0);
   }
   console.error("verify:425c-petition-not-hardcoded selftest FAILED", {
-    badCreateFails, badAssignFails, goodCreatePasses, goodHomePasses, badHomeFails,
+    badCreateFails, badAssignFails, goodCreatePasses, goodHomePasses, badHomeFails, wipeFails, persistPasses,
   });
   process.exit(1);
 }
