@@ -17,7 +17,8 @@ function audit(s) {
   const failures = [];
   if (!/DriverPickerWithCreate/.test(s.background) || !/driver_id: selectedDriverId/.test(s.background)) failures.push("background-check creator driver FK missing");
   if (!/DriverPickerWithCreate/.test(s.medical) || !/driver_id: selectedDriverId/.test(s.medical)) failures.push("medical-card creator driver FK missing");
-  if (!/bc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.backgroundRoute) || !/d\.operating_company_id = bc\.operating_company_id/.test(s.backgroundRoute)) failures.push("background-check exact scoped reverse missing");
+  if (!/bc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.backgroundRoute) || !/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(s.backgroundRoute) || !/label_dca\.company_id = bc\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true/.test(s.backgroundRoute)) failures.push("background-check exact scoped authorized reverse missing");
+  if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(s.backgroundRoute)) failures.push("background-check invalid parent must not render as true empty");
   if (!/mc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.medicalRoute) || !/d\.operating_company_id = mc\.operating_company_id/.test(s.medicalRoute)) failures.push("medical-card exact scoped reverse missing");
   if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(s.background) || !/query\.isError/.test(s.background) || !/No background checks found/.test(s.background)) failures.push("background-check reverse states missing");
   if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(s.medical) || !/query\.isError/.test(s.medical) || !/No medical cards found/.test(s.medical)) failures.push("medical-card reverse states missing");
@@ -35,6 +36,9 @@ if (process.argv.includes("--selftest")) {
     ["medical-picker", "medical", /DriverPickerWithCreate/g, "MissingDriverPicker"],
     ["medical-payload", "medical", /driver_id: selectedDriverId/, "driver_id: ''"],
     ["background-filter", "backgroundRoute", /bc\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["background-parent-auth", "backgroundRoute", /dca\.is_authorized = true/, "TRUE"],
+    ["background-label-auth", "backgroundRoute", /label_dca\.is_authorized = true/, "TRUE"],
+    ["background-parent-404", "backgroundRoute", /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)"],
     ["medical-filter", "medicalRoute", /mc\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["detail-medical", "detail", /MedicalCardsHistorySection/g, "MissingMedicalCards"],
     ["detail-background", "detail", /BackgroundChecksSection/g, "MissingBackgroundChecks"],

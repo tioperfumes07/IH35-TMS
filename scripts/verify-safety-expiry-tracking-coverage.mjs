@@ -82,7 +82,7 @@ function selftest() {
     const mutations = [
       [REL.background, "d.operating_company_id = bc.operating_company_id", "TRUE"],
       [REL.background, "bc.driver_id = $${values.length}::uuid", "TRUE"],
-      [REL.background, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.background, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
       [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string)", "listSafetyBackgroundChecks(companyId: string)"],
       [REL.section, 'dataField="background-check-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<BackgroundChecksSection", "<MissingBackgroundChecksSection"],
@@ -95,9 +95,9 @@ function selftest() {
       [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
       [REL.training, 'app.post("/api/v1/safety/training-records", RL_WRITE', 'app.post("/api/v1/safety/training-records", {}'],
-      [REL.training, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.training, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
       [REL.dq, 'app.post("/api/v1/safety/driver-qualification/items", RL_WRITE', 'app.post("/api/v1/safety/driver-qualification/items", {}'],
-      [REL.dq, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.dq, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
