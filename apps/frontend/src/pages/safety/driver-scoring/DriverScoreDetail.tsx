@@ -222,40 +222,53 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
           </div>
         </div>
         <div className="divide-y divide-slate-100 text-xs">
-          {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
-            <div key={event.id} className="px-3 py-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
-                  {event.unit_id ? (
-                    <EntityLink
-                      kind="unit"
-                      id={String(event.unit_id)}
-                      label={entityLabel(event.unit_number, event.unit_id, "Unit")}
-                    />
-                  ) : (
-                    entityLabel(event.unit_number, null, "Unit")
-                  )}{" "}
-                  · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
-                </span>
-                <button
-                  type="button"
-                  className="text-slate-700 underline"
-                  onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
-                >
-                  {expandedEventId === event.id ? "Hide dashcam" : "View dashcam"}
-                </button>
-              </div>
-              {expandedEventId === event.id ? (
-                <div className="mt-2">
-                  <HarshEventDetail harshEventId={event.id} />
-                </div>
-              ) : null}
+          {eventsQuery.isError ? (
+            <div className="px-3 py-2">
+              <ListErrorState
+                title="Couldn't load harsh events"
+                status={0}
+                message={(eventsQuery.error as Error)?.message}
+                onRetry={() => void eventsQuery.refetch()}
+              />
             </div>
-          ))}
-          {(eventsQuery.data?.events ?? []).length === 0 ? (
-            <div className="px-3 py-2 text-slate-500">No harsh events for this driver in period.</div>
-          ) : null}
+          ) : (
+            <>
+              {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
+                <div key={event.id} className="px-3 py-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
+                      {event.unit_id ? (
+                        <EntityLink
+                          kind="unit"
+                          id={String(event.unit_id)}
+                          label={entityLabel(event.unit_number, event.unit_id, "Unit")}
+                        />
+                      ) : (
+                        entityLabel(event.unit_number, null, "Unit")
+                      )}{" "}
+                      · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-slate-700 underline"
+                      onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
+                    >
+                      {expandedEventId === event.id ? "Hide dashcam" : "View dashcam"}
+                    </button>
+                  </div>
+                  {expandedEventId === event.id ? (
+                    <div className="mt-2">
+                      <HarshEventDetail harshEventId={event.id} />
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+              {(eventsQuery.data?.events ?? []).length === 0 ? (
+                <div className="px-3 py-2 text-slate-500">No harsh events for this driver in period.</div>
+              ) : null}
+            </>
+          )}
         </div>
       </section>
     </div>
