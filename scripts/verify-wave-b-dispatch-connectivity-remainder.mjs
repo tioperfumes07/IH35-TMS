@@ -2,7 +2,7 @@
 /**
  * WAVE-B dispatch connectivity remainder — hops, queues, docs, settings mounts + drills.
  *
- * @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(secondary\\.(settlements|pre_settlements)$|queues\\.(border|alerts|live_map|map|trip_pairing|factoring|factoring_queue)$|planning\\.(templates|unassigned)$|docs\\.(pod|ocr|equipment_transfers)$|settings\\.(dispatch|notify)$|misc\\.(geofence_history|chat|layover)$)","task":"WAVE-B-dispatch-connectivity-remainder","vertical":"column-wave"}
+ * @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(secondary\\.(settlements|pre_settlements)$|queues\\.(border|alerts|live_map|map|trip_pairing|factoring|factoring_queue)$|planning\\.(templates|unassigned)$|docs\\.(pod|ocr|equipment_transfers)$|settings\\.(dispatch|notify)$|misc\\.(geofence_history|chat|layover)$|load\\.detail$)","task":"WAVE-B-dispatch-connectivity-remainder","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-b-dispatch-connectivity-remainder.mjs --selftest
  */
@@ -39,6 +39,8 @@ const CHECKS = [
   { name: "dispatch settings page exists", file: "apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx", pattern: /export function DispatchSettingsPage|function DispatchSettingsPage/ },
   { name: "load template library exists", file: "apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx", pattern: /export function LoadTemplateLibrary|function LoadTemplateLibrary/ },
   { name: "dispatch sheet resolves canonical stop location label", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /loc\.location_name[\s\S]{0,180}LEFT JOIN mdata\.locations loc[\s\S]{0,180}loc\.operating_company_id = \$2::uuid/ },
+  { name: "dispatch sheet primary driver accepts an active company authorization", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /driver_company_authorizations dispatch_sheet_primary_dca[\s\S]{0,320}dispatch_sheet_primary_dca\.company_id = l\.operating_company_id[\s\S]{0,180}dispatch_sheet_primary_dca\.is_authorized = true[\s\S]{0,180}dispatch_sheet_primary_dca\.deactivated_at IS NULL/ },
+  { name: "dispatch sheet secondary driver accepts an active company authorization", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /driver_company_authorizations dispatch_sheet_secondary_dca[\s\S]{0,320}dispatch_sheet_secondary_dca\.company_id = \$2::uuid[\s\S]{0,180}dispatch_sheet_secondary_dca\.is_authorized = true[\s\S]{0,180}dispatch_sheet_secondary_dca\.deactivated_at IS NULL/ },
 ];
 
 function checkAll(readFile) {

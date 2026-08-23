@@ -69,7 +69,13 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
           LEFT JOIN identity.users disp ON disp.id = l.dispatcher_user_id
           LEFT JOIN identity.users book ON book.id = l.booked_by_user_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.operating_company_id = l.operating_company_id
+                                   AND (d.operating_company_id = l.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations dispatch_sheet_primary_dca
+                                     WHERE dispatch_sheet_primary_dca.driver_id = d.id
+                                       AND dispatch_sheet_primary_dca.company_id = l.operating_company_id
+                                       AND dispatch_sheet_primary_dca.is_authorized = true
+                                       AND dispatch_sheet_primary_dca.deactivated_at IS NULL
+                                   ))
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.id = $1
@@ -84,7 +90,17 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
       let secondaryIdentity: string | null = null;
       if (load.assigned_secondary_driver_id) {
         const secondaryDriverRes = await client.query(
-          `SELECT identity_user_id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          `SELECT d.identity_user_id
+             FROM mdata.drivers d
+            WHERE d.id = $1
+              AND (d.operating_company_id = $2::uuid OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dispatch_sheet_secondary_dca
+                 WHERE dispatch_sheet_secondary_dca.driver_id = d.id
+                   AND dispatch_sheet_secondary_dca.company_id = $2::uuid
+                   AND dispatch_sheet_secondary_dca.is_authorized = true
+                   AND dispatch_sheet_secondary_dca.deactivated_at IS NULL
+              ))
+            LIMIT 1`,
           [load.assigned_secondary_driver_id, query.data.operating_company_id]
         );
         secondaryIdentity = (secondaryDriverRes.rows[0]?.identity_user_id as string | undefined | null) ?? null;
