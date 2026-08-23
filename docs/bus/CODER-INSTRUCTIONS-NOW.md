@@ -6,7 +6,7 @@ U14 exclusive unchanged. One seat, one current module.
 
 | Seat | Port | Current | GO |
 |------|------|---------|-----|
-| Cursor | 9222 | vendors | Chrome leftover unique on `/vendors`. Dispatch CERTIFIED `39472f2` omit. Banking CERTIFIED `36e51bb` omit. Then maint |
+| Cursor | 9222 | maintenance | Chrome leftover unique on `/maintenance`. Vendors CERTIFIED `627d7d0` omit. Dispatch CERTIFIED `39472f2` omit. Banking CERTIFIED `36e51bb` omit. Then safety |
 | CC-1 | 9223 | accounting | Chrome leftover unique `/accounting` 1–12. Then factoring. Do not remake TESTs |
 | CC-2 | 9224 | settlements omit | ACK. REJECT watching. No CDP. Next unique Codex reverse SQL |
 | CC-3 | 9225 | lists | Chrome `/lists` 1–12. Legal ≠ CERTIFIED. No `trigger_deploy` |
