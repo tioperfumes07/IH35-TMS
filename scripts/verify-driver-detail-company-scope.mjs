@@ -31,7 +31,8 @@ function verify(source) {
   const authRouteEnd = source.profileBackend.indexOf('app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations"', authRouteStart);
   const authHandler = authRouteStart >= 0 && authRouteEnd > authRouteStart ? source.profileBackend.slice(authRouteStart, authRouteEnd) : "";
   need(/parsedQuery\.data\.operating_company_id/.test(authHandler), "company-authorization backend must resolve the selected company");
-  need(/JOIN mdata\.drivers d[\s\S]{0,120}d\.operating_company_id = \$2::uuid/.test(authHandler), "company-authorization backend must gate the parent driver to selected company");
+  need(/FROM mdata\.drivers d[\s\S]{0,600}selected_dca\.company_id = \$2::uuid[\s\S]{0,160}selected_dca\.is_authorized = true[\s\S]{0,160}selected_dca\.deactivated_at IS NULL/.test(authHandler), "company-authorization backend must validate owner or canonical active authorization for the selected company");
+  need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(authHandler), "company-authorization backend must distinguish a missing/unauthorized driver from a true empty relationship list");
   const qualificationsStart = source.profileBackend.indexOf('app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"');
   const qualificationsEnd = source.profileBackend.indexOf('app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"', qualificationsStart);
   const qualificationsHandler = qualificationsStart >= 0 && qualificationsEnd > qualificationsStart ? source.profileBackend.slice(qualificationsStart, qualificationsEnd) : "";
@@ -105,11 +106,13 @@ if (process.argv.includes("--selftest")) {
       key: "profileBackend",
       text: replaceOrFail(
         source.profileBackend,
-        /(\/api\/v1\/mdata\/drivers\/:id\/company-authorizations[\s\S]{0,2200})d\.operating_company_id = \$2::uuid/,
-        "$1TRUE",
-        "company authorization parent driver scope"
+        /selected_dca\.company_id = \$2::uuid/,
+        "TRUE",
+        "company authorization selected-company scope"
       ),
     },
+    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /selected_dca\.is_authorized = true/, "TRUE", "company authorization active flag") },
+    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /selected_dca\.deactivated_at IS NULL/, "TRUE", "company authorization non-deactivated relationship") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.is_authorized = true/, "TRUE", "qualification active company authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.deactivated_at IS NULL/, "TRUE", "qualification non-deactivated authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "qualification missing parent response") },
