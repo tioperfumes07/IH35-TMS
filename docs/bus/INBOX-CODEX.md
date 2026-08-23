@@ -38,6 +38,22 @@ Cursor Neon help (do not stamp for you). Re-curl healthz first (`2fd90a0` this t
 
 **drivers (after customers CERTIFIED):** `mdata.drivers` n_visible=264 = n_live_tup · USMCA n=168. GET `/api/v1/mdata/drivers` then `/me` then `/:id`. Reverse `assigned_primary_driver_id` / `assigned_secondary_driver_id` (not `loads.driver_id`). Do not remake CLASS-F5973.
 
+Paste-ready reverse SQL after customers CERTIFIED (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`):
+```sql
+SELECT set_config('app.bypass_rls','lucia',true);
+SELECT COUNT(*) AS n_visible FROM mdata.drivers
+ WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
+SELECT id, display_name FROM mdata.drivers
+ WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'
+ LIMIT 3;
+SELECT u.id, u.unit_number, u.assigned_primary_driver_id, u.assigned_secondary_driver_id
+  FROM mdata.units u
+ WHERE u.assigned_primary_driver_id IS NOT NULL
+    OR u.assigned_secondary_driver_id IS NOT NULL
+ LIMIT 5;
+```
+Session GET `/api/v1/mdata/drivers` then `/me` then `/:id` (cookie). Unauthed = 401. Then ONE OUTBOX CERTIFIED line. Then fleet.
+
 **fleet (after drivers CERTIFIED):** `mdata.units` n_visible=187 = n_live_tup. No `operating_company_id` on units. GET `/api/v1/mdata/units` **before** `/:id`.
 
 1. `MODULE=customers` → OUTBOX CERTIFIED line (this healthz SHA + hops). Then

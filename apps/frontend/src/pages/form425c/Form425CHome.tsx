@@ -202,14 +202,17 @@ export function Form425CHome() {
   }, [reportsQuery.data?.reports]);
 
   useEffect(() => {
-    if (!detailQuery.data?.report) {
-      const defaults = profiles[activeCompany].defaultAnswers;
-      setForm((prev) => ({ ...emptyForm(), answers: { ...defaults }, projectionOverrideReason: prev.projectionOverrideReason }));
+    if (detailQuery.data?.report) {
+      setForm(toFormState(detailQuery.data.report as Record<string, unknown>, profiles[activeCompany].defaultAnswers));
+      setDirty(false);
       return;
     }
-    setForm(toFormState(detailQuery.data.report as Record<string, unknown>, profiles[activeCompany].defaultAnswers));
-    setDirty(false);
-  }, [detailQuery.data?.report, profiles, activeCompany]);
+    // Save/list invalidate briefly drops detail + selectedReport. Wiping here disabled
+    // Save Draft / Import from Banking / Generate / Mark Filed with no toast (leftover silent).
+    if (detailQuery.isFetching || selectedReport?.id) return;
+    const defaults = profiles[activeCompany].defaultAnswers;
+    setForm((prev) => ({ ...emptyForm(), answers: { ...defaults }, projectionOverrideReason: prev.projectionOverrideReason }));
+  }, [detailQuery.data?.report, detailQuery.isFetching, selectedReport?.id, profiles, activeCompany]);
 
   const saveProfileMutation = useMutation({
     mutationFn: async () =>
@@ -257,7 +260,9 @@ export function Form425CHome() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!form.reportId) return;
+      if (!form.reportId) {
+        throw new Error("Create / Load Draft before saving");
+      }
       await patchForm425CReport(form.reportId, companyId, {
         operating_company_id: companyId,
         part1_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) <= 9)),
@@ -421,7 +426,15 @@ export function Form425CHome() {
             createMutation.mutate();
           }}
           onImportBanking={() => importMutation.mutate()}
-          onSave={() => saveMutation.mutate()}
+          onSave={() => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before saving", "error");
+              return;
+            }
+            saveMutation.mutate(undefined, {
+              onSuccess: () => pushToast("Draft saved", "success"),
+            });
+          }}
           onGeneratePdf={() => generateMutation.mutate()}
           onMarkFiled={() => markFiledMutation.mutate()}
           loading={importMutation.isPending || saveMutation.isPending}
@@ -439,14 +452,17 @@ export function Form425CHome() {
           loading={reportsQuery.isLoading}
           onOpen={(id) => {
             const row = historyReports.find((r) => r.id === id);
-            if (row?.reporting_month) {
-              const d = new Date(row.reporting_month);
-              if (!Number.isNaN(d.getTime())) {
-                setYear(d.getUTCFullYear());
-                setMonth(d.getUTCMonth());
-              }
+            if (!row?.reporting_month) {
+              pushToast("Could not open that report", "error");
+              return;
+            }
+            const d = new Date(row.reporting_month);
+            if (!Number.isNaN(d.getTime())) {
+              setYear(d.getUTCFullYear());
+              setMonth(d.getUTCMonth());
             }
             setTab("form");
+            pushToast("Opened report in Form 425C", "success");
           }}
           onAmend={(id) => amendMutation.mutate(id)}
         />
