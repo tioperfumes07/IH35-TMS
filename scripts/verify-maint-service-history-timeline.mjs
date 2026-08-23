@@ -40,6 +40,14 @@ function accidentFailureProblems(service) {
   return failures;
 }
 
+function componentFailureProblems(component) {
+  const failures = [];
+  if (!/<ListErrorState[\s\S]{0,180}onRetry=\{\(\) => void timelineQ\.refetch\(\)\}/.test(component)) {
+    failures.push("service timeline failure must retry its exact query");
+  }
+  return failures;
+}
+
 function main() {
   const failures = [];
   const service = read(paths.service);
@@ -61,6 +69,7 @@ function main() {
   if (!service.includes("fuel.fuel_transactions")) failures.push("service must aggregate fuel events");
   if (!service.includes("ARCHIVE-not-DELETE")) failures.push("service must document ARCHIVE-not-DELETE sunset");
   failures.push(...accidentFailureProblems(service));
+  failures.push(...componentFailureProblems(component));
   if ((serviceTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("service-timeline.service.test must include at least 3 vitest cases");
   }
@@ -103,5 +112,9 @@ if (process.argv.includes("--selftest")) {
   if (!failures.includes("accident SQL failures must propagate instead of masquerading as empty history")) {
     fail("selftest inert: catch-to-empty mutation escaped");
   }
-  console.log("verify:maint-service-history-timeline SELFTEST PASS — catch-to-empty mutation rejected");
+  const component = read(paths.component);
+  if (!componentFailureProblems(component.replace("timelineQ.refetch()", "retryRemoved()")).includes("service timeline failure must retry its exact query")) {
+    fail("selftest inert: retry-removal mutation escaped");
+  }
+  console.log("verify:maint-service-history-timeline SELFTEST PASS — catch-to-empty and retry-removal mutations rejected");
 }
