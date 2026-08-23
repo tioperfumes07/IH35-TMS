@@ -62,12 +62,14 @@ function audit(sources) {
     "END AS subject_kind", "END AS subject_label", "maintenance.work_orders",
     "accounting.invoices", "accounting.bills",
     "audit_load.operating_company_id = ${alias}.operating_company_id",
-    "audit_driver.operating_company_id = ${alias}.operating_company_id",
     "audit_wo.operating_company_id = ${alias}.operating_company_id",
     "audit_invoice.operating_company_id = ${alias}.operating_company_id",
     "audit_bill.operating_company_id = ${alias}.operating_company_id",
     "COALESCE(audit_unit.currently_leased_to_company_id, audit_unit.owner_company_id) = ${alias}.operating_company_id",
   ]) if (!routes.includes(token)) failures.push(`resolver contract missing: ${token}`);
+  if (!/FROM mdata\.driver_company_authorizations audit_driver_dca[\s\S]{0,180}audit_driver_dca\.driver_id = audit_driver\.id[\s\S]{0,180}audit_driver_dca\.company_id = \$\{alias\}\.operating_company_id[\s\S]{0,180}audit_driver_dca\.is_authorized = true[\s\S]{0,180}audit_driver_dca\.deactivated_at IS NULL/.test(routes)) {
+    failures.push("audit driver resolver excludes active canonical shared-driver authorization");
+  }
 
   if (!/subject_kind:\s*string\s*\|\s*null/.test(api)) failures.push("API omits subject_kind");
   if (!/subject_label:\s*string\s*\|\s*null/.test(api)) failures.push("API omits subject_label");
@@ -84,6 +86,7 @@ if (process.argv.includes("--selftest")) {
     ["projection-all", { routes: base.routes.replaceAll('auditSubjectProjection("el")', 'missingProjection("el")').replace('auditSubjectProjection("c")', 'missingProjection("c")') }],
     ["joins-all", { routes: base.routes.replaceAll('auditSubjectJoins("el")', 'missingJoins("el")').replace('auditSubjectJoins("c")', 'missingJoins("c")') }],
     ["company-scope", { routes: base.routes.replace("audit_load.operating_company_id = ${alias}.operating_company_id", "TRUE") }],
+    ["shared-driver-authorization", { routes: base.routes.replace("FROM mdata.driver_company_authorizations audit_driver_dca", "FROM removed audit_driver_dca") }],
     ["api-kind", { api: base.api.replace("subject_kind: string | null", "missing_kind: string | null") }],
     ["api-label", { api: base.api.replace("subject_label: string | null", "missing_label: string | null") }],
     ["ui-kind", { page: base.page.replaceAll("row.subject_kind ?? row.subject_type", "row.subject_type") }],
@@ -98,7 +101,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify-a8-audit-reports-section SELFTEST PASS — ${mutations.length}/10 planted regressions caught`);
+  console.log(`verify-a8-audit-reports-section SELFTEST PASS — ${mutations.length}/${mutations.length} planted regressions caught`);
   process.exit(0);
 }
 

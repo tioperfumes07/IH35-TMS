@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6223-AUDIT-REPORTS-NULL-AUTHORIZED-SHARED-DRIVER-SUBJECT-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; registered seven-leaf audit guard + typecheck pending.
+
 - ☐ `DRV-F6222-COMPLAINT-CREATE-VALIDATOR-REJECTS-AUTHORIZED-SHARED-DRIVERS` — Cursor safety write validation lane — OPEN; depends on DRV-F6221; exact dual-role validator filed.
 
 - ☑ `DRV-F6221-COMPLAINTS-GET-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; registered safety driver guard + typecheck pending.
