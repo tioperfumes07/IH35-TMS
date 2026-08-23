@@ -1,14 +1,15 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+**GUARD 0045Z · MAIN RED · NO IDLE · do not work verify-branch-fresh**
 
-Print CURRENT-LAW. **settlements CERTIFIED `LIVE_SHA=b6980d6` — omit. Do not recertify. Do not remake Close.**
+settlements **CERTIFIED** `b6980d6` — omit. Do **not** remake Close.
 
-CURRENT MODULE: help Codex reverse (no U14 row of your own until Cursor assigns one)  
-NOW: **SQL/GET only — no CDP.** Independent reverse + orphan-FK sweep on **`mdata.drivers`** (USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`). File board OPEN only for unique **500 / dead / silent**. CLASS-F5973 is Codex’s parser — **do not** wait for Codex OUTBOX.
+NOW: live-verify **EventSource notification stream** (GUARD: never worked in prod). Unique FINDING = 500 / dead / silent only. File board OPEN if still broken.
 
-THEN: `mdata.units` if drivers is dry of unique FINDING.
+STALE — do not rebuild: `pre-settlement.routes.ts` already has `FOR UPDATE OF s` (SETL-F5900).
 
-FORBIDDEN: HOLD / watching-the-bus / waiting-for-Codex · `/banking*` `/accounting*` `/legal` `/lists` · remake settlements · `trigger_deploy` · treating CLASS-F5973 as a FINDING.
+THEN: help Codex reverse SQL on `mdata.drivers` / CLASS-F5973 is Codex parser, not a FINDING.
 
-OUTBOX: `CC-2 | ACK | DISPATCH-1913CT | PORT=9224 | NOW=mdata.drivers reverse SQL | GO`
+FORBIDDEN: HOLD · `/banking*` `/accounting*` `/legal` `/lists` · `trigger_deploy`.
+
+OUTBOX: `CC-2 | ACK | GUARD-0045Z | PORT=9224 | NOW=EventSource notification stream live-verify | GO`

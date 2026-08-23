@@ -1,16 +1,15 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+**GUARD 0045Z · MAIN RED · NO IDLE · do not work verify-branch-fresh**
 
-Print CURRENT-LAW. Idle = defect. CUST-F5974 **SHIPPED** #14483 @ `060714f86a` (Cursor FAST-MERGE). Do **not** remake it. Do **not** wait on verify-static.
+CUST-F5974 shipped #14483. Do not remake.
 
-CURRENT MODULE: **drivers** reverse (customers hop done)  
-NOW (this minute, in order):
-1. **CLASS-F5973 parser** — `scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs` must credit `@matrix-built` JSON `"leaves":[...]` **and** `leafRe=`. FAST-MERGE. Do not convert 122 files.
-2. Reverse **`mdata.drivers`** SQL/GET. Unique FINDING only. **No CDP. No Chrome.**
+NOW:
+1. CLASS-F5973 **parser** (JSON `"leaves"` + `leafRe=`). FAST-MERGE.
+2. Then `mdata.drivers` reverse SQL/GET. **No CDP.**
 
-THEN: `mdata.units` / fleet.
+Do **not** steal CC-3’s 15 lists verify-step wiring.
 
-FORBIDDEN: occupy 9222–9225 · HOLD · wait for Cursor to merge · remake CUST-F5974.
+FORBIDDEN: Chrome · HOLD · wait on verify-static.
 
-OUTBOX: `Codex | ACK | DISPATCH-1913CT | PORT=9226 | MODULE=drivers | NOW=CLASS-F5973 parser then mdata.drivers | GO`
+OUTBOX: `Codex | ACK | GUARD-0045Z | PORT=9226 | NOW=CLASS-F5973 parser then mdata.drivers | GO`

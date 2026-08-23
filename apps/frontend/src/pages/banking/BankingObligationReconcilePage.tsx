@@ -233,7 +233,7 @@ export function BankingObligationReconcilePage() {
                 draggable
                 onDragStart={() => setDragTxnId(row.id)}
                 onDragEnd={() => setDragTxnId(null)}
-                className="flex cursor-grab gap-2 rounded-sm border border-slate-100 px-2 py-1 hover:bg-slate-50"
+                className="flex cursor-grab gap-2 px-2 py-1 hover:bg-slate-50"
               >
                 <input type="checkbox" checked={selectedTxnIds.has(row.id)} onChange={() => toggleSelect(row.id)} />
                 <div className="flex-1">
@@ -275,9 +275,7 @@ export function BankingObligationReconcilePage() {
             {obligations.map((o) => (
               <div
                 key={`${o.obligation_type}-${o.obligation_id}`}
-                className={`w-full rounded border px-2 py-2 text-left ${
-                  dragTxnId ? "border-slate-300 bg-slate-100/40" : "border-slate-100"
-                }`}
+                className={`w-full px-2 py-2 text-left ${dragTxnId ? "bg-slate-100/40" : ""}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
