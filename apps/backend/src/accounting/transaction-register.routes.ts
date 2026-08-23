@@ -50,6 +50,7 @@ type RegisterRow = {
   status: string | null;
   detail_path: string | null;
   journal_entry_id: string | null;
+  journal_entry_memo: string | null;
   total_count: string;
 };
 
@@ -66,8 +67,11 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          (CASE WHEN bt.is_credit THEN 0 ELSE ABS(bt.amount_cents) END)::bigint AS amount_out_cents,
          COALESCE(bt.status, 'uncategorized') AS status,
          '/banking/transactions?txn_id=' || bt.id::text AS detail_path,
-         -- ACCT-F5982: real column on banking.bank_transactions, no join needed.
-         bt.matched_journal_entry_id::text AS journal_entry_id
+         -- ACCT-F5982: real column on banking.bank_transactions, no join needed. 3029 doesn't apply
+         -- here (this arm never joins accounting.journal_entries), but the memo column must still be
+         -- present to keep every UNION ALL arm's column list aligned.
+         bt.matched_journal_entry_id::text AS journal_entry_id,
+         NULL::text AS journal_entry_memo
     FROM banking.bank_transactions bt
    WHERE bt.operating_company_id = $1::uuid
 
@@ -90,7 +94,8 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/fuel/history?transaction_id=' || ft.id::text AS detail_path,
          -- ACCT-F5982: a raw fuel purchase has no journal_entry_postings source_transaction_type of
          -- its own (fuel flows through 'bill'/'expense' once categorized) — honest NULL, not a gap.
-         NULL::text AS journal_entry_id
+         NULL::text AS journal_entry_id,
+         NULL::text AS journal_entry_memo
     FROM fuel.fuel_transactions ft
     LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
                              AND v.operating_company_id = ft.operating_company_id
@@ -112,12 +117,16 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          -- ACCT-F5982: same source_transaction_type='invoice' resolution invoices.routes.ts already
          -- uses for its own GL panel (Law §9) — most recent posting for this invoice, if any (an
          -- unsent draft invoice correctly resolves NULL, not an invented link).
-         jei.journal_entry_id
+         jei.journal_entry_id,
+         -- 3029 (LV-JE-LABEL-IGNORES-POPULATED-MEMO): accounting.journal_entries has no number/ref
+         -- column, so je.memo IS the JE's human identity — a payload that exposes je.id without it
+         -- renders the honest-but-uninformative "Journal entry - not visible" fallback forever.
+         jei.journal_entry_memo
     FROM accounting.invoices i
     LEFT JOIN mdata.customers c ON c.id = i.customer_id
                                AND c.operating_company_id = i.operating_company_id
     LEFT JOIN LATERAL (
-      SELECT je.id::text AS journal_entry_id
+      SELECT je.id::text AS journal_entry_id, je.memo AS journal_entry_memo
         FROM accounting.journal_entry_postings jep
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
                                            AND je.operating_company_id = jep.operating_company_id
@@ -150,12 +159,14 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/accounting/bills/' || b.id::text AS detail_path,
          -- ACCT-F5982: same source_transaction_type='bill' resolution the bill GL poster itself
          -- claims against (bill-gl.service.ts) — most recent posting for this bill, if any.
-         jeb.journal_entry_id
+         jeb.journal_entry_id,
+         -- 3029: see the invoice arm's identical comment above.
+         jeb.journal_entry_memo
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_uuid
                              AND v.operating_company_id = b.operating_company_id
     LEFT JOIN LATERAL (
-      SELECT je.id::text AS journal_entry_id
+      SELECT je.id::text AS journal_entry_id, je.memo AS journal_entry_memo
         FROM accounting.journal_entry_postings jep
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
                                            AND je.operating_company_id = jep.operating_company_id
@@ -189,7 +200,8 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          -- source_transaction_type of its own — its lines post per deduction/advance/reimbursement
          -- type (driver_advance, driver_reimbursement, etc), never one JE per settlement. Honest
          -- NULL rather than an invented one-to-one link that doesn't exist.
-         NULL::text AS journal_entry_id
+         NULL::text AS journal_entry_id,
+         NULL::text AS journal_entry_memo
     FROM driver_finance.driver_settlements s
     LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                               AND d.operating_company_id = s.operating_company_id
@@ -242,7 +254,7 @@ export async function registerTransactionRegisterRoutes(app: FastifyInstance) {
         WITH reg AS (${TRANSACTION_REGISTER_UNION_SQL})
         SELECT source, id, txn_date::text AS txn_date, description, counterparty, type,
                amount_in_cents::text AS amount_in_cents, amount_out_cents::text AS amount_out_cents,
-               status, detail_path, journal_entry_id,
+               status, detail_path, journal_entry_id, journal_entry_memo,
                count(*) OVER()::text AS total_count
           FROM reg
           ${whereSql}
@@ -267,6 +279,7 @@ export async function registerTransactionRegisterRoutes(app: FastifyInstance) {
           status: r.status,
           detail_path: r.detail_path,
           journal_entry_id: r.journal_entry_id,
+          journal_entry_memo: r.journal_entry_memo,
         })),
         total,
         limit: q.limit,
