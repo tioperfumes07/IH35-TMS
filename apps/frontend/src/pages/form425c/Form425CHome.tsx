@@ -334,7 +334,9 @@ export function Form425CHome() {
     return () => clearTimeout(timer);
   }, [dirty, form.reportId, form, saveMutation]);
 
-  const historyReports = ((reportsQuery.data?.reports ?? []) as HistoryReportRow[]).filter((r) => r.status === "filed");
+  // History is the canonical report list (draft + ready_to_file + filed + amended).
+  // Status narrowing belongs on HistoryTab's filter, never a silent filed-only hide.
+  const historyReports = (reportsQuery.data?.reports ?? []) as HistoryReportRow[];
 
   return (
     <div className="min-h-screen bg-slate-100" data-form425c-page="true">
