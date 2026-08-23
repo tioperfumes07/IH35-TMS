@@ -15,6 +15,8 @@ const VEHICLE_PAGE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const EXPENSE_ROUTES = "apps/backend/src/accounting/expenses.routes.ts";
 const WO_DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const ASSIGNMENT = "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx";
+const REEFER_TELEMETRY = "apps/frontend/src/components/trailer-profile/ReeferTelemetrySection.tsx";
+const DOCUMENTS = "apps/frontend/src/components/trailer-profile/DocumentsSection.tsx";
 const FLEET_MATRIX = "docs/specs/scoreboard/modules/fleet.required.json";
 const BUILT_FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-trailer-profile-sections-complete.mjs";
@@ -56,6 +58,15 @@ function evidenceProblems(source) {
     failures.push("legacy trailer-profile manual feed still paints reverse leaves");
   }
   return failures;
+}
+
+function failureTruthProblems(page, service, reeferTelemetry, documents) {
+  return [
+    [/samsara_telemetry_unavailable = telRes\.unavailable/.test(service) && page.includes("unavailable={aggregate.samsara_telemetry_unavailable === true}"), "telemetry failure must remain distinct from absent telemetry"],
+    [/documents_unavailable = documentsRes\.unavailable/.test(service) && page.includes("unavailable={aggregate.documents_unavailable === true}"), "documents failure must remain distinct from no documents"],
+    [reeferTelemetry.includes("Samsara telemetry could not be loaded.") && reeferTelemetry.includes("!unavailable && telemetry"), "telemetry failure must render visibly without a false linked state"],
+    [documents.includes("Trailer documents could not be loaded.") && documents.includes("unavailable ?"), "documents failure must not render as no documents"],
+  ].filter(([ok]) => !ok).map(([, message]) => message);
 }
 
 export function problems(
@@ -194,6 +205,8 @@ function selftest() {
   const expenseRoutes = fs.readFileSync(path.join(ROOT, EXPENSE_ROUTES), "utf8");
   const woDetail = fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8");
   const assignment = fs.readFileSync(path.join(ROOT, ASSIGNMENT), "utf8");
+  const reeferTelemetry = fs.readFileSync(path.join(ROOT, REEFER_TELEMETRY), "utf8");
+  const documents = fs.readFileSync(path.join(ROOT, DOCUMENTS), "utf8");
   const cases = [
     ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 0],
     ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
@@ -215,6 +228,19 @@ function selftest() {
       console.error(`verify:trailer-profile-sections-complete SELFTEST FAIL: ${name} produced ${count}`);
       process.exit(1);
     }
+  }
+  const truthMutations = [
+    [page.replace("unavailable={aggregate.samsara_telemetry_unavailable === true}", ""), service, reeferTelemetry, documents, "telemetry page flag"],
+    [page, service.replace("samsara_telemetry_unavailable = telRes.unavailable", "samsara_telemetry_unavailable = false"), reeferTelemetry, documents, "telemetry backend flag"],
+    [page, service, reeferTelemetry.replace("Samsara telemetry could not be loaded.", "Telemetry unavailable."), documents, "telemetry failure copy"],
+    [page, service, reeferTelemetry.replace("!unavailable && telemetry", "telemetry"), documents, "telemetry false linked state"],
+    [page.replace("unavailable={aggregate.documents_unavailable === true}", ""), service, reeferTelemetry, documents, "documents page flag"],
+    [page, service.replace("documents_unavailable = documentsRes.unavailable", "documents_unavailable = false"), reeferTelemetry, documents, "documents backend flag"],
+    [page, service, reeferTelemetry, documents.replace("Trailer documents could not be loaded.", "Documents unavailable."), "documents failure copy"],
+  ];
+  if (failureTruthProblems(page, service, reeferTelemetry, documents).length) throw new Error(`failure-truth baseline failed: ${failureTruthProblems(page, service, reeferTelemetry, documents).join("; ")}`);
+  for (const [p, s, r, d, name] of truthMutations) {
+    if (!failureTruthProblems(p, s, r, d).length) throw new Error(`failure-truth mutation survived: ${name}`);
   }
   const evidence = {
     matrix: fs.readFileSync(path.join(ROOT, FLEET_MATRIX), "utf8"),
@@ -248,7 +274,7 @@ function selftest() {
   const feed = JSON.parse(evidence.feed);
   feed.entries.unshift({ task: "P31-BROKEN", guard: SELF, modules: ["fleet"], cols: ["reverse_link"], leafRe: "^unit\\." });
   if (!evidenceProblems({ ...evidence, feed: JSON.stringify(feed) }).length) throw new Error("legacy feed mutation survived");
-  console.log(`verify:trailer-profile-sections-complete SELFTEST PASS — ${cases.length - 1 + EXACT_LEAVES.length + 4 + CORE_CONNECTIVITY.length * 3 + 1} planted defects rejected`);
+  console.log(`verify:trailer-profile-sections-complete SELFTEST PASS — ${cases.length - 1 + EXACT_LEAVES.length + 4 + CORE_CONNECTIVITY.length * 3 + 1 + truthMutations.length} planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -271,6 +297,12 @@ failures.push(...evidenceProblems({
   feed: fs.readFileSync(path.join(ROOT, BUILT_FEED), "utf8"),
   self: fs.readFileSync(path.join(ROOT, SELF), "utf8"),
 }));
+failures.push(...failureTruthProblems(
+  fs.readFileSync(path.join(ROOT, PAGE), "utf8"),
+  fs.readFileSync(path.join(ROOT, SERVICE), "utf8"),
+  fs.readFileSync(path.join(ROOT, REEFER_TELEMETRY), "utf8"),
+  fs.readFileSync(path.join(ROOT, DOCUMENTS), "utf8"),
+));
 if (failures.length) {
   for (const failure of failures) console.error(`verify:trailer-profile-sections-complete FAIL: ${failure}`);
   process.exit(1);

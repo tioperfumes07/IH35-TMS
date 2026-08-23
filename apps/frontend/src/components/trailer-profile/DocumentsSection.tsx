@@ -14,12 +14,14 @@ export function DocumentsSection({
   // `f.operating_company_id = $2` match, not "any accessible company").
   companyId,
   documents,
+  unavailable = false,
   onUploaded,
 }: {
   equipmentId: string;
   equipmentNumber?: string;
   companyId: string;
   documents: Array<Record<string, unknown>>;
+  unavailable?: boolean;
   onUploaded?: () => void;
 }) {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -55,7 +57,9 @@ export function DocumentsSection({
         />
       ) : null}
       <ul className="mt-2 space-y-1 text-xs text-gray-700">
-        {documents.length === 0 ? (
+        {unavailable ? (
+          <li className="font-medium text-red-700">Trailer documents could not be loaded.</li>
+        ) : documents.length === 0 ? (
           <li className="text-gray-500">No documents on file.</li>
         ) : (
           documents.map((d) => (

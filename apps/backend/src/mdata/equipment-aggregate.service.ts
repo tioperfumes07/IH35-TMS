@@ -144,8 +144,9 @@ export async function buildEquipmentAggregate(
     : null;
 
   let samsara_telemetry: Record<string, unknown> | null = null;
+  let samsara_telemetry_unavailable = false;
   if (isReefer && unitId) {
-    const telRes = await withSavepoint(
+    const telRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
       client,
       "eq_agg_reefer_tel",
       () =>
@@ -159,9 +160,10 @@ export async function buildEquipmentAggregate(
             LIMIT 1
           `,
           [unitId, operatingCompanyId]
-        ),
-      { rows: [] as Array<Record<string, unknown>> }
+        ).then((result) => ({ ...result, unavailable: false as const })),
+      { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
     );
+    samsara_telemetry_unavailable = telRes.unavailable;
     const raw = telRes.rows[0]?.raw_payload;
     if (raw && typeof raw === "object") {
       samsara_telemetry = { source: "samsara", payload: raw };
@@ -272,7 +274,7 @@ export async function buildEquipmentAggregate(
     plates: platesRes.rows,
   };
 
-  const documentsRes = await withSavepoint(
+  const documentsRes = await withSavepoint<{ rows: Array<Record<string, unknown>>; unavailable: boolean }>(
     client,
     "eq_agg_docs",
     () =>
@@ -296,9 +298,10 @@ export async function buildEquipmentAggregate(
           ORDER BY f.created_at DESC
         `,
         [equipmentId, operatingCompanyId]
-      ),
-    { rows: [] as Array<Record<string, unknown>> }
+      ).then((result) => ({ ...result, unavailable: false as const })),
+    { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
+  const documents_unavailable = documentsRes.unavailable;
 
   return {
     equipment,
@@ -307,9 +310,11 @@ export async function buildEquipmentAggregate(
     loads: loadsRes.rows,
     reefer,
     samsara_telemetry,
+    samsara_telemetry_unavailable,
     maintenance,
     compliance,
     documents: documentsRes.rows,
+    documents_unavailable,
     plates: platesRes.rows,
   };
 }
