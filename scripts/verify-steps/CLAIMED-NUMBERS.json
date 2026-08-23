@@ -1,4 +1,19 @@
 {
+  "4511": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-list-excludes-sample-data"
+  },
+  "4513": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dispatcher-safety-events-write-scope"
+  },
+  "4509": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-csa-score-error-state"
+  },
   "4505": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -3434,6 +3449,16 @@
     "claimed_by": "cc-1",
     "purpose": "verify-transaction-register-gl-je-link"
   },
+  "4352": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cursor",
+    "purpose": "verify-form425c-history-includes-drafts"
+  },
+  "4354": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cursor",
+    "purpose": "verify-form425c-history-month-utc"
+  },
   "4353": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
@@ -5563,5 +5588,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1253
+  "total_claimed": 1255
 }

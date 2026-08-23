@@ -615,9 +615,20 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const currentRes = await client.query<{ id: string; voided_at: string | null }>(
+      // CLS-JOIN-ENTITY-UNSCOPED fix (mirrors MDATA-F12 on the sibling driver-safety-events.routes.ts
+      // void route): this route only checked isOwner() (a global role, not company membership) then
+      // mutated by id+dispatcher_user_id with zero entity scope. Resolve scope from the row's own
+      // related entity (same load/driver/customer priority scopeToRelatedEntity uses at creation) and
+      // assert real company membership before voiding, matching the file's own GET/POST convention.
+      const currentRes = await client.query<{
+        id: string;
+        voided_at: string | null;
+        related_load_id: string | null;
+        related_driver_id: string | null;
+        related_customer_id: string | null;
+      }>(
         `
-          SELECT id, voided_at
+          SELECT id, voided_at, related_load_id, related_driver_id, related_customer_id
           FROM mdata.dispatcher_safety_events
           WHERE id = $1 AND dispatcher_user_id = $2
           LIMIT 1
@@ -626,6 +637,13 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       );
       const current = currentRes.rows[0];
       if (!current) return { error: "dispatcher_safety_event_not_found" as const };
+
+      await scopeToRelatedEntity(client, authUser.uuid, {
+        loadId: current.related_load_id,
+        driverId: current.related_driver_id,
+        customerId: current.related_customer_id,
+      });
+
       if (current.voided_at) return { error: "already_voided" as const };
 
       const updateRes = await client.query(
@@ -694,16 +712,31 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     sets.push("updated_by_user_id = $3");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      const currentRes = await client.query(
+      // CLS-JOIN-ENTITY-UNSCOPED fix (mirrors MDATA-F12 on the sibling driver-safety-events.routes.ts
+      // PATCH-edit route, and the void route above): resolve scope from the row's own related entity
+      // and assert real company membership before editing, matching the file's own GET/POST convention.
+      const currentRes = await client.query<{
+        id: string;
+        related_load_id: string | null;
+        related_driver_id: string | null;
+        related_customer_id: string | null;
+      }>(
         `
-          SELECT id
+          SELECT id, related_load_id, related_driver_id, related_customer_id
           FROM mdata.dispatcher_safety_events
           WHERE id = $1 AND dispatcher_user_id = $2
           LIMIT 1
         `,
         [parsedParams.data.event_id, parsedParams.data.user_id]
       );
-      if (!currentRes.rows[0]) return null;
+      const current = currentRes.rows[0];
+      if (!current) return null;
+
+      await scopeToRelatedEntity(client, authUser.uuid, {
+        loadId: current.related_load_id,
+        driverId: current.related_driver_id,
+        customerId: current.related_customer_id,
+      });
 
       const updateRes = await client.query(
         `

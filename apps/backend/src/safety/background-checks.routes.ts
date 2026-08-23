@@ -115,7 +115,16 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const driver = await client.query(
-        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND (d.operating_company_id = $2::uuid OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations background_check_create_driver_dca
+             WHERE background_check_create_driver_dca.driver_id = d.id
+               AND background_check_create_driver_dca.company_id = $2::uuid
+               AND background_check_create_driver_dca.is_authorized = true
+               AND background_check_create_driver_dca.deactivated_at IS NULL
+           ))
+         LIMIT 1`,
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;

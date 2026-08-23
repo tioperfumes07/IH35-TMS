@@ -169,7 +169,17 @@ async function deriveClassHint(
     // mdata.drivers.operating_company_id is uuid NOT NULL (verified on prod), and RLS is not a backstop:
     // org.user_accessible_company_ids() returns EVERY active company when the role is Owner.
     const driverRes = await client.query<{ last_name: string | null }>(
-      `SELECT last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      `SELECT d.last_name
+       FROM mdata.drivers d
+       WHERE d.id = $1
+         AND (d.operating_company_id = $2::uuid OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations wo_class_driver_dca
+           WHERE wo_class_driver_dca.driver_id = d.id
+             AND wo_class_driver_dca.company_id = $2::uuid
+             AND wo_class_driver_dca.is_authorized = true
+             AND wo_class_driver_dca.deactivated_at IS NULL
+         ))
+       LIMIT 1`,
       [driverId, operatingCompanyId]
     );
     driverPart = String(driverRes.rows[0]?.last_name ?? "UNASSIGNED").trim().toUpperCase();

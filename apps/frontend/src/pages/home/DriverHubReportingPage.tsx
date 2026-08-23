@@ -309,7 +309,7 @@ export function DriverHubReportingPage() {
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
             <div className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">
-              By load (LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK)
+              By load
             </div>
             <ParityTable
               rows={data.by_load}

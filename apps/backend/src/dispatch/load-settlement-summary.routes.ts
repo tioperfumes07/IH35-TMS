@@ -93,7 +93,16 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
 
       const driverRes = await client.query<{ driver_name: string | null }>(
         `SELECT concat(d.first_name, ' ', d.last_name) AS driver_name
-         FROM mdata.drivers d WHERE d.id = $1 AND d.operating_company_id = $2::uuid LIMIT 1`,
+         FROM mdata.drivers d
+         WHERE d.id = $1
+           AND (d.operating_company_id = $2::uuid OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations settlement_summary_driver_dca
+             WHERE settlement_summary_driver_dca.driver_id = d.id
+               AND settlement_summary_driver_dca.company_id = $2::uuid
+               AND settlement_summary_driver_dca.is_authorized = true
+               AND settlement_summary_driver_dca.deactivated_at IS NULL
+           ))
+         LIMIT 1`,
         [s.driver_id, operating_company_id]
       );
       const driverName = driverRes.rows[0]?.driver_name ?? null;

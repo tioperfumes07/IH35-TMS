@@ -212,7 +212,16 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const driver = await client.query(
-        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND (d.operating_company_id = $2::uuid OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations medical_card_create_driver_dca
+             WHERE medical_card_create_driver_dca.driver_id = d.id
+               AND medical_card_create_driver_dca.company_id = $2::uuid
+               AND medical_card_create_driver_dca.is_authorized = true
+               AND medical_card_create_driver_dca.deactivated_at IS NULL
+           ))
+         LIMIT 1`,
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;

@@ -10,10 +10,29 @@ type Props = {
   onAmend: (id: string) => void;
 };
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+/** Calendar month of reporting_month (YYYY-MM-DD / timestamptz). Never local Date — UTC midnight shifts August → July in US. */
 function periodLabel(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const ymd = String(value).slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return value;
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return value;
+  return `${MONTH_NAMES[month - 1]} ${match[1]}`;
 }
 
 const STATUS_OPTIONS: Array<HistoryReportRow["status"] | ""> = ["", "draft", "ready_to_file", "filed", "amended"];

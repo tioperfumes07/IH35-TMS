@@ -41,6 +41,10 @@ function check() {
     ),
     "must EXISTS settlement_lines / driver_bills.load_id path (for-load parity)"
   );
+  assert(
+    /settlement_summary_driver_dca\.driver_id = d\.id[\s\S]{0,180}settlement_summary_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}settlement_summary_driver_dca\.is_authorized = true[\s\S]{0,180}settlement_summary_driver_dca\.deactivated_at IS NULL/.test(src),
+    "driver label must admit active selected-company authorization"
+  );
 }
 
 function selftest() {
@@ -60,6 +64,18 @@ function selftest() {
     fs.writeFileSync(ROUTES, original);
   }
   assert(failed, "--selftest expected FAIL when load_bookended-only filter is restored");
+  const noSharedDriver = original.replace("settlement_summary_driver_dca.is_authorized = true", "settlement_summary_driver_dca.is_authorized = false");
+  assert(noSharedDriver !== original, "--selftest plant must mutate shared-driver authorization");
+  fs.writeFileSync(ROUTES, noSharedDriver);
+  failed = false;
+  try {
+    check();
+  } catch {
+    failed = true;
+  } finally {
+    fs.writeFileSync(ROUTES, original);
+  }
+  assert(failed, "--selftest expected FAIL when shared-driver authorization is disabled");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }

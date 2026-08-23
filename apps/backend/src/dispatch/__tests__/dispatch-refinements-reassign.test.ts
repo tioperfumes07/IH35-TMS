@@ -119,6 +119,7 @@ describe("manualReassignLoad driver-existence guard", () => {
 
     expect(result).toMatchObject({ ok: true, load_id: LOAD });
     expect(log.some((s) => s.includes("UPDATE mdata.loads"))).toBe(true);
+    expect(log.some((s) => s.includes("driver_company_authorizations reassign_driver_dca"))).toBe(true);
     expect(log.some((s) => s.startsWith("COMMIT"))).toBe(true);
   });
 });

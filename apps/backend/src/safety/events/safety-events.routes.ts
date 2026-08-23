@@ -327,7 +327,17 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     const event = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       const links = await client.query(
         `SELECT
-           ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid)) AS driver_ok,
+           ($2::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $2::uuid
+               AND (d.operating_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations safety_event_create_driver_dca
+                 WHERE safety_event_create_driver_dca.driver_id = d.id
+                   AND safety_event_create_driver_dca.company_id = $1::uuid
+                   AND safety_event_create_driver_dca.is_authorized = true
+                   AND safety_event_create_driver_dca.deactivated_at IS NULL
+               ))
+           )) AS driver_ok,
            ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.units u WHERE u.id = $3::uuid AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid))) AS unit_ok,
            ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = $4::uuid AND l.operating_company_id = $1::uuid)) AS load_ok`,
         [body.data.operating_company_id, body.data.subject_driver_id ?? null, body.data.subject_unit_id ?? null, body.data.related_load_id ?? null]
