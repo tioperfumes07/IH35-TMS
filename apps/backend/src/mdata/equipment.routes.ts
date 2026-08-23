@@ -336,9 +336,18 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
     const parsedAggregateQuery = aggregateQuerySchema.safeParse(req.query ?? {});
     if (parsedAggregateQuery.success) {
-      const aggregate = await withCurrentUser(authUser.uuid, async (client) =>
-        buildEquipmentAggregate(client, parsedParams.data.id, parsedAggregateQuery.data.operating_company_id)
-      );
+      const aggregate = await withCurrentUser(authUser.uuid, async (client) => {
+        // The aggregate builder sets app.operating_company_id from this value. Resolve the
+        // caller-supplied company before handing it over; otherwise the query parameter itself
+        // chooses the RLS scope and a non-member can read another company's trailer aggregate.
+        const scopedCompanyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          parsedAggregateQuery.data.operating_company_id
+        );
+        if (!scopedCompanyId) return null;
+        return buildEquipmentAggregate(client, parsedParams.data.id, scopedCompanyId);
+      });
       if (!aggregate) return reply.code(404).send({ error: "mdata_equipment_not_found" });
       return aggregate;
     }

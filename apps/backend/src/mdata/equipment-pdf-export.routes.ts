@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
 import { buildTrailerProfilePdfSections, renderTrailerProfilePdf } from "./trailer-profile-pdf-renderer.service.js";
@@ -21,7 +22,15 @@ export async function registerEquipmentPdfExportRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const pdf = await withCurrentUser(user.uuid, async (client) => {
-      const aggregate = await buildEquipmentAggregate(client, params.data.id, query.data.operating_company_id);
+      // The PDF is a second consumer of the same aggregate and must not let a raw query parameter
+      // select the transaction's RLS scope. Resolve membership before building or rendering it.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        user.uuid,
+        query.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      const aggregate = await buildEquipmentAggregate(client, params.data.id, scopedCompanyId);
       if (!aggregate) return null;
       const built = buildTrailerProfilePdfSections(aggregate);
       return renderTrailerProfilePdf(built);
