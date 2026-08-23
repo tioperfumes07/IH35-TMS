@@ -40,6 +40,22 @@ export function InspectionScoreBadge({ companyId, driverId }: Props) {
     enabled: Boolean(companyId),
   });
 
+  if (query.isError) {
+    return (
+      <button
+        type="button"
+        role="alert"
+        className="inline-flex"
+        title={(query.error as Error)?.message ?? "DOT inspection score could not be loaded."}
+        onClick={() => void query.refetch()}
+      >
+        <span className="inline-flex items-center rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+          DOT: unavailable · Retry
+        </span>
+      </button>
+    );
+  }
+
   const rate = query.data?.clean_rate_percent ?? null;
   const total = query.data?.total_inspections ?? 0;
   const label = query.isLoading ? "Loading…" : labelForRate(rate, total);

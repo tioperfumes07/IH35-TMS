@@ -54,6 +54,15 @@ contains("apps/frontend/src/components/safety/InspectionScoreBadge.tsx", badge, 
   { pattern: /red-100/, label: "red badge state" },
 ]);
 
+function auditBadgeRecovery(source) {
+  const problems = [];
+  if (!/query\.isError[\s\S]{0,420}role="alert"/.test(source)) problems.push("clean-rate GET failure must render a distinct alert");
+  if (!/onClick=\{\(\) => void query\.refetch\(\)\}/.test(source)) problems.push("clean-rate GET failure must expose exact retry");
+  if (!/query\.isError[\s\S]{0,700}const rate = query\.data/.test(source)) problems.push("failure branch must precede zero-inspection derivation");
+  return problems;
+}
+for (const problem of auditBadgeRecovery(badge)) fail(`apps/frontend/src/components/safety/InspectionScoreBadge.tsx: ${problem}`);
+
 const packageJson = read("package.json");
 contains("package.json", packageJson, [
   { pattern: /"verify:dot-inspection-history": "node scripts\/verify-dot-inspection-history\.mjs"/, label: "verify npm script" },
@@ -70,6 +79,22 @@ contains(".block-ready/GAP-84-DOT-INSPECTION-GAP-CLOSE.json", perBlockManifest, 
   { pattern: /verify:dot-inspection-history/, label: "verify extra gate in per-block manifest" },
   { pattern: /InspectionScoreBadge\.tsx/, label: "badge component in allowed_files" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["error-alert", /query\.isError/, "false"],
+    ["exact-retry", /onClick=\{\(\) => void query\.refetch\(\)\}/, "onClick={undefined}"],
+  ];
+  for (const [name, pattern, replacement] of mutations) {
+    const mutated = badge.replace(pattern, replacement);
+    if (mutated === badge || auditBadgeRecovery(mutated).length === 0) {
+      console.error(`verify:dot-inspection-history --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:dot-inspection-history --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:dot-inspection-history — FAILED");
