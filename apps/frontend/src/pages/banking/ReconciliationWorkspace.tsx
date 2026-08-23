@@ -3,7 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import {
   completeReconciliationSession,
   getReconciliationSessions,
@@ -554,7 +554,7 @@ export function ReconciliationWorkspacePage() {
                           <EntityLink
                             kind="expense"
                             id={tx.matched_expense_id}
-                            label={entityLabel(tx.matched_expense_number ?? null, tx.matched_expense_id, "Expense")}
+                            label={visibleDocumentLabel(tx.matched_expense_number ?? null, tx.matched_expense_id, "Expense")}
                           />
                         ) : null}
                         {tx.matched_transfer_id ? (
