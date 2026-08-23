@@ -752,7 +752,7 @@ export function CustomerDetailPage() {
 
   // Soft-delete (Inactivate / Reactivate) — never hard-delete a master record.
   const inactivateCustomerMutation = useMutation({
-    mutationFn: () => deactivateCustomer(id),
+    mutationFn: () => deactivateCustomer(id, selectedCompanyId ?? operatingCompanyId ?? ""),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -762,7 +762,7 @@ export function CustomerDetailPage() {
   });
 
   const reactivateCustomerMutation = useMutation({
-    mutationFn: () => reactivateCustomer(id),
+    mutationFn: () => reactivateCustomer(id, selectedCompanyId ?? operatingCompanyId ?? ""),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });

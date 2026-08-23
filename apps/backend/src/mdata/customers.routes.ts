@@ -979,7 +979,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const patchName = b.legal_name ?? b.name ?? null;
     // Resolve the caller's operating company up front so the dedup check is entity-scoped (G6-3).
     const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
-      resolveOperatingCompanyId(client, authUser.uuid)
+      resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
     );
     if (!patchScopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
     const conflict = await assertUniqueCustomerFields(authUser.uuid, patchScopedCompanyId, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
@@ -994,7 +994,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const existingRow = await withCurrentUser(authUser.uuid, async (client) => {
       // Entity scope (USMCA cross-entity leak fix): a by-id customer update must not touch a customer
       // belonging to another operating company. Scope to the user's current company.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
@@ -1047,7 +1047,6 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
     if ("parent_customer_id" in b) add("parent_customer_id", b.parent_customer_id ?? null); // D1-4
-    if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("customer_type" in b) add("customer_type", normalizeCustomerType(b.customer_type ?? null));
     if ("customer_type_id" in b) add("customer_type_id", b.customer_type_id ?? null);
     if ("status" in b) add("status", b.status);
@@ -1112,7 +1111,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         // Entity scope (USMCA cross-entity leak fix): re-confirm the row is in the user's company
         // before the UPDATE (existingRow already gated it above).
-        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!scopedCompanyId) return null;
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const oldRes = await client.query(
@@ -1309,15 +1308,17 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return reply.send({ classifications });
   });
 
-  app.post("/api/v1/mdata/customers/:id/deactivate", RL_WRITE, async (req, reply) => {
+  app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/customers/:id/deactivate", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       // Entity scope (USMCA cross-entity leak fix): never deactivate a customer in another company.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const oldRes = await client.query(
