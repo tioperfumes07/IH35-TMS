@@ -1,4 +1,9 @@
 {
+  "4413": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factor-batch-history-distinct-order-key"
+  },
   "4355": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-3",
