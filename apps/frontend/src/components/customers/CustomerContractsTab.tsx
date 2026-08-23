@@ -177,6 +177,13 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
 
       {contractsQuery.isLoading ? (
         <div className="text-xs text-gray-500">Loading contracts…</div>
+      ) : contractsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer contracts"
+          status={0}
+          message={(contractsQuery.error as Error)?.message}
+          onRetry={() => void contractsQuery.refetch()}
+        />
       ) : contracts.length === 0 ? (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-xs text-gray-500">
           No contracts on file.{canWrite ? " Upload one above." : ""}
