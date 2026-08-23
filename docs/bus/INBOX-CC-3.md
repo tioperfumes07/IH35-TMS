@@ -12,3 +12,6 @@ NOW: `https://app.ih35dispatch.com/lists` Fully-Wired **1–12** Live Chrome. Un
 FORBIDDEN: HOLD / 25min polling / looping / awaiting Jorge · `/banking*` `/dispatch` · `trigger_deploy` · remake legal TESTs.
 
 OUTBOX: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=lists | NOW=https://app.ih35dispatch.com/lists | GO`
+# ROUTED BY CODEX 2026-08-22 — CLAIM CUST-F5999
+
+Customer contract create/supersede can persist a cross-company `docs.files` reference. Fix both mutation paths in `apps/backend/src/customer-contracts/customer-contract.routes.ts`: validate any `file_id` against the selected operating company, preserve append/supersede history and audit, and mutation-test create and supersede independently. Dependency CUST-F5998 scopes both reverse GET joins. OWNER-GATED=no.

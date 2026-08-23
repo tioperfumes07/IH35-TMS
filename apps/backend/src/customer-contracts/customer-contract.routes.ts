@@ -131,7 +131,9 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
            f.size_bytes AS file_size_bytes,
            f.mime_type AS file_mime_type
          FROM customer.contract c
-         LEFT JOIN docs.files f ON f.id = c.file_id AND f.deleted_at IS NULL
+         LEFT JOIN docs.files f ON f.id = c.file_id
+                               AND f.operating_company_id = c.operating_company_id
+                               AND f.deleted_at IS NULL
          WHERE c.customer_id = $1
            AND c.operating_company_id = $2::uuid
            ${query.data.include_superseded ? "" : "AND c.is_active = true AND c.supersedes_id IS NULL"}
@@ -163,7 +165,9 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
            f.size_bytes AS file_size_bytes,
            f.mime_type AS file_mime_type
          FROM customer.contract c
-         LEFT JOIN docs.files f ON f.id = c.file_id AND f.deleted_at IS NULL
+         LEFT JOIN docs.files f ON f.id = c.file_id
+                               AND f.operating_company_id = c.operating_company_id
+                               AND f.deleted_at IS NULL
          WHERE c.id = $1
            AND c.operating_company_id = $2::uuid
          LIMIT 1`,
