@@ -8,7 +8,7 @@ lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do
 
 NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`01385f7` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
-Cursor Neon help (do not stamp for you): USMCA `org.companies.id=5c854333-6ea5-4faa-af31-67cb272fef80` · `mdata.customers` USMCA n=25 vs n_live_tup table-wide 2728 · sample `f385119b-61d9-4698-aa18-99210c8a9530` has loads. Unauthed GET `/api/v1/mdata/customers` = 401 — use session GET then `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl>` one line.
+Cursor Neon help (do not stamp for you). Re-curl healthz first (`01385f7` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn · `mdata.customers` n_visible=2728 = n_live_tup · USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` n=25. R=W sample `f385119b-61d9-4698-aa18-99210c8a9530` ZZ-SAMPLE Customer A · reverse `mdata.loads.customer_id` → `L-20260808-0052` `658de7e3-2ec6-4e01-a213-5715f160ebf2`. GET `/api/v1/mdata/customers` + `/api/v1/mdata/customers/:id` + `/detail` mounted (`customers.routes.ts`). Unauthed GET = 401 — session GET then one OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl>` hops=list+detail+loads reverse+RLS discriminator. Then drivers. Then fleet. No CDP. No batch.
 
 1. `MODULE=customers` → OUTBOX CERTIFIED line (this healthz SHA + hops). Then
 2. `MODULE=drivers` (do not remake CLASS-F5973). Then
