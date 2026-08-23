@@ -101,7 +101,14 @@ export function CashFlowStatementPage() {
             <tr><th>Net cash change</th><td>${esc(money(data.net_cash_change))}</td></tr>
             <tr><th>Cash at start</th><td>${esc(money(data.cash_at_start))}</td></tr>
             <tr><th>Cash at end</th><td>${esc(money(data.cash_at_end))}</td></tr>
-            <tr><th>Reconciliation</th><td>${esc(data.reconciled ? "Reconciled" : "Needs review")}</td></tr>
+            <tr><th>Reconciliation</th><td>${esc(
+              !data.reconciled
+                ? "Needs review"
+                : data.unclassified_leg_count > 0
+                  ? "Reconciled — unclassified legs"
+                  : "Reconciled",
+            )}</td></tr>
+            <tr><th>Unclassified legs</th><td>${esc(String(data.unclassified_leg_count))}</td></tr>
           </tbody>
         </table>
         ${sectionHtml("Operating activities", operatingLines, data.operating.total)}
@@ -212,12 +219,29 @@ export function CashFlowStatementPage() {
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at end</div>
             <div className="text-lg font-semibold">{money(query.data.cash_at_end)}</div>
           </div>
-          <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.reconciled ? "border-emerald-200" : "border-amber-300"}`}>
+          <div
+            className={`rounded-sm border bg-white px-3 py-2 ${
+              query.data.reconciled && query.data.unclassified_leg_count === 0 ? "border-emerald-200" : "border-amber-300"
+            }`}
+          >
             <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
-            <div className={`text-lg font-semibold ${query.data.reconciled ? "text-emerald-700" : "text-amber-700"}`}>
-              {query.data.reconciled ? "Reconciled" : "Needs review"}
+            <div
+              className={`text-lg font-semibold ${
+                query.data.reconciled && query.data.unclassified_leg_count === 0 ? "text-emerald-700" : "text-amber-700"
+              }`}
+            >
+              {!query.data.reconciled
+                ? "Needs review"
+                : query.data.unclassified_leg_count > 0
+                  ? "Reconciled — unclassified legs"
+                  : "Reconciled"}
             </div>
-            <div className="text-[11px] text-gray-500">Unclassified legs: {query.data.unclassified_leg_count}</div>
+            <div className={query.data.unclassified_leg_count > 0 ? "text-[11px] font-semibold text-slate-700" : "text-[11px] text-gray-500"}>
+              Unclassified legs: {query.data.unclassified_leg_count}
+              {query.data.unclassified_leg_count > 0
+                ? " — bucketed into Operating by default, may not reflect the true Operating/Investing/Financing split"
+                : ""}
+            </div>
           </div>
         </div>
       ) : null}
