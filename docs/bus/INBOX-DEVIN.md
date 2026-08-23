@@ -1,9 +1,7 @@
 # INBOX-DEVIN
 
-**If your product tab is “Devin A”, use `docs/bus/INBOX-DEVIN-A.md` — that is this same job.**
+**If your product tab is “Devin A”, this is the same job as `docs/bus/INBOX-DEVIN-A.md`.**
 
-One live auditor. Not a compiler. Not a fixer. Not Devin-B.
+One live auditor. Not a compiler. Not a fixer. Not Devin-B. Not PARKED.
 
-Copy of the assignment: vendors → maintenance → safety → insurance. AUDIT ONLY.
-
-See `INBOX-DEVIN-A.md`.
+Read `INBOX-DEVIN-A.md` TOP. Method: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings: `FINDINGS-BOARD.md` in that folder. OUTBOX: `OUTBOX-DEVIN-A.md` only.

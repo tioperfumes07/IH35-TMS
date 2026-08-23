@@ -57,9 +57,15 @@ RECOMMEND:
 VERDICT:
 ```
 
-## Unique FINDING
+## Unique FINDING (shared board — same turn)
 
-None | id + 500/dead/silent mechanism (not scoreboard)
+Chat is not a finding. If unique 500/dead/silent/missing-reverse/no-GL:
+
+1. Row on `FINDINGS-BOARD.md` (this folder) with OWNER=Cursor|CC-1|CC-2|CC-3|Codex
+2. OPEN row on `docs/audit/GUARD-WORKORDERS.md`
+3. OUTBOX `FINDING | id | OWNER= | board OPEN`
+
+None | id + mechanism (not scoreboard)
 
 ## Verdict
 

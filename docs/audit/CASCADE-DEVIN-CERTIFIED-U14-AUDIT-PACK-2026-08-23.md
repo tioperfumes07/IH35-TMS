@@ -62,8 +62,7 @@ Historical CERTIFIED SHAs may be **older** than live healthz. That is expected. 
 | Seat | Port (if CDP) | CERTIFIED modules to audit | URLs (do not leave this list) |
 |------|---------------|----------------------------|-------------------------------|
 | **Cascade** | 9227 if assigned | 1 accounting · 2 banking · 3 settlements · 4 factoring · 5 dispatch | `/accounting` `/banking` `/driver-finance` `/settlements` `/cash-advances` `/factoring` `/dispatch` |
-| **Devin** | assigned | 6 vendors · 11 maintenance · 12 safety · 13 insurance | `/vendors` `/maintenance` `/safety` `/insurance` |
-| **Devin-A** | assigned | Scenario trackers **only** (no live prefix steal) | Write/finish files under `docs/audit/scenario-trackers/certified-u14/` from Cascade/Devin OUTBOX evidence. If a tracker needs a live hop Devin-A does not have, ping that seat’s OUTBOX — do not open CC-3/Codex prefixes. |
+| **Devin-A (Devin)** | assigned | 6 vendors · 11 maintenance · 12 safety · 13 insurance | `/vendors` `/maintenance` `/safety` `/insurance` — **live auditor, not scribe**. Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings `FINDINGS-BOARD.md` same folder. OUTBOX=`docs/bus/OUTBOX-DEVIN-A.md`. No Devin-B. |
 
 Empty unique-FINDING on your next module → next row in **your** column. After your column is done → leftover `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` first **unclaimed** row. **Never idle.**
 
