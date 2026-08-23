@@ -268,7 +268,7 @@ export async function buildDriverAggregate(
           FROM mdata.load_stops ls WHERE ls.load_id = l.id ORDER BY ls.sequence_number DESC LIMIT 1
         ) AS delivery
       FROM mdata.loads l
-      WHERE l.assigned_primary_driver_id = $1::uuid
+      WHERE (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
