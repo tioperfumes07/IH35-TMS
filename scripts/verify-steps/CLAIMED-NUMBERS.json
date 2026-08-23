@@ -1,4 +1,9 @@
 {
+  "4473": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-earnings-tab-error-state"
+  },
   "4469": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5518,5 +5523,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1245
+  "total_claimed": 1246
 }
