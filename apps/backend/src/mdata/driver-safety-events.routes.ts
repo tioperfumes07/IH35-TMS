@@ -122,7 +122,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
   // CodeQL: authorized mutation routes must be rate-limited (match peer mdata handlers).
   const RL_SUSPEND = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } };
 
-  app.get("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -143,12 +143,13 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         throw e;
       });
       if (!opco) return null;
-      const whereClause = parsedQuery.data.include_inactive ? "" : "WHERE is_active = true AND deactivated_at IS NULL";
+      const activeClause = parsedQuery.data.include_inactive ? "" : "AND is_active = true AND deactivated_at IS NULL";
       const result = await client.query(
         `
           SELECT id, operating_company_id, code, label, description, severity, is_active, deactivated_at
           FROM catalogs.driver_termination_reasons
-          ${whereClause}
+          WHERE operating_company_id = $1::uuid
+          ${activeClause}
           ORDER BY
             CASE severity
               WHEN 'severe' THEN 1
@@ -156,7 +157,8 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
               ELSE 3
             END,
             label ASC
-        `
+        `,
+        [opco]
       );
       return result.rows;
     });
