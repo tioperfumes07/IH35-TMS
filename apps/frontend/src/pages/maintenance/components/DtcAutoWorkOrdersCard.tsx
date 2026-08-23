@@ -2,6 +2,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceDtcAutoWorkOrders } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -21,6 +22,17 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
   const rows = query.data?.rows ?? [];
   const visibleRows = rows.slice(0, 10);
   const totalCount = query.data?.total_count ?? rows.length;
+
+  if (query.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load DTC auto-created work orders"
+        status={0}
+        message={(query.error as Error)?.message}
+        onRetry={() => void query.refetch()}
+      />
+    );
+  }
 
   if (compact) {
     return (
