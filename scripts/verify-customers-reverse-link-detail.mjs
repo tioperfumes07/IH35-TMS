@@ -144,6 +144,26 @@ const CHECKS = [
     pattern: /const filters = \["e\.customer_id = \$1"\]/,
   },
   {
+    name: "quality event GET requires selected company query",
+    file: QUALITY_EVENTS_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{\s*operating_company_id: uuidSchema,/,
+  },
+  {
+    name: "quality event GET resolves selected company",
+    file: QUALITY_EVENTS_ROUTE,
+    pattern: /app\.get\("\/api\/v1\/mdata\/customers\/:customer_id\/quality-events"[\s\S]{0,1600}resolveOperatingCompanyId\([\s\S]{0,180}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "quality event frontend GET carries selected company",
+    file: MDATA_API,
+    pattern: /listCustomerQualityEvents\(customerId: string, operatingCompanyId: string,[\s\S]{0,260}operating_company_id: operatingCompanyId/,
+  },
+  {
+    name: "quality history query keys and enables by selected company",
+    file: DETAIL,
+    pattern: /queryKey: \["customer-quality-events", id, operatingCompanyId, showVoidedQuality\][\s\S]{0,260}listCustomerQualityEvents\(id, operatingCompanyId!, showVoidedQuality\)[\s\S]{0,160}enabled: Boolean\(id && operatingCompanyId\)/,
+  },
+  {
     name: "parent customer drill preserves nullable canonical label for tombstone handling",
     file: DETAIL,
     pattern: /kind="customer"\s+id=\{customer\.parent_customer_id\}\s+name=\{customer\.parent_customer_name\}\s+noun="Customer"[\s\S]{0,240}data-testid="customer-parent-record-link"/,

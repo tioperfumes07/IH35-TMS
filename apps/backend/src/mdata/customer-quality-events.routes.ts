@@ -26,6 +26,7 @@ const uuidSchema = z.string().uuid();
 const customerParamsSchema = z.object({ customer_id: uuidSchema });
 const eventParamsSchema = z.object({ customer_id: uuidSchema, event_id: uuidSchema });
 const reasonsQuerySchema = z.object({
+  operating_company_id: uuidSchema,
   event_type: eventTypeSchema.optional(),
   include_inactive: z
     .union([z.boolean(), z.string()])
@@ -33,6 +34,7 @@ const reasonsQuerySchema = z.object({
     .transform((value) => value === true || value === "true"),
 });
 const listQuerySchema = z.object({
+  operating_company_id: uuidSchema,
   include_voided: z
     .union([z.boolean(), z.string()])
     .optional()
@@ -121,7 +123,11 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     const reasons = await withCurrentUser(authUser.uuid, async (client) => {
       // customer_quality_event_reasons is per-entity + FORCE RLS (202607920000). Resolve the caller's
       // company and set the GUC so the read returns the entity's rows; also filter explicitly.
-      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
       if (!companyId) return null;
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const values: unknown[] = [companyId];
@@ -165,7 +171,11 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       // id-only parent-existence check exposes another operating company's dispute dollars. Resolve
       // the caller's operating company and bind it on BOTH the parent check and the events query so
       // a foreign customer id can only ever return the caller's own entity's rows.
-      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
       if (!companyId) return { error: "mdata_customer_not_found" as const };
       // Set the GUC so the LEFT JOIN on the per-entity reasons catalog resolves under FORCE RLS.
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
