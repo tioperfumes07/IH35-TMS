@@ -286,10 +286,8 @@
       "sub": "Factoring advances list",
       "route_hint": "/accounting/factoring",
       "required": [
-        "load",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -300,7 +298,6 @@
       "route_hint": "/accounting/factoring",
       "required": [
         "customer",
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -313,7 +310,6 @@
       "route_hint": "/accounting/factoring/:id",
       "required": [
         "customer",
-        "load",
         "gl_je",
         "liability",
         "connectivity",
@@ -882,6 +878,31 @@
           "id": "factoring.wizard.batch",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "load_false_required_2026_08_22": {
+      "finding": "FACTORING-ADVANCE-NO-LOAD-COLUMN-PER-ADVANCE-FK",
+      "note": "accounting.factoring_advances (db/migrations/0061_p3_t11_20_5_factoring_tracking.sql) has NO load_id column at all -- verified live on Neon prod (information_schema.columns, 30 columns, none load-related). This is architecturally correct, not an oversight: the create schema accepts invoice_ids as an array (min 1, max 500 -- apps/backend/src/accounting/factoring-advances.routes.ts createBodySchema), i.e. one advance can batch MANY invoices, and each invoice already carries its own real source_load_id (used for the module's genuine load-scoped filtering elsewhere, e.g. factoring-queue.routes.ts). A single per-advance load FK cannot correctly represent a batch spanning multiple loads -- the load relationship lives one level down, on the invoice, not the advance header. Dropping `load` Required from accounting.list, accounting.submit, and accounting.detail (all three claimed it with zero column/link to satisfy it, confirmed by independent Explore-agent audits and a live Neon schema read, not guessed). Also dropping accounting.list's `reverse_link`: its own code comment (FactoringListPage.tsx LINK-F5171/LINK-F5184) claims a load-to-list drill via ?load_id= -- the CONSUMER side is real (the page does honor the query param, filtered server-side through the invoice FK) but zero producer anywhere in the app links to it (grepped the whole frontend for '/accounting/factoring?load_id=', zero hits); the actual, working reverse-link path from a Load is FactoringTab.tsx -> a specific advance's accounting.detail (already correctly Required + PASS there), which is the more useful target anyway since a load resolves to one specific batch via its own invoice, not a filtered list. The dormant ?load_id= list-filter code is left in place (additive-only law -- not deleted, just no longer a Required claim) in case a future producer link is added.",
+      "drops": [
+        {
+          "id": "accounting.list",
+          "removed": [
+            "load",
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "accounting.submit",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "accounting.detail",
+          "removed": [
+            "load"
           ]
         }
       ]
