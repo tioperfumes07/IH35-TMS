@@ -87,6 +87,10 @@ export function assertDriverSafetyReverse(sources) {
   } else if (!/<DriverSafetyReverseSection[\s\S]{0,200}driverId=/.test(src[DRIVER_PROFILE])) {
     problems.push(`${DRIVER_PROFILE}: DriverSafetyReverseSection is imported but not rendered with driverId.`);
   }
+  const retryQueries = ["trainingQuery", "accidentsQuery", "hosViolationsQuery", "dotInspectionsQuery", "civilFinesQuery", "internalFinesQuery", "complaintsQuery", "testsQuery"];
+  if (!src[SECTION].includes("<ListErrorState") || retryQueries.some((query) => !src[SECTION].includes(`onRetry={() => void ${query}.refetch()}`))) {
+    problems.push(`${SECTION}: every safety reverse GET failure must retry its exact query.`);
+  }
 
   // 3. Server-side scoping (NOT a client-side filter over a LIMIT 500 company list).
   if (!/f\.driver_id = \$\$\{values\.length\}|f\.driver_id = \$/.test(src[INTERNAL_FINES_ROUTE])) {
@@ -220,6 +224,11 @@ if (SELFTEST) {
     "internal-safety-events-retry-removed",
     { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/safetyEventsQuery\.refetch\(\)/, "Promise.resolve()") },
     "internal driver safety-event reverse GET failure"
+  );
+  expectCaught(
+    "driver-safety-query-retry-removed",
+    { ...live, [SECTION]: live[SECTION].replace("onRetry={() => void trainingQuery.refetch()}", "onRetry={() => undefined}") },
+    "every safety reverse GET failure must retry its exact query"
   );
   expectCaught(
     "internal-safety-events-empty-gate-removed",
