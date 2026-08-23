@@ -29,6 +29,16 @@ function contains(relativePath, content, checks) {
 }
 
 const monitorService = read("apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts");
+function sharedDriverScopeFailures(source) {
+  const required = [
+    "driver_company_authorizations cert_expiry_driver_dca",
+    "cert_expiry_driver_dca.driver_id = d.id",
+    "cert_expiry_driver_dca.company_id = $1::uuid",
+    "cert_expiry_driver_dca.is_authorized = true",
+    "cert_expiry_driver_dca.deactivated_at IS NULL",
+  ];
+  return required.filter((token) => !source.includes(token));
+}
 contains("apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts", monitorService, [
   { pattern: /scanAllDrivers/, label: "scanAllDrivers export" },
   { pattern: /computeSeverity/, label: "computeSeverity export" },
@@ -36,6 +46,9 @@ contains("apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts", moni
   { pattern: /dot_medical_expires_at/, label: "medical card fallback" },
   { pattern: /twic_expires_at/, label: "TWIC tracking" },
 ]);
+for (const token of sharedDriverScopeFailures(monitorService)) {
+  fail(`apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts: missing shared-driver scope ${token}`);
+}
 
 const routes = read("apps/backend/src/safety/expiry-tracking/routes.ts");
 contains("apps/backend/src/safety/expiry-tracking/routes.ts", routes, [
@@ -106,6 +119,24 @@ if (/GAP-82-MEDICAL-CARD-TRACKING/.test(manifest)) {
   contains(".block-ready.json", manifest, [
     { pattern: /GAP-82-MEDICAL-CARD-TRACKING/, label: "GAP-82 block id in manifest" },
   ]);
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["authorization table", "driver_company_authorizations cert_expiry_driver_dca", "drivers cert_expiry_driver_dca"],
+    ["authorization company", "cert_expiry_driver_dca.company_id = $1::uuid", "cert_expiry_driver_dca.company_id = d.operating_company_id"],
+    ["authorization active", "cert_expiry_driver_dca.is_authorized = true", "cert_expiry_driver_dca.is_authorized = false"],
+    ["authorization lifecycle", "cert_expiry_driver_dca.deactivated_at IS NULL", "cert_expiry_driver_dca.deactivated_at IS NOT NULL"],
+  ];
+  for (const [name, before, after] of mutations) {
+    const mutated = monitorService.replace(before, after);
+    if (mutated === monitorService || sharedDriverScopeFailures(mutated).length === 0) {
+      console.error(`verify:cert-expiry-tracking --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  process.exit(0);
 }
 
 if (failures.length > 0) {
