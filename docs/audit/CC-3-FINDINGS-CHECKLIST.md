@@ -1,6 +1,8 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
-- ☑ `DRV-F6227-SAFETY-SCORER-EXCLUDES-AUTHORIZED-SHARED-DRIVER-INPUTS` — Codex drivers reverse SQL/GET — FIXED this PR; registered safety driver guard + typecheck pending.
+- ☑ `DRV-F6228-INSURANCE-CLAIMS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; shared list/graph driver label resolver admits active canonical authorizations; registered guard + typecheck pending.
+
+- ☑ `DRV-F6227-SAFETY-SCORER-EXCLUDES-AUTHORIZED-SHARED-DRIVER-INPUTS` — Codex drivers reverse SQL/GET — FIXED #14844; registered safety driver guard normal + selftest 55/55.
 
 - ☑ `DRV-F6226-FUEL-SAVINGS-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; registered runner guard + typecheck pending.
 
@@ -58,7 +60,7 @@
 
 - ☑ `DRV-F6199-BORDER-CROSSING-READS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; border-crossing guard + typecheck pending.
 
-- ☐ `DRV-F6198-SCORING-AGGREGATOR-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Cursor scoring computation/write lane — OPEN; dependency #14800; exact event+mileage joins filed.
+- ☑ `DRV-F6198-SCORING-AGGREGATOR-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — SUPERSEDED by DRV-F6227 / #14844; historical handoff retained on board without a false OPEN.
 
 - ☑ `DRV-F6197-AGGREGATE-READS-MISHANDLE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance+compliance guards + typecheck pending.
 

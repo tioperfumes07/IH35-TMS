@@ -151,7 +151,17 @@ function claimFrom(caps: ClaimColumnCapabilities) {
   --     silently resolve NOTHING and leave the policy label blank again.
   LEFT JOIN mdata.drivers cdrv
     ON cdrv.id = c.driver_id
-   AND cdrv.operating_company_id = ${scope}
+   AND (
+        cdrv.operating_company_id = ${scope}
+     OR EXISTS (
+          SELECT 1
+          FROM mdata.driver_company_authorizations claim_driver_dca
+          WHERE claim_driver_dca.driver_id = cdrv.id
+            AND claim_driver_dca.company_id = ${scope}
+            AND claim_driver_dca.is_authorized = true
+            AND claim_driver_dca.deactivated_at IS NULL
+        )
+   )
   LEFT JOIN mdata.units cunit
     ON cunit.id = assets.unit_id
    AND COALESCE(cunit.currently_leased_to_company_id, cunit.owner_company_id) = ${scope}
