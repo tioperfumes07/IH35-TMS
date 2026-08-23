@@ -4,6 +4,7 @@
  *  1) Migration seeds identity_document, passport, visa, mexican_federal_license
  *  2) CreateDriverModal maps DQ upload keys to those codes (or medical_card/cdl)
  *  3) requestUploadUrl receives category_id from the resolved category
+ *  4) A category GET failure is disclosed with Retry and staged uploads fail closed
  *
  * --selftest strips mexican_federal_license from the migration and expects FAIL.
  */
@@ -65,6 +66,18 @@ function check({ migration, modal, board, register }) {
       errors.push("CreateDriverModal upload path must pass category_id from resolved map");
     }
   }
+  if (!/title="Couldn't load document categories"/.test(modal) || !/fileCategoriesQuery\.refetch\(\)/.test(modal)) {
+    errors.push("CreateDriverModal must disclose category GET failure with Retry");
+  }
+  if (!/pendingDocCategoriesUnavailable/.test(modal)) {
+    errors.push("CreateDriverModal must fail closed when staged document categories are unavailable");
+  }
+  if (!/pendingDocCategoriesUnavailable\s*\|\|\s*returningCheckLoading/.test(modal)) {
+    errors.push("CreateDriverModal Save must be disabled while staged document categories are unavailable");
+  }
+  if (!/if \(pendingDocCategoriesUnavailable\) \{[\s\S]*?return;[\s\S]*?\}\s*saveModeRef\.current/.test(modal)) {
+    errors.push("CreateDriverModal save handler must reject unavailable staged document categories");
+  }
   for (const [name, text] of [["GUARD board", board], ["findings register", register]]) {
     const line = findingLine(text);
     if (!line.includes(MERGED_PR)) {
@@ -104,6 +117,33 @@ function selftest() {
   });
   if (!staleProvenance.some((error) => error.includes("stale PR #7666 provenance"))) {
     throw new Error("selftest: planted stale PR provenance did not fail");
+  }
+  const mutations = [
+    {
+      name: "category error disclosure",
+      modal: modal.replace("title=\"Couldn't load document categories\"", "title=\"Categories unavailable\""),
+      expected: "disclose category GET failure",
+    },
+    {
+      name: "staged upload save gate",
+      modal: modal.replace("pendingDocCategoriesUnavailable ||\n                    returningCheckLoading", "returningCheckLoading"),
+      expected: "Save must be disabled",
+    },
+    {
+      name: "save handler defense",
+      modal: modal.replace(
+        "if (pendingDocCategoriesUnavailable) {\n        pushToast(\"Document categories are unavailable. Retry before saving staged files.\", \"error\");\n        return;\n      }\n      saveModeRef.current",
+        "saveModeRef.current"
+      ),
+      expected: "save handler must reject",
+    },
+  ];
+  for (const mutation of mutations) {
+    if (mutation.modal === modal) throw new Error(`selftest: could not plant ${mutation.name}`);
+    const errors = check({ migration: orig, modal: mutation.modal, board, register });
+    if (!errors.some((error) => error.includes(mutation.expected))) {
+      throw new Error(`selftest: planted ${mutation.name} did not fail`);
+    }
   }
   console.log("verify-doc-categories-identity-mx-license --selftest OK");
 }

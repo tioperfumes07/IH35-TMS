@@ -16,6 +16,7 @@ import {
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
+import { ListErrorState } from "../ListErrorState";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -213,6 +214,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     }
     return map;
   }, [fileCategoriesQuery.data]);
+  const pendingDocEntries = Object.entries(pendingDocs) as Array<[PendingDriverDocKey, File]>;
+  const hasPendingDocs = pendingDocEntries.length > 0;
+  const missingPendingDocCategory = pendingDocEntries.find(([key]) => {
+    const code = DRIVER_CREATE_DOC_CATEGORY_CODES[key];
+    return !categoryIdByCode.has(code);
+  });
+  const pendingDocCategoriesUnavailable =
+    hasPendingDocs &&
+    (fileCategoriesQuery.isError || !fileCategoriesQuery.isSuccess || Boolean(missingPendingDocCategory));
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(true);
   const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
@@ -403,6 +413,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         ? "Acknowledge the returning-driver detection above to enable Save."
         : overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId
           ? 'Select the prior driver record to link, or choose "Treat as a new hire" instead.'
+          : pendingDocCategoriesUnavailable
+            ? "Document categories are unavailable. Retry the category list or remove the staged files before saving."
           : returningCheckLoading
             ? "Checking for a matching returning-driver record…"
             : undefined;
@@ -556,10 +568,14 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   const runDriverCreateSave = useCallback(
     (mode: "default" | "add_another") => {
+      if (pendingDocCategoriesUnavailable) {
+        pushToast("Document categories are unavailable. Retry before saving staged files.", "error");
+        return;
+      }
       saveModeRef.current = mode;
       void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
     },
-    [form, submitDriverCreate]
+    [form, pendingDocCategoriesUnavailable, pushToast, submitDriverCreate]
   );
 
   useEffect(() => {
@@ -978,6 +994,29 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               Stage the required hiring documents here. They upload to the saved driver record after Save.
               Pre-employment drug screen must be acknowledged before create.
             </p>
+            {hasPendingDocs && fileCategoriesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load document categories"
+                status={fileCategoriesQuery.error instanceof ApiError ? fileCategoriesQuery.error.status : 0}
+                message={userFacingApiError(fileCategoriesQuery.error, "Document categories are unavailable")}
+                onRetry={() => void fileCategoriesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
+            {hasPendingDocs && fileCategoriesQuery.isPending ? (
+              <p className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" role="status">
+                Loading document categories before staged files can be saved…
+              </p>
+            ) : null}
+            {hasPendingDocs && fileCategoriesQuery.isSuccess && missingPendingDocCategory ? (
+              <ListErrorState
+                title="Document category unavailable"
+                status={0}
+                message={`The ${DRIVER_CREATE_DOC_CATEGORY_CODES[missingPendingDocCategory[0]]} category is missing from the active catalog.`}
+                onRetry={() => void fileCategoriesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <label className="flex items-start gap-2 text-sm text-slate-800">
               <input
                 type="checkbox"
@@ -1123,6 +1162,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       rehireAction === "rehire" &&
                       terminatedMatches.length > 0 &&
                       !selectedPriorDriverId) ||
+                    pendingDocCategoriesUnavailable ||
                     returningCheckLoading
                   }
                   title={saveDisabledReason}
