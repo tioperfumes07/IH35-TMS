@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-codex-progress-check-fleet-sweep-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports a clean empty-unique-FINDING fleet-side sweep for the same home-entity-only bug class Codex has been fixing on drivers.",
+  "branch": "cc-2/codex-progress-check-fleet-sweep-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-codex-progress-check-fleet-sweep-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "status/progress-check line, honest empty unique-FINDING" }
+  ],
+  "linkage": "N/A -- read-only source grep + git log review, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
