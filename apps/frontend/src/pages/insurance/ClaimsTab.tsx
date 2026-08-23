@@ -308,7 +308,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             {highlightedClaim ? " — highlighted below." : " — not in current list."}
           </p>
           {graphQuery.isLoading ? <p>Loading reverse links…</p> : null}
-          {graph ? (
+          {graphQuery.isError ? (
+            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+              Failed to load claim graph.
+            </div>
+          ) : null}
+          {!graphQuery.isError && graph ? (
             <div className="grid gap-1 md:grid-cols-2">
               <div>
                 <strong>Forward:</strong>{" "}
