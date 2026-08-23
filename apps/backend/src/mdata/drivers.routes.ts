@@ -1211,6 +1211,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         // generated events and must NOT be deleted.
         filters.push(EXCLUDE_PSEUDO_DRIVERS_SQL);
       }
+      // LV-DRIVER-HUB-SCHEDULER-TEST-FIXTURES-IN-PROD-PICKER-2026-08-23: this is the canonical driver
+      // list/picker read (GET /api/v1/mdata/drivers) that the Driver Hub Assign-Temp-Cover modal, and
+      // every other driver picker across the app, call. Unlike units.routes.ts (DISPATCH-4) and
+      // driver-scheduler.service.ts, this route had no is_sample_data exclusion at all, so agent/QA
+      // fixture drivers (e.g. "CODEX ACTIVE FLEET TEST 20260821", "TEST-DRIVER-1 SEED") were live and
+      // selectable in real dispatch/scheduling flows. is_sample_data is NOT NULL DEFAULT false, so
+      // `IS NOT TRUE` is a total, index-friendly predicate — same pattern as units.routes.ts.
+      filters.push("is_sample_data IS NOT TRUE");
       if (status) {
         values.push(status);
         filters.push(`status = $${values.length}`);
