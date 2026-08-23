@@ -129,7 +129,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
             )
           ), 0)::numeric AS oos_hours
           FROM mdata.units u
-          WHERE u.owner_company_id = $1::uuid
+          WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
             AND u.is_oos = true
             AND u.oos_since IS NOT NULL
             AND u.oos_since::date <= $3::date
@@ -334,7 +334,10 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
 
 async function countActiveUnits(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, companyId: string) {
   const res = await client.query(
-    `SELECT COUNT(*)::int AS c FROM mdata.units WHERE owner_company_id = $1::uuid AND deactivated_at IS NULL`,
+    `SELECT COUNT(*)::int AS c
+       FROM mdata.units
+      WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
+        AND deactivated_at IS NULL`,
     [companyId]
   );
   return Number(res.rows[0]?.c ?? 1);
