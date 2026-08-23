@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-mdata-sweep-clean-0223c",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean across 11 more orphan/consistency checks. 0 new unique defects. Per INBOX empty-unique-FINDING routing, returning to the /driver-hub leftover leg.",
+  "branch": "cc-2/mdata-sweep-clean-0223c",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-mdata-sweep-clean-0223c.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "documents the sweep checklist and its clean result" }
+  ],
+  "linkage": "N/A -- read-only reverse SQL verification pass, no schema/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
