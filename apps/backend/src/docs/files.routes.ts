@@ -156,47 +156,53 @@ async function ensureCategoryExists(
   return Boolean(res.rows[0]?.id);
 }
 
+// DOCS-F6072: every one of these tables is company-scoped (operating_company_id NOT NULL),
+// but this existence check used to look the entity_id up with no company predicate at all —
+// any accessible-company user could link a file to a driver/customer/vendor/unit/equipment/
+// load/invoice/settlement that belongs to a DIFFERENT company, as long as they knew its UUID.
+// Every entity_type branch below must filter on the resolved operating_company_id.
 async function ensureLinkEntityExists(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
   entityType: z.infer<typeof entityTypeSchema>,
-  entityId: string
+  entityId: string,
+  operatingCompanyId: string
 ) {
   if (entityType === "driver") {
-    const res = await client.query("SELECT id FROM mdata.drivers WHERE id = $1 LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "customer") {
-    const res = await client.query("SELECT id FROM mdata.customers WHERE id = $1 LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "vendor") {
-    const res = await client.query("SELECT id FROM mdata.vendors WHERE id = $1 LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "unit") {
-    const res = await client.query("SELECT id FROM mdata.units WHERE id = $1 LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.units WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "equipment") {
-    const res = await client.query("SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.equipment WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "load") {
     // §4: loads live in mdata.loads with soft-delete via soft_deleted_at.
-    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1", [entityId]);
+    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "invoice") {
     const res = await client.query(
-      "SELECT id FROM accounting.invoices WHERE id = $1 AND voided_at IS NULL LIMIT 1",
-      [entityId]
+      "SELECT id FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;
   }
   if (entityType === "settlement") {
     const res = await client.query(
-      "SELECT id FROM driver_finance.driver_settlements WHERE id = $1 LIMIT 1",
-      [entityId]
+      "SELECT id FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2 LIMIT 1",
+      [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;
   }
@@ -243,7 +249,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
             if (!SUPPORTED_LINK_ENTITY_TYPES.includes(link.entity_type as (typeof SUPPORTED_LINK_ENTITY_TYPES)[number])) {
               throw new Error("entity_type_not_supported_yet");
             }
-            const exists = await ensureLinkEntityExists(client, link.entity_type, link.entity_id);
+            const exists = await ensureLinkEntityExists(client, link.entity_type, link.entity_id, operatingCompanyId);
             if (!exists) throw new Error(`entity_not_found:${link.entity_type}`);
           }
         }
@@ -636,7 +642,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
       const existingRes = await client.query(
-        `SELECT id, category_id, document_date, expiration_date, description FROM docs.files WHERE id = $1 LIMIT 1`,
+        `SELECT id, category_id, document_date, expiration_date, description FROM docs.files WHERE id = $1 AND operating_company_id IN (SELECT org.user_accessible_company_ids()) LIMIT 1`,
         [parsedParams.data.file_id]
       );
       const existing = existingRes.rows[0] ?? null;
@@ -703,9 +709,12 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
 
     try {
       const linked = await withCurrentUser(user.uuid, async (client) => {
-        const fileRes = await client.query(`SELECT id FROM docs.files WHERE id = $1 LIMIT 1`, [parsedParams.data.file_id]);
+        const fileRes = await client.query(
+          `SELECT id, operating_company_id FROM docs.files WHERE id = $1 AND operating_company_id IN (SELECT org.user_accessible_company_ids()) LIMIT 1`,
+          [parsedParams.data.file_id]
+        );
         if (fileRes.rows.length === 0) return null;
-        const entityExists = await ensureLinkEntityExists(client, body.entity_type, body.entity_id);
+        const entityExists = await ensureLinkEntityExists(client, body.entity_type, body.entity_id, String(fileRes.rows[0].operating_company_id));
         if (!entityExists) throw new Error("entity_not_found");
         const res = await client.query(
           `
@@ -757,6 +766,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
           WHERE id = $1
             AND file_id = $2
             AND deleted_at IS NULL
+            AND file_id IN (SELECT id FROM docs.files WHERE operating_company_id IN (SELECT org.user_accessible_company_ids()))
           RETURNING *
         `,
         [parsedParams.data.link_id, parsedParams.data.file_id, user.uuid]
@@ -804,6 +814,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1
             AND deleted_at IS NULL
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
           RETURNING id
         `,
         [parsedParams.data.file_id, user.uuid, parsedBody.data.delete_reason]
@@ -846,6 +857,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1
             AND deleted_at IS NOT NULL
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
           RETURNING id
         `,
         [parsedParams.data.file_id]
@@ -894,6 +906,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
             version_number
           FROM docs.files
           WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
           LIMIT 1
         `,
         [parsedParams.data.file_id]
