@@ -192,16 +192,24 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
       const expectedSettle = num(settleRes.rows[0]?.amt);
       const netProjected = expectedAr - expectedAp - expectedSettle;
 
+      // CASHFLOW-OVERVIEW-SIGNED-AMOUNT: banking.bank_transactions.amount_cents is NOT a normalized
+      // magnitude for every ingestion path — live-verified on USMCA, Plaid-sourced credit
+      // (is_credit=true, money IN) rows store amount_cents NEGATIVE (Plaid's own raw sign
+      // convention), while debit rows store it positive. Summing t.amount_cents directly for
+      // is_credit=true rows therefore summed negative numbers, producing a negative "inflow" —
+      // live-observed as "Avg daily inflow: -$3,947.79" on /reports/cash-flow-overview. Direction
+      // must come ONLY from is_credit (see bank-feed-gl-posting.service.ts's own law on this);
+      // ABS() restores the magnitude regardless of which ingestion path signed it which way.
       const hist7 = await client
         .query(
           `
             SELECT
               COALESCE(
-                SUM(CASE WHEN t.is_credit THEN t.amount_cents ELSE 0 END),
+                SUM(CASE WHEN t.is_credit THEN ABS(t.amount_cents) ELSE 0 END),
                 0
               )::text AS inflow,
               COALESCE(
-                SUM(CASE WHEN NOT t.is_credit THEN t.amount_cents ELSE 0 END),
+                SUM(CASE WHEN NOT t.is_credit THEN ABS(t.amount_cents) ELSE 0 END),
                 0
               )::text AS outflow
             FROM banking.bank_transactions t
@@ -220,11 +228,11 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
           `
             SELECT
               COALESCE(
-                SUM(CASE WHEN t.is_credit THEN t.amount_cents ELSE 0 END),
+                SUM(CASE WHEN t.is_credit THEN ABS(t.amount_cents) ELSE 0 END),
                 0
               )::text AS inflow,
               COALESCE(
-                SUM(CASE WHEN NOT t.is_credit THEN t.amount_cents ELSE 0 END),
+                SUM(CASE WHEN NOT t.is_credit THEN ABS(t.amount_cents) ELSE 0 END),
                 0
               )::text AS outflow
             FROM banking.bank_transactions t
