@@ -1103,3 +1103,4 @@ Codex | FINDING OPEN | FO=CODEX-LOAD-COLUMN-DOCS-MAP-SELFTEST-ANCHOR-DRIFT | fil
 Codex | WORKING | merged customers #13317 @ 5c7e88a51b | NOW=banking transactions reverse exact guard | NEXT=settlements reverse | GO
 Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse exact seven-leaf guard | NEXT=factoring reverse | GO
 Codex | WORKING | FO=DISP-F6281-MDATA-LOAD-CREATE-TRAILER-EQUIPMENT-NOT-NULL | live pre-fix POST=500/23502 | guard=9/9+selftest | NEXT=FAST-MERGE then deployed TEST fixture retry | GO
+Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES/TEST-TIO · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator 2728=2728/USMCA25 · unauth 401 · no 500 | GO
