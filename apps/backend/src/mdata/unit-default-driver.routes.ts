@@ -57,7 +57,11 @@ async function fetchDriverAssignments(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text, vda.source, vda.is_default
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                           AND d.operating_company_id = $2::uuid
+                           AND (d.operating_company_id = $2::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations default_dca
+                              WHERE default_dca.driver_id = d.id AND default_dca.company_id = $2::uuid
+                                AND default_dca.is_authorized = true AND default_dca.deactivated_at IS NULL
+                           ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -72,7 +76,11 @@ async function fetchDriverAssignments(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                           AND d.operating_company_id = $2::uuid
+                           AND (d.operating_company_id = $2::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations current_dca
+                              WHERE current_dca.driver_id = d.id AND current_dca.company_id = $2::uuid
+                                AND current_dca.is_authorized = true AND current_dca.deactivated_at IS NULL
+                           ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
@@ -88,7 +96,11 @@ async function fetchDriverAssignments(
              d.id::text AS driver_id, d.first_name, d.last_name
       FROM telematics.vehicle_driver_assignments vda
       LEFT JOIN mdata.drivers d ON d.id = vda.driver_id
-                                AND d.operating_company_id = $2::uuid
+                                AND (d.operating_company_id = $2::uuid OR EXISTS (
+                                  SELECT 1 FROM mdata.driver_company_authorizations history_dca
+                                   WHERE history_dca.driver_id = d.id AND history_dca.company_id = $2::uuid
+                                     AND history_dca.is_authorized = true AND history_dca.deactivated_at IS NULL
+                                ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
       ORDER BY vda.started_at DESC
@@ -107,7 +119,7 @@ async function fetchDriverAssignments(
 }
 
 export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/drivers/assignments", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/drivers/assignments", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});
@@ -123,7 +135,7 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/mdata/units/:id/current-driver", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/current-driver", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});

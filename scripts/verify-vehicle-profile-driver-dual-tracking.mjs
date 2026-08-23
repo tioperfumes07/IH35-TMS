@@ -31,4 +31,31 @@ if (!driverSection.includes("defaultDriver") || !driverSection.includes("current
   console.error("verify:vehicle-profile-driver-dual-tracking FAIL: frontend must render default + current separately");
   process.exit(1);
 }
+const routeChecks = (candidate) => [
+  /default_dca\.company_id = \$2::uuid[\s\S]{0,160}default_dca\.is_authorized = true[\s\S]{0,160}default_dca\.deactivated_at IS NULL/.test(candidate),
+  /current_dca\.company_id = \$2::uuid[\s\S]{0,160}current_dca\.is_authorized = true[\s\S]{0,160}current_dca\.deactivated_at IS NULL/.test(candidate),
+  /history_dca\.company_id = \$2::uuid[\s\S]{0,160}history_dca\.is_authorized = true[\s\S]{0,160}history_dca\.deactivated_at IS NULL/.test(candidate),
+  (candidate.match(/rateLimit: \{ max: 120, timeWindow: "1 minute" \}/g) ?? []).length === 2,
+];
+if (routeChecks(routes).some((ok) => !ok)) {
+  console.error("verify:vehicle-profile-driver-dual-tracking FAIL: default/current/history driver reads must preserve authorized labels and rate limits");
+  process.exit(1);
+}
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    (x) => x.replace("default_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace("current_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace("history_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace('rateLimit: { max: 120, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }'),
+  ];
+  for (const mutate of mutations) {
+    const broken = mutate(routes);
+    if (broken === routes || routeChecks(broken).every(Boolean)) {
+      console.error("verify:vehicle-profile-driver-dual-tracking SELFTEST FAIL: planted defect escaped");
+      process.exit(1);
+    }
+  }
+  console.log("verify:vehicle-profile-driver-dual-tracking SELFTEST PASS — 4 planted defects caught");
+  process.exit(0);
+}
 console.log("verify:vehicle-profile-driver-dual-tracking PASS");
