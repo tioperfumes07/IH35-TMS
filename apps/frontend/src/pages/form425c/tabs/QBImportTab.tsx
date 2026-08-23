@@ -125,7 +125,19 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
         <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={parseIncomeDeposits}>
           Parse Income Deposits
         </button>
-        <button type="button" className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
+        <button
+          type="button"
+          className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white"
+          disabled={!parsed.length}
+          onClick={() => {
+            if (includedTotal <= 0) {
+              pushToast("No included deposits — check Use boxes before applying to Line 20", "error");
+              return;
+            }
+            onApplyTotal(includedTotal);
+            pushToast(`Applied $${includedTotal.toFixed(2)} to Line 20`, "success");
+          }}
+        >
           Apply ${includedTotal.toFixed(2)} to Line 20
         </button>
       </div>

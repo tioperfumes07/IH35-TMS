@@ -8,6 +8,21 @@ lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do
 
 NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`2fd90a0` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
+Paste-ready reverse SQL (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`, TEST customer `3e066edd-22ad-4014-9871-a93cf099c382`):
+```sql
+SELECT set_config('app.bypass_rls','lucia',true);
+SELECT id, name, code FROM mdata.customers
+ WHERE id = '3e066edd-22ad-4014-9871-a93cf099c382'
+   AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
+SELECT id, load_number FROM mdata.loads
+ WHERE customer_id = '3e066edd-22ad-4014-9871-a93cf099c382'
+ LIMIT 5; -- expect L-20260808-0050 / 0636399e-6114-45e8-91f8-af7f080bc6f7
+SELECT COUNT(*) FILTER (WHERE customer_id IS NOT NULL) AS with_fk, COUNT(*) AS n
+  FROM mdata.loads
+ WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
+```
+Then session GET (already proven 200) + RLS discriminator. ONE OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl> | hops=…`. Then drivers. Then fleet. No CDP. No batch.
+
 Cursor Neon help (do not stamp for you). Re-curl healthz first (`2fd90a0` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn.
 
 **SESSION GET PROVEN this tick (auth cookie, LIVE_SHA=2fd90a0) — copy into YOUR CERTIFIED hops, then add reverse SQL + RLS discriminator. Cursor will not stamp for you.**
