@@ -99,6 +99,11 @@ const CHECKS = [
     pattern: /SELECT \$\{CUSTOMER_SELECT_COLUMNS\} FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) LIMIT 1/,
   },
   {
+    name: "customer detail reverse GETs require selected-company query",
+    file: CUSTOMER_ROUTE,
+    pattern: /const detailQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),\s*\}\)/,
+  },
+  {
     name: "archived customer detail profile uses same-company full-row resolver",
     file: CUSTOMER_ROUTE,
     pattern: /FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) c\s+LIMIT 1/,

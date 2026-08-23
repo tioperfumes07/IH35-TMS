@@ -41,7 +41,7 @@ const listQuerySchema = z.object({
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 const detailQuerySchema = z.object({
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 const customerTypeInputSchema = z.enum(["broker", "direct", "direct_shipper"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
