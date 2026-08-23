@@ -136,6 +136,10 @@ export function ExhibitsViewer() {
               type="button"
               className="text-xs font-semibold text-[#1f2a44] hover:underline"
               onClick={() => {
+                if (!activeExhibit) {
+                  pushToast("No exhibit payload to export", "error");
+                  return;
+                }
                 const blob = new Blob([JSON.stringify(activeExhibit, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
@@ -143,6 +147,7 @@ export function ExhibitsViewer() {
                 a.download = `form-425c-exhibit-${activeLetter}-${built.period_end}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
+                pushToast(`Exported exhibit ${activeLetter.toUpperCase()} JSON`, "success");
               }}
             >
               Export JSON
