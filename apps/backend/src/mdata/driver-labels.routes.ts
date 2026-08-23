@@ -44,7 +44,17 @@ export async function registerDriverLabelsRoutes(app: FastifyInstance) {
         `SELECT d.id::text AS id,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS label
            FROM mdata.drivers d
-          WHERE d.operating_company_id = $1::uuid
+          WHERE (
+                  d.operating_company_id = $1::uuid
+                  OR EXISTS (
+                    SELECT 1
+                    FROM mdata.driver_company_authorizations label_dca
+                    WHERE label_dca.driver_id = d.id
+                      AND label_dca.company_id = $1::uuid
+                      AND label_dca.is_authorized = true
+                      AND label_dca.deactivated_at IS NULL
+                  )
+                )
             AND d.id = ANY($2::uuid[])
           ORDER BY array_position($2::uuid[], d.id)`,
         [companyId, ids],
