@@ -340,14 +340,23 @@ export function PolicyDetail() {
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Claims (INS-06)</h3>
           <div className="mt-2">
-            <ParityTable
-              rows={claims}
-              columns={claimColumns}
-              rowKey={(claim) => claim.id}
-              loading={claimsQuery.isPending || (claimsQuery.isFetching && claims.length === 0)}
-              storageKey="insurance-policy-claims"
-              emptyText="No claims attached to this policy."
-            />
+            {claimsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load this policy's claims"
+                status={claimsQuery.error instanceof ApiError ? claimsQuery.error.status : 0}
+                message={(claimsQuery.error as Error)?.message}
+                onRetry={() => void claimsQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                rows={claims}
+                columns={claimColumns}
+                rowKey={(claim) => claim.id}
+                loading={claimsQuery.isPending || (claimsQuery.isFetching && claims.length === 0)}
+                storageKey="insurance-policy-claims"
+                emptyText="No claims attached to this policy."
+              />
+            )}
           </div>
         </div>
 
