@@ -42,5 +42,5 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | Cursor | 9222 | banking | `/banking` labeled TEST expense → For review **Match** same $ → `/banking/reconciliation` **Accept** → ledger. Do not drain For-review. Do not Close period with 0 sessions. **Then** dispatch leftover (do not remake Book Load) → vendors → maint → safety → insurance |
 | CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden |
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
-| CC-3 | 9225 | legal | `/legal` pickers (`+ Add new` first row → wizard → R=W). Then `/lists` |
+| CC-3 | 9225 | lists | Legal unique-FINDING-CLEAN ≠ CERTIFIED until API healthz matches hops. NOW `/lists` 1–12 Live Chrome. No 25min wait. No `trigger_deploy` |
 | Codex | 9226 | drivers | CLASS-F5973 **landed** #14509. Next unique 500/dead/silent reverse SQL/GET on customers→drivers→fleet only. **No CDP.** Do not remake drivers/units audits. CUST-F5974 shipped #14483 |
