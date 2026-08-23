@@ -944,6 +944,14 @@ export function CustomersPage() {
               {createFieldErrors.email}
             </span>
           ) : null}
+          {paymentTermsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load payment terms"
+              status={0}
+              message={(paymentTermsQuery.error as Error)?.message}
+              onRetry={() => void paymentTermsQuery.refetch()}
+            />
+          ) : null}
           <CustomerProfileForm
             values={createValues}
             onPatch={(patch) => setCreateValues((current) => ({ ...current, ...patch }))}
@@ -963,7 +971,7 @@ export function CustomersPage() {
             <ActionButton type="button" onClick={() => setCreateOpen(false)}>
               Cancel
             </ActionButton>
-            <ActionButton type="submit" disabled={createMutation.isPending || !companyId}>
+            <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !companyId}>
               {createMutation.isPending ? "Saving..." : "Save"}
             </ActionButton>
           </div>

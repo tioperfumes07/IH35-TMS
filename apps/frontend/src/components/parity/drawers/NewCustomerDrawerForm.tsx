@@ -14,6 +14,7 @@ import {
 } from "../../customers/CustomerProfileForm";
 import { ActionButton } from "../../shared/ActionButton";
 import { CappedListNotice } from "../../CappedListNotice";
+import { ListErrorState } from "../../ListErrorState";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -123,6 +124,14 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
       {fieldErrors.email ? (
         <span className="block text-xs text-red-700">{fieldErrors.email}</span>
       ) : null}
+      {paymentTermsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load payment terms"
+          status={0}
+          message={(paymentTermsQuery.error as Error)?.message}
+          onRetry={() => void paymentTermsQuery.refetch()}
+        />
+      ) : null}
       <CustomerProfileForm
         values={values}
         onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
@@ -145,7 +154,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
         <ActionButton type="button" onClick={onClose}>
           Cancel
         </ActionButton>
-        <ActionButton type="submit" disabled={createMutation.isPending || !operatingCompanyId}>
+        <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !operatingCompanyId}>
           {createMutation.isPending ? "Saving..." : "Save"}
         </ActionButton>
       </div>
