@@ -20,7 +20,10 @@ import {
   loadStatusRequiresDeliveryDepartureStamp,
   stampFinalActiveDeliveryDeparture,
 } from "../dispatch/stamp-final-delivery-departure.js";
-import { ensureDriverBillArtifactsForLoad } from "../dispatch/book-load.service.js";
+import {
+  ensureDriverBillArtifactsForLoad,
+  resolveLoadTrailerEquipmentIdForInsert,
+} from "../dispatch/book-load.service.js";
 import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
@@ -143,6 +146,7 @@ const createLoadBodySchema = z.object({
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
+  load_trailer_equipment_id: z.string().uuid().optional(),
   notes: z.string().trim().max(5000).optional(),
   // FAIL-T1 — this is the SECOND load-create path and it never tagged sample data. The Book wizard
   // (dispatch/book-load.service.ts, numbers from load-id-reservation.service.ts:74 => "L-<ymd>-<seq>")
@@ -381,6 +385,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
+        const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
+          client,
+          b.operating_company_id,
+          b.load_trailer_equipment_id
+        );
+
         let loadNumber = "";
         let inserted: Record<string, unknown> | null = null;
         for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -396,14 +406,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 INSERT INTO mdata.loads (
                   operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
                   assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes, is_sample_data
+                  dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id
                 ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
                 )
                 RETURNING
                   id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
                   assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes, is_sample_data, created_at, updated_at, soft_deleted_at, deleted_by_user_id
+                  dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id,
+                  created_at, updated_at, soft_deleted_at, deleted_by_user_id
               `,
               [
                 b.operating_company_id,
@@ -419,6 +430,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 authUser.uuid,
                 b.notes ?? null,
                 b.is_sample_data ?? false,
+                loadTrailerEquipmentId,
               ]
             );
             await client.query(`RELEASE SAVEPOINT create_load`);

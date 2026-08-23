@@ -1102,3 +1102,4 @@ Codex | WORKING | FO=ACCT-F5668 | leaf=reports:report.trip_profitability:{driver
 Codex | FINDING OPEN | FO=CODEX-LOAD-COLUMN-DOCS-MAP-SELFTEST-ANCHOR-DRIFT | file=scripts/verify-load-column-all-modules.mjs:78 | BLOCKS=ACCT-F5668-followup | OWNER=Codex | NEXT=ship ACCT-F5668 then fix guard atomically | GO
 Codex | WORKING | merged customers #13317 @ 5c7e88a51b | NOW=banking transactions reverse exact guard | NEXT=settlements reverse | GO
 Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse exact seven-leaf guard | NEXT=factoring reverse | GO
+Codex | WORKING | FO=DISP-F6281-MDATA-LOAD-CREATE-TRAILER-EQUIPMENT-NOT-NULL | live pre-fix POST=500/23502 | guard=9/9+selftest | NEXT=FAST-MERGE then deployed TEST fixture retry | GO
