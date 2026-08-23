@@ -223,7 +223,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     return { qualifications: result.qualifications };
   });
 
-  app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
+  app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -231,13 +231,15 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = createQualificationSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     try {
       return await withCurrentUser(authUser.uuid, async (client) => {
         // XE-IDOR (same class as the sibling GET route above): scope the driver existence check to the
         // caller's own operating company so a foreign driver id cannot have a qualification created
         // against it.
-        const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
         if (!companyId) return reply.code(400).send({ error: "operating_company_unresolved" });
         const driverRes = await client.query(
           `SELECT d.id FROM mdata.drivers d
