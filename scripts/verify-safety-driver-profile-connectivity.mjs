@@ -17,6 +17,7 @@ const sources = {
   backend: fs.readFileSync("apps/backend/src/mdata/driver-aggregate.service.ts", "utf8"),
   routes: fs.readFileSync("apps/backend/src/mdata/drivers.routes.ts", "utf8"),
   pdf: fs.readFileSync("apps/backend/src/mdata/driver-pdf-export.routes.ts", "utf8"),
+  w8benRoutes: fs.readFileSync("apps/backend/src/mdata/driver-w8ben.routes.ts", "utf8"),
   matrix: fs.readFileSync("docs/specs/scoreboard/modules/safety.required.json", "utf8"),
 };
 
@@ -45,6 +46,7 @@ function failures(candidate) {
     [!candidate.backend.includes('"driver_agg_docs"') && !candidate.backend.includes("documents: documentsRes.rows"), "unused duplicate documents query removed"],
     [/resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}parsedAggregateQuery\.data\.operating_company_id[\s\S]{0,180}buildDriverAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(candidate.routes), "aggregate membership scope"],
     [/resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}query\.data\.operating_company_id[\s\S]{0,180}buildDriverAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(candidate.pdf), "PDF membership scope"],
+    [/app\.get\("\/api\/v1\/mdata\/drivers\/:id\/w8ben"[\s\S]*FROM mdata\.drivers d[\s\S]*d\.operating_company_id = \$2::uuid[\s\S]*dca\.company_id = \$2::uuid[\s\S]*dca\.is_authorized = true[\s\S]*if \(driver\.rowCount === 0\) return null;[\s\S]*FROM safety\.driver_w8ben[\s\S]*if \(rows === null\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(candidate.w8benRoutes), "W-8BEN reverse GET parent scope and honest 404"],
     [candidate.page.includes("driver.first_name") && candidate.page.includes("driver.cdl_number") && candidate.page.includes("CDL not on file") && !candidate.page.includes("driver.id.slice") && !candidate.page.includes("DRV-0000"), "real driver identity"],
     [candidate.page.includes("dqMissingCount") && candidate.page.includes("trainingDueCount"), "derived safety counts"],
     [candidate.panel.includes('<EntityLink kind="driver"'), "driver drill-through"],
@@ -84,6 +86,9 @@ if (process.argv.includes("--selftest")) {
     ["backend", "const w8benRes =", 'const documentsRes = await withSavepoint(client, "driver_agg_docs", async () => ({ rows: [] }), { rows: [] });\n  const w8benRes =', "unused duplicate documents query removed"],
     ["routes", "parsedAggregateQuery.data.operating_company_id", "undefined", "aggregate membership scope"],
     ["pdf", "query.data.operating_company_id", "undefined", "PDF membership scope"],
+    ["w8benRoutes", "d.operating_company_id = $2::uuid", "TRUE", "W-8BEN reverse GET parent scope and honest 404"],
+    ["w8benRoutes", 'return reply.code(404).send({ error: "mdata_driver_not_found" })', "return { rows: [] }", "W-8BEN reverse GET parent scope and honest 404"],
+    ["w8benRoutes", "if (driver.rowCount === 0) return null;", "", "W-8BEN reverse GET parent scope and honest 404"],
     ["page", "driver.first_name", "driver.id.slice", "real driver identity"],
     ["page", "dqMissingCount", "removedDqCount", "derived safety counts", true],
     ["panel", '<EntityLink kind="driver"', '<span data-kind="driver"', "driver drill-through"],
