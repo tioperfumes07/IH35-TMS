@@ -67,6 +67,10 @@ export function verify(source) {
   need("maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}", "maintenance client must send explicit company scope");
   need("maintenanceRoutes", "const result = await createDriverCanonical(", "maintenance route must reuse the canonical driver writer");
   need("maintenanceRoutes", "{ assignCompanyId: companyId, provisionSubAccounts: false }", "canonical driver writer must bind the selected company");
+  need("maintenanceRoutes", "maintenance_roster_dca.driver_id = d.id", "maintenance driver GET must retain active authorized shared drivers for WO pickers");
+  need("maintenanceRoutes", "maintenance_roster_dca.company_id = $1::uuid", "maintenance shared-driver roster must bind the selected company");
+  need("maintenanceRoutes", "maintenance_roster_dca.is_authorized = true", "maintenance shared-driver roster must require active authorization");
+  need("maintenanceRoutes", "maintenance_roster_dca.deactivated_at IS NULL", "maintenance shared-driver roster must reject deactivated authorization");
   return failures;
 }
 
@@ -105,6 +109,10 @@ if (process.argv.includes("--selftest")) {
     ["maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
     ["maintenanceRoutes", "const result = await createDriverCanonical("],
     ["maintenanceRoutes", "{ assignCompanyId: companyId, provisionSubAccounts: false }"],
+    ["maintenanceRoutes", "maintenance_roster_dca.driver_id = d.id"],
+    ["maintenanceRoutes", "maintenance_roster_dca.company_id = $1::uuid"],
+    ["maintenanceRoutes", "maintenance_roster_dca.is_authorized = true"],
+    ["maintenanceRoutes", "maintenance_roster_dca.deactivated_at IS NULL"],
     ["driversMatrix", '"id": "teams.create"'],
     ["driversMatrix", '"id": "team_splits"'],
     ["maintenanceMatrix", '"id": "master.drivers.create"'],
