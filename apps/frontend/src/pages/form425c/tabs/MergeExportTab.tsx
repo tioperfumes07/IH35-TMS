@@ -25,6 +25,11 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
         <p className="mt-1 text-xs text-slate-500">
           Period: {MONTHS[month]} {year}
         </p>
+        {!canGenerate ? (
+          <p className="mt-2 text-xs font-semibold text-red-700">
+            Create / Load Draft before generating the filing package — the button still explains on click.
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={onGenerate}
