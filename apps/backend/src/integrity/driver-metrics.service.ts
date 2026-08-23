@@ -233,7 +233,13 @@ export function buildDriverMetricsAggregationSql(): string {
         d.id::text AS driver_id,
         NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations metrics_roster_dca
+          WHERE metrics_roster_dca.driver_id = d.id
+            AND metrics_roster_dca.company_id = $1::uuid
+            AND metrics_roster_dca.is_authorized = true
+            AND metrics_roster_dca.deactivated_at IS NULL
+        ))
         AND d.deactivated_at IS NULL
         AND d.archived_at IS NULL
     ),
