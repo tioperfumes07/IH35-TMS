@@ -7,6 +7,7 @@ const checks = [
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
   ["apps/backend/src/driver/loads.routes.ts", /customer_id:\s*row\.customer_id/],
   ["apps/frontend/src/pages/driver/DriverLoadsPage.tsx", /<EntityLink[\s\S]{0,80}kind="customer"[\s\S]{0,80}id=\{load\.customer_id\}/],
+  ["apps/frontend/src/pages/driver/DriverLoadsPage.tsx", /q\.isError[\s\S]{0,360}title="Couldn't load assigned loads"[\s\S]{0,360}q\.refetch\(\)/],
   ["apps/frontend/src/pages/driver/DriverLoadDetailPage.tsx", /<EntityLink kind="customer" id=\{load\.customer_id\}/],
   ["apps/backend/src/reports/dispatch-margin.routes.ts", /l\.customer_id::text/],
   ["apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
