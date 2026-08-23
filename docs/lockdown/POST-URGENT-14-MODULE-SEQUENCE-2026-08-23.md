@@ -20,7 +20,7 @@ Canonical ids = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sideb
 | 2 | FINANCE HUB | `finance` | `/finance` | **CC-1** after cash-flow |
 | 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | **CC-2** when Codex SQL unique-empty (still help Codex 7–9 first) |
 | 4 | 425C | `form_425` | `/425c` | **Cursor** |
-| 5 | REPORTS | `reports` | `/reports` | next free seat after its claim CERTIFIED |
+| 5 | REPORTS | `reports` | `/reports` | **CC-2** (driver-hub unique-FINDING hunting empty; 2 fixes shipped, 3 modules' worth of chrome-law/create-void spot-checks clean, 2 items honestly logged open not blocking) |
 | 6 | TASKS | `tasks` | `/tasks` | next free |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | next free |
 | 8 | ELD | `eld` | `/eld` | next free (hidden stub — still hop the id) |
