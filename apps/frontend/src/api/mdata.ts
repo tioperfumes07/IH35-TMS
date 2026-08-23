@@ -985,15 +985,15 @@ export function createDriverQualification(
   });
 }
 
-export function updateDriverQualification(driverId: string, qualificationId: string, body: { is_active?: boolean; notes?: string }) {
-  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}`, {
+export function updateDriverQualification(driverId: string, qualificationId: string, operatingCompanyId: string, body: { is_active?: boolean; notes?: string }) {
+  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "PATCH",
     body,
   });
 }
 
-export function deactivateDriverQualification(driverId: string, qualificationId: string) {
-  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}`, {
+export function deactivateDriverQualification(driverId: string, qualificationId: string, operatingCompanyId: string) {
+  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "PATCH",
     body: { is_active: false },
   });
