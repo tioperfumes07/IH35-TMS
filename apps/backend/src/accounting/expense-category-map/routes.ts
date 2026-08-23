@@ -111,6 +111,13 @@ async function appendExpenseCategoryMapAudit(
       JSON.stringify({
         action: params.action,
         mapping_id: params.mappingId,
+        // ADMIN-ACTIVITY-F1 — the generic Activity Log page (and its "View audit" deep links)
+        // filters/displays via the payload's own entity_type/entity_id keys; this producer only
+        // ever wrote mapping_id, so ExpenseCategoryMapPage's "View audit" link silently showed
+        // unrelated recent activity instead of this mapping's own history. Kept mapping_id too
+        // for any existing consumer relying on that exact key.
+        entity_type: "accounting.expense_category_map",
+        entity_id: params.mappingId,
         operating_company_id: params.operatingCompanyId,
         ...params.payload,
       }),
