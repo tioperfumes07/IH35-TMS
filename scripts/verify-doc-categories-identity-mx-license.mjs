@@ -5,6 +5,7 @@
  *  2) CreateDriverModal maps DQ upload keys to those codes (or medical_card/cdl)
  *  3) requestUploadUrl receives category_id from the resolved category
  *  4) A category GET failure is disclosed with Retry and staged uploads fail closed
+ *  5) Company and state catalog failures are independently disclosed and retryable
  *
  * --selftest strips mexican_federal_license from the migration and expects FAIL.
  */
@@ -78,6 +79,21 @@ function check({ migration, modal, board, register }) {
   if (!/if \(pendingDocCategoriesUnavailable\) \{[\s\S]*?return;[\s\S]*?\}\s*saveModeRef\.current/.test(modal)) {
     errors.push("CreateDriverModal save handler must reject unavailable staged document categories");
   }
+  for (const [query, title] of [
+    ["companiesQuery", "Couldn't load operating companies"],
+    ["usStatesQuery", "Couldn't load US states"],
+    ["mexicoStatesQuery", "Couldn't load Mexico states"],
+  ]) {
+    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const disclosure = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${escapedTitle}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!disclosure.test(modal)) {
+      errors.push(`CreateDriverModal must disclose and retry ${query} failure`);
+    }
+    const failClosed = new RegExp(`disabled=\\{${query}\\.isError\\}`);
+    if (!failClosed.test(modal)) {
+      errors.push(`CreateDriverModal must disable the selector when ${query} fails`);
+    }
+  }
   for (const [name, text] of [["GUARD board", board], ["findings register", register]]) {
     const line = findingLine(text);
     if (!line.includes(MERGED_PR)) {
@@ -143,6 +159,14 @@ function selftest() {
     const errors = check({ migration: orig, modal: mutation.modal, board, register });
     if (!errors.some((error) => error.includes(mutation.expected))) {
       throw new Error(`selftest: planted ${mutation.name} did not fail`);
+    }
+  }
+  for (const query of ["companiesQuery", "usStatesQuery", "mexicoStatesQuery"]) {
+    const mutation = modal.replace(`${query}.refetch()`, "Promise.resolve()");
+    if (mutation === modal) throw new Error(`selftest: could not remove ${query} retry`);
+    const errors = check({ migration: orig, modal: mutation, board, register });
+    if (!errors.some((error) => error.includes(`retry ${query} failure`))) {
+      throw new Error(`selftest: removed ${query} retry did not fail`);
     }
   }
   console.log("verify-doc-categories-identity-mx-license --selftest OK");

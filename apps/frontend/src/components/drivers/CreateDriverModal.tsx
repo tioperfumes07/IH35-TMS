@@ -624,6 +624,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           <>
           <div className="col-span-full flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Operating Company</label>
+            {companiesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load operating companies"
+                status={0}
+                message={companiesQuery.error instanceof Error ? companiesQuery.error.message : undefined}
+                onRetry={() => void companiesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <Combobox
               dataField="operating_company_id"
               options={(companiesQuery.data ?? []).map((company) => ({
@@ -682,6 +691,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ))}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL State</label>
+            {usStatesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load US states"
+                status={0}
+                message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined}
+                onRetry={() => void usStatesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
             <Combobox
               dataField="cdl_state"
               options={(usStatesQuery.data ?? []).map((state) => ({
@@ -867,6 +885,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 ))}
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">MX State</label>
+                  {mexicoStatesQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load Mexico states"
+                      status={0}
+                      message={mexicoStatesQuery.error instanceof Error ? mexicoStatesQuery.error.message : undefined}
+                      onRetry={() => void mexicoStatesQuery.refetch()}
+                      className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                    />
+                  ) : null}
                   <Combobox
                     dataField="mx_state"
                     options={(mexicoStatesQuery.data ?? []).map((state) => ({
