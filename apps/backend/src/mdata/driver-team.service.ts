@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertDriverQualifiedForLoad } from "../dispatch/driver-qualification.service.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 export type TeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
@@ -101,7 +102,7 @@ async function getTeam(client: Queryable, teamId: string, operatingCompanyId: st
 
 export async function listDriverTeams(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT
@@ -124,7 +125,7 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
 
 export async function getDriverTeam(userId: string, operatingCompanyId: string, teamId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const teamRes = await client.query(
       `
         SELECT

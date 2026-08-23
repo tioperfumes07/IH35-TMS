@@ -24,6 +24,7 @@ function failures(s = files) { return [
   ["visible driver EntityPicker filter", s.panel.includes('dataTestId="team-split-config-filter-driver"') && s.panel.includes("allowCreate={false}") && s.panel.includes("setSearchParams") && s.panel.includes("EntityPicker")],
   // LV-DRIVERS-TEAM-SPLIT-NULL-IDENTITY — opco-only membership (no uca join on nullable identity_user_id)
   ["assertDriverCompany opco-only", /FROM mdata\.drivers d\s+WHERE d\.id = \$1\s+AND d\.operating_company_id = \$2::uuid/.test(s.service) && !/FROM mdata\.drivers d\s+JOIN org\.user_company_access/.test(s.service)],
+  ["team list/detail membership scope", (s.service.match(/setScopedCompanyContext\(client, userId, operatingCompanyId\)/g) ?? []).length === 2],
   ["exact Required ownership", (() => { try { return JSON.parse(s.matrix).leaves?.find((leaf) => leaf.id === "drivers.panel.team_split_config")?.required?.includes("reverse_link"); } catch { return false; } })()],
   ["exact Built header", s.self.split("\n").includes(HEADER)],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
@@ -37,11 +38,12 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, panel: files.panel.replace("!isLoading && !isError", "!isLoading") }).includes("honest panel failure state"),
     failures({ ...files, panel: files.panel.replace('dataTestId="team-split-config-filter-driver"', 'dataTestId="gone"') }).includes("visible driver EntityPicker filter"),
     failures({ ...files, service: files.service.replace("AND d.operating_company_id = $2::uuid", "AND FALSE") }).includes("assertDriverCompany opco-only"),
+    failures({ ...files, service: files.service.replace("setScopedCompanyContext(client, userId, operatingCompanyId)", "client.query('SELECT 1')") }).includes("team list/detail membership scope"),
     failures({ ...files, matrix: files.matrix.replace('"id": "drivers.panel.team_split_config"', '"id": "drivers.panel.team_split_config.removed"') }).includes("exact Required ownership"),
     failures({ ...files, self: files.self.replace(HEADER, `${HEADER}.removed`) }).includes("exact Built header"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-driver-team-split-config-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-driver-team-split-config-reverse selftest PASS — 10/10 runtime/evidence mutations red"); process.exit(0);
+  console.log("verify-driver-team-split-config-reverse selftest PASS — 11/11 runtime/evidence mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-driver-team-split-config-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
