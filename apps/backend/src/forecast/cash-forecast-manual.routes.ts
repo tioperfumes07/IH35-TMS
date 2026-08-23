@@ -80,7 +80,11 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       if (q.data.to) { values.push(q.data.to); filters.push(`entry_date <= $${values.length}`); }
       if (q.data.entry_id) { values.push(q.data.entry_id); filters.push(`id = $${values.length}::uuid`); }
       if (q.data.party_ref_kind) { values.push(q.data.party_ref_kind); filters.push(`party_ref_kind = $${values.length}`); }
-      if (q.data.party_ref_id) { values.push(q.data.party_ref_id); filters.push(`party_ref_id = $${values.length}::uuid`); }
+      // party_ref_id is a snapshot identity stored as TEXT (migration 202606170100), even
+      // though the API validates canonical entity ids as UUIDs. Keep the request contract
+      // strict, but bind the SQL parameter as text so customer/vendor/driver reverse reads
+      // do not ask Postgres to evaluate `text = uuid` (42883).
+      if (q.data.party_ref_id) { values.push(q.data.party_ref_id); filters.push(`party_ref_id = $${values.length}::text`); }
       if (q.data.ref_kind) { values.push(q.data.ref_kind); filters.push(`ref_kind = $${values.length}`); }
       if (q.data.ref_external_id) { values.push(q.data.ref_external_id); filters.push(`ref_external_id = $${values.length}`); }
       const res = await client.query(
