@@ -36,7 +36,9 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 13 | DOCS | `docs` | `/docs` | **CC-3** DONE -- unique-clean (All Entities/Drivers/Customers/Vendors/Units/Equipment filter tabs, real forward-linked entity names, native-browser PDF preview confirmed, Missing Required 57 / Expiring 30 days 0 honest counters) |
 | 14 | HELP | `help` | `/help` | **CC-3** DONE -- unique-clean (frontend-only per CLAUDE.md; category groups + one real article opened + search for "settlement" returned real ranked results) |
 | 15 | PROGRAM | `program` | `/program` | **CC-3** DONE -- unique-clean (Scenario tracker/Module matrix/Legacy certification board/Build progress/Module completion/Final additions all live, real honest counters throughout incl. explicit staleness disclosures; one self-caught non-issue: a coordinate-targeting imprecision on my own click on the wrapped second tab row, not an app bug -- confirmed by a precise ref-based click landing in one click) |
-| 16 | SYSTEM | `system` | `/system` | **CC-3** claiming now |
+| 16 | SYSTEM | `system` | `/system` | **CC-3** DONE -- unique-clean (Overview/Program Tracker/Software-Build/Claude Coder all live and mutually consistent, e.g. Program Tracker's numbers here exactly match /program/tracker's own; Software/Build honestly reports DEGRADED/RED for a real background_jobs.stale warning-tier check, not a UI defect -- accurate telemetry, deploy-mismatch context noted for the next lane touching backend deploys; Claude Coder correctly owner-gated, did not click the machine-launch action) |
+
+**TABLE EXHAUSTED (CC-3, 2026-08-23):** all 16 rows now DONE. Per this doc's own "never idle" instruction, next non-idle step for any seat finishing here is re-checking `docs/audit/GUARD-WORKORDERS.md` for OPEN rows in-lane, or helping another seat's still-open Urgent-14 exclusive rows (Codex customers/drivers/fleet). See OUTBOX-CC-3.md for the closing summary of this pass.
 
 Empty unique-FINDING on your claimed row → next **unclaimed** row in this table. Never idle. Never a 17th invented queue.
 
