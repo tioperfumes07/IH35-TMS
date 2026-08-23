@@ -28,6 +28,7 @@ const SECTION =
 const PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const API = "apps/frontend/src/api/safety.ts";
 const ROUTE = "apps/backend/src/safety/safety-v5.routes.ts";
+const CIVIL_ROUTE = "apps/backend/src/safety/fines.routes.ts";
 
 function stripComments(src) {
   return src
@@ -50,6 +51,9 @@ function links(s) {
   const routeStart = s[ROUTE].indexOf('"/api/v1/safety/internal-fines"');
   const routeEnd = s[ROUTE].indexOf("app.patch(", routeStart);
   const route = s[ROUTE].slice(routeStart, routeEnd);
+  const civilStart = s[CIVIL_ROUTE].indexOf('"/api/v1/safety/fines"');
+  const civilEnd = s[CIVIL_ROUTE].indexOf('"/api/v1/safety/fines/:id"', civilStart);
+  const civilList = s[CIVIL_ROUTE].slice(civilStart, civilEnd);
   return [
     {
       ok: /getSafetyFines\(/.test(s[SECTION]),
@@ -113,6 +117,24 @@ function links(s) {
       ),
       why: `${ROUTE}: invalid exact driver renders as a legitimate empty fines history`,
     },
+    {
+      ok: /dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(
+        civilList,
+      ),
+      why: `${CIVIL_ROUTE}: exact-driver civil-fines reverse does not validate owned/authorized parent`,
+    },
+    {
+      ok:
+        (s[CIVIL_ROUTE].match(/label_dca\.company_id = cf\.operating_company_id/g) ?? []).length === 2 &&
+        (s[CIVIL_ROUTE].match(/label_dca\.is_authorized = true/g) ?? []).length === 2,
+      why: `${CIVIL_ROUTE}: authorized shared-driver civil-fine labels are suppressed in list or detail`,
+    },
+    {
+      ok: /if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(
+        civilList,
+      ),
+      why: `${CIVIL_ROUTE}: invalid exact driver renders as a legitimate empty civil-fines history`,
+    },
   ];
 }
 
@@ -123,7 +145,7 @@ const check = (s) =>
 
 function loadAll() {
   const out = {};
-  for (const p of [SECTION, PAGE, API, ROUTE]) out[p] = read(p);
+  for (const p of [SECTION, PAGE, API, ROUTE, CIVIL_ROUTE]) out[p] = read(p);
   return out;
 }
 
@@ -195,6 +217,26 @@ function selftest() {
       (x) =>
         x.replace(
           /("\/api\/v1\/safety\/internal-fines"[\s\S]{0,7000}?)if \(!result\.found\)\s*return reply\.code\(404\)/,
+          "$1if (false) return reply.code(404)",
+        ),
+    ],
+    [
+      CIVIL_ROUTE,
+      (x) =>
+        x.replace(
+          /("\/api\/v1\/safety\/fines"[\s\S]{0,3000}?)dca\.is_authorized = true/,
+          "$1TRUE",
+        ),
+    ],
+    [
+      CIVIL_ROUTE,
+      (x) => x.replace("label_dca.is_authorized = true", "TRUE"),
+    ],
+    [
+      CIVIL_ROUTE,
+      (x) =>
+        x.replace(
+          /("\/api\/v1\/safety\/fines"[\s\S]{0,7000}?)if \(!result\.found\)\s*return reply\.code\(404\)/,
           "$1if (false) return reply.code(404)",
         ),
     ],
