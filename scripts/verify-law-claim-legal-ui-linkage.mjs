@@ -104,6 +104,9 @@ export function computeFailures(sources) {
   if (!/insuranceClaimsApi\.list/.test(reverseSection)) {
     errors.push("InsuranceClaimsReverseSection must list claims via insuranceClaimsApi");
   }
+  if (!/query\.isError[\s\S]{0,420}title="Couldn't load linked insurance claims"[\s\S]{0,420}query\.refetch\(\)/.test(reverseSection)) {
+    errors.push("InsuranceClaimsReverseSection failed GET must expose exact retry");
+  }
 
   if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(claimShared)) {
     errors.push("listClaimsQuerySchema must accept optional driver_id");
@@ -169,6 +172,7 @@ function selftest() {
     reverseSection: `
       export function InsuranceClaimsReverseSection() {}
       insuranceClaimsApi.list({ operating_company_id, ...filter })
+      query.isError title="Couldn't load linked insurance claims" onRetry={() => void query.refetch()}
     `,
   };
   const bad = {
@@ -191,6 +195,14 @@ function selftest() {
   };
   if (!computeFailures(cappedPicker).some((failure) => failure.includes("insurance-claim-picker"))) {
     console.error(`${LABEL} selftest FAIL: capped claim selector mutation passed`);
+    process.exit(1);
+  }
+  const retryRemoved = {
+    ...good,
+    reverseSection: good.reverseSection.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}"),
+  };
+  if (!computeFailures(retryRemoved).some((failure) => failure.includes("exact retry"))) {
+    console.error(`${LABEL} selftest FAIL: insurance reverse retry mutation passed`);
     process.exit(1);
   }
   console.log(`✓ ${LABEL} selftest PASS`);

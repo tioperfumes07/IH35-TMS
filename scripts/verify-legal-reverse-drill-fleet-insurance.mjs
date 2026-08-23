@@ -95,6 +95,9 @@ export function check(texts) {
     if (!/kind\s*=\s*["']matter["']/.test(texts.section) || !/EntityLinkOrTombstone/.test(texts.section) || !/legal-matters-reverse-matter-link/.test(texts.section)) {
       f.push(`${FILES.section}: must EntityLinkOrTombstone kind="matter" with legal-matters-reverse-matter-link`);
     }
+    if (!/query\.isError[\s\S]{0,420}title="Couldn't load linked legal matters"[\s\S]{0,420}query\.refetch\(\)/.test(texts.section)) {
+      f.push(`${FILES.section}: failed reverse GET must expose exact retry`);
+    }
   }
 
   if (!texts.api) f.push(`${FILES.api}: missing`);
@@ -172,7 +175,7 @@ function selftest() {
     claims: `LegalMattersReverseSection\ninsurance_claim_id`,
     lawsuits: `LegalMattersReverseSection\ninsurance_lawsuit_id`,
     driver: `import { LegalMattersReverseSection } from "...";\nfilter={{ related_driver_id: id }}`,
-    section: `Owner Administrator legalMattersApi.list\n<EntityLinkOrTombstone kind="matter" id={id} data-testid="legal-matters-reverse-matter-link" />`,
+    section: `Owner Administrator legalMattersApi.list\nquery.isError title="Couldn't load linked legal matters" onRetry={() => void query.refetch()}\n<EntityLinkOrTombstone kind="matter" id={id} data-testid="legal-matters-reverse-matter-link" />`,
     api: `unit_id insurance_claim_id related_driver_id`,
     routes: `unit_id: z.string().uuid().optional(),\ninsurance_claim_id: z.string().uuid().optional(),\nrelated_driver_id: z.string().uuid().optional(),`,
     service: `m.unit_id = $n\nm.insurance_claim_id = $n\nm.related_driver_id = $n`,
@@ -189,6 +192,8 @@ function selftest() {
   };
   if (check(good).length) throw new Error(`${LABEL}: selftest good fixture failed: ${check(good).join("; ")}`);
   if (!check(bad).length) throw new Error(`${LABEL}: selftest expected planted miss`);
+  const retryRemoved = { ...good, section: good.section.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}") };
+  if (!check(retryRemoved).some((failure) => failure.includes("exact retry"))) throw new Error(`${LABEL}: retry mutation escaped`);
   console.log(`${LABEL}: selftest PASS`);
 }
 
