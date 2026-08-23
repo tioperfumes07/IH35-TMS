@@ -357,6 +357,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <DrugProgramSection drug={aggregate.drug_program} unavailable={aggregate.drug_program_unavailable === true} />
       </div>
       <div data-testid="dp-section-5-hos">
+        {hosQ.isError ? (
+          <ListErrorState
+            title="Couldn't refresh HOS status"
+            status={0}
+            message={(hosQ.error as Error)?.message}
+            onRetry={() => void hosQ.refetch()}
+          />
+        ) : null}
         <HOSStatusSection hos={hos} unavailable={aggregate.hos_unavailable === true} />
         <EntityLink
           kind="compliance_hos_driver"
