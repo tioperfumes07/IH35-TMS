@@ -108,6 +108,12 @@ export function audit(src) {
   if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: unit.edit.* tabs must all patch the real edited unit's own id`);
   }
+  if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed canonical unit reads must expose exact retry`);
+  }
+  if (!/disabled=\{saveMutation\.isPending \|\| profileQuery\.isError \|\| !unitId\}/.test(src.editModal)) {
+    failures.push(`${FILES.editModal}: failed canonical unit reads must disable destructive patch saves`);
+  }
   if (!/<UnitPermitsTab unitId=\{id\}/.test(src.unitDetail) || !/<UnitFinanceLinkageTab unitId=\{id\}/.test(src.unitDetail)) {
     failures.push(`${FILES.unitDetail}: unit.detail.* tabs must be self-referentially scoped via unitId={id}`);
   }
@@ -170,6 +176,8 @@ if (process.argv.includes("--selftest")) {
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
+    ["edit-modal-read-retry", "editModal", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["edit-modal-save-gate", "editModal", /saveMutation\.isPending \|\| profileQuery\.isError \|\| !unitId/, "saveMutation.isPending || !unitId"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
     ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
