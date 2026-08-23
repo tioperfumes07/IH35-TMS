@@ -51,6 +51,12 @@ export function audit(src) {
   if (!/customer\.deactivated_at != null/.test(src.customers) || !/customer\.deactivated_at == null/.test(src.customers)) {
     failures.push(`${FILES.customers}: active/inactive segments must filter real customer.deactivated_at`);
   }
+  if (!/customersQuery\.isError \|\| inactiveCustomersQuery\.isError/.test(src.customers)) {
+    failures.push(`${FILES.customers}: active and inactive roster GET failures must both block the shared list`);
+  }
+  if (!/Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/.test(src.customers)) {
+    failures.push(`${FILES.customers}: shared roster failure retry must refetch both company-scoped roster reads`);
+  }
   if (!/raw === "all"/.test(src.customers) || !/else params\.set\("listTab", next\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: all segment must be URL-backed by listTab=all`);
   }
@@ -155,6 +161,8 @@ if (process.argv.includes("--selftest")) {
     ["create-call", "customers", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
     ["active-filter", "customers", /customer\.deactivated_at == null/g, "false"],
+    ["inactive-roster-error", "customers", /customersQuery\.isError \|\| inactiveCustomersQuery\.isError/g, "customersQuery.isError"],
+    ["combined-roster-retry", "customers", /Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/, "customersQuery.refetch()"],
     ["all-segment", "customers", /raw === "all"/, "false"],
     ["all-segment-url", "customers", /else params\.set\("listTab", next\)/, 'else params.set("tab", next)'],
     ["roster-staged-filters", "customers", /applied: \{ listTab, rosterType, rosterCreditStatus \}/, "applied: { listTab }"],
