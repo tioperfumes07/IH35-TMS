@@ -12,8 +12,10 @@ import {
   patchForm425CReport,
   upsertForm425CProfile,
   amendForm425CReport,
+  attachForm425CLineFile,
   type Form425CReport,
 } from "../../api/form425c";
+import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -340,6 +342,26 @@ export function Form425CHome() {
   });
 
   const autosaveBlockedToast = useRef(false);
+
+  // Part 8 checkboxes (att38-42) are display-only — a real attachment requires an uploaded file.
+  // Save Draft never sent these booleans to the server (no such columns); the actual truth is
+  // attachment_3X_..._uuids arrays, written only by this upload → confirm → link chain.
+  const attachMutation = useMutation({
+    mutationFn: async ({ line, file }: { line: number; file: File }) => {
+      const reportId = form.reportId;
+      if (!reportId) throw new Error("Create / Load Draft before attaching a file");
+      const { file_id, presigned_url } = await requestUploadUrlFromFile(file, { operating_company_id: companyId });
+      await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
+      await confirmUpload(file_id);
+      await attachForm425CLineFile(reportId, companyId, line, file_id);
+    },
+    onSuccess: async () => {
+      pushToast("File attached", "success");
+      await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Attachment upload failed"), "error"),
+  });
+
   useEffect(() => {
     if (!dirty) return;
     if (!form.reportId) {
@@ -499,6 +521,14 @@ export function Form425CHome() {
             }
             markFiledMutation.mutate();
           }}
+          onAttachFile={(line, file) => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before attaching a file", "error");
+              return;
+            }
+            attachMutation.mutate({ line, file });
+          }}
+          attaching={attachMutation.isPending}
           loading={importMutation.isPending || saveMutation.isPending}
           autoSaveLabel={dirty ? "Auto-save pending..." : autoSavedAt ? `Auto-saved at ${new Date(autoSavedAt).toLocaleTimeString()}` : "No unsaved changes"}
         />
