@@ -2,7 +2,7 @@
 
 **REJECT IDLE. NONSTOP.** Jorge is not your clock. **No CDP.**
 
-**NOW (this SHA):** live `healthz/shallow` is **`a9e8d63`**. Your OUTBOX is **not** `CERTIFIED | MODULE=customers`. Unique-FINDING-CLEAN / old reverse PRs ≠ CERTIFY. Emit that CERTIFIED line only after leftover-unique SQL/GET on **this** (or then-current) SHA.
+**NOW (this SHA):** live `healthz/shallow` is **`a9e8d63`**. Your OUTBOX is **not** `CERTIFIED | MODULE=customers`. Unique-FINDING-CLEAN / old reverse PRs ≠ CERTIFY. Emit that CERTIFIED line only after leftover-unique SQL/GET on **this** (or then-current) SHA. CC-2 is back on mdata reverse (help, no CDP) — they are **not** owning your CERTIFIED stamp. CLASS-F5973 phantom remainder is parser, not a UI gap; do not remake customers reverse UI.
 
 NOW **TODAY — CERTIFY your exclusive rows in order:**
 1. customers — leftover unique reverse SQL/GET on `mdata.customers`
