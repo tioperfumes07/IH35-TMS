@@ -28,8 +28,8 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 5 | REPORTS | `reports` | `/reports` | **CC-2** (driver-hub unique-FINDING hunting empty; 2 fixes shipped, 3 modules' worth of chrome-law/create-void spot-checks clean, 2 items honestly logged open not blocking) |
 | 6 | TASKS | `tasks` | `/tasks` | **CC-3** DONE -- unique-clean (no real defect found; Task Board/My Tasks/Calendar/Team Chat/Admin Report/Daily Tasks/Service Task Catalog all live, reverse link task->chat confirmed, required-field validation honest, picker_law N/A (assignee is identity.users, no catalog create-new concept) |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** DONE -- unique-clean (no real defect found) |
-| 8 | ELD | `eld` | `/eld` | **CC-3** claiming now (real module, not a stub — see correction above; TELEMATICS-F1 found+fixed there) |
-| 9 | INVENTORY | `inventory` | `/inventory` | next free |
+| 8 | ELD | `eld` | `/eld` | **CC-3** DONE -- all 5 sub-tabs hopped live (Live Duty Status/HOS Violations/Unidentified Driving/Driver Certifications/ELD Settings); found+fixed TELEMATICS-F1 (500 on Drill-down), merged `3126097ec`; the 2 "not wired yet" tabs are honest deferred-feature disclosures, not defects |
+| 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** claiming now |
 | 10 | USERS | `users` | `/users` | next free |
 | 11 | HOME | `home` | `/home` | next free |
 | 12 | FUEL | `fuel` | `/fuel` | next free |
