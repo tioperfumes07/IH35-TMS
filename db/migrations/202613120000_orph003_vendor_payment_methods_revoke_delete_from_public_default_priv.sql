@@ -1,0 +1,22 @@
+-- ORPH-003 follow-up — mdata.vendor_payment_methods DELETE was still reachable via PUBLIC's default
+-- privilege, not just ih35_app's.
+--
+-- ROOT CAUSE: 202613110000 (the migration creating mdata.vendor_payment_methods) correctly did
+-- `GRANT SELECT, INSERT, UPDATE ... TO ih35_app; REVOKE DELETE ... FROM ih35_app;`, following the
+-- documented mdata ALTER-DEFAULT-PRIVILEGES landmine (dispatch's own precedent, per the
+-- ih35-financial-migrations skill). Applying that migration live on Neon prod (tiny-field-89581227)
+-- immediately after merge revealed a SECOND, wider default-privilege grant on the same schema:
+-- `pg_default_acl` for mdata carries `{=arwd/neondb_owner,...}` — the leading `=` with no role name
+-- is PUBLIC, and `arwd` is INSERT/SELECT/UPDATE/DELETE. Every role, including ih35_app, inherits
+-- PUBLIC's grants regardless of its own REVOKE, so `has_table_privilege('ih35_app', ...,
+-- 'DELETE')` was still TRUE after 202613110000 ran — void-not-delete was not actually enforced at
+-- the DB layer for this table. Confirmed live via `relacl` on pg_class before and after this fix;
+-- the local ih35-tms-verify-db container used to validate 202613110000 pre-merge did NOT reproduce
+-- this (its mdata schema's default-privilege ACL lacks the same PUBLIC grant prod carries), which is
+-- why this had to be caught and fixed post-merge rather than pre-merge.
+--
+-- 202613110000 is already applied on Neon prod and merged to main — per
+-- [[never-edit-applied-migration-checksum-freeze]] it cannot be edited in place. This is a small,
+-- additive, idempotent follow-up instead.
+
+REVOKE DELETE ON mdata.vendor_payment_methods FROM PUBLIC;
