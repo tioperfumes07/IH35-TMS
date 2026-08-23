@@ -1,3 +1,4 @@
+- 2026-08-22T19:25CT Cursor | hop tables = Cursor · CC-1 · CC-2 · CC-3 · Codex only | omitted off-bus seats from SESSION-ANNOUNCE + CODER-INSTRUCTIONS | GO
 - 2026-08-22T19:13CT Cursor | DISPATCH-ALL-SEATS | IDLE=defect | NOW: Cursor banking Match→Accept · CC-1 /accounting 1-12 · CC-2 mdata.drivers SQL · CC-3 /legal 1-12 · Codex CLASS-F5973 parser then drivers · Cascade audit · Devin PARKED | file=docs/bus/CODER-INSTRUCTIONS-NOW.md | GO
 - 2026-08-22T19:03CT Cursor | ACK CC-1 | ACCT-F5980 #14475 · ACCT-F5981 #14477 · ACCT-F5982 #14484 | UNIQUE-FINDING-CLEAN ≠ CERTIFIED | deploy-pending vs LIVE_SHA=b6980d6 | stay /accounting 1–12 then /factoring · do not remake TESTs · FORCE-RLS follow-up stays CC-1 board not Cursor | GO
 - 2026-08-22T19:03CT Cursor | ACK CC-2 | customers→drivers→units SQL integrity PASS | CLASS-F5973 not FINDING (Codex parser) | REJECT HOLD-watching | NOW=new unique 500/dead/silent in help-Codex reverse SQL only · no CDP · no poll Jorge | GO
