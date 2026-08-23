@@ -39,6 +39,21 @@ function verifySharedDriverLabel(service) {
   return failures;
 }
 
+function verifySharedDriverIncomingMessages(service) {
+  const failures = [];
+  for (const needle of [
+    "FROM mdata.driver_company_authorizations dispatcher_message_dca",
+    "dispatcher_message_dca.driver_id = d.id",
+    "dispatcher_message_dca.company_id = m.operating_company_id",
+    "dispatcher_message_dca.is_authorized = true",
+    "dispatcher_message_dca.deactivated_at IS NULL",
+    "AND l.operating_company_id = m.operating_company_id",
+  ]) {
+    if (!service.includes(needle)) failures.push(`incoming-message shared-driver scope missing ${needle}`);
+  }
+  return failures;
+}
+
 function main() {
   const service = read(paths.backendService);
   const routes = read(paths.backendRoutes);
@@ -55,6 +70,7 @@ function main() {
   if (!service.includes("mdata.detention_requests")) failures.push("dispatcher service must read pending detention approvals");
   if (!service.includes("mdata.driver_profile_messages")) failures.push("dispatcher service must read inbound queue");
   failures.push(...verifySharedDriverLabel(service));
+  failures.push(...verifySharedDriverIncomingMessages(service));
 
   if (!routes.includes('app.get("/api/v1/dispatcher-board/home"')) failures.push("backend route /api/v1/dispatcher-board/home missing");
   if (!routes.includes("canReadDispatcherHome")) failures.push("dispatcher route must gate allowed office roles");
@@ -88,8 +104,18 @@ function main() {
       service.replace("dispatcher_home_dca.company_id = l.operating_company_id", "dispatcher_home_dca.company_id = dr.operating_company_id"),
       service.replace("dispatcher_home_dca.is_authorized = true", "dispatcher_home_dca.is_authorized = false"),
       service.replace("dispatcher_home_dca.deactivated_at IS NULL", "dispatcher_home_dca.deactivated_at IS NOT NULL"),
+      service.replace("FROM mdata.driver_company_authorizations dispatcher_message_dca", "FROM mdata.drivers dispatcher_message_dca"),
+      service.replace("dispatcher_message_dca.driver_id = d.id", "dispatcher_message_dca.driver_id = m.id"),
+      service.replace("dispatcher_message_dca.company_id = m.operating_company_id", "dispatcher_message_dca.company_id = d.operating_company_id"),
+      service.replace("dispatcher_message_dca.is_authorized = true", "dispatcher_message_dca.is_authorized = false"),
+      service.replace("dispatcher_message_dca.deactivated_at IS NULL", "dispatcher_message_dca.deactivated_at IS NOT NULL"),
+      service.replace("AND l.operating_company_id = m.operating_company_id", "AND l.operating_company_id = d.operating_company_id"),
     ];
-    const escaped = mutations.filter((candidate) => verifySharedDriverLabel(candidate).length === 0);
+    const escaped = mutations.filter(
+      (candidate) =>
+        verifySharedDriverLabel(candidate).length === 0 &&
+        verifySharedDriverIncomingMessages(candidate).length === 0
+    );
     if (escaped.length > 0) fail(`SELFTEST: ${escaped.length}/${mutations.length} planted defects escaped`);
     console.log(`verify:dispatcher-home SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
   }
