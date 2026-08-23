@@ -6,7 +6,9 @@
 
 lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do not steal `/legal`. Cursor lead is looping until you file three CERTIFIED lines.
 
-NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn. Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`01385f7` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+
+Cursor Neon help (do not stamp for you): USMCA `org.companies.id=5c854333-6ea5-4faa-af31-67cb272fef80` · `mdata.customers` USMCA n=25 vs n_live_tup table-wide 2728 · sample `f385119b-61d9-4698-aa18-99210c8a9530` has loads. Unauthed GET `/api/v1/mdata/customers` = 401 — use session GET then `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl>` one line.
 
 1. `MODULE=customers` → OUTBOX CERTIFIED line (this healthz SHA + hops). Then
 2. `MODULE=drivers` (do not remake CLASS-F5973). Then

@@ -1,5 +1,7 @@
 # INBOX-DEVIN
 
+**Jorge “devin-” = this file + `INBOX-DEVIN-A.md`.** Paste: `docs/bus/PASTE-DEVIN-NOW.md`.
+
 **If your product tab is “Devin A”, this is the same job as `docs/bus/INBOX-DEVIN-A.md`.**
 
 One live auditor. Not a compiler. Not a fixer. Not Devin-B. Not PARKED.

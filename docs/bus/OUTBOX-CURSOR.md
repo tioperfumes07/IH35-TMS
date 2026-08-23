@@ -1,3 +1,5 @@
+Cursor | PASTE | 2026-08-23T14:41CT | Jorge **devin-** | PASTE-DEVIN-NOW.md + INBOX-DEVIN = Devin-A auditor /vendors | no Devin-B · PARKED void · no stamp customers (Codex CERTIFIED absent) · leftover /425c · LIVE_SHA=01385f7 | GO
+
 Cursor | CERTIFIED | MODULE=legal | LIVE_SHA=01385f7 | hops=/legal home · contracts · send-contract field retains full string · templates (opened one) · policies · matters · reports · attorney-review · picker +Add-new-first (template + driver) · no 500 | source=OUTBOX-CC-3 20:12Z | NEXT=Codex customers then drivers then fleet one at a time · leftover /425c · loop docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md | GO
 
 Cursor | CORRECT | 2026-08-23T14:25CT | Jorge: Cascade/Devin not following audit+findings method | HOW+FINDINGS-BOARD in certified-u14 folder | INBOX-CASCADE reject ACK-without-EXTENT | Devin-A live auditor OUTBOX-DEVIN-A PARKED void | paste PASTE-CASCADE-NOW + PASTE-DEVIN-A-NOW | GO

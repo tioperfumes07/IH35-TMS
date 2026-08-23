@@ -1,5 +1,7 @@
 # PASTE DEVIN-A NOW · 2026-08-23
 
+**Same paste:** `docs/bus/PASTE-DEVIN-NOW.md` (Jorge: **devin-**).
+
 **PARKED is void.** You are the Devin **auditor**. Not a scribe. Not Devin-B.
 
 ```text
