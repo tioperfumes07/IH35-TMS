@@ -439,6 +439,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string; qual_id: string } }>(
     "/api/v1/mdata/drivers/:id/qualifications/:qual_id/rate-history",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
       if (!authUser) return;
@@ -460,7 +461,17 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             FROM mdata.driver_equipment_qualifications dq
             JOIN mdata.drivers d
               ON d.id = dq.driver_id
-             AND d.operating_company_id = $3::uuid
+             AND (
+               d.operating_company_id = $3::uuid
+               OR EXISTS (
+                 SELECT 1
+                 FROM mdata.driver_company_authorizations qualification_history_dca
+                 WHERE qualification_history_dca.driver_id = d.id
+                   AND qualification_history_dca.company_id = $3::uuid
+                   AND qualification_history_dca.is_authorized = true
+                   AND qualification_history_dca.deactivated_at IS NULL
+               )
+             )
             WHERE dq.id = $1
               AND dq.driver_id = $2
               AND dq.deactivated_at IS NULL
