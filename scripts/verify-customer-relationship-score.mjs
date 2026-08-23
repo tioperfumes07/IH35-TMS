@@ -47,6 +47,18 @@ contains("apps/backend/src/customers/relationship-score/scorer.service.ts", scor
   { pattern: /complaint_subscore: 0\.1/, label: "complaint weight 10%" },
   { pattern: /if \(!hasStopArrivals \|\| !hasLoadStops \|\| !hasLoads\) return null/, label: "GAP-30 graceful degrade" },
   { pattern: /if \(!hasLoads\) return null/, label: "GAP-35 graceful degrade" },
+  {
+    pattern: /async function computeComplaintSubscore\(\s*client: DbClient,\s*operatingCompanyId: string,\s*customerUuid: string\s*\)/,
+    label: "complaint subscore requires selected company",
+  },
+  {
+    pattern: /FROM mdata\.customer_quality_events\s+WHERE operating_company_id = \$1::uuid\s+AND customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/,
+    label: "complaint history read is company scoped",
+  },
+  {
+    pattern: /computeComplaintSubscore\(\s*client,\s*input\.operating_company_id,\s*input\.customer_uuid\s*\)/,
+    label: "relationship scorer forwards selected company to complaints",
+  },
 ]);
 
 const routes = read("apps/backend/src/customers/relationship-score/routes.ts");
@@ -132,6 +144,9 @@ if (process.argv.includes("--selftest")) {
     [routes, "const atRiskQuerySchema = z.object({\n  operating_company_id: z.string().uuid(),", "const atRiskQuerySchema = z.object({\n  operating_company_id: z.string().uuid().optional(),", "at-risk scores require selected company"],
     [frontendApi, "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string)", "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null)", "single score client requires selected company"],
     [frontendApi, "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id: string;", "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id?: string | null;", "at-risk client requires selected company"],
+    [scorer, "async function computeComplaintSubscore(\n  client: DbClient,\n  operatingCompanyId: string,\n  customerUuid: string\n): Promise<number | null> {", "async function computeComplaintSubscore(\n  client: DbClient,\n  customerUuid: string\n): Promise<number | null> {", "complaint subscore requires selected company"],
+    [scorer, "FROM mdata.customer_quality_events\n      WHERE operating_company_id = $1::uuid\n        AND customer_id = $2::uuid\n    `,\n    [operatingCompanyId, customerUuid]", "FROM mdata.customer_quality_events\n      WHERE customer_id = $1::uuid\n    `,\n    [customerUuid]", "complaint history read is company scoped"],
+    [scorer, "const complaint_subscore = await computeComplaintSubscore(\n    client,\n    input.operating_company_id,\n    input.customer_uuid\n  );", "const complaint_subscore = await computeComplaintSubscore(\n    client,\n    input.customer_uuid\n  );", "relationship scorer forwards selected company to complaints"],
   ];
   let caught = 0;
   for (const [source, before, after, label] of mutations) {
@@ -146,7 +161,13 @@ if (process.argv.includes("--selftest")) {
         ? /const atRiskQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/
         : label === "single score client requires selected company"
           ? /getCustomerRelationshipScore\(customerUuid: string, operatingCompanyId: string\)/
-          : /listAtRiskCustomerRelationshipScores\(params: \{\s*operating_company_id: string;/;
+          : label === "at-risk client requires selected company"
+            ? /listAtRiskCustomerRelationshipScores\(params: \{\s*operating_company_id: string;/
+            : label === "complaint subscore requires selected company"
+              ? /async function computeComplaintSubscore\(\s*client: DbClient,\s*operatingCompanyId: string,\s*customerUuid: string\s*\)/
+              : label === "complaint history read is company scoped"
+                ? /FROM mdata\.customer_quality_events\s+WHERE operating_company_id = \$1::uuid\s+AND customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/
+                : /computeComplaintSubscore\(\s*client,\s*input\.operating_company_id,\s*input\.customer_uuid\s*\)/;
     if (pattern.test(mutated)) {
       console.error(`verify:customer-relationship-score SELFTEST FAIL — mutation escaped: ${label}`);
       process.exit(1);

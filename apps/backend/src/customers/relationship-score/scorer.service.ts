@@ -246,6 +246,7 @@ async function computeMarginTrendSubscore(
 
 async function computeComplaintSubscore(
   client: DbClient,
+  operatingCompanyId: string,
   customerUuid: string
 ): Promise<number | null> {
   const hasQualityEvents = await tableExists(client, "mdata", "customer_quality_events");
@@ -260,9 +261,10 @@ async function computeComplaintSubscore(
             AND event_date >= current_date - interval '30 days'
         )::int::text AS complaint_count
       FROM mdata.customer_quality_events
-      WHERE customer_id = $1::uuid
+      WHERE operating_company_id = $1::uuid
+        AND customer_id = $2::uuid
     `,
-    [customerUuid]
+    [operatingCompanyId, customerUuid]
   );
 
   const complaintCount = Number(res.rows[0]?.complaint_count ?? 0);
@@ -293,7 +295,11 @@ export async function computeRelationshipScore(
     input.operating_company_id,
     input.customer_uuid
   );
-  const complaint_subscore = await computeComplaintSubscore(client, input.customer_uuid);
+  const complaint_subscore = await computeComplaintSubscore(
+    client,
+    input.operating_company_id,
+    input.customer_uuid
+  );
 
   const overall_health_score = computeWeightedOverallScore({
     engagement_subscore,
