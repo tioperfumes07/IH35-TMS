@@ -29,6 +29,17 @@ function fail(msg) {
   process.exit(1);
 }
 
+function accidentFailureProblems(service) {
+  const failures = [];
+  if (!/if \(!\(await relationExists\(client, "safety\.accident_reports"\)\)\) return \[\];/.test(service)) {
+    failures.push("legitimately absent accident table must remain an honest empty state");
+  }
+  if (/fetchAccidentEvents[\s\S]*?catch\s*\{[\s\S]*?return \[\];[\s\S]*?\}/.test(service)) {
+    failures.push("accident SQL failures must propagate instead of masquerading as empty history");
+  }
+  return failures;
+}
+
 function main() {
   const failures = [];
   const service = read(paths.service);
@@ -49,6 +60,7 @@ function main() {
   if (!service.includes("maintenance.inspections")) failures.push("service must aggregate inspections");
   if (!service.includes("fuel.fuel_transactions")) failures.push("service must aggregate fuel events");
   if (!service.includes("ARCHIVE-not-DELETE")) failures.push("service must document ARCHIVE-not-DELETE sunset");
+  failures.push(...accidentFailureProblems(service));
   if ((serviceTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("service-timeline.service.test must include at least 3 vitest cases");
   }
@@ -83,3 +95,13 @@ function main() {
 }
 
 main();
+
+if (process.argv.includes("--selftest")) {
+  const service = read(paths.service);
+  const mutation = `${service}\nasync function fetchAccidentEvents() { try {} catch { return []; } }`;
+  const failures = accidentFailureProblems(mutation);
+  if (!failures.includes("accident SQL failures must propagate instead of masquerading as empty history")) {
+    fail("selftest inert: catch-to-empty mutation escaped");
+  }
+  console.log("verify:maint-service-history-timeline SELFTEST PASS — catch-to-empty mutation rejected");
+}
