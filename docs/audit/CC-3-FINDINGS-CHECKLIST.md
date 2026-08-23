@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6245-INSURANCE-CLAIM-WRITE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; claim driver write validation now mirrors selected-company home-or-active-authorization read scope; guard mutation proof + focused route test.
+
 - ☑ `CI-F6253-OWNER-OVERRIDE-ENTITYLINK-BASELINE-STALE` — Codex mechanical guard integrity — FIXED this PR; intentionally ratchets the one exact fingerprint introduced by DISPATCH-F6251; guard normal + selftest PASS.
 - ☑ `CUST-F6244-RELATIONSHIP-COMPLAINT-SUBSCORE-READ-OMITS-COMPANY` — Codex customers reverse SQL/GET — FIXED this PR; complaint-history scoring binds both selected company and canonical customer; registered guard + planted mutations and focused tests.
 
