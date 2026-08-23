@@ -43,6 +43,9 @@ export function collectContractProblems(parts) {
   if (!/operating_company_id[\s\S]*ids/.test(parts.route) || !/d\.operating_company_id\s*=\s*\$1::uuid/.test(parts.route)) {
     problems.push(`${ROUTE}: exact label lookup must bind company + requested driver ids`);
   }
+  if (!/label_dca\.driver_id = d\.id[\s\S]{0,180}label_dca\.company_id = \$1::uuid[\s\S]{0,180}label_dca\.is_authorized = true[\s\S]{0,120}label_dca\.deactivated_at IS NULL/.test(parts.route)) {
+    problems.push(`${ROUTE}: exact label lookup must preserve active company-authorized shared drivers`);
+  }
   if (!/d\.id\s*=\s*ANY\(\$2::uuid\[\]\)/.test(parts.route)) problems.push(`${ROUTE}: must resolve requested FKs, not a paged roster`);
   if (/EXCLUDE_ARCHIVED_DRIVERS_SQL/.test(parts.route)) problems.push(`${ROUTE}: historical reverse labels must include archived drivers`);
   if (!/getDriverLabels/.test(parts.api) || !/driver-labels/.test(parts.api)) problems.push(`${API}: exact label client missing`);
@@ -71,6 +74,7 @@ if (SELFTEST) {
   };
   const mutations = [
     ["company scope", { ...realParts, route: realParts.route.replace("d.operating_company_id = $1::uuid", "TRUE") }],
+    ["shared-driver authorization", { ...realParts, route: realParts.route.replace("label_dca.is_authorized = true", "label_dca.is_authorized = false") }],
     ["exact ids", { ...realParts, route: realParts.route.replace("d.id = ANY($2::uuid[])", "TRUE") }],
     ["silent cap", { ...realParts, hook: realParts.hook.replace("chunkDriverLabelIds(ids)", "[ids.slice(0, 200)]") }],
     ["consumer adoption", { ...realParts, targets: { ...realParts.targets, [LABEL_TARGETS[0]]: realParts.targets[LABEL_TARGETS[0]].replace("useDriverLabels(", "usePagedRoster(") } }],
