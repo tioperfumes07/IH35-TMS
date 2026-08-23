@@ -1,4 +1,9 @@
 {
+  "4565": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-training-completions-excludes-voided"
+  },
   "4561": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5653,5 +5658,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1266
+  "total_claimed": 1267
 }
