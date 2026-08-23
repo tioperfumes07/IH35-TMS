@@ -30,6 +30,7 @@ const backendRoutesPath = "apps/backend/src/banking/reconciliation.routes.ts";
 const apiClientPath = "apps/frontend/src/api/banking.ts";
 const bankingHomePath = "apps/frontend/src/pages/banking/BankingHome.tsx";
 const workspacePath = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
+const reconPagePath = "apps/frontend/src/pages/banking/BankReconciliationPage.tsx";
 const manifestPath = "apps/frontend/src/routes/manifest.tsx";
 
 function read(rootDir, relativePath) {
@@ -43,6 +44,7 @@ export function run(rootDir = root) {
   const apiClient = read(rootDir, apiClientPath);
   const bankingHome = read(rootDir, bankingHomePath);
   const workspace = read(rootDir, workspacePath);
+  const reconPage = read(rootDir, reconPagePath);
   const manifest = read(rootDir, manifestPath);
 
   if (!indexSrc.includes('import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";')) {
@@ -81,6 +83,16 @@ export function run(rootDir = root) {
     failures.push("ReconciliationWorkspace.tsx inline 'Create Session' form must call startReconciliationSession, not a disabled/no-op button");
   }
 
+  if (!bankingHome.includes('to="/banking/reconciliation-workspace"') || !/Open Workspace/.test(bankingHome)) {
+    failures.push("BankingHome 'Open Workspace' must target /banking/reconciliation-workspace (not /banking/reconciliation Close-period chrome)");
+  }
+  if (!reconPage.includes('to="/banking/reconciliation-workspace"') || !reconPage.includes('data-testid="banking-recon-start-session"')) {
+    failures.push("BankReconciliationPage (sidebar Reconciliation) must expose Start reconciliation → /banking/reconciliation-workspace — a self-link is a dead hop");
+  }
+  if (reconPage.includes('Link to="/banking/reconciliation"')) {
+    failures.push("BankReconciliationPage must not self-link Start a session to /banking/reconciliation");
+  }
+
   if (!manifest.match(/path="\/banking\/reconciliation-workspace"/)) {
     failures.push("manifest.tsx must mount /banking/reconciliation-workspace — the page an operator lands on after starting a session");
   }
@@ -103,6 +115,7 @@ if (process.argv.includes("--selftest")) {
       [apiClientPath]: read(root, apiClientPath),
       [bankingHomePath]: read(root, bankingHomePath),
       [workspacePath]: read(root, workspacePath),
+      [reconPagePath]: read(root, reconPagePath),
       [manifestPath]: read(root, manifestPath),
     };
     for (const [rel, contents] of Object.entries(files)) write(temp, rel, contents);
@@ -132,6 +145,30 @@ if (process.argv.includes("--selftest")) {
     );
     mutationFailures = run(temp);
     if (mutationFailures.length === 0) throw new Error("disabled/dead entry-point button was not detected");
+    write(temp, bankingHomePath, files[bankingHomePath]);
+
+    write(
+      temp,
+      reconPagePath,
+      files[reconPagePath].replace(
+        'to="/banking/reconciliation-workspace"',
+        'to="/banking/reconciliation"'
+      )
+    );
+    mutationFailures = run(temp);
+    if (mutationFailures.length === 0) throw new Error("sidebar Reconciliation self-link was not detected");
+    write(temp, reconPagePath, files[reconPagePath]);
+
+    write(
+      temp,
+      bankingHomePath,
+      files[bankingHomePath].replace(
+        'to="/banking/reconciliation-workspace"',
+        'to="/banking/reconciliation"'
+      )
+    );
+    mutationFailures = run(temp);
+    if (mutationFailures.length === 0) throw new Error("Home Open Workspace mis-route was not detected");
     write(temp, bankingHomePath, files[bankingHomePath]);
 
     console.log("verify-banking-recon-start-session-wired --selftest OK");

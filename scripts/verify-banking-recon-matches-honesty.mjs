@@ -11,6 +11,9 @@ export function run(root = process.cwd()) {
   if (!recon.includes("Do not treat this screen as books reconciled")) {
     failures.push("BankReconciliationPage must refuse fake reconciled implication");
   }
+  if (!recon.includes('to="/banking/reconciliation-workspace"')) {
+    failures.push("BankReconciliationPage start-session hop must target /banking/reconciliation-workspace");
+  }
   if (!queue.includes('data-testid="banking-reconcile-queue-empty-honesty-banner"')) {
     failures.push("BankingObligationReconcilePage missing empty-queue honesty banner");
   }
@@ -24,7 +27,7 @@ if (process.argv.includes("--selftest")) {
   fs.mkdirSync(`${tmp}/apps/frontend/src/pages/banking`, { recursive: true });
   fs.writeFileSync(
     `${tmp}/apps/frontend/src/pages/banking/BankReconciliationPage.tsx`,
-    `data-testid="banking-recon-matches-never-proven-banner"\nDo not treat this screen as books reconciled\n`
+    `data-testid="banking-recon-matches-never-proven-banner"\nDo not treat this screen as books reconciled\nto="/banking/reconciliation-workspace"\n`
   );
   fs.writeFileSync(
     `${tmp}/apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx`,

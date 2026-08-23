@@ -2,7 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   acceptBankReconMatch,
   type BankMatchCandidateKind,
@@ -71,6 +71,7 @@ export function BankReconciliationPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // 0441-mod8: honor deep link from ReconciliationWorkspace Auto-Match Suggestions
@@ -235,12 +236,16 @@ export function BankReconciliationPage() {
           <p className="font-semibold">No reconciliation sessions or matches proven live for this company.</p>
           <p className="mt-1">
             Neon truth: reconciliation_matches / sessions can be empty while the bank feed still has a large for-review
-            backlog. Progress % here is not a period close. Start a session from Banking → Reconciliation, then Match /
-            Categorize feed rows on Transactions. Do not treat this screen as books reconciled.
+            backlog. Progress % here is not a period close. Start a session from Banking → Reconciliation workspace,
+            then Match / Categorize feed rows on Transactions. Do not treat this screen as books reconciled.
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
-            <Link to="/banking/reconciliation" className="font-medium text-slate-800 underline">
-              Banking Reconciliation tab
+            <Link
+              to="/banking/reconciliation-workspace"
+              data-testid="banking-recon-start-session"
+              className="font-medium text-slate-800 underline"
+            >
+              Start reconciliation
             </Link>
             <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">
               For-review Match/Categorize
@@ -273,7 +278,7 @@ export function BankReconciliationPage() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-6">
         <SelectCombobox value={accountId} onChange={(event) => setAccountId(event.target.value)} className="text-sm">
           <option value="">Select bank account</option>
           {(accountsQuery.data ?? []).map((account) => (
@@ -288,6 +293,9 @@ export function BankReconciliationPage() {
           Progress: {worklistQuery.data?.progress.percent ?? 0}% ({worklistQuery.data?.progress.matched_or_skipped_transactions ?? 0}/
           {worklistQuery.data?.progress.total_transactions ?? 0})
         </div>
+        <ActionButton onClick={() => navigate("/banking/reconciliation-workspace")}>
+          Start reconciliation
+        </ActionButton>
         <ActionButton
           disabled={!selectedCompanyId || !accountId || !periodEnd}
           onClick={() =>
