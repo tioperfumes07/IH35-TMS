@@ -21,6 +21,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   customers: "apps/frontend/src/pages/Customers.tsx",
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  drillModal: "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
   sidebar: "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
   coi: "apps/frontend/src/pages/customers/CoiTab.tsx",
   sync: "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
@@ -101,6 +102,9 @@ export function audit(src) {
   if (!/bulkUpdate\(\{ domain: "mdata", resource: "customers"/.test(src.listView)) {
     failures.push(`${FILES.listView}: list.view_list bulk actions must target the real mdata.customers resource`);
   }
+  if (!/billingSummaryError=\{drillSummaryQuery\.isError/.test(src.listView) || !/onRetryBillingSummary=\{\(\) => void drillSummaryQuery\.refetch\(\)\}/.test(src.listView) || !/<ListErrorState[\s\S]{0,280}onRetry=\{onRetryBillingSummary\}/.test(src.drillModal)) {
+    failures.push(`${FILES.listView}: customer drill billing-summary failure must expose exact-query retry instead of zero dollars`);
+  }
   if (!/CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(src.sidebar)) {
     failures.push(`${FILES.sidebar}: home.roster rows must link to the real customer's own record`);
   }
@@ -131,6 +135,7 @@ function loadSrc(root) {
   return {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
+    drillModal: fs.readFileSync(path.join(root, FILES.drillModal), "utf8"),
     sidebar: fs.readFileSync(path.join(root, FILES.sidebar), "utf8"),
     coi: fs.readFileSync(path.join(root, FILES.coi), "utf8"),
     vendors: fs.readFileSync(path.join(root, FILES.vendors), "utf8"),
@@ -178,6 +183,7 @@ if (process.argv.includes("--selftest")) {
       "companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null",
     ],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "customers"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
+    ["billing-summary-retry", "listView", /onRetryBillingSummary=\{\(\) => void drillSummaryQuery\.refetch\(\)\}/, "onRetryBillingSummary={() => undefined}"],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
     ["responsive-stack", "customers", /className="flex flex-col gap-3 xl:flex-row"/, 'className="flex gap-3"'],
     ["responsive-sidebar", "sidebar", /min-w-0 max-w-none/, "min-w-[300px] max-w-[560px]"],
