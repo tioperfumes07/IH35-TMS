@@ -13,6 +13,7 @@ import { Combobox } from "../Combobox";
 import { EntityPicker } from "../parity/EntityPicker";
 import { listMyCompanies, type MyCompany } from "../../api/org";
 import type { FleetRow } from "../FleetTable";
+import { ListErrorState } from "../ListErrorState";
 
 function companyPickerLabel(c: MyCompany): string {
   const name = (c.short_name ?? c.legal_name ?? "").trim();
@@ -367,9 +368,16 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
         </div>
 
         {profileQuery.isLoading ? <p className="text-xs text-gray-600">Loading unit…</p> : null}
-        {profileQuery.isError ? <p className="text-xs text-red-600">Failed to load unit profile.</p> : null}
+        {profileQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load unit profile"
+            status={0}
+            message={(profileQuery.error as Error)?.message}
+            onRetry={() => void profileQuery.refetch()}
+          />
+        ) : null}
 
-        {activeTab === "Reefer" ? (
+        {!profileQuery.isError && activeTab === "Reefer" ? (
           <FieldSet title="Reefer (linked trailer)" columns={1}>
             <p className="text-xs text-gray-600">
               {reefer
@@ -379,7 +387,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           </FieldSet>
         ) : null}
 
-        {activeTab === "Documents" ? (
+        {!profileQuery.isError && activeTab === "Documents" ? (
           <FieldSet title="Documents & Photos" columns={1}>
             <p className="text-xs text-gray-600">
               Photo grid and document list are available on the full vehicle profile page.
@@ -387,7 +395,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           </FieldSet>
         ) : null}
 
-        {activeTab !== "Reefer" && activeTab !== "Documents" ? (
+        {!profileQuery.isError && activeTab !== "Reefer" && activeTab !== "Documents" ? (
           <FieldSet title={activeTab} columns={2}>
             {fieldsForTab(activeTab).map((def) => (
               <FormField
@@ -408,7 +416,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           <Button
             variant="primary"
             type="button"
-            disabled={saveMutation.isPending || !unitId}
+            disabled={saveMutation.isPending || profileQuery.isError || !unitId}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
                 onClose();
