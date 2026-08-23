@@ -40,10 +40,10 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 
 | # | Module | Exclusive owner | URL prefix (do not enter another seat’s) | Status |
 |---|--------|-----------------|------------------------------------------|--------|
-| 1 | accounting | CC-1 | `/accounting` leftover money FAIL only — **do not remake TESTs** | OPEN |
+| 1 | accounting | CC-1 | `/accounting` leftover money FAIL only — **do not remake TESTs** | CERTIFIED LIVE_SHA=c11bdab |
 | 2 | banking | Cursor | `/banking` — TEST expense → **Match** → recon **Accept** → ledger | CERTIFIED LIVE_SHA=36e51bb |
 | 3 | settlements | CC-2 | `/driver-finance` `/settlements` `/cash-advances` — **do not remake Close** | CERTIFIED LIVE_SHA=b6980d6 |
-| 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | OPEN |
+| 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | CERTIFIED LIVE_SHA=c11bdab |
 | 5 | dispatch | Cursor after banking CERTIFIED | `/dispatch` — **do not remake Book Load** | CERTIFIED LIVE_SHA=39472f2 |
 | 6 | vendors | Cursor after dispatch | `/vendors` | CERTIFIED LIVE_SHA=627d7d0 |
 | 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | OPEN |

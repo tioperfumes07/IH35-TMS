@@ -39,8 +39,8 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | maintenance | `/maintenance` leftover unique 500/dead/silent Fully-Wired **1–12**. Vendors **omit** (CERTIFIED LIVE_SHA=627d7d0). Dispatch **omit** (CERTIFIED LIVE_SHA=39472f2). Banking **omit** (CERTIFIED LIVE_SHA=36e51bb). Then safety → insurance |
-| CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` live `bff155e` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden. NONSTOP |
+| Cursor | 9222 | maintenance | `/maintenance` leftover unique 500/dead/silent Fully-Wired **1–12**. U6 1–6 **omit** (accounting+factoring CERTIFIED LIVE_SHA=c11bdab · vendors `627d7d0` · dispatch `39472f2` · banking `36e51bb` · settlements `b6980d6`). Then safety → insurance |
+| CC-1 | 9223 | *(accounting+factoring CERTIFIED — omit)* | Do **not** recertify accounting/factoring (`c11bdab`). Next: unique FINDING only, **no** `/banking*` `/maintenance` `/legal` `/lists`. HOLD forbidden. NONSTOP |
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
 | CC-3 | 9225 | lists | Legal unique-FINDING-CLEAN ≠ CERTIFIED. NOW `/lists` Fully-Wired **1–12** Live Chrome on `bff155e`. No 25min wait. No `trigger_deploy`. NONSTOP |
 | Codex | 9226 | drivers | CLASS-F5973 **landed** #14509. Next unique 500/dead/silent reverse SQL/GET on customers→drivers→fleet only. **No CDP.** Do not remake drivers/units audits. CUST-F5974 shipped #14483 |
