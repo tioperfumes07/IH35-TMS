@@ -1,4 +1,9 @@
 {
+  "4566": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-mdata-load-create-trailer-equipment-default"
+  },
   "4565": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5658,5 +5663,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1267
+  "total_claimed": 1268
 }
