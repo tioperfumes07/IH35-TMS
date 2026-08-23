@@ -188,14 +188,28 @@ const AGGREGATE_SQL = `
       ORDER BY test_date DESC
       LIMIT 1
     ) dt ON true
-    WHERE d.operating_company_id = $1::uuid
+    WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+      SELECT 1 FROM mdata.driver_company_authorizations aggregate_drug_cycle_dca
+      WHERE aggregate_drug_cycle_dca.driver_id = d.id
+        AND aggregate_drug_cycle_dca.company_id = $1::uuid
+        AND aggregate_drug_cycle_dca.is_authorized = true
+        AND aggregate_drug_cycle_dca.deactivated_at IS NULL
+    ))
 
     UNION ALL
     SELECT 'training', 'driver', t.driver_id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))),
            COALESCE(t.training_name, 'Training'), t.expiry_date, NULL
     FROM safety.training_records t
-    JOIN mdata.drivers d ON d.id = t.driver_id
+    JOIN mdata.drivers d ON d.id = t.driver_id AND (
+      d.operating_company_id = t.operating_company_id OR EXISTS (
+        SELECT 1 FROM mdata.driver_company_authorizations aggregate_training_dca
+        WHERE aggregate_training_dca.driver_id = d.id
+          AND aggregate_training_dca.company_id = t.operating_company_id
+          AND aggregate_training_dca.is_authorized = true
+          AND aggregate_training_dca.deactivated_at IS NULL
+      )
+    )
     WHERE t.operating_company_id = $1::uuid AND t.voided_at IS NULL AND t.expiry_date IS NOT NULL
 
     UNION ALL

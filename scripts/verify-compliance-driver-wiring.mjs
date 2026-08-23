@@ -34,6 +34,8 @@ const CHECKS = [
   ["apps/backend/src/compliance/drug-alcohol-results.ts", /rtd_list_dca\.driver_id = d\.id[\s\S]{0,180}rtd_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}rtd_list_dca\.is_authorized = true[\s\S]{0,180}rtd_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/compliance/drug-alcohol.routes.ts", /drug_draw_list_dca\.driver_id = dr\.id[\s\S]{0,180}drug_draw_list_dca\.company_id = d\.operating_company_id[\s\S]{0,180}drug_draw_list_dca\.is_authorized = true[\s\S]{0,180}drug_draw_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/compliance/drug-alcohol.routes.ts", /drug_results_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_results_list_dca\.company_id = t\.operating_company_id[\s\S]{0,180}drug_results_list_dca\.is_authorized = true[\s\S]{0,180}drug_results_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /aggregate_drug_cycle_dca\.driver_id = d\.id[\s\S]{0,180}aggregate_drug_cycle_dca\.company_id = \$1::uuid[\s\S]{0,180}aggregate_drug_cycle_dca\.is_authorized = true[\s\S]{0,180}aggregate_drug_cycle_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /aggregate_training_dca\.driver_id = d\.id[\s\S]{0,180}aggregate_training_dca\.company_id = t\.operating_company_id[\s\S]{0,180}aggregate_training_dca\.is_authorized = true[\s\S]{0,180}aggregate_training_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
