@@ -10,6 +10,8 @@
  *   (e) LoadBolPanel missing bol-generate-button / not used on PodReview + LoadDetailDrawer
  *
  * Mutation-tested both directions.
+ *
+ * @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leaves":["dispatch.panel.load_bol"],"task":"DRV-F6209-BOL-SHARED-DRIVER-LABEL","vertical":"class-sweep"}
  */
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -53,6 +55,9 @@ export function auditBolWire(sources) {
   }
   if (!/export\s+async\s+function\s+generateAndStoreBol/.test(service)) {
     problems.push(`${PATHS.service}: generateAndStoreBol export missing`);
+  }
+  if (!/driver_company_authorizations bol_driver_dca[\s\S]{0,320}bol_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}bol_driver_dca\.is_authorized = true[\s\S]{0,180}bol_driver_dca\.deactivated_at IS NULL/.test(service)) {
+    problems.push(`${PATHS.service}: BOL driver label must accept active company authorization`);
   }
   if (!/registerDispatchPodBolRoutes/.test(index)) {
     problems.push(`${PATHS.index}: registerDispatchPodBolRoutes not mounted`);
@@ -121,6 +126,15 @@ function selftest() {
           ),
         }),
       expect: "INSERT dispatch.bol_documents",
+    },
+    {
+      label: "shared-driver authorization removed",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, "bol_driver_dca.is_authorized = true", "bol_driver_dca.is_authorized = false", "driver auth"),
+        }),
+      expect: "active company authorization",
     },
     {
       label: "drawer mount removed",
