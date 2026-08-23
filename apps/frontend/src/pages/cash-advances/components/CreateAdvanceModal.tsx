@@ -430,6 +430,11 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     </option>
                   ))}
                 </SelectCombobox>
+                {bankAccountsQuery.isError ? (
+                  <p className="text-[11px] text-slate-600">
+                    Could not load bank accounts — retry before selecting, this list is not empty.
+                  </p>
+                ) : null}
               </label>
             ) : (
               <label className="space-y-1">
@@ -544,6 +549,11 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       </option>
                     ))}
                   </SelectCombobox>
+                  {billsQuery.isError ? (
+                    <p className="text-[11px] text-slate-600">
+                      Could not load unpaid bills — retry before linking, this list is not empty.
+                    </p>
+                  ) : null}
                   {selectedBill ? (
                     <p className="text-[11px] text-gray-500">
                       Selected{" "}
