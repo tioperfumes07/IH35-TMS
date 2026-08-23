@@ -75,7 +75,7 @@ interface LayoverSummary {
 function LayoverSummaryCard({ driverId, companyId }: { driverId: string; companyId: string }) {
   const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
   const to = new Date().toISOString().slice(0, 10);
-  const { data, isLoading } = useQuery<{ data: LayoverSummary[] }>({
+  const { data, isLoading, isError, refetch } = useQuery<{ data: LayoverSummary[] }>({
     queryKey: ["driver-layovers-summary", driverId, companyId],
     queryFn: async () => {
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(companyId)}&driver=${encodeURIComponent(driverId)}&from=${from}&to=${to}`),
@@ -105,7 +105,12 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
           className="text-xs font-semibold text-slate-700 hover:underline"
         />
       </div>
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+          Failed to load driver layovers.
+          <button type="button" className="ml-2 underline" onClick={() => void refetch()}>Retry</button>
+        </div>
+      ) : isLoading ? (
         <p className="text-xs text-gray-400">Loading...</p>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
