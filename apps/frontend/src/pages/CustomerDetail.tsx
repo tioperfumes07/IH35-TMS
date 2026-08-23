@@ -862,16 +862,20 @@ export function CustomerDetailPage() {
 
   const createQualityEventMutation = useMutation({
     mutationFn: () =>
-      createCustomerQualityEvent(id, {
-        event_type: qualityForm.event_type,
-        event_date: qualityForm.event_date,
-        reason_id: qualityForm.reason_id || undefined,
-        severity: qualityForm.severity,
-        summary: qualityForm.summary,
-        details: qualityForm.details || undefined,
-        dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
-        days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
-      }),
+      createCustomerQualityEvent(
+        id,
+        {
+          event_type: qualityForm.event_type,
+          event_date: qualityForm.event_date,
+          reason_id: qualityForm.reason_id || undefined,
+          severity: qualityForm.severity,
+          summary: qualityForm.summary,
+          details: qualityForm.details || undefined,
+          dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
+          days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
+        },
+        operatingCompanyId
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -893,7 +897,8 @@ export function CustomerDetailPage() {
   });
 
   const voidQualityEventMutation = useMutation({
-    mutationFn: ({ eventId, reason }: { eventId: string; reason: string }) => voidCustomerQualityEvent(id, eventId, reason),
+    mutationFn: ({ eventId, reason }: { eventId: string; reason: string }) =>
+      voidCustomerQualityEvent(id, eventId, reason, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -905,7 +910,8 @@ export function CustomerDetailPage() {
   });
 
   const updateQualityEventMutation = useMutation({
-    mutationFn: ({ eventId, details }: { eventId: string; details: string }) => updateCustomerQualityEvent(id, eventId, { details }),
+    mutationFn: ({ eventId, details }: { eventId: string; details: string }) =>
+      updateCustomerQualityEvent(id, eventId, { details }, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       pushToast("Quality event updated", "success");
