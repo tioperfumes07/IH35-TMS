@@ -218,7 +218,6 @@
       "required": [
         "customer",
         "load",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link",
@@ -233,7 +232,6 @@
       "required": [
         "customer",
         "load",
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -400,7 +398,6 @@
       "surface_path": "pages/factoring/BatchWizard.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome",
         "customer",
         "invoice"
@@ -861,6 +858,30 @@
           "id": "accounting.factor_recon",
           "removed": [
             "bank"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_22_selection_wizards": {
+      "finding": "FACTORING-BATCH-WIZARD-PICKER-LAW-NO-PICKER-COMPONENT",
+      "note": "Resolves the open product-decision question CC-3 logged (docs/audit/GUARD-WORKORDERS.md, OWNER-GATED=no): submit.queue (SubmissionQueue.tsx) and batches.create/factoring.wizard.batch (both BatchWizard.tsx) are bulk-select-from-scoped-candidates wizards over ALREADY-EXISTING company-scoped invoices -- picking rows via checkbox, not creating a new customer/vendor/account/load record. Direct read of both files confirms zero EntityPicker/ReferenceSelect/Combobox anywhere (SubmissionQueue.tsx's two EntityPicker uses are allowCreate=false filters, not create surfaces). picker_law's item 9 governs inline entity CREATION (catalog + Add-new-first-row); there is no entity to create on either leaf -- same class as maintenance's parts.vendor_default exemption and this same module's already-dropped reverse_link/liability flags on these identical three leaves (batches.create's creation-wizard/no-persisted-record reasoning applies equally to picker_law). Dropping picker_law Required from all three; the module's other create surfaces that genuinely need it (accounting.submit's SubmitFactoringModal vendor picker, factors.admin's factor/customer pickers) are unaffected and correctly still Required.",
+      "drops": [
+        {
+          "id": "submit.queue",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "batches.create",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "factoring.wizard.batch",
+          "removed": [
+            "picker_law"
           ]
         }
       ]
