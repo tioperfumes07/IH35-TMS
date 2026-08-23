@@ -24,6 +24,7 @@ export type UnitInsuranceSummary = {
   /** Real FK-linked policies (insurance.policy_unit) — insurance.policy has no US/MX jurisdiction
    *  column, so these are labelled by coverage type, not folded into us_policy/mx_policy. */
   linked_policies?: LinkedInsurancePolicy[];
+  linked_policies_unavailable?: boolean;
 };
 
 function fmtDate(value: unknown): string {
@@ -75,6 +76,7 @@ export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranc
   const us = insuranceSummary?.us_policy ?? null;
   const mx = insuranceSummary?.mx_policy ?? null;
   const linked = insuranceSummary?.linked_policies ?? [];
+  const linkedUnavailable = insuranceSummary?.linked_policies_unavailable === true;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-insurance-summary">
@@ -87,7 +89,9 @@ export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranc
           className="mt-1 inline-block text-xs text-slate-700 hover:underline"
         />
       ) : null}
-      {!us && !mx && linked.length === 0 ? (
+      {linkedUnavailable ? (
+        <p className="mt-2 text-xs font-medium text-red-700">Linked insurance policies could not be loaded.</p>
+      ) : !us && !mx && linked.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No US or MX policy on file for this unit.</p>
       ) : (
         <div className="mt-2 grid gap-2 md:grid-cols-2">
