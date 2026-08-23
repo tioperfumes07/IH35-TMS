@@ -1361,6 +1361,14 @@ export function DriverDetailPage() {
             </div>
           </div>
           <div className="space-y-2">
+            {qualificationsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load driver qualifications"
+                status={qualificationsQuery.error instanceof ApiError ? qualificationsQuery.error.status : 0}
+                message={qualificationsQuery.error instanceof Error ? qualificationsQuery.error.message : undefined}
+                onRetry={() => void qualificationsQuery.refetch()}
+              />
+            ) : null}
             {qualifications.map((qualification) => (
               <div
                 key={qualification.id}
@@ -1468,7 +1476,7 @@ export function DriverDetailPage() {
                 ) : null}
               </div>
             ))}
-            {qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
+            {!qualificationsQuery.isError && qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
           {driver?.operating_company_id ? (
             <DriverEquipmentTransfersReverseSection
