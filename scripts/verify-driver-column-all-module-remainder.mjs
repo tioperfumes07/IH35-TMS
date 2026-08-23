@@ -50,9 +50,17 @@ export function verify(source) {
   need("mdataApi", "settlement_history?: DriverTeamSettlementHistory[]", "team split history labels must remain typed");
   need("driversPage", 'entityLabel(row.load_number, row.load_id, "Load")', "team drawer must consume human load numbers");
   need("driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")', "team drawer must consume human driver names");
-  need("driverAggregate", "prior.operating_company_id = d.operating_company_id", "aggregate prior-driver label join must remain company scoped");
+  need("driverAggregate", "prior.operating_company_id = $2::uuid", "aggregate prior-driver label join must bind the selected company");
+  need("driverAggregate", "prior_driver_label_dca.driver_id = prior.id", "aggregate prior-driver label must use canonical authorization");
+  need("driverAggregate", "prior_driver_label_dca.company_id = $2::uuid", "aggregate prior-driver authorization must bind the selected company");
+  need("driverAggregate", "prior_driver_label_dca.is_authorized = true", "aggregate prior-driver authorization must be active");
+  need("driverAggregate", "prior_driver_label_dca.deactivated_at IS NULL", "aggregate prior-driver authorization must not be deactivated");
   need("driverAggregate", "AS prior_driver_name", "aggregate response must resolve the prior driver name");
-  need("driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id", "flat detail prior-driver label lookup must remain company scoped");
+  need("driverRoutes", "prior.operating_company_id = $2::uuid", "flat detail prior-driver label must bind the selected company");
+  need("driverRoutes", "flat_prior_driver_label_dca.driver_id = prior.id", "flat detail prior-driver label must use canonical authorization");
+  need("driverRoutes", "flat_prior_driver_label_dca.company_id = $2::uuid", "flat detail prior-driver authorization must bind the selected company");
+  need("driverRoutes", "flat_prior_driver_label_dca.is_authorized = true", "flat detail prior-driver authorization must be active");
+  need("driverRoutes", "flat_prior_driver_label_dca.deactivated_at IS NULL", "flat detail prior-driver authorization must not be deactivated");
   need("driverRoutes", "AS prior_driver_name", "flat detail response must resolve the prior driver name");
   need("apiTypes", "prior_driver_name: string | null", "Driver contract must type the prior driver name");
   need("driverDetail", 'data-testid="driver-detail-prior-driver-link"', "rehire banner prior-driver drill must remain mounted");
@@ -96,9 +104,17 @@ if (process.argv.includes("--selftest")) {
     ["mdataApi", "settlement_history?: DriverTeamSettlementHistory[]"],
     ["driversPage", 'entityLabel(row.load_number, row.load_id, "Load")'],
     ["driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")'],
-    ["driverAggregate", "prior.operating_company_id = d.operating_company_id"],
+    ["driverAggregate", "prior.operating_company_id = $2::uuid"],
+    ["driverAggregate", "prior_driver_label_dca.driver_id = prior.id"],
+    ["driverAggregate", "prior_driver_label_dca.company_id = $2::uuid"],
+    ["driverAggregate", "prior_driver_label_dca.is_authorized = true"],
+    ["driverAggregate", "prior_driver_label_dca.deactivated_at IS NULL"],
     ["driverAggregate", "AS prior_driver_name"],
-    ["driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id"],
+    ["driverRoutes", "prior.operating_company_id = $2::uuid"],
+    ["driverRoutes", "flat_prior_driver_label_dca.driver_id = prior.id"],
+    ["driverRoutes", "flat_prior_driver_label_dca.company_id = $2::uuid"],
+    ["driverRoutes", "flat_prior_driver_label_dca.is_authorized = true"],
+    ["driverRoutes", "flat_prior_driver_label_dca.deactivated_at IS NULL"],
     ["driverRoutes", "AS prior_driver_name"],
     ["apiTypes", "prior_driver_name: string | null"],
     ["driverDetail", 'data-testid="driver-detail-prior-driver-link"'],

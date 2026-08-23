@@ -48,7 +48,17 @@ export async function buildDriverAggregate(
       FROM mdata.drivers d
       LEFT JOIN mdata.drivers prior
         ON prior.id = d.prior_driver_id
-       AND prior.operating_company_id = d.operating_company_id
+       AND (
+         prior.operating_company_id = $2::uuid
+         OR EXISTS (
+           SELECT 1
+           FROM mdata.driver_company_authorizations prior_driver_label_dca
+           WHERE prior_driver_label_dca.driver_id = prior.id
+             AND prior_driver_label_dca.company_id = $2::uuid
+             AND prior_driver_label_dca.is_authorized = true
+             AND prior_driver_label_dca.deactivated_at IS NULL
+         )
+       )
       LEFT JOIN identity.users updater ON updater.id = d.updated_by_user_id
       WHERE d.id = $1::uuid
         AND (
