@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-driver-hub-sweep-status-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus the Reporting sub-page are live-Chrome-confirmed genuinely wired (real data, real controls, honest empty states), following the LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK label-leak fix (#14881, merged). Explicitly NOT a CERTIFY stamp -- CREATE-TEST-THEN-VOID and full chrome-law sweep remain.",
+  "branch": "cc-2/driver-hub-sweep-status-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-driver-hub-sweep-status-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "status-only, no CERTIFY claim" }
+  ],
+  "linkage": "N/A -- docs-only status update.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

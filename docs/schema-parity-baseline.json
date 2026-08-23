@@ -2578,6 +2578,7 @@
       "line_of_business",
       "naisc_code",
       "operating_company_id",
+      "petition_date",
       "updated_at"
     ],
     "catalogs.internal_fine_reasons": [
