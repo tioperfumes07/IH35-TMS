@@ -768,10 +768,21 @@ export function CustomersPage() {
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <h3 className="mb-2 text-sm font-semibold text-gray-900">Financial summary</h3>
-                  <p className="text-sm text-gray-600">Open balance</p>
-                  <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
-                  <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
-                  <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
+                  {summaryQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load customer financial summary"
+                      status={0}
+                      message={(summaryQuery.error as Error)?.message}
+                      onRetry={() => void summaryQuery.refetch()}
+                    />
+                  ) : (
+                    <div data-testid="customer-financial-summary-values">
+                      <p className="text-sm text-gray-600">Open balance</p>
+                      <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
+                      <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
+                      <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
+                    </div>
+                  )}
                 </section>
               </div>
 

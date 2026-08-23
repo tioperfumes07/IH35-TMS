@@ -58,6 +58,9 @@ function checkFrontend(sources) {
   if (!sources[CUSTOMERS_PAGE].includes('<CustomerCOITab')) {
     fail(`${CUSTOMERS_PAGE}: COI reverse surface is not mounted on customer master-detail.`);
   }
+  if (!/summaryQuery\.isError[\s\S]*Couldn't load customer financial summary[\s\S]*onRetry=\{\(\) => void summaryQuery\.refetch\(\)\}[\s\S]*customer-financial-summary-values/.test(sources[CUSTOMERS_PAGE])) {
+    fail(`${CUSTOMERS_PAGE}: billing-summary GET failure must expose exact retry before monetary values.`);
+  }
 }
 
 function checkEvidence(sources) {
@@ -131,6 +134,21 @@ function selftest() {
     const mutated = { ...frontend, [CONTRACT_TAB]: frontend[CONTRACT_TAB].replace(needle, "BROKEN_CONTRACT_FAILURE_RECOVERY") };
     if (mutated[CONTRACT_TAB] === frontend[CONTRACT_TAB]) {
       console.error(`SELFTEST SETUP FAILED: contract recovery pattern not found: ${needle}`);
+      process.exit(1);
+    }
+    checkFrontend(mutated);
+    const caught = process.exitCode === 1;
+    process.exitCode = undefined;
+    if (!caught) {
+      console.error(`SELFTEST INERT: removing ${needle} was not caught.`);
+      process.exit(1);
+    }
+    probesProven++;
+  }
+  for (const needle of ["summaryQuery.isError", "onRetry={() => void summaryQuery.refetch()}", 'data-testid="customer-financial-summary-values"']) {
+    const mutated = { ...frontend, [CUSTOMERS_PAGE]: frontend[CUSTOMERS_PAGE].replace(needle, "BROKEN_CUSTOMER_SUMMARY_FAILURE_TRUTH") };
+    if (mutated[CUSTOMERS_PAGE] === frontend[CUSTOMERS_PAGE]) {
+      console.error(`SELFTEST SETUP FAILED: customer summary recovery pattern not found: ${needle}`);
       process.exit(1);
     }
     checkFrontend(mutated);
