@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DOCS-F6236-ENTITY-LABEL-HYDRATOR-USES-PHANTOM-FLEET-SCOPE` — Codex customer/driver/fleet reverse SQL/GET — FIXED this PR; type-specific scopes remove unit/equipment 42703 and admit active shared drivers; guard 22/22.
+
 - ☑ `DRV-F6235-LOAD-DISTRIBUTION-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; load-instruction PDF/notification resolver admits active shared-driver authorizations; guard 44/44.
 
 - ☑ `DRV-F6234-WORK-ORDER-V1-READS-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers/fleet reverse SQL/GET — FIXED this PR; V1 list search and PDF admit active canonical shared-driver authorizations; guard 21/21 + tests 11 passed.
