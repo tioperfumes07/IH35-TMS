@@ -119,6 +119,25 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
 
     const cards = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const parent = await client.query(
+        `SELECT 1
+         FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
+           AND (
+             d.operating_company_id = $2::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations dca
+               WHERE dca.driver_id = d.id
+                 AND dca.company_id = $2::uuid
+                 AND dca.is_authorized = true
+                 AND dca.deactivated_at IS NULL
+             )
+           )
+         LIMIT 1`,
+        [params.data.driver_id, company.data.operating_company_id]
+      );
+      if (!parent.rows[0]) return null;
       const res = await client.query(
         `
           SELECT
@@ -148,6 +167,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
       return res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>));
     });
 
+    if (!cards) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return { cards };
   });
 
