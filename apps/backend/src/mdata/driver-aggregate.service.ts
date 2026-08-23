@@ -151,6 +151,7 @@ export async function buildDriverAggregate(
       FROM safety.random_pool
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND voided_at IS NULL
         AND status NOT IN ('missed', 'excused')
     `,
         [driverId, operatingCompanyId]
