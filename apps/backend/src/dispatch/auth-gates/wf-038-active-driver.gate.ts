@@ -20,8 +20,17 @@ const wf038Gate: GateFn = async (ctx, client) => {
   // mdata.drivers.status is enum `driver_status` = Active | Probation | Inactive | Terminated | OnLeave
   // (prod-verified), so the "Active" comparison below is capitalised correctly.
   const res = await client.query<{ status: string }>(
-    `SELECT status::text
-     FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    `SELECT d.status::text
+     FROM mdata.drivers d
+     WHERE d.id = $1::uuid
+       AND (d.operating_company_id = $2::uuid OR EXISTS (
+         SELECT 1 FROM mdata.driver_company_authorizations wf038_driver_dca
+         WHERE wf038_driver_dca.driver_id = d.id
+           AND wf038_driver_dca.company_id = $2::uuid
+           AND wf038_driver_dca.is_authorized = true
+           AND wf038_driver_dca.deactivated_at IS NULL
+       ))
+     LIMIT 1`,
     [ctx.driver_uuid, ctx.operating_company_id]
   );
   const row = res.rows[0];
