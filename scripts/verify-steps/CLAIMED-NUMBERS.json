@@ -1,4 +1,9 @@
 {
+  "4461": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-advances-shared-company-reverse"
+  },
   "4457": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5503,5 +5508,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1242
+  "total_claimed": 1243
 }
