@@ -7,6 +7,7 @@ import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../component
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
@@ -360,6 +361,11 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         />
       </div>
 
+      {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}
+      {totalRowsQuery.isError ? <ListErrorState status={0} message="The all-type fleet count could not be loaded." onRetry={() => void totalRowsQuery.refetch()} /> : null}
+      {fleetLocationQuery.isError ? <ListErrorState status={0} message="Fleet location and HOS data could not be loaded." onRetry={() => void fleetLocationQuery.refetch()} /> : null}
+      {showMaintenanceColumns && maintStatusQuery.isError ? <ListErrorState status={0} message="Fleet maintenance status could not be loaded." onRetry={() => void maintStatusQuery.refetch()} /> : null}
+
       <div
         className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
         data-fleet-page-filter-toolbar="collapsed"
@@ -427,7 +433,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         ) : null}
       </div>
 
-      {listState.isEmpty ? (
+      {listState.isError ? (
+        <ListErrorState status={0} message="The company fleet roster could not be loaded." onRetry={() => void rowsQuery.refetch()} />
+      ) : listState.isEmpty ? (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">
