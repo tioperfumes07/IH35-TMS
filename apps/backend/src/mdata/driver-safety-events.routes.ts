@@ -483,7 +483,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const rows = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       // This mounted Driver Detail reverse read must honor the company selected in the UI. Resolving
       // company from driver_id alone makes a non-default-company page read whichever entity owns the
       // supplied UUID, rather than the USMCA context the operator is actually viewing.
@@ -492,12 +492,33 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         authUser.uuid,
         parsedQuery.data.operating_company_id
       );
-      if (!companyId) return [];
+      if (!companyId) return { found: false as const, events: [] };
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.operating_company_id = $2::uuid
+                  AND dca.is_active = true
+              )
+            )
+          LIMIT 1
+        `,
+        [parsedParams.data.driver_id, companyId]
+      );
+      if (parent.rowCount === 0) return { found: false as const, events: [] };
       const filters = ["e.driver_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
       }
-      const result = await client.query(
+      const eventsResult = await client.query(
         `
           SELECT
             e.id,
@@ -535,10 +556,11 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         `,
         [parsedParams.data.driver_id, companyId]
       );
-      return result.rows;
+      return { found: true as const, events: eventsResult.rows };
     });
 
-    return { events: rows };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { events: result.events };
   });
 
   app.post("/api/v1/mdata/drivers/:driver_id/safety-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
