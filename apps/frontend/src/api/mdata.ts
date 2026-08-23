@@ -1290,10 +1290,11 @@ export function verifyCustomerFmcsa(id: string) {
 }
 
 export function listCustomerQualityEventReasons(
+  operatingCompanyId: string,
   eventType?: CustomerQualityEvent["event_type"],
   includeInactive = false
 ) {
-  const query = new URLSearchParams();
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (eventType) query.set("event_type", eventType);
   if (includeInactive) query.set("include_inactive", "true");
   const qs = query.toString();
@@ -1302,9 +1303,10 @@ export function listCustomerQualityEventReasons(
   );
 }
 
-export function listCustomerQualityEvents(customerId: string, includeVoided = false) {
-  const query = includeVoided ? "?include_voided=true" : "";
-  return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events${query}`);
+export function listCustomerQualityEvents(customerId: string, operatingCompanyId: string, includeVoided = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeVoided) query.set("include_voided", "true");
+  return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events?${query}`);
 }
 
 export function createCustomerQualityEvent(

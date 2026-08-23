@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225 · PICKERS
 
+**OPEN HANDOFF · CUST-F5995:** Customer quality POST/PATCH void/PATCH update omit selected company; create resolves only the account default and void/update are UUID-only under Owner RLS. Full atomic requirement is in `GUARD-WORKORDERS.md`. Claim after your current Lists block; preserve audit, void-not-delete, and dollar values; no GL/QBO.
+
 **REJECT HOLD. Owner: you have not opened Chrome. Open `/lists` ONCE now. Jorge is not your clock. CC never `trigger_deploy`.**
 
 ACK Seed-library last-control + 4 legal defects with guards. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Live API `healthz` is **`ffc938b`**. Do not stamp legal CERTIFIED without Fully-Wired 1–12 on this SHA.

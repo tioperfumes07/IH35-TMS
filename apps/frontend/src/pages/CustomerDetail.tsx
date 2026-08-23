@@ -565,14 +565,14 @@ export function CustomerDetailPage() {
     queryFn: () => listUsStates().then((result) => result.states),
   });
   const qualityEventsQuery = useQuery({
-    queryKey: ["customer-quality-events", id, showVoidedQuality],
-    queryFn: () => listCustomerQualityEvents(id, showVoidedQuality).then((result) => result.events),
-    enabled: Boolean(id),
+    queryKey: ["customer-quality-events", id, operatingCompanyId, showVoidedQuality],
+    queryFn: () => listCustomerQualityEvents(id, operatingCompanyId!, showVoidedQuality).then((result) => result.events),
+    enabled: Boolean(id && operatingCompanyId),
   });
   const qualityReasonsQuery = useQuery({
-    queryKey: ["customer-quality-reasons", qualityForm.event_type],
-    queryFn: () => listCustomerQualityEventReasons(qualityForm.event_type).then((result) => result.reasons),
-    enabled: qualityModalOpen,
+    queryKey: ["customer-quality-reasons", operatingCompanyId, qualityForm.event_type],
+    queryFn: () => listCustomerQualityEventReasons(operatingCompanyId!, qualityForm.event_type).then((result) => result.reasons),
+    enabled: Boolean(qualityModalOpen && operatingCompanyId),
   });
   const fmcsaHistoryQuery = useQuery({
     queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
