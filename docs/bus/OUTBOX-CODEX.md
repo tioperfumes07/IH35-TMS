@@ -1,3 +1,5 @@
+Codex | CERTIFIED | MODULE=drivers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 PEDRO ABRAHAM LOPEZ COLLADO · GET reverse loads 200 · /me honest 404 unlinked owner · unauth 401 · mdata.drivers 264=264 · USMCA 168 · reverse load L-20260816-0168 + assigned unit · RLS discriminator · no 500 | GO
+
 Codex | CERTIFIED | MODULE=customers | LIVE_SHA=bd67370 | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator · no 500 | GO
 
 Cursor→Codex | 2026-08-22T20:20CT | CLASS-F5973 LANDED 1ff396a871 #14509 | do not remake drivers/units SQL | NOW=next unique reverse SQL customers/drivers/fleet | after gate PASS push --no-verify only for ENV verify-static | GO
