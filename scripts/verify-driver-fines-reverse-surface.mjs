@@ -23,9 +23,11 @@
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-driver-fines-reverse-surface";
-const SECTION = "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx";
+const SECTION =
+  "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx";
 const PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const API = "apps/frontend/src/api/safety.ts";
+const ROUTE = "apps/backend/src/safety/safety-v5.routes.ts";
 
 function stripComments(src) {
   return src
@@ -45,6 +47,9 @@ function fnBody(src, name) {
 }
 
 function links(s) {
+  const routeStart = s[ROUTE].indexOf('"/api/v1/safety/internal-fines"');
+  const routeEnd = s[ROUTE].indexOf("app.patch(", routeStart);
+  const route = s[ROUTE].slice(routeStart, routeEnd);
   return [
     {
       ok: /getSafetyFines\(/.test(s[SECTION]),
@@ -71,7 +76,9 @@ function links(s) {
       why: `${SECTION}: internal fines lost their drill-through to the fine record`,
     },
     {
-      ok: /kind="safety_fines_driver"/.test(s[SECTION]) && !/to="\/safety\/fines"/.test(s[SECTION]),
+      ok:
+        /kind="safety_fines_driver"/.test(s[SECTION]) &&
+        !/to="\/safety\/fines"/.test(s[SECTION]),
       why: `${SECTION}: Open Safety must EntityLink the filtered external-fines queue (not dead /safety/fines)`,
     },
     {
@@ -88,14 +95,35 @@ function links(s) {
       ok: /qs\.set\("driver_id"/.test(fnBody(s[API], "getInternalFines")),
       why: `${API}: getInternalFines drops driver_id — the 500-row cap would silently omit fines`,
     },
+    {
+      ok: /dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(
+        route,
+      ),
+      why: `${ROUTE}: exact-driver internal-fines reverse does not validate owned/authorized parent`,
+    },
+    {
+      ok: /label_dca\.company_id = f\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true/.test(
+        route,
+      ),
+      why: `${ROUTE}: authorized shared-driver fine labels are suppressed`,
+    },
+    {
+      ok: /if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(
+        route,
+      ),
+      why: `${ROUTE}: invalid exact driver renders as a legitimate empty fines history`,
+    },
   ];
 }
 
-const check = (s) => links(s).filter((l) => !l.ok).map((l) => l.why);
+const check = (s) =>
+  links(s)
+    .filter((l) => !l.ok)
+    .map((l) => l.why);
 
 function loadAll() {
   const out = {};
-  for (const p of [SECTION, PAGE, API]) out[p] = read(p);
+  for (const p of [SECTION, PAGE, API, ROUTE]) out[p] = read(p);
   return out;
 }
 
@@ -111,34 +139,86 @@ function selftest() {
   const mutations = [
     [SECTION, (x) => x.replace("getSafetyFines(", "getNothing(")],
     [SECTION, (x) => x.replace("getInternalFines(", "getNothing(")],
-    [SECTION, (x) => x.replace("subject_driver_id: driverId", "subject_driver_id: undefined")],
+    [
+      SECTION,
+      (x) =>
+        x.replace(
+          "subject_driver_id: driverId",
+          "subject_driver_id: undefined",
+        ),
+    ],
     [SECTION, (x) => x.replace("driver_id: driverId", "driver_id: undefined")],
     [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="driver"')],
     [SECTION, (x) => x.replace('kind="internal_fine"', 'kind="driver"')],
-    [PAGE, (x) => x.split("DriverFinesReverseSection").join("SomeOtherSection")],
-    [API, (x) => {
-      const i = x.indexOf("export function getSafetyFines(");
-      return x.slice(0, i) + x.slice(i).replace('qs.set("subject_driver_id"', 'qs.set("ignored"');
-    }],
-    [API, (x) => {
-      const i = x.indexOf("export function getInternalFines(");
-      return x.slice(0, i) + x.slice(i).replace('qs.set("driver_id"', 'qs.set("ignored"');
-    }],
+    [
+      PAGE,
+      (x) => x.split("DriverFinesReverseSection").join("SomeOtherSection"),
+    ],
+    [
+      API,
+      (x) => {
+        const i = x.indexOf("export function getSafetyFines(");
+        return (
+          x.slice(0, i) +
+          x.slice(i).replace('qs.set("subject_driver_id"', 'qs.set("ignored"')
+        );
+      },
+    ],
+    [
+      API,
+      (x) => {
+        const i = x.indexOf("export function getInternalFines(");
+        return (
+          x.slice(0, i) +
+          x.slice(i).replace('qs.set("driver_id"', 'qs.set("ignored"')
+        );
+      },
+    ],
+    [
+      ROUTE,
+      (x) =>
+        x.replace(
+          /("\/api\/v1\/safety\/internal-fines"[\s\S]{0,3000}?)dca\.is_authorized = true/,
+          "$1TRUE",
+        ),
+    ],
+    [
+      ROUTE,
+      (x) =>
+        x.replace(
+          /("\/api\/v1\/safety\/internal-fines"[\s\S]{0,5000}?)label_dca\.is_authorized = true/,
+          "$1TRUE",
+        ),
+    ],
+    [
+      ROUTE,
+      (x) =>
+        x.replace(
+          /("\/api\/v1\/safety\/internal-fines"[\s\S]{0,7000}?)if \(!result\.found\)\s*return reply\.code\(404\)/,
+          "$1if (false) return reply.code(404)",
+        ),
+    ],
   ];
 
   for (const [file, mutate] of mutations) {
     const broken = { ...real, [file]: mutate(real[file]) };
     if (broken[file] === real[file]) {
-      console.error(`${LABEL} --selftest FAIL — a mutation on ${file} changed nothing (guard is stale).`);
+      console.error(
+        `${LABEL} --selftest FAIL — a mutation on ${file} changed nothing (guard is stale).`,
+      );
       process.exit(1);
     }
     if (check(broken).length === 0) {
-      console.error(`${LABEL} --selftest FAIL — breaking ${file} was NOT detected.`);
+      console.error(
+        `${LABEL} --selftest FAIL — breaking ${file} was NOT detected.`,
+      );
       process.exit(1);
     }
   }
 
-  console.log(`${LABEL} --selftest PASS — all ${mutations.length} assertions proven able to fail.`);
+  console.log(
+    `${LABEL} --selftest PASS — all ${mutations.length} assertions proven able to fail.`,
+  );
   process.exit(0);
 }
 
@@ -146,11 +226,13 @@ if (process.argv.includes("--selftest")) selftest();
 
 const errors = check(loadAll());
 if (errors.length > 0) {
-  console.error(`${LABEL} FAIL — driver fines reverse surface is broken at ${errors.length} point(s):`);
+  console.error(
+    `${LABEL} FAIL — driver fines reverse surface is broken at ${errors.length} point(s):`,
+  );
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
 console.log(
   `${LABEL} PASS — driver profile surfaces BOTH civil and internal fines, each scoped server-side, ` +
-    `with EntityLink drills for safety_fine + internal_fine.`
+    `with EntityLink drills for safety_fine + internal_fine.`,
 );
