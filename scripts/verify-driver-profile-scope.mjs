@@ -66,6 +66,16 @@ export function check({ mdataApi, pages }) {
     errs.push("getDriver must be declared as getDriver(id: string, operatingCompanyId: string) (async is allowed)");
   }
 
+  if (!/export function listDriverQualifications\(driverId: string, operatingCompanyId: string, includeInactive\?: boolean\)/.test(mdataApi)) {
+    errs.push("listDriverQualifications must require operatingCompanyId");
+  }
+  if (!/operating_company_id: operatingCompanyId/.test(mdataApi)) {
+    errs.push("driver qualification readers must send operating_company_id");
+  }
+  if (!/export function getDriverQualificationRateHistory\(driverId: string, qualificationId: string, operatingCompanyId: string\)/.test(mdataApi)) {
+    errs.push("getDriverQualificationRateHistory must require operatingCompanyId");
+  }
+
   for (const { file, idArg, companyVar } of SCOPED_PAGES) {
     if (!Object.prototype.hasOwnProperty.call(pages, file)) continue;
     const src = pages[file] ?? "";
@@ -86,6 +96,14 @@ export function check({ mdataApi, pages }) {
     if (!scopedCall) {
       errs.push(`${file}: expected getDriver(${idArg}, ${companyVar}) scoped call`);
     }
+    if (file.endsWith("DriverDetail.tsx")) {
+      if (!/listDriverQualifications\(id, companyId, showInactiveQualifications\)/.test(src)) {
+        errs.push(`${file}: qualifications GET must use selected companyId`);
+      }
+      if (!/getDriverQualificationRateHistory\(id, selectedQualificationId, companyId\)/.test(src)) {
+        errs.push(`${file}: qualification history GET must use selected companyId`);
+      }
+    }
     const enabledGate = new RegExp(`enabled:\\s*Boolean\\([^)]*${companyVar}[^)]*\\)`).test(src);
     if (!enabledGate) {
       errs.push(`${file}: driver query must gate on ${companyVar} (enabled: Boolean(...))`);
@@ -103,8 +121,14 @@ export function run() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const goodApi = "export function getDriver(id: string, operatingCompanyId: string) {";
-  const badApi = "export function getDriver(id: string, operatingCompanyId?: string) {";
+  const scopedSatelliteApi = `
+    export function listDriverQualifications(driverId: string, operatingCompanyId: string, includeInactive?: boolean) {
+      new URLSearchParams({ operating_company_id: operatingCompanyId });
+    }
+    export function getDriverQualificationRateHistory(driverId: string, qualificationId: string, operatingCompanyId: string) {}
+  `;
+  const goodApi = "export function getDriver(id: string, operatingCompanyId: string) {" + scopedSatelliteApi;
+  const badApi = "export function getDriver(id: string, operatingCompanyId?: string) {" + scopedSatelliteApi;
   const goodPage = `
     useCompanyContext();
     const operatingCompanyId = "x";
@@ -135,10 +159,34 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
+  const driverDetailSatellite = `
+    useCompanyContext();
+    queryFn: () => getDriver(id, companyId),
+    enabled: Boolean(id && companyId),
+    listDriverQualifications(id, companyId, showInactiveQualifications);
+    getDriverQualificationRateHistory(id, selectedQualificationId, companyId);
+  `;
+  const badSatelliteApi = goodApi.replace(
+    "listDriverQualifications(driverId: string, operatingCompanyId: string, includeInactive?: boolean)",
+    "listDriverQualifications(driverId: string, includeInactive?: boolean)"
+  );
+  const badSatellitePage = driverDetailSatellite.replace(
+    "getDriverQualificationRateHistory(id, selectedQualificationId, companyId)",
+    "getDriverQualificationRateHistory(id, selectedQualificationId)"
+  );
+  if (
+    check({ mdataApi: goodApi, pages: { "apps/frontend/src/pages/DriverDetail.tsx": driverDetailSatellite } }).length > 0 ||
+    check({ mdataApi: badSatelliteApi, pages: { "apps/frontend/src/pages/DriverDetail.tsx": driverDetailSatellite } }).length === 0 ||
+    check({ mdataApi: goodApi, pages: { "apps/frontend/src/pages/DriverDetail.tsx": badSatellitePage } }).length === 0
+  ) {
+    console.error(`${LABEL} --selftest FAIL — selected-company qualification satellite mutation escaped`);
+    process.exit(1);
+  }
+
   // The real getDriver() shape as of LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING:
   // multi-line Prettier params + a trailing optional 3rd `signal` param, and call sites passing a
   // 3rd `signal` argument. Both must still be accepted as scoped.
-  const multilineApi = `export async function getDriver(\n  id: string,\n  operatingCompanyId: string,\n  signal?: AbortSignal\n): Promise<Driver> {`;
+  const multilineApi = `export async function getDriver(\n  id: string,\n  operatingCompanyId: string,\n  signal?: AbortSignal\n): Promise<Driver> {` + scopedSatelliteApi;
   const threeArgPage = `
     useCompanyContext();
     const operatingCompanyId = "x";
