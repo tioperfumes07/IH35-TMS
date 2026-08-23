@@ -73,9 +73,9 @@ export function ExhibitsViewer() {
           <p className="text-sm text-slate-600">Auto-build court-ready supporting exhibits for the selected operating company.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
-          <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
-          <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
-          <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
+          <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
+          <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
+          <Link to="/425c?tab=history" className="hover:underline">History</Link>
           <Link to="/425c" className="hover:underline">← Form 425C</Link>
         </div>
       </div>
