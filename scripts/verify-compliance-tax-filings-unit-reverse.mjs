@@ -20,6 +20,7 @@ function failures(source = files) {
     ["property-tax list and detail drills", source.section.includes('kind="property_tax_unit"') && source.section.includes("id={unitId}") && source.section.includes('kind="property_tax_rendition"') && source.section.includes("id={rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")') && source.propertyPage.includes('kind="property_tax_rendition"')],
     ["property-tax EntityPicker unit filter", source.propertyPage.includes('dataTestId="property-tax-filter-unit"') && source.propertyPage.includes('kind="unit"') && source.propertyPage.includes("allowCreate={false}") && source.propertyPage.includes("effectiveUnitId")],
     ["Form 2290 exact filing drill", source.section.includes('kind="form_2290_filing"') && source.section.includes("id={filing.id}") && source.formPage.includes('searchParams.get("filing_id")') && source.formPage.includes("String(filing.id) === filingId")],
+    ["tax filing failures cannot masquerade as empty", source.section.includes("<ListErrorState") && source.section.includes("Promise.all([propertyTaxQ.refetch(), form2290Q.refetch()])") && source.section.includes("!propertyTaxQ.isError && !form2290Q.isError && renditions.length === 0")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -32,12 +33,13 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, propertyPage: files.propertyPage.replace('dataTestId="property-tax-filter-unit"', 'dataTestId="broken"') }).includes("property-tax EntityPicker unit filter"),
     failures({ ...files, formPage: files.formPage.replace("String(filing.id) === filingId", "true") }).includes("Form 2290 exact filing drill"),
     failures({ ...files, section: files.section.replace('kind="form_2290_filing"', 'kind="unit"') }).includes("Form 2290 exact filing drill"),
+    failures({ ...files, section: files.section.replace("!propertyTaxQ.isError && !form2290Q.isError && renditions.length === 0", "renditions.length === 0") }).includes("tax filing failures cannot masquerade as empty"),
   ];
   if (checks.some((ok) => !ok)) {
     console.error(`verify-compliance-tax-filings-unit-reverse selftest FAIL — mutations ${checks.map((ok, index) => ok ? null : index + 1).filter(Boolean).join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-compliance-tax-filings-unit-reverse selftest PASS — 7/7 API/profile/target mutations red");
+  console.log("verify-compliance-tax-filings-unit-reverse selftest PASS — 8/8 API/profile/target/error mutations red");
   process.exit(0);
 }
 
