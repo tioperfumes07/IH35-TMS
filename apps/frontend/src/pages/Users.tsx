@@ -835,7 +835,12 @@ export function UsersPage() {
             }
           }}
         >
-          <div className="text-sm text-gray-600">Current role: {roleModalUser?.role ?? "—"}</div>
+          <div className="text-sm text-gray-600">
+            Current role:{" "}
+            {roleModalUser?.role
+              ? (ROLE_LABEL[roleModalUser.role as UserRole] ?? roleModalUser.role)
+              : "—"}
+          </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">New role</label>
             <Combobox
