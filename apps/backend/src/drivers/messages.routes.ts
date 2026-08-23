@@ -5,6 +5,7 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { requireDriverSession } from "../driver/auth.js";
 import {
+  assertDriverActingCompany,
   deliverDriverProfileMessage,
   insertDriverReply,
   listDriverMessageThread,
@@ -20,7 +21,14 @@ const driverParamsSchema = z.object({ driverId: z.string().uuid() });
 const messageParamsSchema = z.object({ messageId: z.string().uuid() });
 const replyBodySchema = z.object({
   message: z.string().trim().min(1).max(4000),
+  // DRV-F6179 — optional: which company thread this reply belongs to. Omitted = the driver's home
+  // company (unchanged prior behavior). When present, must be the home company or an active
+  // canonical authorization (assertDriverActingCompany) — a shared driver replying to an
+  // authorized-company thread no longer silently misroutes into their home-company inbox.
+  operating_company_id: z.string().uuid().optional(),
 });
+// DRV-F6179 — same optional-company contract as replyBodySchema, for the PWA mark-read route.
+const pwaReadQuerySchema = z.object({ operating_company_id: z.string().uuid().optional() });
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -121,51 +129,86 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
     const driver = req.driver!;
     const userId = req.user!.uuid;
-    const message = await withCurrentUser(userId, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1`,
-        [driver.id]
-      );
-      const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
-      if (!operatingCompanyId) throw new Error("driver_company_missing");
-      // membership-scope-exempt: principal-derived
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-      const created = await insertDriverReply(client as Queryable, {
-        operatingCompanyId,
-        driverId: driver.id,
-        driverUserId: userId,
-        message: body.data.message,
+    try {
+      const message = await withCurrentUser(userId, async (client) => {
+        let operatingCompanyId: string;
+        if (body.data.operating_company_id) {
+          // DRV-F6179 — the caller named a target company (e.g. replying in an authorized-company
+          // thread). Validate it's the driver's home company or an active canonical authorization
+          // before honoring it — never trust a caller-supplied company id outright.
+          await assertDriverActingCompany(client as Queryable, driver.id, body.data.operating_company_id);
+          operatingCompanyId = body.data.operating_company_id;
+        } else {
+          const companyRes = await client.query<{ operating_company_id: string }>(
+            `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1`,
+            [driver.id]
+          );
+          const homeCompanyId = companyRes.rows[0]?.operating_company_id;
+          if (!homeCompanyId) throw new Error("driver_company_missing");
+          operatingCompanyId = homeCompanyId;
+        }
+        // membership-scope-exempt: principal-derived, and (when caller-supplied) explicitly
+        // authorization-checked above via assertDriverActingCompany.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        const created = await insertDriverReply(client as Queryable, {
+          operatingCompanyId,
+          driverId: driver.id,
+          driverUserId: userId,
+          message: body.data.message,
+        });
+        await appendCrudAudit(client, userId, "mdata.driver_profile_message.driver_reply", {
+          resource_type: "mdata.driver_profile_messages",
+          resource_id: created.id,
+          operating_company_id: operatingCompanyId,
+          driver_id: driver.id,
+        });
+        return created;
       });
-      await appendCrudAudit(client, userId, "mdata.driver_profile_message.driver_reply", {
-        resource_type: "mdata.driver_profile_messages",
-        resource_id: created.id,
-        operating_company_id: operatingCompanyId,
-        driver_id: driver.id,
-      });
-      return created;
-    });
-    return reply.code(201).send({ message });
+      return reply.code(201).send({ message });
+    } catch (err) {
+      if ((err as Error).message === "driver_company_not_authorized") {
+        return reply.code(403).send({ error: "driver_company_not_authorized" });
+      }
+      throw err;
+    }
   });
 
   app.patch("/api/v1/driver/messages/:messageId/read", async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = messageParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const query = pwaReadQuerySchema.safeParse(req.query ?? {});
+    if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const driver = req.driver!;
     const userId = req.user!.uuid;
-    const message = await withCurrentUser(userId, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1`,
-        [driver.id]
-      );
-      const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
-      if (!operatingCompanyId) return null;
-      // membership-scope-exempt: principal-derived
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-      return markMessageRead(client as Queryable, params.data.messageId, operatingCompanyId, userId);
-    });
-    if (!message) return reply.code(404).send({ error: "not_found" });
-    return reply.send({ message });
+    try {
+      const message = await withCurrentUser(userId, async (client) => {
+        let operatingCompanyId: string;
+        if (query.data.operating_company_id) {
+          // DRV-F6179 — same validated-target-company path as the reply route above.
+          await assertDriverActingCompany(client as Queryable, driver.id, query.data.operating_company_id);
+          operatingCompanyId = query.data.operating_company_id;
+        } else {
+          const companyRes = await client.query<{ operating_company_id: string }>(
+            `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1`,
+            [driver.id]
+          );
+          const homeCompanyId = companyRes.rows[0]?.operating_company_id;
+          if (!homeCompanyId) return null;
+          operatingCompanyId = homeCompanyId;
+        }
+        // membership-scope-exempt: principal-derived, and (when caller-supplied) explicitly
+        // authorization-checked above via assertDriverActingCompany.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        return markMessageRead(client as Queryable, params.data.messageId, operatingCompanyId, userId);
+      });
+      if (!message) return reply.code(404).send({ error: "not_found" });
+      return reply.send({ message });
+    } catch (err) {
+      if ((err as Error).message === "driver_company_not_authorized") {
+        return reply.code(403).send({ error: "driver_company_not_authorized" });
+      }
+      throw err;
+    }
   });
 }
 
