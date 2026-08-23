@@ -679,7 +679,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+    let updated: Record<string, unknown> | null;
+    try {
+      updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       const currentRes = await client.query(
         `
           SELECT *
@@ -753,12 +755,17 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         "BT-3-FORM-425C"
       );
       return report;
-    }).catch((error: Error) => {
-      if (error.message === "projection_override_reason_required_min_30_chars") {
-        throw error;
+    });
+    } catch (error) {
+      const msg = (error as Error).message;
+      if (msg === "projection_override_reason_required_min_30_chars") {
+        return reply.code(422).send({
+          error: "projection_override_reason_required_min_30_chars",
+          message: "Carry-forward override needs a reason of at least 30 characters",
+        });
       }
       throw error;
-    });
+    }
 
     if (!updated) return reply.code(404).send({ error: "report_not_found" });
     return updated;

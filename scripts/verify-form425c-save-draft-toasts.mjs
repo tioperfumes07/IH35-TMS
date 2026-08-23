@@ -74,6 +74,13 @@ export function collectProblems(src) {
   if (!applyChunk.includes("setDirty(true)")) {
     problems.push(`${PAGE}: Apply to Line 20 must setDirty so Generate PDF cannot silently print a stale total`);
   }
+  if (!src.includes("Carry-forward override needs a reason of at least 30 characters")) {
+    problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
+  }
+  const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c.routes.ts"), "utf8");
+  if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
+  }
   return problems;
 }
 
@@ -95,6 +102,7 @@ const good = `
   <QBImportTab
   onApplyTotal={(total) => {
   setDirty(true);
+  throw new Error("Carry-forward override needs a reason of at least 30 characters");
 `;
 const bad = `
   if (!detailQuery.data?.report) {

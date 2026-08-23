@@ -263,6 +263,9 @@ export function Form425CHome() {
       if (!form.reportId) {
         throw new Error("Create / Load Draft before saving");
       }
+      if (form.hasCarryForward && String(form.projectionOverrideReason ?? "").trim().length < 30) {
+        throw new Error("Carry-forward override needs a reason of at least 30 characters");
+      }
       await patchForm425CReport(form.reportId, companyId, {
         operating_company_id: companyId,
         part1_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) <= 9)),
