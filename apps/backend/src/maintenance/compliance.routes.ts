@@ -34,17 +34,20 @@ export async function registerMaintenanceComplianceRoutes(app: FastifyInstance) 
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
+          -- audit.audit_events PK is uuid (not id); class is event_class (not event_type);
+          -- company scope lives in payload, not a table column. Bare id/event_type/operating_company_id
+          -- 500 the 425C related hop /maintenance/compliance (undefined_column).
           SELECT
-            id::text,
-            event_type,
+            uuid::text AS id,
+            event_class AS event_type,
             created_at::text,
             payload
           FROM audit.audit_events
-          WHERE operating_company_id = $1::uuid
+          WHERE payload->>'operating_company_id' = $1
             AND (
-              event_type ILIKE '%425c%'
-              OR event_type ILIKE '%inspection%'
-              OR event_type ILIKE '%compliance%'
+              event_class ILIKE '%425c%'
+              OR event_class ILIKE '%inspection%'
+              OR event_class ILIKE '%compliance%'
             )
           ORDER BY created_at DESC
           LIMIT 200
