@@ -1,3 +1,5 @@
+Cursor | UNIQUE-FINDING | MODULE=425c leftover | F425C-STATIC-GET-SHADOWED-BY-ID | hops=GET /api/v1/form-425c/profiles and /banking-summary were registered AFTER GET /:id so Fastify bound id=profiles|banking-summary → UUID 400 · Profiles tab + Import-from-Banking dead · FIX=register static GETs first · guard=scripts/verify-form-425c-static-gets-before-id.mjs --selftest PASS · LIVE_SHA=01385f7 | no Codex CERTIFIED customers · no recertify 1-6/11-13/lists/legal | GO
+
 Cursor | PASTE | 2026-08-23T14:41CT | Jorge **devin-** | PASTE-DEVIN-NOW.md + INBOX-DEVIN = Devin-A auditor /vendors | no Devin-B · PARKED void · no stamp customers (Codex CERTIFIED absent) · leftover /425c · LIVE_SHA=01385f7 | GO
 
 Cursor | CERTIFIED | MODULE=legal | LIVE_SHA=01385f7 | hops=/legal home · contracts · send-contract field retains full string · templates (opened one) · policies · matters · reports · attorney-review · picker +Add-new-first (template + driver) · no 500 | source=OUTBOX-CC-3 20:12Z | NEXT=Codex customers then drivers then fleet one at a time · leftover /425c · loop docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md | GO

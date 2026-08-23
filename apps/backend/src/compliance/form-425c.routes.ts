@@ -403,6 +403,44 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return { reports };
   });
 
+  // Static paths MUST register before GET /:id. Fastify matches in order; otherwise
+  // GET /form-425c/profiles and GET /form-425c/banking-summary bind as id="profiles"|"banking-summary",
+  // fail UUID parse (400), and the Profiles / Import-from-Banking hops are dead.
+  app.get("/api/v1/form-425c/profiles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = COMPANY_QUERY.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    const profiles = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const identity = await ensureDefaultProfile(client, companyId, user.uuid);
+      const res = await client.query(
+        `
+          SELECT *
+          FROM catalogs.form_425c_company_profiles
+          WHERE operating_company_id = $1::uuid
+            AND company_key = $2
+          LIMIT 1
+        `,
+        [companyId, identity.companyKey]
+      );
+      return res.rows;
+    });
+    return { profiles };
+  });
+
+  app.get("/api/v1/form-425c/banking-summary", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = MONTH_QUERY.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const q = query.data;
+    const summary = await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
+      computeBankingSummary(client, q.operating_company_id, q.month)
+    );
+    return summary;
+  });
+
   app.get("/api/v1/form-425c/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -448,29 +486,6 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
     return payload;
-  });
-
-  app.get("/api/v1/form-425c/profiles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const query = COMPANY_QUERY.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
-    const profiles = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const identity = await ensureDefaultProfile(client, companyId, user.uuid);
-      const res = await client.query(
-        `
-          SELECT *
-          FROM catalogs.form_425c_company_profiles
-          WHERE operating_company_id = $1::uuid
-            AND company_key = $2
-          LIMIT 1
-        `,
-        [companyId, identity.companyKey]
-      );
-      return res.rows;
-    });
-    return { profiles };
   });
 
   app.post("/api/v1/form-425c/profiles", async (req, reply) => {
@@ -747,18 +762,6 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "report_not_found" });
     return updated;
-  });
-
-  app.get("/api/v1/form-425c/banking-summary", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const query = MONTH_QUERY.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
-    const q = query.data;
-    const summary = await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
-      computeBankingSummary(client, q.operating_company_id, q.month)
-    );
-    return summary;
   });
 
   app.post("/api/v1/form-425c/:id/import-banking", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
