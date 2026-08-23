@@ -94,6 +94,9 @@ const profileSchema = COMPANY_QUERY.extend({
   naisc_code: z.string().default(""),
   default_questionnaire_answers: z.record(z.string(), z.string()).default({}),
   bank_accounts: z.array(z.object({ id: z.string(), label: z.string(), number: z.string() })).default([]),
+  petition_date: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()])
+    .optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -498,10 +501,11 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             naisc_code,
             default_questionnaire_answers,
             bank_accounts,
+            petition_date,
             last_updated_at,
             last_updated_by_user_id
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, now(), $14)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::date, now(), $15)
           ON CONFLICT (operating_company_id, company_key)
           DO UPDATE SET
             company_name = EXCLUDED.company_name,
@@ -515,6 +519,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             naisc_code = EXCLUDED.naisc_code,
             default_questionnaire_answers = EXCLUDED.default_questionnaire_answers,
             bank_accounts = EXCLUDED.bank_accounts,
+            petition_date = EXCLUDED.petition_date,
             last_updated_at = now(),
             last_updated_by_user_id = EXCLUDED.last_updated_by_user_id,
             updated_at = now()
@@ -534,6 +539,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           b.naisc_code,
           JSON.stringify(b.default_questionnaire_answers ?? {}),
           JSON.stringify(b.bank_accounts ?? []),
+          b.petition_date ?? null,
           user.uuid,
         ]
       );

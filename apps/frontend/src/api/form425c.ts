@@ -28,6 +28,7 @@ export type Form425CProfileRecord = {
   default_questionnaire_answers: Record<string, string>;
   bank_accounts: Array<{ id: string; label: string; number: string }>;
   last_updated_at: string;
+  petition_date?: string | null;
 };
 
 export type GenerateForm425CPdfResponse = {
