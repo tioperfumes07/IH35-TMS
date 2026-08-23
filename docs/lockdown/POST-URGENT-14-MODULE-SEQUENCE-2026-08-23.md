@@ -35,8 +35,8 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 12 | FUEL | `fuel` | `/fuel` | **CC-3** DONE -- unique-clean (Home/Planner/Relay inbox/Settings/Expense mapping/History & savings/Loves prices/Compliance all live, honest empty/not-synced states throughout, Settings values match Planner display, Expense mapping forward-links 5/5 GL categories) |
 | 13 | DOCS | `docs` | `/docs` | **CC-3** DONE -- unique-clean (All Entities/Drivers/Customers/Vendors/Units/Equipment filter tabs, real forward-linked entity names, native-browser PDF preview confirmed, Missing Required 57 / Expiring 30 days 0 honest counters) |
 | 14 | HELP | `help` | `/help` | **CC-3** DONE -- unique-clean (frontend-only per CLAUDE.md; category groups + one real article opened + search for "settlement" returned real ranked results) |
-| 15 | PROGRAM | `program` | `/program` | **CC-3** claiming now |
-| 16 | SYSTEM | `system` | `/system` | next free |
+| 15 | PROGRAM | `program` | `/program` | **CC-3** DONE -- unique-clean (Scenario tracker/Module matrix/Legacy certification board/Build progress/Module completion/Final additions all live, real honest counters throughout incl. explicit staleness disclosures; one self-caught non-issue: a coordinate-targeting imprecision on my own click on the wrapped second tab row, not an app bug -- confirmed by a precise ref-based click landing in one click) |
+| 16 | SYSTEM | `system` | `/system` | **CC-3** claiming now |
 
 Empty unique-FINDING on your claimed row → next **unclaimed** row in this table. Never idle. Never a 17th invented queue.
 
