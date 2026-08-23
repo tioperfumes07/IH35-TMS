@@ -30,10 +30,10 @@ function assert(src, route, api) {
   if (!/export type IntegrityReportRow/.test(api) || !/driver_name\?: string \| null/.test(api) || !/unit_number\?: string \| null/.test(api)) {
     problems.push(`${API}: four integrity payloads must share a typed human-label contract`);
   }
-  const driverJoins = route.match(/LEFT JOIN mdata\.drivers d ON d\.id = o\.driver_id AND d\.operating_company_id = o\.operating_company_id/g) ?? [];
+  const driverJoins = route.match(/driver_company_authorizations integrity_report_driver_dca[\s\S]{0,320}integrity_report_driver_dca\.driver_id = d\.id[\s\S]{0,180}integrity_report_driver_dca\.company_id = o\.operating_company_id[\s\S]{0,180}integrity_report_driver_dca\.is_authorized = true[\s\S]{0,180}integrity_report_driver_dca\.deactivated_at IS NULL/g) ?? [];
   const unitJoins = route.match(/LEFT JOIN mdata\.units u ON u\.id = o\.unit_id\s+AND COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = o\.operating_company_id/g) ?? [];
   if (driverJoins.length !== 3 || unitJoins.length !== 2) {
-    problems.push(`${ROUTE}: every applicable outlier view must resolve labels with exact same-company joins`);
+    problems.push(`${ROUTE}: every applicable outlier view must resolve driver labels through home-company or active canonical authorization and units through owner/lease scope`);
   }
   if ((route.match(/AS driver_name/g) ?? []).length !== 3 || (route.match(/u\.unit_number/g) ?? []).length < 2) {
     problems.push(`${ROUTE}: applicable view projections must expose driver_name/unit_number`);
@@ -50,7 +50,7 @@ if (SELFTEST) {
     .replace(/import \{ EntityLink \}[^\n]+\n/, "");
   const mutations = [
     [planted, liveRoute, liveApi],
-    [live, liveRoute.replace("d.operating_company_id = o.operating_company_id", "TRUE"), liveApi],
+    [live, liveRoute.replace("integrity_report_driver_dca.is_authorized = true", "integrity_report_driver_dca.is_authorized = false"), liveApi],
     [live, liveRoute.replace("AS driver_name", "AS unresolved_driver"), liveApi],
     [live, liveRoute, liveApi.replace("driver_name?: string | null", "driver_name?: unknown")],
     [live.replace("row.unit_number, unitId", "null, unitId"), liveRoute, liveApi],
