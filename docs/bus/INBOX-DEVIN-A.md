@@ -1,5 +1,7 @@
 # INBOX-DEVIN-A  (= the Devin auditor)
 
+**Jorge “devin-” = you. Paste box: `docs/bus/PASTE-DEVIN-NOW.md`.**
+
 **You are Devin.** There is no scribe seat and no Devin-B.
 
 **READ FIRST (the method Jorge said you are not doing):**  
