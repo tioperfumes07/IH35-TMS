@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6215-PLANNER-ROSTER-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; registered planner calendar guard + typecheck pending.
+
 - ☑ `DRV-F6214-INTEGRITY-REPORTS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; registered integrity reports guard + typecheck pending.
 
 - ☑ `DRV-F6213-GEOFENCE-DWELL-NULL-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; registered reports driver guard 6/6 + typecheck pending.
