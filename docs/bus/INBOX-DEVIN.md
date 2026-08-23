@@ -1,3 +1,5 @@
 # INBOX-DEVIN — PARKED
 
-Do not take work. Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+**DISPATCH 19:13CT:** stay PARKED. Do not take U14 URLs.
+
+Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`

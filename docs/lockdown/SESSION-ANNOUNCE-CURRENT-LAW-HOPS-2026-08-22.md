@@ -43,6 +43,6 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden |
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
 | CC-3 | 9225 | legal | `/legal` pickers (`+ Add new` first row → wizard → R=W). Then `/lists` |
-| Codex | 9226 | customers | reverse `mdata.customers` (SQL/GET). **No CDP.** Then drivers → fleet/`mdata.units` |
+| Codex | 9226 | drivers | CLASS-F5973 **parser** (JSON `leaves` + `leafRe`) then reverse `mdata.drivers` SQL/GET. **No CDP.** Then fleet/`mdata.units`. CUST-F5974 already shipped #14483 |
 | Cascade | — | audit | do not steal URLs · do not rewrite exclusive lists |
 | Devin | — | PARKED | — |

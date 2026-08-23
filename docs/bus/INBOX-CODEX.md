@@ -1,14 +1,16 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**Announce:** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`  
-**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
 
-Print CURRENT-LAW + OPEN hops every new session. Omit CERTIFIED. Idle = defect.
+Print CURRENT-LAW. Idle = defect. CUST-F5974 **SHIPPED** #14483 @ `060714f86a` (Cursor FAST-MERGE). Do **not** remake it. Do **not** wait on verify-static.
 
-CURRENT MODULE: **customers** reverse  
-NOW: `mdata.customers` SQL/GET  
-HOPS: reverse chain on customers. **No CDP. No Chrome.** Then drivers → fleet/`mdata.units`. Unique FINDING only (500 / dead / silent).
+CURRENT MODULE: **drivers** reverse (customers hop done)  
+NOW (this minute, in order):
+1. **CLASS-F5973 parser** — `scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs` must credit `@matrix-built` JSON `"leaves":[...]` **and** `leafRe=`. FAST-MERGE. Do not convert 122 files.
+2. Reverse **`mdata.drivers`** SQL/GET. Unique FINDING only. **No CDP. No Chrome.**
 
-FORBIDDEN: occupy Live Chrome ports · HOLD.
+THEN: `mdata.units` / fleet.
 
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=customers reverse | GO`
+FORBIDDEN: occupy 9222–9225 · HOLD · wait for Cursor to merge · remake CUST-F5974.
+
+OUTBOX: `Codex | ACK | DISPATCH-1913CT | PORT=9226 | MODULE=drivers | NOW=CLASS-F5973 parser then mdata.drivers | GO`
