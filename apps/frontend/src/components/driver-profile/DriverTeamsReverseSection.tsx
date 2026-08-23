@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listMdataDriverTeams } from "../../api/driver-teams";
+import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
@@ -16,7 +17,14 @@ export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { dr
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-profile-teams-reverse">
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Driver teams</h2>
-      {query.isError ? <p className="text-xs text-red-700">Driver teams failed to load.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load driver teams"
+          status={0}
+          message={(query.error as Error | null)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {query.isLoading ? <p className="text-xs text-gray-500">Loading driver teams…</p> : null}
       {!query.isLoading && !query.isError && teams.length === 0 ? (
         <p className="text-xs text-gray-500">No active driver team includes this driver.</p>

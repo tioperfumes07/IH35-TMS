@@ -16,6 +16,7 @@ function failures(s = source) {
     ["company-scoped roster", s.reverse.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')],
     ["both driver slots", /team\.primary_driver_id === driverId \|\| team\.secondary_driver_id === driverId/.test(s.reverse)],
     ["exact team drill", s.reverse.includes('kind="driver_team"') && s.reverse.includes("id={team.id}")],
+    ["failed roster retry", /<ListErrorState[\s\S]{0,260}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(s.reverse)],
     ["deep link honored", s.list.includes('searchParams.get("team_id")') && s.list.includes("candidate.id === teamId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
   const matrix = JSON.parse(s.matrix);
@@ -32,6 +33,7 @@ if (process.argv.includes("--selftest")) {
     ["reverse", 'listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })', 'listMdataDriverTeams({ is_active: "true" })'],
     ["reverse", "team.primary_driver_id === driverId || team.secondary_driver_id === driverId", "false"],
     ["reverse", 'kind="driver_team"', 'kind="driver"'],
+    ["reverse", "onRetry={() => void query.refetch()}", "onRetry={() => undefined}"],
     ["list", "candidate.id === teamId", "candidate.id === companyId"],
     ["matrix", '"id": "catalog.drivers.teams.list"', '"id": "catalog.drivers.teams.list.broken"'],
   ];
@@ -42,7 +44,7 @@ if (process.argv.includes("--selftest")) {
   const feed = JSON.parse(source.feed);
   feed.entries.unshift({ task: "BROKEN", guard: FILES.self, modules: ["lists"], cols: ["reverse_link"], leafRe: "^catalog" });
   if (!failures({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
-  console.log("verify-driver-team-profile-reverse selftest PASS — 8/8 runtime/evidence mutations red");
+  console.log("verify-driver-team-profile-reverse selftest PASS — 9/9 runtime/evidence mutations red");
   process.exit(0);
 }
 
