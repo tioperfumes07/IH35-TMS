@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6184-MISSING-REQUIRED-DOCS-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; compliance driver guard + service tests + typecheck pending.
+
 - ☑ `DRV-F6183-USER-DETAIL-HIDES-AUTHORIZED-SHARED-DRIVER-RECORD` — Codex drivers reverse SQL/GET — FIXED this PR; user-detail reverse guard + backend typecheck pending.
 
 - ☑ `CUST-F6182-NOTIFY-GUARD-REJECTS-INDEPENDENT-RETRY-STATES` — Codex customers reverse SQL/GET — FIXED this PR; guard normal + planted-defect selftest pending.
