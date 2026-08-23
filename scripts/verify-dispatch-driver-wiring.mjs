@@ -54,6 +54,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", /kind="driver" id=\{doc\.driver_id\}/],
   ["apps/backend/src/dispatch/pod.routes.ts", /FROM mdata\.driver_company_authorizations pod_review_driver_dca[\s\S]{0,180}pod_review_driver_dca\.driver_id = d\.id[\s\S]{0,140}pod_review_driver_dca\.company_id = p\.operating_company_id[\s\S]{0,140}pod_review_driver_dca\.is_authorized = true[\s\S]{0,140}pod_review_driver_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/dispatch/pod.routes.ts", /FROM mdata\.driver_company_authorizations pod_capture_driver_dca[\s\S]{0,180}pod_capture_driver_dca\.driver_id = dd\.id[\s\S]{0,140}pod_capture_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}pod_capture_driver_dca\.is_authorized = true[\s\S]{0,140}pod_capture_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx", /kind="driver"/],
