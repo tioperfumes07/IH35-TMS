@@ -132,7 +132,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         .union([z.boolean(), z.string()])
         .optional()
         .transform((value) => value === true || value === "true"),
-      operating_company_id: z.string().uuid().optional(),
+      operating_company_id: z.string().uuid(),
     });
     const parsedQuery = querySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
