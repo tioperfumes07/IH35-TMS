@@ -23,6 +23,13 @@ vi.mock("../../../auth/useAuth", () => ({
 
 const listCustomersMock = vi.fn();
 
+function mockCustomerRosters(activeCustomers: Customer[], inactiveCustomers: Customer[] = []) {
+  listCustomersMock.mockImplementation(async (params?: { status?: string }) => {
+    const customers = params?.status === "inactive" ? inactiveCustomers : activeCustomers;
+    return { customers, total: customers.length };
+  });
+}
+
 vi.mock("../../../api/mdata", () => ({
   listCustomers: (...args: unknown[]) => listCustomersMock(...args),
   listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
@@ -134,27 +141,30 @@ function renderCustomersAt(path: string) {
 }
 
 describe("CustomersPage list tabs", () => {
-  it("defaults to All and shows Preferred tab counts", async () => {
-    listCustomersMock.mockResolvedValue({
-      customers: [
+  it("defaults to Active and shows quality-segment counts without duplicating the inactive roster", async () => {
+    mockCustomerRosters(
+      [
         minimalCustomer({ id: "1", name: "Preferred Co", quality_overall_flag: "preferred" }),
         minimalCustomer({ id: "2", name: "Caution Co", quality_overall_flag: "caution" }),
-      ],
-    });
-    renderCustomersAt("/customers");
+      ]
+    );
+    const router = renderCustomersAt("/customers");
     await waitFor(() => expect(listCustomersMock).toHaveBeenCalled());
     expect(await screen.findByRole("button", { name: /preferred \(1\)/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /watch \(1\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /active \(2\)/i })).toHaveClass("border-[#1f2a44]");
+    expect(router.state.location.search).toBe("");
+    expect(screen.getAllByText("Preferred Co")).toHaveLength(1);
   });
 
   it("clicking Preferred filters rows and sets ?listTab=preferred", async () => {
     const user = userEvent.setup();
-    listCustomersMock.mockResolvedValue({
-      customers: [
+    mockCustomerRosters(
+      [
         minimalCustomer({ id: "1", name: "Preferred Co", quality_overall_flag: "preferred" }),
         minimalCustomer({ id: "2", name: "Other Co", quality_overall_flag: "standard" }),
-      ],
-    });
+      ]
+    );
     const router = renderCustomersAt("/customers");
     // Default view is master-detail, which renders a customer name in BOTH the sidebar and the detail panel,
     // so the singular queries throw "Found multiple elements". Presence becomes "at least one"; absence
@@ -171,9 +181,7 @@ describe("CustomersPage list tabs", () => {
 
   it("keeps the roster segment while secondary tabs update the detail route", async () => {
     const user = userEvent.setup();
-    listCustomersMock.mockResolvedValue({
-      customers: [minimalCustomer({ id: "1", name: "COI Customer" })],
-    });
+    mockCustomerRosters([minimalCustomer({ id: "1", name: "COI Customer" })]);
     const router = renderCustomersAt("/customers?listTab=all");
 
     await screen.findAllByText("COI Customer");
