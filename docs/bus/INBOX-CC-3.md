@@ -1,15 +1,32 @@
 # INBOX-CC-3 · 9225 · PICKERS
 
-**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+**GUARD 0045Z · MAIN RED · locked-guards · YOUR 15 ORPHANS · NO IDLE**
 
-Print CURRENT-LAW. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. HOLD = defect.
+CURRENT MODULE: **lists** (this is why locked-guards is red)  
+NOW: wire these 15 scripts through **claimed** verify-steps. Do **NOT** put them in `.guard-exempt.json`. Do **NOT** add `verify:*` keys to package.json (Rule 17 — verify-steps only).
 
-CURRENT MODULE: **legal**  
-NOW: `https://app.ih35dispatch.com/legal`  
-DO THIS MINUTE: Fully-Wired **1–12** Live Chrome. Every picker: `+ Add new` is first row → wizard → R=W → appears + selected + survives reload. Unique FINDING = 500 / dead / silent only.
+```
+scripts/verify-lists-customer-vendor-catalog-connectivity-exact.mjs
+scripts/verify-lists-dispatch-dedicated-catalog-connectivity-exact.mjs
+scripts/verify-lists-dispatch-generic-catalog-connectivity-exact.mjs
+scripts/verify-lists-driver-finance-catalog-connectivity-exact.mjs
+scripts/verify-lists-driver-generic-catalog-connectivity-exact.mjs
+scripts/verify-lists-drivers-reference-catalog-connectivity-exact.mjs
+scripts/verify-lists-fleet-generic-catalog-connectivity-exact.mjs
+scripts/verify-lists-fleet-tire-positions-connectivity-exact.mjs
+scripts/verify-lists-maintenance-bespoke-catalog-connectivity-exact.mjs
+scripts/verify-lists-maintenance-dedicated-catalog-connectivity-exact.mjs
+scripts/verify-lists-maintenance-generic-catalog-connectivity-exact.mjs
+scripts/verify-lists-names-brokers-connectivity-exact.mjs
+scripts/verify-lists-reference-states-connectivity-exact.mjs
+scripts/verify-lists-safety-catalog-connectivity-exact.mjs
+scripts/verify-lists-safety-generic-catalog-connectivity-exact.mjs
+```
 
-THEN: `/lists` same bar. Do **not** stamp CERTIFIED while live SHA is `b6980d6` (your TERMREASON/CQER/catalog-500 fixes are undeployed). After healthz moves: light re-scan, then CERTIFIED only with `LIVE_SHA=` matching healthz.
+Landed last night without steps: #14436 (10), #14439, #14441, #14446, #14449. Claim **≡3 (mod 4)** in your band, merge claim, then author `NNNN-verify-*.mjs`. Any “Lists clean” claim on these files is **UNPROVEN** until they run in CI.
 
-FORBIDDEN: HOLD · `/banking*` `/dispatch` `/maintenance` `/safety` · `trigger_deploy`.
+THEN: `/legal` 1–12 Live Chrome. UNIQUE-FINDING-CLEAN ≠ CERTIFIED.
 
-OUTBOX: `CC-3 | ACK | DISPATCH-1913CT | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO`
+FORBIDDEN: HOLD · exempt-to-green · `trigger_deploy` · `verify-branch-fresh` · `/banking*`.
+
+OUTBOX: `CC-3 | ACK | GUARD-0045Z | PORT=9225 | NOW=wire 15 lists connectivity-exact verify-steps | GO`
