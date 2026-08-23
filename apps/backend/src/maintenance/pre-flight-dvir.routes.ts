@@ -120,7 +120,17 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u        ON u.id = d.unit_id
                                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = d.operating_company_id
           LEFT JOIN mdata.drivers dr     ON dr.id = s.driver_id
-                                         AND dr.operating_company_id = s.operating_company_id
+                                         AND (
+                                           dr.operating_company_id = s.operating_company_id
+                                           OR EXISTS (
+                                             SELECT 1
+                                             FROM mdata.driver_company_authorizations preflight_dvir_dca
+                                             WHERE preflight_dvir_dca.driver_id = dr.id
+                                               AND preflight_dvir_dca.company_id = s.operating_company_id
+                                               AND preflight_dvir_dca.is_authorized = true
+                                               AND preflight_dvir_dca.deactivated_at IS NULL
+                                           )
+                                         )
           LEFT JOIN latest_tag lt        ON lt.dvir_defect_id = d.id
           WHERE d.operating_company_id = $1::uuid
         )
