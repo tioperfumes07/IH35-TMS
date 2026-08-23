@@ -1626,6 +1626,13 @@ export function DriverDetailPage() {
             <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
             {legalMattersForDriverQuery.isLoading ? (
               <p className="text-sm text-gray-500">Loading…</p>
+            ) : legalMattersForDriverQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load linked legal matters"
+                status={legalMattersForDriverQuery.error instanceof ApiError ? legalMattersForDriverQuery.error.status : 0}
+                message={legalMattersForDriverQuery.error instanceof Error ? legalMattersForDriverQuery.error.message : undefined}
+                onRetry={() => void legalMattersForDriverQuery.refetch()}
+              />
             ) : (
               <ul className="space-y-2">
                 {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
@@ -1642,7 +1649,7 @@ export function DriverDetailPage() {
                 ))}
               </ul>
             )}
-            {legalMattersListState.isEmpty ? (
+            {!legalMattersForDriverQuery.isError && legalMattersListState.isEmpty ? (
               <p className="text-sm text-gray-500">No linked matters.</p>
             ) : null}
           </div>
