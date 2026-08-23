@@ -16,12 +16,14 @@ type EldCertified = {
   polled_at: string;
 } | null;
 
-export function HOSStatusSection({ hos }: { hos: Record<string, unknown> | null }) {
+export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<string, unknown> | null; unavailable?: boolean }) {
   if (!hos) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="mb-2 text-sm font-semibold text-slate-900">HOS status</h2>
-        <p className="text-xs text-slate-500">ELD / HOS data not available for this driver.</p>
+        <p className={`text-xs ${unavailable ? "text-red-700" : "text-slate-500"}`}>
+          {unavailable ? "ELD / HOS data could not be loaded." : "ELD / HOS data not available for this driver."}
+        </p>
       </section>
     );
   }
