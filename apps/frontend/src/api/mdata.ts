@@ -1076,9 +1076,12 @@ export function listTerminationReasons(operatingCompanyId: string, includeInacti
   return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons?${query}`);
 }
 
-export function listSafetyEvents(driverId: string, includeVoided = false) {
-  const query = includeVoided ? "?include_voided=true" : "";
-  return apiRequest<{ events: SafetyEvent[] }>(`/api/v1/mdata/drivers/${driverId}/safety-events${query}`);
+export function listSafetyEvents(driverId: string, operatingCompanyId: string, includeVoided = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeVoided) query.set("include_voided", "true");
+  return apiRequest<{ events: SafetyEvent[] }>(
+    `/api/v1/mdata/drivers/${driverId}/safety-events?${query.toString()}`
+  );
 }
 
 export function createSafetyEvent(

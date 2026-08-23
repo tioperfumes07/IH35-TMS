@@ -353,9 +353,9 @@ export function DriverDetailPage() {
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
 
   const safetyEventsQuery = useQuery({
-    queryKey: ["driver-safety-events", id, showVoidedSafetyEvents],
-    queryFn: () => listSafetyEvents(id, showVoidedSafetyEvents).then((result) => result.events),
-    enabled: Boolean(id) && canViewSafetyFile && activeTab === "Safety File",
+    queryKey: ["driver-safety-events", id, companyId, showVoidedSafetyEvents],
+    queryFn: () => listSafetyEvents(id, companyId, showVoidedSafetyEvents).then((result) => result.events),
+    enabled: Boolean(id && companyId) && canViewSafetyFile && activeTab === "Safety File",
   });
   const terminationReasonsQuery = useQuery({
     queryKey: ["driver-termination-reasons", companyId],

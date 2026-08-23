@@ -10,6 +10,7 @@ const FILES = {
   profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
   backend: "apps/backend/src/mdata/drivers.routes.ts",
   profileBackend: "apps/backend/src/mdata/driver-profile.routes.ts",
+  safetyBackend: "apps/backend/src/mdata/driver-safety-events.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -31,6 +32,14 @@ function verify(source) {
   const authHandler = authRouteStart >= 0 && authRouteEnd > authRouteStart ? source.profileBackend.slice(authRouteStart, authRouteEnd) : "";
   need(/parsedQuery\.data\.operating_company_id/.test(authHandler), "company-authorization backend must resolve the selected company");
   need(/JOIN mdata\.drivers d[\s\S]{0,120}d\.operating_company_id = \$2::uuid/.test(authHandler), "company-authorization backend must gate the parent driver to selected company");
+  need(/listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/.test(source.detail), "DriverDetail safety-event reverse GET must send selected companyId");
+  need(/queryKey: \["driver-safety-events", id, companyId, showVoidedSafetyEvents\]/.test(source.detail), "safety-event query key must include selected companyId");
+  need(/export function listSafetyEvents\(driverId: string, operatingCompanyId: string, includeVoided = false\)/.test(source.api), "safety-event API must require operatingCompanyId");
+  const safetyRouteStart = source.safetyBackend.indexOf('app.get("/api/v1/mdata/drivers/:driver_id/safety-events"');
+  const safetyRouteEnd = source.safetyBackend.indexOf('app.post("/api/v1/mdata/drivers/:driver_id/safety-events"', safetyRouteStart);
+  const safetyHandler = safetyRouteStart >= 0 && safetyRouteEnd > safetyRouteStart ? source.safetyBackend.slice(safetyRouteStart, safetyRouteEnd) : "";
+  need(/parsedQuery\.data\.operating_company_id/.test(safetyHandler), "safety-event backend must resolve the selected company");
+  need(/JOIN mdata\.drivers d[\s\S]{0,120}d\.operating_company_id = \$2::uuid/.test(safetyHandler), "safety-event backend must gate the parent driver to selected company");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -72,6 +81,17 @@ if (process.argv.includes("--selftest")) {
         /getDriver\(id, companyId(?:, signal)?\)/,
         "getDriver(id)",
         "scoped DriverDetail read",
+      ),
+    },
+    { key: "detail", text: replaceOrFail(source.detail, /listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/, "listSafetyEvents(id, showVoidedSafetyEvents)", "safety event selected-company call") },
+    { key: "api", text: replaceOrFail(source.api, /listSafetyEvents\(driverId: string, operatingCompanyId: string, includeVoided = false\)/, "listSafetyEvents(driverId: string, includeVoided = false)", "safety event required company API") },
+    {
+      key: "safetyBackend",
+      text: replaceOrFail(
+        source.safetyBackend,
+        /(\/api\/v1\/mdata\/drivers\/:driver_id\/safety-events[\s\S]{0,2400})d\.operating_company_id = \$2::uuid/,
+        "$1TRUE",
+        "safety event parent driver scope"
       ),
     },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
