@@ -1,5 +1,19 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6240-CERT-EXPIRY-ROSTER-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; all/by-driver expiry roster admits active canonical shared-driver authorization; guard 4/4 + tests 4/4 + typecheck exit 0.
+
+- ☑ `DRV-F6239-COMPLIANCE-CREDENTIAL-EXPIRIES-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; one canonical eligible roster feeds all six credential expiry branches; guard 23/23 + typecheck exit 0.
+
+- ☑ `DRV-F6238-ELD-AUDIT-RESOLVER-BINDS-SHARED-DRIVER-TO-HOME-INTEGRATION` — Codex drivers reverse SQL/GET — FIXED this PR; selected-company Samsara mapping/config plus active shared-driver eligibility; guard 7/7 + tests 7/7 + typecheck exit 0.
+
+- ☑ `DRV-F6237-FILINGS-DASHBOARD-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; Clearinghouse/MVR filing rosters admit active canonical shared-driver authorizations; guard 41/41 + tests 6/6 + typecheck exit 0.
+
+- ☑ `DOCS-F6236-ENTITY-LABEL-HYDRATOR-USES-PHANTOM-FLEET-SCOPE` — Codex customer/driver/fleet reverse SQL/GET — FIXED this PR; type-specific scopes remove unit/equipment 42703 and admit active shared drivers; guard 22/22.
+
+- ☑ `DRV-F6235-LOAD-DISTRIBUTION-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; load-instruction PDF/notification resolver admits active shared-driver authorizations; guard 44/44.
+
+- ☑ `DRV-F6234-WORK-ORDER-V1-READS-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers/fleet reverse SQL/GET — FIXED this PR; V1 list search and PDF admit active canonical shared-driver authorizations; guard 21/21 + tests 11 passed.
+
 - ☑ `DRV-F6233-AVAILABLE-DRIVERS-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers connectivity SQL/GET — FIXED this PR; AssignDriverDropdown fallback admits active canonical shared-driver authorizations; guard 12/12 + tests 6/6.
 
 - ☑ `DRV-F6232-OPTIMAL-DRIVERS-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers connectivity SQL/GET — FIXED this PR; ranked optimizer admits active canonical shared-driver authorizations; guard 6/6 + tests 5/5.

@@ -69,6 +69,19 @@ function mapRow(row: Record<string, unknown>): ComplianceCredential {
 }
 
 const AGGREGATE_SQL = `
+  WITH eligible_drivers AS (
+    SELECT d.*
+    FROM mdata.drivers d
+    WHERE d.operating_company_id = $1::uuid
+       OR EXISTS (
+         SELECT 1
+         FROM mdata.driver_company_authorizations aggregate_expiry_dca
+         WHERE aggregate_expiry_dca.driver_id = d.id
+           AND aggregate_expiry_dca.company_id = $1::uuid
+           AND aggregate_expiry_dca.is_authorized = true
+           AND aggregate_expiry_dca.deactivated_at IS NULL
+       )
+  )
   SELECT type, owner_type, owner_id::text, owner_name, label, expiration_date::text,
          (expiration_date - CURRENT_DATE)::int AS days_until_expiration, parent_id::text
   FROM (
@@ -138,43 +151,43 @@ const AGGREGATE_SQL = `
     SELECT 'cdl', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'CDL',
            d.cdl_expires_at, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.cdl_expires_at IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.cdl_expires_at IS NOT NULL
 
     UNION ALL
     SELECT 'medical_card', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'Medical Card',
            d.dot_medical_expires_at, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.dot_medical_expires_at IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.dot_medical_expires_at IS NOT NULL
 
     UNION ALL
     SELECT 'fast_card', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'FAST Card',
            d.fast_card_expiration, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.fast_card_expiration IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.fast_card_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'sentri', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'SENTRI',
            d.sentri_expiration, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.sentri_expiration IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.sentri_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'twic', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'TWIC',
            d.twic_expiration, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.twic_expiration IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.twic_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'mexican_license', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'Mexican License',
            d.mexican_license_expiration, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.mexican_license_expiration IS NOT NULL
+    FROM eligible_drivers d
+    WHERE d.mexican_license_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'drug_test_cycle', 'driver', d.id,

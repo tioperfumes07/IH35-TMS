@@ -287,7 +287,14 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             </Link>
           </div>
           <div className="max-h-80 overflow-y-auto p-2">
-            {violations.length === 0 ? (
+            {violationsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load HOS violations"
+                status={0}
+                message={(violationsQuery.error as Error)?.message}
+                onRetry={() => void violationsQuery.refetch()}
+              />
+            ) : violations.length === 0 ? (
               <p className="text-xs text-slate-500">No open violations on file.</p>
             ) : (
               <ul className="space-y-2 text-xs">

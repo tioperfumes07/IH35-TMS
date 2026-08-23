@@ -36,6 +36,13 @@ const CHECKS = [
   ["apps/backend/src/compliance/drug-alcohol.routes.ts", /drug_results_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_results_list_dca\.company_id = t\.operating_company_id[\s\S]{0,180}drug_results_list_dca\.is_authorized = true[\s\S]{0,180}drug_results_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/compliance/compliance-aggregate.service.ts", /aggregate_drug_cycle_dca\.driver_id = d\.id[\s\S]{0,180}aggregate_drug_cycle_dca\.company_id = \$1::uuid[\s\S]{0,180}aggregate_drug_cycle_dca\.is_authorized = true[\s\S]{0,180}aggregate_drug_cycle_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/compliance/compliance-aggregate.service.ts", /aggregate_training_dca\.driver_id = d\.id[\s\S]{0,180}aggregate_training_dca\.company_id = t\.operating_company_id[\s\S]{0,180}aggregate_training_dca\.is_authorized = true[\s\S]{0,180}aggregate_training_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /WITH eligible_drivers AS \([\s\S]{0,240}driver_company_authorizations aggregate_expiry_dca[\s\S]{0,180}aggregate_expiry_dca\.driver_id = d\.id[\s\S]{0,180}aggregate_expiry_dca\.company_id = \$1::uuid[\s\S]{0,180}aggregate_expiry_dca\.is_authorized = true[\s\S]{0,180}aggregate_expiry_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'cdl'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.cdl_expires_at IS NOT NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'medical_card'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.dot_medical_expires_at IS NOT NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'fast_card'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.fast_card_expiration IS NOT NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'sentri'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.sentri_expiration IS NOT NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'twic'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.twic_expiration IS NOT NULL/],
+  ["apps/backend/src/compliance/compliance-aggregate.service.ts", /SELECT 'mexican_license'[\s\S]{0,300}FROM eligible_drivers d[\s\S]{0,100}d\.mexican_license_expiration IS NOT NULL/],
 ];
 
 export function audit(files) {

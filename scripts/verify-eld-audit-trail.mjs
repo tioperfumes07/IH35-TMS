@@ -37,6 +37,13 @@ contains("apps/backend/src/safety/eld-audit-trail/viewer.service.ts", viewerServ
   { pattern: /getHosLogs|SamsaraClient/, label: "live Samsara HOS edit fetch (not phantom hos_log_edits)" },
   { pattern: /read_only/, label: "read-only marker" },
   { pattern: /buildDotAuditPdfPayload/, label: "DOT PDF payload builder" },
+  { pattern: /sd\.operating_company_id = \$1::uuid/, label: "selected-company Samsara driver mapping" },
+  { pattern: /sc\.operating_company_id = \$1::uuid/, label: "selected-company Samsara config" },
+  { pattern: /driver_company_authorizations eld_audit_driver_dca/, label: "shared-driver authorization table" },
+  { pattern: /eld_audit_driver_dca\.driver_id = d\.id/, label: "shared-driver authorization identity" },
+  { pattern: /eld_audit_driver_dca\.company_id = \$1::uuid/, label: "shared-driver selected company" },
+  { pattern: /eld_audit_driver_dca\.is_authorized = true/, label: "active shared-driver authorization" },
+  { pattern: /eld_audit_driver_dca\.deactivated_at IS NULL/, label: "non-deactivated shared-driver authorization" },
 ]);
 
 const routes = read("apps/backend/src/safety/eld-audit-trail/routes.ts");
@@ -132,7 +139,26 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:eld-audit-trail --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  const viewerMutations = [
+    ["selected-company-driver-map", "sd.operating_company_id = $1::uuid", "sd.operating_company_id = d.operating_company_id"],
+    ["selected-company-config", "sc.operating_company_id = $1::uuid", "sc.operating_company_id = d.operating_company_id"],
+    ["shared-authorization-table", "driver_company_authorizations eld_audit_driver_dca", "drivers eld_audit_driver_dca"],
+    ["shared-authorization-active", "eld_audit_driver_dca.is_authorized = true", "eld_audit_driver_dca.is_authorized = false"],
+  ];
+  const requiredViewerPatterns = [
+    /sd\.operating_company_id = \$1::uuid/,
+    /sc\.operating_company_id = \$1::uuid/,
+    /driver_company_authorizations eld_audit_driver_dca/,
+    /eld_audit_driver_dca\.is_authorized = true/,
+  ];
+  for (const [name, before, after] of viewerMutations) {
+    const mutated = viewerService.replace(before, after);
+    if (mutated === viewerService || requiredViewerPatterns.every((pattern) => pattern.test(mutated))) {
+      console.error(`verify:eld-audit-trail --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:eld-audit-trail --selftest OK — ${mutations.length + viewerMutations.length}/${mutations.length + viewerMutations.length} mutations detected`);
   process.exit(0);
 }
 
