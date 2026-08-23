@@ -1,239 +1,4 @@
 {
-  "4443": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-fleet-location-hos-shared-drivers"
-  },
-  "4447": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-vehicle-driver-history-shared-label"
-  },
-  "4441": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-customer-quality-events-company-scope"
-  },
-  "4445": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-customer-contract-file-company-scope"
-  },
-  "4423": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-catalog-mutation-routes-set-company-scope"
-  },
-  "4427": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-maintenance-services-catalog-editable"
-  },
-  "4431": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-legal-contract-signer-phone-e164"
-  },
-  "4435": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-driver-detail-catalog-failure-truth"
-  },
-  "4439": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-unit-wear-telemetry-failure-truth"
-  },
-  "4421": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-team-money-writes-membership-scope"
-  },
-  "4417": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-banking-bank-accounts-mask-column"
-  },
-  "4413": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factor-batch-history-distinct-order-key"
-  },
-  "4355": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-customer-vendor-catalog-connectivity-exact"
-  },
-  "4359": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-dispatch-dedicated-catalog-connectivity-exact"
-  },
-  "4363": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-dispatch-generic-catalog-connectivity-exact"
-  },
-  "4367": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-driver-finance-catalog-connectivity-exact"
-  },
-  "4371": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-driver-generic-catalog-connectivity-exact"
-  },
-  "4375": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-drivers-reference-catalog-connectivity-exact"
-  },
-  "4379": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-fleet-generic-catalog-connectivity-exact"
-  },
-  "4383": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-fleet-tire-positions-connectivity-exact"
-  },
-  "4387": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-maintenance-bespoke-catalog-connectivity-exact"
-  },
-  "4391": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-maintenance-dedicated-catalog-connectivity-exact"
-  },
-  "4395": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-maintenance-generic-catalog-connectivity-exact"
-  },
-  "4399": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-names-brokers-connectivity-exact"
-  },
-  "4403": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-reference-states-connectivity-exact"
-  },
-  "4407": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-safety-catalog-connectivity-exact"
-  },
-  "4411": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-safety-generic-catalog-connectivity-exact"
-  },
-  "4353": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-vendor-merges-resolved-vendor-link"
-  },
-  "4350": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-transaction-register-gl-je-link"
-  },
-  "4349": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-bill-payment-modal-bank-account-picker"
-  },
-  "4348": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-void-reverses-funding-je"
-  },
-  "4347": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-per-entity-catalog-no-stray-legacy-policy"
-  },
-  "4346": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-termination-reasons-rls-single-policy"
-  },
-  "4345": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-maintenance-parts-catalog-create-modal"
-  },
-  "4341": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cash-advance-mark-disbursed-bank-txn-picker"
-  },
-  "4340": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-fleet-catalog-display-name-key"
-  },
-  "4330": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-catalog-label-column-not-self-aliased"
-  },
-  "4337": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-chargebacks-fees-advance-amount-column"
-  },
-  "4333": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-settle-for-update-scoped-to-settlement-row"
-  },
-  "4329": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-recon-worklist-excludes-already-matched-candidates"
-  },
-  "4326": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-catalog-conflict-check-code-column-aliased"
-  },
-  "4325": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-vendors-page-fetches-inactive-roster"
-  },
-  "4321": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-customers-pager-total-tab-aware"
-  },
-  "4317": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-record-payment-modal-deactivated-customer-option"
-  },
-  "4313": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-customers-page-fetches-inactive-roster"
-  },
-  "4310": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-3",
-    "purpose": "verify-trailer-expense-reverse-label-visible"
-  },
-  "4309": {
-    "claimed_at": "2026-08-22",
-    "claimed_by": "cc-1",
-    "purpose": "verify-customers-list-inactive-status-same-company"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3503,6 +3268,246 @@
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-3",
     "purpose": "verify-vendor-work-orders-canonical-reverse"
+  },
+  "4309": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-customers-list-inactive-status-same-company"
+  },
+  "4310": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-trailer-expense-reverse-label-visible"
+  },
+  "4313": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-customers-page-fetches-inactive-roster"
+  },
+  "4317": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-record-payment-modal-deactivated-customer-option"
+  },
+  "4321": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-customers-pager-total-tab-aware"
+  },
+  "4325": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendors-page-fetches-inactive-roster"
+  },
+  "4326": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-catalog-conflict-check-code-column-aliased"
+  },
+  "4329": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-recon-worklist-excludes-already-matched-candidates"
+  },
+  "4330": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-catalog-label-column-not-self-aliased"
+  },
+  "4333": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settle-for-update-scoped-to-settlement-row"
+  },
+  "4337": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-chargebacks-fees-advance-amount-column"
+  },
+  "4340": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-fleet-catalog-display-name-key"
+  },
+  "4341": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-advance-mark-disbursed-bank-txn-picker"
+  },
+  "4345": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-maintenance-parts-catalog-create-modal"
+  },
+  "4346": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-termination-reasons-rls-single-policy"
+  },
+  "4347": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-per-entity-catalog-no-stray-legacy-policy"
+  },
+  "4348": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-void-reverses-funding-je"
+  },
+  "4349": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bill-payment-modal-bank-account-picker"
+  },
+  "4350": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-transaction-register-gl-je-link"
+  },
+  "4353": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-merges-resolved-vendor-link"
+  },
+  "4355": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-customer-vendor-catalog-connectivity-exact"
+  },
+  "4359": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-dispatch-dedicated-catalog-connectivity-exact"
+  },
+  "4363": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-dispatch-generic-catalog-connectivity-exact"
+  },
+  "4367": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-driver-finance-catalog-connectivity-exact"
+  },
+  "4371": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-driver-generic-catalog-connectivity-exact"
+  },
+  "4375": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-drivers-reference-catalog-connectivity-exact"
+  },
+  "4379": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-fleet-generic-catalog-connectivity-exact"
+  },
+  "4383": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-fleet-tire-positions-connectivity-exact"
+  },
+  "4387": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-maintenance-bespoke-catalog-connectivity-exact"
+  },
+  "4391": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-maintenance-dedicated-catalog-connectivity-exact"
+  },
+  "4395": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-maintenance-generic-catalog-connectivity-exact"
+  },
+  "4399": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-names-brokers-connectivity-exact"
+  },
+  "4403": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-reference-states-connectivity-exact"
+  },
+  "4407": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-safety-catalog-connectivity-exact"
+  },
+  "4411": {
+    "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-safety-generic-catalog-connectivity-exact"
+  },
+  "4413": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factor-batch-history-distinct-order-key"
+  },
+  "4417": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-banking-bank-accounts-mask-column"
+  },
+  "4421": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-team-money-writes-membership-scope"
+  },
+  "4423": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-catalog-mutation-routes-set-company-scope"
+  },
+  "4427": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-services-catalog-editable"
+  },
+  "4431": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-legal-contract-signer-phone-e164"
+  },
+  "4435": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-detail-catalog-failure-truth"
+  },
+  "4439": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-unit-wear-telemetry-failure-truth"
+  },
+  "4441": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customer-quality-events-company-scope"
+  },
+  "4443": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fleet-location-hos-shared-drivers"
+  },
+  "4445": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customer-contract-file-company-scope"
+  },
+  "4447": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-vehicle-driver-history-shared-label"
+  },
+  "4449": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-payment-methods-structured-not-notes-heuristic"
   },
   "_band": {
     "cc-1": "n%4===1",
