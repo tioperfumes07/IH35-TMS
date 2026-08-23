@@ -430,11 +430,7 @@ const CUSTOMER_C_SELECT_COLUMNS = CUSTOMER_SELECT_COLUMNS.replace(
 function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean): Record<string, unknown> {
   let taxId: string | null = null;
   if (includeTaxId && row.tax_id_encrypted) {
-    try {
-      taxId = decrypt(row.tax_id_encrypted as Buffer);
-    } catch {
-      taxId = null;
-    }
+    taxId = decrypt(row.tax_id_encrypted as Buffer);
   }
   return {
     ...row,

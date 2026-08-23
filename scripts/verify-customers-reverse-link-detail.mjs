@@ -33,6 +33,11 @@ const CLAIMED_LEAVES = ["detail.profile", "detail.billing", "detail.quality"];
 const EXACT_HEADER = ' * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["detail.profile","detail.billing","detail.quality"],"task":"CUST-F5872-DETAIL-REVERSE-EXACT-LEAVES","vertical":"column-wave"}';
 
 const CHECKS = [
+  {
+    name: "authorized tax-id decryption failures propagate",
+    file: CUSTOMER_ROUTE,
+    pattern: /if \(includeTaxId && row\.tax_id_encrypted\) \{\s*taxId = decrypt\(row\.tax_id_encrypted as Buffer\);\s*\}/,
+  },
   { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
   { name: "driver EntityLink", file: DETAIL, pattern: /kind="driver"/ },
   { name: "unit EntityLink", file: DETAIL, pattern: /kind="unit"/ },
@@ -232,6 +237,15 @@ const CHECKS = [
 ];
 
 const FORBIDDEN = [
+  {
+    name: "tax-id decryption failure must not masquerade as missing tax ID",
+    file: CUSTOMER_ROUTE,
+    pattern: /try \{[\s\S]{0,120}taxId = decrypt\([\s\S]{0,120}catch \{\s*taxId = null;/,
+    mutate: (source) => source.replace(
+      "taxId = decrypt(row.tax_id_encrypted as Buffer);",
+      "try { taxId = decrypt(row.tax_id_encrypted as Buffer); } catch { taxId = null; }",
+    ),
+  },
   {
     name: "customer financial document failures must not become false-empty history",
     file: FINANCIAL_ROUTE,
