@@ -123,8 +123,8 @@ async function lookupLinkedPolicies(
   client: DbClient,
   operatingCompanyId: string,
   unitId: string
-): Promise<LinkedPolicyRow[]> {
-  const res = await withSavepoint(
+): Promise<{ policies: LinkedPolicyRow[]; unavailable: boolean }> {
+  const res = await withSavepoint<{ rows: LinkedPolicyRow[]; unavailable: boolean }>(
     client,
     "unit_aggregate_linked_policies",
     () =>
@@ -148,10 +148,10 @@ async function lookupLinkedPolicies(
           ORDER BY (p.status = 'active') DESC, p.expiry_date DESC
         `,
         [operatingCompanyId, unitId]
-      ),
-    { rows: [] as LinkedPolicyRow[] }
+      ).then((result) => ({ ...result, unavailable: false })),
+    { rows: [], unavailable: true }
   );
-  return res.rows;
+  return { policies: res.rows, unavailable: res.unavailable };
 }
 
 async function mapDriverRow(row: Record<string, unknown> | undefined, extra?: Record<string, unknown>) {
@@ -729,7 +729,7 @@ export async function buildUnitAggregate(
     (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
 
   const unitNumber = unit.unit_number != null ? String(unit.unit_number) : null;
-  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicies] = await Promise.all([
+  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicyRead] = await Promise.all([
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.us_insurance_policy_number as string | null),
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.mx_insurance_policy_number as string | null),
     lookupLinkedPolicies(client, operatingCompanyId, unitId),
@@ -777,7 +777,7 @@ export async function buildUnitAggregate(
       // Real FK-linked policies (insurance.policy_unit) — never gated on the legacy text fields
       // above, so a policy attached through the Insurance module is visible here even when nobody
       // has hand-typed a matching policy number into this unit's legacy us_/mx_insurance_* columns.
-      linked_policies: linkedPolicies.map((p) => ({
+      linked_policies: linkedPolicyRead.policies.map((p) => ({
         policy_id: p.policy_id,
         number: p.policy_number,
         carrier: p.insurer_name,
@@ -786,6 +786,7 @@ export async function buildUnitAggregate(
         coverage_type: p.coverage_type,
         status: p.status,
       })),
+      linked_policies_unavailable: linkedPolicyRead.unavailable,
     },
     total_ownership_cost: {
       purchase_price_cents,
