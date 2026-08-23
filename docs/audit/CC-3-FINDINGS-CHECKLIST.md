@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `CUST-F6182-NOTIFY-GUARD-REJECTS-INDEPENDENT-RETRY-STATES` — Codex customers reverse SQL/GET — FIXED this PR; guard normal + planted-defect selftest pending.
+
 > **★★★ HARD STANDING RULE — OWNER-LOCKED 2026-08-07. PERMANENT. ENFORCEABLE. APPLIES TO EVERY LANE.**
 >
 > Owner directive, verbatim: *"I need you to create permanent rule that you will write all findings, create

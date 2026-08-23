@@ -20,7 +20,9 @@ function audit(s) {
   if ((s.service.match(/FROM views\.dispatch_load_with_driver_status l/g) ?? []).length < 2) failures.push("ETA context and notification scan must read the canonical latest-prediction view");
   if ((s.service.match(/E_CUSTOMER_NOT_FOUND/g) ?? []).length < 2 || !/customer_not_found/.test(s.routes)) failures.push("read/write missing-customer contract missing");
   if (!/getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/.test(s.reverse) || !/getCustomerNotifyLog\(operatingCompanyId, customerId\)/.test(s.reverse)) failures.push("exact customer reverse reads missing");
-  if (!/preferences\.isError \|\| log\.isError/.test(s.reverse) || !/No delivery confirmations logged yet/.test(s.reverse)) failures.push("honest reverse states missing");
+  if (!/preferences\.isError[\s\S]{0,240}preferences\.refetch\(\)/.test(s.reverse)) failures.push("preference error retry missing");
+  if (!/log\.isError[\s\S]{0,240}log\.refetch\(\)/.test(s.reverse)) failures.push("history error retry missing");
+  if (!/!preferences\.isError && !log\.isError/.test(s.reverse) || !/No delivery confirmations logged yet/.test(s.reverse)) failures.push("honest reverse success/empty states missing");
   if (!(/kind="customer_notify_preferences"/.test(s.reverse) || /dispatch\/notify-preferences\?customer_id=/.test(s.reverse)) || !/useSearchParams\(\)\[0\]\.get\("customer_id"\)/.test(s.page)) {
     failures.push("filtered canonical drill missing");
   }
@@ -39,7 +41,9 @@ if (process.argv.includes("--selftest")) {
     ["missing", "service", /E_CUSTOMER_NOT_FOUND/g, "E_WRONG"],
     ["prefs", "reverse", /getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/, "getCustomerNotifyPreferences(operatingCompanyId, customerId)"],
     ["log", "reverse", /getCustomerNotifyLog\(operatingCompanyId, customerId\)/, "getCustomerNotifyLog(operatingCompanyId)"],
-    ["error", "reverse", /preferences\.isError \|\| log\.isError/, "false"],
+    ["preference-retry", "reverse", /preferences\.refetch\(\)/, "log.refetch()"],
+    ["history-retry", "reverse", /log\.refetch\(\)/, "preferences.refetch()"],
+    ["success-gate", "reverse", /!preferences\.isError && !log\.isError/, "!preferences.isError"],
     ["drill", "reverse", /kind="customer_notify_preferences"/, 'kind="broken_notify"'],
     ["mount", "customer", /CustomerNotifyReverseSection/g, "MissingNotifyReverse"],
   ];
