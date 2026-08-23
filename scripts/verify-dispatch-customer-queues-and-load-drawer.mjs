@@ -60,8 +60,8 @@ export function audit(src) {
   if (!/kind="customer"[\s\S]{0,50}id=\{load\.customer_id\}/.test(src.drawer)) {
     failures.push(`${FILES.drawer}: Load Detail Drawer Overview must render a real EntityLink kind="customer"`);
   }
-  if (!/customer_id: load!\.customer_id/.test(src.factoringTab)) {
-    failures.push(`${FILES.factoringTab}: Factoring tab must query invoices scoped by the load's real customer_id`);
+  if (!/listInvoices\(operatingCompanyId, \{ source_load_id: loadId, limit: 1 \}\)/.test(src.factoringTab)) {
+    failures.push(`${FILES.factoringTab}: Factoring tab must query invoices by the exact canonical source_load_id`);
   }
   if (!/customer_id: customerId/.test(src.preDispatch)) {
     failures.push(`${FILES.preDispatch}: pre-dispatch validation must submit a real customer_id`);
@@ -89,7 +89,7 @@ if (process.argv.includes("--selftest")) {
     ["notify-customer-link", "notify", /<EntityLink[\s\S]{0,100}kind="customer"[\s\S]{0,80}id=\{entry\.customer_id\}/, '<EntityLink kind="unit" id={entry.customer_id}'],
     ["bookload-required", "bookLoad", /form\.register\("customer_id", \{ required:/, 'form.register("customer_id_unused", { required:'],
     ["drawer-link", "drawer", /kind="customer"[\s\S]{0,50}id=\{load\.customer_id\}/, 'kind="unit" id={load.unit_id}'],
-    ["factoring-tab-scope", "factoringTab", /customer_id: load!\.customer_id/, "customer_id: undefined"],
+    ["factoring-tab-scope", "factoringTab", /source_load_id: loadId/, "source_load_id: undefined"],
     ["predispatch-submit", "preDispatch", /customer_id: customerId/, "customer_id: undefined"],
     ["board-customer-identity", "board", /name=\{load\.customer_name\}/, "name={load.customer_id}"],
   ];

@@ -13,8 +13,8 @@ export function collectFailures(src = source) {
   const failures = [];
   const requireText = (token, message) => { if (!src.includes(token)) failures.push(message); };
   requireText("const load = loadQ.data", "tab must consume the canonical selected load result");
-  requireText("listInvoices(operatingCompanyId, { customer_id: load!.customer_id })", "invoice reader must bind selected company and load customer");
-  requireText("find((inv) => inv.source_load_id === loadId)", "linked invoice must reverse-match the selected load id");
+  requireText("listInvoices(operatingCompanyId, { source_load_id: loadId, limit: 1 })", "invoice reader must bind selected company and exact source load");
+  requireText("invoicesQ.data?.invoices?.[0] ?? null", "linked invoice must consume the exact source-load result");
   requireText('data-testid="factoring-tab-customer-entitylink"', "customer reverse surface must remain mounted");
   requireText('kind="customer"\n            id={load.customer_id}\n            name={load.customer_name ?? null}', "customer drill must bind the load customer id and human name");
   requireText('kind="invoice" id={linkedInvoice.id} name={linkedInvoice.display_id}', "invoice drill must bind the matched invoice id and display id");
@@ -27,8 +27,8 @@ function selftest() {
   if (baseline.length) throw new Error(`clean baseline red: ${baseline.join("; ")}`);
   const mutations = [
     ["const load = loadQ.data", "const load = undefined"],
-    ["listInvoices(operatingCompanyId, { customer_id: load!.customer_id })", "listInvoices(operatingCompanyId, {})"],
-    ["inv.source_load_id === loadId", "inv.source_load_id === load?.customer_id"],
+    ["listInvoices(operatingCompanyId, { source_load_id: loadId, limit: 1 })", "listInvoices(operatingCompanyId, {})"],
+    ["invoicesQ.data?.invoices?.[0] ?? null", "invoicesQ.data?.invoices?.find(() => true) ?? null"],
     ['data-testid="factoring-tab-customer-entitylink"', 'data-testid="planted-customer-missing"'],
     ["id={load.customer_id}", "id={load.id}"],
     ["name={load.customer_name ?? null}", "name={null}"],
