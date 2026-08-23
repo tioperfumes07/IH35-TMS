@@ -49,7 +49,17 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                 AND d.operating_company_id = l.operating_company_id
+                                 AND (
+                                   d.operating_company_id = l.operating_company_id
+                                   OR EXISTS (
+                                     SELECT 1
+                                     FROM mdata.driver_company_authorizations load_distribution_driver_dca
+                                     WHERE load_distribution_driver_dca.driver_id = d.id
+                                       AND load_distribution_driver_dca.company_id = l.operating_company_id
+                                       AND load_distribution_driver_dca.is_authorized = true
+                                       AND load_distribution_driver_dca.deactivated_at IS NULL
+                                   )
+                                 )
         WHERE l.id = $1
           AND l.operating_company_id = $2::uuid
         LIMIT 1
