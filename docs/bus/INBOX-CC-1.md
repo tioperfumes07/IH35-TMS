@@ -1,11 +1,13 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**★ FAST-MERGE ON.** Gate exit 0 → push → PR → **`gh pr merge --squash --delete-branch --admin` same turn.** Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock.
 
 Accounting + factoring CERTIFIED `c11bdab`. Do **not** recertify. Do not remake TESTs.
 
-CURRENT MODULE: **cash-flow** (U14 done → leftover NOW)  
-NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12** Live Chrome. Unique FINDING = 500 / dead / silent / leftover money FAIL only. Then `https://app.ih35dispatch.com/finance` same bar.
+CURRENT MODULE: **cash-flow** (U14 done → leftover NOW — never idle)  
+NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12** Live Chrome. Unique FINDING = 500 / dead / silent / leftover money FAIL only. Then `https://app.ih35dispatch.com/finance` same bar. Then next unclaimed POST-U14 row. Do not recertify accounting/factoring. Do not wait for U14 OPEN seats.
 
 Board leftovers (`FACT-F5986`, unit-finance remainder, `DRVFIN-F6169`) stay unique-FINDING on **your** money prefix if they appear **while** cash-flow hops — do not park on board-watch.
 

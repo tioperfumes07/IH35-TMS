@@ -1,6 +1,6 @@
 # SESSION ANNOUNCE — CURRENT-LAW + OPEN HOPS (owner 2026-08-22)
 
-**Autoload every conversation.** First assistant reply of a **new** session (seats on this bus: Cursor, CC-1, CC-2, CC-3, Codex) **MUST** paste the bullets below. Do not invent a 15th plan. Do not reprint **CERTIFIED** modules as work.
+**Autoload every conversation.** First assistant reply of a **new** session (seats on this bus: Cursor, CC-1, CC-2, CC-3, Codex; Cascade/Devin/Devin-A = CERTIFIED-row audit overlay) **MUST** paste the bullets below. Do not invent a 15th plan. Do not reprint **CERTIFIED** modules as U14 work (audit overlay may re-walk them without restamping).
 
 Canonical lists: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
 Cursor rule: `.cursor/rules/22-session-boot-announce.mdc` (after the NEW SESSION line)
@@ -20,7 +20,7 @@ CURRENT-LAW
 - CERTIFIED = Fully-Wired 1–12 + Live Chrome hops on LIVE_SHA (healthz)
 - Scoreboard / N-of-M / “clicked” ≠ CERTIFIED
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
-- FAST-MERGE ~4 min · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
+- FAST-MERGE ~4 min · local gate PASS → PR → `gh pr merge --admin` SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
 MY SEAT / CURRENT MODULE / OPEN HOPS
 - (copy only OPEN rows for YOUR seat from the exclusive law — never CERTIFIED)
@@ -42,5 +42,8 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | Cursor | 9222 | 425c leftover | U14 1–6 + 11–13 CERTIFIED — omit. Stamp Codex/CC-3 on healthz match. **NOW leftover** `/425c` Fully-Wired 1–12. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` |
 | CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance`. **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
 | CC-2 | 9224 | Codex help then driver-hub | Settlements CERTIFIED — omit. Kill CI-watch. Help Codex 7–9 SQL (no CDP). Empty unique → leftover `/driver-hub` 1–12. **No** `/lists` `/legal` `/banking*` |
-| CC-3 | 9225 | lists then legal | **TODAY:** Fully-Wired **1–12** Live Chrome on `/lists` then `/legal`. Unique-FINDING-CLEAN ≠ CERTIFIED ≠ idle. Do **not** monitor INBOX. OUTBOX `CERTIFIED` only with hops covering 1–12 + matching `healthz`. No 25min wait. No `trigger_deploy`. Do not remake TESTs |
-| Codex | 9226 | customers then drivers then fleet | **TODAY:** reverse SQL/GET Fully-Wired leftover unique on customers → drivers → fleet. **No CDP.** Do not remake proven audits. OUTBOX `CERTIFIED \| MODULE=<id> \| LIVE_SHA=<healthz> \| hops=<one line>` so Cursor can stamp. NONSTOP |
+| CC-3 | 9225 | lists then legal | **TODAY:** hops file `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`. CERTIFY **lists** then **legal** as **two** OUTBOX lines. Unique-CLEAN ≠ CERTIFIED. No leftover until both stamped. No `trigger_deploy` |
+| Codex | 9226 | customers then drivers then fleet | **TODAY:** same hops file. Reverse SQL/GET. **Three** CERTIFIED lines (not one). **No CDP.** Cursor stamps when SHA=healthz |
+| Cascade | audit | CERTIFIED 1–5 | Pack `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`. No OPEN prefixes |
+| Devin | audit | CERTIFIED 6,11–13 | Same pack. Trackers `docs/audit/scenario-trackers/certified-u14/` |
+| Devin-A | trackers | fill U14-*.md | Same folder. No live prefix steal |
