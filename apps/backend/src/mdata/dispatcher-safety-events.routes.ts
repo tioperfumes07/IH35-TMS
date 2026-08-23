@@ -399,7 +399,13 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $2::uuid
           LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $2::uuid
-          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $2::uuid
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND (rd.operating_company_id = $2::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dispatcher_user_dca
+            WHERE dispatcher_user_dca.driver_id = rd.id
+              AND dispatcher_user_dca.company_id = $2::uuid
+              AND dispatcher_user_dca.is_authorized = true
+              AND dispatcher_user_dca.deactivated_at IS NULL
+          ))
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
@@ -448,7 +454,13 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           JOIN identity.users du ON du.id = e.dispatcher_user_id
           LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $1::uuid
           LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $1::uuid
-          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $1::uuid
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND (rd.operating_company_id = $1::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dispatcher_reverse_dca
+            WHERE dispatcher_reverse_dca.driver_id = rd.id
+              AND dispatcher_reverse_dca.company_id = $1::uuid
+              AND dispatcher_reverse_dca.is_authorized = true
+              AND dispatcher_reverse_dca.deactivated_at IS NULL
+          ))
           WHERE e.voided_at IS NULL AND ${filter.sql}
           ORDER BY e.event_date DESC, e.created_at DESC
           LIMIT 200
