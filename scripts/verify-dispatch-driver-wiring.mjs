@@ -66,6 +66,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/components/QuickAssignModal.tsx", /<DriverPickerWithCreate/],
   ["apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx", /if \(!rowDisabled\) onSelectDriver\(d\.driver_id\)/],
   ["apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx", /kind="driver"/],
+  ["apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts", /predispatch_cdl_driver_dca\.driver_id = d\.id[\s\S]{0,180}predispatch_cdl_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}predispatch_cdl_driver_dca\.is_authorized = true[\s\S]{0,180}predispatch_cdl_driver_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts", /predispatch_medical_driver_dca\.driver_id = d\.id[\s\S]{0,180}predispatch_medical_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}predispatch_medical_driver_dca\.is_authorized = true[\s\S]{0,180}predispatch_medical_driver_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts", /predispatch_active_driver_dca\.driver_id = d\.id[\s\S]{0,180}predispatch_active_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}predispatch_active_driver_dca\.is_authorized = true[\s\S]{0,180}predispatch_active_driver_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {

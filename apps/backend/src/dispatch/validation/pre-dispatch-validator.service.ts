@@ -58,9 +58,15 @@ async function checkDriverCdl(
         CONCAT_WS(' ', first_name, last_name) AS full_name,
         first_name,
         last_name
-      FROM mdata.drivers
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND (d.operating_company_id = $2::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations predispatch_cdl_driver_dca
+          WHERE predispatch_cdl_driver_dca.driver_id = d.id
+            AND predispatch_cdl_driver_dca.company_id = $2::uuid
+            AND predispatch_cdl_driver_dca.is_authorized = true
+            AND predispatch_cdl_driver_dca.deactivated_at IS NULL
+        ))
       LIMIT 1
     `,
     [driverUuid, operatingCompanyId]
@@ -135,7 +141,13 @@ async function checkDriverMedicalCard(
         LIMIT 1
       ) mc ON true
       WHERE d.id = $1::uuid
-        AND d.operating_company_id = $2::uuid
+        AND (d.operating_company_id = $2::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations predispatch_medical_driver_dca
+          WHERE predispatch_medical_driver_dca.driver_id = d.id
+            AND predispatch_medical_driver_dca.company_id = $2::uuid
+            AND predispatch_medical_driver_dca.is_authorized = true
+            AND predispatch_medical_driver_dca.deactivated_at IS NULL
+        ))
       LIMIT 1
     `,
     [driverUuid, operatingCompanyId]
@@ -199,9 +211,15 @@ async function checkDriverActive(
         CONCAT_WS(' ', first_name, last_name) AS full_name,
         first_name,
         last_name
-      FROM mdata.drivers
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND (d.operating_company_id = $2::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations predispatch_active_driver_dca
+          WHERE predispatch_active_driver_dca.driver_id = d.id
+            AND predispatch_active_driver_dca.company_id = $2::uuid
+            AND predispatch_active_driver_dca.is_authorized = true
+            AND predispatch_active_driver_dca.deactivated_at IS NULL
+        ))
       LIMIT 1
     `,
     [driverUuid, operatingCompanyId]
