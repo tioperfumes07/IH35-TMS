@@ -136,6 +136,11 @@ contains(`${PAGE_DIR}/AccidentHistoryView.tsx`, accidentPage, [
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "accident load renders human label over canonical id" },
   { pattern: /key:\s*"vendor_name"[\s\S]*idKey:\s*"vendor_id"/, label: "accident vendor renders human label over canonical id" },
 ]);
+const permitSvc = read(`${BACKEND_DIR}/permit-history.service.ts`);
+contains(`${BACKEND_DIR}/permit-history.service.ts`, permitSvc, [
+  { pattern: /FROM mdata\.driver_company_authorizations permit_cdl_dca[\s\S]{0,260}permit_cdl_dca\.company_id = \$2::uuid[\s\S]{0,180}permit_cdl_dca\.is_authorized = true[\s\S]{0,180}permit_cdl_dca\.deactivated_at IS NULL/, label: "CDL rows preserve active authorized shared drivers" },
+  { pattern: /FROM mdata\.driver_company_authorizations permit_hazmat_dca[\s\S]{0,260}permit_hazmat_dca\.company_id = \$2::uuid[\s\S]{0,180}permit_hazmat_dca\.is_authorized = true[\s\S]{0,180}permit_hazmat_dca\.deactivated_at IS NULL/, label: "hazmat rows preserve active authorized shared drivers" },
+]);
 contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
   { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
@@ -178,6 +183,8 @@ if (process.argv.includes("--selftest")) {
     ["requested company membership", routes.replace("resolveOperatingCompanyId(", "trustOperatingCompanyId("), /resolveOperatingCompanyId\([\s\S]{0,180}query\.data\.operating_company_id/],
     ["shared-driver authorization", shared.replace("FROM mdata.driver_company_authorizations operations_depth_dca", "FROM mdata.drivers operations_depth_dca"), /FROM mdata\.driver_company_authorizations operations_depth_dca/],
     ["shared-driver active status", shared.replace("operations_depth_dca.is_authorized = true", "operations_depth_dca.is_authorized = false"), /operations_depth_dca\.is_authorized = true/],
+    ["permit CDL shared driver", permitSvc.replace("FROM mdata.driver_company_authorizations permit_cdl_dca", "FROM mdata.drivers permit_cdl_dca"), /FROM mdata\.driver_company_authorizations permit_cdl_dca/],
+    ["permit hazmat shared driver", permitSvc.replace("permit_hazmat_dca.is_authorized = true", "permit_hazmat_dca.is_authorized = false"), /permit_hazmat_dca\.is_authorized = true/],
   ];
   const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {
