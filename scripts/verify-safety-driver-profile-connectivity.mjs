@@ -8,6 +8,8 @@ const sources = {
   api: fs.readFileSync("apps/frontend/src/api/mdata.ts", "utf8"),
   manifest: fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8"),
   backend: fs.readFileSync("apps/backend/src/mdata/driver-aggregate.service.ts", "utf8"),
+  routes: fs.readFileSync("apps/backend/src/mdata/drivers.routes.ts", "utf8"),
+  pdf: fs.readFileSync("apps/backend/src/mdata/driver-pdf-export.routes.ts", "utf8"),
   matrix: fs.readFileSync("docs/specs/scoreboard/modules/safety.required.json", "utf8"),
 };
 
@@ -18,6 +20,8 @@ function failures(candidate) {
     [candidate.page.includes("getDriverSafetyAggregate(driverId, companyId)") && candidate.api.includes("operating_company_id: operatingCompanyId"), "company-scoped aggregate"],
     [candidate.backend.includes("FROM safety.medical_cards") && candidate.backend.includes("medical_card"), "canonical medical source"],
     [candidate.backend.includes("FROM safety.training_records") && candidate.backend.includes("training_records"), "canonical training source"],
+    [/resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}parsedAggregateQuery\.data\.operating_company_id[\s\S]{0,180}buildDriverAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(candidate.routes), "aggregate membership scope"],
+    [/resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}query\.data\.operating_company_id[\s\S]{0,180}buildDriverAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(candidate.pdf), "PDF membership scope"],
     [candidate.page.includes("driver.first_name") && candidate.page.includes("driver.cdl_number") && candidate.page.includes("CDL not on file") && !candidate.page.includes("driver.id.slice") && !candidate.page.includes("DRV-0000"), "real driver identity"],
     [candidate.page.includes("dqMissingCount") && candidate.page.includes("trainingDueCount"), "derived safety counts"],
     [candidate.panel.includes('<EntityLink kind="driver"'), "driver drill-through"],
@@ -39,6 +43,8 @@ if (process.argv.includes("--selftest")) {
     ["page", "getDriverSafetyAggregate(driverId, companyId)", "getDriverSafetyAggregate(driverId, '')", "company-scoped aggregate"],
     ["backend", "FROM safety.medical_cards", "FROM safety.removed_cards", "canonical medical source"],
     ["backend", "FROM safety.training_records", "FROM safety.removed_training", "canonical training source"],
+    ["routes", "parsedAggregateQuery.data.operating_company_id", "undefined", "aggregate membership scope"],
+    ["pdf", "query.data.operating_company_id", "undefined", "PDF membership scope"],
     ["page", "driver.first_name", "driver.id.slice", "real driver identity"],
     ["page", "dqMissingCount", "removedDqCount", "derived safety counts", true],
     ["panel", '<EntityLink kind="driver"', '<span data-kind="driver"', "driver drill-through"],
