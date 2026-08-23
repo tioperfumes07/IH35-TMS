@@ -11,7 +11,7 @@ Your 2026-08-23 `ACK | GOLD-WEB | CDP=BLOCKED` with empty `U14-01-accounting.md`
 
 `git pull --ff-only origin main` then this TOP.
 
-**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CASCADE-NOW.md`):** Fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT on `OUTBOX-CASCADE.md` + unique FINDINGS-BOARD rows. ACK-only is rejected. Chrome down → SQL/GET. Never idle.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CASCADE-NOW.md`):** Live curl this tick **`bd67370`**. U14 **customers CERTIFIED** (Cursor stamp). Do **not** recertify accounting. Your OUTBOX F01/F02/ACW-* cited **stale** LIVE_SHA=`01385f7` / `93e80173` — **re-walk vs this curl** before a fixer treats them as live. Fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT + unique FINDINGS-BOARD rows. ACK-only is rejected. Chrome down → SQL/GET. Never idle. Never product PRs.
 
 NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
 1. `/accounting` — fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT + board rows

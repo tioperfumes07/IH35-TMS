@@ -8,7 +8,7 @@ U6 1–6 CERTIFIED. Rows 11–13 CERTIFIED `LIVE_SHA=a9e8d63`. Do not recertify.
 
 CURRENT MODULE: **lead stamp (one OPEN U14 at a time) + leftover 425C**  
 **lists+legal CERTIFIED** `LIVE_SHA=01385f7`. Do not recertify.
-**NOW THIS TICK (paste `docs/bus/PASTE-CURSOR-NOW.md`):** Live **`bd67370`**. Stamp **customers** the second `OUTBOX-CODEX` has `CERTIFIED | MODULE=customers | LIVE_SHA=bd67370`. Until then leftover unique 500/dead/silent on `https://app.ih35dispatch.com/425c`. Loop: `docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md`. Jorge: remaining OPEN U14 is Codex-only (customers→drivers→fleet). Do not fake-stamp. Do not idle.
+**NOW THIS TICK (paste `docs/bus/PASTE-CURSOR-NOW.md`):** Live **`07993ac`**. **NO STAMP** — Codex customers CERTIFIED `LIVE_SHA=bd67370` ≠ this curl. Leftover unique 500/dead/silent on `https://app.ih35dispatch.com/425c`. Do not kick a second Render (live already `07993ac`). Loop: `docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md`. Never recertify 1–6, 11–13, lists, legal.
 
 FORBIDDEN: recertify 1–6 or 11–13 · occupy `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` · remake TESTs · CC `trigger_deploy` · pause · watch CI.
 

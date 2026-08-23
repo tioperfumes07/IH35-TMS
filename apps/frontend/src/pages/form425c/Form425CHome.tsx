@@ -446,6 +446,15 @@ export function Form425CHome() {
               pushToast("Create / Load Draft before generating the filing PDF", "error");
               return;
             }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — generating filing PDF", "success");
+                  generateMutation.mutate();
+                },
+              });
+              return;
+            }
             generateMutation.mutate();
           }}
           onMarkFiled={() => {
@@ -470,6 +479,15 @@ export function Form425CHome() {
           onGenerate={() => {
             if (!form.reportId) {
               pushToast("Create / Load Draft before generating the filing package", "error");
+              return;
+            }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — generating filing PDF", "success");
+                  generateMutation.mutate();
+                },
+              });
               return;
             }
             generateMutation.mutate();
