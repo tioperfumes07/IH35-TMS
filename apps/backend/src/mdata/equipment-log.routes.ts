@@ -15,7 +15,7 @@ const listQuerySchema = z.object({
   event_type: eventTypeSchema.optional(),
   event_at_from: z.string().datetime().optional(),
   event_at_to: z.string().datetime().optional(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });

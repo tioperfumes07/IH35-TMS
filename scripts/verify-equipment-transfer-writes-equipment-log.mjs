@@ -111,6 +111,26 @@ if (dualTest && !/INSERT INTO mdata\.equipment_log/.test(dualTest)) {
 
 const logRoutes = read("apps/backend/src/mdata/equipment-log.routes.ts");
 const transferRoutes = read("apps/backend/src/mdata/equipment-transfer.routes.ts");
+function auditListReadScope(source) {
+  const start = source.indexOf('app.get("/api/v1/mdata/equipment-log"');
+  const end = source.indexOf('app.post("/api/v1/mdata/equipment-log"', start);
+  const route = source.slice(start, end);
+  const routeFailures = [];
+  const schema = source.slice(source.indexOf("const listQuerySchema = z.object({"), source.indexOf("const idParamSchema"));
+  if (!/operating_company_id:\s*z\.string\(\)\.uuid\(\),/.test(schema)) {
+    routeFailures.push("list GET must require explicit operating_company_id");
+  }
+  if (!/resolveOperatingCompanyId\(client, authUser\.uuid, operating_company_id\)/.test(route)) {
+    routeFailures.push("list GET must resolve the selected company instead of the account default");
+  }
+  if (!/JOIN mdata\.equipment e ON e\.id = el\.equipment_id AND \(e\.owner_company_id = \$1 OR e\.currently_leased_to_company_id = \$1\)/.test(route)) {
+    routeFailures.push("list GET must gate equipment-log rows through selected-company equipment");
+  }
+  return routeFailures;
+}
+
+for (const listFailure of auditListReadScope(logRoutes)) fail(listFailure);
+
 function auditDetailReadScope(source) {
   const detail = source.slice(source.indexOf('app.get("/api/v1/mdata/equipment-log/:id"'));
   const detailFailures = [];
@@ -155,6 +175,18 @@ if (process.argv.includes("--selftest")) {
     ["equipment-gate", /\(e\.owner_company_id = \$2 OR e\.currently_leased_to_company_id = \$2\)/],
   ];
   let caught = 0;
+  for (const [name, pattern] of [
+    ["list-query-required", /operating_company_id:\s*z\.string\(\)\.uuid\(\),/],
+    ["list-selected-company", /resolveOperatingCompanyId\(client, authUser\.uuid, operating_company_id\)/],
+    ["list-equipment-gate", /JOIN mdata\.equipment e ON e\.id = el\.equipment_id AND \(e\.owner_company_id = \$1 OR e\.currently_leased_to_company_id = \$1\)/],
+  ]) {
+    const mutated = logRoutes.replace(pattern, "REMOVED");
+    if (mutated === logRoutes || auditListReadScope(mutated).length === 0) {
+      console.error(`verify-equipment-transfer-writes-equipment-log SELFTEST FAIL — ${name} mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
   for (const [name, pattern] of mutations) {
     const detailStart = logRoutes.indexOf('app.get("/api/v1/mdata/equipment-log/:id"');
     const prefix = logRoutes.slice(0, detailStart);
@@ -184,7 +216,7 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
-  console.log(`verify-equipment-transfer-writes-equipment-log SELFTEST PASS — ${caught}/5 scope mutations detected`);
+  console.log(`verify-equipment-transfer-writes-equipment-log SELFTEST PASS — ${caught}/8 scope mutations detected`);
   process.exit(0);
 }
 
