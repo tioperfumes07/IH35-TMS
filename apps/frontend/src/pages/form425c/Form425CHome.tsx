@@ -410,7 +410,10 @@ export function Form425CHome() {
           setMonth={setMonth}
           setYear={setYear}
           profiles={profiles}
-          onApplyTotal={(total) => setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }))}
+          onApplyTotal={(total) => {
+            setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }));
+            setDirty(true);
+          }}
         />
       ) : null}
 
