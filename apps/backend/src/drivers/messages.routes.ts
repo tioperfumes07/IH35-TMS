@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { requireDriverSession } from "../driver/auth.js";
 import {
@@ -78,7 +78,9 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     return reply.send({ driver_id: params.data.driverId, messages });
   });
 
-  app.patch("/api/v1/drivers/messages/:messageId/read", async (req, reply) => {
+  app.patch("/api/v1/drivers/messages/:messageId/read", {
+    config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const params = messageParamsSchema.safeParse(req.params ?? {});
@@ -99,21 +101,17 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     return reply.send({ message });
   });
 
-  app.get("/api/v1/driver/messages", async (req, reply) => {
+  app.get("/api/v1/driver/messages", {
+    config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver!;
-    const messages = await withCurrentUser(req.user!.uuid, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1`,
-        [driver.id]
-      );
-      const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
-      if (operatingCompanyId) {
-        // membership-scope-exempt: principal-derived
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-      }
+    const messages = await withLuciaBypass(async (client) => {
+      // The authenticated driver id is principal-derived. The service binds every returned
+      // message to that exact id and to either the driver's home company or an active canonical
+      // company authorization, so the bypass cannot widen this read to another driver/company.
       return listDriverPwaMessages(client as Queryable, driver.id);
-    });
+    }, { actorUserId: req.user!.uuid });
     return reply.send({ driver_id: driver.id, messages });
   });
 

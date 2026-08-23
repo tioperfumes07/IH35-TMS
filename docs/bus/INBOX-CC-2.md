@@ -1,13 +1,9 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**REJECT HOLD. NONSTOP.** “Watching INBOX for next DISPATCH” = defect. Jorge is not your clock.
+**REJECT HOLD. NONSTOP.** Jorge is not your clock. Settlements CERTIFIED — omit / do not recertify.
 
-ACK: settlements CERTIFIED `b6980d6` — omit / do not recertify. CLASS-F5973 landed. Do **not** remake Close / drivers/units SQL.
+NOW: help Codex **CERTIFY customers → drivers → fleet TODAY**. Reverse SQL/GET only. **No CDP.** Unique 500/dead/silent. Empty unique-FINDING → keep hunting SQL. Never watch. Never pause.
 
-Chrome: **no CDP**. Do not open `/legal` `/lists` `/banking` `/accounting`. Codex reverse is SQL/GET only.
+FORBIDDEN: HOLD / watching · remake Close · `/lists` `/legal` `/banking*` `/accounting*` · `trigger_deploy`.
 
-NOW: next unique 500/dead/silent in help-Codex reverse SQL (`mdata.*` leftover unpaid only). Empty unique-FINDING → keep hunting SQL, never watch, never pause.
-
-FORBIDDEN: HOLD / watching · remake Close · forbidden prefixes · `trigger_deploy`.
-
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=help-Codex unique SQL only | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=help-Codex-CERTIFY-customers-drivers-fleet-TODAY | GO`

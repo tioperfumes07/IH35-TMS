@@ -117,7 +117,11 @@ async function countUnreadDriverComms(client: DbClient, ociId: string): Promise<
       FROM mdata.driver_profile_messages m
       JOIN mdata.drivers d ON d.id = m.driver_id
       WHERE m.operating_company_id = $1::uuid
-        AND d.operating_company_id = $1::uuid
+        AND (d.operating_company_id = $1::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations manager_comms_dca
+          WHERE manager_comms_dca.driver_id = d.id AND manager_comms_dca.company_id = $1::uuid
+            AND manager_comms_dca.is_authorized = true AND manager_comms_dca.deactivated_at IS NULL
+        ))
         AND d.deactivated_at IS NULL
         AND m.read_at IS NULL
         AND m.created_by IS NOT NULL
@@ -147,7 +151,11 @@ async function loadLateArrivals7d(
       JOIN mdata.load_stops ls ON ls.id = sa.stop_id
       JOIN mdata.loads l ON l.id = ls.load_id
       LEFT JOIN mdata.drivers d ON d.id = sa.driver_id
-                                AND d.operating_company_id = $1::uuid
+                                AND (d.operating_company_id = $1::uuid OR EXISTS (
+                                  SELECT 1 FROM mdata.driver_company_authorizations manager_arrival_dca
+                                  WHERE manager_arrival_dca.driver_id = d.id AND manager_arrival_dca.company_id = $1::uuid
+                                    AND manager_arrival_dca.is_authorized = true AND manager_arrival_dca.deactivated_at IS NULL
+                                ))
       WHERE sa.operating_company_id = $1::uuid
         AND l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
@@ -244,9 +252,13 @@ async function loadScoringLeaderboard(
       FROM mdata.drivers d
       LEFT JOIN safety.harsh_events e
         ON e.driver_id = d.id
-       AND e.operating_company_id = d.operating_company_id
+       AND e.operating_company_id = $1::uuid
        AND e.event_at >= (now() - interval '7 days')
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations manager_score_dca
+          WHERE manager_score_dca.driver_id = d.id AND manager_score_dca.company_id = $1::uuid
+            AND manager_score_dca.is_authorized = true AND manager_score_dca.deactivated_at IS NULL
+        ))
         AND d.deactivated_at IS NULL
         AND d.archived_at IS NULL
       GROUP BY d.id, d.first_name, d.last_name
@@ -308,7 +320,7 @@ async function loadCoolingDrivers(client: DbClient, ociId: string): Promise<Cool
         LEFT JOIN LATERAL (
           SELECT max(GREATEST(l.updated_at, l.created_at)) AS last_at
           FROM mdata.loads l
-          WHERE l.operating_company_id = d.operating_company_id
+          WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND (
               l.assigned_primary_driver_id = d.id
@@ -318,10 +330,14 @@ async function loadCoolingDrivers(client: DbClient, ociId: string): Promise<Cool
         LEFT JOIN LATERAL (
           SELECT max(m.created_at) AS last_at
           FROM mdata.driver_profile_messages m
-          WHERE m.operating_company_id = d.operating_company_id
+          WHERE m.operating_company_id = $1::uuid
             AND m.driver_id = d.id
         ) msg_activity ON true
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations manager_cooling_dca
+            WHERE manager_cooling_dca.driver_id = d.id AND manager_cooling_dca.company_id = $1::uuid
+              AND manager_cooling_dca.is_authorized = true AND manager_cooling_dca.deactivated_at IS NULL
+          ))
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
       ) cooling
