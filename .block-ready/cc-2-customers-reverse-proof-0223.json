@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-customers-reverse-proof-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL proof of forward+reverse FK chain (customer->loads->invoices->back to customer) for a real, non-fixture USMCA customer, offered as usable evidence for Codex's CERTIFIED line. Not stamping CERTIFIED myself -- that's Codex's line per the hops doc.",
+  "branch": "cc-2/customers-reverse-proof-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-customers-reverse-proof-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "SQL proof for Codex, not a CERTIFIED claim" }
+  ],
+  "linkage": "N/A -- read-only SQL verification, no schema/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
