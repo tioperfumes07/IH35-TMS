@@ -1,4 +1,29 @@
 {
+  "4423": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-catalog-mutation-routes-set-company-scope"
+  },
+  "4427": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-services-catalog-editable"
+  },
+  "4431": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-legal-contract-signer-phone-e164"
+  },
+  "4435": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-detail-catalog-failure-truth"
+  },
+  "4439": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-unit-wear-telemetry-failure-truth"
+  },
   "4421": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5443,5 +5468,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1233
+  "total_claimed": 1238
 }
