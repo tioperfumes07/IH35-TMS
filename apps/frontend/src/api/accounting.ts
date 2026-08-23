@@ -2418,6 +2418,10 @@ export type RegisterTransaction = {
   /** ACCT-F5982 — real GL journal entry this row posted to, when one exists (bank/invoice/bill only;
    *  fuel/settlement rows honestly have no single JE of their own — see transaction-register.routes.ts). */
   journal_entry_id: string | null;
+  /** 3029 — the JE's own memo (accounting.journal_entries has no number/ref column; memo IS its
+   *  human identity). Always selected alongside journal_entry_id so the link never degrades to the
+   *  honest-but-uninformative "Journal entry - not visible" fallback. */
+  journal_entry_memo: string | null;
 };
 
 export type TransactionRegisterResponse = {
