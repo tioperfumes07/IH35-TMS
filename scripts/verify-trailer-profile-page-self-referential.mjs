@@ -49,6 +49,12 @@ export function audit(src, routeSrc, pdfSrc) {
   if (!/const scopedCompanyId = await resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}parsedAggregateQuery\.data\.operating_company_id[\s\S]{0,160}buildEquipmentAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(routeSrc)) {
     failures.push(`${ROUTE_FILE}: trailer aggregate GET must resolve caller membership before selecting aggregate scope`);
   }
+  if (!/const parsedAggregateQuery = aggregateQuerySchema\.safeParse\(req\.query \?\? \{\}\);\s*if \(!parsedAggregateQuery\.success\) return sendValidationError\(reply, parsedAggregateQuery\.error\);/.test(routeSrc)) {
+    failures.push(`${ROUTE_FILE}: trailer aggregate GET must reject missing or invalid selected-company scope`);
+  }
+  if (/const row = await withCurrentUser\(authUser\.uuid[\s\S]{0,500}req\.query as \{ operating_company_id\?: string \}/.test(routeSrc)) {
+    failures.push(`${ROUTE_FILE}: trailer aggregate GET must not retain the default-company raw-row fallback`);
+  }
   if (!/const scopedCompanyId = await resolveOperatingCompanyId\([\s\S]{0,180}user\.uuid,[\s\S]{0,120}query\.data\.operating_company_id[\s\S]{0,180}buildEquipmentAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(pdfSrc)) {
     failures.push(`${PDF_FILE}: trailer PDF GET must resolve caller membership before selecting aggregate scope`);
   }
@@ -103,6 +109,24 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
+  const validationMutated = good.route.replace(
+    "if (!parsedAggregateQuery.success) return sendValidationError(reply, parsedAggregateQuery.error);",
+    "if (!parsedAggregateQuery.success) return undefined;"
+  );
+  if (validationMutated === good.route || !audit(good.page, validationMutated, good.pdf).some((f) => f.includes("reject missing or invalid"))) {
+    console.error(`${LABEL} SELFTEST FAIL — aggregate query validation mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const fallbackMutated = good.route.replace(
+    "if (!parsedAggregateQuery.success) return sendValidationError(reply, parsedAggregateQuery.error);",
+    "if (!parsedAggregateQuery.success) { const row = await withCurrentUser(authUser.uuid, async () => (req.query as { operating_company_id?: string })); return row; }"
+  );
+  if (fallbackMutated === good.route || !audit(good.page, fallbackMutated, good.pdf).some((f) => f.includes("default-company raw-row fallback"))) {
+    console.error(`${LABEL} SELFTEST FAIL — raw-row fallback mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
   console.log(`${LABEL} SELFTEST PASS — ${caught} mutations detected`);
   process.exit(0);
 }

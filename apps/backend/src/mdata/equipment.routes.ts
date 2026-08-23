@@ -335,66 +335,21 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const parsedAggregateQuery = aggregateQuerySchema.safeParse(req.query ?? {});
-    if (parsedAggregateQuery.success) {
-      const aggregate = await withCurrentUser(authUser.uuid, async (client) => {
-        // The aggregate builder sets app.operating_company_id from this value. Resolve the
-        // caller-supplied company before handing it over; otherwise the query parameter itself
-        // chooses the RLS scope and a non-member can read another company's trailer aggregate.
-        const scopedCompanyId = await resolveOperatingCompanyId(
-          client,
-          authUser.uuid,
-          parsedAggregateQuery.data.operating_company_id
-        );
-        if (!scopedCompanyId) return null;
-        return buildEquipmentAggregate(client, parsedParams.data.id, scopedCompanyId);
-      });
-      if (!aggregate) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-      return aggregate;
-    }
-
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
-      // Entity scope (USMCA cross-entity leak fix): the non-aggregate GET-by-id path must gate on
-      // owner/lessee so a caller cannot read another entity's trailer by omitting operating_company_id.
+    if (!parsedAggregateQuery.success) return sendValidationError(reply, parsedAggregateQuery.error);
+    const aggregate = await withCurrentUser(authUser.uuid, async (client) => {
+      // The aggregate builder sets app.operating_company_id from this value. Resolve the
+      // caller-supplied company before handing it over; otherwise the query parameter itself
+      // chooses the RLS scope and a non-member can read another company's trailer aggregate.
       const scopedCompanyId = await resolveOperatingCompanyId(
         client,
         authUser.uuid,
-        (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+        parsedAggregateQuery.data.operating_company_id
       );
-      const res = await client.query(
-        `
-          SELECT
-            id,
-            equipment_number,
-            vin,
-            equipment_type,
-            make,
-            model,
-            year,
-            status,
-            current_unit_id,
-            current_location_id,
-            owner_company_id,
-            currently_leased_to_company_id,
-            acquired_date,
-            disposed_date,
-            notes,
-            created_at,
-            updated_at,
-            deactivated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM mdata.equipment
-          WHERE id = $1
-            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
-          LIMIT 1
-        `,
-        [parsedParams.data.id, scopedCompanyId]
-      );
-      return res.rows[0] ?? null;
+      if (!scopedCompanyId) return null;
+      return buildEquipmentAggregate(client, parsedParams.data.id, scopedCompanyId);
     });
-
-    if (!row) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-    return row;
+    if (!aggregate) return reply.code(404).send({ error: "mdata_equipment_not_found" });
+    return aggregate;
   });
 
   app.post("/api/v1/mdata/equipment/:id/status-change", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
