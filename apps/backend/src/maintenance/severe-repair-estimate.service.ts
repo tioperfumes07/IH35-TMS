@@ -58,7 +58,13 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
       LEFT JOIN mdata.units u ON u.id = e.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = u.assigned_driver_id
-                               AND d.operating_company_id = e.operating_company_id
+                               AND (d.operating_company_id = e.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations severe_repair_driver_dca
+                                 WHERE severe_repair_driver_dca.driver_id = d.id
+                                   AND severe_repair_driver_dca.company_id = e.operating_company_id
+                                   AND severe_repair_driver_dca.is_authorized = true
+                                   AND severe_repair_driver_dca.deactivated_at IS NULL
+                               ))
       WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
         AND ($2::uuid IS NULL OR e.unit_id = $2::uuid)
