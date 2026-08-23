@@ -79,7 +79,17 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
           JOIN mdata.units u ON u.id = a.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           LEFT JOIN mdata.drivers d ON d.id = a.driver_id
-                                    AND d.operating_company_id = $1::uuid
+                                    AND (
+                                      d.operating_company_id = $1::uuid
+                                      OR EXISTS (
+                                        SELECT 1
+                                        FROM mdata.driver_company_authorizations pairing_history_dca
+                                        WHERE pairing_history_dca.driver_id = d.id
+                                          AND pairing_history_dca.company_id = $1::uuid
+                                          AND pairing_history_dca.is_authorized = true
+                                          AND pairing_history_dca.deactivated_at IS NULL
+                                      )
+                                    )
           WHERE ${filters.join(" AND ")}
           ORDER BY a.started_at DESC, a.created_at DESC
           LIMIT 250
