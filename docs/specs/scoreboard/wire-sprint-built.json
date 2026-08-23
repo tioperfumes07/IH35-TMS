@@ -2359,6 +2359,18 @@
       "leafRe": "^(submit\\.queue|accounting\\.(list|detail)|factoring\\.wizard\\.batch)$",
       "guard": "scripts/verify-factoring-liability-invoice-gl-wired.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "CLASS-F5973-TRUE-REMAINDER-CODEX",
+      "modules": [
+        "driver-hub"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^reporting$",
+      "guard": "scripts/verify-driver-hub-surfaces-pack.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
