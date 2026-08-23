@@ -39,8 +39,8 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | maintenance | `/maintenance` leftover unique 500/dead/silent Fully-Wired **1–12**. U6 1–6 **omit** (accounting+factoring CERTIFIED LIVE_SHA=c11bdab · vendors `627d7d0` · dispatch `39472f2` · banking `36e51bb` · settlements `b6980d6`). Then safety → insurance |
-| CC-1 | 9223 | *(accounting+factoring CERTIFIED — omit)* | Do **not** recertify accounting/factoring (`c11bdab`). Next: unique FINDING only, **no** `/banking*` `/maintenance` `/legal` `/lists`. HOLD forbidden. NONSTOP |
-| CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
-| CC-3 | 9225 | lists | Legal unique-FINDING-CLEAN ≠ CERTIFIED. NOW `/lists` Fully-Wired **1–12** Live Chrome on `bff155e`. No 25min wait. No `trigger_deploy`. NONSTOP |
-| Codex | 9226 | drivers | CLASS-F5973 **landed** #14509. Next unique 500/dead/silent reverse SQL/GET on customers→drivers→fleet only. **No CDP.** Do not remake drivers/units audits. CUST-F5974 shipped #14483 |
+| Cursor | 9222 | *(maint+safety+insurance CERTIFIED — omit)* | Rows 11–13 CERTIFIED `a9e8d63`. Do **not** recertify. Lead: FAST-MERGE + copy CERTIFIED from Codex/CC-3 OUTBOX when `healthz` matches. Unique FINDING only. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` |
+| CC-1 | 9223 | *(accounting+factoring CERTIFIED — omit)* | Do **not** recertify accounting/factoring (`c11bdab`). Unique FINDING only. **No** `/banking*` `/maintenance` `/legal` `/lists`. HOLD forbidden. NONSTOP |
+| CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Help Codex **CERTIFY customers→drivers→fleet TODAY** reverse SQL/GET (no CDP). Unique FINDING only. **No** `/lists` `/legal` `/banking*` |
+| CC-3 | 9225 | lists then legal | **TODAY:** Fully-Wired **1–12** Live Chrome on `/lists` then `/legal`. Unique FINDING = 500/dead/silent. Empty → keep hunting, never idle. OUTBOX `CERTIFIED \| MODULE=lists\|legal \| LIVE_SHA=<healthz> \| hops=<one line>`. No 25min wait. No `trigger_deploy`. Do not remake TESTs |
+| Codex | 9226 | customers then drivers then fleet | **TODAY:** reverse SQL/GET Fully-Wired leftover unique on customers → drivers → fleet. **No CDP.** Do not remake proven audits. OUTBOX `CERTIFIED \| MODULE=<id> \| LIVE_SHA=<healthz> \| hops=<one line>` so Cursor can stamp. NONSTOP |

@@ -50,9 +50,9 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 | 8 | drivers | Codex after customers | reverse `mdata.drivers` — **no CDP** | OPEN |
 | 9 | fleet | Codex after drivers | reverse `mdata.units` — **no CDP** | OPEN |
 | 10 | lists | CC-3 after legal | `/lists` pickers | OPEN |
-| 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | OPEN |
-| 12 | safety | Cursor after maintenance | `/safety` leftover unique | OPEN |
-| 13 | insurance | Cursor after safety | `/insurance` leftover unique | OPEN |
+| 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
+| 12 | safety | Cursor after maintenance | `/safety` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
+| 13 | insurance | Cursor after safety | `/insurance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 14 | legal | CC-3 | `/legal` pickers | OPEN |
 
 **Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence.
