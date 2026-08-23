@@ -80,6 +80,7 @@ describe("driver operations-depth routes (GAP-48)", () => {
 
   function wireInScopeDriver() {
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM org.companies")) return { rows: [{ id: COMPANY }] };
       if (sql.includes("set_config")) return { rows: [] };
       // permit-history's UNION ALL CTE also references `FROM mdata.drivers` (CDL + hazmat rows), so
       // the driver-scope check must be more specific than a bare substring match: assertDriverScope's
@@ -112,6 +113,7 @@ describe("driver operations-depth routes (GAP-48)", () => {
 
   it("returns 404 when the driver is outside the operating company scope", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM org.companies")) return { rows: [{ id: COMPANY }] };
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("FROM mdata.drivers")) return { rows: [] };
       return { rows: [] };
@@ -122,6 +124,21 @@ describe("driver operations-depth routes (GAP-48)", () => {
     });
     expect(res.statusCode).toBe(404);
     expect(res.json()).toMatchObject({ error: "driver_not_found" });
+  });
+
+  it("uses membership resolution and canonical authorization for shared-driver scope", async () => {
+    wireInScopeDriver();
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/drivers/${DRIVER}/operations/debt-history?operating_company_id=${COMPANY}`,
+    });
+    expect(res.statusCode).toBe(200);
+    const sql = mockQuery.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(sql).toContain("FROM org.companies");
+    expect(sql).toContain("FROM mdata.driver_company_authorizations operations_depth_dca");
+    expect(sql).toContain("operations_depth_dca.company_id = $2::uuid");
+    expect(sql).toContain("operations_depth_dca.is_authorized = true");
+    expect(sql).toContain("operations_depth_dca.deactivated_at IS NULL");
   });
 
   it("rejects an invalid operating_company_id with 400", async () => {

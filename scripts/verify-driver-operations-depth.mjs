@@ -58,10 +58,18 @@ for (const subView of SUB_VIEWS) {
 
 // Routes file registers all 12 sub-views + exports the register fn
 const routes = read(`${BACKEND_DIR}/routes.ts`);
+const shared = read(`${BACKEND_DIR}/shared.ts`);
 contains(`${BACKEND_DIR}/routes.ts`, routes, [
   { pattern: /registerDriverOperationsDepthRoutes/, label: "routes register export" },
   { pattern: /\/api\/drivers\/:uuid\/operations\/\$\{subView\.slug\}/, label: "operations route template" },
   { pattern: /assertDriverScope/, label: "driver tenant scope guard" },
+  { pattern: /resolveOperatingCompanyId\([\s\S]{0,180}query\.data\.operating_company_id/, label: "requested company membership resolution" },
+]);
+contains(`${BACKEND_DIR}/shared.ts`, shared, [
+  { pattern: /FROM mdata\.driver_company_authorizations operations_depth_dca/, label: "shared-driver canonical authorization" },
+  { pattern: /operations_depth_dca\.company_id = \$2::uuid/, label: "shared-driver selected-company scope" },
+  { pattern: /operations_depth_dca\.is_authorized = true/, label: "shared-driver active authorization" },
+  { pattern: /operations_depth_dca\.deactivated_at IS NULL/, label: "shared-driver non-deactivated authorization" },
 ]);
 for (const subView of SUB_VIEWS) {
   contains(`${BACKEND_DIR}/routes.ts`, routes, [
@@ -167,6 +175,9 @@ if (process.argv.includes("--selftest")) {
     ["documents producer scope", documentsSvc.replaceAll("AND f.operating_company_id = $2::uuid", "AND f.id IS NOT NULL"), (source) => (source.match(documentsScopePredicate) ?? []).length >= 2],
     ["shared unresolved related drill", operationsTable.replace("<EntityLinkOrTombstone", "<EntityLink"), /<EntityLinkOrTombstone[\s\S]{0,160}kind=\{column\.entityKind\}/],
     ["maintenance raw UUID label", maintenanceSvc.replace("NULLIF(TRIM(u.unit_number), '') AS unit_number", "COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number"), /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/],
+    ["requested company membership", routes.replace("resolveOperatingCompanyId(", "trustOperatingCompanyId("), /resolveOperatingCompanyId\([\s\S]{0,180}query\.data\.operating_company_id/],
+    ["shared-driver authorization", shared.replace("FROM mdata.driver_company_authorizations operations_depth_dca", "FROM mdata.drivers operations_depth_dca"), /FROM mdata\.driver_company_authorizations operations_depth_dca/],
+    ["shared-driver active status", shared.replace("operations_depth_dca.is_authorized = true", "operations_depth_dca.is_authorized = false"), /operations_depth_dca\.is_authorized = true/],
   ];
   const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {
