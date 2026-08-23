@@ -519,7 +519,7 @@ export function DriverDetailPage() {
       driverId: string;
       qualificationId: string;
       body: Parameters<typeof changeDriverQualificationRate>[2];
-    }) => changeDriverQualificationRate(driverId, qualificationId, body),
+    }) => changeDriverQualificationRate(driverId, qualificationId, body, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       queryClient.invalidateQueries({ queryKey: ["driver-rate-history", id, selectedQualificationId, selectedLineItemId] });

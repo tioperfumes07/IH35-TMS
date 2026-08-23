@@ -571,7 +571,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post<{ Params: { id: string; qual_id: string } }>(
+  app.post<{ Params: { id: string; qual_id: string }; Querystring: { operating_company_id: string } }>(
     "/api/v1/mdata/drivers/:id/qualifications/:qual_id/rates/change",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
@@ -581,18 +581,30 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
       const parsedBody = changeRateSchema.safeParse(req.body ?? {});
       if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+      const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
+        const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+        if (!companyId) return reply.code(404).send({ error: "driver_qualification_not_found" });
         const qualificationRes = await client.query(
           `
-            SELECT id, equipment_type_id
-            FROM mdata.driver_equipment_qualifications
-            WHERE id = $1
-              AND driver_id = $2
-              AND deactivated_at IS NULL
+            SELECT dq.id, dq.equipment_type_id
+            FROM mdata.driver_equipment_qualifications dq
+            JOIN mdata.drivers d ON d.id = dq.driver_id
+            WHERE dq.id = $1
+              AND dq.driver_id = $2
+              AND dq.deactivated_at IS NULL
+              AND (d.operating_company_id = $3::uuid OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations qualification_rate_dca
+                 WHERE qualification_rate_dca.driver_id = d.id
+                   AND qualification_rate_dca.company_id = $3::uuid
+                   AND qualification_rate_dca.is_authorized = true
+                   AND qualification_rate_dca.deactivated_at IS NULL
+              ))
             LIMIT 1
           `,
-          [parsedParams.data.qual_id, parsedParams.data.id]
+          [parsedParams.data.qual_id, parsedParams.data.id, companyId]
         );
         if (qualificationRes.rows.length === 0) return reply.code(404).send({ error: "driver_qualification_not_found" });
 
