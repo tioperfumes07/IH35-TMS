@@ -43,6 +43,10 @@ const SITES = [
 
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const ROUTES = "apps/backend/src/catalogs/payment-terms.routes.ts";
+const CREATE_CONSUMERS = [
+  "apps/frontend/src/pages/Customers.tsx",
+  "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
+];
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -140,6 +144,20 @@ export function collectProblems(root = ROOT, registryOverride = null) {
     }
   }
 
+  for (const rel of CREATE_CONSUMERS) {
+    const src = readRel(root, rel);
+    if (!src) {
+      problems.push(`missing ${rel}`);
+      continue;
+    }
+    if (!/paymentTermsQuery\.isError[\s\S]{0,500}<ListErrorState[\s\S]{0,300}paymentTermsQuery\.refetch\(\)/.test(src)) {
+      problems.push(`${rel}: failed payment-term catalog read must expose exact retry`);
+    }
+    if (!/type="submit" disabled=\{[^}]*paymentTermsQuery\.isError[^}]*\}/.test(src)) {
+      problems.push(`${rel}: customer create must fail closed while payment terms are unavailable`);
+    }
+  }
+
   problems.push(...collectRegistryProblems(registry));
 
   if (!routes) problems.push(`missing ${ROUTES}`);
@@ -192,6 +210,21 @@ if (process.argv.includes("--selftest")) {
   if (!collectProblems(retryMutationRoot).some((p) => p.includes("failed payment-term catalog read must expose exact retry"))) {
     console.error(`${LABEL} SELFTEST FAIL: customer-detail retry-removal mutation escaped`);
     process.exit(1);
+  }
+
+  for (const rel of CREATE_CONSUMERS) {
+    const mutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-create-failure-"));
+    for (const site of [...SITES.map((entry) => entry.rel), ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
+      const target = path.join(mutationRoot, site);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const source = readRel(ROOT, site);
+      fs.writeFileSync(target, site === rel ? source.replace("paymentTermsQuery.isError", "paymentTermsQuery.isSuccess") : source);
+    }
+    const mutationProblems = collectProblems(mutationRoot);
+    if (!mutationProblems.some((p) => p.startsWith(`${rel}:`) && p.includes("payment-term"))) {
+      console.error(`${LABEL} SELFTEST FAIL: ${rel} failure-truth mutation escaped`);
+      process.exit(1);
+    }
   }
 
   console.log(`${LABEL} SELFTEST OK`);

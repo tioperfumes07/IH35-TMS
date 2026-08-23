@@ -38,7 +38,7 @@ function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null
 // Enriched with flat sort keys ParityTable can read directly (String(row[key])) — "open_balance",
 // "health"/"quality" are computed values that don't exist as plain Customer properties.
 type CustomerRow = Customer & {
-  open_balance: number;
+  open_balance: number | null;
   health_tier_label: string;
   quality_flag_label: string;
   overdue_label: string;
@@ -52,10 +52,11 @@ type Props = {
   /** Roster query status so the empty state renders only once the fetch settles. */
   status: ListQueryStatus;
   openByCustomerId: Map<string, number>;
+  openBalancesAvailable: boolean;
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, status, openByCustomerId, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
@@ -98,23 +99,23 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       if (filter === "late_pay") return badge.label === "Late-pay";
       if (filter === "medium") return badge.label === "Medium";
       if (filter === "active") return badge.label === "Active";
-      if (filter === "overdue") return open > 0 && badge.label === "Late-pay";
-      if (filter === "with_open") return open > 0;
+      if (filter === "overdue") return openBalancesAvailable && open > 0 && badge.label === "Late-pay";
+      if (filter === "with_open") return openBalancesAvailable && open > 0;
       return true;
     });
-  }, [customers, filter, openByCustomerId]);
+  }, [customers, filter, openBalancesAvailable, openByCustomerId]);
 
   const enrichedRows = useMemo<CustomerRow[]>(
     () =>
       filtered.map((c) => ({
         ...c,
-        open_balance: openByCustomerId.get(c.id) ?? 0,
+        open_balance: openBalancesAvailable ? (openByCustomerId.get(c.id) ?? 0) : null,
         health_tier_label: relationshipTierBadge(c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null)).label,
         quality_flag_label: qualityBadge(c).label,
         // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
-        overdue_label: (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
+        overdue_label: openBalancesAvailable && (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
       })),
-    [filtered, openByCustomerId, atRiskCustomerIds]
+    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -166,7 +167,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         c.email ?? "",
         c.phone ?? "",
         c.billing_state ?? "",
-        fmtMoney(c.open_balance),
+        c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance),
         c.fmcsa_verified_at ? "Yes" : "No",
         c.health_tier_label,
         c.quality_flag_label,
@@ -244,6 +245,8 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                       staged.draft.filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                     onClick={() => staged.setDraft({ filter: chip.id })}
+                    disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}
+                    title={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open") ? "Open balances unavailable" : undefined}
                   >
                     {chip.label}
                   </button>
@@ -347,7 +350,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             label: "Open Balance",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => fmtMoney(row.open_balance),
+            render: (row) => row.open_balance == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.open_balance),
           },
           {
             key: "overdue_label",
@@ -405,7 +408,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       <CustomerDrillModal
         open={Boolean(drillCustomer)}
         customer={drillCustomer}
-        openBalanceCents={openByCustomerId.get(drillCustomer?.id ?? "") ?? 0}
+        openBalanceCents={openBalancesAvailable ? (openByCustomerId.get(drillCustomer?.id ?? "") ?? 0) : null}
         overdueCents={drillSummaryQuery.data?.aging_buckets?.bucket_91_plus ?? 0}
         billingSummaryLoading={drillSummaryQuery.isPending}
         billingSummaryError={drillSummaryQuery.isError ? (drillSummaryQuery.error as Error) : null}

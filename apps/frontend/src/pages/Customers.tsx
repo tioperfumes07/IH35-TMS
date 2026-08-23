@@ -682,12 +682,21 @@ export function CustomersPage() {
           { id: "factored", label: `Factored (${customerTabCounts.factored})` },
         ]}
       />
+      {allInvoicesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer open balances"
+          status={0}
+          message={(allInvoicesQuery.error as Error)?.message}
+          onRetry={() => void allInvoicesQuery.refetch()}
+        />
+      ) : null}
       {viewMode === "list" ? (
         <CustomersListView
           companyId={companyId}
           customers={customersSorted}
           status={customersStatus}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
             setViewMode("master-detail");
@@ -705,6 +714,7 @@ export function CustomersPage() {
           sortByName={sortByName}
           selectedCustomerId={selectedCustomer?.id ?? ""}
           openByCustomerId={openByCustomerId}
+          openBalancesAvailable={!allInvoicesQuery.isError}
           onSearchChange={setSearch}
           onSortChange={setSortByName}
           onPageChange={setSidebarPage}
@@ -934,6 +944,14 @@ export function CustomersPage() {
               {createFieldErrors.email}
             </span>
           ) : null}
+          {paymentTermsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load payment terms"
+              status={0}
+              message={(paymentTermsQuery.error as Error)?.message}
+              onRetry={() => void paymentTermsQuery.refetch()}
+            />
+          ) : null}
           <CustomerProfileForm
             values={createValues}
             onPatch={(patch) => setCreateValues((current) => ({ ...current, ...patch }))}
@@ -953,7 +971,7 @@ export function CustomersPage() {
             <ActionButton type="button" onClick={() => setCreateOpen(false)}>
               Cancel
             </ActionButton>
-            <ActionButton type="submit" disabled={createMutation.isPending || !companyId}>
+            <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !companyId}>
               {createMutation.isPending ? "Saving..." : "Save"}
             </ActionButton>
           </div>
