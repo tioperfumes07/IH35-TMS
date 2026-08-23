@@ -64,7 +64,12 @@ function failures(sources) {
   const formStart = form.indexOf('span className="mb-1 block text-xs font-semibold text-gray-600">Customer category');
   assert(formStart !== -1, `${FILES.form}: "Customer category" field anchor not found — file shape changed`, out);
   if (formStart !== -1) {
-    const block = form.slice(formStart, formStart + 400);
+    // Bound the check by the next canonical field, not an arbitrary character window. The category
+    // query's required inline error state legitimately grows and previously pushed ReferenceSelect
+    // beyond the old 400-character slice, making healthy main fail this guard.
+    const formEnd = form.indexOf('<TextField label="Email"', formStart);
+    assert(formEnd > formStart, `${FILES.form}: Customer category field end anchor not found`, out);
+    const block = formEnd > formStart ? form.slice(formStart, formEnd) : "";
     assert(/ReferenceSelect/.test(block), `${FILES.form}: Customer category field must use ReferenceSelect`, out);
     assert(/createKind="customer_type"/.test(block), `${FILES.form}: Customer category field missing createKind="customer_type"`, out);
   }
