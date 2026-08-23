@@ -95,10 +95,10 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
       }>(
         `
           SELECT
-            id::text,
-            duty_status,
-            started_at::text,
-            ended_at::text,
+            e.id::text,
+            e.duty_status,
+            e.started_at::text,
+            e.ended_at::text,
             e.unit_id::text,
             u.unit_number,
             e.source,
