@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6190-WORK-ORDERS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance driver guard + typecheck pending.
+
 - ☑ `DRV-F6187-MAINTENANCE-QUEUES-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance driver guard + typecheck pending.
 - ☑ `DRV-F6189-SAFETY-GETS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; safety driver guard + typecheck pending.
 - ☐ `DRV-F6188-ROAD-SERVICE-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Cursor maintenance write lane — OPEN; dependency DRV-F6187; file `apps/backend/src/maintenance/road-service/tickets.routes.ts`.
