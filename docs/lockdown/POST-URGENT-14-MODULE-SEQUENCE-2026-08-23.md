@@ -8,7 +8,12 @@ Still-open Urgent-14 exclusive rows stay first **for that seat only**:
 
 Same bar: Fully-Wired 1–12 + Live Chrome last. USMCA only. CREATE-TEST-THEN-VOID. Do not remake proven TESTs. Do not steal another seat’s prefix.
 
-Canonical ids = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sidebar-config.ts` (30 total; ELD is a hidden stub).
+Canonical ids = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sidebar-config.ts` (30 total).
+
+**Correction (CC-3, 2026-08-23):** row 8 ELD is NOT a hidden stub — live-verified it is a fully real,
+API-backed module (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD
+Settings all render live data). The "hidden stub" note below was stale; do not skip real hop testing on
+it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see OUTBOX-CC-3).
 
 ---
 
@@ -22,8 +27,8 @@ Canonical ids = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sideb
 | 4 | 425C | `form_425` | `/425c` | **Cursor** |
 | 5 | REPORTS | `reports` | `/reports` | **CC-2** (driver-hub unique-FINDING hunting empty; 2 fixes shipped, 3 modules' worth of chrome-law/create-void spot-checks clean, 2 items honestly logged open not blocking) |
 | 6 | TASKS | `tasks` | `/tasks` | **CC-3** DONE -- unique-clean (no real defect found; Task Board/My Tasks/Calendar/Team Chat/Admin Report/Daily Tasks/Service Task Catalog all live, reverse link task->chat confirmed, required-field validation honest, picker_law N/A (assignee is identity.users, no catalog create-new concept) |
-| 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** claiming now |
-| 8 | ELD | `eld` | `/eld` | next free (hidden stub — still hop the id) |
+| 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** DONE -- unique-clean (no real defect found) |
+| 8 | ELD | `eld` | `/eld` | **CC-3** claiming now (real module, not a stub — see correction above; TELEMATICS-F1 found+fixed there) |
 | 9 | INVENTORY | `inventory` | `/inventory` | next free |
 | 10 | USERS | `users` | `/users` | next free |
 | 11 | HOME | `home` | `/home` | next free |
