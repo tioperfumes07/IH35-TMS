@@ -41,9 +41,17 @@ function verify(source) {
   need(/FROM mdata\.drivers d[\s\S]{0,600}selected_dca\.company_id = \$2::uuid[\s\S]{0,160}selected_dca\.is_authorized = true[\s\S]{0,160}selected_dca\.deactivated_at IS NULL/.test(authHandler), "company-authorization backend must validate owner or canonical active authorization for the selected company");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(authHandler), "company-authorization backend must distinguish a missing/unauthorized driver from a true empty relationship list");
   const qualificationsStart = source.profileBackend.indexOf('app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"');
-  const qualificationsEnd = source.profileBackend.indexOf('app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"', qualificationsStart);
+  const qualificationsEnd = source.profileBackend.indexOf("app.post<", qualificationsStart);
   const qualificationsHandler = qualificationsStart >= 0 && qualificationsEnd > qualificationsStart ? source.profileBackend.slice(qualificationsStart, qualificationsEnd) : "";
-  need(/FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(qualificationsHandler), "qualifications GET must validate canonical active driver authorization before reading children");
+  const qualificationParentScope = [
+    /FROM mdata\.drivers d/.test(qualificationsHandler),
+    /FROM mdata\.driver_company_authorizations dca/.test(qualificationsHandler),
+    /dca\.driver_id = d\.id/.test(qualificationsHandler),
+    /dca\.company_id = \$2::uuid/.test(qualificationsHandler),
+    /dca\.is_authorized = true/.test(qualificationsHandler),
+    /dca\.deactivated_at IS NULL/.test(qualificationsHandler),
+  ].every(Boolean);
+  need(qualificationParentScope, "qualifications GET must validate canonical active driver authorization before reading children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(qualificationsHandler), "qualifications GET must distinguish a missing/unauthorized parent from a true empty qualifications list");
   need(/listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/.test(source.detail), "DriverDetail safety-event reverse GET must send selected companyId");
   need(/queryKey: \["driver-safety-events", id, companyId, showVoidedSafetyEvents\]/.test(source.detail), "safety-event query key must include selected companyId");
@@ -69,11 +77,16 @@ function verify(source) {
     "both medical-card reverse GET shapes must validate driver ownership or active authorization");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card optional exact filter must distinguish invalid parent from true empty cards");
   need(/if \(!cards\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card reverse GET must distinguish invalid parent from true empty cards");
-  need(canonicalDriverAuthorization.test(source.dqfBackend), "DQF reverse GET must validate driver ownership or active authorization");
+  const dqfGetStart = source.dqfBackend.indexOf('app.get("/api/v1/safety/driver-qualification/drivers/:driver_id/items"');
+  const dqfGetEnd = source.dqfBackend.indexOf('app.post("/api/v1/safety/driver-qualification/items"', dqfGetStart);
+  const dqfGetHandler = dqfGetStart >= 0 && dqfGetEnd > dqfGetStart ? source.dqfBackend.slice(dqfGetStart, dqfGetEnd) : "";
+  need(canonicalDriverAuthorization.test(dqfGetHandler), "DQF reverse GET must validate driver ownership or active authorization");
   need(/if \(!items\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.dqfBackend), "DQF reverse GET must distinguish invalid parent from true empty items");
   need(canonicalDriverAuthorization.test(source.rtdBackend), "RTD reverse GET must validate driver ownership or active authorization");
   need(/if \(!payload\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.rtdBackend), "RTD reverse GET must distinguish invalid parent from valid driver without a case");
-  need(canonicalDriverAuthorization.test(source.drugProgramBackend), "drug-program status GET must validate driver ownership or active authorization");
+  const drugStatusStart = source.drugProgramBackend.indexOf('app.get("/api/v1/safety/drug-program/drivers/:driver_id/drug-status"');
+  const drugStatusHandler = drugStatusStart >= 0 ? source.drugProgramBackend.slice(drugStatusStart) : "";
+  need(canonicalDriverAuthorization.test(drugStatusHandler), "drug-program status GET must validate driver ownership or active authorization");
   need(/if \(!status\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.drugProgramBackend), "drug-program status GET must reject invalid parent instead of fabricating unblocked status");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
@@ -134,7 +147,15 @@ if (process.argv.includes("--selftest")) {
     { key: "dqfBackend", text: replaceOrFail(source.dqfBackend, /if \(!items\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "DQF missing parent response") },
     { key: "rtdBackend", text: replaceOrFail(source.rtdBackend, /dca\.is_authorized = true/, "TRUE", "RTD active company authorization") },
     { key: "rtdBackend", text: replaceOrFail(source.rtdBackend, /if \(!payload\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "RTD missing parent response") },
-    { key: "drugProgramBackend", text: replaceOrFail(source.drugProgramBackend, /dca\.is_authorized = true/, "TRUE", "drug-program active company authorization") },
+    {
+      key: "drugProgramBackend",
+      text: replaceOrFail(
+        source.drugProgramBackend,
+        /(\/api\/v1\/safety\/drug-program\/drivers\/:driver_id\/drug-status[\s\S]*?)dca\.is_authorized = true/,
+        "$1TRUE",
+        "drug-program active company authorization",
+      ),
+    },
     { key: "drugProgramBackend", text: replaceOrFail(source.drugProgramBackend, /if \(!status\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "drug-program missing parent response") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
