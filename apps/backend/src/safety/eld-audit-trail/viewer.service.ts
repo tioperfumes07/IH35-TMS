@@ -102,11 +102,21 @@ async function resolveDriverSource(client: Queryable, operatingCompanyId: string
             sc.encrypted_api_token, sc.api_token_encrypted, sc.samsara_org_id, sc.is_enabled
        FROM mdata.drivers d
        JOIN integrations.samsara_drivers sd
-         ON sd.operating_company_id = d.operating_company_id
+         ON sd.operating_company_id = $1::uuid
         AND sd.local_driver_id = d.id
        JOIN integrations.samsara_config sc
-         ON sc.operating_company_id = d.operating_company_id
-      WHERE d.operating_company_id = $1::uuid
+         ON sc.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations eld_audit_driver_dca
+            WHERE eld_audit_driver_dca.driver_id = d.id
+              AND eld_audit_driver_dca.company_id = $1::uuid
+              AND eld_audit_driver_dca.is_authorized = true
+              AND eld_audit_driver_dca.deactivated_at IS NULL
+          )
+        )
         AND d.id = $2::uuid
         AND d.deactivated_at IS NULL
       LIMIT 1`,

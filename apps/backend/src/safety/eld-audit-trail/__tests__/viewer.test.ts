@@ -96,8 +96,16 @@ describe("ELD audit trail viewer", () => {
     const sql = String(query.mock.calls[0]?.[0] ?? "");
     expect(sql).toContain("integrations.samsara_drivers");
     expect(sql).toContain("integrations.samsara_config");
-    expect(sql).toContain("operating_company_id = $1::uuid");
+    expect(sql).toContain("sd.operating_company_id = $1::uuid");
+    expect(sql).toContain("sc.operating_company_id = $1::uuid");
     expect(sql).toContain("sd.local_driver_id = d.id");
+    expect(sql).toContain("driver_company_authorizations eld_audit_driver_dca");
+    expect(sql).toContain("eld_audit_driver_dca.driver_id = d.id");
+    expect(sql).toContain("eld_audit_driver_dca.company_id = $1::uuid");
+    expect(sql).toContain("eld_audit_driver_dca.is_authorized = true");
+    expect(sql).toContain("eld_audit_driver_dca.deactivated_at IS NULL");
+    expect(sql).not.toContain("sd.operating_company_id = d.operating_company_id");
+    expect(sql).not.toContain("sc.operating_company_id = d.operating_company_id");
     expect(sql).toContain("NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name");
     expect(sql).not.toContain("d.display_name");
     expect(query.mock.calls[0]?.[1]).toEqual(["22222222-2222-2222-2222-222222222222", "d9"]);
