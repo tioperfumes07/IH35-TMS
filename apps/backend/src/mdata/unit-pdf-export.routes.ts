@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { buildUnitAggregate } from "./unit-aggregate.service.js";
 import { buildVehicleProfilePdfSections, renderVehicleProfilePdf } from "./vehicle-profile-pdf-renderer.service.js";
@@ -22,7 +23,15 @@ export async function registerUnitPdfExportRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const pdf = await withCurrentUser(authUser.uuid, async (client) => {
-      const aggregate = await buildUnitAggregate(client, params.data.id, query.data.operating_company_id);
+      // FLEET-F6112: buildUnitAggregate installs its company argument as the RLS GUC. Membership-resolve
+      // the requested company before exporting the complete reverse-linked unit profile.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        query.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      const aggregate = await buildUnitAggregate(client, params.data.id, scopedCompanyId);
       if (!aggregate) return null;
       const unitNumber = String((aggregate.unit as { unit_number?: string }).unit_number ?? params.data.id.slice(0, 8));
       const htmlSections = buildVehicleProfilePdfSections(aggregate as Record<string, unknown>);
