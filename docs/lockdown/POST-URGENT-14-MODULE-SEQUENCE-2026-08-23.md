@@ -29,8 +29,8 @@ it based on that assumption. Found+fixed a real defect there: TELEMATICS-F1 (see
 | 6 | TASKS | `tasks` | `/tasks` | **CC-3** DONE -- unique-clean (no real defect found; Task Board/My Tasks/Calendar/Team Chat/Admin Report/Daily Tasks/Service Task Catalog all live, reverse link task->chat confirmed, required-field validation honest, picker_law N/A (assignee is identity.users, no catalog create-new concept) |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** DONE -- unique-clean (no real defect found) |
 | 8 | ELD | `eld` | `/eld` | **CC-3** DONE -- all 5 sub-tabs hopped live (Live Duty Status/HOS Violations/Unidentified Driving/Driver Certifications/ELD Settings); found+fixed TELEMATICS-F1 (500 on Drill-down), merged `3126097ec`; the 2 "not wired yet" tabs are honest deferred-feature disclosures, not defects |
-| 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** claiming now |
-| 10 | USERS | `users` | `/users` | next free |
+| 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** DONE -- unique-clean (Parts & Stock/Assignments/Purchase History all live; Record Purchase forward-links vendor by name; Assignments honestly empty with a real explanatory note; Purchase History append-only with Void not delete; +Add-new-vendor first row confirmed; Escape closes dropdown-only) |
+| 10 | USERS | `users` | `/users` | **CC-3** claiming now |
 | 11 | HOME | `home` | `/home` | next free |
 | 12 | FUEL | `fuel` | `/fuel` | next free |
 | 13 | DOCS | `docs` | `/docs` | next free |
