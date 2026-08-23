@@ -31,6 +31,15 @@ export function collectProblems(src) {
   if (!src.includes("Create / Load Draft before generating the filing package")) {
     problems.push(`${PAGE}: Merge Generate without reportId must toast, not a dead disabled button`);
   }
+  if (!src.includes("Create / Load Draft before importing from Banking")) {
+    problems.push(`${PAGE}: Form Import from Banking without reportId must toast, not a dead disabled button`);
+  }
+  if (!src.includes("Create / Load Draft before generating the filing PDF")) {
+    problems.push(`${PAGE}: Form Generate PDF without reportId must toast, not a dead disabled button`);
+  }
+  if (!src.includes("Create / Load Draft before marking filed")) {
+    problems.push(`${PAGE}: Form Mark Filed without reportId must toast, not a dead disabled button`);
+  }
   return problems;
 }
 
@@ -41,6 +50,9 @@ const good = `
   pushToast("Could not open that report", "error");
   pushToast("Opened report in Form 425C", "success");
   pushToast("Create / Load Draft before generating the filing package", "error");
+  pushToast("Create / Load Draft before importing from Banking", "error");
+  pushToast("Create / Load Draft before generating the filing PDF", "error");
+  pushToast("Create / Load Draft before marking filed", "error");
 `;
 const bad = `
   if (!detailQuery.data?.report) {

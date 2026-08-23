@@ -425,7 +425,13 @@ export function Form425CHome() {
             }
             createMutation.mutate();
           }}
-          onImportBanking={() => importMutation.mutate()}
+          onImportBanking={() => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before importing from Banking", "error");
+              return;
+            }
+            importMutation.mutate();
+          }}
           onSave={() => {
             if (!form.reportId) {
               pushToast("Create / Load Draft before saving", "error");
@@ -435,8 +441,20 @@ export function Form425CHome() {
               onSuccess: () => pushToast("Draft saved", "success"),
             });
           }}
-          onGeneratePdf={() => generateMutation.mutate()}
-          onMarkFiled={() => markFiledMutation.mutate()}
+          onGeneratePdf={() => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before generating the filing PDF", "error");
+              return;
+            }
+            generateMutation.mutate();
+          }}
+          onMarkFiled={() => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before marking filed", "error");
+              return;
+            }
+            markFiledMutation.mutate();
+          }}
           loading={importMutation.isPending || saveMutation.isPending}
           autoSaveLabel={dirty ? "Auto-save pending..." : autoSavedAt ? `Auto-saved at ${new Date(autoSavedAt).toLocaleTimeString()}` : "No unsaved changes"}
         />

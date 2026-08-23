@@ -85,7 +85,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onCreateOrLoad} className="self-end rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Create / Load Draft
         </button>
-        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white" disabled={!form.reportId || loading}>
+        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white" disabled={loading}>
           ⟳ Import from Banking
         </button>
         <div className="self-end text-xs text-slate-500">{autoSaveLabel}</div>
@@ -280,13 +280,13 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={onSave} disabled={!form.reportId || loading} className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={loading} className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Save Draft
         </button>
-        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onGeneratePdf} disabled={loading} className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">
           Save & Generate Filing PDF
         </button>
-        <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onMarkFiled} disabled={loading} className="rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white">
           Mark Filed
         </button>
       </div>
