@@ -627,8 +627,15 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               .catch(() => [] as Record<string, unknown>[])
           : [];
 
+      // BANK-F5987 — banking.bank_accounts has no `mask` column; the canonical column (see
+      // db/migrations/0072_p5_t1_1_banking_bank_accounts.sql:17, and BANK-F13's own uniqueness
+      // index) is `account_mask`. This raised SQLSTATE 42703 ("column mask does not exist") the
+      // moment the workspace GET reached this label lookup — reproduced live against Neon prod
+      // before fixing (`RESET ROLE` + bypass, run as a plain SELECT: NeonDbError column "mask"
+      // does not exist), and confirmed fixed against the same prod branch after (real account
+      // names and mask-derived fallback labels, e.g. "BUSINESS CHECKING ...3500").
       const accountLabel = await client.query<{ account_label: string }>(
-        `SELECT COALESCE(NULLIF(TRIM(account_name), ''), CONCAT('Bank account •', RIGHT(COALESCE(mask, ''), 4))) AS account_label
+        `SELECT COALESCE(NULLIF(TRIM(account_name), ''), CONCAT('Bank account •', RIGHT(COALESCE(account_mask, ''), 4))) AS account_label
            FROM banking.bank_accounts
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
           LIMIT 1`,
