@@ -24,14 +24,25 @@ export function MessagesPage() {
   });
 
   const markReadMutation = useMutation({
-    mutationFn: markDriverPwaMessageRead,
+    // DRV-F6179 — pass the message's OWN company (msg.operating_company_id), not always home.
+    // The inbox can hold messages from more than one company (home + any active canonical
+    // authorization); marking a non-home-company message read against home 404'd before this fix.
+    mutationFn: (msg: { id: string; operating_company_id: string }) =>
+      markDriverPwaMessageRead(msg.id, msg.operating_company_id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["pwa", "driver-messages"] });
     },
   });
 
+  const messages = query.data?.messages ?? [];
+  // DRV-F6179 — the composer is a single global reply box with no per-thread UI, so it defaults
+  // to the company of the most recent message in the list (the conversation the driver is
+  // actually looking at) instead of always the driver's home company. Falls back to home
+  // (omitted -> backend default) when the inbox is empty.
+  const latestMessageCompanyId = messages.length > 0 ? messages[messages.length - 1].operating_company_id : undefined;
+
   const replyMutation = useMutation({
-    mutationFn: () => replyDriverPwaMessage(reply.trim()),
+    mutationFn: () => replyDriverPwaMessage(reply.trim(), latestMessageCompanyId),
     onSuccess: async () => {
       setReply("");
       pushToast(t("messages.reply_sent"), "success");
@@ -39,8 +50,6 @@ export function MessagesPage() {
     },
     onError: () => pushToast(t("messages.reply_failed"), "error"),
   });
-
-  const messages = query.data?.messages ?? [];
 
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
@@ -74,7 +83,7 @@ export function MessagesPage() {
                     <button
                       type="button"
                       className="font-semibold text-amber-300 underline"
-                      onClick={() => markReadMutation.mutate(msg.id)}
+                      onClick={() => markReadMutation.mutate({ id: msg.id, operating_company_id: msg.operating_company_id })}
                     >
                       {t("messages.mark_read")}
                     </button>

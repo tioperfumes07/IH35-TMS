@@ -188,6 +188,44 @@ export async function listDriverPwaMessages(client: Queryable, driverId: string)
   return res.rows.map((row) => mapMessageRow(row as Record<string, unknown>));
 }
 
+/**
+ * DRV-F6179 — the PWA GET (listDriverPwaMessages, DRV-F6178) returns messages from every company
+ * the driver is authorized for, home or shared, but the write endpoints (reply / mark-read) always
+ * derived the acting company from the driver's HOME company alone. A shared driver marking a
+ * non-home-company message read got a 404 (dead click); replying silently inserted the reply into
+ * the wrong (home-company) thread instead of erroring. This asserts the SAME predicate the SELECT
+ * side and markMessageRead already encode (home company OR an active canonical authorization)
+ * BEFORE a write is allowed to target a non-home company. Throws `driver_company_not_authorized`.
+ */
+export async function assertDriverActingCompany(
+  client: Queryable,
+  driverId: string,
+  operatingCompanyId: string
+): Promise<void> {
+  const res = await client.query(
+    `
+      SELECT 1
+      FROM mdata.drivers d
+      WHERE d.id = $1
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations acting_dca
+            WHERE acting_dca.driver_id = d.id
+              AND acting_dca.company_id = $2::uuid
+              AND acting_dca.is_authorized = true
+              AND acting_dca.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1
+    `,
+    [driverId, operatingCompanyId]
+  );
+  if (res.rows.length === 0) {
+    throw new Error("driver_company_not_authorized");
+  }
+}
+
 export async function markMessageRead(
   client: Queryable,
   messageId: string,
