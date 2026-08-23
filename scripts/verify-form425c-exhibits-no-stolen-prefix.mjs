@@ -34,6 +34,12 @@ export function collectProblems(src, page = PAGE) {
     if (!src.includes("Select an operating company before building exhibits")) {
       problems.push(`${page}: Build all exhibits must toast when no operating company (disabled+silent is leftover FINDING)`);
     }
+    if (!src.includes("No exhibit payload to export")) {
+      problems.push(`${page}: Export JSON with empty exhibit must toast, not download null silently`);
+    }
+    if (!src.includes("Exported exhibit")) {
+      problems.push(`${page}: Export JSON success must toast (silent download is leftover FINDING)`);
+    }
   }
   if (page === HOME) {
     if (!src.includes('to: "/425c?tab=qb"')) {
@@ -68,6 +74,8 @@ const kept = `
   <Link to="/425c?tab=history">History</Link>
   <Link to="/425c">← Form 425C</Link>
   pushToast("Select an operating company before building exhibits", "error");
+  pushToast("No exhibit payload to export", "error");
+  pushToast("Exported exhibit A JSON", "success");
 `;
 const stolenHome = `links={[{ label: "Safety Audit", to: "/safety/audit-425c" }]}`;
 const keptHome = `
