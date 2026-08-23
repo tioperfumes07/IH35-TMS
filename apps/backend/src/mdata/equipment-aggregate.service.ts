@@ -193,6 +193,7 @@ export async function buildEquipmentAggregate(
         SELECT ps.label, ps.next_due_odometer::int
         FROM maintenance.pm_alerts pa
         JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id
+                                        AND ps.operating_company_id = pa.operating_company_id
         WHERE pa.unit_id = $1::uuid
           AND pa.operating_company_id = $2::uuid
           AND pa.state IN ('open', 'acknowledged')
