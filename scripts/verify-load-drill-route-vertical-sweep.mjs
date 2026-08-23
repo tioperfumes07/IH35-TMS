@@ -18,7 +18,9 @@ const sources = {
 const checks = [
   ["self", /^\/\*\* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["load\.drawer\.settlement"\],"task":"DISP-F5843-LOAD-SETTLEMENT-REVERSE-EXACT-LEAF","vertical":"class-sweep"\} \*\/$/m, "Built annotation owns exact load.drawer.settlement reverse leaf"],
   ["arrival", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{activePrompt\.load_id\}/, "arrival prompt drills to driver load detail"],
+  ["arrival", /promptsQuery\.isError[\s\S]{0,420}title="Couldn't load arrival checks"[\s\S]{0,420}promptsQuery\.refetch\(\)/, "arrival prompt GET failure exposes exact retry"],
   ["status", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{active\.load_id\}/, "status prompt drills to driver load detail"],
+  ["status", /query\.isError[\s\S]{0,420}title="Couldn't load status suggestions"[\s\S]{0,420}query\.refetch\(\)/, "status prompt GET failure exposes exact retry"],
   ["settlement", /kind="load" id=\{leg\.load_id\}/, "settlement-chain leg drills to office load detail"],
   ["edi", /kind="load" id=\{selected\.related_load_uuid\}/, "EDI transaction drills to office load detail"],
   ["edi", /entityLabel\(selected\.related_load_number, selected\.related_load_uuid, "Load"\)/, "EDI load drill consumes the human load number"],
