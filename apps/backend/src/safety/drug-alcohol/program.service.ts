@@ -94,7 +94,17 @@ export async function listEnrollments(
       FROM safety.da_program_enrollments e
       LEFT JOIN mdata.drivers d
         ON d.id = e.driver_uuid
-       AND d.operating_company_id::text = e.operating_company_id::text
+       AND (
+         d.operating_company_id::text = e.operating_company_id::text
+         OR EXISTS (
+           SELECT 1
+           FROM mdata.driver_company_authorizations da_enrollment_label_dca
+           WHERE da_enrollment_label_dca.driver_id = d.id
+             AND da_enrollment_label_dca.company_id = e.operating_company_id
+             AND da_enrollment_label_dca.is_authorized = true
+             AND da_enrollment_label_dca.deactivated_at IS NULL
+         )
+       )
       WHERE e.operating_company_id::text = $1::uuid::text
         AND ($2 = false OR e.is_active = true)
       ORDER BY e.enrolled_at DESC, e.created_at DESC
@@ -205,7 +215,17 @@ export async function listTestRecords(
       FROM safety.da_test_records t
       LEFT JOIN mdata.drivers d
         ON d.id = t.driver_uuid
-       AND d.operating_company_id::text = t.operating_company_id::text
+       AND (
+         d.operating_company_id::text = t.operating_company_id::text
+         OR EXISTS (
+           SELECT 1
+           FROM mdata.driver_company_authorizations da_test_label_dca
+           WHERE da_test_label_dca.driver_id = d.id
+             AND da_test_label_dca.company_id = t.operating_company_id
+             AND da_test_label_dca.is_authorized = true
+             AND da_test_label_dca.deactivated_at IS NULL
+         )
+       )
       WHERE ${where}
       ORDER BY t.created_at DESC
       ${limitClause}
