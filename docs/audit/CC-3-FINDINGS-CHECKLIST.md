@@ -58,7 +58,7 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **100** |
+| **total findings filed** | **101** |
 | **OPEN — awaiting a coder** | **81** |
 | **☑ fixed & signed off by a coder** | **21** (re-counted 2026-08-11 by CC-2 after `CLS-INSURANCE-DRIVER-REVERSE-UNGUARDED` landed; `grep -c "^\| ☑"` on this file, minus the template example row, is the live source of truth) |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
@@ -85,6 +85,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 
 | ☐ | Finding ID | Sev | Owning lane | Coder | PR | Date | Live proof of fix | Guard (file + step #) | CC-3 VERIFIED |
 |---|---|---|---|---|---|---|---|---|---|
+| ☑ | `CUST-F5990-CUSTOMER-RECLASSIFICATION-HISTORY-CROSS-COMPANY-GET` | **A** | Codex customers reverse SQL/GET | Codex | this PR | 2026-08-22 | Code proof only per no-CDP lane: company query + membership resolver + canonical same-company customer gate + scoped audit-log join. | `verify-customer-reclassification-history-scope.mjs` normal + 8/8 selftest; CI step 3406 | Independent CC-3 verify pending |
 | ☐ | `LEGAL-F5988-CONTRACT-CREATE-500-AFTER-VARIABLE-SCHEMA-FIX` | **B** | CC-3 legal non-money create/connectivity | — | — | 2026-08-22 | OPEN — reproduce labeled USMCA TEST create on deployed SHA `ffc938b`; request `76cef236-2b3a-4fe2` returned 500 after #14514 was live. | Required fix guard: exact create transaction + company scope + persisted reload + planted defect | — |
 | ☑ | `FLEET-F5947-UNIT-EDIT-TABS-CONNECTIVITY-LACKS-EXACT-OWNER` | **C** | Codex | Codex | pending | 2026-08-22 | Six Unit Edit tabs now have exact Fleet connectivity ownership. | `verify-fleet-unit-profile-edit-detail` normal + mutation self-test; global leaf ratchet | Runtime unchanged; independent CC-3 verify pending |
 | ☑ | `FLEET-F5946-UNIT-PROFILE-CORE-CONNECTIVITY-LACKS-EXACT-OWNER` | **C** | Codex | Codex | pending | 2026-08-22 | Eight mounted unit-profile core sections now have exact Fleet connectivity ownership. | `verify-fleet-unit-profile-edit-detail` normal + mutation self-test; global leaf ratchet | Runtime unchanged; independent CC-3 verify pending |
