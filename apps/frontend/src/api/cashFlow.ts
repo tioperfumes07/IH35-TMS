@@ -105,3 +105,15 @@ export function addCashFlowAdjustment(payload: {
     body: payload,
   });
 }
+
+// CASHFLOW-ADJUSTMENT-NO-VOID-PATH: archived_at has existed on the table since it was created,
+// but no route/UI ever set it — a mistaken manual adjustment could be created but never removed.
+export function archiveCashFlowAdjustment(
+  id: string,
+  operatingCompanyId: string
+): Promise<CashFlowAdjustment> {
+  return apiRequest<CashFlowAdjustment>(`/api/v1/cash-flow/adjustments/${encodeURIComponent(id)}/archive`, {
+    method: "PATCH",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
