@@ -1,4 +1,9 @@
 {
+  "4553": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-claims-graph-error-state"
+  },
   "4549": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5638,5 +5643,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1263
+  "total_claimed": 1264
 }
