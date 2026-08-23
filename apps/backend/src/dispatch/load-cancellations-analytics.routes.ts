@@ -105,7 +105,13 @@ export async function registerLoadCancellationsAnalyticsRoutes(app: FastifyInsta
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                      AND c.operating_company_id = lc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.operating_company_id = lc.operating_company_id
+                                   AND (d.operating_company_id = lc.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations cancellation_analytics_driver_dca
+                                      WHERE cancellation_analytics_driver_dca.driver_id = d.id
+                                        AND cancellation_analytics_driver_dca.company_id = lc.operating_company_id
+                                        AND cancellation_analytics_driver_dca.is_authorized = true
+                                        AND cancellation_analytics_driver_dca.deactivated_at IS NULL
+                                   ))
           LEFT JOIN catalogs.load_cancellation_reasons lcr
             ON lcr.reason_code = lc.reason_code
            AND lcr.operating_company_id = lc.operating_company_id
