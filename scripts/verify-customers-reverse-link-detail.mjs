@@ -188,6 +188,11 @@ const CHECKS = [
     file: DETAIL,
     pattern: /kind="customer"\s+id=\{customer\.parent_customer_id\}\s+name=\{customer\.parent_customer_name\}\s+noun="Customer"[\s\S]{0,240}data-testid="customer-parent-record-link"/,
   },
+  {
+    name: "parent customer candidate GET failure exposes exact retry",
+    file: DETAIL,
+    pattern: /parentCandidatesQuery\.isError[\s\S]{0,500}title="Couldn't load parent customer choices"[\s\S]{0,500}parentCandidatesQuery\.refetch\(\)/,
+  },
   { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
     name: "payment application invoice EntityLinkOrTombstone",

@@ -1260,7 +1260,14 @@ export function CustomerDetailPage() {
           <DataPanel title="Relationships">
             <div className="mb-2 flex flex-col gap-1" data-testid="customer-parent-select">
               <label className="text-xs font-semibold text-gray-600">Parent customer</label>
-              {editMode && operatingCompanyId ? (
+              {editMode && operatingCompanyId && parentCandidatesQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load parent customer choices"
+                  status={0}
+                  message={parentCandidatesQuery.error instanceof Error ? parentCandidatesQuery.error.message : undefined}
+                  onRetry={() => void parentCandidatesQuery.refetch()}
+                />
+              ) : editMode && operatingCompanyId ? (
                 <ReferenceSelect
                   options={parentCustomerOptions}
                   value={hydratedForm.parent_customer_id || null}
