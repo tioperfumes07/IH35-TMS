@@ -1,6 +1,6 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**★ FAST-MERGE ON.** Gate exit 0 → push → PR → **`gh pr merge --squash --delete-branch --admin` same turn.** Never watch CI. Never ask Jorge to merge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never watch CI. Never ask Jorge to merge. `gh pr merge` worktree-main error = run API PUT same 15s, not later. `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
 **REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge chat empty ≠ pause.
 

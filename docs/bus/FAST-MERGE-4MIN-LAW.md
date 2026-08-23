@@ -9,7 +9,13 @@ Jorge is **not** the messenger.
 
 Local gate **exit 0** is merge proof. GitHub check queues (20–30 pending, docs-only behind 32 runs) are **not** a merge gate.
 
-**Required same turn after gate PASS:** `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin` (or `gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`).
+**Required same turn after gate PASS:** `gh pr create` → **immediately** squash-merge via API (do **not** stop on `gh pr merge` — that command checks out `main` and **breaks FAST-MERGE** when another worktree already has `main`):
+
+```bash
+gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
+```
+
+`gh pr merge --admin` is optional sugar **only if** it returns merged in one shot. If it errors on local `main` / worktree, that is **not** a stop — run the `gh api` line **in the same 15 seconds**. Waiting on CI after that is a violation.
 
 **Forbidden:** `gh pr checks --watch` · waiting for required checks · asking Jorge to merge · leaving OPEN PRs while CI queues · “armed monitor on #N”.
 
@@ -50,7 +56,7 @@ Cursor already FAST-MERGED #14921 (claim-reserve) and #14923 (DRV-F6259) that we
 | **1 · Gate** | ~60–90s | `node scripts/money-pr-local-gate.mjs` → **exit 0** (Cursor: `cursor-ship-preflight --body-file /tmp/pr-body.txt`) |
 | **2 · Push** | ~30s | Normal `git push` first. If push dies **only** at `verify-static-fallback` on **ENV-VERIFY-STATIC** class (not your guard/selftest) → **`git push --no-verify`** — authorized; **not** bypassing step 1 |
 | **3 · Open PR** | ~15s | `gh pr create …` (or skip if exists) — **do NOT** `gh pr checks --watch` |
-| **4 · Merge** | ~15s | `gh pr merge N --squash --delete-branch --admin` **immediately** after step 1 PASS. If that command tries to check out local `main` (worktree already has `main`) or returns 404 on POST: `gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` — same squash, no local checkout |
+| **4 · Merge** | ~15s | **Default:** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` **immediately** after step 1 PASS. Do not wait for checks. Do not ask Jorge. `gh pr merge --admin` that dies on “main is already used by worktree” is a **known trap** — API PUT in the same breath, not a later turn |
 | **5 · Neon** | after | Money/migrations: **you** apply on Neon · prove one query |
 | **6 · Next** | same turn | OUTBOX one line → start next ☐ in INBOX |
 

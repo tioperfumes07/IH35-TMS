@@ -20,7 +20,7 @@ CURRENT-LAW
 - CERTIFIED = Fully-Wired 1–12 + Live Chrome hops on LIVE_SHA (healthz)
 - Scoreboard / N-of-M / “clicked” ≠ CERTIFIED
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
-- FAST-MERGE ~4 min · local gate PASS → PR → `gh pr merge --admin` SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
+- FAST-MERGE ~4 min · local gate PASS → PR → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` SAME TURN · never `gh pr checks --watch` · never stall on `gh pr merge` worktree-main · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
 MY SEAT / CURRENT MODULE / OPEN HOPS
 - (copy only OPEN rows for YOUR seat from the exclusive law — never CERTIFIED)

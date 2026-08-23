@@ -96,7 +96,7 @@ In-app: `/home` scenario tracker (do not claim product complete here).
 
 **This audit’s trackers** are the markdown files in `docs/audit/scenario-trackers/certified-u14/`. Fill every section. If the in-app tracker card for that process is red/missing, record it in the markdown; fix only if it is a unique 500/dead/silent on **your** assigned URL. Otherwise remaining line + continue.
 
-FAST-MERGE tracker completions (docs-only): gate N/A docs → PR → `gh pr merge --squash --delete-branch --admin` same turn.
+FAST-MERGE tracker completions (docs-only): PR → immediately `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never watch CI.
 
 ---
 

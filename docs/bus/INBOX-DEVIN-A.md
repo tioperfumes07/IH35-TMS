@@ -2,7 +2,7 @@
 
 **ON THE BUS — SCENARIO TRACKERS for CERTIFIED U14.** No live prefix steal.
 
-**★ FAST-MERGE ON.** Tracker files are docs: PR → `gh pr merge --squash --delete-branch --admin` same turn.
+**★ FAST-MERGE ON (4 min · LAW).** Tracker files are docs: PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`.
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 

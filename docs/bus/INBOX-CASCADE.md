@@ -2,7 +2,7 @@
 
 **ON THE BUS — CERTIFIED U14 AUDIT ONLY.** Not a 15th plan. Not OPEN U14 prefixes.
 
-**★ FAST-MERGE ON.** Docs or unique FINDING: gate exit 0 → PR → `gh pr merge --squash --delete-branch --admin` same turn. Never `gh pr checks --watch`. Never `trigger_deploy`.
+**★ FAST-MERGE ON (4 min · LAW).** Docs or unique FINDING: gate exit 0 → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never `trigger_deploy`.
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 

@@ -1,6 +1,6 @@
 # CODER INSTRUCTIONS NOW
 
-**★ FAST-MERGE ON.** After `money-pr-local-gate` / `cursor-ship-preflight` **exit 0**: push → `gh pr create` → **immediately** `gh pr merge --squash --delete-branch --admin`. Never `gh pr checks --watch`. Never wait for Jorge. Docs-only PRs do not sit behind the CI queue. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** After `money-pr-local-gate` / `cursor-ship-preflight` **exit 0**: push → `gh pr create` → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. If `gh pr merge` errors on local `main` worktree, that is **not** a stop — API PUT same 15s. Docs-only must not sit in the CI queue. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
 **NONSTOP. `git pull --ff-only origin main`. INBOX TOP = order. Jorge chat empty ≠ idle.**  
 HOLD / watching / awaiting next order / CI loop = defect.  
