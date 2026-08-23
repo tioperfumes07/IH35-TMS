@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
 const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
+const LATE_ARRIVAL_CARD = "apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx";
 const REQUIRED = "docs/specs/scoreboard/modules/customers.required.json";
 const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-customer-detail-page-self-referential.mjs";
@@ -54,7 +55,7 @@ const CHECKS = [
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id\)/],
 ];
 
-export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "") {
+export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "") {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
@@ -67,6 +68,9 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
     if (/rounded-sm border border-gray-200 p-3/.test(fmcsaSrc)) {
       failures.push(`${FMCSA_MODAL}: must not nest bordered cards (box-in-box)`);
     }
+  }
+  if (lateArrivalSrc && !/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(lateArrivalSrc)) {
+    failures.push(`${LATE_ARRIVAL_CARD}: detail late-arrival failure must expose exact-query retry`);
   }
   if (requiredSrc) {
     const required = JSON.parse(requiredSrc);
@@ -87,8 +91,9 @@ if (process.argv.includes("--selftest")) {
   const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
   const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
   const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
-  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood).length) {
-    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood, requiredGood, selfGood, feedGood).join("\n- ")}`);
+  const lateArrivalGood = fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8");
+  if (audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).length) {
+    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).join("\n- ")}`);
     process.exit(1);
   }
   let caught = 0;
@@ -109,6 +114,12 @@ if (process.argv.includes("--selftest")) {
     '\n<div className="rounded-sm border border-gray-200 p-3" />\n';
   if (!audit(good, fmcsaPlanted).some((f) => f.includes("box-in-box") || f.includes("fmcsa-verify-flat"))) {
     console.error(`${LABEL} SELFTEST FAIL — fmcsa box-in-box mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const lateArrivalMutated = lateArrivalGood.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
+  if (lateArrivalMutated === lateArrivalGood || audit(good, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalMutated).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — late-arrival retry mutation escaped`);
     process.exit(1);
   }
   caught++;
@@ -140,6 +151,7 @@ const failures = audit(
   fs.readFileSync(path.join(ROOT, REQUIRED), "utf8"),
   fs.readFileSync(path.join(ROOT, SELF), "utf8"),
   fs.readFileSync(path.join(ROOT, FEED), "utf8"),
+  fs.readFileSync(path.join(ROOT, LATE_ARRIVAL_CARD), "utf8"),
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);

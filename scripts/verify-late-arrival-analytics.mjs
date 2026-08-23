@@ -88,7 +88,18 @@ function driverCardFailures(source) {
   ].filter(Boolean);
 }
 failures.push(...driverCardFailures(driverCard));
-read("apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx");
+const customerCard = read("apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx");
+function customerCardFailures(source) {
+  return [
+    !/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(source)
+      ? "customer late-arrival GET failure must be distinct from empty and exactly retryable"
+      : null,
+    /query\.isError \|\| !query\.data/.test(source)
+      ? "customer late-arrival failure must not masquerade as no data"
+      : null,
+  ].filter(Boolean);
+}
+failures.push(...customerCardFailures(customerCard));
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
@@ -115,7 +126,14 @@ if (process.argv.includes("--selftest")) {
   for (const [index, mutated] of mutations.entries()) {
     if (mutated === driverCard || driverCardFailures(mutated).length === 0) throw new Error(`driver-card mutation ${index + 1} escaped`);
   }
-  console.log("verify:late-arrival-analytics SELFTEST PASS — 2/2 driver failure/empty mutations red");
+  const customerMutations = [
+    customerCard.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}"),
+    customerCard.replace("if (query.isError) {", "if (query.isError || !query.data) {"),
+  ];
+  for (const [index, mutated] of customerMutations.entries()) {
+    if (mutated === customerCard || customerCardFailures(mutated).length === 0) throw new Error(`customer-card mutation ${index + 1} escaped`);
+  }
+  console.log("verify:late-arrival-analytics SELFTEST PASS — 4/4 driver/customer failure/empty mutations red");
   process.exit(0);
 }
 
