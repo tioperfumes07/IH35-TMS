@@ -1,4 +1,9 @@
 {
+  "4549": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-users-change-role-current-role-label"
+  },
   "4545": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5633,5 +5638,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1262
+  "total_claimed": 1263
 }
