@@ -67,7 +67,14 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
          FROM safety.v_fuel_mpg_anomalies o
          LEFT JOIN mdata.units u ON u.id = o.unit_id
                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = o.operating_company_id
-         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id
+                                  AND (d.operating_company_id = o.operating_company_id OR EXISTS (
+                                    SELECT 1 FROM mdata.driver_company_authorizations integrity_report_driver_dca
+                                     WHERE integrity_report_driver_dca.driver_id = d.id
+                                       AND integrity_report_driver_dca.company_id = o.operating_company_id
+                                       AND integrity_report_driver_dca.is_authorized = true
+                                       AND integrity_report_driver_dca.deactivated_at IS NULL
+                                  ))
          WHERE o.operating_company_id = $1::uuid ORDER BY o.transaction_date DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
@@ -85,7 +92,14 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
       const res = await client.query(
         `SELECT o.*, NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
          FROM safety.v_driver_dwell_outliers o
-         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id
+                                  AND (d.operating_company_id = o.operating_company_id OR EXISTS (
+                                    SELECT 1 FROM mdata.driver_company_authorizations integrity_report_driver_dca
+                                     WHERE integrity_report_driver_dca.driver_id = d.id
+                                       AND integrity_report_driver_dca.company_id = o.operating_company_id
+                                       AND integrity_report_driver_dca.is_authorized = true
+                                       AND integrity_report_driver_dca.deactivated_at IS NULL
+                                  ))
          WHERE o.operating_company_id = $1::uuid ORDER BY o.minutes_over_avg DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
@@ -103,7 +117,14 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
       const res = await client.query(
         `SELECT o.*, NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
          FROM safety.v_hos_pattern_breaks o
-         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id
+                                  AND (d.operating_company_id = o.operating_company_id OR EXISTS (
+                                    SELECT 1 FROM mdata.driver_company_authorizations integrity_report_driver_dca
+                                     WHERE integrity_report_driver_dca.driver_id = d.id
+                                       AND integrity_report_driver_dca.company_id = o.operating_company_id
+                                       AND integrity_report_driver_dca.is_authorized = true
+                                       AND integrity_report_driver_dca.deactivated_at IS NULL
+                                  ))
          WHERE o.operating_company_id = $1::uuid ORDER BY o.violations_30d DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
