@@ -1,6 +1,6 @@
 # INBOX-DEVIN
 
-**Jorge “devin-” = this file + `INBOX-DEVIN-A.md`.** Paste: `docs/bus/PASTE-DEVIN-NOW.md`.
+**Jorge “devin-” = this file + `INBOX-DEVIN-A.md`.** Paste first: `docs/bus/PASTE-DEVIN-NOW.md` then `INBOX-DEVIN-A.md` TOP. **NOW THIS 4 MINUTES:** `/vendors` EXTENT — ACK-only is rejected. Never idle.
 
 **If your product tab is “Devin A”, this is the same job as `docs/bus/INBOX-DEVIN-A.md`.**
 

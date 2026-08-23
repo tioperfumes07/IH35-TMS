@@ -11,6 +11,8 @@ Your 2026-08-23 `ACK | GOLD-WEB | CDP=BLOCKED` with empty `U14-01-accounting.md`
 
 `git pull --ff-only origin main` then this TOP.
 
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CASCADE-NOW.md`):** Fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT on `OUTBOX-CASCADE.md` + unique FINDINGS-BOARD rows. ACK-only is rejected. Chrome down → SQL/GET. Never idle.
+
 NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
 1. `/accounting` — fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT + board rows
 2. `/banking` → `U14-02-banking.md`

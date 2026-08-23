@@ -4,11 +4,11 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. CC never `trigger_deploy`.
 
-**lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs. POST-U14 table exhausted ≠ idle: unique 500/dead/silent on `/compliance` then any unclaimed leftover surface. Do not hold for routing. Do not steal `/425c` `/customers` `/drivers` `/fleet`.
+**lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs.
 
-CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`) — first unfinished leftover after tasks unique-clean.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-3-NOW.md`):** unique 500/dead/silent Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance`. Empty unique → next unclaimed leftover in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Do not hold for routing. Do not steal `/425c` `/customers` `/drivers` `/fleet`.
 
-CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`) — first unfinished leftover after tasks unique-clean.
+CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`).
 
 NOW: curl healthz this turn. Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance`. Unique 500/dead/silent only. Empty unique → next unclaimed leftover in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Never idle.
 
