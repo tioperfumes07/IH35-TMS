@@ -1742,7 +1742,9 @@ export function CustomerDetailPage() {
             </div>
             <div className="space-y-2">
               {qualityEventsQuery.isLoading ? <div className="text-xs text-gray-500">Loading events...</div> : null}
-              {qualityEvents.map((event) => (
+              {qualityEventsQuery.isError ? (
+                <ListErrorState title="Couldn't load customer quality history" status={0} message={qualityEventsQuery.error instanceof Error ? qualityEventsQuery.error.message : undefined} onRetry={() => void qualityEventsQuery.refetch()} />
+              ) : qualityEvents.map((event) => (
                 <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
@@ -2000,6 +2002,9 @@ export function CustomerDetailPage() {
 
       {activeTab === "Contacts" ? (
         <DataPanel title={`Contacts (${contacts.length})`}>
+          {contactsQuery.isError ? (
+            <ListErrorState title="Couldn't load customer contacts" status={0} message={contactsQuery.error instanceof Error ? contactsQuery.error.message : undefined} onRetry={() => void contactsQuery.refetch()} />
+          ) : (
           <ParityTable<CustomerContact>
             rows={contacts}
             rowKey={(contact) => contact.id}
@@ -2100,6 +2105,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </DataPanel>
       ) : null}
 
@@ -2459,6 +2465,9 @@ export function CustomerDetailPage() {
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 text-sm text-gray-600">Customer lane pricing definitions</div>
+          {lanesQuery.isError ? (
+            <ListErrorState title="Couldn't load customer lanes" status={0} message={lanesQuery.error instanceof Error ? lanesQuery.error.message : undefined} onRetry={() => void lanesQuery.refetch()} />
+          ) : (
           <ParityTable<CustomerLane>
             rows={customerLanes}
             rowKey={(lane) => lane.id}
@@ -2552,6 +2561,7 @@ export function CustomerDetailPage() {
               },
             ]}
           />
+          )}
         </div>
       ) : null}
 
@@ -2950,7 +2960,9 @@ export function CustomerDetailPage() {
       <Modal open={fmcsaHistoryOpen} onClose={() => setFmcsaHistoryOpen(false)} title="FMCSA Verification History">
         <div className="space-y-2">
           {fmcsaHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading verification history...</div> : null}
-          {(fmcsaHistoryQuery.data ?? []).map((lookup) => (
+          {fmcsaHistoryQuery.isError ? (
+            <ListErrorState title="Couldn't load FMCSA verification history" status={0} message={fmcsaHistoryQuery.error instanceof Error ? fmcsaHistoryQuery.error.message : undefined} onRetry={() => void fmcsaHistoryQuery.refetch()} />
+          ) : (fmcsaHistoryQuery.data ?? []).map((lookup) => (
             <div key={lookup.lookup_id} className="rounded-sm border border-gray-200 p-2 text-sm">
               <div className="flex items-center justify-between">
                 <strong>{lookup.legal_name ?? "Unknown carrier"}</strong>
@@ -2961,7 +2973,7 @@ export function CustomerDetailPage() {
               </div>
             </div>
           ))}
-          {fmcsaHistoryListState.isEmpty ? (
+          {!fmcsaHistoryQuery.isError && fmcsaHistoryListState.isEmpty ? (
             <div className="text-sm text-gray-500">No FMCSA verifications found for this company.</div>
           ) : null}
         </div>
