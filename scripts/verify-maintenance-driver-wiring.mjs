@@ -28,6 +28,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
   ["apps/backend/src/maintenance/pre-flight-dvir.routes.ts", /dr\.id = s\.driver_id[\s\S]{0,520}preflight_dvir_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_dvir_dca\.company_id = s\.operating_company_id[\s\S]{0,180}preflight_dvir_dca\.is_authorized = true[\s\S]{0,180}preflight_dvir_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /row\.driver_id[\s\S]{0,120}<EntityLink[\s\S]{0,80}kind="driver"[\s\S]{0,80}id=\{row\.driver_id\}[\s\S]{0,100}label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/],
+  ["apps/backend/src/maintenance/defects.routes.ts", /defects_list_dca\.driver_id = d\.id[\s\S]{0,180}defects_list_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}defects_list_dca\.is_authorized = true[\s\S]{0,180}defects_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/defects.routes.ts", /defects_detail_dca\.driver_id = d\.id[\s\S]{0,180}defects_detail_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}defects_detail_dca\.is_authorized = true[\s\S]{0,180}defects_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/road-service/tickets.routes.ts", /road_service_list_dca\.driver_id = d\.id[\s\S]{0,180}road_service_list_dca\.company_id = \$1::uuid[\s\S]{0,180}road_service_list_dca\.is_authorized = true[\s\S]{0,180}road_service_list_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
