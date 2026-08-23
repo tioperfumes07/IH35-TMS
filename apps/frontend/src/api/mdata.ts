@@ -1229,9 +1229,9 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   });
 }
 
-export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null) {
+export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string) {
   const query = new URLSearchParams();
-  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  query.set("operating_company_id", operatingCompanyId);
   const qs = query.toString();
   return apiRequest<CustomerRelationshipScore>(
     `/api/v1/customers/${customerUuid}/relationship-score${qs ? `?${qs}` : ""}`
@@ -1239,11 +1239,11 @@ export function getCustomerRelationshipScore(customerUuid: string, operatingComp
 }
 
 export function listAtRiskCustomerRelationshipScores(params: {
-  operating_company_id?: string | null;
+  operating_company_id: string;
   limit?: number;
-} = {}) {
+}) {
   const query = new URLSearchParams();
-  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  query.set("operating_company_id", params.operating_company_id);
   if (params.limit) query.set("limit", String(params.limit));
   const qs = query.toString();
   return apiRequest<{ operating_company_id: string; count: number; customers: AtRiskCustomerRelationshipScore[] }>(
