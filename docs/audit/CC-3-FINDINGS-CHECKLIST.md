@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `SRCH-F6231-UNIVERSAL-INDEX-EVICTS-SHARED-DRIVER-COMPANY-ROWS` — Codex drivers connectivity SQL/GET — FIXED this PR; company-scoped identity, active shared-driver eligibility, stale cleanup, and no-load company discovery; guard 12/12 + tests 3/3.
+
 - ☑ `FLEET-F6230-MAINT-KPI-EXCLUDES-CURRENTLY-LEASED-UNITS` — Codex fleet SQL/GET — FIXED this PR; OOS downtime and MTBF denominator share canonical owner-or-leased scope; registered KPI guard/tests pending.
 
 - ☑ `DRV-F6229-INTEGRITY-ANOMALY-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; list/detail anomaly subject resolver admits active canonical driver authorizations; guard/typecheck pending.

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { indexEntity, indexLoadsForCompany } from "../indexer.service.js";
+import { indexDriversForCompany, indexEntity, indexLoadsForCompany } from "../indexer.service.js";
 
 describe("indexEntity", () => {
   it("upserts search index rows idempotently", async () => {
@@ -18,7 +18,23 @@ describe("indexEntity", () => {
     expect(query).toHaveBeenCalledOnce();
     const sql = String(query.mock.calls[0]?.[0] ?? "");
     expect(sql).toContain("INSERT INTO search.universal_index");
-    expect(sql).toContain("ON CONFLICT (entity_type, entity_uuid) DO UPDATE");
+    expect(sql).toContain("ON CONFLICT (operating_company_id, entity_type, entity_uuid) DO UPDATE");
+  });
+});
+
+describe("indexDriversForCompany", () => {
+  it("indexes eligible drivers before pruning stale selected-company rows", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ entity_uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", display_text: "Shared Driver", secondary_text: "D-42" }] })
+      .mockResolvedValue({ rows: [] });
+
+    const count = await indexDriversForCompany({ query }, "11111111-1111-4111-8111-111111111111");
+    expect(count).toBe(1);
+    expect(query).toHaveBeenCalledTimes(3);
+    expect(String(query.mock.calls[0]?.[0])).toContain("driver_company_authorizations universal_driver_dca");
+    expect(String(query.mock.calls[1]?.[0])).toContain("ON CONFLICT (operating_company_id, entity_type, entity_uuid)");
+    expect(String(query.mock.calls[2]?.[0])).toContain("DELETE FROM search.universal_index ui");
   });
 });
 

@@ -11,9 +11,20 @@ export async function runSearchIndexerIncrementalTick() {
   await withLuciaBypass(async (client) => {
     const companies = await client.query<{ operating_company_id: string }>(
       `
-        SELECT DISTINCT operating_company_id::text AS operating_company_id
+        SELECT operating_company_id::text AS operating_company_id
         FROM mdata.loads
         WHERE operating_company_id IS NOT NULL
+        UNION
+        SELECT operating_company_id::text AS operating_company_id
+        FROM mdata.drivers
+        WHERE operating_company_id IS NOT NULL
+          AND deactivated_at IS NULL
+        UNION
+        SELECT company_id::text AS operating_company_id
+        FROM mdata.driver_company_authorizations
+        WHERE company_id IS NOT NULL
+          AND is_authorized = true
+          AND deactivated_at IS NULL
       `
     );
 
