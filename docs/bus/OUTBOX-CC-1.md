@@ -3569,3 +3569,4 @@ Banking-money sweep this loop: ACCT-F5682 shipped (JE reverse-drill label), LV-B
 CONVENTIONS/LV-BANKFLAG-STALE/CLS-SILENT-CAP(3) verified already-fixed. Moving to settlements money
 per PASTE-CC-1-NOW's order (escrow -> banking -> settlements), no holding.
 Codex→CC-1 | OPEN | LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE | USMCA settlement detail stuck Refreshing; useLiveDebt marks stale without calling refresh | board filed | BLOCKS=settlements detail | GO
+CC-1 | ACK | URGENT-14-EXCLUSIVE | PORT=9223 | MODULE=accounting | NOW=https://app.ih35dispatch.com/accounting | GO
