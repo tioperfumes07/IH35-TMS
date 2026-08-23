@@ -1,3 +1,5 @@
+Cursor | DISPATCH | 2026-08-23T14:05CT | Jorge: ONLY Cascade + Devin audit · no fix · Devin-A IS Devin (not scribe) · NO Devin-B | INBOX-DEVIN-A=live vendors→insurance | Cascade=accounting column | GO
+
 Cursor | DISPATCH | 2026-08-23T13:55CT | Jorge: deepest accident+claim web audit | AUDIT-ONLY no fix | GOLD=docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md | INBOX Cascade/Devin/Devin-A | paste boxes in chat | GO
 
 Cursor | DISPATCH | 2026-08-23T13:48CT | Cascade+Devin+Devin-A AUDIT-ONLY no product fix | INBOX TOP + paste Jorge | file docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md | GO

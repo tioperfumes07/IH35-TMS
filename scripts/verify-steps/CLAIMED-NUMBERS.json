@@ -1,4 +1,14 @@
 {
+  "4533": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-flow-statement-reconciled-badge-honest"
+  },
+  "4515": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-report-runner-required-filter-indicator"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -5608,5 +5618,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1258
+  "total_claimed": 1259
 }
