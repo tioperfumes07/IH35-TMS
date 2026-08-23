@@ -502,7 +502,7 @@ export function DriverDetailPage() {
 
   const deactivateQualificationMutation = useMutation({
     mutationFn: ({ driverId, qualificationId }: { driverId: string; qualificationId: string }) =>
-      deactivateDriverQualification(driverId, qualificationId),
+      deactivateDriverQualification(driverId, qualificationId, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       pushToast("Qualification deactivated", "info");

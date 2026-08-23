@@ -394,7 +394,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch<{ Params: { id: string; qual_id: string } }>("/api/v1/mdata/drivers/:id/qualifications/:qual_id", async (req, reply) => {
+  app.patch<{ Params: { id: string; qual_id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications/:qual_id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -402,8 +402,12 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = updateQualificationSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const result = await withCurrentUser(authUser.uuid, async (client) => {
+    return withCurrentUser(authUser.uuid, async (client) => {
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      if (!companyId) return reply.code(404).send({ error: "driver_qualification_not_found" });
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -417,13 +421,23 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
       values.push(parsedParams.data.qual_id);
+      values.push(companyId);
       const res = await client.query(
         `
-          UPDATE mdata.driver_equipment_qualifications
+          UPDATE mdata.driver_equipment_qualifications dq
           SET ${fields.join(", ")}
-          WHERE driver_id = $${values.length - 1}
-            AND id = $${values.length}
-            AND deactivated_at IS NULL
+          FROM mdata.drivers d
+          WHERE dq.driver_id = $${values.length - 2}
+            AND dq.id = $${values.length - 1}
+            AND d.id = dq.driver_id
+            AND (d.operating_company_id = $${values.length}::uuid OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations qualification_patch_dca
+               WHERE qualification_patch_dca.driver_id = d.id
+                 AND qualification_patch_dca.company_id = $${values.length}::uuid
+                 AND qualification_patch_dca.is_authorized = true
+                 AND qualification_patch_dca.deactivated_at IS NULL
+            ))
+            AND dq.deactivated_at IS NULL
           RETURNING id, driver_id, equipment_type_id, is_active, qualified_at, notes
         `,
         values
