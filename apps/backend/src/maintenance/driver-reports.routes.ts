@@ -12,6 +12,8 @@ const listQuerySchema = companyQuerySchema.extend({
   status: z.enum(["submitted", "under_review", "resolved", "dismissed"]).optional(),
   driver_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const patchBodySchema = z.object({
@@ -32,7 +34,7 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
       let sql = `
         SELECT
@@ -74,12 +76,15 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
         values.push(query.data.load_id);
         sql += ` AND r.load_id = $${values.length}::uuid`;
       }
-      sql += ` ORDER BY r.reported_at DESC LIMIT 500`;
+      const countSql = `SELECT count(*)::int AS total_count FROM (${sql}) scoped_reports`;
+      const count = (await client.query(countSql, values)) as { rows: Array<{ total_count: number }> };
+      values.push(query.data.limit, query.data.offset);
+      sql += ` ORDER BY r.reported_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`;
       const res = await client.query(sql, values);
-      return res.rows;
+      return { rows: res.rows, total_count: count.rows[0]?.total_count ?? 0 };
     });
 
-    return { rows };
+    return result;
   });
 
   app.patch("/api/v1/maintenance/driver-reports/:id", async (req, reply) => {
