@@ -7,7 +7,7 @@
 Accounting + factoring CERTIFIED `c11bdab`. Do **not** recertify. Do not remake TESTs.
 
 CURRENT MODULE: **cash-flow** (U14 done → leftover NOW — never idle)  
-NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12** Live Chrome. Unique FINDING = 500 / dead / silent / leftover money FAIL only. Then `https://app.ih35dispatch.com/finance` same bar. Then next unclaimed POST-U14 row. Do not recertify accounting/factoring. Do not wait for U14 OPEN seats.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-1-NOW.md`):** Land **CUST-MONEY-F6105** Unapply + **F6278** payment-history fail UI. FAST-MERGE. Then unique 500/dead/silent on `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12**. Then `/finance`. Do not recertify accounting/factoring. Do not wait for Codex U14. Do not steal `/customers` `/drivers` `/fleet`.
 
 Board leftovers (`FACT-F5986`, unit-finance remainder, `DRVFIN-F6169`) stay unique-FINDING on **your** money prefix if they appear **while** cash-flow hops — do not park on board-watch.
 

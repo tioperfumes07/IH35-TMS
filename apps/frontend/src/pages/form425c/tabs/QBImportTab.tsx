@@ -128,8 +128,11 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
         <button
           type="button"
           className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white"
-          disabled={!parsed.length}
           onClick={() => {
+            if (!parsed.length) {
+              pushToast("Parse Income Deposits before applying to Line 20", "error");
+              return;
+            }
             if (includedTotal <= 0) {
               pushToast("No included deposits — check Use boxes before applying to Line 20", "error");
               return;

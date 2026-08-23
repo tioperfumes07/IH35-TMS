@@ -4,7 +4,7 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. Settlements CERTIFIED — omit.
 
-**THIS TICK:** Codex customers still OPEN (honest — no CERTIFIED line). Live curl=`2fd90a0`. Cursor kicked Render `dep-da5n84mk1f9s739557jg` (`bd6737094f`). After healthz.version **changes**, help Codex emit **one** `CERTIFIED | MODULE=customers | LIVE_SHA=<new curl>`. Do **not** wait quiet. Empty Codex SQL angle → leftover unique 500/dead/silent on `/driver-hub`. No CDP. No `trigger_deploy`.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-2-NOW.md`):** Live **`bd67370`**. Codex customers still OPEN because **OUTBOX-CODEX has zero CERTIFIED line** — not because live trails main. Run customers reverse SQL/GET yourself on `bd67370`. Paste **PROOF** (not CERTIFIED) into `docs/bus/OUTBOX-CC-2.md` so Codex can copy one CERTIFIED line. **Same turn** leftover unique 500/dead/silent on `https://app.ih35dispatch.com/driver-hub`. Do **not** wait quiet. No CDP. No `trigger_deploy`. You do **not** stamp U14.
 
 **KILL LOOP:** stop chasing `cc-2/bus-ack-and-mdata-sweep-0223` / unscoped gate / “watching for next DISPATCH.” That is HOLD.
 

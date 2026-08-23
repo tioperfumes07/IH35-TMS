@@ -74,6 +74,12 @@ function assertMigrated(src) {
   if (!src.includes("No included deposits")) {
     errors.push(`${PAGE}: Apply with $0 included must toast, not silently write Line 20`);
   }
+  if (src.includes("disabled={!parsed.length}")) {
+    errors.push(`${PAGE}: Apply must not be disabled when parsed is empty (dead click is leftover FINDING)`);
+  }
+  if (!src.includes("Parse Income Deposits before applying to Line 20")) {
+    errors.push(`${PAGE}: Apply with empty parsed must toast Parse Income Deposits before applying to Line 20`);
+  }
   return errors;
 }
 
@@ -98,6 +104,7 @@ function selftest() {
     No matching DIP deposits
     Applied $
     No included deposits
+    Parse Income Deposits before applying to Line 20
   `;
   const bad = `
     import { DataTable } from "../../components/DataTable";
