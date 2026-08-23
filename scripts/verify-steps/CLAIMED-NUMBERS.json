@@ -1,4 +1,9 @@
 {
+  "4449": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-payment-methods-structured-not-notes-heuristic"
+  },
   "4441": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
