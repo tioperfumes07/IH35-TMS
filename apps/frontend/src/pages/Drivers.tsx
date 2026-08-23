@@ -466,9 +466,13 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
   }, [cashAdvancesQuery.data?.requests, liabilitiesQuery.data?.liabilities]);
+  // DRV-MONEY-F6110 — debtAlertRows derives from BOTH cashAdvancesQuery and liabilitiesQuery with no
+  // isError check on either, so a failed fetch on either one silently presented as "no outstanding
+  // debt" (-$0.00) instead of an error, on a KPI/panel drivers use to decide who owes money.
+  const debtDataError = cashAdvancesQuery.isError || liabilitiesQuery.isError;
   const totalDriversOwe = useMemo(
-    () => debtAlertRows.reduce((sum, row) => sum + Number(row.total || 0), 0),
-    [debtAlertRows]
+    () => (debtDataError ? null : debtAlertRows.reduce((sum, row) => sum + Number(row.total || 0), 0)),
+    [debtAlertRows, debtDataError]
   );
   const activeDriverLoadRows = useMemo(() => {
     // P40 — driver_short_name was rendered as plain text with no link back to the canonical driver
@@ -530,19 +534,26 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   //
   // Inverted to a DENYlist: a settlement is "due" unless it is settled or abandoned. A KPI whose job is
   // "how many need attention" must fail OPEN — an unrecognised status is surfaced, never silently dropped.
+  // DRV-MONEY-F6110 — null (not 0) on a failed fetch, matching availableCount's own established
+  // isError-aware pattern just above, so the KPI tile renders "—" instead of a confirmed-zero count.
   const settleDueCount = useMemo(
     () =>
-      (settlementsQuery.data?.settlements ?? []).filter((s) => {
-        const status = String(s.status ?? "").toLowerCase();
-        if (["paid", "cancelled", "canceled"].includes(status)) return false;
-        // Paid-by-payment-state also closes it out, even when the status word lags behind.
-        return !["cleared", "manual_paid"].includes(String(s.payment_state ?? "").toLowerCase());
-      }).length,
-    [settlementsQuery.data?.settlements]
+      settlementsQuery.isError
+        ? null
+        : (settlementsQuery.data?.settlements ?? []).filter((s) => {
+            const status = String(s.status ?? "").toLowerCase();
+            if (["paid", "cancelled", "canceled"].includes(status)) return false;
+            // Paid-by-payment-state also closes it out, even when the status word lags behind.
+            return !["cleared", "manual_paid"].includes(String(s.payment_state ?? "").toLowerCase());
+          }).length,
+    [settlementsQuery.data?.settlements, settlementsQuery.isError]
   );
   const escrowTotal = useMemo(
-    () => (escrowBalancesQuery.data?.drivers ?? []).reduce((sum, row) => sum + Number(row.escrow_balance ?? 0), 0),
-    [escrowBalancesQuery.data?.drivers]
+    () =>
+      escrowBalancesQuery.isError
+        ? null
+        : (escrowBalancesQuery.data?.drivers ?? []).reduce((sum, row) => sum + Number(row.escrow_balance ?? 0), 0),
+    [escrowBalancesQuery.data?.drivers, escrowBalancesQuery.isError]
   );
 
   const setDriverListStatus = (next: DriversListStatusId) => {
@@ -594,9 +605,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} to="/dispatch?view=loads" />
         <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers?status=active" />
         <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers?status=on_leave" />
-        <KpiCard label="Settle Due" number={String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
-        <KpiCard label="Drivers Owe" number={formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
-        <KpiCard label="Escrow" number={formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
+        <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
+        <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
+        <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
       </KpiStrip>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -806,26 +817,36 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           ) : null}
           {subnavTab === "pre_settlements" ? (
-            <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
+            <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} />
           ) : null}
           {subnavTab === "cash_advances" ? (
             <div className="space-y-2" data-testid="drivers-cash-advances-debt-alert">
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-semibold text-gray-700">Debt Alert · before any payment</span>
-                <span className="text-xs font-semibold text-red-700">Total outstanding: -{formatMoney(totalDriversOwe)}</span>
+                <span className="text-xs font-semibold text-red-700">
+                  {debtDataError ? "Error loading debt" : `Total outstanding: -${formatMoney(totalDriversOwe ?? 0)}`}
+                </span>
               </div>
-              {/* LINK-F5187 (drivers:cash_advances) -- the real driver_finance.driver_liabilities ids
-                  were already fetched by liabilitiesQuery and carried through into the Liability column. */}
-              {/* No separate search input on this tab (unlike the roster's server-bound listDrivers
-                  search) — ParityTable's own built-in toolbar search stays enabled so the debt-alert
-                  rows are still searchable, matching the real chrome.toolbar_search leaf requirement. */}
-              <ParityTable
-                rows={debtAlertRows}
-                storageKey="drivers-cash-advances-debt-alert"
-                rowKey={(row) => row.driver_id}
-                columns={debtAlertColumns}
-                emptyText="No outstanding cash advance, repair, damage, or late-arrival debt."
-              />
+              {/* LINK-F5187: liabilityIds carried into the Liability column. DRV-MONEY-F6110:
+                  debtDataError below gates a real error instead of a false "no debt" empty table. */}
+              {debtDataError ? (
+                <ListErrorState
+                  status={0}
+                  message="Cash advances or liabilities could not be loaded."
+                  onRetry={() => {
+                    void cashAdvancesQuery.refetch();
+                    void liabilitiesQuery.refetch();
+                  }}
+                />
+              ) : (
+                <ParityTable
+                  rows={debtAlertRows}
+                  storageKey="drivers-cash-advances-debt-alert"
+                  rowKey={(row) => row.driver_id}
+                  columns={debtAlertColumns}
+                  emptyText="No outstanding cash advance, repair, damage, or late-arrival debt."
+                />
+              )}
             </div>
           ) : null}
           {subnavTab === "deductions" ? (
@@ -882,31 +903,46 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           ) : null}
           {subnavTab === "drivers" ? (
             <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
-              <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} title="Settlements Ready" />
+              <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} title="Settlements Ready" />
               <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
-                {debtAlertRows.map((row) => (
-                  <DataPanelRow key={row.driver_id}>
-                    <span>
-                      <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
-                      {row.reasons.slice(0, 2).join(" + ")}
-                      {/* LINK-F5187 (drivers:cash_advances) -- see debtAlertRows.liabilityIds above. */}
-                      {row.liabilityIds.length > 0 ? (
-                        <span className="ml-1">
-                          {row.liabilityIds.map((id, idx) => (
-                            <span key={id}>
-                              {idx > 0 ? ", " : " ("}
-                              <EntityLink kind="liability" id={id} label={`#${idx + 1}`} className="text-red-600 hover:underline" />
+                {/* DRV-MONEY-F6110 — same false-clean-bill-of-health defect as the cash_advances tab
+                    above; debtDataError gates this panel too. */}
+                {debtDataError ? (
+                  <ListErrorState
+                    status={0}
+                    message="Cash advances or liabilities could not be loaded."
+                    onRetry={() => {
+                      void cashAdvancesQuery.refetch();
+                      void liabilitiesQuery.refetch();
+                    }}
+                  />
+                ) : (
+                  <>
+                    {debtAlertRows.map((row) => (
+                      <DataPanelRow key={row.driver_id}>
+                        <span>
+                          <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
+                          {row.reasons.slice(0, 2).join(" + ")}
+                          {/* LINK-F5187 (drivers:cash_advances) -- see debtAlertRows.liabilityIds above. */}
+                          {row.liabilityIds.length > 0 ? (
+                            <span className="ml-1">
+                              {row.liabilityIds.map((id, idx) => (
+                                <span key={id}>
+                                  {idx > 0 ? ", " : " ("}
+                                  <EntityLink kind="liability" id={id} label={`#${idx + 1}`} className="text-red-600 hover:underline" />
+                                </span>
+                              ))}
+                              {")"}
                             </span>
-                          ))}
-                          {")"}
+                          ) : null}
                         </span>
-                      ) : null}
-                    </span>
-                    <span className="text-red-600">-{formatMoney(row.total)}</span>
-                  </DataPanelRow>
-                ))}
-                {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
-                <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span></DataPanelRow>
+                        <span className="text-red-600">-{formatMoney(row.total)}</span>
+                      </DataPanelRow>
+                    ))}
+                    {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
+                    <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe ?? 0)}</span></DataPanelRow>
+                  </>
+                )}
               </DataPanel>
               <DataPanel
                 title={`Active Drivers · Samsara ${samsaraHealthQuery.isError ? "unavailable" : samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
@@ -933,7 +969,12 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   </DataPanelRow>
                 ))}
                 {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
-                <DataPanelRow><span className="font-semibold">Pending escrow approvals</span><span className="font-semibold">{(pendingEscrowQuery.data?.data ?? []).length}</span></DataPanelRow>
+                <DataPanelRow>
+                  <span className="font-semibold">Pending escrow approvals</span>
+                  <span className="font-semibold">
+                    {pendingEscrowQuery.isError ? <span className="text-red-600">Error</span> : (pendingEscrowQuery.data?.data ?? []).length}
+                  </span>
+                </DataPanelRow>
               </DataPanel>
             </div>
           ) : null}
