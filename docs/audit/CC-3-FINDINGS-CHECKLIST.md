@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6246-SAFETY-COMPLAINT-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; both complaint creator driver roles now use the same home-or-active-authorization eligibility as list/reverse labels; vertical safety guard mutation-proves both.
+
 - ☑ `DRV-F6245-INSURANCE-CLAIM-WRITE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; claim driver write validation now mirrors selected-company home-or-active-authorization read scope; guard mutation proof + focused route test.
 
 - ☑ `CI-F6253-OWNER-OVERRIDE-ENTITYLINK-BASELINE-STALE` — Codex mechanical guard integrity — FIXED this PR; intentionally ratchets the one exact fingerprint introduced by DISPATCH-F6251; guard normal + selftest PASS.

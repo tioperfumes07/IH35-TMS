@@ -45,6 +45,8 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", /kind="driver"/],
   ["apps/backend/src/routes/safety/complaints.ts", /complaint_complainant_driver_dca\.driver_id = cd\.id[\s\S]{0,180}complaint_complainant_driver_dca\.company_id = c\.operating_company_id[\s\S]{0,180}complaint_complainant_driver_dca\.is_authorized = true[\s\S]{0,180}complaint_complainant_driver_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/routes/safety/complaints.ts", /complaint_respondent_driver_dca\.driver_id = rd\.id[\s\S]{0,180}complaint_respondent_driver_dca\.company_id = c\.operating_company_id[\s\S]{0,180}complaint_respondent_driver_dca\.is_authorized = true[\s\S]{0,180}complaint_respondent_driver_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/routes/safety/complaints.ts", /complaint_create_complainant_dca\.driver_id = d\.id[\s\S]{0,180}complaint_create_complainant_dca\.company_id = \$1::uuid[\s\S]{0,180}complaint_create_complainant_dca\.is_authorized = true[\s\S]{0,180}complaint_create_complainant_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/routes/safety/complaints.ts", /complaint_create_respondent_dca\.driver_id = d\.id[\s\S]{0,180}complaint_create_respondent_dca\.company_id = \$1::uuid[\s\S]{0,180}complaint_create_respondent_dca\.is_authorized = true[\s\S]{0,180}complaint_create_respondent_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /kind="driver" id=\{entry\.driver_id\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx", /kind="driver" id=\{a\.primary_driver_id\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx", /kind="driver" id=\{String\(r\.driver_id \?\? ""\)\}/],
