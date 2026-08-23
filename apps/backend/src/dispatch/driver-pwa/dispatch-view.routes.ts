@@ -167,7 +167,15 @@ async function fetchDriverOwnedLoad(
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the load itself carries no entity predicate above,
       -- so bind it here via the driver acting on it — the JOIN only matches when the driver identified
       -- by $2 belongs to the SAME company as the load, which fails closed (no row) on a cross-entity FK.
-      JOIN mdata.drivers drv ON drv.id = $2 AND drv.operating_company_id = l.operating_company_id
+      JOIN mdata.drivers drv ON drv.id = $2
+                              AND drv.archived_at IS NULL
+                              AND (drv.operating_company_id = l.operating_company_id OR EXISTS (
+                                SELECT 1 FROM mdata.driver_company_authorizations dispatch_view_dca
+                                WHERE dispatch_view_dca.driver_id = drv.id
+                                  AND dispatch_view_dca.company_id = l.operating_company_id
+                                  AND dispatch_view_dca.is_authorized = true
+                                  AND dispatch_view_dca.deactivated_at IS NULL
+                              ))
       LEFT JOIN LATERAL (
         SELECT s.site_contact_name, s.site_contact_phone
         FROM mdata.load_stops s
