@@ -1,11 +1,11 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**REJECT IDLE. U14 exclusive unchanged. CLASS-F5973 landed #14509.**
+**REJECT IDLE. Jorge restarting Chrome — this seat opens `/banking/transactions` once after restart.**
+
+Live API `healthz` **`ffc938b`**. BANK-F07 merged; live DesignView chunk still `entityLabel` until web deploy `4e4bc2f` finishes.
 
 CURRENT MODULE: **banking**  
-NOW: Categorized Restante hop — matched TEST expense UUID `7219e2ef-ec00-4132-9409-f447b512d43c` must drill as **Expense** (not "Expense — not visible"). Then continue Fully-Wired 1–12 Live Chrome. **CERTIFIED only when live `healthz/shallow` version matches the hops.** Do not drain For-review. Do not Close period with 0 sessions.
-
-THEN only after banking CERTIFIED: dispatch leftover (no remake Book Load) → vendors → maint → safety → insurance.
+NOW: All dates + Restante → Categorized → matched TEST expense `7219e2ef-ec00-4132-9409-f447b512d43c` must read **Expense** (not tombstone) and the in-row link must click (td intercept is remaining). Then continue 1–12 Live Chrome. Do not drain For-review. Do not Close period with 0 sessions.
 
 FORBIDDEN: another seat’s prefix · remake Accounting TESTs · CC deploy.
 
