@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch"],"cols":["driver"],"leafRe":"^(home\\.(overview|kanban|list|round_trips)|secondary\\.(book_load|assignments|pre_settlements))$","task":"LINK-F5168-DISPATCH-DRIVER-HOME-SECONDARY"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver"],"leafRe":"^queues\\.(at_risk|detention|border|border_history|late|trip_pairing|in_transit)$","task":"LINK-F5168-DISPATCH-DRIVER-QUEUES"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["queues.at_risk"],"task":"DRV-F6204-AT-RISK-SHARED-DRIVER-LABEL","vertical":"column-wave"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver"],"leafRe":"^planning\\.(timeline|driver|truck|calendar|unassigned|reserve)$","task":"LINK-F5168-DISPATCH-DRIVER-PLANNERS"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver"],"leafRe":"^(docs\\.(pod|equipment_transfers)|misc\\.(trip_profit|layover))$","task":"LINK-F5168-DISPATCH-DRIVER-DOCS-MISC"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver"],"leafRe":"^load\\.(detail|drawer\\.(overview|settlement))$","task":"LINK-F5168-DISPATCH-DRIVER-LOAD"} */
@@ -36,6 +37,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", /kind="driver" id=\{row\.previous_driver_id\}/],
   ["apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx", /kind="driver" id=\{load\.driver_id\}/],
+  ["apps/backend/src/dispatch/arch-tabs.service.ts", /FROM mdata\.driver_company_authorizations at_risk_driver_dca[\s\S]{0,180}at_risk_driver_dca\.driver_id = d\.id[\s\S]{0,140}at_risk_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}at_risk_driver_dca\.is_authorized = true[\s\S]{0,140}at_risk_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx", /kind="driver" id=\{event\.driver_id\}/],
   ["apps/backend/src/dispatch/detention.service.ts", /FROM mdata\.driver_company_authorizations detention_board_driver_dca[\s\S]{0,180}detention_board_driver_dca\.driver_id = d\.id[\s\S]{0,140}detention_board_driver_dca\.company_id = de\.operating_company_id[\s\S]{0,140}detention_board_driver_dca\.is_authorized = true[\s\S]{0,140}detention_board_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/components/border-crossing/WizardStep1.tsx", /kind="driver"/],
