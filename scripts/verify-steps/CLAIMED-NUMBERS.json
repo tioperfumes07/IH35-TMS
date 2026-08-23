@@ -1,4 +1,9 @@
 {
+  "4517": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-create-advance-modal-error-state"
+  },
   "4513": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5583,5 +5588,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1255
+  "total_claimed": 1256
 }
