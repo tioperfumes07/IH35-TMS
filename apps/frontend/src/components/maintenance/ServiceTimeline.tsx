@@ -4,6 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { titleize } from "../../lib/titleize";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { ListErrorState } from "../ListErrorState";
 import {
   getMaintenanceServiceTimeline,
   type ServiceTimelineEvent,
@@ -106,7 +107,11 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
       </div>
       {timelineQ.isLoading ? <p className="mt-3 text-xs text-gray-500">Loading service history…</p> : null}
       {timelineQ.isError ? (
-        <p className="mt-3 text-xs text-red-600">Unable to load service history.</p>
+        <ListErrorState
+          status={0}
+          message="Unable to load service history."
+          onRetry={() => void timelineQ.refetch()}
+        />
       ) : (
         <ul className="mt-3 space-y-2">
           {events.length === 0 ? (
