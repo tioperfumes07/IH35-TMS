@@ -75,6 +75,10 @@ export function checkAll(sources) {
       offenders.push(`${check.file}: ${check.label} — ADMIN-ACTIVITY-F1 regression shape`);
     }
   }
+  const expenseMap = sources["apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx"] ?? "";
+  if (/render:\s*\(row\)\s*=>\s*\(\s*\{\/\*/.test(expenseMap)) {
+    offenders.push("ExpenseCategoryMapPage: JSX comment cannot be the bare first child of render parentheses — ADMIN-ACTIVITY-F1 parse regression shape");
+  }
   return offenders;
 }
 
@@ -112,12 +116,17 @@ if (process.argv.includes("--selftest")) {
 
   const buggyFails = checkAll(buggy).length > 0;
   const fixedPasses = checkAll(fixed).length === 0;
+  const parseBug = {
+    ...fixed,
+    "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx": `render: (row) => ({/* invalid bare JSX comment */}<Link to={\`/admin/activity?action=expense_category_map_change&entity_id=\${encodeURIComponent(row.id)}\`}>View audit</Link>)`,
+  };
+  const parseBugFails = checkAll(parseBug).some((failure) => failure.includes("parse regression"));
 
-  if (buggyFails && fixedPasses) {
+  if (buggyFails && fixedPasses && parseBugFails) {
     console.log("verify:admin-activity-log-reads-url-filters selftest OK");
     process.exit(0);
   }
-  console.error("verify:admin-activity-log-reads-url-filters selftest FAILED", { buggyFails, fixedPasses, buggyOffenders: checkAll(buggy), fixedOffenders: checkAll(fixed) });
+  console.error("verify:admin-activity-log-reads-url-filters selftest FAILED", { buggyFails, fixedPasses, parseBugFails, buggyOffenders: checkAll(buggy), fixedOffenders: checkAll(fixed) });
   process.exit(1);
 }
 
