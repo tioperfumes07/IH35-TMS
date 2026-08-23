@@ -19,6 +19,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /kind="driver"[\s\S]{0,20}id=\{r\.primary_driver_id\}/],
   ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/reports/GeofenceDwellReport.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
+  ["apps/backend/src/reports/geofence-dwell.routes.ts", /driver_company_authorizations geofence_dwell_driver_dca[\s\S]{0,360}geofence_dwell_driver_dca\.driver_id = d\.id[\s\S]{0,180}geofence_dwell_driver_dca\.company_id = o\.operating_company_id[\s\S]{0,180}geofence_dwell_driver_dca\.is_authorized = true[\s\S]{0,180}geofence_dwell_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/reports/runners/runner-config.ts", /\{ type: "driver_select", key: "driver_id", label: "Driver", required: true \}/],
 ];
 
