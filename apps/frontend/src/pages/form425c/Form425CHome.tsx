@@ -443,7 +443,20 @@ export function Form425CHome() {
       ) : null}
 
       {tab === "merge" ? (
-        <MergeExportTab company={profiles[activeCompany]} month={month} year={year} canGenerate={Boolean(form.reportId)} generating={generateMutation.isPending} onGenerate={() => generateMutation.mutate()} />
+        <MergeExportTab
+          company={profiles[activeCompany]}
+          month={month}
+          year={year}
+          canGenerate={Boolean(form.reportId)}
+          generating={generateMutation.isPending}
+          onGenerate={() => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before generating the filing package", "error");
+              return;
+            }
+            generateMutation.mutate();
+          }}
+        />
       ) : null}
 
       {tab === "history" ? (
