@@ -842,7 +842,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
-        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
         [parsedParams.data.id, resolvedOperatingCompanyId]
       );
       return res.rows[0] ?? null;
@@ -880,9 +880,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             -- D1-4: forward drill-through — the parent's name (when this is a sub-customer).
             (
               SELECT p.customer_name
-              FROM mdata.customers p
-              WHERE p.id = c.parent_customer_id
-                AND p.operating_company_id = c.operating_company_id
+              FROM mdata.get_customer_same_company(c.parent_customer_id, c.operating_company_id) p
               LIMIT 1
             ) AS parent_customer_name,
             -- D1-4: reverse drill-through — every sub-customer that links back to this parent.
@@ -925,9 +923,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               WHERE cc.customer_uuid = c.id
                 AND cc.deactivated_at IS NULL
             ), '[]'::json) AS contacts
-          FROM mdata.customers c
-          WHERE c.id = $1
-            AND c.operating_company_id = $2::uuid
+          FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c
           LIMIT 1
         `,
         [parsedParams.data.id, resolvedOperatingCompanyId]
@@ -1285,7 +1281,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]
       );
       if (customerRes.rows.length === 0) return undefined;
