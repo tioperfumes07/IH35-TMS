@@ -23,6 +23,17 @@ export async function registerUnitDocumentsRoutes(app: FastifyInstance) {
 
     const documents = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      // FLEET-F6118: child-only docs lookup returned documents:[] for unknown/other-company units.
+      // Prove the unit is owned or currently leased by this company before reporting true zero docs.
+      const unit = await client.query(
+        `SELECT 1
+           FROM mdata.units
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (unit.rowCount === 0) return null;
       const res = await client.query(
         `
           SELECT
@@ -48,6 +59,7 @@ export async function registerUnitDocumentsRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
+    if (documents === null) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return { documents };
   });
 }
