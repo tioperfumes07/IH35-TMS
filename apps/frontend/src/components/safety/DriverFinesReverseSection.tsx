@@ -1,5 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { getSafetyFines, getInternalFines } from "../../api/safety";
 import { EntityLink } from "../shared/EntityLink";
 
@@ -61,8 +62,8 @@ export function DriverFinesReverseSection({
       </p>
 
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {civilFailed ? <p className="text-sm text-red-600">Failed to load civil fines.</p> : null}
-      {internalFailed ? <p className="text-sm text-red-600">Failed to load internal fines.</p> : null}
+      {civilFailed ? <ListErrorState status={0} message="Failed to load civil fines." onRetry={() => void civilQuery.refetch()} /> : null}
+      {internalFailed ? <ListErrorState status={0} message="Failed to load internal fines." onRetry={() => void internalQuery.refetch()} /> : null}
       {!isLoading && !civilFailed && !internalFailed && total === 0 ? (
         <p className="text-sm text-gray-500">No fines linked to this driver.</p>
       ) : null}

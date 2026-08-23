@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { listDriverReports } from "../../api/maintenance";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -18,7 +19,7 @@ export function DriverReportsReverseSection({ operatingCompanyId, driverId }: { 
         <EntityLink kind="driver_reports_driver" id={driverId} label="Open report queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading driver reports…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load reports for this driver.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Could not load reports for this driver." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No reports submitted by this driver.</p> : null}
       {totalCount > rows.length ? <p className="text-xs text-slate-500">Showing {rows.length} of {totalCount}. Open report queue to view all.</p> : null}
       {rows.length > 0 ? (

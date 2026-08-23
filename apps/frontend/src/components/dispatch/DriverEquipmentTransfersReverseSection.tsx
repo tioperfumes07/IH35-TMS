@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../ListErrorState";
 import { apiRequest } from "../../api/client";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
@@ -29,7 +30,7 @@ export function DriverEquipmentTransfersReverseSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="text-sm font-semibold text-gray-800">Equipment transfer history</h3>
-      {query.isError ? <p className="mt-2 text-sm text-red-700">Equipment transfer history could not be loaded.</p> : null}
+      {query.isError ? <ListErrorState status={0} message="Equipment transfer history could not be loaded." onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading equipment transfer history…</p> : null}
       {!query.isLoading && !query.isError && (query.data?.requests ?? []).length === 0 ? (
         <p className="mt-2 text-sm text-gray-500">No equipment transfers are linked to this driver.</p>
