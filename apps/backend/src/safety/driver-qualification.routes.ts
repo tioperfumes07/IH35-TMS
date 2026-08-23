@@ -152,7 +152,16 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const driver = await client.query(
-        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM mdata.drivers d
+         WHERE d.id = $1::uuid
+           AND (d.operating_company_id = $2::uuid OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations qualification_create_driver_dca
+             WHERE qualification_create_driver_dca.driver_id = d.id
+               AND qualification_create_driver_dca.company_id = $2::uuid
+               AND qualification_create_driver_dca.is_authorized = true
+               AND qualification_create_driver_dca.deactivated_at IS NULL
+           ))
+         LIMIT 1`,
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;

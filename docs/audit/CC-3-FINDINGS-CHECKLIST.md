@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6249-SAFETY-CREDENTIAL-CREATORS-REJECT-AUTHORIZED-SHARED-DRIVERS` — Codex vertical driver-column sweep — FIXED this PR across training, medical card, background check, and qualification creators; all now match their canonical authorized-driver reads and reverse surfaces.
+
 - ☑ `DRV-F6248-CIVIL-FINE-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; Civil Fine creator now uses the same home-or-active-authorization driver eligibility as list/filter/detail; vertical safety guard mutation-proves it.
 
 - ☑ `DRV-F6247-SAFETY-EVENT-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; Safety Event creator now uses the same home-or-active-authorization driver eligibility as list/detail labels; vertical safety guard mutation-proves it.
