@@ -14,6 +14,7 @@ import { CustomerDrillModal } from "../../components/customers/CustomerDrillModa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { ListErrorState } from "../../components/ListErrorState";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -197,6 +198,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
 
   return (
     <div className="space-y-2" data-customers-list-view="true" data-bulk-selectable="true" data-entity-type="customers">
+      {atRiskQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load customer relationship health"
+          status={0}
+          message={(atRiskQuery.error as Error)?.message}
+          onRetry={() => void atRiskQuery.refetch()}
+        />
+      ) : null}
       <ParityTable<CustomerRow>
         key={tableResetKey}
         rows={enrichedRows}
