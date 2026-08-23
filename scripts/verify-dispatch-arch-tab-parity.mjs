@@ -52,6 +52,12 @@ const contracts = [
   ["in-transit API route", "routes", hasAll("/api/v1/dispatch/intransit-issues"), remove("/api/v1/dispatch/intransit-issues")],
   ["assignment-history API route", "routes", hasAll("/api/v1/dispatch/assignment-history"), remove("/api/v1/dispatch/assignment-history")],
   ["assignment-history canonical service table", "service", hasAll("dispatch.load_assignment_history"), remove("dispatch.load_assignment_history")],
+  [
+    "in-transit authorized shared-driver label",
+    "service",
+    matches(/FROM mdata\.driver_company_authorizations intransit_issue_driver_dca[\s\S]{0,180}intransit_issue_driver_dca\.driver_id = d\.id[\s\S]{0,140}intransit_issue_driver_dca\.company_id = i\.operating_company_id[\s\S]{0,140}intransit_issue_driver_dca\.is_authorized = true[\s\S]{0,140}intransit_issue_driver_dca\.deactivated_at IS NULL/),
+    remove("intransit_issue_driver_dca.is_authorized = true"),
+  ],
   ["backend route registration", "index", hasAll("registerDispatchArchTabsRoutes"), remove("registerDispatchArchTabsRoutes")],
   ["at-risk mounted manifest route", "manifest", hasAll('path="/dispatch/at-risk"'), remove('path="/dispatch/at-risk"')],
   ["in-transit mounted manifest route", "manifest", hasAll('path="/dispatch/in-transit-issues"'), remove('path="/dispatch/in-transit-issues"')],
