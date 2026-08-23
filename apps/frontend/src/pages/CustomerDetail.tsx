@@ -1346,13 +1346,21 @@ export function CustomerDetailPage() {
           <DataPanel title="Payment Terms">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Assigned term</label>
+              {paymentTermsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load payment terms"
+                  status={0}
+                  message={paymentTermsQuery.error instanceof Error ? paymentTermsQuery.error.message : undefined}
+                  onRetry={() => void paymentTermsQuery.refetch()}
+                />
+              ) : null}
               <ReferenceSelect
                 value={hydratedForm.payment_terms_id || null}
                 onChange={(nextValue) => setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }))}
                 options={paymentTermOptions}
                 createKind="payment_term"
                 operatingCompanyId={operatingCompanyId ?? ""}
-                disabled={!editMode}
+                disabled={!editMode || paymentTermsQuery.isError}
                 placeholder="Select terms"
                 onOptionCreated={() => void paymentTermsQuery.refetch()}
               />
