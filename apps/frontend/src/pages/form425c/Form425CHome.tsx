@@ -300,7 +300,10 @@ export function Form425CHome() {
     onSuccess: async (res) => {
       const printHtml = res.print_html || buildPrintHTML(form, profiles[activeCompany], month, year);
       const w = window.open("", "_blank");
-      if (!w) return;
+      if (!w) {
+        pushToast("Popup blocked — allow popups to print the filing PDF", "error");
+        return;
+      }
       w.document.write(printHtml);
       w.document.close();
       setTimeout(() => w.print(), 600);

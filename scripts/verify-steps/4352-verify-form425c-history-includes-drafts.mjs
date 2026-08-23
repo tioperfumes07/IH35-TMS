@@ -3,5 +3,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-form425c-history-includes-drafts.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-form425c-history-includes-drafts.mjs"]);
+    ctx.run("node", ["scripts/verify-form-425c-print-popup-blocked.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-form-425c-print-popup-blocked.mjs"]);
   },
 };
