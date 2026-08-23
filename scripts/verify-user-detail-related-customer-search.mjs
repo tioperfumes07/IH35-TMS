@@ -63,10 +63,22 @@ export function collectProblems(root = ROOT) {
     for (const [table, alias, id] of [
       ["loads", "rl", "related_load_id"],
       ["customers", "rc", "related_customer_id"],
-      ["drivers", "rd", "related_driver_id"],
     ]) {
       const join = new RegExp(`LEFT JOIN\\s+mdata\\.${table}\\s+${alias}\\s+ON\\s+${alias}\\.id\\s*=\\s*e\\.${id}\\s+AND\\s+${alias}\\.operating_company_id\\s*=\\s*\\$2`);
       if (!join.test(route)) problems.push(`${ROUTE}: ${id} label join must be explicitly company-scoped`);
+    }
+    // Shared drivers are valid for the selected company when they have an active
+    // driver_company_authorizations row. Require that canonical scope predicate on
+    // both the user-detail ($2) and reverse-list ($1) reads; direct ownership alone
+    // would incorrectly hide authorized shared drivers.
+    for (const [label, parameter, authorizationAlias] of [
+      ["user detail", "2", "dispatcher_user_dca"],
+      ["reverse list", "1", "dispatcher_reverse_dca"],
+    ]) {
+      const driverJoin = new RegExp(
+        `LEFT JOIN\\s+mdata\\.drivers\\s+rd\\s+ON\\s+rd\\.id\\s*=\\s*e\\.related_driver_id\\s+AND\\s+\\(rd\\.operating_company_id\\s*=\\s*\\$${parameter}::uuid\\s+OR\\s+EXISTS\\s*\\([\\s\\S]{0,500}FROM\\s+mdata\\.driver_company_authorizations\\s+${authorizationAlias}[\\s\\S]{0,300}${authorizationAlias}\\.company_id\\s*=\\s*\\$${parameter}::uuid[\\s\\S]{0,200}${authorizationAlias}\\.is_authorized\\s*=\\s*true[\\s\\S]{0,200}${authorizationAlias}\\.deactivated_at\\s+IS\\s+NULL`
+      );
+      if (!driverJoin.test(route)) problems.push(`${ROUTE}: related_driver_id ${label} label join must be selected-company owned or actively authorized`);
     }
     if (!/app\.get\(["']\/api\/v1\/mdata\/dispatcher-safety-events["']/.test(route)) {
       problems.push(`${ROUTE}: reverse route is not mounted`);
@@ -106,6 +118,8 @@ if (process.argv.includes("--selftest")) {
     const mutations = [
       [FILE, "related_load_id: enableRelated ? relatedLoadId ?? undefined : undefined", "related_load_id: undefined"],
       [ROUTE, "rl.operating_company_id = $2", "TRUE"],
+      [ROUTE, "dispatcher_user_dca.company_id = $2::uuid", "dispatcher_user_dca.company_id IS NOT NULL"],
+      [ROUTE, "dispatcher_reverse_dca.company_id = $1::uuid", "dispatcher_reverse_dca.company_id IS NOT NULL"],
       [ROUTE, 'app.get("/api/v1/mdata/dispatcher-safety-events"', 'app.get("/api/v1/mdata/disabled-dispatcher-events"'],
       [REVERSE, 'kind="user"', 'kind="load"'],
       [REVERSE, "formatUsd(event.cost_amount)", '"hidden"'],
@@ -126,7 +140,7 @@ if (process.argv.includes("--selftest")) {
       fs.writeFileSync(target, original);
     }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
-  console.log(LABEL, "SELFTEST OK (6/6 mutations killed)");
+  console.log(LABEL, "SELFTEST OK (8/8 mutations killed)");
 } else {
   const problems = collectProblems();
   if (problems.length) { console.error(LABEL, problems); process.exit(1); }
