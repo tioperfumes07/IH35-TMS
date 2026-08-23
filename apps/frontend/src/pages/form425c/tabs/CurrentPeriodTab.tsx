@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useToast } from "../../../components/Toast";
 
 type Props = {
   activeCompany: CompanyKey;
@@ -44,6 +45,7 @@ export function CurrentPeriodTab({
   loading,
   autoSaveLabel,
 }: Props) {
+  const { pushToast } = useToast();
   const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
   const cashEnd = nv(form.openingBalance) + netCash;
   const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
@@ -272,7 +274,16 @@ export function CurrentPeriodTab({
             <input
               type="checkbox"
               checked={Boolean((form as unknown as Record<string, boolean>)[key])}
-              onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.checked }))}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  pushToast(
+                    "Lines 38–42 need a file on the report — checking the box does not attach a document",
+                    "error",
+                  );
+                  return;
+                }
+                setForm((prev) => ({ ...prev, [key]: false }));
+              }}
             />
             <span>{label}</span>
           </label>
