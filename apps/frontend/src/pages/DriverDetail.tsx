@@ -519,7 +519,7 @@ export function DriverDetailPage() {
       driverId: string;
       qualificationId: string;
       body: Parameters<typeof changeDriverQualificationRate>[2];
-    }) => changeDriverQualificationRate(driverId, qualificationId, body),
+    }) => changeDriverQualificationRate(driverId, qualificationId, body, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       queryClient.invalidateQueries({ queryKey: ["driver-rate-history", id, selectedQualificationId, selectedLineItemId] });
@@ -531,7 +531,7 @@ export function DriverDetailPage() {
 
   const reactivateQualificationMutation = useMutation({
     mutationFn: ({ driverId, qualificationId }: { driverId: string; qualificationId: string }) =>
-      reactivateQualification(driverId, qualificationId),
+      reactivateQualification(driverId, qualificationId, companyId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       const restoredCount = result.qualification.rates_restored.length;
