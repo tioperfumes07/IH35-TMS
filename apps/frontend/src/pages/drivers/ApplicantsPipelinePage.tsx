@@ -143,6 +143,14 @@ export function ApplicantsPipelinePage() {
       />
 
       {applicantsQ.isLoading ? <p className="text-sm text-gray-500">Loading applicants…</p> : null}
+      {portalQ.isError ? (
+        <ListErrorState
+          title="Couldn't load applicant portal link"
+          status={0}
+          message={(portalQ.error as Error)?.message}
+          onRetry={() => void portalQ.refetch()}
+        />
+      ) : null}
       {applicantsQ.isError ? (
         <ListErrorState title="Couldn't load applicants" status={0} message={(applicantsQ.error as Error)?.message} onRetry={() => void applicantsQ.refetch()} />
       ) : null}
