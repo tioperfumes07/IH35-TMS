@@ -110,6 +110,7 @@ if (dualTest && !/INSERT INTO mdata\.equipment_log/.test(dualTest)) {
 }
 
 const logRoutes = read("apps/backend/src/mdata/equipment-log.routes.ts");
+const transferRoutes = read("apps/backend/src/mdata/equipment-transfer.routes.ts");
 function auditDetailReadScope(source) {
   const detail = source.slice(source.indexOf('app.get("/api/v1/mdata/equipment-log/:id"'));
   const detailFailures = [];
@@ -126,6 +127,22 @@ function auditDetailReadScope(source) {
 }
 
 for (const detailFailure of auditDetailReadScope(logRoutes)) fail(detailFailure);
+
+function auditPendingPwaScope(source) {
+  const start = source.indexOf('app.get("/api/v1/driver-pwa/my-pending-transfers"');
+  const end = source.indexOf('app.post("/api/v1/driver-pwa/transfers/', start);
+  const route = source.slice(start, end);
+  const routeFailures = [];
+  if (!/const operatingCompanyId = await resolveOperatingCompanyForUser\(user\.uuid\)/.test(route)) {
+    routeFailures.push("pending PWA transfer GET must resolve the driver's company");
+  }
+  if (!/listTransfers\(user\.uuid, \{[\s\S]{0,120}operating_company_id: operatingCompanyId,[\s\S]{0,120}to_driver_id: driverId/.test(route)) {
+    routeFailures.push("pending PWA transfer GET must bind company and driver to the list query");
+  }
+  return routeFailures;
+}
+
+for (const routeFailure of auditPendingPwaScope(transferRoutes)) fail(routeFailure);
 
 if (process.argv.includes("--selftest")) {
   if (failures.length > 0) {
@@ -153,7 +170,21 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
-  console.log(`verify-equipment-transfer-writes-equipment-log SELFTEST PASS — ${caught}/3 detail-scope mutations detected`);
+  for (const [name, pattern] of [
+    ["pending-company-resolver", /const operatingCompanyId = await resolveOperatingCompanyForUser\(user\.uuid\)/],
+    ["pending-company-bind", /operating_company_id: operatingCompanyId,/],
+  ]) {
+    const start = transferRoutes.indexOf('app.get("/api/v1/driver-pwa/my-pending-transfers"');
+    const prefix = transferRoutes.slice(0, start);
+    const route = transferRoutes.slice(start);
+    const mutatedRoute = route.replace(pattern, "REMOVED");
+    if (mutatedRoute === route || auditPendingPwaScope(prefix + mutatedRoute).length === 0) {
+      console.error(`verify-equipment-transfer-writes-equipment-log SELFTEST FAIL — ${name} mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  console.log(`verify-equipment-transfer-writes-equipment-log SELFTEST PASS — ${caught}/5 scope mutations detected`);
   process.exit(0);
 }
 
