@@ -1273,9 +1273,11 @@ export function reactivateCustomer(id: string) {
   return updateCustomer(id, { deactivated_at: null });
 }
 
-export function getCustomerDetail(id: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
-  return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail${query}`);
+export function getCustomerDetail(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ customer: CustomerDetailFull }>(
+    `/api/v1/mdata/customers/${id}/detail?${query.toString()}`
+  );
 }
 
 export type CustomerFinancialSummary = {
