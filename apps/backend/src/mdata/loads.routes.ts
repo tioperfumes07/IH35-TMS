@@ -761,7 +761,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) tr ON true
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.operating_company_id = l.operating_company_id
+                                   AND d.archived_at IS NULL
+                                   AND (d.operating_company_id = l.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations load_list_rows_dca
+                                      WHERE load_list_rows_dca.driver_id = d.id
+                                        AND load_list_rows_dca.company_id = l.operating_company_id
+                                        AND load_list_rows_dca.is_authorized = true
+                                        AND load_list_rows_dca.deactivated_at IS NULL
+                                   ))
           JOIN catalogs.dispatch_flag_colors df ON df.id = l.dispatch_flag_color_id
                                                 AND df.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
