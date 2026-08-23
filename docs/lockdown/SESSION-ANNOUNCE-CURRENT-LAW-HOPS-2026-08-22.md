@@ -39,7 +39,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | dispatch | `/dispatch` leftover unique 500/dead/silent (do **not** remake Book Load). Then `/vendors` leftover unique → maint → safety → insurance. Banking **omit** (CERTIFIED LIVE_SHA=36e51bb) |
+| Cursor | 9222 | vendors | `/vendors` leftover unique 500/dead/silent Fully-Wired **1–12**. Dispatch **omit** (CERTIFIED LIVE_SHA=39472f2). Banking **omit** (CERTIFIED LIVE_SHA=36e51bb). Then maint → safety → insurance |
 | CC-1 | 9223 | accounting | UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Fully-Wired **1–12** Live Chrome on `/accounting` (do not remake TESTs). Then `/factoring` same bar. HOLD forbidden |
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
 | CC-3 | 9225 | lists | Legal unique-FINDING-CLEAN ≠ CERTIFIED until API healthz matches hops. NOW `/lists` 1–12 Live Chrome. No 25min wait. No `trigger_deploy` |
