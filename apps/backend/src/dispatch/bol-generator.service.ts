@@ -143,7 +143,13 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
                              AND c.operating_company_id = $2::uuid
       JOIN org.companies comp ON comp.id = l.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                AND d.operating_company_id = $2::uuid
+                                AND (d.operating_company_id = $2::uuid OR EXISTS (
+                                  SELECT 1 FROM mdata.driver_company_authorizations bol_driver_dca
+                                   WHERE bol_driver_dca.driver_id = d.id
+                                     AND bol_driver_dca.company_id = $2::uuid
+                                     AND bol_driver_dca.is_authorized = true
+                                     AND bol_driver_dca.deactivated_at IS NULL
+                                ))
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       -- Most recent crossing for THIS load, entity-scoped like every other join here so a commodity
