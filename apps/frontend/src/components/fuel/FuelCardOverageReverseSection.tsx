@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -27,7 +28,16 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
           <EntityLink kind="fuel_card_overage_unit" id={filter.unit_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
         )}
       </div>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Fuel card overages unavailable.</p> : null}
+      {query.isError ? (
+        <div className="mt-2">
+          <ListErrorState
+            title="Couldn't load fuel card overages"
+            status={0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        </div>
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="mt-2 text-xs text-gray-500">No fuel card overages.</p> : null}
       {totalCount > visibleEvents.length ? (
