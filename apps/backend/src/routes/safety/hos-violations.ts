@@ -103,7 +103,13 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           FROM safety.hos_violations hv
           LEFT JOIN mdata.drivers d
             ON d.id = hv.driver_id
-           AND d.operating_company_id = hv.operating_company_id
+           AND (d.operating_company_id = hv.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations hos_violations_list_dca
+             WHERE hos_violations_list_dca.driver_id = d.id
+               AND hos_violations_list_dca.company_id = hv.operating_company_id
+               AND hos_violations_list_dca.is_authorized = true
+               AND hos_violations_list_dca.deactivated_at IS NULL
+           ))
           LEFT JOIN mdata.loads l
             ON l.id = hv.related_load_id
            AND l.operating_company_id = hv.operating_company_id
