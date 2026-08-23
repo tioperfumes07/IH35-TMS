@@ -9,8 +9,9 @@ const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const listQuerySchema = z.object({
   is_active: z.enum(["true", "false"]).optional(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
+const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 const replaceDriverParamsSchema = z.object({ id: z.string().uuid() });
@@ -192,11 +193,13 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const team = await withCurrentUser(user.uuid, async (client) => {
-      // Entity scope (USMCA cross-entity leak fix): a by-id team read must not cross operating
-      // companies. Scope to the user's current company.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+      // Bind the exact company selected by the caller. Falling back to the user's default company
+      // makes a valid team opened after an entity switch look missing (or resolves the wrong entity).
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
