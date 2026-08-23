@@ -101,6 +101,7 @@ export function useRoadServiceTickets(filters?: { status?: RoadServiceStatus; un
     tickets: listQuery.data?.tickets ?? [],
     isLoading: listQuery.isLoading,
     isError: listQuery.isError,
+    refetch: listQuery.refetch,
     createTicket,
     completeTicket,
     createWo,

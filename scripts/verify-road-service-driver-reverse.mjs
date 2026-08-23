@@ -56,7 +56,7 @@ function audit(s) {
     failures.push("bill label join must be entity-scoped");
   }
   if (!/bill_number\?: string \| null/.test(s.hook)) failures.push("ticket response type must expose bill label");
-  if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/<ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
+  if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/refetch:\s*listQuery\.refetch/.test(s.hook) || !/<ListErrorBanner[\s\S]{0,180}onRetry=\{\(\) => void refetch\(\)\}/.test(s.section)) failures.push("reverse section must expose retryable query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
   for (const kind of ["unit", "driver", "vendor"]) {
     if (!new RegExp(`<EntityLink(?:OrTombstone)?[^>]+kind=["']${kind}["']`).test(s.list)) failures.push(`ticket list must use canonical EntityLink kind=${kind}`);
@@ -124,6 +124,7 @@ if (process.argv.includes("--selftest")) {
     ["bill response label", { ...source, hook: source.hook.replace("bill_number?: string | null", "bill_label_missing?: string | null") }],
     ["reverse errors", { ...source, hook: source.hook.replace("isError: listQuery.isError", "isError: false") }],
     ["reverse error surface", { ...source, section: source.section.replace("<ListErrorBanner", "<MissingErrorBanner") }],
+    ["reverse retry", { ...source, section: source.section.replace("refetch()", "retryRemoved()") }],
     ["deep-link highlight", { ...source, list: source.list.replace("highlightedTicketId === row.id", "false") }],
   ];
   for (const [name, changed] of mutations) {
