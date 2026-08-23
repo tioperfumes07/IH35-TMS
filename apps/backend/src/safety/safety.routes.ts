@@ -377,9 +377,30 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = trainingCompletionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // CLS-UUID-LABEL: no driver join — TrainingRecordsPage's EntityLink rendered tr.driver_id
       // as a raw full uuid with no label (same class fixed on accidents/dot_inspections/internal_fines).
+      if (query.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+           FROM mdata.drivers d
+           WHERE d.id = $1::uuid
+             AND d.archived_at IS NULL
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
+          [query.data.driver_id, query.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false as const, rows: [] };
+      }
       const values: unknown[] = [query.data.operating_company_id];
       const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
       if (query.data.driver_id) values.push(query.data.driver_id);
@@ -391,18 +412,27 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             FROM safety.training_records tr
             LEFT JOIN mdata.drivers d
               ON d.id = tr.driver_id
-             AND d.operating_company_id = tr.operating_company_id
+             AND (
+               d.operating_company_id = tr.operating_company_id
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                 WHERE label_dca.driver_id = d.id
+                   AND label_dca.company_id = tr.operating_company_id
+                   AND label_dca.is_authorized = true
+                   AND label_dca.deactivated_at IS NULL
+               )
+             )
             WHERE tr.operating_company_id = $1::uuid
               ${driverFilter}
             ORDER BY tr.completed_at DESC
             LIMIT 500
           `,
           values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows;
+        );
+      return { found: true as const, rows: res.rows };
     });
-    return { training_completions: rows };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { training_completions: result.rows };
   });
 
   app.get("/api/v1/safety/drug-alcohol/tests", async (req, reply) => {
