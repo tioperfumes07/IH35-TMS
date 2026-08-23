@@ -58,6 +58,9 @@ function audit(hosSrc, eldSrc, driverHosSrc, driverHosApiSrc, driverHosRouteSrc,
   if (!/<EntityLinkOrTombstone[\s\S]{0,120}kind=["']unit["'][\s\S]{0,100}id=\{event\.unit_id\}[\s\S]{0,100}name=\{event\.unit_number\}/.test(driverHosSrc)) {
     failures.push(`${DRIVER_HOS}: timeline unit must tombstone-safe drill by event.unit_id with human unit_number`);
   }
+  if (!/driverQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void driverQuery\.refetch\(\)\}/.test(driverHosSrc)) {
+    failures.push(`${DRIVER_HOS}: driver identity GET failure must be visible and retryable without suppressing HOS data`);
+  }
   return failures;
 }
 
@@ -88,6 +91,7 @@ if (process.argv.includes("--selftest")) {
     ["producer-label", driverHosRoute.replace(/u\.unit_number,/, "NULL::text AS unit_number,")],
     ["producer-scope", driverHosRoute.replace(/COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = e\.operating_company_id/, "TRUE")],
     ["mounted-route", routes.replace(/<DriverHosDetailPage\s*\/>/, "<div />")],
+    ["identity-error", driverHos.replace(/onRetry=\{\(\) => void driverQuery\.refetch\(\)\}/, "onRetry={undefined}")],
   ];
   for (const [name, mutated] of mutations) {
     const sources = { driverHos, driverHosRoute, routes, [name === "producer-label" || name === "producer-scope" ? "driverHosRoute" : name === "mounted-route" ? "routes" : "driverHos"]: mutated };
@@ -96,7 +100,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest OK — 7 planted regressions caught`);
+  console.log(`${LABEL} --selftest OK — 8 planted regressions caught`);
   process.exit(0);
 }
 
