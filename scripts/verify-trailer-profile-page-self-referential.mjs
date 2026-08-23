@@ -18,6 +18,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx";
+const ROUTE_FILE = "apps/backend/src/mdata/equipment.routes.ts";
+const PDF_FILE = "apps/backend/src/mdata/equipment-pdf-export.routes.ts";
 const LABEL = "verify-trailer-profile-page-self-referential";
 
 const SECTION_CHECKS = [
@@ -39,29 +41,63 @@ const SECTION_CHECKS = [
   ["edit", /<EditTrailerModal[\s\S]{0,200}open=\{editModalOpen\}/],
 ];
 
-export function audit(src) {
+export function audit(src, routeSrc, pdfSrc) {
   const failures = [];
   for (const [name, pattern] of SECTION_CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} section is missing its self-referential trailer scoping`);
   }
+  if (!/const scopedCompanyId = await resolveOperatingCompanyId\([\s\S]{0,180}authUser\.uuid,[\s\S]{0,120}parsedAggregateQuery\.data\.operating_company_id[\s\S]{0,160}buildEquipmentAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(routeSrc)) {
+    failures.push(`${ROUTE_FILE}: trailer aggregate GET must resolve caller membership before selecting aggregate scope`);
+  }
+  if (!/const scopedCompanyId = await resolveOperatingCompanyId\([\s\S]{0,180}user\.uuid,[\s\S]{0,120}query\.data\.operating_company_id[\s\S]{0,180}buildEquipmentAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(pdfSrc)) {
+    failures.push(`${PDF_FILE}: trailer PDF GET must resolve caller membership before selecting aggregate scope`);
+  }
   return failures;
 }
 
+function sources() {
+  return {
+    page: fs.readFileSync(path.join(ROOT, FILE), "utf8"),
+    route: fs.readFileSync(path.join(ROOT, ROUTE_FILE), "utf8"),
+    pdf: fs.readFileSync(path.join(ROOT, PDF_FILE), "utf8"),
+  };
+}
+
 if (process.argv.includes("--selftest")) {
-  const good = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-  if (audit(good).length) {
-    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good).join("\n- ")}`);
+  const good = sources();
+  if (audit(good.page, good.route, good.pdf).length) {
+    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good.page, good.route, good.pdf).join("\n- ")}`);
     process.exit(1);
   }
   let caught = 0;
   for (const [name, pattern] of SECTION_CHECKS) {
-    const mutated = good.replace(pattern, "REMOVED");
-    if (mutated === good) {
+    const mutated = good.page.replace(pattern, "REMOVED");
+    if (mutated === good.page) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: pattern did not match source, re-anchor`);
       process.exit(1);
     }
-    const failures = audit(mutated);
+    const failures = audit(mutated, good.route, good.pdf);
     if (!failures.some((f) => f.includes(name))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name}: mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const [name, key, pattern] of [
+    ["aggregate-membership", "route", /parsedAggregateQuery\.data\.operating_company_id\n\s*\);/],
+    ["pdf-membership", "pdf", /query\.data\.operating_company_id\n\s*\);/],
+  ]) {
+    const mutated = good[key].replace(pattern, "undefined\n        );");
+    if (mutated === good[key]) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name}: pattern did not match source, re-anchor`);
+      process.exit(1);
+    }
+    const failures = audit(
+      good.page,
+      key === "route" ? mutated : good.route,
+      key === "pdf" ? mutated : good.pdf
+    );
+    if (!failures.some((f) => f.includes("resolve caller membership"))) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: mutation escaped`);
       process.exit(1);
     }
@@ -71,7 +107,8 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const failures = audit(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const current = sources();
+const failures = audit(current.page, current.route, current.pdf);
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
