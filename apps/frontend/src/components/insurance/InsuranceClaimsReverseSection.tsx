@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 const FAULT_LABELS: Record<string, string> = {
   undetermined: "Fault undetermined",
@@ -176,7 +177,12 @@ export function InsuranceClaimsReverseSection({
       </p>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {query.isError ? (
-        <p className="text-sm text-red-600">Failed to load linked insurance claims.</p>
+        <ListErrorState
+          title="Couldn't load linked insurance claims"
+          status={0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
       {!query.isLoading && !query.isError && claims.length === 0 ? (
         <p className="text-sm text-gray-500">No linked claims.</p>

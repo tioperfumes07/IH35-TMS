@@ -3,6 +3,7 @@ import { legalMattersApi } from "../../api/legal-matters";
 import { useAuth } from "../../auth/useAuth";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 type Filter =
   | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never }
@@ -70,7 +71,12 @@ export function LegalMattersReverseSection({
       </p>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {query.isError ? (
-        <p className="text-sm text-red-600">Failed to load linked legal matters.</p>
+        <ListErrorState
+          title="Couldn't load linked legal matters"
+          status={0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
       {!query.isLoading && !query.isError && matters.length === 0 ? (
         <p className="text-sm text-gray-500">No linked matters.</p>
