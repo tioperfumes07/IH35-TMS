@@ -1,4 +1,9 @@
 {
+  "4568": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-merged-findings-not-open"
+  },
   "4566": {
     "claimed_at": "2026-08-23",
     "claimed_by": "codex",
@@ -5663,5 +5668,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1268
+  "total_claimed": 1269
 }
