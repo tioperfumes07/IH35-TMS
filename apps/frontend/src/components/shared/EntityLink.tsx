@@ -518,9 +518,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "legal_contracts_customer":
       return `/legal/contracts?signer_type=customer&signer_entity_id=${id}`;
     case "unit_tires_tab":
-      return `/fleet/units/${id}?tab=tires`;
+      return `/fleet/units/${id}/detail?tab=tires`;
     case "unit_brakes_tab":
-      return `/fleet/units/${id}?tab=brakes`;
+      return `/fleet/units/${id}/detail?tab=brakes`;
     case "loads_driver_filter":
       return `/dispatch/loads?driver_id=${id}`;
     case "unit_detail_finance":
