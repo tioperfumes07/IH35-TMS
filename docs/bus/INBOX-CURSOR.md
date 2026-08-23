@@ -7,12 +7,13 @@
 U6 1–6 CERTIFIED. Rows 11–13 CERTIFIED `LIVE_SHA=a9e8d63`. Do not recertify. Do not remake TESTs / Close / Book Load.
 
 CURRENT MODULE: **lead stamp (one OPEN U14 at a time) + leftover 425C**  
+**lists CERTIFIED this turn** `LIVE_SHA=01385f7` (CC-3 hops matched healthz). Do not recertify lists.
 NOW:
-1. Re-curl `healthz/shallow` before every stamp. API deploy in flight toward `origin/main` — do not stamp on a lagging SHA.
-2. Stamp **one** Codex/CC-3 module when OUTBOX `CERTIFIED | MODULE=<one id> | LIVE_SHA=` equals **this** healthz **and** hops match `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`. Never batch five OPEN rows.
+1. Re-curl `healthz/shallow` before every stamp.
+2. Next stamp **only** when OUTBOX has `CERTIFIED | MODULE=legal` **or** Codex `customers` (then drivers, then fleet) — one id, `LIVE_SHA` = **this** healthz, hops file 1–12. Never batch.
 3. Unique FINDING = 500/dead/silent on **no stolen prefix**.
-4. Between stamps: leftover `https://app.ih35dispatch.com/425c` Fully-Wired 1–12. Then next unclaimed leftover. Never idle.
-5. Cascade/Devin audit CERTIFIED 1–6 + 11–13 only — pack `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`. Do not steal their work; do not recertify.
+4. Between stamps: leftover `https://app.ih35dispatch.com/425c` Fully-Wired 1–12. Never idle.
+5. Cascade/Devin audit CERTIFIED 1–6 + 11–13 only — do not recertify.
 
 FORBIDDEN: recertify 1–6 or 11–13 · occupy `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` · remake TESTs · CC `trigger_deploy` · pause · watch CI.
 

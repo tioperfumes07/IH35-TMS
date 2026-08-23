@@ -42,7 +42,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | Cursor | 9222 | 425c leftover | U14 1–6 + 11–13 CERTIFIED — omit. Stamp Codex/CC-3 on healthz match. **NOW leftover** `/425c` Fully-Wired 1–12. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` |
 | CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance`. **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
 | CC-2 | 9224 | Codex help then driver-hub | Settlements CERTIFIED — omit. Kill CI-watch. Help Codex 7–9 SQL (no CDP). Empty unique → leftover `/driver-hub` 1–12. **No** `/lists` `/legal` `/banking*` |
-| CC-3 | 9225 | lists then legal | **TODAY:** hops file `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`. CERTIFY **lists** then **legal** as **two** OUTBOX lines. Unique-CLEAN ≠ CERTIFIED. No leftover until both stamped. No `trigger_deploy` |
+| CC-3 | 9225 | legal | lists CERTIFIED LIVE_SHA=01385f7 — omit. **NOW `/legal` Fully-Wired 1–12** hops file then OUTBOX `CERTIFIED \| MODULE=legal`. Unique-CLEAN ≠ CERTIFIED. No leftover until legal stamped. No `trigger_deploy` |
 | Codex | 9226 | customers then drivers then fleet | **TODAY:** same hops file. Reverse SQL/GET. **Three** CERTIFIED lines (not one). **No CDP.** Cursor stamps when SHA=healthz |
 | Cascade | audit | CERTIFIED 1–5 | Pack `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`. No OPEN prefixes |
 | Devin | audit | CERTIFIED 6,11–13 | Same pack. Trackers `docs/audit/scenario-trackers/certified-u14/` |

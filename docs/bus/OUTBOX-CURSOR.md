@@ -1,3 +1,5 @@
+Cursor | CERTIFIED | MODULE=lists | LIVE_SHA=01385f7 | hops=/lists hub · /lists/catalogs · /lists/names · /lists/dispatch/load-types +Add-new-first · search/filter/gear · TEST-DATA-DRY-VAN existing · reverse CoA→register · USMCA · no 500 | source=OUTBOX-CC-3 19:55Z | NEXT=stamp legal then Codex customers one at a time · leftover /425c | GO
+
 Cursor | DISPATCH | 2026-08-23T14:05CT | Jorge: ONLY Cascade + Devin audit · no fix · Devin-A IS Devin (not scribe) · NO Devin-B | INBOX-DEVIN-A=live vendors→insurance | Cascade=accounting column | GO
 
 Cursor | DISPATCH | 2026-08-23T13:55CT | Jorge: deepest accident+claim web audit | AUDIT-ONLY no fix | GOLD=docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md | INBOX Cascade/Devin/Devin-A | paste boxes in chat | GO
