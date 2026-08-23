@@ -39,6 +39,7 @@ const CHECKS = [
   ["apps/backend/src/maintenance/dashboard.routes.ts", /intransit_queue_dca\.driver_id = d\.id[\s\S]{0,180}intransit_queue_dca\.company_id = i\.operating_company_id[\s\S]{0,180}intransit_queue_dca\.is_authorized = true[\s\S]{0,180}intransit_queue_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/maintenance/pre-flight/routes.ts", /preflight_defects_dca\.driver_id = dr\.id[\s\S]{0,180}preflight_defects_dca\.company_id = ds\.operating_company_id[\s\S]{0,180}preflight_defects_dca\.is_authorized = true[\s\S]{0,180}preflight_defects_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/maintenance/severe-repair-estimate.service.ts", /severe_repair_driver_dca\.driver_id = d\.id[\s\S]{0,180}severe_repair_driver_dca\.company_id = e\.operating_company_id[\s\S]{0,180}severe_repair_driver_dca\.is_authorized = true[\s\S]{0,180}severe_repair_driver_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/maintenance/two-section-service.ts", /wo_class_driver_dca\.driver_id = d\.id[\s\S]{0,180}wo_class_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}wo_class_driver_dca\.is_authorized = true[\s\S]{0,180}wo_class_driver_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
