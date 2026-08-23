@@ -113,7 +113,17 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
             nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), '') AS load_driver_name
        FROM mdata.loads l
        LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
-        AND ld.operating_company_id = l.operating_company_id
+        AND (
+          ld.operating_company_id = l.operating_company_id
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations trip_pairing_load_driver_dca
+            WHERE trip_pairing_load_driver_dca.driver_id = ld.id
+              AND trip_pairing_load_driver_dca.company_id = l.operating_company_id
+              AND trip_pairing_load_driver_dca.is_authorized = true
+              AND trip_pairing_load_driver_dca.deactivated_at IS NULL
+          )
+        )
        LEFT JOIN LATERAL (
          SELECT scheduled_arrival_at FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup'
          ORDER BY sequence_number ASC LIMIT 1) pu ON true

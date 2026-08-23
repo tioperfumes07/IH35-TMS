@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["queues.trip_pairing"],"task":"DRV-F6207-TRIP-PAIRING-SHARED-DRIVER-LABEL","vertical":"column-wave"} */
 /**
  * FAIL-TP1 — the Trip Pairing board must resolve its driver from the LOAD, not only from telematics.
  *
@@ -45,6 +46,10 @@ function assert(files) {
     problems.push(`${SVC}: must LEFT JOIN mdata.drivers on l.assigned_primary_driver_id to resolve the driver NAME`);
   }
 
+  if (!/FROM mdata\.driver_company_authorizations trip_pairing_load_driver_dca[\s\S]{0,180}trip_pairing_load_driver_dca\.driver_id = ld\.id[\s\S]{0,140}trip_pairing_load_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}trip_pairing_load_driver_dca\.is_authorized = true[\s\S]{0,140}trip_pairing_load_driver_dca\.deactivated_at IS NULL/.test(svc)) {
+    problems.push(`${SVC}: load-driver label must admit active canonical selected-company authorization`);
+  }
+
   // Precedence: the load's dispatch assignment wins, telematics is the fallback.
   if (!/loadDrv\s*\?\?\s*eldDrv/.test(svc)) {
     problems.push(
@@ -76,6 +81,12 @@ if (SELFTEST) {
     [SVC]: files[SVC].replace(/LEFT JOIN mdata\.drivers ld ON ld\.id = l\.assigned_primary_driver_id\n/, ""),
   };
   checks.push(["name join removed", assert(noJoin).some((p) => /resolve the driver NAME/.test(p))]);
+
+  const noSharedDriver = {
+    ...files,
+    [SVC]: files[SVC].replace("trip_pairing_load_driver_dca.is_authorized = true", "trip_pairing_load_driver_dca.is_authorized = false"),
+  };
+  checks.push(["shared-driver authorization removed", assert(noSharedDriver).some((p) => /active canonical/.test(p))]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);
   if (failed.length) {
