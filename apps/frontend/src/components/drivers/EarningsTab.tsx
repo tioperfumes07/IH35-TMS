@@ -10,6 +10,7 @@ import { getDriverApVendor } from "../../api/mdata";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
@@ -38,6 +39,21 @@ type LiabilityRow = Record<string, unknown>;
 
 function money(value: number) {
   return `$${Number(value ?? 0).toFixed(2)}`;
+}
+
+// DRV-MONEY-F6083 — a failed GET on any of this tab's 7 independent queries was silently rendering
+// as $0.00 / an empty list, indistinguishable from genuine zero activity, on a money-bearing
+// surface. Money-tile figures (not full sections with their own loading/empty split) use this
+// instead of money() directly so a fetch failure reads as "Error", never a confirmed zero.
+function moneyOrError(isError: boolean, value: number) {
+  if (isError) {
+    return (
+      <span className="text-red-600" title="Failed to load — try refreshing the page">
+        Error
+      </span>
+    );
+  }
+  return money(value);
 }
 
 function sumBalances(rows: Array<Record<string, unknown>>) {
@@ -288,15 +304,21 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
           <div className="text-[11px] uppercase text-slate-700">Outstanding liabilities</div>
           <div className="text-lg font-semibold text-slate-800" data-testid="driver-earnings-liabilities-total">
-            {money(totalOutstandingLiabilities)}
+            {moneyOrError(liabilitiesQuery.isError, totalOutstandingLiabilities)}
           </div>
         </div>
         <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
           <div className="text-[11px] uppercase text-slate-700">Cash advances unpaid</div>
           <div className="text-lg font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
-            {money(cashAdvancesUnpaid)}
+            {moneyOrError(liabilitiesQuery.isError, cashAdvancesUnpaid)}
           </div>
-          <div className="text-[10px] text-slate-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
+          <div className="text-[10px] text-slate-700">
+            {cashAdvancesQuery.isError ? (
+              <span className="text-red-600">Error loading advances</span>
+            ) : (
+              `${approvedAdvancesForDriver.length} approved advance(s)`
+            )}
+          </div>
           <Link
             to={`/cash-advances?driver_id=${encodeURIComponent(driverId)}`}
             className="text-[10px] text-slate-700 underline"
@@ -362,7 +384,14 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             />
           ) : null}
         </div>
-        {apVendorQuery.isPending ? (
+        {apVendorQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load A/P vendor"
+            status={0}
+            message={(apVendorQuery.error as Error | null)?.message}
+            onRetry={() => void apVendorQuery.refetch()}
+          />
+        ) : apVendorQuery.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
         ) : !apVendorQuery.data?.vendor ? (
           <p className="text-xs text-gray-500" data-testid="driver-earnings-ap-vendor-empty">
@@ -388,10 +417,18 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             <div>
               <div className="text-[11px] uppercase text-gray-500">Open bills</div>
               <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-open-total">
-                {openBillsQuery.isPending ? "…" : money(openBillTotalCents / 100)}
+                {openBillsQuery.isError
+                  ? moneyOrError(true, 0)
+                  : openBillsQuery.isPending
+                    ? "…"
+                    : money(openBillTotalCents / 100)}
               </div>
               <div className="text-[10px] text-gray-500">
-                {(openBillsQuery.data?.rows ?? []).length} unpaid bill(s)
+                {openBillsQuery.isError ? (
+                  <span className="text-red-600">Error loading open bills</span>
+                ) : (
+                  `${(openBillsQuery.data?.rows ?? []).length} unpaid bill(s)`
+                )}
               </div>
             </div>
           </div>
@@ -408,7 +445,14 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             Open all →
           </Link>
         </div>
-        {driverExpensesQuery.isPending ? (
+        {driverExpensesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load driver-attributed expenses"
+            status={0}
+            message={(driverExpensesQuery.error as Error | null)?.message}
+            onRetry={() => void driverExpensesQuery.refetch()}
+          />
+        ) : driverExpensesQuery.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
         ) : (driverExpensesQuery.data ?? []).length === 0 ? (
           <p className="text-xs text-gray-500" data-testid="driver-earnings-expenses-empty">
@@ -430,18 +474,20 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">YTD earnings</div>
           <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-ytd">
-            {money(ytdEarnings)}
+            {moneyOrError(settlementsQuery.isError, ytdEarnings)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">Average per week</div>
           <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-avg-week">
-            {money(averagePerWeek)}
+            {moneyOrError(settlementsQuery.isError, averagePerWeek)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">Settlements YTD</div>
-          <div className="text-lg font-semibold text-gray-900">{ytdSettlements.length}</div>
+          <div className="text-lg font-semibold text-gray-900">
+            {settlementsQuery.isError ? <span className="text-red-600">Error</span> : ytdSettlements.length}
+          </div>
         </div>
       </div>
 
@@ -456,17 +502,26 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             View all settlements →
           </Link>
         </div>
-        <ParityTable
-          columns={SETTLEMENT_COLUMNS}
-          rows={lastFourSettlements}
-          rowKey={(row) => row.id}
-          loading={settlementsQuery.isPending}
-          storageKey="driver-earnings-last-settlements"
-          emptyText="No settlements for this driver yet."
-          initialPageSize={10}
-          pageSizeOptions={[10, 25, 50]}
-          rowTestId={(row) => `driver-earnings-settlement-${row.id}`}
-        />
+        {settlementsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load settlements"
+            status={0}
+            message={(settlementsQuery.error as Error | null)?.message}
+            onRetry={() => void settlementsQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={SETTLEMENT_COLUMNS}
+            rows={lastFourSettlements}
+            rowKey={(row) => row.id}
+            loading={settlementsQuery.isPending}
+            storageKey="driver-earnings-last-settlements"
+            emptyText="No settlements for this driver yet."
+            initialPageSize={10}
+            pageSizeOptions={[10, 25, 50]}
+            rowTestId={(row) => `driver-earnings-settlement-${row.id}`}
+          />
+        )}
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -480,17 +535,26 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             View all liabilities →
           </Link>
         </div>
-        <ParityTable
-          columns={LIABILITY_COLUMNS}
-          rows={liabilities}
-          rowKey={(row) => String(row.id)}
-          loading={liabilitiesQuery.isPending}
-          storageKey="driver-earnings-active-liabilities"
-          emptyText="No active liabilities for this driver."
-          initialPageSize={25}
-          pageSizeOptions={[10, 25, 50, 100]}
-          rowTestId={(row) => `driver-earnings-liability-${String(row.id)}`}
-        />
+        {liabilitiesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load liabilities"
+            status={0}
+            message={(liabilitiesQuery.error as Error | null)?.message}
+            onRetry={() => void liabilitiesQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={LIABILITY_COLUMNS}
+            rows={liabilities}
+            rowKey={(row) => String(row.id)}
+            loading={liabilitiesQuery.isPending}
+            storageKey="driver-earnings-active-liabilities"
+            emptyText="No active liabilities for this driver."
+            initialPageSize={25}
+            pageSizeOptions={[10, 25, 50, 100]}
+            rowTestId={(row) => `driver-earnings-liability-${String(row.id)}`}
+          />
+        )}
       </div>
 
       {/* LAW OF THE LAND §9 (2026-07-22): active deductions / auto-deduction policies reverse-link. */}
@@ -505,7 +569,14 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             data-testid="driver-earnings-auto-deductions-link"
           />
         </div>
-        {autoDeductionPoliciesQuery.isPending ? (
+        {autoDeductionPoliciesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load auto-deduction policies"
+            status={0}
+            message={(autoDeductionPoliciesQuery.error as Error | null)?.message}
+            onRetry={() => void autoDeductionPoliciesQuery.refetch()}
+          />
+        ) : autoDeductionPoliciesQuery.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
         ) : (autoDeductionPoliciesQuery.data?.rows ?? []).length === 0 ? (
           <p className="text-xs text-gray-500">No auto-deduction policies for this driver.</p>
