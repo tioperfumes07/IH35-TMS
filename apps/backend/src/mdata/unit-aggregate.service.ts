@@ -640,6 +640,7 @@ export async function buildUnitAggregate(
       FROM maintenance.work_orders w
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
       ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
       LIMIT 10
     `,
