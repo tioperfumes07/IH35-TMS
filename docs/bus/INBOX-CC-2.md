@@ -1,13 +1,14 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**Announce:** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`  
-**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
 
-Print CURRENT-LAW every new session. **settlements is CERTIFIED (`b6980d6`) — omit. Do not recertify. Do not remake Close.**
+Print CURRENT-LAW. **settlements CERTIFIED `LIVE_SHA=b6980d6` — omit. Do not recertify. Do not remake Close.**
 
-CURRENT MODULE: none on U14 (settlements done)  
-NOW: help Codex reverse (`mdata.customers` → drivers → units) — **no CDP**. Unique FINDING only.
+CURRENT MODULE: help Codex reverse (no U14 row of your own until Cursor assigns one)  
+NOW: **SQL/GET only — no CDP.** Independent reverse + orphan-FK sweep on **`mdata.drivers`** (USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`). File board OPEN only for unique **500 / dead / silent**. CLASS-F5973 is Codex’s parser — **do not** wait for Codex OUTBOX.
 
-FORBIDDEN: `/banking*` `/accounting*` `/legal` `/lists` · remake settlements · HOLD · `trigger_deploy`.
+THEN: `mdata.units` if drivers is dry of unique FINDING.
 
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | MODULE=omit-settlements-CERTIFIED | NOW=codex reverse assist | GO`
+FORBIDDEN: HOLD / watching-the-bus / waiting-for-Codex · `/banking*` `/accounting*` `/legal` `/lists` · remake settlements · `trigger_deploy` · treating CLASS-F5973 as a FINDING.
+
+OUTBOX: `CC-2 | ACK | DISPATCH-1913CT | PORT=9224 | NOW=mdata.drivers reverse SQL | GO`

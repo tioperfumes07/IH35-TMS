@@ -1,14 +1,15 @@
 # INBOX-CC-3 · 9225 · PICKERS
 
-**Announce:** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`  
-**Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
+**DISPATCH 19:13CT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
 
-Print CURRENT-LAW + OPEN hops every new session. Omit CERTIFIED. HOLD = defect.
+Print CURRENT-LAW. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. HOLD = defect.
 
 CURRENT MODULE: **legal**  
 NOW: `https://app.ih35dispatch.com/legal`  
-HOPS: pickers — `+ Add new` first row → wizard → R=W → appears + selected + survives reload. Then `/lists` same bar.
+DO THIS MINUTE: Fully-Wired **1–12** Live Chrome. Every picker: `+ Add new` is first row → wizard → R=W → appears + selected + survives reload. Unique FINDING = 500 / dead / silent only.
 
-FORBIDDEN: `/banking*` `/dispatch` `/maintenance` `/safety` · HOLD · `trigger_deploy`.
+THEN: `/lists` same bar. Do **not** stamp CERTIFIED while live SHA is `b6980d6` (your TERMREASON/CQER/catalog-500 fixes are undeployed). After healthz moves: light re-scan, then CERTIFIED only with `LIVE_SHA=` matching healthz.
 
-OUTBOX: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO`
+FORBIDDEN: HOLD · `/banking*` `/dispatch` `/maintenance` `/safety` · `trigger_deploy`.
+
+OUTBOX: `CC-3 | ACK | DISPATCH-1913CT | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO`
