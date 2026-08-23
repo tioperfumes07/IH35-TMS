@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6248-CIVIL-FINE-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; Civil Fine creator now uses the same home-or-active-authorization driver eligibility as list/filter/detail; vertical safety guard mutation-proves it.
+
 - ☑ `DRV-F6247-SAFETY-EVENT-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex drivers reverse SQL/GET — FIXED this PR; Safety Event creator now uses the same home-or-active-authorization driver eligibility as list/detail labels; vertical safety guard mutation-proves it.
 
 - ☑ `DRV-F6246-SAFETY-COMPLAINT-CREATE-REJECTS-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; both complaint creator driver roles now use the same home-or-active-authorization eligibility as list/reverse labels; vertical safety guard mutation-proves both.

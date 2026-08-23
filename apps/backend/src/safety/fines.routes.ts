@@ -287,7 +287,17 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         document_ok: boolean;
       }>(
         `SELECT
-           ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid)) AS driver_ok,
+           ($2::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $2::uuid
+               AND (d.operating_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations fine_create_driver_dca
+                 WHERE fine_create_driver_dca.driver_id = d.id
+                   AND fine_create_driver_dca.company_id = $1::uuid
+                   AND fine_create_driver_dca.is_authorized = true
+                   AND fine_create_driver_dca.deactivated_at IS NULL
+               ))
+           )) AS driver_ok,
            ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = $3::uuid AND l.operating_company_id = $1::uuid)) AS load_ok,
            ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.units u WHERE u.id = $4::uuid AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid))) AS unit_ok,
            ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM catalogs.civil_fine_types cft WHERE cft.id = $5::uuid AND cft.operating_company_id = $1::uuid)) AS type_ok,
