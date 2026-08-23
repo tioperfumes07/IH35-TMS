@@ -966,12 +966,14 @@ export type DriverReportRow = {
   updated_at: string;
 };
 
-export async function listDriverReports(params: { operating_company_id: string; status?: string; driver_id?: string; load_id?: string }) {
+export async function listDriverReports(params: { operating_company_id: string; status?: string; driver_id?: string; load_id?: string; limit?: number; offset?: number }) {
   const qs = new URLSearchParams({ operating_company_id: params.operating_company_id });
   if (params.status) qs.set("status", params.status);
   if (params.driver_id) qs.set("driver_id", params.driver_id);
   if (params.load_id) qs.set("load_id", params.load_id);
-  return apiRequest<{ rows: DriverReportRow[] }>(`/api/v1/maintenance/driver-reports?${qs.toString()}`);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ rows: DriverReportRow[]; total_count: number }>(`/api/v1/maintenance/driver-reports?${qs.toString()}`);
 }
 
 export async function updateDriverReportStatus(
