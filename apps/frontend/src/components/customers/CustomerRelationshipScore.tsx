@@ -1,9 +1,11 @@
 import type { CustomerRelationshipScore } from "../../api/mdata";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   score: CustomerRelationshipScore | null | undefined;
   loading?: boolean;
   error?: string | null;
+  onRetry?: () => void;
 };
 
 function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undefined) {
@@ -27,7 +29,7 @@ function subscoreValue(value: number | null | undefined) {
   return Number(value).toFixed(1);
 }
 
-export function CustomerRelationshipScore({ score, loading = false, error = null }: Props) {
+export function CustomerRelationshipScore({ score, loading = false, error = null, onRetry }: Props) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
@@ -38,7 +40,7 @@ export function CustomerRelationshipScore({ score, loading = false, error = null
       </div>
 
       {loading ? <p className="text-xs text-gray-500">Loading relationship score...</p> : null}
-      {!loading && error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {!loading && error && onRetry ? <ListErrorState status={0} message={error} onRetry={onRetry} /> : null}
 
       {!loading && !error ? (
         <>
