@@ -62,7 +62,10 @@ contains("apps/backend/src/reports/index.ts", reportsIndex, [
   { pattern: /registerForm425cExhibitsRoutes/, label: "exhibits routes registered in reports index" },
 ]);
 
-read("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
+const exhibitsViewer = read("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
+if (exhibitsViewer && /to="\/(legal|finance|accounting)\//.test(exhibitsViewer)) {
+  fail("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: leftover /425c must not steal /legal /finance /accounting prefixes");
+}
 read("apps/frontend/src/components/form-425c/ExhibitCard.tsx");
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
