@@ -14,6 +14,8 @@ const FILES = {
   communicationsBackend: "apps/backend/src/drivers/communications.routes.ts",
   hosBackend: "apps/backend/src/telematics/hos.routes.ts",
   dispatchBackend: "apps/backend/src/dispatch/loads.routes.ts",
+  medicalBackend: "apps/backend/src/safety/medical-cards.routes.ts",
+  dqfBackend: "apps/backend/src/safety/driver-qualification.routes.ts",
 };
 const read = (file) => fs.readFileSync(file, "utf8");
 
@@ -60,6 +62,10 @@ function verify(source) {
   const canonicalDriverAuthorization = /FROM mdata\.drivers d[\s\S]{0,600}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/;
   need(canonicalDriverAuthorization.test(dispatchHosHandler), "dispatch HOS status must preserve active selected-company authorization visibility");
   need(canonicalDriverAuthorization.test(dispatchDrugHandler), "dispatch drug status must preserve active selected-company authorization visibility");
+  need(canonicalDriverAuthorization.test(source.medicalBackend), "medical-card reverse GET must validate driver ownership or active authorization");
+  need(/if \(!cards\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.medicalBackend), "medical-card reverse GET must distinguish invalid parent from true empty cards");
+  need(canonicalDriverAuthorization.test(source.dqfBackend), "DQF reverse GET must validate driver ownership or active authorization");
+  need(/if \(!items\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(source.dqfBackend), "DQF reverse GET must distinguish invalid parent from true empty items");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -113,6 +119,10 @@ if (process.argv.includes("--selftest")) {
     { key: "hosBackend", text: replaceOrFail(source.hosBackend, /dca\.is_authorized = true/, "TRUE", "HOS active company authorization") },
     { key: "dispatchBackend", text: replaceOrFail(source.dispatchBackend, /(\/api\/v1\/dispatch\/drivers\/:driver_id\/hos-status[\s\S]{0,1800})dca\.is_authorized = true/, "$1TRUE", "dispatch HOS active company authorization") },
     { key: "dispatchBackend", text: replaceOrFail(source.dispatchBackend, /(\/api\/v1\/dispatch\/drivers\/:driver_id\/drug-status[\s\S]{0,1800})dca\.is_authorized = true/, "$1TRUE", "dispatch drug active company authorization") },
+    { key: "medicalBackend", text: replaceOrFail(source.medicalBackend, /dca\.is_authorized = true/, "TRUE", "medical-card active company authorization") },
+    { key: "medicalBackend", text: replaceOrFail(source.medicalBackend, /if \(!cards\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "medical-card missing parent response") },
+    { key: "dqfBackend", text: replaceOrFail(source.dqfBackend, /dca\.is_authorized = true/, "TRUE", "DQF active company authorization") },
+    { key: "dqfBackend", text: replaceOrFail(source.dqfBackend, /if \(!items\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "DQF missing parent response") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
     { key: "detail", text: replaceOrFail(source.detail, /companiesQuery\.isError/, "false", "accessible company error disclosure") },
