@@ -61,6 +61,10 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
   }
+  if (!/queryFn: \(\) => getCustomerDetail\(id, selectedCompanyId!\)/.test(src) ||
+      !/enabled: Boolean\(id && selectedCompanyId\)/.test(src)) {
+    failures.push(`${FILE}: root detail GET must wait for and send selected company`);
+  }
   if (!/customerLoadsQuery\.isError[\s\S]{0,500}title="Couldn't load customer loads"[\s\S]{0,500}customerLoadsQuery\.refetch\(\)/.test(src)) {
     failures.push(`${FILE}: customer loads reverse GET failure must reach ParityTable with exact-query retry`);
   }
@@ -129,6 +133,12 @@ if (process.argv.includes("--selftest")) {
   const relationshipMutated = good.replace("relationshipScoreQuery.refetch()", "retryRemoved()");
   if (relationshipMutated === good || !audit(relationshipMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("relationship-score GET"))) {
     console.error(`${LABEL} SELFTEST FAIL — relationship-score retry mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const detailCompanyMutated = good.replace("getCustomerDetail(id, selectedCompanyId!)", "getCustomerDetail(id)");
+  if (detailCompanyMutated === good || !audit(detailCompanyMutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes("root detail GET"))) {
+    console.error(`${LABEL} SELFTEST FAIL — root detail selected-company mutation escaped`);
     process.exit(1);
   }
   caught++;

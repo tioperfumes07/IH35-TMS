@@ -483,8 +483,8 @@ export function CustomerDetailPage() {
 
   const detailQuery = useQuery({
     queryKey: ["customer-detail", id, selectedCompanyId ?? "none"],
-    queryFn: () => getCustomerDetail(id, selectedCompanyId).then((result) => result.customer),
-    enabled: Boolean(id),
+    queryFn: () => getCustomerDetail(id, selectedCompanyId!).then((result) => result.customer),
+    enabled: Boolean(id && selectedCompanyId),
   });
   const operatingCompanyId = detailQuery.data?.operating_company_id ?? null;
 
