@@ -350,9 +350,18 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedQuery = unitAggregateQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const aggregate = await withCurrentUser(authUser.uuid, async (client) =>
-      buildUnitAggregate(client, parsedParams.data.id, parsedQuery.data.operating_company_id)
-    );
+    const aggregate = await withCurrentUser(authUser.uuid, async (client) => {
+      // FLEET-F6111: buildUnitAggregate installs its company argument as the RLS GUC. Resolve the
+      // caller-named company first, matching the sibling equipment aggregate, so the query string
+      // cannot choose another tenant's unit-profile scope.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      return buildUnitAggregate(client, parsedParams.data.id, scopedCompanyId);
+    });
     if (!aggregate) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return aggregate;
   });
