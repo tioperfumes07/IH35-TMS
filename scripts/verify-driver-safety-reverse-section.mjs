@@ -76,6 +76,12 @@ export function assertDriverSafetyReverse(sources) {
   } else if (!/<DriverSafetyReverseSection[\s\S]{0,200}driverId=/.test(src[DRIVER_DETAIL])) {
     problems.push(`${DRIVER_DETAIL}: DriverSafetyReverseSection is imported but not rendered with driverId.`);
   }
+  if (!/safetyEventsQuery\.isError[\s\S]{0,500}title="Couldn't load driver safety events"[\s\S]{0,500}safetyEventsQuery\.refetch\(\)/.test(src[DRIVER_DETAIL])) {
+    problems.push(`${DRIVER_DETAIL}: internal driver safety-event reverse GET failure must render retryable ListErrorState.`);
+  }
+  if (!/!safetyEventsQuery\.isError\s*&&\s*safetyEventsListState\.isEmpty/.test(src[DRIVER_DETAIL])) {
+    problems.push(`${DRIVER_DETAIL}: failed internal safety-event reverse GET must not render as an empty relationship.`);
+  }
   if (!src[DRIVER_PROFILE].includes("DriverSafetyReverseSection")) {
     problems.push(`${DRIVER_PROFILE}: does not import DriverSafetyReverseSection — the /drivers/:id/profile route has no safety reverse section.`);
   } else if (!/<DriverSafetyReverseSection[\s\S]{0,200}driverId=/.test(src[DRIVER_PROFILE])) {
@@ -204,6 +210,21 @@ if (SELFTEST) {
     "not-mounted-driver-profile",
     { ...live, [DRIVER_PROFILE]: live[DRIVER_PROFILE].replace(/DriverSafetyReverseSection/g, "SomeOtherSection") },
     "does not import DriverSafetyReverseSection"
+  );
+  expectCaught(
+    "internal-safety-events-error-hidden",
+    { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/safetyEventsQuery\.isError/, "false") },
+    "internal driver safety-event reverse GET failure"
+  );
+  expectCaught(
+    "internal-safety-events-retry-removed",
+    { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/safetyEventsQuery\.refetch\(\)/, "Promise.resolve()") },
+    "internal driver safety-event reverse GET failure"
+  );
+  expectCaught(
+    "internal-safety-events-empty-gate-removed",
+    { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/!safetyEventsQuery\.isError\s*&&\s*safetyEventsListState\.isEmpty/, "safetyEventsListState.isEmpty") },
+    "must not render as an empty relationship"
   );
   // 4. server-side driver filter removed from the internal-fines SQL.
   expectCaught(

@@ -1526,6 +1526,14 @@ export function DriverDetailPage() {
 
               <div className="space-y-2">
                 {safetyEventsQuery.isLoading ? <div className="text-sm text-gray-500">Loading safety events...</div> : null}
+                {safetyEventsQuery.isError ? (
+                  <ListErrorState
+                    title="Couldn't load driver safety events"
+                    status={safetyEventsQuery.error instanceof ApiError ? safetyEventsQuery.error.status : 0}
+                    message={safetyEventsQuery.error instanceof Error ? safetyEventsQuery.error.message : undefined}
+                    onRetry={() => void safetyEventsQuery.refetch()}
+                  />
+                ) : null}
                 {safetyEvents.map((event) => {
                   const expanded = expandedSafetyEventId === event.id;
                   const isVoided = Boolean(event.voided_at);
@@ -1582,7 +1590,7 @@ export function DriverDetailPage() {
                     </div>
                   );
                 })}
-                {safetyEventsListState.isEmpty ? (
+                {!safetyEventsQuery.isError && safetyEventsListState.isEmpty ? (
                   <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
                 ) : null}
               </div>
