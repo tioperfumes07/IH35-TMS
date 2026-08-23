@@ -1,4 +1,9 @@
 {
+  "4570": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-customer-lifecycle-selected-company-scope"
+  },
   "4568": {
     "claimed_at": "2026-08-23",
     "claimed_by": "codex",
@@ -5668,5 +5673,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1269
+  "total_claimed": 1270
 }
