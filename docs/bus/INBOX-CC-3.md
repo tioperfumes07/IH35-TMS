@@ -4,7 +4,9 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. CC never `trigger_deploy`.
 
-**lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs.
+**lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs. POST-U14 table exhausted ≠ idle: unique 500/dead/silent on `/compliance` then any unclaimed leftover surface. Do not hold for routing. Do not steal `/425c` `/customers` `/drivers` `/fleet`.
+
+CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`) — first unfinished leftover after tasks unique-clean.
 
 CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`) — first unfinished leftover after tasks unique-clean.
 

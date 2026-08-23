@@ -100,8 +100,14 @@ export function ExhibitsViewer() {
           </label>
           <button
             type="button"
-            disabled={!companyId || buildMut.isPending}
-            onClick={() => buildMut.mutate()}
+            disabled={buildMut.isPending}
+            onClick={() => {
+              if (!companyId) {
+                pushToast("Select an operating company before building exhibits", "error");
+                return;
+              }
+              buildMut.mutate();
+            }}
             className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {buildMut.isPending ? "Building…" : "Build all exhibits"}

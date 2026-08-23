@@ -31,6 +31,9 @@ export function collectProblems(src, page = PAGE) {
     if (!src.includes('to="/425c?tab=history"')) {
       problems.push(`${page}: missing in-module History hop /425c?tab=history`);
     }
+    if (!src.includes("Select an operating company before building exhibits")) {
+      problems.push(`${page}: Build all exhibits must toast when no operating company (disabled+silent is leftover FINDING)`);
+    }
   }
   if (page === HOME) {
     if (!src.includes('to: "/425c?tab=qb"')) {
@@ -64,6 +67,7 @@ const kept = `
   <Link to="/425c?tab=merge">Merge & Export</Link>
   <Link to="/425c?tab=history">History</Link>
   <Link to="/425c">← Form 425C</Link>
+  pushToast("Select an operating company before building exhibits", "error");
 `;
 const stolenHome = `links={[{ label: "Safety Audit", to: "/safety/audit-425c" }]}`;
 const keptHome = `
