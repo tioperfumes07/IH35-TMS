@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6203-DETENTION-BOARD-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; dispatch driver guard + typecheck pending.
+
 - ☑ `DRV-F6202-POD-REVIEW-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; dispatch driver guard + typecheck pending.
 
 - ☑ `DRV-F6201-LATE-ARRIVAL-QUEUE-NULLS-AUTHORIZED-SHARED-DRIVER-LABEL` — Codex drivers reverse SQL/GET — FIXED this PR; exact queues.late guard + typecheck pending.
