@@ -490,7 +490,7 @@ export function CustomerDetailPage() {
 
   const contactsQuery = useQuery({
     queryKey: ["customer-contacts", id, includeInactiveContacts, operatingCompanyId],
-    queryFn: () => listCustomerContacts(id, includeInactiveContacts, operatingCompanyId).then((result) => result.contacts),
+    queryFn: () => listCustomerContacts(id, includeInactiveContacts, operatingCompanyId!).then((result) => result.contacts),
     enabled: Boolean(id && operatingCompanyId),
   });
   const billingSummaryQuery = useQuery({
@@ -819,7 +819,7 @@ export function CustomerDetailPage() {
   });
 
   const createContactMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload, operatingCompanyId),
+    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -832,7 +832,7 @@ export function CustomerDetailPage() {
 
   const updateContactMutation = useMutation({
     mutationFn: ({ contactId, payload }: { contactId: string; payload: Parameters<typeof updateCustomerContact>[2] }) =>
-      updateCustomerContact(id, contactId, payload, operatingCompanyId),
+      updateCustomerContact(id, contactId, payload, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -843,7 +843,7 @@ export function CustomerDetailPage() {
   });
 
   const deactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId, operatingCompanyId),
+    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -852,7 +852,7 @@ export function CustomerDetailPage() {
   });
 
   const reactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId, operatingCompanyId),
+    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });

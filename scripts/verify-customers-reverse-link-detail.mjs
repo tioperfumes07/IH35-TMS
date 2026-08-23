@@ -114,6 +114,26 @@ const CHECKS = [
     pattern: /FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\)\s+LIMIT 1/,
   },
   {
+    name: "customer contact GET and mutations require selected-company query",
+    file: CONTACTS_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,320}operating_company_id: z\.string\(\)\.uuid\(\),[\s\S]{0,180}const opcoQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),/,
+  },
+  {
+    name: "customer contact create resolves query company not body fallback",
+    file: CONTACTS_ROUTE,
+    pattern: /app\.post<\{ Params: \{ customer_id: string \} \}>[\s\S]{0,900}const parsedQuery = opcoQuerySchema\.safeParse\(req\.query \?\? \{\}\);[\s\S]{0,700}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "customer contact update resolves query company not body fallback",
+    file: CONTACTS_ROUTE,
+    pattern: /app\.patch<\{ Params: \{ customer_id: string; id: string \} \}>[\s\S]{0,1100}const parsedQuery = opcoQuerySchema\.safeParse\(req\.query \?\? \{\}\);[\s\S]{0,700}parsedQuery\.data\.operating_company_id/,
+  },
+  {
+    name: "customer contact clients require selected company",
+    file: MDATA_API,
+    pattern: /listCustomerContacts\(customerId: string, includeInactive: boolean, operatingCompanyId: string\)[\s\S]{0,1500}createCustomerContact\([\s\S]{0,500}operatingCompanyId: string[\s\S]{0,900}updateCustomerContact\([\s\S]{0,600}operatingCompanyId: string/,
+  },
+  {
     name: "archived customer contacts SELECT policy resolves parent in pinned company",
     file: CONTACTS_POLICY_MIGRATION,
     pattern: /CREATE POLICY cc_select ON mdata\.customer_contacts[\s\S]{0,420}FROM mdata\.get_customer_same_company\([\s\S]{0,180}current_setting\('app\.operating_company_id', true\)/,

@@ -1375,10 +1375,10 @@ export function updateCustomerQualityEvent(
   });
 }
 
-export function listCustomerContacts(customerId: string, includeInactive = false, operatingCompanyId?: string | null) {
+export function listCustomerContacts(customerId: string, includeInactive: boolean, operatingCompanyId: string) {
   const query = new URLSearchParams();
   if (includeInactive) query.set("include_inactive", "true");
-  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  query.set("operating_company_id", operatingCompanyId);
   const qs = query.toString();
   return apiRequest<{ contacts: CustomerContact[] }>(`/api/v1/mdata/customers/${customerId}/contacts${qs ? `?${qs}` : ""}`);
 }
@@ -1395,9 +1395,9 @@ export function createCustomerContact(
     is_primary?: boolean;
     notes?: string;
   },
-  operatingCompanyId?: string | null
+  operatingCompanyId: string
 ) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts${query}`, { method: "POST", body: payload });
 }
 
@@ -1414,24 +1414,24 @@ export function updateCustomerContact(
     is_primary: boolean;
     notes: string | null;
   }>,
-  operatingCompanyId?: string | null
+  operatingCompanyId: string
 ) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "PATCH",
     body: payload,
   });
 }
 
-export function deactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+export function deactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId: string) {
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "DELETE",
   });
 }
 
-export function reactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
-  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+export function reactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId: string) {
+  const query = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}/reactivate${query}`, {
     method: "POST",
   });
