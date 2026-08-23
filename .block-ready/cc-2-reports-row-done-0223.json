@@ -1,0 +1,23 @@
+{
+  "block_id": "cc-2-reports-row-done-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention to the primary assignment: help Codex CERTIFY customers/drivers/fleet SQL/GET.",
+  "branch": "cc-2/reports-row-done-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-reports-row-done-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md", "note": "row 5 marked DONE" }
+  ],
+  "linkage": "N/A -- docs-only status update.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
