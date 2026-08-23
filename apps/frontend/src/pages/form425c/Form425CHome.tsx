@@ -367,9 +367,9 @@ export function Form425CHome() {
         className="mx-4 mt-3"
         testId="form-425c-related-module-links"
         links={[
-          { label: "Safety Audit", to: "/safety/audit-425c" },
-          { label: "Maintenance Compliance", to: "/maintenance/compliance" },
-          { label: "Compliance", to: "/compliance" },
+          { label: "Deposit Import", to: "/425c?tab=qb" },
+          { label: "Merge & Export", to: "/425c?tab=merge" },
+          { label: "History", to: "/425c?tab=history" },
         ]}
       />
 

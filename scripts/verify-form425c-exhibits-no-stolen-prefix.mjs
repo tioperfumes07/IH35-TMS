@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * F425C-EXHIBITS-STOLEN-PREFIX — /425c/exhibits related hops must stay on /425c.
- * Live: Bank reconciliation / Accounting statements / Legal reports linked to
- * /accounting/reconciliation, /finance/statements, /legal/reports (other seats).
+ * F425C-EXHIBITS-STOLEN-PREFIX — /425c related hops must stay on /425c.
+ * Live: exhibits + Form425CHome RelatedModuleLinks stole /accounting /finance /legal
+ * /safety /maintenance /compliance (other leftover seats).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -11,20 +11,36 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-form425c-exhibits-no-stolen-prefix";
 const PAGE = "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx";
+const HOME = "apps/frontend/src/pages/form425c/Form425CHome.tsx";
+const STOLEN_RE =
+  /to[=:]\s*"\/(legal|finance|accounting|safety|maintenance|compliance|customers|drivers|fleet|lists|cash-flow|driver-hub)/;
 
-export function collectProblems(src) {
+export function collectProblems(src, page = PAGE) {
   const problems = [];
-  if (/to="\/(legal|finance|accounting)\//.test(src)) {
-    problems.push(`${PAGE}: related links must not steal /legal /finance /accounting`);
+  if (STOLEN_RE.test(src)) {
+    problems.push(`${page}: related links must not steal other seats' prefixes`);
   }
-  if (!src.includes('to="/425c?tab=qb"')) {
-    problems.push(`${PAGE}: missing in-module Deposit Import hop /425c?tab=qb`);
+  if (page === PAGE) {
+    if (!src.includes('to="/425c?tab=qb"')) {
+      problems.push(`${page}: missing in-module Deposit Import hop /425c?tab=qb`);
+    }
+    if (!src.includes('to="/425c?tab=merge"')) {
+      problems.push(`${page}: missing in-module Merge hop /425c?tab=merge`);
+    }
+    if (!src.includes('to="/425c?tab=history"')) {
+      problems.push(`${page}: missing in-module History hop /425c?tab=history`);
+    }
   }
-  if (!src.includes('to="/425c?tab=merge"')) {
-    problems.push(`${PAGE}: missing in-module Merge hop /425c?tab=merge`);
-  }
-  if (!src.includes('to="/425c?tab=history"')) {
-    problems.push(`${PAGE}: missing in-module History hop /425c?tab=history`);
+  if (page === HOME) {
+    if (!src.includes('to: "/425c?tab=qb"')) {
+      problems.push(`${page}: related hops must stay on /425c?tab=qb`);
+    }
+    if (!src.includes('to: "/425c?tab=merge"')) {
+      problems.push(`${page}: related hops must stay on /425c?tab=merge`);
+    }
+    if (!src.includes('to: "/425c?tab=history"')) {
+      problems.push(`${page}: related hops must stay on /425c?tab=history`);
+    }
   }
   return problems;
 }
@@ -40,10 +56,20 @@ const kept = `
   <Link to="/425c?tab=history">History</Link>
   <Link to="/425c">← Form 425C</Link>
 `;
+const stolenHome = `links={[{ label: "Safety Audit", to: "/safety/audit-425c" }]}`;
+const keptHome = `
+  links={[
+    { label: "Deposit Import", to: "/425c?tab=qb" },
+    { label: "Merge & Export", to: "/425c?tab=merge" },
+    { label: "History", to: "/425c?tab=history" },
+  ]}
+`;
 
 if (process.argv.includes("--selftest")) {
-  const bad = collectProblems(stolen);
-  const good = collectProblems(kept);
+  const bad = collectProblems(stolen, PAGE);
+  const good = collectProblems(kept, PAGE);
+  const badHome = collectProblems(stolenHome, HOME);
+  const goodHome = collectProblems(keptHome, HOME);
   if (!bad.some((p) => p.includes("steal"))) {
     console.error(`${LABEL} --selftest FAIL: stolen prefixes must fail`);
     process.exit(1);
@@ -52,15 +78,24 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL good fixture: ${good.join("; ")}`);
     process.exit(1);
   }
+  if (!badHome.some((p) => p.includes("steal"))) {
+    console.error(`${LABEL} --selftest FAIL: home stolen prefixes must fail`);
+    process.exit(1);
+  }
+  if (goodHome.length) {
+    console.error(`${LABEL} --selftest FAIL good home: ${goodHome.join("; ")}`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
 
 const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-const problems = collectProblems(src);
+const homeSrc = fs.readFileSync(path.join(ROOT, HOME), "utf8");
+const problems = [...collectProblems(src, PAGE), ...collectProblems(homeSrc, HOME)];
 if (problems.length) {
   console.error(`${LABEL}: FAIL\n${problems.map((p) => `  - ${p}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — ${PAGE} related hops stay on /425c`);
+console.log(`${LABEL}: PASS — ${PAGE} + ${HOME} related hops stay on /425c`);
 process.exit(0);
