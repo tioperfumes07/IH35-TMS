@@ -23,6 +23,9 @@ const FILES = {
   mdataApi: "apps/frontend/src/api/mdata.ts",
   loadsSection: "apps/frontend/src/components/driver-profile/LoadsSection.tsx",
   entityLink: "apps/frontend/src/components/shared/EntityLink.tsx",
+  tireDashboard: "apps/frontend/src/pages/maintenance/tires/TireWearDashboard.tsx",
+  brakeDashboard: "apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx",
+  unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
 };
 
 function stripComments(text) {
@@ -43,6 +46,9 @@ export function assertGuard(sources) {
   const mdataApi = stripComments(sources.mdataApi);
   const loadsSection = stripComments(sources.loadsSection);
   const entityLink = stripComments(sources.entityLink);
+  const tireDashboard = stripComments(sources.tireDashboard);
+  const brakeDashboard = stripComments(sources.brakeDashboard);
+  const unitDetail = stripComments(sources.unitDetail);
 
   if (/assign_truck=1/.test(actionBar) && !/onAssignTruck/.test(actionBar)) {
     errors.push(`${FILES.actionBar}: raw ?assign_truck=1 href without onAssignTruck handler`);
@@ -103,6 +109,30 @@ export function assertGuard(sources) {
     errors.push(`${FILES.dispatch}: Dispatch must consume the driver_id reverse-filter query`);
   }
 
+  // Tire/brake dashboards use the same shared-route contract class. Their real reader is UnitDetail;
+  // the general unit profile does not own either tab and therefore made both links dead-looking.
+  if (!/case "unit_tires_tab":\s*return `\/fleet\/units\/\$\{id\}\/detail\?tab=tires`;/.test(entityLink)) {
+    errors.push(`${FILES.entityLink}: unit_tires_tab must target the mounted UnitDetail tires tab`);
+  }
+  if (!/case "unit_brakes_tab":\s*return `\/fleet\/units\/\$\{id\}\/detail\?tab=brakes`;/.test(entityLink)) {
+    errors.push(`${FILES.entityLink}: unit_brakes_tab must target the mounted UnitDetail brakes tab`);
+  }
+  if (!/<EntityLink kind="unit_tires_tab" id=\{row\.unit_uuid\}/.test(tireDashboard)) {
+    errors.push(`${FILES.tireDashboard}: tire rows must use the canonical unit_tires_tab drill`);
+  }
+  if (!/<EntityLink kind="unit_brakes_tab" id=\{row\.unit_uuid\}/.test(brakeDashboard)) {
+    errors.push(`${FILES.brakeDashboard}: brake rows must use the canonical unit_brakes_tab drill`);
+  }
+  if (!/path="\/fleet\/units\/:id\/detail"/.test(manifest)) {
+    errors.push(`${FILES.manifest}: UnitDetail route must remain mounted`);
+  }
+  if (!/searchParams\.get\("tab"\)/.test(unitDetail) || !/tab === "tires"/.test(unitDetail) || !/tab === "brakes"/.test(unitDetail)) {
+    errors.push(`${FILES.unitDetail}: UnitDetail must consume both wear tab query values`);
+  }
+  if (!/activeTab === "tires"[^\n]*<UnitTiresTab/.test(unitDetail) || !/activeTab === "brakes"[^\n]*<UnitBrakesTab/.test(unitDetail)) {
+    errors.push(`${FILES.unitDetail}: UnitDetail must render both wear tab bodies`);
+  }
+
   return errors;
 }
 
@@ -126,10 +156,13 @@ function selftest() {
     dispatch:
       'const { id: routeLoadId } = useParams(); const loadId = routeLoadId ?? searchParams.get("load_id"); const driverId = params.get("driver_id"); ' +
       "<Drawer isOpen={Boolean(loadId)} />;",
-    manifest: '<Route path="/dispatch/map" element={<MapView />} />',
+    manifest: '<Route path="/dispatch/map" element={<MapView />} /><Route path="/fleet/units/:id/detail" element={<UnitDetail />} />',
     mdataApi: "export function setDriverDefaultTruck() { return apiRequest(`/default-truck`",
     loadsSection: '<EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" />',
-    entityLink: 'switch (kind) { case "loads_driver_filter": return `/dispatch/loads?driver_id=${id}`; }',
+    entityLink: 'switch (kind) { case "loads_driver_filter": return `/dispatch/loads?driver_id=${id}`; case "unit_tires_tab": return `/fleet/units/${id}/detail?tab=tires`; case "unit_brakes_tab": return `/fleet/units/${id}/detail?tab=brakes`; }',
+    tireDashboard: '<EntityLink kind="unit_tires_tab" id={row.unit_uuid} label="Unit" />',
+    brakeDashboard: '<EntityLink kind="unit_brakes_tab" id={row.unit_uuid} label="Unit" />',
+    unitDetail: 'const tab = searchParams.get("tab"); if (tab === "tires" || tab === "brakes") setActiveTab(tab); activeTab === "tires" ? <UnitTiresTab /> : null; activeTab === "brakes" ? <UnitBrakesTab /> : null;',
   };
   const pass = assertGuard(good);
   if (pass.length) {
@@ -181,6 +214,21 @@ function selftest() {
     process.exit(1);
   }
 
+
+  for (const [name, changed] of [
+    ["tire writer", { entityLink: good.entityLink.replace("/detail?tab=tires", "?tab=tires") }],
+    ["brake writer", { entityLink: good.entityLink.replace("/detail?tab=brakes", "?tab=brakes") }],
+    ["tire producer", { tireDashboard: good.tireDashboard.replace('kind="unit_tires_tab"', 'kind="unit"') }],
+    ["brake producer", { brakeDashboard: good.brakeDashboard.replace('kind="unit_brakes_tab"', 'kind="unit"') }],
+    ["wear route mount", { manifest: good.manifest.replace('/fleet/units/:id/detail', '/fleet/units/:id/legacy') }],
+    ["wear reader", { unitDetail: good.unitDetail.replaceAll('tab === "tires"', 'tab === "legacy-tires"') }],
+  ]) {
+    if (!assertGuard({ ...good, ...changed }).length) {
+      console.error(`[${LABEL}] --selftest FAIL: ${name} mutation was not rejected`);
+      process.exit(1);
+    }
+  }
+
   console.log(`[${LABEL}] --selftest OK`);
 }
 
@@ -196,7 +244,7 @@ function main() {
     for (const error of errors) console.error(`  - ${error}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — map/load routes consumed and Assign Truck opens default-truck modal`);
+  console.log(`[${LABEL}] OK — map/load/wear routes are consumed and Assign Truck opens default-truck modal`);
 }
 
 main();
