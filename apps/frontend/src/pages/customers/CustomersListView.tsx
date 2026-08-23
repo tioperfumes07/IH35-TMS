@@ -407,6 +407,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         customer={drillCustomer}
         openBalanceCents={openByCustomerId.get(drillCustomer?.id ?? "") ?? 0}
         overdueCents={drillSummaryQuery.data?.aging_buckets?.bucket_91_plus ?? 0}
+        billingSummaryLoading={drillSummaryQuery.isPending}
+        billingSummaryError={drillSummaryQuery.isError ? (drillSummaryQuery.error as Error) : null}
+        onRetryBillingSummary={() => void drillSummaryQuery.refetch()}
         onClose={() => setDrillCustomer(null)}
       />
     </div>
