@@ -36,15 +36,31 @@ function tooltip(summary: MissingRequiredSummary): string {
 
 export function MissingRequiredChip({ operatingCompanyId, entityKind, entityId }: Props) {
   const enabled = Boolean(operatingCompanyId && entityId);
-  const { data, isSuccess } = useQuery({
+  const query = useQuery({
     queryKey: ["missing-required", entityKind, entityId, operatingCompanyId],
     queryFn: () => fetchMissingRequired(operatingCompanyId as string, entityKind, entityId as string),
     enabled,
     staleTime: 60_000,
   });
 
-  // Never render on loading/error/empty — absence is honest; a false chip is not.
-  if (!isSuccess || !data) return null;
+  // FLEET-F6062: absence while loading is honest, but absence after a failed canonical GET hides a
+  // compliance outage. Keep the profile header compact while exposing exact recovery and never
+  // painting a false green "Required docs OK" state.
+  if (query.isError) {
+    return (
+      <button
+        type="button"
+        role="alert"
+        title={(query.error as Error)?.message ?? "Required-document status could not be loaded."}
+        onClick={() => void query.refetch()}
+      >
+        <StatusBadge variant="warn">Required docs unavailable · Retry</StatusBadge>
+      </button>
+    );
+  }
+  if (!query.isSuccess || !query.data) return null;
+
+  const data = query.data;
 
   if (data.missing_count === 0) {
     return (

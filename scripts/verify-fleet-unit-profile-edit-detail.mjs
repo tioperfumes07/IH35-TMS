@@ -33,6 +33,7 @@ const FILES = {
   editModal: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
   assignment: "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx",
+  missingRequired: "apps/frontend/src/components/compliance/MissingRequiredChip.tsx",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
   self: "scripts/verify-fleet-unit-profile-edit-detail.mjs",
 };
@@ -141,6 +142,10 @@ export function audit(src) {
   if (!/unit\?\.unit_id \?[\s\S]{0,120}EntityLinkOrTombstone[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}[\s\S]{0,80}name=\{unit\.unit_number\}/.test(src.assignment)) {
     failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real or tombstoned attached-unit drill`);
   }
+  if (!/query\.isError[\s\S]{0,500}role="alert"[\s\S]{0,500}onClick=\{\(\) => void query\.refetch\(\)\}/.test(src.missingRequired) ||
+      !/!query\.isSuccess \|\| !query\.data/.test(src.missingRequired)) {
+    failures.push(`${FILES.missingRequired}: required-document GET failure must be visible and exactly retryable before the loading/absence gate`);
+  }
   for (const id of CONNECTIVITY_LEAVES) {
     if (!required.leaves?.find((leaf) => leaf.id === id)?.required?.includes("connectivity")) failures.push(`${FILES.required}: ${id} must require connectivity`);
   }
@@ -204,6 +209,8 @@ if (process.argv.includes("--selftest")) {
     ["unit-detail-task-label", "unitDetail", /targetLabel=\{unitLabel\}/, 'targetLabel="Unit"'],
     ["unit-detail-error", "unitDetail", /unitQuery\.isError/, "false"],
     ["assignment-link", "assignment", /unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/, 'kind="trailer" id={unit.trailer_id}'],
+    ["missing-required-error", "missingRequired", /query\.isError/, "false"],
+    ["missing-required-retry", "missingRequired", /onClick=\{\(\) => void query\.refetch\(\)\}/, "onClick={undefined}"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
