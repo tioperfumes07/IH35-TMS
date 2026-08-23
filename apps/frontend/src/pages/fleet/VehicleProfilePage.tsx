@@ -291,6 +291,14 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-2-telemetry">
+            {telemetryQuery.isError ? (
+              <ListErrorState
+                title="Couldn't refresh live telemetry"
+                status={0}
+                message={(telemetryQuery.error as Error)?.message}
+                onRetry={() => void telemetryQuery.refetch()}
+              />
+            ) : null}
             <LiveTelemetrySection samsara={telemetry?.samsara ?? null} latestPosition={telemetry?.latest_position ?? null} />
           </div>
           <div data-testid="vp-section-3-driver">
