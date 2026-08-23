@@ -55,7 +55,28 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      if (query.data.driver_id) {
+        const parent = await client.query(
+          `SELECT 1
+           FROM mdata.drivers d
+           WHERE d.id = $1::uuid
+             AND d.archived_at IS NULL
+             AND (
+               d.operating_company_id = $2::uuid
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations dca
+                 WHERE dca.driver_id = d.id
+                   AND dca.company_id = $2::uuid
+                   AND dca.is_authorized = true
+                   AND dca.deactivated_at IS NULL
+               )
+             )
+           LIMIT 1`,
+          [query.data.driver_id, query.data.operating_company_id]
+        );
+        if (!parent.rows[0]) return { found: false as const, rows: [] };
+      }
       const filters: string[] = ["ds.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
@@ -107,7 +128,16 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
           -- names were not. A DVIR is a DOT compliance record — the driver and unit on it are the record.
           -- mdata.units has NO operating_company_id; it uses the owner/leased pair (CLAUDE.md §4).
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
-                                   AND d.operating_company_id = ds.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ds.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations label_dca
+                                       WHERE label_dca.driver_id = d.id
+                                         AND label_dca.company_id = ds.operating_company_id
+                                         AND label_dca.is_authorized = true
+                                         AND label_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           LEFT JOIN maintenance.work_orders wo ON wo.id = ds.follow_up_wo_id
@@ -123,10 +153,11 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { found: true as const, rows: res.rows };
     });
 
-    return { submissions: rows };
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { submissions: result.rows };
   });
 
   app.get("/api/v1/safety/dvir/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
