@@ -26,16 +26,19 @@ describe("dev-fixtures prod gate (CODER-10)", () => {
     expect(shouldUseDevFixturesForMaintenance("staging", "1")).toBe(true);
   });
 
-  it("structural: every triageDevFixtures() return is wrapped behind the gate", () => {
+  it("structural: every triageDevFixtures() call is wrapped behind the gate", () => {
     const src = readFileSync(
       resolve(__dirname, "../dashboard.routes.ts"),
       "utf8"
     );
-    // No bare fixture return may exist without the gate call guarding the same handler.
-    const fixtureReturns = (src.match(/return triageDevFixtures\(\)/g) || []).length;
+    // No fixture call may exist without the gate call guarding the same handler. The call site
+    // shape is `const issues = triageDevFixtures();` (not a bare `return triageDevFixtures()`)
+    // as of the in-transit-triage-queue endpoint's real-data-first fallback — match the call
+    // itself, not one specific statement shape around it.
+    const fixtureCalls = (src.match(/triageDevFixtures\(\)/g) || []).length;
     const gateCalls = (src.match(/if \(shouldUseDevFixturesForMaintenance\(\)\)/g) || []).length;
-    expect(fixtureReturns).toBeGreaterThan(0);
-    // Each fixture return must be paired with a gate check.
-    expect(gateCalls).toBeGreaterThanOrEqual(fixtureReturns);
+    expect(fixtureCalls).toBeGreaterThan(0);
+    // Each fixture call must be paired with a gate check.
+    expect(gateCalls).toBeGreaterThanOrEqual(fixtureCalls);
   });
 });

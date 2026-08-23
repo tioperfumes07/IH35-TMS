@@ -214,6 +214,16 @@ describe("settlement.template", () => {
     expect(html.includes("<script>")).toBe(false);
 
     const wrapped = wrapPdfDocument({ title: "S-test · Settlement", body: html });
-    expect(wrapped.includes("<script>")).toBe(false);
+    // wrapPdfDocument legitimately emits ONE static, first-party print-trigger <script> (the
+    // ?print=1 auto-print IIFE) -- a bare "no <script> at all" assertion is stale against that
+    // real, guarded feature (verify-bill-payment-print-letter-html). The real security property
+    // is that no model/user data is interpolated INTO a script context: assert there is exactly
+    // one script block, it is the known static IIFE, and it contains none of this model's data.
+    const scriptBlocks = wrapped.match(/<script>[\s\S]*?<\/script>/g) ?? [];
+    expect(scriptBlocks.length).toBe(1);
+    expect(scriptBlocks[0]).toContain('q.get("print")');
+    expect(scriptBlocks[0]).not.toContain("S-test");
+    expect(scriptBlocks[0]).not.toContain(model.sigDriverName);
+    expect(scriptBlocks[0]).not.toContain("S-2026-W20-RSMITH");
   });
 });

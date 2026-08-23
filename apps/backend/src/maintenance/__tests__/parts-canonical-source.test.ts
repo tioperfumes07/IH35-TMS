@@ -103,7 +103,10 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/);
       // Alias pi required for same-opco vendor_name LEFT JOIN on the list path.
       expect(source).toMatch(/filters\.push\(`pi\.vendor_id = \$\$\{values\.length\}::uuid`\)/);
-      expect(source).toMatch(/v\.vendor_name AS vendor_name/);
+      // The bare `v.vendor_name AS vendor_name` alias was wrapped in a COALESCE historical-label
+      // fallback (verify-inventory-vendor-historical-label-resolver) so a deactivated/renamed
+      // vendor still resolves a label instead of going blank -- match the current, guarded shape.
+      expect(source).toMatch(/COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\([^)]*\)\) AS vendor_name/);
       expect(source).toMatch(/LEFT JOIN mdata\.vendors v/);
     });
 
