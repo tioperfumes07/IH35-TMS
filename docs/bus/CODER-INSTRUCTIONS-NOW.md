@@ -1,20 +1,21 @@
 # CODER INSTRUCTIONS NOW
 
-**NONSTOP. Do not pause. Jorge chat empty ≠ idle. HOLD / watching / awaiting next order = defect.**  
-INBOX TOP = order. Execute now. Empty unique-FINDING → keep hunting on **your** module, never another seat’s prefix.
+**NONSTOP. `git pull --ff-only origin main`. INBOX TOP = order. Jorge chat empty ≠ idle.**  
+HOLD / watching / awaiting next order / CI loop = defect.  
+If **your** U14 rows are CERTIFIED → leftover sequence NOW. Do not wait to be assigned.
 
-U14 exclusive. Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (**now `a9e8d63`**). Scoreboard ≠ CERTIFIED. CC never `trigger_deploy`. Deploy 5–10 PRs / 5–10 min, one in-flight.
+Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (**now `a9e8d63`**). CC never `trigger_deploy`.
 
-U6 1–6 CERTIFIED — omit. Cursor 11–13 CERTIFIED `a9e8d63` — omit. Remaining TODAY: Codex 7–9 · CC-3 10 then 14.
-
-**Lead ACK this turn:** CC-2 — abandon unscoped-gate chase on `cc-2/bus-ack-and-mdata-sweep-0223`; NOW mdata reverse help Codex CERTIFY 7–9. CC-3 — unique-CLEAN ≠ CERTIFIED (correct); “monitor INBOX” = HOLD; NOW Fully-Wired 1–12 Live Chrome `/lists` then `/legal`. Do not stamp lists/legal.
+U6 1–6 CERTIFIED — omit. Cursor 11–13 CERTIFIED `a9e8d63` — omit.  
+OPEN U14 TODAY: Codex 7–9 · CC-3 10 then 14.  
+U14-done seats TODAY: CC-1 cash-flow → finance · Cursor 425c · CC-2 Codex SQL then driver-hub.
 
 | Seat | Port | Current | GO |
 |------|------|---------|-----|
-| Cursor | 9222 | lead | FAST-MERGE. Stamp Codex/CC-3 CERTIFIED only when OUTBOX SHA = live healthz **and** hops cover Fully-Wired 1–12. Unique FINDING. No stolen prefixes |
-| CC-1 | 9223 | accounting+factoring omit | Unique money FINDING (board leftovers). Do not recertify. No `/banking*`. No `trigger_deploy` |
-| CC-2 | 9224 | settlements omit | Help Codex CERTIFY customers→drivers→fleet TODAY. mdata reverse SQL. No CDP. No unscoped-gate loop. No `trigger_deploy` |
-| CC-3 | 9225 | lists then legal | Chrome `/lists` 1–12 TODAY then `/legal` 1–12. Unique-CLEAN ≠ CERTIFIED ≠ idle. No `trigger_deploy` |
-| Codex | 9226 | customers→drivers→fleet | Reverse SQL/GET CERTIFY TODAY in order. No Chrome. OUTBOX CERTIFIED + LIVE_SHA |
+| Cursor | 9222 | 425c + stamp | FAST-MERGE stamps. Chrome `/425c` 1–12. No stolen U14 prefixes |
+| CC-1 | 9223 | cash-flow | Chrome `/cash-flow` 1–12 then `/finance`. Do not recertify accounting |
+| CC-2 | 9224 | Codex help then driver-hub | mdata SQL help 7–9. Empty unique → `/driver-hub` 1–12. Kill gate loop |
+| CC-3 | 9225 | lists then legal | Chrome `/lists` 1–12 then `/legal`. Unique-CLEAN ≠ CERTIFIED. No leftover yet |
+| Codex | 9226 | customers→drivers→fleet | Reverse SQL CERTIFY TODAY. No leftover until 7–9 stamped |
 
 ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<current> | NOW=<url> | GO`

@@ -39,8 +39,8 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | *(maint+safety+insurance CERTIFIED — omit)* | Rows 11–13 CERTIFIED `a9e8d63`. Do **not** recertify. Lead: FAST-MERGE + copy CERTIFIED from Codex/CC-3 OUTBOX when `healthz` matches. Unique FINDING only. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` |
-| CC-1 | 9223 | *(accounting+factoring CERTIFIED — omit)* | Do **not** recertify accounting/factoring (`c11bdab`). Unique FINDING only. **No** `/banking*` `/maintenance` `/legal` `/lists`. HOLD forbidden. NONSTOP |
-| CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. **Do not** chase repo-wide unscoped CI on a docs branch. Help Codex **CERTIFY customers→drivers→fleet TODAY** reverse SQL/GET (no CDP). Unique FINDING only. **No** `/lists` `/legal` `/banking*` |
+| Cursor | 9222 | 425c leftover | U14 1–6 + 11–13 CERTIFIED — omit. Stamp Codex/CC-3 on healthz match. **NOW leftover** `/425c` Fully-Wired 1–12. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` |
+| CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance`. **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
+| CC-2 | 9224 | Codex help then driver-hub | Settlements CERTIFIED — omit. Kill CI-watch. Help Codex 7–9 SQL (no CDP). Empty unique → leftover `/driver-hub` 1–12. **No** `/lists` `/legal` `/banking*` |
 | CC-3 | 9225 | lists then legal | **TODAY:** Fully-Wired **1–12** Live Chrome on `/lists` then `/legal`. Unique-FINDING-CLEAN ≠ CERTIFIED ≠ idle. Do **not** monitor INBOX. OUTBOX `CERTIFIED` only with hops covering 1–12 + matching `healthz`. No 25min wait. No `trigger_deploy`. Do not remake TESTs |
 | Codex | 9226 | customers then drivers then fleet | **TODAY:** reverse SQL/GET Fully-Wired leftover unique on customers → drivers → fleet. **No CDP.** Do not remake proven audits. OUTBOX `CERTIFIED \| MODULE=<id> \| LIVE_SHA=<healthz> \| hops=<one line>` so Cursor can stamp. NONSTOP |

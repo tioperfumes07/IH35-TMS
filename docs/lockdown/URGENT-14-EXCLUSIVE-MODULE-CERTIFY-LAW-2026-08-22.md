@@ -61,8 +61,12 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 
 ## Forbidden
 
-HOLD · awaiting next order · idle · invent 15th plan · occupy another seat’s prefix · remake proven TESTs / Close / Book Load · per-merge Render · CC `trigger_deploy` · guess live SHA · claim CERTIFIED without `healthz` SHA + hops
+HOLD · awaiting next order · idle after your U14 rows CERTIFIED · occupy another seat’s prefix · remake proven TESTs / Close / Book Load · per-merge Render · CC `trigger_deploy` · guess live SHA · claim CERTIFIED without `healthz` SHA + hops
+
+If **your** exclusive U14 rows are CERTIFIED and Jorge did not give a different NOW: start `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` (first unclaimed leftover). That is not a 15th Urgent-14 plan — it is anti-idle. Codex/CC-3 still finish their OPEN U14 rows first.
 
 ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`
 
 **This law expires only when all 14 Status cells are CERTIFIED with a live SHA.** Until then it is session boot.
+
+**Leftover sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Seats whose **own** U14 rows are CERTIFIED start it **now** (first unclaimed row). Codex/CC-3 do not start leftover until their OPEN U14 rows CERTIFIED.
