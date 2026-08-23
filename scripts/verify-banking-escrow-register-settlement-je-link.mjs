@@ -63,8 +63,14 @@ export function checkEscrowRegisterLinkage(src, frontendSrc) {
   }
 
   if (frontendSrc !== undefined) {
-    if (!/entityLabel\(String\(row\.settlement_display_id[^)]*\)[^,]*,\s*sid,\s*"Settlement"\)/.test(frontendSrc)) {
-      problems.push(`${FRONTEND_TARGET}: Settlement column no longer threads row.settlement_display_id into entityLabel — still hardcoded null or reverted`);
+    if (!/visibleDocumentLabel\(String\(row\.settlement_display_id[^)]*\)[^,]*,\s*sid,\s*"Settlement"\)/.test(frontendSrc)) {
+      problems.push(`${FRONTEND_TARGET}: Settlement column no longer threads row.settlement_display_id into visibleDocumentLabel — tombstone entityLabel or reverted`);
+    }
+    if (!/settlement_display_id: String\(row\.settlement_display_id/.test(frontendSrc)) {
+      problems.push(`${FRONTEND_TARGET}: registerToEscrowRow no longer copies settlement_display_id from the register payload — BANK-F6050 live tombstone class`);
+    }
+    if (!/journal_entry_id: String\(row\.journal_entry_id/.test(frontendSrc)) {
+      problems.push(`${FRONTEND_TARGET}: registerToEscrowRow no longer copies journal_entry_id from the register payload`);
     }
   }
 
@@ -94,7 +100,9 @@ function selftest() {
     }
     if (virtual === "advance_pool") {
   `;
-  const goodFrontend = `label={entityLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}`;
+  const goodFrontend = `label={visibleDocumentLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
+    settlement_display_id: String(row.settlement_display_id ?? ""),
+    journal_entry_id: String(row.journal_entry_id ?? ""),`;
   const goodProblems = checkEscrowRegisterLinkage(good, goodFrontend);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
@@ -108,7 +116,8 @@ function selftest() {
     { src: good.replace("je.memo AS journal_entry_memo\n", ""), frontend: goodFrontend },
     { src: good.replace("ds.display_id AS settlement_display_id,\n", ""), frontend: goodFrontend },
     { src: good.replace(/LEFT JOIN driver_finance\.driver_settlements ds[\s\S]*?'driver_settlement'\n/, ""), frontend: goodFrontend },
-    { src: good, frontend: goodFrontend.replace("row.settlement_display_id", "null") },
+    { src: good, frontend: goodFrontend.replace("row.settlement_display_id ?? \"\") || null", "null") },
+    { src: good, frontend: goodFrontend.replace("settlement_display_id: String(row.settlement_display_id ?? \"\"),", "") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (checkEscrowRegisterLinkage(mutated.src, mutated.frontend).length === 0) {
