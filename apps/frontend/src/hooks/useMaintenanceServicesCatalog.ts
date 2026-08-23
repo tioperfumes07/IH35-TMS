@@ -80,6 +80,23 @@ export function useCreateMaintenanceService(operatingCompanyId: string) {
   });
 }
 
+export type UpdateMaintenanceServiceInput = Partial<CreateMaintenanceServiceInput>;
+
+// CLOSURE-11-EDIT — this catalog shipped create-only; there was no way to fix a typo or retire an
+// obsolete service afterward. Mirrors useCreateMaintenanceService's shape.
+export function useUpdateMaintenanceService(operatingCompanyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateMaintenanceServiceInput }) =>
+      apiRequest<MaintenanceService>(`/api/v1/catalogs/maintenance/services-catalog/${id}`, {
+        method: "PATCH",
+        body: { ...body, operating_company_id: operatingCompanyId },
+      }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["catalogs", "maintenance", "services-catalog"] }),
+  });
+}
+
 export function useUnitServiceEtas(operatingCompanyId: string, unitId: string) {
   return useQuery({
     queryKey: ["maintenance", "services", "eta", operatingCompanyId, unitId],
