@@ -367,7 +367,17 @@ export async function assertDriverQualifiedForLoad(
         LIMIT 1
       ) mc ON true
       WHERE d.id = $1::uuid
-        AND d.operating_company_id = $2::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations qualification_gate_driver_dca
+            WHERE qualification_gate_driver_dca.driver_id = d.id
+              AND qualification_gate_driver_dca.company_id = $2::uuid
+              AND qualification_gate_driver_dca.is_authorized = true
+              AND qualification_gate_driver_dca.deactivated_at IS NULL
+          )
+        )
     `,
     [driverId, operatingCompanyId]
   );

@@ -62,6 +62,19 @@ if (!dq) {
   // ...and must NEVER reintroduce the phantom `d.hazmat_endorsement` column (that boolean lives on
   // mdata.units, not mdata.drivers; `d.hazmat_endorsement_expires_at` is the real, distinct column).
   if (/\bd\.hazmat_endorsement\b/.test(dq)) failures.push("phantom_driver_hazmat_endorsement_column");
+  // DRV-F6254: the canonical gate must evaluate credentials for a driver that is actively shared
+  // into the selected company. A home-company-only lookup returns no row and the gate's deliberate
+  // caller-owned not-found contract then becomes a silent qualification bypass.
+  const sharedDriverChecks = [
+    ["missing_qualification_shared_driver_source", "FROM mdata.driver_company_authorizations qualification_gate_driver_dca"],
+    ["missing_qualification_shared_driver_identity", "qualification_gate_driver_dca.driver_id = d.id"],
+    ["missing_qualification_shared_driver_company", "qualification_gate_driver_dca.company_id = $2::uuid"],
+    ["missing_qualification_shared_driver_active", "qualification_gate_driver_dca.is_authorized = true"],
+    ["missing_qualification_shared_driver_not_deactivated", "qualification_gate_driver_dca.deactivated_at IS NULL"],
+  ];
+  for (const [failure, token] of sharedDriverChecks) {
+    if (!dq.includes(token)) failures.push(failure);
+  }
 }
 
 // G9-C1/D3-1/DISP-2: every SIBLING assignment path must delegate its driver credential hard-stops
@@ -109,3 +122,21 @@ if (failures.length > 0) {
 }
 
 console.log("verify:book-load-driver-qualification-gate OK");
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["source", "FROM mdata.driver_company_authorizations qualification_gate_driver_dca", "FROM mdata.drivers qualification_gate_driver_dca"],
+    ["identity", "qualification_gate_driver_dca.driver_id = d.id", "qualification_gate_driver_dca.driver_id IS NULL"],
+    ["company", "qualification_gate_driver_dca.company_id = $2::uuid", "qualification_gate_driver_dca.company_id = d.operating_company_id"],
+    ["authorization", "qualification_gate_driver_dca.is_authorized = true", "qualification_gate_driver_dca.is_authorized = false"],
+    ["deactivation", "qualification_gate_driver_dca.deactivated_at IS NULL", "qualification_gate_driver_dca.deactivated_at IS NOT NULL"],
+  ];
+  for (const [label, before, after] of mutations) {
+    const mutated = dq.replace(before, after);
+    if (mutated === dq || mutated.includes(before)) {
+      console.error(`verify:book-load-driver-qualification-gate SELFTEST FAILED: ${label}`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:book-load-driver-qualification-gate SELFTEST OK (${mutations.length}/${mutations.length} planted defects rejected)`);
+}
