@@ -29,6 +29,15 @@ function contains(relativePath, content, checks) {
 }
 
 const service = read("apps/backend/src/safety-officer/role-views/safety-home.service.ts");
+function certFreshnessScopeFailures(source) {
+  return [
+    "driver_company_authorizations safety_home_cert_stale_dca",
+    "safety_home_cert_stale_dca.driver_id = d.id",
+    "safety_home_cert_stale_dca.company_id = $1::uuid",
+    "safety_home_cert_stale_dca.is_authorized = true",
+    "safety_home_cert_stale_dca.deactivated_at IS NULL",
+  ].filter((token) => !source.includes(token));
+}
 contains("apps/backend/src/safety-officer/role-views/safety-home.service.ts", service, [
   { pattern: /getSafetyHomeData/, label: "getSafetyHomeData export" },
   { pattern: /open_dvir_major_defects/, label: "DVIR defects KPI" },
@@ -36,6 +45,9 @@ contains("apps/backend/src/safety-officer/role-views/safety-home.service.ts", se
   { pattern: /expiring_certs_30d/, label: "expiring certs KPI" },
   { pattern: /severity_rank/, label: "alerts sorted by severity" },
 ]);
+for (const token of certFreshnessScopeFailures(service)) {
+  fail(`apps/backend/src/safety-officer/role-views/safety-home.service.ts: missing cert freshness scope ${token}`);
+}
 
 const routes = read("apps/backend/src/safety-officer/role-views/routes.ts");
 contains("apps/backend/src/safety-officer/role-views/routes.ts", routes, [
@@ -87,6 +99,24 @@ const ci = read(".github/workflows/ci.yml");
 contains(".github/workflows/ci.yml", ci, [
   { pattern: /verify:safety-officer-home/, label: "CI workflow runs verify gate" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["authorization table", "driver_company_authorizations safety_home_cert_stale_dca", "drivers safety_home_cert_stale_dca"],
+    ["authorization company", "safety_home_cert_stale_dca.company_id = $1::uuid", "safety_home_cert_stale_dca.company_id = d.operating_company_id"],
+    ["authorization active", "safety_home_cert_stale_dca.is_authorized = true", "safety_home_cert_stale_dca.is_authorized = false"],
+    ["authorization lifecycle", "safety_home_cert_stale_dca.deactivated_at IS NULL", "safety_home_cert_stale_dca.deactivated_at IS NOT NULL"],
+  ];
+  for (const [name, before, after] of mutations) {
+    const mutated = service.replace(before, after);
+    if (mutated === service || certFreshnessScopeFailures(mutated).length === 0) {
+      console.error(`verify:safety-officer-home --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:safety-officer-home --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:safety-officer-home — FAILED");
