@@ -1,4 +1,9 @@
 {
+  "4489": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-hos-violations-error-state"
+  },
   "4485": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5538,5 +5543,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1248
+  "total_claimed": 1249
 }
