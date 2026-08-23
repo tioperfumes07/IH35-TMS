@@ -48,7 +48,9 @@ export function analyse(files) {
       const code = span.split("\n").map((l) => (l.includes("--") ? l.slice(0, l.indexOf("--")) : l)).join("\n");
       for (const bad of PHANTOM) {
         // Bare column reference, not `AS id` / `AS emitted_at` (aliasing the real column is correct).
-        const bare = new RegExp(`(^|[,\\s(])${bad}\\s*(,|\\s|$)`, "m");
+        // Catch `id`, `id::text`, and `ORDER BY id` — the original `id\\s*(,|\\s|$)` missed casts,
+        // so maintenance/compliance.routes.ts `id::text` 500'd live while this guard stayed green.
+        const bare = new RegExp(`(^|[,\\s(])${bad}(\\s*::|\\s|,|$)`, "m");
         const aliased = new RegExp(`AS\\s+${bad}\\b`, "i");
         if (bare.test(code) && !aliased.test(code)) {
           problems.push(
@@ -65,9 +67,11 @@ function selftest() {
   let bad = 0;
   const t = (n, c) => { if (!c) { console.error(`  SELFTEST FAIL: ${n}`); bad++; } };
   const BROKEN = [{ file: "x.ts", src: "SELECT id, event_class, payload, emitted_at\nFROM audit.audit_events\nORDER BY emitted_at DESC LIMIT 5" }];
+  const CASTED = [{ file: "x.ts", src: "SELECT id::text, event_class, payload\nFROM audit.audit_events\nORDER BY created_at DESC LIMIT 5" }];
   const FIXED  = [{ file: "x.ts", src: "SELECT uuid AS id, event_class, payload, created_at AS emitted_at\nFROM audit.audit_events\nORDER BY created_at DESC LIMIT 5" }];
   const PROSE  = [{ file: "x.ts", src: "SELECT uuid AS id -- this used to select emitted_at\nFROM audit.audit_events LIMIT 1" }];
   t("the exact 425C defect is caught", analyse(BROKEN).length >= 1);
+  t("id::text cast is caught", analyse(CASTED).some((p) => p.includes('"id"')));
   t("the aliased fix passes", analyse(FIXED).length === 0);
   t("a comment naming the old column is not a defect", analyse(PROSE).length === 0);
   t("failure names the phantom column", (analyse(BROKEN)[0] || "").includes("emitted_at") || (analyse(BROKEN)[0] || "").includes('"id"'));
@@ -77,7 +81,7 @@ function selftest() {
 if (process.argv[1] && process.argv[1].endsWith("verify-audit-events-column-names.mjs")) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 4 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 5 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const files = walk(SRC).map((file) => ({ file: file.replace(`${ROOT}/`, ""), src: readFileSync(file, "utf8") }));
