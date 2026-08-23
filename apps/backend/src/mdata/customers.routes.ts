@@ -547,13 +547,22 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const filters: string[] = status === "inactive" ? [] : [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
+      // CUST-F6183 — the prefix-match pattern used only by the ORDER BY relevance ranking below
+      // used to be bound into this SAME `values` array as `search%` even though nothing in the WHERE
+      // clause (or the COUNT query, which shares this array/clause and has no ORDER BY at all)
+      // ever references it. A parameter bound into a query's values array but absent from that
+      // query's own SQL text has no context Postgres can infer a type from, so the COUNT query
+      // 500'd on every non-empty search with `42P18 could not determine data type of parameter $2`
+      // — silently breaking every customer search (EntityPicker kind="customer" across Legal/
+      // Dispatch/Documents/Safety, this list endpoint's own `search=` callers) into "no results,
+      // + Add new" with no visible error, inviting duplicate customer creation. Fix: keep the
+      // COUNT/WHERE parameter set search-contains-only; bind the prefix pattern separately, after
+      // COUNT has already run, directly onto the ROWS query's own values array where its ORDER BY
+      // placeholder actually appears in that query's text.
       let searchContainsIdx: number | null = null;
-      let searchPrefixIdx: number | null = null;
       if (search) {
         values.push(`%${search}%`);
         searchContainsIdx = values.length;
-        values.push(`${search}%`);
-        searchPrefixIdx = values.length;
         const idx = searchContainsIdx;
         filters.push(
           `(customer_name ILIKE $${idx} OR customer_code ILIKE $${idx} OR mc_number ILIKE $${idx} OR dot_number ILIKE $${idx} OR billing_email ILIKE $${idx} OR status::text ILIKE $${idx})`
@@ -589,12 +598,19 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         `SELECT count(*)::int AS total FROM ${fromClause} ${shiftedWhereClause}`,
         fromValues
       );
+      // Bind the prefix-match ranking pattern only now, onto the ROWS query's own values array —
+      // it must never reach the COUNT query above (see the search-block comment): a value bound
+      // but absent from that query's SQL text gives Postgres no type to infer and 500s (42P18).
+      let shiftedSearchPrefixIdx: number | null = null;
+      if (search) {
+        fromValues.push(`${search}%`);
+        shiftedSearchPrefixIdx = fromValues.length;
+      }
       fromValues.push(limit);
       fromValues.push(offset);
       // Shift the search-relevance ORDER BY's own placeholder refs by the same amount as the WHERE
       // clause above — they were captured before status=inactive's extra leading $1 was prepended.
       const shiftedSearchContainsIdx = searchContainsIdx !== null ? searchContainsIdx + shift : null;
-      const shiftedSearchPrefixIdx = searchPrefixIdx !== null ? searchPrefixIdx + shift : null;
       const orderClause =
         shiftedSearchContainsIdx && shiftedSearchPrefixIdx
           ? `
