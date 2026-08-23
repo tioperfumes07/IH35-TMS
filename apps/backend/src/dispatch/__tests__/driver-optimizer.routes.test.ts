@@ -102,4 +102,13 @@ describe("driver-optimizer.service (B21-D8)", () => {
     const src = readFileSync(indexPath, "utf8");
     expect(src).toContain("registerDispatchRefinementsRoutes");
   });
+
+  it("available-driver fallback admits active company-authorized shared drivers", () => {
+    const src = readFileSync(resolve(import.meta.dirname, "../dispatch-refinements.service.ts"), "utf8");
+    expect(src).toContain("driver_company_authorizations available_driver_dca");
+    expect(src).toContain("available_driver_dca.driver_id = d.id");
+    expect(src).toContain("available_driver_dca.company_id = $1::uuid");
+    expect(src).toContain("available_driver_dca.is_authorized = true");
+    expect(src).toContain("available_driver_dca.deactivated_at IS NULL");
+  });
 });

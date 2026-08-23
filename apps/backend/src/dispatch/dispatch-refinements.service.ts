@@ -454,7 +454,17 @@ export async function listAvailableDriversForDispatch(
           COALESCE(h.minutes_until_violation, 9999)::double precision AS minutes_until_violation
         FROM mdata.drivers d
         LEFT JOIN views.drivers_with_hos_status h ON h.id = d.id
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (
+                d.operating_company_id = $1::uuid
+                OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations available_driver_dca
+                  WHERE available_driver_dca.driver_id = d.id
+                    AND available_driver_dca.company_id = $1::uuid
+                    AND available_driver_dca.is_authorized = true
+                    AND available_driver_dca.deactivated_at IS NULL
+                )
+              )
           AND d.status = 'Active'::mdata.driver_status
           AND d.deactivated_at IS NULL
         ORDER BY d.last_name ASC, d.first_name ASC
