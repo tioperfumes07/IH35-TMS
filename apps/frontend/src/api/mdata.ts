@@ -1309,6 +1309,11 @@ export function listCustomerQualityEvents(customerId: string, operatingCompanyId
   return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events?${query}`);
 }
 
+// CUST-F5995 — create/void/update never sent the caller's SELECTED operating company (CustomerDetail.tsx
+// derives it from the loaded customer record, same as every other mutation on that page, e.g.
+// deactivateCustomerContact). Without it, the backend resolved the caller's DEFAULT company instead,
+// so create could silently target the wrong entity after a company switch, and void/update had no
+// company binding at all. All three now accept it as an optional query param, same as the GET siblings.
 export function createCustomerQualityEvent(
   customerId: string,
   body: {
@@ -1323,13 +1328,21 @@ export function createCustomerQualityEvent(
     related_load_id?: string;
     related_invoice_id?: string;
     document_ids?: string[];
-  }
+  },
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events`, { method: "POST", body });
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events${q}`, { method: "POST", body });
 }
 
-export function voidCustomerQualityEvent(customerId: string, eventId: string, voidReason: string) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}/void`, {
+export function voidCustomerQualityEvent(
+  customerId: string,
+  eventId: string,
+  voidReason: string,
+  operatingCompanyId?: string | null
+) {
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}/void${q}`, {
     method: "PATCH",
     body: { void_reason: voidReason },
   });
@@ -1338,9 +1351,11 @@ export function voidCustomerQualityEvent(customerId: string, eventId: string, vo
 export function updateCustomerQualityEvent(
   customerId: string,
   eventId: string,
-  body: { details?: string | null; document_ids?: string[] | null; dollar_impact_amount?: number | null }
+  body: { details?: string | null; document_ids?: string[] | null; dollar_impact_amount?: number | null },
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}`, {
+  const q = operatingCompanyId ? `?${new URLSearchParams({ operating_company_id: operatingCompanyId })}` : "";
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}${q}`, {
     method: "PATCH",
     body,
   });

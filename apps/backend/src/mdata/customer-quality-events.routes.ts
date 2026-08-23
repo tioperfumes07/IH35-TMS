@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { OperatingCompanyMembershipError, resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const qualityReadRoles = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
@@ -40,6 +40,14 @@ const listQuerySchema = z.object({
     .optional()
     .transform((value) => value === true || value === "true"),
 });
+// CUST-F5995 — POST/PATCH-void/PATCH-update all resolved the caller's DEFAULT company (or none at
+// all), ignoring any company the caller actually had selected on the Customer Detail page. That let
+// create silently write against the wrong entity after a company switch, and let void/update look up
+// the target event by event_id/customer_id alone with no company binding whatsoever — under Owner RLS
+// (org.user_accessible_company_ids() returns every entity for Owner sessions) that permitted voiding or
+// editing another company's quality event by UUID. Every mutation below now takes the same optional
+// operating_company_id query param the GET routes already use and resolves/validates it the same way.
+const companyQuerySchema = z.object({ operating_company_id: uuidSchema.optional() });
 
 const createCustomerQualityEventBodySchema = z
   .object({
@@ -233,6 +241,8 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
     const parsedParams = customerParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = createCustomerQualityEventBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const body = parsedBody.data;
@@ -240,10 +250,18 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     if (body.event_date > todayIsoDate()) return reply.code(400).send({ error: "event_date_in_future" });
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
-      // Resolve the caller's company, scope the customer check to it (closes the id-only XE-IDOR the
-      // GET already fixed), and set the GUC so the per-entity reason lookup below resolves in the
-      // customer's entity (customer_quality_event_reasons is FORCE RLS).
-      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      // CUST-F5995 — resolve the caller's SELECTED company (falls back to their default only when
+      // omitted), scope the customer check to it (closes the id-only XE-IDOR the GET already fixed),
+      // and set the GUC so the per-entity reason lookup below resolves in the customer's entity
+      // (customer_quality_event_reasons is FORCE RLS). A named company the caller isn't a member of
+      // throws OperatingCompanyMembershipError, mapped to the same not-found the caller would see for
+      // any other cross-company id.
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id).catch(
+        (e) => {
+          if (e instanceof OperatingCompanyMembershipError) return null;
+          throw e;
+        }
+      );
       if (!companyId) return { error: "mdata_customer_not_found" as const };
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const customerRes = await client.query(
@@ -380,10 +398,32 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = voidCustomerQualityEventBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // CUST-F5995 — this lookup previously bound only event_id + customer_id with no company context
+      // at all, so an Owner session (RLS is not a backstop for Owner — org.user_accessible_company_ids()
+      // returns every entity) could void any company's event by UUID. Resolve + validate the caller's
+      // selected company the same way the GET route does, and prove the customer belongs to it via the
+      // same SECURITY DEFINER helper (mdata.get_customer_same_company) BEFORE ever touching the event —
+      // it still finds archived customers so permanent quality history stays voidable (CUST-F5974).
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id).catch(
+        (e) => {
+          if (e instanceof OperatingCompanyMembershipError) return null;
+          throw e;
+        }
+      );
+      if (!companyId) return { error: "customer_quality_event_not_found" as const };
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+      const customerRes = await client.query(
+        `SELECT id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
+        [parsedParams.data.customer_id, companyId]
+      );
+      if (!customerRes.rows[0]) return { error: "customer_quality_event_not_found" as const };
+
       const currentRes = await client.query<{ id: string; event_type: string; event_date: string; voided_at: string | null }>(
         `
           SELECT id, event_type, event_date, voided_at
@@ -450,6 +490,8 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = updateCustomerQualityEventBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
@@ -470,6 +512,22 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     sets.push("updated_by_user_id = $3");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      // CUST-F5995 — same fix as void: bind the caller's resolved+validated company before the event
+      // lookup so this can't reach another entity's row under Owner RLS.
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id).catch(
+        (e) => {
+          if (e instanceof OperatingCompanyMembershipError) return null;
+          throw e;
+        }
+      );
+      if (!companyId) return null;
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+      const customerRes = await client.query(
+        `SELECT id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
+        [parsedParams.data.customer_id, companyId]
+      );
+      if (!customerRes.rows[0]) return null;
+
       const currentRes = await client.query(
         `
           SELECT id
