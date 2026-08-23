@@ -10,7 +10,12 @@ import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useCreateMaintenanceService, useMaintenanceServicesCatalog, type MaintenanceService } from "../../hooks/useMaintenanceServicesCatalog";
+import {
+  useCreateMaintenanceService,
+  useMaintenanceServicesCatalog,
+  useUpdateMaintenanceService,
+  type MaintenanceService,
+} from "../../hooks/useMaintenanceServicesCatalog";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const APPLIES_TO = ["", "truck", "trailer", "reefer", "all"];
@@ -29,6 +34,25 @@ type CreateForm = {
   typical_cost_cents: number;
   compliance_ref: string;
 };
+
+type EditForm = CreateForm & { is_active: boolean };
+
+function toEditForm(svc: MaintenanceService): EditForm {
+  return {
+    service_code: svc.service_code,
+    service_name: svc.service_name,
+    service_category: svc.service_category,
+    applies_to_type: svc.applies_to_type,
+    interval_miles: svc.interval_miles ? String(svc.interval_miles) : "",
+    interval_months: svc.interval_months ? String(svc.interval_months) : "",
+    interval_hours: svc.interval_hours ? String(svc.interval_hours) : "",
+    is_safety_critical: svc.is_safety_critical,
+    typical_duration_hours: "",
+    typical_cost_cents: svc.typical_cost_cents,
+    compliance_ref: svc.compliance_ref ?? "",
+    is_active: svc.is_active,
+  };
+}
 
 const EMPTY_CREATE: CreateForm = {
   service_code: "",
@@ -71,7 +95,16 @@ function intervalDisplay(svc: MaintenanceService) {
   );
 }
 
-const SERVICES_COLUMNS: Array<ParityColumn<MaintenanceService>> = [
+// §7 palette: matches the shared status-pill convention used across every other lists page
+// (e.g. TerminationReasonsListPage) — slate only, never green/amber/emerald for a status badge.
+function activeBadge(isActive: boolean) {
+  return isActive
+    ? "rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700"
+    : "rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600";
+}
+
+function buildServicesColumns(onEdit: (svc: MaintenanceService) => void): Array<ParityColumn<MaintenanceService>> {
+  return [
   {
     key: "service_code",
     label: "Code",
@@ -125,7 +158,24 @@ const SERVICES_COLUMNS: Array<ParityColumn<MaintenanceService>> = [
       </span>
     ),
   },
-];
+  {
+    key: "is_active",
+    label: "Status",
+    sortable: true,
+    sortValue: (svc) => (svc.is_active ? 0 : 1),
+    render: (svc) => <span className={activeBadge(svc.is_active)}>{svc.is_active ? "Active" : "Archived"}</span>,
+  },
+  {
+    key: "actions",
+    label: "",
+    render: (svc) => (
+      <Button size="sm" variant="secondary" onClick={() => onEdit(svc)}>
+        Edit
+      </Button>
+    ),
+  },
+  ];
+}
 
 export function MaintenanceServicesCatalog() {
   const { selectedCompanyId } = useCompanyContext();
@@ -136,6 +186,9 @@ export function MaintenanceServicesCatalog() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_CREATE);
   const [createError, setCreateError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editError, setEditError] = useState("");
 
   const query = useMaintenanceServicesCatalog(companyId, {
     search: search || undefined,
@@ -143,9 +196,17 @@ export function MaintenanceServicesCatalog() {
     page,
   });
   const createMutation = useCreateMaintenanceService(companyId);
+  const updateMutation = useUpdateMaintenanceService(companyId);
 
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
+
+  const openEdit = (svc: MaintenanceService) => {
+    setEditingId(svc.id);
+    setEditForm(toEditForm(svc));
+    setEditError("");
+  };
+  const columns = buildServicesColumns(openEdit);
 
   return (
     <div className="space-y-3">
@@ -180,7 +241,7 @@ export function MaintenanceServicesCatalog() {
       ) : (
         <ParityTable
           rows={rows}
-          columns={SERVICES_COLUMNS}
+          columns={columns}
           rowKey={(svc) => svc.id}
           loading={query.isLoading}
           storageKey="maintenance-services-catalog"
@@ -231,6 +292,66 @@ export function MaintenanceServicesCatalog() {
             } catch (error) { setCreateError(error instanceof Error ? error.message : "Failed to create service."); }
           })()}>Create</Button></div>
         </div>
+      </Modal>
+
+      {/* CLOSURE-11-EDIT — this catalog previously had no way to fix a typo or retire an obsolete
+          service after create; see the PATCH route note in services.routes.ts for the full gap. */}
+      <Modal variant="drawer" open={editingId !== null} onClose={() => setEditingId(null)} title="Edit Maintenance Service">
+        {editForm ? (
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-gray-600">Code<input value={editForm.service_code} onChange={(e) => setEditForm((v) => (v ? { ...v, service_code: e.target.value.toUpperCase() } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            <label className="block text-xs font-semibold text-gray-600">Service Name<input value={editForm.service_name} onChange={(e) => setEditForm((v) => (v ? { ...v, service_name: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            <label className="block text-xs font-semibold text-gray-600">Category<input value={editForm.service_category} onChange={(e) => setEditForm((v) => (v ? { ...v, service_category: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            <label className="block text-xs font-semibold text-gray-600">Applies To<SelectCombobox value={editForm.applies_to_type} onChange={(e) => setEditForm((v) => (v ? { ...v, applies_to_type: e.target.value as CreateForm["applies_to_type"] } : v))} className="mt-1 h-9 w-full"><option value="all">All</option><option value="truck">Truck</option><option value="trailer">Trailer</option><option value="reefer">Reefer</option></SelectCombobox></label>
+            <div className="grid grid-cols-3 gap-2">
+              <label className="block text-xs font-semibold text-gray-600">Miles<input type="number" min="1" value={editForm.interval_miles} onChange={(e) => setEditForm((v) => (v ? { ...v, interval_miles: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+              <label className="block text-xs font-semibold text-gray-600">Months<input type="number" min="1" value={editForm.interval_months} onChange={(e) => setEditForm((v) => (v ? { ...v, interval_months: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+              <label className="block text-xs font-semibold text-gray-600">Hours<input type="number" min="1" value={editForm.interval_hours} onChange={(e) => setEditForm((v) => (v ? { ...v, interval_hours: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            </div>
+            <label className="block text-xs font-semibold text-gray-600">Typical Duration (hours)<input type="number" min="0" step="0.1" value={editForm.typical_duration_hours} onChange={(e) => setEditForm((v) => (v ? { ...v, typical_duration_hours: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            <label className="block text-xs font-semibold text-gray-600">Typical Cost<MoneyInput valueCents={editForm.typical_cost_cents} onChangeCents={(value) => setEditForm((v) => (v ? { ...v, typical_cost_cents: value ?? 0 } : v))} ariaLabel="Typical cost" className="mt-1 w-full" /></label>
+            <label className="block text-xs font-semibold text-gray-600">Compliance Reference<input value={editForm.compliance_ref} onChange={(e) => setEditForm((v) => (v ? { ...v, compliance_ref: e.target.value } : v))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" /></label>
+            <label className="flex items-center gap-2 text-xs text-gray-700"><input type="checkbox" checked={editForm.is_safety_critical} onChange={(e) => setEditForm((v) => (v ? { ...v, is_safety_critical: e.target.checked } : v))} />Safety critical</label>
+            <label className="flex items-center gap-2 text-xs text-gray-700"><input type="checkbox" checked={editForm.is_active} onChange={(e) => setEditForm((v) => (v ? { ...v, is_active: e.target.checked } : v))} />Active</label>
+            {editError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{editError}</div> : null}
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="secondary"
+                disabled={updateMutation.isPending || !editingId}
+                onClick={() => void (async () => {
+                  if (!editingId) return;
+                  setEditError("");
+                  try {
+                    await updateMutation.mutateAsync({ id: editingId, body: { is_active: false } });
+                    setEditingId(null);
+                  } catch (error) { setEditError(error instanceof Error ? error.message : "Failed to deactivate service."); }
+                })()}
+              >
+                Deactivate
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel</Button>
+                <Button disabled={updateMutation.isPending} onClick={() => void (async () => {
+                  if (!editingId || !editForm) return;
+                  if (!editForm.service_code.trim() || !editForm.service_name.trim() || !editForm.service_category.trim()) { setEditError("Code, service name, and category are required."); return; }
+                  setEditError("");
+                  try {
+                    await updateMutation.mutateAsync({
+                      id: editingId,
+                      body: {
+                        service_code: editForm.service_code.trim(), service_name: editForm.service_name.trim(), service_category: editForm.service_category.trim(), applies_to_type: editForm.applies_to_type,
+                        interval_miles: positiveOrNull(editForm.interval_miles), interval_months: positiveOrNull(editForm.interval_months), interval_hours: positiveOrNull(editForm.interval_hours),
+                        is_safety_critical: editForm.is_safety_critical, typical_duration_hours: positiveOrNull(editForm.typical_duration_hours), typical_cost_cents: editForm.typical_cost_cents,
+                        compliance_ref: editForm.compliance_ref.trim() || null, is_active: editForm.is_active,
+                      },
+                    });
+                    setEditingId(null);
+                  } catch (error) { setEditError(error instanceof Error ? error.message : "Failed to save service."); }
+                })()}>Save Changes</Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </div>
   );

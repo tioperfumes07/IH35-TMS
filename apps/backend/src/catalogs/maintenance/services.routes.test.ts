@@ -92,3 +92,74 @@ describe("maintenance services-catalog GET (missing-table 500 regression guard)"
     expect(out.code).toBe(401);
   });
 });
+
+// CLOSURE-11-EDIT — this catalog shipped list+create only; there was never a PATCH route, so a
+// real, non-empty table (reachable and used in production) had no way to fix a typo or retire an
+// obsolete service. Live-reproduced 2026-08-23: read_page on the deployed page confirmed zero
+// action buttons in the accessibility tree for any row. Locks the new PATCH handler's contract:
+// registered, requires company scope, 404s a real not-found, 409s a code conflict, 200s a real
+// update, and the UPDATE statement it issues carries an explicit operating_company_id predicate
+// (belt-and-suspenders alongside withCompany's app.operating_company_id GUC).
+const PATCH_PATH = "PATCH /api/v1/catalogs/maintenance/services-catalog/:id";
+const SERVICE_ID = "11111111-1111-4111-8111-111111111111";
+
+describe("maintenance services-catalog PATCH (CLOSURE-11-EDIT)", () => {
+  beforeEach(() => { requireAuthResult = true; });
+
+  it("registers the PATCH endpoint", () => {
+    expect(Object.keys(captureRoutes())).toContain(PATCH_PATH);
+  });
+
+  it("400s on an empty body", async () => {
+    const handler = captureRoutes()[PATCH_PATH];
+    const { reply, out } = makeReply();
+    await handler({ user: OWNER, params: { id: SERVICE_ID }, body: { operating_company_id: OCI } }, reply);
+    expect(out.code).toBe(400);
+  });
+
+  it("403s a role without catalog write access", async () => {
+    const handler = captureRoutes()[PATCH_PATH];
+    const { reply, out } = makeReply();
+    await handler(
+      { user: { uuid: OWNER.uuid, role: "Driver" }, params: { id: SERVICE_ID }, body: { operating_company_id: OCI, service_name: "New name" } },
+      reply
+    );
+    expect(out.code).toBe(403);
+  });
+
+  it("404s when the UPDATE matches zero rows (wrong id or wrong company)", async () => {
+    queryRows = [];
+    const handler = captureRoutes()[PATCH_PATH];
+    const { reply, out } = makeReply();
+    await handler(
+      { user: OWNER, params: { id: SERVICE_ID }, body: { operating_company_id: OCI, service_name: "New name" } },
+      reply
+    );
+    expect(out.code).toBe(404);
+    expect((out.body as { error?: string } | undefined)?.error).toBe("maintenance_service_not_found");
+  });
+
+  it("200s and returns the updated row on a real match", async () => {
+    queryRows = [{ id: SERVICE_ID, service_code: "PM-A", service_name: "New name", service_category: "PM" }];
+    const handler = captureRoutes()[PATCH_PATH];
+    const { reply, out } = makeReply();
+    const result = await handler(
+      { user: OWNER, params: { id: SERVICE_ID }, body: { operating_company_id: OCI, service_name: "New name" } },
+      reply
+    );
+    expect(out.code).toBe(200);
+    expect((result as { service_name?: string })?.service_name).toBe("New name");
+  });
+
+  it("PATCH with is_active:false is the deactivate path — 200s and returns the row", async () => {
+    queryRows = [{ id: SERVICE_ID, service_code: "PM-A", service_name: "PM A Service", service_category: "PM", is_active: false }];
+    const handler = captureRoutes()[PATCH_PATH];
+    const { reply, out } = makeReply();
+    const result = await handler(
+      { user: OWNER, params: { id: SERVICE_ID }, body: { operating_company_id: OCI, is_active: false } },
+      reply
+    );
+    expect(out.code).toBe(200);
+    expect((result as { is_active?: boolean })?.is_active).toBe(false);
+  });
+});
