@@ -63,6 +63,11 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   if (!/customerLoadsQuery\.isError[\s\S]{0,500}title="Couldn't load customer loads"[\s\S]{0,500}customerLoadsQuery\.refetch\(\)/.test(src)) {
     failures.push(`${FILE}: customer loads reverse GET failure must reach ParityTable with exact-query retry`);
   }
+  for (const [query, title] of [["contactsQuery", "Couldn't load customer contacts"], ["lanesQuery", "Couldn't load customer lanes"], ["qualityEventsQuery", "Couldn't load customer quality history"], ["fmcsaHistoryQuery", "Couldn't load FMCSA verification history"]]) {
+    const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${query} reverse GET failure must render exact-query retry`);
+  }
+  if (!/!fmcsaHistoryQuery\.isError\s*&&\s*fmcsaHistoryListState\.isEmpty/.test(src)) failures.push(`${FILE}: FMCSA failed GET must not render as empty history`);
   // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
   if (fmcsaSrc) {
     if (!/data-testid=["']fmcsa-verify-flat["']/.test(fmcsaSrc)) {
@@ -120,6 +125,14 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   caught++;
+  for (const query of ["contactsQuery", "lanesQuery", "qualityEventsQuery", "fmcsaHistoryQuery"]) {
+    const mutated = good.replace(new RegExp(`${query}\\.refetch\\(\\)`), "Promise.resolve()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood).some((f) => f.includes(`${query} reverse GET failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${query} retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
   const loadsErrorMutated = good.replace(
     /customerLoadsQuery\.refetch\(\)/,
     "Promise.resolve()",
