@@ -38,7 +38,8 @@ const COMPLAINTS_ROUTE = "apps/backend/src/routes/safety/complaints.ts";
 const DOT_ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
 const OPS_SAFETY_VIEW = "apps/frontend/src/pages/drivers/operations/SafetyEventsView.tsx";
 const OPS_SAFETY_SERVICE = "apps/backend/src/master-data/drivers/operations-depth/safety-events.service.ts";
-const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE, DOT_ROUTE, OPS_SAFETY_VIEW, OPS_SAFETY_SERVICE];
+const INTERNAL_EVENTS_ROUTE = "apps/backend/src/mdata/driver-safety-events.routes.ts";
+const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE, DOT_ROUTE, OPS_SAFETY_VIEW, OPS_SAFETY_SERVICE, INTERNAL_EVENTS_ROUTE];
 const LABEL = "verify-driver-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -81,6 +82,9 @@ export function assertDriverSafetyReverse(sources) {
   }
   if (!/!safetyEventsQuery\.isError\s*&&\s*safetyEventsListState\.isEmpty/.test(src[DRIVER_DETAIL])) {
     problems.push(`${DRIVER_DETAIL}: failed internal safety-event reverse GET must not render as an empty relationship.`);
+  }
+  if (!/FROM mdata\.driver_safety_events e[\s\S]{0,700}safety_event_dca\.driver_id = d\.id[\s\S]{0,180}safety_event_dca\.company_id = \$2::uuid[\s\S]{0,180}safety_event_dca\.is_authorized = true[\s\S]{0,120}safety_event_dca\.deactivated_at IS NULL/.test(src[INTERNAL_EVENTS_ROUTE])) {
+    problems.push(`${INTERNAL_EVENTS_ROUTE}: internal safety-event reverse GET must preserve rows for an active company-authorized driver.`);
   }
   if (!src[DRIVER_PROFILE].includes("DriverSafetyReverseSection")) {
     problems.push(`${DRIVER_PROFILE}: does not import DriverSafetyReverseSection — the /drivers/:id/profile route has no safety reverse section.`);
@@ -235,6 +239,11 @@ if (SELFTEST) {
     { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/!safetyEventsQuery\.isError\s*&&\s*safetyEventsListState\.isEmpty/, "safetyEventsListState.isEmpty") },
     "must not render as an empty relationship"
   );
+  expectCaught(
+    "internal-safety-events-shared-driver-auth-removed",
+    { ...live, [INTERNAL_EVENTS_ROUTE]: live[INTERNAL_EVENTS_ROUTE].replace(/safety_event_dca\.is_authorized = true/g, "safety_event_dca.is_authorized = false") },
+    "must preserve rows for an active company-authorized driver"
+  );
   // 4. server-side driver filter removed from the internal-fines SQL.
   expectCaught(
     "internal-fines-filter-removed",
@@ -281,7 +290,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 15 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 16 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

@@ -549,7 +549,17 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
           FROM mdata.driver_safety_events e
           JOIN mdata.drivers d
             ON d.id = e.driver_id
-           AND d.operating_company_id = $2::uuid
+           AND (
+             d.operating_company_id = $2::uuid
+             OR EXISTS (
+               SELECT 1
+               FROM mdata.driver_company_authorizations safety_event_dca
+               WHERE safety_event_dca.driver_id = d.id
+                 AND safety_event_dca.company_id = $2::uuid
+                 AND safety_event_dca.is_authorized = true
+                 AND safety_event_dca.deactivated_at IS NULL
+             )
+           )
           LEFT JOIN catalogs.driver_termination_reasons tr ON tr.id = e.termination_reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           WHERE ${filters.join(" AND ")}
