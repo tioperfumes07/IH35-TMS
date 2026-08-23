@@ -531,7 +531,7 @@ export function DriverDetailPage() {
 
   const reactivateQualificationMutation = useMutation({
     mutationFn: ({ driverId, qualificationId }: { driverId: string; qualificationId: string }) =>
-      reactivateQualification(driverId, qualificationId),
+      reactivateQualification(driverId, qualificationId, companyId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       const restoredCount = result.qualification.rates_restored.length;

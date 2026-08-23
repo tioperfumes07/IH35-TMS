@@ -999,7 +999,7 @@ export function deactivateDriverQualification(driverId: string, qualificationId:
   });
 }
 
-export function reactivateQualification(driverId: string, qualificationId: string) {
+export function reactivateQualification(driverId: string, qualificationId: string, operatingCompanyId: string) {
   return apiRequest<{
     qualification: DriverQualification & {
       rates_restored: Array<{
@@ -1008,7 +1008,7 @@ export function reactivateQualification(driverId: string, qualificationId: strin
         action: "reopened" | "reactivated";
       }>;
     };
-  }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/reactivate`, {
+  }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/reactivate?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "POST",
   });
 }
