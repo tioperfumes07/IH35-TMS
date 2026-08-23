@@ -23,6 +23,11 @@ const ROUTES = [
   // Added 2026-07-25: this third named surface still carried the defect while the other two were fixed.
   "apps/backend/src/catalogs/fmcsa.routes.ts",
 ];
+const FMCSA_API = "apps/frontend/src/api/fmcsa.ts";
+const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
+const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
+const MDATA_API = "apps/frontend/src/api/mdata.ts";
+const GUARDED = [...ROUTES, FMCSA_API, FMCSA_MODAL, CUSTOMER_DETAIL, MDATA_API];
 // The ONE module allowed to contain the lowest-UUID fallback, because there it is the second arm of an
 // explicit COALESCE(default, lowest) — the correct behaviour, not the bug.
 const CANONICAL_MODULE = "apps/backend/src/auth/operating-company-scope.ts";
@@ -63,6 +68,33 @@ export function assertCanonicalResolver(sources) {
       problems.push(`${rel}: still contains an inline \`UNION … ORDER BY id LIMIT 1\` default resolver — it picks the lowest accessible UUID and hijacks the user's default (USMCA < TRANSP).`);
     }
   }
+  const fmcsaRoute = stripComments(sources?.[ROUTES[2]] ?? read(ROUTES[2]));
+  const fmcsaApi = stripComments(sources?.[FMCSA_API] ?? read(FMCSA_API));
+  const fmcsaModal = stripComments(sources?.[FMCSA_MODAL] ?? read(FMCSA_MODAL));
+  const customerDetail = stripComments(sources?.[CUSTOMER_DETAIL] ?? read(CUSTOMER_DETAIL));
+  const mdataApi = stripComments(sources?.[MDATA_API] ?? read(MDATA_API));
+  if ((fmcsaRoute.match(/operating_company_id: z\.string\(\)\.uuid\(\),/g) ?? []).length < 3) {
+    problems.push(`${ROUTES[2]}: lookup, history, and customer-link contracts must all require operating_company_id.`);
+  }
+  if (!/FROM catalogs\.fmcsa_lookups[\s\S]{0,160}operating_company_id = \$2::uuid/.test(fmcsaRoute) ||
+      !/UPDATE mdata\.customers[\s\S]{0,260}operating_company_id = \$5::uuid/.test(fmcsaRoute)) {
+    problems.push(`${ROUTES[2]}: customer FMCSA link must scope both lookup and customer to the selected company.`);
+  }
+  if (!/lookupFmcsa\(body: \{ type: FmcsaLookupType; value: string; operating_company_id: string \}\)/.test(fmcsaApi) ||
+      !/linkFmcsaLookupToCustomer\(customerId: string, lookupId: string, operatingCompanyId: string\)/.test(fmcsaApi) ||
+      !/listFmcsaLookups\(operatingCompanyId: string/.test(fmcsaApi)) {
+    problems.push(`${FMCSA_API}: lookup, link, and history helpers must require selected operating company.`);
+  }
+  if (!/lookupFmcsa\(\{ \.\.\.payload, operating_company_id: operatingCompanyId \}\)/.test(fmcsaModal) ||
+      !/linkFmcsaLookupToCustomer\(customerId, lookupId, operatingCompanyId\)/.test(fmcsaModal)) {
+    problems.push(`${FMCSA_MODAL}: lookup and link writes must forward selected operating company.`);
+  }
+  if (!/listFmcsaLookups\(operatingCompanyId!, \{ limit: 25 \}\)/.test(customerDetail) ||
+      !/operatingCompanyId=\{operatingCompanyId!\}/.test(customerDetail) ||
+      !/verifyCustomerFmcsa\(id, operatingCompanyId!\)/.test(customerDetail) ||
+      !/verifyCustomerFmcsa\(id: string, operatingCompanyId: string\)/.test(mdataApi)) {
+    problems.push(`${CUSTOMER_DETAIL}: history, modal, and forced verify must share selected operating company.`);
+  }
 
   // ── SYSTEMIC SWEEP (added 2026-07-25) ──────────────────────────────────────────────────────────────
   // A three-route allowlist was not enough. The packet named cancel/void/fmcsa; a repo-wide sweep found
@@ -100,7 +132,7 @@ export function assertCanonicalResolver(sources) {
 }
 
 if (SELFTEST) {
-  const live = Object.fromEntries(ROUTES.map((r) => [r, read(r)]));
+  const live = Object.fromEntries(GUARDED.map((r) => [r, read(r)]));
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) { failures.push(`${name}: inert`); return; }
@@ -123,11 +155,20 @@ if (SELFTEST) {
   expectCaught("local-shadow-reintroduced",
     { ...live, [SHADOW_FILE]: live[SHADOW_FILE] + "\nasync function resolveOperatingCompanyId(a, b) { return null; }\n" },
     "defines a LOCAL resolveOperatingCompanyId");
+  expectCaught("fmcsa-link-lookup-scope-removed",
+    { ...live, [SHADOW_FILE]: live[SHADOW_FILE].replace("AND operating_company_id = $2::uuid", "AND TRUE") },
+    "scope both lookup and customer");
+  expectCaught("fmcsa-history-company-removed",
+    { ...live, [CUSTOMER_DETAIL]: live[CUSTOMER_DETAIL].replace("listFmcsaLookups(operatingCompanyId!, { limit: 25 })", "listFmcsaLookups({ limit: 25 })") },
+    "history, modal, and forced verify");
+  expectCaught("fmcsa-modal-link-company-removed",
+    { ...live, [FMCSA_MODAL]: live[FMCSA_MODAL].replace("linkFmcsaLookupToCustomer(customerId, lookupId, operatingCompanyId)", "linkFmcsaLookupToCustomer(customerId, lookupId)") },
+    "lookup and link writes");
 
   const liveProblems = assertCanonicalResolver(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
   if (failures.length) { console.error(`${LABEL} SELFTEST FAILED:`); for (const f of failures) console.error(`  ${f}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

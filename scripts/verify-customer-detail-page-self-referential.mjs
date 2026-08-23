@@ -41,7 +41,7 @@ const CHECKS = [
   ["billing", /queryKey: \["customer-billing-summary", id,/],
   ["billing.record_payment", /recordCustomerPayment\(id, selectedCompanyId \?\? "", \{/],
   ["quality", /queryKey: \["customer-quality-events", id,/],
-  ["quality.create_event", /createCustomerQualityEvent\(id, \{/],
+  ["quality.create_event", /createCustomerQualityEvent\(\s*id,\s*\{/],
   ["lanes", /queryKey: \["customer-lanes", id,/],
   ["lanes.create", /createCustomerLane\(id, operatingCompanyId!, payload\)/],
   ["documents", /<DocumentsTab entityType="customer" entityId=\{customer\.id\}/],
@@ -53,7 +53,7 @@ const CHECKS = [
   ["pnl", /queryKey: \["customer-pnl", id,/],
   ["audit", /<EntityAuditHistoryTab operatingCompanyId=\{operatingCompanyId \?\? ""\} entityType="customer" entityId=\{customer\.id\}/],
   ["edit", /await updateCustomer\(id, \{/],
-  ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id\)/],
+  ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id, operatingCompanyId!\)/],
 ];
 
 export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSrc = "", lateArrivalSrc = "", relationshipSrc = "") {
@@ -69,6 +69,8 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
     if (!pattern.test(src)) failures.push(`${FILE}: ${query} reverse GET failure must render exact-query retry`);
   }
   if (!/!fmcsaHistoryQuery\.isError\s*&&\s*fmcsaHistoryListState\.isEmpty/.test(src)) failures.push(`${FILE}: FMCSA failed GET must not render as empty history`);
+  if (!/listFmcsaLookups\(operatingCompanyId!, \{ limit: 25 \}\)/.test(src)) failures.push(`${FILE}: FMCSA history GET must use the selected operating company`);
+  if (!/<FMCSAVerificationModal[\s\S]{0,180}operatingCompanyId=\{operatingCompanyId!\}/.test(src)) failures.push(`${FILE}: FMCSA lookup/link modal must receive selected operating company`);
   // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
   if (fmcsaSrc) {
     if (!/data-testid=["']fmcsa-verify-flat["']/.test(fmcsaSrc)) {

@@ -579,8 +579,8 @@ export function CustomerDetailPage() {
   });
   const fmcsaHistoryQuery = useQuery({
     queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
-    queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
-    enabled: fmcsaHistoryOpen,
+    queryFn: () => listFmcsaLookups(operatingCompanyId!, { limit: 25 }).then((res) => res.lookups),
+    enabled: fmcsaHistoryOpen && Boolean(operatingCompanyId),
   });
   // TMS Loads tab — reuse the shared loads list endpoint (mdata.loads), scoped to this customer +
   // operating company. Lazy: only fetches once the Loads tab is opened. No new backend.
@@ -772,7 +772,7 @@ export function CustomerDetailPage() {
   });
 
   const verifyFmcsaMutation = useMutation({
-    mutationFn: () => verifyCustomerFmcsa(id),
+    mutationFn: () => verifyCustomerFmcsa(id, operatingCompanyId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -3077,6 +3077,7 @@ export function CustomerDetailPage() {
         open={fmcsaModalOpen}
         onClose={() => setFmcsaModalOpen(false)}
         customerId={customer.id}
+        operatingCompanyId={operatingCompanyId!}
         initialUsdot={hydratedForm.dot_number}
         initialMc={hydratedForm.mc_number}
         onApplyToCustomer={(fmcsaResult) => {
