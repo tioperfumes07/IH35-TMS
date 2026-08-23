@@ -4,7 +4,7 @@
 
 | Seat | MODULE NOW |
 |------|------------|
-| Cursor 9222 | vendors leftover unique (dispatch CERTIFIED `39472f2` omit · banking CERTIFIED `36e51bb` omit) |
+| Cursor 9222 | maintenance leftover unique (vendors CERTIFIED `627d7d0` omit · dispatch CERTIFIED `39472f2` omit · banking CERTIFIED `36e51bb` omit) |
 | CC-1 9223 | accounting leftover money then factoring |
 | CC-2 9224 | settlements omit — unique FINDING / Codex reverse SQL only |
 | CC-3 9225 | lists |
