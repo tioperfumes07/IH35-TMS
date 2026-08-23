@@ -243,7 +243,13 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                          AND d.operating_company_id = vda.operating_company_id
+                          AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
+                            SELECT 1 FROM mdata.driver_company_authorizations aggregate_default_dca
+                             WHERE aggregate_default_dca.driver_id = d.id
+                               AND aggregate_default_dca.company_id = vda.operating_company_id
+                               AND aggregate_default_dca.is_authorized = true
+                               AND aggregate_default_dca.deactivated_at IS NULL
+                          ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -259,7 +265,13 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
-                          AND d.operating_company_id = vda.operating_company_id
+                          AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
+                            SELECT 1 FROM mdata.driver_company_authorizations aggregate_current_dca
+                             WHERE aggregate_current_dca.driver_id = d.id
+                               AND aggregate_current_dca.company_id = vda.operating_company_id
+                               AND aggregate_current_dca.is_authorized = true
+                               AND aggregate_current_dca.deactivated_at IS NULL
+                          ))
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
@@ -643,7 +655,13 @@ export async function buildUnitAggregate(
         NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.unit_photos p
       LEFT JOIN mdata.drivers d ON d.id = p.uploaded_by_driver_id
-                               AND d.operating_company_id = p.operating_company_id
+                               AND (d.operating_company_id = p.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations photo_dca
+                                  WHERE photo_dca.driver_id = d.id
+                                    AND photo_dca.company_id = p.operating_company_id
+                                    AND photo_dca.is_authorized = true
+                                    AND photo_dca.deactivated_at IS NULL
+                               ))
       WHERE p.unit_id = $1::uuid
         AND p.operating_company_id = $2::uuid
         AND p.archived_at IS NULL
