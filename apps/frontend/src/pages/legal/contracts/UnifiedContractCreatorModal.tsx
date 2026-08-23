@@ -14,6 +14,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { normalizePickedEntityPhoneToE164 } from "../../../lib/phone-format";
 import { LegalTemplateNewModal } from "../templates/LegalTemplateNewModal";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
@@ -472,7 +473,10 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         .then((d) => {
                           setSignerName(`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || id);
                           setSignerEmail(d.email ?? "");
-                          setSignerPhone(d.phone ?? "");
+                          // LEGAL-F5988 — mdata.drivers.phone is not uniformly E.164 (bulk CSV import
+                          // bypasses that invariant); normalize so an auto-filled value can't fail the
+                          // backend's strict E.164 signer_phone check the operator never typed.
+                          setSignerPhone(normalizePickedEntityPhoneToE164(d.phone));
                         })
                         .catch(() => {
                           /* Picker validated the id; leave contact fields for manual entry if fetch fails. */
@@ -499,7 +503,9 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                       void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => {
                         setSignerName(entityLabel(customer.name, customer.id, "Customer"));
                         setSignerEmail(customer.email ?? customer.ar_email ?? "");
-                        setSignerPhone(customer.phone ?? customer.office_phone ?? "");
+                        // LEGAL-F5988 — see driver picker above; customer phone/office_phone are equally
+                        // not guaranteed E.164.
+                        setSignerPhone(normalizePickedEntityPhoneToE164(customer.phone ?? customer.office_phone));
                       });
                     }}
                     enabled={open}
@@ -527,7 +533,9 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                       void getVendor(id, operatingCompanyId).then((vendor) => {
                         setSignerName(vendor.name);
                         setSignerEmail(vendor.email ?? "");
-                        setSignerPhone(vendor.phone ?? "");
+                        // LEGAL-F5988 — see driver picker above; vendor phone is equally not guaranteed
+                        // E.164.
+                        setSignerPhone(normalizePickedEntityPhoneToE164(vendor.phone));
                       });
                     }}
                     enabled={open}
