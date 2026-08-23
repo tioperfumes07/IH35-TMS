@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-mdata-reverse-sweep-0223b",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass swept clean across 18+ orphan/consistency checks (samsara dup mapping, driver_company_authorizations, mdata.customers merge/parent/factoring linkage, mx_permits/mx_tolls_ledger/unit_border_crossings, unit_photos/unit_plates/driver_profile_messages/driver_cdl_*/driver_equipment_qualifications) -- 0 new unique defects. Noted one pre-existing June bulk-import data-quality item (26 OOS units with no reason) as NOT a live defect, not filed separately. Per INBOX's empty-unique-FINDING routing, this closes out the SQL lane for this pass.",
+  "branch": "cc-2/mdata-reverse-sweep-0223b",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-mdata-reverse-sweep-0223b.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "documents the full sweep checklist and its clean result" }
+  ],
+  "linkage": "N/A -- read-only reverse SQL verification pass, no schema/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
