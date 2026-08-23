@@ -6,7 +6,7 @@
 
 lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do not steal `/legal`. Cursor lead is looping until you file three CERTIFIED lines.
 
-NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`2fd90a0` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). **This-tick curl** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` = **`2fd90a0`** (uptime ~2h). Your `01385f7` is the **previous** Render commit (deactivated). Cursor lead **just kicked** deploy `dep-da5n84mk1f9s739557jg` of `origin/main` `bd6737094f` (13 undeployed PRs, cadence 5–10 + cap 10). **Do not CERTIFIED until you re-curl and `version` equals your hops SHA.** Then **one** OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<that curl>`. Then drivers. Then fleet. **CUST-MONEY-F6105 / F6278 are CC-1 leftover money — they are not your U14 reverse stamp gate.** Do not idle waiting for Unapply. Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
 Paste-ready reverse SQL (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`, TEST customer `3e066edd-22ad-4014-9871-a93cf099c382`):
 ```sql

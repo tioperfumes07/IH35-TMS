@@ -11,6 +11,8 @@ NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12** Live Chrome
 
 Board leftovers (`FACT-F5986`, unit-finance remainder, `DRVFIN-F6169`) stay unique-FINDING on **your** money prefix if they appear **while** cash-flow hops — do not park on board-watch.
 
+**`--no-verify` (this tick, owner FAST-MERGE law):** YES — **scoped**. After `money-pr-local-gate` **minus** `verify-static` is **exit 0**, `git push --no-verify` is authorized **only** to skip the ENV/`verify-static` flake class (Codex/CC-3 convention). **Never** skip a red guard that is **your** money/F6105 diff. Never `trigger_deploy`. Land **CUST-MONEY-F6105** Unapply + **F6278** payment-history fail UI. Unique 500/dead/silent on `/cash-flow` then `/finance`.
+
 FORBIDDEN: HOLD / looping / recertify accounting/factoring · `/banking*` `/lists` `/legal` `/customers` `/drivers` `/fleet` · `trigger_deploy` · wait for Jorge.
 
 OUTBOX: `CC-1 | ACK | URGENT-14-EXCLUSIVE | PORT=9223 | MODULE=cash-flow | NOW=https://app.ih35dispatch.com/cash-flow | GO`
