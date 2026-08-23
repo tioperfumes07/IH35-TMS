@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6241-SAFETY-HOME-CERT-FRESHNESS-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; Safety Home cert freshness uses active canonical shared-driver eligibility; guard 4/4 + tests 5/5 + typecheck exit 0.
+
 - ☑ `DRV-F6240-CERT-EXPIRY-ROSTER-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; all/by-driver expiry roster admits active canonical shared-driver authorization; guard 4/4 + tests 4/4 + typecheck exit 0.
 
 - ☑ `DRV-F6239-COMPLIANCE-CREDENTIAL-EXPIRIES-EXCLUDE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; one canonical eligible roster feeds all six credential expiry branches; guard 23/23 + typecheck exit 0.

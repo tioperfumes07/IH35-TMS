@@ -233,7 +233,17 @@ async function isCertDataStale(client: DbClient, ociId: string): Promise<boolean
         COALESCE(d.dot_medical_expires_at::timestamptz, 'epoch'::timestamptz)
       ))::text AS last_touch
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations safety_home_cert_stale_dca
+            WHERE safety_home_cert_stale_dca.driver_id = d.id
+              AND safety_home_cert_stale_dca.company_id = $1::uuid
+              AND safety_home_cert_stale_dca.is_authorized = true
+              AND safety_home_cert_stale_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
     `,
     [ociId]
