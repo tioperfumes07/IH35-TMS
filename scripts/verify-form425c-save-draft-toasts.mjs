@@ -43,6 +43,12 @@ export function collectProblems(src) {
   if (!src.includes("Draft saved — generating filing PDF")) {
     problems.push(`${PAGE}: dirty Generate PDF must save first then toast, not silently print a stale PDF`);
   }
+  if (!src.includes("Draft saved — marking filed")) {
+    problems.push(`${PAGE}: dirty Mark Filed must save first then toast, not silently file a stale draft`);
+  }
+  if (!src.includes("Create / Load Draft before autosave")) {
+    problems.push(`${PAGE}: dirty autosave without reportId must toast, not silently skip`);
+  }
   const profiles = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx"), "utf8");
   if (!profiles.includes('bankAccounts: [...draft.bankAccounts, { id: "", label: "", number: "" }]')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Bank Accounts must + Create a new row, not a dead heading with no add");
@@ -61,6 +67,8 @@ const good = `
   pushToast("Create / Load Draft before generating the filing PDF", "error");
   pushToast("Create / Load Draft before marking filed", "error");
   pushToast("Draft saved — generating filing PDF", "success");
+  pushToast("Draft saved — marking filed", "success");
+  pushToast("Create / Load Draft before autosave", "error");
 `;
 const bad = `
   if (!detailQuery.data?.report) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -336,11 +336,20 @@ export function Form425CHome() {
     onError: (error) => pushToast(userFacingApiError(error, "Amend failed"), "error"),
   });
 
+  const autosaveBlockedToast = useRef(false);
   useEffect(() => {
-    if (!dirty || !form.reportId) return;
+    if (!dirty) return;
+    if (!form.reportId) {
+      if (!autosaveBlockedToast.current) {
+        autosaveBlockedToast.current = true;
+        pushToast("Create / Load Draft before autosave", "error");
+      }
+      return;
+    }
+    autosaveBlockedToast.current = false;
     const timer = setTimeout(() => saveMutation.mutate(), 10_000);
     return () => clearTimeout(timer);
-  }, [dirty, form.reportId, form, saveMutation]);
+  }, [dirty, form.reportId, form, saveMutation, pushToast]);
 
   // History is the canonical report list (draft + ready_to_file + filed + amended).
   // Status narrowing belongs on HistoryTab's filter, never a silent filed-only hide.
@@ -460,6 +469,15 @@ export function Form425CHome() {
           onMarkFiled={() => {
             if (!form.reportId) {
               pushToast("Create / Load Draft before marking filed", "error");
+              return;
+            }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — marking filed", "success");
+                  markFiledMutation.mutate();
+                },
+              });
               return;
             }
             markFiledMutation.mutate();
