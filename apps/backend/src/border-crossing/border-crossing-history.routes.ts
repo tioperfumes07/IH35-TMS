@@ -58,7 +58,17 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
-                                   AND d.operating_company_id = ubc.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ubc.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1
+                                       FROM mdata.driver_company_authorizations border_history_list_dca
+                                       WHERE border_history_list_dca.driver_id = d.id
+                                         AND border_history_list_dca.company_id = ubc.operating_company_id
+                                         AND border_history_list_dca.is_authorized = true
+                                         AND border_history_list_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
                                  AND l.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
@@ -98,7 +108,17 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
-                                   AND d.operating_company_id = ubc.operating_company_id
+                                   AND (
+                                     d.operating_company_id = ubc.operating_company_id
+                                     OR EXISTS (
+                                       SELECT 1
+                                       FROM mdata.driver_company_authorizations border_history_detail_dca
+                                       WHERE border_history_detail_dca.driver_id = d.id
+                                         AND border_history_detail_dca.company_id = ubc.operating_company_id
+                                         AND border_history_detail_dca.is_authorized = true
+                                         AND border_history_detail_dca.deactivated_at IS NULL
+                                     )
+                                   )
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
                                  AND l.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id

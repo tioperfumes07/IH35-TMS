@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6199-BORDER-CROSSING-READS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; border-crossing guard + typecheck pending.
+
 - ☐ `DRV-F6198-SCORING-AGGREGATOR-EXCLUDES-AUTHORIZED-SHARED-DRIVERS` — Cursor scoring computation/write lane — OPEN; dependency #14800; exact event+mileage joins filed.
 
 - ☑ `DRV-F6197-AGGREGATE-READS-MISHANDLE-AUTHORIZED-SHARED-DRIVERS` — Codex drivers reverse SQL/GET — FIXED this PR; maintenance+compliance guards + typecheck pending.
