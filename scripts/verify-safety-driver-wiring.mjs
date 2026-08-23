@@ -42,6 +42,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/InternalFinesPage.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/FinesPage.tsx", /kind="driver"/],
+  ["apps/backend/src/safety/fines.routes.ts", /fine_create_driver_dca\.driver_id = d\.id[\s\S]{0,180}fine_create_driver_dca\.company_id = \$1::uuid[\s\S]{0,180}fine_create_driver_dca\.is_authorized = true[\s\S]{0,180}fine_create_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", /kind="driver"/],
   ["apps/backend/src/routes/safety/complaints.ts", /complaint_complainant_driver_dca\.driver_id = cd\.id[\s\S]{0,180}complaint_complainant_driver_dca\.company_id = c\.operating_company_id[\s\S]{0,180}complaint_complainant_driver_dca\.is_authorized = true[\s\S]{0,180}complaint_complainant_driver_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/routes/safety/complaints.ts", /complaint_respondent_driver_dca\.driver_id = rd\.id[\s\S]{0,180}complaint_respondent_driver_dca\.company_id = c\.operating_company_id[\s\S]{0,180}complaint_respondent_driver_dca\.is_authorized = true[\s\S]{0,180}complaint_respondent_driver_dca\.deactivated_at IS NULL/],
