@@ -39,7 +39,7 @@ const listQuerySchema = z.object({
   status: equipmentStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   equipment_kind: z.enum(["trailer", "chassis"]).optional(),
-  operating_company_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
