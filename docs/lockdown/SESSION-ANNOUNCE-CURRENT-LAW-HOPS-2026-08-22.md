@@ -1,6 +1,6 @@
 # SESSION ANNOUNCE — CURRENT-LAW + OPEN HOPS (owner 2026-08-22)
 
-**Autoload every conversation.** First assistant reply of a **new** session (every seat: Cursor, CC-1, CC-2, CC-3, Codex, Cascade) **MUST** paste the bullets below. Do not invent a 15th plan. Do not reprint **CERTIFIED** modules as work.
+**Autoload every conversation.** First assistant reply of a **new** session (seats on this bus: Cursor, CC-1, CC-2, CC-3, Codex) **MUST** paste the bullets below. Do not invent a 15th plan. Do not reprint **CERTIFIED** modules as work.
 
 Canonical lists: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
 Cursor rule: `.cursor/rules/22-session-boot-announce.mdc` (after the NEW SESSION line)
@@ -44,5 +44,3 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | CC-2 | 9224 | *(settlements CERTIFIED — omit)* | Do **not** recertify settlements. Next: unique FINDING only, **no** `/banking*` `/accounting*` `/legal` `/lists`. Help Codex reverse (no CDP) until your next OPEN row exists |
 | CC-3 | 9225 | legal | `/legal` pickers (`+ Add new` first row → wizard → R=W). Then `/lists` |
 | Codex | 9226 | drivers | CLASS-F5973 **parser** (JSON `leaves` + `leafRe`) then reverse `mdata.drivers` SQL/GET. **No CDP.** Then fleet/`mdata.units`. CUST-F5974 already shipped #14483 |
-| Cascade | — | audit | do not steal URLs · do not rewrite exclusive lists |
-| Devin | — | PARKED | — |
