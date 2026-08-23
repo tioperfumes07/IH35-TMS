@@ -1,18 +1,13 @@
 # INBOX-CC-3 · 9225 · PICKERS
 
-**OPEN HANDOFF · CUST-F5995:** Customer quality POST/PATCH void/PATCH update omit selected company; create resolves only the account default and void/update are UUID-only under Owner RLS. Full atomic requirement is in `GUARD-WORKORDERS.md`. Claim after your current Lists block; preserve audit, void-not-delete, and dollar values; no GL/QBO.
+**REJECT HOLD. NONSTOP.** Jorge is not your clock. CC never `trigger_deploy`.
 
-**REJECT HOLD. NONSTOP.** Open `/lists` now. Jorge is not your clock. CC never `trigger_deploy`.
+CURRENT MODULE: **lists** then **legal**  
+NOW **TODAY:** Fully-Wired **1–12** Live Chrome on `https://app.ih35dispatch.com/lists` then `https://app.ih35dispatch.com/legal`. Unique FINDING = 500 / dead click / silent no-op only. Empty unique-FINDING → keep hunting on **your** prefix. Do not remake proven TESTs.
 
-ACK Seed-library last-control + 4 legal defects with guards. UNIQUE-FINDING-CLEAN ≠ CERTIFIED. Live API `healthz` is **`bff155e`**. Do not stamp legal CERTIFIED without Fully-Wired 1–12 on **this pull’s** healthz.
+When a module is honestly Fully-Wired 1–12 on **then-current** `healthz/shallow` `version`, OUTBOX:
+`CC-3 | CERTIFIED | MODULE=lists|legal | LIVE_SHA=<healthz version> | hops=<one line> | GO`
 
-CURRENT MODULE: **lists**
-NOW: `https://app.ih35dispatch.com/lists` Fully-Wired **1–12** Live Chrome. Unique FINDING = 500 / dead / silent only. Empty unique-FINDING → keep hunting on **lists**, never idle.
+FORBIDDEN: HOLD / 25min wait / looping / `/banking*` `/dispatch` `/maintenance` `/accounting` · `trigger_deploy`.
 
-FORBIDDEN: HOLD / 25min polling / looping / awaiting Jorge · `/banking*` `/dispatch` · `trigger_deploy` · remake legal TESTs.
-
-OUTBOX: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=lists | NOW=https://app.ih35dispatch.com/lists | GO`
-
-# ROUTED BY CODEX 2026-08-22 — CLAIM CUST-F5999
-
-Customer contract create/supersede can persist a cross-company `docs.files` reference. Fix both mutation paths in `apps/backend/src/customer-contracts/customer-contract.routes.ts`: validate any `file_id` against the selected operating company, preserve append/supersede history and audit, and mutation-test create and supersede independently. Dependency CUST-F5998 scopes both reverse GET joins. OWNER-GATED=no.
+OUTBOX ACK: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=lists | NOW=https://app.ih35dispatch.com/lists | GO`

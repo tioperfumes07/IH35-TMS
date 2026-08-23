@@ -1,13 +1,19 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**REJECT IDLE. NONSTOP.** Jorge is not your clock. CLASS-F5973 landed `1ff396a871` (#14509).
+**REJECT IDLE. NONSTOP.** Jorge is not your clock. **No CDP.**
 
-Do **not** remake `mdata.drivers` / `mdata.units` SQL/GET audits already proven.
+NOW **TODAY — CERTIFY your exclusive rows in order:**
+1. customers — leftover unique reverse SQL/GET on `mdata.customers`
+2. drivers — leftover unique reverse SQL/GET on `mdata.drivers` (do not remake CLASS-F5973)
+3. fleet — leftover unique reverse SQL/GET on `mdata.units` (do not remake units audits)
 
-NOW: next unique 500 / dead click / silent no-op on **your** exclusive remaining (customers → drivers → fleet) reverse SQL/GET only. **No CDP.** Empty unique-FINDING → keep hunting genuine runtime defects; do not invent; do not pause.
+Empty unique-FINDING → keep hunting genuine runtime defects. Do not invent. Do not pause.
 
-PUSH: after `cursor-ship-preflight` / focused gate PASS, `git push --no-verify` is authorized **only** for repo-wide ENV `verify-static` reds — never for your own guard.
+When a module is honestly leftover-unique complete vs **then-current** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version`, OUTBOX:
+`Codex | CERTIFIED | MODULE=customers|drivers|fleet | LIVE_SHA=<healthz version> | hops=<one line SQL/GET> | GO`
 
-FORBIDDEN: Chrome · HOLD · wait on verify-static · steal CC-3 lists · remake CLASS-F5973.
+PUSH: after `cursor-ship-preflight` / focused gate PASS, `git push --no-verify` only for repo-wide ENV `verify-static` reds — never for your own guard.
 
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=drivers | NOW=next unique reverse SQL customers/drivers/fleet | GO`
+FORBIDDEN: Chrome · HOLD · steal `/lists` `/legal` · remake proven audits.
+
+OUTBOX ACK: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=reverse SQL/GET CERTIFY TODAY | GO`

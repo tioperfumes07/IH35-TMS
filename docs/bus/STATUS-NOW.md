@@ -2,17 +2,19 @@
 
 **Law:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
-Live API `healthz` **`c11bdab`**. NONSTOP. HOLD = defect.
+Live API `healthz` **`a9e8d63`**. NONSTOP. HOLD = defect.
 
-U6 1–6 CERTIFIED: accounting `c11bdab` · banking `36e51bb` · settlements `b6980d6` · factoring `c11bdab` · dispatch `39472f2` · vendors `627d7d0`. Do not recertify.
+CERTIFIED: U6 1–6 · maintenance/safety/insurance `a9e8d63`. Do not recertify.
+
+OPEN TODAY: customers · drivers · fleet (Codex) · lists then legal (CC-3).
 
 | Seat | MODULE NOW |
 |------|------------|
-| Cursor 9222 | maintenance leftover unique |
+| Cursor 9222 | lead stamp + unique FINDING (11–13 omit) |
 | CC-1 9223 | unique FINDING only (accounting+factoring omit) |
-| CC-2 9224 | settlements omit — unique FINDING / Codex reverse SQL only |
-| CC-3 9225 | lists — Live Chrome |
-| Codex 9226 | customers→drivers→fleet reverse SQL (no CDP) |
+| CC-2 9224 | help Codex CERTIFY 7–9 TODAY (no CDP) |
+| CC-3 9225 | lists then legal — CERTIFY TODAY Live Chrome |
+| Codex 9226 | customers→drivers→fleet CERTIFY TODAY reverse SQL |
 | Devin | PARKED |
 
 ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`
