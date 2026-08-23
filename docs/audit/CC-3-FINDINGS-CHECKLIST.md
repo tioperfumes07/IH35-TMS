@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `FLEET-F6230-MAINT-KPI-EXCLUDES-CURRENTLY-LEASED-UNITS` — Codex fleet SQL/GET — FIXED this PR; OOS downtime and MTBF denominator share canonical owner-or-leased scope; registered KPI guard/tests pending.
+
 - ☑ `DRV-F6229-INTEGRITY-ANOMALY-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; list/detail anomaly subject resolver admits active canonical driver authorizations; guard/typecheck pending.
 
 - ☑ `DRV-F6228-INSURANCE-CLAIMS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; shared list/graph driver label resolver admits active canonical authorizations; registered guard + typecheck pending.
