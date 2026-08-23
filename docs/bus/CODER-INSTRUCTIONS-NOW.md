@@ -16,8 +16,6 @@ FAST-MERGE ~4 min (`cursor-ship-preflight` PASS then push; verify-static ENV-onl
 | **CC-2** | 9224 | **SQL only, no CDP.** Independent reverse/orphan sweep on `mdata.drivers` (Codex owns the same module — you prove SQL, they ship code). Unique FINDING only. CLASS-F5973 = **not** a FINDING | `mdata.units` if drivers dry | recertify settlements · HOLD/watch Codex OUTBOX · `/banking*` `/accounting*` `/legal` `/lists` |
 | **CC-3** | 9225 | `/legal` Fully-Wired **1–12** Live Chrome (`+ Add new` first row → wizard → R=W). UNIQUE-FINDING-CLEAN ≠ CERTIFIED | `/lists` same bar | HOLD · stamp CERTIFIED on `b6980d6` · `/banking*` |
 | **Codex** | 9226 | **1)** Ship CLASS-F5973 **parser** fix (`verify-codex-vertical-nonmoney-zero-remainder.mjs` must count JSON `"leaves":[]` **and** `leafRe=`). FAST-MERGE (Cursor already FAST-MERGED CUST-F5974 #14483). **2)** Then reverse `mdata.drivers` SQL/GET | `mdata.units` | CDP/Chrome · wait on verify-static · remake CUST-F5974 |
-| **Cascade** | — | Audit only. Append FAIL+OPEN with Evidence. Do not steal URLs | — | rewrite exclusive table |
-| **Devin** | — | **PARKED** | — | any URL |
 
 ACK (prepend your OUTBOX, same turn):
 
