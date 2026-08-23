@@ -21,6 +21,7 @@ const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
 const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
 const CONTACTS_ROUTE = "apps/backend/src/mdata/customer-contacts.routes.ts";
 const CUSTOMER_ROUTE = "apps/backend/src/mdata/customers.routes.ts";
+const CUSTOMER_LIST_ROUTE = "apps/backend/src/customers/list.routes.ts";
 const FINANCIAL_ROUTE = "apps/backend/src/mdata/customer-financial.routes.ts";
 const CUSTOMER_INVOICES_ROUTE = "apps/backend/src/mdata/customer-invoices.routes.ts";
 const CONTACTS_POLICY_MIGRATION = "db/migrations/202613100000_cust_f5974_archived_customer_contacts_read_scope.sql";
@@ -102,6 +103,16 @@ const CHECKS = [
     name: "customer detail reverse GETs require selected-company query",
     file: CUSTOMER_ROUTE,
     pattern: /const detailQuerySchema = z\.object\(\{\s*operating_company_id: z\.string\(\)\.uuid\(\),\s*\}\)/,
+  },
+  {
+    name: "canonical customer list GET requires selected-company query",
+    file: CUSTOMER_LIST_ROUTE,
+    pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,360}operating_company_id: z\.string\(\)\.uuid\(\),/,
+  },
+  {
+    name: "canonical customer list GET scopes SQL to selected company",
+    file: CUSTOMER_LIST_ROUTE,
+    pattern: /app\.get\("\/api\/v1\/customers"[\s\S]{0,1500}resolveOperatingCompanyId\(client, authUser\.uuid, operating_company_id\)[\s\S]{0,700}operating_company_id = \$1::uuid/,
   },
   {
     name: "archived customer detail profile uses same-company full-row resolver",
@@ -336,7 +347,7 @@ const FORBIDDEN = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, CONTACTS_ROUTE, CUSTOMER_ROUTE, FINANCIAL_ROUTE, CUSTOMER_INVOICES_ROUTE, CONTACTS_POLICY_MIGRATION, QUALITY_EVENTS_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX, SELF].map((file) => [
+    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, CONTACTS_ROUTE, CUSTOMER_ROUTE, CUSTOMER_LIST_ROUTE, FINANCIAL_ROUTE, CUSTOMER_INVOICES_ROUTE, CONTACTS_POLICY_MIGRATION, QUALITY_EVENTS_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX, SELF].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),
