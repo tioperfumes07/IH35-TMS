@@ -394,7 +394,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     const parsedBody = updateQualificationSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -887,13 +887,35 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    return withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const companyId = await resolveOperatingCompanyId(
         client,
         authUser.uuid,
         parsedQuery.data.operating_company_id
       );
-      if (!companyId) return reply.code(404).send({ error: "mdata_driver_not_found" });
+      if (!companyId) return { found: false as const, authorizations: [] };
+      const parent = await client.query(
+        `
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.archived_at IS NULL
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations selected_dca
+                WHERE selected_dca.driver_id = d.id
+                  AND selected_dca.company_id = $2::uuid
+                  AND selected_dca.is_authorized = true
+                  AND selected_dca.deactivated_at IS NULL
+              )
+            )
+          LIMIT 1
+        `,
+        [parsed.data.id, companyId]
+      );
+      if (parent.rowCount === 0) return { found: false as const, authorizations: [] };
       const res = await client.query(
         `
           SELECT
@@ -909,9 +931,6 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             c.short_name AS company_short_name,
             u.email AS authorized_by_user_email
           FROM mdata.driver_company_authorizations dca
-          JOIN mdata.drivers d
-            ON d.id = dca.driver_id
-           AND d.operating_company_id = $2::uuid
           JOIN org.companies c ON c.id = dca.company_id
           LEFT JOIN identity.users u ON u.id = dca.authorized_by_user_id
           WHERE dca.driver_id = $1
@@ -921,6 +940,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         [parsed.data.id, companyId]
       );
       return {
+        found: true as const,
         authorizations: res.rows.map((row) => ({
           id: row.id,
           company_id: row.company_id,
@@ -937,6 +957,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         })),
       };
     });
+    if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { authorizations: result.authorizations };
   });
 
   app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations", async (req, reply) => {
