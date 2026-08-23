@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { buildUnitAggregate } from "./unit-aggregate.service.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -48,7 +49,13 @@ export async function registerUnitTripCostRoutes(app: FastifyInstance) {
     if (!params.success || !query.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const aggregate = await buildUnitAggregate(client, params.data.id, query.data.operating_company_id);
+      // FLEET-MONEY-F6113: buildUnitAggregate installs its company argument directly as the RLS
+      // GUC (app.operating_company_id). Resolve the caller-named company first, matching the
+      // sibling fixes (FLEET-F6111 in units.routes.ts's GET /:id, FLEET-F6112 in
+      // unit-pdf-export.routes.ts) — the query string cannot choose another tenant's scope.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, query.data.operating_company_id);
+      if (!scopedCompanyId) return null;
+      const aggregate = await buildUnitAggregate(client, params.data.id, scopedCompanyId);
       if (!aggregate) return null;
 
       const pos = aggregate.latest_position as { lat?: number; lng?: number } | null;
