@@ -54,6 +54,7 @@ const eventParamsSchema = z.object({
 });
 
 const listQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
   include_voided: z
     .union([z.boolean(), z.string()])
     .optional()
@@ -481,9 +482,15 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      // driver_termination_reasons is per-entity + FORCE RLS; set the GUC from the driver's company so
-      // the LEFT JOIN on the reasons catalog resolves (otherwise tr.* would come back NULL).
-      await scopeToDriverCompany(client, authUser.uuid, parsedParams.data.driver_id);
+      // This mounted Driver Detail reverse read must honor the company selected in the UI. Resolving
+      // company from driver_id alone makes a non-default-company page read whichever entity owns the
+      // supplied UUID, rather than the USMCA context the operator is actually viewing.
+      const companyId = await scopeToCallerCompany(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!companyId) return [];
       const filters = ["e.driver_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
@@ -516,12 +523,15 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
             e.created_by_user_id,
             e.updated_by_user_id
           FROM mdata.driver_safety_events e
+          JOIN mdata.drivers d
+            ON d.id = e.driver_id
+           AND d.operating_company_id = $2::uuid
           LEFT JOIN catalogs.driver_termination_reasons tr ON tr.id = e.termination_reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
-        [parsedParams.data.driver_id]
+        [parsedParams.data.driver_id, companyId]
       );
       return result.rows;
     });
