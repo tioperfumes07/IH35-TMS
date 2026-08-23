@@ -145,8 +145,33 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
     sortable: true,
     render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
   },
-  { key: "from_qbo_vendor_id", label: "From", sortable: true },
-  { key: "to_qbo_vendor_id", label: "To", sortable: true },
+  {
+    key: "from_qbo_vendor_id",
+    label: "From",
+    sortable: true,
+    // ACCT-F5983: the backend already resolves from_qbo_vendor_id -> mdata.vendors via
+    // mdata.vendors.qbo_vendor_id (data-infra.service.ts LINK-F5171/LINK-F5183) and returns
+    // from_vendor_id/from_vendor_name -- this column rendered the raw QBO id as plain text and
+    // never used the already-resolved fields. Real EntityLink when an internal vendor matches;
+    // honest raw-QBO-id fallback (not a bare "-") when it doesn't, since the id itself is real data.
+    render: (row) =>
+      row.from_vendor_id ? (
+        <EntityLinkOrTombstone kind="vendor" id={row.from_vendor_id} name={row.from_vendor_name} noun="Vendor" />
+      ) : (
+        row.from_qbo_vendor_id
+      ),
+  },
+  {
+    key: "to_qbo_vendor_id",
+    label: "To",
+    sortable: true,
+    render: (row) =>
+      row.to_vendor_id ? (
+        <EntityLinkOrTombstone kind="vendor" id={row.to_vendor_id} name={row.to_vendor_name} noun="Vendor" />
+      ) : (
+        row.to_qbo_vendor_id
+      ),
+  },
   { key: "merge_reason", label: "Reason", sortable: true },
   { key: "merged_at", label: "Merged At", sortable: true, render: (row) => fmtDate(row.merged_at) },
 ];
