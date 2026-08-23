@@ -224,10 +224,26 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       const linked = await client.query(
         `SELECT
            ($2::uuid IS NULL OR EXISTS (
-             SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $2::uuid
+               AND (d.operating_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations complaint_create_complainant_dca
+                 WHERE complaint_create_complainant_dca.driver_id = d.id
+                   AND complaint_create_complainant_dca.company_id = $1::uuid
+                   AND complaint_create_complainant_dca.is_authorized = true
+                   AND complaint_create_complainant_dca.deactivated_at IS NULL
+               ))
            )) AS complainant_driver_ok,
            ($3::uuid IS NULL OR EXISTS (
-             SELECT 1 FROM mdata.drivers d WHERE d.id = $3::uuid AND d.operating_company_id = $1::uuid
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $3::uuid
+               AND (d.operating_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations complaint_create_respondent_dca
+                 WHERE complaint_create_respondent_dca.driver_id = d.id
+                   AND complaint_create_respondent_dca.company_id = $1::uuid
+                   AND complaint_create_respondent_dca.is_authorized = true
+                   AND complaint_create_respondent_dca.deactivated_at IS NULL
+               ))
            )) AS respondent_driver_ok,
            ($4::uuid IS NULL OR EXISTS (
              SELECT 1 FROM mdata.customers c WHERE c.id = $4::uuid AND c.operating_company_id = $1::uuid
