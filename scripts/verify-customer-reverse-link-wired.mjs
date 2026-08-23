@@ -46,6 +46,9 @@ function checkFrontend(sources) {
   if (!sources[CONTRACT_TAB].includes("listCustomerContracts(customerId, operatingCompanyId")) {
     fail(`${CONTRACT_TAB}: mounted contracts reverse read does not carry customer and company scope.`);
   }
+  if (!/contractsQuery\.isError[\s\S]*onRetry=\{\(\) => void contractsQuery\.refetch\(\)\}[\s\S]*contracts\.length === 0/.test(sources[CONTRACT_TAB])) {
+    fail(`${CONTRACT_TAB}: contract GET failure must expose exact retry before true-empty state.`);
+  }
   if (!/listInsuranceCoiRequests\(\{\s*operating_company_id: operatingCompanyId!,\s*customer_id: customerId/.test(sources[COI_TAB])) {
     fail(`${COI_TAB}: mounted COI reverse read does not carry customer and company scope.`);
   }
@@ -120,6 +123,21 @@ function selftest() {
     process.exitCode = undefined;
     if (!caught) {
       console.error(`SELFTEST INERT: removing ${needle} in ${file} was not caught.`);
+      process.exit(1);
+    }
+    probesProven++;
+  }
+  for (const needle of ["contractsQuery.isError", "onRetry={() => void contractsQuery.refetch()}"]) {
+    const mutated = { ...frontend, [CONTRACT_TAB]: frontend[CONTRACT_TAB].replace(needle, "BROKEN_CONTRACT_FAILURE_RECOVERY") };
+    if (mutated[CONTRACT_TAB] === frontend[CONTRACT_TAB]) {
+      console.error(`SELFTEST SETUP FAILED: contract recovery pattern not found: ${needle}`);
+      process.exit(1);
+    }
+    checkFrontend(mutated);
+    const caught = process.exitCode === 1;
+    process.exitCode = undefined;
+    if (!caught) {
+      console.error(`SELFTEST INERT: removing ${needle} was not caught.`);
       process.exit(1);
     }
     probesProven++;
