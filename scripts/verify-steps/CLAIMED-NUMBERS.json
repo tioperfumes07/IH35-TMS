@@ -1,4 +1,9 @@
 {
+  "4485": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customers-search-count-query-params"
+  },
   "4481": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
