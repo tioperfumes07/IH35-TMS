@@ -9,6 +9,7 @@ import process from "node:process";
 const ROOT = process.cwd();
 const paths = {
   service: path.join(ROOT, "apps/backend/src/dispatch/driver-optimizer.service.ts"),
+  refinements: path.join(ROOT, "apps/backend/src/dispatch/dispatch-refinements.service.ts"),
   routeTest: path.join(ROOT, "apps/backend/src/dispatch/__tests__/driver-optimizer.routes.test.ts"),
   routes: path.join(ROOT, "apps/backend/src/dispatch/dispatch-refinements.routes.ts"),
   panel: path.join(ROOT, "apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx"),
@@ -43,9 +44,24 @@ export function auditSharedDriverScope(service) {
   return failures;
 }
 
+export function auditAvailableDriverScope(service) {
+  const failures = [];
+  const required = [
+    [/d\.operating_company_id\s*=\s*\$1::uuid\s+OR\s+EXISTS/i, "available-driver fallback must retain home-company drivers and admit an authorization branch"],
+    [/FROM\s+mdata\.driver_company_authorizations\s+available_driver_dca/i, "available-driver fallback must use the canonical authorization table"],
+    [/available_driver_dca\.driver_id\s*=\s*d\.id/i, "available-driver authorization must bind the candidate"],
+    [/available_driver_dca\.company_id\s*=\s*\$1::uuid/i, "available-driver authorization must bind the selected company"],
+    [/available_driver_dca\.is_authorized\s*=\s*true/i, "available-driver authorization must be active"],
+    [/available_driver_dca\.deactivated_at\s+IS\s+NULL/i, "available-driver authorization must not be deactivated"],
+  ];
+  for (const [pattern, message] of required) if (!pattern.test(service)) failures.push(message);
+  return failures;
+}
+
 function main() {
   const service = read(paths.service);
   const routeTest = read(paths.routeTest);
+  const refinements = read(paths.refinements);
   const routes = read(paths.routes);
   const panel = read(paths.panel);
   const panelTest = read(paths.panelTest);
@@ -59,6 +75,7 @@ function main() {
   if (!service.includes("rankOptimalDrivers")) failures.push("optimizer service must rank top drivers");
   if (!service.includes("scoreDriverCandidate")) failures.push("optimizer service must score driver candidates");
   failures.push(...auditSharedDriverScope(service));
+  failures.push(...auditAvailableDriverScope(refinements));
   if ((routeTest.match(/\bit\(/g) ?? []).length < 5) failures.push("driver-optimizer routes tests must cover at least 5 cases");
   if (!routes.includes("/api/v1/dispatch/loads/:loadId/optimal-drivers")) failures.push("routes must expose optimal-drivers endpoint");
   if (!routes.includes("listOptimalDriversForLoad")) failures.push("routes must call listOptimalDriversForLoad");
@@ -86,6 +103,7 @@ function main() {
 
 function selftest() {
   const service = read(paths.service);
+  const refinements = read(paths.refinements);
   const mutations = [
     ["home-or-authorization", "OR EXISTS", "AND EXISTS"],
     ["authorization table", "mdata.driver_company_authorizations optimizer_driver_dca", "mdata.drivers optimizer_driver_dca"],
@@ -99,8 +117,21 @@ function selftest() {
     const planted = service.replace(before, after);
     if (planted === service || auditSharedDriverScope(planted).length === 0) failures.push(`${name} mutation escaped`);
   }
+  const availableMutations = [
+    ["available home-or-authorization", "OR EXISTS", "AND EXISTS"],
+    ["available table", "mdata.driver_company_authorizations available_driver_dca", "mdata.drivers available_driver_dca"],
+    ["available driver", "available_driver_dca.driver_id = d.id", "available_driver_dca.driver_id = d.other_id"],
+    ["available company", "available_driver_dca.company_id = $1::uuid", "available_driver_dca.company_id = $2::uuid"],
+    ["available active", "available_driver_dca.is_authorized = true", "available_driver_dca.is_authorized = false"],
+    ["available deactivation", "available_driver_dca.deactivated_at IS NULL", "available_driver_dca.deactivated_at IS NOT NULL"],
+  ];
+  for (const [name, before, after] of availableMutations) {
+    const planted = refinements.replace(before, after);
+    if (planted === refinements || auditAvailableDriverScope(planted).length === 0) failures.push(`${name} mutation escaped`);
+  }
   if (failures.length) fail(failures.join("; "));
-  console.log(`verify:dispatch-assignment-optimizer selftest PASS — ${mutations.length}/${mutations.length} shared-driver scope mutations caught`);
+  const total = mutations.length + availableMutations.length;
+  console.log(`verify:dispatch-assignment-optimizer selftest PASS — ${total}/${total} shared-driver scope mutations caught`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
