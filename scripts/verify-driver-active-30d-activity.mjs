@@ -57,6 +57,25 @@ assert(SVC, svc, /assigned_primary_driver_id/, "load activity");
 assert(SVC, svc, /vehicle_driver_assignments/, "drive activity");
 assert(SVC, svc, /Terminated/, "never touch Terminated");
 
+function sharedActivityFailures(source) {
+  const needles = [
+    "mdata.driver_company_authorizations load_activity_dca",
+    "load_activity_dca.driver_id = d.id",
+    "load_activity_dca.company_id = l.operating_company_id",
+    "load_activity_dca.is_authorized = true",
+    "load_activity_dca.deactivated_at IS NULL",
+    "mdata.driver_company_authorizations telematics_activity_dca",
+    "telematics_activity_dca.driver_id = d.id",
+    "telematics_activity_dca.company_id = a.operating_company_id",
+    "telematics_activity_dca.is_authorized = true",
+    "telematics_activity_dca.deactivated_at IS NULL",
+    "(l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id)",
+  ];
+  return needles.filter((needle) => !source.includes(needle));
+}
+
+for (const needle of sharedActivityFailures(svc)) fail(`${SVC}: missing ${needle}`);
+
 const job = read(JOB);
 assert(JOB, job, /applyDriverActive30dRule/, "worker calls apply");
 assert(JOB, job, /initializeDriverActive30dWorker/, "worker export");
@@ -89,6 +108,15 @@ process.exit(0);
   if (r.status === 0) {
     fail("--selftest: mutated migration (365d + no Terminated) must FAIL the probe");
   }
+  const serviceMutations = [
+    svc.replace("load_activity_dca.is_authorized = true", "load_activity_dca.is_authorized = false"),
+    svc.replace("load_activity_dca.deactivated_at IS NULL", "load_activity_dca.deactivated_at IS NOT NULL"),
+    svc.replace("telematics_activity_dca.is_authorized = true", "telematics_activity_dca.is_authorized = false"),
+    svc.replace("telematics_activity_dca.deactivated_at IS NULL", "telematics_activity_dca.deactivated_at IS NOT NULL"),
+    svc.replace(" OR l.assigned_secondary_driver_id = d.id", ""),
+  ];
+  const escaped = serviceMutations.filter((source) => sharedActivityFailures(source).length === 0);
+  if (escaped.length > 0) fail(`--selftest: ${escaped.length}/${serviceMutations.length} shared-activity mutations escaped`);
 }
 
 if (process.argv.includes("--selftest")) {
