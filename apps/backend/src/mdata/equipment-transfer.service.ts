@@ -286,10 +286,24 @@ export async function listTransfers(
          AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         LEFT JOIN mdata.drivers from_driver
           ON from_driver.id = r.from_driver_id
-         AND from_driver.operating_company_id = r.operating_company_id
+         AND (from_driver.operating_company_id = r.operating_company_id OR EXISTS (
+               SELECT 1
+               FROM mdata.driver_company_authorizations transfer_from_dca
+               WHERE transfer_from_dca.driver_id = from_driver.id
+                 AND transfer_from_dca.company_id = r.operating_company_id
+                 AND transfer_from_dca.is_authorized = true
+                 AND transfer_from_dca.deactivated_at IS NULL
+             ))
         LEFT JOIN mdata.drivers to_driver
           ON to_driver.id = r.to_driver_id
-         AND to_driver.operating_company_id = r.operating_company_id
+         AND (to_driver.operating_company_id = r.operating_company_id OR EXISTS (
+               SELECT 1
+               FROM mdata.driver_company_authorizations transfer_to_dca
+               WHERE transfer_to_dca.driver_id = to_driver.id
+                 AND transfer_to_dca.company_id = r.operating_company_id
+                 AND transfer_to_dca.is_authorized = true
+                 AND transfer_to_dca.deactivated_at IS NULL
+             ))
         ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
         ORDER BY r.initiated_at DESC
       `,
