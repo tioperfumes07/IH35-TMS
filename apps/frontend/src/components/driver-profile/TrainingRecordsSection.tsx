@@ -12,9 +12,11 @@ type TrainingRecordRow = Record<string, unknown> & { __rowKey: string };
 
 export function TrainingRecordsSection({
   records,
+  unavailable = false,
   onAddTraining,
 }: {
   records: Array<Record<string, unknown>>;
+  unavailable?: boolean;
   onAddTraining?: () => void;
 }) {
   const rows: TrainingRecordRow[] = records.map((row, index) => ({
@@ -52,6 +54,7 @@ export function TrainingRecordsSection({
         </button>
       </div>
       <div className="mt-3">
+        {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Training records could not be loaded.</p> : null}
         <ParityTable<TrainingRecordRow>
           rows={rows}
           rowKey={(row) => row.__rowKey}
