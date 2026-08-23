@@ -76,7 +76,18 @@ contains("apps/frontend/src/pages/reports/LateArrivalReport.tsx", report, [
   { pattern: /\/api\/v1\/dispatch\/analytics\/late-arrivals/, label: "report API fetch" },
 ]);
 
-read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
+const driverCard = read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
+function driverCardFailures(source) {
+  return [
+    !/query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/.test(source)
+      ? "driver late-arrival GET failure must be distinct from empty and exactly retryable"
+      : null,
+    /query\.isError \|\| !query\.data/.test(source)
+      ? "driver late-arrival failure must not masquerade as no data"
+      : null,
+  ].filter(Boolean);
+}
+failures.push(...driverCardFailures(driverCard));
 read("apps/frontend/src/components/customers/CustomerLateArrivalCard.tsx");
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
@@ -94,6 +105,19 @@ contains(".block-ready/GAP-30.json", blockManifest, [
 ]);
 
 
+
+if (process.argv.includes("--selftest")) {
+  if (failures.length) throw new Error(`baseline failed: ${failures.join("; ")}`);
+  const mutations = [
+    driverCard.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}"),
+    driverCard.replace("if (query.isError) {", "if (query.isError || !query.data) {"),
+  ];
+  for (const [index, mutated] of mutations.entries()) {
+    if (mutated === driverCard || driverCardFailures(mutated).length === 0) throw new Error(`driver-card mutation ${index + 1} escaped`);
+  }
+  console.log("verify:late-arrival-analytics SELFTEST PASS — 2/2 driver failure/empty mutations red");
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:late-arrival-analytics — FAILED");

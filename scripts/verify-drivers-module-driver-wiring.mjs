@@ -73,6 +73,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{id\}[\s\S]*?name=\{driverName\}[\s\S]*?noun="Driver"/],
   ["apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{driverId\}[\s\S]*?name=\{driverName\}[\s\S]*?noun="Driver"/],
   ["apps/frontend/src/pages/drivers/MessagesInboxPage.tsx", /threadQuery\.isError[\s\S]{0,220}Couldn't load message thread[\s\S]{0,220}onRetry=\{\(\) => void threadQuery\.refetch\(\)\}/],
+  ["apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx", /query\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void query\.refetch\(\)\}/],
   ["apps/frontend/src/api/onboarding.ts", /driver_name: string \| null;/],
   ["apps/backend/src/safety/onboarding.routes.ts", /LEFT JOIN mdata\.drivers driver[\s\S]*?driver\.operating_company_id = session\.operating_company_id/],
   ["apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx", /kind="driver"/],
