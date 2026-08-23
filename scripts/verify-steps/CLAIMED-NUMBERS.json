@@ -1,4 +1,9 @@
 {
+  "4505": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-csa-score-error-state"
+  },
   "4501": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
@@ -5558,5 +5563,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1252
+  "total_claimed": 1253
 }
