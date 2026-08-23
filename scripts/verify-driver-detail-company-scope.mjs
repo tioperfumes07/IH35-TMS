@@ -35,7 +35,7 @@ function verify(source) {
   const qualificationsStart = source.profileBackend.indexOf('app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"');
   const qualificationsEnd = source.profileBackend.indexOf('app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"', qualificationsStart);
   const qualificationsHandler = qualificationsStart >= 0 && qualificationsEnd > qualificationsStart ? source.profileBackend.slice(qualificationsStart, qualificationsEnd) : "";
-  need(/FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.is_active = true/.test(qualificationsHandler), "qualifications GET must validate active driver ownership or authorization before reading children");
+  need(/FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(qualificationsHandler), "qualifications GET must validate canonical active driver authorization before reading children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(qualificationsHandler), "qualifications GET must distinguish a missing/unauthorized parent from a true empty qualifications list");
   need(/listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/.test(source.detail), "DriverDetail safety-event reverse GET must send selected companyId");
   need(/queryKey: \["driver-safety-events", id, companyId, showVoidedSafetyEvents\]/.test(source.detail), "safety-event query key must include selected companyId");
@@ -44,7 +44,7 @@ function verify(source) {
   const safetyRouteEnd = source.safetyBackend.indexOf('app.post("/api/v1/mdata/drivers/:driver_id/safety-events"', safetyRouteStart);
   const safetyHandler = safetyRouteStart >= 0 && safetyRouteEnd > safetyRouteStart ? source.safetyBackend.slice(safetyRouteStart, safetyRouteEnd) : "";
   need(/parsedQuery\.data\.operating_company_id/.test(safetyHandler), "safety-event backend must resolve the selected company");
-  need(/SELECT 1[\s\S]{0,180}FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.is_active = true/.test(safetyHandler), "safety-event backend must prove the requested parent driver is active in the selected company before listing children");
+  need(/SELECT 1[\s\S]{0,180}FROM mdata\.drivers d[\s\S]{0,500}driver_company_authorizations[\s\S]{0,300}dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(safetyHandler), "safety-event backend must prove canonical active driver authorization before listing children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(safetyHandler), "safety-event backend must distinguish an unauthorized/missing parent from a legitimate empty event list");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
@@ -91,7 +91,8 @@ if (process.argv.includes("--selftest")) {
     },
     { key: "detail", text: replaceOrFail(source.detail, /listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/, "listSafetyEvents(id, showVoidedSafetyEvents)", "safety event selected-company call") },
     { key: "api", text: replaceOrFail(source.api, /listSafetyEvents\(driverId: string, operatingCompanyId: string, includeVoided = false\)/, "listSafetyEvents(driverId: string, includeVoided = false)", "safety event required company API") },
-    { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /dca\.is_active = true/, "TRUE", "safety-event active company authorization") },
+    { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /dca\.is_authorized = true/, "TRUE", "safety-event active company authorization") },
+    { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /dca\.deactivated_at IS NULL/, "TRUE", "safety-event non-deactivated authorization") },
     { key: "safetyBackend", text: replaceOrFail(source.safetyBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "safety-event missing parent response") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
     { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
@@ -109,7 +110,8 @@ if (process.argv.includes("--selftest")) {
         "company authorization parent driver scope"
       ),
     },
-    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.is_active = true/, "TRUE", "qualification active company authorization") },
+    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.is_authorized = true/, "TRUE", "qualification active company authorization") },
+    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.deactivated_at IS NULL/, "TRUE", "qualification non-deactivated authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "qualification missing parent response") },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },

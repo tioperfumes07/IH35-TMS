@@ -122,8 +122,9 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 SELECT 1
                 FROM mdata.driver_company_authorizations dca
                 WHERE dca.driver_id = d.id
-                  AND dca.operating_company_id = $2::uuid
-                  AND dca.is_active = true
+                  AND dca.company_id = $2::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
               )
             )
           LIMIT 1
