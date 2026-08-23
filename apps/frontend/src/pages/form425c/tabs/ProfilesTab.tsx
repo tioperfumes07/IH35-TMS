@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import type { CompanyKey, CompanyProfiles } from "../types";
 import { QUESTIONNAIRE } from "../lib/constants";
@@ -123,7 +124,12 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
               <span className="flex items-center gap-2">
                 {q.text}
                 {flagged ? (
-                  <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Exhibit required</span>
+                  <Link
+                    to="/425c/exhibits"
+                    className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white hover:underline"
+                  >
+                    Exhibit required
+                  </Link>
                 ) : null}
               </span>
               <div className="flex gap-2">
