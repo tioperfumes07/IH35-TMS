@@ -1551,6 +1551,83 @@ export function getVendor(id: string, operatingCompanyId?: string | null) {
   return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}${query}`);
 }
 
+// ORPH-003 — mdata.vendor_payment_methods (migration 202613110000): structured payment-method records,
+// replacing buildAchDisplay()'s notes-text "ach" heuristic. See
+// docs/specs/CURSOR-AUDIT-2026-07-15/modules/15-CUSTOMERS-VENDORS.md §5 item 5.
+export type VendorPaymentMethod = {
+  id: string;
+  operating_company_id: string;
+  vendor_id: string;
+  method_type: "ach" | "check" | "wire" | "other";
+  bank_name: string | null;
+  // Last 4 digits only -- never a full account/routing number (DB-enforced, see the migration's CHECK).
+  account_mask: string | null;
+  is_primary: boolean;
+  notes: string | null;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  deactivated_at: string | null;
+  void_reason: string | null;
+  voided_by_user_id: string | null;
+};
+
+export function listVendorPaymentMethods(vendorId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ payment_methods: VendorPaymentMethod[] }>(
+    `/api/v1/mdata/vendors/${vendorId}/payment-methods?${query}`
+  );
+}
+
+export function createVendorPaymentMethod(
+  vendorId: string,
+  body: {
+    operating_company_id: string;
+    method_type: VendorPaymentMethod["method_type"];
+    bank_name?: string;
+    account_mask?: string;
+    is_primary?: boolean;
+    notes?: string;
+  }
+) {
+  return apiRequest<VendorPaymentMethod>(`/api/v1/mdata/vendors/${vendorId}/payment-methods`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateVendorPaymentMethod(
+  vendorId: string,
+  methodId: string,
+  operatingCompanyId: string,
+  body: {
+    method_type?: VendorPaymentMethod["method_type"];
+    bank_name?: string | null;
+    account_mask?: string | null;
+    is_primary?: boolean;
+    notes?: string | null;
+  }
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<VendorPaymentMethod>(`/api/v1/mdata/vendors/${vendorId}/payment-methods/${methodId}?${query}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidVendorPaymentMethod(
+  vendorId: string,
+  methodId: string,
+  operatingCompanyId: string,
+  voidReason: string
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<VendorPaymentMethod>(
+    `/api/v1/mdata/vendors/${vendorId}/payment-methods/${methodId}/void?${query}`,
+    { method: "POST", body: { void_reason: voidReason } }
+  );
+}
+
 export type CreateVendorInput = {
   name: string;
   // LST-WIRE-04 — was a frozen union of eight literals, which made catalogs.vendor_types unusable:
