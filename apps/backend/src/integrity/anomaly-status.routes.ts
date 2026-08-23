@@ -145,7 +145,17 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d
             ON a.subject_type = 'driver'
            AND d.id = a.subject_id
-           AND d.operating_company_id = a.tenant_id
+           AND (
+                d.operating_company_id = a.tenant_id
+             OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations anomaly_driver_dca
+                  WHERE anomaly_driver_dca.driver_id = d.id
+                    AND anomaly_driver_dca.company_id = a.tenant_id
+                    AND anomaly_driver_dca.is_authorized = true
+                    AND anomaly_driver_dca.deactivated_at IS NULL
+                )
+           )
           LEFT JOIN mdata.units u
             ON a.subject_type = 'unit'
            AND u.id = a.subject_id
@@ -207,7 +217,17 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d
             ON a.subject_type = 'driver'
            AND d.id = a.subject_id
-           AND d.operating_company_id = a.tenant_id
+           AND (
+                d.operating_company_id = a.tenant_id
+             OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations anomaly_driver_dca
+                  WHERE anomaly_driver_dca.driver_id = d.id
+                    AND anomaly_driver_dca.company_id = a.tenant_id
+                    AND anomaly_driver_dca.is_authorized = true
+                    AND anomaly_driver_dca.deactivated_at IS NULL
+                )
+           )
           LEFT JOIN mdata.units u
             ON a.subject_type = 'unit'
            AND u.id = a.subject_id

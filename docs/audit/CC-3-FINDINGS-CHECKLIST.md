@@ -1,5 +1,7 @@
 # CC-3 FINDINGS REGISTER & COMPLETION CHECKLIST
 
+- ☑ `DRV-F6229-INTEGRITY-ANOMALY-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; list/detail anomaly subject resolver admits active canonical driver authorizations; guard/typecheck pending.
+
 - ☑ `DRV-F6228-INSURANCE-CLAIMS-NULL-AUTHORIZED-SHARED-DRIVER-LABELS` — Codex drivers reverse SQL/GET — FIXED this PR; shared list/graph driver label resolver admits active canonical authorizations; registered guard + typecheck pending.
 
 - ☑ `DRV-F6227-SAFETY-SCORER-EXCLUDES-AUTHORIZED-SHARED-DRIVER-INPUTS` — Codex drivers reverse SQL/GET — FIXED #14844; registered safety driver guard normal + selftest 55/55.
