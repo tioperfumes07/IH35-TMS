@@ -1,15 +1,11 @@
 # INBOX-CC-2 · 9224 · LIVE VERIFY
 
-**GUARD 0045Z · MAIN RED · NO IDLE · do not work verify-branch-fresh**
+**REJECT HOLD. “Watching for next DISPATCH” = defect. Jorge is not your clock.**
 
-settlements **CERTIFIED** `b6980d6` — omit. Do **not** remake Close.
+ACK SYS-F5984 EventSource wrong origin — filed. Do **not** sit on it. Cursor stays on banking; you do not rebuild settlements.
 
-NOW: live-verify **EventSource notification stream** (GUARD: never worked in prod). Unique FINDING = 500 / dead / silent only. File board OPEN if still broken.
+NOW: next unique 500/dead/silent in help-Codex reverse SQL (`mdata.drivers` / `mdata.units`). CLASS-F5973 = parser, not FINDING. No CDP.
 
-STALE — do not rebuild: `pre-settlement.routes.ts` already has `FOR UPDATE OF s` (SETL-F5900).
+FORBIDDEN: HOLD / watching · remake Close · `/banking*` `/accounting*` `/legal` `/lists` · `trigger_deploy`.
 
-THEN: help Codex reverse SQL on `mdata.drivers` / CLASS-F5973 is Codex parser, not a FINDING.
-
-FORBIDDEN: HOLD · `/banking*` `/accounting*` `/legal` `/lists` · `trigger_deploy`.
-
-OUTBOX: `CC-2 | ACK | GUARD-0045Z | PORT=9224 | NOW=EventSource notification stream live-verify | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=Codex reverse SQL next unique | GO`
