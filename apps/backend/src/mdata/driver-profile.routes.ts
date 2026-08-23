@@ -10,8 +10,10 @@ const qualificationIdParamSchema = z.object({ id: z.string().uuid(), qual_id: z.
 const qualificationRateHistoryParamSchema = z.object({ id: z.string().uuid(), qual_id: z.string().uuid() });
 const companyAuthorizationIdParamSchema = z.object({ id: z.string().uuid(), auth_id: z.string().uuid() });
 const listQualificationsQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
   include_inactive: z.enum(["true", "false"]).optional(),
 });
+const qualificationHistoryQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const payRateChangeReasonSchema = z.enum([
@@ -101,7 +103,11 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       // company's negotiated pay rates. Resolve the caller's operating company and JOIN
       // mdata.drivers on operating_company_id so this can only ever return the caller's own
       // entity's qualifications (the pay-rate query below is transitively scoped by these ids).
-      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const companyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
       if (!companyId) return { qualifications: [] };
 
       const includeInactive = parsedQuery.data.include_inactive === "true";
@@ -413,18 +419,29 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       if (!authUser) return;
       const parsedParams = qualificationRateHistoryParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+      const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
+        const companyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          parsedQuery.data.operating_company_id
+        );
+        if (!companyId) return reply.code(404).send({ error: "driver_qualification_not_found" });
         const qualificationRes = await client.query(
           `
-            SELECT id, equipment_type_id
-            FROM mdata.driver_equipment_qualifications
-            WHERE id = $1
-              AND driver_id = $2
-              AND deactivated_at IS NULL
+            SELECT dq.id, dq.equipment_type_id
+            FROM mdata.driver_equipment_qualifications dq
+            JOIN mdata.drivers d
+              ON d.id = dq.driver_id
+             AND d.operating_company_id = $3::uuid
+            WHERE dq.id = $1
+              AND dq.driver_id = $2
+              AND dq.deactivated_at IS NULL
             LIMIT 1
           `,
-          [parsedParams.data.qual_id, parsedParams.data.id]
+          [parsedParams.data.qual_id, parsedParams.data.id, companyId]
         );
         if (qualificationRes.rows.length === 0) return reply.code(404).send({ error: "driver_qualification_not_found" });
 

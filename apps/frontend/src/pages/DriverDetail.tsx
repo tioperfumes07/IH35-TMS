@@ -262,9 +262,9 @@ export function DriverDetailPage() {
   });
 
   const qualificationsQuery = useQuery({
-    queryKey: ["driver-qualifications", id, showInactiveQualifications],
-    queryFn: () => listDriverQualifications(id, showInactiveQualifications).then((result) => result.qualifications),
-    enabled: Boolean(id),
+    queryKey: ["driver-qualifications", id, companyId, showInactiveQualifications],
+    queryFn: () => listDriverQualifications(id, companyId, showInactiveQualifications).then((result) => result.qualifications),
+    enabled: Boolean(id && companyId),
   });
 
   const companiesQuery = useQuery({
@@ -294,9 +294,9 @@ export function DriverDetailPage() {
   });
 
   const historyQuery = useQuery({
-    queryKey: ["driver-rate-history", id, selectedQualificationId, selectedLineItemId],
-    queryFn: () => getDriverQualificationRateHistory(id, selectedQualificationId),
-    enabled: historyModalOpen && Boolean(id) && Boolean(selectedQualificationId),
+    queryKey: ["driver-rate-history", id, companyId, selectedQualificationId, selectedLineItemId],
+    queryFn: () => getDriverQualificationRateHistory(id, selectedQualificationId, companyId),
+    enabled: historyModalOpen && Boolean(id) && Boolean(companyId) && Boolean(selectedQualificationId),
   });
 
   const driver = driverQuery.data;

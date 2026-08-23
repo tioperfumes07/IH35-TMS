@@ -957,9 +957,12 @@ export function getDriverApVendor(driverId: string, operatingCompanyId: string) 
   );
 }
 
-export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ qualifications: DriverQualification[] }>(`/api/v1/mdata/drivers/${driverId}/qualifications${query}`);
+export function listDriverQualifications(driverId: string, operatingCompanyId: string, includeInactive?: boolean) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ qualifications: DriverQualification[] }>(
+    `/api/v1/mdata/drivers/${driverId}/qualifications?${query.toString()}`
+  );
 }
 
 export function createDriverQualification(
@@ -1010,9 +1013,10 @@ export function reactivateQualification(driverId: string, qualificationId: strin
   });
 }
 
-export function getDriverQualificationRateHistory(driverId: string, qualificationId: string) {
+export function getDriverQualificationRateHistory(driverId: string, qualificationId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ line_items: DriverQualificationRateHistoryLineItem[] }>(
-    `/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rate-history`
+    `/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/rate-history?${query.toString()}`
   );
 }
 
