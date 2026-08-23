@@ -49,6 +49,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /kind="driver" id=\{driver\.id\}/],
   ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /EntityLinkOrTombstone kind="driver" id=\{driverId\} name=\{name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{row\.driverName\} noun="Driver"/],
+  ["apps/backend/src/dispatch/loads.routes.ts", /FROM mdata\.driver_company_authorizations awaiting_unit_driver_dca[\s\S]{0,180}awaiting_unit_driver_dca\.driver_id = ud\.id[\s\S]{0,140}awaiting_unit_driver_dca\.company_id = \$1::uuid[\s\S]{0,140}awaiting_unit_driver_dca\.is_authorized = true[\s\S]{0,140}awaiting_unit_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="driver" id=\{driver\.id\}/],
   ["apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", /kind="driver" id=\{doc\.driver_id\}/],

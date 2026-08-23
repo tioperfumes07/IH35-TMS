@@ -1638,7 +1638,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- show Driver + HOS even with no load. (The old join used the load's driver, which is
           -- null for an unloaded truck.)
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
-                                     AND ud.operating_company_id = $1::uuid
+                                     AND (ud.operating_company_id = $1::uuid OR EXISTS (
+                                       SELECT 1 FROM mdata.driver_company_authorizations awaiting_unit_driver_dca
+                                       WHERE awaiting_unit_driver_dca.driver_id = ud.id
+                                         AND awaiting_unit_driver_dca.company_id = $1::uuid
+                                         AND awaiting_unit_driver_dca.is_authorized = true
+                                         AND awaiting_unit_driver_dca.deactivated_at IS NULL
+                                     ))
           -- A truck can retain its assigned trailer while awaiting the next load. The previous
           -- hardcoded NULL hid that real reverse relationship on every awaiting-truck row.
           LEFT JOIN LATERAL (
