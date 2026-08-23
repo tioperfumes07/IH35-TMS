@@ -65,6 +65,9 @@ export function assertDriverTerminationReasonsPerEntity(sources) {
   if (!/app\.get\("\/api\/v1\/catalogs\/driver-termination-reasons", \{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/.test(route)) {
     errs.push("catalog GET must retain its auth-route rate limit");
   }
+  if (!/app\.get\("\/api\/v1\/catalogs\/driver-termination-reasons"[\s\S]{0,900}operating_company_id: z\.string\(\)\.uuid\(\),/.test(route)) {
+    errs.push("catalog GET must require selected operating_company_id");
+  }
   if (!/\[opco\]/.test(route)) errs.push("catalog GET must bind the resolved selected company");
 
   const returning = get(RETURNING);
@@ -110,6 +113,13 @@ if (SELFTEST) {
   expectCaught("route-insert-unscoped", { ...live, [ROUTE]: live[ROUTE].replace(/INSERT INTO catalogs\.driver_termination_reasons \(operating_company_id, /g, "INSERT INTO catalogs.driver_termination_reasons (") }, "catalog INSERT must write operating_company_id");
   expectCaught("route-get-unscoped", { ...live, [ROUTE]: live[ROUTE].replace(/WHERE operating_company_id = \$1::uuid/g, "WHERE true") }, "catalog GET must predicate selected operating_company_id");
   expectCaught("route-get-rate-limit-removed", { ...live, [ROUTE]: live[ROUTE].replace('app.get("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', 'app.get("/api/v1/catalogs/driver-termination-reasons",') }, "catalog GET must retain its auth-route rate limit");
+  expectCaught("route-get-company-optional", {
+    ...live,
+    [ROUTE]: live[ROUTE].replace(
+      '      operating_company_id: z.string().uuid(),\n    });\n    const parsedQuery = querySchema',
+      '      operating_company_id: z.string().uuid().optional(),\n    });\n    const parsedQuery = querySchema'
+    ),
+  }, "catalog GET must require selected operating_company_id");
   expectCaught("returning-guc-removed", { ...live, [RETURNING]: live[RETURNING].replace(/set_config\('app\.operating_company_id'/g, "set_config('app.other'") }, "returning-driver detection must set the entity GUC");
   expectCaught("mig-force-rls-removed", { ...live, [MIG]: live[MIG].replace(/FORCE ROW LEVEL SECURITY/g, "no rls") }, "FORCE ROW LEVEL SECURITY");
   expectCaught("api-company-dropped", { ...live, [API]: live[API].replace("listDriverTerminationReasons(operatingCompanyId: string", "listDriverTerminationReasons(") }, "frontend API must explicitly scope");
@@ -124,7 +134,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 10 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
