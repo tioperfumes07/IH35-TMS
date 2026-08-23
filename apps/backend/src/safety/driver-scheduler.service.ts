@@ -324,7 +324,13 @@ export async function listLeaveBalances(
         GREATEST(b.personal_allocated - b.personal_used, 0) AS personal_remaining
       FROM catalogs.driver_leave_balances b
       JOIN mdata.drivers d ON d.id = b.driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (d.operating_company_id = $1::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations leave_balances_dca
+                             WHERE leave_balances_dca.driver_id = d.id
+                               AND leave_balances_dca.company_id = $1::uuid
+                               AND leave_balances_dca.is_authorized = true
+                               AND leave_balances_dca.deactivated_at IS NULL
+                           ))
       WHERE b.operating_company_id = $1::uuid
         AND b.plan_year = $2
         AND d.deactivated_at IS NULL
@@ -633,7 +639,13 @@ export async function listPendingLeaveRequests(client: QueryableClient, operatin
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (d.operating_company_id = $1::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations pending_leave_dca
+                             WHERE pending_leave_dca.driver_id = d.id
+                               AND pending_leave_dca.company_id = $1::uuid
+                               AND pending_leave_dca.is_authorized = true
+                               AND pending_leave_dca.deactivated_at IS NULL
+                           ))
       WHERE r.operating_company_id = $1::uuid
         AND r.status = 'pending_review'
         AND r.voided_at IS NULL
@@ -652,7 +664,13 @@ export async function listAllLeaveRequests(client: QueryableClient, operatingCom
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (d.operating_company_id = $1::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations all_leave_dca
+                             WHERE all_leave_dca.driver_id = d.id
+                               AND all_leave_dca.company_id = $1::uuid
+                               AND all_leave_dca.is_authorized = true
+                               AND all_leave_dca.deactivated_at IS NULL
+                           ))
       WHERE r.operating_company_id = $1::uuid
       ORDER BY r.created_at DESC
       LIMIT $2
@@ -669,7 +687,13 @@ export async function getLeaveRequestDetail(client: QueryableClient, operatingCo
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
-                           AND d.operating_company_id = $1::uuid
+                           AND (d.operating_company_id = $1::uuid OR EXISTS (
+                             SELECT 1 FROM mdata.driver_company_authorizations leave_detail_dca
+                             WHERE leave_detail_dca.driver_id = d.id
+                               AND leave_detail_dca.company_id = $1::uuid
+                               AND leave_detail_dca.is_authorized = true
+                               AND leave_detail_dca.deactivated_at IS NULL
+                           ))
       WHERE r.operating_company_id = $1::uuid AND r.id = $2
       LIMIT 1
     `,

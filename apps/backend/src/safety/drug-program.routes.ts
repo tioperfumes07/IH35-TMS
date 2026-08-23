@@ -404,7 +404,13 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           FROM safety.clearinghouse_query q
           LEFT JOIN mdata.drivers d
             ON d.id = q.driver_id
-           AND d.operating_company_id = q.operating_company_id
+           AND (d.operating_company_id = q.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations clearinghouse_list_dca
+             WHERE clearinghouse_list_dca.driver_id = d.id
+               AND clearinghouse_list_dca.company_id = q.operating_company_id
+               AND clearinghouse_list_dca.is_authorized = true
+               AND clearinghouse_list_dca.deactivated_at IS NULL
+           ))
           WHERE q.operating_company_id = $1::uuid
             AND q.voided_at IS NULL
           ORDER BY q.queried_at DESC

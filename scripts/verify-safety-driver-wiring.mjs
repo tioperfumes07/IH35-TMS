@@ -65,6 +65,11 @@ const CHECKS = [
   ["apps/backend/src/safety/onboarding.routes.ts", /onboarding_detail_dca\.driver_id = driver\.id[\s\S]{0,180}onboarding_detail_dca\.company_id = session\.operating_company_id[\s\S]{0,180}onboarding_detail_dca\.is_authorized = true[\s\S]{0,180}onboarding_detail_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/driver-scoring/scoring.service.ts", /scoring_leaderboard_dca\.driver_id = d\.id[\s\S]{0,180}scoring_leaderboard_dca\.company_id = s\.operating_company_id[\s\S]{0,180}scoring_leaderboard_dca\.is_authorized = true[\s\S]{0,180}scoring_leaderboard_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/driver-scoring/scoring.service.ts", /scoring_trend_dca\.driver_id = d\.id[\s\S]{0,180}scoring_trend_dca\.company_id = s\.operating_company_id[\s\S]{0,180}scoring_trend_dca\.is_authorized = true[\s\S]{0,180}scoring_trend_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/drug-program.routes.ts", /clearinghouse_list_dca\.driver_id = d\.id[\s\S]{0,180}clearinghouse_list_dca\.company_id = q\.operating_company_id[\s\S]{0,180}clearinghouse_list_dca\.is_authorized = true[\s\S]{0,180}clearinghouse_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /leave_balances_dca\.driver_id = d\.id[\s\S]{0,180}leave_balances_dca\.company_id = \$1::uuid[\s\S]{0,180}leave_balances_dca\.is_authorized = true[\s\S]{0,180}leave_balances_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /pending_leave_dca\.driver_id = d\.id[\s\S]{0,180}pending_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}pending_leave_dca\.is_authorized = true[\s\S]{0,180}pending_leave_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /all_leave_dca\.driver_id = d\.id[\s\S]{0,180}all_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}all_leave_dca\.is_authorized = true[\s\S]{0,180}all_leave_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /leave_detail_dca\.driver_id = d\.id[\s\S]{0,180}leave_detail_dca\.company_id = \$1::uuid[\s\S]{0,180}leave_detail_dca\.is_authorized = true[\s\S]{0,180}leave_detail_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {
