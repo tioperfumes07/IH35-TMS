@@ -977,9 +977,10 @@ export function createDriverQualification(
       change_reason?: PayRateChangeReason;
       change_notes?: string;
     }>;
-  }
+  },
+  operatingCompanyId: string
 ) {
-  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications`, {
+  return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "POST",
     body,
   });

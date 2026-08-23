@@ -486,7 +486,7 @@ export function DriverDetailPage() {
 
   const addQualificationMutation = useMutation({
     mutationFn: ({ driverId, body }: { driverId: string; body: Parameters<typeof createDriverQualification>[1] }) =>
-      createDriverQualification(driverId, body),
+      createDriverQualification(driverId, body, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
       setAddQualificationOpen(false);
