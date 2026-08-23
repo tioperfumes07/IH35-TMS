@@ -1,89 +1,4 @@
 {
-  "4517": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-create-advance-modal-error-state"
-  },
-  "4513": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-dispatcher-safety-events-write-scope"
-  },
-  "4509": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-safety-csa-score-error-state"
-  },
-  "4505": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-notification-action-links-match-routes"
-  },
-  "4501": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-send-contract-variable-row-stable-key"
-  },
-  "4497": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-owner-override-log-route-wired"
-  },
-  "4493": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-safety-driver-score-events-error-state"
-  },
-  "4489": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-safety-hos-violations-error-state"
-  },
-  "4485": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-customers-search-count-query-params"
-  },
-  "4481": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-insurance-policy-claims-error-state"
-  },
-  "4477": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-drivers-hub-kpi-error-state"
-  },
-  "4473": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-earnings-tab-error-state"
-  },
-  "4469": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-payment-methods-card-error-state"
-  },
-  "4465": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-unit-trip-cost-membership-resolved"
-  },
-  "4461": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-advances-shared-company-reverse"
-  },
-  "4457": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-pwa-message-writes-shared-company"
-  },
-  "4453": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-vendor-payment-methods-public-default-privilege-delete-revoked"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3454,15 +3369,15 @@
     "claimed_by": "cursor",
     "purpose": "verify-form425c-history-includes-drafts"
   },
-  "4354": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cursor",
-    "purpose": "verify-form425c-history-month-utc"
-  },
   "4353": {
     "claimed_at": "2026-08-22",
     "claimed_by": "cc-1",
     "purpose": "verify-vendor-merges-resolved-vendor-link"
+  },
+  "4354": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cursor",
+    "purpose": "verify-form425c-history-month-utc"
   },
   "4355": {
     "claimed_at": "2026-08-22",
@@ -3603,6 +3518,96 @@
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
     "purpose": "verify-vendor-payment-methods-structured-not-notes-heuristic"
+  },
+  "4453": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-payment-methods-public-default-privilege-delete-revoked"
+  },
+  "4457": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-pwa-message-writes-shared-company"
+  },
+  "4461": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-advances-shared-company-reverse"
+  },
+  "4465": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-unit-trip-cost-membership-resolved"
+  },
+  "4469": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-payment-methods-card-error-state"
+  },
+  "4473": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-earnings-tab-error-state"
+  },
+  "4477": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-drivers-hub-kpi-error-state"
+  },
+  "4481": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-policy-claims-error-state"
+  },
+  "4485": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customers-search-count-query-params"
+  },
+  "4489": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-hos-violations-error-state"
+  },
+  "4493": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-driver-score-events-error-state"
+  },
+  "4497": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-owner-override-log-route-wired"
+  },
+  "4501": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-send-contract-variable-row-stable-key"
+  },
+  "4505": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-notification-action-links-match-routes"
+  },
+  "4509": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-safety-csa-score-error-state"
+  },
+  "4511": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-list-excludes-sample-data"
+  },
+  "4513": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dispatcher-safety-events-write-scope"
+  },
+  "4517": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-create-advance-modal-error-state"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -5588,5 +5593,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1256
+  "total_claimed": 1255
 }

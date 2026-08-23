@@ -1,0 +1,22 @@
+{
+  "block_id": "cc-2-driver-hub-chrome-law-note-0223",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-picker fix, plus the earlier fleet cross-entity fix from the SQL lane), a safe read-only Escape-dismiss chrome-law check confirmed clean. Explicitly not claiming CERTIFIED -- CREATE-TEST-THEN-VOID and further chrome-law items remain.",
+  "branch": "cc-2/driver-hub-chrome-law-note-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-driver-hub-chrome-law-note-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "status-only, no CERTIFY claim" }
+  ],
+  "linkage": "N/A -- docs-only status update.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

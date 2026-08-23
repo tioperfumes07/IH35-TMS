@@ -1,0 +1,30 @@
+{
+  "block_id": "cc-2-driver-list-sample-data-exclusion-0223",
+  "status": "GUARD",
+  "classification": "NON-FINANCIAL",
+  "phase": "URGENT-14-EXCLUSIVE-MODULE-CERTIFY",
+  "task": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and drivers live and selectable in real prod pickers. mdata.units already had the correct is_sample_data exclusion (DISPATCH-4); the canonical GET /api/v1/mdata/drivers list endpoint did not. Fixed: 23 fixture rows flagged is_sample_data=true (non-destructive), drivers.routes.ts list handler now excludes is_sample_data rows matching units.routes.ts's existing pattern, new guard verify-step 4511 (claimed+merged #14907).",
+  "branch": "cc-2/driver-list-sample-data-exclusion-0223",
+  "lane": "URGENT-14-EXCLUSIVE-CERTIFY",
+  "runtime_path": "src",
+  "allowed_files": [
+    "apps/backend/src/mdata/drivers.routes.ts",
+    "scripts/verify-driver-list-excludes-sample-data.mjs",
+    "scripts/verify-steps/4511-verify-driver-list-excludes-sample-data.mjs",
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc-2-driver-list-sample-data-exclusion-0223.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-driver-list-excludes-sample-data.mjs", "wired_into": "verify-steps/4511 (claimed on main via #14907)" },
+    { "kind": "live", "assert": "node scripts/verify-driver-list-excludes-sample-data.mjs --selftest exit 0 (1/1); npx vitest run drivers-test-seed-archive-list.test.ts drivers-pseudo-user-list.test.ts 4/4 PASS" },
+    { "kind": "route", "value": "apps/backend/src/mdata/drivers.routes.ts", "note": "GET /api/v1/mdata/drivers now excludes is_sample_data rows, matching units.routes.ts" },
+    { "kind": "design", "spec": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md", "sections": ["item 8 chrome law: no test/demo fixtures visible in real operational pickers"] }
+  ],
+  "linkage": "mdata.units.is_sample_data / mdata.drivers.is_sample_data -- existing columns, no schema change. No new FK/table/migration.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "NON-FINANCIAL, self-merge on green per owner law."
+}
