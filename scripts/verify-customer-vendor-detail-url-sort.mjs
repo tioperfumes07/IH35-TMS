@@ -120,7 +120,10 @@ export function customerVendorDetailUrlSortErrors({ hookSrc, pages }) {
     if (bad.length) failures.push(`${page.file} — data column(s) missing sortable: true: ${bad.join(", ")}`);
     if (page.file.endsWith("VendorDetail.tsx")) {
       for (const query of ["vendorQuery", "billsQuery", "vendorExpensesQuery", "vendorCreditsQuery"]) {
-        const retry = new RegExp(`${query}\\.isError[\\s\\S]{0,220}<ListErrorBanner[\\s\\S]{0,220}${query}\\.refetch\\(\\)`);
+        // Vendor detail legitimately renders an archived/not-in-company 404 branch
+        // before its generic retry banner. Keep the matcher bounded, but allow that
+        // honest branch instead of requiring the banner within 220 characters.
+        const retry = new RegExp(`${query}\\.isError[\\s\\S]{0,1200}<ListErrorBanner[\\s\\S]{0,220}${query}\\.refetch\\(\\)`);
         if (!retry.test(pageSrc)) failures.push(`${page.file} — ${query} failure must render retryable ListErrorBanner`);
       }
     }
