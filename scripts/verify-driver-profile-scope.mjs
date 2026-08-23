@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-profile-scope";
+const DRIVER_PROFILE_ROUTES = "apps/backend/src/mdata/driver-profile.routes.ts";
 
 const SCOPED_PAGES = [
   {
@@ -40,6 +41,17 @@ function read(rel) {
   } catch {
     return "";
   }
+}
+
+function checkQualificationRateHistoryAuthorization(routes) {
+  const errs = [];
+  if (!/\/api\/v1\/mdata\/drivers\/:id\/qualifications\/:qual_id\/rate-history[\s\S]{0,180}rateLimit: \{ max: 120, timeWindow: "1 minute" \}/.test(routes)) {
+    errs.push(`${DRIVER_PROFILE_ROUTES}: qualification rate-history GET must remain rate-limited`);
+  }
+  if (!/JOIN mdata\.drivers d[\s\S]{0,500}qualification_history_dca\.driver_id = d\.id[\s\S]{0,180}qualification_history_dca\.company_id = \$3::uuid[\s\S]{0,180}qualification_history_dca\.is_authorized = true[\s\S]{0,120}qualification_history_dca\.deactivated_at IS NULL/.test(routes)) {
+    errs.push(`${DRIVER_PROFILE_ROUTES}: qualification rate-history GET must admit an active company-authorized driver`);
+  }
+  return errs;
 }
 
 /** Pure checks for --selftest and repo scan. */
@@ -117,7 +129,10 @@ export function run() {
   const pageMap = Object.fromEntries(
     SCOPED_PAGES.map(({ file }) => [file, read(file)]),
   );
-  return check({ mdataApi: read("apps/frontend/src/api/mdata.ts"), pages: pageMap });
+  return [
+    ...check({ mdataApi: read("apps/frontend/src/api/mdata.ts"), pages: pageMap }),
+    ...checkQualificationRateHistoryAuthorization(read(DRIVER_PROFILE_ROUTES)),
+  ];
 }
 
 if (process.argv.includes("--selftest")) {
@@ -222,7 +237,29 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} --selftest PASS`);
+  const goodQualificationRoute = `
+    app.get("/api/v1/mdata/drivers/:id/qualifications/:qual_id/rate-history",
+      { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+      async () => client.query(\`
+        JOIN mdata.drivers d ON d.id = dq.driver_id AND (d.operating_company_id = $3::uuid OR EXISTS (
+          SELECT 1 FROM mdata.driver_company_authorizations qualification_history_dca
+          WHERE qualification_history_dca.driver_id = d.id
+            AND qualification_history_dca.company_id = $3::uuid
+            AND qualification_history_dca.is_authorized = true
+            AND qualification_history_dca.deactivated_at IS NULL
+        ))
+      \`));
+  `;
+  const qualificationMutations = [
+    goodQualificationRoute.replace('qualification_history_dca.is_authorized = true', 'qualification_history_dca.is_authorized = false'),
+    goodQualificationRoute.replace('{ config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },', ''),
+  ];
+  if (checkQualificationRateHistoryAuthorization(goodQualificationRoute).length > 0 || qualificationMutations.some((source) => checkQualificationRateHistoryAuthorization(source).length === 0)) {
+    console.error(`${LABEL} --selftest FAIL — qualification rate-history authorization mutation escaped`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} --selftest PASS — qualification authorization/rate-limit mutations rejected`);
   process.exit(0);
 }
 
