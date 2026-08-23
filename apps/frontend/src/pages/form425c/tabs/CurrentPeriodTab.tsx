@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -124,7 +125,12 @@ export function CurrentPeriodTab({
                 <span className="flex items-center gap-2">
                   {q.text}
                   {flagged ? (
-                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Exhibit required</span>
+                    <Link
+                      to="/425c/exhibits"
+                      className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white hover:underline"
+                    >
+                      Exhibit required
+                    </Link>
                   ) : null}
                 </span>
                 <div className="flex gap-2">

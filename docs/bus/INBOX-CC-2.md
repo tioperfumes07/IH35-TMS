@@ -4,6 +4,8 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. Settlements CERTIFIED — omit.
 
+**THIS TICK:** Codex customers still OPEN (honest — no CERTIFIED line). Live curl=`2fd90a0`. Cursor kicked Render `dep-da5n84mk1f9s739557jg` (`bd6737094f`). After healthz.version **changes**, help Codex emit **one** `CERTIFIED | MODULE=customers | LIVE_SHA=<new curl>`. Do **not** wait quiet. Empty Codex SQL angle → leftover unique 500/dead/silent on `/driver-hub`. No CDP. No `trigger_deploy`.
+
 **KILL LOOP:** stop chasing `cc-2/bus-ack-and-mdata-sweep-0223` / unscoped gate / “watching for next DISPATCH.” That is HOLD.
 
 NOW (two lanes, never idle). Codex hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` (one module per stamp).
