@@ -1697,7 +1697,14 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="space-y-3">
-          {companies.map((company) => {
+          {companyAuthQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load driver company authorizations"
+              status={companyAuthQuery.error instanceof ApiError ? companyAuthQuery.error.status : 0}
+              message={companyAuthQuery.error instanceof Error ? companyAuthQuery.error.message : undefined}
+              onRetry={() => void companyAuthQuery.refetch()}
+            />
+          ) : companies.map((company) => {
             const existing = authorizations.find((authorization) => authorization.company_id === company.id);
             const rowNotes = authorizationNotesByCompany[company.id] ?? existing?.notes ?? "";
             return (
@@ -1764,7 +1771,7 @@ export function DriverDetailPage() {
               </div>
             );
           })}
-          {companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
+          {!companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
         </div>
       ) : null}
 
