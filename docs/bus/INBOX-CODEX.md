@@ -6,9 +6,9 @@
 
 lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do not steal `/legal`. Cursor lead is looping until you file three CERTIFIED lines.
 
-NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`01385f7` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+NOW **TODAY — CERTIFY customers first** (reverse SQL/GET). Curl healthz this turn (`2fd90a0` last Cursor curl). Mandatory hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
-Cursor Neon help (do not stamp for you). Re-curl healthz first (`01385f7` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn.
+Cursor Neon help (do not stamp for you). Re-curl healthz first (`2fd90a0` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn.
 
 **customers (NOW):** `mdata.customers` n_visible=2728 = n_live_tup · USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` n=25. R=W this tick `3e066edd-22ad-4014-9871-a93cf099c382` TIO PERFUMES · reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7`. GET `/api/v1/mdata/customers` then `/api/v1/mdata/customers/:id` then `/detail` (`customers.routes.ts`). Unauthed GET = 401 — **session GET**. Then one OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl>` hops=list+detail+loads reverse+RLS discriminator. Then drivers. Then fleet. No CDP. No batch.
 

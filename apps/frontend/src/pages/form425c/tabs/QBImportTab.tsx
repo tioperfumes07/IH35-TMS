@@ -5,6 +5,7 @@ import { parseQBText } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useToast } from "../../../components/Toast";
 
 type Props = {
   activeCompany: CompanyKey;
@@ -17,11 +18,29 @@ type Props = {
 type ParsedRow = QBParsedLine & { idx: number };
 
 export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApplyTotal }: Props) {
+  const { pushToast } = useToast();
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
   const [raw, setRaw] = useState("");
   const [parsed, setParsed] = useState<QBParsedLine[]>([]);
   const profile = profiles[activeCompany];
+
+  function parseIncomeDeposits() {
+    const text = raw.trim();
+    if (!text) {
+      setParsed([]);
+      pushToast("Paste a tab-delimited deposit export first", "error");
+      return;
+    }
+    const rows = parseQBText(raw, profile.bankAccounts);
+    setParsed(rows);
+    if (rows.length === 0) {
+      pushToast(
+        "No matching DIP deposits — check tab-separated columns and bank account codes on Profiles",
+        "error",
+      );
+    }
+  }
 
   const includedTotal = useMemo(() => parsed.filter((x) => x.include).reduce((sum, x) => sum + x.amt, 0), [parsed]);
 
@@ -103,7 +122,7 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       />
 
       <div className="flex gap-2">
-        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={() => setParsed(parseQBText(raw, profile.bankAccounts))}>
+        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={parseIncomeDeposits}>
           Parse Income Deposits
         </button>
         <button type="button" className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
