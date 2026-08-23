@@ -88,6 +88,16 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
     const pattern = new RegExp(`${query}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
     if (!pattern.test(src)) failures.push(`${FILE}: ${query} catalog failure must expose exact-query retry`);
   }
+  // CUST-MONEY-F6057A — recent-invoices and open-invoices-for-payment failures collapsed into
+  // "no invoices" instead of an honest error+retry; checks the DERIVED listState's isError (not the
+  // raw query) since both render sites gate on recentInvoicesListState/openInvoicesListState.
+  for (const [state, query, title] of [
+    ["recentInvoicesListState", "recentInvoicesQuery", "Couldn't load recent invoices"],
+    ["openInvoicesListState", "paymentInvoicesQuery", "Couldn't load open invoices"],
+  ]) {
+    const pattern = new RegExp(`${state}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
+    if (!pattern.test(src)) failures.push(`${FILE}: ${state} money GET failure must render exact-query retry, not a false empty`);
+  }
   if (requiredSrc) {
     const required = JSON.parse(requiredSrc);
     for (const [id, route] of EXACT_ROUTES) {
@@ -124,6 +134,14 @@ if (process.argv.includes("--selftest")) {
     const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
     if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${query} catalog failure`))) {
       console.error(`${LABEL} SELFTEST FAIL — ${query} catalog retry mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  for (const [state, query] of [["recentInvoicesListState", "recentInvoicesQuery"], ["openInvoicesListState", "paymentInvoicesQuery"]]) {
+    const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
+    if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${state} money GET failure`))) {
+      console.error(`${LABEL} SELFTEST FAIL — ${state} money retry mutation escaped`);
       process.exit(1);
     }
     caught++;

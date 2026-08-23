@@ -2268,6 +2268,19 @@ export function CustomerDetailPage() {
                   </p>
                   {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                    {/* CUST-MONEY-F6057A — a settled GET failure left paymentInvoicesQuery.data
+                        undefined, so openInvoicesForPayment (derived from `?? []`) was empty and
+                        `.isEmpty` was false (a settled ERROR, not empty) — neither branch here
+                        rendered anything: a fetch failure looked like a silent, unexplained blank
+                        list with no invoices to apply payment to and no way to retry. */}
+                    {openInvoicesListState.isError ? (
+                      <ListErrorState
+                        title="Couldn't load open invoices"
+                        status={0}
+                        message={paymentInvoicesQuery.error instanceof Error ? paymentInvoicesQuery.error.message : undefined}
+                        onRetry={() => void paymentInvoicesQuery.refetch()}
+                      />
+                    ) : null}
                     {openInvoicesListState.isEmpty ? <p className="text-gray-500">No open invoices.</p> : null}
                     {openInvoicesForPayment.map((inv: Invoice) => (
                       <div key={inv.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
@@ -2444,6 +2457,21 @@ export function CustomerDetailPage() {
               </button>
             </div>
             {/* CUST-F3560: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar. */}
+            {/* CUST-MONEY-F6057A — ParityTable has no error slot of its own: recentInvoicesQuery.data
+                falls back to [] on a settled GET failure (line ~1036), so a real 500/network error
+                rendered silently as "No invoices yet for this customer." — masquerading a fetch
+                failure as an honest empty history. Render the shared ListErrorState + Retry instead
+                of the table when the query has actually errored (house pattern used 8+ times
+                elsewhere in this same file); the table (with its own honest loading/empty states)
+                renders only once the query has settled without an error. */}
+            {recentInvoicesListState.isError ? (
+              <ListErrorState
+                title="Couldn't load recent invoices"
+                status={0}
+                message={recentInvoicesQuery.error instanceof Error ? recentInvoicesQuery.error.message : undefined}
+                onRetry={() => void recentInvoicesQuery.refetch()}
+              />
+            ) : (
             <ParityTable<Invoice>
               rows={recentInvoices}
               rowKey={(invoice) => invoice.id}
@@ -2485,6 +2513,7 @@ export function CustomerDetailPage() {
                 },
               ]}
             />
+            )}
           </div>
         </div>
         </div>
