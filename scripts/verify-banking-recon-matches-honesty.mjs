@@ -14,6 +14,9 @@ export function run(root = process.cwd()) {
   if (!recon.includes('to="/banking/reconciliation-workspace"')) {
     failures.push("BankReconciliationPage start-session hop must target /banking/reconciliation-workspace");
   }
+  if (!recon.includes("getBankingTiles") || !recon.includes('tile_kind) === "real"')) {
+    failures.push("BankReconciliationPage account picker must use real banking tiles (Home KPI source), not Plaid-only");
+  }
   if (!queue.includes('data-testid="banking-reconcile-queue-empty-honesty-banner"')) {
     failures.push("BankingObligationReconcilePage missing empty-queue honesty banner");
   }
@@ -27,7 +30,7 @@ if (process.argv.includes("--selftest")) {
   fs.mkdirSync(`${tmp}/apps/frontend/src/pages/banking`, { recursive: true });
   fs.writeFileSync(
     `${tmp}/apps/frontend/src/pages/banking/BankReconciliationPage.tsx`,
-    `data-testid="banking-recon-matches-never-proven-banner"\nDo not treat this screen as books reconciled\nto="/banking/reconciliation-workspace"\n`
+    `data-testid="banking-recon-matches-never-proven-banner"\nDo not treat this screen as books reconciled\nto="/banking/reconciliation-workspace"\ngetBankingTiles\ntile_kind) === "real"\n`
   );
   fs.writeFileSync(
     `${tmp}/apps/frontend/src/pages/banking/BankingObligationReconcilePage.tsx`,
