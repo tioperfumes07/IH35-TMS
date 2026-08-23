@@ -1,12 +1,10 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**REJECT IDLE. Jorge restarting Chrome — this seat opens `/banking/transactions` once after restart.**
+**REJECT IDLE.** Live API `healthz` **`ffc938b`**. BANK-F07 live: Restante matched TEST expense `7219e2ef-ec00-4132-9409-f447b512d43c` reads **Expense**; in-row click proven.
 
-Live API `healthz` **`ffc938b`**. BANK-F07 merged; live DesignView chunk still `entityLabel` until web deploy `4e4bc2f` finishes.
+CURRENT MODULE: **banking**
+NOW: `/banking/reconciliation` — select USMCA FREIGHT account + period, **do not Close period** with 0 sessions. Unique FINDING if Start session is missing (banner says start, chrome has no create). Continue 1–12. Do not drain For-review.
 
-CURRENT MODULE: **banking**  
-NOW: All dates + Restante → Categorized → matched TEST expense `7219e2ef-ec00-4132-9409-f447b512d43c` must read **Expense** (not tombstone) and the in-row link must click (td intercept is remaining). Then continue 1–12 Live Chrome. Do not drain For-review. Do not Close period with 0 sessions.
+FORBIDDEN: another seat’s prefix · remake Accounting TESTs · CC deploy · wipe shared node_modules.
 
-FORBIDDEN: another seat’s prefix · remake Accounting TESTs · CC deploy.
-
-OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=banking | NOW=https://app.ih35dispatch.com/banking/transactions | GO`
+OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=banking | NOW=https://app.ih35dispatch.com/banking/reconciliation | GO`
