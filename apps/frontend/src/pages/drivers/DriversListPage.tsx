@@ -244,7 +244,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         onCreated={onOpenProfile}
       />
 
-      <KpiStrip>
+      {!dqfQ.isError ? <KpiStrip>
         <KpiCard
           label="Drivers"
           number={String(totals.total)}
@@ -275,10 +275,12 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
           accent={colors.drivers.strong}
           onClick={() => toggleDqfFocus("empty")}
         />
-      </KpiStrip>
+      </KpiStrip> : null}
 
       <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        {driversQ.isError ? (
+        {dqfQ.isError ? (
+          <ListErrorState title="Couldn't load driver DQF summaries" status={0} message={(dqfQ.error as Error)?.message} onRetry={() => void dqfQ.refetch()} />
+        ) : driversQ.isError ? (
           <ListErrorState title="Couldn't load drivers" status={0} message={(driversQ.error as Error)?.message} onRetry={() => void driversQ.refetch()} />
         ) : driversQ.isLoading ? (
           <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
