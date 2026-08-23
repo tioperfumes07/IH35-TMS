@@ -679,7 +679,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.operating_company_id = l.operating_company_id
+                                   AND d.archived_at IS NULL
+                                   AND (d.operating_company_id = l.operating_company_id OR EXISTS (
+                                     SELECT 1 FROM mdata.driver_company_authorizations load_list_dca
+                                     WHERE load_list_dca.driver_id = d.id AND load_list_dca.company_id = l.operating_company_id
+                                       AND load_list_dca.is_authorized = true AND load_list_dca.deactivated_at IS NULL
+                                   ))
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -902,9 +907,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           -- exposed this is exactly a TRK-owned unit LEASED to USMCA, which a bare owner_company_id
           -- predicate would silently drop back to a raw id.
           LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
-                                    AND pd.operating_company_id = l.operating_company_id
+                                    AND pd.archived_at IS NULL
+                                    AND (pd.operating_company_id = l.operating_company_id OR EXISTS (
+                                      SELECT 1 FROM mdata.driver_company_authorizations load_detail_primary_dca
+                                      WHERE load_detail_primary_dca.driver_id = pd.id AND load_detail_primary_dca.company_id = l.operating_company_id
+                                        AND load_detail_primary_dca.is_authorized = true AND load_detail_primary_dca.deactivated_at IS NULL
+                                    ))
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
-                                    AND sd.operating_company_id = l.operating_company_id
+                                    AND sd.archived_at IS NULL
+                                    AND (sd.operating_company_id = l.operating_company_id OR EXISTS (
+                                      SELECT 1 FROM mdata.driver_company_authorizations load_detail_secondary_dca
+                                      WHERE load_detail_secondary_dca.driver_id = sd.id AND load_detail_secondary_dca.company_id = l.operating_company_id
+                                        AND load_detail_secondary_dca.is_authorized = true AND load_detail_secondary_dca.deactivated_at IS NULL
+                                    ))
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE ${loadRefMatchSql("l", 1)}
@@ -919,7 +934,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
                 WHERE d.identity_user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                  AND d.operating_company_id = l.operating_company_id
+                  AND d.archived_at IS NULL
+                  AND (d.operating_company_id = l.operating_company_id OR EXISTS (
+                    SELECT 1 FROM mdata.driver_company_authorizations load_access_dca
+                    WHERE load_access_dca.driver_id = d.id AND load_access_dca.company_id = l.operating_company_id
+                      AND load_access_dca.is_authorized = true AND load_access_dca.deactivated_at IS NULL
+                  ))
                   AND (d.id = l.assigned_primary_driver_id OR d.id = l.assigned_secondary_driver_id)
               )
             )
