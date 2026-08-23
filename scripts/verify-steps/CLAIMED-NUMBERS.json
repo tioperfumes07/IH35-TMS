@@ -1,4 +1,9 @@
 {
+  "4465": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-unit-trip-cost-membership-resolved"
+  },
   "4461": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -5508,5 +5513,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1243
+  "total_claimed": 1244
 }
