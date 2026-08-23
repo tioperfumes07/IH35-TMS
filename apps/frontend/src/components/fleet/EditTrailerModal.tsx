@@ -10,6 +10,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+import { ListErrorState } from "../ListErrorState";
 
 function companyPickerLabel(c: MyCompany): string {
   const name = (c.short_name ?? c.legal_name ?? "").trim();
@@ -149,6 +150,16 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
     <Modal open={open} title="Edit trailer" onClose={onClose}>
       <div className="max-h-[70vh] space-y-3 overflow-y-auto text-sm" data-testid="tp-edit-trailer-modal">
         {profileQuery.isLoading ? <p>Loading…</p> : null}
+        {profileQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load trailer profile"
+            status={0}
+            message={(profileQuery.error as Error)?.message}
+            onRetry={() => void profileQuery.refetch()}
+          />
+        ) : null}
+        {!profileQuery.isError ? (
+          <>
         <FieldSet title="Identity">
           <FormField label="Trailer #" name="equipment_number">
             <input id="equipment_number" className={inputClass} value={draft.equipment_number ?? ""} onChange={(e) => set("equipment_number", e.target.value)} />
@@ -231,6 +242,8 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
         <FormField label="Notes" name="notes">
           <textarea id="notes" className={`${inputClass} min-h-16 py-1`} value={draft.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
         </FormField>
+          </>
+        ) : null}
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" onClick={onClose}>
             Cancel
@@ -238,6 +251,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           <Button
             size="sm"
             loading={saveMutation.isPending}
+            disabled={profileQuery.isError}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
                 onClose();
