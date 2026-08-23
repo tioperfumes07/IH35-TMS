@@ -85,10 +85,16 @@ export class AnomalyDetectorService {
         FROM mdata.drivers d
         LEFT JOIN safety.medical_cards mc
           ON mc.driver_id = d.id
-         AND mc.operating_company_id = d.operating_company_id
+         AND mc.operating_company_id = $1::uuid
          AND mc.voided_at IS NULL
          AND (mc.expiry_date IS NULL OR mc.expiry_date >= current_date)
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations anomaly_medcard_dca
+            WHERE anomaly_medcard_dca.driver_id = d.id
+              AND anomaly_medcard_dca.company_id = $1::uuid
+              AND anomaly_medcard_dca.is_authorized = true
+              AND anomaly_medcard_dca.deactivated_at IS NULL
+          ))
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
           AND mc.id IS NULL
