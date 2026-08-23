@@ -158,7 +158,10 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             onRetry={() => void profileQuery.refetch()}
           />
         ) : null}
-        {!profileQuery.isError ? (
+        {companiesQuery.isError ? (
+          <ListErrorState title="Couldn't load company choices" status={0} message={(companiesQuery.error as Error)?.message} onRetry={() => void companiesQuery.refetch()} />
+        ) : null}
+        {!profileQuery.isError && !companiesQuery.isError ? (
           <>
         <FieldSet title="Identity">
           <FormField label="Trailer #" name="equipment_number">
@@ -251,7 +254,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           <Button
             size="sm"
             loading={saveMutation.isPending}
-            disabled={profileQuery.isError}
+            disabled={profileQuery.isError || companiesQuery.isError}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
                 onClose();

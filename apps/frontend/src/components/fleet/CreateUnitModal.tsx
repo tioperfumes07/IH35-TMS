@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
@@ -103,7 +104,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create unit"), "error"),
   });
 
-  const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending;
+  const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending && !companiesQuery.isError;
 
   return (
     <ParityDrawer
@@ -134,6 +135,9 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
           if (canSubmit) createMutation.mutate();
         }}
       >
+        {companiesQuery.isError ? (
+          <ListErrorState title="Couldn't load company choices" status={0} message={(companiesQuery.error as Error)?.message} onRetry={() => void companiesQuery.refetch()} />
+        ) : null}
         <FieldSet title="Identity">
           <FormField label="Unit Number" name="unit_number">
             <input
