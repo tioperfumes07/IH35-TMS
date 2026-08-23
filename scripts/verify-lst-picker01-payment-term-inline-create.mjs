@@ -13,6 +13,11 @@ const LABEL = "verify-lst-picker01-payment-term-inline-create";
 
 const SITES = [
   {
+    rel: "apps/frontend/src/pages/CustomerDetail.tsx",
+    refresh: /paymentTermsQuery\.refetch/,
+    errorRecovery: /paymentTermsQuery\.isError[\s\S]{0,500}<ListErrorState[\s\S]{0,300}paymentTermsQuery\.refetch\(\)/,
+  },
+  {
     rel: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
     refresh: /onPaymentTermCreated|paymentTermsQuery\.refetch|invalidateQueries.*payment-term/,
   },
@@ -130,6 +135,9 @@ export function collectProblems(root = ROOT, registryOverride = null) {
     if (!site.refresh.test(code)) {
       problems.push(`${site.rel}: must invalidate/refetch payment-term-options after inline create`);
     }
+    if (site.errorRecovery && !site.errorRecovery.test(code)) {
+      problems.push(`${site.rel}: failed payment-term catalog read must expose exact retry`);
+    }
   }
 
   problems.push(...collectRegistryProblems(registry));
@@ -170,6 +178,21 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL: stripped create() did not fail guard`);
     process.exit(1);
   }
+  const customerDetail = readRel(ROOT, "apps/frontend/src/pages/CustomerDetail.tsx");
+  const retryMutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-retry-"));
+  for (const site of SITES) {
+    const target = path.join(retryMutationRoot, site.rel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, site.rel === "apps/frontend/src/pages/CustomerDetail.tsx" ? customerDetail.replace("paymentTermsQuery.refetch()", "retryRemoved()") : readRel(ROOT, site.rel));
+  }
+  fs.mkdirSync(path.dirname(path.join(retryMutationRoot, REGISTRY)), { recursive: true });
+  fs.writeFileSync(path.join(retryMutationRoot, REGISTRY), registry);
+  fs.mkdirSync(path.dirname(path.join(retryMutationRoot, ROUTES)), { recursive: true });
+  fs.writeFileSync(path.join(retryMutationRoot, ROUTES), readRel(ROOT, ROUTES));
+  if (!collectProblems(retryMutationRoot).some((p) => p.includes("failed payment-term catalog read must expose exact retry"))) {
+    console.error(`${LABEL} SELFTEST FAIL: customer-detail retry-removal mutation escaped`);
+    process.exit(1);
+  }
 
   console.log(`${LABEL} SELFTEST OK`);
 } else {
@@ -179,5 +202,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — payment_term inline create at 4 customer/vendor sites`);
+  console.log(`${LABEL} OK — payment_term inline create at ${SITES.length} customer/vendor sites`);
 }
