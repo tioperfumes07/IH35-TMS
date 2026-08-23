@@ -28,6 +28,9 @@ export function collectProblems(src) {
   if (!src.includes("Opened report in Form 425C")) {
     problems.push(`${PAGE}: History Open must toast when a report loads`);
   }
+  if (!src.includes("Create / Load Draft before generating the filing package")) {
+    problems.push(`${PAGE}: Merge Generate without reportId must toast, not a dead disabled button`);
+  }
   return problems;
 }
 
@@ -37,6 +40,7 @@ const good = `
   pushToast("Draft saved", "success");
   pushToast("Could not open that report", "error");
   pushToast("Opened report in Form 425C", "success");
+  pushToast("Create / Load Draft before generating the filing package", "error");
 `;
 const bad = `
   if (!detailQuery.data?.report) {
