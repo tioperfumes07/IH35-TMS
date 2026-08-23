@@ -18,17 +18,18 @@ const FILES = {
   routes: "apps/backend/src/mdata/driver-safety-events.routes.ts",
 };
 
-function readRel(root, rel) {
+function readRel(root, rel, overrides = {}) {
+  if (Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
   const p = path.join(root, rel);
   if (!fs.existsSync(p)) return null;
   return fs.readFileSync(p, "utf8");
 }
 
 /** @param {string | null | undefined} registryOverride */
-export function collectProblems(root = ROOT, registryOverride = undefined) {
+export function collectProblems(root = ROOT, registryOverride = undefined, sourceOverrides = {}) {
   const problems = [];
   const driverDetail = readRel(root, FILES.driverDetail);
-  const terminateModal = readRel(root, FILES.terminateModal);
+  const terminateModal = readRel(root, FILES.terminateModal, sourceOverrides);
   const registry = registryOverride ?? readRel(root, FILES.registry);
   const routes = readRel(root, FILES.routes);
 
@@ -84,6 +85,12 @@ export function collectProblems(root = ROOT, registryOverride = undefined) {
     if (/<Combobox[\s\S]{0,120}reasonOptions/.test(code)) {
       problems.push(`${FILES.terminateModal}: must not keep bare Combobox for termination reason`);
     }
+    if (!/reasonsQ\.isError[\s\S]{0,500}<ListErrorState[\s\S]{0,300}reasonsQ\.refetch\(\)/.test(code)) {
+      problems.push(`${FILES.terminateModal}: failed termination-reason GET must expose exact retry`);
+    }
+    if (!/disabled=\{reasonsQ\.isError\}/.test(code) || !/if \(reasonsQ\.isError\)/.test(code)) {
+      problems.push(`${FILES.terminateModal}: terminate action must fail closed while reasons are unavailable`);
+    }
   }
 
   if (!registry) problems.push(`missing ${FILES.registry}`);
@@ -135,7 +142,19 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST OK`);
+  const modal = readRel(ROOT, FILES.terminateModal);
+  for (const [name, next, expected] of [
+    ["retry removed", modal.replace("reasonsQ.refetch()", "reasonRetryRemoved()"), "exact retry"],
+    ["fail closed removed", modal.replace("disabled={reasonsQ.isError}", "disabled={false}"), "fail closed"],
+  ]) {
+    const problems = collectProblems(ROOT, undefined, { [FILES.terminateModal]: next });
+    if (next === modal || !problems.some((p) => p.includes(expected))) {
+      console.error(`${LABEL} SELFTEST FAIL: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`${LABEL} SELFTEST OK — 3 planted defects caught`);
 } else {
   const problems = collectProblems();
   if (problems.length) {
