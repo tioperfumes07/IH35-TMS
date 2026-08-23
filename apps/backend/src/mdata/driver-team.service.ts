@@ -111,9 +111,17 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                             AND pd.operating_company_id = t.operating_company_id
+                             AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                  AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                             ))
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
-                             AND cd.operating_company_id = t.operating_company_id
+                             AND (cd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations cd_dca
+                                WHERE cd_dca.driver_id = cd.id AND cd_dca.company_id = t.operating_company_id
+                                  AND cd_dca.is_authorized = true AND cd_dca.deactivated_at IS NULL
+                             ))
         WHERE t.operating_company_id = $1::uuid
         ORDER BY t.is_active DESC, t.created_at DESC
       `,
@@ -134,9 +142,17 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                             AND pd.operating_company_id = t.operating_company_id
+                             AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                  AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                             ))
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
-                             AND cd.operating_company_id = t.operating_company_id
+                             AND (cd.operating_company_id = t.operating_company_id OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations cd_dca
+                                WHERE cd_dca.driver_id = cd.id AND cd_dca.company_id = t.operating_company_id
+                                  AND cd_dca.is_authorized = true AND cd_dca.deactivated_at IS NULL
+                             ))
         WHERE t.id = $2
           AND t.operating_company_id = $1::uuid
         LIMIT 1
@@ -156,7 +172,11 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
          AND load.operating_company_id = split.operating_company_id
         JOIN mdata.drivers driver
           ON driver.id = split.driver_id
-         AND driver.operating_company_id = split.operating_company_id
+         AND (driver.operating_company_id = split.operating_company_id OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations history_dca
+            WHERE history_dca.driver_id = driver.id AND history_dca.company_id = split.operating_company_id
+              AND history_dca.is_authorized = true AND history_dca.deactivated_at IS NULL
+         ))
         WHERE split.team_id = $1
           AND split.operating_company_id = $2::uuid
         ORDER BY split.computed_at DESC

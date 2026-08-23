@@ -7,6 +7,7 @@ const FILES = {
   list: "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx",
   api: "apps/frontend/src/api/driver-teams.ts",
   backend: "apps/backend/src/mdata/driver-teams.routes.ts",
+  service: "apps/backend/src/mdata/driver-team.service.ts",
   matrix: "docs/specs/scoreboard/modules/lists.required.json",
   feed: "docs/specs/scoreboard/wire-sprint-built.json",
 };
@@ -23,6 +24,9 @@ function failures(s = source) {
     ["GET clients require selected company", /getMdataDriverTeam\(id: string, operatingCompanyId: string\)[\s\S]{0,180}operating_company_id: operatingCompanyId/.test(s.api)],
     ["list backend requires selected company", /const listQuerySchema = z\.object\(\{[\s\S]{0,120}operating_company_id: z\.string\(\)\.uuid\(\),/.test(s.backend)],
     ["detail backend requires selected company", /const companyQuerySchema = z\.object\(\{ operating_company_id: z\.string\(\)\.uuid\(\) \}\)/.test(s.backend) && /app\.get\("\/api\/v1\/mdata\/driver-teams\/:id"[\s\S]{0,750}companyQuerySchema\.safeParse\(req\.query \?\? \{\}\)[\s\S]{0,750}parsedQuery\.data\.operating_company_id/.test(s.backend)],
+    ["mounted list/detail preserve authorized team members", (s.backend.match(/pd_dca\.is_authorized = true/g) ?? []).length === 2 && (s.backend.match(/sd_dca\.is_authorized = true/g) ?? []).length === 2],
+    ["shared service list/detail preserve authorized team members", (s.service.match(/pd_dca\.is_authorized = true/g) ?? []).length === 2 && (s.service.match(/cd_dca\.is_authorized = true/g) ?? []).length === 2],
+    ["team settlement history preserves authorized driver label", /history_dca\.company_id = split\.operating_company_id[\s\S]{0,180}history_dca\.is_authorized = true/.test(s.service)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
   const matrix = JSON.parse(s.matrix);
   if (!matrix.leaves.find((leaf) => leaf.id === "catalog.drivers.teams.list")?.required?.includes("reverse_link")) found.push("Lists Required reverse cell missing");
@@ -43,6 +47,11 @@ if (process.argv.includes("--selftest")) {
     ["api", "getMdataDriverTeam(id: string, operatingCompanyId: string)", "getMdataDriverTeam(id: string)"],
     ["backend", "const listQuerySchema = z.object({\n  is_active: z.enum([\"true\", \"false\"]).optional(),\n  operating_company_id: z.string().uuid(),", "const listQuerySchema = z.object({\n  is_active: z.enum([\"true\", \"false\"]).optional(),\n  operating_company_id: z.string().uuid().optional(),"],
     ["backend", "// Bind the exact company selected by the caller. Falling back to the user's default company\n      // makes a valid team opened after an entity switch look missing (or resolves the wrong entity).\n      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);", "// PLANTED default-company fallback\n      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);"],
+    ["backend", "pd_dca.is_authorized = true", "TRUE"],
+    ["backend", "sd_dca.is_authorized = true", "TRUE"],
+    ["service", "pd_dca.is_authorized = true", "TRUE"],
+    ["service", "cd_dca.is_authorized = true", "TRUE"],
+    ["service", "history_dca.is_authorized = true", "TRUE"],
     ["matrix", '"id": "catalog.drivers.teams.list"', '"id": "catalog.drivers.teams.list.broken"'],
   ];
   for (const [key, before, after] of mutations) {
@@ -52,7 +61,7 @@ if (process.argv.includes("--selftest")) {
   const feed = JSON.parse(source.feed);
   feed.entries.unshift({ task: "BROKEN", guard: FILES.self, modules: ["lists"], cols: ["reverse_link"], leafRe: "^catalog" });
   if (!failures({ ...source, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
-  console.log("verify-driver-team-profile-reverse selftest PASS — 11/11 runtime/evidence mutations red");
+  console.log("verify-driver-team-profile-reverse selftest PASS — 16/16 runtime/evidence mutations red");
   process.exit(0);
 }
 

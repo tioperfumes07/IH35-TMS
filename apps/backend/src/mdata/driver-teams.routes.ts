@@ -174,9 +174,17 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             t.created_by_user_id
           FROM mdata.driver_teams t
           JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                               AND pd.operating_company_id = t.operating_company_id
+                               AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                  WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                    AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                               ))
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
-                               AND sd.operating_company_id = t.operating_company_id
+                               AND (sd.operating_company_id = t.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations sd_dca
+                                  WHERE sd_dca.driver_id = sd.id AND sd_dca.company_id = t.operating_company_id
+                                    AND sd_dca.is_authorized = true AND sd_dca.deactivated_at IS NULL
+                               ))
           ${whereClause}
           ORDER BY t.is_active DESC, t.created_at DESC
         `,
@@ -224,9 +232,17 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             t.created_by_user_id
           FROM mdata.driver_teams t
           JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-                               AND pd.operating_company_id = t.operating_company_id
+                               AND (pd.operating_company_id = t.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations pd_dca
+                                  WHERE pd_dca.driver_id = pd.id AND pd_dca.company_id = t.operating_company_id
+                                    AND pd_dca.is_authorized = true AND pd_dca.deactivated_at IS NULL
+                               ))
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
-                               AND sd.operating_company_id = t.operating_company_id
+                               AND (sd.operating_company_id = t.operating_company_id OR EXISTS (
+                                 SELECT 1 FROM mdata.driver_company_authorizations sd_dca
+                                  WHERE sd_dca.driver_id = sd.id AND sd_dca.company_id = t.operating_company_id
+                                    AND sd_dca.is_authorized = true AND sd_dca.deactivated_at IS NULL
+                               ))
           WHERE t.id = $1
             AND t.operating_company_id = $2::uuid
           LIMIT 1
