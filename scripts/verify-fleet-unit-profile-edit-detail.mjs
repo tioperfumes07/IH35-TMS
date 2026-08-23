@@ -99,6 +99,9 @@ export function audit(src) {
   if (!/profileQuery\.isError[\s\S]{0,160}<ListErrorState/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit profile outage must be explicit ListErrorState + retry`);
   }
+  if (!/faultSummaryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/.test(src.profile)) {
+    failures.push(`${FILES.profile}: active-fault reverse-read failure must be visible and retryable`);
+  }
   if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
     failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
   }
@@ -173,6 +176,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
     ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
+    ["profile-fault-error", "profile", /onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],

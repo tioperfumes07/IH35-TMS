@@ -312,6 +312,14 @@ export function VehicleProfilePage() {
             <TripCostCalculator unitId={id} companyId={companyId} unitNumber={unit?.unit_number != null ? String(unit.unit_number) : null} />
           </div>
           <div data-testid="vp-section-5-maintenance">
+            {faultSummaryQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load active fault summary"
+                status={0}
+                message={(faultSummaryQuery.error as Error)?.message}
+                onRetry={() => void faultSummaryQuery.refetch()}
+              />
+            ) : null}
             <MaintenanceSnapshotSection
               openWoCount={profile.open_wo_count}
               nextPmDue={profile.next_pm_due}
