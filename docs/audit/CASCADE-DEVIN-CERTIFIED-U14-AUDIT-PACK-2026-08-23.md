@@ -1,8 +1,8 @@
 # CASCADE + DEVIN — CERTIFIED U14 AUDIT PACK (owner 2026-08-23)
 
-**Lane:** audit-only. **Not** a 15th Urgent-14 plan. **Do not** steal OPEN prefixes (`/lists` `/legal` `/customers` `/drivers` `/fleet`). **Do not** recertify. **Do not** `trigger_deploy`. **Do not** remake proven TESTs / Close / Book Load.
+**Lane:** **AUDIT ONLY — no product fixes, no apps/ PRs.** Findings + recommendations only. Vertical how-to: `docs/audit/CASCADE-DEVIN-VERTICAL-CERTIFIED-AUDIT-INSTRUCTIONS-2026-08-23.md`. **Gold web:** `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md`. **Not** a 15th plan. **Do not** steal OPEN prefixes (`/lists` `/legal` `/customers` `/drivers` `/fleet`). **Do not** recertify. **Do not** `trigger_deploy`. **Do not** remake proven TESTs / Close / Book Load.
 
-Jorge ordered: audit **already CERTIFIED** Urgent-14 modules completely, stay current with repo + live SHA, finish scenario trackers if the module’s tracker is incomplete.
+Jorge ordered: **deepest** audit of already CERTIFIED Urgent-14 modules — security, wiring, double-sided linkage, routes, reverse, **full extent of connectivity**, **whether money posts to GL** — using the **accident + insurance claim scenario** as the TMS-wide linkage basis. Stay current with repo + live SHA. Fill scenario trackers as the findings record.
 
 ---
 
@@ -12,7 +12,7 @@ Jorge ordered: audit **already CERTIFIED** Urgent-14 modules completely, stay cu
 |------|--------|
 | GitHub | `tioperfumes07/IH35-TMS` |
 | Clone / worktree | `/Users/jorgemunoz/IH35-TMS-clean` (or your assigned worktree of the **same** remote) |
-| Branch | `main` only for audit reads. Feature branch only if you ship a unique FINDING (500 / dead click / silent no-op) |
+| Branch | `main` only. **No product PRs.** Findings go to OUTBOX + scenario-trackers. |
 | App | `https://app.ih35dispatch.com` |
 | API | `https://api.ih35dispatch.com` |
 | Live SHA | `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` |
