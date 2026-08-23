@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DriverLayoverHistory } from "./DriverLayoverHistory";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../../components/ListErrorState";
 
 // Route target for the "View history" button on the driver profile Layovers card
 // (/dispatch/layovers/driver/:driverId). Wraps the DriverLayoverHistory panel with the
@@ -46,6 +47,15 @@ export function DriverLayoverHistoryPage() {
           ) : null
         }
       />
+
+      {driverQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load driver identity"
+          status={0}
+          message={(driverQuery.error as Error)?.message}
+          onRetry={() => void driverQuery.refetch()}
+        />
+      ) : null}
 
       {!operatingCompanyId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
