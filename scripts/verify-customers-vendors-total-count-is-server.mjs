@@ -38,12 +38,19 @@ const CUSTOMER_EDIT_MODAL = "apps/frontend/src/components/customers/CustomerEdit
 function assertGuard(sources) {
   const errors = [];
 
+  const hasServerCount = (src, table) => {
+    const literal = new RegExp(`SELECT\\s+count\\(\\*\\)::int\\s+AS\\s+total\\s+FROM\\s+${table.replace(".", "\\.")}`, "i");
+    if (literal.test(src)) return true;
+    const fromClauseRoot = new RegExp(`const\\s+fromClause\\s*=.*["']${table.replace(".", "\\.")}["']`);
+    return fromClauseRoot.test(src) && /SELECT\s+count\(\*\)::int\s+AS\s+total\s+FROM\s+\$\{fromClause\}/i.test(src);
+  };
+
   // 1 — backend COUNT + envelope `total`
   for (const [label, src, table] of [
     [CUSTOMERS_ROUTE, sources.customersRoute, "mdata.customers"],
     [VENDORS_ROUTE, sources.vendorsRoute, "mdata.vendors"],
   ]) {
-    if (!new RegExp(`SELECT\\s+count\\(\\*\\)::int\\s+AS\\s+total\\s+FROM\\s+${table.replace(".", "\\.")}`, "i").test(src)) {
+    if (!hasServerCount(src, table)) {
       errors.push(`${label}: list route must COUNT(*) AS total FROM ${table}`);
     }
     if (!/return\s*\{\s*(customers|vendors):\s*result\.rows\s*,\s*total:\s*result\.total\s*\}/.test(src)) {
@@ -110,13 +117,13 @@ function assertGuard(sources) {
   if (!/totalCount=\{\s*customersServerTotal\s*\}/.test(sources.customersPage)) {
     errors.push(`${CUSTOMERS_PAGE}: totalCount must bind customersServerTotal (server COUNT)`);
   }
-  if (!/customersServerTotal\s*=\s*customersQuery\.data\?\.total/.test(sources.customersPage)) {
+  if (!/const\s+customersServerTotal\s*=[\s\S]{0,450}(?:customersQuery|inactiveCustomersQuery)\.data\?\.total/.test(sources.customersPage)) {
     errors.push(`${CUSTOMERS_PAGE}: must read customersServerTotal from listCustomers().total`);
   }
   if (!/totalCount=\{\s*vendorsServerTotal\s*\}/.test(sources.vendorsPage)) {
     errors.push(`${VENDORS_PAGE}: totalCount must bind vendorsServerTotal (server COUNT)`);
   }
-  if (!/vendorsServerTotal\s*=\s*vendorsQuery\.data\?\.total/.test(sources.vendorsPage)) {
+  if (!/const\s+vendorsServerTotal\s*=[\s\S]{0,450}(?:vendorsQuery|inactiveVendorsQuery)\.data\?\.total/.test(sources.vendorsPage)) {
     errors.push(`${VENDORS_PAGE}: must read vendorsServerTotal from listVendors().total`);
   }
 
