@@ -4,18 +4,12 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. CC never `trigger_deploy`.
 
-**lists is CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify lists. Do **not** remake TESTs.
+**lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify. Do **not** remake TESTs.
 
-CURRENT MODULE: **legal** (U14 row 14 — last CC-3 OPEN)
+CURRENT MODULE: **leftover COMPLIANCE** (`/compliance`) — first unfinished leftover after tasks unique-clean.
 
-NOW: curl `https://api.ih35dispatch.com/api/v1/healthz/shallow` this turn. Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` **MODULE=legal** Fully-Wired 1–12 Live Chrome.
+NOW: curl healthz this turn. Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance`. Unique 500/dead/silent only. Empty unique → next unclaimed leftover in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Never idle.
 
-OUTBOX when 1–12 honest: `CC-3 | CERTIFIED | MODULE=legal | LIVE_SHA=<this healthz> | hops=/legal home · contracts · send-contract field retains full string · templates · policies · matters · reports · attorney-review · picker +Add-new-first · no 500 | GO`
+FORBIDDEN: HOLD · recertify lists/legal · `/customers` `/drivers` `/fleet` `/banking*` `/dispatch` `/425c` · `trigger_deploy`.
 
-Unique-FINDING-CLEAN ≠ CERTIFIED. Prior /legal tab sweep ≠ this stamp. Re-walk hops on **this** healthz.
-
-After legal CERTIFIED: leftover first unclaimed `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Not before.
-
-FORBIDDEN: HOLD · recertify lists · `/customers` `/drivers` `/fleet` `/banking*` `/dispatch` `/425c` · `trigger_deploy`.
-
-OUTBOX ACK: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=legal | NOW=https://app.ih35dispatch.com/legal | GO`
+OUTBOX ACK: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | MODULE=compliance | NOW=https://app.ih35dispatch.com/compliance | GO`

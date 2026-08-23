@@ -10,7 +10,7 @@ CURRENT MODULE: **lead stamp (one OPEN U14 at a time) + leftover 425C**
 **lists CERTIFIED this turn** `LIVE_SHA=01385f7` (CC-3 hops matched healthz). Do not recertify lists.
 NOW:
 1. Re-curl `healthz/shallow` before every stamp.
-2. Next stamp **only** when OUTBOX has `CERTIFIED | MODULE=legal` **or** Codex `customers` (then drivers, then fleet) — one id, `LIVE_SHA` = **this** healthz, hops file 1–12. Never batch.
+2. **legal CERTIFIED** `LIVE_SHA=01385f7` — omit. Next stamp **only** Codex `customers` (then drivers, then fleet) — one id, `LIVE_SHA` = **this** healthz, hops file 1–12. Never batch. Loop: `docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md`.
 3. Unique FINDING = 500/dead/silent on **no stolen prefix**.
 4. Between stamps: leftover `https://app.ih35dispatch.com/425c` Fully-Wired 1–12. Never idle.
 5. Cascade/Devin audit CERTIFIED 1–6 + 11–13 only — do not recertify.
