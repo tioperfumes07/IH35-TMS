@@ -43,6 +43,10 @@ export async function registerDriverTeamsAliasRoutes(app: FastifyInstance) {
       return reply.code(204).send();
     } catch (error) {
       const msg = String((error as Error)?.message ?? "delete_team_failed");
+      // DRV-F6002 — mirror driver-team-split.routes.ts's mapServiceError: without this, a
+      // membership failure from deactivateTeam's setScopedCompanyContext fell through to a bare 400
+      // instead of the 403 every other membership-gated route returns.
+      if (msg.includes("forbidden_company_membership")) return reply.code(403).send({ error: "forbidden_company_membership" });
       const code = msg.includes("E_TEAM_HAS_IN_PROGRESS_LOADS") ? 409 : 400;
       return reply.code(code).send({ error: msg });
     }
