@@ -538,10 +538,12 @@ export function Form425CHome() {
               return;
             }
             const d = new Date(row.reporting_month);
-            if (!Number.isNaN(d.getTime())) {
-              setYear(d.getUTCFullYear());
-              setMonth(d.getUTCMonth());
+            if (Number.isNaN(d.getTime())) {
+              pushToast("Could not open that report — reporting month is invalid", "error");
+              return;
             }
+            setYear(d.getUTCFullYear());
+            setMonth(d.getUTCMonth());
             setTab("form");
             pushToast("Opened report in Form 425C", "success");
           }}
