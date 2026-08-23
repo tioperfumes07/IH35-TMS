@@ -266,7 +266,17 @@ export async function listOptimalDriversForLoad(userId: string, query: OptimalDr
             AND l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
         ) perf ON true
-        WHERE d.operating_company_id = $1::uuid
+        WHERE (
+                d.operating_company_id = $1::uuid
+                OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations optimizer_driver_dca
+                  WHERE optimizer_driver_dca.driver_id = d.id
+                    AND optimizer_driver_dca.company_id = $1::uuid
+                    AND optimizer_driver_dca.is_authorized = true
+                    AND optimizer_driver_dca.deactivated_at IS NULL
+                )
+              )
           AND d.status = 'Active'::mdata.driver_status
           AND d.deactivated_at IS NULL
         ORDER BY d.last_name ASC, d.first_name ASC

@@ -93,6 +93,9 @@ describe("driver-optimizer.service (B21-D8)", () => {
     expect(src).toContain("rankOptimalDrivers");
     expect(src).toContain("views.drivers_with_hos_status");
     expect(src).toContain("endorsement_h");
+    expect(src).toContain("driver_company_authorizations optimizer_driver_dca");
+    expect(src).toContain("optimizer_driver_dca.is_authorized = true");
+    expect(src).toContain("optimizer_driver_dca.deactivated_at IS NULL");
   });
 
   it("dispatch refinements routes remain registered in backend index", () => {

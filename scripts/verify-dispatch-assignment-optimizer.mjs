@@ -29,6 +29,20 @@ function fail(msg) {
   process.exit(1);
 }
 
+export function auditSharedDriverScope(service) {
+  const failures = [];
+  const required = [
+    [/d\.operating_company_id\s*=\s*\$1::uuid\s+OR\s+EXISTS/i, "optimizer must retain home-company drivers and admit an authorization branch"],
+    [/FROM\s+mdata\.driver_company_authorizations\s+optimizer_driver_dca/i, "optimizer must use the canonical driver authorization table"],
+    [/optimizer_driver_dca\.driver_id\s*=\s*d\.id/i, "authorization must bind the ranked driver"],
+    [/optimizer_driver_dca\.company_id\s*=\s*\$1::uuid/i, "authorization must bind the selected company"],
+    [/optimizer_driver_dca\.is_authorized\s*=\s*true/i, "authorization must be active"],
+    [/optimizer_driver_dca\.deactivated_at\s+IS\s+NULL/i, "deactivated authorizations must be rejected"],
+  ];
+  for (const [pattern, message] of required) if (!pattern.test(service)) failures.push(message);
+  return failures;
+}
+
 function main() {
   const service = read(paths.service);
   const routeTest = read(paths.routeTest);
@@ -44,6 +58,7 @@ function main() {
   if (!service.includes("DEFAULT_OPTIMIZER_WEIGHTS")) failures.push("optimizer service must export default weights");
   if (!service.includes("rankOptimalDrivers")) failures.push("optimizer service must rank top drivers");
   if (!service.includes("scoreDriverCandidate")) failures.push("optimizer service must score driver candidates");
+  failures.push(...auditSharedDriverScope(service));
   if ((routeTest.match(/\bit\(/g) ?? []).length < 5) failures.push("driver-optimizer routes tests must cover at least 5 cases");
   if (!routes.includes("/api/v1/dispatch/loads/:loadId/optimal-drivers")) failures.push("routes must expose optimal-drivers endpoint");
   if (!routes.includes("listOptimalDriversForLoad")) failures.push("routes must call listOptimalDriversForLoad");
@@ -69,4 +84,24 @@ function main() {
   console.log("verify:dispatch-assignment-optimizer PASS");
 }
 
-main();
+function selftest() {
+  const service = read(paths.service);
+  const mutations = [
+    ["home-or-authorization", "OR EXISTS", "AND EXISTS"],
+    ["authorization table", "mdata.driver_company_authorizations optimizer_driver_dca", "mdata.drivers optimizer_driver_dca"],
+    ["driver binding", "optimizer_driver_dca.driver_id = d.id", "optimizer_driver_dca.driver_id = d.other_id"],
+    ["company binding", "optimizer_driver_dca.company_id = $1::uuid", "optimizer_driver_dca.company_id = $2::uuid"],
+    ["authorized flag", "optimizer_driver_dca.is_authorized = true", "optimizer_driver_dca.is_authorized = false"],
+    ["deactivation", "optimizer_driver_dca.deactivated_at IS NULL", "optimizer_driver_dca.deactivated_at IS NOT NULL"],
+  ];
+  const failures = [];
+  for (const [name, before, after] of mutations) {
+    const planted = service.replace(before, after);
+    if (planted === service || auditSharedDriverScope(planted).length === 0) failures.push(`${name} mutation escaped`);
+  }
+  if (failures.length) fail(failures.join("; "));
+  console.log(`verify:dispatch-assignment-optimizer selftest PASS — ${mutations.length}/${mutations.length} shared-driver scope mutations caught`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else main();
