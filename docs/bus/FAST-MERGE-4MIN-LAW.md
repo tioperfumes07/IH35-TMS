@@ -5,6 +5,16 @@
 
 Jorge is **not** the messenger.
 
+## ★ CI babysit = FAST-MERGE violation (owner 2026-08-23)
+
+Local gate **exit 0** is merge proof. GitHub check queues (20–30 pending, docs-only behind 32 runs) are **not** a merge gate.
+
+**Required same turn after gate PASS:** `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin` (or `gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`).
+
+**Forbidden:** `gh pr checks --watch` · waiting for required checks · asking Jorge to merge · leaving OPEN PRs while CI queues · “armed monitor on #N”.
+
+Cursor already FAST-MERGED #14921 (claim-reserve) and #14923 (DRV-F6259) that were sitting on pending checks.
+
 ---
 
 ## Push hook vs merge proof (read this first)

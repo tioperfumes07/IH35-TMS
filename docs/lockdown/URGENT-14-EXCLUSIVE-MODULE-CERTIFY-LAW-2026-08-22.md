@@ -36,7 +36,7 @@ Live proof is **this pull’s** `healthz/shallow`, not chat.
 
 ## Exclusive lists (finish current before next)
 
-Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Devin **PARKED**.
+Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Codex **9226**. Cascade / Devin / Devin-A = **audit overlay on CERTIFIED rows only** (pack `docs/audit/CASCADE-DEVIN-CERTIFIED-U14-AUDIT-PACK-2026-08-23.md`) — they do **not** own OPEN prefixes.
 
 | # | Module | Exclusive owner | URL prefix (do not enter another seat’s) | Status |
 |---|--------|-----------------|------------------------------------------|--------|
@@ -49,13 +49,15 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 | 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | OPEN |
 | 8 | drivers | Codex after customers | reverse `mdata.drivers` — **no CDP** | OPEN |
 | 9 | fleet | Codex after drivers | reverse `mdata.units` — **no CDP** | OPEN |
-| 10 | lists | CC-3 after legal | `/lists` pickers | OPEN |
+| 10 | lists | CC-3 first | `/lists` pickers — hops `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` | OPEN |
 | 11 | maintenance | Cursor after vendors | `/maintenance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 12 | safety | Cursor after maintenance | `/safety` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
 | 13 | insurance | Cursor after safety | `/insurance` leftover unique | CERTIFIED LIVE_SHA=a9e8d63 |
-| 14 | legal | CC-3 | `/legal` pickers | OPEN |
+| 14 | legal | CC-3 after lists CERTIFIED | `/legal` pickers — separate CERTIFIED line | OPEN |
 
-**Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence.
+**Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence. Cascade/Devin = re-walk Fully-Wired 1–12 on CERTIFIED modules vs **current** healthz (AUDIT-PASS or unique FINDING; never restamp the table). Devin-A = finish `docs/audit/scenario-trackers/certified-u14/`.
+
+**Stamp one OPEN module at a time.** Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`. `LIVE_SHA` must equal **this curl** of `healthz/shallow`. Do not batch lists+legal or customers+drivers+fleet.
 
 ---
 
