@@ -9,6 +9,20 @@ import process from "node:process";
 const ROOT = process.cwd();
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const dashboard = read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx");
+const KPI_ROUTES = "apps/backend/src/maintenance/kpi.routes.ts";
+const kpiRoutes = read(KPI_ROUTES);
+
+function fleetScopeFailures(source) {
+  const failures = [];
+  const oosQuery = source.match(/AS oos_hours[\s\S]{0,500}?FROM mdata\.units u[\s\S]{0,500}?u\.oos_since::date <= \$3::date/)?.[0] ?? "";
+  const activeCounter = source.match(/async function countActiveUnits[\s\S]{0,700}?return Number\(res\.rows\[0\]\?\.c \?\? 1\);/)?.[0] ?? "";
+  for (const [name, query] of [["OOS downtime", oosQuery], ["MTBF active-unit denominator", activeCounter]]) {
+    if (!query.includes("owner_company_id = $1::uuid") || !query.includes("currently_leased_to_company_id = $1::uuid")) {
+      failures.push(`${KPI_ROUTES}: ${name} must use the canonical owner-or-currently-leased fleet scope`);
+    }
+  }
+  return failures;
+}
 
 function fail(msg) {
   console.error(`verify:maint-kpi-dashboard FAIL: ${msg}`);
@@ -16,6 +30,7 @@ function fail(msg) {
 }
 
 const failures = [];
+failures.push(...fleetScopeFailures(kpiRoutes));
 const checks = [
   ["kpi routes file", fs.existsSync("apps/backend/src/maintenance/kpi.routes.ts")],
   ["summary endpoint", read("apps/backend/src/maintenance/kpi.routes.ts").includes('app.get("/api/v1/maintenance/kpi/summary"')],
@@ -43,6 +58,21 @@ const checks = [
 ];
 
 for (const [name, ok] of checks) if (!ok) failures.push(name);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["OOS leased scope", kpiRoutes.replace("WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)", "WHERE u.owner_company_id = $1::uuid")],
+    ["active-unit leased scope", kpiRoutes.replace("WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)", "WHERE owner_company_id = $1::uuid")],
+  ];
+  for (const [name, mutated] of mutations) {
+    if (mutated === kpiRoutes || fleetScopeFailures(mutated).length === 0) {
+      console.error(`verify:maint-kpi-dashboard SELFTEST FAIL — ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:maint-kpi-dashboard SELFTEST PASS — ${mutations.length} mutations detected`);
+  process.exit(0);
+}
 
 if (failures.length) {
   for (const f of failures) console.error(" -", f);
