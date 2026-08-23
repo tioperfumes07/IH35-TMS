@@ -6,6 +6,7 @@ import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
+import { ListErrorState } from "../ListErrorState";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -45,6 +46,10 @@ export function TerminateConfirmModal({
 
   const submit = async () => {
     setError("");
+    if (reasonsQ.isError) {
+      setError("Termination reasons are unavailable. Retry before terminating this driver.");
+      return;
+    }
     if (!terminationReasonId || !selectedReason) {
       setError("Termination reason is required.");
       return;
@@ -104,6 +109,14 @@ export function TerminateConfirmModal({
               void queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
             }}
           />
+          {reasonsQ.isError ? (
+            <ListErrorState
+              title="Couldn't load termination reasons"
+              status={0}
+              message={(reasonsQ.error as Error)?.message}
+              onRetry={() => void reasonsQ.refetch()}
+            />
+          ) : null}
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Event date</label>
@@ -129,7 +142,7 @@ export function TerminateConfirmModal({
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" onClick={() => void submit()} loading={pending} data-testid="terminate-confirm">
+          <Button type="button" onClick={() => void submit()} loading={pending} disabled={reasonsQ.isError} data-testid="terminate-confirm">
             Terminate
           </Button>
         </div>
