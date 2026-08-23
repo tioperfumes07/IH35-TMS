@@ -59,6 +59,10 @@ const CHECKS = [
   ["apps/backend/src/safety/dot-inspection-events.routes.ts", /dot_inspection_list_dca\.driver_id = d\.id[\s\S]{0,180}dot_inspection_list_dca\.company_id = e\.operating_company_id[\s\S]{0,180}dot_inspection_list_dca\.is_authorized = true[\s\S]{0,180}dot_inspection_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/drug-program.routes.ts", /drug_tests_list_dca\.driver_id = d\.id[\s\S]{0,180}drug_tests_list_dca\.company_id = t\.operating_company_id[\s\S]{0,180}drug_tests_list_dca\.is_authorized = true[\s\S]{0,180}drug_tests_list_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/drug-program.routes.ts", /random_pool_list_dca\.driver_id = d\.id[\s\S]{0,180}random_pool_list_dca\.company_id = p\.operating_company_id[\s\S]{0,180}random_pool_list_dca\.is_authorized = true[\s\S]{0,180}random_pool_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/integrity-alerts.routes.ts", /integrity_alerts_list_dca\.driver_id = d\.id[\s\S]{0,180}integrity_alerts_list_dca\.company_id = ia\.operating_company_id[\s\S]{0,180}integrity_alerts_list_dca\.is_authorized = true[\s\S]{0,180}integrity_alerts_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/integrity-alerts.routes.ts", /integrity_alerts_detail_dca\.driver_id = d\.id[\s\S]{0,180}integrity_alerts_detail_dca\.company_id = ia\.operating_company_id[\s\S]{0,180}integrity_alerts_detail_dca\.is_authorized = true[\s\S]{0,180}integrity_alerts_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/reminders.routes.ts", /reminders_list_dca\.driver_id = d\.id[\s\S]{0,180}reminders_list_dca\.company_id = r\.operating_company_id[\s\S]{0,180}reminders_list_dca\.is_authorized = true[\s\S]{0,180}reminders_list_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/onboarding.routes.ts", /onboarding_detail_dca\.driver_id = driver\.id[\s\S]{0,180}onboarding_detail_dca\.company_id = session\.operating_company_id[\s\S]{0,180}onboarding_detail_dca\.is_authorized = true[\s\S]{0,180}onboarding_detail_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {

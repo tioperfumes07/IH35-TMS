@@ -133,7 +133,13 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
           FROM safety.onboarding_sessions session
           LEFT JOIN mdata.drivers driver
             ON driver.id = session.driver_id
-           AND driver.operating_company_id = session.operating_company_id
+           AND (driver.operating_company_id = session.operating_company_id OR EXISTS (
+             SELECT 1 FROM mdata.driver_company_authorizations onboarding_detail_dca
+             WHERE onboarding_detail_dca.driver_id = driver.id
+               AND onboarding_detail_dca.company_id = session.operating_company_id
+               AND onboarding_detail_dca.is_authorized = true
+               AND onboarding_detail_dca.deactivated_at IS NULL
+           ))
           WHERE session.id = $1
             AND session.operating_company_id = $2::uuid
         `,
