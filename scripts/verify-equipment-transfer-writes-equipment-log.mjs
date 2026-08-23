@@ -109,6 +109,54 @@ if (dualTest && !/INSERT INTO mdata\.equipment_log/.test(dualTest)) {
   fail("dual-confirm.test.ts: missing assertion for INSERT INTO mdata.equipment_log");
 }
 
+const logRoutes = read("apps/backend/src/mdata/equipment-log.routes.ts");
+function auditDetailReadScope(source) {
+  const detail = source.slice(source.indexOf('app.get("/api/v1/mdata/equipment-log/:id"'));
+  const detailFailures = [];
+  if (!/const parsedQuery = companyQuerySchema\.safeParse\(req\.query \?\? \{\}\)/.test(detail)) {
+    detailFailures.push("detail GET must validate explicit operating_company_id");
+  }
+  if (!/resolveOperatingCompanyId\([\s\S]{0,160}authUser\.uuid,[\s\S]{0,120}parsedQuery\.data\.operating_company_id/.test(detail)) {
+    detailFailures.push("detail GET must resolve the selected company instead of the account default");
+  }
+  if (!/JOIN mdata\.equipment e ON e\.id = el\.equipment_id[\s\S]{0,180}\(e\.owner_company_id = \$2 OR e\.currently_leased_to_company_id = \$2\)/.test(detail)) {
+    detailFailures.push("detail GET must gate the equipment-log row through the selected company's equipment");
+  }
+  return detailFailures;
+}
+
+for (const detailFailure of auditDetailReadScope(logRoutes)) fail(detailFailure);
+
+if (process.argv.includes("--selftest")) {
+  if (failures.length > 0) {
+    console.error(`verify-equipment-transfer-writes-equipment-log SELFTEST FAIL — real repo state rejected:\n- ${failures.join("\n- ")}`);
+    process.exit(1);
+  }
+  const mutations = [
+    ["query", /const parsedQuery = companyQuerySchema\.safeParse\(req\.query \?\? \{\}\)/],
+    ["selected-company", /parsedQuery\.data\.operating_company_id/],
+    ["equipment-gate", /\(e\.owner_company_id = \$2 OR e\.currently_leased_to_company_id = \$2\)/],
+  ];
+  let caught = 0;
+  for (const [name, pattern] of mutations) {
+    const detailStart = logRoutes.indexOf('app.get("/api/v1/mdata/equipment-log/:id"');
+    const prefix = logRoutes.slice(0, detailStart);
+    const detail = logRoutes.slice(detailStart);
+    const mutatedDetail = detail.replace(pattern, "REMOVED");
+    if (mutatedDetail === detail) {
+      console.error(`verify-equipment-transfer-writes-equipment-log SELFTEST FAIL — ${name} mutation did not match`);
+      process.exit(1);
+    }
+    if (auditDetailReadScope(prefix + mutatedDetail).length === 0) {
+      console.error(`verify-equipment-transfer-writes-equipment-log SELFTEST FAIL — ${name} mutation escaped`);
+      process.exit(1);
+    }
+    caught++;
+  }
+  console.log(`verify-equipment-transfer-writes-equipment-log SELFTEST PASS — ${caught}/3 detail-scope mutations detected`);
+  process.exit(0);
+}
+
 if (failures.length > 0) {
   console.error("verify-equipment-transfer-writes-equipment-log — FAILED");
   for (const entry of failures) {
