@@ -31,6 +31,17 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      // FLEET-F6117: a child-only lookup returned photos:[] for an unknown or other-company unit.
+      // Prove the unit is owned or currently leased by this company before reporting true zero photos.
+      const unit = await client.query(
+        `SELECT 1
+           FROM mdata.units
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (unit.rowCount === 0) return null;
       const res = await client.query(
         `
           SELECT id::text, photo_url, photo_type, caption, taken_at::text, created_at::text
@@ -42,6 +53,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
+    if (rows === null) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return { photos: rows };
   });
 
