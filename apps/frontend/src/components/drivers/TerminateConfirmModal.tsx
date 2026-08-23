@@ -37,8 +37,8 @@ export function TerminateConfirmModal({
   const [pending, setPending] = useState(false);
 
   const reasonsQ = useQuery({
-    queryKey: ["driver-termination-reasons"],
-    queryFn: () => listTerminationReasons().then((result) => result.reasons),
+    queryKey: ["driver-termination-reasons", operatingCompanyId],
+    queryFn: () => listTerminationReasons(operatingCompanyId).then((result) => result.reasons),
     enabled: open,
   });
 

@@ -1063,9 +1063,10 @@ export function upsertDriverCompanyAuthorization(
   });
 }
 
-export function listTerminationReasons(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons${query}`);
+export function listTerminationReasons(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons?${query}`);
 }
 
 export function listSafetyEvents(driverId: string, includeVoided = false) {

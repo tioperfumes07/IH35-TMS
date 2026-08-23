@@ -16,6 +16,7 @@ const FILES = {
   terminateModal: "apps/frontend/src/components/drivers/TerminateConfirmModal.tsx",
   registry: "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
   routes: "apps/backend/src/mdata/driver-safety-events.routes.ts",
+  api: "apps/frontend/src/api/mdata.ts",
 };
 
 function readRel(root, rel, overrides = {}) {
@@ -28,10 +29,11 @@ function readRel(root, rel, overrides = {}) {
 /** @param {string | null | undefined} registryOverride */
 export function collectProblems(root = ROOT, registryOverride = undefined, sourceOverrides = {}) {
   const problems = [];
-  const driverDetail = readRel(root, FILES.driverDetail);
+  const driverDetail = readRel(root, FILES.driverDetail, sourceOverrides);
   const terminateModal = readRel(root, FILES.terminateModal, sourceOverrides);
   const registry = registryOverride ?? readRel(root, FILES.registry);
   const routes = readRel(root, FILES.routes);
+  const api = readRel(root, FILES.api, sourceOverrides);
 
   if (!driverDetail) problems.push(`missing ${FILES.driverDetail}`);
   else {
@@ -71,6 +73,9 @@ export function collectProblems(root = ROOT, registryOverride = undefined, sourc
         `${FILES.driverDetail}: FAIL-D5 — hydratedForm must merge {...driverFormDefaults, ...form}`,
       );
     }
+    if (!/queryKey:\s*\["driver-termination-reasons", companyId\]/.test(code) || !/listTerminationReasons\(companyId, false\)/.test(code)) {
+      problems.push(`${FILES.driverDetail}: termination-reason GET must bind the selected company`);
+    }
   }
 
   if (!terminateModal) problems.push(`missing ${FILES.terminateModal}`);
@@ -90,6 +95,18 @@ export function collectProblems(root = ROOT, registryOverride = undefined, sourc
     }
     if (!/disabled=\{reasonsQ\.isError\}/.test(code) || !/if \(reasonsQ\.isError\)/.test(code)) {
       problems.push(`${FILES.terminateModal}: terminate action must fail closed while reasons are unavailable`);
+    }
+    if (!/queryKey:\s*\["driver-termination-reasons", operatingCompanyId\]/.test(code) || !/listTerminationReasons\(operatingCompanyId\)/.test(code)) {
+      problems.push(`${FILES.terminateModal}: termination-reason GET must bind the selected company`);
+    }
+  }
+
+  if (!api) problems.push(`missing ${FILES.api}`);
+  else {
+    const listReasonsBlock = api.match(/export function listTerminationReasons[\s\S]{0,500}?\n\}/)?.[0] ?? "";
+    if (!/listTerminationReasons\(operatingCompanyId: string, includeInactive = false\)/.test(listReasonsBlock) ||
+        !/new URLSearchParams\(\{ operating_company_id: operatingCompanyId \}\)/.test(listReasonsBlock)) {
+      problems.push(`${FILES.api}: listTerminationReasons must send explicit operating_company_id`);
     }
   }
 
@@ -153,8 +170,19 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  for (const [name, rel, next, expected] of [
+    ["modal company scope removed", FILES.terminateModal, modal.replace("listTerminationReasons(operatingCompanyId)", "listTerminationReasons(\"\")"), "selected company"],
+    ["detail company scope removed", FILES.driverDetail, readRel(ROOT, FILES.driverDetail).replace("listTerminationReasons(companyId, false)", "listTerminationReasons(\"\", false)"), "selected company"],
+    ["API company scope removed", FILES.api, readRel(ROOT, FILES.api).replace(/(export function listTerminationReasons[\s\S]{0,160}?)new URLSearchParams\(\{ operating_company_id: operatingCompanyId \}\)/, "$1new URLSearchParams()"), "explicit operating_company_id"],
+  ]) {
+    const problems = collectProblems(ROOT, undefined, { [rel]: next });
+    if (!problems.some((p) => p.includes(expected))) {
+      console.error(`${LABEL} SELFTEST FAIL: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
 
-  console.log(`${LABEL} SELFTEST OK — 3 planted defects caught`);
+  console.log(`${LABEL} SELFTEST OK — 6 planted defects caught`);
 } else {
   const problems = collectProblems();
   if (problems.length) {
