@@ -30,6 +30,16 @@ function verify(candidate) {
   };
   need("labelHelper", "export async function hydrateEntityLabels", "shared label hydrator must exist");
   need("labelHelper", "d.operating_company_id = $1::uuid", "canonical label reads must be explicitly company-scoped");
+  need("labelHelper", 'customer: { table: "mdata.customers", labelSelect: "NULLIF(TRIM(d.customer_name), \'\')", scopePredicate: "d.operating_company_id = $1::uuid" }', "customer labels must retain exact company scope");
+  need("labelHelper", "COALESCE(d.currently_leased_to_company_id, d.owner_company_id) = $1::uuid", "unit/equipment labels must use canonical owner-or-current-lease scope, never phantom operating_company_id");
+  need("labelHelper", 'unit: { table: "mdata.units", labelSelect: "NULLIF(TRIM(d.unit_number::text), \'\')", scopePredicate: "COALESCE(d.currently_leased_to_company_id, d.owner_company_id) = $1::uuid" }', "unit labels must use owner-or-current-lease scope");
+  need("labelHelper", 'equipment: { table: "mdata.equipment", labelSelect: "NULLIF(TRIM(d.equipment_number), \'\')", scopePredicate: "COALESCE(d.currently_leased_to_company_id, d.owner_company_id) = $1::uuid" }', "equipment labels must use owner-or-current-lease scope");
+  need("labelHelper", "driver_company_authorizations docs_driver_dca", "driver labels must admit canonical company authorization");
+  need("labelHelper", "docs_driver_dca.driver_id = d.id", "driver authorization must bind the linked driver");
+  need("labelHelper", "docs_driver_dca.company_id = $1::uuid", "driver authorization must bind selected company");
+  need("labelHelper", "docs_driver_dca.is_authorized = true", "driver authorization must be active");
+  need("labelHelper", "docs_driver_dca.deactivated_at IS NULL", "driver authorization must not be deactivated");
+  need("labelHelper", "WHERE ${config.scopePredicate}", "label hydration must apply the entity-type-specific scope predicate");
   need("labelHelper", "d.id = ANY($2::uuid[])", "canonical label reads must retain batched UUID lookup");
   need("filesRoute", "await hydrateEntityLabels(client, operatingCompanyId, res.rows)", "files list must hydrate scoped labels");
   need("filesRoute", 'filters.push("f.operating_company_id = $1::uuid")', "files list itself must use one explicit company predicate");
@@ -71,7 +81,15 @@ if (failures.length) {
 
 if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
-    { file: "labelHelper", token: "d.operating_company_id = $1::uuid" },
+    { file: "labelHelper", token: 'customer: { table: "mdata.customers", labelSelect: "NULLIF(TRIM(d.customer_name), \'\')", scopePredicate: "d.operating_company_id = $1::uuid" }' },
+    { file: "labelHelper", token: 'unit: { table: "mdata.units", labelSelect: "NULLIF(TRIM(d.unit_number::text), \'\')", scopePredicate: "COALESCE(d.currently_leased_to_company_id, d.owner_company_id) = $1::uuid" }' },
+    { file: "labelHelper", token: 'equipment: { table: "mdata.equipment", labelSelect: "NULLIF(TRIM(d.equipment_number), \'\')", scopePredicate: "COALESCE(d.currently_leased_to_company_id, d.owner_company_id) = $1::uuid" }' },
+    { file: "labelHelper", token: "driver_company_authorizations docs_driver_dca" },
+    { file: "labelHelper", token: "docs_driver_dca.driver_id = d.id" },
+    { file: "labelHelper", token: "docs_driver_dca.company_id = $1::uuid" },
+    { file: "labelHelper", token: "docs_driver_dca.is_authorized = true" },
+    { file: "labelHelper", token: "docs_driver_dca.deactivated_at IS NULL" },
+    { file: "labelHelper", token: "WHERE ${config.scopePredicate}" },
     { file: "filesRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, res.rows)" },
     { file: "filesRoute", token: 'filters.push("f.operating_company_id = $1::uuid")' },
     { file: "foundationRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows)" },
