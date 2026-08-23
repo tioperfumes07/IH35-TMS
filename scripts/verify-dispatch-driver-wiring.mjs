@@ -37,6 +37,7 @@ const CHECKS = [
   ["apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx", /kind="driver" id=\{load\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx", /kind="driver" id=\{event\.driver_id\}/],
+  ["apps/backend/src/dispatch/detention.service.ts", /FROM mdata\.driver_company_authorizations detention_board_driver_dca[\s\S]{0,180}detention_board_driver_dca\.driver_id = d\.id[\s\S]{0,140}detention_board_driver_dca\.company_id = de\.operating_company_id[\s\S]{0,140}detention_board_driver_dca\.is_authorized = true[\s\S]{0,140}detention_board_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/components/border-crossing/WizardStep1.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx", /kind="driver" id=\{selected\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx", /kind="driver" id=\{load\.driver_id\}/],
