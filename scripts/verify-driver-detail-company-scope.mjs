@@ -18,6 +18,8 @@ function verify(source) {
   need(/useCompanyContext\s*\(/.test(source.detail), "DriverDetail must read selected company context");
   need(/getDriver\(\s*id\s*,\s*[A-Za-z0-9_]+/.test(source.detail), "DriverDetail must call getDriver(id, companyId)");
   need(!/getDriver\(\s*id\s*\)/.test(source.detail), "DriverDetail must not perform a bare unscoped getDriver(id) read");
+  need(/companyAuthQuery\.isError[\s\S]{0,500}title="Couldn't load driver company authorizations"[\s\S]{0,500}companyAuthQuery\.refetch\(\)/.test(source.detail), "DriverDetail must fail closed and offer exact retry when company authorization reverse GET fails");
+  need(/!companyAuthQuery\.isError\s*&&\s*companiesListState\.isEmpty/.test(source.detail), "DriverDetail must not portray a failed authorization reverse GET as an empty company relationship");
 
   const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
   need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
@@ -61,6 +63,9 @@ if (process.argv.includes("--selftest")) {
         "scoped DriverDetail read",
       ),
     },
+    { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.isError/, "false", "company authorization error disclosure") },
+    { key: "detail", text: replaceOrFail(source.detail, /companyAuthQuery\.refetch\(\)/, "Promise.resolve()", "company authorization retry") },
+    { key: "detail", text: replaceOrFail(source.detail, /!companyAuthQuery\.isError\s*&&\s*companiesListState\.isEmpty/, "companiesListState.isEmpty", "company authorization empty gate") },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
     { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },
