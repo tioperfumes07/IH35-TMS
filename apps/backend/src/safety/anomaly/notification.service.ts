@@ -16,7 +16,10 @@ export async function notifyAnomalyAlert(
       severity: rule.severity === "critical" ? "critical" : "high",
       title: `Anomaly: ${rule.rule_name}`,
       body: JSON.stringify(evidence).slice(0, 500),
-      action_link: `/safety/anomaly?alert=${alertUuid}`,
+      // NOTIFY-F6252 — the registered route is /safety/anomaly-alerts (AnomalyAlertsPage), not
+      // /safety/anomaly; the wrong path silently fell through the router catch-all to "/" on every
+      // anomaly-alert notification's "Open" click (severity critical/high).
+      action_link: `/safety/anomaly-alerts?alert=${alertUuid}`,
       entity_type: "anomaly_alert",
       entity_id: alertUuid,
       source_block: "GAP-46",

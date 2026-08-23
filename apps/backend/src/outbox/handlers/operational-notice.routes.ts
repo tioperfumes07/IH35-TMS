@@ -102,7 +102,10 @@ export const NOTICE_ROUTES: NoticeRoute[] = [
       `A critical in-transit issue was raised on load ${label(p, "load_number", "load_id")}` +
       `${text(p, "issue_type") ? ` (${text(p, "issue_type")})` : ""}. ` +
       `${text(p, "description") ?? "No description was recorded."} Respond now — the truck is moving.`,
-    actionLink: (p) => `/dispatch/intransit?issue_id=${text(p, "issue_id") ?? ""}`,
+    // NOTIFY-F6252 — the registered route is /dispatch/in-transit-issues (InTransitIssuesPage), not
+    // /dispatch/intransit; the wrong path silently fell through the router catch-all to "/" on every
+    // critical in-transit-issue notification's "Open" click.
+    actionLink: (p) => `/dispatch/in-transit-issues?issue_id=${text(p, "issue_id") ?? ""}`,
   },
   {
     // A driver liability the driver has not acknowledged is not collectable with a clean record.
@@ -116,7 +119,10 @@ export const NOTICE_ROUTES: NoticeRoute[] = [
     body: (p) =>
       `${text(p, "message") ?? "You have a liability on your account awaiting acknowledgement."} ` +
       `Acknowledging records your agreement; it does not by itself authorise any deduction.`,
-    actionLink: (p) => `/drivers/liabilities?liability_id=${text(p, "liability_id") ?? ""}`,
+    // NOTIFY-F6252 — the registered route is /liabilities (LiabilitiesHomePage), not
+    // /drivers/liabilities; the wrong path silently fell through the router catch-all to "/" on
+    // every liability-acknowledgement-requested notification's "Open" click.
+    actionLink: (p) => `/liabilities?liability_id=${text(p, "liability_id") ?? ""}`,
   },
   {
     eventType: "maintenance.triage.converted_to_wo",
