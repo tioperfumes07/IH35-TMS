@@ -1,7 +1,7 @@
 # INBOX-DEVIN-A
 
-Not PARKED. AUDIT ONLY. WAVE 4 leftover-CERTIFIED @ `189dd4c`. Do not recertify. Do not restamp U14.
+Not PARKED. AUDIT ONLY. **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** leftover unique FINDING only. File FINDING or AUDIT-PASS. No product PRs.
+**NOW:** leftover unique FINDING or AUDIT-PASS. `/vendors` EXTENT. No leftover-CERTIFY. No restamp.
 
-OUTBOX: `Devin-A | ACK | LEFTOVER-W4-STAMPED | NOW=next-unique | GO`
+OUTBOX: `Devin-A | ACK | CERTIFY-TRUTH | NOW=/vendors EXTENT | GO`

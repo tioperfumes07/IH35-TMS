@@ -280,6 +280,7 @@
         "accounting_note": "accounting removed from modules after ECON-012 FIXED + ECON-015 reclassified not-a-defect. UPDATED 2026-08-20: ECON-005 also reclassified not-a-defect (fuel-lane, superseded architecture) -- only ECON-014 (driver-finance catalog-FK refactor, large scope, needs owner/spec decision) remains genuinely open on this card."
       },
       "status": "open",
+      "pins_complete": false,
       "hotfiles": [
         "apps/backend/src/fuel",
         "apps/backend/src/driver-finance",
@@ -408,6 +409,7 @@
         "money_critical": true
       },
       "status": "open",
+      "pins_complete": false,
       "hotfiles": [
         "apps/backend/src/banking/categorization.service.ts",
         "apps/backend/src/banking/categorization.routes.ts",
@@ -556,6 +558,7 @@
         "money_critical": true
       },
       "status": "open",
+      "pins_complete": false,
       "hotfiles": [
         "apps/backend/src/driver-finance",
         "apps/backend/src/factoring",
@@ -996,6 +999,7 @@
         "dispatch_note": "dispatch removed from modules after #5369 CERTIFIED (37/37 pv). Fuel historical load_id=NULL remains N/A-PRE-OPERATIONAL (owner 2026-08-04); going-forward accounting.expenses USMCA load_id n=9 (Devin OUTBOX). No invent FKs."
       },
       "status": "open",
+      "pins_complete": false,
       "hotfiles": [
         "apps/backend/src/fuel"
       ]

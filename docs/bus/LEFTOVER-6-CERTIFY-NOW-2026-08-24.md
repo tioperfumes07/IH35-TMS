@@ -1,18 +1,18 @@
-# LEFTOVER 6 — leftover-CERTIFIED (owner 2026-08-24 06:30 CT)
+# LEFTOVER 6 — leftover unique hop LOG (owner 2026-08-24)
 
-**Not U14.** U14 14/14 stays frozen. Never restamp accounting/banking/settlements/factoring/dispatch/vendors/customers/drivers/fleet/lists/maintenance/safety/insurance/legal.
+**Not U14. Not a second exclusive CERTIFIED.** U14 14/14 frozen. Never restamp the 14.
 
-Cursor Live Chrome + matching `healthz/shallow` `version` **`6585a66`** (`dep-da62kgr`). Unique 500 / dead / silent this pass: none. Empty $0 / TEST rows expected.
+Leftover unique Live Chrome @ `6585a66` (500 / dead / silent none). Empty $0 / TEST expected.
 
-| # | Module | Route | leftover-CERTIFIED SHA |
-|---|--------|-------|------------------------|
-| L1 | cash-flow | `/cash-flow` | `6585a66` — Projected · Actual vs Projected · Manual Daily |
-| L2 | finance | `/finance` | `6585a66` — Hub + `/finance/projections` |
-| L3 | reports | `/reports` | `6585a66` — hub + `/reports/trial-balance` |
-| L4 | compliance | `/compliance` | `6585a66` — Filings & Compliance Due |
-| L5 | eld | `/eld` | `6585a66` — Live Duty Status roster |
-| L6 | inventory | `/inventory` | `6585a66` — Parts & Stock + CC3 TEST part row |
+| # | Module | Route | Hop log SHA |
+|---|--------|-------|-------------|
+| L1 | cash-flow | `/cash-flow` | `6585a66` |
+| L2 | finance | `/finance` | `6585a66` |
+| L3 | reports | `/reports` | `6585a66` |
+| L4 | compliance | `/compliance` | `6585a66` |
+| L5 | eld | `/eld` | `6585a66` |
+| L6 | inventory | `/inventory` | `6585a66` |
 
-Do **not** recertify. WAVE 2 + WAVE 3 leftover-CERTIFIED at `6585a66`. Next = unique leftover FINDING only. Idle = defect.
+Do **not** leftover-CERTIFY again. Next = unique FINDING only.
 
-ACK: `SEAT | ACK | LEFTOVER-6-STAMPED | PORT=n | NOW=<next> | GO`
+Canonical list: `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`.

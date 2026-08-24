@@ -2,7 +2,7 @@
 
 **ALL 14 ROWS ARE CERTIFIED. THIS CAMPAIGN IS CLOSED.** Do not reload as OPEN work. Do not stamp. Do not recertify. Do not invent a 15th U14 queue.
 
-Work is leftover only: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` + `docs/bus/NOW-ONE-SOURCE.md`.
+Work is leftover only: `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md` + `docs/bus/NOW-ONE-SOURCE.md`.
 
 **Canonical NOW.** Older bus timestamps (12:05 / 12:28 / 16:55 / 17:14 CT), “help Cursor wherever,” and “awaiting next order” are **void**.
 

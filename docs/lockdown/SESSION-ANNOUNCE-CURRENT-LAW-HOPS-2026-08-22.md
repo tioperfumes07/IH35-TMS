@@ -17,8 +17,8 @@ Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version
 CURRENT-LAW
 - USMCA only · no TRANSP/TRK · no TMS→QBO write-back
 - U14 14/14 CERTIFIED · never restamp · never recertify
-- AFTER U14 = docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md · NEXT-8 pack docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md · one seat · one NOW · HOLD = defect
-- CERTIFIED ≠ Rule 24 complete ≠ matrix Box 4 · do not paint those from U14 stamps
+- AFTER U14 = docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md · NOW-ONE-SOURCE · unique FINDING only · HOLD = defect
+- CERTIFIED ≠ leftover hop log ≠ Rule 24 complete ≠ matrix Box 4 · do not leftover-CERTIFY U14 modules
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
 - FAST-MERGE ~4 min · local gate PASS → PR → squash SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
@@ -37,12 +37,12 @@ Then ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
 
 Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next **your** module, never idle.
 
-| Seat | Port | Current | Hops (stop when leftover-clean) |
-|------|------|---------|--------------------------------|
-| Cursor | 9222 | leftover-6 + WAVE 2 + WAVE 3 + WAVE 4 stamped | **U14 omit.** Lead. **Do not loop `/425c`.** No leftover recertify |
-| CC-1 | 9223 | leftover-6 L1–L2 stamped | Accounting+factoring omit. NOW next money unique. No `/lists` `/legal` `/docs`. HOLD forbidden |
-| CC-2 | 9224 | leftover-6 L3 + WAVE 2 W1 stamped | Settlements omit. NOW next unique FINDING. No Close remake. No leftover recertify |
-| CC-3 | 9225 | leftover-6 L4–L6 + WAVE 2 W2 stamped | lists+legal omit. NOW next unique FINDING. No leftover recertify. No `trigger_deploy` |
-| Codex | 9226 | WAVE 3 leftover-CERTIFIED | U14 7–9 omit restamp. NOW next unique FINDING only. Never steal `/docs` `/cash-flow` `/compliance` |
-| Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. ACK≠audit |
-| Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors` EXTENT. Not scribe |
+| Seat | Port | Current | Hops |
+|------|------|---------|------|
+| Cursor | 9222 | U14 omit. Lead | Unique leftover FINDING overflow. **Do not loop `/425c`.** Never leftover-CERTIFY |
+| CC-1 | 9223 | Accounting+factoring omit | Next money unique. STOP `/425c`. HOLD forbidden |
+| CC-2 | 9224 | Settlements omit | Next unique FINDING. No Close remake |
+| CC-3 | 9225 | lists+legal+maintenance omit | Next unique FINDING. No `trigger_deploy` |
+| Codex | 9226 | customers/drivers/fleet omit restamp | Next unique FINDING only |
+| Cascade | audit | CERTIFIED overlay | AUDIT-PASS or unique FINDING. Never restamp |
+| Devin-A | audit | CERTIFIED overlay | Same. `/vendors` EXTENT. Not scribe |

@@ -1,8 +1,8 @@
 {
   "module": "factoring",
   "title": "Factoring (FACT)",
-  "complete": false,
-  "as_of": "2026-08-18T22:00Z",
+  "complete": true,
+  "as_of": "2026-08-24T13:20:00Z",
   "live_sha": "ed061c2",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
@@ -168,5 +168,7 @@
     ]
   },
   "item_count": 10,
-  "note": "2026-08-10 FACT-CERTIFIED-NEON: all 10 FACT-* items prod_verified:true (Neon lucia + USMCA CDP9227). complete:false — CLS-MONEY-HOLD still lists factoring (reserve_movement/advances empty = owner-hold economics, not chrome). scenario.factoring remains 0 advances (honest). | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn."
+  "note": "2026-08-10 FACT-CERTIFIED-NEON: all 10 FACT-* items prod_verified:true (Neon lucia + USMCA CDP9227). complete:false — CLS-MONEY-HOLD still lists factoring (reserve_movement/advances empty = owner-hold economics, not chrome). scenario.factoring remains 0 advances (honest). | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn.",
+  "complete_unpinned_at": "2026-08-24T13:20:00Z",
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

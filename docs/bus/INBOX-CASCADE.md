@@ -1,7 +1,7 @@
 # INBOX-CASCADE
 
-AUDIT ONLY. WAVE 4 leftover-CERTIFIED @ `189dd4c`. Do not recertify. Do not restamp U14.
+AUDIT ONLY. **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** leftover unique FINDING only. File FINDING or AUDIT-PASS. No product PRs.
+**NOW:** leftover unique FINDING or AUDIT-PASS. No product PRs. No leftover-CERTIFY. No restamp.
 
-OUTBOX: `Cascade | ACK | LEFTOVER-W4-STAMPED | NOW=next-unique | GO`
+OUTBOX: `Cascade | ACK | CERTIFY-TRUTH | NOW=audit | GO`

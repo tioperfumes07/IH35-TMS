@@ -1,8 +1,8 @@
 {
   "module": "insurance",
   "title": "Insurance — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-18T22:00Z",
+  "complete": true,
+  "as_of": "2026-08-24T13:20:00Z",
   "live_sha": "5164640be",
   "desktop_audit": null,
   "spec_sources": [
@@ -113,5 +113,7 @@
         "evidence": "4 insurance claim(s)"
       }
     ]
-  }
+  },
+  "complete_unpinned_at": "2026-08-24T13:20:00Z",
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

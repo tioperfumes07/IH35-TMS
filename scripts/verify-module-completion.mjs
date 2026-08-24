@@ -6,8 +6,9 @@
  * - complete:true is ILLEGAL while any item is not PASS or qualifying HOLD
  * - complete:true is ILLEGAL while any open|draining wave card in
  *   docs/audit/wave-queue.json lists the module (cross-cutting class still open)
- * - complete:false is REQUIRED (legal) when N===M BUT open wave cards list the module —
- *   honesty, not a gap. Without this, verify-no-false-green-certify and this guard fight.
+ * - complete:false is REQUIRED (legal) when N===M BUT pinning open wave cards list the module
+ *   (status open|draining AND pins_complete !== false). HOLD / empty-expected / N/A-PRE-OP
+ *   cards set pins_complete:false so they cannot freeze complete:false on an all-PASS list.
  * - Branch commits claiming "accounting done" / "banking done" / "module complete"
  *   while that module's complete!==true → FAIL
  * - Prints PROGRESS: N of M for each module

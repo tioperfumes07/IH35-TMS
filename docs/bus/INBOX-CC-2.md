@@ -1,7 +1,7 @@
 # INBOX-CC-2 · 9224
 
-W1 `/fuel` leftover-CERTIFIED. WAVE 4 leftover-CERTIFIED. **Do not recertify.**
+**THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** next unique leftover FINDING only. Never remake Close. Never `trigger_deploy`. Never restamp U14.
+**NOW:** next unique leftover FINDING only. Never remake Close. Never leftover-CERTIFY. Never `trigger_deploy`. Never restamp U14.
 
-OUTBOX: `CC-2 | ACK | LEFTOVER-W4-STAMPED | PORT=9224 | NOW=next-unique | GO`
+OUTBOX: `CC-2 | ACK | CERTIFY-TRUTH | PORT=9224 | NOW=next-unique | GO`
