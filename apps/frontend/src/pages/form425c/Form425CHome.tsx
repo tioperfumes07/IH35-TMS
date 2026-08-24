@@ -82,6 +82,7 @@ function emptyForm(): CurrentFormState {
     att42: false,
     notes: "",
     amendedFromUuid: null,
+    filedAt: null,
   };
 }
 
@@ -132,6 +133,7 @@ function toFormState(report: Record<string, unknown>): CurrentFormState {
     att42: Array.isArray(report.attachment_42_job_costing_uuids) && report.attachment_42_job_costing_uuids.length > 0,
     notes: "",
     amendedFromUuid: String(report.amended_from_uuid ?? ""),
+    filedAt: report.filed_at ? String(report.filed_at) : null,
   };
 }
 

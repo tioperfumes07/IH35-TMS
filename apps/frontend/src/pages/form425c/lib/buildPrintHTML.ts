@@ -19,6 +19,16 @@ function plus(a: number | null, b: number | null): number | null {
   return a + b;
 }
 
+/** Court "Date filed" from filed_at YYYY-MM-DD only. Never print-day. Never UTC Date shift. */
+function filedDateLabel(filedAt: unknown): string {
+  const ymd = String(filedAt ?? "").trim().slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return "";
+  const monthIdx = Number(match[2]) - 1;
+  if (monthIdx < 0 || monthIdx > 11) return "";
+  return `${MONTHS[monthIdx]} ${Number(match[3])}, ${match[1]}`;
+}
+
 function lastDay(m: number, y: number) {
   return new Date(y, m + 1, 0).getDate();
 }
@@ -136,7 +146,7 @@ export function buildPrintHTML(
 
 <div style="display:flex;border:1px solid #8a9ab0;margin-bottom:4px;">
   <div style="flex:1;padding:3px 7px;border-right:1px solid #8a9ab0;"><strong>Month:</strong> <span style="color:#1a3a8f;font-weight:600;">${MONTHS[month]}</span></div>
-  <div style="flex:1;padding:3px 7px;border-right:1px solid #8a9ab0;"><strong>Date filed:</strong> <span style="color:#1a3a8f;">${today}</span></div>
+  <div style="flex:1;padding:3px 7px;border-right:1px solid #8a9ab0;"><strong>Date filed:</strong> <span style="color:#1a3a8f;">${filedDateLabel(form.filedAt)}</span></div>
   <div style="flex:1.6;padding:3px 7px;border-right:1px solid #8a9ab0;"><strong>Line of business:</strong> <span style="color:#1a3a8f;">${p.lineOfBusiness}</span></div>
   <div style="flex:1;padding:3px 7px;"><strong>NAICS:</strong> <span style="color:#1a3a8f;">${p.naiscCode}</span></div>
 </div>

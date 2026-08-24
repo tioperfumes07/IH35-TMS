@@ -69,6 +69,7 @@ export type CurrentFormState = {
   att42: boolean;
   notes: string;
   amendedFromUuid?: string | null;
+  filedAt?: string | null;
 };
 
 export type HistoryReportRow = {

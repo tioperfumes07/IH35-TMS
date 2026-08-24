@@ -163,6 +163,9 @@ export function collectProblems(src) {
   if (printHtml.includes("function nv(") || printHtml.includes("nv(form.totalReceipts)") || printHtml.includes("|| 0")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: empty cash/projection fields must not print invented $0 nets (nv || 0)");
   }
+  if (/Date filed:[\s\S]{0,120}\$\{today\}/.test(printHtml) || !printHtml.includes("filedDateLabel")) {
+    problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: Date filed must use filed_at — must not invent print-day as the court filed date");
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
