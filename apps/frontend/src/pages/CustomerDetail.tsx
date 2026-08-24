@@ -828,6 +828,7 @@ export function CustomerDetailPage() {
       setContactForm(emptyContactForm());
       pushToast("Contact added", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to add contact", "error"),
   });
 
   const updateContactMutation = useMutation({
@@ -840,6 +841,7 @@ export function CustomerDetailPage() {
       setEditingContact(null);
       pushToast("Contact updated", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update contact", "error"),
   });
 
   const deactivateContactMutation = useMutation({
@@ -849,6 +851,7 @@ export function CustomerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       pushToast("Contact deactivated", "info");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate contact", "error"),
   });
 
   const reactivateContactMutation = useMutation({
@@ -858,6 +861,7 @@ export function CustomerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       pushToast("Contact reactivated", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to reactivate contact", "error"),
   });
 
   const createQualityEventMutation = useMutation({
