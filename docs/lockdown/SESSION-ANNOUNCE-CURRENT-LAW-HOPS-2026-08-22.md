@@ -16,20 +16,20 @@ Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version
 ```
 CURRENT-LAW
 - USMCA only · no TRANSP/TRK · no TMS→QBO write-back
-- Exclusive U14 · one seat · one current module · HOLD = defect
-- CERTIFIED = Fully-Wired 1–12 + Live Chrome hops on LIVE_SHA (healthz)
-- Scoreboard / N-of-M / “clicked” ≠ CERTIFIED
+- U14 14/14 CERTIFIED · never restamp · never recertify
+- AFTER U14 = docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md · one seat · one NOW · HOLD = defect
+- CERTIFIED ≠ Rule 24 complete ≠ matrix Box 4 · do not paint those from U14 stamps
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
-- FAST-MERGE ~4 min · local gate PASS → PR → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash` SAME TURN · never `gh pr checks --watch` · never stall on `gh pr merge` worktree-main · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
+- FAST-MERGE ~4 min · local gate PASS → PR → squash SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
-MY SEAT / CURRENT MODULE / OPEN HOPS
-- (copy only OPEN rows for YOUR seat from the exclusive law — never CERTIFIED)
+MY SEAT / NOW / OPEN LEFTOVER
+- (copy YOUR row from POST-U14 sequence + NOW-ONE-SOURCE — never CERTIFIED U14 hops)
 
 NOT MY URL
 - do not enter another seat’s prefix
 ```
 
-Then ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`
+Then ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
 
 ---
 

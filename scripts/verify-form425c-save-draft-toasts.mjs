@@ -22,6 +22,9 @@ export function collectProblems(src) {
   if (src.includes("{ ...defaults, ...(report.part1_answers") || !src.includes("function answersFromReport")) {
     problems.push(`${PAGE}: hydrate must not spread profile defaults over unanswered lines — autosave then wrote invented Yes/No onto the MOR`);
   }
+  if (src.includes("answers: { ...DEFAULT_PROFILES.trucking.defaultAnswers }") || src.includes("answers: { ...defaults }")) {
+    problems.push(`${PAGE}: empty / period-switch form must not paint profile default Yes/No — that is a silent court questionnaire`);
+  }
   if (!src.includes("loadedId !== selectedReport.id")) {
     problems.push(`${PAGE}: must clear stale MOR cash when the selected period id is not the loaded detail id`);
   }
@@ -434,6 +437,7 @@ export function collectProblems(src) {
 const good = `
   if (detailQuery.isFetching || selectedReport?.id) return;
   function answersFromReport
+  answers: {}
   if (selectedReport?.id && loadedId === selectedReport.id) {
   if (selectedReport?.id && loadedId !== selectedReport.id) {
   if (!form.reportId || form.reportId !== selectedReport?.id) {

@@ -1,5 +1,6 @@
 # PASTE INTO DEVIN · PLAN MODE · 2026-08-23
 
+**AFTER U14:** audit overlay. `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
 **NOW:** `docs/bus/NOW-ONE-SOURCE.md` — Chrome `/vendors` EXTENT. Not PARKED. U14 14/14 CERTIFIED — never recertify.
 
 Jorge typed **devin-**. You are Devin-A. **AUDIT ONLY. PLAN MODE = no file writes, no PRs, no apps/, no fix, no recertify.**

@@ -1,9 +1,5 @@
-# PASTE DEVIN-A NOW
-
-**NOW:** `docs/bus/NOW-ONE-SOURCE.md` — Chrome `/vendors` EXTENT. Not PARKED.
-
-Same paste as Jorge `devin-`: `docs/bus/PASTE-DEVIN-NOW.md`
-
-```text
-git fetch origin && git switch --detach origin/main
-```
+===== DEVIN-A =====
+AFTER U14: audit overlay. docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md
+AUDIT ONLY. Chrome /vendors EXTENT then maintenance → safety → insurance. No product PRs. Not PARKED.
+ACK: Devin-A | ACK | POST-U14-SEQUENCE | NOW=/vendors EXTENT | GO
+===== END =====
