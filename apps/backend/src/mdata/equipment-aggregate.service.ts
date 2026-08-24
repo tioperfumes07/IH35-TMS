@@ -80,7 +80,7 @@ export async function buildEquipmentAggregate(
   let attached_to_unit = null;
   if (unitId) {
     const unitRes = await client.query(
-      `SELECT id::text AS unit_id, unit_number, vin FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+      `SELECT id::text AS unit_id, unit_number, vin FROM mdata.units WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid) LIMIT 1`,
       [unitId, operatingCompanyId]
     );
     attached_to_unit = unitRes.rows[0] ?? null;
