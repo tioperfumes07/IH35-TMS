@@ -15,6 +15,15 @@
  *   3. Frontend listDocsFoundation forwards both flags
  *   4. DocsHomePage KpiCards for Missing Required + Recent Uploads have onClick=
  *
+ * DOCS-F-KPI-FILTER-RESET-STUCK (this pass) — a KPI click sets a SEPARATE `kpiFilter` state
+ * (missing_required | recent_uploads), counted in the Filters panel's "N active" badge alongside
+ * typeFilter/expiresBefore. The panel's own Reset button was wired only to `staged.reset` (the
+ * useStagedListFilters draft for typeFilter/expiresBefore) — clicking Reset with a KPI filter active
+ * produced zero network requests and left the "1 active filter" badge + the KPI description line
+ * ("Missing required (no category or incomplete upload)" / "Recent uploads (last 7 days)") on screen
+ * with no indication anything failed. The only working clear path was the unrelated "Total Docs" KPI
+ * card (clearListFilters). Guard: the CollapsedListFilters onReset handler must also clear kpiFilter.
+ *
  * Usage:
  *   node scripts/verify-docs-home-kpi-clicks.mjs
  *   node scripts/verify-docs-home-kpi-clicks.mjs --selftest
@@ -127,6 +136,18 @@ export function assertGuard({ routes, api, page }) {
     }
   }
 
+  // DOCS-F-KPI-FILTER-RESET-STUCK: the Filters panel's Reset button (onReset=) must clear kpiFilter,
+  // not just the staged typeFilter/expiresBefore draft — otherwise it's counted in "N active filters"
+  // but Reset silently leaves it applied.
+  const onResetMatch = /onReset=\{([\s\S]*?)\}\s*\n?\s*onCancel=/.exec(p);
+  if (!onResetMatch) {
+    errors.push(`${PAGE}: CollapsedListFilters onReset= prop not found`);
+  } else if (!/setKpiFilter\(\s*"none"\s*\)/.test(onResetMatch[1])) {
+    errors.push(
+      `${PAGE}: onReset must also call setKpiFilter("none") — a KPI-driven filter (missing_required/recent_uploads) counts toward "N active filters" but Reset does not clear it`,
+    );
+  }
+
   return errors;
 }
 
@@ -152,10 +173,16 @@ function selftest() {
   const goodPage = `
     <KpiCard label="Missing Required" value="1" onClick={() => setKpiFilter("missing_required")} />
     <KpiCard label="Recent Uploads" value="2" onClick={() => setKpiFilter("recent_uploads")} />
+    <CollapsedListFilters
+      onApply={staged.apply}
+      onReset={() => { staged.reset(); setKpiFilter("none"); }}
+      onCancel={staged.cancel}
+    >
   `;
   const deadPage = `
     <KpiCard label="Missing Required" value="1" />
     <KpiCard label="Recent Uploads" value="2" />
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel}>
   `;
 
   const pass = assertGuard({ routes: goodRoutes, api: goodApi, page: goodPage });
@@ -166,6 +193,20 @@ function selftest() {
   const fail = assertGuard({ routes: goodRoutes, api: goodApi, page: deadPage });
   if (!fail.some((e) => e.includes("dead click"))) {
     console.error(`[${LABEL}] --selftest FAIL: dead-click fixture did not fail`, fail);
+    process.exit(1);
+  }
+  if (!fail.some((e) => e.includes("setKpiFilter"))) {
+    console.error(`[${LABEL}] --selftest FAIL: stuck-reset fixture did not fail`, fail);
+    process.exit(1);
+  }
+  const stuckResetOnly = `
+    <KpiCard label="Missing Required" value="1" onClick={() => setKpiFilter("missing_required")} />
+    <KpiCard label="Recent Uploads" value="2" onClick={() => setKpiFilter("recent_uploads")} />
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel}>
+  `;
+  const stuckReset = assertGuard({ routes: goodRoutes, api: goodApi, page: stuckResetOnly });
+  if (!stuckReset.some((e) => e.includes("setKpiFilter"))) {
+    console.error(`[${LABEL}] --selftest FAIL: stuck-reset-only fixture did not isolate the reset defect`, stuckReset);
     process.exit(1);
   }
   console.log(`[${LABEL}] --selftest OK`);
