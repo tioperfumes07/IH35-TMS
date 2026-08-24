@@ -611,6 +611,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "This entity's bankruptcy case number is not set (or is a placeholder). Set the real case number in Profiles & Defaults before printing.",
         });
       }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
       throw err;
     }
   });
@@ -947,6 +950,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "This MOR is filed — use Amend on History to create a draft. Save Draft will not rewrite a filed court filing.",
         });
       }
+      if (msg === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
       throw error;
     }
 
@@ -1042,6 +1048,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "form_425c_filed_immutable",
           message: "This MOR is filed — use Amend on History. Import from Banking will not rewrite a filed court filing.",
         });
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       req.log?.error?.({ err: e, reportId: params.data.id }, "form-425c import-banking failed");
       // Surface the pg error code/message only (never connection strings). Nothing was persisted.
@@ -1140,6 +1149,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "This MOR is filed — use Amend on History. Generate will not un-file a court filing.",
         });
       }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
       throw err;
     }
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
@@ -1207,6 +1219,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "form_425c_filed_immutable",
           message: "This MOR is filed — use Amend on History. Mark Filed will not rewrite a filed court filing.",
         });
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw err;
     }
@@ -1395,6 +1410,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "form_425c_amendment_already_open",
           message: "An amendment draft already exists for this period — Open it on History. Amend will not create a second draft.",
         });
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw err;
     }
