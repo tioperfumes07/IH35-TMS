@@ -11,18 +11,36 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 const fail = (m) => { console.error(`FAIL verify-fleet-deactivate-consistency: ${m}`); process.exit(1); };
 
+function audit(units, trailer) {
+  const checks = [
+    ["units archive status stamps deactivated_at", /ARCHIVE_STATUSES\.has\(b\.status\)[\s\S]{0,160}deactivated_at/.test(units)],
+    ["units active status clears deactivated_at", /ACTIVE_FLEET_STATUSES\.has\(b\.status\)[\s\S]{0,160}add\("deactivated_at",\s*null\)/.test(units)],
+    ["trailer archive status stamps deactivated_at", /TRAILER_ARCHIVE_STATUSES[\s\S]{0,200}deactivated_at = COALESCE/.test(trailer)],
+    ["trailer active status clears deactivated_at", /TRAILER_ACTIVE_STATUSES[\s\S]{0,120}deactivated_at = NULL/.test(trailer)],
+  ];
+  return checks.filter(([, passed]) => !passed).map(([label]) => label);
+}
+
 // UNITS — PATCH /api/v1/mdata/units/:id
 const units = read("apps/backend/src/mdata/units.routes.ts");
-if (!/ARCHIVE_STATUSES\.has\(b\.status\)[\s\S]{0,160}deactivated_at/.test(units))
-  fail("units PATCH must set deactivated_at when status is an archive status");
-if (!/ACTIVE_FLEET_STATUSES\.has\(b\.status\)[\s\S]{0,160}add\("deactivated_at",\s*null\)/.test(units))
-  fail("units PATCH must CLEAR deactivated_at (reactivate) when status returns to an active-fleet status");
-
-// TRAILERS / EQUIPMENT — PUT /api/v1/fleet/trailers/:id/status
 const trailer = read("apps/backend/src/fleet/trailer.routes.ts");
-if (!/TRAILER_ARCHIVE_STATUSES[\s\S]{0,200}deactivated_at = COALESCE/.test(trailer))
-  fail("trailer status PUT must set deactivated_at when status is an archive status (was the Saldana-class gap)");
-if (!/TRAILER_ACTIVE_STATUSES[\s\S]{0,120}deactivated_at = NULL/.test(trailer))
-  fail("trailer status PUT must CLEAR deactivated_at (reactivate) when status returns to an active-fleet status");
+
+if (process.argv.includes("--selftest")) {
+  const fixtures = [
+    [units.replace('add("deactivated_at", new Date().toISOString().slice(0, 10))', 'add("status_note", "archived")'), trailer],
+    [units.replace('add("deactivated_at", null)', 'add("status_note", "active")'), trailer],
+    [units, trailer.replace('deactivated_at = COALESCE($4::date, CURRENT_DATE)::timestamptz', 'status = status')],
+    [units, trailer.replace('deactivated_at = NULL', 'status = status')],
+  ];
+  const escaped = fixtures.filter(([unitFixture, trailerFixture]) => audit(unitFixture, trailerFixture).length === 0);
+  if (audit(units, trailer).length || escaped.length) {
+    fail(`selftest expected 4 planted lifecycle defects; ${escaped.length} escaped`);
+  }
+  console.log("OK verify-fleet-deactivate-consistency --selftest: 4/4 status lifecycle defects detected.");
+  process.exit(0);
+}
+
+const failures = audit(units, trailer);
+if (failures.length) fail(failures.join("; "));
 
 console.log("OK verify-fleet-deactivate-consistency: units + trailers keep deactivated_at consistent with status.");
