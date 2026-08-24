@@ -743,6 +743,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
+        "vendor",
         "connectivity",
         "reverse_link"
       ]

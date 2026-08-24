@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet"],"cols":["vendor"],"leaves":["trailer.profile.maintenance"],"task":"FLT-F6306-TRAILER-LAST-SERVICE-VENDOR-REVERSE","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,11 +9,13 @@ const routesPath = path.join(ROOT, "apps/backend/src/mdata/units.routes.ts");
 const aggregatePath = path.join(ROOT, "apps/backend/src/mdata/unit-aggregate.service.ts");
 const equipmentAggregatePath = path.join(ROOT, "apps/backend/src/mdata/equipment-aggregate.service.ts");
 const maintenanceSnapshotPath = path.join(ROOT, "apps/frontend/src/components/vehicle-profile/MaintenanceSnapshotSection.tsx");
+const fleetRequiredPath = path.join(ROOT, "docs/specs/scoreboard/modules/fleet.required.json");
 
 const routes = fs.readFileSync(routesPath, "utf8");
 const aggregate = fs.readFileSync(aggregatePath, "utf8");
 const equipmentAggregate = fs.readFileSync(equipmentAggregatePath, "utf8");
 const maintenanceSnapshot = fs.readFileSync(maintenanceSnapshotPath, "utf8");
+const fleetRequired = fs.readFileSync(fleetRequiredPath, "utf8");
 
 function pmScheduleScopeFailures(unitSource, equipmentSource) {
   const scopedJoin = /JOIN maintenance\.pm_schedules ps ON ps\.id = pa\.pm_schedule_id\s+AND ps\.operating_company_id = pa\.operating_company_id/;
@@ -43,6 +46,24 @@ function currentLoadCustomerFailures(unitSource) {
   if (!/l\.customer_id::text AS customer_id[\s\S]{0,900}LEFT JOIN LATERAL \(\s+SELECT scoped_customer\.customer_name\s+FROM mdata\.get_customer_same_company\(l\.customer_id, l\.operating_company_id\) scoped_customer\s+LIMIT 1\s+\) c ON TRUE[\s\S]{0,260}WHERE l\.assigned_unit_id = \$1::uuid\s+AND l\.operating_company_id = \$2::uuid/.test(unitSource)) {
     failures.push("unit aggregate current-load customer reverse must use the scoped historical customer resolver");
   }
+  return failures;
+}
+
+function trailerLastServiceVendorFailures(equipmentSource, consumerSource, requiredSource) {
+  const failures = [];
+  if (!/COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}FROM maintenance\.work_orders w\s+LEFT JOIN LATERAL \(\s+SELECT scoped_vendor\.vendor_name\s+FROM mdata\.get_vendor_same_company\(\s+COALESCE\(w\.external_vendor_id, w\.vendor_id\),\s+w\.operating_company_id\s+\) scoped_vendor\s+LIMIT 1\s+\) v ON TRUE[\s\S]{0,260}WHERE w\.equipment_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid/.test(equipmentSource)) failures.push("trailer aggregate last-service canonical historical vendor chain");
+  if (!/EntityLinkOrTombstone[\s\S]{0,180}kind="vendor"[\s\S]{0,180}id=\{String\(lastService\.vendor_id\)\}/.test(consumerSource)) failures.push("shared maintenance snapshot last-service vendor drill");
+  const required = JSON.parse(requiredSource);
+  let leaf;
+  const visit = (value) => {
+    if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") {
+      if (value.id === "trailer.profile.maintenance" && Array.isArray(value.required)) leaf = value;
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(required);
+  if (!leaf?.required?.includes("vendor")) failures.push("fleet trailer.profile.maintenance must honestly require vendor");
   return failures;
 }
 
@@ -95,6 +116,11 @@ if (currentLoadCustomerMissing.length > 0) {
   console.error(`verify:aggregate-shape-route FAIL: current-load customer reverse is unresolved: ${currentLoadCustomerMissing.join(", ")}`);
   process.exit(1);
 }
+const trailerLastServiceVendorMissing = trailerLastServiceVendorFailures(equipmentAggregate, maintenanceSnapshot, fleetRequired);
+if (trailerLastServiceVendorMissing.length > 0) {
+  console.error(`verify:aggregate-shape-route FAIL: trailer last-service vendor is unwired: ${trailerLastServiceVendorMissing.join(", ")}`);
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const unscoped = "JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id";
@@ -109,12 +135,14 @@ if (process.argv.includes("--selftest")) {
     unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+ORDER BY COALESCE\(w\.updated_at, w\.opened_at\))/, "$1$2")),
     currentLoadCustomerFailures(aggregate.replace("mdata.get_customer_same_company(l.customer_id, l.operating_company_id)", "mdata.customers")),
+    trailerLastServiceVendorFailures(equipmentAggregate.replace("mdata.get_vendor_same_company(", "mdata.get_vendor_active_only("), maintenanceSnapshot, fleetRequired),
+    trailerLastServiceVendorFailures(equipmentAggregate, maintenanceSnapshot, fleetRequired.replace(/("id": "trailer\.profile\.maintenance"[\s\S]{0,220})"vendor",/, '$1"vendor_MISSING",')),
   ];
   if (mutations.some((failures) => failures.length === 0)) {
     console.error("verify:aggregate-shape-route SELFTEST FAIL: a PM schedule company-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify:aggregate-shape-route SELFTEST PASS — 9/9 aggregate scope/vendor/void/customer mutations red");
+  console.log("verify:aggregate-shape-route SELFTEST PASS — 11/11 aggregate scope/vendor/void/customer mutations red");
   process.exit(0);
 }
 
