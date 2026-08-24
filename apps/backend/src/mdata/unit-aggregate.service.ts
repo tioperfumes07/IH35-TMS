@@ -434,8 +434,14 @@ export async function buildUnitAggregate(
         COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id,
         v.vendor_name AS vendor
       FROM maintenance.work_orders w
-      LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id)
-                               AND v.operating_company_id = w.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT scoped_vendor.vendor_name
+        FROM mdata.get_vendor_same_company(
+          COALESCE(w.external_vendor_id, w.vendor_id),
+          w.operating_company_id
+        ) scoped_vendor
+        LIMIT 1
+      ) v ON TRUE
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
         AND w.voided_at IS NULL
