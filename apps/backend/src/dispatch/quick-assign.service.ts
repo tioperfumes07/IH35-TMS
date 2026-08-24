@@ -418,6 +418,8 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
                  AS new_driver_name,
                pu.unit_number AS previous_unit_number,
                nu.unit_number AS new_unit_number,
+               pt.equipment_number AS previous_trailer_number,
+               nt.equipment_number AS new_trailer_number,
                -- identity.users has NO first_name/last_name — 0004 creates it with email/role only and
                -- no later migration adds a name — so email is the only human-readable identifier.
                -- The PK column is id: 0004 created it under the old name and
@@ -451,6 +453,14 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
         LEFT JOIN mdata.units nu
                ON nu.id = h.new_unit_id
               AND COALESCE(nu.currently_leased_to_company_id, nu.owner_company_id) = h.operating_company_id
+        LEFT JOIN mdata.equipment pt
+               ON pt.id = h.previous_trailer_id
+              AND (pt.owner_company_id = h.operating_company_id
+                   OR pt.currently_leased_to_company_id = h.operating_company_id)
+        LEFT JOIN mdata.equipment nt
+               ON nt.id = h.new_trailer_id
+              AND (nt.owner_company_id = h.operating_company_id
+                   OR nt.currently_leased_to_company_id = h.operating_company_id)
         LEFT JOIN identity.users au
                ON au.id = h.assigned_by_user_id
         WHERE h.operating_company_id = $1::uuid
