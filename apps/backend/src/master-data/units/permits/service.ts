@@ -291,7 +291,7 @@ export async function scanUnitPermitExpiries(
         COALESCE(NULLIF(TRIM(u.unit_number), ''), u.id::text) AS unit_number
       FROM master_data.unit_permits p
       JOIN mdata.units u ON u.id = p.unit_uuid
-                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+                         AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
       WHERE p.operating_company_id = $1::uuid
         AND p.deleted_at IS NULL
     `,

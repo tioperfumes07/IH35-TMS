@@ -55,6 +55,14 @@ describe("scanUnitPermitExpiries", () => {
     expect(query).toHaveBeenCalledOnce();
     expect(String(query.mock.calls[0]?.[0])).toContain("deleted_at IS NULL");
   });
+
+  it("keeps permit expiry visibility for either the unit owner or current lessee", async () => {
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    await scanUnitPermitExpiries({ query }, COMPANY);
+    const sql = String(query.mock.calls[0]?.[0]);
+    expect(sql).toContain("u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid");
+    expect(sql).not.toContain("COALESCE(u.currently_leased_to_company_id, u.owner_company_id)");
+  });
 });
 
 describe("unit permits routes (GAP-85)", () => {
