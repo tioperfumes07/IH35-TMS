@@ -884,9 +884,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             ${CUSTOMER_C_SELECT_COLUMNS},
             (
               SELECT v.vendor_name
-              FROM mdata.vendors v
-              WHERE v.id = c.factoring_company_vendor_id
-                AND v.operating_company_id = c.operating_company_id
+              FROM mdata.get_vendor_same_company(
+                c.factoring_company_vendor_id,
+                c.operating_company_id
+              ) v
               LIMIT 1
             ) AS factoring_company_name,
             -- D1-4: forward drill-through — the parent's name (when this is a sub-customer).

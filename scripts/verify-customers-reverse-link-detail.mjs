@@ -75,9 +75,14 @@ const CHECKS = [
     pattern: /fv\.vendor_name AS factoring_company_vendor_name/,
   },
   {
-    name: "billing producer scopes factor vendor join to customer company",
+    name: "billing producer preserves archived factor vendor label through same-company resolver",
     file: BILLING_ROUTE,
-    pattern: /LEFT JOIN mdata\.vendors fv\s+ON fv\.id = c\.factoring_company_vendor_id\s+AND fv\.operating_company_id = c\.operating_company_id/,
+    pattern: /LEFT JOIN LATERAL mdata\.get_vendor_same_company\(\s*c\.factoring_company_vendor_id,\s*c\.operating_company_id\s*\) fv ON true/,
+  },
+  {
+    name: "customer detail preserves archived factor vendor label through same-company resolver",
+    file: CUSTOMER_ROUTE,
+    pattern: /FROM mdata\.get_vendor_same_company\(\s*c\.factoring_company_vendor_id,\s*c\.operating_company_id\s*\) v/,
   },
   {
     name: "billing response exposes nullable factor vendor label",
