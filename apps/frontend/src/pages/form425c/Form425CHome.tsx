@@ -556,6 +556,10 @@ export function Form425CHome() {
             setDirty(true);
           }}
           onCreateOrLoad={() => {
+            if (createMutation.isPending) {
+              pushToast("Create already in progress", "error");
+              return;
+            }
             if (selectedReport?.id) {
               if (selectedReport.status === "filed") {
                 pushToast("This MOR is filed — use Amend on History", "error");

@@ -613,7 +613,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     const reportingMonth = b.reporting_month.length === 7 ? `${b.reporting_month}-01` : b.reporting_month;
     const { prevMonthDate } = monthWindow(reportingMonth.slice(0, 7));
 
-    const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+    let created: Record<string, unknown> | { error: "petition_date_required" } | null;
+    try {
+    created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       await ensureDefaultProfile(client, b.operating_company_id, user.uuid);
 
       // Case petition date is a single source of truth for the Ch.11 case — never invent a literal.
@@ -632,6 +634,21 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       const petitionDate = casePetitionDate ?? b.petition_date;
       if (!petitionDate || !/^\d{4}-\d{2}-\d{2}$/.test(petitionDate)) {
         return { error: "petition_date_required" as const };
+      }
+
+      const existingDraft = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM compliance.form_425c_reports
+          WHERE operating_company_id = $1::uuid
+            AND reporting_month = $2::date
+            AND status <> 'filed'
+          LIMIT 1
+        `,
+        [b.operating_company_id, reportingMonth]
+      );
+      if (existingDraft.rows[0]) {
+        throw new Error("form_425c_period_draft_exists");
       }
 
       const prevRes = await client.query(
@@ -697,6 +714,16 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       return report;
     });
+    } catch (err) {
+      const e = err as { message?: string; code?: string; cause?: { code?: string } };
+      if (e?.message === "form_425c_period_draft_exists" || e?.code === "23505" || e?.cause?.code === "23505") {
+        return reply.code(409).send({
+          error: "form_425c_period_draft_exists",
+          message: "A draft already exists for this period — use Load Draft. Create will not insert a second MOR.",
+        });
+      }
+      throw err;
+    }
     if (created && typeof created === "object" && "error" in created && created.error === "petition_date_required") {
       return reply.code(400).send({
         error: "petition_date_required",
