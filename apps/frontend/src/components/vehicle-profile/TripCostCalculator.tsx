@@ -38,6 +38,7 @@ export function TripCostCalculator({
   });
 
   const r = mutation.data;
+  const destinationValid = destination.trim().length >= 3;
 
   return (
     <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-3" data-testid="vp-trip-cost">
@@ -62,11 +63,26 @@ export function TripCostCalculator({
             className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="Destination ZIP"
             value={destination}
-            onChange={(e) => setDestination(e.target.value)}
+            aria-invalid={destination.length > 0 && !destinationValid}
+            aria-describedby="vp-trip-cost-status"
+            onChange={(e) => {
+              setDestination(e.target.value);
+              mutation.reset();
+            }}
           />
-          <Button size="sm" loading={mutation.isPending} onClick={() => mutation.mutate()}>
+          <Button size="sm" loading={mutation.isPending} disabled={!destinationValid} onClick={() => mutation.mutate()}>
             Compute
           </Button>
+          <div id="vp-trip-cost-status" aria-live="polite">
+            {!destinationValid ? (
+              <p className="text-xs text-gray-600">Enter a destination ZIP (at least 3 characters) to compute.</p>
+            ) : null}
+            {mutation.isError ? (
+              <p className="text-xs text-red-700" role="alert">
+                Couldn&apos;t compute trip cost. {(mutation.error as Error)?.message ?? "Try again."}
+              </p>
+            ) : null}
+          </div>
           {r ? (
             <div className="text-xs text-gray-700">
               <div>
