@@ -1,4 +1,9 @@
 {
+  "4690": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-unit-maintenance-create-work-order-drill-wired"
+  },
   "4688": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5978,5 +5983,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1295
+  "total_claimed": 1296
 }
