@@ -911,6 +911,7 @@ export function CustomerDetailPage() {
       setVoidReason("");
       pushToast("Quality event voided", "info");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to void quality event", "error"),
   });
 
   const updateQualityEventMutation = useMutation({
@@ -920,6 +921,7 @@ export function CustomerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
       pushToast("Quality event updated", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update quality event", "error"),
   });
 
   const createLaneMutation = useMutation({
