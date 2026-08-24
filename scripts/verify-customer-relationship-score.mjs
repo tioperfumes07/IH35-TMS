@@ -22,7 +22,10 @@ function contains(relativePath, content, checks) {
   if (!content) return;
   for (const check of checks) {
     const pattern = check.pattern instanceof RegExp ? check.pattern : new RegExp(check.pattern);
-    if (!pattern.test(content)) {
+    const matched = pattern.test(content);
+    if (check.inverted) {
+      if (matched) fail(`${relativePath}: forbidden ${check.label}`);
+    } else if (!matched) {
       fail(`${relativePath}: missing ${check.label}`);
     }
   }
@@ -52,8 +55,13 @@ contains("apps/backend/src/customers/relationship-score/scorer.service.ts", scor
     label: "complaint subscore requires selected company",
   },
   {
-    pattern: /FROM mdata\.customer_quality_events\s+WHERE operating_company_id = \$1::uuid\s+AND customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/,
-    label: "complaint history read is company scoped",
+    pattern: /FROM mdata\.customer_quality_events q\s+INNER JOIN mdata\.customers c\s+ON c\.id = q\.customer_id\s+AND c\.operating_company_id = \$1::uuid\s+WHERE q\.customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/,
+    label: "complaint history read is company scoped via customers join",
+  },
+  {
+    pattern: /FROM mdata\.customer_quality_events\s+WHERE operating_company_id/,
+    label: "complaint history must not use phantom quality-events operating_company_id",
+    inverted: true,
   },
   {
     pattern: /computeComplaintSubscore\(\s*client,\s*input\.operating_company_id,\s*input\.customer_uuid\s*\)/,
@@ -145,7 +153,7 @@ if (process.argv.includes("--selftest")) {
     [frontendApi, "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string)", "getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null)", "single score client requires selected company"],
     [frontendApi, "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id: string;", "listAtRiskCustomerRelationshipScores(params: {\n  operating_company_id?: string | null;", "at-risk client requires selected company"],
     [scorer, "async function computeComplaintSubscore(\n  client: DbClient,\n  operatingCompanyId: string,\n  customerUuid: string\n): Promise<number | null> {", "async function computeComplaintSubscore(\n  client: DbClient,\n  customerUuid: string\n): Promise<number | null> {", "complaint subscore requires selected company"],
-    [scorer, "FROM mdata.customer_quality_events\n      WHERE operating_company_id = $1::uuid\n        AND customer_id = $2::uuid\n    `,\n    [operatingCompanyId, customerUuid]", "FROM mdata.customer_quality_events\n      WHERE customer_id = $1::uuid\n    `,\n    [customerUuid]", "complaint history read is company scoped"],
+    [scorer, "FROM mdata.customer_quality_events q\n      INNER JOIN mdata.customers c\n        ON c.id = q.customer_id\n       AND c.operating_company_id = $1::uuid\n      WHERE q.customer_id = $2::uuid\n    `,\n    [operatingCompanyId, customerUuid]", "FROM mdata.customer_quality_events\n      WHERE customer_id = $1::uuid\n    `,\n    [customerUuid]", "complaint history read is company scoped via customers join"],
     [scorer, "const complaint_subscore = await computeComplaintSubscore(\n    client,\n    input.operating_company_id,\n    input.customer_uuid\n  );", "const complaint_subscore = await computeComplaintSubscore(\n    client,\n    input.customer_uuid\n  );", "relationship scorer forwards selected company to complaints"],
   ];
   let caught = 0;
@@ -165,8 +173,8 @@ if (process.argv.includes("--selftest")) {
             ? /listAtRiskCustomerRelationshipScores\(params: \{\s*operating_company_id: string;/
             : label === "complaint subscore requires selected company"
               ? /async function computeComplaintSubscore\(\s*client: DbClient,\s*operatingCompanyId: string,\s*customerUuid: string\s*\)/
-              : label === "complaint history read is company scoped"
-                ? /FROM mdata\.customer_quality_events\s+WHERE operating_company_id = \$1::uuid\s+AND customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/
+              : label === "complaint history read is company scoped via customers join"
+                ? /FROM mdata\.customer_quality_events q\s+INNER JOIN mdata\.customers c\s+ON c\.id = q\.customer_id\s+AND c\.operating_company_id = \$1::uuid\s+WHERE q\.customer_id = \$2::uuid[\s\S]{0,80}\[operatingCompanyId, customerUuid\]/
                 : /computeComplaintSubscore\(\s*client,\s*input\.operating_company_id,\s*input\.customer_uuid\s*\)/;
     if (pattern.test(mutated)) {
       console.error(`verify:customer-relationship-score SELFTEST FAIL — mutation escaped: ${label}`);
