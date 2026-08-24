@@ -148,6 +148,7 @@ export function UsersPage() {
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [returningDetection, setReturningDetection] = useState<ReturningDispatcherDetectionResult | null>(null);
   const [checkingReturningDispatcher, setCheckingReturningDispatcher] = useState(false);
+  const [returningCheckError, setReturningCheckError] = useState<string | null>(null);
   const [roleChangeRole, setRoleChangeRole] = useState<UserRole>("Manager");
   const [roleApproverId, setRoleApproverId] = useState("");
   const [roleReason, setRoleReason] = useState("");
@@ -431,18 +432,21 @@ export function UsersPage() {
     const shouldCheck = normalizedEmail.length >= 5 && inviteRole !== "Owner" && inviteRole !== "Driver" && inviteRole !== "Viewer";
     if (!shouldCheck) {
       setReturningDetection(null);
+      setReturningCheckError(null);
       setCheckingReturningDispatcher(false);
       setOverrideReturningWarning(false);
       return;
     }
     const timer = window.setTimeout(async () => {
       setCheckingReturningDispatcher(true);
+      setReturningCheckError(null);
       try {
         const result = await checkReturningDispatcher(normalizedEmail);
         setReturningDetection(result.returning_dispatcher ? result : null);
         if (!result.returning_dispatcher) setOverrideReturningWarning(false);
-      } catch {
+      } catch (error) {
         setReturningDetection(null);
+        setReturningCheckError(error instanceof Error ? error.message : "Could not check returning-dispatcher history");
       } finally {
         setCheckingReturningDispatcher(false);
       }
@@ -469,6 +473,10 @@ export function UsersPage() {
   }
 
   async function submitInvite(closeAfter: boolean) {
+    if (checkingReturningDispatcher || returningCheckError) {
+      pushToast("Returning-dispatcher history must be checked successfully before creating this user", "error");
+      return;
+    }
     if (inviteRole === "Viewer") {
       pushToast("Viewer role comes in a future phase", "error");
       return;
@@ -764,6 +772,11 @@ export function UsersPage() {
             </div>
           ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
+          {returningCheckError ? (
+            <p role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              Returning-dispatcher check failed: {returningCheckError}. Change the email to retry.
+            </p>
+          ) : null}
           {returningDetection ? (
             <div ref={returningWarningRef} className="rounded-sm border-2 border-slate-400 bg-slate-100 p-3 text-xs text-slate-700">
               <p className="flex items-center gap-1.5 font-semibold text-slate-700">
@@ -793,7 +806,7 @@ export function UsersPage() {
               storageKey="users-invite"
               primaryLabel={provisionMode === "send_invite" ? "Create and send invite" : "Create user"}
               loading={createUserMutation.isPending}
-              disabled={createUserMutation.isPending}
+              disabled={createUserMutation.isPending || checkingReturningDispatcher || Boolean(returningCheckError)}
               onSave={() => void submitInvite(false)}
               onSaveAndClose={() => void submitInvite(true)}
             />
