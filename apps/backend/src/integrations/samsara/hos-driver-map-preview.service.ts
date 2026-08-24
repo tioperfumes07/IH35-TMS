@@ -86,11 +86,18 @@ function indexRoster(roster: SamsaraDriver[]) {
  *  must be resolved before the separate mapping workflow applies any UPDATE. */
 export async function previewDriverSamsaraMap(client: PgClient, operatingCompanyId: string): Promise<DriverMapPreview> {
   const ours = await client.query(
-    `SELECT id::text AS id, trim(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) AS name,
-            cdl_number, mexican_license_number, phone, samsara_driver_id::text AS samsara_driver_id
-       FROM mdata.drivers
-      WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
-      ORDER BY last_name, first_name`,
+    `SELECT d.id::text AS id, trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS name,
+            d.cdl_number, d.mexican_license_number, d.phone, d.samsara_driver_id::text AS samsara_driver_id
+       FROM mdata.drivers d
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations hos_map_roster_dca
+               WHERE hos_map_roster_dca.driver_id = d.id
+                 AND hos_map_roster_dca.company_id = $1::uuid
+                 AND hos_map_roster_dca.is_authorized = true
+                 AND hos_map_roster_dca.deactivated_at IS NULL
+            ))
+        AND d.deactivated_at IS NULL
+      ORDER BY d.last_name, d.first_name`,
     [operatingCompanyId]
   );
 
@@ -173,7 +180,14 @@ export async function previewDriverSamsaraMap(client: PgClient, operatingCompany
            ON a.driver_id = d.id
           AND a.operating_company_id = $1::uuid
           AND a.ended_at IS NULL
-        WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL`,
+        WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations hos_map_active_dca
+                 WHERE hos_map_active_dca.driver_id = d.id
+                   AND hos_map_active_dca.company_id = $1::uuid
+                   AND hos_map_active_dca.is_authorized = true
+                   AND hos_map_active_dca.deactivated_at IS NULL
+              ))
+          AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL`,
       [operatingCompanyId]
     ),
     client.query(
