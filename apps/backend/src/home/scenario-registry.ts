@@ -465,7 +465,14 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                  ON jep.posting_batch_id = pb.id
                 AND jep.operating_company_id = pb.operating_company_id
                 AND jep.source_transaction_type = 'driver_advance'
-                AND jep.source_transaction_id = a.id
+                -- PROGRAM-TRACKER-F08: source_transaction_id is text (polymorphic-source column,
+                -- not always a uuid), a.id is uuid -- comparing them bare threw "operator does
+                -- not exist: text = uuid", which poisoned the whole scenario-tracker request's
+                -- shared transaction and cascaded a false "unreachable" STALE banner onto every
+                -- other probe that ran after this one on the same connection. Cast the uuid
+                -- side, not the text side, so this stays correct if source_transaction_id ever
+                -- holds a non-uuid source id for another source_transaction_type.
+                AND jep.source_transaction_id = a.id::text
                JOIN accounting.journal_entries je
                  ON je.id = jep.journal_entry_uuid
                 AND je.operating_company_id = jep.operating_company_id
@@ -473,7 +480,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                 AND je.voided_at IS NULL
               WHERE pb.operating_company_id = a.operating_company_id
                 AND pb.source_transaction_type = 'driver_advance'
-                AND pb.source_transaction_id = a.id
+                AND pb.source_transaction_id = a.id::text
                 AND pb.batch_status = 'posted'
            )
       `,
