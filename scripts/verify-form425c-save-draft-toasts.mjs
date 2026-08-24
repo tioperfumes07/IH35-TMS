@@ -234,6 +234,13 @@ export function collectProblems(src) {
   if (!exhibitsViewer.includes("Build all exhibits first") || exhibitsViewer.includes("disabled={!built}")) {
     problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print before Build must toast, not a dead disabled button");
   }
+  if (!exhibitsViewer.includes("Period end must be on or after period start")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: inverted A–F period must toast, not POST a silent empty court package");
+  }
+  const exhibitsRoutes = fs.readFileSync(path.join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts"), "utf8");
+  if (!exhibitsRoutes.includes("period_end_before_start") || !exhibitsRoutes.includes("period_end < parsed.data.period_start")) {
+    problems.push("apps/backend/src/reports/form-425c/exhibits/routes.ts: inverted period must 422 — 200 empty A–F was a silent court package");
+  }
   const exhibitsPrint = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts"), "utf8");
   if (
     !exhibitsPrint.includes("export function buildExhibitsPrintBodyHtml") ||
