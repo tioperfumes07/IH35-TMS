@@ -49,6 +49,16 @@ contains("apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.s
   { pattern: /detectAndFlagOverlaps/, label: "overlap detection" },
   { pattern: /applyManualOverride/, label: "manual override" },
 ]);
+function pairingScopeFailures(source) {
+  const missing = [];
+  for (const alias of ["pairing_sync_dca", "pairing_history_dca"]) {
+    if (!new RegExp(`FROM mdata\\.driver_company_authorizations ${alias}[\\s\\S]{0,260}${alias}\\.operating_company_id = \\$1::uuid[\\s\\S]{0,180}${alias}\\.is_authorized = true[\\s\\S]{0,180}${alias}\\.deactivated_at IS NULL`).test(source)) {
+      missing.push(`${alias} active selected-company authorization`);
+    }
+  }
+  return missing;
+}
+for (const missing of pairingScopeFailures(service)) fail(`pairing.service.ts: missing ${missing}`);
 
 read("apps/backend/src/integrations/samsara/vehicle-driver-pairing/__tests__/pairing.test.ts");
 
@@ -120,6 +130,20 @@ if (failures.length > 0) {
   console.error("verify-cap-9-pairing FAILED:");
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    service.replace("pairing_sync_dca.is_authorized = true", "pairing_sync_dca.is_authorized = false"),
+    service.replace("pairing_history_dca.deactivated_at IS NULL", "pairing_history_dca.deactivated_at IS NOT NULL"),
+  ];
+  const caught = mutations.filter((source) => pairingScopeFailures(source).length > 0).length;
+  if (caught !== mutations.length) {
+    console.error(`verify-cap-9-pairing SELFTEST FAILED: caught ${caught}/${mutations.length}`);
+    process.exit(1);
+  }
+  console.log(`verify-cap-9-pairing SELFTEST PASS — ${caught}/${mutations.length} shared-driver mutations red`);
+  process.exit(0);
 }
 
 console.log("verify-cap-9-pairing PASS");

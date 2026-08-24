@@ -1143,3 +1143,4 @@ Codex | WORKING | FO=FLT-F6285-SAMSARA-WEBHOOK-DROPS-SHARED-DRIVER-PAIRING | sco
 Codex | WORKING | FO=FLT-F6286-HOS-POLL-CROSS-TENANT-ROSTER-DRIFT | scope=fleet HOS driver/unit reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
 Codex | WORKING | FO=FLT-F6287-HOS-WEBHOOK-REJECTS-SHARED-DRIVER | scope=fleet HOS realtime driver/unit reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
 Codex | WORKING | FO=FLT-F6288-SAMSARA-STATS-PROBE-OMITS-SHARED-DRIVERS | scope=fleet HOS diagnostic GET/reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6289-SAMSARA-PAIRING-CRON-DROPS-SHARED-DRIVER | scope=fleet scheduled driver/unit forward+reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
