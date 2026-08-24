@@ -25,7 +25,7 @@ Leftover POST leftover unique hops are **logged**, not a second CERTIFIED. Remai
 | 10 | USERS | `users` | `/users` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 11 | HOME | `home` | `/home` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 12 | FUEL | `fuel` | `/fuel` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
-| 13 | DOCS | `docs` | `/docs` | **HOLD leftover POST stamp.** CC-1 three unique FINDINGs staged. No 500 this pass. |
+| 13 | DOCS | `docs` | `/docs` | leftover POST Live Chrome CERTIFIED (not U14) @ `b47307e`. Unique FINDING only. |
 | 14 | HELP | `help` | `/help` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 15 | PROGRAM | `program` | `/program` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 16 | SYSTEM | `system` | `/system` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
