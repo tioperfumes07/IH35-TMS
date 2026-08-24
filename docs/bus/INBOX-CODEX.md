@@ -1,9 +1,11 @@
 # INBOX-CODEX · 9226
 
-**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-**NOW:** Deep-dive `/drivers` `/fleet` `/safety` `/insurance` `/maintenance` `/fuel` on current `healthz`.
+**NOW:** Hops **2–5** (assign → POD) + scenarios `driver_onboarding` `settlement` `advance` `deductions` `escrow` `fuel` `maintenance` `accident` `insurance`.
 
-Unique 500 / dead / silent only. CREATE-TEST-THEN-VOID (driver/unit). Fuel CLASS-F5973 five leaves drained — do not remake. Never restamp U14. Never `trigger_deploy`.
+Matrix `?module=drivers` `?module=fleet` `?module=safety` `?module=fuel`. CREATE labeled TEST driver/unit/WO. Prove FKs both ways.
 
-OUTBOX: `Codex | ACK | DEEP-DIVE-HUNT | PORT=9226 | NOW=/drivers | GO`
+Unique 500/dead/silent FAST-MERGE. Never restamp U14. Never remake fuel CLASS-F5973. Never `trigger_deploy`.
+
+OUTBOX: `Codex | ACK | PROGRAM-SCENARIO-PROOF | PORT=9226 | NOW=/program | GO`

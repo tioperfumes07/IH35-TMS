@@ -1,13 +1,15 @@
 # CODER INSTRUCTIONS — NOW (2026-08-24)
 
-**Full law:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-Jorge: dive deep, fix, audit, make it perfect = **zero unique 500 / dead click / silent no-op / fake-$0 / reverse-empty** on your URLs. **Not** a U14 recertify. **Not** a 1–12 restamp.
+Run **Program scenarios + `/program/matrix` mapping**. Prove each TEST lands in the correct **table / ledger / column / module**. File FINDINGS. CREATE-TEST-THEN-VOID (void at launch).
+
+**Still in force:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md` (unique 500/dead/silent/fake-$0). **Not** a U14 recertify.
 
 1. `git pull --ff-only origin main`
-2. Read that law + your `INBOX-<SEAT>.md` TOP
-3. Live Chrome on current `healthz/shallow` + repo grep + Neon if money empty
-4. One unique PR, FAST-MERGE, OUTBOX, next URL
-5. CREATE-TEST-THEN-VOID. Empty after create-attempt is honest. Idle is a defect.
+2. Read the Program-scenario law + your `INBOX-<SEAT>.md` TOP
+3. Live `/program` Scenario Tracker + `/program/matrix?module=` for your lane
+4. CREATE labeled TEST · prove UUID in Neon/UI reverse link · OUTBOX line
+5. Unique leftover PR still FAST-MERGE if you find 500/dead/silent
 
-ACK: `SEAT | ACK | DEEP-DIVE-HUNT | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | PROGRAM-SCENARIO-PROOF | PORT=n | NOW=/program | GO`

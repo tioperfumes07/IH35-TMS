@@ -2,7 +2,7 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**THIS HOUR:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md` — deep dive unique 500/dead/silent/fake-$0. U14 never restamp. CREATE-TEST-THEN-VOID.
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` — every seat (Cursor, CC-1/2/3, Codex, **Cascade**, **Devin-A**) runs Program hops + matrix mapping and proves TESTs in the correct tables/ledgers/modules. Unique hunt still on. U14 never restamp. CREATE-TEST-THEN-VOID (void at launch).
 
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
@@ -38,13 +38,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | fuel spend fail-loud + `/customers` TEST | Stamp launch-ready only after live unique=none. |
-| **CC-1** | **9223** | `/accounting` TEST | STOP `/425c`. Never `trigger_deploy`. |
-| **CC-2** | **9224** | `/reports` `/tasks` `/cash-flow` | Next 6. CREATE TEST. |
-| **CC-3** | **9225** | `/lists` `/maintenance` `/legal` | No roadside remake. |
-| **Codex** | **9226** | `/drivers` `/fleet` `/safety` `/insurance` | Never restamp U14 table. |
-| **Cascade** | audit | `/banking` `/settlements` `/factoring` `/finance` | Unique FINDING if still true. |
-| **Devin-A** | audit | `/customers` 3 tabs + `/vendors` + `/dispatch` | CREATE TEST. Not PARKED. |
+| **Cursor** | **9222** | hops 1–9 E2E on one TEST load + matrix dispatch/customers | Lead. FAST-MERGE unique. Deploy cadence. |
+| **CC-1** | **9223** | hops 6–9 + scenarios coa/ap/factoring/banking | Prove JE/invoice/bill/bank tables. Never `trigger_deploy`. |
+| **CC-2** | **9224** | reports/cash-flow/tasks **read the same TESTs** | No fake $0. CREATE TEST if empty. |
+| **CC-3** | **9225** | `/program` + matrix lists/legal + scenario.legal | Unique leftover chrome too. |
+| **Codex** | **9226** | hops 2–5 + driver/fuel/safety/maint scenarios | Never restamp U14. |
+| **Cascade** | audit | Full hop 1–9 + money matrix walk | FINDING if linkage miss. No product PRs. |
+| **Devin-A** | audit | `/program` then `/customers` + hop.book | CREATE TEST. File FINDING. Not PARKED. |
 
 Forbidden: remake Close / F6301 / fleet #15291–#15310 / fuel phantom #15335 / `/425c` loop.
 

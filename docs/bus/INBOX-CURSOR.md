@@ -1,11 +1,11 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`  
-**SHORT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
 **NOW:**
-1. Lead the deep-dive hunt. Fan unique FINDINGS. FAST-MERGE. Deploy 5–10 min AND 5–10 PRs, one in-flight.
-2. Overflow unique anywhere (cash-flow fake-$0, customers money tabs, fuel fail-loud remainder).
-3. Never restamp U14. Never 1–12 recertify. `/425c` do not loop.
+1. Open `/program` Scenario Tracker. Run hops **1–9 on one labeled TEST load** (Book → bank match).
+2. `/program/matrix?module=dispatch` and `?module=customers` — click Required leaves to live surfaces.
+3. Prove Neon/UI: `mdata.loads` UUID, invoice `customer_id`+`load_id`, JE postings or **loud flag-OFF**.
+4. FAST-MERGE unique 500/dead/silent if found. Deploy 5–10 min AND 5–10 PRs. Never restamp U14.
 
-OUTBOX: `Cursor | ACK | DEEP-DIVE-HUNT | PORT=9222 | NOW=unique-hunt | GO`
+OUTBOX: `Cursor | ACK | PROGRAM-SCENARIO-PROOF | PORT=9222 | NOW=/program | GO`

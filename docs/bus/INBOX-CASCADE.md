@@ -1,9 +1,11 @@
 # INBOX-CASCADE
 
-AUDIT ONLY. **INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+AUDIT ONLY. **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-**NOW:** Live Chrome on current `healthz` for `/banking` `/settlements` `/factoring` `/finance`. File unique FINDING (500 / dead / silent / reverse-empty / fake-$0) if still true. CREATE-TEST-THEN-VOID if a hop is empty.
+**NOW:** Live-walk **all 9 hops** on `/program` + matrix for accounting/banking/factoring/settlements.
 
-Do **not** restamp U14. No product PRs.
+CREATE labeled TEST if a hop is empty. Prove: invoice↔customer↔load, bill↔vendor, settlement↔driver, JE postings or loud flag-OFF.
 
-OUTBOX: `Cascade | ACK | DEEP-DIVE-HUNT | NOW=/banking | SHA=<healthz> | GO`
+File unique FINDING if linkage miss / 500 / dead / silent / reverse-empty / fake-$0. **No product PRs. No U14 restamp.**
+
+OUTBOX: `Cascade | ACK | PROGRAM-SCENARIO-PROOF | NOW=/program | SHA=<healthz> | HOP=<key> | TABLE=<schema.table> | FINDING=<id-or-none> | GO`
