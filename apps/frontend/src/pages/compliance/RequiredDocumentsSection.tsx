@@ -29,6 +29,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
   const queryClient = useQueryClient();
   const [entityKind, setEntityKind] = useState<RequiredDocEntityKind>("driver");
   const [showCreate, setShowCreate] = useState(false);
+  const [patchError, setPatchError] = useState<string | null>(null);
 
   const key = ["required-doc-types", operatingCompanyId, entityKind];
   const listQ = useQuery({
@@ -42,7 +43,9 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
   const patch = useMutation({
     mutationFn: (v: { id: string; input: Parameters<typeof updateRequiredDocumentType>[1] }) =>
       updateRequiredDocumentType(v.id, v.input),
+    onMutate: () => setPatchError(null),
     onSuccess: invalidate,
+    onError: (error) => setPatchError(error instanceof Error ? error.message : "Failed to update required document"),
   });
 
   const create = useMutation({
@@ -135,6 +138,8 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
           onSubmit={(input) => create.mutate({ operating_company_id: operatingCompanyId, entity_kind: entityKind, ...input })}
         />
       ) : null}
+
+      {patchError ? <p role="alert" className="mb-3 text-xs text-red-700">{patchError}</p> : null}
 
       {listQ.isError ? (
         <ListErrorBanner onRetry={() => void listQ.refetch()} />
