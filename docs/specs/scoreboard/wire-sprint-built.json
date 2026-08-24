@@ -2453,6 +2453,14 @@
       "leafRe": "^maintenance\\.panel\\.integrations$",
       "guard": "scripts/verify-maintenance-integration-strip-failure-truth.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "MAINTENANCE-WO-AUTHORIZER-READ-FAILURE-TRUTH",
+      "modules": ["maintenance"],
+      "cols": ["connectivity"],
+      "leafRe": "^maintenance\\.modal\\.create_work_order$",
+      "guard": "scripts/verify-maintenance-wo-authorizer-read-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
