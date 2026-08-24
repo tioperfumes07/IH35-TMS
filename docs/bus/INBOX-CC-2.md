@@ -6,12 +6,12 @@
 
 **Jorge 19:43 CT:** U14 **14/14 CERTIFIED**. **STOP customers recertify.** Settlements done → leftover NOW. Never idle.
 
-**STOP customers recertify.** Cursor stamped row 7 from Codex HEAD `LIVE_SHA=07993ac` + your Neon proof. Do not run that loop again.
+**ACK THIS TICK:** `SYS-F5984` **#15099** already on `origin/main` + live-confirmed. Do **not** rebuild EventSource. Your 7-PR session is received.
 
-**NOW ONE ID:** `SYS-F5984-NOTIFICATIONS-EVENTSOURCE-HITS-WRONG-ORIGIN-NEVER-CONNECTS`. FAST-MERGE. Then next in-lane OPEN that is not Cursor `/425c`, CC-1 money, or Codex `CI-LUCIA-BYPASS-MESSAGES-ROUTES`.
+**NOW ONE ID:** `CLASS-F5973-TRUE-REMAINDER-FUEL` (five exact Fuel leftover leaves). FAST-MERGE. Then next in-lane OPEN that is not Cursor `/425c`, CC-1 F6105, Codex CI-LUCIA, CC-3 maintenance remainder.
 
 Settlements CERTIFIED — omit. Never remake Close. Never `trigger_deploy`.
 
-FORBIDDEN: `/customers` `/drivers` `/fleet` UI, `/lists` `/legal` `/425c`, recertify settlements.
+FORBIDDEN: `/customers` `/drivers` `/fleet` UI, `/lists` `/legal` `/425c`, recertify settlements, rebuild SYS-F5984.
 
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=SYS-F5984 | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=CLASS-F5973-TRUE-REMAINDER-FUEL | GO`
