@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
+import { formatQueryErrorDetail } from "../../lib/tableError";
+import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
@@ -364,19 +366,28 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               the policy form for TypeCatalogAdmin. ReferenceSelect createKind=insurance_coverage_type
               posts insurance.type_catalog (same table the list reads). Value is CODE (not UUID).
             */}
-            <ReferenceSelect
-              value={form.coverage_type || null}
-              onChange={(next) => updateField("coverage_type", next ?? "")}
-              options={(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name }))}
-              createKind="insurance_coverage_type"
-              createdValueField="code"
-              operatingCompanyId={operatingCompanyId}
-              placeholder="Select type"
-              onOptionCreated={async (opt) => {
-                updateField("coverage_type", opt.value);
-                await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", operatingCompanyId] });
-              }}
-            />
+            {typesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load coverage types"
+                {...formatQueryErrorDetail(typesQuery.error)}
+                onRetry={() => void typesQuery.refetch()}
+                className="py-4"
+              />
+            ) : (
+              <ReferenceSelect
+                value={form.coverage_type || null}
+                onChange={(next) => updateField("coverage_type", next ?? "")}
+                options={(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name }))}
+                createKind="insurance_coverage_type"
+                createdValueField="code"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select type"
+                onOptionCreated={async (opt) => {
+                  updateField("coverage_type", opt.value);
+                  await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", operatingCompanyId] });
+                }}
+              />
+            )}
             {fieldErrors.coverage_type ? <span className="text-xs text-red-700">{fieldErrors.coverage_type}</span> : null}
           </label>
 
@@ -522,8 +533,16 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             data-testid="policy-create-unit-search"
           />
           <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 p-2">
-            {unitsQuery.isLoading ? <p className="text-xs text-slate-500">Loading units...</p> : null}
-            {units.map((unit) => (
+            {unitsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load units"
+                {...formatQueryErrorDetail(unitsQuery.error)}
+                onRetry={() => void unitsQuery.refetch()}
+                className="py-4"
+              />
+            ) : unitsQuery.isLoading ? (
+              <p className="text-xs text-slate-500">Loading units...</p>
+            ) : units.map((unit) => (
               <label key={unit.id} className="flex cursor-pointer items-center gap-2 py-1 text-xs text-slate-700">
                 <input
                   type="checkbox"
@@ -537,7 +556,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
                 {unit.status ? <span className="text-slate-500">({unit.status})</span> : null}
               </label>
             ))}
-            {!unitsQuery.isLoading && units.length === 0 ? <p className="text-xs text-slate-500">No units found.</p> : null}
+            {!unitsQuery.isLoading && !unitsQuery.isError && units.length === 0 ? <p className="text-xs text-slate-500">No units found.</p> : null}
           </div>
           {fieldErrors.covered_units ? <span className="text-xs text-red-700">{fieldErrors.covered_units}</span> : null}
         </div>
@@ -549,7 +568,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <button
             type="submit"
             className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || typesQuery.isError || unitsQuery.isError}
           >
             {createMutation.isPending ? "Creating..." : "+ Policy"}
           </button>
