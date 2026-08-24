@@ -4019,7 +4019,7 @@
     "claimed_by": "cc-2",
     "purpose": "verify-geofence-dwell-cte-operating-company-id"
   },
-  "4696": {
+  "4698": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-equipment-log-create-entity-scope-wired"
