@@ -242,7 +242,7 @@ export function assertExpensesListRoute({
   const createTargets = [
     ["Topbar", topbar, /create_expense[^]*?["']\/accounting\/expenses\?create=1["']/],
     ["QboStyleHomePage CREATE_ACTIONS", home, /label:\s*["']\+ Create Expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
-    ["AccountingSubNavWrapper CREATE_MENU", subnavWrapper, /label:\s*["']Expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
+    ["AccountingSubNavWrapper CREATE_MENU", subnavWrapper, /label:\s*["']Expense["'],\s*to:\s*["']\/accounting\/expenses\?create=1["']/],
   ];
   for (const [name, src, okRe] of createTargets) {
     if (!src) {
@@ -251,7 +251,7 @@ export function assertExpensesListRoute({
     }
     if (!okRe.test(src)) {
       errors.push(
-        name === "Topbar"
+        name === "Topbar" || name === "AccountingSubNavWrapper CREATE_MENU"
           ? `${name}: create entry must target /accounting/expenses?create=1 (drawer deep-link)`
           : `${name}: create entry must target canonical list /accounting/expenses`
       );
@@ -365,7 +365,7 @@ function selftest() {
     manifest: goodManifest,
     topbar: `[t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"]`,
     home: `{ label: "+ Create Expense", to: "/accounting/expenses" } <Link to="/accounting/expenses/list">View →</Link>`,
-    subnavWrapper: `{ label: "Expense", to: "/accounting/expenses" }`,
+    subnavWrapper: `{ label: "Expense", to: "/accounting/expenses?create=1" }`,
     subnavManifest: `${childrenBlock}${flatBlock}${groupEntry}`,
     accountingHub: `{ id: "expenses", label: "Expenses", to: "/accounting/expenses/list" }`,
     accountRegister: `if (t === "expense" && reference) return \`/accounting/expenses/\${reference}\`; if (t === "expense") return "/accounting/expenses/list";`,
@@ -396,7 +396,8 @@ function selftest() {
     ],
     ["Topbar create alias", { ...good, topbar: good.topbar.replace("/accounting/expenses?create=1", "/accounting/expenses/new") }, "Topbar"],
     ["home create alias", { ...good, home: good.home.replace('to: "/accounting/expenses"', 'to: "/accounting/expenses/new"') }, "CREATE_ACTIONS"],
-    ["wrapper create list", { ...good, subnavWrapper: good.subnavWrapper.replace('expenses"', 'expenses/list"') }, "CREATE_MENU"],
+    ["wrapper create list", { ...good, subnavWrapper: good.subnavWrapper.replace('expenses?create=1"', 'expenses/list"') }, "CREATE_MENU"],
+    ["wrapper create bare list", { ...good, subnavWrapper: good.subnavWrapper.replace("?create=1", "") }, "CREATE_MENU"],
     ["group reversed", { ...good, subnavManifest: `${childrenBlock}${flatBlock}{ label: GROUP_LABELS.expenses, href: "/accounting/expenses" }` }, "group href"],
     ["missing children", { ...good, subnavManifest: `export const SUBNAV_ITEMS = [] as const;${flatBlock}${groupEntry}` }, "expense children"],
     ["missing flat metadata", { ...good, subnavManifest: `${childrenBlock}export const ACCOUNTING_CLEAN_TABS = [] as const;${groupEntry}` }, "flat metadata"],

@@ -17,15 +17,8 @@ function read(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
 }
 
-function main() {
+export function collectFailures({ hosPage, hosTab, orphanExceptions, tabsConfig, manifest, tests }) {
   const failures = [];
-  const hosPage = read(paths.hosPage);
-  const hosTab = read(paths.hosTab);
-  const orphanExceptions = read(paths.orphanExceptions);
-  const tabsConfig = read(paths.tabsConfig);
-  const manifest = read(paths.manifest);
-  const tests = read(paths.tests);
-
   if (!hosPage.includes("export function HoursOfServicePage")) {
     failures.push("HoursOfServicePage.tsx missing canonical export");
   }
@@ -74,6 +67,56 @@ function main() {
     failures.push("HoursOfServiceDashboard.test.tsx must include at least 3 vitest cases");
   }
 
+  return failures;
+}
+
+function main() {
+  const sources = {
+    hosPage: read(paths.hosPage),
+    hosTab: read(paths.hosTab),
+    orphanExceptions: read(paths.orphanExceptions),
+    tabsConfig: read(paths.tabsConfig),
+    manifest: read(paths.manifest),
+    tests: read(paths.tests),
+  };
+  if (process.argv.includes("--selftest")) {
+    const good = {
+      hosPage: `export function HoursOfServicePage() { getDriverHosDetail(); return <><a href="/safety/hos-violations" /><button data-testid="safety-hos-create-violation" aria-label="Create HOS violation">+ Create</button><div data-testid="safety-hos-dashboard-page" /></>; }`,
+      hosTab: "<HoursOfServicePage />",
+      orphanExceptions: 'ARCHIVE (A23-6) <Link to="/safety/hos" />',
+      tabsConfig: 'id: "hos", label: "HOS", status: "Live"',
+      manifest: '<Route path="hos" element={<HoursOfServiceTab />} />',
+      tests: 'it("one", () => {}); it("two", () => {}); it("three", () => {});',
+    };
+    if (collectFailures(good).length) throw new Error(`good fixture rejected: ${collectFailures(good).join("; ")}`);
+    const mutations = [
+      ["hosPage", "export function HoursOfServicePage", "function LegacyHos", "missing canonical export"],
+      ["hosPage", "safety-hos-dashboard-page", "removed-dashboard", "missing safety-hos-dashboard-page"],
+      ["hosPage", "getDriverHosDetail", "getWrongDetail", "must read CAP-11"],
+      ["hosPage", "/safety/hos-violations", "/wrong", "must read CAP-11"],
+      ["hosPage", "safety-hos-create-violation", "removed-create", "must expose modal create"],
+      ["hosPage", 'aria-label="Create HOS violation"', 'aria-label="Wrong"', "must expose modal create"],
+      ["hosPage", ">+ Create<", ">+ Create violation<", "primary CTA must be + Create"],
+      ["hosPage", ">+ Create<", ">+ New<", "must not use non-canonical"],
+      ["orphanExceptions", "ARCHIVE (A23-6)", "ACTIVE", "must carry ARCHIVE"],
+      ["orphanExceptions", 'to="/safety/hos"', 'to="/wrong"', "must link to canonical"],
+      ["tabsConfig", 'id: "hos"', 'id: "wrong"', "hos tab must be Live"],
+      ["tabsConfig", 'status: "Live"', 'status: "Hidden"', "hos tab must be Live"],
+      ["manifest", 'path="hos"', 'path="wrong"', "manifest must route"],
+      ["manifest", "<HoursOfServiceTab", "<LegacyHosTab", "manifest must route"],
+      ["hosTab", "HoursOfServicePage", "LegacyHos", "must render HoursOfServicePage"],
+      ["tests", 'it("three", () => {});', "", "at least 3 vitest cases"],
+    ];
+    for (const [field, from, to, expected] of mutations) {
+      const failures = collectFailures({ ...good, [field]: good[field].replace(from, to) });
+      if (!failures.some((failure) => failure.includes(expected))) {
+        throw new Error(`mutation escaped: ${expected} (${JSON.stringify(failures)})`);
+      }
+    }
+    console.log(`verify:safety-hos-dashboard-wire SELFTEST OK ${mutations.length}/${mutations.length}`);
+    return;
+  }
+  const failures = collectFailures(sources);
   if (failures.length > 0) {
     console.error("verify:safety-hos-dashboard-wire FAILED");
     for (const failure of failures) console.error(` - ${failure}`);
