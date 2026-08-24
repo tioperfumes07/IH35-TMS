@@ -46,7 +46,7 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 | 4 | factoring | CC-1 after accounting leftover empty | `/factoring` | CERTIFIED LIVE_SHA=c11bdab |
 | 5 | dispatch | Cursor after banking CERTIFIED | `/dispatch` — **do not remake Book Load** | CERTIFIED LIVE_SHA=39472f2 |
 | 6 | vendors | Cursor after dispatch | `/vendors` | CERTIFIED LIVE_SHA=627d7d0 |
-| 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | OPEN |
+| 7 | customers | Codex | reverse `mdata.customers` — **no CDP** | CERTIFIED LIVE_SHA=07993ac |
 | 8 | drivers | Codex after customers | reverse `mdata.drivers` — **no CDP** | OPEN |
 | 9 | fleet | Codex after drivers | reverse `mdata.units` — **no CDP** | OPEN |
 | 10 | lists | CC-3 first | `/lists` pickers — hops `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` | CERTIFIED LIVE_SHA=01385f7 |
