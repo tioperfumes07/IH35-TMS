@@ -9,6 +9,7 @@
 
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
+import { listActiveHosDriverRoster } from "./active-hos-driver-roster.service.js";
 
 export type CanonicalDutyStatus =
   | "off_duty"
@@ -70,20 +71,10 @@ export async function syncSamsaraHosLogs(
   // always inserted unit_id=NULL; since both paths write the same natural key with ON CONFLICT ... DO NOTHING,
   // whichever path landed first won PERMANENTLY — if this (slower) poll cron ever won the race, unit_id stayed
   // NULL forever for that event. Root-caused, not patched: resolve it here too instead of hardcoding NULL.
-  const active = await client.query(
-    `SELECT DISTINCT ON (d.id) d.id::text AS local_driver_id, d.samsara_driver_id::text AS samsara_driver_id,
-            a.unit_id::text AS unit_id
-       FROM mdata.drivers d
-       JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
-      WHERE d.operating_company_id = $1::uuid
-        AND d.samsara_driver_id IS NOT NULL
-        AND d.deactivated_at IS NULL
-      ORDER BY d.id, a.started_at DESC`,
-    [operatingCompanyId]
-  );
+  const active = await listActiveHosDriverRoster(client, operatingCompanyId);
   const localBySamsara = new Map<string, string>();
   const unitByLocalDriver = new Map<string, string>();
-  for (const r of active.rows as Array<{ local_driver_id: string; samsara_driver_id: string; unit_id: string | null }>) {
+  for (const r of active) {
     localBySamsara.set(r.samsara_driver_id, r.local_driver_id);
     if (r.unit_id) unitByLocalDriver.set(r.local_driver_id, r.unit_id);
   }

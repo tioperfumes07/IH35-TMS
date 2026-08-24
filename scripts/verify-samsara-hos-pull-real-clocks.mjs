@@ -25,12 +25,22 @@ if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(cron))
   fail("hos-pull cron must write an integration_sync_log row (sync_kind='samsara_hos_pull') so the probe can verify it committed");
 
 const svc = read("apps/backend/src/integrations/samsara/samsara-hos-pull.service.ts");
+const clocksPull = read("apps/backend/src/integrations/samsara/samsara-hos-clocks-pull.service.ts");
+const roster = read("apps/backend/src/integrations/samsara/active-hos-driver-roster.service.ts");
 // SCOPE: pull only the tenant's ACTIVE board drivers (OPEN vehicle assignment) via the board-proven key — NOT the
 // whole account (1358 drivers -> 1204 unmapped, missing the 8 that matter). Resolve their local+samsara ids here.
-if (!/JOIN telematics\.vehicle_driver_assignments[\s\S]{0,120}ended_at IS NULL/.test(svc))
+if (!/JOIN telematics\.vehicle_driver_assignments[\s\S]{0,220}ended_at IS NULL/.test(roster))
   fail("hos pull must scope to drivers with an OPEN vehicle assignment (the active board drivers), not account-wide");
-if (!/mdata\.drivers[\s\S]{0,200}samsara_driver_id IS NOT NULL/.test(svc))
+if (!/mdata\.drivers[\s\S]{0,700}samsara_driver_id IS NOT NULL/.test(roster))
   fail("hos pull must resolve active drivers via mdata.drivers.samsara_driver_id (the board-proven key)");
+if (!/\ba\.operating_company_id = \$1::uuid/.test(roster))
+  fail("active HOS roster must scope the open vehicle assignment to the selected company");
+if (!/driver_company_authorizations dca[\s\S]{0,260}dca\.operating_company_id = \$1::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(roster))
+  fail("active HOS roster must admit only home-company or actively authorized shared drivers");
+if (!/listActiveHosDriverRoster\(client, operatingCompanyId\)/.test(svc))
+  fail("HOS logs pull must consume the canonical selected-company active-driver roster");
+if (!/listActiveHosDriverRoster\(client, operatingCompanyId\)/.test(clocksPull))
+  fail("verbatim HOS clocks pull must consume the canonical selected-company active-driver roster");
 // The /fleet/hos/logs pull must be SCOPED to those driverIds (so unmapped ~0 and the active drivers are covered).
 if (!/listHosLogs\([\s\S]{0,90}\[\.\.\.localBySamsara\.keys\(\)\]\)/.test(svc))
   fail("hos pull must call listHosLogs with the active driverIds (scoped), not the account-wide pull");
@@ -109,4 +119,19 @@ if (!/syncSamsaraHosLogs\(c, operatingCompanyId\)/.test(posCron))
 if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(posCron))
   fail("the */5 positions cron must write the samsara_hos_pull sync-log row so the probe sees a fresh committed pull");
 
-console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
+if (process.argv.includes("--selftest")) {
+  const planted = [
+    ["assignment company scope", roster.replace("a.operating_company_id = $1::uuid", "a.operating_company_id = a.operating_company_id")],
+    ["authorization active flag", roster.replace("dca.is_authorized = true", "dca.is_authorized = false")],
+    ["authorization lifecycle", roster.replace("dca.deactivated_at IS NULL", "dca.deactivated_at IS NOT NULL")],
+  ];
+  const catches = planted.filter(([, source]) =>
+    !/\ba\.operating_company_id = \$1::uuid/.test(source) ||
+    !/dca\.is_authorized = true/.test(source) ||
+    !/dca\.deactivated_at IS NULL/.test(source)
+  ).length;
+  if (catches !== planted.length) fail(`selftest caught ${catches}/${planted.length} planted scope defects`);
+  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${catches}/${planted.length} planted scope defects`);
+} else {
+  console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
+}
