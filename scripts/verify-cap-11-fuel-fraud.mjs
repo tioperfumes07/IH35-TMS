@@ -52,7 +52,7 @@ contains("apps/backend/src/integrations/fuel/fraud-detector/rules.service.ts", r
 read("apps/backend/src/integrations/fuel/fraud-detector/alerter.service.ts");
 const routes = read("apps/backend/src/integrations/fuel/fraud-detector/routes.ts");
 contains("apps/backend/src/integrations/fuel/fraud-detector/routes.ts", routes, [
-  { pattern: /\/api\/fuel\/fraud-alerts/, label: "list route" },
+  { pattern: /\/api\/v1\/fuel\/fraud-alerts/, label: "canonical list route" },
   { pattern: /\/investigate/, label: "investigate route" },
   { pattern: /\/confirm-fraud/, label: "confirm fraud route" },
   { pattern: /\/dismiss/, label: "dismiss route" },
@@ -73,7 +73,55 @@ contains("apps/frontend/src/pages/fuel/FuelHome.tsx", fuelHome, [
   { pattern: /Open Fraud Alerts/, label: "Open Fraud Alerts KPI card" },
 ]);
 
-read("apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx");
+const fraudAlertsPage = read("apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx");
+function fraudMutationErrorFailures(source) {
+  const found = [];
+  if (!/import\s+\{\s*userFacingApiError\s*\}\s+from\s+["']\.\.\/\.\.\/\.\.\/lib\/api-error-message["']/.test(source)) {
+    found.push("missing shared user-facing API error formatter");
+  }
+  const mutations = [
+    ["investigateMut", "confirmMut", "Could not mark the alert as investigating"],
+    ["confirmMut", "dismissMut", "Could not confirm the alert as fraud"],
+    ["dismissMut", "const rows", "Could not dismiss the alert"],
+  ];
+  for (const [start, end, fallback] of mutations) {
+    const startAt = source.indexOf(`const ${start} = useMutation({`);
+    const endAt = source.indexOf(end === "const rows" ? "const rows" : `const ${end} = useMutation({`, startAt + 1);
+    const block = startAt >= 0 && endAt > startAt ? source.slice(startAt, endAt) : "";
+    if (!block) {
+      found.push(`${start} mutation block missing`);
+      continue;
+    }
+    if (!block.includes("onError:") || !block.includes("userFacingApiError(error") || !block.includes(fallback)) {
+      found.push(`${start} rejected PATCH is not surfaced visibly`);
+    }
+  }
+  return found;
+}
+
+for (const message of fraudMutationErrorFailures(fraudAlertsPage)) fail(`apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx: ${message}`);
+
+if (process.argv.includes("--selftest")) {
+  const baseline = fraudMutationErrorFailures(fraudAlertsPage);
+  if (baseline.length > 0) {
+    console.error(`verify-cap-11-fuel-fraud selftest baseline failed: ${baseline.join("; ")}`);
+    process.exit(1);
+  }
+  const fallbacks = [
+    "Could not mark the alert as investigating",
+    "Could not confirm the alert as fraud",
+    "Could not dismiss the alert",
+  ];
+  for (const fallback of fallbacks) {
+    const mutant = fraudAlertsPage.replace(new RegExp(`\\n\\s*onError:[^\\n]*${fallback}[^\\n]*`), "");
+    if (mutant === fraudAlertsPage || fraudMutationErrorFailures(mutant).length === 0) {
+      console.error(`verify-cap-11-fuel-fraud selftest failed to reject missing handler: ${fallback}`);
+      process.exit(1);
+    }
+  }
+  console.log("verify-cap-11-fuel-fraud selftest PASS — 3 independent rejected-PATCH handlers mutation-proven");
+  process.exit(0);
+}
 read("apps/frontend/src/components/fuel/FuelFraudBadge.tsx");
 
 const indexTs = read("apps/backend/src/index.ts");

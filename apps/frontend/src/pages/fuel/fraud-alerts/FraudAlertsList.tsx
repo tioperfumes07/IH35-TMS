@@ -8,6 +8,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type FraudAlertRow = {
   uuid: string;
@@ -63,6 +64,7 @@ export function FraudAlertsListPage() {
       pushToast("Alert marked investigating.", "success");
       invalidate();
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not mark the alert as investigating"), "error"),
   });
 
   const confirmMut = useMutation({
@@ -75,6 +77,7 @@ export function FraudAlertsListPage() {
       pushToast("Alert confirmed as fraud.", "error");
       invalidate();
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not confirm the alert as fraud"), "error"),
   });
 
   const dismissMut = useMutation({
@@ -87,6 +90,7 @@ export function FraudAlertsListPage() {
       pushToast("Alert dismissed.", "success");
       invalidate();
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not dismiss the alert"), "error"),
   });
 
   const rows = alertsQuery.data?.alerts ?? [];
