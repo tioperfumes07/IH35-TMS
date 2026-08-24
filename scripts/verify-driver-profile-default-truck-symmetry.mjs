@@ -53,6 +53,10 @@ if ((driverRoutes.match(truckAssignmentScope) ?? []).length !== 2) {
   console.error("verify:driver-profile-default-truck-symmetry FAIL: default/current truck GETs must retain owner-or-lessee unit scope");
   process.exit(1);
 }
+if ((aggregate.match(truckAssignmentScope) ?? []).length !== 2) {
+  console.error("verify:driver-profile-default-truck-symmetry FAIL: aggregate default/current trucks must retain owner-or-lessee unit scope");
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
@@ -61,9 +65,12 @@ if (process.argv.includes("--selftest")) {
     ["soft-delete", "aggregate", aggregate.replace("AND l.soft_deleted_at IS NULL", "AND TRUE")],
     ["closed-status", "aggregate", aggregate.replace("'delivered', 'cancelled', 'void', 'completed', 'closed'", "'delivered', 'cancelled', 'void', 'completed'")],
     ["owner-hidden-when-leased", "driver", driverRoutes.replaceAll("(u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)", "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid")],
+    ["aggregate-owner-hidden-when-leased", "aggregate-unit", aggregate.replaceAll("(u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)", "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid")],
   ];
   const escaped = mutations.filter(([, kind, source]) =>
-    kind === "aggregate" ? verifyCurrentLoadReverse(source).length === 0 : (source.match(truckAssignmentScope) ?? []).length === 2
+    kind === "aggregate"
+      ? verifyCurrentLoadReverse(source).length === 0
+      : (source.match(truckAssignmentScope) ?? []).length === 2
   );
   if (escaped.length > 0) {
     console.error(`verify:driver-profile-default-truck-symmetry SELFTEST FAIL: ${escaped.length}/${mutations.length} planted defects escaped`);
