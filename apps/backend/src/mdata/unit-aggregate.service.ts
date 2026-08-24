@@ -551,7 +551,7 @@ export async function buildUnitAggregate(
         e.reefer_notes
       FROM mdata.equipment e
       WHERE e.current_unit_id = $1::uuid
-        AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $2::uuid
+        AND (e.owner_company_id = $2::uuid OR e.currently_leased_to_company_id = $2::uuid)
         AND e.equipment_type = 'Reefer'
         AND e.deactivated_at IS NULL
       ORDER BY e.updated_at DESC

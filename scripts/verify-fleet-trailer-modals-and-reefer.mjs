@@ -22,6 +22,7 @@ const FILES = {
   editTrailer: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
   reefer: "apps/frontend/src/components/vehicle-profile/ReeferSection.tsx",
+  aggregate: "apps/backend/src/mdata/unit-aggregate.service.ts",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
   feed: "docs/specs/scoreboard/wire-sprint-built.json",
   self: "scripts/verify-fleet-trailer-modals-and-reefer.mjs",
@@ -56,6 +57,9 @@ export function audit(src) {
   }
   if (!/attached_trailer_id\?:\s*string \| null/.test(src.reefer)) {
     failures.push(`${FILES.reefer}: reefer section must carry the attached trailer's canonical id`);
+  }
+  if (!/WHERE e\.current_unit_id = \$1::uuid\s+AND \(e\.owner_company_id = \$2::uuid OR e\.currently_leased_to_company_id = \$2::uuid\)\s+AND e\.equipment_type = 'Reefer'/.test(src.aggregate)) {
+    failures.push(`${FILES.aggregate}: attached reefer reverse must remain visible to its owner or current lessee`);
   }
   if (
     !/EntityLinkOrTombstone/.test(src.reefer) ||
@@ -98,6 +102,7 @@ function loadSrc(root) {
     editTrailer: fs.readFileSync(path.join(root, FILES.editTrailer), "utf8"),
     quickAssign: fs.readFileSync(path.join(root, FILES.quickAssign), "utf8"),
     reefer: fs.readFileSync(path.join(root, FILES.reefer), "utf8"),
+    aggregate: fs.readFileSync(path.join(root, FILES.aggregate), "utf8"),
     required: fs.readFileSync(path.join(root, FILES.required), "utf8"),
     feed: fs.readFileSync(path.join(root, FILES.feed), "utf8"),
     self: fs.readFileSync(path.join(root, FILES.self), "utf8"),
@@ -123,6 +128,7 @@ if (process.argv.includes("--selftest")) {
     ["reefer-link", "reefer", /kind="trailer"/, 'kind="unit"'],
     ["reefer-tombstone", "reefer", /EntityLinkOrTombstone/g, "EntityLink"],
     ["reefer-testid", "reefer", /vp-reefer-trailer-link/g, "vp-reefer-trailer-gone"],
+    ["reefer-owner-scope", "aggregate", /\(e\.owner_company_id = \$2::uuid OR e\.currently_leased_to_company_id = \$2::uuid\)/, "COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $2::uuid"],
     ["leaf", "required", /"unit\.profile\.reefer"/, '"unit.profile.reefer_MISSING"'],
     ["reverse", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,260})"reverse_link"/, '$1"reverse_link_MISSING"'],
     ["route", "required", /("id": "unit\.profile\.reefer"[\s\S]{0,180})"\/fleet\/units\/:id"/, '$1"/fleet/trailers/:id"'],
