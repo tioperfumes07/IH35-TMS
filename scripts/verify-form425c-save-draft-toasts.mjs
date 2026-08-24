@@ -255,6 +255,14 @@ export function collectProblems(src) {
   if (!routes.includes("/filing-html") || !routes.includes("buildForm425CPrintDocument")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET filing-html must reprint without INSERT/UPDATE");
   }
+  const filingHtmlChunk = (routes.split('app.get("/api/v1/form-425c/:id/filing-html"')[1] ?? "").split('app.post("/api/v1/form-425c/profiles"')[0];
+  if (!filingHtmlChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: History/Merge print GET filing-html must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  const generateChunk = (routes.split('app.post("/api/v1/form-425c/:id/generate-filing-pdf"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/mark-filed"')[0];
+  if (!generateChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate PDF must 403 on forbidden_company_membership, not an uncaught 500");
+  }
   const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
   if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
