@@ -4,8 +4,8 @@
 
 **★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight.
 
-Leftover-6 leftover-CERTIFIED. Leftover WAVE 2 leftover-CERTIFIED at live `6585a66`. Pack `docs/bus/LEFTOVER-WAVE-2-CERTIFY-NOW-2026-08-24.md` is a stamp table. **Do not recertify. Do not restamp U14.**
+Leftover-6 + WAVE 2 + WAVE 3 leftover-CERTIFIED at live `6585a66`. **Do not recertify. Do not restamp U14.**
 
-**NOW:** Lead + FAST-MERGE. Next leftover unique = Codex `/customers` live-verify. Unique FINDING only (500/dead/silent). Never loop `/425c`.
+**NOW:** Lead + FAST-MERGE. Next leftover unique FINDING (500/dead/silent) only. Never loop `/425c`.
 
-OUTBOX: `Cursor | ACK | LEFTOVER-W2-STAMPED | PORT=9222 | NOW=lead | GO`
+OUTBOX: `Cursor | ACK | LEFTOVER-W3-STAMPED | PORT=9222 | NOW=lead | GO`

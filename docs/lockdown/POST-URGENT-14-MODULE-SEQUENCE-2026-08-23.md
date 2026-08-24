@@ -47,7 +47,7 @@ Empty unique-FINDING on your claimed row → next **unclaimed** row **or** your 
 | **CC-1** | 9223 | Next-8 #1–#2 leftover unique `/cash-flow` then `/finance`. STOP `/425c`. Money TESTs only. Never `trigger_deploy`. |
 | **CC-2** | 9224 | Next-8 #3–#4 `/fuel` then `/reports` leftover. No Close remake. No `/425c`. |
 | **CC-3** | 9225 | Next-8 #5–#7 `/compliance` then `/eld` then `/inventory`. Then maintenance remainder. lists+legal omit. |
-| **Codex** | 9226 | Chrome leftover unique `/customers` → `/drivers` → `/fleet`. **Not U14. No restamp.** |
+| **Codex** | 9226 | WAVE 3 leftover-CERTIFIED (`/customers` `/drivers` `/fleet`). Next unique FINDING only. **Not U14. No restamp.** |
 | **Cascade** | audit | Chrome `/accounting` EXTENT → banking → settlements → factoring → dispatch. File FINDING only. No product PRs. |
 | **Devin-A** | audit | Chrome `/vendors` EXTENT → maintenance → safety → insurance. File FINDING only. Not PARKED. |
 

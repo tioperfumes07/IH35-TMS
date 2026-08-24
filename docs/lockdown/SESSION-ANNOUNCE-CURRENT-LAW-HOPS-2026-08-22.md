@@ -39,10 +39,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when leftover-clean) |
 |------|------|---------|--------------------------------|
-| Cursor | 9222 | leftover-6 + WAVE 2 stamped | **U14 omit.** Lead. **Do not loop `/425c`.** No leftover-6 / WAVE 2 recertify |
+| Cursor | 9222 | leftover-6 + WAVE 2 + WAVE 3 stamped | **U14 omit.** Lead. **Do not loop `/425c`.** No leftover-6 / W2 / W3 recertify |
 | CC-1 | 9223 | leftover-6 L1–L2 stamped | Accounting+factoring omit. NOW next money unique. No `/lists` `/legal` `/docs`. HOLD forbidden |
-| CC-2 | 9224 | leftover-6 L3 + WAVE 2 W1 stamped | Settlements omit. NOW next unique FINDING. No Close remake. No leftover-6/W2 recertify |
-| CC-3 | 9225 | leftover-6 L4–L6 + WAVE 2 W2 stamped | lists+legal omit. NOW next unique FINDING. No leftover-6/W2 recertify. No `trigger_deploy` |
-| Codex | 9226 | leftover unique | U14 7–9 omit restamp. NOW Chrome leftover `/customers` → `/drivers` → `/fleet`. Never steal `/docs` `/cash-flow` `/compliance` |
+| CC-2 | 9224 | leftover-6 L3 + WAVE 2 W1 stamped | Settlements omit. NOW next unique FINDING. No Close remake. No leftover recertify |
+| CC-3 | 9225 | leftover-6 L4–L6 + WAVE 2 W2 stamped | lists+legal omit. NOW next unique FINDING. No leftover recertify. No `trigger_deploy` |
+| Codex | 9226 | WAVE 3 leftover-CERTIFIED | U14 7–9 omit restamp. NOW next unique FINDING only. Never steal `/docs` `/cash-flow` `/compliance` |
 | Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. ACK≠audit |
 | Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors` EXTENT. Not scribe |
