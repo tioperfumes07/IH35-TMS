@@ -1,6 +1,8 @@
 # INBOX-CASCADE
 
-**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`
+**AFTER U14:** audit overlay — not leftover product.  
+**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`  
+Law: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 
 **READ:** `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
 
@@ -12,4 +14,4 @@ U14 14/14 CERTIFIED. Never recertify. ACK ≠ audit. HOLD = defect.
 
 FORBIDDEN: product PRs · recertify · leftover product on Cursor `/425c` or CC-1 money
 
-OUTBOX: `Cascade | ACK | NOW-ONE-SOURCE | NOW=/accounting EXTENT | GO`
+OUTBOX: `Cascade | ACK | POST-U14-SEQUENCE | NOW=/accounting EXTENT | GO`

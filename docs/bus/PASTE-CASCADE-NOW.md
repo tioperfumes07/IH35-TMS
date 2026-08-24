@@ -1,9 +1,5 @@
-# PASTE CASCADE NOW
-
-See `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-CASCADE.md`
-
-AUDIT ONLY. Chrome `/accounting` EXTENT. ACK ≠ audit. No product PRs. Never recertify.
-
-```text
-Cascade | ACK | NOW-ONE-SOURCE | NOW=/accounting EXTENT | GO
-```
+===== CASCADE =====
+AFTER U14: audit overlay. docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md
+AUDIT ONLY. Chrome /accounting EXTENT. Unique FINDING. No product PRs. Never recertify.
+ACK: Cascade | ACK | POST-U14-SEQUENCE | NOW=/accounting EXTENT | GO
+===== END =====
