@@ -1,4 +1,8 @@
 import { runReportQuery, type QueryContext, type ReportDataEnvelope } from "./shared.js";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
+// Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit's fixture loads must not surface as
+// real per-truck profit/revenue on this report.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../../mdata/fleet-visibility.js";
 
 type ProfitPerTruckWeeklyRow = {
   unit_id: string;
@@ -50,6 +54,8 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
         -- §4: mdata.units has NO operating_company_id — scope via owner_company_id / currently_leased_to_company_id.
         WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
           AND u.deactivated_at IS NULL
+          AND ${excludeDemoPhantomSql("u.unit_number")}
+          AND ${excludeSampleDataSql("u.is_sample_data")}
         GROUP BY u.id, u.unit_number
         HAVING
           COALESCE(

@@ -2,6 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, parseMonthWindow, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
+// Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit's fixture loads must not surface as
+// real per-truck profit/revenue on this report. Live-confirmed 2026-08-24: 6 real loads with real
+// dollar amounts are attached to TEST-* units on prod, unprotected by either exclusion mechanism.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 
 const legacyQuerySchema = companyQuerySchema.extend({
   month: z.string().regex(/^\d{4}-\d{2}$/),
@@ -167,6 +172,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
             LEFT JOIN primary_pick pp ON pp.unit_id = u.id
             WHERE u.deactivated_at IS NULL
               AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+              AND ${excludeDemoPhantomSql("u.unit_number")}
+              AND ${excludeSampleDataSql("u.is_sample_data")}
           `,
           [companyId, pStart, pEnd]
         );
@@ -394,6 +401,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
           LEFT JOIN wo_agg wa ON wa.unit_id = u.id
           WHERE u.deactivated_at IS NULL
             AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+            AND ${excludeDemoPhantomSql("u.unit_number")}
+            AND ${excludeSampleDataSql("u.is_sample_data")}
             ${unitFilter}
           ORDER BY (COALESCE(la.revenue_cents, 0) - COALESCE(wa.wo_cost_cents, 0)) DESC
         `,

@@ -1,3 +1,8 @@
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
+// Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit's fixture loads must not surface as
+// real per-truck cost-per-mile on this report.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../../mdata/fleet-visibility.js";
+
 export type PerTruckCpmRow = {
   unit_uuid: string;
   display_id: string;
@@ -137,6 +142,8 @@ export async function calculatePerTruckCpm(
       LEFT JOIN permits p ON p.unit_id = u.id
       WHERE u.deactivated_at IS NULL
         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        AND ${excludeDemoPhantomSql("u.unit_number")}
+        AND ${excludeSampleDataSql("u.is_sample_data")}
       ORDER BY u.unit_number
     `,
     [operatingCompanyId, from, to]
