@@ -891,21 +891,60 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND p.operating_company_id = c.operating_company_id
            AND p.status = 'active'
            AND p.cancelled_on IS NULL
+           AND p.effective_date <= c.accident_date
+           AND p.expiry_date >= c.accident_date
+          LEFT JOIN accounting.expenses e
+            ON e.id = c.expense_id
+           AND e.operating_company_id = c.operating_company_id
+           AND e.voided_at IS NULL
+          LEFT JOIN accounting.bills b
+            ON b.id = c.bill_id
+           AND b.operating_company_id = c.operating_company_id
+           AND b.revoked_at IS NULL
+           AND b.voided_at IS NULL
          WHERE ($1::uuid IS NULL OR c.operating_company_id = $1::uuid)
            AND c.amount_paid_cents > 0
+           AND COALESCE(e.total_amount_cents, b.amount_cents, NULLIF(c.amount_claimed_cents, 0)) > 0
            AND EXISTS (
              SELECT 1
                FROM accounting.insurance_claim_recovery_postings rp
-               JOIN accounting.journal_entries je
-                 ON je.id = rp.journal_entry_id
-                AND je.operating_company_id = rp.operating_company_id
-                AND je.status = 'posted'
-                AND je.voided_at IS NULL
               WHERE rp.claim_id = c.id
                 AND rp.operating_company_id = c.operating_company_id
                 AND rp.status = 'posted'
                 AND rp.is_active = true
                 AND rp.voided_at IS NULL
+              GROUP BY rp.claim_id
+             HAVING SUM(rp.amount_cents) = LEAST(
+                      c.amount_paid_cents,
+                      COALESCE(e.total_amount_cents, b.amount_cents, NULLIF(c.amount_claimed_cents, 0))
+                    )
+           )
+           AND NOT EXISTS (
+             SELECT 1
+               FROM accounting.insurance_claim_recovery_postings bad_rp
+              WHERE bad_rp.claim_id = c.id
+                AND bad_rp.operating_company_id = c.operating_company_id
+                AND bad_rp.status = 'posted'
+                AND bad_rp.is_active = true
+                AND bad_rp.voided_at IS NULL
+                AND NOT EXISTS (
+                  SELECT 1
+                    FROM accounting.journal_entries je
+                   WHERE je.id = bad_rp.journal_entry_id
+                     AND je.operating_company_id = bad_rp.operating_company_id
+                     AND je.status = 'posted'
+                     AND je.voided_at IS NULL
+                     AND EXISTS (
+                       SELECT 1
+                         FROM accounting.journal_entry_postings balance
+                        WHERE balance.journal_entry_uuid = je.id
+                          AND balance.operating_company_id = je.operating_company_id
+                        GROUP BY balance.journal_entry_uuid
+                       HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) =
+                              SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
+                          AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
+                     )
+                )
            )
       `,
       describe: (n) => `${n} active-policy claim recovery chain(s) posted to the GL`,
