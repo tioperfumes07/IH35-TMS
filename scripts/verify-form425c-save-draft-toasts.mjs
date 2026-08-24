@@ -97,12 +97,18 @@ export function collectProblems(src) {
   if (constants.includes("DEFAULT_Q") || constants.includes("1: \"yes\"") || constants.includes("defaultAnswers: { ...DEFAULT_Q }")) {
     problems.push("apps/frontend/src/pages/form425c/lib/constants.ts: client DEFAULT_PROFILES must not seed invented Yes/No before the filing profile loads");
   }
+  if (constants.includes("WF-3500") || constants.includes("WF-1") || constants.includes("xxxx3500")) {
+    problems.push("apps/frontend/src/pages/form425c/lib/constants.ts: client DEFAULT_PROFILES must not seed invented DIP bank accounts before the filing profile loads");
+  }
   const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
   if (qbTab.includes("useState(new Date().getMonth())")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Month/Year must be the Form period, not a silent local picker");
   }
   if (!qbTab.includes("qbDateInPeriod") || !qbTab.includes("month/year filter excluded pasted rows")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Parse must filter to selected month/year and toast when the filter drops all rows");
+  }
+  if (qbTab.includes('?? "WF-3500"') || qbTab.includes("?? 'WF-3500'")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: paste placeholder must not invent WF-3500 when Profiles has no DIP account");
   }
   if (!src.includes("month={month}") || !src.includes("<QBImportTab")) {
     problems.push(`${PAGE}: QB Import must receive the Form month/year, not a disconnected local period`);

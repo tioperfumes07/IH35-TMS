@@ -54,7 +54,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
     address: "Laredo, TX 78041",
     lineOfBusiness: "Freight Trucking",
     naiscCode: "484121",
-    bankAccounts: [{ id: "WF-3500", label: "Wells Fargo – WF-3500", number: "xxxx3500" }],
+    bankAccounts: [],
     defaultAnswers: {},
   },
   transportation: {
@@ -68,11 +68,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
     address: "Laredo, TX 78041",
     lineOfBusiness: "Transportation",
     naiscCode: "485",
-    bankAccounts: [
-      { id: "WF-1", label: "Wells Fargo – WF (Account 1)", number: "xxxx" },
-      { id: "WF-2", label: "Wells Fargo – WF (Account 2)", number: "xxxx" },
-      { id: "WF-3", label: "Wells Fargo – WF (Account 3)", number: "xxxx" },
-    ],
+    bankAccounts: [],
     defaultAnswers: {},
   },
 };

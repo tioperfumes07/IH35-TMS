@@ -138,7 +138,11 @@ export function QBImportTab({
 
       <textarea
         className="h-56 w-full rounded-sm border bg-white p-3 font-mono text-xs"
-        placeholder={`Date\tType\tDescription\tAccount\tAmount\n01/05/${year}\tDeposit\tCustomer Payment\t${profile.bankAccounts[0]?.id ?? "WF-3500"}\t12500.00`}
+        placeholder={
+          profile.bankAccounts[0]?.id
+            ? `Date\tType\tDescription\tAccount\tAmount\n01/05/${year}\tDeposit\tCustomer Payment\t${profile.bankAccounts[0].id}\t12500.00`
+            : "Date\tType\tDescription\tAccount\tAmount\nAdd a DIP bank account on Profiles before pasting — will not invent WF-3500"
+        }
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
       />
