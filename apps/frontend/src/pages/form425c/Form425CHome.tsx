@@ -698,26 +698,24 @@ export function Form425CHome() {
           month={month}
           year={year}
           canGenerate={Boolean(form.reportId && form.reportId === selectedReport?.id)}
-          generating={generateMutation.isPending}
+          generating={historyPrintMutation.isPending}
           onGenerate={() => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing package", "error");
               return;
             }
-            if (form.status === "filed") {
-              pushToast("This MOR is filed — use Amend on History", "error");
-              return;
-            }
-            if (dirty) {
+            // Merge print is read-only (same GET as History Print). Form "Generate PDF"
+            // is the write path that inserts docs.files and sets ready_to_file.
+            if (dirty && form.status !== "filed") {
               saveMutation.mutate(undefined, {
                 onSuccess: () => {
-                  pushToast("Draft saved — generating filing PDF", "success");
-                  generateMutation.mutate();
+                  pushToast("Draft saved — opening print window (status unchanged)", "success");
+                  historyPrintMutation.mutate(form.reportId!);
                 },
               });
               return;
             }
-            generateMutation.mutate();
+            historyPrintMutation.mutate(form.reportId);
           }}
         />
       ) : null}

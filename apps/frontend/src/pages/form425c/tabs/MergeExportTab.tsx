@@ -17,7 +17,9 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
       <div className="rounded-sm border bg-white p-4">
         <div className="text-sm font-semibold text-slate-800">Build Complete Report Package</div>
         <p className="mt-2 text-xs text-slate-600">
-          Generates filing HTML and opens browser print dialog. Use browser destination <strong>Save as PDF</strong>.
+          Prints the current MOR without changing status or writing a filing PDF. Use{" "}
+          <strong>Generate PDF</strong> on Form 425C to create the court artifact and mark ready to
+          file. Browser destination <strong>Save as PDF</strong>.
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Suggested filename: <em>{suggestedFilename(company.name, month, year)}</em>

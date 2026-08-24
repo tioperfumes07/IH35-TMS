@@ -137,6 +137,17 @@ export function collectProblems(src) {
   if (mergeTab.includes("disabled={generating || !canGenerate}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must stay clickable so the parent toast fires — a disabled button is a dead click");
   }
+  const mergeChunk = (src.split('tab === "merge"')[1] ?? "").split('tab === "history"')[0];
+  if (mergeChunk.includes("generateMutation.mutate")) {
+    problems.push(
+      `${PAGE}: Merge Generate must not POST generate-filing-pdf — that silently flipped draft → ready_to_file`,
+    );
+  }
+  if (!mergeChunk.includes("historyPrintMutation.mutate") || !mergeChunk.includes("status unchanged")) {
+    problems.push(
+      `${PAGE}: Merge Generate must use History Print GET (read-only) and toast that status is unchanged`,
+    );
+  }
   if (!src.includes("This MOR is filed — use Amend on History")) {
     problems.push(`${PAGE}: Save/Import/Generate on a filed MOR must toast Amend — not silently rewrite the court filing`);
   }
@@ -300,6 +311,10 @@ const good = `
   exhibitEntries.b
   getForm425CFilingHtml
   historyPrintMutation
+  tab === "merge"
+          historyPrintMutation.mutate(form.reportId);
+          status unchanged
+  tab === "history"
 `;
 const bad = `
   if (!detailQuery.data?.report) {
@@ -308,6 +323,9 @@ const bad = `
   }
   onOpen={(id) => { setTab("form"); }}
   setForm((prev) => ({ ...prev, [key]: e.target.checked }))
+  tab === "merge"
+          generateMutation.mutate();
+  tab === "history"
 `;
 
 if (process.argv.includes("--selftest")) {
