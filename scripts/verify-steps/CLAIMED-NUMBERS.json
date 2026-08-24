@@ -1,4 +1,9 @@
 {
+  "4584": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-telematics-shared-driver-reads"
+  },
   "4583": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
