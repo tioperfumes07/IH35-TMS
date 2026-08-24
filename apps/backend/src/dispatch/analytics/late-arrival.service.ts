@@ -47,6 +47,26 @@ export function isLateArrival(input: {
   return arrivedMs > scheduledMs + input.grace_minutes * 60_000;
 }
 
+/** Honest empty detail for an existing customer/driver with no completed stops in range — never 404. */
+export function emptyLateArrivalDetail(
+  entityId: string,
+  entityLabel: string,
+  from: string,
+  to: string
+): LateArrivalEntityDetail {
+  return {
+    entity_id: entityId,
+    entity_label: entityLabel.trim() || "Unknown",
+    late_count: 0,
+    total_count: 0,
+    late_rate: 0,
+    chronic_offender: false,
+    grace_minutes: lateArrivalGraceMinutes(),
+    from,
+    to,
+  };
+}
+
 async function tableExists(client: PoolClient, qualified: string): Promise<boolean> {
   const [schema, table] = qualified.includes(".") ? qualified.split(".") : ["public", qualified];
   const res = await client.query(
@@ -302,13 +322,25 @@ export async function getDriverLateArrivalDetail(
       value: driverUuid,
     });
     const row = rows[0];
-    if (!row) return null;
-    return {
-      ...row,
-      grace_minutes: lateArrivalGraceMinutes(),
-      from,
-      to,
-    };
+    if (row) {
+      return {
+        ...row,
+        grace_minutes: lateArrivalGraceMinutes(),
+        from,
+        to,
+      };
+    }
+    const exists = await client.query<{ first_name: string | null; last_name: string | null }>(
+      `SELECT first_name, last_name
+         FROM mdata.drivers
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        LIMIT 1`,
+      [driverUuid, operatingCompanyId]
+    );
+    const driver = exists.rows[0];
+    if (!driver) return null;
+    const label = `${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || "Unknown driver";
+    return emptyLateArrivalDetail(driverUuid, label, from, to);
   });
 }
 
@@ -326,13 +358,24 @@ export async function getCustomerLateArrivalDetail(
       value: customerUuid,
     });
     const row = rows[0];
-    if (!row) return null;
-    return {
-      ...row,
-      grace_minutes: lateArrivalGraceMinutes(),
-      from,
-      to,
-    };
+    if (row) {
+      return {
+        ...row,
+        grace_minutes: lateArrivalGraceMinutes(),
+        from,
+        to,
+      };
+    }
+    const exists = await client.query<{ customer_name: string | null }>(
+      `SELECT customer_name
+         FROM mdata.customers
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        LIMIT 1`,
+      [customerUuid, operatingCompanyId]
+    );
+    const customer = exists.rows[0];
+    if (!customer) return null;
+    return emptyLateArrivalDetail(customerUuid, customer.customer_name ?? "Unknown customer", from, to);
   });
 }
 
