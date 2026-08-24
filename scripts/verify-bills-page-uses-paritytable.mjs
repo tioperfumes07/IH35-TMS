@@ -7,7 +7,7 @@
  * grid already renders via ParityTable; this guard pins that the per-row expanded
  * payments sub-table also uses the shared ParityTable grammar (no hand-rolled <table>),
  * and that the display-only contract holds: exact column order (Vendor, Bill #, Date,
- * Original, Paid, Balance, Status, Reconciled, Due date, Memo, Allocate), cents-based
+ * Original, Paid, Balance, Status, Reconciled, Due date, Claim, Work order, Memo, Allocate), cents-based
  * money() formatting, the ListErrorBanner error surface, the inline Allocate action
  * (handler unchanged), and the "No bills found." empty text.
  */
@@ -30,6 +30,8 @@ const MAIN_LABELS_IN_ORDER = [
   "Status",
   "Reconciled",
   "Due date",
+  "Claim",
+  "Work order",
   "Memo",
   "Allocate",
 ];
@@ -113,6 +115,8 @@ function selftest() {
       { key: "status", label: "Status" },
       { key: "is_reconciled", label: "Reconciled" },
       { key: "due_date", label: "Due date" },
+      { key: "insurance_claim_id", label: "Claim" },
+      { key: "linked_work_order_uuid", label: "Work order" },
       { key: "memo", label: "Memo" },
       { key: "allocate", label: "Allocate", render: (bill) => <button onClick={() => setAllocationBillId(bill.id)}>Allocate</button> },
     ];
@@ -131,8 +135,13 @@ function selftest() {
   `;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const missingClaimWo = assertMigrated(good.replace('label: "Claim"', 'label: "Xclaim"').replace('label: "Work order"', 'label: "Xwo"'));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  if (!missingClaimWo.some((e) => e.includes("Claim") || e.includes("Work order"))) {
+    console.error(`${LABEL} --selftest FAIL must redden when Claim/Work order columns are gone:`, missingClaimWo);
     process.exit(1);
   }
   if (badErrors.length < 3) {

@@ -845,9 +845,17 @@ export async function listBillsByVendor(
         SELECT b.*, v.vendor_name, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
-               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
+               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
+               wo.display_id AS linked_work_order_display_id,
+               claim.claim_number AS insurance_claim_number
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        LEFT JOIN maintenance.work_orders wo
+          ON wo.id = b.linked_work_order_uuid
+         AND wo.operating_company_id = b.operating_company_id
+        LEFT JOIN insurance.claim claim
+          ON claim.id = b.insurance_claim_id
+         AND claim.tenant_id = b.operating_company_id
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
@@ -934,9 +942,17 @@ export async function listAllBillsForCompany(
         SELECT b.*, v.vendor_name, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
-               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
+               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
+               wo.display_id AS linked_work_order_display_id,
+               claim.claim_number AS insurance_claim_number
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        LEFT JOIN maintenance.work_orders wo
+          ON wo.id = b.linked_work_order_uuid
+         AND wo.operating_company_id = b.operating_company_id
+        LEFT JOIN insurance.claim claim
+          ON claim.id = b.insurance_claim_id
+         AND claim.tenant_id = b.operating_company_id
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
