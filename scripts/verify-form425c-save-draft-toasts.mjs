@@ -104,6 +104,9 @@ export function collectProblems(src) {
   if (!src.includes("setOpenedReportId(created.id)")) {
     problems.push(`${PAGE}: Create / Amend must pin created.id — month-only find() can hydrate the other same-month MOR`);
   }
+  if (!src.includes("Create already in progress")) {
+    problems.push(`${PAGE}: double-click Create must toast, not fire a second POST that 500s on UNIQUE(month, status)`);
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
@@ -111,6 +114,9 @@ export function collectProblems(src) {
     problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
   }
   const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c.routes.ts"), "utf8");
+  if (!routes.includes("form_425c_period_draft_exists")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
+  }
   if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
   }
@@ -218,6 +224,7 @@ const good = `
   setOpenedReportId(id)
   setOpenedReportId(created.id)
   openedReportId
+  Create already in progress
   matches.find((r) => r.status !== "filed")
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
   throw new Error("This MOR is filed — use Amend on History");
