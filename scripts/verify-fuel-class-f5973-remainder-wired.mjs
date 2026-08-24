@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   createModal: "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx",
+  fuelRoute: "apps/backend/src/fuel/fuel-transactions.routes.ts",
   importModal: "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
   uploadModal: "apps/frontend/src/pages/fuel/components/UploadLovesPricesModal.tsx",
   lovesRoute: "apps/backend/src/fuel/loves-upload.routes.ts",
@@ -48,6 +49,15 @@ export function audit(src) {
   }
   if (!/loadExemptionReason/.test(src.createModal)) {
     failures.push(`${FILES.createModal}: must retain the G18 load-exemption-reason field (load column)`);
+  }
+  if (!/driver_company_authorizations fuel_create_driver_dca/.test(src.fuelRoute) || !/driver_not_found_for_company/.test(src.fuelRoute)) {
+    failures.push(`${FILES.fuelRoute}: manual create must reject drivers outside the selected company authorization boundary`);
+  }
+  if (!/COALESCE\(fuel_create_unit\.currently_leased_to_company_id, fuel_create_unit\.owner_company_id\) = \$2::uuid/.test(src.fuelRoute) || !/unit_not_found_for_company/.test(src.fuelRoute)) {
+    failures.push(`${FILES.fuelRoute}: manual create must reject units outside the selected owner/lease company`);
+  }
+  if (!/FROM mdata\.vendors fuel_create_vendor[\s\S]*fuel_create_vendor\.operating_company_id = \$2::uuid[\s\S]*fuel_create_vendor\.deactivated_at IS NULL/.test(src.fuelRoute) || !/vendor_not_found_for_company/.test(src.fuelRoute)) {
+    failures.push(`${FILES.fuelRoute}: manual create must reject vendors outside the selected active company catalog`);
   }
 
   if (!/await importFuelTransactions\(operatingCompanyId/.test(src.importModal)) {
@@ -108,6 +118,12 @@ if (process.argv.includes("--selftest")) {
     { key: "createModal", from: "await createFuelTransaction(operatingCompanyId", to: "await createFuelTransaction(REMOVED" },
     { key: "createModal", from: 'kind="load"', to: 'kind="REMOVED_load"' },
     { key: "createModal", from: "loadExemptionReason", to: "loadExempti0nReason" },
+    { key: "fuelRoute", from: "driver_company_authorizations fuel_create_driver_dca", to: "driver_company_authorizations REMOVED_driver_dca" },
+    { key: "fuelRoute", from: "driver_not_found_for_company", to: "driver_not_scoped" },
+    { key: "fuelRoute", from: "COALESCE(fuel_create_unit.currently_leased_to_company_id, fuel_create_unit.owner_company_id) = $2::uuid", to: "fuel_create_unit.owner_company_id IS NOT NULL" },
+    { key: "fuelRoute", from: "unit_not_found_for_company", to: "unit_not_scoped" },
+    { key: "fuelRoute", from: "vendor_not_found_for_company", to: "vendor_not_scoped" },
+    { key: "fuelRoute", from: "fuel_create_vendor.operating_company_id = $2::uuid", to: "fuel_create_vendor.operating_company_id IS NOT NULL" },
     { key: "importModal", from: "await importFuelTransactions(operatingCompanyId", to: "await importFuelTransactions(REMOVED" },
     { key: "importModal", from: "${res.dead_letters} rejected", to: "0 rejected" },
     { key: "importModal", from: 'res.dead_letters > 0 ? "error" : "success"', to: '"success"' },

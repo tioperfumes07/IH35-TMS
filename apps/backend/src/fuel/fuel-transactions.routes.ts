@@ -285,6 +285,51 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       const tableExists = await client.query(`SELECT to_regclass('fuel.fuel_transactions') IS NOT NULL AS ok`);
       if (!(tableExists.rows[0] as { ok?: boolean } | undefined)?.ok) return { unavailable: true as const };
 
+      if (b.driver_id) {
+        const driverRes = (await client.query(
+          `SELECT d.id::text AS id
+             FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                    FROM mdata.driver_company_authorizations fuel_create_driver_dca
+                   WHERE fuel_create_driver_dca.driver_id = d.id
+                     AND fuel_create_driver_dca.company_id = $2::uuid
+                     AND fuel_create_driver_dca.is_authorized = true
+                     AND fuel_create_driver_dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
+          [b.driver_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!driverRes.rows[0]) return { error: "driver_not_found_for_company" as const };
+      }
+
+      if (b.unit_id) {
+        const unitRes = (await client.query(
+          `SELECT fuel_create_unit.id::text AS id FROM mdata.units fuel_create_unit
+            WHERE fuel_create_unit.id = $1::uuid
+              AND COALESCE(fuel_create_unit.currently_leased_to_company_id, fuel_create_unit.owner_company_id) = $2::uuid
+            LIMIT 1`,
+          [b.unit_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!unitRes.rows[0]) return { error: "unit_not_found_for_company" as const };
+      }
+
+      if (b.vendor_id) {
+        const vendorRes = (await client.query(
+          `SELECT fuel_create_vendor.id::text AS id FROM mdata.vendors fuel_create_vendor
+            WHERE fuel_create_vendor.id = $1::uuid
+              AND fuel_create_vendor.operating_company_id = $2::uuid
+              AND fuel_create_vendor.deactivated_at IS NULL
+            LIMIT 1`,
+          [b.vendor_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!vendorRes.rows[0]) return { error: "vendor_not_found_for_company" as const };
+      }
+
       if (b.load_id) {
         const loadRes = (await client.query(
           `SELECT id::text AS id FROM mdata.loads
