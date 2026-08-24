@@ -6,6 +6,8 @@ import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
   PART_INVENTORY_CATEGORIES,
   formatPartInventoryCategoryLabel,
@@ -20,6 +22,7 @@ interface PartCreateDrawerProps {
 
 export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyId }: PartCreateDrawerProps) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -84,6 +87,10 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
         vendor_id: "",
       });
     },
+    // INV-F6323: zero error handling anywhere in this file — no onError, no isError render, no
+    // try/catch at the fire-and-forget .mutate() call site. A rejected create (validation error,
+    // 500, network failure) silently did nothing: the drawer just sat there with no explanation.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not create the part"), "error"),
   });
 
   const canSubmit = Boolean(formData.name.trim() && formData.category.trim());
