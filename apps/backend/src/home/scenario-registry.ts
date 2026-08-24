@@ -761,6 +761,17 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
       sql: `
         SELECT count(*)::text AS n
           FROM maintenance.work_orders w
+          JOIN mdata.units u
+            ON u.id = w.unit_id
+           AND (u.owner_company_id = w.operating_company_id OR u.currently_leased_to_company_id = w.operating_company_id)
+          JOIN mdata.loads l
+            ON l.id = w.load_id
+           AND l.operating_company_id = w.operating_company_id
+           AND l.soft_deleted_at IS NULL
+          JOIN mdata.vendors v
+            ON v.id = w.vendor_id
+           AND v.operating_company_id = w.operating_company_id
+           AND v.deactivated_at IS NULL
          WHERE ($1::uuid IS NULL OR w.operating_company_id = $1::uuid)
            AND w.status = 'closed'
            AND w.voided_at IS NULL
@@ -769,15 +780,17 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND w.load_id IS NOT NULL
            AND EXISTS (
              SELECT 1
-               FROM maintenance.work_order_lines wol
+              FROM maintenance.work_order_lines wol
               WHERE wol.work_order_uuid = w.id
                 AND wol.line_type IN ('part', 'parts')
+                AND wol.total_cost > 0
            )
            AND EXISTS (
              SELECT 1
-               FROM maintenance.work_order_lines wol
+              FROM maintenance.work_order_lines wol
               WHERE wol.work_order_uuid = w.id
                 AND wol.line_type = 'labor'
+                AND wol.total_cost > 0
            )
            AND EXISTS (
              SELECT 1
@@ -787,10 +800,32 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                 AND pb.source_transaction_id = b.id::text
                 AND pb.operating_company_id = b.operating_company_id
                 AND pb.batch_status = 'posted'
+               JOIN accounting.journal_entry_postings jep
+                 ON jep.posting_batch_id = pb.id
+                AND jep.operating_company_id = pb.operating_company_id
+                AND jep.source_transaction_type = 'bill'
+                AND jep.source_transaction_id = b.id::text
+               JOIN accounting.journal_entries je
+                 ON je.id = jep.journal_entry_uuid
+                AND je.operating_company_id = jep.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
               WHERE b.linked_work_order_uuid = w.id
                 AND b.operating_company_id = w.operating_company_id
+                AND b.vendor_id = w.vendor_id::text
+                AND b.amount_cents > 0
                 AND b.revoked_at IS NULL
                 AND b.voided_at IS NULL
+                AND EXISTS (
+                  SELECT 1
+                    FROM accounting.journal_entry_postings balance
+                   WHERE balance.journal_entry_uuid = je.id
+                     AND balance.operating_company_id = je.operating_company_id
+                   GROUP BY balance.journal_entry_uuid
+                  HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) =
+                         SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
+                     AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
+                )
            )
       `,
       describe: (n) => `${n} closed work order chain(s) with parts, labor and posted A/P`,
