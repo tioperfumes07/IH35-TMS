@@ -153,6 +153,9 @@ export function collectProblems(src) {
   if (!src.includes("will not create a court MOR without a debtor name")) {
     problems.push(`${PAGE}: Create must refuse empty debtor name after DEFAULT_PROFILES emptied — must not POST a nameless court MOR`);
   }
+  if (src.includes("Number(form.totalPayables || 0)") || src.includes("Number(form.projReceiptsLast || 0)") || !src.includes("optionalFormNumber")) {
+    problems.push(`${PAGE}: Save Draft must send null for empty money/count fields — Number(x || 0) invents $0 on the court MOR`);
+  }
   const printHtml = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts"), "utf8");
   if (printHtml.includes("${p.division} Division · ${p.district} District") || !printHtml.includes("courtDistrictCaption")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: court line must use courtDistrictCaption — empty profile must not print invented Division/District");
@@ -164,6 +167,9 @@ export function collectProblems(src) {
     problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
   }
   const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c.routes.ts"), "utf8");
+  if (routes.includes("Number(incoming32 ?? current.line_32_proj_receipts ?? 0)") || routes.includes("Number(b.line_35_next_proj_receipts ?? current.line_35_next_proj_receipts ?? 0)")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH must not invent line 34/37 nets from empty projections as $0");
+  }
   if (!routes.includes("form_425c_period_draft_exists")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
   }
@@ -561,6 +567,7 @@ const good = `
   Generate the filing PDF before marking filed
   will not invent a court caption
   will not create a court MOR without a debtor name
+  optionalFormNumber
 `;
 const bad = `
   if (!detailQuery.data?.report) {
