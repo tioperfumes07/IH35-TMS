@@ -48,14 +48,23 @@ if (currentLoadFailures.length > 0) {
   process.exit(1);
 }
 
+const truckAssignmentScope = /JOIN mdata\.units u ON u\.id = vda\.unit_id\s+AND \(u\.owner_company_id = \$2::uuid OR u\.currently_leased_to_company_id = \$2::uuid\)/g;
+if ((driverRoutes.match(truckAssignmentScope) ?? []).length !== 2) {
+  console.error("verify:driver-profile-default-truck-symmetry FAIL: default/current truck GETs must retain owner-or-lessee unit scope");
+  process.exit(1);
+}
+
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    aggregate.replace(" OR l.assigned_secondary_driver_id = $1::uuid", ""),
-    aggregate.replace("AND l.operating_company_id = $2::uuid", "AND TRUE"),
-    aggregate.replace("AND l.soft_deleted_at IS NULL", "AND TRUE"),
-    aggregate.replace("'delivered', 'cancelled', 'void', 'completed', 'closed'", "'delivered', 'cancelled', 'void', 'completed'"),
+    ["secondary-load", "aggregate", aggregate.replace(" OR l.assigned_secondary_driver_id = $1::uuid", "")],
+    ["company-scope", "aggregate", aggregate.replace("AND l.operating_company_id = $2::uuid", "AND TRUE")],
+    ["soft-delete", "aggregate", aggregate.replace("AND l.soft_deleted_at IS NULL", "AND TRUE")],
+    ["closed-status", "aggregate", aggregate.replace("'delivered', 'cancelled', 'void', 'completed', 'closed'", "'delivered', 'cancelled', 'void', 'completed'")],
+    ["owner-hidden-when-leased", "driver", driverRoutes.replaceAll("(u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)", "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid")],
   ];
-  const escaped = mutations.filter((source) => verifyCurrentLoadReverse(source).length === 0);
+  const escaped = mutations.filter(([, kind, source]) =>
+    kind === "aggregate" ? verifyCurrentLoadReverse(source).length === 0 : (source.match(truckAssignmentScope) ?? []).length === 2
+  );
   if (escaped.length > 0) {
     console.error(`verify:driver-profile-default-truck-symmetry SELFTEST FAIL: ${escaped.length}/${mutations.length} planted defects escaped`);
     process.exit(1);
