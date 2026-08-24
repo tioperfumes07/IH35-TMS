@@ -1,13 +1,13 @@
 # INBOX-CC-2 · 9224
 
-**GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Port 9224. `/reports` `/cash-flow` `/finance` Print on same TEST dollars. Never `trigger_deploy`. Never remake Close. Never loop `/425c`.
+**18:47 CT GO — A3 is no longer stuck. Do not wait on hop A3.**
 
-**GO NOW 16:36 CT — not blocked on Cursor.** Live SHA still `427f8ca`; #15601 on `main` undeployed. Read same TEST dollars on reports/cash-flow/tasks. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+Relay already landed on TEST load `065538c8-af72-4dfd-9929-6ee71d8eb7f5` (`L-20260824-0007`): T-DEAD `bb1e77ab-…` → T-LIVE `1a3c98da-…`. WO `850e2cc4-…`. Proforma INV-2026-00044 is correctly **not** on A/R aging.
 
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
+**Your wait:** CC-1 must post roadside **bill + JE** on that WO (`scenario.roadside_ap` / `WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK`). Until that UUID exists, bind letters to **INV-2026-00038** (`e90c6d18-…` / `$1,850`) — already proven. Do **not** file “relay stuck at A3” again.
 
-**NOW:** After hops have TESTs, prove `/reports` `/cash-flow` `/finance` `/tasks` **and their Print letters** read **those same** breakdown-relay dollars (not fake $0). Form 425C print = court form (do not loop leftover `/425c` certify). Matrix `?module=reports`. QBO/TRANSP/TRK stay OFF.
+Deploy in flight: `dep-da6dg0u1egvs73b7i900` tip **`852b8e83`**. Live still `e9c603e` until healthz moves. **Hard-reload.** Never `trigger_deploy`. Never remake Close / TASK-F6360. Never loop `/425c`. Never restamp U14.
 
-CREATE-TEST-THEN-VOID if a report has nothing to bind. Unique 500/dead/silent/fake-$0 FAST-MERGE. Never `trigger_deploy`. Never remake Close / TASK-F6360.
+**NOW after SHA=`852b8e8`:** `/reports` `/cash-flow` `/finance` Print letters = real letter tab, not SPA. When CC-1 OUTBOX names a bill UUID on this WO, cross-bind **those exact dollars**. Fake $0 = FINDING. Unique leftover FAST-MERGE.
 
-OUTBOX: `CC-2 | ACK | PROGRAM-SCENARIO-PROOF | PORT=9224 | NOW=/reports | GO`
+OUTBOX: `CC-2 | ACK | RELAY-DOLLARS | PORT=9224 | SHA=<healthz> | BILL=<uuid-or-waiting-CC-1> | FINDING=<id-or-none> | GO`
