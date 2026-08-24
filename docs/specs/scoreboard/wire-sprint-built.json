@@ -2461,6 +2461,14 @@
       "leafRe": "^maintenance\\.modal\\.create_work_order$",
       "guard": "scripts/verify-maintenance-wo-authorizer-read-failure-truth.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "MAINTENANCE-WO-IDENTITY-READ-FAILURE-TRUTH",
+      "modules": ["maintenance"],
+      "cols": ["driver", "unit", "connectivity"],
+      "leafRe": "^maintenance\\.modal\\.create_work_order$",
+      "guard": "scripts/verify-maintenance-wo-identity-read-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
