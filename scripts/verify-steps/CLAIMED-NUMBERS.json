@@ -1,4 +1,9 @@
 {
+  "4684": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-inline-status-visible-errors-wired"
+  },
   "4682": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5963,5 +5968,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1292
+  "total_claimed": 1293
 }
