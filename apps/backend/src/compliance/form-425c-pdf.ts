@@ -190,6 +190,7 @@ export async function buildForm425CPrintDocument({
     [operatingCompanyId]
   );
   const profile = profileRes.rows[0];
+  if (!profile) throw new Error("form_425c_profile_required");
 
   const exhibitARes = await client.query<ExhibitRow>(
     `
@@ -212,7 +213,8 @@ export async function buildForm425CPrintDocument({
 
   const printHtml = buildPrintHTML(report, profile, exhibitARes.rows, exhibitBRes.rows);
   const monthLabel = labelForMonth(String(report.reporting_month ?? ""));
-  const companyName = String(profile?.company_name ?? "IH 35");
+  const companyName = String(profile.company_name ?? "").trim();
+  if (!companyName) throw new Error("form_425c_profile_required");
   const suggestedFilename = `${companyName} – ${monthLabel} – Monthly Operating Report.pdf`;
   return { report, printHtml, suggestedFilename };
 }

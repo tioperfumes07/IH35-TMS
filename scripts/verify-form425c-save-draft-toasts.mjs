@@ -280,6 +280,9 @@ export function collectProblems(src) {
   if (!filingHtmlChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: History/Merge print GET filing-html must 403 on forbidden_company_membership, not an uncaught 500");
   }
+  if (!filingHtmlChunk.includes("form_425c_profile_required") || !filingHtmlChunk.includes("422")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: reprint must 422 when the profile/debtor name is missing — not print IH 35 / Debtor");
+  }
   const generateChunk = (routes.split('app.post("/api/v1/form-425c/:id/generate-filing-pdf"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/mark-filed"')[0];
   if (!generateChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate PDF must 403 on forbidden_company_membership, not an uncaught 500");
@@ -290,9 +293,15 @@ export function collectProblems(src) {
   if (!generateChunk.includes("form_425c_r2_not_configured") || !generateChunk.includes("form_425c_r2_put_failed")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate must 502 when R2 put is missing/fails — not ready_to_file with a ghost r2_key");
   }
+  if (!generateChunk.includes("form_425c_profile_required") || !generateChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate must 422 without a profile name and 404 a missing company — not invent IH 35 or 500");
+  }
   const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
   if (!pdfLib.includes("form_425c_filing_file_insert_failed") || pdfLib.includes("fileInsert.rows[0]?.id ?? null")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must throw when docs.files INSERT returns no id — null fileId marked the MOR ready");
+  }
+  if (!pdfLib.includes("form_425c_profile_required") || pdfLib.includes('?? "IH 35"')) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: missing profile must throw — suggested_filename used IH 35 on a court artifact");
   }
   if (!pdfLib.includes("putObjectBytes") || !pdfLib.includes("isR2Configured") || !pdfLib.includes("form_425c_r2_put_failed")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must putObjectBytes before docs.files upload_completed_at — r2_key-only was a silent court artifact");
