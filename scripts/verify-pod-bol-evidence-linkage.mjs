@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built [{"module":"program","leaf":"nav.scenario","cols":["connectivity"]}]
  * CLS-ORPHAN-SURFACE — POD/BOL evidence must be REACHABLE from its load, and the scenario probe must
  * measure the table the product actually writes.
  *
@@ -107,6 +108,17 @@ export function findMissingProbeSources(src) {
   for (const table of ["dispatch.pod_documents", "dispatch.bol_documents"]) {
     if (!sql[1].includes(table)) missing.push(`hop.pod_bol probe SQL never reads ${table}`);
   }
+  if (/FROM\s+docs\.file_links\b/i.test(sql[1])) {
+    if (!/JOIN\s+catalogs\.file_categories\s+\w+\s+ON\s+\w+\.id\s*=\s*f\.category_id/i.test(sql[1])) {
+      missing.push("docs-library evidence does not resolve the canonical file category");
+    }
+    if (!/\bfc\.code\s+IN\s*\(\s*['\"]pod['\"]\s*,\s*['\"]bol['\"]\s*\)/i.test(sql[1])) {
+      missing.push("docs-library evidence counts non-POD/BOL categories");
+    }
+    if (!/\bf\.deleted_at\s+IS\s+NULL/i.test(sql[1])) {
+      missing.push("docs-library evidence counts deleted files");
+    }
+  }
   return missing;
 }
 
@@ -148,11 +160,27 @@ if (process.argv.includes("--selftest")) {
     [
       "probe reading only docs.file_links is flagged twice",
       () => findMissingProbeSources("  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `SELECT count(*) FROM docs.file_links` },\n  },"),
-      2,
+      5,
     ],
     [
       "probe reading both canonical stores is clean",
       () => findMissingProbeSources("  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents` },\n  },"),
+      0,
+    ],
+    [
+      "generic load documents cannot masquerade as POD/BOL evidence",
+      () =>
+        findMissingProbeSources(
+          "  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents UNION ALL SELECT fl.id FROM docs.file_links fl JOIN docs.files f ON f.id=fl.file_id JOIN mdata.loads l ON l.id=fl.entity_id WHERE f.deleted_at IS NULL` },\n  },"
+        ),
+      2,
+    ],
+    [
+      "canonical POD/BOL file categories are accepted",
+      () =>
+        findMissingProbeSources(
+          "  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents UNION ALL SELECT fl.id FROM docs.file_links fl JOIN docs.files f ON f.id=fl.file_id JOIN catalogs.file_categories fc ON fc.id = f.category_id JOIN mdata.loads l ON l.id=fl.entity_id WHERE f.deleted_at IS NULL AND fc.code IN ('pod', 'bol')` },\n  },"
+        ),
       0,
     ],
     [
@@ -163,7 +191,7 @@ if (process.argv.includes("--selftest")) {
         findMissingProbeSources(
           "  {\n    key: \"hop.pod_bol\",\n    sources: [\"dispatch.pod_documents\", \"dispatch.bol_documents\"],\n    probe: { sql: `SELECT count(*) FROM docs.file_links` },\n  },"
         ),
-      2,
+      5,
     ],
   ];
   let bad = 0;
