@@ -148,6 +148,12 @@ export function collectProblems(src) {
   if (formTab.includes('to="/425c/exhibits"') && formTab.includes("Exhibit required")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must not navigate to A–F builder in place of Exhibit A/B");
   }
+  if (profiles.includes('to="/425c/exhibits"') && profiles.includes("Exhibit required")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: default flagged answers must hop to Form 425C Exhibit A/B, not A–F builder");
+  }
+  if (!profiles.includes('to="/425c?tab=form"') || !profiles.includes("Save Exhibit on Form 425C")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Exhibit required on defaults must open /425c?tab=form");
+  }
   const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
