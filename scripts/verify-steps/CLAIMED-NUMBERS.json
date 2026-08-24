@@ -1,4 +1,9 @@
 {
+  "4674": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-tasks-chat-comment-visible-errors-wired"
+  },
   "4672": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5938,5 +5943,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1287
+  "total_claimed": 1288
 }
