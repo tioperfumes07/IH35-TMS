@@ -7,6 +7,8 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // B-1 Cash-GL setup (fork-A): map each bank account → its COA cash GL account, per entity.
 // Owner/Administrator only. NO posting, NO flag — setup only. Reads/writes banking.bank_accounts.ledger_account_id.
@@ -17,6 +19,7 @@ export function CashGlSetupPage() {
   const canEdit = ["Owner", "Administrator"].includes(String((user as { role?: string } | null)?.role ?? ""));
   const qc = useQueryClient();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const { pushToast } = useToast();
 
   const query = useQuery({
     queryKey: ["banking", "cash-gl-mapping", companyId],
@@ -27,6 +30,10 @@ export function CashGlSetupPage() {
   const mutation = useMutation({
     mutationFn: (vars: { bankAccountId: string; ledgerAccountId: string | null }) =>
       setBankAccountCashGl(companyId, vars.bankAccountId, vars.ledgerAccountId),
+    // BANK-F6321: onSettled alone silently refetched-and-reverted the picker on a rejected write —
+    // no toast, no explanation, indistinguishable from a successful save that happened not to
+    // stick. Surface the failure explicitly, matching the sibling banking pages' convention.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not save the Cash GL mapping"), "error"),
     onSettled: () => {
       setSavingId(null);
       void qc.invalidateQueries({ queryKey: ["banking", "cash-gl-mapping", companyId] });
