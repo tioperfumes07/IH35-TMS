@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { registerComplianceRoutes } from "./compliance.routes.js";
-import { generateForm425CPdf, isInvalidCaseNumber } from "./form-425c-pdf.js";
+import { buildForm425CPrintDocument, generateForm425CPdf, isInvalidCaseNumber } from "./form-425c-pdf.js";
 import { registerShipperPortalRoutes } from "../shipper-portal/portal-auth.routes.js";
 import { registerBorderCrossingHistoryRoutes } from "../border-crossing/border-crossing-history.routes.js";
 import { registerBorderCrossingWizardRoutes } from "../border-crossing/border-crossing-wizard.routes.js";
@@ -539,6 +539,38 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
     return payload;
+  });
+
+  app.get("/api/v1/form-425c/:id/filing-html", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = ID_PARAMS.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = COMPANY_QUERY.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    try {
+      return await withCompanyScope(user.uuid, companyId, async (client) => {
+        const built = await buildForm425CPrintDocument({
+          client,
+          reportId: params.data.id,
+          operatingCompanyId: companyId,
+        });
+        return { print_html: built.printHtml, suggested_filename: built.suggestedFilename };
+      });
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "form_425c_report_not_found") {
+        return reply.code(404).send({ error: "report_not_found" });
+      }
+      if (e?.message === "form_425c_case_number_required") {
+        return reply.code(422).send({
+          error: "case_number_required",
+          message: "This entity's bankruptcy case number is not set (or is a placeholder). Set the real case number in Profiles & Defaults before printing.",
+        });
+      }
+      throw err;
+    }
   });
 
   app.post("/api/v1/form-425c/profiles", async (req, reply) => {

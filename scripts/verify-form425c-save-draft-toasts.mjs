@@ -197,6 +197,19 @@ export function collectProblems(src) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Exhibit required on defaults must open /425c?tab=form");
   }
   const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
+  if (!historyTab.includes("onPrint(r.id)") || !historyTab.includes("Print")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: History must Print a filing — filed MORs had no reprint hop after Generate was blocked");
+  }
+  if (!src.includes("getForm425CFilingHtml") || !src.includes("historyPrintMutation")) {
+    problems.push(`${PAGE}: History Print must GET filing-html — not POST generate-filing-pdf (that mutates / refuses filed)`);
+  }
+  if (!routes.includes("/filing-html") || !routes.includes("buildForm425CPrintDocument")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET filing-html must reprint without INSERT/UPDATE");
+  }
+  const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
+  if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
+  }
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
       "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
@@ -285,6 +298,8 @@ const good = `
   onSaveExhibit
   exhibitEntries.a
   exhibitEntries.b
+  getForm425CFilingHtml
+  historyPrintMutation
 `;
 const bad = `
   if (!detailQuery.data?.report) {
@@ -296,8 +311,9 @@ const bad = `
 `;
 
 if (process.argv.includes("--selftest")) {
-  if (collectProblems(good).length) {
-    console.error(`${LABEL} --selftest FAIL good`);
+  const goodProblems = collectProblems(good);
+  if (goodProblems.length) {
+    console.error(`${LABEL} --selftest FAIL good\n${goodProblems.map((p) => `  - ${p}`).join("\n")}`);
     process.exit(1);
   }
   if (collectProblems(bad).length < 4) {

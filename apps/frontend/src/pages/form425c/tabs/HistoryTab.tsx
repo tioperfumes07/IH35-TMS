@@ -8,6 +8,7 @@ type Props = {
   loading: boolean;
   onOpen: (id: string) => void;
   onAmend: (id: string) => void;
+  onPrint: (id: string) => void;
 };
 
 const MONTH_NAMES = [
@@ -37,7 +38,7 @@ function periodLabel(value: string) {
 
 const STATUS_OPTIONS: Array<HistoryReportRow["status"] | ""> = ["", "draft", "ready_to_file", "filed", "amended"];
 
-export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
+export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props) {
   const [statusFilter, setStatusFilter] = useState<HistoryReportRow["status"] | "">("");
   const staged = useStagedListFilters({
     applied: { statusFilter },
@@ -72,6 +73,9 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
             <button type="button" className="mr-2 rounded-sm border px-2 py-1 text-xs" onClick={() => onOpen(r.id)}>
               Open
             </button>
+            <button type="button" className="mr-2 rounded-sm border px-2 py-1 text-xs" onClick={() => onPrint(r.id)}>
+              Print
+            </button>
             {r.status === "filed" ? (
               <button type="button" className="rounded-sm bg-slate-800 px-2 py-1 text-xs text-white" onClick={() => onAmend(r.id)}>
                 Amend
@@ -81,7 +85,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
         ),
       },
     ],
-    [onAmend, onOpen],
+    [onAmend, onOpen, onPrint],
   );
 
   return (
