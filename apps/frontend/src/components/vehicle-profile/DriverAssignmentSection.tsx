@@ -55,9 +55,21 @@ export function DriverAssignmentSection({
             )}
           </div>
           <div className="text-xs text-gray-600">{String(defaultDriver?.phone ?? "")}</div>
-          <Button size="sm" variant="secondary" className="mt-2" onClick={() => clearDefault.mutate()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-2"
+            disabled={!defaultDriver?.id || clearDefault.isPending}
+            loading={clearDefault.isPending}
+            onClick={() => clearDefault.mutate()}
+          >
             Clear default
           </Button>
+          {clearDefault.isError ? (
+            <p className="mt-2 text-xs text-red-700" role="alert">
+              Couldn&apos;t clear default driver. {(clearDefault.error as Error)?.message ?? "Try again."}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-sm border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
