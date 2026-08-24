@@ -156,6 +156,13 @@ export function collectProblems(src) {
   if (!detailChunk.includes("sendForm425CCompanyMissing")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: report detail GET must 404 a missing/inactive company, not an uncaught 500");
   }
+  const ensureChunk = (routes.split("async function ensureDefaultProfile")[1] ?? "").split("app.get(\"/api/v1/form-425c\"")[0];
+  if (ensureChunk.includes('"1": "yes"') || ensureChunk.includes("JSON.stringify(defaultAnswers)")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: ensureDefaultProfile must not invent Yes/No default_questionnaire_answers on first GET");
+  }
+  if (!ensureChunk.includes("'{}'::jsonb")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: first profile insert must store empty default_questionnaire_answers");
+  }
   const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split("app.get(\"/api/v1/form-425c/banking-summary\"")[0];
   if (!profilesGetChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: profiles GET must 403 on forbidden_company_membership, not an uncaught 500");
