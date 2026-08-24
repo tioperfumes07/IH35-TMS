@@ -2,10 +2,8 @@
 
 **YOU HAVE FULL INSTRUCTIONS.** Idle = defect. Chrome **9226**.
 
-`git pull --ff-only origin main` → this TOP.
+**THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-WAVE 3 + WAVE 4 leftover-CERTIFIED. Live `189dd4c`. **Do not recertify. Do not restamp U14.**
+**NOW:** next unique leftover FINDING. Never leftover-CERTIFY customers/drivers/fleet. Never restamp U14. Never `trigger_deploy`.
 
-**NOW:** next unique leftover FINDING (500/dead/silent). Never `trigger_deploy`.
-
-OUTBOX: `Codex | ACK | LEFTOVER-W4-STAMPED | PORT=9226 | NOW=next-unique | GO`
+OUTBOX: `Codex | ACK | CERTIFY-TRUTH | PORT=9226 | NOW=next-unique | GO`

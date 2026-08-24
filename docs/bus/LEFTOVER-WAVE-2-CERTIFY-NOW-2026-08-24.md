@@ -1,24 +1,24 @@
-# LEFTOVER WAVE 2 — leftover-CERTIFIED (owner 2026-08-24 06:50 CT)
+# LEFTOVER WAVE 2 — leftover unique hop LOG (owner 2026-08-24)
 
-**Not U14. Not leftover-6 recertify.** Leftover-6 L1–L6 stays leftover-CERTIFIED at `6585a66`. U14 14/14 frozen.
+**Not U14. Not a second CERTIFIED.** U14 14/14 frozen.
 
-Cursor Live Chrome + matching `healthz/shallow` `version` **`6585a66`**. Unique 500 / dead / silent this pass: **none**. Empty $0 / TEST / disabled-until-row expected. CREATE-TEST-THEN-VOID.
+**VOID as second CERTIFY:** W2 **maintenance** — already U14 CERTIFIED (`a9e8d63`). Hop log only.
 
-| # | Module | Route | leftover-CERTIFIED SHA |
-|---|--------|-------|------------------------|
-| W1 | fuel | `/fuel` | `6585a66` — Home tiles + `/fuel/planner` (HOS-aware stops) |
-| W2 | maintenance | `/maintenance` | `6585a66` — R&M board + Create Work Order drawer |
-| W3 | docs | `/docs` | `6585a66` — Documents + Upload Document drawer |
-| W4 | users | `/users` | `6585a66` — roster + Create User drawer |
-| W5 | home | `/home` | `6585a66` — KPIs + Book Load wizard |
-| W6 | help | `/help` | `6585a66` — Help center articles |
-| W7 | program | `/program` | `6585a66` — Scenario tracker |
-| W8 | system | `/system` | `6585a66` — Overview + `?tab=software` |
-| W9 | driver-hub | `/driver-hub` | `6585a66` — Overview + `?tab=scheduler` |
-| W10 | tasks | `/tasks` | `6585a66` — Task Board + Create task drawer |
+The other rows were never on the U14 table. Leftover unique Live Chrome @ `6585a66` (500 / dead / silent none). Not exclusive CERTIFIED.
 
-Do **not** recertify WAVE 2. Do **not** restamp U14. Do **not** recertify leftover-6. Do **not** loop `/425c`.
+| # | Module | Route | Note |
+|---|--------|-------|------|
+| W1 | fuel | `/fuel` | leftover POST hop log @ `6585a66` |
+| W2 | maintenance | `/maintenance` | **U14 CERTIFIED — VOID as leftover-CERTIFY** |
+| W3 | docs | `/docs` | leftover POST hop log @ `6585a66` |
+| W4 | users | `/users` | leftover POST hop log @ `6585a66` |
+| W5 | home | `/home` | leftover POST hop log @ `6585a66` |
+| W6 | help | `/help` | leftover POST hop log @ `6585a66` |
+| W7 | program | `/program` | leftover POST hop log @ `6585a66` |
+| W8 | system | `/system` | leftover POST hop log @ `6585a66` |
+| W9 | driver-hub | `/driver-hub` | leftover POST hop log @ `6585a66` |
+| W10 | tasks | `/tasks` | leftover POST hop log @ `6585a66` |
 
-WAVE 3 leftover-CERTIFIED at `6585a66` (`docs/bus/LEFTOVER-WAVE-3-CERTIFY-NOW-2026-08-24.md`). Next leftover unique FINDING only. Idle = defect.
+Do **not** leftover-CERTIFY these. Do **not** restamp U14. Next = unique FINDING only.
 
-ACK: `SEAT | ACK | LEFTOVER-W2-STAMPED | PORT=n | NOW=<next> | GO`
+Canonical list: `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`.

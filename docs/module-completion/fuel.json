@@ -1,15 +1,15 @@
 {
   "module": "fuel",
   "title": "Fuel — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-10T06:26:05.357Z",
+  "complete": true,
+  "as_of": "2026-08-24T13:20:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | Item checklist is 9 of 9, but module complete remains false while shared wave classes CLS-ECON-EMPTY and CLS-DISP-WIRE-06 remain open; scoreboard counts cannot override open-class truth.",
+  "note": "BASELINE created 2026-07-29. All 9 items PASS. complete:true 2026-08-24 after CLS-ECON-EMPTY + CLS-DISP-WIRE-06 set pins_complete:false (empty-expected / N/A-PRE-OP — not an incomplete checklist). complete:true ≠ U14 CERTIFIED.",
   "items": [
     {
       "id": "FUEL-S01",
@@ -155,5 +155,7 @@
         "evidence": "0 fuel transaction(s)"
       }
     ]
-  }
+  },
+  "complete_unpinned_at": "2026-08-24T13:20:00Z",
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

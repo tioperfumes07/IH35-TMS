@@ -38,6 +38,7 @@
             }
           },
           "status":   { "type": "string", "enum": ["open", "draining", "drained"] },
+          "pins_complete": { "type": "boolean", "$comment": "false = do not freeze Rule 24 complete:false (HOLD / empty-expected / N/A-PRE-OP / ops backlog)" },
           "hotfiles": { "type": "array", "items": { "type": "string" }, "$comment": "files this class edits — Cursor uses overlap to decide the <=3 parallel cap" }
         }
       }

@@ -1,8 +1,8 @@
 {
   "module": "banking",
   "title": "Banking (Module 4)",
-  "complete": false,
-  "as_of": "2026-08-18T22:00Z",
+  "complete": true,
+  "as_of": "2026-08-24T13:20:00Z",
   "live_sha": "3fa422cb19",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
@@ -443,5 +443,7 @@
       }
     ]
   },
-  "note": " | 2026-08-10T06:38:46Z BANK-CLS-SHARED → qualifying HOLD after Cascade bank categorize + Rule 32 reclass."
+  "note": " | 2026-08-10T06:38:46Z BANK-CLS-SHARED → qualifying HOLD after Cascade bank categorize + Rule 32 reclass.",
+  "complete_unpinned_at": "2026-08-24T13:20:00Z",
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }
