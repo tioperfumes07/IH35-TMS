@@ -76,7 +76,7 @@ describe("VendorDetail bill payment", () => {
         } as never,
       ],
     });
-    vi.mocked(vendorsApi.listVendorBillPayments).mockResolvedValue({ payments: [] });
+    vi.mocked(vendorsApi.listVendorBillPayments).mockResolvedValue({ payments: [], rows: [] });
   });
 
   it("shows Record Bill Payment on AP tab", async () => {
