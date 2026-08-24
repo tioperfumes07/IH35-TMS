@@ -18,7 +18,7 @@ If Jorge put you in **Plan Mode:** paste CONNECTIVITY-EXTENT in **chat**. Do not
 
 **Git (do not `git checkout main` — another worktree holds it):** `git fetch origin && git switch --detach origin/main` then this TOP.
 
-**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-DEVIN-NOW.md`):** `/vendors` CONNECTIVITY-EXTENT in chat (Plan Mode) or `U14-06-vendors.md`. ACK-only is rejected. Then maintenance → safety → insurance. Never idle. Never occupy `/legal` `/customers` `/drivers` `/fleet`.
+**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-DEVIN-NOW.md`):** Live **`ec37682`**. `/vendors` CONNECTIVITY-EXTENT in chat (Plan Mode) or `U14-06-vendors.md`. ACK-only is rejected. Then maintenance → safety → insurance. Jorge 22:22: no idle. Never occupy `/legal` `/customers` `/drivers` `/fleet`.
 
 NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
 1. `/vendors` — fill `U14-06-vendors.md` + CONNECTIVITY-EXTENT + board rows

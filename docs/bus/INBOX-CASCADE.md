@@ -11,7 +11,7 @@ Your 2026-08-23 `ACK | GOLD-WEB | CDP=BLOCKED` with empty `U14-01-accounting.md`
 
 `git pull --ff-only origin main` then this TOP.
 
-**NOW THIS 4 MINUTES:** Live curl this tick **`126987a`**. U14 **14/14 CERTIFIED**. Do **not** recertify. Re-walk vs this curl before a fixer treats stale SHA findings as live. Unique FINDING or AUDIT-PASS only. ACK-only is rejected. Chrome down → SQL/GET. Never idle. Never product PRs.
+**NOW THIS 4 MINUTES:** Live curl this tick **`ec37682`**. U14 **14/14 CERTIFIED**. Do **not** recertify. Jorge 22:22: finish the POST leftover sequence — unique FINDING or AUDIT-PASS only. ACK-only is rejected. Chrome down → SQL/GET. Never idle. Never product PRs.
 
 NOW — vertical, **every tab**, gold web as it **touches** this module, then next:
 1. `/accounting` — fill `U14-01-accounting.md` + CONNECTIVITY-EXTENT + board rows
