@@ -9,7 +9,7 @@ import { Button } from "../components/Button";
 import { typography } from "../design/tokens";
 
 export function LoginPage() {
-  const { user, isLoading, isError, refetch } = useAuth();
+  const { user, isLoading, isError, isUnauthenticated, refetch } = useAuth();
   const queryClient = useQueryClient();
   const authBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
   const returnTo = encodeURIComponent(window.location.origin);
@@ -32,7 +32,8 @@ export function LoginPage() {
     );
   }
 
-  if (!user && isError) {
+  // 401 is signed-out — show the login form. Only a real /auth/me hang (408/5xx) is this wall.
+  if (!user && isError && !isUnauthenticated) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-sm text-gray-700">
         <p role="alert">Session check timed out. The API hung — you may still be signed in.</p>
