@@ -80,7 +80,12 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
         ) sp ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.is_sample_data IS NOT TRUE
+          AND EXISTS (
+            SELECT 1
+            FROM mdata.loads sample_load
+            WHERE sample_load.id = l.id
+              AND sample_load.is_sample_data IS NOT TRUE
+          )
           AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
           AND sp.scheduled_arrival_at IS NOT NULL
           AND (
