@@ -26,8 +26,9 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-form425c-exhibits-route-mounted";
 const INDEX = join(ROOT, "apps/backend/src/index.ts");
 const ROUTES = join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts");
+const VIEWER = join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
 
-export function audit(indexSrc, routesSrc) {
+export function audit(indexSrc, routesSrc, viewerSrc = "") {
   const problems = [];
 
   if (!/import\s*\{[^}]*registerForm425cExhibitsRoutes[^}]*\}\s*from\s*["'][^"']*reports\/form-425c\/exhibits\/routes\.js["']/.test(indexSrc)) {
@@ -68,6 +69,20 @@ export function audit(indexSrc, routesSrc) {
       "exhibits POST /build must 403 forbidden_company_membership — blanket 502 mor_cash_source_error was a leftover 500-class",
     );
   }
+  if (
+    !buildChunk.includes('e.message.startsWith("Exhibit F ")') ||
+    !buildChunk.includes("exhibit_f_incomplete") ||
+    !buildChunk.includes("422")
+  ) {
+    problems.push(
+      "exhibits POST /build must 422 exhibit_f_incomplete when Exhibit F refuses truncation — not 502 mor_cash_source_error",
+    );
+  }
+  if (viewerSrc && (!viewerSrc.includes("userFacingApiError") || viewerSrc.includes('pushToast("Exhibit build failed"'))) {
+    problems.push(
+      "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Build error must toast the API message — generic Exhibit build failed hid Exhibit F incomplete",
+    );
+  }
 
   return problems;
 }
@@ -75,16 +90,17 @@ export function audit(indexSrc, routesSrc) {
 function selftest() {
   const indexSrc = readFileSync(INDEX, "utf8");
   const routesSrc = readFileSync(ROUTES, "utf8");
+  const viewerSrc = readFileSync(VIEWER, "utf8");
   const failures = [];
 
   // Case 0 — the CORRECTED shape must not be flagged.
-  const clean = audit(indexSrc, routesSrc);
+  const clean = audit(indexSrc, routesSrc, viewerSrc);
   if (clean.length !== 0) failures.push(`case0 FAIL — corrected source flagged: ${clean.join("; ")}`);
 
   // Case 1 — the ORIGINAL defect: imported but never called. Must be caught.
   const importOnly = indexSrc.replace(/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\);?/, "");
   if (importOnly === indexSrc) failures.push("case1 INERT — mutation did not change the source");
-  else if (!audit(importOnly, routesSrc).some((p) => /never CALLS/.test(p)))
+  else if (!audit(importOnly, routesSrc, viewerSrc).some((p) => /never CALLS/.test(p)))
     failures.push("case1 FAIL — import-without-call not caught (the original defect)");
 
   // Case 2 — import removed entirely.
@@ -93,19 +109,24 @@ function selftest() {
     ""
   );
   if (noImport === indexSrc) failures.push("case2 INERT — mutation did not change the source");
-  else if (!audit(noImport, routesSrc).some((p) => /IMPORT/.test(p)))
+  else if (!audit(noImport, routesSrc, viewerSrc).some((p) => /IMPORT/.test(p)))
     failures.push("case2 FAIL — missing import not caught");
 
   // Case 3 — the role gate stripped from the handler.
   const noGate = routesSrc.replace(/reply\.code\(403\)/g, "reply.code(200)");
   if (noGate === routesSrc) failures.push("case3 INERT — mutation did not change the source");
-  else if (!audit(indexSrc, noGate).some((p) => /403/.test(p)))
+  else if (!audit(indexSrc, noGate, viewerSrc).some((p) => /403/.test(p)))
     failures.push("case3 FAIL — stripped 403 role gate not caught");
 
   const noMembership = routesSrc.replace('e?.message === "forbidden_company_membership"', "e?.message === \"other\"");
   if (noMembership === routesSrc) failures.push("case4 INERT — membership mutation did not change the source");
-  else if (!audit(indexSrc, noMembership).some((p) => /forbidden_company_membership/.test(p)))
+  else if (!audit(indexSrc, noMembership, viewerSrc).some((p) => /forbidden_company_membership/.test(p)))
     failures.push("case4 FAIL — POST /build membership 502 not caught");
+
+  const noExhibitF = routesSrc.replace("exhibit_f_incomplete", "other");
+  if (noExhibitF === routesSrc) failures.push("case5 INERT — exhibit_f_incomplete mutation did not change the source");
+  else if (!audit(indexSrc, noExhibitF, viewerSrc).some((p) => /exhibit_f_incomplete/.test(p)))
+    failures.push("case5 FAIL — Exhibit F incomplete mapped as cash 502 not caught");
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
@@ -119,7 +140,7 @@ function main() {
     selftest();
     return;
   }
-  const problems = audit(readFileSync(INDEX, "utf8"), readFileSync(ROUTES, "utf8"));
+  const problems = audit(readFileSync(INDEX, "utf8"), readFileSync(ROUTES, "utf8"), readFileSync(VIEWER, "utf8"));
   if (problems.length) {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);

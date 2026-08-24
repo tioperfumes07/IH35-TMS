@@ -6,6 +6,7 @@ import { apiRequest } from "../../../api/client";
 import { ExhibitCard } from "../../../components/form-425c/ExhibitCard";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { buildExhibitsPrintBodyHtml } from "./exhibitsPrintHtml";
 
@@ -59,7 +60,7 @@ export function ExhibitsViewer() {
       setBuilt(data);
       pushToast("Exhibits A–F built", "success");
     },
-    onError: () => pushToast("Exhibit build failed", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Exhibit build failed"), "error"),
   });
 
   const activeExhibit = useMemo(() => {

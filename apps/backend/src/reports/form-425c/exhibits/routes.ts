@@ -61,6 +61,12 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
           message: "Not a member of that operating company — exhibits will not build another entity's court package",
         });
       }
+      if (typeof e?.message === "string" && e.message.startsWith("Exhibit F ")) {
+        return reply.code(422).send({
+          error: "exhibit_f_incomplete",
+          message: e.message,
+        });
+      }
       req.log?.error?.({ err: e }, "form-425c exhibits build failed");
       return reply.code(502).send({
         error: "mor_cash_source_error",
