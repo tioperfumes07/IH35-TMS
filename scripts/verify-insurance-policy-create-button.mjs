@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @matrix-built {"modules":["insurance"],"cols":["connectivity"],"leaves":["policies.create"],"task":"INSURANCE-POLICY-CREATOR-READ-FAILURE-TRUTH"}
 /** Ratchets the policy-list create action through its canonical modal submit. */
 import fs from "node:fs";
 
@@ -16,6 +17,10 @@ const CHECKS = [
   ["modal:canonical-units", "modal", /listUnits/],
   ["modal:create-endpoint", "modal", /\/api\/v1\/insurance\/policies/],
   ["modal:create-title", "modal", /title="Create Policy"/],
+  ["modal:type-error-truth", "modal", /typesQuery\.isError[\s\S]{0,240}Couldn't load coverage types[\s\S]{0,240}typesQuery\.refetch/],
+  ["modal:units-error-truth", "modal", /unitsQuery\.isError[\s\S]{0,240}Couldn't load units[\s\S]{0,240}unitsQuery\.refetch/],
+  ["modal:units-empty-after-success", "modal", /!unitsQuery\.isLoading && !unitsQuery\.isError && units\.length === 0/],
+  ["modal:submit-fails-closed", "modal", /disabled=\{createMutation\.isPending \|\| typesQuery\.isError \|\| unitsQuery\.isError\}/],
 ];
 
 export function collectProblems(sources) {
@@ -45,5 +50,5 @@ else {
     console.error(`verify-insurance-policy-create-button FAILED:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
     process.exit(1);
   }
-  console.log("verify-insurance-policy-create-button PASS — visible RBAC action→canonical catalogs/units→real policy endpoint");
+  console.log("verify-insurance-policy-create-button PASS — visible RBAC action→honest canonical catalog/unit reads→real policy endpoint");
 }
