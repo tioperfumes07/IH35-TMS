@@ -64,6 +64,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const [addLabel, setAddLabel] = useState("");
   const [addAmount, setAddAmount] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const queryKey = ["cash-flow-daily", operatingCompanyId, date];
@@ -97,7 +98,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const archiveMutation = useMutation({
     mutationFn: (adjustmentId: string) => archiveCashFlowAdjustment(adjustmentId, operatingCompanyId),
     onSuccess: () => {
+      setArchiveError(null);
       void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (e) => {
+      setArchiveError(e instanceof Error ? e.message : "Failed to remove adjustment. Please try again.");
     },
   });
 
@@ -386,7 +391,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                           type="button"
                           className="ml-3 shrink-0 text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
                           disabled={archiveMutation.isPending}
-                          onClick={() => archiveMutation.mutate(item.adjustment_id!)}
+                          onClick={() => {
+                            setArchiveError(null);
+                            archiveMutation.mutate(item.adjustment_id!);
+                          }}
                           data-testid="cash-flow-adjustment-remove"
                         >
                           Remove
@@ -396,6 +404,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   ))}
                 </div>
               )}
+              {archiveError ? (
+                <p className="px-4 pt-2 text-xs text-red-600" data-testid="cash-flow-adjustment-archive-error" role="alert">
+                  {archiveError}
+                </p>
+              ) : null}
 
               {/* Projection-only cash-flow adjustment (does NOT create accounting bill/expense). */}
               <div className="border-t border-dashed border-gray-200 px-4 py-3" data-testid="cash-flow-adjustment-create">

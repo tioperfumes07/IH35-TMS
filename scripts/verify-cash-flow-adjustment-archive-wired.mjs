@@ -70,6 +70,9 @@ export function checkCashFlowAdjustmentArchiveWired(serviceSrc, routesSrc, apiSr
   const mutCallIdx = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveCashFlowAdjustment(", mutIdx);
   const btnIdx = mutIdx === -1 ? -1 : tabSrc.indexOf('data-testid="cash-flow-adjustment-remove"', mutIdx);
   const onClickIdx = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveMutation.mutate(item.adjustment_id", mutIdx);
+  const mutBlock = mutIdx === -1 ? "" : tabSrc.slice(mutIdx, mutIdx + 500);
+  const hasOnError = /onError\s*:/.test(mutBlock);
+  const errIdx = tabSrc.indexOf('data-testid="cash-flow-adjustment-archive-error"');
   if (
     mutIdx === -1 ||
     mutCallIdx === -1 ||
@@ -81,6 +84,10 @@ export function checkCashFlowAdjustmentArchiveWired(serviceSrc, routesSrc, apiSr
   ) {
     problems.push(
       "DailyPredictionTab.tsx has no archiveMutation wired to a Remove button — a mistaken manual adjustment could still be created but never removed from the UI"
+    );
+  } else if (!hasOnError || errIdx === -1) {
+    problems.push(
+      "DailyPredictionTab.tsx archiveMutation has no onError + visible archive-error — Remove fail is a silent no-op"
     );
   }
 
@@ -137,6 +144,14 @@ if (process.argv.includes("--selftest")) {
   if (partialProblems.length !== 1) {
     failures.push(
       `a partial fix (backend wired, frontend button missing) expected 1 problem, got ${partialProblems.length}: ${partialProblems.join("; ")}`
+    );
+  }
+
+  const silentTab = goodTab.replace(/onError:\s*\(e\)\s*=>\s*\{[\s\S]*?\},\n/, "");
+  const silentProblems = checkCashFlowAdjustmentArchiveWired(goodService, goodRoutes, goodApi, silentTab);
+  if (!silentProblems.some((p) => /silent no-op/.test(p))) {
+    failures.push(
+      `stripping archive onError must fail as silent no-op, got: ${silentProblems.join("; ") || "none"}`
     );
   }
 
