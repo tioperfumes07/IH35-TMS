@@ -154,14 +154,24 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Load status moves to in-transit",
     je: "—",
     spec_ref: "WIRE-06",
-    sources: ["mdata.loads"],
+    sources: ["mdata.loads", "events.event_log"],
     probe: {
       sql: `
         SELECT count(*)::text AS n
           FROM mdata.loads l
+          JOIN events.event_log e
+            ON e.source_table = 'mdata.loads'
+           AND e.source_reference_id = l.id
+           AND e.subject_type = 'load'
+           AND e.subject_id = l.id
+           AND e.operating_company_id = l.operating_company_id
          WHERE l.status::text IN ('dispatched','in_transit','at_delivery','delivered',
                                   'delivered_pending_docs','completed_docs_received','invoiced','paid','closed')
            AND l.soft_deleted_at IS NULL
+           AND e.event_type = 'load.status_changed'
+           AND e.payload->>'to_status' = 'in_transit'
+           AND e.actor_user_id IS NOT NULL
+           AND e.is_active = true
            AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} load(s) dispatched or beyond`,
