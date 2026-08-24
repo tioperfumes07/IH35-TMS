@@ -254,7 +254,26 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     const suffix = nextParams.toString() ? `?${nextParams.toString()}` : "";
     navigate(`${target}${suffix}`, { replace: true });
   }, [navigate, searchParams]);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(() => searchParams.get("create") === "1");
+  useEffect(() => {
+    if (searchParams.get("create") !== "1") return;
+    setAddOpen(true);
+  }, [searchParams]);
+  const openCreate = () => {
+    setAddOpen(true);
+    if (searchParams.get("create") === "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.set("create", "1");
+    setSearchParams(next, { replace: true });
+  };
+  const closeCreate = () => {
+    setAddOpen(false);
+    if (searchParams.get("create") === "1") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("create");
+      setSearchParams(next, { replace: true });
+    }
+  };
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
@@ -590,7 +609,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         actions={
           <div className="flex items-center gap-2">
             {/* ARCHIVE-not-DELETE (A24-4): former label "+ Driver" → canonical "+ Create Driver" per locked vocabulary */}
-            <Button type="button" onClick={() => setAddOpen(true)}>
+            <Button type="button" data-testid="drivers-create-open" onClick={openCreate}>
               + Create Driver
             </Button>
             <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
@@ -1234,7 +1253,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       <CreateDriverModal
         open={addOpen}
         companyId={selectedCompanyId}
-        onClose={() => setAddOpen(false)}
+        onClose={closeCreate}
       />
 
       <VoidReasonModal
