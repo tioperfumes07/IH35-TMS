@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, DollarSign, RefreshCw, AlertCircle, CheckCircle, X } from "lucide-react";
 import type { AuthMeResponse } from "../../types/api";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { fetchHomeCashPosition, fetchHomeTodayRevenue, type HomeKpiRange } from "../../api/home";
 import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
@@ -91,6 +92,7 @@ type Props = {
 
 export function QboStyleHomePage({ auth }: Props) {
   const navigate = useNavigate();
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const cid = selectedCompanyId ?? "";
   const displayName = auth.email?.split("@")[0] ?? "there";
@@ -217,7 +219,13 @@ export function QboStyleHomePage({ auth }: Props) {
             <button
               key={a.to}
               type="button"
-              onClick={() => navigate(a.to)}
+              onClick={() => {
+                if (!cid) {
+                  pushToast("Select an operating company before creating", "error");
+                  return;
+                }
+                navigate(a.to);
+              }}
               className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-xs hover:bg-gray-50 hover:border-gray-300"
             >
               {a.label}
