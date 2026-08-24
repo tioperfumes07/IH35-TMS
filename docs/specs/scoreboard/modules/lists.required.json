@@ -295,7 +295,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -306,7 +305,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -317,7 +315,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -328,7 +325,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -339,7 +335,6 @@
       "sub": "Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -350,7 +345,6 @@
       "sub": "+ Create — Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1746,7 +1740,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1757,7 +1750,6 @@
       "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1788,7 +1780,6 @@
       "sub": "Trailer Statuses",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1799,7 +1790,6 @@
       "sub": "+ Create — Trailer Statuses",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1810,7 +1800,6 @@
       "sub": "Condition Codes",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1821,7 +1810,6 @@
       "sub": "+ Create — Condition Codes",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7969,6 +7957,24 @@
     "picker_law_generic_catalog_class_architecturally_flat_2026_08_21": {
       "finding": "CC-3-PICKER-LAW-GENERIC-CATALOG-CLASS-CONFIRMED-FLAT",
       "note": "Closes the picker_law question for the entire CATALOG-2 generic-CRUD catalog class (GenericCatalogPage.tsx + CatalogEditModal.tsx + GENERIC_CATALOG_REGISTRY in useCatalogQuery.ts, 83 registry entries spanning accounting/customers/dispatch/driver/fleet/fuel/maintenance/safety/vendors), not just individual catalogs. Proof, not a spot-guess: (1) CatalogFieldType (useCatalogQuery.ts:4) declares 'foreign_key' as a supported type — the picker capability exists (CatalogEditModal.tsx renders a real Combobox for it, fixed this session, PR #13599) — but `grep -c foreign_key` on the 83-entry registry returns exactly 1 hit, the type-union declaration itself; zero of the 83 entries assign it. (2) 3 fresh live spot-checks this session across independent domains — accounting.account_role_bindings (0 rows, no page-level Create button exists at all), maintenance.maintenance_vendors (5 rows, Code/Display Name/Description/Order/Status, no FK), fuel.fuel_stations (0 rows, Create modal = Code/Fuel Station/Description/Sort Order, no FK) — all match the uniform flat shape. Cross-catalog references that ARE genuinely picked (vendor, account, class, payment_term, load_trailer_equipment, etc.) route through the SEPARATE catalogPickerRegistry.ts (42 keys) consumed by ReferenceSelect elsewhere in the app, not through the generic catalog's own create/edit form — verify-lst-picker01-consumer-adoption (verify-step 2358) PASSES against all 42. Net: a generic-catalog leaf's OWN create/edit modal is correctly zero-picker by architecture; picker_law for these leaves is satisfied by their registry consumer wiring, not by anything inside GenericCatalogPage/CatalogEditModal. Documents an acceptable non-gap at the class level so future sweeps don't re-open already-closed leaves one at a time."
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_23_batch1": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "verify-picker-law-built-match-cap.mjs flags LST-F-FOREIGN-KEY-RAW-INPUT-CHROME-LAW-9's leafRe as over-claiming 119 Required leaves (cap 40). The generic-catalog-class note above (picker_law_generic_catalog_class_architecturally_flat_2026_08_21) already proved these leaves' own Create forms are architecturally flat but never actually dropped picker_law from their required arrays, leaving the matrix internally inconsistent with its own documented conclusion. CC-2's board audit (docs/audit/GUARD-WORKORDERS.md, LST-PICKER-LAW-FLAT-CATALOG-OVERREACH) independently classified the full catalog set from Create-form JSX reads. This entry completes the drop for the first verified batch of 6 catalogs (12 leaves: .list + .create) — each independently re-confirmed via direct JSX read of its own dedicated Create-form component (InternalFineReasonModal.tsx, CivilFineTypeModal.tsx, CompanyViolationTypeModal.tsx, FleetCatalogModal.tsx x3) immediately before this drop, not inferred from the catalog name or copied from the earlier class-level note. Remaining catalogs from CC-2's audit (fuel/accounting/drivers/maintenance) follow in later passes.",
+      "drops_applied": [
+        { "id": "catalog.safety.internal_fine_reasons.list", "removed": ["picker_law"] },
+        { "id": "catalog.safety.internal_fine_reasons.create", "removed": ["picker_law"] },
+        { "id": "catalog.safety.civil_fine_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.safety.civil_fine_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.safety.company_violation_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.safety.company_violation_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.condition_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.condition_codes.create", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.tire_positions.list", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.tire_positions.create", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.ownership_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.fleet.ownership_types.create", "removed": ["picker_law"] }
+      ]
     }
   }
 }
