@@ -30,7 +30,7 @@ export function printLetterHtml(opts: {
   bodyHtml: string;
   /** Optional @page size for wide tables (banking recon / register). */
   orientation?: "portrait" | "landscape";
-}): void {
+}): boolean {
   const title = escapeHtml(opts.title);
   const pageSize = opts.orientation === "landscape" ? "landscape" : "portrait";
   const maxWidth = opts.orientation === "landscape" ? "1100px" : "720px";
@@ -68,10 +68,11 @@ export function printLetterHtml(opts: {
   const win = window.open(url, "_blank", "noopener,noreferrer");
   if (!win) {
     URL.revokeObjectURL(url);
-    return;
+    return false;
   }
   // Revoke after the new window has a chance to load the blob.
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return true;
 }
 
 function escapeHtml(unsafe: string): string {

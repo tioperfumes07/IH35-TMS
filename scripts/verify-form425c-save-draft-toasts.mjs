@@ -216,6 +216,22 @@ export function collectProblems(src) {
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
   }
+  const exhibitsViewer = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx"), "utf8");
+  if (!exhibitsViewer.includes("printLetterHtml") || !exhibitsViewer.includes("buildExhibitsPrintBodyHtml")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: A–F builder must print the built package — JSON-only was a silent incomplete court hop");
+  }
+  if (!exhibitsViewer.includes("Build all exhibits first") || exhibitsViewer.includes("disabled={!built}")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print before Build must toast, not a dead disabled button");
+  }
+  const exhibitsPrint = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts"), "utf8");
+  if (
+    !exhibitsPrint.includes("export function buildExhibitsPrintBodyHtml") ||
+    !exhibitsPrint.includes("Exhibit A") ||
+    !exhibitsPrint.includes("Exhibit F") ||
+    !exhibitsPrint.includes("total_cents")
+  ) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts: print body must include A–F totals, not empty chrome");
+  }
   return problems;
 }
 
