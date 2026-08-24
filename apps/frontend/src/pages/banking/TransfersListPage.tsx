@@ -16,7 +16,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, looksLikeSerializedJson } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { TransferModal } from "./TransferModal";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -31,6 +31,16 @@ function formatMoney(cents: number) {
 
 function typeLabel(type: TransferType) {
   return type.replaceAll("_", " ");
+}
+
+// ACCT-F6284: a bank-feed line minted into a transfer can inherit a serialized-JSON
+// categorization_memo (apps/backend/src/banking/transfers.service.ts,
+// mintTransferForBankFeedLineInClient) — this is a free-text Memo field, not an entity-name lookup,
+// so it uses the shared JSON-shape detector directly rather than entityLabel's "not visible" wording.
+function memoText(memo: string | null | undefined): string {
+  const s = (memo ?? "").trim();
+  if (s === "" || looksLikeSerializedJson(s)) return "-";
+  return s;
 }
 
 export function TransfersListPage() {
@@ -166,7 +176,7 @@ export function TransfersListPage() {
         sortValue: (row) => Number(row.amount_cents),
         render: (row) => formatMoney(Number(row.amount_cents)),
       },
-      { key: "memo", label: "Memo", render: (row) => row.memo || "-" },
+      { key: "memo", label: "Memo", render: (row) => memoText(row.memo) },
       { key: "reference_number", label: "Reference", render: (row) => row.reference_number || "-" },
       {
         key: "journal_entry_id",
@@ -242,7 +252,7 @@ export function TransfersListPage() {
                         <div className="space-y-1 text-xs text-slate-800">
                           <p>Type: {detail.transfer.transfer_type}</p>
                           <p>Amount: {formatMoney(Number(detail.transfer.amount_cents))}</p>
-                          <p>Memo: {detail.transfer.memo || "-"}</p>
+                          <p>Memo: {memoText(detail.transfer.memo)}</p>
                           <p>
                             TMS JE:{" "}
                             {detail.transfer.journal_entry_id ? (

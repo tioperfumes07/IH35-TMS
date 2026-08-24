@@ -34,8 +34,16 @@
 const UUID_SHAPE_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name. */
-function looksLikeSerializedJson(s: string): boolean {
+/**
+ * ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name.
+ * Exported so free-text display sites (a "Memo" column, not an entity-name lookup) can reuse the
+ * same detection without adopting entityLabel's "not visible" resolved-entity semantics — see
+ * TransfersListPage.tsx, whose Memo column/detail can inherit a serialized-JSON categorization_memo
+ * from apps/backend/src/banking/bulk-transactions.ts when a bulk-categorized bank feed line is later
+ * minted into a bank-to-bank transfer (apps/backend/src/banking/transfers.service.ts,
+ * mintTransferForBankFeedLineInClient: `categorization_memo?.trim() || description?.trim()`).
+ */
+export function looksLikeSerializedJson(s: string): boolean {
   const first = s[0];
   if (first !== "{" && first !== "[") return false;
   try {
