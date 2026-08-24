@@ -128,6 +128,30 @@ export function billReference(row: {
   return `— ${vendor}, ${date}, ${amount} (no vendor bill number on file)`;
 }
 
+/**
+ * The human-facing reference for an invoice row — same standard as billReference() above, and the
+ * exact same defect class: `label: \`Invoice ${row.display_id}\`` had no fallback when display_id
+ * was null, so it would render the literal string "Invoice null" (String(undefined/null) coerces
+ * that way in a template literal) the first time an invoice without a display_id reached this
+ * exhibit. Unreachable against prod data TODAY (accounting.invoices has 0 rows system-wide as of
+ * this fix — verified via Neon), but this is the identical latent bug billReference() was written
+ * to close for bills, in the same file, and must not regress the next time an invoice is created.
+ */
+export function invoiceReference(row: {
+  display_id: string | null;
+  customer_name: string | null;
+  total_cents: string | number | null;
+  invoice_date: string | null;
+}): string {
+  const displayId = row.display_id?.trim();
+  if (displayId) return displayId;
+
+  const customer = row.customer_name?.trim() || "customer not recorded";
+  const date = row.invoice_date ? String(row.invoice_date) : "date not recorded";
+  const amount = formatUsd(Number(row.total_cents ?? 0));
+  return `— ${customer}, ${date}, ${amount} (no invoice number on file)`;
+}
+
 export async function buildExhibitF(
   client: ExhibitQueryClient,
   input: ExhibitPeriod
@@ -136,13 +160,17 @@ export async function buildExhibitF(
 
   const invoicesRes = await client.query<{
     id: string;
-    display_id: string;
+    display_id: string | null;
+    customer_name: string | null;
     total_cents: string;
     invoice_date: string;
   }>(
     `
-      SELECT i.id, i.display_id, i.total_cents, i.issue_date::text AS invoice_date
+      SELECT i.id, i.display_id, c.customer_name, i.total_cents, i.issue_date::text AS invoice_date
       FROM accounting.invoices i
+      LEFT JOIN mdata.customers c
+        ON c.id = i.customer_id
+       AND c.operating_company_id = i.operating_company_id
       WHERE i.operating_company_id = $1::uuid
         AND i.issue_date >= $2::date
         AND i.issue_date <= $3::date
@@ -173,11 +201,12 @@ export async function buildExhibitF(
   );
 
   for (const row of invoicesRes.rows) {
+    const ref = invoiceReference(row);
     documents.push({
       doc_type: "invoice",
-      reference_id: String(row.display_id ?? row.id),
+      reference_id: ref,
       evidence_uuid: null,
-      label: `Invoice ${row.display_id}`,
+      label: `Invoice ${ref}`,
       amount_cents: Number(row.total_cents ?? 0),
       doc_date: row.invoice_date ? String(row.invoice_date) : null,
     });

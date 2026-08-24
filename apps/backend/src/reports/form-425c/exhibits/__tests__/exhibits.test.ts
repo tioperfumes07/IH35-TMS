@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildExhibitD, calculateUsTrusteeQuarterlyFeeCents, calendarQuarterContaining } from "../exhibit-d-quarterly-fees.js";
-import { billReference, buildExhibitF } from "../exhibit-f-supporting-docs.js";
+import { billReference, buildExhibitF, invoiceReference } from "../exhibit-f-supporting-docs.js";
 import { buildAllExhibits, getBuiltExhibits } from "../exhibits-builder.service.js";
 import { registerForm425cExhibitsRoutes } from "../routes.js";
 import { buildExhibitC } from "../exhibit-c-bank-reconciliation.js";
@@ -265,6 +265,46 @@ describe("form-425c exhibits", () => {
         bill_date: null,
       });
       expect(ref).toContain("vendor not recorded");
+      expect(ref).toContain("date not recorded");
+      expect(ref).toContain("$95,000.00");
+      expect(ref).not.toMatch(/null|undefined/);
+    });
+  });
+
+  describe("invoiceReference — F425C-EXHIBIT-F-INVOICE-NULL-LABEL — must never label a document 'null' or a uuid", () => {
+    it("uses the invoice's display_id when present", () => {
+      expect(
+        invoiceReference({
+          display_id: "INV-2026-00038",
+          customer_name: "TC Freight",
+          total_cents: "179400",
+          invoice_date: "2026-06-30",
+        })
+      ).toBe("INV-2026-00038");
+    });
+
+    it("falls back to customer + date + amount when display_id is null — never the literal 'null'", () => {
+      const ref = invoiceReference({
+        display_id: null,
+        customer_name: "TC Freight",
+        total_cents: "179400",
+        invoice_date: "2026-06-30",
+      });
+      expect(ref).toContain("TC Freight");
+      expect(ref).toContain("2026-06-30");
+      expect(ref).toContain("$1,794.00");
+      expect(ref).not.toMatch(/null|undefined/);
+      expect(ref).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/); // no uuid
+    });
+
+    it("stays honest when the customer is missing too — no fabricated reference", () => {
+      const ref = invoiceReference({
+        display_id: "   ", // whitespace-only must not count as a real reference
+        customer_name: null,
+        total_cents: "9500000",
+        invoice_date: null,
+      });
+      expect(ref).toContain("customer not recorded");
       expect(ref).toContain("date not recorded");
       expect(ref).toContain("$95,000.00");
       expect(ref).not.toMatch(/null|undefined/);
