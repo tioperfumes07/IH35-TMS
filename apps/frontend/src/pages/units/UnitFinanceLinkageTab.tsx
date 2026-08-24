@@ -57,7 +57,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-financials">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Linked Bills / Expenses</h3>
-          <Link to="/accounting/bills" className="text-xs text-slate-700 hover:underline">
+          <Link to={`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`} className="text-xs text-slate-700 hover:underline">
             Open Bills →
           </Link>
         </div>

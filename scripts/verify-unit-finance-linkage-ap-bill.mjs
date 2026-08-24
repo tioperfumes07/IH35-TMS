@@ -44,6 +44,9 @@ export function audit(src) {
   if (!/EntityLink kind="bill" id=\{b\.id\}/.test(src.tab)) {
     failures.push(`${FILES.tab}: linked bills must render a real EntityLink kind="bill"`);
   }
+  if (!/to=\{`\/accounting\/bills\?unit_id=\$\{encodeURIComponent\(unitId\)\}`\}[\s\S]{0,120}Open Bills/.test(src.tab)) {
+    failures.push(`${FILES.tab}: Open Bills must preserve the current unit_id filter`);
+  }
   return failures;
 }
 
@@ -66,6 +69,7 @@ if (process.argv.includes("--selftest")) {
     ["route-registered", "routes", /units\/:id\/linked-financials/g, "units/:id/unused-route"],
     ["tab-call", "tab", /listUnitLinkedFinancials\(unitId, companyId\)/, "listSomethingElse(unitId, companyId)"],
     ["tab-entitylink", "tab", /EntityLink kind="bill" id=\{b\.id\}/, 'span'],
+    ["tab-open-bills-filter", "tab", /\/accounting\/bills\?unit_id=\$\{encodeURIComponent\(unitId\)\}/, "/accounting/bills"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
