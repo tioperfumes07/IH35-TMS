@@ -216,6 +216,17 @@ export function collectProblems(src) {
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
   }
+  const markChunk = (routes.split('app.post("/api/v1/form-425c/:id/mark-filed"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/amend"')[0];
+  if (
+    !markChunk.includes('SELECT case_number, status') ||
+    !markChunk.includes('existing.status === "filed"') ||
+    !markChunk.includes("form_425c_filed_immutable") ||
+    !markChunk.includes("409")
+  ) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: Mark Filed on a filed MOR must 409 — UPDATE 0 rows was a silent 404 report_not_found_or_invalid_state",
+    );
+  }
   const exhibitsViewer = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx"), "utf8");
   if (!exhibitsViewer.includes("printLetterHtml") || !exhibitsViewer.includes("buildExhibitsPrintBodyHtml")) {
     problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: A–F builder must print the built package — JSON-only was a silent incomplete court hop");

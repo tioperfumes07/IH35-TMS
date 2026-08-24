@@ -1063,18 +1063,23 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      const existingRes = await client.query(
-        `SELECT case_number FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-        [params.data.id, b.operating_company_id]
-      );
-      const existing = existingRes.rows[0];
-      if (!existing) return null;
-      if (isInvalidCaseNumber(existing.case_number)) {
-        return { caseNumberInvalid: true } as const;
-      }
-      const res = await client.query(
-        `
+    let updated: Record<string, unknown> | { caseNumberInvalid: true } | null;
+    try {
+      updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        const existingRes = await client.query<{ case_number: string | null; status: string }>(
+          `SELECT case_number, status FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, b.operating_company_id]
+        );
+        const existing = existingRes.rows[0];
+        if (!existing) return null;
+        if (existing.status === "filed") {
+          throw new Error("form_425c_filed_immutable");
+        }
+        if (isInvalidCaseNumber(existing.case_number)) {
+          return { caseNumberInvalid: true } as const;
+        }
+        const res = await client.query(
+          `
           UPDATE compliance.form_425c_reports
           SET status = 'filed',
               filed_at = COALESCE($3::timestamptz, now()),
@@ -1085,25 +1090,35 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             AND status IN ('draft', 'ready_to_file', 'amended')
           RETURNING *
         `,
-        [params.data.id, b.operating_company_id, b.filed_at ?? null, user.uuid]
-      );
-      const report = res.rows[0];
-      if (!report) return null;
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "compliance.form_425c.filed",
-        {
-          resource_type: "compliance.form_425c_reports",
-          resource_id: params.data.id,
-          operating_company_id: b.operating_company_id,
-        },
-        "info",
-        "BT-3-FORM-425C"
-      );
-      return report;
-    });
-    if (!updated) return reply.code(404).send({ error: "report_not_found_or_invalid_state" });
+          [params.data.id, b.operating_company_id, b.filed_at ?? null, user.uuid]
+        );
+        const report = res.rows[0];
+        if (!report) return null;
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "compliance.form_425c.filed",
+          {
+            resource_type: "compliance.form_425c_reports",
+            resource_id: params.data.id,
+            operating_company_id: b.operating_company_id,
+          },
+          "info",
+          "BT-3-FORM-425C"
+        );
+        return report;
+      });
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History. Mark Filed will not rewrite a filed court filing.",
+        });
+      }
+      throw err;
+    }
+    if (!updated) return reply.code(404).send({ error: "report_not_found" });
     if ((updated as { caseNumberInvalid?: boolean }).caseNumberInvalid) {
       return reply.code(422).send({
         error: "case_number_required",
