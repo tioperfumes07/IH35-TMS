@@ -40,6 +40,10 @@ function verify(source) {
   need(/parsedQuery\.data\.operating_company_id/.test(authHandler), "company-authorization backend must resolve the selected company");
   need(/FROM mdata\.drivers d[\s\S]{0,600}selected_dca\.company_id = \$2::uuid[\s\S]{0,160}selected_dca\.is_authorized = true[\s\S]{0,160}selected_dca\.deactivated_at IS NULL/.test(authHandler), "company-authorization backend must validate owner or canonical active authorization for the selected company");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(authHandler), "company-authorization backend must distinguish a missing/unauthorized driver from a true empty relationship list");
+  need(
+    /WHERE dca\.driver_id = \$1[\s\S]{0,180}ORDER BY c\.legal_name[\s\S]{0,80}\[parsed\.data\.id\]/.test(authHandler),
+    "company-authorization child query must bind exactly the one placeholder it declares",
+  );
   const qualificationsStart = source.profileBackend.indexOf('app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications"');
   const qualificationsEnd = source.profileBackend.indexOf("app.post<", qualificationsStart);
   const qualificationsHandler = qualificationsStart >= 0 && qualificationsEnd > qualificationsStart ? source.profileBackend.slice(qualificationsStart, qualificationsEnd) : "";
@@ -175,6 +179,15 @@ if (process.argv.includes("--selftest")) {
     },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /selected_dca\.is_authorized = true/, "TRUE", "company authorization active flag") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /selected_dca\.deactivated_at IS NULL/, "TRUE", "company authorization non-deactivated relationship") },
+    {
+      key: "profileBackend",
+      text: replaceOrFail(
+        source.profileBackend,
+        /(WHERE dca\.driver_id = \$1[\s\S]{0,180}ORDER BY c\.legal_name[\s\S]{0,80})\[parsed\.data\.id\]/,
+        "$1[parsed.data.id, companyId]",
+        "company authorization child query placeholder count",
+      ),
+    },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.is_authorized = true/, "TRUE", "qualification active company authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.deactivated_at IS NULL/, "TRUE", "qualification non-deactivated authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "qualification missing parent response") },

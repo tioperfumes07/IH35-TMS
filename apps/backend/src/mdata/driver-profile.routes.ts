@@ -1010,7 +1010,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             AND dca.deactivated_at IS NULL
           ORDER BY c.legal_name
         `,
-        [parsed.data.id, companyId]
+        [parsed.data.id]
       );
       return {
         found: true as const,
