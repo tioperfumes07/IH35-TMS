@@ -1,11 +1,12 @@
-# NOW — ONE SOURCE (owner 2026-08-24 08:20 CT)
+# NOW — ONE SOURCE (owner 2026-08-24 08:40 CT)
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
 - **FULLY CERTIFIED (nothing pending):** U14 exclusive **14/14**. Nobody certifies them again.
-- **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second CERTIFIED. Next = unique FINDING only.
+- **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
+- **leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`:** cash-flow · finance · driver-hub · reports. Next on those four = unique FINDING only.
 - **VOID as second CERTIFY:** WAVE 3/4 leftover stamps on already-U14 modules (customers/drivers/fleet/vendors/lists/legal/safety) and WAVE 2 maintenance.
 
 If WAVE packs / PASTE / OUTBOX / Desktop INBOX still say leftover-CERTIFIED on a U14 module — **that line is void.**

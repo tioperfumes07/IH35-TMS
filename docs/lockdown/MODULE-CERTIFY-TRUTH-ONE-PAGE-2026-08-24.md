@@ -39,15 +39,27 @@ That campaign is **CLOSED. 14/14. Nothing pending.** Never stamp. Never restamp.
 
 ---
 
-## B — NOT U14 CERTIFIED (leftover POST). Leftover unique hop clean. Not a second CERTIFIED.
+## B — NOT U14 CERTIFIED (leftover POST). Leftover unique hop clean. Not a second exclusive campaign.
 
-These never sat on the exclusive U14 table. Cursor walked leftover unique Live Chrome (500 / dead / silent). That is a hop log, **not** exclusive CERTIFIED.
+These never sat on the exclusive U14 table. They are **not** U14 CERTIFIED. Owner-ordered leftover POST Live Chrome (500 / dead / silent) is a leftover stamp, **not** a 15th U14 module.
+
+### B1 — leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14` · 2026-08-24
+
+Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / silent no-op = **none**. Finance Hub `/finance` honest flag-off copy is not a FINDING.
+
+| Sidebar id | Route | Leftover POST Live Chrome SHA | Hops (USMCA) |
+|------------|-------|-------------------------------|--------------|
+| cash-flow | `/cash-flow` | `97d6a14` | Projected (Auto) · Actual vs Projected · Manual Daily Projections · $0 expected |
+| finance | `/finance` | `97d6a14` | Overview · Projections · Scenarios · Hub · Statements · AR/AP Aging · Break-Even · Loan Wizard · Calculator · Amortization |
+| driver-hub | `/driver-hub` | `97d6a14` | Overview · Driver Scheduler · Leave Requests |
+| reports | `/reports` | `97d6a14` | category tabs All→Saved · Trial balance · Profit & loss |
+
+**Who restamps these as U14:** **nobody.** Next on these four = unique FINDING only.
+
+### B2 — leftover POST hop log (not leftover POST Live Chrome CERTIFIED yet)
 
 | Sidebar id | Route | Leftover unique hop SHA | Who walks unique FINDING next |
 |------------|-------|-------------------------|-------------------------------|
-| cash-flow | `/cash-flow` | `6585a66` | CC-1 (money unique only) |
-| finance | `/finance` | `6585a66` | CC-1 (money unique only) |
-| reports | `/reports` | `6585a66` | CC-2 |
 | compliance | `/compliance` | `6585a66` | CC-3 |
 | eld | `/eld` | `6585a66` | CC-3 |
 | inventory | `/inventory` | `6585a66` | CC-3 |
@@ -58,7 +70,6 @@ These never sat on the exclusive U14 table. Cursor walked leftover unique Live C
 | help | `/help` | `6585a66` | Cursor |
 | program | `/program` | `6585a66` | Cursor |
 | system | `/system` | `6585a66` | Cursor |
-| driver-hub | `/driver-hub` | `6585a66` | Cursor |
 | tasks | `/tasks` | `6585a66` | Cursor |
 | form_425 | `/425c` | `189dd4c` | **Do not loop.** Unique FINDING only if new 500/dead/silent |
 

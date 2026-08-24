@@ -13,11 +13,11 @@ Leftover POST leftover unique hops are **logged**, not a second CERTIFIED. Remai
 
 | Order | Module | Sidebar id | Route | Status |
 |------:|--------|------------|-------|--------|
-| 1 | CASH FLOW | `cash-flow` | `/cash-flow` | leftover unique hop @ `6585a66`. CC-1 next money unique. |
-| 2 | FINANCE HUB | `finance` | `/finance` | leftover unique hop @ `6585a66`. CC-1 next money unique. |
-| 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | leftover unique hop @ `6585a66`. |
+| 1 | CASH FLOW | `cash-flow` | `/cash-flow` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 2 | FINANCE HUB | `finance` | `/finance` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 4 | 425C | `form_425` | `/425c` | leftover unique hop @ `189dd4c`. **Do not loop.** |
-| 5 | REPORTS | `reports` | `/reports` | leftover unique hop @ `6585a66`. CC-2 unique FINDING. |
+| 5 | REPORTS | `reports` | `/reports` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 6 | TASKS | `tasks` | `/tasks` | leftover unique hop @ `6585a66`. |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | leftover unique hop @ `6585a66`. CC-3 unique FINDING. |
 | 8 | ELD | `eld` | `/eld` | leftover unique hop @ `6585a66`. |
