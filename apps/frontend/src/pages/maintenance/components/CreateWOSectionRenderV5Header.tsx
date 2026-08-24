@@ -80,14 +80,24 @@ export function CreateWOSectionRenderV5Header({
           <input type="time" {...register("close_time")} className={INPUT} />
         </Cell>
         <Cell label="Authorized by employees">
-          <SelectCombobox {...register("authorized_by_user_id")} className={INPUT}>
-            <option value="">— select —</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {userLabel(u)}
-              </option>
-            ))}
-          </SelectCombobox>
+          {usersQuery.isError ? (
+            <button
+              type="button"
+              className={`${INPUT} border-red-300 bg-red-50 text-left text-red-700 underline`}
+              onClick={() => void usersQuery.refetch()}
+            >
+              Employees unavailable — retry
+            </button>
+          ) : (
+            <SelectCombobox {...register("authorized_by_user_id")} className={INPUT} disabled={usersQuery.isPending}>
+              <option value="">{usersQuery.isPending ? "Loading employees…" : "— select —"}</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {userLabel(u)}
+                </option>
+              ))}
+            </SelectCombobox>
+          )}
         </Cell>
         <Cell label="Repaired by">
           <select {...register("repaired_by")} className={INPUT}>
