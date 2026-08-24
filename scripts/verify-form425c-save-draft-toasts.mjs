@@ -210,6 +210,11 @@ export function collectProblems(src) {
   if (!patchChunk.includes("AND status <> 'filed'") || !importChunk.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH and Import UPDATE must refuse status=filed — SELECT-then-UPDATE without the predicate could rewrite a just-filed MOR");
   }
+  if (!importChunk.includes("form_425c_operating_company_not_found") || !importChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: Import from Banking must 404 missing company — blanket 502 was a leftover 500-class",
+    );
+  }
   if (!routes.includes("form_425c_amendment_already_open") || !routes.includes("form_425c_amend_source_not_filed")) {
     problems.push(
       "apps/backend/src/compliance/form-425c.routes.ts: second Amend on a filed MOR must 409 — UNIQUE(opco, month, status) was a 500",
