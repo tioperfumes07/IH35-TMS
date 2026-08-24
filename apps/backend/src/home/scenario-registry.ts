@@ -650,12 +650,52 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Fuel pumped on a card / wallet",
     je: "DR Fuel Expense / CR Relay Fuel Wallet",
     spec_ref: "FUEL/CONN-3",
-    sources: ["fuel.fuel_transactions"],
+    sources: ["fuel.fuel_transactions", "mdata.loads", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries", "accounting.transaction_source_links"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM fuel.fuel_transactions f
+        SELECT count(*)::text AS n
+          FROM fuel.fuel_transactions f
+          JOIN mdata.loads l
+            ON l.id = f.load_id
+           AND l.operating_company_id = f.operating_company_id
          WHERE f.load_id IS NOT NULL  -- all 1,548 rows are CSV-imported (source='other'); the TMS fuel
                                       -- flow is proven only by a fuel txn LINKED to a TMS load
+           AND f.archived_at IS NULL
+           AND f.total_cost > 0
+           AND l.soft_deleted_at IS NULL
+           AND EXISTS (
+             SELECT 1
+               FROM accounting.posting_batches pb
+               JOIN accounting.journal_entry_postings jep
+                 ON jep.posting_batch_id = pb.id
+                AND jep.operating_company_id = pb.operating_company_id
+                AND jep.source_transaction_type = 'fuel_event'
+                AND jep.source_transaction_id = f.id::text
+               JOIN accounting.journal_entries je
+                 ON je.id = jep.journal_entry_uuid
+                AND je.operating_company_id = jep.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
+               JOIN accounting.transaction_source_links tsl
+                 ON tsl.journal_entry_posting_id = jep.id
+                AND tsl.operating_company_id = jep.operating_company_id
+                AND tsl.linked_object_type = 'fuel_event'
+                AND tsl.linked_object_id = f.id::text
+              WHERE pb.operating_company_id = f.operating_company_id
+                AND pb.source_transaction_type = 'fuel_event'
+                AND pb.source_transaction_id = f.id::text
+                AND pb.batch_status = 'posted'
+                AND EXISTS (
+                  SELECT 1
+                    FROM accounting.journal_entry_postings balance
+                   WHERE balance.journal_entry_uuid = je.id
+                     AND balance.operating_company_id = je.operating_company_id
+                   GROUP BY balance.journal_entry_uuid
+                  HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END)
+                       = SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
+                     AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
+                )
+           )
            AND ($1::uuid IS NULL OR f.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} fuel transaction(s)`,
