@@ -347,8 +347,9 @@ function buildPdfModel(params: {
   wo: Record<string, unknown>;
   unit: Record<string, unknown> | null;
   driver: Record<string, unknown> | null;
+  lineTotals: { laborCents: number | null; partsCents: number | null; otherCents: number | null };
 }): WorkOrderPdfModel {
-  const { company, wo, unit, driver } = params;
+  const { company, wo, unit, driver, lineTotals } = params;
   const legalName = String(company.legal_name ?? company.short_name ?? "Carrier");
   const ein = company.tax_id ? `EIN ${String(company.tax_id)}` : "Motor carrier identifiers on file";
 
@@ -425,6 +426,9 @@ function buildPdfModel(params: {
     estimatedTotalCents,
     actualTotalCents,
     isCompleted,
+    lineLaborCents: lineTotals.laborCents,
+    linePartsCents: lineTotals.partsCents,
+    lineOtherCents: lineTotals.otherCents,
   };
 }
 
@@ -1466,7 +1470,29 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         driver = driverRes.rows[0] ?? null;
       }
 
-      const model = buildPdfModel({ company, wo, unit, driver });
+      // WO-PDF-COST-BREAKDOWN-LINES-FALLBACK: wo.labor_hours/parts_cost_cents are never written by
+      // any product write path (create/two-section/WAVE3 proof-of-path all skip them) — every real
+      // WO's itemized cost lives in work_order_lines instead, so the printed Cost breakdown table
+      // read "—" for every real WO in prod despite real dollars existing. Sum the real lines here.
+      const lineTotalsRes = await client.query(
+        `SELECT line_type, COALESCE(SUM(total_cost), 0) AS total
+           FROM maintenance.work_order_lines
+          WHERE work_order_uuid = $1
+          GROUP BY line_type`,
+        [params.data.id]
+      );
+      let laborCents: number | null = null;
+      let partsCents: number | null = null;
+      let otherCents: number | null = null;
+      for (const row of lineTotalsRes.rows as Array<{ line_type: string; total: string }>) {
+        const cents = Math.round(Number(row.total) * 100);
+        if (!Number.isFinite(cents) || cents === 0) continue;
+        if (row.line_type === "labor") laborCents = (laborCents ?? 0) + cents;
+        else if (row.line_type === "part" || row.line_type === "parts") partsCents = (partsCents ?? 0) + cents;
+        else otherCents = (otherCents ?? 0) + cents;
+      }
+
+      const model = buildPdfModel({ company, wo, unit, driver, lineTotals: { laborCents, partsCents, otherCents } });
       return { kind: "html" as const, html: renderWorkOrderPdfHtml(model) };
     });
 
