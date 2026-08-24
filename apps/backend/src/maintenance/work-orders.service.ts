@@ -34,9 +34,14 @@ export async function listWorkOrdersByBucket(client: QueryClient, operatingCompa
             ELSE 'external'
           END
         ) AS normalized_bucket,
-        v.vendor_name AS roadside_provider_name
+        v.vendor_name AS roadside_provider_name,
+        u.unit_number,
+        TRIM(CONCAT(d.first_name, ' ', d.last_name)) AS driver_name
       FROM maintenance.work_orders w
       LEFT JOIN mdata.vendors v ON v.id = w.roadside_provider_vendor_id AND v.operating_company_id = w.operating_company_id
+      LEFT JOIN mdata.units u ON u.id = w.unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
+      LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
       WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
       ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
