@@ -1,6 +1,8 @@
 # INBOX-CASCADE
 
-**U14 is DONE. You do not recertify. You audit leftover EXTENT so fixers have unique FINDINGs.**
+**YOU HAVE INSTRUCTIONS.** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
+
+U14 is DONE. You do not recertify. You audit leftover EXTENT so fixers have unique FINDINGs.
 
 AUDIT ONLY. DO NOT FIX. DO NOT OPEN PRODUCT PRs.
 
@@ -8,6 +10,6 @@ AUDIT ONLY. DO NOT FIX. DO NOT OPEN PRODUCT PRs.
 
 READ: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
 
-FORBIDDEN: idle · product PRs · recertify · leftover product on `/425c` or `/cash-flow`
+FORBIDDEN: idle · “no instructions” · product PRs · recertify · leftover product on `/425c` `/cash-flow` `/docs` `/compliance`
 
-OUTBOX: `Cascade | ACK | POST-U14-SEQUENCE | NOW=/accounting EXTENT | GO`
+OUTBOX: `Cascade | ACK | NEXT-8 | NOW=/accounting EXTENT | GO`

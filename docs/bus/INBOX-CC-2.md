@@ -1,13 +1,15 @@
 # INBOX-CC-2 · 9224
 
-**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`.
+**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Never `gh pr checks --watch`.
 
-**U14 is DONE. You certify leftover `/fuel` now.** Not U14 recertify. Not idle.
+**YOU HAVE INSTRUCTIONS.** Pull `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` then this TOP.
 
-**NOW:** `https://app.ih35dispatch.com/fuel` — CLASS-F5973-TRUE-REMAINDER-FUEL. New unique 500/dead/silent only. Fully-Wired 1–12 on leftover leaves.
+**NOW:** Chrome `https://app.ih35dispatch.com/fuel` — leftover module **#3 of 8**. CLASS-F5973-TRUE-REMAINDER-FUEL + new unique 500/dead/silent. Fully-Wired 1–12 leftover leaves. One small PR per finding.
+
+**THEN:** `/reports` leftover unique (module **#4 of 8**). Stay out of CC-1 cash-flow/finance money reports.
 
 Never remake Close. Never remake #15228–#15243.
 
-FORBIDDEN: idle · `/425c` `/cash-flow` `/finance` `/lists` `/legal` · recertify
+FORBIDDEN: idle · HOLD · “no instructions” · `/425c` `/cash-flow` `/finance` `/docs` `/compliance` `/lists` `/legal` · recertify · mega-PR
 
-OUTBOX: `CC-2 | ACK | POST-U14-SEQUENCE | PORT=9224 | NOW=/fuel CERTIFY leftover | GO`
+OUTBOX: `CC-2 | ACK | NEXT-8 | PORT=9224 | NOW=/fuel | GO`
