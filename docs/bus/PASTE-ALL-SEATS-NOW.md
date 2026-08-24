@@ -10,8 +10,8 @@ CURRENT-LAW
 - OWNER leftover POST CERTIFIED IMMEDIATE (NOT U14) @ healthz 97d6a14 Live Chrome 09:05CT:
   /cash-flow  /finance  /driver-hub  /reports
   unique 500/dead/silent=none · DO NOT RECERTIFY THESE FOUR
-- Also leftover POST Live Chrome (not U14): compliance eld inventory fuel users home help tasks program system
-- HOLD: /docs (3 FINDINGs) · /425c DO NOT LOOP
+- Also leftover POST Live Chrome (not U14): compliance eld inventory fuel users home help tasks program system docs
+- /docs leftover POST CERTIFIED @ b47307e · /425c DO NOT LOOP
 - Unique FINDING only · one small PR · FAST-MERGE
 - Never remake INFRA-F6350 / Close / Book Load
 - git pull --ff-only origin main then INBOX-<SEAT>.md TOP

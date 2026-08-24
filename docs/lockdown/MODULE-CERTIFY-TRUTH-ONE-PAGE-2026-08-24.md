@@ -43,7 +43,7 @@ That campaign is **CLOSED. 14/14. Nothing pending.** Never stamp. Never restamp.
 
 These never sat on the exclusive U14 table. They are **not** U14 CERTIFIED. Owner-ordered leftover POST Live Chrome (500 / dead / silent) is a leftover stamp, **not** a 15th U14 module.
 
-### B1 — leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14` · 2026-08-24
+### B1 — leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14` · plus `docs` @ `b47307e` · 2026-08-24
 
 **OWNER 2026-08-24 09:05 CT — leftover POST CERTIFIED IMMEDIATE (Live Chrome re-walk, not U14):** `cash-flow` · `finance` · `driver-hub` · `reports` @ healthz `97d6a14` (USMCA). Unique 500 / dead click / silent no-op = **none**. Seats do **not** recertify these four.
 
@@ -65,6 +65,7 @@ Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / 
 | tasks | `/tasks` | `97d6a14` | Task Board · Calendar · My Tasks · Team Chat · Admin Report |
 | program | `/program` | `97d6a14` | Scenario tracker · matrix · legacy board · tracker · modules · final-additions |
 | system | `/system` | `97d6a14` | Overview · Program Tracker · Software / Build · Claude Coder. QBO tabs hidden (USMCA; not a FINDING). `background_jobs.stale` expected until next cron tick (CC-2) |
+| docs | `/docs` | `b47307e` | All Entities · Drivers · Customers · Vendors · Units · Equipment · + Upload Document. Fixes #15371 #15372 #15373 live. |
 
 **Who restamps these as U14:** **nobody.** Next = unique FINDING only.
 
@@ -72,7 +73,6 @@ Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / 
 
 | Sidebar id | Route | Leftover unique hop SHA | Who walks unique FINDING next |
 |------------|-------|-------------------------|-------------------------------|
-| docs | `/docs` | `6585a66` | **HOLD leftover POST stamp until live SHA includes** #15371 #15372 #15373 (all merged). |
 | form_425 | `/425c` | `189dd4c` | **Do not loop.** Unique FINDING only if new 500/dead/silent |
 
 **Who “certifies” leftover POST as U14:** **nobody.** There is no second exclusive campaign. Remaining work = unique FINDING (500 / dead click / silent no-op). One small PR. FAST-MERGE.
