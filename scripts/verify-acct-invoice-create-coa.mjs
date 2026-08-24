@@ -109,10 +109,15 @@ function checkInvoiceCreateCoa(files) {
   if (!api.includes("source_load_id: string | null")) violations.push("patchInvoice API must expose source_load_id");
 
   // ACCT-F5053 — Topbar Create→Invoice must deep-link create wizard (Bills ?create=1 parity).
+  // ACCT-F6322 — hub + Create ▾ must use the same deep-link (bare /invoices is a silent no-op).
   const topbar = byRel["apps/frontend/src/components/Topbar.tsx"] ?? "";
+  const hubCreate = byRel["apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx"] ?? "";
   const list = byRel["apps/frontend/src/pages/accounting/InvoicesListPage.tsx"] ?? "";
   if (!topbar.includes("/accounting/invoices?create=1")) {
     violations.push("Topbar Create→Invoice must navigate to /accounting/invoices?create=1");
+  }
+  if (!hubCreate.includes("/accounting/invoices?create=1")) {
+    violations.push("AccountingSubNavWrapper + Create ▾ Invoice must navigate to /accounting/invoices?create=1");
   }
   if (!list.includes('searchParams.get("create") === "1"') && !list.includes("createDeepLink")) {
     violations.push("InvoicesListPage must honor ?create=1 deep link");
@@ -141,6 +146,10 @@ function loadRepositoryFixture() {
     {
       rel: "apps/frontend/src/components/Topbar.tsx",
       source: read("apps/frontend/src/components/Topbar.tsx"),
+    },
+    {
+      rel: "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+      source: read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx"),
     },
     {
       rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
@@ -208,6 +217,10 @@ const goodFixture = [
     source: `/accounting/invoices?create=1`,
   },
   {
+    rel: "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+    source: `{ label: "Invoice", to: "/accounting/invoices?create=1" }`,
+  },
+  {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
     source: [`account_id: z.string().uuid().optional()`, `assertExplicitIncomeAccount`].join("\n"),
   },
@@ -244,6 +257,10 @@ const badFixture = [
   {
     rel: "apps/frontend/src/components/Topbar.tsx",
     source: `/accounting/invoices`,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+    source: `{ label: "Invoice", to: "/accounting/invoices" }`,
   },
   {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",

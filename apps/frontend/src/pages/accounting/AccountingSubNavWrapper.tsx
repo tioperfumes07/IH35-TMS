@@ -3,12 +3,14 @@ import { Link, useLocation } from "react-router-dom";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 
+// ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
+// (ACCT-F5053–5056). Bare list hrefs are silent no-ops when already on that list.
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
-  { label: "Expense", to: "/accounting/expenses" },
-  { label: "Invoice", to: "/accounting/invoices" },
-  { label: "Receive payment", to: "/accounting/payments" },
-  { label: "Journal entry", to: "/accounting/journal-entries" },
+  { label: "Expense", to: "/accounting/expenses?create=1" },
+  { label: "Invoice", to: "/accounting/invoices?create=1" },
+  { label: "Receive payment", to: "/accounting/payments?create=1" },
+  { label: "Journal entry", to: "/accounting/journal-entries?create=1" },
 ] as const;
 
 type Props = {
