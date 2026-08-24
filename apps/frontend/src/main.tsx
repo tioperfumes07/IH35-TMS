@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { installStaleChunkRecovery } from "./bootstrap/installStaleChunkRecovery";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./components/Toast";
 import { initFrontendSentry } from "./observability/sentry-client";
@@ -10,6 +11,8 @@ import "./index.css";
 import i18n from "./i18n";
 
 void i18n;
+
+installStaleChunkRecovery();
 
 // G10-C3: actually initialize Sentry (the init fn existed but was never called). No-ops when
 // VITE_SENTRY_DSN is unset, so local/dev is unaffected.
