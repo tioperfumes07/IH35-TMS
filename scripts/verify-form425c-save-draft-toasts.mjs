@@ -124,6 +124,18 @@ export function collectProblems(src) {
   if (mergeTab.includes("disabled={generating || !canGenerate}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must stay clickable so the parent toast fires — a disabled button is a dead click");
   }
+  if (!src.includes("This MOR is filed — use Amend on History")) {
+    problems.push(`${PAGE}: Save/Import/Generate on a filed MOR must toast Amend — not silently rewrite the court filing`);
+  }
+  if (!src.includes('form.status === "filed"')) {
+    problems.push(`${PAGE}: filed status must block Save Draft / autosave / Import / Generate`);
+  }
+  if (!routes.includes("form_425c_filed_immutable") || !routes.includes('reply.code(409).send({')) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH/import/generate on filed must 409, not rewrite or un-file");
+  }
+  if (!routes.includes("AND status <> 'filed'")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: generate UPDATE must refuse status=filed (would set ready_to_file)");
+  }
   const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
@@ -159,6 +171,8 @@ const good = `
   openedReportId
   matches.find((r) => r.status !== "filed")
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
+  throw new Error("This MOR is filed — use Amend on History");
+  form.status === "filed"
 `;
 const bad = `
   if (!detailQuery.data?.report) {
