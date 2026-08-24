@@ -1,9 +1,7 @@
 export default {
   name: "verify-safety-hos-dashboard-wire",
-  run(ctx) {
-    if (ctx.run("npm", ["run", "verify:safety-hos-dashboard-wire"]) !== 0) {
-      return 1;
-    }
-    return 0;
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-safety-hos-dashboard-wire.mjs"]);
+    await ctx.run("node", ["scripts/verify-safety-hos-dashboard-wire.mjs", "--selftest"]);
   },
 };
