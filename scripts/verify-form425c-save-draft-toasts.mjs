@@ -82,9 +82,21 @@ export function collectProblems(src) {
   if (!src.includes("month={month}") || !src.includes("<QBImportTab")) {
     problems.push(`${PAGE}: QB Import must receive the Form month/year, not a disconnected local period`);
   }
-  const applyChunk = src.split("onApplyTotal")[1] ?? "";
-  if (!applyChunk.includes("setDirty(true)")) {
-    problems.push(`${PAGE}: Apply to Line 20 must setDirty so Generate PDF cannot silently print a stale total`);
+  if (src.includes("onApplyTotal")) {
+    problems.push(`${PAGE}: Apply to Line 20 must not write form.totalReceipts — Save Draft cannot PATCH lines 19-21`);
+  }
+  if (!qbTab.includes("court cash is banking SoR")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Apply to Line 20 must toast banking SoR, not silently paint an unsaved Line 20");
+  }
+  if (!formTab.includes("readOnly") || !formTab.includes("Save Draft does not write them")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Lines 19-21 must be readOnly banking SoR — editable + Save was a silent no-op");
+  }
+  const saveChunk = (src.split("const saveMutation")[1] ?? "").split("const importMutation")[0];
+  if (saveChunk.includes("line_19") || saveChunk.includes("line_20_receipts") || saveChunk.includes("line_21_disbursements")) {
+    problems.push(`${PAGE}: Save Draft must not PATCH lines 19-21 (banking import is SoR)`);
+  }
+  if (src.includes("new Date(row.reporting_month)")) {
+    problems.push(`${PAGE}: History Open must parse YYYY-MM from reporting_month slice, not Date (UTC/local month shift)`);
   }
   if (!src.includes("Carry-forward override needs a reason of at least 30 characters")) {
     problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
@@ -128,8 +140,6 @@ const good = `
   pushToast("Create / Load Draft before autosave", "error");
   month={month}
   <QBImportTab
-  onApplyTotal={(total) => {
-  setDirty(true);
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
 `;
 const bad = `

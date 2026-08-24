@@ -15,7 +15,6 @@ type Props = {
   setMonth: (month: number) => void;
   setYear: (year: number) => void;
   profiles: CompanyProfiles;
-  onApplyTotal: (totalReceipts: number) => void;
 };
 
 /** Parsed line + its position in the parsed array so the include-toggle targets the right row after sort/page. */
@@ -29,7 +28,6 @@ export function QBImportTab({
   setMonth,
   setYear,
   profiles,
-  onApplyTotal,
 }: Props) {
   const { pushToast } = useToast();
   const [raw, setRaw] = useState("");
@@ -156,8 +154,10 @@ export function QBImportTab({
               pushToast("No included deposits — check Use boxes before applying to Line 20", "error");
               return;
             }
-            onApplyTotal(includedTotal);
-            pushToast(`Applied $${includedTotal.toFixed(2)} to Line 20`, "success");
+            pushToast(
+              "Deposit preview is session-only — use Import from Banking to write Line 20 (court cash is banking SoR)",
+              "error",
+            );
           }}
         >
           Apply ${includedTotal.toFixed(2)} to Line 20

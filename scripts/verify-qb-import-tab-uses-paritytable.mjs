@@ -68,8 +68,11 @@ function assertMigrated(src) {
   if (!src.includes("No matching DIP deposits")) {
     errors.push(`${PAGE}: Parse with no matching bank/DIP rows must toast, not silently leave Apply $0.00 disabled`);
   }
-  if (!src.includes("Applied $")) {
-    errors.push(`${PAGE}: Apply to Line 20 must toast Applied $… (silent parent state update is leftover FINDING)`);
+  if (!src.includes("court cash is banking SoR")) {
+    errors.push(`${PAGE}: Apply to Line 20 must toast banking SoR — writing Line 20 locally was a silent Save no-op`);
+  }
+  if (src.includes("Applied $")) {
+    errors.push(`${PAGE}: must not toast Applied $ to Line 20 — that cash is not in the Save PATCH`);
   }
   if (!src.includes("No included deposits")) {
     errors.push(`${PAGE}: Apply with $0 included must toast, not silently write Line 20`);
@@ -102,7 +105,7 @@ function selftest() {
     <div>Session-scoped preview only. Authoritative Form lines 19-23 remain backend Banking import values.</div>
     Paste a tab-delimited deposit export first
     No matching DIP deposits
-    Applied $
+    court cash is banking SoR
     No included deposits
     Parse Income Deposits before applying to Line 20
   `;
