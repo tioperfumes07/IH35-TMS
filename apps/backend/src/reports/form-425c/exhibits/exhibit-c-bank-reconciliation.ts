@@ -3,10 +3,14 @@ import type { ExhibitPeriod, ExhibitQueryClient } from "./types.js";
 export type BankAccountReconRow = {
   account_id: string;
   account_label: string;
-  opening_balance_cents: number;
+  // null (never 0) when opening_balance_source is "unavailable" — a fabricated $0 opening must
+  // never be presented as a real statement-backed balance (see F425C-EXHIBIT-C-UNVERIFIED-OPENING-FEEDS-TOTAL).
+  opening_balance_cents: number | null;
   inflows_cents: number;
   outflows_cents: number;
-  closing_balance_cents: number;
+  // null when opening_balance_cents is null — a closing balance computed against a fabricated $0
+  // opening is not a real number and must not be printed or summed as one.
+  closing_balance_cents: number | null;
   opening_balance_source: "reconciliation_session" | "unavailable";
   reconciliation_session_id: string | null;
 };
@@ -17,7 +21,14 @@ export type ExhibitC = {
   period_start: string;
   period_end: string;
   accounts: BankAccountReconRow[];
+  // Sum of ONLY the accounts with a real, statement-backed closing balance. An account whose
+  // opening balance is unavailable is excluded here (never defaulted to $0), so the total never
+  // silently understates/overstates itself against a fabricated baseline.
   total_closing_cents: number;
+  // Count of accounts.length - (accounts actually summed into total_closing_cents), so a reviewer
+  // can see at a glance whether the total is complete without cross-checking every row's
+  // opening_balance_source.
+  accounts_excluded_from_total: number;
 };
 
 export async function buildExhibitC(
@@ -87,10 +98,14 @@ export async function buildExhibitC(
 
   const accounts: BankAccountReconRow[] = accountsRes.rows.map((row) => {
     const hasStatementOpening = row.beginning_balance_cents !== null;
-    const opening = hasStatementOpening ? Math.trunc(Number(row.beginning_balance_cents)) : 0;
     const inflows = Math.trunc(Number(row.inflows ?? 0));
     const outflows = Math.trunc(Number(row.outflows ?? 0));
-    const closing = opening + inflows - outflows;
+    // F425C-EXHIBIT-C-UNVERIFIED-OPENING-FEEDS-TOTAL: opening/closing must be null, not a
+    // fabricated $0, when the statement-backed opening balance is unavailable — an inflows/outflows
+    // delta computed against an invented $0 baseline is not a real closing balance and must never
+    // be printed or summed into total_closing_cents as if it were one.
+    const opening = hasStatementOpening ? Math.trunc(Number(row.beginning_balance_cents)) : null;
+    const closing = opening === null ? null : opening + inflows - outflows;
     const mask = row.mask ? ` ••••${row.mask}` : "";
     return {
       account_id: String(row.id),
@@ -104,7 +119,11 @@ export async function buildExhibitC(
     };
   });
 
-  const total_closing_cents = accounts.reduce((sum, row) => sum + row.closing_balance_cents, 0);
+  const total_closing_cents = accounts.reduce(
+    (sum, row) => sum + (row.closing_balance_cents ?? 0),
+    0,
+  );
+  const accounts_excluded_from_total = accounts.filter((row) => row.closing_balance_cents === null).length;
 
   return {
     letter: "c",
@@ -113,5 +132,6 @@ export async function buildExhibitC(
     period_end: input.period_end,
     accounts,
     total_closing_cents,
+    accounts_excluded_from_total,
   };
 }
