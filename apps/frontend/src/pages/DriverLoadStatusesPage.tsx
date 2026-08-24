@@ -104,6 +104,7 @@ export function DriverLoadStatusesPage() {
       setCreateForm(emptyForm());
       pushToast("Driver load status created", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to create driver load status", "error"),
   });
 
   const updateMutation = useMutation({
@@ -115,6 +116,7 @@ export function DriverLoadStatusesPage() {
       setSelectedStatus(null);
       pushToast("Driver load status updated", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update driver load status", "error"),
   });
 
   const statuses = useMemo(() => statusesQuery.data ?? [], [statusesQuery.data]);
