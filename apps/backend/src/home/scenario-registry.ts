@@ -90,7 +90,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Driver and unit assigned to the booked load",
     je: "— (driver bill is a payable artifact, not a posting)",
     spec_ref: "WIRE-02 / ACCT-F63",
-    sources: ["driver_finance.driver_pay_rates", "driver_finance.driver_bills"],
+    sources: ["dispatch.load_assignment_history", "mdata.loads", "mdata.drivers", "mdata.units", "driver_finance.driver_bills"],
     probe: {
       // A driver bill priced from the RATE CARD, never equal to the customer rate (ACCT-F63).
       //
@@ -105,10 +105,42 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
       sql: `
         SELECT count(*)::text AS n
           FROM driver_finance.driver_bills b
-          JOIN mdata.loads l ON l.id = b.load_id
+          JOIN mdata.loads l
+            ON l.id = b.load_id
+           AND l.operating_company_id = b.operating_company_id
+          JOIN mdata.drivers d
+            ON d.id = l.assigned_primary_driver_id
+           AND d.operating_company_id = l.operating_company_id
+          JOIN mdata.units u
+            ON u.id = l.assigned_unit_id
+           AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
          WHERE b.status <> 'void'
+           AND b.driver_id = l.assigned_primary_driver_id
            AND b.rate_per_mile_cents IS NOT NULL
            AND b.gross_amount_cents <> l.rate_total_cents
+           AND l.soft_deleted_at IS NULL
+           AND d.status = 'Active'
+           AND d.archived_at IS NULL
+           AND d.deactivated_at IS NULL
+           AND u.deactivated_at IS NULL
+           AND u.is_oos IS NOT TRUE
+           AND u.is_dispatch_blocked IS NOT TRUE
+           AND EXISTS (
+             SELECT 1
+               FROM dispatch.load_assignment_history h
+              WHERE h.load_id = l.id
+                AND h.operating_company_id = l.operating_company_id
+                AND h.new_driver_id = l.assigned_primary_driver_id
+                AND h.new_unit_id = l.assigned_unit_id
+                AND NOT EXISTS (
+                  SELECT 1
+                    FROM dispatch.load_assignment_history later
+                   WHERE later.load_id = h.load_id
+                     AND later.operating_company_id = h.operating_company_id
+                     AND (later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)
+                     AND (later.new_driver_id IS DISTINCT FROM h.new_driver_id OR later.new_unit_id IS DISTINCT FROM h.new_unit_id)
+                )
+           )
            AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
            AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
       `,
