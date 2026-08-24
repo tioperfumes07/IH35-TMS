@@ -551,7 +551,7 @@ export function ModuleMatrixPreviewPage() {
       <ProgramModuleNav active="matrix" />
 
       <header className="hd">
-        <div className="t">Program — Module matrix scoreboards</div>
+        <h1 className="t">Program — Module matrix scoreboards</h1>
         <div className="s">
           One shell · 29 module boards + system rollup. <b>All modules</b> uses the same columns and
           4-box ✓/●/✕ cells — priority 10 first, then the rest. Columns include linkage, money,{" "}
@@ -578,46 +578,6 @@ export function ModuleMatrixPreviewPage() {
           )}
         </div>
       </header>
-
-      <section className="recent" data-testid="module-matrix-recent-activity">
-        <h2>
-          Recent activity — last 10 merged PRs{" "}
-          <span className="sub" data-testid="module-matrix-recent-source">
-            {recentSourceLabel} · merge times in CT (America/Chicago)
-          </span>
-        </h2>
-        {recentSource === "ledger_committed" ? (
-          <div className="clsWarn" data-testid="module-matrix-recent-stale-warning">
-            Showing the committed scoreboard snapshot — live git log / GitHub did not answer. This can
-            lag tip; it is not a live feed.
-          </div>
-        ) : null}
-        {recentRows.length === 0 ? (
-          <p className="recent-empty" data-testid="module-matrix-recent-empty">
-            No recent PRs from git log, GitHub, or the committed ledger — empty is honest, not a fake
-            green panel.
-          </p>
-        ) : (
-          <ul className="recent-list">
-            {recentRows.map((row) => (
-              <li key={row.number || row.title} data-testid={`module-matrix-recent-pr-${row.number}`}>
-                {row.url ? (
-                  <a href={row.url} target="_blank" rel="noreferrer">
-                    #{row.number}
-                  </a>
-                ) : (
-                  <span>#{row.number || "—"}</span>
-                )}
-                <span className="recent-title">
-                  {row.state ? <span className="recent-state">{row.state}</span> : null}
-                  {row.title}
-                </span>
-                <span className="recent-when">{row.mergedAtCt || "—"}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       <div className="module-rail" data-testid="module-matrix-module-rail">
         <div className="lbl">
@@ -818,6 +778,46 @@ export function ModuleMatrixPreviewPage() {
         PROD-VERIFIED. Group table breaks down linkage / money / chrome / wiring / process.
       </div>
 
+      <section className="recent" data-testid="module-matrix-recent-activity">
+        <h2>
+          Recent activity — last 10 merged PRs{" "}
+          <span className="sub" data-testid="module-matrix-recent-source">
+            {recentSourceLabel} · merge times in CT (America/Chicago)
+          </span>
+        </h2>
+        {recentSource === "ledger_committed" ? (
+          <div className="clsWarn" data-testid="module-matrix-recent-stale-warning">
+            Showing the committed scoreboard snapshot — live git log / GitHub did not answer. This can
+            lag tip; it is not a live feed.
+          </div>
+        ) : null}
+        {recentRows.length === 0 ? (
+          <p className="recent-empty" data-testid="module-matrix-recent-empty">
+            No recent PRs from git log, GitHub, or the committed ledger — empty is honest, not a fake
+            green panel.
+          </p>
+        ) : (
+          <ul className="recent-list">
+            {recentRows.map((row) => (
+              <li key={row.number || row.title} data-testid={`module-matrix-recent-pr-${row.number}`}>
+                {row.url ? (
+                  <a href={row.url} target="_blank" rel="noreferrer">
+                    #{row.number}
+                  </a>
+                ) : (
+                  <span>#{row.number || "—"}</span>
+                )}
+                <span className="recent-title">
+                  {row.state ? <span className="recent-state">{row.state}</span> : null}
+                  {row.title}
+                </span>
+                <span className="recent-when">{row.mergedAtCt || "—"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="foot">
         Design lock: <code>docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md</code>
         {" · "}
@@ -847,7 +847,7 @@ const CSS = `
 .ih35mm .banner.live b{color:#166534}
 .ih35mm .banner b{color:#92400e}
 .ih35mm .hd{background:linear-gradient(135deg,var(--navy),var(--navy-dk));color:#fff;padding:16px 20px;border-radius:10px}
-.ih35mm .hd .t{font-size:18px;font-weight:700}
+.ih35mm .hd .t,.ih35mm .hd h1.t{font-size:18px;font-weight:700;margin:0}
 .ih35mm .hd .s{color:#94a3b8;font-size:12px;margin-top:6px;line-height:1.55}
 .ih35mm .hd .synced{margin-top:10px;font-size:12px;color:#e2e8f0}
 .ih35mm .hd .synced b{color:#fff}

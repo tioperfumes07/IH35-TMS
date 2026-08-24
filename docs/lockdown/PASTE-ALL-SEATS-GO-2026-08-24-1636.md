@@ -1,5 +1,15 @@
 # PASTE ALL SEATS — GO NOW (2026-08-24 16:36 CT)
 
+**17:47 CT — GO. Deploy in flight `dep-da6bnmv40ujc739gmihg`.** Do not idle on `427f8ca`.
+
+Live **was** `427f8ca` (F07 / UUID-probe / customer-create **not** on that SHA). That is why `/program` STALE (`accounting.bills` +38), hop cards missing, `/customers` → Dispatch, breakdown → generic Maintenance, print `.html` SPA-steal.
+
+**Already on `main` (this deploy):** #15601 F07 hops · #15602 UUID probe (STALE root) · Devin `PROGRAM-SCENARIO-TRACKER-API-STALE` · #15607 POD/BOL href · customer `?create=1`.
+
+**Not Fully-Wired 1–12.** Unique leftover only. U14 never restamp.
+
+When `healthz/shallow` `version` ≠ `427f8ca`: **hard reload** then re-walk. Until then: CREATE TEST on **direct URLs** (`/dispatch/book-load?book_load=1`, `/customers?create=1`, `/dispatch/in-transit-issues`, `/accounting/bills`). Do not wait idle.
+
 **You are not blocked on Cursor merge.** Keep working. Idle = defect.
 
 ## Honest bar (do not lie to Jorge)

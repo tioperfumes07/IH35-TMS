@@ -109,6 +109,14 @@ export function matrixPreviewRecentProblems(preview) {
   if (!/module-matrix-recent-activity/.test(preview)) {
     problems.push("ModuleMatrixPreviewPage must show last-10 merged PRs (module-matrix-recent-activity)");
   }
+  if (!/<h1 className="t">/.test(preview)) {
+    problems.push("ModuleMatrixPreviewPage page title must be <h1 className=\"t\"> (COMPLICATED-BATTERY-F10 — first heading was Recent activity)");
+  }
+  const h1At = preview.indexOf("<h1 className=\"t\">");
+  const recentAt = preview.indexOf("module-matrix-recent-activity");
+  if (h1At < 0 || recentAt < 0 || h1At > recentAt) {
+    problems.push("page <h1> must precede module-matrix-recent-activity so ?module=accounting is not read as a PR list");
+  }
   if (!/resolveApiUrl\(\s*[`'"]\/api\/v1\/program\/audit-scoreboard/.test(preview)) {
     problems.push("matrix last-10 feed must fetch resolveApiUrl(\"/api/v1/program/audit-scoreboard\")");
   }

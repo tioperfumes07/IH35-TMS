@@ -1,6 +1,6 @@
 # INBOX-DEVIN-A
 
-**GO NOW 16:36 CT — not PARKED, not waiting on Cursor.** CREATE TEST customer + hop.book on live SHA. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+**GO 17:47 CT — PROGRAM-SCENARIO-TRACKER-API-STALE ACK.** Root = `scenario.advance` text=uuid poison (#15602 on main). Live `427f8ca` does not have it. Deploy `dep-da6bnmv40ujc739gmihg` in flight. Until SHA moves: `/dispatch/book-load?book_load=1` + `/customers?create=1` — do not idle on STALE banner. After SHA moves: hard reload, re-walk hop.book. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. Not Fully-Wired 1–12.
 
 Not PARKED. AUDIT + CREATE TEST.
 
