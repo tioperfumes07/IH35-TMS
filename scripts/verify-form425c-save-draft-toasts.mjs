@@ -186,6 +186,12 @@ export function collectProblems(src) {
   if (!createChunk.includes("form_425c_operating_company_not_found") || !createChunk.includes("sendForm425CCompanyMissing")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create on a missing/inactive company must 404, not an uncaught 500 from ensureDefaultProfile");
   }
+  const identityChunk = (routes.split("async function filingProfileIdentity")[1] ?? "").split("async function ensureDefaultProfile")[0];
+  if (!identityChunk.includes("deactivated_at IS NULL") || identityChunk.includes("is_active = true")) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: filingProfileIdentity must not gate is_active — that 404'd a selectable USMCA entity as company-not-found",
+    );
+  }
   if (!src.includes("Select an operating company before creating a report")) {
     problems.push(`${PAGE}: Create / Load Draft without an operating company must toast, not POST an empty uuid`);
   }
