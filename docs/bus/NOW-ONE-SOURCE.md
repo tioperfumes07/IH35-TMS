@@ -1,4 +1,4 @@
-# NOW — ONE SOURCE (owner 2026-08-24 08:40 CT)
+# NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
@@ -6,7 +6,8 @@
 
 - **FULLY CERTIFIED (nothing pending):** U14 exclusive **14/14**. Nobody certifies them again.
 - **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
-- **leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`:** cash-flow · finance · driver-hub · reports · compliance · eld · inventory · fuel · users · home · help · tasks · program · system. Next on those = unique FINDING only.
+- **OWNER leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14` Live Chrome 09:05 CT:** cash-flow · finance · driver-hub · reports. Seats do not recertify.
+- **leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`:** also compliance · eld · inventory · fuel · users · home · help · tasks · program · system. Next = unique FINDING only.
 - **HOLD leftover POST stamp:** `/docs` — CC-1 unique `DOCS-F-KPI-FILTER-RESET-STUCK` · `DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY` · `DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED`. `/425c` do not loop.
 - **VOID as second CERTIFY:** WAVE 3/4 leftover stamps on already-U14 modules (customers/drivers/fleet/vendors/lists/legal/safety) and WAVE 2 maintenance.
 
