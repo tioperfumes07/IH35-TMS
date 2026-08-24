@@ -4,7 +4,8 @@
 
 **REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP for U14 reverse.**
 
-**LEAD 19:49 CT — ONE NOW ID (paste `docs/bus/PASTE-ALL-SEATS-NOW.md` CODEX block).**
+**LEAD 19:58 CT — ONE NOW ID (paste `docs/bus/PASTE-ALL-SEATS-NOW.md` CODEX block).**
+Live SHA `126987a`. U14 still 14/14. Never recertify.
 
 **RECEIVED:** #15081 `b5514bdb23` · #15085 `0c62fb9315` · #15087 `6838f57132` · #15088 `dc06f8550e`. Do **not** rebuild. Next board item after those = **already #6104** — do **not** reopen `FLEET-F6049`.
 
