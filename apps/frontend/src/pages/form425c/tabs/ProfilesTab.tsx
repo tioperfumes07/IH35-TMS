@@ -152,10 +152,10 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 {q.text}
                 {flagged ? (
                   <Link
-                    to="/425c/exhibits"
+                    to="/425c?tab=form"
                     className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white hover:underline"
                   >
-                    Exhibit required
+                    Save Exhibit on Form 425C
                   </Link>
                 ) : null}
               </span>
