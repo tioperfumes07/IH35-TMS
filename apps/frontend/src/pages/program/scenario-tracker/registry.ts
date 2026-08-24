@@ -10,7 +10,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     doing:
       "Book Load screen persists load + inline customer; booking auto-creates the proforma invoice via the single writer, with a loud audit row if a projection can't be sourced.",
     spec_ref: "WIRE-01",
-    href: "/dispatch/book-load",
+    href: "/dispatch/book-load?book_load=1",
   },
   {
     order: 2,
@@ -20,7 +20,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     doing: "Pay resolves as rate-per-mile × shortest miles (per-load flat alternate), never the customer rate.",
     je: "driver pay = rate_per_mile × miles_shortest (fails closed if no rate/miles)",
     spec_ref: "WIRE-02",
-    href: "/dispatch",
+    href: "/dispatch/assignments",
   },
   {
     order: 3,
@@ -29,7 +29,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     lane: "screens",
     doing: 'The "Delivered" drag stamps actual_departure_at (the recognition evidence) instead of bypassing it.',
     spec_ref: "WIRE-07",
-    href: "/dispatch",
+    href: "/dispatch/loads",
   },
   {
     order: 4,
@@ -38,7 +38,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     lane: "screens",
     doing: "Delivery flips the load to delivered_pending_docs and records the departure — the source event the revenue latch reads.",
     spec_ref: "delivery latch",
-    href: "/dispatch",
+    href: "/dispatch/loads?view=kanban",
   },
   {
     order: 5,
@@ -47,7 +47,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     lane: "screens",
     doing: "POD/BOL upload flips the load to completed_docs_received — the billing trigger for Event 2.",
     spec_ref: "POD billing readiness",
-    href: "/dispatch",
+    href: "/dispatch/ocr-queue",
   },
   {
     order: 6,
@@ -67,7 +67,7 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     doing: "Event 2 fires at POD — the real invoice off the delivered load, accessorials each to their own account.",
     je: "DR Accounts Receivable / CR Unbilled Revenue",
     spec_ref: "A/R + accessorials",
-    href: "/accounting/invoices",
+    href: "/accounting/invoices?create=1",
   },
   {
     order: 8,
@@ -116,7 +116,7 @@ export const SCENARIO_IDENTITY: Array<
     trigger: "In-transit breakdown → WO → replacement unit on same load",
     spec_ref: "COMPLICATED-BATTERY-01",
     links: "intransit_issues ⇄ WO ⇄ load_assignment_history (dead unit ≠ live unit) ⇄ driver ⇄ trailer ⇄ load ⇄ diesel ⇄ roadside bill. Print dispatch sheet + WO after relay.",
-    href: "/maintenance/in-transit-issues",
+    href: "/dispatch/in-transit-issues",
   },
   {
     key: "scenario.trailer_swap",

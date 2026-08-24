@@ -101,6 +101,6 @@ describe("ScenarioTrackerHome — P0 payload resilience", () => {
     renderTracker();
 
     const link = await waitFor(() => screen.getByTestId("scenario-hop-link-hop.book"));
-    expect(link.getAttribute("href")).toBe("/dispatch/book-load");
+    expect(link.getAttribute("href")).toBe("/dispatch/book-load?book_load=1");
   });
 });
