@@ -533,6 +533,21 @@ async function copyToAccountingLines(
             line_type: row.line_type,
             category_kind: "maintenance",
           });
+          // ACCT-LINK-04 (bill branch — mirrors the expense branch below): work_order_lines.expense_category_uuid
+          // points at catalogs.qbo_categories, while accounting.bill_lines.expense_category_uuid is FK'd to
+          // catalogs.expense_categories, same-entity (bill_lines_expense_category_same_entity_fkey). Passing the
+          // raw work-order category id straight through here always violated that FK (100% reproducible on any
+          // WO→Bill with a categorized cost line) because it never exists in catalogs.expense_categories. Resolve
+          // it the same way the expense branch already does: keep the pointer only when it resolves in THIS
+          // entity's expense-category catalog, otherwise the projected line is uncategorized. Never touches
+          // account_id/category_kind/category_code (the actual GL posting target), which resolveBillLineAccountId
+          // already resolves correctly above — this only fixes the separate categorization pointer.
+          const projectedBillCategoryId = row.expense_category_uuid
+            ? await resolveExpenseCategoryById(client, {
+                operatingCompanyId,
+                categoryId: row.expense_category_uuid,
+              })
+            : null;
           return client.query<{ id: string }>(
             `
               INSERT INTO accounting.bill_lines (
@@ -549,7 +564,7 @@ async function copyToAccountingLines(
               row.description,
               row.section,
               parentMapped,
-              row.expense_category_uuid,
+              projectedBillCategoryId,
               row.service_item_uuid,
               row.part_uuid,
               row.labor_rate_uuid,
