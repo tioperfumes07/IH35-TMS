@@ -933,6 +933,7 @@ export function CustomerDetailPage() {
       setLaneForm(emptyLaneForm());
       pushToast("Lane created", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to create lane", "error"),
   });
 
   const updateLaneMutation = useMutation({
@@ -945,6 +946,7 @@ export function CustomerDetailPage() {
       setLaneForm(emptyLaneForm());
       pushToast("Lane updated", "success");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update lane", "error"),
   });
 
   const deactivateLaneMutation = useMutation({
@@ -953,6 +955,7 @@ export function CustomerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-lanes", id] });
       pushToast("Lane deactivated", "info");
     },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate lane", "error"),
   });
 
   const openInvoicesForPayment = useMemo(
