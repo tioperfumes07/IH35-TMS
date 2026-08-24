@@ -558,6 +558,92 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
       describe: (n) => `${n} categorized bank transaction(s)`,
     },
   },
+  {
+    key: "scenario.breakdown_relay",
+    title: "Breakdown + replacement truck",
+    lane: "screens",
+    trigger: "In-transit breakdown, WO opened, replacement unit assigned to the same load",
+    je: "Roadside bill posts DR Repair / CR A/P (see scenario.roadside_ap)",
+    spec_ref: "COMPLICATED-BATTERY-01",
+    sources: ["dispatch.intransit_issues", "dispatch.load_assignment_history", "maintenance.work_orders", "mdata.loads"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM dispatch.intransit_issues i
+          JOIN dispatch.load_assignment_history h ON h.load_id = i.load_id
+         WHERE i.promoted_to_wo_id IS NOT NULL
+           AND i.unit_id IS NOT NULL
+           AND h.previous_unit_id IS NOT NULL
+           AND h.new_unit_id IS NOT NULL
+           AND h.previous_unit_id <> h.new_unit_id
+           AND ($1::uuid IS NULL OR i.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} load(s) with in-transit WO + unit swap (replacement truck)`,
+    },
+  },
+  {
+    key: "scenario.trailer_swap",
+    title: "Trailer hook / drop mid-load",
+    lane: "screens",
+    trigger: "Trailer changed on an in-progress load",
+    je: "—",
+    spec_ref: "COMPLICATED-BATTERY-02",
+    sources: ["dispatch.load_assignment_history", "mdata.loads"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM dispatch.load_assignment_history h
+         WHERE h.previous_trailer_id IS NOT NULL
+           AND h.new_trailer_id IS NOT NULL
+           AND h.previous_trailer_id <> h.new_trailer_id
+           AND ($1::uuid IS NULL OR h.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} mid-load trailer swap(s)`,
+    },
+  },
+  {
+    key: "scenario.roadside_ap",
+    title: "Roadside tow / repair AP on the load",
+    lane: "money",
+    trigger: "Vendor bill from the in-transit WO",
+    je: "DR Repair / CR A/P",
+    spec_ref: "COMPLICATED-BATTERY-03",
+    sources: ["accounting.bills", "maintenance.work_orders", "dispatch.intransit_issues"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM accounting.bills b
+          JOIN maintenance.work_orders w ON w.id = b.linked_work_order_uuid
+         WHERE b.qbo_bill_id IS NULL
+           AND b.voided_at IS NULL
+           AND b.revoked_at IS NULL
+           AND EXISTS (
+             SELECT 1 FROM dispatch.intransit_issues i
+              WHERE i.promoted_to_wo_id = w.id
+           )
+           AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} TMS-native roadside bill(s) linked to an in-transit WO`,
+    },
+  },
+  {
+    key: "scenario.parts_receive",
+    title: "Receive parts inventory onto a WO",
+    lane: "money",
+    trigger: "Parts purchase receipt (optional WO consume)",
+    je: "DR Inventory / CR A/P when parts GL flag ON",
+    spec_ref: "COMPLICATED-BATTERY-04",
+    sources: ["maintenance.parts_purchases", "maintenance.parts_inventory"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM maintenance.parts_purchases p
+         WHERE p.voided_at IS NULL
+           AND ($1::uuid IS NULL OR p.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} live parts receipt(s)`,
+    },
+  },
 ];
 
 export const SCENARIO_KEYS = SCENARIO_REGISTRY.map((s) => s.key);
