@@ -47,6 +47,33 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.fuel",
+    needles: [
+      "fuel.fuel_transactions",
+      "mdata.loads",
+      "l.id = f.load_id",
+      "l.operating_company_id = f.operating_company_id",
+      "f.archived_at IS NULL",
+      "f.total_cost > 0",
+      "l.soft_deleted_at IS NULL",
+      "accounting.posting_batches",
+      "accounting.journal_entry_postings",
+      "jep.source_transaction_type = 'fuel_event'",
+      "jep.source_transaction_id = f.id::text",
+      "accounting.journal_entries",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "accounting.transaction_source_links",
+      "tsl.linked_object_type = 'fuel_event'",
+      "tsl.linked_object_id = f.id::text",
+      "pb.source_transaction_type = 'fuel_event'",
+      "pb.source_transaction_id = f.id::text",
+      "pb.batch_status = 'posted'",
+      "balance.debit_or_credit = 'debit'",
+      "balance.debit_or_credit = 'credit'",
+    ],
+  },
+  {
     key: "hop.deliver",
     needles: [
       "mdata.load_stops",
@@ -515,6 +542,9 @@ function selftest() {
     ["delivery probe accepts a non-final stop", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.sequence_number > s.sequence_number", "") })],
     ["delivery probe accepts a cancelled departure", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.status::text = 'departed'", "") })],
     ["delivery probe accepts a deleted parent load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.soft_deleted_at IS NULL\n           AND l.soft_deleted_at IS NULL", "AND s.soft_deleted_at IS NULL") })],
+    ["fuel probe loses its posting batch", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.source_transaction_id = f.id::text", "") })],
+    ["fuel probe accepts an unposted JE", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND je.status = 'posted'", "") })],
+    ["fuel probe loses its reverse source link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND tsl.linked_object_id = f.id::text", "") })],
     ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')", "") })],
     ["trailer swap ignores a later replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.new_trailer_id <> h.new_trailer_id", "") })],
     ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
