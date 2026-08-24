@@ -79,6 +79,7 @@ export function ApplicantsPipelinePage() {
   const { selectedCompanyId } = useCompanyContext();
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const portalQ = useQuery({
     queryKey: ["applicant-portal", selectedCompanyId],
@@ -95,6 +96,8 @@ export function ApplicantsPipelinePage() {
   const statusM = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ApplicantStatus }) =>
       updateApplicantStatus(id, selectedCompanyId ?? "", { status }),
+    onMutate: () => setMutationError(null),
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to update applicant status"),
     onSettled: async () => {
       await qc.invalidateQueries({ queryKey: ["driver-applicants", selectedCompanyId] });
       setBusyId(null);
@@ -103,6 +106,8 @@ export function ApplicantsPipelinePage() {
 
   const convertM = useMutation({
     mutationFn: (id: string) => convertApplicantToDriver(id, selectedCompanyId ?? ""),
+    onMutate: () => setMutationError(null),
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to convert applicant to driver"),
     onSettled: async () => {
       await qc.invalidateQueries({ queryKey: ["driver-applicants", selectedCompanyId] });
       setBusyId(null);
@@ -153,6 +158,11 @@ export function ApplicantsPipelinePage() {
       ) : null}
       {applicantsQ.isError ? (
         <ListErrorState title="Couldn't load applicants" status={0} message={(applicantsQ.error as Error)?.message} onRetry={() => void applicantsQ.refetch()} />
+      ) : null}
+      {mutationError ? (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {mutationError}
+        </div>
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-5">
