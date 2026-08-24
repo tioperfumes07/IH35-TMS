@@ -18,10 +18,16 @@ vi.mock("../../../api/client", () => ({
 
 // eslint-disable-next-line import/first
 import { VendorsSyncPanel } from "../VendorsSyncPanel";
+// eslint-disable-next-line import/first
+import { ToastProvider } from "../../../components/Toast";
 
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={qc}>
+      <ToastProvider>{ui}</ToastProvider>
+    </QueryClientProvider>
+  );
 }
 
 const OPCO = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";

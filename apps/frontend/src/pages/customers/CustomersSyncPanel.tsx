@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type CustomersSyncStatus = {
   total_local: number;
@@ -81,6 +83,7 @@ type Props = {
 
 export function CustomersSyncPanel({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const statusQuery = useQuery({
     queryKey: ["customers-sync-status", operatingCompanyId],
@@ -96,11 +99,13 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
   const pullMutation = useMutation({
     mutationFn: () => postCustomersAction("/api/v1/qbo-sync/customers/pull-now", operatingCompanyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["customers-sync-status", operatingCompanyId] }),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not refresh customers from QBO"), "error"),
   });
 
   const reconcileMutation = useMutation({
     mutationFn: () => postCustomersAction("/api/v1/qbo-sync/customers/reconcile-now", operatingCompanyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["customers-sync-status", operatingCompanyId] }),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not reconcile customers"), "error"),
   });
 
   const status = statusQuery.data;
