@@ -1822,7 +1822,15 @@ export function auditSibling(rel, src, bad, good) {
 export function auditMaintenanceWorkOrderLabels(routesSrc, tableSrc) {
   const problems = [];
   const listQuery = routesSrc.match(/SELECT w\.\*, u\.unit_number,[\s\S]*?ORDER BY w\.opened_at DESC NULLS LAST/)?.[0] ?? "";
-  if (!/LEFT JOIN mdata\.drivers d ON d\.id = w\.driver_id AND d\.operating_company_id = w\.operating_company_id/.test(listQuery)
+  // DRV-F6190 (already shipped) admits an active shared-driver authorization alongside the plain
+  // home-company equality, so the driver join now reads
+  // "... ON d.id = w.driver_id AND (d.operating_company_id = w.operating_company_id OR EXISTS (...))"
+  // instead of a single bare "AND d.operating_company_id = ...". Match the driver join clause up to
+  // the vendor join and require the home-company predicate SOMEWHERE inside it — tolerant of the
+  // wrapping parens/OR/newlines a correct shared-driver fix adds, but still rejects a join with no
+  // company scope at all (the real regression this guard exists to catch).
+  const driverJoinClause = listQuery.match(/LEFT JOIN mdata\.drivers d ON d\.id = w\.driver_id([\s\S]*?)LEFT JOIN mdata\.vendors/)?.[1] ?? "";
+  if (!/d\.operating_company_id = w\.operating_company_id/.test(driverJoinClause)
     || !/LEFT JOIN mdata\.vendors v ON v\.id = COALESCE\(w\.external_vendor_id, w\.vendor_id\) AND v\.operating_company_id = w\.operating_company_id/.test(listQuery)) {
     problems.push(`${MAINT_WO_ROUTES}: list serializer missing entity-scoped driver/vendor label join`);
   }
@@ -1950,9 +1958,36 @@ function selftest() {
 LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
 LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
 ORDER BY w.opened_at DESC NULLS LAST`;
+  // Real shipped shape (DRV-F6190): home-company equality OR'd with an active shared-driver
+  // authorization, wrapped in parens across multiple lines — must be accepted, not just the
+  // single-line plain-equality shape above.
+  const goodMaintRoutesSharedDriver = `SELECT w.*, u.unit_number, NULLIF(TRIM('x'), '') AS driver_name, COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id, v.vendor_name AS resolved_vendor_name
+LEFT JOIN mdata.drivers d ON d.id = w.driver_id
+                           AND (
+                             d.operating_company_id = w.operating_company_id
+                             OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations work_orders_list_dca
+                               WHERE work_orders_list_dca.driver_id = d.id
+                                 AND work_orders_list_dca.company_id = w.operating_company_id
+                                 AND work_orders_list_dca.is_authorized = true
+                                 AND work_orders_list_dca.deactivated_at IS NULL
+                             )
+                           )
+LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+ORDER BY w.opened_at DESC NULLS LAST`;
+  const badMaintRoutesUnscopedDriver = `SELECT w.*, u.unit_number, NULLIF(TRIM('x'), '') AS driver_name, COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id, v.vendor_name AS resolved_vendor_name
+LEFT JOIN mdata.drivers d ON d.id = w.driver_id
+LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+ORDER BY w.opened_at DESC NULLS LAST`;
   const goodMaintTable = `entityLabel(row.driver_name, row.driver_id, "Driver"); entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, "Vendor")`;
   if (auditMaintenanceWorkOrderLabels(goodMaintRoutes, goodMaintTable).length) {
     failures.push("selftest: good maintenance WO label serializer flagged");
+  }
+  if (auditMaintenanceWorkOrderLabels(goodMaintRoutesSharedDriver, goodMaintTable).length) {
+    failures.push("selftest: good maintenance WO label serializer (shared-driver-authorized shape) flagged");
+  }
+  if (!auditMaintenanceWorkOrderLabels(badMaintRoutesUnscopedDriver, goodMaintTable).some((p) => p.includes("entity-scoped driver/vendor label join"))) {
+    failures.push("selftest: driver join with NO company scope at all NOT detected");
   }
   if (!auditMaintenanceWorkOrderLabels(goodMaintRoutes.replace(" AS driver_name", ""), goodMaintTable).length) {
     failures.push("selftest: missing maintenance WO driver label alias NOT detected");
