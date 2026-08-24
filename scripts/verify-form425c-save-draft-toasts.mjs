@@ -411,6 +411,20 @@ export function collectProblems(src) {
   if (pdfLib.includes("function nv(") || pdfLib.includes("Number(v ?? 0)") || pdfLib.includes("nv(report.line_20_receipts)")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: empty cash/projection fields must not print invented $0 (nv ?? 0) on Generate/History Print");
   }
+  if (
+    !pdfLib.includes("function filedDateLabel") ||
+    !pdfLib.includes("<strong>Date filed:</strong>") ||
+    !pdfLib.includes("line_26_employees_at_filing") ||
+    !pdfLib.includes("line_27_employees_now") ||
+    !pdfLib.includes("Employees when the case was filed")
+  ) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c-pdf.ts: Generate/History Print must include Date filed from filed_at and lines 26–27 — omitting them silently dropped Official Form fields from the live court HTML",
+    );
+  }
+  if (pdfLib.includes("Date filed:") && pdfLib.includes("toLocaleDateString")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Date filed must not invent print-day via toLocaleDateString");
+  }
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
       "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
