@@ -18,6 +18,7 @@ const LABEL = "verify-customers-load-column-remainder";
 
 const MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
 const DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
+const LOADS_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 const SELF = "scripts/verify-customers-load-column-remainder.mjs";
 const ENTITY_GUARD = "scripts/verify-entity-label-rejects-uuid-shaped-name.mjs";
 const REVERSE_HEADER = ' * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leaves":["detail.loads"],"task":"CUST-F5875-DETAIL-LOADS-REVERSE-EXACT-LEAF","vertical":"column-wave"}';
@@ -33,6 +34,11 @@ const WIRING = [
   [DETAIL, /operating_company_id: operatingCompanyId \? \[operatingCompanyId\] : undefined,/],
   [DETAIL, /activeTab === "Loads"/],
   [DETAIL, /onRowClick=\{\(load\) => navigate\(`\/dispatch\/loads\/\$\{load\.id\}`\)\}/],
+];
+
+const PRODUCER_WIRING = [
+  /SELECT COUNT\(\*\)::int AS total_count[\s\S]{0,220}JOIN LATERAL mdata\.get_customer_same_company\(\s*l\.customer_id,\s*l\.operating_company_id\s*\) c ON true/,
+  /c\.customer_name AS customer_name[\s\S]{0,900}FROM mdata\.loads l\s+JOIN LATERAL mdata\.get_customer_same_company\(\s*l\.customer_id,\s*l\.operating_company_id\s*\) c ON true/,
 ];
 
 function read(rel) {
@@ -66,6 +72,9 @@ export function verify(source) {
   for (const [file, pattern] of WIRING) {
     if (!pattern.test(source.detail || "")) failures.push(`${file}: missing real EntityLink kind="load" wiring`);
   }
+  for (const pattern of PRODUCER_WIRING) {
+    if (!pattern.test(source.loadsRoute || "")) failures.push(`${LOADS_ROUTE}: customer-filtered load list must preserve archived customer history through the same-company resolver`);
+  }
   if (!source.self.split("\n").includes(REVERSE_HEADER)) failures.push(`${SELF}: exact reverse Built header missing`);
   if (source.entityGuard.includes(OLD_REVERSE_HEADER)) failures.push(`${ENTITY_GUARD}: legacy broad customer reverse credit must stay removed`);
 
@@ -73,7 +82,7 @@ export function verify(source) {
 }
 
 function loadSource() {
-  return { matrix: read(MATRIX), detail: read(DETAIL), self: read(SELF), entityGuard: read(ENTITY_GUARD) };
+  return { matrix: read(MATRIX), detail: read(DETAIL), loadsRoute: read(LOADS_ROUTE), self: read(SELF), entityGuard: read(ENTITY_GUARD) };
 }
 
 const source = loadSource();
@@ -109,6 +118,10 @@ if (process.argv.includes("--selftest")) {
   for (const [, pattern] of WIRING.slice(2)) {
     const globalPattern = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
     mutations.push(() => ({ ...source, detail: source.detail.replace(globalPattern, "/* planted reverse defect */") }));
+  }
+  for (const pattern of PRODUCER_WIRING) {
+    const globalPattern = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+    mutations.push(() => ({ ...source, loadsRoute: source.loadsRoute.replace(globalPattern, "/* planted archived-customer load-list defect */") }));
   }
   mutations.forEach((mut, i) => {
     if (!verify(mut()).length) throw new Error(`selftest mutation ${i + 1} survived`);
