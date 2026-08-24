@@ -10,6 +10,7 @@ const REPROMPT_AFTER_MS = 5 * 60 * 1000;
 export function ArrivalPrompt() {
   const queryClient = useQueryClient();
   const [snoozedUntilByPrompt, setSnoozedUntilByPrompt] = useState<Record<string, number>>({});
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const promptsQuery = useQuery({
     queryKey: ["driver", "arrival-prompts"],
@@ -19,12 +20,19 @@ export function ArrivalPrompt() {
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) => confirmDriverArrivalPrompt(id),
+    onMutate: () => setMutationError(null),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["driver", "arrival-prompts"] }),
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to confirm arrival"),
   });
 
   const dismissMutation = useMutation({
     mutationFn: (id: string) => dismissDriverArrivalPrompt(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["driver", "arrival-prompts"] }),
+    onMutate: () => setMutationError(null),
+    onSuccess: (_result, promptId) => {
+      setSnoozedUntilByPrompt((current) => ({ ...current, [promptId]: Date.now() + REPROMPT_AFTER_MS }));
+      return queryClient.invalidateQueries({ queryKey: ["driver", "arrival-prompts"] });
+    },
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to dismiss arrival check"),
   });
 
   const activePrompt = useMemo(() => {
@@ -62,13 +70,13 @@ export function ArrivalPrompt() {
             className="font-semibold text-slate-700 hover:underline"
           />
         </p>
+        {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
             className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             onClick={() => {
-              void dismissMutation.mutateAsync(activePrompt.id);
-              setSnoozedUntilByPrompt((current) => ({ ...current, [activePrompt.id]: Date.now() + REPROMPT_AFTER_MS }));
+              dismissMutation.mutate(activePrompt.id);
             }}
             disabled={dismissMutation.isPending || confirmMutation.isPending}
           >

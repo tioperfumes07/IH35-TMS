@@ -10,6 +10,7 @@ const SNOOZE_MS = 5 * 60 * 1000;
 export function StatusSuggestionPrompt() {
   const queryClient = useQueryClient();
   const [snoozedUntilById, setSnoozedUntilById] = useState<Record<string, number>>({});
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["driver", "status-suggestions"],
@@ -20,7 +21,9 @@ export function StatusSuggestionPrompt() {
   const respondMutation = useMutation({
     mutationFn: (input: { id: string; response: "confirmed" | "overridden" | "dismissed" | "expired" }) =>
       respondDriverStatusSuggestion(input.id, { response: input.response }),
+    onMutate: () => setMutationError(null),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["driver", "status-suggestions"] }),
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to respond to status suggestion"),
   });
 
   const active = useMemo(() => {
@@ -57,6 +60,7 @@ export function StatusSuggestionPrompt() {
           . Mark as <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
         </p>
         <p className="mt-1 text-xs text-slate-500">{active.reason}</p>
+        {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
