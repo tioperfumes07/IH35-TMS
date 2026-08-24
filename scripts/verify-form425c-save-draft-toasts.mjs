@@ -139,6 +139,11 @@ export function collectProblems(src) {
   if (!routes.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: generate UPDATE must refuse status=filed (would set ready_to_file)");
   }
+  if (!routes.includes("form_425c_amendment_already_open") || !routes.includes("form_425c_amend_source_not_filed")) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: second Amend on a filed MOR must 409 — UNIQUE(opco, month, status) was a 500",
+    );
+  }
   if (!src.includes("addForm425CExhibitA") || !src.includes("addForm425CExhibitB") || !src.includes("onSaveExhibit")) {
     problems.push(`${PAGE}: flagged questionnaire must POST exhibit A/B — not a dead hop to /425c/exhibits A–F`);
   }
