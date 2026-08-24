@@ -83,7 +83,11 @@ describe("DailyTasksPage", () => {
       completedAt: null as string | null,
     };
 
-    vi.spyOn(identityApi, "listUsers").mockResolvedValue({
+    // DAILY-TASKS-F1: the component calls listAssignableUsers (identity.ts:141), not listUsers --
+    // listUsers is the Owner/Administrator-only full directory (identity.ts:138-140 comment); this
+    // test mocked the wrong function, so the real assignee combo was always empty and pickCombo
+    // failed on every run. Pre-existing drift, unrelated to the cancel feature below.
+    vi.spyOn(identityApi, "listAssignableUsers").mockResolvedValue({
       users: [
         {
           id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
