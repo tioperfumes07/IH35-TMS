@@ -42,27 +42,6 @@ export const QUESTIONNAIRE: QuestionnaireItem[] = [
   { num: 18, text: "Have you allowed any checks to clear the bank that were issued before you filed bankruptcy?", expectYes: false },
 ];
 
-export const DEFAULT_Q = {
-  1: "yes",
-  2: "yes",
-  3: "yes",
-  4: "yes",
-  5: "yes",
-  6: "yes",
-  7: "yes",
-  8: "yes",
-  9: "yes",
-  10: "no",
-  11: "no",
-  12: "no",
-  13: "no",
-  14: "no",
-  15: "no",
-  16: "no",
-  17: "no",
-  18: "no",
-} as const;
-
 export const DEFAULT_PROFILES: CompanyProfiles = {
   trucking: {
     name: "IH 35 TRUCKING LLC",
@@ -76,7 +55,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
     lineOfBusiness: "Freight Trucking",
     naiscCode: "484121",
     bankAccounts: [{ id: "WF-3500", label: "Wells Fargo – WF-3500", number: "xxxx3500" }],
-    defaultAnswers: { ...DEFAULT_Q },
+    defaultAnswers: {},
   },
   transportation: {
     name: "IH 35 TRANSPORTATION LLC",
@@ -94,7 +73,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
       { id: "WF-2", label: "Wells Fargo – WF (Account 2)", number: "xxxx" },
       { id: "WF-3", label: "Wells Fargo – WF (Account 3)", number: "xxxx" },
     ],
-    defaultAnswers: { ...DEFAULT_Q },
+    defaultAnswers: {},
   },
 };
 

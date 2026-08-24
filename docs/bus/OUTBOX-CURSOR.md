@@ -1,3 +1,4 @@
+Cursor | LOOP | 2026-08-23T22:52CT | healthz=6723148 | NO STAMP | leftover F425C-DEFAULT-PROFILES-CLIENT-INVENTS-YES-NO | deploy dep-da5ru2b in flight — no second kick | GO
 Cursor | LOOP | 2026-08-23T22:49CT | healthz=6723148 | NO STAMP | leftover F425C-ENSURE-DEFAULT-PROFILE-INVENTS-YES-NO | deploy dep-da5ru2b in flight — no second kick | GO
 Cursor | U14-CLOSED | 2026-08-23T22:46CT | healthz=6723148 | ALL 14 CONCLUDED — hop tables erased · rule 46 · leftover POST only | auditors file FINDING or AUDIT-PASS | GO
 Cursor | LOOP-U14 | 2026-08-23T22:44CT | healthz=6723148 | NO STAMP (U14 14/14) | leftover F425C-PROFILE-DEFAULT-RADIO-INVENTS-YES-NO | GO

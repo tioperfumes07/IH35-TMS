@@ -21,7 +21,7 @@ Seat NOW (one source): `docs/bus/NOW-ONE-SOURCE.md`.
 | 1 | CASH FLOW | `cash-flow` | `/cash-flow` | **CC-1** — Fully-Wired 1–12 leftover unique. Then row 2. |
 | 2 | FINANCE HUB | `finance` | `/finance` | **CC-1** after cash-flow unique-clean. |
 | 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | **CC-2** walked. Do not remake Close / proven TESTs. Next = in-lane unique (`CLASS-F5973-TRUE-REMAINDER-FUEL`). |
-| 4 | 425C | `form_425` | `/425c` | **Cursor** leftover unique — do not remake #15053–#15238. Next = unique 500/dead/silent only. |
+| 4 | 425C | `form_425` | `/425c` | **Cursor** leftover unique — do not remake #15053–#15247. Next = unique 500/dead/silent only. |
 | 5 | REPORTS | `reports` | `/reports` | **CC-2** walked. Stay out of CC-1 money reports. Next = fuel remainder unique. |
 | 6 | TASKS | `tasks` | `/tasks` | **CC-3** walked. Next = `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` unique. |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** walked. Unique only if a new 500/dead/silent appears. |
