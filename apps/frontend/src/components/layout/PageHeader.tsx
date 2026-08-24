@@ -33,7 +33,23 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
         </div>
       ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-end gap-2">
+        {/*
+          BANKING-HOME-TITLE-ACTIONS-OVERLAP: this title-group used to carry `min-w-0` alongside
+          `flex-1`, which let the flex algorithm shrink this WHOLE group narrower than the title's own
+          (flexShrink:0, nowrap) content when the sibling actions block's natural width left little
+          room — e.g. /banking/transactions and /banking/reconciliation, whose action list is short
+          enough to fit on the header's first line, unlike /banking (Accounts) with its long action
+          list that already forced a wrap. With min-w-0 the browser preferred shrinking this box to a
+          few px (down to just the back button) over wrapping the row, and the h1 — which itself
+          refuses to shrink and has no overflow clipping — rendered straight over the actions text
+          instead of moving to a second line, corrupting both readability and click targets. Live-
+          reproduced and live-fixed via DOM patch on /banking/transactions before touching source: with
+          min-w-0 removed, the parent's `flex-wrap` correctly pushes the actions block to its own line
+          once the two groups' natural widths exceed the row, matching the working /banking (Accounts)
+          layout instead of overlapping it. No other prop of this shared component changes; the title/
+          subtitle-vs-title truncation math below is unaffected.
+        */}
+        <div className="flex flex-1 items-end gap-2">
           <button
             type="button"
             aria-label="Back"
