@@ -45,6 +45,8 @@ These never sat on the exclusive U14 table. They are **not** U14 CERTIFIED. Owne
 
 ### B1 — leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14` · 2026-08-24
 
+**OWNER 2026-08-24 09:05 CT — leftover POST CERTIFIED IMMEDIATE (Live Chrome re-walk, not U14):** `cash-flow` · `finance` · `driver-hub` · `reports` @ healthz `97d6a14` (USMCA). Unique 500 / dead click / silent no-op = **none**. Seats do **not** recertify these four.
+
 Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / silent no-op = **none**. Finance Hub `/finance` honest flag-off copy is not a FINDING.
 
 | Sidebar id | Route | Leftover POST Live Chrome SHA | Hops (USMCA) |
