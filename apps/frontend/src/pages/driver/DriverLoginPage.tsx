@@ -54,7 +54,7 @@ export function DriverLoginPage() {
       void registerDriverServiceWorker();
       initDriverBackgroundSessionRefresh();
       const vapid = readVapidPublicKeyFromEnv();
-      if (vapid) void registerDriverWebPush(vapid);
+      if (vapid) void registerDriverWebPush(vapid).catch(() => undefined);
       navigate("/driver/loads", { replace: true });
     } catch {
       setMessage("Invalid code or not a driver account.");
