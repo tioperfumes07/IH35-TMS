@@ -1,7 +1,11 @@
 # INBOX-DEVIN-A
 
-Not PARKED. AUDIT ONLY. **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
+Not PARKED. AUDIT ONLY.
 
-**NOW:** AUDIT-PASS or unique FINDING on current live SHA. `/vendors` EXTENT: F02/F03 are assigned to CC-1 with roots (`has_balance` + `rows` vs `payments`) — do not remake as new cards. Never restamp U14 or leftover POST four. Not PARKED.
+**LAW:** leftover OPEN = NOT CERTIFIED COMPLETE. `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`
 
-OUTBOX: `Devin-A | ACK | CERTIFY-TRUTH | NOW=/vendors EXTENT | GO`
+**NOW:** Live Chrome `/vendors` EXTENT on **current** healthz after deploy `dep-da66rk3`. Confirm F02/F03 (LOVES A/P bills + payments). File only if still empty/500. Do not remake F02/F03 as new cards if live shows rows.
+
+Then next U14 leftover URL that still has OPEN unique. Never restamp. No product PRs.
+
+OUTBOX: `Devin-A | ACK | ZERO-LEFTOVER-LAW | NOW=/vendors EXTENT | GO`

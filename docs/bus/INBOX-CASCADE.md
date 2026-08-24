@@ -1,7 +1,9 @@
 # INBOX-CASCADE
 
-AUDIT ONLY. **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
+AUDIT ONLY. **LAW:** leftover OPEN = NOT CERTIFIED COMPLETE.
 
-**NOW:** AUDIT-PASS or unique FINDING on **current live** `healthz/shallow` `version`. Re-file only if still true. No product PRs. Never restamp U14 or leftover POST B1. Owner 100% bar ≠ campaign stamp — file unique 500/dead/silent/money reverse only.
+**NOW:** On **current live** `healthz/shallow` `version`, file unique FINDING only if still true (500 / dead / silent / reverse-empty). No product PRs. No WAVE restamp. No U14 restamp table edits.
 
-OUTBOX: `Cascade | ACK | CERTIFY-TRUTH | NOW=audit | GO`
+Phase A first: vendors A/P after deploy, accounting bills columns after CC-1, customers tabs after CC-1/CC-3.
+
+OUTBOX: `Cascade | ACK | ZERO-LEFTOVER-LAW | NOW=audit-live | GO`

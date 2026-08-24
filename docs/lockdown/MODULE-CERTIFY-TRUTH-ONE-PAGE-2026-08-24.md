@@ -1,18 +1,21 @@
 # MODULE CERTIFY — ONE TRUTH PAGE (owner 2026-08-24)
 
-**This is the only certify list.** Do not invent a second CERTIFIED class. Do not leftover-CERTIFY a U14 module.
+**This is the only certify list.** Do not invent a second CERTIFIED class.
 
-`docs/bus/NOW-ONE-SOURCE.md` points here. If WAVE / leftover / OUTBOX / chat disagrees — **this page wins.**
+**LAW (owner 2026-08-24 11:13 CT):** `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`  
+**Leftover OPEN = NOT CERTIFIED COMPLETE.** Historical U14 stamp SHA is history, not a pass while unique leftovers remain.
+
+`docs/bus/NOW-ONE-SOURCE.md` points here. If WAVE / leftover / OUTBOX / chat disagrees — **this page + ZERO-LEFTOVER law win.**
 
 ---
 
-## What CERTIFIED means (one word, one campaign)
+## What CERTIFIED COMPLETE means (one definition)
 
-**CERTIFIED** = Urgent 14 exclusive certify, Fully-Wired **1–12** + Live Chrome last, stamped on `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`.
+Fully-Wired **1–12** + Live Chrome on **current** `healthz/shallow` + **zero unique OPEN leftovers**.
 
-That campaign is **CLOSED. 14/14. Nothing pending.** Never stamp. Never restamp. Never recertify.
+U14 exclusive campaign table below is the **14-module set**. Those 14 are CERTIFIED COMPLETE **only** when the remainder file has **no OPEN unique** on that module. Do not run a second exclusive stamp campaign. **Close leftovers. Live-verify. Then they are complete.**
 
-**Not CERTIFIED:** leftover unique hop logs · Rule 24 `complete:true` · matrix Box 4 · leftover WAVE tables. Those are other meters. They do **not** reopen U14 and they are **not** a second exclusive certify.
+**Not this definition:** Rule 24 `complete:true` · matrix Box 4 · leftover WAVE hop logs.
 
 ---
 
