@@ -4104,6 +4104,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-deactivate-consistency"
   },
+  "6498": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-edit-save-wired"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -6093,5 +6098,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1312
+  "total_claimed": 1313
 }
