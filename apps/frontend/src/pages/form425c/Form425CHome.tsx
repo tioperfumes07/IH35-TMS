@@ -149,12 +149,23 @@ export function Form425CHome() {
   const [form, setForm] = useState<CurrentFormState>(emptyForm());
   const [dirty, setDirty] = useState(false);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
+  const profileErrorToast = useRef(false);
 
   const profilesQuery = useQuery({
     queryKey: ["form-425c", "profiles", companyId],
     enabled: Boolean(companyId),
     queryFn: () => listForm425CProfiles(companyId),
   });
+
+  useEffect(() => {
+    if (!profilesQuery.isError) {
+      profileErrorToast.current = false;
+      return;
+    }
+    if (profileErrorToast.current) return;
+    profileErrorToast.current = true;
+    pushToast(userFacingApiError(profilesQuery.error, "Could not load Form 425C profile"), "error");
+  }, [profilesQuery.isError, profilesQuery.error, pushToast]);
 
   const availableCompanies = useMemo<CompanyKey[]>(() => {
     const keys = profilesQuery.data?.profiles?.map((row) => row.company_key) ?? [];
@@ -539,7 +550,13 @@ export function Form425CHome() {
           onChange={(company, updater) => {
             setProfiles((prev) => ({ ...prev, [company]: updater(prev[company]) }));
           }}
-          onSave={() => saveProfileMutation.mutate()}
+          onSave={() => {
+            if (!companyId) {
+              pushToast("Select an operating company before saving profile defaults", "error");
+              return;
+            }
+            saveProfileMutation.mutate();
+          }}
           saving={saveProfileMutation.isPending}
         />
       ) : null}
