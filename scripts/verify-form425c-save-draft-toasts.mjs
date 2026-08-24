@@ -386,6 +386,9 @@ export function collectProblems(src) {
   if (!src.includes("Print opened without a debtor filename") || src.includes("res.suggested_filename || suggestedFilename")) {
     problems.push(`${PAGE}: Generate toast must not invent a court PDF name when suggested_filename and Profiles name are empty`);
   }
+  if (src.includes("Ready to print: ${res.suggested_filename}")) {
+    problems.push(`${PAGE}: History Print must refuse an empty suggested_filename — interpolating it was a silent success toast`);
+  }
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
   }
