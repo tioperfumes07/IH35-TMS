@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { getCurrentClocks } from "./hos-clocks.service.js";
+import { computeDailyDutySummary, getCurrentClocks, type HosDutyStatusEvent } from "./hos-clocks.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -115,36 +115,25 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id, params.data.driver_id]
       );
-      const summary8dRes = await client.query<{
-        service_day: string;
-        duty_status: string;
-        total_minutes: number;
-      }>(
+      // HOS-F6312: the daily summary is derived from flattenDutySegments() — the SAME
+      // non-overlapping reconstruction the clocks panel above already requires — not a raw SQL SUM
+      // over the append-only event rows. ELD ingest legitimately writes overlapping/duplicate rows
+      // for one real duty period; summing them directly produces impossible per-day totals (a
+      // single day showing 140+ hours). Fetch with a lookback buffer beyond the 8-day window so a
+      // segment that started earlier still gets its correct flattened boundary before being clipped
+      // to the window in computeDailyDutySummary().
+      const summary8dEventsRes = await client.query<HosDutyStatusEvent>(
         `
-          SELECT
-            to_char(date_trunc('day', started_at), 'YYYY-MM-DD') AS service_day,
-            duty_status,
-            FLOOR(
-              SUM(
-                EXTRACT(
-                  EPOCH FROM
-                  (
-                    LEAST(COALESCE(ended_at, now()), now())
-                    - GREATEST(started_at, now() - interval '8 days')
-                  )
-                ) / 60.0
-              )
-            )::int AS total_minutes
+          SELECT started_at::text, ended_at::text, duty_status
           FROM hos.duty_status_events
           WHERE operating_company_id = $1::uuid
             AND driver_id = $2::uuid
-            AND started_at < now()
-            AND COALESCE(ended_at, now()) > now() - interval '8 days'
-          GROUP BY 1, 2
-          ORDER BY service_day DESC, duty_status
+            AND COALESCE(ended_at, now()) > now() - interval '10 days'
+          ORDER BY started_at ASC
         `,
         [query.data.operating_company_id, params.data.driver_id]
       );
+      const summary8d = computeDailyDutySummary(summary8dEventsRes.rows, 8);
       const manualEditsRes = await client.query<{
         id: string;
         started_at: string;
@@ -166,7 +155,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
         driver_id: params.data.driver_id,
         clocks,
         timeline_24h: events24hRes.rows,
-        summary_8d: summary8dRes.rows,
+        summary_8d: summary8d,
         manual_edits: {
           count: manualEditsRes.rows.length,
           requires_supervisor_signoff: true,
