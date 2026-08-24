@@ -47,6 +47,27 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.deductions",
+    needles: [
+      "s.id = d.applied_to_settlement_id",
+      "s.operating_company_id = d.operating_company_id",
+      "s.voided_at IS NULL",
+      "s.reversed_at IS NULL",
+      "d.status = 'applied'",
+      "d.is_held = false",
+      "driver_finance.settlement_lines",
+      "sl.line_type = 'deduction'",
+      "sl.is_active = true",
+      "sl.source_table = 'driver_finance.driver_settlement_deductions'",
+      "sl.source_reference_id = d.id",
+      "driver_finance.payrun_gl_runs",
+      "accounting.journal_entries",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "pr.status = 'posted'",
+    ],
+  },
+  {
     key: "scenario.advance",
     needles: [
       "a.driver_id IS NOT NULL",
@@ -272,6 +293,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["deduction probe accepts a held deduction", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND d.is_held = false", "") })],
+    ["deduction probe loses its source line", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND sl.source_reference_id = d.id", "") })],
     ["advance probe accepts an undisbursed row", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND a.disbursement_status = 'disbursed'", "") })],
     ["advance probe drops its posting batch", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
     ["settlement probe drops payment proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("OR s.payment_state IN ('paid', 'cleared')", "") })],

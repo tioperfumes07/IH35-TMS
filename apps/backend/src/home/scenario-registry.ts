@@ -449,12 +449,42 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Deduction applied against a settlement",
     je: "DR Net Pay Clearing / CR the deduction account",
     spec_ref: "DEDUCT",
-    sources: ["driver_finance.driver_settlement_deductions"],
+    sources: ["driver_finance.driver_settlement_deductions", "driver_finance.settlement_lines", "driver_finance.driver_settlements", "driver_finance.payrun_gl_runs", "accounting.journal_entries"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM driver_finance.driver_settlement_deductions d WHERE ($1::uuid IS NULL OR d.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM driver_finance.driver_settlement_deductions d
+          JOIN driver_finance.driver_settlements s
+            ON s.id = d.applied_to_settlement_id
+           AND s.operating_company_id = d.operating_company_id
+           AND s.voided_at IS NULL
+           AND s.reversed_at IS NULL
+         WHERE ($1::uuid IS NULL OR d.operating_company_id = $1::uuid)
+           AND d.status = 'applied'
+           AND d.is_held = false
+           AND EXISTS (
+             SELECT 1
+               FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id
+                AND sl.line_type = 'deduction'
+                AND sl.is_active = true
+                AND sl.source_table = 'driver_finance.driver_settlement_deductions'
+                AND sl.source_reference_id = d.id
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM driver_finance.payrun_gl_runs pr
+               JOIN accounting.journal_entries je
+                 ON je.id = pr.journal_entry_id
+                AND je.operating_company_id = pr.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
+              WHERE pr.settlement_id = s.id
+                AND pr.operating_company_id = s.operating_company_id
+                AND pr.status = 'posted'
+           )
       `,
-      describe: (n) => `${n} settlement deduction(s) applied`,
+      describe: (n) => `${n} applied settlement deduction(s) included in a posted pay-run JE`,
     },
   },
   {
