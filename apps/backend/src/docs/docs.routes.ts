@@ -221,12 +221,19 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const doc = await withCurrentUser(authUser.uuid, async (client) => {
+      // DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED: this response is typed DocsFile on the
+      // frontend (apiRequest<DocsFile>) and fed straight into the shared PreviewModal, whose
+      // contract reads file.category_label / file.category_code — the same names the sibling
+      // /api/v1/docs/files (files.routes.ts) endpoint already uses. Aliasing to type/type_label
+      // here (the list-row shape) meant PreviewModal's category_label was always undefined —
+      // the Preview modal showed "Uncategorized" for every document regardless of its real
+      // category. Alias to match the DocsFile contract instead.
       const res = await client.query(
         `
           SELECT
             f.*,
-            fc.code AS type,
-            fc.label AS type_label,
+            fc.code AS category_code,
+            fc.label AS category_label,
             COALESCE((
               SELECT json_agg(
                 json_build_object(
