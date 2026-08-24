@@ -2,7 +2,7 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` — every seat (Cursor, CC-1/2/3, Codex, **Cascade**, **Devin-A**) runs Program hops + matrix mapping and proves TESTs in the correct tables/ledgers/modules. Unique hunt still on. U14 never restamp. CREATE-TEST-THEN-VOID (void at launch).
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + **`docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`**. Program hops + **breakdown/replacement-truck battery** + printable letters. **USMCA posting LIVE.** Only QBO + TRANSP/TRK flags stay OFF. Prove TESTs in real tables/JEs. Unique hunt still on. U14 never restamp. CREATE-TEST-THEN-VOID (void at launch).
 
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  

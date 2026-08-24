@@ -174,10 +174,10 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     // LoadBolPanel. So the dot measured a different table from the one the product writes and reads,
     // and could not have gone green from a real POD capture no matter how many were taken.
     //
-    // The docs-library arm is KEPT rather than replaced: a BOL scanned into the document library and
-    // linked to the load is genuine POD/BOL evidence too, and dropping that arm would have swapped one
-    // blind spot for another. UNION ALL over the three, so the count is "pieces of POD/BOL evidence
-    // attached to a load", which is what the label claims.
+    // The docs-library arm is KEPT rather than replaced: a POD/BOL scanned into the document library
+    // and linked to the load is genuine evidence too. It MUST carry the canonical `pod` or `bol` file
+    // category; counting every load-linked file turns driver-instruction PDFs into fake POD/BOL proof.
+    // UNION ALL over the three stores, so the count is "pieces of POD/BOL evidence attached to a load".
     //
     // Both dispatch tables carry operating_company_id directly; file_links does not, so that arm still
     // takes its entity scope from the parent load. archived_at IS NULL matches the read endpoint's own
@@ -187,6 +187,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
       "dispatch.bol_documents",
       "docs.files",
       "docs.file_links",
+      "catalogs.file_categories",
       "mdata.loads",
     ],
     probe: {
@@ -205,9 +206,12 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
           SELECT fl.id
             FROM docs.file_links fl
             JOIN docs.files f ON f.id = fl.file_id
+            JOIN catalogs.file_categories fc ON fc.id = f.category_id
             JOIN mdata.loads l ON l.id = fl.entity_id
            WHERE fl.entity_type = 'load'
              AND fl.deleted_at IS NULL
+             AND f.deleted_at IS NULL
+             AND fc.code IN ('pod', 'bol')
              AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
         ) evidence
       `,
@@ -556,6 +560,92 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
         SELECT count(*)::text AS n FROM banking.bank_transactions bt WHERE bt.categorized_at IS NOT NULL AND ($1::uuid IS NULL OR bt.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} categorized bank transaction(s)`,
+    },
+  },
+  {
+    key: "scenario.breakdown_relay",
+    title: "Breakdown + replacement truck",
+    lane: "screens",
+    trigger: "In-transit breakdown, WO opened, replacement unit assigned to the same load",
+    je: "Roadside bill posts DR Repair / CR A/P (see scenario.roadside_ap)",
+    spec_ref: "COMPLICATED-BATTERY-01",
+    sources: ["dispatch.intransit_issues", "dispatch.load_assignment_history", "maintenance.work_orders", "mdata.loads"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM dispatch.intransit_issues i
+          JOIN dispatch.load_assignment_history h ON h.load_id = i.load_id
+         WHERE i.promoted_to_wo_id IS NOT NULL
+           AND i.unit_id IS NOT NULL
+           AND h.previous_unit_id IS NOT NULL
+           AND h.new_unit_id IS NOT NULL
+           AND h.previous_unit_id <> h.new_unit_id
+           AND ($1::uuid IS NULL OR i.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} load(s) with in-transit WO + unit swap (replacement truck)`,
+    },
+  },
+  {
+    key: "scenario.trailer_swap",
+    title: "Trailer hook / drop mid-load",
+    lane: "screens",
+    trigger: "Trailer changed on an in-progress load",
+    je: "—",
+    spec_ref: "COMPLICATED-BATTERY-02",
+    sources: ["dispatch.load_assignment_history", "mdata.loads"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM dispatch.load_assignment_history h
+         WHERE h.previous_trailer_id IS NOT NULL
+           AND h.new_trailer_id IS NOT NULL
+           AND h.previous_trailer_id <> h.new_trailer_id
+           AND ($1::uuid IS NULL OR h.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} mid-load trailer swap(s)`,
+    },
+  },
+  {
+    key: "scenario.roadside_ap",
+    title: "Roadside tow / repair AP on the load",
+    lane: "money",
+    trigger: "Vendor bill from the in-transit WO",
+    je: "DR Repair / CR A/P",
+    spec_ref: "COMPLICATED-BATTERY-03",
+    sources: ["accounting.bills", "maintenance.work_orders", "dispatch.intransit_issues"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM accounting.bills b
+          JOIN maintenance.work_orders w ON w.id = b.linked_work_order_uuid
+         WHERE b.qbo_bill_id IS NULL
+           AND b.voided_at IS NULL
+           AND b.revoked_at IS NULL
+           AND EXISTS (
+             SELECT 1 FROM dispatch.intransit_issues i
+              WHERE i.promoted_to_wo_id = w.id
+           )
+           AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} TMS-native roadside bill(s) linked to an in-transit WO`,
+    },
+  },
+  {
+    key: "scenario.parts_receive",
+    title: "Receive parts inventory onto a WO",
+    lane: "money",
+    trigger: "Parts purchase receipt (optional WO consume)",
+    je: "DR Inventory / CR A/P when parts GL flag ON",
+    spec_ref: "COMPLICATED-BATTERY-04",
+    sources: ["maintenance.parts_purchases", "maintenance.parts_inventory"],
+    probe: {
+      sql: `
+        SELECT count(*)::text AS n
+          FROM maintenance.parts_purchases p
+         WHERE p.voided_at IS NULL
+           AND ($1::uuid IS NULL OR p.operating_company_id = $1::uuid)
+      `,
+      describe: (n) => `${n} live parts receipt(s)`,
     },
   },
 ];

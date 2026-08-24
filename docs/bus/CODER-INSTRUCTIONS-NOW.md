@@ -1,8 +1,9 @@
 # CODER INSTRUCTIONS — NOW (2026-08-24)
 
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`  
+**COMPLICATED + PRINT:** `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
 
-Run **Program scenarios + `/program/matrix` mapping**. Prove each TEST lands in the correct **table / ledger / column / module**. File FINDINGS. CREATE-TEST-THEN-VOID (void at launch).
+Run **Program hops + matrix** **and** the breakdown/replacement-truck battery (drivers, trucks, trailers, diesel, bills, inventory). Print invoices / proforma / dispatch / WO / 425C / cash-flow / finance to letter spec (not SPA chrome). Prove each TEST in the correct **table / ledger / column / module**. **Posting LIVE on USMCA.** Only **QBO** and **TRANSP/TRK** flags stay OFF. File FINDINGS. CREATE-TEST-THEN-VOID (void at launch).
 
 **Still in force:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md` (unique 500/dead/silent/fake-$0). **Not** a U14 recertify.
 

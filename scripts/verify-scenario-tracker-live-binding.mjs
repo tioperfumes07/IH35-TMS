@@ -41,6 +41,7 @@ const ORIGIN_REQUIRED = [
   { key: "scenario.customer", needle: "c.qbo_customer_id IS NULL", why: "2,689 of 2,696 customers are QBO clones" },
   { key: "scenario.coa", needle: "a.qbo_account_id IS NULL", why: "1,295 of 1,442 accounts are QBO clones" },
   { key: "scenario.fuel", needle: "f.load_id IS NOT NULL", why: "all 1,548 fuel rows are CSV-imported" },
+  { key: "scenario.roadside_ap", needle: "b.qbo_bill_id IS NULL", why: "QBO clone bills must not prove roadside TMS AP" },
 ];
 
 function stripComments(src) {
