@@ -6,9 +6,9 @@
 **YOU LEAD. Idle = defect.** Deploy 5–10 min AND 5–10 PRs, one in-flight.
 
 **NOW:**
-1. Keep seats on Phase A: CC-1 F03 + CUST-MONEY; CC-2 `/reports`; CC-3 CLASS-F5973 maint; Codex fuel.
-2. GitHub clean: close stale chore PRs (tracker #10720, out-of-sequence dependabot majors).
-3. Unique overflow. Never leftover-CERTIFY a module that still has unique OPEN.
+1. FAST-MERGE CUST-MONEY-F6312. Then unique overflow only.
+2. Wake Cascade + Devin-A: LIVE WALK on current `healthz` — unique FINDING only.
+3. Deploy every 5–10 min AND 5–10 PRs (never wait past 10). One in-flight.
 
 Late-arrivals API **200** `{count:2}` @ `d6b43ce`. Vendors F02/F03 **LIVE CLOSED**. `/425c` do not loop.
 

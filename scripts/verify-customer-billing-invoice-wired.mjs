@@ -44,6 +44,33 @@ const CHECKS = [
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
     pattern: /recordPaymentOpen/,
   },
+  {
+    name: "CUST-MONEY-F6312 Statements tab reads invoices + payments (not coming-state copy)",
+    file: "apps/frontend/src/pages/Customers.tsx",
+    pattern: /activeTab === "statements"/,
+  },
+  {
+    name: "CUST-MONEY-F6312 Recurring tab lists accounting.recurring_templates for this customer",
+    file: "apps/frontend/src/pages/Customers.tsx",
+    pattern: /listAccountingRecurringTemplates/,
+  },
+  {
+    name: "CUST-MONEY-F6312 Late Fees tab is overdue AR only — no invented late-fee dollar",
+    file: "apps/frontend/src/pages/Customers.tsx",
+    pattern: /no customer late-fee rule table/,
+  },
+  {
+    name: "CUST-MONEY-F6312 money tabs are not COMING_STATE_COPY leftovers",
+    file: "apps/frontend/src/pages/Customers.tsx",
+    pattern:
+      /const COMING_STATE_COPY[\s\S]*projects:[\s\S]*opportunities:[\s\S]*conversations:/,
+    antiPattern: /^\s+(statements|recurring_transactions|late_fees):/m,
+  },
+  {
+    name: "CUST-MONEY-F6312 backend lists recurring templates scoped by customer_id",
+    file: "apps/backend/src/accounting/recurring-template-detail.routes.ts",
+    pattern: /app\.get\("\/api\/v1\/accounting\/recurring-templates"/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -57,29 +84,52 @@ export function checkAll(readFile) {
     if (!c.pattern.test(src)) {
       failures.push(`${c.name}: ${c.file} no longer matches expected shape`);
     }
+    if (c.antiPattern && c.antiPattern.test(src)) {
+      failures.push(`${c.name}: ${c.file} still contains leftover coming-state copy`);
+    }
   }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
-    "apps/frontend/src/pages/Customers.tsx":
-      "onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}",
+    "apps/frontend/src/pages/Customers.tsx": `
+      onClick={() => navigate(\`/accounting/invoices?customer_id=\${selectedCustomer.id}\`)}
+      listAccountingRecurringTemplates
+      {activeTab === "statements" ? (
+      There is no customer late-fee rule table.
+      const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
+        projects: "Projects",
+        opportunities: "Opportunities",
+        conversations: "Conversations",
+      };
+    `,
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx":
       'const customerId = searchParams.get("customer_id") ?? "";',
     "apps/frontend/src/pages/CustomerDetail.tsx": `
       queryFn: () => listInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices ?? []),
       const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
     `,
+    "apps/backend/src/accounting/recurring-template-detail.routes.ts":
+      'app.get("/api/v1/accounting/recurring-templates"',
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
     console.error(`[${LABEL}] selftest FAIL: known-good fixture should pass — ${goodFailures.join("; ")}`);
     process.exit(1);
   }
+  const leftoverComing = checkAll((f) =>
+    f === "apps/frontend/src/pages/Customers.tsx"
+      ? `const COMING_STATE_COPY = { statements: "x", recurring_transactions: "y", late_fees: "z", projects: "p", opportunities: "o", conversations: "c" };`
+      : GOOD_FIXTURES[f] ?? null,
+  );
+  if (!leftoverComing.some((line) => line.includes("coming-state"))) {
+    console.error(`[${LABEL}] selftest FAIL: leftover coming-state fixture must fail antiPattern`);
+    process.exit(1);
+  }
   const regressedFailures = checkAll(() => "nothing matches here");
-  if (regressedFailures.length !== CHECKS.length) {
-    console.error(`[${LABEL}] selftest FAIL: regressed fixture (all-empty) should fail every check`);
+  if (regressedFailures.length < CHECKS.length) {
+    console.error(`[${LABEL}] selftest FAIL: regressed fixture (all-empty) should fail every pattern check`);
     process.exit(1);
   }
   console.log(`[${LABEL}] selftest: PASS — good/regressed fixtures classify correctly`);

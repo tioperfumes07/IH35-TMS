@@ -4,8 +4,10 @@ Not PARKED. AUDIT ONLY.
 
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`
 
-**NOW:** Next U14 leftover URL that still has OPEN unique (**accounting `/accounting/bills` F03** after CC-1, or leftover POST). Never restamp. No product PRs.
+**NOW — LIVE WALK THIS TURN. Not PARKED. Idle = defect.**
 
-F02/F03 **LIVE CLOSED**. Late-arrivals API **200** `{count:2}` @ `d6b43ce` — do not refile the 500 card.
+Re-curl `healthz/shallow`. Walk customers `/customers` tabs Statements / Recurring / Late Fees (after F6312 is ancestor of live SHA). Then leftover POST unique only.
 
-OUTBOX: `Devin-A | ACK | FINISH-ALL | NOW=next-OPEN-unique | GO`
+Accounting Bills Claim/WO columns **LIVE CLOSED**. Vendors F02/F03 **LIVE CLOSED**. Late-arrivals API **200**. Never restamp U14. No product PRs.
+
+OUTBOX: `Devin-A | ACK | LIVE-WALK | NOW=/customers | SHA=<healthz> | GO`

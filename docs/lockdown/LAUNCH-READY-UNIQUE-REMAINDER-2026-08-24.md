@@ -38,13 +38,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Module | Stamp | Unique leftover TODAY (verified or still-OPEN on main) | Seat NOW |
 |--------|-------|--------------------------------------------------------|----------|
-| accounting | U14 `@c11bdab` | **U14-01-F03** Bills **list** has no Claim/WO **column** (filter + detail exist). | **CC-1 NOW** |
+| accounting | U14 `@c11bdab` | **U14-01-F03** Claim/WO **list columns LIVE CLOSED** @ `0404290` (still on `9858b12`). Full 1–12 walk on current live SHA still owed — unique FINDING only. | Cascade/Devin LIVE WALK |
 | banking | U14 `@36e51bb` | BANK-F5987 `mask` — **grep-closed** (`account_mask` on main). No remake. | — |
 | settlements | U14 `@b6980d6` | No unique leftover verified this pass. | Unique FINDING only |
 | factoring | U14 `@c11bdab` | FACT-F5986 DISTINCT/ORDER — **grep-closed** (`sort_key` on main). No remake. | — |
 | dispatch | U14 `@39472f2` | Late-arrivals page + API **LIVE 200** @ `d6b43ce` (`count:2`). Devin widget-500 card **REFUTED** (Cursor CDP `GET https://api.ih35dispatch.com/api/v1/dispatch/alerts/late-arrivals`). | Do not remake |
 | vendors | U14 `@627d7d0` | F02/F03 **LIVE CLOSED** @ `d6b43ce` (Devin-A + Cursor Chrome: LOVES A/P 2 bills + 2 payments). | Do not remake |
-| customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees still follow-up copy. CUST-CRM-F6313 — **VERIFIED honest empty, not a leftover** (CC-3): zero canonical backend exists for Projects/Opportunities/Conversations (grepped every `db/migrations/*.sql` — no projects table, no CRM/opportunities schema; the only `chat.*` schema is per-load driver↔office chat, `kind` CHECK has no `'customer'` option; grepped `apps/backend/src` — zero real routes, only coincidental word matches) and the current `COMING_STATE_COPY` placeholder in `Customers.tsx` is confirmed NOT faking data from loads anywhere (only 3 refs each: type def, tab list, placeholder string). Same exemption class as "Finance Hub honest flag-off" in the zero-leftover law. | **CC-1** money only |
+| customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees wired to invoices + payments + `accounting.recurring_templates` (overdue AR only; no invented late-fee $). Live Chrome after this deploy. CUST-CRM-F6313 — **honest empty, not leftover**. | Cursor ship then Cascade/Devin walk |
 | drivers | U14 `@07993ac` | DRVFIN-F6169 advances 404 — **grep-closed** (`driver_company_authorizations` on main). No remake. | Unique FINDING only |
 | fleet | U14 `@07993ac` | No unique leftover verified this pass. | Unique FINDING only |
 | lists | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
@@ -65,7 +65,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 | reports | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
 | compliance | leftover `@97d6a14` | Form 2290 errors — shipped Codex. | Unique FINDING only |
 | eld | leftover `@97d6a14` | Hidden stub — **not missing**. | Unique FINDING only |
-| inventory | leftover `@97d6a14` | INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE still OPEN (WORM). Grep-verify then fix. | **CC-1** after F02/F03/F031 |
+| inventory | leftover `@97d6a14` | INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE — **FIXED #13931** (void-not-delete). Do not remake. | Unique FINDING only |
 | fuel | leftover `@97d6a14` | CLASS-F5973 fuel leaves — grep-verify; wire only if still dead. | **Codex** |
 | users | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
 | home | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
