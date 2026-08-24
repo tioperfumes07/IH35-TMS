@@ -47,7 +47,11 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
     lane: "screens",
     doing: "POD/BOL upload flips the load to completed_docs_received — the billing trigger for Event 2.",
     spec_ref: "POD billing readiness",
-    href: "/dispatch/ocr-queue",
+    // PROGRAM-TRACKER-F07: was "/dispatch/ocr-queue" (the OCR intake for INBOUND rate confirmations
+    // used to book new loads — a completely different workflow). The real POD/BOL screen is
+    // PodReviewPage ("POD review + BOL — Review driver proof-of-delivery captures and generate bills
+    // of lading"), mounted at this route in routes/manifest.tsx.
+    href: "/dispatch/pod-review",
   },
   {
     order: 6,
