@@ -181,6 +181,56 @@ describe("form-425c exhibits", () => {
     });
   });
 
+  describe("Exhibit C — F425C-EXHIBIT-C-UNVERIFIED-OPENING-FEEDS-TOTAL", () => {
+    it("never fabricates a $0 opening/closing for an account with no reconciliation session, and excludes it from the total", async () => {
+      const client = {
+        query: vi.fn(async () => ({
+          rows: [
+            {
+              id: "11111111-1111-4111-8111-111111111111",
+              name: "DIP Operating",
+              mask: "3500",
+              inflows: "500000",
+              outflows: "200000",
+              beginning_balance_cents: "900000",
+              reconciliation_session_id: "22222222-2222-4222-8222-222222222222",
+            },
+            {
+              id: "33333333-3333-4333-8333-333333333333",
+              name: "Relay Fuel Wallet",
+              mask: null,
+              inflows: "10000",
+              outflows: "0",
+              beginning_balance_cents: null,
+              reconciliation_session_id: null,
+            },
+          ],
+        })),
+      };
+      const exhibit = await buildExhibitC(client, {
+        operating_company_id: companyId,
+        period_start: "2026-05-01",
+        period_end: "2026-05-31",
+      });
+      // Verified account: real opening/closing, as before.
+      expect(exhibit.accounts[0]).toMatchObject({
+        opening_balance_cents: 900000,
+        closing_balance_cents: 1200000,
+        opening_balance_source: "reconciliation_session",
+      });
+      // Unverified account: opening AND closing must be null (never a fabricated $0-based number).
+      expect(exhibit.accounts[1]).toMatchObject({
+        opening_balance_cents: null,
+        closing_balance_cents: null,
+        opening_balance_source: "unavailable",
+      });
+      // The total must reflect only the verified account (1,200,000), not silently add the
+      // unverified account's inflows-only delta (which would be 1,210,000 if $0 opening leaked in).
+      expect(exhibit.total_closing_cents).toBe(1_200_000);
+      expect(exhibit.accounts_excluded_from_total).toBe(1);
+    });
+  });
+
   describe("billReference — a court schedule must never label a document 'null' or a uuid", () => {
     it("uses the vendor's bill_number when present", () => {
       expect(
