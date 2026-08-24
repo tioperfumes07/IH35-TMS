@@ -1,4 +1,9 @@
 {
+  "4583": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-inbox-reporting-excludes-sample-data"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -5708,5 +5713,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1270
+  "total_claimed": 1271
 }
