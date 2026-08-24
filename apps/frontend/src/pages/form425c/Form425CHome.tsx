@@ -204,6 +204,16 @@ export function Form425CHome() {
     enabled: Boolean(companyId && selectedReport?.id),
     queryFn: () => getForm425CReport(selectedReport!.id, companyId),
   });
+  const detailErrorToast = useRef(false);
+  useEffect(() => {
+    if (!detailQuery.isError) {
+      detailErrorToast.current = false;
+      return;
+    }
+    if (detailErrorToast.current) return;
+    detailErrorToast.current = true;
+    pushToast(userFacingApiError(detailQuery.error, "Could not load Form 425C report detail"), "error");
+  }, [detailQuery.isError, detailQuery.error, pushToast]);
 
   const exhibitEntries = useMemo(() => {
     const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
@@ -235,7 +245,7 @@ export function Form425CHome() {
         lineOfBusiness: row.line_of_business,
         naiscCode: row.naisc_code,
         bankAccounts: row.bank_accounts,
-        defaultAnswers: Object.fromEntries(Object.entries(row.default_questionnaire_answers).map(([k, v]) => [Number(k), v])) as CompanyProfiles[CompanyKey]["defaultAnswers"],
+        defaultAnswers: Object.fromEntries(Object.entries(row.default_questionnaire_answers ?? {}).map(([k, v]) => [Number(k), v])) as CompanyProfiles[CompanyKey]["defaultAnswers"],
       };
     }
     setProfiles(merged);

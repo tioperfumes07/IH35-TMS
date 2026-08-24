@@ -127,6 +127,9 @@ export function collectProblems(src) {
   if (!src.includes("Could not load Form 425C reports")) {
     problems.push(`${PAGE}: reports GET failure must toast — History empty with no toast was a silent miss`);
   }
+  if (!src.includes("Could not load Form 425C report detail")) {
+    problems.push(`${PAGE}: report detail GET failure must toast — Form cash empty with no toast was a silent miss`);
+  }
   const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split('app.get("/api/v1/form-425c/banking-summary"')[0];
   const profilesPostChunk = (routes.split('app.post("/api/v1/form-425c/profiles"')[1] ?? "").split('app.post("/api/v1/form-425c"')[0];
   if (!profilesGetChunk.includes("form_425c_operating_company_not_found") || !profilesGetChunk.includes("sendForm425CCompanyMissing")) {
@@ -343,6 +346,7 @@ const good = `
   Select an operating company before saving profile defaults
   Select an operating company before creating a report
   Could not load Form 425C reports
+  Could not load Form 425C report detail
 `;
 const bad = `
   if (!detailQuery.data?.report) {

@@ -1,3 +1,4 @@
+Cursor | LOOP-U14 | 2026-08-23T21:32CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-DETAIL-GET-SILENT | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
 Cursor | LOOP-U14 | 2026-08-23T21:28CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-CREATE-MISSING-COMPANY-500 | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
 Cursor | LOOP-U14 | 2026-08-23T21:25CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-PROFILES-GET-500-SILENT-DEFAULTS | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
 Cursor | LOOP-U14 | 2026-08-23T21:22CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-MERGE-GENERATE-MUTATES-DRAFT-TO-READY | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
