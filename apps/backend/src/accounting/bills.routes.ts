@@ -357,7 +357,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
-      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -403,7 +403,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/bills/:id/pay", async (req, reply) => {
+  app.post("/api/v1/accounting/bills/:id/pay", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -436,7 +436,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       // P1-BILLPAY-GL: payBill always records the payment + bank decrement; payment.gl_posting reports
       // whether the balanced JE was also posted ("posted") or skipped because the per-entity flag is OFF
       // ("blocked_flag_off") — no silent success, no bill-payment outage for flag-OFF entities.
-      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -468,7 +468,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/bills/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/bills/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // Role is enforced inside voidBill (flag-aware): Owner-only when the void engine is OFF,
@@ -487,7 +487,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid), {
         role: user.role,
       });
-      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -534,7 +534,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     try {
       await voidBillPayment(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
-      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),

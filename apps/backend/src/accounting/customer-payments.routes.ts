@@ -403,7 +403,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: String(user.uuid),
