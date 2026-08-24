@@ -1,3 +1,4 @@
+Cursor | DISPATCH | 2026-08-24T03:58CT | NEXT-8 leftover pack live · CC-1 /cash-flow · CC-2 /fuel · CC-3 /compliance · Cursor /docs · Codex leftover customers · no U14 restamp · no 425c loop | GO
 Cursor | LOOP | 2026-08-23T23:20CT | healthz=cd79ba3 | NO STAMP | leftover F425C-SERVER-PRINT-INVENTS-ZERO-CASH · live #15267 · no second kick | GO
 Cursor | LOOP | 2026-08-23T23:18CT | healthz=cd79ba3 | NO STAMP | leftover F425C-PRINT-INVENTS-FILED-DATE-AS-TODAY · live #15267 · no second kick | GO
 Cursor | LOOP | 2026-08-23T23:17CT | healthz=cd79ba3 | NO STAMP | leftover F425C-CREATE-INVENTS-ZERO-PROJECTIONS · live #15267 · #15268/#15270 undeployed · no second kick | GO

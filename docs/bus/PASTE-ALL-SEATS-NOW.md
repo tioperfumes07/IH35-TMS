@@ -1,60 +1,59 @@
-# PASTE ALL SEATS · CERTIFY THE LEFTOVER MODULES NOW
+# PASTE ALL SEATS · NEXT 8 LEFTOVER MODULES · GO THIS TURN
 
-**What “U14 14/14 CERTIFIED. No stamp. Never recertify. Codex leftover is not U14 hops” means:**
-The exclusive 14-module certify pass is **finished**. Do **not** walk those hops again. Do **not** wait. The **next** modules to certify are the POST leftover table. Idle = defect.
+**Full pack:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md`  
+**Sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 
-Law: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
-NOW: `docs/bus/NOW-ONE-SOURCE.md`  
-Certify bar: Fully-Wired **1–12** + Live Chrome last (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`). USMCA. CREATE-TEST-THEN-VOID. Unique 500 / dead click / silent no-op. Grep `origin/main`. FAST-MERGE 4 min. CC never `trigger_deploy`.
+U14 14/14 CERTIFIED. Never restamp. Never recertify. Idle / “no instructions” = defect.
 
-`git pull --ff-only origin main` then this paste. Re-curl live SHA. GO **this turn**.
+`git pull --ff-only origin main` then ACK. Unique 500/dead/silent. One small PR. FAST-MERGE 4 min. CC never `trigger_deploy`. Deploy = Cursor, 5–10 min **and** 5–10 PRs, one in-flight.
 
-===== SEQUENCE (certify these — not U14) =====
-1–2  CC-1   CERTIFY `/cash-flow` then `/finance`
-3,5,12 CC-2 CERTIFY leftover unique on `/fuel` (driver-hub + reports already walked)
-4     Cursor CERTIFY leftover unique on `/425c` (do not remake #15053–#15257)
-6–11,13–16 CC-3 CERTIFY leftover unique on `/maintenance` (those POST rows walked)
-Codex leftover unique `/customers` → `/drivers` → `/fleet` (already U14 CERTIFIED — NEW bugs only, no restamp)
-Cascade audit `/accounting` EXTENT — file FINDING
-Devin-A audit `/vendors` EXTENT — file FINDING
-===== END SEQUENCE =====
+===== THE NEXT 8 =====
+1–2  CC-1   `/cash-flow` then `/finance`
+3–4  CC-2   `/fuel` then `/reports` leftover unique (not CC-1 money reports)
+5–7  CC-3   `/compliance` then `/eld` then `/inventory`
+8    Cursor `/docs` leftover unique (do NOT loop `/425c`)
+Codex leftover unique `/customers` → `/drivers` → `/fleet` (no restamp)
+===== END =====
 
 ===== CC-1 9223 =====
-REJECT HOLD. CERTIFY `https://app.ih35dispatch.com/cash-flow` now (Fully-Wired 1–12 Live Chrome). Then `/finance`.
-STOP `/425c`. Money TESTs only. Never trigger_deploy. Never remake F6301/F6305.
-ACK: CC-1 | ACK | POST-U14-SEQUENCE | PORT=9223 | NOW=/cash-flow CERTIFY leftover | GO
+REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
+NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired 1–12. Then `/finance`.
+STOP `/425c` `/docs` `/compliance`. Money TESTs only. Never trigger_deploy.
+ACK: CC-1 | ACK | NEXT-8 | PORT=9223 | NOW=/cash-flow | GO
 ===== END =====
 
 ===== CC-2 9224 =====
-REJECT HOLD. CERTIFY leftover unique on `/fuel` now (CLASS-F5973-TRUE-REMAINDER-FUEL). New 500/dead/silent only.
-Never remake Close or #15228–#15243. Empty unique → OUTBOX leftover-clean, keep polling /fuel. Do not steal cash-flow/425c.
-ACK: CC-2 | ACK | POST-U14-SEQUENCE | PORT=9224 | NOW=/fuel CERTIFY leftover | GO
+REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
+NOW: `https://app.ih35dispatch.com/fuel` leftover unique. Then `/reports` leftover.
+Never remake Close or #15228–#15243. Never trigger_deploy.
+ACK: CC-2 | ACK | NEXT-8 | PORT=9224 | NOW=/fuel | GO
 ===== END =====
 
 ===== CC-3 9225 =====
-REJECT HOLD. CERTIFY leftover unique on `/maintenance` now. lists+legal CERTIFIED — omit.
-Do not remake F6301/F6305. Do not fabricate settlements/claims/factoring.
-ACK: CC-3 | ACK | POST-U14-SEQUENCE | PORT=9225 | NOW=/maintenance CERTIFY leftover | GO
+REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
+NOW: `https://app.ih35dispatch.com/compliance` CERTIFY leftover 1–12. Then `/eld` then `/inventory`.
+lists+legal omit. Never trigger_deploy.
+ACK: CC-3 | ACK | NEXT-8 | PORT=9225 | NOW=/compliance | GO
 ===== END =====
 
 ===== CODEX 9226 =====
-REJECT IDLE. USE CHROME. U14 7–9 already CERTIFIED — do NOT restamp.
-NOW: leftover unique 500/dead/silent on `/customers` then `/drivers` then `/fleet`. That is leftover certify, not U14 hops.
-FORBIDDEN: /425c /cash-flow /lists /legal · CERTIFIED restamp
-ACK: Codex | ACK | POST-U14-SEQUENCE | PORT=9226 | NOW=/customers leftover unique | GO
+REJECT IDLE. YOU HAVE INSTRUCTIONS (NEXT-8). USE CHROME.
+NOW: leftover unique `/customers` then `/drivers` then `/fleet`. No CERTIFIED restamp.
+ACK: Codex | ACK | NEXT-8 | PORT=9226 | NOW=/customers leftover unique | GO
 ===== END =====
 
 ===== CASCADE =====
-AUDIT ONLY. Chrome `/accounting` EXTENT. File FINDING or AUDIT-PASS. No product PRs. Never recertify U14.
-ACK: Cascade | ACK | POST-U14-SEQUENCE | NOW=/accounting EXTENT | GO
+AUDIT ONLY. Chrome `/accounting` EXTENT. File FINDING. No product PRs.
+ACK: Cascade | ACK | NEXT-8 | NOW=/accounting EXTENT | GO
 ===== END =====
 
 ===== DEVIN-A =====
-AUDIT ONLY. Not PARKED. Chrome `/vendors` EXTENT → maintenance → safety → insurance. File FINDING. No product PRs.
-ACK: Devin-A | ACK | POST-U14-SEQUENCE | NOW=/vendors EXTENT | GO
+AUDIT ONLY. Not PARKED. Chrome `/vendors` EXTENT. File FINDING.
+ACK: Devin-A | ACK | NEXT-8 | NOW=/vendors EXTENT | GO
 ===== END =====
 
 ===== CURSOR 9222 =====
-Lead. CERTIFY leftover unique on `/425c`. Do not remake #15053–#15257. Do not steal CC-1 cash-flow.
-ACK: Cursor | ACK | POST-U14-SEQUENCE | PORT=9222 | NOW=/425c leftover unique | GO
+Lead. NOW leftover `/docs` (module #8). Do not loop `/425c`. Deploy 5–10 min AND 5–10 PRs, one in-flight.
+ACK: Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/docs | GO
 ===== END =====

@@ -17,7 +17,7 @@ Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version
 CURRENT-LAW
 - USMCA only · no TRANSP/TRK · no TMS→QBO write-back
 - U14 14/14 CERTIFIED · never restamp · never recertify
-- AFTER U14 = docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md · one seat · one NOW · HOLD = defect
+- AFTER U14 = docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md · NEXT-8 pack docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md · one seat · one NOW · HOLD = defect
 - CERTIFIED ≠ Rule 24 complete ≠ matrix Box 4 · do not paint those from U14 stamps
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
 - FAST-MERGE ~4 min · local gate PASS → PR → squash SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
@@ -37,12 +37,12 @@ Then ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
 
 Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next **your** module, never idle.
 
-| Seat | Port | Current | Hops (stop when CERTIFIED) |
-|------|------|---------|----------------------------|
-| Cursor | 9222 | 425c leftover | **U14 14/14 CERTIFIED** — omit recertify. **NOW leftover** `/425c` Fully-Wired 1–12 then POST-U14 unclaimed. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` |
-| CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance` (POST-U14 sequence). **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
-| CC-2 | 9224 | POST-U14 leftover | Settlements CERTIFIED — omit. **STOP customers recertify.** Sequence 16/16 DONE → GUARD-WORKORDERS unique 500/dead/silent. **No** `/lists` `/legal` `/banking*` `/425c` |
-| CC-3 | 9225 | leftover maintenance remainder | lists+legal CERTIFIED LIVE_SHA=01385f7 — omit. **NOW** `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE`. No recertify. No `trigger_deploy` |
-| Codex | 9226 | POST-U14 leftover | U14 customers+drivers+fleet CERTIFIED `07993ac` — omit recertify. **NOW Chrome leftover unique** `/customers` → `/drivers` → `/fleet` (500/dead/silent). Never restamp. Never steal `/425c` `/cash-flow` `/lists` `/legal` |
-| Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings board same folder. ACK≠audit. No OPEN prefixes |
-| Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors`→`/insurance`. OUTBOX-DEVIN-A. Not scribe. No Devin-B |
+| Seat | Port | Current | Hops (stop when leftover-clean) |
+|------|------|---------|--------------------------------|
+| Cursor | 9222 | Next-8 #8 `/docs` | **U14 omit.** NOW leftover `/docs`. Wave 2 users/home/help/program/system. **Do not loop `/425c`.** No `/lists` `/legal` `/cash-flow` `/fuel` `/compliance` |
+| CC-1 | 9223 | Next-8 #1 `/cash-flow` | Accounting+factoring omit. NOW `/cash-flow` then `/finance`. No `/banking*` `/lists` `/legal` `/docs`. HOLD forbidden |
+| CC-2 | 9224 | Next-8 #3 `/fuel` | Settlements omit. NOW `/fuel` then `/reports` leftover. No `/lists` `/legal` `/425c` `/cash-flow` |
+| CC-3 | 9225 | Next-8 #5 `/compliance` | lists+legal omit. NOW `/compliance` → `/eld` → `/inventory`. Then maintenance remainder. No `trigger_deploy` |
+| Codex | 9226 | leftover unique | U14 7–9 omit restamp. NOW Chrome leftover `/customers` → `/drivers` → `/fleet`. Never steal `/docs` `/cash-flow` `/compliance` |
+| Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. ACK≠audit |
+| Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors` EXTENT. Not scribe |

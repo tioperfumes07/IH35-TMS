@@ -1,14 +1,18 @@
-# NOW — ONE SOURCE (owner 2026-08-23 23:05 CT)
+# NOW — ONE SOURCE (owner 2026-08-24 03:58 CT)
 
 **This file is the only NOW.** Every session, every seat: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**U14 14/14 CERTIFIED means the exclusive 14-module pass is finished — not that you stop.** No stamp / never recertify = do not walk those 14 hops again. You **certify leftover modules in parallel** from the POST table. Idle = defect.
+**Instruction pack (NEXT 8 leftover modules):** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
+If a seat claims “no instructions,” they did not pull that file.
 
-**AFTER URGENT 14:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` — that table is the sequence for **all** coders. Paste pack: `docs/bus/PASTE-ALL-SEATS-NOW.md`.
+**U14 14/14 CERTIFIED** = exclusive 14-module pass finished — not stop. Never restamp. Never recertify. Certify leftover POST in parallel. Idle = defect.
 
-If any other bus file (WAVE*, URGENT-BLOCKS tables, FINAL-CODER-2026-08-20, old STATUS/CODER tables, OUTBOX history) disagrees — **this file + the POST table win.** Those files are SUPERSEDED. Do not recertify. Do not invent a 15th plan.
+**AFTER URGENT 14:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
+Paste pack: `docs/bus/PASTE-ALL-SEATS-NOW.md`.
 
-Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (**re-curl; do not trust a pasted SHA**).
+If any other bus file disagrees — **this file + NEXT-8 + POST table win.**
+
+Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version` (**re-curl**).
 
 ---
 
@@ -16,41 +20,40 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 - USMCA only. No TRANSP/TRK. No TMS→QBO write-back.
 - U14 exclusive table is **14/14 CERTIFIED**. **Never restamp. Never recertify.**
-- CERTIFIED ≠ Rule 24 `complete` ≠ matrix Box 4 Live. Do not paint those from U14 stamps.
-- Fully-Wired **1–12**, Live Chrome last. McLeod / QBO chrome / Alvys / NetSuite bar = every tab works, create labeled TEST then owner voids, no 500, no dead click, no silent no-op.
-- CREATE-TEST-THEN-VOID. Empty TMS is expected. Do not remake proven TESTs / Close / Book Load.
+- CERTIFIED ≠ Rule 24 `complete` ≠ matrix Box 4 Live.
+- Fully-Wired **1–12**, Live Chrome last. Unique 500 / dead click / silent no-op. One small PR per finding.
+- CREATE-TEST-THEN-VOID. Do not remake proven TESTs / Close / Book Load.
 - FAST-MERGE ~4 min. Never `gh pr checks --watch`. Deploy: Cursor lead only, 5–10 min **and** 5–10 PRs, one in-flight. CC never `trigger_deploy`.
-- HOLD / idle / “awaiting next order” = defect.
+- HOLD / idle / “awaiting next order” / “no instructions” = defect.
 
 ---
 
-## Chrome (every coder has Chrome — use it)
+## Chrome (one NOW per seat)
 
-| Seat | Port | NOW (one URL / one id) | Do |
-|------|------|------------------------|----|
-| **Cursor** | **9222** | `https://app.ih35dispatch.com/425c` leftover unique | POST row 4. 500 / dead / silent only. Do not remake #15053–#15257. Then next unclaimed POST row. |
-| **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | POST rows 1–2. Fully-Wired 1–12 Live Chrome. STOP `/425c`. Money TESTs only. |
-| **CC-2** | **9224** | `CLASS-F5973-TRUE-REMAINDER-FUEL` | POST row 12 leftover. Chrome `/fuel` unique. No Close remake. |
-| **CC-3** | **9225** | `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` | POST 6–16 walked. Chrome `/maintenance` unique. lists+legal omit. |
-| **Codex** | **9226** | leftover unique `/customers` → `/drivers` → `/fleet` | **Use Chrome.** Unique 500/dead/silent. **Not U14. No CERTIFIED restamp.** |
-| **Cascade** | audit Chrome | `/accounting` EXTENT then banking → settlements → factoring → dispatch | AUDIT ONLY. File unique FINDING. No product PRs. ACK ≠ audit. |
-| **Devin-A** | audit Chrome | `/vendors` EXTENT then maintenance → safety → insurance | AUDIT ONLY. File unique FINDING. No product PRs. Not PARKED. |
+| Seat | Port | NOW (one URL / one id) | Next 8 role |
+|------|------|------------------------|-------------|
+| **Cursor** | **9222** | `https://app.ih35dispatch.com/docs` leftover unique | Module **#8**. Do not loop `/425c`. Wave 2 = users/home/help/program/system. Lead deploy cadence. |
+| **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | Modules **#1–#2**. Money TESTs only. STOP `/425c`. |
+| **CC-2** | **9224** | `https://app.ih35dispatch.com/fuel` then `/reports` leftover | Modules **#3–#4**. No Close remake. Stay out of CC-1 money reports. |
+| **CC-3** | **9225** | `https://app.ih35dispatch.com/compliance` then `/eld` `/inventory` | Modules **#5–#7**. Then maintenance remainder. lists+legal omit. |
+| **Codex** | **9226** | leftover unique `/customers` → `/drivers` → `/fleet` | **Use Chrome.** Not U14. No restamp. |
+| **Cascade** | audit Chrome | `/accounting` EXTENT then banking → settlements → factoring → dispatch | AUDIT ONLY. File FINDING. No product PRs. |
+| **Devin-A** | audit Chrome | `/vendors` EXTENT then maintenance → safety → insurance | AUDIT ONLY. File FINDING. Not PARKED. |
 
-Forbidden steal: Cursor `/425c` · CC-1 `/cash-flow` `/finance` · do not occupy another seat’s NOW this tick.
+Forbidden steal: CC-1 `/cash-flow` `/finance` · CC-2 `/fuel` · CC-3 `/compliance` · Cursor `/docs` · Codex leftover customers/drivers/fleet.
 
 ---
 
 ## Superceded — do not take orders from
 
+- Any INBOX that still says Cursor NOW = `/425c` only
+- Any INBOX that still says CC-3 NOW = `/maintenance` only (that is **after** #7)
 - `WAVE-2-AND-3-EVERYTHING-2026-08-21.md`
 - `FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md`
-- `URGENT-BLOCKS-NOW-2026-08-22.md` tables (pointer-only)
-- `SHARED-NOW.md` · `HOURLY-REREAD.md` · `STANDING-ORDER-SEATS.md`
-- Any INBOX/PASTE/STATUS that still says OPEN U14 customers/drivers/fleet/lists/legal
-- Any “NO CDP” / “Codex SQL only” line — **Codex has Chrome now**
-- Recertify hops in `U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md` (already CERTIFIED)
-- Any “TABLE EXHAUSTED → go recertify Codex U14” line (deleted)
+- `URGENT-BLOCKS-NOW-2026-08-22.md` tables
+- Any “NO CDP” / “Codex SQL only” line
+- Recertify hops in `U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
 ---
 
-ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
+ACK: `SEAT | ACK | NEXT-8 | PORT=n | NOW=<url> | GO`

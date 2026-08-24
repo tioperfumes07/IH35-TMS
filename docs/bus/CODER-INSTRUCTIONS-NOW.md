@@ -2,25 +2,24 @@
 
 **★ FAST-MERGE ON (4 min).** Local gate exit 0 → push → `gh pr create` → squash-merge same turn. Never `gh pr checks --watch`.
 
-**AFTER URGENT 14 (all seats):** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
+**THIS TURN PACK:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
 **ONE NOW:** `docs/bus/NOW-ONE-SOURCE.md`  
 Then `docs/bus/INBOX-<SEAT>.md` TOP.  
-**Paste pack:** `docs/bus/PASTE-ALL-SEATS-NOW.md`
+**Paste pack:** `docs/bus/PASTE-ALL-SEATS-NOW.md`  
+**AFTER U14 sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 
-U14 **14/14 CERTIFIED**. Never recertify. USMCA only. HOLD = defect.
+U14 **14/14 CERTIFIED**. Never recertify. USMCA only. HOLD / “no instructions” = defect.
 
-| Seat | After U14 |
-|------|-----------|
-| Cursor 9222 | `/425c` leftover unique |
-| CC-1 9223 | `/cash-flow` then `/finance` |
-| CC-2 9224 | `/fuel` remainder unique |
-| CC-3 9225 | `/maintenance` remainder unique |
+| Seat | NOW (Next 8) |
+|------|----------------|
+| Cursor 9222 | `/docs` leftover unique (module #8). Do not loop `/425c`. Wave 2 = users/home/help/program/system |
+| CC-1 9223 | `/cash-flow` then `/finance` (modules #1–#2) |
+| CC-2 9224 | `/fuel` then `/reports` leftover (modules #3–#4) |
+| CC-3 9225 | `/compliance` then `/eld` then `/inventory` (modules #5–#7) |
 | Codex 9226 | leftover unique `/customers` → `/drivers` → `/fleet` — no restamp |
 | Cascade | audit `/accounting` EXTENT |
 | Devin-A | audit `/vendors` EXTENT |
 
-Live SHA: re-curl `https://api.ih35dispatch.com/api/v1/healthz/shallow`. CC never `trigger_deploy`.
+Live SHA: re-curl `https://api.ih35dispatch.com/api/v1/healthz/shallow`. CC never `trigger_deploy`. Deploy = Cursor, 5–10 min **and** 5–10 PRs, one in-flight. One small PR per unique finding.
 
-Do **not** follow WAVE* · 2026-08-20 FINAL-CODER · URGENT-BLOCKS tables · any file that lists OPEN U14 7–14.
-
-ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
+ACK: `SEAT | ACK | NEXT-8 | PORT=n | NOW=<url> | GO`

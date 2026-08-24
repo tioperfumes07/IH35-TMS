@@ -18,22 +18,22 @@ Seat NOW (one source): `docs/bus/NOW-ONE-SOURCE.md`.
 
 | Order | Module | Sidebar id | Route | Claim NOW |
 |------:|--------|------------|-------|-----------|
-| 1 | CASH FLOW | `cash-flow` | `/cash-flow` | **CC-1** — Fully-Wired 1–12 leftover unique. Then row 2. |
-| 2 | FINANCE HUB | `finance` | `/finance` | **CC-1** after cash-flow unique-clean. |
-| 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | **CC-2** walked. Do not remake Close / proven TESTs. Next = in-lane unique (`CLASS-F5973-TRUE-REMAINDER-FUEL`). |
-| 4 | 425C | `form_425` | `/425c` | **Cursor** leftover unique — do not remake #15053–#15247. Next = unique 500/dead/silent only. |
-| 5 | REPORTS | `reports` | `/reports` | **CC-2** walked. Stay out of CC-1 money reports. Next = fuel remainder unique. |
-| 6 | TASKS | `tasks` | `/tasks` | **CC-3** walked. Next = `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` unique. |
-| 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3** walked. Unique only if a new 500/dead/silent appears. |
-| 8 | ELD | `eld` | `/eld` | **CC-3** walked (real module — not a stub). Unique only. |
-| 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** walked. Unique only. |
-| 10 | USERS | `users` | `/users` | **CC-3** walked. Unique only. |
-| 11 | HOME | `home` | `/home` | **CC-3** walked. Unique only. |
-| 12 | FUEL | `fuel` | `/fuel` | **CC-2** remainder class + unique leftover leaves. Never remake Close. |
-| 13 | DOCS | `docs` | `/docs` | **CC-3** walked. Unique only. |
-| 14 | HELP | `help` | `/help` | **CC-3** walked. Unique only. |
-| 15 | PROGRAM | `program` | `/program` | **CC-3** walked. Unique only. |
-| 16 | SYSTEM | `system` | `/system` | **CC-3** walked. Unique only. |
+| 1 | CASH FLOW | `cash-flow` | `/cash-flow` | **CC-1 NOW** — Next-8 #1. Fully-Wired 1–12 leftover unique. Then row 2. |
+| 2 | FINANCE HUB | `finance` | `/finance` | **CC-1** after cash-flow unique-clean. Next-8 #2. |
+| 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | Walked. Do not remake Close / proven TESTs. Not in Next-8. |
+| 4 | 425C | `form_425` | `/425c` | Cursor leftover shipped #15053–#15279 — **do not loop**. Not in Next-8. |
+| 5 | REPORTS | `reports` | `/reports` | **CC-2** after fuel unique-clean. Next-8 #4. Stay out of CC-1 money reports. |
+| 6 | TASKS | `tasks` | `/tasks` | Leftover-clean #15279. Not in Next-8. |
+| 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3 NOW** — Next-8 #5. CERTIFY leftover 1–12. Then row 8. |
+| 8 | ELD | `eld` | `/eld` | **CC-3** after compliance unique-clean. Next-8 #6. |
+| 9 | INVENTORY | `inventory` | `/inventory` | **CC-3** after eld unique-clean. Next-8 #7. Then maintenance remainder. |
+| 10 | USERS | `users` | `/users` | Cursor wave 2 after `/docs`. |
+| 11 | HOME | `home` | `/home` | Cursor wave 2. |
+| 12 | FUEL | `fuel` | `/fuel` | **CC-2 NOW** — Next-8 #3. Remainder class + leftover unique. Never remake Close. |
+| 13 | DOCS | `docs` | `/docs` | **Cursor NOW** — Next-8 #8. Unique 500/dead/silent. |
+| 14 | HELP | `help` | `/help` | Cursor wave 2. |
+| 15 | PROGRAM | `program` | `/program` | Cursor wave 2. |
+| 16 | SYSTEM | `system` | `/system` | Cursor wave 2. |
 
 Empty unique-FINDING on your claimed row → next **unclaimed** row **or** your NOW remainder class. **Never idle.** Never a 17th invented queue. Never “go recertify U14.”
 
@@ -43,15 +43,17 @@ Empty unique-FINDING on your claimed row → next **unclaimed** row **or** your 
 
 | Seat | Port | After U14 you do THIS |
 |------|------|------------------------|
-| **Cursor** | 9222 | Leftover unique `/425c`. Then next unclaimed POST row. Lead + FAST-MERGE + deploy cadence. |
-| **CC-1** | 9223 | Leftover unique `/cash-flow` then `/finance`. STOP `/425c`. Money TESTs only. Never `trigger_deploy`. |
-| **CC-2** | 9224 | In-lane unique on `/fuel` remainder (`CLASS-F5973-TRUE-REMAINDER-FUEL`). No Close remake. No `/425c`. |
-| **CC-3** | 9225 | In-lane unique on `/maintenance` remainder (`CLASS-F5973-TRUE-REMAINDER-MAINTENANCE`). lists+legal stay CERTIFIED — omit. |
+| **Cursor** | 9222 | Next-8 #8 leftover unique `/docs`. Do not loop `/425c`. Wave 2 = users/home/help/program/system. Lead + FAST-MERGE + deploy 5–10. |
+| **CC-1** | 9223 | Next-8 #1–#2 leftover unique `/cash-flow` then `/finance`. STOP `/425c`. Money TESTs only. Never `trigger_deploy`. |
+| **CC-2** | 9224 | Next-8 #3–#4 `/fuel` then `/reports` leftover. No Close remake. No `/425c`. |
+| **CC-3** | 9225 | Next-8 #5–#7 `/compliance` then `/eld` then `/inventory`. Then maintenance remainder. lists+legal omit. |
 | **Codex** | 9226 | Chrome leftover unique `/customers` → `/drivers` → `/fleet`. **Not U14. No restamp.** |
 | **Cascade** | audit | Chrome `/accounting` EXTENT → banking → settlements → factoring → dispatch. File FINDING only. No product PRs. |
 | **Devin-A** | audit | Chrome `/vendors` EXTENT → maintenance → safety → insurance. File FINDING only. Not PARKED. |
 
-Forbidden steal: Cursor `/425c` · CC-1 `/cash-flow` `/finance` · do not occupy another seat’s NOW.
+Forbidden steal: Cursor `/docs` · CC-1 `/cash-flow` `/finance` · CC-2 `/fuel` · CC-3 `/compliance` · do not occupy another seat’s NOW.
+
+Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
 
 ---
 

@@ -1,11 +1,13 @@
 # INBOX-CODEX · 9226
 
-**★ FAST-MERGE ON (4 min).** USE CHROME.
+**★ FAST-MERGE ON (4 min).** USE CHROME. Never `trigger_deploy`.
 
-**U14 7–9 already CERTIFIED. That does NOT mean stop.** You certify leftover unique on those same URLs — new 500/dead/silent only. That is NOT an U14 hop restamp.
+**YOU HAVE INSTRUCTIONS.** Pull `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` then this TOP.
 
-**NOW:** `https://app.ih35dispatch.com/customers` then `/drivers` then `/fleet`. Grep main. Board + FAST-MERGE.
+U14 7–9 already CERTIFIED. That does **not** mean stop. You certify leftover unique on those URLs — new 500/dead/silent only. **Not** an U14 hop restamp.
 
-FORBIDDEN: idle · restamp CERTIFIED · `/425c` `/cash-flow` `/lists` `/legal`
+**NOW:** `https://app.ih35dispatch.com/customers` then `/drivers` then `/fleet`. Grep main. One small PR per finding. Board + FAST-MERGE.
 
-OUTBOX: `Codex | ACK | POST-U14-SEQUENCE | PORT=9226 | NOW=/customers leftover unique | GO`
+FORBIDDEN: idle · “no instructions” · restamp CERTIFIED · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal`
+
+OUTBOX: `Codex | ACK | NEXT-8 | PORT=9226 | NOW=/customers leftover unique | GO`

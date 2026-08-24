@@ -1,5 +1,6 @@
 # INBOX-DEVIN
 
+**YOU HAVE INSTRUCTIONS.** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
 **U14 is DONE. You do not recertify. Audit leftover EXTENT this turn.** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
 **Jorge “devin-” = this file + `INBOX-DEVIN-A.md`.** Paste first: `docs/bus/PASTE-ALL-SEATS-NOW.md` then `INBOX-DEVIN-A.md` TOP. **NOW THIS 4 MINUTES:** `/vendors` EXTENT — ACK-only is rejected. Never idle.
 
