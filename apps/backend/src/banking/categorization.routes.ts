@@ -463,7 +463,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    void withCompanyScope(user.uuid, companyId, (client) =>
+    await withCompanyScope(user.uuid, companyId, (client) =>
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
@@ -833,10 +833,10 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return { categorized_count: categorized, categorizedIds, errors };
     });
 
-    // Spine-event parity with the single-row route: one transaction.categorized per affected ID,
-    // fire-and-forget (the categorization + CRUD audit are already committed above).
+    // Spine-event parity with the single-row route: one transaction.categorized per affected ID.
+    // Await so events.log_event cannot drop after the handler returns (BANK-F6411).
     for (const id of result.categorizedIds) {
-      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -1026,7 +1026,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "reconciled_session_locked" });
     }
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
-    void withCompanyScope(user.uuid, companyId, (client) =>
+    await withCompanyScope(user.uuid, companyId, (client) =>
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
@@ -1094,7 +1094,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "reconciled_session_locked" });
     }
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
-    void withCompanyScope(user.uuid, companyId, (client) =>
+    await withCompanyScope(user.uuid, companyId, (client) =>
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
