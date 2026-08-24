@@ -45,13 +45,26 @@ export function isInvalidCaseNumber(caseNumber: unknown): boolean {
   return trimmed.length === 0 || PLACEHOLDER_CASE_NUMBERS.has(trimmed);
 }
 
-function nv(v: unknown) {
-  const n = Number(v ?? 0);
-  return Number.isFinite(n) ? n : 0;
+function optionalNum(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function minus(a: number | null, b: number | null): number | null {
+  if (a === null || b === null) return null;
+  return a - b;
+}
+
+function plus(a: number | null, b: number | null): number | null {
+  if (a === null || b === null) return null;
+  return a + b;
 }
 
 function fmt(v: unknown) {
-  return nv(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const n = typeof v === "number" ? v : optionalNum(v);
+  if (n === null) return "";
+  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function labelForMonth(monthDate: string) {
@@ -96,16 +109,23 @@ function buildPrintHTML(
   const companyName = String(profile?.company_name ?? "").trim();
   if (!companyName) throw new Error("form_425c_profile_required");
   const answers = requireCourtPrintAnswers(report);
-  const netCash = nv(report.line_20_receipts) - nv(report.line_21_disbursements);
-  const cashEnd = nv(report.line_19_opening_cash) + netCash;
-  const projNetPrev = nv(report.line_32_proj_receipts) - nv(report.line_33_proj_disbursements);
-  const pDR = nv(report.line_32_proj_receipts) - nv(report.line_20_receipts);
-  const pDD = nv(report.line_33_proj_disbursements) - nv(report.line_21_disbursements);
-  const pDN = projNetPrev - netCash;
-  const projNetNext = nv(report.line_35_next_proj_receipts) - nv(report.line_36_next_proj_disbursements);
+  const receipts = optionalNum(report.line_20_receipts);
+  const disbursements = optionalNum(report.line_21_disbursements);
+  const opening = optionalNum(report.line_19_opening_cash);
+  const projReceipts = optionalNum(report.line_32_proj_receipts);
+  const projDisb = optionalNum(report.line_33_proj_disbursements);
+  const nextReceipts = optionalNum(report.line_35_next_proj_receipts);
+  const nextDisb = optionalNum(report.line_36_next_proj_disbursements);
+  const netCash = minus(receipts, disbursements);
+  const cashEnd = plus(opening, netCash);
+  const projNetPrev = minus(projReceipts, projDisb);
+  const pDR = minus(projReceipts, receipts);
+  const pDD = minus(projDisb, disbursements);
+  const pDN = minus(projNetPrev, netCash);
+  const projNetNext = minus(nextReceipts, nextDisb);
 
   const mrow = (line: number, label: string, value: string) =>
-    `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>${line}.</strong> ${label}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:right;">$${value}</td></tr>`;
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>${line}.</strong> ${label}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:right;">${value ? `$${value}` : ""}</td></tr>`;
   const qrow = (num: number, text: string, expectYes: boolean) => {
     const ans = String(answers[String(num)] ?? "").trim().toLowerCase();
     const flagged = (expectYes && ans === "no") || (!expectYes && ans === "yes");

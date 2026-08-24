@@ -408,6 +408,9 @@ export function collectProblems(src) {
   if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
   }
+  if (pdfLib.includes("function nv(") || pdfLib.includes("Number(v ?? 0)") || pdfLib.includes("nv(report.line_20_receipts)")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: empty cash/projection fields must not print invented $0 (nv ?? 0) on Generate/History Print");
+  }
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
       "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
