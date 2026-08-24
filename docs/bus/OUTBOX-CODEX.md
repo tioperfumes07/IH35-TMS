@@ -1138,3 +1138,4 @@ Codex | WORKING | FO=DRIVER-MANAGER-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15040 s
 Codex | WORKING | FO=DRIVER-METRICS-SHARED-ROSTER-GUARD-ORPHAN | claim=#15042 step=4576 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=ANOMALY-MEDCARD-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15044 step=4578 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=DRIVER-PWA-SHARED-DISPATCH-VIEW-GUARD-ORPHAN | claim=#15047 step=4580 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRV-F6283-SHARED-DRIVER-AP-VENDOR-REVERSE-FALSE-404 | scope=selected-company shared-driver parent GET only · no money math | NEXT=guard+typecheck+FAST-MERGE | GO

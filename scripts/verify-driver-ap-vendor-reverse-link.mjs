@@ -41,6 +41,12 @@ function assertDriversRoute(src) {
   if (!/DriverVendorMissingError/.test(src)) {
     problems.push("ap-vendor route must soft-miss on DriverVendorMissingError");
   }
+  const routeStart = src.indexOf('"/api/v1/mdata/drivers/:id/ap-vendor"');
+  const routeEnd = src.indexOf("/**\n   * BULK INVITE", routeStart);
+  const route = routeStart >= 0 && routeEnd > routeStart ? src.slice(routeStart, routeEnd) : "";
+  if (!/FROM mdata\.drivers d[\s\S]*d\.operating_company_id = \$2::uuid[\s\S]*FROM mdata\.driver_company_authorizations ap_vendor_driver_dca[\s\S]*ap_vendor_driver_dca\.driver_id = d\.id[\s\S]*ap_vendor_driver_dca\.company_id = \$2::uuid[\s\S]*ap_vendor_driver_dca\.is_authorized = true[\s\S]*ap_vendor_driver_dca\.deactivated_at IS NULL/.test(route)) {
+    problems.push("ap-vendor parent read must admit an active driver authorization for the selected company");
+  }
   return problems;
 }
 
@@ -134,6 +140,10 @@ function selftest() {
   const goodManifest = read(PATHS.routeManifest);
   const goodTypes = read(PATHS.apiTypes);
   const badD = goodD.replace(/\/ap-vendor/g, "/x-vendor").replace(/resolveDriverVendorLink/g, "x");
+  const badSharedDriverScope = goodD.replace(
+    "ap_vendor_driver_dca.is_authorized = true",
+    "ap_vendor_driver_dca.is_authorized = false"
+  );
   const badE = goodE.replace(/getDriverApVendor/g, "x").replace(/kind=\"vendor\"/g, 'kind="bill"');
   const badEarningsLabel = goodE.replace("name={apVendorQuery.data?.vendor?.name}", 'label="Open vendor →"');
   const badProfile = goodProfile
@@ -155,6 +165,10 @@ function selftest() {
   }
   if (assertDriversRoute(badD).length < 1) {
     console.error("bad drivers route should fail");
+    failed++;
+  }
+  if (!assertDriversRoute(badSharedDriverScope).some((problem) => problem.includes("active driver authorization"))) {
+    console.error("planted shared-driver authorization defect should fail");
     failed++;
   }
   if (assertEarnings(goodE).length) {
