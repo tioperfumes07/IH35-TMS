@@ -1,4 +1,9 @@
 {
+  "4692": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-unit-map-focus-wired"
+  },
   "4690": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5983,5 +5988,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1296
+  "total_claimed": 1297
 }
