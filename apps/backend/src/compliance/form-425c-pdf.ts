@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -222,6 +223,14 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
   const sha256 = crypto.createHash("sha256").update(htmlBuffer).digest("hex");
   const keySuffix = crypto.randomUUID();
   const r2Key = `org/${operatingCompanyId}/form-425c/${reportId}/${keySuffix}.html`;
+  if (!isR2Configured()) {
+    throw new Error("form_425c_r2_not_configured");
+  }
+  try {
+    await putObjectBytes(r2Key, htmlBuffer, "text/html");
+  } catch {
+    throw new Error("form_425c_r2_put_failed");
+  }
   const fileInsert = await client.query<{ id: string }>(
     `
       INSERT INTO docs.files (
