@@ -133,6 +133,15 @@ export function Form425CHome() {
   const [activeCompany, setActiveCompany] = useState<CompanyKey>("trucking");
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
+  const [openedReportId, setOpenedReportId] = useState<string | null>(null);
+  const setMonthFromPicker = (next: number) => {
+    setOpenedReportId(null);
+    setMonth(next);
+  };
+  const setYearFromPicker = (next: number) => {
+    setOpenedReportId(null);
+    setYear(next);
+  };
   const [profiles, setProfiles] = useState<CompanyProfiles>(DEFAULT_PROFILES);
   const [form, setForm] = useState<CurrentFormState>(emptyForm());
   const [dirty, setDirty] = useState(false);
@@ -156,9 +165,15 @@ export function Form425CHome() {
   });
 
   const selectedReport = useMemo(() => {
+    const reports = reportsQuery.data?.reports ?? [];
+    if (openedReportId) {
+      const byId = reports.find((r) => r.id === openedReportId);
+      if (byId) return byId as Form425CReport;
+    }
     const key = `${monthKey(year, month)}-01`;
-    return (reportsQuery.data?.reports ?? []).find((r) => String(r.reporting_month).slice(0, 10) === key) as Form425CReport | undefined;
-  }, [reportsQuery.data?.reports, month, year]);
+    const matches = reports.filter((r) => String(r.reporting_month).slice(0, 10) === key);
+    return (matches.find((r) => r.status !== "filed") ?? matches[0]) as Form425CReport | undefined;
+  }, [reportsQuery.data?.reports, month, year, openedReportId]);
 
   const detailQuery = useQuery({
     queryKey: ["form-425c", "detail", companyId, selectedReport?.id ?? ""],
@@ -358,8 +373,16 @@ export function Form425CHome() {
 
   const amendMutation = useMutation({
     mutationFn: (id: string) => amendForm425CReport(id, companyId),
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       pushToast("Amendment draft created", "success");
+      setOpenedReportId(created.id);
+      const ymd = String(created.reporting_month ?? "").slice(0, 10);
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+      if (match) {
+        setYear(Number(match[1]));
+        setMonth(Number(match[2]) - 1);
+      }
+      setTab("form");
       await queryClient.invalidateQueries({ queryKey: ["form-425c"] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Amend failed"), "error"),
@@ -456,8 +479,8 @@ export function Form425CHome() {
           setActiveCompany={setActiveCompany}
           month={month}
           year={year}
-          setMonth={setMonth}
-          setYear={setYear}
+          setMonth={setMonthFromPicker}
+          setYear={setYearFromPicker}
           profiles={profiles}
           availableCompanies={availableCompanies}
         />
@@ -469,8 +492,8 @@ export function Form425CHome() {
           setActiveCompany={setActiveCompany}
           month={month}
           year={year}
-          setMonth={setMonth}
-          setYear={setYear}
+          setMonth={setMonthFromPicker}
+          setYear={setYearFromPicker}
           profiles={profiles}
           availableCompanies={availableCompanies}
           form={form}
@@ -598,6 +621,7 @@ export function Form425CHome() {
               pushToast("Could not open that report — reporting month is invalid", "error");
               return;
             }
+            setOpenedReportId(id);
             setYear(Number(match[1]));
             setMonth(Number(match[2]) - 1);
             setTab("form");

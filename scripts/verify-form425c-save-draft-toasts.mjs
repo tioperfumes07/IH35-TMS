@@ -98,6 +98,12 @@ export function collectProblems(src) {
   if (src.includes("new Date(row.reporting_month)")) {
     problems.push(`${PAGE}: History Open must parse YYYY-MM from reporting_month slice, not Date (UTC/local month shift)`);
   }
+  if (!src.includes("setOpenedReportId(id)") || !src.includes("openedReportId")) {
+    problems.push(`${PAGE}: History Open must select the clicked report id — same-month filed+amendment find() kept the wrong row`);
+  }
+  if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
+    problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
+  }
   if (!src.includes("Carry-forward override needs a reason of at least 30 characters")) {
     problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
   }
@@ -140,6 +146,9 @@ const good = `
   pushToast("Create / Load Draft before autosave", "error");
   month={month}
   <QBImportTab
+  setOpenedReportId(id)
+  openedReportId
+  matches.find((r) => r.status !== "filed")
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
 `;
 const bad = `
