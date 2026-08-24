@@ -1,9 +1,11 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-**NOW:** Deep-dive `/accounting` then `/banking` `/customers` `/vendors` `/factoring` `/settlements` on **current** `healthz/shallow`.
+**NOW:** Hops **6–9** (revenue → invoice → GL → bank) + scenarios `coa` `ap` `factoring` `banking` `escrow`.
 
-Hunt: 500, dead click, silent save, fake $0 `.catch`, reverse-empty (Neon has rows). CREATE-TEST-THEN-VOID if the list is empty. FAST-MERGE. Never `trigger_deploy`. Never `/425c`. Never restamp U14.
+Create labeled TEST bill/invoice/expense if empty. Prove rows in `accounting.invoices` / `accounting.bills` / `accounting.journal_entries` / banking match. Matrix `?module=accounting` `?module=banking` `?module=factoring`.
 
-OUTBOX: `CC-1 | ACK | DEEP-DIVE-HUNT | PORT=9223 | NOW=/accounting | GO`
+Unique leftover still FAST-MERGE. Never `trigger_deploy`. Never `/425c`. Never restamp U14. CREATE-TEST-THEN-VOID (void at launch).
+
+OUTBOX: `CC-1 | ACK | PROGRAM-SCENARIO-PROOF | PORT=9223 | NOW=/program | HOP=hop.invoice | GO`

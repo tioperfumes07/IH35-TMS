@@ -1,11 +1,12 @@
 # INBOX-CC-3 · 9225
 
-**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-**NOW:** Deep-dive leftover chrome `/help` `/program` `/system` `/inventory` `/users` `/docs` `/home` on current `healthz`.
+**NOW:**
+1. `/program` + `/program/matrix?module=lists` + `?module=legal` — dead tab / 500 / fake-green cell.
+2. Scenario `legal` + maintenance unique only.
+3. Leftover chrome `/help` `/system` `/inventory` `/users` `/docs` `/home` unique only.
 
-Then `/lists` `/maintenance` `/legal` **unique only** — do not restamp U14, do not remake roadside / CLASS-F5973 exhausted leaves.
+Never restamp U14. Never remake roadside / CLASS-F5973. Never `trigger_deploy`. CREATE-TEST-THEN-VOID.
 
-CREATE-TEST-THEN-VOID. FAST-MERGE. Never `trigger_deploy`.
-
-OUTBOX: `CC-3 | ACK | DEEP-DIVE-HUNT | PORT=9225 | NOW=/help | GO`
+OUTBOX: `CC-3 | ACK | PROGRAM-SCENARIO-PROOF | PORT=9225 | NOW=/program | GO`

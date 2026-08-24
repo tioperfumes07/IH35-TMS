@@ -493,8 +493,8 @@ export function CustomersPage() {
     [customersRoster]
   );
   const allInvoicesQuery = useQuery({
-    queryKey: ["accounting", "invoices", "all", companyId],
-    queryFn: () => listInvoices(companyId),
+    queryKey: ["accounting", "invoices", "all", "open", companyId],
+    queryFn: () => listInvoices(companyId, { has_balance: true, limit: 500 }),
     enabled: Boolean(companyId),
   });
   const paymentTermsQuery = useQuery({

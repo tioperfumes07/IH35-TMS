@@ -2,10 +2,14 @@
 
 Not PARKED. AUDIT + CREATE TEST.
 
-**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
 
-**NOW:** `/customers` — Statements, Recurring, Late Fees. Empty → CREATE labeled TEST invoice via `/accounting/invoices`, reload customer. Then `/vendors` A/P + `/dispatch` late-arrivals.
+**NOW:**
+1. `/program` — run hop.book + scenario.customer on live SHA.
+2. `/program/matrix?module=customers` — every Required leaf click-through.
+3. CREATE labeled TEST customer + TEST invoice if empty. Prove list Open = invoice Open = detail aging (draft ≠ A/R).
+4. Then hop.assign/dispatch as far as the TEST load goes. File FINDING if table/ledger miss.
 
-File unique FINDING only if still true. No U14 restamp. No product PRs unless a unique 500 the coders missed.
+No U14 restamp. No product PRs unless unique 500 the builders missed. Void TESTs at launch, not now.
 
-OUTBOX: `Devin-A | ACK | DEEP-DIVE-HUNT | NOW=/customers | SHA=<healthz> | GO`
+OUTBOX: `Devin-A | ACK | PROGRAM-SCENARIO-PROOF | NOW=/program | SHA=<healthz> | HOP=hop.book | TABLE=mdata.loads | UUID=<id> | FINDING=<id-or-none> | GO`

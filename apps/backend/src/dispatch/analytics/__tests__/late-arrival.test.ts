@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  emptyLateArrivalDetail,
   computeLateRate,
   isChronicOffender,
   isLateArrival,
@@ -12,6 +13,23 @@ describe("late-arrival analytics (GAP-30)", () => {
   const servicePath = resolve(import.meta.dirname, "../late-arrival.service.ts");
   const workerPath = resolve(import.meta.dirname, "../../../jobs/late-arrival-aggregator-worker.ts");
   const indexPath = resolve(import.meta.dirname, "../../../index.ts");
+
+  it("emptyLateArrivalDetail is honest zero, not missing", () => {
+    const empty = emptyLateArrivalDetail("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "Acme Freight", "2026-08-01", "2026-08-24");
+    expect(empty.late_count).toBe(0);
+    expect(empty.total_count).toBe(0);
+    expect(empty.late_rate).toBe(0);
+    expect(empty.chronic_offender).toBe(false);
+    expect(empty.entity_label).toBe("Acme Freight");
+  });
+
+  it("customer/driver detail looks up the entity when aggregates are empty (no 404-for-empty)", () => {
+    const src = readFileSync(servicePath, "utf8");
+    expect(src).toContain("emptyLateArrivalDetail");
+    expect(src).toContain("FROM mdata.customers");
+    expect(src).toContain("FROM mdata.drivers");
+    expect(src).not.toMatch(/const row = rows\[0\];\s*if \(!row\) return null;/);
+  });
 
   it("computes late rate and chronic offender threshold", () => {
     expect(computeLateRate(2, 10)).toBe(0.2);

@@ -64,6 +64,10 @@ export function assertOpenByCustomerExcludesVoid(source) {
     }
   }
 
+  if (!/listInvoices\(companyId,\s*\{\s*has_balance:\s*true/.test(source)) {
+    errors.push("allInvoicesQuery must pass has_balance: true so drafts cannot inflate Open Balance");
+  }
+
   if (!/key:\s*["']balance["'][^\n]*render:\s*\(r\)\s*=>\s*fmtMoney\(invoiceOpenCentsForDisplay\(r\)\)/.test(source)) {
     errors.push("customer transaction-list Balance must use invoiceOpenCentsForDisplay(r)");
   }
@@ -139,6 +143,14 @@ function selftest() {
         "{ key: \"balance\", label: \"Balance\", render: (r) => fmtMoney(r.amount_open_cents) },"
       ),
       "transaction-list Balance",
+    ],
+    [
+      "allInvoicesQuery dropped has_balance filter",
+      live.replace(
+        "listInvoices(companyId, { has_balance: true, limit: 500 })",
+        "listInvoices(companyId)"
+      ),
+      "has_balance: true",
     ],
   ];
 
