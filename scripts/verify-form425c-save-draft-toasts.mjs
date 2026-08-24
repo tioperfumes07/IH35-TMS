@@ -124,6 +124,15 @@ export function collectProblems(src) {
   if (mergeTab.includes("disabled={generating || !canGenerate}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must stay clickable so the parent toast fires — a disabled button is a dead click");
   }
+  const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
+  if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
+    problems.push(
+      "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
+    );
+  }
+  if (historyTab.includes("return reports.filter((r) => r.status === statusFilter);") && !historyTab.includes('statusFilter === "amended"')) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: must not filter amended by status equality alone");
+  }
   return problems;
 }
 
