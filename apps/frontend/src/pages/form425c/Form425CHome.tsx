@@ -13,6 +13,8 @@ import {
   upsertForm425CProfile,
   amendForm425CReport,
   attachForm425CLineFile,
+  addForm425CExhibitA,
+  addForm425CExhibitB,
   type Form425CReport,
 } from "../../api/form425c";
 import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
@@ -413,6 +415,45 @@ export function Form425CHome() {
     onError: (error) => pushToast(userFacingApiError(error, "Attachment upload failed"), "error"),
   });
 
+  const exhibitEntries = useMemo(() => {
+    const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
+    if (!selectedReport?.id || loadedId !== selectedReport.id) {
+      return { a: [] as Array<Record<string, unknown>>, b: [] as Array<Record<string, unknown>> };
+    }
+    return {
+      a: detailQuery.data?.exhibit_a ?? [],
+      b: detailQuery.data?.exhibit_b ?? [],
+    };
+  }, [detailQuery.data, selectedReport?.id]);
+
+  const exhibitMutation = useMutation({
+    mutationFn: async ({ line, explanation }: { line: number; explanation: string }) => {
+      const reportId = form.reportId;
+      if (!reportId || reportId !== selectedReport?.id) {
+        throw new Error("Create / Load Draft before saving an exhibit entry");
+      }
+      if (form.status === "filed") {
+        throw new Error("This MOR is filed — use Amend on History");
+      }
+      const text = explanation.trim();
+      if (text.length < 3) {
+        throw new Error("Exhibit explanation needs at least 3 characters");
+      }
+      if (line >= 1 && line <= 9) {
+        return addForm425CExhibitA(reportId, companyId, line, text);
+      }
+      if (line >= 10 && line <= 18) {
+        return addForm425CExhibitB(reportId, companyId, line, text);
+      }
+      throw new Error("Exhibit line must be 1–9 (A) or 10–18 (B)");
+    },
+    onSuccess: async () => {
+      pushToast("Exhibit entry saved", "success");
+      await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Exhibit save failed"), "error"),
+  });
+
   useEffect(() => {
     if (!dirty) return;
     if (!form.reportId || form.reportId !== selectedReport?.id) {
@@ -608,6 +649,20 @@ export function Form425CHome() {
             }
             attachMutation.mutate({ line, file });
           }}
+          exhibitA={exhibitEntries.a}
+          exhibitB={exhibitEntries.b}
+          onSaveExhibit={(line, explanation) => {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
+              pushToast("Create / Load Draft before saving an exhibit entry", "error");
+              return;
+            }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
+              return;
+            }
+            exhibitMutation.mutate({ line, explanation });
+          }}
+          savingExhibit={exhibitMutation.isPending}
           attaching={attachMutation.isPending}
           loading={importMutation.isPending || saveMutation.isPending}
           autoSaveLabel={dirty ? "Auto-save pending..." : autoSavedAt ? `Auto-saved at ${new Date(autoSavedAt).toLocaleTimeString()}` : "No unsaved changes"}

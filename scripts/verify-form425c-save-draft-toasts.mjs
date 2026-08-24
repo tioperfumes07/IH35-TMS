@@ -139,6 +139,15 @@ export function collectProblems(src) {
   if (!routes.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: generate UPDATE must refuse status=filed (would set ready_to_file)");
   }
+  if (!src.includes("addForm425CExhibitA") || !src.includes("addForm425CExhibitB") || !src.includes("onSaveExhibit")) {
+    problems.push(`${PAGE}: flagged questionnaire must POST exhibit A/B — not a dead hop to /425c/exhibits A–F`);
+  }
+  if (!formTab.includes("onSaveExhibit") || !formTab.includes("Save Exhibit")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must save a line explanation, not only link to /425c/exhibits");
+  }
+  if (formTab.includes('to="/425c/exhibits"') && formTab.includes("Exhibit required")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must not navigate to A–F builder in place of Exhibit A/B");
+  }
   const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
@@ -177,6 +186,9 @@ const good = `
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
   throw new Error("This MOR is filed — use Amend on History");
   form.status === "filed"
+  addForm425CExhibitA
+  addForm425CExhibitB
+  onSaveExhibit
 `;
 const bad = `
   if (!detailQuery.data?.report) {

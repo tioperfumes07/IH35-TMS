@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+
+type ExhibitRow = Record<string, unknown> & { line_number?: number; explanation?: string };
 
 type Props = {
   activeCompany: CompanyKey;
@@ -20,6 +22,10 @@ type Props = {
   onGeneratePdf: () => void;
   onMarkFiled: () => void;
   onAttachFile: (line: number, file: File) => void;
+  exhibitA: ExhibitRow[];
+  exhibitB: ExhibitRow[];
+  onSaveExhibit: (line: number, explanation: string) => void;
+  savingExhibit: boolean;
   attaching: boolean;
   loading: boolean;
   autoSaveLabel: string;
@@ -46,10 +52,15 @@ export function CurrentPeriodTab({
   onGeneratePdf,
   onMarkFiled,
   onAttachFile,
+  exhibitA,
+  exhibitB,
+  onSaveExhibit,
+  savingExhibit,
   attaching,
   loading,
   autoSaveLabel,
 }: Props) {
+  const [exhibitDrafts, setExhibitDrafts] = useState<Record<number, string>>({});
   const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
   const cashEnd = nv(form.openingBalance) + netCash;
   const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
@@ -126,6 +137,8 @@ export function CurrentPeriodTab({
         {QUESTIONNAIRE.map((q, i) => {
           const answer = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
+          const letter = q.num <= 9 ? "A" : "B";
+          const saved = (q.num <= 9 ? exhibitA : exhibitB).filter((row) => Number(row.line_number) === q.num);
           return (
             <div key={q.num}>
               {i === 9 ? <div className="border-b bg-slate-100 px-3 py-1 text-xs italic text-slate-600">Lines 10-18: if Yes, Exhibit B entry required.</div> : null}
@@ -134,12 +147,9 @@ export function CurrentPeriodTab({
                 <span className="flex items-center gap-2">
                   {q.text}
                   {flagged ? (
-                    <Link
-                      to="/425c/exhibits"
-                      className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white hover:underline"
-                    >
-                      Exhibit required
-                    </Link>
+                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">
+                      Exhibit {letter} required
+                    </span>
                   ) : null}
                 </span>
                 <div className="flex gap-2">
@@ -160,6 +170,33 @@ export function CurrentPeriodTab({
                   ))}
                 </div>
               </div>
+              {flagged ? (
+                <div className="space-y-2 border-b bg-slate-50 px-3 py-2" data-form425c-exhibit-line={q.num}>
+                  {saved.length ? (
+                    <ul className="list-disc pl-5 text-xs text-slate-700">
+                      {saved.map((row, idx) => (
+                        <li key={String(row.id ?? idx)}>{String(row.explanation ?? "")}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-slate-600">No Exhibit {letter} explanation saved for line {q.num}.</p>
+                  )}
+                  <textarea
+                    className="h-16 w-full rounded-sm border px-2 py-1.5 text-sm"
+                    placeholder={`Exhibit ${letter} explanation (saved to the court filing)`}
+                    value={exhibitDrafts[q.num] ?? ""}
+                    onChange={(e) => setExhibitDrafts((prev) => ({ ...prev, [q.num]: e.target.value }))}
+                  />
+                  <button
+                    type="button"
+                    className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                    disabled={savingExhibit}
+                    onClick={() => onSaveExhibit(q.num, exhibitDrafts[q.num] ?? "")}
+                  >
+                    {savingExhibit ? "Saving…" : `Save Exhibit ${letter} entry`}
+                  </button>
+                </div>
+              ) : null}
             </div>
           );
         })}
