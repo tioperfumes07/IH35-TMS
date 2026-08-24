@@ -11,6 +11,7 @@ import { getApAging, type ApAgingSummary } from "../../api/arApAging";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../../api/program-tracker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { useToast } from "../../components/Toast";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -587,13 +588,23 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
 
 function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable: boolean }) {
   const { health, recon, tracker } = data;
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
   const apObj = findApObject(recon.data);
   const recentMerged = tracker.data?.recent_merged ?? [];
-  const copy = (which: string) => {
-    void navigator.clipboard?.writeText(LAUNCH_COMMAND).catch(() => undefined);
-    setCopied(which);
-    window.setTimeout(() => setCopied(null), 2500);
+  const copy = async (which: string) => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        pushToast("Could not copy the launch command. Select the command text and copy it yourself.", "error");
+        return;
+      }
+      await navigator.clipboard.writeText(LAUNCH_COMMAND);
+      setCopied(which);
+      pushToast("Copied. Paste it in your terminal — nothing runs here.", "success");
+      window.setTimeout(() => setCopied(null), 2500);
+    } catch {
+      pushToast("Could not copy the launch command. Select the command text and copy it yourself.", "error");
+    }
   };
 
   return (
