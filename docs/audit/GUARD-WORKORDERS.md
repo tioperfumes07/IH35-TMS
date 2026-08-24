@@ -2,6 +2,8 @@
 
 > Every finding follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in the same turn.
 
+| **FIXED CODE THIS PR (Codex 2026-08-24):** `COMP-NOTIFICATION-RULE-GUARD-UNWIRED` — notification-rule create/archive failures were visibly handled and mutation-tested, but the regression guard had no numbered CI wrapper. | `scripts/verify-compliance-notification-rule-visible-errors.mjs`; `scripts/verify-steps/4668-verify-compliance-notification-rule-visible-errors.mjs`; claim #15408 | C | **Codex — POST-U14 compliance regression enforcement** | Execute the five-mutation self-test and normal guard from claimed Codex-even step 4668. | step 4668 direct normal+selftest; claimed-on-main; fast-merge gate | **FIXED CODE THIS PR · OWNER-GATED=no** |
+
 | **FIXED (PR #15371):** `DOCS-F-KPI-FILTER-RESET-STUCK` — `/docs` Reset now clears KPI filter. Live SHA still `97d6a14` until deploy. | #15371 | C | **CC-1 / Cursor FAST-MERGE** | Reset clears KPI + list filters. | merged | **FIXED (PR #15371) · OWNER-GATED=no** |
 | **FIXED (PR #15372):** `DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY` — `/docs` type filter substring match. Live SHA still `97d6a14` until deploy. | #15372 | C | **CC-1 / Cursor FAST-MERGE** | Type filter contains-match. | merged | **FIXED (PR #15372) · OWNER-GATED=no** |
 | **FIXED (PR #15373):** `DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED` — GET `/docs/:id` aliases `category_label`. Live SHA still `97d6a14` until deploy. | #15373 | C | **CC-1 / Cursor FAST-MERGE** | Detail GET matches PreviewModal fields. | squash `7564b2f` | **FIXED (PR #15373) · OWNER-GATED=no** |
