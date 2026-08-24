@@ -1,6 +1,6 @@
 # INBOX-CASCADE
 
-**GO NOW 16:36 CT — not blocked on Cursor merge.** Curl healthz yourself. Walk hops + battery on **that SHA**. FINDING if still stub. No product PR. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+**GO 17:47 CT — COMPLICATED-BATTERY-F08 ACK on `427f8ca`.** F07 href `/dispatch/in-transit-issues` is on main, **not live**. PRINT-F09 same. F10 = recent-PRs block sat above the matrix (fix shipping). Deploy in flight. Direct URLs until SHA ≠ `427f8ca`, then hard reload. No product PR. No U14 restamp. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`.
 
 AUDIT ONLY. **THIS HOUR:** hops 1–9 + **complicated battery** `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
 
