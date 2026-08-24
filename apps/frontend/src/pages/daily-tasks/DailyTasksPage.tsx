@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle2, Clock3, ListChecks, UserRound } from "luci
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import {
   acceptDailyTask,
+  cancelDailyTask,
   completeDailyTask,
   createDailyTask,
   getDailyTaskEvents,
@@ -106,6 +107,8 @@ export function DailyTasksPage() {
   };
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -196,6 +199,21 @@ export function DailyTasksPage() {
     onError: (error) => pushToast(userFacingApiError(error, "Complete failed"), "error"),
   });
 
+  // DAILY-TASKS-F1: cancelDailyTask existed in api/dailyTasks.ts (a real, authorized
+  // POST /api/v1/daily-tasks/:id/cancel -- creator, assignee, or Owner/Admin/Manager)
+  // but was never wired to any button anywhere in the frontend, so a created daily
+  // task could never be cancelled once made -- a silent capability gap, not a 500.
+  const cancelMut = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => cancelDailyTask(id, reason),
+    onSuccess: () => {
+      pushToast("Task cancelled", "success");
+      setCancelTaskId(null);
+      setCancelReason("");
+      invalidateTasks();
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Cancel failed"), "error"),
+  });
+
   const submitCreate = async () => {
     if (!companyId || !userId) return;
     if (!title.trim()) {
@@ -283,6 +301,11 @@ export function DailyTasksPage() {
         render: (task) => {
           const canAccept = task.status === "created" && task.assigned_to_user_id === userId;
           const canComplete = task.status === "accepted" && task.assigned_to_user_id === userId;
+          const isManager = ["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "");
+          const canCancel =
+            task.status !== "completed" &&
+            task.status !== "cancelled" &&
+            (task.created_by_user_id === userId || task.assigned_to_user_id === userId || isManager);
           return (
             <div className="flex flex-wrap gap-1">
               {canAccept ? (
@@ -295,6 +318,19 @@ export function DailyTasksPage() {
                   Complete
                 </Button>
               ) : null}
+              {canCancel ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => {
+                    setCancelReason("");
+                    setCancelTaskId(task.id);
+                  }}
+                >
+                  Cancel
+                </Button>
+              ) : null}
               <Button size="sm" variant="secondary" type="button" onClick={() => setDetailTaskId(task.id)}>
                 Details
               </Button>
@@ -303,7 +339,7 @@ export function DailyTasksPage() {
         },
       },
     ],
-    [acceptMut.isPending, completeMut.isPending, userId],
+    [acceptMut.isPending, completeMut.isPending, auth.user?.role, userId],
   );
 
   return (
@@ -461,6 +497,39 @@ export function DailyTasksPage() {
             </Button>
             <Button type="button" loading={createMut.isPending} onClick={() => void submitCreate()}>
               + Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal variant="drawer" open={cancelTaskId != null} onClose={() => setCancelTaskId(null)} title="Cancel Task">
+        <div className="space-y-3 text-xs">
+          <div>
+            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+              Cancellation reason
+            </label>
+            <textarea
+              id="daily-task-cancel-reason"
+              className="min-h-[84px] w-full rounded-sm border border-slate-300 px-2 py-1.5"
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="Why is this task being cancelled?"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="secondary" onClick={() => setCancelTaskId(null)}>
+              Keep task
+            </Button>
+            <Button
+              type="button"
+              loading={cancelMut.isPending}
+              disabled={!cancelReason.trim()}
+              onClick={() => {
+                if (!cancelTaskId) return;
+                cancelMut.mutate({ id: cancelTaskId, reason: cancelReason.trim() });
+              }}
+            >
+              Cancel task
             </Button>
           </div>
         </div>
