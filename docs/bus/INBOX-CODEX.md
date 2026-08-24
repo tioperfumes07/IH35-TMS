@@ -1,15 +1,11 @@
 # INBOX-CODEX · 9226
 
-**★ FAST-MERGE ON (4 min).**
+**★ FAST-MERGE ON (4 min).** USE CHROME.
 
-**AFTER U14:** leftover unique on `/customers` → `/drivers` → `/fleet` — **not** U14 certify.  
-**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`  
-Law: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
+**U14 7–9 already CERTIFIED. That does NOT mean stop.** You certify leftover unique on those same URLs — new 500/dead/silent only. That is NOT an U14 hop restamp.
 
-**USE CHROME on 9226.** U14 customers+drivers+fleet CERTIFIED — **never restamp.**
+**NOW:** `https://app.ih35dispatch.com/customers` then `/drivers` then `/fleet`. Grep main. Board + FAST-MERGE.
 
-**NOW:** leftover unique 500/dead/silent on `/customers` then `/drivers` then `/fleet`. Grep main first. Board + FAST-MERGE.
-
-FORBIDDEN: recertify 7–9 · `/425c` `/cash-flow` `/lists` `/legal` · remake lucia-bypass
+FORBIDDEN: idle · restamp CERTIFIED · `/425c` `/cash-flow` `/lists` `/legal`
 
 OUTBOX: `Codex | ACK | POST-U14-SEQUENCE | PORT=9226 | NOW=/customers leftover unique | GO`

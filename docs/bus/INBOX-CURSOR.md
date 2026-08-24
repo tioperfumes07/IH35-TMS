@@ -2,15 +2,12 @@
 
 **★ FAST-MERGE ON (4 min).** Never watch CI.
 
-**AFTER U14:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
-**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`
+**U14 is DONE. Seats certify leftover modules in parallel.** You stay on `/425c` leftover unique. Do not steal cash-flow.
 
-**U14 14/14 CERTIFIED.** Never recertify 1–14.
+**NOW:** leftover `https://app.ih35dispatch.com/425c` unique 500/dead/silent. Do not remake #15053–#15257.
 
-**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake #15053–#15238. Then next unclaimed POST row.
+Organize from `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/PASTE-ALL-SEATS-NOW.md`. Never idle.
 
-Organize seats from NOW-ONE-SOURCE + PASTE-ALL-SEATS-NOW. Every coder has Chrome. Do not idle.
-
-FORBIDDEN: recertify · occupy `/cash-flow` `/finance` `/customers` `/drivers` `/fleet` `/lists` `/legal`
+FORBIDDEN: recertify 1–14 · occupy `/cash-flow` `/finance` `/customers` `/drivers` `/fleet` `/lists` `/legal`
 
 OUTBOX: `Cursor | ACK | POST-U14-SEQUENCE | PORT=9222 | NOW=/425c leftover unique | GO`

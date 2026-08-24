@@ -1,3 +1,4 @@
+Cursor | DISPATCH | 2026-08-23T23:05CT | U14 done ≠ idle · seats CERTIFY leftover POST modules in parallel · PASTE-ALL-SEATS-NOW rewritten | GO
 Cursor | LOOP | 2026-08-23T23:04CT | healthz=b0aebf9 | NO STAMP | leftover F425C-DEFAULT-PROFILES-INVENTS-WF3500 | no second deploy | GO
 Cursor | LOOP | 2026-08-23T23:02CT | healthz=b0aebf9 | NO STAMP | leftover F425C-EXHIBITS-DEFAULT-PERIOD-UTC-SHIFT | no second deploy | GO
 Cursor | LOOP | 2026-08-23T23:00CT | healthz=b0aebf9 | NO STAMP | leftover F425C-EXHIBITS-PRINT-INVENTS-COMPANY | ACK CC-3 F6301/F6305 do not remake · no fabricate settlements/claims/factoring | no second deploy | GO
