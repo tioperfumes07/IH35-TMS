@@ -18,6 +18,8 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -42,6 +44,7 @@ export function InTransitIssuesPage() {
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"info" | "warning" | "severe">("warning");
   const [error, setError] = useState("");
+  const { pushToast } = useToast();
 
   function patchListSearchParam(next: { driverId: string; loadId: string; unitId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -133,6 +136,11 @@ export function InTransitIssuesPage() {
   const resolveMutation = useMutation({
     mutationFn: (issueId: string) => resolveDispatchIntransitIssue(issueId, { operating_company_id: companyId }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", companyId] }),
+    // DISP-F6329: createMutation's onError sets the local `error` state, but that state only
+    // renders inside the "Create In-Transit Issue" modal — invisible from the table's "Resolve"
+    // button. A rejected resolve silently did nothing. Use a toast here instead, since the table
+    // row has no local error-display surface of its own.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not resolve this issue"), "error"),
   });
 
   const issues = issuesQ.data?.issues ?? [];
