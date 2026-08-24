@@ -222,14 +222,18 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                 AND occurred_at <= now() + INTERVAL '30 days') AS training_due_30d,
             -- Must agree with the canonical Drivers list (/api/v1/mdata/drivers?status=Active),
             -- which is what an operator cross-checks this tile against. That list filters on the
-            -- driver STATUS plus the archived/pseudo exclusions — NOT on deactivated_at. Using a
-            -- different predicate here produced 83 vs the list's 82 and would reintroduce exactly
-            -- the kind of number-disagreement this fix exists to remove.
+            -- driver STATUS plus the archived/pseudo/is_sample_data exclusions — NOT on
+            -- deactivated_at. Using a different predicate here produced 83 vs the list's 82 and
+            -- would reintroduce exactly the kind of number-disagreement this fix exists to remove.
+            -- HOME-FLEET-UTILIZATION-F4583 class (2026-08-24): this tile was still missing the
+            -- is_sample_data half of that parity — live-measured 80 here vs 79 on the canonical
+            -- list (drivers.routes.ts already filters is_sample_data IS NOT TRUE, #14909).
             (SELECT COUNT(*)::int FROM mdata.drivers
               WHERE operating_company_id = $1::uuid
                 AND status = 'Active'
                 AND ${EXCLUDE_ARCHIVED_DRIVERS_SQL}
-                AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}) AS active_drivers,
+                AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}
+                AND is_sample_data IS NOT TRUE) AS active_drivers,
             (SELECT COUNT(DISTINCT driver_id)::int FROM (
                 SELECT subject_driver_id AS driver_id
                 FROM safety.civil_fines

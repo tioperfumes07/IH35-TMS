@@ -21,6 +21,7 @@ function audit(s) {
   if (!/previous_trailer_id, new_trailer_id/.test(s.service) || !/input\.trailer_id \?\? null/.test(s.service) || !/resolvedTrailerId, userId/.test(s.service)) failures.push("canonical assignment-history trailer FK sink missing");
   if (!/code === "E_TRAILER_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("trailer rejection route mapping missing");
   if (!/lah\.new_trailer_id = \$1::uuid/.test(s.aggregate) || !/lah\.operating_company_id = \$2::uuid/.test(s.aggregate) || !/l\.operating_company_id = lah\.operating_company_id/.test(s.aggregate)) failures.push("exact entity-scoped trailer reverse query missing");
+  if (!/FROM mdata\.units WHERE id = \$1::uuid AND \(owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid\)/.test(s.aggregate)) failures.push("attached-unit reverse label must admit the unit owner or current lessee");
   if (!/aggregate\.loads \?\? \[\]/.test(s.profile) || !/<EntityLinkOrTombstone[\s\S]{0,160}kind="load"[\s\S]{0,180}noun="Load"/.test(s.profile) || !/No linked loads\./.test(s.profile)) failures.push("trailer profile reverse load drill/tombstone or honest empty state missing");
   return failures;
 }
@@ -36,6 +37,7 @@ if (process.argv.includes("--selftest")) {
     ["sink", "service", /input\.trailer_id \?\? null/, "null"],
     ["route", "routes", /code === "E_TRAILER_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /lah\.new_trailer_id = \$1::uuid/, "TRUE"],
+    ["attached-unit-scope", "aggregate", /owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/, "owner_company_id = $2::uuid"],
     ["drill", "profile", /<EntityLinkOrTombstone/, '<EntityLink'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

@@ -53,10 +53,28 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
     return Number(r.rows[0]?.n ?? 0);
   };
   const drivers_mapped = await oneNum(
-    `SELECT count(*) AS n FROM mdata.drivers WHERE operating_company_id = $1::uuid AND samsara_driver_id IS NOT NULL AND deactivated_at IS NULL`
+    `SELECT count(*) AS n
+       FROM mdata.drivers d
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations stats_mapped_dca
+               WHERE stats_mapped_dca.driver_id = d.id
+                 AND stats_mapped_dca.company_id = $1::uuid
+                 AND stats_mapped_dca.is_authorized = true
+                 AND stats_mapped_dca.deactivated_at IS NULL
+            ))
+        AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL`
   );
   const drivers_total = await oneNum(
-    `SELECT count(*) AS n FROM mdata.drivers WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`
+    `SELECT count(*) AS n
+       FROM mdata.drivers d
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations stats_total_dca
+               WHERE stats_total_dca.driver_id = d.id
+                 AND stats_total_dca.company_id = $1::uuid
+                 AND stats_total_dca.is_authorized = true
+                 AND stats_total_dca.deactivated_at IS NULL
+            ))
+        AND d.deactivated_at IS NULL`
   );
   const units_mapped = await oneNum(
     `SELECT count(*) AS n FROM mdata.units WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid AND samsara_vehicle_id IS NOT NULL AND deactivated_at IS NULL`
@@ -118,7 +136,13 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
                FROM samsara.hos_snapshots WHERE operating_company_id = $1::uuid
               ORDER BY driver_uuid, polled_at DESC) s
        JOIN mdata.drivers d ON d.id = s.driver_uuid
-                            AND d.operating_company_id = $1::uuid
+                            AND (d.operating_company_id = $1::uuid OR EXISTS (
+                              SELECT 1 FROM mdata.driver_company_authorizations stats_clock_dca
+                               WHERE stats_clock_dca.driver_id = d.id
+                                 AND stats_clock_dca.company_id = $1::uuid
+                                 AND stats_clock_dca.is_authorized = true
+                                 AND stats_clock_dca.deactivated_at IS NULL
+                            ))
       ORDER BY driver_name`,
     [operatingCompanyId]
   );

@@ -1,4 +1,8 @@
 import type { PoolClient } from "pg";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): the same shared exclusion already required
+// on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here — a fixture unit must not
+// inflate the active-unit-count denominator this per-load insurance allocation estimate divides by.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 
 export type LoadProfitabilitySnapshot = {
   load_id: string;
@@ -163,7 +167,7 @@ export async function computeLoadProfitability(
          COALESCE(SUM(ip.total_premium_cents), 0)::text AS total_premium_cents,
          -- §4: mdata.units has NO operating_company_id — a unit is operated by a company when it OWNS it
          -- (owner_company_id) or LEASES it (currently_leased_to_company_id). Old u.operating_company_id 42703'd.
-         GREATEST((SELECT COUNT(*)::int FROM mdata.units u WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1) AND u.deactivated_at IS NULL), 1)::text AS active_unit_count
+         GREATEST((SELECT COUNT(*)::int FROM mdata.units u WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1) AND u.deactivated_at IS NULL AND ${excludeDemoPhantomSql("u.unit_number")} AND ${excludeSampleDataSql("u.is_sample_data")}), 1)::text AS active_unit_count
        -- insurance.policy (singular): tenant-scoped via tenant_id (RLS keys on app.operating_company_id,
        -- set by the route), date column is expiry_date, status enum is active/expired/cancelled/pending
        -- (no 'bound'). The old insurance.policies / operating_company_id / expiration_date / 'bound'

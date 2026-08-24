@@ -1485,7 +1485,21 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
 
         const driverExists = await client.query(
-          `SELECT 1 FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          `SELECT 1
+             FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                    FROM mdata.driver_company_authorizations ap_vendor_driver_dca
+                   WHERE ap_vendor_driver_dca.driver_id = d.id
+                     AND ap_vendor_driver_dca.company_id = $2::uuid
+                     AND ap_vendor_driver_dca.is_authorized = true
+                     AND ap_vendor_driver_dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         if (!driverExists.rows[0]) return { error: "mdata_driver_not_found" as const };

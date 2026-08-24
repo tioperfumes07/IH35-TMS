@@ -14,33 +14,49 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const TARGET = path.join(ROOT, "apps/backend/src/maintenance/dashboard.routes.ts");
+const TARGETS = [
+  "apps/backend/src/maintenance/dashboard.routes.ts",
+  "apps/backend/src/maintenance/dashboard-kpis.routes.ts",
+];
 
 function fail(message) {
   console.error(`verify:fleet-table-owner-leased-scope FAILED\n- ${message}`);
   process.exit(1);
 }
 
-if (!fs.existsSync(TARGET)) {
-  fail(`missing ${path.relative(ROOT, TARGET)}`);
-}
-
-const src = fs.readFileSync(TARGET, "utf8");
-
-// Bad pattern: a bare `owner_company_id = $N` filter on mdata.units with no
-// `currently_leased_to_company_id` OR-clause anywhere nearby (within ~200 chars).
-const OWNER_ONLY_SCOPE =
-  /FROM\s+mdata\.units\s+u?[\s\S]{0,120}?\b(?:owner_company_id|u\.owner_company_id)\s*=\s*\$1(?:::uuid)?\s*\n(?:[\s\S]{0,40}?AND\s+(?:u\.)?deactivated_at\s+IS\s+NULL)?/i;
-
-for (const m of src.matchAll(/FROM\s+mdata\.units\s*u?[\s\S]{0,400}?(?=\n\s*\)|\n\s*`,)/gi)) {
-  const block = m[0];
-  const hasOwner = /\bowner_company_id\s*=\s*\$1/.test(block);
-  const hasLeased = /\bcurrently_leased_to_company_id\s*=\s*\$1/.test(block);
-  if (hasOwner && !hasLeased) {
-    fail(
-      `a FROM mdata.units query scopes by owner_company_id = $1 without also allowing currently_leased_to_company_id = $1 (OR) — TRANSP/USMCA lease units would be dropped. Block:\n${block.slice(0, 300)}`
-    );
+function scopeFailures(sources) {
+  const failures = [];
+  for (const [file, src] of Object.entries(sources)) {
+    for (const m of src.matchAll(/FROM\s+mdata\.units\s*u?[\s\S]{0,400}?(?=\n\s*\)|\n\s*`,)/gi)) {
+      const block = m[0];
+      const hasOwner = /\bowner_company_id\s*=\s*\$1/.test(block);
+      const hasLeased = /\bcurrently_leased_to_company_id\s*=\s*\$1/.test(block);
+      if (hasOwner && !hasLeased) failures.push(`${file}: owner-only mdata.units scope: ${block.slice(0, 220)}`);
+    }
   }
+  return failures;
 }
+
+const sources = Object.fromEntries(TARGETS.map((file) => {
+  const target = path.join(ROOT, file);
+  if (!fs.existsSync(target)) fail(`missing ${file}`);
+  return [file, fs.readFileSync(target, "utf8")];
+}));
+
+if (process.argv.includes("--selftest")) {
+  const file = TARGETS[1];
+  const mutated = sources[file].replace(
+    "WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)",
+    "WHERE owner_company_id = $1::uuid"
+  );
+  if (mutated === sources[file] || scopeFailures({ ...sources, [file]: mutated }).length === 0) {
+    fail("planted dashboard KPI owner-only mutation escaped");
+  }
+  console.log("verify:fleet-table-owner-leased-scope SELFTEST PASS — owner-only dashboard KPI mutation detected");
+  process.exit(0);
+}
+
+const failures = scopeFailures(sources);
+if (failures.length) fail(failures.join("\n- "));
 
 console.log("verify:fleet-table-owner-leased-scope OK");

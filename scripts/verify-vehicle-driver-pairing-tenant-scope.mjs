@@ -13,7 +13,11 @@ if (!fs.existsSync(servicePath)) {
   throw new Error(`Missing service file: ${servicePath}`);
 }
 const service = fs.readFileSync(servicePath, "utf8");
-mustInclude(service, "WHERE d.operating_company_id = $1::uuid", "driver tenant filter");
+mustInclude(service, "d.operating_company_id = $1::uuid", "driver home-company tenant filter");
+mustInclude(service, "FROM mdata.driver_company_authorizations webhook_pairing_driver_dca", "shared-driver authorization source");
+mustInclude(service, "webhook_pairing_driver_dca.company_id = $1::uuid", "shared-driver company filter");
+mustInclude(service, "webhook_pairing_driver_dca.is_authorized = true", "active shared-driver authorization filter");
+mustInclude(service, "webhook_pairing_driver_dca.deactivated_at IS NULL", "non-deactivated shared-driver authorization filter");
 mustInclude(service, "COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid", "equipment tenant filter");
 mustInclude(service, "WHERE operating_company_id = $1::uuid", "assignment tenant filter");
 mustInclude(service, "operating_company_id,", "assignment tenant writes");

@@ -48,7 +48,14 @@ export function verify(source) {
   if (/app\.(?:post|put|patch|delete)\("\/api\/v1\/telematics\/hos-driver-map/i.test(withoutComments(source.route))) failures.push(`${FILES.route}: preview namespace must remain read-only`);
 
   need("service", "FROM mdata.drivers", "preview must read canonical driver records");
-  need("service", "WHERE operating_company_id = $1::uuid", "driver read must be explicitly company scoped");
+  need("service", "FROM mdata.driver_company_authorizations hos_map_roster_dca", "preview roster must admit canonical shared drivers");
+  need("service", "hos_map_roster_dca.company_id = $1::uuid", "preview roster authorization must bind selected company");
+  need("service", "hos_map_roster_dca.is_authorized = true", "preview roster authorization must be active");
+  need("service", "hos_map_roster_dca.deactivated_at IS NULL", "preview roster authorization must not be deactivated");
+  need("service", "FROM mdata.driver_company_authorizations hos_map_active_dca", "downstream active count must admit canonical shared drivers");
+  need("service", "hos_map_active_dca.company_id = $1::uuid", "active-count authorization must bind selected company");
+  need("service", "hos_map_active_dca.is_authorized = true", "active-count authorization must be active");
+  need("service", "hos_map_active_dca.deactivated_at IS NULL", "active-count authorization must not be deactivated");
   need("service", "a.operating_company_id = $1::uuid", "assignment join must carry its own company predicate");
   need("service", "local_driver_id: r.id as string", "canonical driver FK must survive projection");
   need("service", "current_samsara_driver_id", "stored mapping must be projected for reconciliation");
@@ -80,7 +87,12 @@ if (process.argv.includes("--self-test")) {
     ["api", "new URLSearchParams({ operating_company_id: operatingCompanyId })"], ["manifest", 'path="/samsara/hos-driver-map"'],
     ["route", 'app.get("/api/v1/telematics/hos-driver-map/preview"'], ["route", "querySchema.safeParse"], ["route", "withCurrentUser(user.uuid"],
     ["route", "set_config('app.operating_company_id', $1::text, true)"], ["service", "FROM mdata.drivers"],
-    ["service", "WHERE operating_company_id = $1::uuid"], ["service", "local_driver_id: r.id as string"],
+    ["service", "FROM mdata.driver_company_authorizations hos_map_roster_dca"],
+    ["service", "hos_map_roster_dca.company_id = $1::uuid"], ["service", "hos_map_roster_dca.is_authorized = true"],
+    ["service", "hos_map_roster_dca.deactivated_at IS NULL"],
+    ["service", "FROM mdata.driver_company_authorizations hos_map_active_dca"],
+    ["service", "hos_map_active_dca.company_id = $1::uuid"], ["service", "hos_map_active_dca.is_authorized = true"],
+    ["service", "hos_map_active_dca.deactivated_at IS NULL"], ["service", "local_driver_id: r.id as string"],
     ["service", "a.operating_company_id = $1::uuid"],
     ["service", "current_samsara_driver_id"], ["service", "proposed_samsara_driver_id"], ["service", "ambiguous"],
     ["routeTest", "expect(scopeCall?.values).toEqual([OCI])"], ["resolver", 'case "driver"'],

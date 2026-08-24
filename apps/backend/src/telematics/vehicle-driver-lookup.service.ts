@@ -175,8 +175,18 @@ async function resolveLocalIds(client: DbClient, event: SamsaraWebhookEvent, fal
     `
       SELECT d.id::text AS driver_id
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
-        AND d.samsara_driver_id = $2
+      WHERE d.samsara_driver_id = $2
+        AND (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations webhook_pairing_driver_dca
+            WHERE webhook_pairing_driver_dca.driver_id = d.id
+              AND webhook_pairing_driver_dca.company_id = $1::uuid
+              AND webhook_pairing_driver_dca.is_authorized = true
+              AND webhook_pairing_driver_dca.deactivated_at IS NULL
+          )
+        )
       LIMIT 1
     `,
     [event.operating_company_id, samsaraDriverId]

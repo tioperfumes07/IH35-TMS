@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createForm425CReport,
   generateForm425CPdf,
+  getForm425CFilingHtml,
   getForm425CReport,
   importForm425CBanking,
   listForm425CProfiles,
@@ -407,6 +408,22 @@ export function Form425CHome() {
     onError: (error) => pushToast(userFacingApiError(error, "Amend failed"), "error"),
   });
 
+  const historyPrintMutation = useMutation({
+    mutationFn: (id: string) => getForm425CFilingHtml(id, companyId),
+    onSuccess: (res) => {
+      const w = window.open("", "_blank");
+      if (!w) {
+        pushToast("Popup blocked — allow popups to print the filing", "error");
+        return;
+      }
+      w.document.write(res.print_html);
+      w.document.close();
+      setTimeout(() => w.print(), 600);
+      pushToast(`Ready to print: ${res.suggested_filename}`, "success");
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not print that filing"), "error"),
+  });
+
   const autosaveBlockedToast = useRef(false);
 
   // Part 8 checkboxes (att38-42) are display-only — a real attachment requires an uploaded file.
@@ -728,6 +745,13 @@ export function Form425CHome() {
             pushToast("Opened report in Form 425C", "success");
           }}
           onAmend={(id) => amendMutation.mutate(id)}
+          onPrint={(id) => {
+            if (!id) {
+              pushToast("Could not print that filing", "error");
+              return;
+            }
+            historyPrintMutation.mutate(id);
+          }}
         />
       ) : null}
     </div>

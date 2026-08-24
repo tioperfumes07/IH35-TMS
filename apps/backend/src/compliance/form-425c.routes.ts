@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { registerComplianceRoutes } from "./compliance.routes.js";
-import { generateForm425CPdf, isInvalidCaseNumber } from "./form-425c-pdf.js";
+import { buildForm425CPrintDocument, generateForm425CPdf, isInvalidCaseNumber } from "./form-425c-pdf.js";
 import { registerShipperPortalRoutes } from "../shipper-portal/portal-auth.routes.js";
 import { registerBorderCrossingHistoryRoutes } from "../border-crossing/border-crossing-history.routes.js";
 import { registerBorderCrossingWizardRoutes } from "../border-crossing/border-crossing-wizard.routes.js";
@@ -466,16 +466,32 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return { profiles };
   });
 
-  app.get("/api/v1/form-425c/banking-summary", async (req, reply) => {
+  app.get("/api/v1/form-425c/banking-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = MONTH_QUERY.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const q = query.data;
-    const summary = await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
-      computeBankingSummary(client, q.operating_company_id, q.month)
-    );
-    return summary;
+    try {
+      return await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
+        computeBankingSummary(client, q.operating_company_id, q.month)
+      );
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      if (e?.message === "mor_cash_zero_with_activity") {
+        return reply.code(422).send({
+          error: "mor_cash_zero_with_activity",
+          message:
+            "Banking summary found in-scope transactions but $0 receipts and $0 disbursements — will not return $0 as court cash",
+        });
+      }
+      req.log?.error?.({ err: e, month: q.month }, "form-425c banking-summary failed");
+      return reply.code(502).send({
+        error: "mor_cash_source_error",
+        code: e?.code ?? null,
+        message: e?.message ?? "banking summary query failed",
+      });
+    }
   });
 
   app.get("/api/v1/form-425c/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -523,6 +539,38 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
     return payload;
+  });
+
+  app.get("/api/v1/form-425c/:id/filing-html", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = ID_PARAMS.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = COMPANY_QUERY.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    try {
+      return await withCompanyScope(user.uuid, companyId, async (client) => {
+        const built = await buildForm425CPrintDocument({
+          client,
+          reportId: params.data.id,
+          operatingCompanyId: companyId,
+        });
+        return { print_html: built.printHtml, suggested_filename: built.suggestedFilename };
+      });
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "form_425c_report_not_found") {
+        return reply.code(404).send({ error: "report_not_found" });
+      }
+      if (e?.message === "form_425c_case_number_required") {
+        return reply.code(422).send({
+          error: "case_number_required",
+          message: "This entity's bankruptcy case number is not set (or is a placeholder). Set the real case number in Profiles & Defaults before printing.",
+        });
+      }
+      throw err;
+    }
   });
 
   app.post("/api/v1/form-425c/profiles", async (req, reply) => {
@@ -803,11 +851,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SET ${updates.join(", ")}, updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
+            AND status <> 'filed'
           RETURNING *
         `,
         values
       );
       const report = updateRes.rows[0];
+      if (!report) throw new Error("form_425c_filed_immutable");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -888,6 +938,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
                 updated_at = now()
             WHERE id = $1
               AND operating_company_id = $2::uuid
+              AND status <> 'filed'
             RETURNING *
           `,
           [
@@ -914,6 +965,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           "info",
           "BT-3-FORM-425C"
         );
+        if (!res.rows[0]) throw new Error("form_425c_filed_immutable");
         return res.rows[0] as Record<string, unknown>;
       });
     } catch (err) {
@@ -1043,18 +1095,23 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      const existingRes = await client.query(
-        `SELECT case_number FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-        [params.data.id, b.operating_company_id]
-      );
-      const existing = existingRes.rows[0];
-      if (!existing) return null;
-      if (isInvalidCaseNumber(existing.case_number)) {
-        return { caseNumberInvalid: true } as const;
-      }
-      const res = await client.query(
-        `
+    let updated: Record<string, unknown> | { caseNumberInvalid: true } | null;
+    try {
+      updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        const existingRes = await client.query<{ case_number: string | null; status: string }>(
+          `SELECT case_number, status FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, b.operating_company_id]
+        );
+        const existing = existingRes.rows[0];
+        if (!existing) return null;
+        if (existing.status === "filed") {
+          throw new Error("form_425c_filed_immutable");
+        }
+        if (isInvalidCaseNumber(existing.case_number)) {
+          return { caseNumberInvalid: true } as const;
+        }
+        const res = await client.query(
+          `
           UPDATE compliance.form_425c_reports
           SET status = 'filed',
               filed_at = COALESCE($3::timestamptz, now()),
@@ -1065,25 +1122,35 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             AND status IN ('draft', 'ready_to_file', 'amended')
           RETURNING *
         `,
-        [params.data.id, b.operating_company_id, b.filed_at ?? null, user.uuid]
-      );
-      const report = res.rows[0];
-      if (!report) return null;
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "compliance.form_425c.filed",
-        {
-          resource_type: "compliance.form_425c_reports",
-          resource_id: params.data.id,
-          operating_company_id: b.operating_company_id,
-        },
-        "info",
-        "BT-3-FORM-425C"
-      );
-      return report;
-    });
-    if (!updated) return reply.code(404).send({ error: "report_not_found_or_invalid_state" });
+          [params.data.id, b.operating_company_id, b.filed_at ?? null, user.uuid]
+        );
+        const report = res.rows[0];
+        if (!report) return null;
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "compliance.form_425c.filed",
+          {
+            resource_type: "compliance.form_425c_reports",
+            resource_id: params.data.id,
+            operating_company_id: b.operating_company_id,
+          },
+          "info",
+          "BT-3-FORM-425C"
+        );
+        return report;
+      });
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History. Mark Filed will not rewrite a filed court filing.",
+        });
+      }
+      throw err;
+    }
+    if (!updated) return reply.code(404).send({ error: "report_not_found" });
     if ((updated as { caseNumberInvalid?: boolean }).caseNumberInvalid) {
       return reply.code(422).send({
         error: "case_number_required",
@@ -1219,6 +1286,27 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         ]
       );
       const report = res.rows[0];
+      if (!report) return null;
+      await client.query(
+        `
+          INSERT INTO compliance.form_425c_exhibit_a_entries (report_id, line_number, explanation)
+          SELECT $1, line_number, explanation
+          FROM compliance.form_425c_exhibit_a_entries
+          WHERE report_id = $2
+          ORDER BY created_at
+        `,
+        [report.id, src.id]
+      );
+      await client.query(
+        `
+          INSERT INTO compliance.form_425c_exhibit_b_entries (report_id, line_number, explanation)
+          SELECT $1, line_number, explanation
+          FROM compliance.form_425c_exhibit_b_entries
+          WHERE report_id = $2
+          ORDER BY created_at
+        `,
+        [report.id, src.id]
+      );
       await appendCrudAudit(
         client,
         user.uuid,

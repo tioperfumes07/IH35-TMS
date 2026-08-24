@@ -6,9 +6,9 @@
 
 **U14 14/14 CERTIFIED.** Never recertify 1–14.
 
-**THIS TICK 20:22 CT:** Codex was idle because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` was already FIXED. Rewrote `PASTE-ALL-SEATS-NOW.md` + all INBOX TOPs. ACK CC-3 #15092 #15103. ACK CC-1 #15094 #15098 #15105 #15111 #15117 (do not rebuild; board OPEN stale).
+**THIS TICK 21:14 CT:** Jorge GO — instruct seats + Program matrix/legacy/completion show Urgent exclusive hops 14/14 **without** painting Rule 24 Certified or Box 4 Live. POST leftover continues.
 
-**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake Exhibit D / period / bank-remove / attachments / filed-immutable / create-pin / amended-filter.
+**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake #15096–#15158 (period, cash 19–21, debtor, history, amended filter, filed immutable, create-pin, exhibits, PDF, POST filed, amend twice, attach, duplicate month, banking-summary, amend A/B, PATCH filed, A–F print, mark-filed 409, inverted period, history filed print).
 
 FORBIDDEN: recertify · occupy other prefixes · let Codex sit on a FIXED NOW.
 

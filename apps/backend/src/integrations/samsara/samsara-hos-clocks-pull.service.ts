@@ -4,6 +4,7 @@
 // ELD timeline + 8-day breakdown bars (Samsara doesn't return those). board==roster==certified-ELD by construction.
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
+import { listActiveHosDriverRoster } from "./active-hos-driver-roster.service.js";
 
 export type HosClocksPullResult = {
   active_drivers: number;
@@ -16,16 +17,7 @@ export type HosClocksPullResult = {
 export async function syncSamsaraHosClocks(client: PgClient, operatingCompanyId: string): Promise<HosClocksPullResult> {
   // Active board drivers = OPEN vehicle assignment, resolved to Samsara id via the board-proven key (same set the
   // logs pull uses). Carry the unit so the snapshot can record vehicle_uuid.
-  const active = await client.query(
-    `SELECT DISTINCT ON (d.id)
-       d.id::text AS local_driver_id, d.samsara_driver_id::text AS samsara_driver_id, a.unit_id::text AS unit_id
-     FROM mdata.drivers d
-     JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
-     WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL
-     ORDER BY d.id, a.started_at DESC`,
-    [operatingCompanyId]
-  );
-  const rows = active.rows as Array<{ local_driver_id: string; samsara_driver_id: string; unit_id: string | null }>;
+  const rows = await listActiveHosDriverRoster(client, operatingCompanyId);
   const localBySamsara = new Map<string, { local: string; unit: string | null }>();
   for (const r of rows) localBySamsara.set(r.samsara_driver_id, { local: r.local_driver_id, unit: r.unit_id });
   const activeDrivers = localBySamsara.size;

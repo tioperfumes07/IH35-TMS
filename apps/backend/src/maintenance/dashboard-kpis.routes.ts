@@ -150,7 +150,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
                 COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units,
                 COUNT(*) FILTER (WHERE ${hasIsOos ? "COALESCE(is_oos, false)" : "false"})::int AS dot_oos
               FROM mdata.units
-              WHERE owner_company_id = $1::uuid
+              WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
                 AND deactivated_at IS NULL
             `,
             [companyId]

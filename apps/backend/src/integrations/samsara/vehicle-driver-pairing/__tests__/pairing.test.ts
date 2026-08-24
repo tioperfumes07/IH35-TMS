@@ -98,6 +98,11 @@ describe("getDriverPairingHistory", () => {
       "2026-06-01T00:00:00.000Z",
       "2026-06-08T00:00:00.000Z",
     ]);
+    const sql = client.query.mock.calls[0]?.[0] as string;
+    expect(sql).toContain("FROM mdata.driver_company_authorizations pairing_history_dca");
+    expect(sql).toContain("pairing_history_dca.company_id = $1::uuid");
+    expect(sql).toContain("pairing_history_dca.is_authorized = true");
+    expect(sql).toContain("pairing_history_dca.deactivated_at IS NULL");
   });
 });
 

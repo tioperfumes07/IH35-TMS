@@ -76,6 +76,12 @@ export function importForm425CBanking(id: string, companyId: string) {
   });
 }
 
+export function getForm425CFilingHtml(id: string, companyId: string) {
+  return apiRequest<{ print_html: string; suggested_filename: string }>(
+    `/api/v1/form-425c/${id}/filing-html?${q(companyId)}`,
+  );
+}
+
 export function generateForm425CPdf(id: string, companyId: string) {
   return apiRequest<GenerateForm425CPdfResponse>(`/api/v1/form-425c/${id}/generate-filing-pdf`, {
     method: "POST",

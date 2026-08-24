@@ -1138,3 +1138,14 @@ Codex | WORKING | FO=DRIVER-MANAGER-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15040 s
 Codex | WORKING | FO=DRIVER-METRICS-SHARED-ROSTER-GUARD-ORPHAN | claim=#15042 step=4576 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=ANOMALY-MEDCARD-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15044 step=4578 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=DRIVER-PWA-SHARED-DISPATCH-VIEW-GUARD-ORPHAN | claim=#15047 step=4580 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRV-F6283-SHARED-DRIVER-AP-VENDOR-REVERSE-FALSE-404 | scope=selected-company shared-driver parent GET only · no money math | NEXT=guard+typecheck+FAST-MERGE | GO
+Codex | WORKING | FO=FLT-F6285-SAMSARA-WEBHOOK-DROPS-SHARED-DRIVER-PAIRING | scope=fleet driver/unit connectivity · no money | NEXT=guard+test+typecheck+FAST-MERGE | GO
+Codex | WORKING | FO=FLT-F6286-HOS-POLL-CROSS-TENANT-ROSTER-DRIFT | scope=fleet HOS driver/unit reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6287-HOS-WEBHOOK-REJECTS-SHARED-DRIVER | scope=fleet HOS realtime driver/unit reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6288-SAMSARA-STATS-PROBE-OMITS-SHARED-DRIVERS | scope=fleet HOS diagnostic GET/reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6289-SAMSARA-PAIRING-CRON-DROPS-SHARED-DRIVER | scope=fleet scheduled driver/unit forward+reverse · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6290-SAMSARA-DCA-PHANTOM-OPERATING-COMPANY-COLUMN | scope=immediate repair of #15138/#15139/#15140/#15142 · canonical company_id | NEXT=FAST-MERGE then resume HOS map preview GET | GO
+Codex | WORKING | FO=FLT-F6291-HOS-MAP-PREVIEW-OMITS-SHARED-DRIVERS | leaf=system.samsara_hos_driver_map:driver · scope=preview+active diagnostic GET | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6292-MAINT-DASHBOARD-KPI-OMITS-LEASED-UNITS | scope=fleet dashboard GET owner-or-lessee parity · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=FLT-F6294-TRAILER-ATTACHED-UNIT-OWNER-REVERSE-TOMBSTONE | leaf=fleet:trailer.profile.assignment:{unit,reverse_link} · HANDOFF=TAX-F6293→CC-1 | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=DRV-F6295-HOME-DUTY-DENOMINATOR-EXCLUDES-SHARED-DRIVERS | leaf=home:home.widget.drivers_on_duty:{driver,connectivity} | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO

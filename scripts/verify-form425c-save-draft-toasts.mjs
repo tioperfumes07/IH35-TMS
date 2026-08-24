@@ -123,6 +123,10 @@ export function collectProblems(src) {
   if (!routes.includes("mor_cash_zero_with_activity") || !routes.includes('reply.code(422).send({')) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: banking import $0-with-activity must 422, not 502/500");
   }
+  const summaryChunk = routes.split('app.get("/api/v1/form-425c/banking-summary"')[1] ?? "";
+  if (!summaryChunk.includes("mor_cash_zero_with_activity") || !summaryChunk.includes("reply.code(422)")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET banking-summary $0-with-activity must 422, not an uncaught 500");
+  }
   if (!routes.includes('error: "file_not_found"') || !routes.includes("Attachment file UUID not found")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: missing attachment file UUID must 404, not 500");
   }
@@ -145,10 +149,23 @@ export function collectProblems(src) {
   if (!routes.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: generate UPDATE must refuse status=filed (would set ready_to_file)");
   }
+  const patchChunk = (routes.split('app.patch("/api/v1/form-425c/:id"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/import-banking"')[0];
+  const importChunk = (routes.split('app.post("/api/v1/form-425c/:id/import-banking"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/generate-filing-pdf"')[0];
+  if (!patchChunk.includes("AND status <> 'filed'") || !importChunk.includes("AND status <> 'filed'")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH and Import UPDATE must refuse status=filed — SELECT-then-UPDATE without the predicate could rewrite a just-filed MOR");
+  }
   if (!routes.includes("form_425c_amendment_already_open") || !routes.includes("form_425c_amend_source_not_filed")) {
     problems.push(
       "apps/backend/src/compliance/form-425c.routes.ts: second Amend on a filed MOR must 409 — UNIQUE(opco, month, status) was a 500",
     );
+  }
+  const amendChunk = (routes.split('app.post("/api/v1/form-425c/:id/amend"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/exhibit-a"')[0];
+  if (
+    !amendChunk.includes("INSERT INTO compliance.form_425c_exhibit_a_entries") ||
+    !amendChunk.includes("INSERT INTO compliance.form_425c_exhibit_b_entries") ||
+    !amendChunk.includes("WHERE report_id = $2")
+  ) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Amend must copy Exhibit A/B rows onto the new draft — dropping them was a silent incomplete amendment");
   }
   const attachChunk = routes.split('app.post("/api/v1/form-425c/:id/attachments/:line"')[1] ?? "";
   if (!attachChunk.includes("assertMutableForm425CReport") || !attachChunk.includes("AND status <> 'filed'")) {
@@ -180,6 +197,19 @@ export function collectProblems(src) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Exhibit required on defaults must open /425c?tab=form");
   }
   const historyTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"), "utf8");
+  if (!historyTab.includes("onPrint(r.id)") || !historyTab.includes("Print")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: History must Print a filing — filed MORs had no reprint hop after Generate was blocked");
+  }
+  if (!src.includes("getForm425CFilingHtml") || !src.includes("historyPrintMutation")) {
+    problems.push(`${PAGE}: History Print must GET filing-html — not POST generate-filing-pdf (that mutates / refuses filed)`);
+  }
+  if (!routes.includes("/filing-html") || !routes.includes("buildForm425CPrintDocument")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET filing-html must reprint without INSERT/UPDATE");
+  }
+  const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
+  if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
+  }
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
       "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
@@ -198,6 +228,40 @@ export function collectProblems(src) {
   }
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
+  }
+  const markChunk = (routes.split('app.post("/api/v1/form-425c/:id/mark-filed"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/amend"')[0];
+  if (
+    !markChunk.includes('SELECT case_number, status') ||
+    !markChunk.includes('existing.status === "filed"') ||
+    !markChunk.includes("form_425c_filed_immutable") ||
+    !markChunk.includes("409")
+  ) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: Mark Filed on a filed MOR must 409 — UPDATE 0 rows was a silent 404 report_not_found_or_invalid_state",
+    );
+  }
+  const exhibitsViewer = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx"), "utf8");
+  if (!exhibitsViewer.includes("printLetterHtml") || !exhibitsViewer.includes("buildExhibitsPrintBodyHtml")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: A–F builder must print the built package — JSON-only was a silent incomplete court hop");
+  }
+  if (!exhibitsViewer.includes("Build all exhibits first") || exhibitsViewer.includes("disabled={!built}")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print before Build must toast, not a dead disabled button");
+  }
+  if (!exhibitsViewer.includes("Period end must be on or after period start")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: inverted A–F period must toast, not POST a silent empty court package");
+  }
+  const exhibitsRoutes = fs.readFileSync(path.join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts"), "utf8");
+  if (!exhibitsRoutes.includes("period_end_before_start") || !exhibitsRoutes.includes("period_end < parsed.data.period_start")) {
+    problems.push("apps/backend/src/reports/form-425c/exhibits/routes.ts: inverted period must 422 — 200 empty A–F was a silent court package");
+  }
+  const exhibitsPrint = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts"), "utf8");
+  if (
+    !exhibitsPrint.includes("export function buildExhibitsPrintBodyHtml") ||
+    !exhibitsPrint.includes("Exhibit A") ||
+    !exhibitsPrint.includes("Exhibit F") ||
+    !exhibitsPrint.includes("total_cents")
+  ) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts: print body must include A–F totals, not empty chrome");
   }
   return problems;
 }
@@ -234,6 +298,8 @@ const good = `
   onSaveExhibit
   exhibitEntries.a
   exhibitEntries.b
+  getForm425CFilingHtml
+  historyPrintMutation
 `;
 const bad = `
   if (!detailQuery.data?.report) {
@@ -245,8 +311,9 @@ const bad = `
 `;
 
 if (process.argv.includes("--selftest")) {
-  if (collectProblems(good).length) {
-    console.error(`${LABEL} --selftest FAIL good`);
+  const goodProblems = collectProblems(good);
+  if (goodProblems.length) {
+    console.error(`${LABEL} --selftest FAIL good\n${goodProblems.map((p) => `  - ${p}`).join("\n")}`);
     process.exit(1);
   }
   if (collectProblems(bad).length < 4) {

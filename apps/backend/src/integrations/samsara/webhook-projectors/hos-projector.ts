@@ -126,8 +126,19 @@ async function resolveLocalDriverId(client: DbClient, operatingCompanyId: string
     `
       SELECT d.id::text AS id
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                  FROM mdata.driver_company_authorizations hos_projector_dca
+                 WHERE hos_projector_dca.driver_id = d.id
+                   AND hos_projector_dca.company_id = $1::uuid
+                   AND hos_projector_dca.is_authorized = true
+                   AND hos_projector_dca.deactivated_at IS NULL
+              )
+            )
         AND d.samsara_driver_id = $2
+        AND d.deactivated_at IS NULL
       LIMIT 1
     `,
     [operatingCompanyId, samsaraDriverId]

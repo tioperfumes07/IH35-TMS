@@ -1,4 +1,19 @@
 {
+  "4611": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-load-profitability-insurance-excludes-sample-data"
+  },
+  "4607": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-safety-home-active-drivers-excludes-sample-data"
+  },
+  "4603": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-home-fleet-utilization-excludes-sample-data"
+  },
   "4581": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -5768,5 +5783,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1273
+  "total_claimed": 1276
 }

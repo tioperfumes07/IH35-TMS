@@ -4,7 +4,9 @@
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
-**LEAD 20:22 CT.** ACK `SYS-F5984` **#15099**. Do **not** rebuild EventSource.
+**LEAD 21:14 CT — Jorge: WORK NOW.** U14 14/14. Never recertify. POST leftover: `CLASS-F5973-TRUE-REMAINDER-FUEL` now.
+
+**ACK `SYS-F5984` #15099.** Do **not** rebuild EventSource.
 
 **NOW ONE ID:** `CLASS-F5973-TRUE-REMAINDER-FUEL`. FAST-MERGE. Then next in-lane OPEN that is not Cursor `/425c`, CC-1 `/cash-flow`, Codex GET-500, CC-3 maintenance remainder.
 

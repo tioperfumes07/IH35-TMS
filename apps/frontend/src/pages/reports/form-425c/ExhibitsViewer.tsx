@@ -6,6 +6,8 @@ import { apiRequest } from "../../../api/client";
 import { ExhibitCard } from "../../../components/form-425c/ExhibitCard";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
+import { printLetterHtml } from "../../../lib/openPrintableDocument";
+import { buildExhibitsPrintBodyHtml } from "./exhibitsPrintHtml";
 
 type ExhibitLetter = "a" | "b" | "c" | "d" | "e" | "f";
 
@@ -36,7 +38,7 @@ function defaultPeriod() {
 }
 
 export function ExhibitsViewer() {
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const [period, setPeriod] = useState(defaultPeriod);
@@ -109,11 +111,37 @@ export function ExhibitsViewer() {
                 pushToast("Select an operating company before building exhibits", "error");
                 return;
               }
+              if (period.period_end < period.period_start) {
+                pushToast("Period end must be on or after period start", "error");
+                return;
+              }
               buildMut.mutate();
             }}
             className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {buildMut.isPending ? "Building…" : "Build all exhibits"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!built) {
+                pushToast("Build all exhibits first", "error");
+                return;
+              }
+              const opened = printLetterHtml({
+                title: `Form 425C Exhibits A-F — ${selectedCompany?.legal_name ?? "Company"} — ${built.period_end}`,
+                bodyHtml: buildExhibitsPrintBodyHtml(built, selectedCompany?.legal_name ?? "Company"),
+                orientation: "portrait",
+              });
+              if (!opened) {
+                pushToast("Pop-up blocked — allow pop-ups to print exhibits A–F", "error");
+                return;
+              }
+              pushToast("Opened exhibits A–F print window", "success");
+            }}
+            className="rounded-sm border border-[#1f2a44] px-3 py-2 text-sm font-semibold text-[#1f2a44]"
+          >
+            Print / Save as PDF
           </button>
         </div>
       </section>

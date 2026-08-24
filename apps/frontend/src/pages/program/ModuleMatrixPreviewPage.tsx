@@ -20,6 +20,10 @@ import {
 } from "./moduleMatrixBoxes";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 import {
+  U14_EXCLUSIVE_CERTIFIED_COUNT,
+  U14_EXCLUSIVE_TOTAL,
+} from "../../generated/module-completion";
+import {
   REQUIRED_BY_MODULE,
   type RequiredLeaf,
   type RequiredMap,
@@ -518,6 +522,9 @@ export function ModuleMatrixPreviewPage() {
           <b>Built (Box 3)</b> = wire-sprint guard shipped only · <b>Probes</b> = Audited ● only ·{" "}
           <b>Live (Box 4)</b> = PROD-VERIFIED click-through
           only · <code>complete:true</code> / scenario dots ≠ linkage done
+          {" "}
+          · Urgent exclusive hops {U14_EXCLUSIVE_CERTIFIED_COUNT} of {U14_EXCLUSIVE_TOTAL} (not Box 4
+          Live)
           {live?.meta?.tipSha ? <> · tip <code>{live.meta.tipSha}</code></> : null}
           {typeof live?.meta?.probeProgress === "number" ? (
             <> · probe {live.meta.probeProgress}%</>
