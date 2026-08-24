@@ -122,6 +122,43 @@ async function withCompanyScope<T>(
   });
 }
 
+async function assertMutableForm425CReport(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  reportId: string,
+  operatingCompanyId: string
+) {
+  const res = await client.query<{ status: string }>(
+    `
+      SELECT status
+      FROM compliance.form_425c_reports
+      WHERE id = $1
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [reportId, operatingCompanyId]
+  );
+  const row = res.rows[0];
+  if (!row) throw new Error("form_425c_report_not_found");
+  if (row.status === "filed") throw new Error("form_425c_filed_immutable");
+}
+
+function sendExhibitWriteError(reply: FastifyReply, err: unknown) {
+  const e = err as { message?: string };
+  if (e?.message === "form_425c_report_not_found") {
+    return reply.code(404).send({ error: "report_not_found" });
+  }
+  if (e?.message === "form_425c_filed_immutable") {
+    return reply.code(409).send({
+      error: "form_425c_filed_immutable",
+      message: "This MOR is filed — use Amend on History. Exhibit A/B will not rewrite a filed court filing.",
+    });
+  }
+  if (e?.message === "form_425c_exhibit_insert_blocked") {
+    return reply.code(404).send({ error: "exhibit_insert_blocked" });
+  }
+  throw err;
+}
+
 function monthWindow(month: string) {
   const [yearRaw, monthRaw] = month.split("-");
   const year = Number(yearRaw);
@@ -1155,7 +1192,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return reply.code(201).send(amended);
   });
 
-  app.post("/api/v1/form-425c/:id/exhibit-a", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/exhibit-a", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -1165,35 +1202,41 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (body.data.line_number < 1 || body.data.line_number > 9) return reply.code(400).send({ error: "line_number_must_be_1_to_9" });
     const b = body.data;
 
-    const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          INSERT INTO compliance.form_425c_exhibit_a_entries (report_id, line_number, explanation)
-          VALUES ($1, $2, $3)
-          RETURNING *
-        `,
-        [params.data.id, b.line_number, b.explanation]
-      );
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "compliance.form_425c.draft_saved",
-        {
-          resource_type: "compliance.form_425c_exhibit_a_entries",
-          resource_id: res.rows[0]?.id,
-          operating_company_id: b.operating_company_id,
-          report_id: params.data.id,
-          line_number: b.line_number,
-        },
-        "info",
-        "BT-3-FORM-425C"
-      );
-      return res.rows[0];
-    });
-    return reply.code(201).send(created);
+    try {
+      const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        await assertMutableForm425CReport(client, params.data.id, b.operating_company_id);
+        const res = await client.query(
+          `
+            INSERT INTO compliance.form_425c_exhibit_a_entries (report_id, line_number, explanation)
+            VALUES ($1, $2, $3)
+            RETURNING *
+          `,
+          [params.data.id, b.line_number, b.explanation]
+        );
+        if (!res.rows[0]) throw new Error("form_425c_exhibit_insert_blocked");
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "compliance.form_425c.draft_saved",
+          {
+            resource_type: "compliance.form_425c_exhibit_a_entries",
+            resource_id: res.rows[0].id,
+            operating_company_id: b.operating_company_id,
+            report_id: params.data.id,
+            line_number: b.line_number,
+          },
+          "info",
+          "BT-3-FORM-425C"
+        );
+        return res.rows[0];
+      });
+      return reply.code(201).send(created);
+    } catch (err) {
+      return sendExhibitWriteError(reply, err);
+    }
   });
 
-  app.post("/api/v1/form-425c/:id/exhibit-b", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/exhibit-b", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -1203,32 +1246,38 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (body.data.line_number < 10 || body.data.line_number > 18) return reply.code(400).send({ error: "line_number_must_be_10_to_18" });
     const b = body.data;
 
-    const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          INSERT INTO compliance.form_425c_exhibit_b_entries (report_id, line_number, explanation)
-          VALUES ($1, $2, $3)
-          RETURNING *
-        `,
-        [params.data.id, b.line_number, b.explanation]
-      );
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "compliance.form_425c.draft_saved",
-        {
-          resource_type: "compliance.form_425c_exhibit_b_entries",
-          resource_id: res.rows[0]?.id,
-          operating_company_id: b.operating_company_id,
-          report_id: params.data.id,
-          line_number: b.line_number,
-        },
-        "info",
-        "BT-3-FORM-425C"
-      );
-      return res.rows[0];
-    });
-    return reply.code(201).send(created);
+    try {
+      const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        await assertMutableForm425CReport(client, params.data.id, b.operating_company_id);
+        const res = await client.query(
+          `
+            INSERT INTO compliance.form_425c_exhibit_b_entries (report_id, line_number, explanation)
+            VALUES ($1, $2, $3)
+            RETURNING *
+          `,
+          [params.data.id, b.line_number, b.explanation]
+        );
+        if (!res.rows[0]) throw new Error("form_425c_exhibit_insert_blocked");
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "compliance.form_425c.draft_saved",
+          {
+            resource_type: "compliance.form_425c_exhibit_b_entries",
+            resource_id: res.rows[0].id,
+            operating_company_id: b.operating_company_id,
+            report_id: params.data.id,
+            line_number: b.line_number,
+          },
+          "info",
+          "BT-3-FORM-425C"
+        );
+        return res.rows[0];
+      });
+      return reply.code(201).send(created);
+    } catch (err) {
+      return sendExhibitWriteError(reply, err);
+    }
   });
 
   app.post("/api/v1/form-425c/:id/attachments/:line", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

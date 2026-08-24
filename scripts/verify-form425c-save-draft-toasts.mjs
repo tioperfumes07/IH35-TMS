@@ -142,6 +142,16 @@ export function collectProblems(src) {
   if (!src.includes("addForm425CExhibitA") || !src.includes("addForm425CExhibitB") || !src.includes("onSaveExhibit")) {
     problems.push(`${PAGE}: flagged questionnaire must POST exhibit A/B — not a dead hop to /425c/exhibits A–F`);
   }
+  if (!routes.includes("assertMutableForm425CReport") || !routes.includes("form_425c_exhibit_insert_blocked")) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c.routes.ts: exhibit A/B POST must refuse filed/missing reports — empty INSERT RETURNING was a silent 201",
+    );
+  }
+  const exhibitAChunk = (routes.split('app.post("/api/v1/form-425c/:id/exhibit-a"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/exhibit-b"')[0];
+  const exhibitBChunk = (routes.split('app.post("/api/v1/form-425c/:id/exhibit-b"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/attachments')[0];
+  if (!exhibitAChunk.includes("assertMutableForm425CReport") || !exhibitBChunk.includes("assertMutableForm425CReport")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: both exhibit A and B POSTs must assert the MOR is a non-filed report for this opco");
+  }
   if (!formTab.includes("onSaveExhibit") || !formTab.includes("Save Exhibit")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must save a line explanation, not only link to /425c/exhibits");
   }
