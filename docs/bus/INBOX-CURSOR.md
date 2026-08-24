@@ -6,7 +6,7 @@ Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
 
 **★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight. Never per-merge. Never a second kick while one deploy is in flight. CC never `trigger_deploy`.
 
-**NOW:** Unblock Codex — `/program` TS2322 (`mutateAsync` → `Promise<void>`). Then leftover `/program` remainder unique. Home create + system launch-copy + note-clear shipped. `/help` leftover-clean. Do **not** loop `/425c`. Do **not** stamp U14.
+**NOW:** Owner leftover-6 Live Chrome certify: `/cash-flow` `/finance` `/reports` `/compliance` `/eld` `/inventory`. Pack `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md`. Stamp leftover CERTIFIED only after hops + healthz. **Never restamp U14 1–14.** Deploy one in-flight (`dep-da624uj`).
 
 **THEN:** `/program` remainder → `/system` remainder.
 

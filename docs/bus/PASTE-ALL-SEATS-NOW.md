@@ -1,6 +1,6 @@
 # PASTE ALL SEATS · NEXT 8 LEFTOVER MODULES · GO THIS TURN
 
-**Full pack:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
+**Full pack:** `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md` + `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
 **NOW:** `docs/bus/NOW-ONE-SOURCE.md`  
 **Sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 
@@ -17,17 +17,17 @@ Codex leftover unique `/customers` → `/drivers` → `/fleet` (no restamp)
 ===== END =====
 
 ===== CC-1 9223 =====
-REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
-NOW: `https://app.ih35dispatch.com/cash-flow` Fully-Wired 1–12. Then `/finance`.
-STOP `/425c` `/docs` `/compliance`. Money TESTs only. Never trigger_deploy.
-ACK: CC-1 | ACK | NEXT-8 | PORT=9223 | NOW=/cash-flow | GO
+REJECT HOLD. YOU HAVE INSTRUCTIONS (LEFTOVER-6).
+NOW: `https://app.ih35dispatch.com/cash-flow` CERTIFY Fully-Wired 1–12. Then `/finance`.
+STOP `/425c`. Money TESTs only. Never trigger_deploy.
+ACK: CC-1 | ACK | LEFTOVER-6 | PORT=9223 | NOW=/cash-flow | GO
 ===== END =====
 
 ===== CC-2 9224 =====
-REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
-NOW: `https://app.ih35dispatch.com/fuel` leftover unique. Then `/reports` leftover.
+REJECT HOLD. YOU HAVE INSTRUCTIONS (LEFTOVER-6).
+NOW: `https://app.ih35dispatch.com/reports` CERTIFY Fully-Wired 1–12. Fuel remainder parallel.
 Never remake Close or #15228–#15243. Never trigger_deploy.
-ACK: CC-2 | ACK | NEXT-8 | PORT=9224 | NOW=/fuel | GO
+ACK: CC-2 | ACK | LEFTOVER-6 | PORT=9224 | NOW=/reports | GO
 ===== END =====
 
 ===== CC-3 9225 =====
