@@ -403,6 +403,14 @@ export function Form425CHome() {
           pushToast("Generate returned empty filing HTML and Profiles has no debtor name — not inventing a court print", "error");
           return;
         }
+        const unanswered = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].some((n) => {
+          const ans = String(form.answers[n] ?? "").trim().toLowerCase();
+          return ans !== "yes" && ans !== "no" && ans !== "na";
+        });
+        if (unanswered) {
+          pushToast("Generate returned empty filing HTML and questionnaire is incomplete — not inventing Yes/No on a court print", "error");
+          return;
+        }
         printHtml = buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
       }
       if (!printHtml.trim()) {

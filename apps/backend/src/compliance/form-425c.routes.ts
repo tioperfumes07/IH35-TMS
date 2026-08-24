@@ -122,6 +122,13 @@ function sendForm425CForbiddenMembership(reply: FastifyReply) {
   });
 }
 
+function sendForm425CAnswersIncomplete(reply: FastifyReply) {
+  return reply.code(422).send({
+    error: "form_425c_answers_incomplete",
+    message: "Questionnaire lines 1–18 are not all answered — Generate will not invent Yes/No on a court filing",
+  });
+}
+
 async function withCompanyScope<T>(
   userId: string,
   operatingCompanyId: string,
@@ -628,6 +635,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "form_425c_profile_required",
           message: "This entity has no Form 425C profile (or no company name). Set Profiles & Defaults before printing — Generate will not invent a debtor name.",
         });
+      }
+      if (e?.message === "form_425c_answers_incomplete") {
+        return sendForm425CAnswersIncomplete(reply);
       }
       if (e?.message === "form_425c_case_number_required") {
         return reply.code(422).send({
@@ -1172,6 +1182,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "form_425c_profile_required",
           message: "This entity has no Form 425C profile (or no company name). Set Profiles & Defaults before Generate — a court PDF will not invent a debtor name.",
         });
+      }
+      if (e?.message === "form_425c_answers_incomplete") {
+        return sendForm425CAnswersIncomplete(reply);
       }
       if (e?.message === "form_425c_operating_company_not_found") {
         return sendForm425CCompanyMissing(reply);
