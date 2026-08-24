@@ -447,6 +447,12 @@ export function collectProblems(src) {
   if (!exhibitsViewer.includes("Period end must be on or after period start")) {
     problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: inverted A–F period must toast, not POST a silent empty court package");
   }
+  if (exhibitsViewer.includes('?? "Company"') || exhibitsViewer.includes("?? 'Company'")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print must not invent debtor name Company on a court exhibit");
+  }
+  if (!exhibitsViewer.includes("will not invent a court debtor")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print with no legal_name must toast, not invent Company");
+  }
   const exhibitsRoutes = fs.readFileSync(path.join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts"), "utf8");
   if (!exhibitsRoutes.includes("period_end_before_start") || !exhibitsRoutes.includes("period_end < parsed.data.period_start")) {
     problems.push("apps/backend/src/reports/form-425c/exhibits/routes.ts: inverted period must 422 — 200 empty A–F was a silent court package");
@@ -459,6 +465,9 @@ export function collectProblems(src) {
     !exhibitsPrint.includes("total_cents")
   ) {
     problems.push("apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts: print body must include A–F totals, not empty chrome");
+  }
+  if (!exhibitsPrint.includes("form_425c_exhibits_debtor_required")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/exhibitsPrintHtml.ts: empty debtor name must throw — not print a blank or invented Company");
   }
   return problems;
 }

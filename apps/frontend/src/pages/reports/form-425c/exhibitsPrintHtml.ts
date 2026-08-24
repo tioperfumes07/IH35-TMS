@@ -103,6 +103,10 @@ function exhibitSection(letter: ExhibitLetter, payload: Record<string, unknown>)
 }
 
 export function buildExhibitsPrintBodyHtml(built: BuiltExhibitsPrint, companyName: string): string {
+  const debtor = String(companyName ?? "").trim();
+  if (!debtor) {
+    throw new Error("form_425c_exhibits_debtor_required");
+  }
   const letters: ExhibitLetter[] = ["a", "b", "c", "d", "e", "f"];
   const sections = letters
     .map((letter) => exhibitSection(letter, built.exhibits[letter] ?? {}))
@@ -110,7 +114,7 @@ export function buildExhibitsPrintBodyHtml(built: BuiltExhibitsPrint, companyNam
   return `
     <h1>Form 425C Exhibits A–F</h1>
     <!-- Exhibit A … Exhibit F -->
-    <div class="meta">${esc(companyName)} · ${esc(built.period_start)} → ${esc(built.period_end)} · filing ${esc(built.filing_uuid)}</div>
+    <div class="meta">${esc(debtor)} · ${esc(built.period_start)} → ${esc(built.period_end)} · filing ${esc(built.filing_uuid)}</div>
     ${sections}
   `;
 }

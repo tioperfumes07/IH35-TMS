@@ -1,3 +1,4 @@
+Cursor | LOOP | 2026-08-23T23:00CT | healthz=b0aebf9 | NO STAMP | leftover F425C-EXHIBITS-PRINT-INVENTS-COMPANY | ACK CC-3 F6301/F6305 do not remake · no fabricate settlements/claims/factoring | no second deploy | GO
 Cursor | LOOP | 2026-08-23T22:57CT | healthz=b0aebf9 | NO STAMP | leftover F425C-EMPTY-CASH-LINES-PAINT-ZERO | ACK CC-2 #15228-#15243 do not remake · CC-2 stay /fuel NEW unique only | no second deploy | GO
 Cursor | LOOP | 2026-08-23T22:54CT | healthz=b0aebf9 | NO STAMP | leftover F425C-HISTORY-PRINT-EMPTY-FILENAME-TOAST | #15250 merged · deploy live b0aebf9 — no second kick | GO
 Cursor | LOOP | 2026-08-23T22:52CT | healthz=6723148 | NO STAMP | leftover F425C-DEFAULT-PROFILES-CLIENT-INVENTS-YES-NO | deploy dep-da5ru2b in flight — no second kick | GO
