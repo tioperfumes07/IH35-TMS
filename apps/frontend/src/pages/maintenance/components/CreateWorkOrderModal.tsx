@@ -436,6 +436,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const serviceDate = form.watch("service_date");
   const selectedLoad = form.watch("load_id");
   const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
+  const [identityReadsBlocked, setIdentityReadsBlocked] = useState(false);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   useEffect(() => {
@@ -536,6 +537,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
 
   const checks = [
+    { label: "Selected unit and driver details loaded", ok: !identityReadsBlocked },
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
     {
       label: "Driver and unit required for non-PM operational types",
@@ -1137,6 +1139,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             operatingCompanyId={operatingCompanyId}
             setValue={form.setValue}
             getValues={form.getValues}
+            onIdentityReadStateChange={setIdentityReadsBlocked}
             requireLoadForExpense={requiresLoadForG18}
             suggestedLoad={
               suggestionQuery.data?.data

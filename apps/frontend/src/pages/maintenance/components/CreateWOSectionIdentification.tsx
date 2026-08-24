@@ -41,6 +41,7 @@ type Props = {
   operatingCompanyId?: string;
   setValue?: UseFormSetValue<CreateWOFormValues>;
   getValues?: UseFormGetValues<CreateWOFormValues>;
+  onIdentityReadStateChange?: (blocked: boolean) => void;
 };
 
 function Field({ label, children }: { label: string; children: JSX.Element }) {
@@ -76,6 +77,7 @@ export function CreateWOSectionIdentification({
   operatingCompanyId,
   setValue,
   getValues,
+  onIdentityReadStateChange,
 }: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
@@ -103,8 +105,17 @@ export function CreateWOSectionIdentification({
     staleTime: 60_000,
   });
 
+  const identityReadBlocked =
+    Boolean(unitId) && (selectedUnitQuery.isPending || selectedUnitQuery.isError) ||
+    Boolean(driverId) && (selectedDriverQuery.isPending || selectedDriverQuery.isError);
+
+  useEffect(() => {
+    onIdentityReadStateChange?.(identityReadBlocked);
+  }, [identityReadBlocked, onIdentityReadStateChange]);
+
   useEffect(() => {
     if (!setValue) return;
+    if (identityReadBlocked) return;
     const unitDisplay = selectedUnitQuery.data?.unit_number;
     const next = deriveWoClassHintLabel({
       unitDisplayId: unitDisplay,
@@ -116,7 +127,7 @@ export function CreateWOSectionIdentification({
     if (current !== next) {
       setValue("class_hint", next, { shouldDirty: false });
     }
-  }, [setValue, getValues, unitId, driverId, selectedUnitQuery.data, selectedDriverQuery.data]);
+  }, [setValue, getValues, unitId, driverId, identityReadBlocked, selectedUnitQuery.data, selectedDriverQuery.data]);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
@@ -217,6 +228,16 @@ export function CreateWOSectionIdentification({
           )}
         </Field>
       </div>
+      {selectedUnitQuery.isError ? (
+        <button type="button" className="mt-2 text-xs font-semibold text-red-700 underline" onClick={() => void selectedUnitQuery.refetch()}>
+          Selected unit couldn't be loaded — retry
+        </button>
+      ) : null}
+      {selectedDriverQuery.isError ? (
+        <button type="button" className="mt-2 ml-3 text-xs font-semibold text-red-700 underline" onClick={() => void selectedDriverQuery.refetch()}>
+          Selected driver couldn't be loaded — retry
+        </button>
+      ) : null}
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
         <Field label="Source Type *">
           <Combobox
