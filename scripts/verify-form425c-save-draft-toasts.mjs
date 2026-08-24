@@ -154,6 +154,14 @@ export function collectProblems(src) {
       "apps/backend/src/compliance/form-425c.routes.ts: second Amend on a filed MOR must 409 — UNIQUE(opco, month, status) was a 500",
     );
   }
+  const amendChunk = (routes.split('app.post("/api/v1/form-425c/:id/amend"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/exhibit-a"')[0];
+  if (
+    !amendChunk.includes("INSERT INTO compliance.form_425c_exhibit_a_entries") ||
+    !amendChunk.includes("INSERT INTO compliance.form_425c_exhibit_b_entries") ||
+    !amendChunk.includes("WHERE report_id = $2")
+  ) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Amend must copy Exhibit A/B rows onto the new draft — dropping them was a silent incomplete amendment");
+  }
   const attachChunk = routes.split('app.post("/api/v1/form-425c/:id/attachments/:line"')[1] ?? "";
   if (!attachChunk.includes("assertMutableForm425CReport") || !attachChunk.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: attachment POST must refuse filed MORs — UPDATE without status was a silent rewrite");
