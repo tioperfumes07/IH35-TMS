@@ -39,7 +39,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when leftover-clean) |
 |------|------|---------|--------------------------------|
-| Cursor | 9222 | leftover-6 + WAVE 2 + WAVE 3 stamped | **U14 omit.** Lead. **Do not loop `/425c`.** No leftover-6 / W2 / W3 recertify |
+| Cursor | 9222 | leftover-6 + WAVE 2 + WAVE 3 + WAVE 4 stamped | **U14 omit.** Lead. **Do not loop `/425c`.** No leftover recertify |
 | CC-1 | 9223 | leftover-6 L1–L2 stamped | Accounting+factoring omit. NOW next money unique. No `/lists` `/legal` `/docs`. HOLD forbidden |
 | CC-2 | 9224 | leftover-6 L3 + WAVE 2 W1 stamped | Settlements omit. NOW next unique FINDING. No Close remake. No leftover recertify |
 | CC-3 | 9225 | leftover-6 L4–L6 + WAVE 2 W2 stamped | lists+legal omit. NOW next unique FINDING. No leftover recertify. No `trigger_deploy` |

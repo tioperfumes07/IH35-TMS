@@ -4,8 +4,9 @@
 
 **LEFTOVER-6 leftover-CERTIFIED** at live `6585a66`. Do not recertify.  
 **LEFTOVER WAVE 2 leftover-CERTIFIED** at live `6585a66`. Do not recertify.  
-**LEFTOVER WAVE 3 leftover-CERTIFIED** at live `6585a66` (`/customers` `/drivers` `/fleet`). Pack `docs/bus/LEFTOVER-WAVE-3-CERTIFY-NOW-2026-08-24.md` is a stamp table. Do not recertify. Not U14 restamp.  
-**THIS TURN:** next unique leftover FINDING only (500 / dead click / silent no-op). CC-1 next unique money FINDING. STOP `/425c`. Never restamp U14.  
+**LEFTOVER WAVE 3 leftover-CERTIFIED** at `6585a66` (`/customers` `/drivers` `/fleet`). Do not recertify. Not U14 restamp.  
+**LEFTOVER WAVE 4 leftover-CERTIFIED** at live `189dd4c` (`/425c` `/vendors` `/lists` `/legal` `/safety`). Pack `docs/bus/LEFTOVER-WAVE-4-CERTIFY-NOW-2026-08-24.md` is a stamp table. Do not recertify. Not U14 restamp.  
+**THIS TURN:** next unique leftover FINDING only (500 / dead click / silent no-op). CC-1 next unique money FINDING. Never restamp U14. Do not loop `/425c`.  
 If a seat claims “no instructions” / poll-mode, they did not pull. Idle = defect.
 
 **U14 14/14 CERTIFIED** = exclusive 14-module pass finished — not stop. Never restamp. Never recertify.
