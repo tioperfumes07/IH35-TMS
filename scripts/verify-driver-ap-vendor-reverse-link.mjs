@@ -56,9 +56,10 @@ function assertVendorsSelect(src) {
     problems.push("vendors VENDOR_SELECT_COLUMNS must expose driver_id for VendorDetail reverse");
   }
   if (!/d\.id = mdata\.vendors\.driver_id/.test(src) ||
-      !/d\.operating_company_id = mdata\.vendors\.operating_company_id/.test(src) ||
+      !/d\.operating_company_id = mdata\.vendors\.operating_company_id OR EXISTS \([\s\S]{0,450}vendor_driver_dca\.driver_id = d\.id[\s\S]{0,250}vendor_driver_dca\.company_id = mdata\.vendors\.operating_company_id[\s\S]{0,200}vendor_driver_dca\.is_authorized = true[\s\S]{0,160}vendor_driver_dca\.deactivated_at IS NULL/.test(src) ||
+      !/d\.operating_company_id = v\.operating_company_id OR EXISTS \([\s\S]{0,450}fallback_vendor_driver_dca\.driver_id = d\.id[\s\S]{0,250}fallback_vendor_driver_dca\.company_id = v\.operating_company_id[\s\S]{0,200}fallback_vendor_driver_dca\.is_authorized = true[\s\S]{0,160}fallback_vendor_driver_dca\.deactivated_at IS NULL/.test(src) ||
       !/AS driver_name/.test(src)) {
-    problems.push("vendor detail producer must project the driver human label inside the vendor company scope");
+    problems.push("vendor detail producer must project home or actively authorized driver labels inside both vendor company reads");
   }
   return problems;
 }
@@ -151,8 +152,12 @@ function selftest() {
     .replace(/name=\{driver\.qbo_vendor_name\}/g, "name={null}");
   const badRoute = goodD.replace(/AS qbo_vendor_local_id/g, "AS missing_local_id");
   const badVendorScope = goodVendors.replace(
-    "d.operating_company_id = mdata.vendors.operating_company_id",
-    "d.operating_company_id = d.operating_company_id"
+    "vendor_driver_dca.is_authorized = true",
+    "vendor_driver_dca.is_authorized = false"
+  );
+  const badFallbackVendorScope = goodVendors.replace(
+    "fallback_vendor_driver_dca.deactivated_at IS NULL",
+    "fallback_vendor_driver_dca.deactivated_at IS NOT NULL"
   );
   const badVendorDetail = goodVendorDetail
     .replace("EntityLinkOrTombstone", "EntityLink")
@@ -189,6 +194,10 @@ function selftest() {
   }
   if (assertVendorsSelect(badVendorScope).length < 1) {
     console.error("planted cross-company driver label join should fail");
+    failed++;
+  }
+  if (assertVendorsSelect(badFallbackVendorScope).length < 1) {
+    console.error("planted fallback shared-driver vendor scope should fail");
     failed++;
   }
   if (assertVendorDetail(goodVendorDetail).length) {

@@ -573,7 +573,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
                    SELECT NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
                      FROM mdata.drivers d
                     WHERE d.id = mdata.vendors.driver_id
-                      AND d.operating_company_id = mdata.vendors.operating_company_id
+                      AND (d.operating_company_id = mdata.vendors.operating_company_id OR EXISTS (
+                        SELECT 1 FROM mdata.driver_company_authorizations vendor_driver_dca
+                        WHERE vendor_driver_dca.driver_id = d.id
+                          AND vendor_driver_dca.company_id = mdata.vendors.operating_company_id
+                          AND vendor_driver_dca.is_authorized = true
+                          AND vendor_driver_dca.deactivated_at IS NULL
+                      ))
                     LIMIT 1
                  ) AS driver_name
           FROM mdata.vendors
@@ -599,7 +605,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
                    SELECT NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
                      FROM mdata.drivers d
                     WHERE d.id = v.driver_id
-                      AND d.operating_company_id = v.operating_company_id
+                      AND (d.operating_company_id = v.operating_company_id OR EXISTS (
+                        SELECT 1 FROM mdata.driver_company_authorizations fallback_vendor_driver_dca
+                        WHERE fallback_vendor_driver_dca.driver_id = d.id
+                          AND fallback_vendor_driver_dca.company_id = v.operating_company_id
+                          AND fallback_vendor_driver_dca.is_authorized = true
+                          AND fallback_vendor_driver_dca.deactivated_at IS NULL
+                      ))
                     LIMIT 1
                  ) AS driver_name
           FROM mdata.get_vendor_same_company($1::uuid, $2::uuid) AS v
