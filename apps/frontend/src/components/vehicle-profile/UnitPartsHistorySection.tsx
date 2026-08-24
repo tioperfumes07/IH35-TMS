@@ -102,7 +102,10 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Parts Used</h2>
-        <Link to="/inventory/assignments" className="text-xs text-slate-700 hover:underline">
+        <Link
+          to={`/inventory/assignments?unit_id=${encodeURIComponent(unitId)}`}
+          className="text-xs text-slate-700 hover:underline"
+        >
           View all assignments
         </Link>
       </div>
