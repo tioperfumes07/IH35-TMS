@@ -518,6 +518,38 @@ export function BillsPage() {
         ),
       },
       {
+        key: "insurance_claim_id",
+        label: "Claim",
+        sortable: true,
+        sortValue: (bill) => bill.insurance_claim_number || bill.insurance_claim_id || "",
+        render: (bill) =>
+          bill.insurance_claim_id ? (
+            <EntityLink
+              kind="claim"
+              id={bill.insurance_claim_id}
+              label={entityLabel(bill.insurance_claim_number, bill.insurance_claim_id, "Claim")}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "linked_work_order_uuid",
+        label: "Work order",
+        sortable: true,
+        sortValue: (bill) => bill.linked_work_order_display_id || bill.linked_work_order_uuid || "",
+        render: (bill) =>
+          bill.linked_work_order_uuid ? (
+            <EntityLink
+              kind="work_order"
+              id={bill.linked_work_order_uuid}
+              label={entityLabel(bill.linked_work_order_display_id, bill.linked_work_order_uuid, "Work order")}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
         key: "memo",
         label: "Memo",
         sortable: true,
