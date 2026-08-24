@@ -1,4 +1,9 @@
 {
+  "4644": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-audit-events-bulk-call-preview-truncation"
+  },
   "4642": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
