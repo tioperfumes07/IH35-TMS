@@ -1,4 +1,9 @@
 {
+  "4686": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-trip-cost-visible-errors-wired"
+  },
   "4684": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5968,5 +5973,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1293
+  "total_claimed": 1294
 }
