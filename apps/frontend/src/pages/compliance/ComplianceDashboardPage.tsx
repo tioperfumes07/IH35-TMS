@@ -78,6 +78,7 @@ export function ComplianceDashboardPage() {
   const [severityFilter, setSeverityFilter] = useState<ComplianceSeverity | null>(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
+  const [ruleError, setRuleError] = useState<string | null>(null);
   const tab = parseComplianceTab(searchParams.get("tab"));
 
   const setTab = (next: ComplianceTab) => {
@@ -121,12 +122,18 @@ export function ComplianceDashboardPage() {
         notify_days_before: [30, 14, 7, 1],
         channel: ["email", "in_app"],
       }),
+    onMutate: () => setRuleError(null),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["compliance-rules", companyId] }),
+    onError: (error) =>
+      setRuleError(error instanceof Error ? error.message : "Failed to create notification rule"),
   });
 
   const archiveRuleM = useMutation({
     mutationFn: (id: string) => archiveComplianceRule(id, companyId),
+    onMutate: () => setRuleError(null),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["compliance-rules", companyId] }),
+    onError: (error) =>
+      setRuleError(error instanceof Error ? error.message : "Failed to archive notification rule"),
   });
 
   const filteredRows = useMemo(() => {
@@ -253,6 +260,11 @@ export function ComplianceDashboardPage() {
 
       <SectionErrorBoundary name="Notification rules">
       <section data-testid="compliance-section-rules">
+        {ruleError ? (
+          <p role="alert" className="mb-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {ruleError}
+          </p>
+        ) : null}
         <NotificationRulesPanel
           rules={(rulesQ.data?.rules ?? []) as Array<{
             id: string;
