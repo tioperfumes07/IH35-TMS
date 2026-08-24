@@ -11,12 +11,24 @@
 import fs from "node:fs";
 const LABEL = "verify-tasks-board-single-create-button-chrome-law";
 const FILE = "apps/frontend/src/pages/tasks/TaskBoardPage.tsx";
+const TABS = "apps/frontend/src/pages/tasks/TasksModuleTabs.tsx";
 
 function audit(src) {
   const failures = [];
   if (!/<TasksModuleTabs/.test(src)) failures.push("TaskBoardPage must render TasksModuleTabs (the shared canonical create-task affordance)");
   if (/<CreateTaskModal/.test(src)) failures.push("TaskBoardPage must not mount its own CreateTaskModal — that duplicates TasksModuleTabs' own instance");
   if (/>\s*\+\s*Create Task\s*</.test(src)) failures.push("TaskBoardPage must not render its own '+ Create Task' button — TasksModuleTabs already owns that affordance");
+  return failures;
+}
+
+function auditTabs(src) {
+  const failures = [];
+  if (src.includes("disabled={!companyId}")) {
+    failures.push("TasksModuleTabs + Create Task must toast when no company is selected — disabled-only was a dead click");
+  }
+  if (!src.includes("Select an operating company before creating a task")) {
+    failures.push("TasksModuleTabs + Create Task must toast Select an operating company before creating a task");
+  }
   return failures;
 }
 
@@ -40,11 +52,20 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  const tabsSrc = fs.readFileSync(TABS, "utf8");
+  if (auditTabs(tabsSrc.replace("Select an operating company before creating a task", "")).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — tabs-toast`);
+    process.exit(1);
+  }
+  if (auditTabs(`${tabsSrc}\ndisabled={!companyId}`).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — tabs-disabled`);
+    process.exit(1);
+  }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
   process.exit(0);
 }
 
-const failures = audit(fs.readFileSync(FILE, "utf8"));
+const failures = [...audit(fs.readFileSync(FILE, "utf8")), ...auditTabs(fs.readFileSync(TABS, "utf8"))];
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
