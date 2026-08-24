@@ -882,17 +882,45 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Trailer changed on an in-progress load",
     je: "—",
     spec_ref: "COMPLICATED-BATTERY-02",
-    sources: ["dispatch.load_assignment_history", "mdata.loads"],
+    sources: ["dispatch.load_assignment_history", "mdata.loads", "mdata.equipment"],
     probe: {
       sql: `
         SELECT count(*)::text AS n
           FROM dispatch.load_assignment_history h
+          JOIN mdata.loads l
+            ON l.id = h.load_id
+           AND l.operating_company_id = h.operating_company_id
+           AND l.soft_deleted_at IS NULL
+           AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
+          JOIN mdata.equipment old_trailer
+            ON old_trailer.id = h.previous_trailer_id
+           AND (
+             old_trailer.owner_company_id = h.operating_company_id
+             OR old_trailer.currently_leased_to_company_id = h.operating_company_id
+           )
+          JOIN mdata.equipment new_trailer
+            ON new_trailer.id = h.new_trailer_id
+           AND (
+             new_trailer.owner_company_id = h.operating_company_id
+             OR new_trailer.currently_leased_to_company_id = h.operating_company_id
+           )
+           AND new_trailer.deactivated_at IS NULL
+           AND new_trailer.status::text = 'Active'
          WHERE h.previous_trailer_id IS NOT NULL
            AND h.new_trailer_id IS NOT NULL
            AND h.previous_trailer_id <> h.new_trailer_id
            AND ($1::uuid IS NULL OR h.operating_company_id = $1::uuid)
+           AND NOT EXISTS (
+             SELECT 1
+               FROM dispatch.load_assignment_history later
+              WHERE later.load_id = h.load_id
+                AND later.operating_company_id = h.operating_company_id
+                AND later.new_trailer_id IS NOT NULL
+                AND later.new_trailer_id <> h.new_trailer_id
+                AND (later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)
+           )
       `,
-      describe: (n) => `${n} mid-load trailer swap(s)`,
+      describe: (n) => `${n} in-progress load(s) retaining a canonical trailer swap`,
     },
   },
   {
