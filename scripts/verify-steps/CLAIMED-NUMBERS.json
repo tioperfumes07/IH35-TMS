@@ -1,4 +1,9 @@
 {
+  "5920": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-deactivate-mutation-errors-surfaced"
+  },
   "5620": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
