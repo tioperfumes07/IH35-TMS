@@ -11,6 +11,7 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { PreviewModal } from "../../components/documents/PreviewModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 
@@ -186,6 +187,7 @@ function fmtFileSize(sizeBytes: string) {
 
 export function DocsHomePage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = parseDocsEntityTab(searchParams.get("tab"));
@@ -305,9 +307,14 @@ export function DocsHomePage() {
         actions={
           <button
             type="button"
-            onClick={() => setUploadOpen(true)}
-            disabled={!companyId}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              if (!companyId) {
+                pushToast("Select an operating company before uploading a document", "error");
+                return;
+              }
+              setUploadOpen(true);
+            }}
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
             data-testid="docs-home-upload-button"
           >
             + Upload Document
