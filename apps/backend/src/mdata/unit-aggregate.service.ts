@@ -2,6 +2,7 @@ import { withSavepoint } from "../auth/db.js";
 import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.service.js";
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
+import { excludeInsuranceFixtureSql } from "../insurance/insurance-visibility.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -86,6 +87,7 @@ async function lookupPolicyMonthlyPremiumCents(
             AND p.status = 'active'
             AND p.effective_date <= CURRENT_DATE
             AND p.expiry_date >= CURRENT_DATE
+            AND ${excludeInsuranceFixtureSql("p.policy_number")}
         `,
         [operatingCompanyId, unitNumber, policyNumber]
       ),
@@ -118,6 +120,13 @@ type LinkedPolicyRow = {
  * db/migrations/0274_insurance.sql), so this does not attempt to guess a US/MX slot for a linked
  * policy — it surfaces every real linked policy generically, labelled by coverage type, alongside
  * (never replacing) the legacy us_policy/mx_policy cards.
+ *
+ * INSURANCE-DASHBOARD-FIXTURE-LEAK (2026-08-23): live-verified on prod — unit T120's "real, FK-linked"
+ * policy cited above at fix-time was in fact SAMPLE-REPROVE-5094-VENDOR-0809, an agent guard-selftest
+ * fixture (insurer_name "CC3 Verify Vendor"), so this card showed T120 as insured when it carries no
+ * real policy. Both this lookup and lookupPolicyMonthlyPremiumCents now exclude fixture-named policies
+ * (excludeInsuranceFixtureSql, insurance/insurance-visibility.ts) so a fixture policy can no longer
+ * mask a real truck's real coverage gap on the Fleet Unit Profile page.
  */
 async function lookupLinkedPolicies(
   client: DbClient,
@@ -145,6 +154,7 @@ async function lookupLinkedPolicies(
             ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
           WHERE a.tenant_id = $1::uuid
             AND a.unit_id = $2::uuid
+            AND ${excludeInsuranceFixtureSql("p.policy_number")}
           ORDER BY (p.status = 'active') DESC, p.expiry_date DESC
         `,
         [operatingCompanyId, unitId]

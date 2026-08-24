@@ -9,6 +9,7 @@ import {
   type CoverageGapUnitRow,
 } from "./coverage-gap-units.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 
 // Insurance dashboard aggregate — the 6 KPI counts for /safety/insurance computed
 // server-side in ONE call (replacing the old 6-query / per-unit-coverage fan-out that
@@ -51,19 +52,29 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
         return Number(res.rows[0]?.count ?? 0);
       };
 
+      // INSURANCE-DASHBOARD-FIXTURE-LEAK: policy/claim/lawsuit carry no is_sample_data column, so
+      // every KPI here must name-pattern-exclude agent-created fixture rows itself — see
+      // insurance-visibility.ts for the live-verified evidence this closes.
       const total_active_policies = await count(
-        `SELECT count(*)::int AS count FROM insurance.policy WHERE tenant_id = $1::uuid AND status = 'active'`
+        `SELECT count(*)::int AS count FROM insurance.policy
+           WHERE tenant_id = $1::uuid AND status = 'active'
+             AND ${excludeInsuranceFixtureSql("policy_number")}`
       );
       const policies_expiring_30d = await count(
         `SELECT count(*)::int AS count FROM insurance.policy
            WHERE tenant_id = $1::uuid AND status = 'active'
-             AND expiry_date BETWEEN now()::date AND (now() + interval '30 days')::date`
+             AND expiry_date BETWEEN now()::date AND (now() + interval '30 days')::date
+             AND ${excludeInsuranceFixtureSql("policy_number")}`
       );
       const open_claims = await count(
-        `SELECT count(*)::int AS count FROM insurance.claim WHERE tenant_id = $1::uuid AND status IN ('open', 'investigating')`
+        `SELECT count(*)::int AS count FROM insurance.claim
+           WHERE tenant_id = $1::uuid AND status IN ('open', 'investigating')
+             AND ${excludeInsuranceFixtureSql("claim_number")}`
       );
       const open_lawsuits = await count(
-        `SELECT count(*)::int AS count FROM insurance.lawsuit WHERE tenant_id = $1::uuid AND status IN ('filed', 'active')`
+        `SELECT count(*)::int AS count FROM insurance.lawsuit
+           WHERE tenant_id = $1::uuid AND status IN ('filed', 'active')
+             AND ${excludeInsuranceFixtureSql("case_number")}`
       );
       const recent_coi_requests = await count(
         `SELECT count(*)::int AS count FROM insurance.coi_request

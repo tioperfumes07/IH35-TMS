@@ -1,5 +1,7 @@
 import { DISPATCH_REQUIRED_INSURANCE_COVERAGE_TYPES } from "./coverage-gap.service.js";
 import type { InsuranceCoverageType } from "./policy.shared.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 
 /**
  * CANONICAL "coverage gap" definition — the SINGLE source of truth shared by BOTH the insurance
@@ -22,6 +24,15 @@ import type { InsuranceCoverageType } from "./policy.shared.js";
  * coverage_gap_count = uncovered.length + mismatched.length (= units missing >= 1 required type).
  *
  * Read-only (SELECT) — no posting/GL, no writes.
+ *
+ * INSURANCE-DASHBOARD-FIXTURE-LEAK (2026-08-23): live-verified on prod — two agent-created fixture
+ * policies (SAMPLE-REPROVE-5094-VENDOR-0809, SAMPLE-VENDOR-UX-0809) were linked via
+ * insurance.policy_unit to REAL fleet units T120/T151, so this query counted those two real trucks as
+ * covered when they carry no real policy — a false negative masking real risk. The LATERAL join now
+ * excludes fixture-named policies (excludeInsuranceFixtureSql, see insurance-visibility.ts), and the
+ * outer unit scan now excludes demo/phantom-named and is_sample_data fixture units (same helpers Fleet
+ * already uses, mdata/fleet-visibility.ts), so a fixture truck can no longer surface as a real gap
+ * (or a real gap get hidden behind a fixture policy) on this KPI or its detail drill-down.
  */
 
 export const REQUIRED_COVERAGE_TYPES: InsuranceCoverageType[] = DISPATCH_REQUIRED_INSURANCE_COVERAGE_TYPES;
@@ -55,6 +66,7 @@ export const COVERAGE_GAP_UNITS_SQL = `
      AND p.status = 'active'
      AND p.effective_date <= now()::date
      AND p.expiry_date >= now()::date
+     AND ${excludeInsuranceFixtureSql("p.policy_number")}
     WHERE a.tenant_id = $1::uuid
       AND a.unit_code = u.unit_number
       AND p.coverage_type::text = ANY($2::text[])
@@ -64,6 +76,8 @@ export const COVERAGE_GAP_UNITS_SQL = `
           OR (u.currently_leased_to_company_id IS NULL AND u.owner_company_id = $1::uuid)
         )
     AND u.deactivated_at IS NULL
+    AND ${excludeDemoPhantomSql("u.unit_number")}
+    AND ${excludeSampleDataSql("u.is_sample_data")}
     AND ($3::uuid IS NULL OR u.id = $3::uuid)
   ORDER BY u.unit_number ASC
 `;
