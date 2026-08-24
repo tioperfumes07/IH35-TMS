@@ -25,7 +25,7 @@ function pmScheduleScopeFailures(unitSource, equipmentSource) {
 function lastServiceVendorFailures(unitSource, consumerSource) {
   const failures = [];
   if (!/COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id/.test(unitSource)) failures.push("unit aggregate last-service canonical vendor id");
-  if (!/LEFT JOIN mdata\.vendors v ON v\.id = COALESCE\(w\.external_vendor_id, w\.vendor_id\)\s+AND v\.operating_company_id = w\.operating_company_id/.test(unitSource)) failures.push("unit aggregate last-service canonical vendor label join");
+  if (!/LEFT JOIN LATERAL \(\s+SELECT scoped_vendor\.vendor_name\s+FROM mdata\.get_vendor_same_company\(\s+COALESCE\(w\.external_vendor_id, w\.vendor_id\),\s+w\.operating_company_id\s+\) scoped_vendor\s+LIMIT 1\s+\) v ON TRUE/.test(unitSource)) failures.push("unit aggregate last-service canonical historical vendor label resolver");
   if (!/EntityLinkOrTombstone[\s\S]{0,180}kind="vendor"[\s\S]{0,180}id=\{String\(lastService\.vendor_id\)\}[\s\S]{0,180}name=\{lastService\.vendor\}/.test(consumerSource)) failures.push("vehicle profile last-service vendor EntityLink");
   return failures;
 }
@@ -103,7 +103,7 @@ if (process.argv.includes("--selftest")) {
     pmScheduleScopeFailures(aggregate.replace(scoped, unscoped), equipmentAggregate),
     pmScheduleScopeFailures(aggregate, equipmentAggregate.replace(scoped, unscoped)),
     lastServiceVendorFailures(aggregate.replace("COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id", "w.external_vendor_id::text AS vendor_id"), maintenanceSnapshot),
-    lastServiceVendorFailures(aggregate.replace("v.id = COALESCE(w.external_vendor_id, w.vendor_id)", "v.id = w.external_vendor_id"), maintenanceSnapshot),
+    lastServiceVendorFailures(aggregate.replace("mdata.get_vendor_same_company(", "mdata.get_vendor_active_only("), maintenanceSnapshot),
     lastServiceVendorFailures(aggregate, maintenanceSnapshot.replace('kind="vendor"', 'kind="vendor_removed"')),
     unitMaintenanceVoidFailures(aggregate.replace(/(FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
