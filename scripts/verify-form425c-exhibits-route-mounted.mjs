@@ -57,6 +57,18 @@ export function audit(indexSrc, routesSrc) {
     problems.push("exhibits routes no longer use withCompanyScope — reads would not be entity-scoped");
   }
 
+  const buildChunk = (routesSrc.split('app.post("/api/v1/reports/form-425c/exhibits/build"')[1] ?? "").split(
+    'app.get("/api/v1/reports/form-425c/exhibits/:filing_uuid"',
+  )[0];
+  if (
+    !buildChunk.includes('e?.message === "forbidden_company_membership"') ||
+    !buildChunk.includes('error: "forbidden_company_membership"')
+  ) {
+    problems.push(
+      "exhibits POST /build must 403 forbidden_company_membership — blanket 502 mor_cash_source_error was a leftover 500-class",
+    );
+  }
+
   return problems;
 }
 
@@ -89,6 +101,11 @@ function selftest() {
   if (noGate === routesSrc) failures.push("case3 INERT — mutation did not change the source");
   else if (!audit(indexSrc, noGate).some((p) => /403/.test(p)))
     failures.push("case3 FAIL — stripped 403 role gate not caught");
+
+  const noMembership = routesSrc.replace('e?.message === "forbidden_company_membership"', "e?.message === \"other\"");
+  if (noMembership === routesSrc) failures.push("case4 INERT — membership mutation did not change the source");
+  else if (!audit(indexSrc, noMembership).some((p) => /forbidden_company_membership/.test(p)))
+    failures.push("case4 FAIL — POST /build membership 502 not caught");
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
