@@ -129,9 +129,14 @@ export function ExhibitsViewer() {
                 pushToast("Build all exhibits first", "error");
                 return;
               }
+              const debtor = String(selectedCompany?.legal_name ?? "").trim();
+              if (!debtor) {
+                pushToast("Set the operating company name before printing exhibits — will not invent a court debtor", "error");
+                return;
+              }
               const opened = printLetterHtml({
-                title: `Form 425C Exhibits A-F — ${selectedCompany?.legal_name ?? "Company"} — ${built.period_end}`,
-                bodyHtml: buildExhibitsPrintBodyHtml(built, selectedCompany?.legal_name ?? "Company"),
+                title: `Form 425C Exhibits A-F — ${debtor} — ${built.period_end}`,
+                bodyHtml: buildExhibitsPrintBodyHtml(built, debtor),
                 orientation: "portrait",
               });
               if (!opened) {
