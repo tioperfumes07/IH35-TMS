@@ -4164,6 +4164,11 @@
     "claimed_by": "codex",
     "purpose": "verify-insurance-policy-create-button-depth"
   },
+  "7598": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-insurance-policy-unit-column-schema"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
