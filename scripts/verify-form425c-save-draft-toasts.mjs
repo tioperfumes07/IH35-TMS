@@ -453,6 +453,12 @@ export function collectProblems(src) {
   if (!exhibitsViewer.includes("will not invent a court debtor")) {
     problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: Print with no legal_name must toast, not invent Company");
   }
+  if (exhibitsViewer.includes("toISOString().slice(0, 10)") && exhibitsViewer.includes("function defaultPeriod")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: default A–F period must use local Y-M-D — toISOString shifted the court month");
+  }
+  if (!exhibitsViewer.includes("function ymdLocal")) {
+    problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: default A–F period must format local calendar dates, not UTC ISO");
+  }
   const exhibitsRoutes = fs.readFileSync(path.join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts"), "utf8");
   if (!exhibitsRoutes.includes("period_end_before_start") || !exhibitsRoutes.includes("period_end < parsed.data.period_start")) {
     problems.push("apps/backend/src/reports/form-425c/exhibits/routes.ts: inverted period must 422 — 200 empty A–F was a silent court package");
