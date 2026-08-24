@@ -4079,6 +4079,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-include-inactive-scope"
   },
+  "6098": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-roster-create-actions"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6063,5 +6068,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1307
+  "total_claimed": 1308
 }
