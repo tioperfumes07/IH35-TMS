@@ -214,7 +214,11 @@ export function VehicleProfilePage() {
 
   const quickAvailMutation = useMutation({
     mutationFn: (value: "available" | "booked" | "holding" | null) => postQuickAvailability(id, companyId, value),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+      pushToast("Unit availability updated", "success");
+    },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update unit availability", "error"),
   });
 
   const invalidateProfile = () => {
@@ -287,6 +291,7 @@ export function VehicleProfilePage() {
               plates={profile.plates ?? []}
               latestPosition={profile.latest_position}
               onQuickAvailability={(value) => quickAvailMutation.mutate(value)}
+              quickAvailabilityPending={quickAvailMutation.isPending}
               onStatusSaved={() => void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] })}
             />
           </div>

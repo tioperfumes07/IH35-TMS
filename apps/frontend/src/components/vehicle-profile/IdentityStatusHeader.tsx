@@ -4,6 +4,7 @@ import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
 import { StatusChangeModal } from "./StatusChangeModal";
 import { PlatesTable } from "./PlatesTable";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { useToast } from "../Toast";
 
 const STATUSES = ["InService", "OutOfService", "InMaintenance", "Sold", "Damaged", "Transferred"] as const;
 
@@ -14,6 +15,7 @@ export function IdentityStatusHeader({
   plates,
   latestPosition,
   onQuickAvailability,
+  quickAvailabilityPending = false,
   onStatusSaved,
 }: {
   unitId: string;
@@ -22,8 +24,10 @@ export function IdentityStatusHeader({
   plates: Array<Record<string, unknown>>;
   latestPosition: Record<string, unknown> | null;
   onQuickAvailability: (value: "available" | "booked" | "holding" | null) => void;
+  quickAvailabilityPending?: boolean;
   onStatusSaved: () => void;
 }) {
+  const { pushToast } = useToast();
   const [modalStatus, setModalStatus] = useState<(typeof STATUSES)[number] | null>(null);
   const currentStatus = String(unit.status ?? "InService");
   const quick = (unit.quick_availability as "available" | "booked" | "holding" | null) ?? null;
@@ -56,7 +60,14 @@ export function IdentityStatusHeader({
                 const next = e.target.value as (typeof STATUSES)[number];
                 if (next === currentStatus) return;
                 if (next === "InService") {
-                  void patchUnit(unitId, companyId, { status: "InService" }).then(onStatusSaved);
+                  void patchUnit(unitId, companyId, { status: "InService" })
+                    .then(() => {
+                      onStatusSaved();
+                      pushToast("Unit status updated", "success");
+                    })
+                    .catch((error) => {
+                      pushToast(error instanceof Error ? error.message : "Failed to update unit status", "error");
+                    });
                   return;
                 }
                 setModalStatus(next);
@@ -69,7 +80,7 @@ export function IdentityStatusHeader({
               ))}
             </select>
           </label>
-          <QuickAvailabilityToggle value={quick} onChange={onQuickAvailability} />
+          <QuickAvailabilityToggle value={quick} disabled={quickAvailabilityPending} onChange={onQuickAvailability} />
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600 md:grid-cols-4">
