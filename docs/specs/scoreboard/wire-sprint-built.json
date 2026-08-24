@@ -2437,6 +2437,14 @@
       "leafRe": "^photo_comparison\\.detail$",
       "guard": "scripts/verify-photo-comparison-detail-failure-truth.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "MAINTENANCE-PM-ALERTS-READ-FAILURE-TRUTH",
+      "modules": ["maintenance"],
+      "cols": ["connectivity", "reverse_link"],
+      "leafRe": "^maintenance\\.panel\\.pm_alerts$",
+      "guard": "scripts/verify-maintenance-pm-alerts-range.mjs",
+      "live": "BLOCKED"
     }
   ]
 }

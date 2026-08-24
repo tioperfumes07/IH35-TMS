@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @matrix-built {"modules":["maintenance"],"cols":["connectivity","reverse_link"],"leaves":["maintenance.panel.pm_alerts"],"task":"MAINTENANCE-PM-ALERTS-READ-FAILURE-TRUTH"}
 /** PM-alert reverse panels must disclose their exact state-filtered capped ranges. */
 import fs from "node:fs";
 
@@ -17,6 +18,8 @@ function failures(source = live) {
     ["scheduled total consumed", source.card.includes("scheduledAlertsQuery.data?.total_count ?? scheduledAlerts.length")],
     ["compact range visible", source.card.includes('data-testid="pm-alerts-compact-range"') && source.card.includes("Showing {alerts.length} of {openTotalCount} open alerts")],
     ["full ranges visible", source.card.includes('data-testid="pm-alerts-open-range"') && source.card.includes('data-testid="pm-alerts-scheduled-range"')],
+    ["open read failure visible", source.card.includes('data-testid="pm-alerts-query-error"') && source.card.includes("Couldn't load PM alerts") && source.card.includes("alertsQuery.refetch()")],
+    ["scheduled read failure visible", source.card.includes('data-testid="pm-alerts-scheduled-query-error"') && source.card.includes("Couldn't load scheduled PM alerts") && source.card.includes("scheduledAlertsQuery.refetch()")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -29,13 +32,15 @@ if (process.argv.includes("--selftest")) {
     { ...live, card: live.card.replace("scheduledAlertsQuery.data?.total_count ?? scheduledAlerts.length", "scheduledAlerts.length") },
     { ...live, card: live.card.replace('data-testid="pm-alerts-compact-range"', 'data-testid="missing"') },
     { ...live, card: live.card.replace('data-testid="pm-alerts-open-range"', 'data-testid="missing"').replace('data-testid="pm-alerts-scheduled-range"', 'data-testid="missing"') },
+    { ...live, card: live.card.replace('data-testid="pm-alerts-query-error"', 'data-testid="missing"') },
+    { ...live, card: live.card.replace('data-testid="pm-alerts-scheduled-query-error"', 'data-testid="missing"') },
   ];
   const escaped = mutations.map((source, index) => failures(source).length ? null : index + 1).filter(Boolean);
   if (escaped.length) {
     console.error(`verify-maintenance-pm-alerts-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-maintenance-pm-alerts-range SELFTEST PASS — 7/7 mutations red");
+  console.log("verify-maintenance-pm-alerts-range SELFTEST PASS — 9/9 mutations red");
   process.exit(0);
 }
 
@@ -44,4 +49,4 @@ if (missing.length) {
   console.error(`verify-maintenance-pm-alerts-range FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
-console.log("verify-maintenance-pm-alerts-range PASS — open and scheduled PM alerts expose exact totals");
+console.log("verify-maintenance-pm-alerts-range PASS — open and scheduled PM alerts expose exact totals and retryable read failures");
