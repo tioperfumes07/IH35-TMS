@@ -325,6 +325,15 @@ export function collectProblems(src) {
       "apps/backend/src/compliance/form-425c.routes.ts: Mark Filed on a filed MOR must 409 — UPDATE 0 rows was a silent 404 report_not_found_or_invalid_state",
     );
   }
+  if (
+    !markChunk.includes("form_425c_generate_required") ||
+    !markChunk.includes("filed_pdf_uuid IS NOT NULL") ||
+    !src.includes("Generate the filing PDF before marking filed")
+  ) {
+    problems.push(
+      "Mark Filed without a Generate snapshot must 422 + toast — draft→filed with null filed_pdf_uuid was a silent court filing",
+    );
+  }
   const exhibitsViewer = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx"), "utf8");
   if (!exhibitsViewer.includes("printLetterHtml") || !exhibitsViewer.includes("buildExhibitsPrintBodyHtml")) {
     problems.push("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: A–F builder must print the built package — JSON-only was a silent incomplete court hop");
@@ -396,6 +405,7 @@ const good = `
   Select an operating company before creating a report
   Could not load Form 425C reports
   Could not load Form 425C report detail
+  Generate the filing PDF before marking filed
 `;
 const bad = `
   if (!detailQuery.data?.report) {
