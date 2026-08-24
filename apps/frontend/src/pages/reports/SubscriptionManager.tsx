@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../../api/client";
+import { apiRequest, ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import {
@@ -148,7 +148,17 @@ export function SubscriptionManager() {
       void qc.invalidateQueries({ queryKey: ["gap43-subscriptions"] });
       pushToast("Subscription deactivated", "success");
     },
-    onError: () => pushToast("Deactivate failed", "error"),
+    // GAP43-SUBSCRIPTIONS-500-ON-EXPECTED-STATE: the backend now returns 409 (not 500) when the row
+    // is already inactive/gone. That is a stale list, not a failure — refetch instead of claiming
+    // the action failed.
+    onError: (error: unknown) => {
+      if (error instanceof ApiError && error.status === 409) {
+        void qc.invalidateQueries({ queryKey: ["gap43-subscriptions"] });
+        pushToast("Already deactivated — list refreshed", "info");
+        return;
+      }
+      pushToast("Deactivate failed", "error");
+    },
   });
 
   const reportOptions = useMemo(
