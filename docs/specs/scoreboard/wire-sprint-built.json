@@ -2421,6 +2421,14 @@
       "leafRe": "^anomaly_alerts\\.list$",
       "guard": "scripts/verify-anomaly-detection-engine.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "SAFETY-LEAVE-REQUEST-DETAIL-FAILURE-TRUTH",
+      "modules": ["safety"],
+      "cols": ["driver", "connectivity", "reverse_link"],
+      "leafRe": "^leave_requests\\.detail$",
+      "guard": "scripts/verify-driver-scheduler-request-detail-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
