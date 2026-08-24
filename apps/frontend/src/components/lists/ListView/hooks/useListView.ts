@@ -28,7 +28,10 @@ export interface ListViewHookResult {
 
 export function useListView(
   savedViewsKey: string | undefined,
-  columns: ListViewColumn<unknown>[]
+  // RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP: intentionally unused — see the comment below on why
+  // `columns` must never become an effect dependency here. Kept in the signature for API parity
+  // with callers; underscore-prefixed so TS's noUnusedParameters doesn't flag deliberate non-use.
+  _columns: ListViewColumn<unknown>[]
 ): ListViewHookResult {
   const [savedView, setSavedView] = useState<SavedViewData | null>(null);
   const [loading, setLoading] = useState(false);
