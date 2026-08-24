@@ -459,10 +459,6 @@ export function Form425CHome() {
           setMonth={setMonth}
           setYear={setYear}
           profiles={profiles}
-          onApplyTotal={(total) => {
-            setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }));
-            setDirty(true);
-          }}
         />
       ) : null}
 
@@ -594,13 +590,14 @@ export function Form425CHome() {
               pushToast("Could not open that report", "error");
               return;
             }
-            const d = new Date(row.reporting_month);
-            if (Number.isNaN(d.getTime())) {
+            const ymd = String(row.reporting_month).slice(0, 10);
+            const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+            if (!match) {
               pushToast("Could not open that report — reporting month is invalid", "error");
               return;
             }
-            setYear(d.getUTCFullYear());
-            setMonth(d.getUTCMonth());
+            setYear(Number(match[1]));
+            setMonth(Number(match[2]) - 1);
             setTab("form");
             pushToast("Opened report in Form 425C", "success");
           }}

@@ -162,6 +162,9 @@ export function CurrentPeriodTab({
 
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
+        <p className="border-b bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          Lines 19–21 are imported from Banking (DIP real accounts). Save Draft does not write them — edit here was a silent no-op on the court filing.
+        </p>
         {[
           ["19", "openingBalance", "Total opening balance of all accounts"],
           ["20", "totalReceipts", "Total cash receipts"],
@@ -172,9 +175,10 @@ export function CurrentPeriodTab({
               <strong>{line}.</strong> {label}
             </span>
             <input
-              className="rounded-sm border px-2 py-1.5 text-right"
+              className="rounded-sm border bg-slate-50 px-2 py-1.5 text-right"
               value={String((form as unknown as Record<string, string>)[key] ?? "")}
-              onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+              readOnly
+              aria-readonly="true"
             />
           </label>
         ))}
