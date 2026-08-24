@@ -544,28 +544,17 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         operation: "create",
       });
       const detail = await enrichInvoice(client, invoiceId, query.data.operating_company_id);
+      await emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: user.uuid,
+        event_type: "invoice.created",
+        entity_id: invoiceId,
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+      });
       return { code: 201 as const, data: detail };
     });
     if ("error" in created) return reply.code(created.code).send({ error: created.error });
-    void withCompanyScope(user.uuid, (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? "", (client) =>
-      emitAccountingSpineEvent(client, {
-        operating_company_id: (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? "",
-        actor_user_id: user.uuid,
-        event_type: "invoice.created",
-        entity_id: (created as { data?: { id?: string } })?.data?.id ?? "",
-        entity_type: "invoice",
-        source_table: "accounting.invoices",
-      })
-    ).catch((err) =>
-      req.log.warn(
-        {
-          err,
-          invoice_id: (created as { data?: { id?: string } })?.data?.id ?? null,
-          company_id: (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? null,
-        },
-        "spine_emit_invoice_created_failed"
-      )
-    );
     return reply.code(created.code).send(created.data);
   });
 
@@ -820,7 +809,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: user.uuid,
@@ -876,7 +865,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       return reply.code(result.code).send({ error: result.error });
     }
-    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: user.uuid,
@@ -1016,7 +1005,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: user.uuid,

@@ -998,7 +998,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         });
       if ("vendorNotInCompany" in payload)
         return reply.code(400).send({ error: "expense_vendor_not_in_company" });
-      void withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -1191,7 +1191,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
-      void withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,
           actor_user_id: String(user.uuid),

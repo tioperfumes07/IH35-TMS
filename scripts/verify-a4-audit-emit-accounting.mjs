@@ -84,5 +84,23 @@ if (!unionBlockMatch) {
   }
 }
 
+// 5. Fire-and-forget `void withCompanyScope(emitAccountingSpineEvent)` drops spine rows after
+// money already committed. Mutations must await the emit (same txn when already in scope).
+const ACCOUNTING_MUTATION_FILES = checks.map((c) => c.file);
+const FIRE_FORGET_RE = /void\s+withCompanyScope\([\s\S]{0,500}?emitAccountingSpineEvent/;
+for (const file of ACCOUNTING_MUTATION_FILES) {
+  const src = read(file);
+  if (FIRE_FORGET_RE.test(src)) fail(`${path.basename(file)}: fire-and-forget void withCompanyScope(emitAccountingSpineEvent) — await the emit`);
+  else pass(`${path.basename(file)}: spine emit is not fire-and-forget`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = `void withCompanyScope(user.uuid, companyId, (client) => emitAccountingSpineEvent(client, { event_type: "invoice.voided" }))`;
+  if (!FIRE_FORGET_RE.test(planted)) {
+    console.error("[verify-a4] SELFTEST FAIL: planted fire-and-forget did not match");
+    process.exit(1);
+  }
+}
+
 if (failed) { console.error("\n[verify-a4] FAILED"); process.exit(1); }
 console.log("\n[verify-a4] ALL CHECKS PASSED");
