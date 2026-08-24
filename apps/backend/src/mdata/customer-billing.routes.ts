@@ -81,9 +81,10 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             pt.days_until_due AS credit_terms_days
           FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
-          LEFT JOIN mdata.vendors fv
-            ON fv.id = c.factoring_company_vendor_id
-           AND fv.operating_company_id = c.operating_company_id
+          LEFT JOIN LATERAL mdata.get_vendor_same_company(
+            c.factoring_company_vendor_id,
+            c.operating_company_id
+          ) fv ON true
           LIMIT 1
         `,
         [customerId, operatingCompanyId]
