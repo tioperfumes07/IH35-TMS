@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -39,6 +39,7 @@ export function Form2290Filings() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const filingId = searchParams.get("filing_id");
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const filingsQ = useQuery({
     queryKey: ["compliance", "form-2290", companyId],
@@ -63,6 +64,7 @@ export function Form2290Filings() {
         { tax_period_start: taxPeriodStart }
       );
     },
+    onMutate: () => setGenerateError(null),
     onSuccess: async (payload: { pdf_base64?: string }) => {
       await queryClient.invalidateQueries({ queryKey: ["compliance", "form-2290", companyId] });
       if (payload.pdf_base64) {
@@ -77,6 +79,8 @@ export function Form2290Filings() {
         URL.revokeObjectURL(url);
       }
     },
+    onError: (error) =>
+      setGenerateError(error instanceof Error ? error.message : "Failed to generate Form 2290 draft"),
   });
 
   const columns = useMemo<ParityColumn<Filing>[]>(
@@ -191,6 +195,12 @@ export function Form2290Filings() {
           Generate draft
         </button>
       </div>
+
+      {generateError ? (
+        <p role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {generateError}
+        </p>
+      ) : null}
 
       {filingsQ.isError ? (
         <ListErrorState
