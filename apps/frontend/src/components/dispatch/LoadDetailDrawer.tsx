@@ -9,6 +9,7 @@ import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
 import { resolveApiUrl } from "../../api/client";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { useToast } from "../Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -175,10 +176,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const auditQuery = useLoadAudit(loadId);
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
+    // DISP-F6320: every caller (dispatch flag select, factoring-package generate/email/mark-uploaded)
+    // did `void updateMutation.mutateAsync(...).then(...)` with no `.catch()` and no onError here — a
+    // failed PATCH silently did nothing: no toast, no revert explanation, .then()'s refetch/toast
+    // never ran. Surface it once, for every caller, instead of a silent no-op.
+    onError: (err) => pushToast(userFacingApiError(err, "Update failed"), "error"),
   });
   const createInvoiceMutation = useMutation({
     mutationFn: ({ operatingCompanyId, loadId }: { operatingCompanyId: string; loadId: string }) =>
       createInvoiceFromLoad(operatingCompanyId, { load_id: loadId }),
+    // DISP-F6320: "Create / View Invoice" awaited this with no try/catch and no onError — a failed
+    // create silently did nothing (unhandled promise rejection, no user feedback).
+    onError: (err) => pushToast(userFacingApiError(err, "Create invoice failed"), "error"),
   });
   const distributeMutation = useMutation({
     mutationFn: ({ loadId, operatingCompanyId }: { loadId: string; operatingCompanyId: string }) =>
