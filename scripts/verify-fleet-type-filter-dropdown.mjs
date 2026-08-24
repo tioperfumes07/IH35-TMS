@@ -22,21 +22,57 @@ const requiredOptions = [
   "Custom",
 ];
 
-if (!pageSource.includes('id="fleet-type-filter"')) {
-  console.error("[verify-fleet-type-filter-dropdown] FleetTablePage missing fleet-type-filter select");
-  process.exit(1);
+function audit(page, options) {
+  const failures = [];
+  const need = (condition, label) => { if (!condition) failures.push(label); };
+  for (const option of requiredOptions) need(options.includes(`label: "${option}"`), `option ${option}`);
+  need(options.includes('searchParams.get("type")'), "URL parser reads type");
+  need(options.includes("isFleetTypeFilterValue(raw) ? raw : \"\""), "URL parser rejects unknown types");
+  need(page.includes("const typeFilter = parseFleetTypeFilter(searchParams)"), "page parses URL type");
+  need(/const typeParam = typeFilter \? `&type=\$\{encodeURIComponent\(typeFilter\)\}` : ""/.test(page), "API URL includes encoded type");
+  need(page.includes('typeFilter || "all"'), "query key varies by type");
+  need(page.includes("buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive)"), "rows query forwards type");
+  need(page.includes("applied: { activeOnly, typeFilter }"), "staged filters seed applied type");
+  need(page.includes("setTypeFilter(next.typeFilter)"), "Apply commits staged type");
+  need(page.includes('id="fleet-type-filter"'), "type select mounted");
+  need(page.includes("value={staged.draft.typeFilter}"), "select reads staged type");
+  need(page.includes("typeFilter: event.target.value"), "select writes staged type");
+  need(page.includes("FLEET_TYPE_FILTER_OPTIONS.map"), "select renders canonical options");
+  return failures;
 }
 
-for (const option of requiredOptions) {
-  if (!optionsSource.includes(`label: "${option}"`)) {
-    console.error(`[verify-fleet-type-filter-dropdown] Missing dropdown option ${option}`);
+if (process.argv.includes("--selftest")) {
+  const mutations = requiredOptions.map((option) => ({
+    page: pageSource,
+    options: optionsSource.replace(`label: "${option}"`, `label: "Missing ${option}"`),
+  }));
+  mutations.push(
+    { page: pageSource, options: optionsSource.replace('searchParams.get("type")', 'searchParams.get("kind")') },
+    { page: pageSource, options: optionsSource.replace('isFleetTypeFilterValue(raw) ? raw : ""', 'raw as FleetTypeFilterValue') },
+    { page: pageSource.replace("const typeFilter = parseFleetTypeFilter(searchParams)", 'const typeFilter = ""'), options: optionsSource },
+    { page: pageSource.replace('const typeParam = typeFilter ? `&type=${encodeURIComponent(typeFilter)}` : ""', 'const typeParam = ""'), options: optionsSource },
+    { page: pageSource.replace('typeFilter || "all"', '"all"'), options: optionsSource },
+    { page: pageSource.replace("buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive)", 'buildUnitsUrl(operatingCompanyId, "", includeInactive)'), options: optionsSource },
+    { page: pageSource.replace("applied: { activeOnly, typeFilter }", 'applied: { activeOnly, typeFilter: "" }'), options: optionsSource },
+    { page: pageSource.replace("setTypeFilter(next.typeFilter)", 'setTypeFilter("")'), options: optionsSource },
+    { page: pageSource.replace('id="fleet-type-filter"', 'id="missing-filter"'), options: optionsSource },
+    { page: pageSource.replace("value={staged.draft.typeFilter}", 'value=""'), options: optionsSource },
+    { page: pageSource.replace("typeFilter: event.target.value", 'typeFilter: ""'), options: optionsSource },
+    { page: pageSource.replace("FLEET_TYPE_FILTER_OPTIONS.map", "[].map"), options: optionsSource },
+  );
+  const escaped = mutations.filter(({ page, options }) => audit(page, options).length === 0);
+  if (audit(pageSource, optionsSource).length || escaped.length) {
+    console.error(`[verify-fleet-type-filter-dropdown] selftest FAIL — ${escaped.length} of ${mutations.length} mutations escaped`);
     process.exit(1);
   }
+  console.log(`[verify-fleet-type-filter-dropdown] selftest PASS — ${mutations.length}/${mutations.length} catalog/parser/API/query/Apply/control defects detected`);
+  process.exit(0);
 }
 
-if (!pageSource.includes("FLEET_TYPE_FILTER_OPTIONS")) {
-  console.error("[verify-fleet-type-filter-dropdown] FleetTablePage must use FLEET_TYPE_FILTER_OPTIONS");
+const failures = audit(pageSource, optionsSource);
+if (failures.length) {
+  console.error(`[verify-fleet-type-filter-dropdown] FAIL — ${failures.join(", ")}`);
   process.exit(1);
 }
 
-console.log("[verify-fleet-type-filter-dropdown] OK");
+console.log("[verify-fleet-type-filter-dropdown] PASS — canonical type catalog is URL/API/query/Apply/control wired");
