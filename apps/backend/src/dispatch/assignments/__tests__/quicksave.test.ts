@@ -137,6 +137,73 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
   });
 });
 
+const CO_DRIVER = "33333333-3333-4333-8333-333333333333";
+const UNIT = "44444444-4444-4444-8444-444444444444";
+const CANONICAL_TRAILER = "55555555-5555-4555-8555-555555555555";
+
+describe("DISP-F6157: quicksave must never write the co-driver uuid into a *_trailer_id history field", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  /** A load with a co-driver assigned (assigned_secondary_driver_id set) AND prior trailer history. */
+  function makeClientWithCoDriverAndTrailer(log: QueryLog) {
+    const insertedValues: unknown[][] = [];
+    return {
+      insertedValues,
+      client: {
+        query: membershipAware(vi.fn(async (sql: string, values?: unknown[]) => {
+          log.push(sql);
+          if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+          if (/^\s*(BEGIN|COMMIT|ROLLBACK)\s*$/.test(sql)) return { rows: [] };
+          if (sql.includes("FROM mdata.loads") && sql.includes("FOR UPDATE")) {
+            return {
+              rows: [
+                {
+                  id: LOAD,
+                  operating_company_id: OPCO,
+                  assigned_primary_driver_id: DRIVER,
+                  assigned_unit_id: UNIT,
+                  assigned_secondary_driver_id: CO_DRIVER,
+                  load_number: "L-1",
+                  is_hazmat: false,
+                },
+              ],
+            };
+          }
+          // resolveCanonicalTrailerId
+          if (sql.includes("FROM dispatch.load_assignment_history") && sql.includes("new_trailer_id")) {
+            return { rows: [{ new_trailer_id: CANONICAL_TRAILER }] };
+          }
+          if (sql.includes("FROM mdata.units u")) {
+            return { rows: [{ id: UNIT, is_dispatch_blocked: false, dispatch_block_reason: null, is_oos: false, display_id: "T1" }] };
+          }
+          if (sql.includes("UPDATE mdata.loads")) return { rows: [{ id: LOAD }] };
+          if (sql.includes("INSERT INTO dispatch.load_assignment_history")) {
+            insertedValues.push(values ?? []);
+            return { rows: [] };
+          }
+          return { rows: [] };
+        })),
+      },
+    };
+  }
+
+  it("reassignUnit: carries the canonical trailer through unchanged, never the co-driver uuid", async () => {
+    const log: QueryLog = [];
+    const { client, insertedValues } = makeClientWithCoDriverAndTrailer(log);
+    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+
+    const { reassignUnit } = await import("../quicksave.service.js");
+    await reassignUnit(USER, { operating_company_id: OPCO, load_uuid: LOAD, unit_uuid: UNIT });
+
+    expect(insertedValues).toHaveLength(1);
+    const [previousTrailerId, newTrailerId] = insertedValues[0].slice(7, 9);
+    expect(previousTrailerId).toBe(CANONICAL_TRAILER);
+    expect(newTrailerId).toBe(CANONICAL_TRAILER);
+    expect(previousTrailerId).not.toBe(CO_DRIVER);
+    expect(newTrailerId).not.toBe(CO_DRIVER);
+  });
+});
+
 describe("GAP-8 assignments quicksave", () => {
   it("service exports reassign helpers with audit prior/new values", () => {
     const src = fs.readFileSync(path.join(here, "../quicksave.service.ts"), "utf8");
