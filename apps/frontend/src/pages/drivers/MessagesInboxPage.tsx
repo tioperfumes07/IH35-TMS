@@ -160,6 +160,7 @@ export function MessagesInboxPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [markReadError, setMarkReadError] = useState<string | null>(null);
 
   const inboxQuery = useQuery({
     queryKey: ["drivers", "messages", "inbox", operatingCompanyId],
@@ -175,9 +176,11 @@ export function MessagesInboxPage() {
 
   const markReadMutation = useMutation({
     mutationFn: (messageId: string) => markDriverMessageRead(messageId, operatingCompanyId),
+    onMutate: () => setMarkReadError(null),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["drivers", "messages"] });
     },
+    onError: (error) => setMarkReadError(error instanceof Error ? error.message : "Failed to mark message as read"),
   });
 
   if (!operatingCompanyId) {
@@ -200,6 +203,11 @@ export function MessagesInboxPage() {
         breadcrumb={["Drivers", "Messages"]}
         backHref="/drivers"
       />
+      {markReadError ? (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {markReadError}
+        </div>
+      ) : null}
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-gray-200 bg-white md:grid-cols-[320px_1fr]">
         <div className="overflow-y-auto border-r border-gray-200">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
