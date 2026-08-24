@@ -1,4 +1,9 @@
 {
+  "4666": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fuel-fraud-alert-mutation-errors-surfaced"
+  },
   "4664": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
