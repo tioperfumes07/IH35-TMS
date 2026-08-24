@@ -6,6 +6,8 @@
 
 **YOU WERE IDLE because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` is already FIXED on main.** Never sit on a closed id.
 
+**LEAD 20:56 CT — Jorge: idle = defect.** U14 14/14 CERTIFIED. Never recertify 7–9. POST leftover reverse GET-500 now.
+
 **LEAD 20:22 CT — ONE NOW ID (paste `docs/bus/PASTE-CODEX-NOW.md`).**
 Live SHA `126987a`. U14 14/14. Never recertify 7–9.
 
