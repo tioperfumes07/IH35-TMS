@@ -1,4 +1,9 @@
 {
+  "5120": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-usmca-activation-checklist-mutation-error-surfaced"
+  },
   "5010": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
