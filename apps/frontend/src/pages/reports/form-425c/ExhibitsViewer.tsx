@@ -28,13 +28,20 @@ const EXHIBIT_META: Array<{ letter: ExhibitLetter; title: string; summary: strin
   { letter: "f", title: "Supporting documents", summary: "Invoices and bills with evidence references" },
 ];
 
+function ymdLocal(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function defaultPeriod() {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return {
-    period_start: start.toISOString().slice(0, 10),
-    period_end: end.toISOString().slice(0, 10),
+    period_start: ymdLocal(start),
+    period_end: ymdLocal(end),
   };
 }
 
