@@ -397,8 +397,12 @@ export function Form425CHome() {
     mutationFn: () => generateForm425CPdf(form.reportId!, companyId),
     onSuccess: async (res) => {
       const printHtml =
-        res.print_html ||
+        String(res.print_html ?? "").trim() ||
         buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
+      if (!printHtml.trim()) {
+        pushToast("Generate returned empty filing HTML — not opening a blank print", "error");
+        return;
+      }
       const w = window.open("", "_blank");
       if (!w) {
         pushToast("Popup blocked — allow popups to print the filing PDF", "error");

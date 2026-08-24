@@ -314,6 +314,14 @@ export function collectProblems(src) {
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
   }
+  if (
+    !src.includes('String(res.print_html ?? "").trim()') ||
+    !src.includes("Generate returned empty filing HTML")
+  ) {
+    problems.push(
+      `${PAGE}: Form Generate must trim print_html before the client fallback and toast if still empty — whitespace-only HTML was a silent blank print`,
+    );
+  }
   const markChunk = (routes.split('app.post("/api/v1/form-425c/:id/mark-filed"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/amend"')[0];
   if (
     !markChunk.includes('SELECT case_number, status') ||
@@ -396,6 +404,8 @@ const good = `
   historyPrintMutation
   if (!res.print_html?.trim())
   the server returned empty HTML
+  String(res.print_html ?? "").trim()
+  Generate returned empty filing HTML
   tab === "merge"
           historyPrintMutation.mutate(form.reportId);
           status unchanged
