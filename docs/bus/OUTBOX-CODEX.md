@@ -1,5 +1,7 @@
 Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=POST-U14 leftover unique | U14=customers+drivers+fleet CERTIFIED 07993ac | GO
 
+Codex | WORKING | FO=DRIVER-QUALIFICATION-PATCH-SCOPE-GUARD-ORPHAN | claim=#15085 step=4594 | NEXT=FAST-MERGE then next unique reverse guard | GO
+
 Codex | WORKING | FO=TELEMATICS-SHARED-DRIVER-READS-GUARD-ORPHAN | claim=#15066 step=4584 | NEXT=FAST-MERGE then next unique reverse guard | GO
 
 Codex | WORKING | FO=VEHICLE-DRIVER-HISTORY-SHARED-LABEL-GUARD-ORPHAN | claim=#15069 step=4586 | NEXT=FAST-MERGE then next unique reverse guard | GO
