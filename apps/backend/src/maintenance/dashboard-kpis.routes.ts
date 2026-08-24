@@ -9,6 +9,10 @@ import {
   openWorkOrderPredicate,
 } from "../kpi/canonical-kpis.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
+// Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit must not inflate this dashboard's
+// total/active-units and DOT OOS tiles.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -152,6 +156,8 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
               FROM mdata.units
               WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
                 AND deactivated_at IS NULL
+                AND ${excludeDemoPhantomSql("unit_number")}
+                AND ${excludeSampleDataSql()}
             `,
             [companyId]
           );
