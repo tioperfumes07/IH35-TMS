@@ -47,6 +47,37 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "hop.pod_bol",
+    needles: [
+      "mdata.loads",
+      "l.soft_deleted_at IS NULL",
+      "dispatch.pod_documents",
+      "mdata.load_stops",
+      "s.id = p.stop_id",
+      "s.load_id = p.load_id",
+      "s.stop_type = 'delivery'",
+      "mdata.drivers",
+      "d.id = p.driver_id",
+      "mdata.driver_company_authorizations",
+      "dca.company_id = p.operating_company_id",
+      "p.load_id = l.id",
+      "p.operating_company_id = l.operating_company_id",
+      "p.status <> 'rejected'",
+      "NULLIF(BTRIM(p.signature_r2_key), '') IS NOT NULL",
+      "pod_f.operating_company_id = l.operating_company_id",
+      "pod_f.upload_completed_at IS NOT NULL",
+      "pod_fc.code = 'pod'",
+      "dispatch.bol_documents",
+      "b.load_id = l.id",
+      "b.operating_company_id = l.operating_company_id",
+      "NULLIF(BTRIM(b.pdf_r2_key), '') IS NOT NULL",
+      "NULLIF(BTRIM(b.sha256), '') IS NOT NULL",
+      "bol_f.operating_company_id = l.operating_company_id",
+      "bol_f.upload_completed_at IS NOT NULL",
+      "bol_fc.code = 'bol'",
+    ],
+  },
+  {
     key: "scenario.parts_receive",
     needles: [
       "maintenance.parts_purchases",
