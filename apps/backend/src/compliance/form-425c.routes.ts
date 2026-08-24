@@ -239,26 +239,6 @@ async function ensureDefaultProfile(
   userId: string
 ): Promise<FilingProfileIdentity> {
   const identity = await filingProfileIdentity(client, operatingCompanyId);
-  const defaultAnswers = {
-    "1": "yes",
-    "2": "yes",
-    "3": "yes",
-    "4": "yes",
-    "5": "yes",
-    "6": "yes",
-    "7": "yes",
-    "8": "yes",
-    "9": "yes",
-    "10": "no",
-    "11": "no",
-    "12": "no",
-    "13": "no",
-    "14": "no",
-    "15": "no",
-    "16": "no",
-    "17": "no",
-    "18": "no",
-  };
   await client.query(
       `
         INSERT INTO catalogs.form_425c_company_profiles (
@@ -274,7 +254,7 @@ async function ensureDefaultProfile(
           bank_accounts,
           last_updated_by_user_id
         )
-        VALUES ($1, $2, $3, '', '', $4, '', '', $5::jsonb, '[]'::jsonb, $6)
+        VALUES ($1, $2, $3, '', '', $4, '', '', '{}'::jsonb, '[]'::jsonb, $5)
         ON CONFLICT (operating_company_id, company_key) DO UPDATE SET
           company_name = CASE
             WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
@@ -319,7 +299,6 @@ async function ensureDefaultProfile(
         identity.companyKey,
         identity.legalName,
         identity.filingAddress,
-        JSON.stringify(defaultAnswers),
         userId,
       ]
   );
