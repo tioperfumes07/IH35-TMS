@@ -10,6 +10,7 @@ import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -58,6 +59,19 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   const scheduledAlerts = scheduledAlertsQuery.data?.alerts ?? [];
   const openTotalCount = alertsQuery.data?.total_count ?? alerts.length;
   const scheduledTotalCount = scheduledAlertsQuery.data?.total_count ?? scheduledAlerts.length;
+
+  if (alertsQuery.isError) {
+    return (
+      <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="pm-alerts-query-error">
+        <ListErrorState
+          title="Couldn't load PM alerts"
+          status={0}
+          message={alertsQuery.error instanceof Error ? alertsQuery.error.message : undefined}
+          onRetry={() => void alertsQuery.refetch()}
+        />
+      </section>
+    );
+  }
 
   if (compact) {
     return (
@@ -177,7 +191,16 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           ))}
         </ul>
       )}
-      {!compact && scheduledAlerts.length > 0 ? (
+      {!compact && scheduledAlertsQuery.isError ? (
+        <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-query-error">
+          <ListErrorState
+            title="Couldn't load scheduled PM alerts"
+            status={0}
+            message={scheduledAlertsQuery.error instanceof Error ? scheduledAlertsQuery.error.message : undefined}
+            onRetry={() => void scheduledAlertsQuery.refetch()}
+          />
+        </div>
+      ) : !compact && scheduledAlerts.length > 0 ? (
         <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-reverse">
           <h4 className="text-xs font-semibold text-gray-700">Recently scheduled</h4>
           {scheduledTotalCount > scheduledAlerts.length ? (
