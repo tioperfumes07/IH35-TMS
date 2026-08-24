@@ -3,7 +3,7 @@
 **U14 is 14/14 CERTIFIED.** Do not recertify.
 
 **AFTER U14 (all seats):** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`  
-**THIS TURN:** `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md` — CC-2/CC-3 poll-mode / “no instructions” = they did not pull. GO until leftover-CERTIFIED.
+**THIS TURN:** leftover-6 leftover-CERTIFIED at `6585a66`. Next POST unique. Idle = defect.
 
 **First reply every new session:** CURRENT-LAW + OPEN leftover hops from `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md` (omit CERTIFIED).
 

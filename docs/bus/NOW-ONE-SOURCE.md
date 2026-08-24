@@ -2,9 +2,9 @@
 
 **This file is the only NOW.** Every session, every seat: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**THIS TURN PACK:** `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md` (cash-flow · finance · reports · compliance · eld · inventory).  
-**Also:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
-If a seat claims “no instructions” / “poll mode” / “cycle complete” / “zero new findings,” they did not pull. That is a defect. GO leftover-6 until leftover-CERTIFIED.
+**LEFTOVER-6 leftover-CERTIFIED** at live `6585a66`. Do not recertify.  
+**THIS TURN:** POST leftover unique — CC-2 `/fuel` · CC-3 `/maintenance` · Cursor `/docs` `/program` `/system` · Codex customers live-verify F6326/F6327.  
+If a seat claims “no instructions” / poll-mode, they did not pull. Idle = defect.
 
 **U14 14/14 CERTIFIED** = exclusive 14-module pass finished — not stop. Never restamp. Never recertify. Certify leftover POST in parallel. Idle = defect.
 
@@ -33,10 +33,10 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW (one URL / one id) | Next 8 role |
 |------|------|------------------------|-------------|
-| **Cursor** | **9222** | Live Chrome leftover-6 + stamp after healthz | Pack `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md`. Deploy one in-flight. Never U14 restamp. |
-| **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | **LEFTOVER-6 L1–L2 CERTIFY now.** Money TESTs only. STOP `/425c`. |
-| **CC-2** | **9224** | `https://app.ih35dispatch.com/reports` | **LEFTOVER-6 L3 CERTIFY now.** Fuel remainder parallel. No Close remake. |
-| **CC-3** | **9225** | `https://app.ih35dispatch.com/compliance` then `/eld` `/inventory` | **LEFTOVER-6 L4–L6 CERTIFY now.** lists+legal omit. |
+| **Cursor** | **9222** | leftover unique `/docs` `/program` `/system` | Leftover-6 stamped. Deploy cadence. Never U14 restamp. |
+| **CC-1** | **9223** | next unique money FINDING | L1–L2 leftover-CERTIFIED. STOP `/425c`. |
+| **CC-2** | **9224** | `https://app.ih35dispatch.com/fuel` | L3 leftover-CERTIFIED. Fuel remainder. No Close remake. |
+| **CC-3** | **9225** | `https://app.ih35dispatch.com/maintenance` | L4–L6 leftover-CERTIFIED. lists+legal omit. |
 | **Codex** | **9226** | leftover unique `/customers` → `/drivers` → `/fleet` | **Use Chrome.** Not U14. No restamp. |
 | **Cascade** | audit Chrome | `/accounting` EXTENT then banking → settlements → factoring → dispatch | AUDIT ONLY. File FINDING. No product PRs. |
 | **Devin-A** | audit Chrome | `/vendors` EXTENT then maintenance → safety → insurance | AUDIT ONLY. File FINDING. Not PARKED. |

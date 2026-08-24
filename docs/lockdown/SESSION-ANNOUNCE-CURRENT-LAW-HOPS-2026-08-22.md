@@ -39,10 +39,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when leftover-clean) |
 |------|------|---------|--------------------------------|
-| Cursor | 9222 | Next-8 #8 `/docs` | **U14 omit.** NOW leftover `/docs`. Wave 2 users/home/help/program/system. **Do not loop `/425c`.** No `/lists` `/legal` `/cash-flow` `/fuel` `/compliance` |
-| CC-1 | 9223 | Next-8 #1 `/cash-flow` | Accounting+factoring omit. NOW `/cash-flow` then `/finance`. No `/banking*` `/lists` `/legal` `/docs`. HOLD forbidden |
-| CC-2 | 9224 | Leftover-6 L3 `/reports` | Settlements omit. NOW `/reports` leftover-CERTIFY (fuel remainder parallel). No poll-mode. No `/lists` `/legal` `/425c` `/cash-flow` |
-| CC-3 | 9225 | Leftover-6 L4 `/compliance` | lists+legal omit. NOW `/compliance` → `/eld` → `/inventory` until leftover-CERTIFIED. No board-poll idle. No `trigger_deploy` |
+| Cursor | 9222 | leftover-6 stamped | **U14 omit.** NOW leftover `/docs` `/program` `/system`. **Do not loop `/425c`.** No leftover-6 recertify |
+| CC-1 | 9223 | leftover-6 L1–L2 stamped | Accounting+factoring omit. NOW next money unique. No `/lists` `/legal` `/docs`. HOLD forbidden |
+| CC-2 | 9224 | leftover-6 L3 stamped | Settlements omit. NOW `/fuel` remainder. No Close remake. No leftover-6 recertify |
+| CC-3 | 9225 | leftover-6 L4–L6 stamped | lists+legal omit. NOW `/maintenance` remainder. No leftover-6 recertify. No `trigger_deploy` |
 | Codex | 9226 | leftover unique | U14 7–9 omit restamp. NOW Chrome leftover `/customers` → `/drivers` → `/fleet`. Never steal `/docs` `/cash-flow` `/compliance` |
 | Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. ACK≠audit |
 | Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors` EXTENT. Not scribe |
