@@ -7,15 +7,17 @@ import { readFileSync } from "node:fs";
 
 const SVC = "apps/backend/src/mdata/units-unified-list.service.ts";
 const ROUTE = "apps/backend/src/mdata/units.routes.ts";
-const failures = [];
+const readFailures = [];
 const read = (p) => {
-  try { return readFileSync(p, "utf8"); } catch { failures.push(`${p}: missing`); return ""; }
+  try { return readFileSync(p, "utf8"); } catch { readFailures.push(`${p}: missing`); return ""; }
 };
 
 const svc = read(SVC);
 const route = read(ROUTE);
 
-if (svc) {
+export function audit(svc, route) {
+  const failures = [];
+  if (svc) {
   // deactivated_at filter must be GATED by include_inactive, not hardcoded.
   if (/const truckFilters: string\[\] = \["deactivated_at IS NULL"/.test(svc) ||
       /const trailerFilters: string\[\] = \["deactivated_at IS NULL"/.test(svc)) {
@@ -30,9 +32,9 @@ if (svc) {
       !/tenantFilter\(trailerValues, options\.operating_company_id\)/.test(svc)) {
     failures.push(`${SVC}: tenant scope filter (tenantFilter) must remain — include_inactive may not touch RLS/cross-entity scope`);
   }
-}
+  }
 
-if (route) {
+  if (route) {
   // RLS scoping (set_config of app.operating_company_id) must remain on the list path.
   if (!/set_config\('app\.operating_company_id'/.test(route)) {
     failures.push(`${ROUTE}: app.operating_company_id RLS set_config must remain`);
@@ -40,11 +42,32 @@ if (route) {
   if (!/include_inactive/.test(route)) {
     failures.push(`${ROUTE}: include_inactive must be parsed and passed through`);
   }
+  }
+  return failures;
 }
 
+const failures = [...readFailures, ...audit(svc, route)];
 if (failures.length) {
   console.error("verify:fleet-include-inactive-scope — FAIL");
   for (const f of failures) console.error("  - " + f);
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    [svc.replace('if (!options.include_inactive) truckFilters.push("deactivated_at IS NULL")', ""), route],
+    [svc.replace('if (!options.include_inactive) trailerFilters.push("deactivated_at IS NULL")', ""), route],
+    [svc.replace("tenantFilter(truckValues, options.operating_company_id)", "TRUE"), route],
+    [svc.replace("tenantFilter(trailerValues, options.operating_company_id)", "TRUE"), route],
+    [svc, route.replaceAll("set_config('app.operating_company_id'", "set_config('app.wrong_company_id'")],
+    [svc, route.replaceAll("include_inactive", "include_archived_missing")],
+  ];
+  for (const [index, [mutatedSvc, mutatedRoute]] of mutations.entries()) {
+    if ((mutatedSvc === svc && mutatedRoute === route) || audit(mutatedSvc, mutatedRoute).length === 0) {
+      console.error(`verify:fleet-include-inactive-scope — SELFTEST FAIL mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:fleet-include-inactive-scope — SELFTEST PASS (${mutations.length}/${mutations.length})`);
 }
 console.log("verify:fleet-include-inactive-scope — OK (widens fetch only; tenant/RLS scope intact)");
