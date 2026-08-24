@@ -9,6 +9,7 @@ const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   vendor_id: z.string().uuid().optional(),
   work_order_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
 });
 // ACCT-F5756 — no frontend caller of DELETE exists yet (verified via repo-wide grep before this fix),
 // so this can add a reason without breaking an in-flight UI; defaults to a fixed reason for API
@@ -66,6 +67,10 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       if (query.data.work_order_id) {
         values.push(query.data.work_order_id);
         filters.push(`pil.work_order_id = $${values.length}::uuid`);
+      }
+      if (query.data.unit_id) {
+        values.push(query.data.unit_id);
+        filters.push(`wo.unit_id = $${values.length}::uuid`);
       }
       const res = await client.query(
         `

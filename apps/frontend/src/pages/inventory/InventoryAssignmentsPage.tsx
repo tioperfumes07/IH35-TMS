@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
@@ -29,12 +29,14 @@ function formatWhen(iso: string | null | undefined) {
  * Distinct from Purchase History (/inventory/purchases) — that door is kept (never deleted).
  */
 export function InventoryAssignmentsPage() {
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const unitId = searchParams.get("unit_id") ?? "";
 
   const assignmentsQuery = useQuery({
-    queryKey: ["maintenance", "parts-assignments", companyId],
-    queryFn: () => getPartsAssignmentsPage(companyId),
+    queryKey: ["maintenance", "parts-assignments", companyId, unitId],
+    queryFn: () => getPartsAssignmentsPage(companyId, unitId ? { unit_id: unitId } : undefined),
     enabled: Boolean(companyId),
   });
 
@@ -148,6 +150,15 @@ export function InventoryAssignmentsPage() {
     <div className="space-y-4">
       <PageHeader title="Assignments" backHref="/inventory" breadcrumb={["Inventory", "Assignments"]} />
       <InventoryModuleTabs />
+
+      {unitId ? (
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          Showing assignments for the selected unit.{" "}
+          <Link className="underline" to="/inventory/assignments">
+            View all units
+          </Link>
+        </div>
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
         Parts used on work orders appear in this assignment trail. Stock on-hand and purchase receipts stay on{" "}

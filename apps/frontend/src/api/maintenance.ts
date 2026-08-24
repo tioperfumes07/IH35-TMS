@@ -810,11 +810,12 @@ export type PartsAssignmentsResponse = {
 
 export function getPartsAssignmentsPage(
   operatingCompanyId: string,
-  filters?: { vendor_id?: string; work_order_id?: string },
+  filters?: { vendor_id?: string; work_order_id?: string; unit_id?: string },
 ) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters?.vendor_id) query.set("vendor_id", filters.vendor_id);
   if (filters?.work_order_id) query.set("work_order_id", filters.work_order_id);
+  if (filters?.unit_id) query.set("unit_id", filters.unit_id);
   return apiRequest<PartsAssignmentsResponse>(
     `/api/v1/maintenance/parts-invoice-links?${query.toString()}`
   );
@@ -822,7 +823,7 @@ export function getPartsAssignmentsPage(
 
 export function listPartsAssignments(
   operatingCompanyId: string,
-  filters?: { vendor_id?: string; work_order_id?: string },
+  filters?: { vendor_id?: string; work_order_id?: string; unit_id?: string },
 ) {
   return getPartsAssignmentsPage(operatingCompanyId, filters).then((result) => result.rows);
 }
