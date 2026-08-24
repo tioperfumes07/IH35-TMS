@@ -74,15 +74,28 @@ function exhibitSection(title: string, flagged: number[], rows: ExhibitRow[]) {
   return `<div class="section">${title}</div><table style="border:1px solid #cbd5e1">${items.join("")}</table>`;
 }
 
+function requireCourtPrintAnswers(report: Record<string, unknown>) {
+  const part1 = (report.part1_answers as Record<string, string>) ?? {};
+  const part2 = (report.part2_answers as Record<string, string>) ?? {};
+  const answers = { ...part1, ...part2 };
+  for (let n = 1; n <= 18; n += 1) {
+    const ans = String(answers[String(n)] ?? "").trim().toLowerCase();
+    if (ans !== "yes" && ans !== "no" && ans !== "na") {
+      throw new Error("form_425c_answers_incomplete");
+    }
+  }
+  return answers;
+}
+
 function buildPrintHTML(
   report: Record<string, unknown>,
   profile: Record<string, unknown> | undefined,
   exhibitA: ExhibitRow[] = [],
   exhibitB: ExhibitRow[] = [],
 ) {
-  const part1 = (report.part1_answers as Record<string, string>) ?? {};
-  const part2 = (report.part2_answers as Record<string, string>) ?? {};
-  const answers = { ...part1, ...part2 };
+  const companyName = String(profile?.company_name ?? "").trim();
+  if (!companyName) throw new Error("form_425c_profile_required");
+  const answers = requireCourtPrintAnswers(report);
   const netCash = nv(report.line_20_receipts) - nv(report.line_21_disbursements);
   const cashEnd = nv(report.line_19_opening_cash) + netCash;
   const projNetPrev = nv(report.line_32_proj_receipts) - nv(report.line_33_proj_disbursements);
@@ -94,14 +107,14 @@ function buildPrintHTML(
   const mrow = (line: number, label: string, value: string) =>
     `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>${line}.</strong> ${label}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:right;">$${value}</td></tr>`;
   const qrow = (num: number, text: string, expectYes: boolean) => {
-    const ans = String(answers[String(num)] ?? (expectYes ? "yes" : "no"));
+    const ans = String(answers[String(num)] ?? "").trim().toLowerCase();
     const flagged = (expectYes && ans === "no") || (!expectYes && ans === "yes");
     return `<tr style="${flagged ? "background:#fff8f8;" : ""}"><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;">${num}. ${text}${flagged ? " <em style='color:#c00'>[Exhibit required]</em>" : ""}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:center;">${ans.toUpperCase()}</td></tr>`;
   };
 
   return `<!doctype html><html><head><meta charset="utf-8" /><style>@page{size:letter;margin:.5in}.section{background:#1e3a6a;color:#fff;padding:4px 8px;margin-top:8px;font-weight:700}table{width:100%;border-collapse:collapse}body{font-family:Arial,sans-serif;font-size:12px}</style></head><body>
   <h2 style="margin:0">Official Form 425C — Monthly Operating Report</h2>
-  <div style="margin:4px 0 10px;color:#334155;">${String(profile?.company_name ?? "Debtor")} · ${labelForMonth(String(report.reporting_month ?? ""))}</div>
+  <div style="margin:4px 0 10px;color:#334155;">${companyName} · ${labelForMonth(String(report.reporting_month ?? ""))}</div>
 
   <div class="section">1. Questionnaire</div>
   <table style="border:1px solid #cbd5e1">${QUESTIONNAIRE.map(([n, t, ey]) => qrow(n, t, ey)).join("")}</table>
@@ -140,7 +153,7 @@ function buildPrintHTML(
   ${exhibitSection(
     "Exhibit A — lines 1–9",
     QUESTIONNAIRE.filter(([n, , ey]) => {
-      const ans = String(answers[String(n)] ?? (ey ? "yes" : "no"));
+      const ans = String(answers[String(n)] ?? "").trim().toLowerCase();
       return n <= 9 && ((ey && ans === "no") || (!ey && ans === "yes"));
     }).map(([n]) => n),
     exhibitA,
@@ -148,7 +161,7 @@ function buildPrintHTML(
   ${exhibitSection(
     "Exhibit B — lines 10–18",
     QUESTIONNAIRE.filter(([n, , ey]) => {
-      const ans = String(answers[String(n)] ?? (ey ? "yes" : "no"));
+      const ans = String(answers[String(n)] ?? "").trim().toLowerCase();
       return n >= 10 && ((ey && ans === "no") || (!ey && ans === "yes"));
     }).map(([n]) => n),
     exhibitB,

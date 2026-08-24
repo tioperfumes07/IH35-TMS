@@ -315,8 +315,14 @@ export function collectProblems(src) {
   if (!pdfLib.includes("form_425c_filing_file_insert_failed") || pdfLib.includes("fileInsert.rows[0]?.id ?? null")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must throw when docs.files INSERT returns no id — null fileId marked the MOR ready");
   }
-  if (!pdfLib.includes("form_425c_profile_required") || pdfLib.includes('?? "IH 35"')) {
-    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: missing profile must throw — suggested_filename used IH 35 on a court artifact");
+  if (!pdfLib.includes("form_425c_profile_required") || pdfLib.includes('?? "IH 35"') || pdfLib.includes('?? "Debtor"')) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: missing profile must throw — suggested_filename used IH 35 / Debtor on a court artifact");
+  }
+  if (!pdfLib.includes("form_425c_answers_incomplete") || pdfLib.includes('?? (expectYes ? "yes" : "no")')) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: unanswered questionnaire must throw — inventing yes/no on a court print is silent fabrication");
+  }
+  if (!routes.includes("sendForm425CAnswersIncomplete") || !src.includes("questionnaire is incomplete")) {
+    problems.push(`${PAGE}: Generate/reprint must 422 unanswered 1–18 and the client must not invent Yes/No after empty HTML`);
   }
   if (!pdfLib.includes("putObjectBytes") || !pdfLib.includes("isR2Configured") || !pdfLib.includes("form_425c_r2_put_failed")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must putObjectBytes before docs.files upload_completed_at — r2_key-only was a silent court artifact");
@@ -447,6 +453,7 @@ const good = `
   String(res.print_html ?? "").trim()
   Generate returned empty filing HTML
   Profiles has no debtor name
+  questionnaire is incomplete
   tab === "merge"
           historyPrintMutation.mutate(form.reportId);
           status unchanged
