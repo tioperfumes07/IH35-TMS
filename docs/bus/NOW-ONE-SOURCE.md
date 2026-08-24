@@ -1,6 +1,8 @@
-# NOW — ONE SOURCE (owner 2026-08-23 22:40 CT)
+# NOW — ONE SOURCE (owner 2026-08-23 23:05 CT)
 
 **This file is the only NOW.** Every session, every seat: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
+
+**U14 14/14 CERTIFIED means the exclusive 14-module pass is finished — not that you stop.** No stamp / never recertify = do not walk those 14 hops again. You **certify leftover modules in parallel** from the POST table. Idle = defect.
 
 **AFTER URGENT 14:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` — that table is the sequence for **all** coders. Paste pack: `docs/bus/PASTE-ALL-SEATS-NOW.md`.
 
@@ -26,7 +28,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW (one URL / one id) | Do |
 |------|------|------------------------|----|
-| **Cursor** | **9222** | `https://app.ih35dispatch.com/425c` leftover unique | POST row 4. 500 / dead / silent only. Do not remake #15053–#15247. Then next unclaimed POST row. |
+| **Cursor** | **9222** | `https://app.ih35dispatch.com/425c` leftover unique | POST row 4. 500 / dead / silent only. Do not remake #15053–#15257. Then next unclaimed POST row. |
 | **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | POST rows 1–2. Fully-Wired 1–12 Live Chrome. STOP `/425c`. Money TESTs only. |
 | **CC-2** | **9224** | `CLASS-F5973-TRUE-REMAINDER-FUEL` | POST row 12 leftover. Chrome `/fuel` unique. No Close remake. |
 | **CC-3** | **9225** | `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` | POST 6–16 walked. Chrome `/maintenance` unique. lists+legal omit. |

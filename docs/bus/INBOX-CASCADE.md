@@ -1,17 +1,13 @@
 # INBOX-CASCADE
 
-**AFTER U14:** audit overlay — not leftover product.  
-**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`  
-Law: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
+**U14 is DONE. You do not recertify. You audit leftover EXTENT so fixers have unique FINDINGs.**
 
-**READ:** `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
+AUDIT ONLY. DO NOT FIX. DO NOT OPEN PRODUCT PRs.
 
-**AUDIT ONLY. DO NOT FIX. DO NOT OPEN PRODUCT PRs.**
+**NOW:** Chrome `/accounting` CONNECTIVITY-EXTENT → banking → settlements → factoring → dispatch. File FINDING or AUDIT-PASS on FINDINGS-BOARD + GUARD-WORKORDERS this session.
 
-U14 14/14 CERTIFIED. Never recertify. ACK ≠ audit. HOLD = defect.
+READ: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
 
-**NOW:** Chrome `/accounting` CONNECTIVITY-EXTENT → fill `U14-01-accounting.md` → banking → settlements → factoring → dispatch. Unique FINDING → FINDINGS-BOARD + GUARD-WORKORDERS.
-
-FORBIDDEN: product PRs · recertify · leftover product on Cursor `/425c` or CC-1 money
+FORBIDDEN: idle · product PRs · recertify · leftover product on `/425c` or `/cash-flow`
 
 OUTBOX: `Cascade | ACK | POST-U14-SEQUENCE | NOW=/accounting EXTENT | GO`
