@@ -106,6 +106,9 @@ export function VoidCancelReasonsListPage() {
     onError: (error) => setConflictError(parseConflict(error)),
   });
 
+  // LISTS-F6334: unlike createMutation/updateMutation above (both wire onError to
+  // setConflictError), deactivateMutation had no onError at all — a rejected deactivate silently
+  // did nothing.
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => deactivateVoidCancelReason(id),
     onSuccess: async () => {
@@ -113,6 +116,7 @@ export function VoidCancelReasonsListPage() {
       setModalMode(null);
       setActiveRow(null);
     },
+    onError: (error) => setConflictError(parseConflict(error) ?? "Could not deactivate this reason."),
   });
 
   const allRows = listQuery.data?.reasons ?? [];

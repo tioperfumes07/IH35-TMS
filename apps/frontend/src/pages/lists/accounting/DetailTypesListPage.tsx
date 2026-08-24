@@ -112,9 +112,13 @@ export function DetailTypesListPage() {
     onSuccess: async () => { await invalidate(); setModalMode(null); setActiveRow(null); },
     onError: (e) => setSubmitError(e instanceof ApiError ? String((e.data as Record<string, unknown>)?.error ?? e.message) : "Failed to update detail type."),
   });
+  // LISTS-F6334: unlike createMutation/updateMutation above (both wire onError to
+  // setSubmitError), deactivateMutation had no onError at all — a rejected deactivate silently
+  // did nothing.
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => detailTypesCatalogClient.deactivate(id, companyId),
     onSuccess: async () => { await invalidate(); setModalMode(null); setActiveRow(null); },
+    onError: (e) => setSubmitError(e instanceof ApiError ? String((e.data as Record<string, unknown>)?.error ?? e.message) : "Failed to deactivate detail type."),
   });
 
   const nextSort = rows.length ? Math.max(...rows.map((r) => r.sort_order ?? 0)) + 1 : 100;
