@@ -1,9 +1,11 @@
 # INBOX-CC-3 · 9225
 
-**RUNBOOK:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md`
+**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
 
-**NOW THIS TURN (U14):** `/lists` then `/maintenance` then `/legal`. Current `healthz`. CREATE labeled TEST if empty. Unique 500 / dead / silent only. FAST-MERGE.
+**NOW:** Deep-dive leftover chrome `/help` `/program` `/system` `/inventory` `/users` `/docs` `/home` on current `healthz`.
 
-CLASS-F5973 maint **exhausted** — do not remake roadside / triage 0-queue. CRM honest empty. Never `trigger_deploy`.
+Then `/lists` `/maintenance` `/legal` **unique only** — do not restamp U14, do not remake roadside / CLASS-F5973 exhausted leaves.
 
-OUTBOX: `CC-3 | ACK | U14+6 | PORT=9225 | NOW=/lists | GO`
+CREATE-TEST-THEN-VOID. FAST-MERGE. Never `trigger_deploy`.
+
+OUTBOX: `CC-3 | ACK | DEEP-DIVE-HUNT | PORT=9225 | NOW=/help | GO`

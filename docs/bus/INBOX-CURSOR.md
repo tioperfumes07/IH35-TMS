@@ -1,12 +1,11 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**RUNBOOK:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md`
+**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`  
+**SHORT:** `docs/bus/CODER-INSTRUCTIONS-NOW.md`
 
 **NOW:**
-1. FAST-MERGE fuel spend fail-loud (no fake $0).
-2. Live Chrome `/customers` Statements / Recurring / Late Fees — create TEST invoice if empty.
-3. Stamp CERTIFIED COMPLETE only on current `healthz` after unique=none. U14+next 6. Never fake-stamp.
+1. Lead the deep-dive hunt. Fan unique FINDINGS. FAST-MERGE. Deploy 5–10 min AND 5–10 PRs, one in-flight.
+2. Overflow unique anywhere (cash-flow fake-$0, customers money tabs, fuel fail-loud remainder).
+3. Never restamp U14. Never 1–12 recertify. `/425c` do not loop.
 
-Deploy 5–10 min AND 5–10 PRs. One in-flight. `/425c` do not loop.
-
-OUTBOX: `Cursor | ACK | U14+6 | PORT=9222 | NOW=fuel+customers | GO`
+OUTBOX: `Cursor | ACK | DEEP-DIVE-HUNT | PORT=9222 | NOW=unique-hunt | GO`

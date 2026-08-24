@@ -2,7 +2,7 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**THIS HOUR:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md` — U14 + next 6 launch-ready on current `healthz`. CREATE-TEST-THEN-VOID.
+**THIS HOUR:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md` — deep dive unique 500/dead/silent/fake-$0. U14 never restamp. CREATE-TEST-THEN-VOID.
 
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
