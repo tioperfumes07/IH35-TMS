@@ -60,6 +60,12 @@ export function audit(src) {
   if (!/getFuelSavingsSummary/.test(src.plannerHome) || !/SavingsPanel/.test(src.plannerHome)) {
     failures.push(`${FILES.plannerHome}: must mount SavingsPanel wired to getFuelSavingsSummary (connectivity)`);
   }
+  if (!/savingsQuery\.isError \? \(\s*<div data-testid="fuel-history-savings-error">\s*<ListErrorBanner onRetry=\{\(\) => void savingsQuery\.refetch\(\)\}/.test(src.plannerHome)) {
+    failures.push(`${FILES.plannerHome}: History savings must show a retryable error instead of fake $0 values`);
+  }
+  if (!/savingsQuery\.isError \? \(\s*<div data-testid="fuel-planner-savings-error">\s*<ListErrorBanner onRetry=\{\(\) => void savingsQuery\.refetch\(\)\}/.test(src.plannerHome)) {
+    failures.push(`${FILES.plannerHome}: Planner savings must show a retryable error instead of fake $0 values`);
+  }
   if (!/CreateFuelTransactionModal/.test(src.plannerHome)) {
     failures.push(`${FILES.plannerHome}: must mount CreateFuelTransactionModal`);
   }
@@ -92,6 +98,9 @@ if (process.argv.includes("--selftest")) {
     { key: "importModal", from: "await importFuelTransactions(operatingCompanyId", to: "await importFuelTransactions(REMOVED" },
     { key: "uploadModal", from: "await uploadLovesPrices(operatingCompanyId", to: "await uploadLovesPrices(REMOVED" },
     { key: "plannerHome", from: "SavingsPanel", to: "SavingsPane1" },
+    { key: "plannerHome", from: "fuel-history-savings-error", to: "fuel-history-savings-removed" },
+    { key: "plannerHome", from: "fuel-planner-savings-error", to: "fuel-planner-savings-removed" },
+    { key: "plannerHome", from: "savingsQuery.refetch()", to: "Promise.resolve()" },
     { key: "plannerHome", from: "CreateFuelTransactionModal", to: "CreateFuelTransactionM0dal" },
     { key: "plannerHome", from: "ImportFuelTransactionsModal", to: "ImportFuelTransactionsM0dal" },
     { key: "plannerHome", from: "UploadLovesPricesModal", to: "UploadLovesPricesM0dal" },
