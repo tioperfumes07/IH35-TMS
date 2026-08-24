@@ -338,15 +338,23 @@ async function recomputeRenditionTotal(client: DbClient, operatingCompanyId: str
 }
 
 /**
- * Candidate taxable assets for the rendering entity — the fleet it OWNS (owner_company_id). Tractors
- * (mdata.units) + trailers (mdata.equipment). Powers "listing the taxable business personal property" and
- * the inline "+ add asset line" picker. Connectivity: rendition ← assets.
+ * Candidate taxable assets for the rendering entity — the fleet it OPERATES, owned OR leased
+ * (COALESCE(currently_leased_to_company_id, owner_company_id), COMP-F6310). Tractors (mdata.units) +
+ * trailers (mdata.equipment). Powers "listing the taxable business personal property" and the inline
+ * "+ add asset line" picker. Connectivity: rendition ← assets.
  */
 export async function listCandidateAssets(client: DbClient, operatingCompanyId: string): Promise<CandidateAsset[]> {
+  // COMP-F6310: was `WHERE owner_company_id = $1` only — every fleet unit/trailer USMCA (and TRANSP)
+  // actually runs is LEASED, not owned (TRK=owner, TRANSP/USMCA=lease per
+  // config/samsara-carrier-attribution.json), so the raw owner_company_id filter matched 0 rows for
+  // both tables (live-confirmed: 0 owned / 44 leased units, 0 owned / 6 leased equipment on USMCA) —
+  // the "+ Create Line" asset picker had nothing to select, ever, for any leased-fleet entity. Fixed
+  // to the same COALESCE(currently_leased_to_company_id, owner_company_id) predicate already
+  // canonical elsewhere in this codebase (e.g. dashboard.routes.ts's severe-alerts/rm-status joins).
   const unitsRes = await client.query<{ id: string; unit_number: string; vin: string | null; make: string | null; model: string | null; year: number | null; acquired_date: string | null }>(
     `SELECT id::text, unit_number, vin, make, model, year, acquired_date::text
      FROM mdata.units
-     WHERE owner_company_id = $1::uuid AND deactivated_at IS NULL
+     WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid AND deactivated_at IS NULL
      ORDER BY unit_number
      LIMIT 500`,
     [operatingCompanyId]
@@ -354,7 +362,7 @@ export async function listCandidateAssets(client: DbClient, operatingCompanyId: 
   const equipRes = await client.query<{ id: string; equipment_number: string; vin: string | null; equipment_type: string | null; make: string | null; model: string | null; year: number | null; acquired_date: string | null }>(
     `SELECT id::text, equipment_number, vin, equipment_type, make, model, year, acquired_date::text
      FROM mdata.equipment
-     WHERE owner_company_id = $1::uuid AND deactivated_at IS NULL
+     WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid AND deactivated_at IS NULL
      ORDER BY equipment_number
      LIMIT 500`,
     [operatingCompanyId]
