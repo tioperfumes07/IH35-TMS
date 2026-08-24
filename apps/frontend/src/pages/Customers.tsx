@@ -260,12 +260,33 @@ function CustomerActivityFeed({
   );
 }
 
+function CustomerNotesTab({ customer, onEdit }: { customer: Customer; onEdit: () => void }) {
+  const notes = displayEntityNotes(customer.notes).trim();
+  return (
+    <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="customer-notes-tab">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Customer notes</h3>
+          <p className="text-xs text-gray-500">Notes saved on this customer profile.</p>
+        </div>
+        <Button type="button" variant="secondary" className="h-8" onClick={onEdit}>
+          Edit notes
+        </Button>
+      </div>
+      {notes ? (
+        <p className="whitespace-pre-wrap text-sm text-gray-800">{notes}</p>
+      ) : (
+        <p className="text-sm text-gray-500">No notes recorded for this customer.</p>
+      )}
+    </section>
+  );
+}
+
 const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
   statements: "Statements will render billing statements for a date range. Needs a customer statement generator endpoint — flagged as a follow-up.",
   recurring_transactions: "Recurring Transactions lists recurring invoice/charge templates for this customer. Needs a recurring-templates data source — flagged as a follow-up.",
   projects: "Projects groups loads/invoices under a customer project. Needs a projects data source — flagged as a follow-up.",
   late_fees: "Late Fees will show configured late-fee rules and applied fees. Needs a late-fee config/data source — flagged as a follow-up.",
-  notes: "Notes will hold free-form customer notes and history. Needs a notes thread endpoint — flagged as a follow-up.",
   tasks: "Tasks will list follow-up tasks tied to this customer. Needs a customer-linked tasks source — flagged as a follow-up.",
   opportunities: "Opportunities tracks sales pipeline for this customer. Needs a CRM opportunities source — flagged as a follow-up.",
   conversations: "Conversations threads customer communications. Needs a conversations/messaging source — flagged as a follow-up.",
@@ -984,6 +1005,11 @@ export function CustomersPage() {
                 <CustomerActivityFeed
                   operatingCompanyId={companyId}
                   customerId={selectedCustomer.id}
+                />
+              ) : activeTab === "notes" ? (
+                <CustomerNotesTab
+                  customer={selectedCustomer}
+                  onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
                 />
               ) : activeTab === "tasks" ? (
                 <TasksTab

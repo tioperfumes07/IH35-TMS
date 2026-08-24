@@ -354,7 +354,10 @@
       "tab": "Customer Detail",
       "sub": "Notes tab",
       "route_hint": "/customers?tab=notes",
-      "required": []
+      "required": [
+        "customer",
+        "connectivity"
+      ]
     },
     {
       "id": "md.tasks",
@@ -846,7 +849,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "7 of 45 leaves in the customers module itself remain FALSE \u2014 the 7 md.* master-detail sub-tabs (statements/recurring_transactions/projects/late_fees/notes/opportunities/conversations) render only a static CustomerTabComingState placeholder, zero data query wired to any customer_id. Activity Feed was removed from this correction by CUST-F6310 after it gained a real customer-scoped audit-spine query. All other leaves are genuinely customer-scoped (list rows are customer records, or the detail page is keyed on the route's own :id, which IS the customer).",
+      "note": "6 of 45 leaves in the customers module itself remain FALSE \u2014 the 6 md.* master-detail sub-tabs (statements/recurring_transactions/projects/late_fees/opportunities/conversations) render only a static CustomerTabComingState placeholder, zero data query wired to any customer_id. Activity Feed and Notes were removed from this correction by CUST-F6310/CUST-F6311 after they gained real selected-customer data. All other leaves are genuinely customer-scoped (list rows are customer records, or the detail page is keyed on the route's own :id, which IS the customer).",
       "drops": [
         {
           "id": "md.statements",
@@ -868,12 +871,6 @@
         },
         {
           "id": "md.late_fees",
-          "removed": [
-            "customer"
-          ]
-        },
-        {
-          "id": "md.notes",
           "removed": [
             "customer"
           ]
@@ -913,7 +910,7 @@
     "connectivity_column_2026_08_14": {
       "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
       "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
-      "leaves_touched": 7,
+      "leaves_touched": 6,
       "drops": [
         {
           "id": "md.statements",
@@ -938,13 +935,6 @@
         },
         {
           "id": "md.late_fees",
-          "removed": [
-            "connectivity"
-          ],
-          "reason": "static CustomerTabComingState placeholder"
-        },
-        {
-          "id": "md.notes",
           "removed": [
             "connectivity"
           ],
