@@ -57,6 +57,7 @@ import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDeta
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { partNeedsReorder } from "./parts-low-stock";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
@@ -302,15 +303,24 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "active_wos" ? (
         <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
-        <WorkOrdersTable
-          rows={workOrdersQuery.data?.work_orders ?? []}
-          operatingCompanyId={companyId}
-          loading={workOrdersQuery.isPending || (workOrdersQuery.isFetching && (workOrdersQuery.data?.work_orders?.length ?? 0) === 0)}
-          sourceTypeFilter={sourceTypeFilter}
-          externalVendorFilter={externalVendorFilter}
-          onSourceTypeChange={setSourceTypeFilter}
-          onExternalVendorChange={setExternalVendorFilter}
-        />
+        {workOrdersQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load active work orders"
+            status={0}
+            message={(workOrdersQuery.error as Error)?.message}
+            onRetry={() => void workOrdersQuery.refetch()}
+          />
+        ) : (
+          <WorkOrdersTable
+            rows={workOrdersQuery.data?.work_orders ?? []}
+            operatingCompanyId={companyId}
+            loading={workOrdersQuery.isPending || (workOrdersQuery.isFetching && (workOrdersQuery.data?.work_orders?.length ?? 0) === 0)}
+            sourceTypeFilter={sourceTypeFilter}
+            externalVendorFilter={externalVendorFilter}
+            onSourceTypeChange={setSourceTypeFilter}
+            onExternalVendorChange={setExternalVendorFilter}
+          />
+        )}
         </div>
       ) : null}
 

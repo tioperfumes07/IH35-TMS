@@ -2469,6 +2469,14 @@
       "leafRe": "^maintenance\\.modal\\.create_work_order$",
       "guard": "scripts/verify-maintenance-wo-identity-read-failure-truth.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "MAINTENANCE-ACTIVE-WORK-ORDERS-FAILURE-TRUTH",
+      "modules": ["maintenance"],
+      "cols": ["connectivity"],
+      "leafRe": "^wo\\.console\\.list$",
+      "guard": "scripts/verify-maintenance-active-work-orders-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
