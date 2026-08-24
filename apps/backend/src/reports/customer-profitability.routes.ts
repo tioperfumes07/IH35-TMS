@@ -116,7 +116,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           GROUP BY l.customer_id
         `,
         [companyId, pStart, pEnd]
-      ).catch(() => ({ rows: [] as Array<{ customer_id: string; cost_cents: string }> }));
+      );
       const costRows = costRes.rows as Array<{ customer_id: string; cost_cents: string }>;
       const costMap = new Map(costRows.map((r) => [String(r.customer_id), num(r.cost_cents)]));
 
@@ -134,7 +134,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           GROUP BY i.customer_id
         `,
         [companyId]
-      ).catch(() => ({ rows: [] as Array<{ customer_id: string; open_cents: string; past_due: boolean }> }));
+      );
       const arRows = arRes.rows as Array<{ customer_id: string; open_cents: string; past_due: boolean }>;
       const arMap = new Map<string, { open: number; pastDue: boolean }>(
         arRows.map((r) => [String(r.customer_id), { open: num(r.open_cents), pastDue: Boolean(r.past_due) }])
