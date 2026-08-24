@@ -66,6 +66,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       // BANK-ACCOUNT-HIDE: every cash aggregate below must exclude accounts hidden for THIS entity
       // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      // Feature flag miss → hide OFF (default). Not a money aggregate; do not invent balances.
       const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
       const bankRes = await client
         .query(
@@ -92,8 +93,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
             ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [{ payroll_cents: "0", dip_cents: "0", total_cents: "0" }] }));
+        );
 
       const payroll = num(bankRes.rows[0]?.payroll_cents);
       const dip = num(bankRes.rows[0]?.dip_cents);
@@ -112,8 +112,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
 
       const factorRow = factorRes.rows[0] ?? {};
       const factoringReservesCents = Math.round(num(factorRow.reserve_balance) * 100);
@@ -135,8 +134,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ c: "0" }] }));
+        );
 
       const horizonEndSql = `($2::date + INTERVAL '30 days')::date`;
 
@@ -153,8 +151,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND i.due_date <= ${horizonEndSql}
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ amt: "0" }] }));
+        );
 
       const apRes = await client
         .query(
@@ -169,8 +166,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND COALESCE(b.due_date, b.bill_date) <= ${horizonEndSql}
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ amt: "0" }] }));
+        );
 
       const settleRes = await client
         .query(
@@ -184,8 +180,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND s.period_end >= $2::date
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ amt: "0" }] }));
+        );
 
       const expectedAr = num(arRes.rows[0]?.amt);
       const expectedAp = num(apRes.rows[0]?.amt);
@@ -220,8 +215,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ inflow: "0", outflow: "0" }] }));
+        );
 
       const hist30 = await client
         .query(
@@ -243,8 +237,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
-        )
-        .catch(() => ({ rows: [{ inflow: "0", outflow: "0" }] }));
+        );
 
       const in7 = num(hist7.rows[0]?.inflow);
       const out7 = num(hist7.rows[0]?.outflow);

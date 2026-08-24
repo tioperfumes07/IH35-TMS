@@ -1,9 +1,9 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**RUNBOOK:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md`
+**INSTRUCTIONS:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md`
 
-**NOW THIS TURN:** `/accounting` on **current** `healthz/shallow`. CREATE-TEST-THEN-VOID — labeled TEST invoice or bill if the list is empty. Prove Bills **Claim** + **Work order** columns still render. Unique 500 / dead / silent only. FAST-MERGE.
+**NOW:** Deep-dive `/accounting` then `/banking` `/customers` `/vendors` `/factoring` `/settlements` on **current** `healthz/shallow`.
 
-**CLOSED — do not remake:** F03 columns · F6312 · inventory #13931 · F02/F03 · `/425c`. Never `trigger_deploy`.
+Hunt: 500, dead click, silent save, fake $0 `.catch`, reverse-empty (Neon has rows). CREATE-TEST-THEN-VOID if the list is empty. FAST-MERGE. Never `trigger_deploy`. Never `/425c`. Never restamp U14.
 
-OUTBOX: `CC-1 | ACK | U14+6 | PORT=9223 | NOW=/accounting | GO`
+OUTBOX: `CC-1 | ACK | DEEP-DIVE-HUNT | PORT=9223 | NOW=/accounting | GO`

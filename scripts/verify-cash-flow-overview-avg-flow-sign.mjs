@@ -59,6 +59,26 @@ export function checkCashFlowOverviewAvgFlowSign(src) {
     );
   }
 
+  if (/\.catch\(\(\) => \(\{ rows: \[\{ payroll_cents: "0"/.test(src)) {
+    problems.push(
+      "bank totals must not catch-fail as $0 — a query error must fail the overview, not paint fake zeros"
+    );
+  }
+  if (/\.catch\(\(\) => \(\{ rows: \[\] as Record<string, unknown>\[\] \}\)\)/.test(src)) {
+    problems.push(
+      "factoring_summary must not catch-fail as empty — a query error must fail the overview, not hide reserves/advances/chargebacks"
+    );
+  }
+  if (/\.catch\(\(\) => \(\{ rows: \[\{ c: "0" \}\] \}\)\)/.test(src)) {
+    problems.push("uncategorized count must not catch-fail as 0");
+  }
+  if ((src.match(/\.catch\(\(\) => \(\{ rows: \[\{ amt: "0" \}\] \}\)\)/g) || []).length > 0) {
+    problems.push("AR/AP/settlement totals must not catch-fail as $0");
+  }
+  if (/\.catch\(\(\) => \(\{ rows: \[\{ inflow: "0", outflow: "0" \}\] \}\)\)/.test(src)) {
+    problems.push("history inflow/outflow must not catch-fail as $0");
+  }
+
   return problems;
 }
 
@@ -91,6 +111,20 @@ if (process.argv.includes("--selftest")) {
   const goodProblems = checkCashFlowOverviewAvgFlowSign(good);
   if (goodProblems.length !== 0) {
     failures.push(`the real fixed file was flagged: ${goodProblems.join("; ")}`);
+  }
+
+  const fakeZero = good.replace(
+    "const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);",
+    `const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
+      const planted = Promise.resolve().catch(() => ({ rows: [{ payroll_cents: "0", dip_cents: "0", total_cents: "0" }] }));`,
+  );
+  if (fakeZero === good) {
+    failures.push("selftest could not plant bank-totals fake-$0 catch");
+  } else {
+    const plantedProblems = checkCashFlowOverviewAvgFlowSign(fakeZero);
+    if (!plantedProblems.some((p) => /bank totals must not catch-fail/.test(p))) {
+      failures.push(`planted fake-$0 catch not detected: ${plantedProblems.join("; ")}`);
+    }
   }
 
   // Partial fix: only hist7 fixed, hist30 still raw — proves the two blocks are checked
