@@ -21,12 +21,14 @@ import {
   fetchCandidateAssets,
   fetchRendition,
   fetchRenditions,
+  renditionPrintPath,
   updateRendition,
   type CandidateAsset,
   type Rendition,
   type RenditionLine,
   type RenditionStatus,
 } from "../../api/property-tax";
+import { openPrintableDocument } from "../../lib/openPrintableDocument";
 
 const BREADCRUMB = ["Compliance", "Business Property Tax"];
 
@@ -373,6 +375,16 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         breadcrumb={[...BREADCRUMB, `${rendition.tax_year} — ${rendition.county}`]}
         title={`${rendition.tax_year} Rendition — ${rendition.cad_name}`}
         subtitle={`Status: ${STATUS_LABEL[rendition.status]} · Due ${formatDateUS(rendition.effective_due_date)}`}
+        actions={
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="property-tax-rendition-print"
+            onClick={() => openPrintableDocument(renditionPrintPath(companyId, renditionId))}
+          >
+            Print
+          </Button>
+        }
       />
 
       {/* Header controls */}
