@@ -17,11 +17,34 @@
  * A uuid-shaped "name" (including when a list API falls back to `vendor_name: vendor_id`) is NOT a
  * name — treat it as missing so the Bills Vendor column cannot paint a raw UUID as if it resolved.
  *
+ * ACCT-F6284 — a serialized-JSON "name" is the same class of not-a-name. `accounting.bill_payments`
+ * (and `accounting.bills`) rows created by the bank-transaction-split flow write internal audit
+ * metadata straight into their `memo` column (`JSON.stringify({source:"bank_tx_split", ...})`) —
+ * that column is ALSO the exact fallback the Accounting hub's "Find Transactions" panel reads for its
+ * display label (reference_number → check_number → memo), so a real, live row rendered as literal
+ * `{"source":"bank_tx_split","bank_transaction_id":"f9cc15bf-...","split_line_no":2}` in the UI. The
+ * write-side fix (don't store internal metadata in a human-facing memo column) is money-ledger schema
+ * work outside this lane; this is the general-class guard so ANY current or future caller of
+ * entityLabel that gets handed a JSON-poisoned "name" — not just this one dashboard panel — falls
+ * back to the same honest sentence instead of dumping raw JSON at an operator.
+ *
  * `noun` should name the thing, so the fallback reads as English. Callers that genuinely have nothing
  * better can omit it and get "Record".
  */
 const UUID_SHAPE_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name. */
+function looksLikeSerializedJson(s: string): boolean {
+  const first = s[0];
+  if (first !== "{" && first !== "[") return false;
+  try {
+    const parsed = JSON.parse(s);
+    return typeof parsed === "object" && parsed !== null;
+  } catch {
+    return false;
+  }
+}
 
 export function entityLabel(
   name: unknown,
@@ -30,7 +53,7 @@ export function entityLabel(
 ): string {
   if (name != null) {
     const s = String(name).trim();
-    if (s !== "" && !UUID_SHAPE_RE.test(s)) return s;
+    if (s !== "" && !UUID_SHAPE_RE.test(s) && !looksLikeSerializedJson(s)) return s;
   }
   if (id != null && String(id).trim() !== "") return `${noun} — not visible`;
   return "Unassigned";
@@ -47,7 +70,7 @@ export function visibleDocumentLabel(
 ): string {
   if (name != null) {
     const s = String(name).trim();
-    if (s !== "" && !UUID_SHAPE_RE.test(s) && !/^unknown\b/i.test(s)) return s;
+    if (s !== "" && !UUID_SHAPE_RE.test(s) && !/^unknown\b/i.test(s) && !looksLikeSerializedJson(s)) return s;
   }
   return noun;
 }
