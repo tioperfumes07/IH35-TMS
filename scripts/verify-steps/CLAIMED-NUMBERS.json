@@ -1,4 +1,9 @@
 {
+  "4672": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-home-attention-dismiss-visible-errors-wired"
+  },
   "4670": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5933,5 +5938,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1286
+  "total_claimed": 1287
 }
