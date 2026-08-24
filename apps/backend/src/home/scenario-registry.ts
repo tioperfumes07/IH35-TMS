@@ -411,12 +411,35 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Advance issued to a driver",
     je: "DR Driver Cash Advance (asset) / CR Cash",
     spec_ref: "ADV",
-    sources: ["driver_finance.driver_advances"],
+    sources: ["driver_finance.driver_advances", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM driver_finance.driver_advances a WHERE ($1::uuid IS NULL OR a.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM driver_finance.driver_advances a
+         WHERE ($1::uuid IS NULL OR a.operating_company_id = $1::uuid)
+           AND a.driver_id IS NOT NULL
+           AND a.disbursement_status = 'disbursed'
+           AND a.disbursed_at IS NOT NULL
+           AND EXISTS (
+             SELECT 1
+               FROM accounting.posting_batches pb
+               JOIN accounting.journal_entry_postings jep
+                 ON jep.posting_batch_id = pb.id
+                AND jep.operating_company_id = pb.operating_company_id
+                AND jep.source_transaction_type = 'driver_advance'
+                AND jep.source_transaction_id = a.id
+               JOIN accounting.journal_entries je
+                 ON je.id = jep.journal_entry_uuid
+                AND je.operating_company_id = jep.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
+              WHERE pb.operating_company_id = a.operating_company_id
+                AND pb.source_transaction_type = 'driver_advance'
+                AND pb.source_transaction_id = a.id
+                AND pb.batch_status = 'posted'
+           )
       `,
-      describe: (n) => `${n} driver advance(s) recorded`,
+      describe: (n) => `${n} disbursed driver advance(s) posted to the GL`,
     },
   },
   {
