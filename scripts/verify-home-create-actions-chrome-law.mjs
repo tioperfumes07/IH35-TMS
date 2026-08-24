@@ -26,6 +26,12 @@ function audit(src) {
     if (!label.startsWith("+ ")) failures.push(`CREATE_ACTIONS label "${label}" is missing the "+ " prefix (chrome law item 8)`);
     if (/\bAdd\b/.test(label) || /\bNew\b/.test(label)) failures.push(`CREATE_ACTIONS label "${label}" uses a forbidden verb (never + New / + Add)`);
   }
+  if (/onClick=\{\(\) => navigate\(a\.to\)\}/.test(src)) {
+    failures.push("CREATE_ACTIONS must toast when no company — bare navigate was a silent empty money page");
+  }
+  if (!src.includes("Select an operating company before creating")) {
+    failures.push("CREATE_ACTIONS missing toast for no operating company");
+  }
   return failures;
 }
 
