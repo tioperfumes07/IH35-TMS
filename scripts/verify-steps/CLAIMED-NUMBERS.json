@@ -4154,6 +4154,11 @@
     "claimed_by": "codex",
     "purpose": "verify-insurance-creator-contract-depth"
   },
+  "7398": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-insurance-dashboard-route-connectivity"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
