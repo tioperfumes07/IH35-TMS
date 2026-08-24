@@ -106,26 +106,30 @@ function selftest() {
     process.exit(1);
   }
 
-  const bad = collectFailures({
-    ...base,
-    profilePage: base.profilePage.replace("InsuranceSummarySection insuranceSummary={profile.insurance_summary}", ""),
+  const mutations = [
+    { key: "section", from: "export function InsuranceSummarySection", to: "function HiddenInsuranceSummary" },
+    { key: "section", from: "monthly_premium", to: "annual_premium" },
+    { key: "section", from: 'data-testid="vp-insurance-summary"', to: 'data-testid="missing-summary"' },
+    { key: "section", from: 'data-testid="vp-insurance-monthly-premium"', to: 'data-testid="missing-premium"' },
+    { key: "section", from: "formatUsdCents", to: "String" },
+    { key: "profilePage", from: "InsuranceSummarySection", to: "MissingInsuranceSection", all: true },
+    { key: "profilePage", from: "insurance_summary", to: "insurance_placeholder", all: true },
+    { key: "profilePage", from: 'data-testid="vp-section-6b-insurance-summary"', to: 'data-testid="missing-section"' },
+    { key: "profilePage", from: "insuranceSummary={profile.insurance_summary}", to: "insuranceSummary={undefined}" },
+    { key: "aggregate", from: "insurance_summary:", to: "insurance_placeholder:" },
+    { key: "aggregate", from: "monthly_premium:", to: "annual_premium:" },
+  ];
+  const escaped = mutations.filter(({ key, from, to, all }) => {
+    const fixture = { ...base };
+    fixture[key] = all ? fixture[key].replaceAll(from, to) : fixture[key].replace(from, to);
+    return collectFailures(fixture).length === 0;
   });
-  if (!bad.some((f) => f.includes("insurance_summary"))) {
-    console.error(`${LABEL} --selftest FAIL: removing insurance_summary wiring must be caught`);
-    console.error(`  got: ${JSON.stringify(bad)}`);
+  if (escaped.length) {
+    console.error(`${LABEL} --selftest FAIL: ${escaped.length} of 11 planted defects escaped`);
     process.exit(1);
   }
 
-  const badSection = collectFailures({
-    ...base,
-    section: base.section.replace("monthly_premium", ""),
-  });
-  if (!badSection.some((f) => f.includes("monthly_premium"))) {
-    console.error(`${LABEL} --selftest FAIL: removing monthly_premium render must be caught`);
-    process.exit(1);
-  }
-
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS — 11/11 section, page, and aggregate defects detected`);
 }
 
 function main() {
