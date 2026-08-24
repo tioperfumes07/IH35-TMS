@@ -36,5 +36,24 @@ if (!/sync_kind[\s\S]{0,40}'samsara_hos_clocks'|'samsara_hos_clocks'/.test(posCr
 const probe = read("apps/backend/src/integrations/samsara/samsara-stats-probe.service.ts");
 if (!/latest_hos_clocks/.test(probe) || !/FROM samsara\.hos_snapshots/.test(probe))
   fail("the probe must surface latest_hos_clocks (our drivers' verbatim Samsara clocks, by name) for the per-driver comparison");
+for (const alias of ["stats_mapped_dca", "stats_total_dca", "stats_clock_dca"]) {
+  if (!new RegExp(`FROM mdata\\.driver_company_authorizations ${alias}[\\s\\S]{0,260}${alias}\\.operating_company_id = \\$1::uuid[\\s\\S]{0,180}${alias}\\.is_authorized = true[\\s\\S]{0,180}${alias}\\.deactivated_at IS NULL`).test(probe))
+    fail(`stats probe must preserve active selected-company authorization through ${alias}`);
+}
 
-console.log("OK verify-verbatim-hos-clocks: Samsara /fleet/hos/clocks pulled (ms->min) -> hos_snapshots; latest-per-driver reader; probe comparison.");
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    probe.replace("stats_mapped_dca.is_authorized = true", "stats_mapped_dca.is_authorized = false"),
+    probe.replace("stats_total_dca.deactivated_at IS NULL", "stats_total_dca.deactivated_at IS NOT NULL"),
+    probe.replace("stats_clock_dca.operating_company_id = $1::uuid", "stats_clock_dca.operating_company_id = d.operating_company_id"),
+  ];
+  const caught = mutations.filter((source) =>
+    !/stats_mapped_dca\.is_authorized = true/.test(source) ||
+    !/stats_total_dca\.deactivated_at IS NULL/.test(source) ||
+    !/stats_clock_dca\.operating_company_id = \$1::uuid/.test(source)
+  ).length;
+  if (caught !== mutations.length) fail(`selftest caught ${caught}/${mutations.length} shared-driver probe defects`);
+  console.log(`OK verify-verbatim-hos-clocks --selftest: caught ${caught}/${mutations.length} shared-driver probe defects`);
+} else {
+  console.log("OK verify-verbatim-hos-clocks: Samsara /fleet/hos/clocks pulled (ms->min) -> hos_snapshots; latest-per-driver reader; probe comparison.");
+}
