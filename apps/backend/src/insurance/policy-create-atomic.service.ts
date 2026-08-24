@@ -115,14 +115,13 @@ async function persistBillsOnClient(
         Math.abs(bill.amount_cents),
         `Insurance dispersal ${input.policyNumber} #${String(bill.sequence).padStart(2, "0")}`,
         input.insurerName,
-        JSON.stringify({
-          source: "insurance_wizard",
-          policy_id: input.policyId,
-          policy_number: input.policyNumber,
-          sequence: bill.sequence,
-          due_date: bill.due_date,
-          idempotency_key: idempotencyKey,
-        }),
+        // ACCT-F6284 — banking.bank_transactions.notes is rendered verbatim in
+        // BankTransactionAttachmentsNotesModal.tsx ({tx.notes}) and string-matched by several
+        // BankingTransactionsDesignView.tsx filters; a serialized object here both displays raw
+        // JSON to the user and silently breaks those substring checks. policy_id/policy_number/
+        // sequence/due_date are all already columns or derivable from the linked bill this
+        // transaction seeds; idempotency_key is stored on the bill's own qbo_idempotency_key.
+        `Insurance wizard seed transaction — policy ${input.policyNumber}, installment ${bill.sequence}`,
       ]
     );
     const txnId = txnRes.rows[0]?.id;
@@ -150,15 +149,11 @@ async function persistBillsOnClient(
         bill.due_date,
         Math.abs(bill.amount_cents),
         Math.abs(bill.amount_cents) / 100,
-        JSON.stringify({
-          source: "insurance_wizard",
-          policy_id: input.policyId,
-          policy_number: input.policyNumber,
-          sequence: bill.sequence,
-          ps_category: INSURANCE_PS_CATEGORY,
-          ps_item: psItem,
-          phase: bill.phase,
-        }),
+        // ACCT-F6284 — plain sentence, not a serialized object, in this free-text memo column;
+        // qbo_idempotency_key (bound below) already carries idempotencyKey losslessly and
+        // category_kind (set on the linked bank_transactions row) already carries ps_category/
+        // ps_item.
+        `Insurance wizard bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase})`,
         idempotencyKey,
         input.userId,
         vendorIsSampleData,
@@ -191,7 +186,10 @@ async function persistBillsOnClient(
         `${INSURANCE_PS_CATEGORY}::${psItem}`,
         billId,
         vendorId,
-        JSON.stringify({ ps_category: INSURANCE_PS_CATEGORY, ps_item: psItem, bill_id: billId }),
+        // ACCT-F6284 — plain sentence, not a serialized object, in this free-text memo column;
+        // linked_entity_id (bound above) already carries billId losslessly and category_kind
+        // already carries INSURANCE_PS_CATEGORY/psItem.
+        `${INSURANCE_PS_CATEGORY} — ${psItem} (bill ${billId})`,
         input.operatingCompanyId,
       ]
     );
