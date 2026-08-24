@@ -1,4 +1,8 @@
 import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): the same shared exclusion already required
+// on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here too — a fixture unit must not
+// inflate the Office HOME Fleet Snapshot's total-units denominator.
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -389,6 +393,8 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
             FROM mdata.units u
             WHERE u.deactivated_at IS NULL
               AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+              AND ${excludeDemoPhantomSql("u.unit_number")}
+              AND ${excludeSampleDataSql("u.is_sample_data")}
           `,
           [parsed.data.operating_company_id]
         );
@@ -399,6 +405,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
             WHERE operating_company_id = $1::uuid
               AND assigned_unit_id IS NOT NULL
               AND status::text IN ('dispatched','in_transit','delivered_pending_docs','assigned_not_dispatched')
+              AND is_sample_data IS NOT TRUE
           `,
           [parsed.data.operating_company_id]
         );
