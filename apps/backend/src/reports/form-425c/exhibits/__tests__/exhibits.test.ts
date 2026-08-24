@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { calculateUsTrusteeQuarterlyFeeCents } from "../exhibit-d-quarterly-fees.js";
+import { buildExhibitD, calculateUsTrusteeQuarterlyFeeCents, calendarQuarterContaining } from "../exhibit-d-quarterly-fees.js";
 import { billReference, buildExhibitF } from "../exhibit-f-supporting-docs.js";
 import { buildAllExhibits, getBuiltExhibits } from "../exhibits-builder.service.js";
 import { registerForm425cExhibitsRoutes } from "../routes.js";
@@ -90,6 +90,45 @@ describe("form-425c exhibits", () => {
         tier_label: "$500,000–$999,999.99 → $2,725",
       });
       expect(calculateUsTrusteeQuarterlyFeeCents(150_000_000).fee_cents).toBe(987_500);
+    });
+  });
+
+  describe("calendarQuarterContaining — F425C-EXHIBIT-D-NOT-A-REAL-QUARTER", () => {
+    it("snaps a mid-quarter month to the full calendar quarter it falls in", () => {
+      expect(calendarQuarterContaining("2026-08-15")).toEqual({
+        period_start: "2026-07-01",
+        period_end: "2026-09-30",
+      });
+    });
+
+    it("handles the first and last months of a quarter identically to the middle month", () => {
+      expect(calendarQuarterContaining("2026-01-31")).toEqual({
+        period_start: "2026-01-01",
+        period_end: "2026-03-31",
+      });
+      expect(calendarQuarterContaining("2026-12-01")).toEqual({
+        period_start: "2026-10-01",
+        period_end: "2026-12-31",
+      });
+    });
+  });
+
+  describe("buildExhibitD — must never compute the statutory fee over a partial quarter", () => {
+    it("queries the full calendar quarter even when the shared exhibits period is a single month", async () => {
+      const client = {
+        query: vi.fn(async () => ({ rows: [{ disbursements_cents: "14297341" }] })),
+      };
+      // The exhibits UI defaults to (and normally passes) one calendar month — August only here.
+      const exhibit = await buildExhibitD(client, {
+        operating_company_id: companyId,
+        period_start: "2026-08-01",
+        period_end: "2026-08-31",
+      });
+      const queryArgs = client.query.mock.calls[0]?.[1] as unknown[];
+      expect(queryArgs[1]).toBe("2026-07-01");
+      expect(queryArgs[2]).toBe("2026-09-30");
+      expect(exhibit.period_start).toBe("2026-07-01");
+      expect(exhibit.period_end).toBe("2026-09-30");
     });
   });
 
