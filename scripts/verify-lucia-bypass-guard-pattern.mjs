@@ -38,6 +38,24 @@ const GUARD_HINTS = [
   "withCompanyScope(",
 ];
 
+const DRIVER_MESSAGES_SERVICE = path.join(SRC_DIR, "drivers/messages.service.ts");
+const driverMessagesService = fs.readFileSync(DRIVER_MESSAGES_SERVICE, "utf8");
+
+function hasDriverPrincipalScope(routeLines) {
+  const route = routeLines.join("\n");
+  return (
+    route.includes("requireDriverSession(req, reply)") &&
+    route.includes("const driver = req.driver!") &&
+    route.includes("listDriverPwaMessages(client as Queryable, driver.id)") &&
+    driverMessagesService.includes("WHERE m.driver_id = $1") &&
+    driverMessagesService.includes("d.operating_company_id = m.operating_company_id") &&
+    driverMessagesService.includes("select_dca.driver_id = d.id") &&
+    driverMessagesService.includes("select_dca.company_id = m.operating_company_id") &&
+    driverMessagesService.includes("select_dca.is_authorized = true") &&
+    driverMessagesService.includes("select_dca.deactivated_at IS NULL")
+  );
+}
+
 function collectFiles(dir) {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -135,8 +153,9 @@ for (const filePath of files) {
     const fnStart = locateFunctionStart(lines, i);
     const start = fnStart >= 0 ? fnStart : 0;
     const before = lines.slice(start, i + 1);
+    const routeContext = lines.slice(routeStart, Math.min(lines.length, i + 12));
     const hasMembership = before.some((line) => lineHasGuard(line));
-    if (hasMembership) continue;
+    if (hasMembership || hasDriverPrincipalScope(routeContext)) continue;
 
     offenders.push(`${rel}:${i + 1}`);
   }
