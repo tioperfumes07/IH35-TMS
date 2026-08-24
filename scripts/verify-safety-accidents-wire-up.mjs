@@ -16,14 +16,8 @@ function read(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
 }
 
-function main() {
+export function collectFailures({ accidentsPage, sharedDrawer, tabsConfig, safetyHome, tabWrapper }) {
   const failures = [];
-  const accidentsPage = read(paths.accidentsPage);
-  const sharedDrawer = read(paths.sharedDrawer);
-  const tabsConfig = read(paths.tabsConfig);
-  const safetyHome = read(paths.safetyHome);
-  const tabWrapper = read(paths.tabWrapper);
-
   if (!accidentsPage.includes("export function AccidentsPage")) {
     failures.push("AccidentsPage.tsx missing canonical export");
   }
@@ -46,6 +40,45 @@ function main() {
     failures.push("AccidentsIncidentsTab must render AccidentsPage");
   }
 
+  return failures;
+}
+
+function main() {
+  const sources = {
+    accidentsPage: read(paths.accidentsPage),
+    sharedDrawer: read(paths.sharedDrawer),
+    tabsConfig: read(paths.tabsConfig),
+    safetyHome: read(paths.safetyHome),
+    tabWrapper: read(paths.tabWrapper),
+  };
+  if (process.argv.includes("--selftest")) {
+    const good = {
+      accidentsPage: 'export function AccidentsPage() {} data-testid="accidents-page" ../../components/safety/AccidentReportDrawer',
+      sharedDrawer: "export function AccidentReportDrawer() {}",
+      tabsConfig: 'id: "accidents", status: "Live"',
+      safetyHome: "/** @deprecated */ export function SafetyHome() {}",
+      tabWrapper: "<AccidentsPage />",
+    };
+    if (collectFailures(good).length) throw new Error(`good fixture rejected: ${collectFailures(good).join("; ")}`);
+    const mutations = [
+      ["accidentsPage", "export function AccidentsPage", "function LegacyAccidentsPage", "missing canonical export"],
+      ["accidentsPage", 'data-testid="accidents-page"', 'data-testid="removed"', "missing accidents-page test id"],
+      ["accidentsPage", "../../components/safety/AccidentReportDrawer", "./LegacyDrawer", "must import shared"],
+      ["sharedDrawer", "export function AccidentReportDrawer", "function LegacyDrawer", "missing export"],
+      ["tabsConfig", 'status: "Live"', 'status: "Hidden"', "accidents tab must be Live"],
+      ["safetyHome", "/** @deprecated */", "/** legacy */", "must carry @deprecated"],
+      ["tabWrapper", "AccidentsPage", "LegacyAccidents", "must render AccidentsPage"],
+    ];
+    for (const [field, from, to, expected] of mutations) {
+      const failures = collectFailures({ ...good, [field]: good[field].replace(from, to) });
+      if (!failures.some((failure) => failure.includes(expected))) {
+        throw new Error(`mutation escaped: ${expected} (${JSON.stringify(failures)})`);
+      }
+    }
+    console.log(`verify:safety-accidents-wire-up SELFTEST OK ${mutations.length}/${mutations.length}`);
+    return;
+  }
+  const failures = collectFailures(sources);
   if (failures.length > 0) {
     console.error("verify:safety-accidents-wire-up FAILED");
     for (const failure of failures) console.error(` - ${failure}`);
