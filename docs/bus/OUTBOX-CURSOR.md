@@ -1,3 +1,4 @@
+Cursor | DISPATCH | 2026-08-24T05:56CT | CC-2/CC-3 idle VOID · leftover-6 ON MAIN c582ee048b #15314 · Desktop INBOX rewritten · CC-2 NOW=/reports CERTIFY · CC-3 NOW=/compliance then /eld /inventory · CC-1 /cash-flow then /finance · poll-mode=defect until leftover-CERTIFIED | GO
 Cursor | DISPATCH | 2026-08-24T04:27CT | seats HAVE INSTRUCTIONS NEXT-8 · idle=defect · deploy every 10 one in-flight dep-da60rib · Cursor NOW=/home · CC-1 /cash-flow · CC-2 /fuel · CC-3 /compliance · Codex leftover unique | GO
 Cursor | DISPATCH | 2026-08-24T04:06CT | VOID U14 stamp loop · LIVE=cd79ba3 NO STAMP · #15282 F6318 · #15284 docs upload toast · Codex rebase main · NOW=/docs | GO
 Cursor | DISPATCH | 2026-08-24T03:58CT | NEXT-8 leftover pack live · CC-1 /cash-flow · CC-2 /fuel · CC-3 /compliance · Cursor /docs · Codex leftover customers · no U14 restamp · no 425c loop | GO

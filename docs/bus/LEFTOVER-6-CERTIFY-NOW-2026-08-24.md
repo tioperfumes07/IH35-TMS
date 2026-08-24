@@ -17,4 +17,6 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 Fuel remainder stays CC-2 in parallel — do not block reports on fuel if unique-empty.
 
+**CC-2 / CC-3:** poll-mode, “cycle complete,” or “zero new findings” is **forbidden** until L3–L6 are leftover-CERTIFIED. Pull `c582ee048b+`. GO.
+
 ACK: `SEAT | ACK | LEFTOVER-6 | PORT=n | NOW=<url> | GO`
