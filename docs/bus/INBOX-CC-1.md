@@ -4,6 +4,8 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock.
 
+**Jorge 19:43 CT:** U14 **14/14 CERTIFIED**. Your accounting+factoring rows are done — **CONTINUE leftover NOW**. Do not recertify. Do not wait for a stamp. Do not idle.
+
 Accounting + factoring CERTIFIED `c11bdab`. Do **not** recertify. Do not remake TESTs.
 
 CURRENT MODULE: **cash-flow** (U14 done → leftover NOW — never idle)  

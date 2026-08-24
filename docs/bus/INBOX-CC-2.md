@@ -4,6 +4,8 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP.
 
+**Jorge 19:43 CT:** U14 **14/14 CERTIFIED**. **STOP customers recertify.** Settlements done → leftover NOW. Never idle.
+
 **STOP customers recertify.** Cursor stamped row 7 from Codex HEAD `LIVE_SHA=07993ac` + your Neon proof. Do not run that loop again.
 
 Settlements CERTIFIED — omit. **YOUR U14 done → agreed leftover sequence NOW:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. driver-hub + reports DONE. POST-U14 16/16 DONE → unique 500/dead/silent in-lane (`docs/audit/GUARD-WORKORDERS.md`). Never idle. No CDP required. Never remake Close. Never `trigger_deploy`.

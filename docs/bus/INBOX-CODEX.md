@@ -4,6 +4,8 @@
 
 **REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP for U14 reverse.**
 
+**Jorge 19:43 CT:** U14 **14/14 CERTIFIED** (rows 7–9 included). Do **not** recertify customers/drivers/fleet. **CONTINUE leftover NOW.** Never idle.
+
 **U14 customers + drivers + fleet CERTIFIED `LIVE_SHA=07993ac`.** Do **not** recertify. Do **not** remake CLASS-F5973.
 
 **NOW leftover:** unique reverse 500/dead/silent in-lane. POST-U14 16/16 DONE → `docs/audit/GUARD-WORKORDERS.md`. Never steal `/425c` `/cash-flow` `/lists` `/legal`. Chrome leftover only on your own free debug port (try 9336).

@@ -19,6 +19,9 @@ export function collectProblems(src) {
   if (!src.includes("loadedId === selectedReport.id")) {
     problems.push(`${PAGE}: hydrate only when detail report id matches the selected period — leftover month change kept prior MOR cash`);
   }
+  if (!src.includes("loadedId !== selectedReport.id")) {
+    problems.push(`${PAGE}: must clear stale MOR cash when the selected period id is not the loaded detail id`);
+  }
   if (!src.includes("form.reportId !== selectedReport?.id")) {
     problems.push(`${PAGE}: Import/Generate/Mark Filed must refuse when the loaded draft is not the selected period`);
   }
@@ -109,6 +112,7 @@ export function collectProblems(src) {
 const good = `
   if (detailQuery.isFetching || selectedReport?.id) return;
   if (selectedReport?.id && loadedId === selectedReport.id) {
+  if (selectedReport?.id && loadedId !== selectedReport.id) {
   if (!form.reportId || form.reportId !== selectedReport?.id) {
   pushToast("Create / Load Draft before saving", "error");
   pushToast("Draft saved", "success");

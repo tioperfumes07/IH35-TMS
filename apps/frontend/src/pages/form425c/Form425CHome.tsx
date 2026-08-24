@@ -212,6 +212,17 @@ export function Form425CHome() {
       setDirty(false);
       return;
     }
+    // Picker changed (August → January) while React Query still holds the prior month's
+    // detail: keep showing that cash = silent wrong period. Clear until ids match.
+    if (selectedReport?.id && loadedId !== selectedReport.id) {
+      const defaults = profiles[activeCompany].defaultAnswers;
+      setForm((prev) => {
+        if (prev.reportId === selectedReport.id) return prev;
+        if (!prev.reportId) return prev;
+        return { ...emptyForm(), answers: { ...defaults }, projectionOverrideReason: prev.projectionOverrideReason };
+      });
+      return;
+    }
     // Save/list invalidate briefly drops detail + selectedReport. Wiping here disabled
     // Save Draft / Import from Banking / Generate / Mark Filed with no toast (leftover silent).
     if (detailQuery.isFetching || selectedReport?.id) return;
