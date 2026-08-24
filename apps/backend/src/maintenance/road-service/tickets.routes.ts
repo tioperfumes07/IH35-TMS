@@ -175,7 +175,14 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
            ) AS unit_ok,
            ($4::uuid IS NULL OR EXISTS (
              SELECT 1 FROM mdata.drivers d
-             WHERE d.id = $4::uuid AND d.operating_company_id = $1::uuid
+             WHERE d.id = $4::uuid
+               AND (d.operating_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations road_service_create_driver_dca
+                 WHERE road_service_create_driver_dca.driver_id = d.id
+                   AND road_service_create_driver_dca.company_id = $1::uuid
+                   AND road_service_create_driver_dca.is_authorized = true
+                   AND road_service_create_driver_dca.deactivated_at IS NULL
+               ))
            )) AS driver_ok`,
         [body.data.operating_company_id, body.data.vendor_id, body.data.unit_id, body.data.driver_id ?? null]
       );
