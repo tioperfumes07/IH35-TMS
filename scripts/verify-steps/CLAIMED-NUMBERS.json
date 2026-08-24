@@ -1,4 +1,9 @@
 {
+  "4581": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-entity-label-rejects-serialized-json"
+  },
   "4599": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
