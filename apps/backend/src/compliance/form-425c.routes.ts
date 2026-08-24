@@ -1164,6 +1164,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "Generate could not write the filing snapshot — status was not set to ready to file",
         });
       }
+      if (e?.message === "form_425c_r2_not_configured" || e?.message === "form_425c_r2_put_failed") {
+        return reply.code(502).send({
+          error: e.message,
+          message: "Generate could not store the filing snapshot in object storage — status was not set to ready to file",
+        });
+      }
       if (e?.message === "forbidden_company_membership") {
         return sendForm425CForbiddenMembership(reply);
       }
