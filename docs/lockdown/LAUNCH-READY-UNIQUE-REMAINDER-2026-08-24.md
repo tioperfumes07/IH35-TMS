@@ -42,7 +42,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 | factoring | U14 `@c11bdab` | FACT-F5986 DISTINCT/ORDER — **grep-closed** (`sort_key` on main). No remake. | — |
 | dispatch | U14 `@39472f2` | Late-arrivals 500 — **FIXED live** `ccdbbbb` / `dep-da65kgu`. | Do not remake |
 | vendors | U14 `@627d7d0` | **U14-06-F02 + F03** A/P Bills/Payments empty while Neon has 3 bills + 2 payments (LOVES `95307de7-…`). | **Cursor THIS PR** |
-| customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees still follow-up copy. **CUST-CRM-F6313** Projects / Opportunities / Conversations still follow-up copy. | **CC-1** money · **CC-3** CRM |
+| customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees still follow-up copy. CUST-CRM-F6313 — **VERIFIED honest empty, not a leftover** (CC-3): zero canonical backend exists for Projects/Opportunities/Conversations (grepped every `db/migrations/*.sql` — no projects table, no CRM/opportunities schema; the only `chat.*` schema is per-load driver↔office chat, `kind` CHECK has no `'customer'` option; grepped `apps/backend/src` — zero real routes, only coincidental word matches) and the current `COMING_STATE_COPY` placeholder in `Customers.tsx` is confirmed NOT faking data from loads anywhere (only 3 refs each: type def, tab list, placeholder string). Same exemption class as "Finance Hub honest flag-off" in the zero-leftover law. | **CC-1** money only |
 | drivers | U14 `@07993ac` | DRVFIN-F6169 advances 404 — **grep-closed** (`driver_company_authorizations` on main). No remake. | Unique FINDING only |
 | fleet | U14 `@07993ac` | No unique leftover verified this pass. | Unique FINDING only |
 | lists | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
@@ -83,7 +83,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 | Cursor | 9222 | Ship **U14-06-F02 + F03**. FAST-MERGE. Lead. Never recertify. |
 | CC-1 | 9223 | **U14-01-F03** Bills list Claim/WO column. Then **CUST-MONEY-F6312**. STOP `/425c`. Never `trigger_deploy`. |
 | CC-2 | 9224 | Unique leftover FINDING on leftover POST (not Close, not F04/F06). |
-| CC-3 | 9225 | **CUST-CRM-F6313** (or CLASS-F5973 maintenance leaf if still dead). No roadside remake. |
+| CC-3 | 9225 | CUST-CRM-F6313 verified honest-empty (see customers row). Next: CLASS-F5973 maintenance leaf if still dead. No roadside remake. |
 | Codex | 9226 | **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify then one leaf PR. Never restamp customers/drivers/fleet. |
 | Cascade | audit | Unique FINDING if still true on **current live SHA**. No restamp. |
 | Devin-A | audit | Same. `/vendors` after F02/F03 deploys. Not PARKED. |
