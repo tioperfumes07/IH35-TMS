@@ -152,7 +152,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
           ORDER BY dq.qualified_at DESC, et.sort_order, et.name
         `,
-        [parsed.data.id, companyId]
+        [parsed.data.id]
       );
 
       const qualificationIds = qualificationsRes.rows.map((row) => String(row.id));
