@@ -269,7 +269,13 @@ export function collectProblems(src) {
   if (!generateChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate PDF must 403 on forbidden_company_membership, not an uncaught 500");
   }
+  if (!generateChunk.includes("form_425c_filing_file_insert_failed") || !generateChunk.includes("502")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate must 502 when the filing snapshot INSERT returns no file — not ready_to_file with a null PDF");
+  }
   const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
+  if (!pdfLib.includes("form_425c_filing_file_insert_failed") || pdfLib.includes("fileInsert.rows[0]?.id ?? null")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must throw when docs.files INSERT returns no id — null fileId marked the MOR ready");
+  }
   if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
   }
