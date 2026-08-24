@@ -62,7 +62,9 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             u.vehicle_type AS truck_unit_type,
             u.make AS truck_make,
             u.model AS truck_model,
-            u.year AS truck_model_year
+            u.year AS truck_model_year,
+            tr.equipment_number AS trailer_number,
+            tr.equipment_type AS trailer_equipment_type
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
@@ -78,6 +80,22 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
                                    ))
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          -- A trailer assignment is append-only history, not a column on mdata.loads. The printable
+          -- must read the same latest canonical assignment as the dispatch list/detail; hard-coding
+          -- an em dash here made a completed trailer swap disappear from the driver's document.
+          LEFT JOIN LATERAL (
+            SELECT eq.equipment_number, eq.equipment_type
+              FROM dispatch.load_assignment_history dispatch_sheet_trailer_history
+              JOIN mdata.equipment eq
+                ON eq.id = dispatch_sheet_trailer_history.new_trailer_id
+               AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
+               AND eq.deactivated_at IS NULL
+             WHERE dispatch_sheet_trailer_history.load_id = l.id
+               AND dispatch_sheet_trailer_history.operating_company_id = l.operating_company_id
+               AND dispatch_sheet_trailer_history.new_trailer_id IS NOT NULL
+             ORDER BY dispatch_sheet_trailer_history.assigned_at DESC, dispatch_sheet_trailer_history.created_at DESC
+             LIMIT 1
+          ) tr ON true
           WHERE l.id = $1
             AND l.operating_company_id = $2::uuid
           LIMIT 1
@@ -232,8 +250,8 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         hosDutyLine: "Confirm available hours in driver app",
         truckUnit,
         truckSub,
-        trailerUnit: "—",
-        trailerSub: "Assign trailer in TMS if applicable",
+        trailerUnit: load.trailer_number ? String(load.trailer_number) : "—",
+        trailerSub: load.trailer_equipment_type ? String(load.trailer_equipment_type) : "No trailer assigned",
         stopsSummaryRight: `${stops.length} stops · ${pickups} pickup · ${deliveries} delivery`,
         stops,
         commodityRight: load.customer_wo_number

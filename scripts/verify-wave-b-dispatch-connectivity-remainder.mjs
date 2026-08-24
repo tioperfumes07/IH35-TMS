@@ -41,6 +41,9 @@ const CHECKS = [
   { name: "dispatch sheet resolves canonical stop location label", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /loc\.location_name[\s\S]{0,180}LEFT JOIN mdata\.locations loc[\s\S]{0,180}loc\.operating_company_id = \$2::uuid/ },
   { name: "dispatch sheet primary driver accepts an active company authorization", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /driver_company_authorizations dispatch_sheet_primary_dca[\s\S]{0,320}dispatch_sheet_primary_dca\.company_id = l\.operating_company_id[\s\S]{0,180}dispatch_sheet_primary_dca\.is_authorized = true[\s\S]{0,180}dispatch_sheet_primary_dca\.deactivated_at IS NULL/ },
   { name: "dispatch sheet secondary driver accepts an active company authorization", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /driver_company_authorizations dispatch_sheet_secondary_dca[\s\S]{0,320}dispatch_sheet_secondary_dca\.company_id = \$2::uuid[\s\S]{0,180}dispatch_sheet_secondary_dca\.is_authorized = true[\s\S]{0,180}dispatch_sheet_secondary_dca\.deactivated_at IS NULL/ },
+  { name: "dispatch sheet resolves the latest same-company trailer assignment", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /dispatch\.load_assignment_history dispatch_sheet_trailer_history[\s\S]{0,700}dispatch_sheet_trailer_history\.load_id = l\.id[\s\S]{0,180}dispatch_sheet_trailer_history\.operating_company_id = l\.operating_company_id[\s\S]{0,180}dispatch_sheet_trailer_history\.new_trailer_id IS NOT NULL[\s\S]{0,220}assigned_at DESC,[\s\S]{0,100}created_at DESC/ },
+  { name: "dispatch sheet trailer lookup enforces active company ownership or lease", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /eq\.id = dispatch_sheet_trailer_history\.new_trailer_id[\s\S]{0,260}eq\.owner_company_id = l\.operating_company_id OR eq\.currently_leased_to_company_id = l\.operating_company_id[\s\S]{0,120}eq\.deactivated_at IS NULL/ },
+  { name: "dispatch sheet model prints the resolved human trailer identity", file: "apps/backend/src/dispatch/dispatch-sheet.routes.ts", pattern: /trailerUnit: load\.trailer_number \? String\(load\.trailer_number\) : "—"[\s\S]{0,140}trailerSub: load\.trailer_equipment_type \? String\(load\.trailer_equipment_type\) : "No trailer assigned"/ },
 ];
 
 function checkAll(readFile) {
@@ -62,7 +65,26 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (poison trips ${fail.length})`);
+  const routeFile = "apps/backend/src/dispatch/dispatch-sheet.routes.ts";
+  const route = fs.readFileSync(path.join(ROOT, routeFile), "utf8");
+  const mutations = [
+    ["drops trailer company scope", "AND dispatch_sheet_trailer_history.operating_company_id = l.operating_company_id", ""],
+    ["accepts deactivated trailer", "AND eq.deactivated_at IS NULL", ""],
+    ["hard-codes trailer label", "trailerUnit: load.trailer_number ? String(load.trailer_number) : \"—\"", "trailerUnit: \"—\""],
+  ];
+  for (const [name, needle, replacement] of mutations) {
+    const planted = route.replace(needle, replacement);
+    if (planted === route) {
+      console.error(`${LABEL} --selftest FAIL — mutation \"${name}\" changed nothing`);
+      process.exit(1);
+    }
+    const errors = checkAll((rel) => rel === routeFile ? planted : fs.readFileSync(path.join(ROOT, rel), "utf8"));
+    if (!errors.length) {
+      console.error(`${LABEL} --selftest FAIL — mutation \"${name}\" was not detected`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} --selftest PASS (poison trips ${fail.length}; ${mutations.length} trailer mutations detected)`);
   process.exit(0);
 }
 
