@@ -1,5 +1,36 @@
 import type { ExhibitPeriod, ExhibitQueryClient } from "./types.js";
 
+/**
+ * F425C-EXHIBIT-D-NOT-A-REAL-QUARTER — the "Build all exhibits" period picker defaults to (and is
+ * normally used for) a single calendar MONTH, shared across all six exhibits A-F. Exhibit D's fee
+ * base is disbursements_cents summed over WHATEVER period_start/period_end was passed in — no
+ * enforcement that it is an actual 28 U.S.C. § 1930(a)(6) calendar quarter. A filer who builds
+ * exhibits on the default 1-month period gets a "quarterly_disbursements_cents" figure that is
+ * really one month, silently understating the U.S. Trustee fee tier on a real court filing.
+ * Fix: always snap to the calendar quarter (UTC) containing period_end, independent of whatever
+ * range the other monthly exhibits used, and report that resolved quarter back on the exhibit so
+ * the filer sees the real dates the fee was computed over.
+ */
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function isoDate(year: number, monthIndex: number, day: number) {
+  return `${year}-${pad2(monthIndex + 1)}-${pad2(day)}`;
+}
+
+export function calendarQuarterContaining(dateIso: string): { period_start: string; period_end: string } {
+  const [y, m] = dateIso.split("-").map(Number);
+  const year = y ?? new Date().getUTCFullYear();
+  const monthIndex = (m ?? 1) - 1;
+  const quarterStartMonth = Math.floor(monthIndex / 3) * 3;
+  const start = isoDate(year, quarterStartMonth, 1);
+  // day 0 of the month after the quarter's last month = the quarter's last calendar day.
+  const endDate = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
+  const end = isoDate(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
+  return { period_start: start, period_end: end };
+}
+
 export type ExhibitD = {
   letter: "d";
   title: string;
@@ -44,6 +75,12 @@ export async function buildExhibitD(
   client: ExhibitQueryClient,
   input: ExhibitPeriod
 ): Promise<ExhibitD> {
+  // F425C-EXHIBIT-D-NOT-A-REAL-QUARTER: never trust input.period_start/period_end for the fee base —
+  // those are whatever (usually one-month) range the shared exhibits picker was left on. Snap to the
+  // real calendar quarter containing period_end so the statutory fee can never be computed over a
+  // partial quarter, regardless of what the other five monthly exhibits used.
+  const quarter = calendarQuarterContaining(input.period_end);
+
   // REAL schema (db/migrations/0072,0073). Disbursements base for the U.S. Trustee quarterly fee
   // (28 U.S.C. § 1930(a)(6)) = money OUT = is_credit=false, summed via abs(amount_cents). GROUP ON
   // is_credit (NOT the Plaid-signed amount) and exclude own-transfers (mirrors
@@ -63,7 +100,7 @@ export async function buildExhibitD(
         AND bt.transfer_kind IS NULL
         AND bt.destination_bank_account_id IS NULL
     `,
-    [input.operating_company_id, input.period_start, input.period_end]
+    [input.operating_company_id, quarter.period_start, quarter.period_end]
   );
 
   const quarterly_disbursements_cents = Math.trunc(Number(res.rows[0]?.disbursements_cents ?? 0));
@@ -72,8 +109,8 @@ export async function buildExhibitD(
   return {
     letter: "d",
     title: "Exhibit D — U.S. Trustee quarterly fee calculation",
-    period_start: input.period_start,
-    period_end: input.period_end,
+    period_start: quarter.period_start,
+    period_end: quarter.period_end,
     quarterly_disbursements_cents,
     fee_cents,
     statute: "28 U.S.C. § 1930(a)(6)",
