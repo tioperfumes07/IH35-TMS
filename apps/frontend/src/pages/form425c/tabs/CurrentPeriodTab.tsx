@@ -135,7 +135,7 @@ export function CurrentPeriodTab({
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
         {QUESTIONNAIRE.map((q, i) => {
-          const answer = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
+          const answer = String(form.answers[q.num] ?? "").trim().toLowerCase();
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
           const letter = q.num <= 9 ? "A" : "B";
           const saved = (q.num <= 9 ? exhibitA : exhibitB).filter((row) => Number(row.line_number) === q.num);

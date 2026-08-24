@@ -87,11 +87,25 @@ function monthKey(year: number, month: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
-function toFormState(report: Record<string, unknown>, defaults: Record<number, "yes" | "no" | "na">): CurrentFormState {
+function answersFromReport(report: Record<string, unknown>): Record<number, "yes" | "no" | "na"> {
+  const part1 = (report.part1_answers ?? {}) as Record<string, string>;
+  const part2 = (report.part2_answers ?? {}) as Record<string, string>;
+  const merged: Record<number, "yes" | "no" | "na"> = {};
+  for (const [key, value] of Object.entries({ ...part1, ...part2 })) {
+    const n = Number(key);
+    const ans = String(value ?? "").trim().toLowerCase();
+    if (n >= 1 && n <= 18 && (ans === "yes" || ans === "no" || ans === "na")) {
+      merged[n] = ans;
+    }
+  }
+  return merged;
+}
+
+function toFormState(report: Record<string, unknown>): CurrentFormState {
   return {
     reportId: String(report.id),
     status: (report.status as CurrentFormState["status"]) ?? "draft",
-    answers: { ...defaults, ...(report.part1_answers as Record<number, "yes" | "no" | "na">), ...(report.part2_answers as Record<number, "yes" | "no" | "na">) },
+    answers: answersFromReport(report),
     openingBalance: String(report.line_19_opening_cash ?? ""),
     totalReceipts: String(report.line_20_receipts ?? ""),
     totalDisbursements: String(report.line_21_disbursements ?? ""),
@@ -268,7 +282,7 @@ export function Form425CHome() {
     // Period change (e.g. August → January) must not keep the prior MOR cash on screen
     // or Import/Generate/Mark Filed will mutate the wrong month while the picker lies.
     if (selectedReport?.id && loadedId === selectedReport.id) {
-      setForm(toFormState(detailQuery.data!.report as Record<string, unknown>, profiles[activeCompany].defaultAnswers));
+      setForm(toFormState(detailQuery.data!.report as Record<string, unknown>));
       setDirty(false);
       return;
     }
