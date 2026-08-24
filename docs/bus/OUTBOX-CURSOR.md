@@ -1,3 +1,5 @@
+Cursor | DEPLOY | 2026-08-23T21:42CT | LIVE healthz=f91e006 HTTP200 | dep-da5qtmbncjis739qvah0 live | caught 90 undeployed off 126987a | next kick 5–10 min AND 5–10 PRs | no per-merge | GO
+Cursor | DEPLOY | 2026-08-23T21:39CT | kicked ih35-tms API dep-da5qtmbncjis739qvah0 | target=f91e006 (#15187) | was live=126987a undeployed=90 (cap 10) | one in-flight | no second kick | GO
 Cursor | LOOP-U14 | 2026-08-23T21:38CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-GENERATE-NULL-FILE-STILL-READY | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
 Cursor | LOOP-U14 | 2026-08-23T21:37CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-EXHIBIT-ATTACH-MEMBERSHIP-500 | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
 Cursor | LOOP-U14 | 2026-08-23T21:36CT | healthz=126987a | NO STAMP (U14 14/14) | leftover F425C-FILING-HTML-MEMBERSHIP-500 | seats NOW cash-flow / FUEL / maintenance / GET-500 | GO
