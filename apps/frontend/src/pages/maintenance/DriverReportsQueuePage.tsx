@@ -98,6 +98,7 @@ export function DriverReportsQueuePage({
       pushToast("Driver report updated", "success");
       await qc.invalidateQueries({ queryKey: ["maintenance", "driver-reports", operatingCompanyId] });
     },
+    onError: () => pushToast("Could not update driver report", "error"),
   });
 
   function reportedAt(iso: string) {

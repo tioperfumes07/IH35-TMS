@@ -51,6 +51,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "pm-alerts", operatingCompanyId] });
     },
+    onError: () => pushToast("Could not schedule PM alert", "error"),
   });
 
   const alerts = alertsQuery.data?.alerts ?? [];
