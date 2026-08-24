@@ -71,6 +71,10 @@ export function USMCAActivationPanel() {
         body: { item_id, completed },
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["usmca", "activation"] }),
+    // ADMIN-F6332: unlike the sibling transitionMutation above, this had no onError — a rejected
+    // checklist-item PATCH silently did nothing, risking the Owner believing a launch-readiness
+    // item was toggled when it was not (or vice versa) on the USMCA activation gate.
+    onError: (e: Error) => pushToast(e.message || "Checklist update failed", "error"),
   });
 
   if (auth.user?.role !== "Owner") {
