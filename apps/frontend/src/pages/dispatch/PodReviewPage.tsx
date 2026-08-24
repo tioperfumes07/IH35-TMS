@@ -10,6 +10,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function PodRowActions({
   doc,
@@ -20,10 +22,14 @@ function PodRowActions({
   companyId: string;
   onReviewed: () => void;
 }) {
+  const { pushToast } = useToast();
+  // DISP-F6328: no toast import anywhere in the file, no isError check, fire-and-forget
+  // .mutate(). A rejected Approve/Reject silently did nothing.
   const reviewMutation = useMutation({
     mutationFn: (status: "approved" | "rejected") =>
       reviewPodDocument(doc.id, { operating_company_id: companyId, status }),
     onSuccess: onReviewed,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not save the POD review"), "error"),
   });
 
   if (doc.status !== "pending_review") {
