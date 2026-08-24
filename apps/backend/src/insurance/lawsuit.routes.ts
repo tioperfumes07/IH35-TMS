@@ -11,6 +11,7 @@ import {
   updateLawsuitBodySchema,
 } from "./claim.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -76,7 +77,9 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["lawsuit.tenant_id = $1::uuid"];
+      // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Lawsuits list in parity with the Open Lawsuits KPI
+      // (summary.routes.ts), which already excludes agent-created fixture rows.
+      const filters = ["lawsuit.tenant_id = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`lawsuit.status = $${values.length}`);

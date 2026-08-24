@@ -14,6 +14,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 import { type ClaimColumnCapabilities, getClaimColumnCapabilities } from "./claim-columns.js";
 import { postInsuranceClaimRecovery } from "../accounting/insurance-claim-recovery-posting/poster.service.js";
+import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -259,7 +260,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client, caps) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["tenant_id = $1::uuid"];
+      // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Claims list in parity with the Open Claims KPI
+      // (summary.routes.ts), which already excludes agent-created fixture rows.
+      const filters = ["tenant_id = $1::uuid", excludeInsuranceFixtureSql("c.claim_number")];
       if (parsed.data.policy_id) {
         values.push(parsed.data.policy_id);
         filters.push(`policy_id = $${values.length}::uuid`);

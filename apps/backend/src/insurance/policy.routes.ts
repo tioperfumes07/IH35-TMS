@@ -11,6 +11,7 @@ import { computeProRataPremiumDeltaCents, recordFleetPremiumJournalEntry } from 
 import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
+import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -181,7 +182,11 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["p.tenant_id = $1::uuid"];
+      // INSURANCE-DASHBOARD-FIXTURE-LEAK: the default Policies list must not show agent-created
+      // fixture rows the KPI headline (summary.routes.ts) already excludes — a list disagreeing with
+      // its own headline count is the exact FLEET-KPI-PARITY bug class this repo already fixed once
+      // for Fleet (mdata/fleet-visibility.ts).
+      const filters = ["p.tenant_id = $1::uuid", excludeInsuranceFixtureSql("p.policy_number")];
       if (parsed.data.coverage_type) {
         values.push(parsed.data.coverage_type);
         filters.push(`p.coverage_type = $${values.length}`);
