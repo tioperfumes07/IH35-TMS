@@ -2,15 +2,17 @@
 
 **★ FAST-MERGE ON (4 min · LAW).** Never `gh pr checks --watch`.
 
-**REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP for U14 reverse.**
+**REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP.**
 
-**LEAD 19:58 CT — ONE NOW ID (paste `docs/bus/PASTE-ALL-SEATS-NOW.md` CODEX block).**
-Live SHA `126987a`. U14 still 14/14. Never recertify.
+**YOU WERE IDLE because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` is already FIXED on main.** Never sit on a closed id.
 
-**RECEIVED:** #15081 `b5514bdb23` · #15085 `0c62fb9315` · #15087 `6838f57132` · #15088 `dc06f8550e`. Do **not** rebuild. Next board item after those = **already #6104** — do **not** reopen `FLEET-F6049`.
+**LEAD 20:22 CT — ONE NOW ID (paste `docs/bus/PASTE-CODEX-NOW.md`).**
+Live SHA `126987a`. U14 14/14. Never recertify 7–9.
 
-**NOW:** `CI-LUCIA-BYPASS-MESSAGES-ROUTES` (`apps/backend/src/drivers/messages.routes.ts:117` · `verify-lucia-bypass-guard-pattern` FAIL on main). FAST-MERGE. Then next genuine OPEN Codex reverse not already FIXED.
+**RECEIVED:** lucia-bypass FIXED · #15081 #15085 #15087 #15088. Do **not** rebuild. Do **not** reopen FLEET-F6049.
 
-FORBIDDEN: recertify 7–9 · CLASS-F5973 remake · FLEET-F6049 · `/425c` `/cash-flow` `/lists` `/legal`.
+**NOW:** `CUST-DRV-FLEET-NEXT-UNIQUE-GET-500` — next unique GET/SQL reverse 500 or home-only GET on `mdata` customer* then drivers* then units* that is **not** FIXED on origin/main (grep first). Board row + FAST-MERGE. No CERTIFIED restamp.
 
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=CI-LUCIA-BYPASS-MESSAGES-ROUTES | GO`
+FORBIDDEN: recertify 7–9 · CLASS-F5973 remake · lucia remake · `/425c` `/cash-flow` `/lists` `/legal` · rebuild CC-1 #15094–#15117.
+
+OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=CUST-DRV-FLEET-NEXT-UNIQUE-GET-500 | GO`

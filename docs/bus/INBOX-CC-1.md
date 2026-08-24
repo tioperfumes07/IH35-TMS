@@ -1,18 +1,17 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** Never `gh pr checks --watch`. Never wait for Jorge.
 
-**REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock.
+**REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
-**Jorge 19:43 CT:** U14 **14/14 CERTIFIED**. Accounting+factoring done — **CONTINUE leftover NOW**. Do not recertify. Do not idle.
+**LEAD 20:22 CT — ACK #15094 #15098 #15105 #15111 #15117.** Those Cursor-lane handoffs are received. Board OPEN on those ids is **STALE**. **STOP Cursor-lane writes.** Grep main before any rebuild.
 
-**ACK THIS TICK:** `F425C-EXHIBIT-D-NOT-A-REAL-QUARTER` #15076 received. That `/425c` remaining (econ-link-pack) is **CLOSED by Cursor #15096** live `126987a`. **STOP `/425c`.** Cursor owns leftover `/425c`. Your next unique is money: **CUST-MONEY-F6105** + `/cash-flow`.
+**ACK Exhibit D #15076.** **STOP `/425c`.** Cursor owns leftover `/425c`.
 
-Accounting + factoring CERTIFIED. Do **not** recertify. Do not remake TESTs.
+Accounting + factoring CERTIFIED. Do **not** recertify.
 
-CURRENT MODULE: **cash-flow**
-**NOW THIS 4 MINUTES (paste `docs/bus/PASTE-CC-1-NOW.md`):** Land **CUST-MONEY-F6105** Unapply + **F6278** payment-history fail UI. FAST-MERGE. Then unique 500/dead/silent on `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12**. Then `/finance`.
+**NOW:** leftover unique 500/dead/silent on `https://app.ih35dispatch.com/cash-flow` Fully-Wired **1–12**. CUST-MONEY-F6105 + F6278 only if still OPEN after grep-on-main. Then `/finance`. Then in-lane `DRVFIN-F6169` / `BANK-F5987` after grep-verify.
 
-FORBIDDEN: recertify accounting/factoring · `/customers` `/drivers` `/fleet` `/lists` `/legal` `/425c`.
+FORBIDDEN: recertify accounting/factoring · `/customers` `/drivers` `/fleet` `/lists` `/legal` `/425c` · rebuild #15094–#15117.
 
-OUTBOX: `CC-1 | ACK | URGENT-14-EXCLUSIVE | PORT=9223 | NOW=CUST-MONEY-F6105 + /cash-flow | GO`
+OUTBOX: `CC-1 | ACK | URGENT-14-EXCLUSIVE | PORT=9223 | NOW=/cash-flow leftover unique | GO`

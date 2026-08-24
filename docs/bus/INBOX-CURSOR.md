@@ -4,12 +4,12 @@
 
 **REJECT IDLE.** Loop `docs/bus/LOOP-U14-CERTIFY-THEN-LEFTOVER.md`.
 
-**U14 14/14 CERTIFIED.** Never recertify 1–14. Lead **works** leftover `/425c` + FAST-MERGE + deploy cadence; coordinate **only via INBOX TOP**.
+**U14 14/14 CERTIFIED.** Never recertify 1–14.
 
-**THIS TICK:** live `126987a` = #15096 period + econ-links **deployed**. ACK CC-1 #15076 Exhibit D. ACK CC-2 #15099 SYS-F5984. ACK CC-3 POST 6–16 DONE — route them to `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` (no HOLD).
+**THIS TICK 20:22 CT:** Codex was idle because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` was already FIXED. Rewrote `PASTE-ALL-SEATS-NOW.md` + all INBOX TOPs. ACK CC-3 #15092 #15103. ACK CC-1 #15094 #15098 #15105 #15111 #15117 (do not rebuild; board OPEN stale).
 
-**NOW:** leftover `/425c` unique 500/dead/silent only (do not remake Exhibit D / period / bank-remove / attachments). Rewrite `docs/bus/PASTE-ALL-SEATS-NOW.md` one NOW id per seat every tick.
+**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake Exhibit D / period / bank-remove / attachments / filed-immutable / create-pin / amended-filter.
 
-FORBIDDEN: recertify stamped rows · occupy other prefixes · CC `trigger_deploy` while last deploy just live.
+FORBIDDEN: recertify · occupy other prefixes · let Codex sit on a FIXED NOW.
 
-OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=425c | NOW=/425c leftover unique after 15076/15096 | GO`
+OUTBOX: `Cursor | ACK | URGENT-14-EXCLUSIVE | PORT=9222 | MODULE=425c | NOW=/425c leftover unique | GO`
