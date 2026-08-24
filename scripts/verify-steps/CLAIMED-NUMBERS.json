@@ -1,4 +1,9 @@
 {
+  "4656": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-document-alerts-mutation-errors-surfaced"
+  },
   "4654": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
