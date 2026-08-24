@@ -1,20 +1,23 @@
-# Cursor lead loop — U14 closed · POST leftover (owner 2026-08-23)
+# Cursor lead loop — U14 CLOSED · leftover POST / NEXT-8
+
+**VOID:** any paste that says “stamp OPEN U14” / “recertify 1–6” / “leftover /425c only” / `AGENT_LOOP_TICK_u14_certify` as a certify loop. U14 is **14/14 CERTIFIED**. **Never stamp. Never recertify.**
 
 **Arm:** 5-minute wake + `stop` hook. **Do not idle.** Jorge chat empty ≠ pause.
 
-U14 is **14/14 CERTIFIED**. **Never stamp. Never recertify.**
+**Pack:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md`
 
 ## Each tick (in order)
 
-1. `git fetch origin && git pull --ff-only origin main` (or rebase feature onto origin/main).
-2. `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `LIVE_SHA=version`.
-3. **Do not stamp** any U14 row. All 14 are CERTIFIED. Matching LIVE_SHA is not a reason to restamp.
-4. **Never recertify** 1–14 (including customers/drivers/fleet/lists/legal).
-5. Codex leftover unique is **POST leftover** on `/customers` → `/drivers` → `/fleet` — not U14 hops.
-6. Cursor leftover **`/425c`** unique FINDING only (500 / dead click / silent no-op). Empty unique → keep walking 425c then next unclaimed POST row. Do not steal `/cash-flow` `/finance` `/driver-hub`. Seat NOW: `docs/bus/NOW-ONE-SOURCE.md`. Sequence: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`.
-7. FAST-MERGE docs/fix PRs. Never `gh pr checks --watch`. Never `trigger_deploy` from CC.
-8. Continue POST leftover until Jorge says stop **or** there is no unclaimed unique FINDING.
+1. `git fetch origin && git pull --ff-only origin main`
+2. `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → record `version`. **Do not stamp.**
+3. **Never recertify** 1–14 (customers/drivers/fleet/lists/legal included).
+4. Codex leftover unique `/customers` → `/drivers` → `/fleet` — not U14 hops. No restamp.
+5. Cursor leftover **`/docs`** (NEXT-8 #8). Do **not** loop `/425c` (#15053–#15282). Then wave 2: users/home/help/program/system.
+6. Other seats: CC-1 `/cash-flow`→`/finance` · CC-2 `/fuel`→`/reports` · CC-3 `/compliance`→`/eld`→`/inventory`.
+7. Unique FINDING only (500 / dead / silent). One small PR. FAST-MERGE ~4 min. Never `gh pr checks --watch`. CC never `trigger_deploy`. Deploy 5–10 min **and** 5–10 PRs, one in-flight.
+8. Continue leftover POST until Jorge says stop **or** there is no unclaimed unique FINDING.
 
 ## Sentinel
 
-`AGENT_LOOP_TICK_u14_certify`
+`AGENT_LOOP_TICK_leftover_post` — if a hook still emits `AGENT_LOOP_TICK_u14_certify`, treat that emit as this leftover tick. Do not stamp.
