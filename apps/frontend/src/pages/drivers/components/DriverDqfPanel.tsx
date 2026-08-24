@@ -20,6 +20,7 @@ type Props = {
 export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) {
   const queryClient = useQueryClient();
   const [itemName, setItemName] = useState("");
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const itemsQ = useQuery({
     queryKey: ["safety", "driver-dqf", companyId, driverId],
@@ -34,18 +35,22 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
         item_name: itemName.trim(),
         status: "present",
       }),
+    onMutate: () => setMutationError(null),
     onSuccess: async () => {
       setItemName("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", companyId, driverId] });
     },
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to create DQF item"),
   });
 
   const patchMutation = useMutation({
     mutationFn: (payload: { id: string; status: DriverQualificationFileItem["status"] }) =>
       patchDriverQualificationItem(payload.id, companyId, { status: payload.status }),
+    onMutate: () => setMutationError(null),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", companyId, driverId] });
     },
+    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to update DQF item"),
   });
 
   if (!driverId) {
@@ -84,6 +89,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
             + Create checklist item
           </button>
         </form>
+      ) : null}
+
+      {mutationError ? (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {mutationError}
+        </div>
       ) : null}
 
       {itemsQ.isError ? (
