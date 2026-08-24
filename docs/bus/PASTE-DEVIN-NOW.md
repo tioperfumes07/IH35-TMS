@@ -1,5 +1,7 @@
 # PASTE INTO DEVIN · PLAN MODE · 2026-08-23
 
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md` — Chrome `/vendors` EXTENT. Not PARKED. U14 14/14 CERTIFIED — never recertify.
+
 Jorge typed **devin-**. You are Devin-A. **AUDIT ONLY. PLAN MODE = no file writes, no PRs, no apps/, no fix, no recertify.**
 
 Your last glob `**/HOW-TO-AUDIT*` failed because the clone was **detached on an old SHA** (`3d7befea2`) that does not have the HOW-TO. `git checkout main` **fails** when another worktree already has `main` (`~/IH35-TMS-audit-main`).

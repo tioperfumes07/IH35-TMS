@@ -1,17 +1,13 @@
-# INBOX-CODEX · 9226 · REVERSE
+# INBOX-CODEX · 9226
 
-**★ FAST-MERGE ON (4 min · LAW).** Never `gh pr checks --watch`.
+**★ FAST-MERGE ON (4 min).**
 
-**REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP.**
+**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`
 
-**YOU WERE IDLE because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` is already FIXED on main.** Never sit on a closed id.
+**USE CHROME on 9226.** U14 customers+drivers+fleet CERTIFIED — **never restamp.**
 
-**LEAD 21:14 CT — Jorge: WORK NOW.** U14 14/14 CERTIFIED. Never recertify 7–9. POST leftover reverse GET-500 now.
+**NOW:** leftover unique 500/dead/silent on `/customers` then `/drivers` then `/fleet`. Grep main first. Board + FAST-MERGE.
 
-**RECEIVED:** lucia-bypass FIXED · #15081 #15085 #15087 #15088. Do **not** rebuild. Do **not** reopen FLEET-F6049.
+FORBIDDEN: recertify 7–9 · `/425c` `/cash-flow` `/lists` `/legal` · remake lucia-bypass
 
-**NOW:** `CUST-DRV-FLEET-NEXT-UNIQUE-GET-500` — next unique GET/SQL reverse 500 or home-only GET on `mdata` customer* then drivers* then units* that is **not** FIXED on origin/main (grep first). Board row + FAST-MERGE. No CERTIFIED restamp.
-
-FORBIDDEN: recertify 7–9 · CLASS-F5973 remake · lucia remake · `/425c` `/cash-flow` `/lists` `/legal` · rebuild CC-1 #15094–#15117.
-
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=CUST-DRV-FLEET-NEXT-UNIQUE-GET-500 | GO`
+OUTBOX: `Codex | ACK | NOW-ONE-SOURCE | PORT=9226 | NOW=/customers leftover unique | GO`

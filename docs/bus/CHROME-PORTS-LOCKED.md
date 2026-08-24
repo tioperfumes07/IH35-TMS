@@ -1,20 +1,18 @@
 # CHROME DEBUG PORTS · CURSOR ASSIGNS · NO DEVIATION
-**Owner 2026-08-20 22:27 CT · Cursor lead controls ports.**
 
-Every working seat **must** attach a debug Chrome (MCP / CDP) on **its assigned port**. Do not steal another seat’s port. If yours is taken, use the spare listed — then PREPEND OUTBOX `PORT=<used>`.
+Every working seat **must** attach debug Chrome on **its assigned port**. Do not steal another seat’s port.
+
+**NOW URLs:** `docs/bus/NOW-ONE-SOURCE.md` only. Do not take URLs from WAVE* or URGENT-BLOCKS tables.
 
 | Seat | Port | Use |
 |------|------|-----|
-| **Cursor** | **9222** | Lead + item-12 Clicked |
-| **CC-1** | **9223** | Money live create/post proof |
-| **CC-2** | **9224** | Box 4 Live stamps (PROD-VERIFIED) |
-| **CC-3** | **9225** | Built / qbo_chrome / picker live |
-| **Codex** | **9226** | Reverse drill **only after** code reverse (INBOX-NOW: no CDP theater) |
-| Devin-A | 9227 | **PARKED — do not start** |
-| Spare | 9228 · 9229 | Overflow only; announce on OUTBOX |
+| **Cursor** | **9222** | leftover `/425c` Live Chrome |
+| **CC-1** | **9223** | leftover `/cash-flow` `/finance` Live Chrome |
+| **CC-2** | **9224** | leftover `/fuel` Live Chrome |
+| **CC-3** | **9225** | leftover `/maintenance` Live Chrome |
+| **Codex** | **9226** | leftover `/customers` `/drivers` `/fleet` Live Chrome (no restamp) |
+| **Cascade** | audit | `/accounting` EXTENT Chrome — file only |
+| **Devin-A** | audit | `/vendors` EXTENT Chrome — file only. Not PARKED. |
+| Spare | 9228 · 9229 | Overflow only; PREPEND OUTBOX `PORT=<used>` |
 
-**NOW URLs:** `docs/bus/URGENT-BLOCKS-NOW-2026-08-22.md` (2026-08-22 **12:05 CT** · after-14). Stale 10:34 CT / 0cec933 / 09:08-closed after `git pull` is a defect.
-
-Target: `https://app.ih35dispatch.com` · USMCA. **Open one leaf URL, prove it, CLOSE THE TAB.** Never leave `/program/matrix` open. Never `refetchIntervalInBackground` Live-Chrome on the scoreboard. Unattended matrix polling starved prod (Mac 24.162.56.21, ~223 KB/response). Client fix #13335; seats must still close old tabs.
-
-**Law:** Jorge is not told a cell is done until that seat proved it **live** on this Chrome (or named UNVERIFIED + blocker). CI-green is not Live. Live Chrome is **not** a parked matrix tab.
+Target: `https://app.ih35dispatch.com` · USMCA. Open one leaf, prove it, close extra matrix tabs.

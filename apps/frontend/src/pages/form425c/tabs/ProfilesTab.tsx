@@ -11,9 +11,10 @@ type Props = {
   onChange: (company: CompanyKey, updater: (draft: CompanyProfiles[CompanyKey]) => CompanyProfiles[CompanyKey]) => void;
   onSave: () => void;
   saving: boolean;
+  canSave?: boolean;
 };
 
-export function ProfilesTab({ profiles, activeCompany, availableCompanies, setActiveCompany, onChange, onSave, saving }: Props) {
+export function ProfilesTab({ profiles, activeCompany, availableCompanies, setActiveCompany, onChange, onSave, saving, canSave = true }: Props) {
   const profile = profiles[activeCompany];
   return (
     <div className="space-y-4 p-4">
@@ -28,7 +29,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
             {profiles[k].name}
           </button>
         ))}
-        <button type="button" onClick={onSave} disabled={saving} className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={saving || !canSave} className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white">
           {saving ? "Saving..." : "Save Defaults"}
         </button>
       </div>

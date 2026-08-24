@@ -1,17 +1,13 @@
-# INBOX-CC-2 · 9224 · LIVE VERIFY
+# INBOX-CC-2 · 9224
 
-**★ FAST-MERGE ON (4 min · LAW).** Never `gh pr checks --watch`.
+**★ FAST-MERGE ON (4 min).**
 
-**REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
+**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`
 
-**LEAD 21:14 CT — Jorge: WORK NOW.** U14 14/14. Never recertify. POST leftover: `CLASS-F5973-TRUE-REMAINDER-FUEL` now.
+**U14 14/14 CERTIFIED.** Never recertify. Never remake Close. Never `trigger_deploy`.
 
-**ACK `SYS-F5984` #15099.** Do **not** rebuild EventSource.
+**NOW:** `CLASS-F5973-TRUE-REMAINDER-FUEL` — Chrome `/fuel` leftover leaves. FAST-MERGE.
 
-**NOW ONE ID:** `CLASS-F5973-TRUE-REMAINDER-FUEL`. FAST-MERGE. Then next in-lane OPEN that is not Cursor `/425c`, CC-1 `/cash-flow`, Codex GET-500, CC-3 maintenance remainder.
+FORBIDDEN: `/425c` `/lists` `/legal` · rebuild SYS-F5984
 
-Settlements CERTIFIED. Never remake Close. Never `trigger_deploy`.
-
-FORBIDDEN: `/customers` `/drivers` `/fleet` UI, `/lists` `/legal` `/425c`, recertify settlements, rebuild SYS-F5984.
-
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=CLASS-F5973-TRUE-REMAINDER-FUEL | GO`
+OUTBOX: `CC-2 | ACK | NOW-ONE-SOURCE | PORT=9224 | NOW=CLASS-F5973-TRUE-REMAINDER-FUEL | GO`

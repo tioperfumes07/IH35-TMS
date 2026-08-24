@@ -276,7 +276,13 @@ export function collectProblems(src) {
   if (!historyTab.includes("onPrint(r.id)") || !historyTab.includes("Print")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: History must Print a filing — filed MORs had no reprint hop after Generate was blocked");
   }
-  if (!src.includes("!res.print_html?.trim()") || !src.includes("the server returned empty HTML")) {
+  if (!src.includes('const printHtml = String(res.print_html ?? "").trim()') || !src.includes("w.document.write(printHtml)")) {
+    problems.push(`${PAGE}: History Print must write trimmed print_html — untrimmed whitespace was a blank court print`);
+  }
+  if (!src.includes("Wait for the filing profile to load") || !src.includes("Active debtor key is not this entity's filing profile")) {
+    problems.push(`${PAGE}: Save Defaults must refuse trucking-key-before-USMCA-profile-load — that posted the wrong debtor key`);
+  }
+  if (!src.includes("!res.print_html?.trim()") && !src.includes('const printHtml = String(res.print_html ?? "").trim()')) {
     problems.push(`${PAGE}: History Print must toast when filing-html is empty — writing blank print_html was a silent no-op`);
   }
   if (!src.includes("getForm425CFilingHtml") || !src.includes("historyPrintMutation")) {
@@ -433,7 +439,10 @@ const good = `
   exhibitEntries.b
   getForm425CFilingHtml
   historyPrintMutation
-  if (!res.print_html?.trim())
+  const printHtml = String(res.print_html ?? "").trim()
+  w.document.write(printHtml)
+  Wait for the filing profile to load
+  Active debtor key is not this entity's filing profile
   the server returned empty HTML
   String(res.print_html ?? "").trim()
   Generate returned empty filing HTML
