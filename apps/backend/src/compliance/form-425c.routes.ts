@@ -694,6 +694,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       const current = currentRes.rows[0];
       if (!current) return null;
+      if (current.status === "filed") {
+        throw new Error("form_425c_filed_immutable");
+      }
 
       const updates: string[] = [];
       const values: unknown[] = [params.data.id, b.operating_company_id];
@@ -764,6 +767,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "Carry-forward override needs a reason of at least 30 characters",
         });
       }
+      if (msg === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History to create a draft. Save Draft will not rewrite a filed court filing.",
+        });
+      }
       throw error;
     }
 
@@ -786,9 +795,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     let updated: Record<string, unknown> | null;
     try {
       updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-        const reportRes = await client.query<{ reporting_month: string }>(
+        const reportRes = await client.query<{ reporting_month: string; status: string }>(
           `
-            SELECT reporting_month::text
+            SELECT reporting_month::text, status
             FROM compliance.form_425c_reports
             WHERE id = $1
               AND operating_company_id = $2::uuid
@@ -798,6 +807,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         );
         const report = reportRes.rows[0];
         if (!report) return null;
+        if (report.status === "filed") {
+          throw new Error("form_425c_filed_immutable");
+        }
         const summary = await computeBankingSummary(client, b.operating_company_id, String(report.reporting_month).slice(0, 7));
         const res = await client.query(
           `
@@ -849,6 +861,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             "Banking import found in-scope transactions but $0 receipts and $0 disbursements — will not write $0 onto a court filing",
         });
       }
+      if (e?.message === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History. Import from Banking will not rewrite a filed court filing.",
+        });
+      }
       req.log?.error?.({ err: e, reportId: params.data.id }, "form-425c import-banking failed");
       // Surface the pg error code/message only (never connection strings). Nothing was persisted.
       return reply.code(502).send({
@@ -873,6 +891,19 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     let payload: Record<string, unknown> | null;
     try {
       payload = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        const currentRes = await client.query<{ status: string }>(
+          `
+            SELECT status
+            FROM compliance.form_425c_reports
+            WHERE id = $1
+              AND operating_company_id = $2::uuid
+            LIMIT 1
+          `,
+          [params.data.id, b.operating_company_id]
+        );
+        const current = currentRes.rows[0];
+        if (!current) throw new Error("form_425c_report_not_found");
+        if (current.status === "filed") throw new Error("form_425c_filed_immutable");
         const generated = await generateForm425CPdf({
           client,
           userId: user.uuid,
@@ -887,6 +918,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
                 updated_at = now()
             WHERE id = $1
               AND operating_company_id = $2::uuid
+              AND status <> 'filed'
             RETURNING *
           `,
           [params.data.id, b.operating_company_id, generated.fileId]
@@ -925,6 +957,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       }
       if (e?.message === "form_425c_report_not_found") {
         return reply.code(404).send({ error: "report_not_found" });
+      }
+      if (e?.message === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History. Generate will not un-file a court filing.",
+        });
       }
       throw err;
     }

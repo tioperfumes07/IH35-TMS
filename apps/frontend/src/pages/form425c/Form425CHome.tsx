@@ -294,6 +294,9 @@ export function Form425CHome() {
       if (!form.reportId) {
         throw new Error("Create / Load Draft before saving");
       }
+      if (form.status === "filed") {
+        throw new Error("This MOR is filed — use Amend on History");
+      }
       if (form.hasCarryForward && String(form.projectionOverrideReason ?? "").trim().length < 30) {
         throw new Error("Carry-forward override needs a reason of at least 30 characters");
       }
@@ -418,6 +421,13 @@ export function Form425CHome() {
       }
       return;
     }
+    if (form.status === "filed") {
+      if (!autosaveBlockedToast.current) {
+        autosaveBlockedToast.current = true;
+        pushToast("This MOR is filed — use Amend on History", "error");
+      }
+      return;
+    }
     autosaveBlockedToast.current = false;
     const timer = setTimeout(() => saveMutation.mutate(), 10_000);
     return () => clearTimeout(timer);
@@ -503,6 +513,10 @@ export function Form425CHome() {
           }}
           onCreateOrLoad={() => {
             if (selectedReport?.id) {
+              if (selectedReport.status === "filed") {
+                pushToast("This MOR is filed — use Amend on History", "error");
+                return;
+              }
               queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, selectedReport.id] });
               pushToast("Loaded existing report for selected period", "success");
               return;
@@ -523,11 +537,19 @@ export function Form425CHome() {
               pushToast("Create / Load Draft before importing from Banking", "error");
               return;
             }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
+              return;
+            }
             importMutation.mutate();
           }}
           onSave={() => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before saving", "error");
+              return;
+            }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
               return;
             }
             saveMutation.mutate(undefined, {
@@ -537,6 +559,10 @@ export function Form425CHome() {
           onGeneratePdf={() => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing PDF", "error");
+              return;
+            }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
               return;
             }
             if (dirty) {
@@ -555,6 +581,10 @@ export function Form425CHome() {
               pushToast("Create / Load Draft before marking filed", "error");
               return;
             }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
+              return;
+            }
             if (dirty) {
               saveMutation.mutate(undefined, {
                 onSuccess: () => {
@@ -569,6 +599,10 @@ export function Form425CHome() {
           onAttachFile={(line, file) => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before attaching a file", "error");
+              return;
+            }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
               return;
             }
             attachMutation.mutate({ line, file });
@@ -589,6 +623,10 @@ export function Form425CHome() {
           onGenerate={() => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing package", "error");
+              return;
+            }
+            if (form.status === "filed") {
+              pushToast("This MOR is filed — use Amend on History", "error");
               return;
             }
             if (dirty) {
