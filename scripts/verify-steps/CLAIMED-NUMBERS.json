@@ -1,89 +1,4 @@
 {
-  "4694": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-location-hos-shared-drivers-wired"
-  },
-  "4692": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-unit-map-focus-wired"
-  },
-  "4690": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-unit-maintenance-create-work-order-drill-wired"
-  },
-  "4688": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-unit-assignments-filter-wired"
-  },
-  "4686": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-trip-cost-visible-errors-wired"
-  },
-  "4684": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-inline-status-visible-errors-wired"
-  },
-  "4682": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fleet-clear-default-driver-visible-errors-wired"
-  },
-  "4680": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-unit-wear-telemetry-failure-truth-wired"
-  },
-  "4678": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-legal-contract-signer-phone-e164-wired"
-  },
-  "4676": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-users-returning-check-fails-closed-wired"
-  },
-  "4674": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-tasks-chat-comment-visible-errors-wired"
-  },
-  "4672": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-home-attention-dismiss-visible-errors-wired"
-  },
-  "4670": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-compliance-required-doc-patch-visible-errors-wired"
-  },
-  "4668": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-compliance-notification-rule-visible-errors-wired"
-  },
-  "4666": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-fuel-fraud-alert-mutation-errors-surfaced"
-  },
-  "4664": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-intransit-issues-resolve-mutation-error-surfaced"
-  },
-  "4662": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-pod-review-mutation-error-surfaced"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4008,6 +3923,96 @@
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
     "purpose": "verify-ocr-queue-mutation-errors-surfaced"
+  },
+  "4662": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-pod-review-mutation-error-surfaced"
+  },
+  "4664": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-intransit-issues-resolve-mutation-error-surfaced"
+  },
+  "4666": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fuel-fraud-alert-mutation-errors-surfaced"
+  },
+  "4668": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-compliance-notification-rule-visible-errors-wired"
+  },
+  "4670": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-compliance-required-doc-patch-visible-errors-wired"
+  },
+  "4672": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-home-attention-dismiss-visible-errors-wired"
+  },
+  "4674": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-tasks-chat-comment-visible-errors-wired"
+  },
+  "4676": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-users-returning-check-fails-closed-wired"
+  },
+  "4678": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-legal-contract-signer-phone-e164-wired"
+  },
+  "4680": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-unit-wear-telemetry-failure-truth-wired"
+  },
+  "4682": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-clear-default-driver-visible-errors-wired"
+  },
+  "4684": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-inline-status-visible-errors-wired"
+  },
+  "4686": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-trip-cost-visible-errors-wired"
+  },
+  "4688": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-unit-assignments-filter-wired"
+  },
+  "4690": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-unit-maintenance-create-work-order-drill-wired"
+  },
+  "4692": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-unit-map-focus-wired"
+  },
+  "4694": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-location-hos-shared-drivers-wired"
+  },
+  "4695": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-geofence-dwell-cte-operating-company-id"
   },
   "_band": {
     "cc-1": "n%4===1",
