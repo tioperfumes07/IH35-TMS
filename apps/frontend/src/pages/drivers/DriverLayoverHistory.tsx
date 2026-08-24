@@ -7,6 +7,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { useToast } from "../../components/Toast";
 
 interface LayoverRow {
   uuid: string;
@@ -31,6 +32,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   const [from, setFrom] = useState(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const qc = useQueryClient();
+  const { pushToast } = useToast();
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: LayoverRow[] }>({
     queryKey: ["driver-layovers", driverUuid, from, to],
@@ -55,6 +57,10 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
       if (!res.ok) throw new Error("Failed");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["driver-layovers"] }),
+    // DRV-F6330: no onError, no toast import anywhere in the file (userFacingApiError was only
+    // wired to the read query's error state, never to this write). A rejected billable-toggle
+    // silently did nothing — the button just stayed on whatever it showed before the click.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not update billable status"), "error"),
   });
 
   const rows = data?.data ?? [];
