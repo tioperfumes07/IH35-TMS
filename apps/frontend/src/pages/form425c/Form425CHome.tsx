@@ -425,7 +425,13 @@ export function Form425CHome() {
       w.document.write(printHtml);
       w.document.close();
       setTimeout(() => w.print(), 600);
-      pushToast(`Ready to print: ${res.suggested_filename || suggestedFilename(profiles[activeCompany].name, month, year)}`, "success");
+      const fileName =
+        String(res.suggested_filename ?? "").trim() || suggestedFilename(profiles[activeCompany].name, month, year);
+      if (!fileName) {
+        pushToast("Print opened without a debtor filename — set Profiles; will not invent a court PDF name", "error");
+      } else {
+        pushToast(`Ready to print: ${fileName}`, "success");
+      }
       await queryClient.invalidateQueries({ queryKey: ["form-425c"] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "PDF generation failed"), "error"),
