@@ -11,6 +11,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addRenditionLine,
   createAppraisalDistrict,
@@ -65,6 +67,7 @@ function RenditionListView({
   onResetFilters: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const now = new Date();
   const [taxYear, setTaxYear] = useState<number>(now.getUTCMonth() < 3 ? now.getUTCFullYear() : now.getUTCFullYear());
   const [districtId, setDistrictId] = useState("");
@@ -83,12 +86,17 @@ function RenditionListView({
     enabled: Boolean(companyId),
   });
 
+  // COMP-F6322: none of this file's 6 mutations had onError (or a wrapping try/catch), and there
+  // is no app-wide default (main.tsx's QueryClient sets no mutation defaults) — a rejected write
+  // was a silent no-op: `.mutate()` fire-and-forget, no toast, no explanation, nothing visibly
+  // happens. Surface every one explicitly.
   const createM = useMutation({
     mutationFn: () => createRendition(companyId, { tax_year: taxYear, appraisal_district_id: districtId }),
     onSuccess: () => {
       setDistrictId("");
       void queryClient.invalidateQueries({ queryKey: ["property-tax-renditions", companyId] });
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not create the rendition"), "error"),
   });
 
   const addDistrictM = useMutation({
@@ -100,6 +108,7 @@ function RenditionListView({
       setDistrictId(res.district.id);
       void queryClient.invalidateQueries({ queryKey: ["appraisal-districts", companyId] });
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not add the appraisal district"), "error"),
   });
 
   const renditions = renditionsQ.data?.renditions ?? [];
@@ -268,6 +277,7 @@ function RenditionListView({
 // ── DETAIL VIEW ───────────────────────────────────────────────────────────────────────────────────
 function RenditionDetailView({ companyId, renditionId }: { companyId: string; renditionId: string }) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [assessedInput, setAssessedInput] = useState("");
   const [selectedAsset, setSelectedAsset] = useState("");
   const [renderedInput, setRenderedInput] = useState("");
@@ -289,13 +299,21 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
     void queryClient.invalidateQueries({ queryKey: ["property-tax-renditions", companyId] });
   };
 
+  // COMP-F6322: none of this file's 6 mutations had onError (or a wrapping try/catch), and there
+  // is no app-wide default (main.tsx's QueryClient sets no mutation defaults) — a rejected write
+  // was a silent no-op: `.mutate()` fire-and-forget, no toast, no explanation, nothing visibly
+  // happens. Surface every one explicitly — addLineM especially, since a failed "+ Create Line"
+  // (the exact picker COMP-F6310 unblocked earlier this session) would otherwise look identical
+  // to a working save that just didn't take.
   const statusM = useMutation({
     mutationFn: (status: RenditionStatus) => updateRendition(companyId, renditionId, { status }),
     onSuccess: invalidate,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not update the rendition status"), "error"),
   });
   const assessedM = useMutation({
     mutationFn: (cents: number) => updateRendition(companyId, renditionId, { assessed_tax_cents: cents }),
     onSuccess: invalidate,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not save the assessed tax"), "error"),
   });
   const extensionM = useMutation({
     mutationFn: (requested: boolean) =>
@@ -304,6 +322,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         extended_due_date: requested && detail ? `${detail.rendition.tax_year}-05-15` : null,
       }),
     onSuccess: invalidate,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not update the extension request"), "error"),
   });
   const addLineM = useMutation({
     mutationFn: (asset: CandidateAsset | null) =>
@@ -322,6 +341,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
       setCostInput("");
       invalidate();
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not add the taxable asset line"), "error"),
   });
 
   if (detailQ.isError || assetsQ.isError) {
