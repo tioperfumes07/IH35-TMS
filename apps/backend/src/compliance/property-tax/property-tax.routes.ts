@@ -13,6 +13,8 @@ import {
   listRenditions,
   updateRendition,
 } from "./property-tax.service.js";
+import { renderPropertyTaxRenditionPdfBody } from "./property-tax-pdf-renderer.service.js";
+import { wrapPdfDocument } from "../../render/pdf-template.js";
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -136,6 +138,64 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!result) return reply.code(404).send({ error: "not_found" });
     return reply.send(result);
   });
+
+  // BUSINESS-PROPERTY-ALLOCATION-PRINT: no product surface ever offered a printable form for a TX
+  // BPP rendition (grepped the entire frontend page for Print/pdf/PDF/Export — zero hits), so the
+  // only way to "print" this compliance filing was the browser printing the SPA chrome, which the
+  // COMPLICATED-SCENARIO-BATTERY law names as a FINDING outright. Letter HTML, same
+  // wrapPdfDocument/PDF_BASE_STYLES architecture as invoices/bills/work orders.
+  app.get(
+    "/api/v1/compliance/property-tax/renditions/:id.html",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = authUser(req, reply);
+      if (!user) return;
+      const q = companyQuery.safeParse(req.query ?? {});
+      if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+      const { id } = req.params as { id: string };
+      await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+      const payload = await withCurrentUser(user.uuid, async (client) => {
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
+        const result = await getRendition(client, q.data.operating_company_id, id);
+        if (!result) return null;
+        const { rendition, lines } = result;
+        const companyRes = await client.query<{ legal_name: string | null; short_name: string | null; tax_id: string | null }>(
+          `SELECT legal_name, short_name, tax_id FROM org.companies WHERE id = $1 LIMIT 1`,
+          [q.data.operating_company_id]
+        );
+        const company = companyRes.rows[0] ?? {};
+        const body = renderPropertyTaxRenditionPdfBody({
+          companyLegalName: String(company.legal_name ?? company.short_name ?? "Carrier"),
+          companyMcDotEinLine: company.tax_id ? `EIN ${String(company.tax_id)}` : "Motor carrier identifiers on file",
+          taxYear: rendition.tax_year,
+          cadName: rendition.cad_name,
+          county: rendition.county,
+          status: rendition.status,
+          valueBasis: rendition.value_basis,
+          dueDate: rendition.due_date,
+          extensionRequested: rendition.extension_requested,
+          extendedDueDate: rendition.extended_due_date,
+          cadAccountNumber: rendition.cad_account_number,
+          totalRenderedValueCents: rendition.total_rendered_value_cents,
+          assessedTaxCents: rendition.assessed_tax_cents,
+          filedAt: rendition.filed_at,
+          notes: rendition.notes,
+          lines: lines.map((l) => ({
+            assetDescription: l.asset_description,
+            assetCategory: l.asset_category,
+            acquisitionDate: l.acquisition_date,
+            acquisitionCostCents: l.acquisition_cost_cents,
+            renderedValueCents: l.rendered_value_cents,
+          })),
+        });
+        return { title: `${rendition.tax_year} Rendition — ${rendition.county}`, body };
+      });
+      if (payload === null) return reply.code(404).type("text/plain").send("rendition_not_found");
+      reply.header("Content-Type", "text/html; charset=utf-8");
+      reply.header("Cache-Control", "no-store");
+      return reply.send(wrapPdfDocument(payload));
+    }
+  );
 
   // Create a draft rendition.
   app.post("/api/v1/compliance/property-tax/renditions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

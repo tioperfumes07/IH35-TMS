@@ -81,6 +81,11 @@ export function fetchRendition(cid: string, id: string) {
   );
 }
 
+/** BUSINESS-PROPERTY-ALLOCATION-PRINT: canonical letter HTML path, for openPrintableDocument. */
+export function renditionPrintPath(cid: string, id: string) {
+  return `/api/v1/compliance/property-tax/renditions/${id}.html?${q(cid)}`;
+}
+
 export function createRendition(
   cid: string,
   body: { tax_year: number; appraisal_district_id: string; value_basis?: ValueBasis; cad_account_number?: string | null; notes?: string | null }
