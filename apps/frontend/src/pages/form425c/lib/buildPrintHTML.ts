@@ -1,14 +1,22 @@
 import { MONTHS, QUESTIONNAIRE } from "./constants";
 import { courtDistrictCaption } from "./courtDistrictCaption";
+import { optionalFormNumber } from "./optionalFormNumber";
 import type { CompanyProfile, CurrentFormState } from "../types";
 
 function fmt(n: unknown) {
-  const v = parseFloat(String(n || "").replace(/[$,]/g, ""));
+  if (n === null || n === undefined || String(n).trim() === "") return "";
+  const v = typeof n === "number" ? n : parseFloat(String(n).replace(/[$,]/g, ""));
   return Number.isNaN(v) ? "" : v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function nv(s: unknown) {
-  return parseFloat(String(s || "").replace(/[$,]/g, "")) || 0;
+function minus(a: number | null, b: number | null): number | null {
+  if (a === null || b === null) return null;
+  return a - b;
+}
+
+function plus(a: number | null, b: number | null): number | null {
+  if (a === null || b === null) return null;
+  return a + b;
 }
 
 function lastDay(m: number, y: number) {
@@ -43,13 +51,20 @@ export function buildPrintHTML(
   exhibitA: ExhibitRow[] = [],
   exhibitB: ExhibitRow[] = [],
 ) {
-  const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
-  const cashEnd = nv(form.openingBalance) + netCash;
-  const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
-  const pDR = nv(form.projReceiptsLast) - nv(form.totalReceipts);
-  const pDD = nv(form.projDisbLast) - nv(form.totalDisbursements);
-  const pDN = projNetPrev - netCash;
-  const projNetNext = nv(form.projReceiptsNext) - nv(form.projDisbNext);
+  const receipts = optionalFormNumber(form.totalReceipts);
+  const disbursements = optionalFormNumber(form.totalDisbursements);
+  const opening = optionalFormNumber(form.openingBalance);
+  const projReceiptsLast = optionalFormNumber(form.projReceiptsLast);
+  const projDisbLast = optionalFormNumber(form.projDisbLast);
+  const projReceiptsNext = optionalFormNumber(form.projReceiptsNext);
+  const projDisbNext = optionalFormNumber(form.projDisbNext);
+  const netCash = minus(receipts, disbursements);
+  const cashEnd = plus(opening, netCash);
+  const projNetPrev = minus(projReceiptsLast, projDisbLast);
+  const pDR = minus(projReceiptsLast, receipts);
+  const pDD = minus(projDisbLast, disbursements);
+  const pDN = minus(projNetPrev, netCash);
+  const projNetNext = minus(projReceiptsNext, projDisbNext);
   const today = new Date().toLocaleDateString("en-US");
   const courtCaption = courtDistrictCaption(p.division, p.district);
   if (!courtCaption) {
@@ -203,13 +218,14 @@ export function buildPrintHTML(
     { n: 34, lbl: "Net cash flow", A: fmt(projNetPrev), B: fmt(netCash), diff: pDN },
   ]
     .map((row, i) => {
-      const dc = row.diff > 0 ? "#c00" : row.diff < 0 ? "#005500" : "#333";
-      const ds = row.diff > 0 ? "+" : row.diff < 0 ? "-" : "";
+      const dc = row.diff === null ? "#333" : row.diff > 0 ? "#c00" : row.diff < 0 ? "#005500" : "#333";
+      const ds = row.diff === null ? "" : row.diff > 0 ? "+" : row.diff < 0 ? "-" : "";
+      const diffCell = row.diff === null ? "" : `${ds}$${fmt(Math.abs(row.diff))}`;
       return `<tr style="border-bottom:1px solid #dde4ee;${i % 2 ? "background:#fafbfd;" : ""}">
       <td style="padding:4px 7px;font-size:7.8pt;"><strong>${row.n}.</strong> ${row.lbl}</td>
       <td style="width:${CW}px;border-left:1px solid #c8d4e0;padding:4px 7px;text-align:right;font-size:7.8pt;font-weight:700;color:#1a3a8f;">${row.A ? `$${row.A}` : ""}</td>
       <td style="width:${CW}px;border-left:1px solid #c8d4e0;padding:4px 7px;text-align:right;font-size:7.8pt;font-weight:700;color:#1a3a8f;">${row.B ? `$${row.B}` : ""}</td>
-      <td style="width:${CW}px;border-left:1px solid #c8d4e0;padding:4px 7px;text-align:right;font-size:7.8pt;font-weight:700;color:${dc};">${ds}$${fmt(Math.abs(row.diff))}</td>
+      <td style="width:${CW}px;border-left:1px solid #c8d4e0;padding:4px 7px;text-align:right;font-size:7.8pt;font-weight:700;color:${dc};">${diffCell}</td>
     </tr>`;
     })
     .join("")}
@@ -221,7 +237,7 @@ export function buildPrintHTML(
     .map(
       (row, i) => `<tr style="background:#eef3f9;border-bottom:${i < 2 ? "1px solid #dde4ee" : "none"};">
       <td style="padding:4px 7px;font-size:7.8pt;"><strong>${row.n}.</strong> ${row.lbl}</td>
-      <td colspan="3" style="border-left:1px solid #c8d4e0;padding:4px 8px;text-align:right;font-weight:700;font-size:8pt;color:#1e3a6a;">${row.pre}${row.val}</td>
+      <td colspan="3" style="border-left:1px solid #c8d4e0;padding:4px 8px;text-align:right;font-weight:700;font-size:8pt;color:#1e3a6a;">${row.val ? `${row.pre}${row.val}` : ""}</td>
     </tr>`
     )
     .join("")}

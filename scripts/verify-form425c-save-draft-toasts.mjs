@@ -160,6 +160,9 @@ export function collectProblems(src) {
   if (printHtml.includes("${p.division} Division · ${p.district} District") || !printHtml.includes("courtDistrictCaption")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: court line must use courtDistrictCaption — empty profile must not print invented Division/District");
   }
+  if (printHtml.includes("function nv(") || printHtml.includes("nv(form.totalReceipts)") || printHtml.includes("|| 0")) {
+    problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: empty cash/projection fields must not print invented $0 nets (nv || 0)");
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
