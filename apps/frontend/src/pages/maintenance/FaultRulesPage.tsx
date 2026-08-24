@@ -64,6 +64,7 @@ export function FaultRulesPage() {
       pushToast("Fault rule archived.", "success");
       queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-rules", companyId] });
     },
+    onError: () => pushToast("Could not archive fault rule.", "error"),
   });
 
   const rules = rulesQuery.data?.rules ?? [];

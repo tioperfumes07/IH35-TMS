@@ -14,6 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { useToast } from "../../../components/Toast";
 import { useSearchParams } from "react-router-dom";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -56,6 +57,7 @@ export function PmSchedulePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
+  const { pushToast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [draft, setDraft] = useState<CreateDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
@@ -87,6 +89,11 @@ export function PmSchedulePage() {
 
   const generateM = useMutation({
     mutationFn: (id: string) => generateMaintenancePmWorkOrder(id, companyId),
+    onSuccess: async () => {
+      pushToast("Work order generated.", "success");
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", companyId] });
+    },
+    onError: (err: unknown) => pushToast(userFacingApiError(err, "Could not generate work order"), "error"),
   });
 
   const rows = listQ.data?.rows ?? [];

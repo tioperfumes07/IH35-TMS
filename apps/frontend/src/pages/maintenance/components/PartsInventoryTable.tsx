@@ -10,6 +10,8 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   companyId: string;
@@ -50,6 +52,7 @@ const EMPTY_PURCHASE: PurchaseForm = {
 
 export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = false, loading = false, isError = false, onRetry, highlightedRowId = "" }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [openPurchase, setOpenPurchase] = useState(openPurchaseOnMount);
   // Search is ONLY ParityTable UniversalListToolbar (LV-PARTS-INVENTORY-DUPLICATE-SEARCH).
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
@@ -78,6 +81,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: keep Purchase History fresh for the same session.
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", companyId] });
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not record parts purchase"), "error"),
   });
   const adjustMutation = useMutation({
     mutationFn: () => {
@@ -91,6 +95,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       setDeltaQty(0);
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not apply inventory adjustment"), "error"),
   });
 
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
