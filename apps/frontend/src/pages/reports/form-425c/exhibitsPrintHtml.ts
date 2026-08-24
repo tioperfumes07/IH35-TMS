@@ -16,6 +16,10 @@ function esc(value: unknown): string {
 }
 
 function moneyCents(cents: unknown): string {
+  // F425C-EXHIBIT-C-UNVERIFIED-OPENING-FEEDS-TOTAL: Number(null) is 0, not NaN — without this
+  // explicit check, a genuinely unavailable (null) balance would print as an honest-looking
+  // "$0.00" instead of the "—" this exhibit already uses elsewhere for an unresolved value.
+  if (cents === null || cents === undefined) return "—";
   const n = Number(cents);
   if (!Number.isFinite(n)) return "—";
   return (n / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -78,7 +82,12 @@ function exhibitSection(letter: ExhibitLetter, payload: Record<string, unknown>)
   }
   if (payload.total_cents != null) parts.push(`<p><strong>Total</strong> ${moneyCents(payload.total_cents)}</p>`);
   if (payload.total_closing_cents != null) {
-    parts.push(`<p><strong>Total closing</strong> ${moneyCents(payload.total_closing_cents)}</p>`);
+    const excluded = Number(payload.accounts_excluded_from_total ?? 0);
+    const caveat =
+      excluded > 0
+        ? ` <em>(excludes ${excluded} account${excluded === 1 ? "" : "s"} with no statement-backed opening balance for this period — see "—" rows above)</em>`
+        : "";
+    parts.push(`<p><strong>Total closing</strong> ${moneyCents(payload.total_closing_cents)}${caveat}</p>`);
   }
   if (payload.fee_cents != null) {
     parts.push(

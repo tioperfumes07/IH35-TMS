@@ -61,6 +61,11 @@ try {
   const loginPage = read("apps/frontend/src/pages/Login.tsx");
   assertIncludes(loginPage, "Sign in with email", "Login page email/password action missing");
   assertIncludes(loginPage, "Sign in with Google", "Login page Google sign-in action missing");
+  assertIncludes(
+    loginPage,
+    "isError && !isUnauthenticated",
+    "Login must show email/Google form on 401 — not the hung session wall"
+  );
 
   console.log("✅ User management/password-auth guard passed");
 } catch (error) {

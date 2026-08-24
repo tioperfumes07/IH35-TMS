@@ -507,23 +507,43 @@ export function RouteFallback() {
   );
 }
 
-function RootRedirect() {
-  const auth = useAuth();
+function SessionCheckRetry({ refetch }: { refetch: () => unknown }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-sm text-gray-700">
+      <p role="alert">Session check timed out. The API hung — you may still be signed in.</p>
+      <button
+        type="button"
+        className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900"
+        onClick={() => void refetch()}
+      >
+        Retry session
+      </button>
+    </div>
+  );
+}
+
+function sessionGate(auth: ReturnType<typeof useAuth>) {
   if (auth.isLoading) {
     return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
   }
-  if (!auth.user || auth.isUnauthenticated) return <Navigate to="/login" replace />;
+  if (auth.isUnauthenticated) return <Navigate to="/login" replace />;
+  if (!auth.user && auth.isError) return <SessionCheckRetry refetch={auth.refetch} />;
+  if (!auth.user) return <Navigate to="/login" replace />;
+  return null;
+}
+
+function RootRedirect() {
+  const auth = useAuth();
+  const gate = sessionGate(auth);
+  if (gate) return gate;
   return <Navigate to="/home" replace />;
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
-  }
-  if (!auth.user || auth.isUnauthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const gate = sessionGate(auth);
+  if (gate) return gate;
+  if (!auth.user) return <Navigate to="/login" replace />;
   return (
     <Shell auth={auth.user}>
       <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
@@ -533,12 +553,9 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 function OwnerAdminRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
-  }
-  if (!auth.user || auth.isUnauthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const gate = sessionGate(auth);
+  if (gate) return gate;
+  if (!auth.user) return <Navigate to="/login" replace />;
   const role = String(auth.user.role ?? "");
   if (role !== "Owner" && role !== "Administrator") {
     return <Navigate to="/home" replace />;
@@ -552,12 +569,9 @@ function OwnerAdminRoute({ children }: { children: ReactNode }) {
 
 function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
-  }
-  if (!auth.user || auth.isUnauthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const gate = sessionGate(auth);
+  if (gate) return gate;
+  if (!auth.user) return <Navigate to="/login" replace />;
   const role = String(auth.user.role ?? "");
   if (role !== "Owner" && role !== "SuperAdmin") {
     return <Navigate to="/home" replace />;
@@ -571,12 +585,9 @@ function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
 
 function OwnerOnlyRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
-  }
-  if (!auth.user || auth.isUnauthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const gate = sessionGate(auth);
+  if (gate) return gate;
+  if (!auth.user) return <Navigate to="/login" replace />;
   if (String(auth.user.role ?? "") !== "Owner") {
     return <Navigate to="/home" replace />;
   }

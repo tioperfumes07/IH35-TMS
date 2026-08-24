@@ -102,7 +102,10 @@ export async function getMe(signal?: AbortSignal): Promise<AuthMeResponse> {
     return await apiRequest<AuthMeResponse>("/api/v1/auth/me", { signal: ctrl.signal });
   } catch (err) {
     const name = err instanceof Error ? err.name : "";
-    if (name === "AbortError" || name === "TimeoutError") {
+    const callerAborted = Boolean(signal?.aborted);
+    const timedOut = Boolean(timeoutSignal?.aborted);
+    // React Query cancel must stay AbortError (not 408). Only the 8s timer is "API hung".
+    if ((name === "AbortError" || name === "TimeoutError") && timedOut && !callerAborted) {
       throw new ApiError(408, {
         message: "Session check timed out. Retry — you may still be signed in.",
       });

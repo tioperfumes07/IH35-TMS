@@ -18,6 +18,7 @@ export function useAuth() {
     isLoading: query.isLoading,
     isError: query.isError,
     isUnauthenticated: query.error instanceof ApiError && query.error.status === 401,
+    isSessionTimeout: query.error instanceof ApiError && query.error.status === 408,
     refetch: query.refetch,
   };
 }
