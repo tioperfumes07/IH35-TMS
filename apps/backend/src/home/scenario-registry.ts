@@ -1024,18 +1024,56 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Vendor bill from the in-transit WO",
     je: "DR Repair / CR A/P",
     spec_ref: "COMPLICATED-BATTERY-03",
-    sources: ["accounting.bills", "maintenance.work_orders", "dispatch.intransit_issues"],
+    sources: ["accounting.bills", "maintenance.work_orders", "dispatch.intransit_issues", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries", "accounting.transaction_source_links"],
     probe: {
       sql: `
         SELECT count(*)::text AS n
           FROM accounting.bills b
-          JOIN maintenance.work_orders w ON w.id = b.linked_work_order_uuid
+          JOIN maintenance.work_orders w
+            ON w.id = b.linked_work_order_uuid
+           AND w.operating_company_id = b.operating_company_id
+           AND w.voided_at IS NULL
+          JOIN dispatch.intransit_issues i
+            ON i.id = w.source_intransit_issue_id
+           AND i.promoted_to_wo_id = w.id
+           AND i.operating_company_id = w.operating_company_id
+           AND i.load_id = w.load_id
+           AND i.unit_id = w.unit_id
+          JOIN accounting.posting_batches pb
+            ON pb.source_transaction_type = 'bill'
+           AND pb.source_transaction_id = b.id::text
+           AND pb.operating_company_id = b.operating_company_id
+           AND pb.batch_status = 'posted'
+          JOIN accounting.journal_entry_postings jep
+            ON jep.posting_batch_id = pb.id
+           AND jep.operating_company_id = pb.operating_company_id
+           AND jep.source_transaction_type = 'bill'
+           AND jep.source_transaction_id = b.id::text
+          JOIN accounting.journal_entries je
+            ON je.id = jep.journal_entry_uuid
+           AND je.operating_company_id = jep.operating_company_id
+           AND je.status = 'posted'
+           AND je.voided_at IS NULL
+          JOIN accounting.transaction_source_links tsl
+            ON tsl.journal_entry_posting_id = jep.id
+           AND tsl.operating_company_id = jep.operating_company_id
+           AND tsl.linked_object_type = 'bill'
+           AND tsl.linked_object_id = b.id::text
          WHERE b.qbo_bill_id IS NULL
            AND b.voided_at IS NULL
            AND b.revoked_at IS NULL
+           AND b.amount_cents > 0
+           AND NULLIF(BTRIM(b.vendor_id), '') IS NOT NULL
+           AND b.unit_id = i.unit_id
            AND EXISTS (
-             SELECT 1 FROM dispatch.intransit_issues i
-              WHERE i.promoted_to_wo_id = w.id
+             SELECT 1
+               FROM accounting.journal_entry_postings balance
+              WHERE balance.journal_entry_uuid = je.id
+                AND balance.operating_company_id = je.operating_company_id
+              GROUP BY balance.journal_entry_uuid
+             HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END)
+                  = SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
+                AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
            )
            AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
       `,
