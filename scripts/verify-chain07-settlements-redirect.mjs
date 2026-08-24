@@ -65,6 +65,15 @@ export function computeChain07Failures(files) {
     );
   }
 
+  // U14-P6-F01 — bare /driver-finance must not fall through to /home.
+  const hubRedirectRe =
+    /path="\/driver-finance"[\s\S]{0,400}<(?:Navigate|PreserveSearchNavigate)\s+to="\/driver-finance\/settlements"/;
+  if (!hubRedirectRe.test(manifest)) {
+    errors.push(
+      'manifest.tsx: path="/driver-finance" must Navigate/PreserveSearchNavigate to="/driver-finance/settlements" (U14-P6-F01)'
+    );
+  }
+
   // 2c. Drivers.tsx must not OR settlements with pre_settlements onto PreSettlementsPanel.
   const driversPage = files.driversPage ?? "";
   if (
@@ -134,6 +143,7 @@ function selftest() {
   const goodManifest = [
     '<Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />',
     '<Route path="/drivers/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />',
+    '<Route path="/driver-finance" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />',
   ].join("\n");
   const goodDrivers = 'subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
   const badDrivers = 'subnavTab === "settlements" || subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
@@ -172,6 +182,17 @@ function selftest() {
     }).length
   ) {
     console.error(`${LABEL} --selftest FAILED: missing /drivers/settlements redirect should fail`);
+    process.exit(1);
+  }
+  if (
+    !computeChain07Failures({
+      subnav: goodSubnav,
+      manifest: goodManifest.replace(/path="\/driver-finance"[\s\S]*?\/>/, ""),
+      legacyRoute: goodLegacy,
+      driversPage: goodDrivers,
+    }).length
+  ) {
+    console.error(`${LABEL} --selftest FAILED: missing /driver-finance hub redirect should fail`);
     process.exit(1);
   }
   if (

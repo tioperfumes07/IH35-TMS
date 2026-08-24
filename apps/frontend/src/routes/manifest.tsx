@@ -2273,6 +2273,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/driver-finance"
+          element={
+            <ProtectedRoute>
+              <PreserveSearchNavigate to="/driver-finance/settlements" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/driver-finance/settlements"
           element={
             <ProtectedRoute>
