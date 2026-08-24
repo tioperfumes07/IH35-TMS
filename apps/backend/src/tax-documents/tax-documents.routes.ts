@@ -143,8 +143,31 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
           continue;
         }
 
+        // TAX-F6293 — the aggregated settlement rows are scoped by the selected company, but a
+        // shared USMCA driver's canonical mdata.drivers row lives on a different home company. The
+        // old home-company-only lookup returned 0 rows for such a driver, driver was undefined, and
+        // the recipient_name write below silently fell back to the literal "Driver". Admit the
+        // driver through home company OR an active canonical selected-company authorization, same
+        // predicate already used for this exact class of shared-driver identity resolution
+        // (late-arrivals.service.ts, pre-dispatch-validator.service.ts).
         const driverRes = await client.query<{ first_name: string; last_name: string }>(
-          `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          `
+            SELECT d.first_name, d.last_name
+            FROM mdata.drivers d
+            WHERE d.id = $1
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                  FROM mdata.driver_company_authorizations tax_1099_dca
+                  WHERE tax_1099_dca.driver_id = d.id
+                    AND tax_1099_dca.company_id = $2::uuid
+                    AND tax_1099_dca.is_authorized = true
+                    AND tax_1099_dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1
+          `,
           [row.driver_id, body.data.operating_company_id]
         );
         const driver = driverRes.rows[0];
