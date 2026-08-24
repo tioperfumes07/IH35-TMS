@@ -15,7 +15,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 
 type Props = {
   driverId: string;
@@ -462,7 +462,19 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <div className="space-y-1">
             {(driverExpensesQuery.data ?? []).slice(0, 5).map((row) => (
               <div key={row.id} className="flex items-center justify-between text-xs">
-                <EntityLink kind="expense" id={row.id} label={entityLabel(row.memo, row.id, "Expense")} />
+                {/* ACCT-F6284/F6301-class: expense_number is NULL on 27,214/27,223 real expenses
+                    and memo is empty on 10,583/27,223 (both live-confirmed) — this row is already
+                    fully in view, so entityLabel's "Expense — not visible" fallback contradicted
+                    the row it's sitting in on a large fraction of real driver-expense lists. */}
+                <EntityLink
+                  kind="expense"
+                  id={row.id}
+                  label={visibleDocumentLabel(
+                    row.expense_number ?? row.memo ?? row.line_description ?? row.vendor_name,
+                    row.id,
+                    "Expense"
+                  )}
+                />
                 <span className="text-gray-700">{money(Number(row.total_amount_cents ?? 0) / 100)}</span>
               </div>
             ))}
