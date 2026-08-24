@@ -1235,6 +1235,27 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         ]
       );
       const report = res.rows[0];
+      if (!report) return null;
+      await client.query(
+        `
+          INSERT INTO compliance.form_425c_exhibit_a_entries (report_id, line_number, explanation)
+          SELECT $1, line_number, explanation
+          FROM compliance.form_425c_exhibit_a_entries
+          WHERE report_id = $2
+          ORDER BY created_at
+        `,
+        [report.id, src.id]
+      );
+      await client.query(
+        `
+          INSERT INTO compliance.form_425c_exhibit_b_entries (report_id, line_number, explanation)
+          SELECT $1, line_number, explanation
+          FROM compliance.form_425c_exhibit_b_entries
+          WHERE report_id = $2
+          ORDER BY created_at
+        `,
+        [report.id, src.id]
+      );
       await appendCrudAudit(
         client,
         user.uuid,
