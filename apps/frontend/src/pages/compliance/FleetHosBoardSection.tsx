@@ -265,6 +265,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
     ...EMPTY_FILTERS,
     unitId: unitIdFromUrl,
   }));
+  const [exportPending, setExportPending] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const staged = useStagedListFilters({
     applied,
     empty: EMPTY_FILTERS,
@@ -273,6 +275,18 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
       patchListSearchParam(next);
     },
   });
+
+  async function exportFleetHos() {
+    setExportError(null);
+    setExportPending(true);
+    try {
+      await downloadFleetLocationHosXlsx(companyId);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Fleet HOS export failed");
+    } finally {
+      setExportPending(false);
+    }
+  }
   const filterDraft = staged.draft;
 
   useEffect(() => {
@@ -383,7 +397,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                 <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
                   Refresh
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => void downloadFleetLocationHosXlsx(companyId).catch(() => undefined)}>
+                <Button type="button" variant="secondary" disabled={exportPending} onClick={() => void exportFleetHos()}>
                   Export (Excel)
                 </Button>
               </div>
@@ -391,6 +405,12 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           }
         />
       )}
+
+      {exportError ? (
+        <p role="alert" className="mt-2 text-xs text-red-700">
+          {exportError}
+        </p>
+      ) : null}
 
       {offlineRows.length > 0 ? (
         <div className="mt-4" data-testid="compliance-fleet-hos-offline">
