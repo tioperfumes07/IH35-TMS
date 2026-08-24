@@ -246,30 +246,78 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     ],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM (
-          SELECT p.id
-            FROM dispatch.pod_documents p
-           WHERE p.archived_at IS NULL
-             AND ($1::uuid IS NULL OR p.operating_company_id = $1::uuid)
-          UNION ALL
-          SELECT b.id
-            FROM dispatch.bol_documents b
-           WHERE b.archived_at IS NULL
-             AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
-          UNION ALL
-          SELECT fl.id
-            FROM docs.file_links fl
-            JOIN docs.files f ON f.id = fl.file_id
-            JOIN catalogs.file_categories fc ON fc.id = f.category_id
-            JOIN mdata.loads l ON l.id = fl.entity_id
-           WHERE fl.entity_type = 'load'
-             AND fl.deleted_at IS NULL
-             AND f.deleted_at IS NULL
-             AND fc.code IN ('pod', 'bol')
-             AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
-        ) evidence
+        SELECT count(*)::text AS n
+          FROM mdata.loads l
+         WHERE l.soft_deleted_at IS NULL
+           AND EXISTS (
+             SELECT 1
+               FROM dispatch.pod_documents p
+               JOIN mdata.load_stops s
+                 ON s.id = p.stop_id
+                AND s.load_id = p.load_id
+                AND s.stop_type = 'delivery'
+                AND s.soft_deleted_at IS NULL
+               JOIN mdata.drivers d
+                 ON d.id = p.driver_id
+                AND (
+                  d.operating_company_id = p.operating_company_id
+                  OR EXISTS (
+                    SELECT 1
+                      FROM mdata.driver_company_authorizations dca
+                     WHERE dca.driver_id = d.id
+                       AND dca.company_id = p.operating_company_id
+                       AND dca.is_authorized = true
+                       AND dca.deactivated_at IS NULL
+                  )
+                )
+              WHERE p.load_id = l.id
+                AND p.operating_company_id = l.operating_company_id
+                AND p.archived_at IS NULL
+                AND p.status <> 'rejected'
+                AND NULLIF(BTRIM(p.signature_r2_key), '') IS NOT NULL
+             UNION ALL
+             SELECT 1
+               FROM docs.file_links pod_fl
+               JOIN docs.files pod_f
+                 ON pod_f.id = pod_fl.file_id
+                AND pod_f.operating_company_id = l.operating_company_id
+                AND pod_f.deleted_at IS NULL
+                AND pod_f.upload_completed_at IS NOT NULL
+               JOIN catalogs.file_categories pod_fc
+                 ON pod_fc.id = pod_f.category_id
+                AND pod_fc.code = 'pod'
+                AND pod_fc.is_active = true
+              WHERE pod_fl.entity_type = 'load'
+                AND pod_fl.entity_id = l.id
+                AND pod_fl.deleted_at IS NULL
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM dispatch.bol_documents b
+              WHERE b.load_id = l.id
+                AND b.operating_company_id = l.operating_company_id
+                AND b.archived_at IS NULL
+                AND NULLIF(BTRIM(b.pdf_r2_key), '') IS NOT NULL
+                AND NULLIF(BTRIM(b.sha256), '') IS NOT NULL
+             UNION ALL
+             SELECT 1
+               FROM docs.file_links bol_fl
+               JOIN docs.files bol_f
+                 ON bol_f.id = bol_fl.file_id
+                AND bol_f.operating_company_id = l.operating_company_id
+                AND bol_f.deleted_at IS NULL
+                AND bol_f.upload_completed_at IS NOT NULL
+               JOIN catalogs.file_categories bol_fc
+                 ON bol_fc.id = bol_f.category_id
+                AND bol_fc.code = 'bol'
+                AND bol_fc.is_active = true
+              WHERE bol_fl.entity_type = 'load'
+                AND bol_fl.entity_id = l.id
+                AND bol_fl.deleted_at IS NULL
+           )
+           AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
       `,
-      describe: (n) => `${n} POD/BOL document(s) linked to a load`,
+      describe: (n) => `${n} load(s) with both POD and BOL evidence`,
     },
   },
   {
