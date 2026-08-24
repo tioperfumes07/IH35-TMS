@@ -86,11 +86,8 @@ const PROTECTED = new Set([
   // is now fully drained.
   // CLASS-F5973 parser correction exposed these exact, genuine owner-lane gaps. They remain visible
   // here (and stale protections fail) while their owning atomic PRs drain them; they grant no Built.
-  "connectivity\tfuel:fuel.modal.create_fuel_transaction", // Fuel FE/create lane; off current Codex hop.
-  "connectivity\tfuel:fuel.modal.import_fuel_transactions",
-  "connectivity\tfuel:fuel.modal.upload_loves_prices",
-  "connectivity\tfuel:fuel.panel.savings",
-  "load\tfuel:fuel.modal.create_fuel_transaction",
+  // CLASS-F5973-TRUE-REMAINDER-FUEL drained 2026-08-23 (CC-2): all 5 fuel keys live-confirmed wired
+  // on prod and covered by verify-fuel-class-f5973-remainder-wired.mjs — removed from PROTECTED.
   "connectivity\tmaintenance:maintenance.modal.add_parts_link", // CC-3 maintenance FE lane.
   "connectivity\tmaintenance:maintenance.modal.convert_issue_to_wo",
   "connectivity\tmaintenance:maintenance.modal.fault_rule",
