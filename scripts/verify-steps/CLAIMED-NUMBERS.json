@@ -1,4 +1,9 @@
 {
+  "4670": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-compliance-required-doc-patch-visible-errors-wired"
+  },
   "4668": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5928,5 +5933,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1285
+  "total_claimed": 1286
 }
