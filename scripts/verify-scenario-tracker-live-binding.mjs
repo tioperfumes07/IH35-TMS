@@ -63,6 +63,25 @@ const CHAIN_REQUIRED = [
       "b.linked_work_order_uuid = w.id",
     ],
   },
+  {
+    key: "scenario.insurance",
+    needles: [
+      "insurance.policy",
+      "p.operating_company_id = c.operating_company_id",
+      "p.status = 'active'",
+      "p.cancelled_on IS NULL",
+      "c.amount_paid_cents > 0",
+      "accounting.insurance_claim_recovery_postings",
+      "accounting.journal_entries",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "rp.claim_id = c.id",
+      "rp.operating_company_id = c.operating_company_id",
+      "rp.status = 'posted'",
+      "rp.is_active = true",
+      "rp.voided_at IS NULL",
+    ],
+  },
 ];
 
 function stripComments(src) {
@@ -218,6 +237,8 @@ function selftest() {
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
     ["maintenance probe counts an unposted WO", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
     ["maintenance probe drops labor proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND wol.line_type = 'labor'", "AND wol.line_type = 'part'") })],
+    ["insurance probe drops recovery posting", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND rp.status = 'posted'", "") })],
+    ["insurance probe accepts a voided JE", (s) => ({ ...s, [BACKEND]: s[BACKEND].split("AND je.voided_at IS NULL").join("") })],
     ["certifier loses its masking guard", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].split("assertNotMasked").join("skipCheck") })],
     ["scoreboard loses its masking guard", (s) => ({ ...s, [SCOREBOARD]: s[SCOREBOARD].split("assertNotMasked").join("skipCheck") })],
     ["certifier bypass becomes transaction-local", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].replace("'app.bypass_rls','lucia',false", "'app.bypass_rls','lucia',true") })],
