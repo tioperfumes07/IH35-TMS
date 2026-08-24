@@ -47,6 +47,11 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
 
   const filtered = useMemo(() => {
     if (!statusFilter) return reports;
+    // Amend POST always inserts status='draft' + amended_from_uuid. Status "amended"
+    // is never written — filtering === "amended" was a silent empty list.
+    if (statusFilter === "amended") {
+      return reports.filter((r) => Boolean(r.amended_from_uuid) || r.status === "amended");
+    }
     return reports.filter((r) => r.status === statusFilter);
   }, [reports, statusFilter]);
 
