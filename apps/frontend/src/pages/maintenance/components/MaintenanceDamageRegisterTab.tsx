@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { entityLabel } from "../../../lib/entity-label";
+import { visibleDocumentLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -67,8 +67,13 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
     {
       key: "id",
       label: "Report #",
-      // safety.incidents has no display/sequence number → short id slice is the stable record reference.
-      render: (row) => (row.id ? entityLabel(null, String(row.id), "Damage") : "—"),
+      // MAINT-DMG-F6314: safety.incidents has no display/sequence number, and this row is already
+      // fully in view (unit/date/description/status all populated) when it exists — entityLabel(null,
+      // row.id, "Damage") ALWAYS produced "Damage — not visible" here, live-reproduced on a real
+      // T120 damage report. visibleDocumentLabel() is the established fix for exactly this "no real
+      // display id, but the row IS visible" class (same null-name pattern already used in
+      // ManualJEListPage.tsx) — falls back to the bare noun "Damage" instead of the tombstone.
+      render: (row) => (row.id ? visibleDocumentLabel(null, String(row.id), "Damage") : "—"),
     },
     {
       key: "unit_number",
