@@ -4129,6 +4129,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-table-type-column-present"
   },
+  "6998": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-roster-create-actions-depth"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -6133,5 +6138,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1319
+  "total_claimed": 1320
 }
