@@ -4,6 +4,7 @@ import { EntityLink } from "../components/shared/EntityLink";
 import { entityLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api/client";
+import { userFacingApiError } from "../lib/api-error-message";
 import {
   createDispatcherSafetyEvent,
   getUserDetail,
@@ -228,6 +229,11 @@ export function UserDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["dispatcher-safety-events", userId] });
       pushToast("Event voided", "info");
     },
+    // USER-F6324: unlike createEventMutation (whose call site wraps mutateAsync in try/catch),
+    // this mutation's "Confirm Void" form does a bare `await voidEventMutation.mutateAsync(...)`
+    // with no try/catch — a rejected void silently did nothing: no toast, the modal just sat
+    // there with no explanation.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not void the event"), "error"),
   });
 
   const updateEventMutation = useMutation({
@@ -247,6 +253,10 @@ export function UserDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["dispatcher-safety-events", userId] });
       pushToast("Event updated", "success");
     },
+    // USER-F6324: same gap as voidEventMutation — the "Save" form does a bare
+    // `await updateEventMutation.mutateAsync(...)` with no try/catch, so a rejected update
+    // silently did nothing.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not update the event"), "error"),
   });
 
   if (userDetailQuery.isLoading) return <div className="p-4 text-sm text-gray-500">Loading user...</div>;
