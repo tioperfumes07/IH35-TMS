@@ -2413,6 +2413,14 @@
       "leafRe": "^policies\\.create$",
       "guard": "scripts/verify-insurance-policy-create-button.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "SAFETY-CRITICAL-ANOMALY-FAILURE-TRUTH",
+      "modules": ["safety"],
+      "cols": ["connectivity"],
+      "leafRe": "^anomaly_alerts\\.list$",
+      "guard": "scripts/verify-anomaly-detection-engine.mjs",
+      "live": "BLOCKED"
     }
   ]
 }

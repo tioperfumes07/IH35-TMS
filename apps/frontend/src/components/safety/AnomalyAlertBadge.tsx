@@ -16,6 +16,22 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
     },
     refetchInterval: 60_000,
   });
+
+  if (q.isError) {
+    return (
+      <button
+        type="button"
+        className="relative inline-flex items-center rounded-sm p-1 text-red-700 hover:bg-red-50"
+        title="Critical anomaly alerts couldn't be loaded. Retry."
+        aria-label="Retry critical anomaly alerts"
+        onClick={() => void q.refetch()}
+      >
+        <Bell size={18} />
+        <span className="absolute -right-1 -top-1 rounded-full bg-red-700 px-1 text-[10px] font-bold text-white">!</span>
+      </button>
+    );
+  }
+
   const count = q.data ?? 0;
   return (
     <a href="/safety/anomaly-alerts" className="relative inline-flex items-center rounded-sm p-1 text-slate-600 hover:bg-gray-100" title="Anomaly alerts">
