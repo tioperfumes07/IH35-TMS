@@ -7,7 +7,9 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listInvoices } from "../api/accounting";
+import { listInvoices, listPayments, type Invoice, type Payment } from "../api/accounting";
+import { listAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
+import { companyToday } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
 import { createCustomer, getCustomerBillingSummary, listCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
@@ -283,11 +285,7 @@ function CustomerNotesTab({ customer, onEdit }: { customer: Customer; onEdit: ()
 }
 
 const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
-  statements: "Statements will render billing statements for a date range. Needs a customer statement generator endpoint — flagged as a follow-up.",
-  recurring_transactions: "Recurring Transactions lists recurring invoice/charge templates for this customer. Needs a recurring-templates data source — flagged as a follow-up.",
   projects: "Projects groups loads/invoices under a customer project. Needs a projects data source — flagged as a follow-up.",
-  late_fees: "Late Fees will show configured late-fee rules and applied fees. Needs a late-fee config/data source — flagged as a follow-up.",
-  tasks: "Tasks will list follow-up tasks tied to this customer. Needs a customer-linked tasks source — flagged as a follow-up.",
   opportunities: "Opportunities tracks sales pipeline for this customer. Needs a CRM opportunities source — flagged as a follow-up.",
   conversations: "Conversations threads customer communications. Needs a conversations/messaging source — flagged as a follow-up.",
 };
@@ -614,6 +612,39 @@ export function CustomersPage() {
       }),
     enabled: Boolean(companyId && selectedCustomer?.id),
   });
+  const statementInvoicesQuery = useQuery({
+    queryKey: ["customers", "statement-invoices", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
+    queryFn: () =>
+      listInvoices(companyId, {
+        customer_id: selectedCustomer!.id,
+        from_date: dateFrom || undefined,
+        to_date: dateTo || undefined,
+        limit: 200,
+      }),
+    enabled: Boolean(companyId && selectedCustomer?.id && (activeTab === "statements" || activeTab === "late_fees")),
+  });
+  const statementPaymentsQuery = useQuery({
+    queryKey: ["customers", "statement-payments", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
+    queryFn: () =>
+      listPayments(companyId, {
+        customer_id: selectedCustomer!.id,
+        status: "all",
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        limit: 200,
+      }),
+    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "statements"),
+  });
+  const recurringQuery = useQuery({
+    queryKey: ["customers", "recurring-templates", companyId, selectedCustomer?.id ?? ""],
+    queryFn: () =>
+      listAccountingRecurringTemplates(companyId, {
+        customer_id: selectedCustomer!.id,
+        kind: "invoice",
+        limit: 100,
+      }),
+    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "recurring_transactions"),
+  });
 
   const txRows = useMemo(() => {
     return (invoicesQuery.data?.invoices ?? []).filter((invoice) => {
@@ -663,6 +694,61 @@ export function CustomersPage() {
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
       { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+    ],
+    [],
+  );
+
+  const statementInvoiceColumns = useMemo<ParityColumn<Invoice>[]>(
+    () => [
+      {
+        key: "invoice",
+        label: "Invoice",
+        render: (r) => <EntityLinkOrTombstone kind="invoice" id={r.id} name={r.display_id} noun="Invoice" />,
+      },
+      { key: "date", label: "Date", render: (r) => formatDateUS(r.issue_date) },
+      { key: "due", label: "Due", render: (r) => formatDateUS(r.due_date) },
+      { key: "status", label: "Status", render: (r) => (isVoidInvoice(r) ? "Voided" : r.status) },
+      { key: "total", label: "Total", render: (r) => fmtMoney(r.total_cents) },
+      { key: "open", label: "Open", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },
+    ],
+    [],
+  );
+  const statementPaymentColumns = useMemo<ParityColumn<Payment>[]>(
+    () => [
+      {
+        key: "payment",
+        label: "Payment",
+        render: (r) => <EntityLinkOrTombstone kind="payment" id={r.id} name={r.display_id} noun="Payment" />,
+      },
+      { key: "date", label: "Date", render: (r) => formatDateUS(r.payment_date) },
+      { key: "method", label: "Method", render: (r) => (r.voided_at ? "Voided" : r.payment_method) },
+      { key: "amount", label: "Amount", render: (r) => fmtMoney(r.amount_cents) },
+    ],
+    [],
+  );
+  const recurringColumns = useMemo<
+    ParityColumn<{
+      id: string;
+      kind: string;
+      cadence: string;
+      next_run_at: string;
+      is_active: boolean;
+      run_count: number;
+    }>[]
+  >(
+    () => [
+      {
+        key: "template",
+        label: "Template",
+        render: (r) => (
+          <EntityLinkOrTombstone kind="recurring_template" id={r.id} name={r.cadence} noun="Recurring template" />
+        ),
+      },
+      { key: "kind", label: "Kind", render: (r) => r.kind },
+      { key: "cadence", label: "Cadence", render: (r) => r.cadence },
+      { key: "next", label: "Next run", render: (r) => formatDateUS(r.next_run_at) },
+      { key: "active", label: "Active", render: (r) => (r.is_active ? "Yes" : "No") },
+      { key: "runs", label: "Runs", render: (r) => String(r.run_count) },
     ],
     [],
   );
@@ -1018,6 +1104,98 @@ export function CustomersPage() {
                   targetId={selectedCustomer.id}
                   targetLabel={selectedCustomer.name}
                 />
+              ) : activeTab === "statements" ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Statement is invoices and payments already on this customer for the selected date range.
+                    Totals come from those rows only — this tab does not invent a customer ledger.
+                  </p>
+                  {statementInvoicesQuery.isError || statementPaymentsQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load statement rows"
+                      status={0}
+                      message={
+                        (statementInvoicesQuery.error as Error | undefined)?.message ??
+                        (statementPaymentsQuery.error as Error | undefined)?.message
+                      }
+                      onRetry={() =>
+                        void Promise.all([statementInvoicesQuery.refetch(), statementPaymentsQuery.refetch()])
+                      }
+                    />
+                  ) : (
+                    <>
+                      <ParityTable
+                        rows={statementInvoicesQuery.data?.invoices ?? []}
+                        columns={statementInvoiceColumns}
+                        rowKey={(r) => r.id}
+                        loading={statementInvoicesQuery.isLoading}
+                        emptyText="No invoices for this customer in the selected date range."
+                        storageKey="customer-statements-invoices"
+                      />
+                      <ParityTable
+                        rows={statementPaymentsQuery.data?.rows ?? []}
+                        columns={statementPaymentColumns}
+                        rowKey={(r) => r.id}
+                        loading={statementPaymentsQuery.isLoading}
+                        emptyText="No payments for this customer in the selected date range."
+                        storageKey="customer-statements-payments"
+                      />
+                    </>
+                  )}
+                </div>
+              ) : activeTab === "recurring_transactions" ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Recurring invoice templates already saved for this customer. Empty is expected until a
+                    template exists.
+                  </p>
+                  {recurringQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load recurring templates"
+                      status={0}
+                      message={(recurringQuery.error as Error)?.message}
+                      onRetry={() => void recurringQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable
+                      rows={recurringQuery.data?.rows ?? []}
+                      columns={recurringColumns}
+                      rowKey={(r) => r.id}
+                      loading={recurringQuery.isLoading}
+                      emptyText="No recurring invoice templates for this customer."
+                      storageKey="customer-recurring-templates"
+                    />
+                  )}
+                </div>
+              ) : activeTab === "late_fees" ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    There is no customer late-fee rule table. This tab lists overdue open invoices (due date
+                    before today, remaining open, not void). It does not invent a late-fee dollar amount.
+                  </p>
+                  {statementInvoicesQuery.isError ? (
+                    <ListErrorState
+                      title="Couldn't load overdue invoices"
+                      status={0}
+                      message={(statementInvoicesQuery.error as Error)?.message}
+                      onRetry={() => void statementInvoicesQuery.refetch()}
+                    />
+                  ) : (
+                    <ParityTable
+                      rows={(statementInvoicesQuery.data?.invoices ?? []).filter((inv) => {
+                        if (isVoidInvoice(inv)) return false;
+                        if (invoiceOpenCentsForDisplay(inv) <= 0) return false;
+                        const due = inv.due_date?.slice(0, 10);
+                        return Boolean(due && due < companyToday());
+                      })}
+                      columns={statementInvoiceColumns}
+                      rowKey={(r) => r.id}
+                      loading={statementInvoicesQuery.isLoading}
+                      emptyText="No overdue open invoices for this customer."
+                      storageKey="customer-late-fees-overdue"
+                    />
+                  )}
+                </div>
               ) : (
                 <CustomerTabComingState
                   tab={activeTab}

@@ -36,13 +36,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | lead + FAST-MERGE + deploy | Phase A leftovers then Phase B. |
-| **CC-1** | **9223** | **U14-01-F03** then CUST-MONEY-F6312 | Bills Claim/WO column. STOP `/425c`. |
+| **Cursor** | **9222** | lead + FAST-MERGE + deploy | CUST-MONEY-F6312 then unique overflow. |
+| **CC-1** | **9223** | next unique money leftover only | F03 + F6312 taken. STOP `/425c`. Inventory #13931 closed. |
 | **CC-2** | **9224** | `/reports` unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
-| **CC-3** | **9225** | CLASS-F5973 maintenance | CRM closed. No roadside remake. |
-| **Codex** | **9226** | **CLASS-F5973 fuel** | Grep-verify then one leaf. Never restamp 7–9. |
-| **Cascade** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. No restamp. |
-| **Devin-A** | audit | next OPEN unique | AUDIT ONLY. F02/F03 closed. Late-arrivals 200. |
+| **CC-3** | **9225** | leftover POST unique | CLASS-F5973 maint closed. No roadside remake. |
+| **Codex** | **9226** | **CLASS-F5973 fuel** if still dead vs main | Never restamp 7–9. |
+| **Cascade** | audit | **LIVE WALK now** on current `healthz` | Unique FINDING if still true. No U14 restamp. |
+| **Devin-A** | audit | **LIVE WALK now** customers + leftover POST | AUDIT ONLY. F02/F03/F03-cols closed. |
 
 Forbidden: remake Close / F6301 / fleet #15291–#15310 / fuel phantom #15335 / `/425c` loop.
 

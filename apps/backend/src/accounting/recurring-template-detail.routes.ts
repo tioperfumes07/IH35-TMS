@@ -8,7 +8,41 @@ import { companyQuerySchema, currentAuthUser, validationError } from "./shared.j
 const paramsSchema = z.object({ id: z.string().uuid() });
 
 /** Exact, read-only reverse surface for accounting.recurring_templates (not recurring_bill_templates). */
+const listQuerySchema = companyQuerySchema.extend({
+  customer_id: z.string().uuid(),
+  kind: z.enum(["invoice", "bill", "expense", "journal_entry"]).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+});
+
 export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance) {
+  app.get("/api/v1/accounting/recurring-templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = listQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const opco = query.data.operating_company_id;
+    await assertCompanyMembership(user.uuid, opco);
+    const kind = query.data.kind ?? "invoice";
+    const limit = query.data.limit ?? 100;
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
+      const result = await client.query(
+        `SELECT rt.id::text, rt.kind, rt.cadence, rt.cron_expression, rt.next_run_at::text,
+                rt.template_payload, rt.is_active, rt.last_run_at::text, rt.run_count,
+                rt.created_at::text, rt.updated_at::text
+           FROM accounting.recurring_templates rt
+          WHERE rt.operating_company_id = $1::uuid
+            AND rt.kind = $2
+            AND rt.template_payload->>'customer_id' = $3
+          ORDER BY rt.next_run_at ASC, rt.created_at DESC
+          LIMIT $4`,
+        [opco, kind, query.data.customer_id, limit],
+      );
+      return result.rows;
+    });
+    return reply.send({ rows });
+  });
+
   app.get("/api/v1/accounting/recurring-templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
