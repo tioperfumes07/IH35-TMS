@@ -149,6 +149,11 @@ export function collectProblems(src) {
   if (!routes.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: generate UPDATE must refuse status=filed (would set ready_to_file)");
   }
+  const patchChunk = (routes.split('app.patch("/api/v1/form-425c/:id"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/import-banking"')[0];
+  const importChunk = (routes.split('app.post("/api/v1/form-425c/:id/import-banking"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/generate-filing-pdf"')[0];
+  if (!patchChunk.includes("AND status <> 'filed'") || !importChunk.includes("AND status <> 'filed'")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH and Import UPDATE must refuse status=filed — SELECT-then-UPDATE without the predicate could rewrite a just-filed MOR");
+  }
   if (!routes.includes("form_425c_amendment_already_open") || !routes.includes("form_425c_amend_source_not_filed")) {
     problems.push(
       "apps/backend/src/compliance/form-425c.routes.ts: second Amend on a filed MOR must 409 — UNIQUE(opco, month, status) was a 500",

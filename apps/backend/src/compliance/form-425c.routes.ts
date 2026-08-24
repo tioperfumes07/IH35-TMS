@@ -819,11 +819,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SET ${updates.join(", ")}, updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
+            AND status <> 'filed'
           RETURNING *
         `,
         values
       );
       const report = updateRes.rows[0];
+      if (!report) throw new Error("form_425c_filed_immutable");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -904,6 +906,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
                 updated_at = now()
             WHERE id = $1
               AND operating_company_id = $2::uuid
+              AND status <> 'filed'
             RETURNING *
           `,
           [
@@ -930,6 +933,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           "info",
           "BT-3-FORM-425C"
         );
+        if (!res.rows[0]) throw new Error("form_425c_filed_immutable");
         return res.rows[0] as Record<string, unknown>;
       });
     } catch (err) {
