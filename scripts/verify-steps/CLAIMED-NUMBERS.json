@@ -4114,6 +4114,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-legal-matter-event-body-readable"
   },
+  "6620": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-module-mutation-errors-surfaced"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6098,5 +6103,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1313
+  "total_claimed": 1314
 }
