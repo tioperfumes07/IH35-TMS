@@ -21,13 +21,12 @@ Canonical sources (do not invent a 15th):
 2. Live Chrome unique **500 / dead click / silent no-op = none** on that stamp walk.
 3. Cursor stamped CERTIFIED (U14) or leftover POST Live Chrome (non-U14) against matching `healthz/shallow` `version`.
 
-**After that stamp:**
+**Owner 2026-08-24 11:13 CT:** leftover unique OPEN = the module is **NOT CERTIFIED COMPLETE**. Fix it live. Do not call it complete while the leftover sits.
 
-- A new unique 500 / dead / silent / reverse-empty is a **FINDING**. Fix it. **Do not un-certify. Do not recertify.**
-- Empty tables, posting flags **OFF** until Jorge says “turn it on”, Finance Hub honest flag-off, ELD hidden stub, `/425c` do-not-loop = **not missing work**.
-- Rule 24 `complete:true`, matrix Box 4, leftover hop logs = **other meters. Not this definition.**
+See `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`.
 
-**I will not use a second “Alvys 100% no possible missing feature” meter to un-stamp CERTIFIED modules.**
+- Empty tables, posting flags **OFF** until Jorge says “turn it on”, Finance Hub honest flag-off, ELD hidden stub, `/425c` do-not-loop = **not leftover**.
+- Rule 24 `complete:true`, matrix Box 4 = **other meters.**
 
 Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version`.
 

@@ -1,7 +1,13 @@
 # INBOX-CC-3 · 9225
 
-**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
+**LAW:** leftover OPEN = NOT CERTIFIED COMPLETE. `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`
 
-**NOW:** **CUST-CRM-F6313** — Customer Projects / Opportunities / Conversations still follow-up copy. Canonical persist or honest empty — do not fake from loads. No roadside F05 remake. No late-arrivals remake. Never leftover-CERTIFY U14. Never `trigger_deploy`.
+**NOW THIS TURN:** **CUST-CRM-F6313** — Customer Projects / Opportunities / Conversations still follow-up copy in `Customers.tsx`. Canonical persist or honest empty. Do not fake from loads. Guard. FAST-MERGE. Never `trigger_deploy`.
 
-OUTBOX: `CC-3 | ACK | CUST-CRM-F6313 | PORT=9225 | NOW=customer-crm | GO`
+Then: CLASS-F5973 maintenance leaves — grep-verify vs main; wire only if still dead.
+
+No roadside F05 remake. No late-arrivals remake. No lists/legal/maintenance U14 restamp.
+
+Pause = defect.
+
+OUTBOX: `CC-3 | ACK | ZERO-LEFTOVER-LAW | PORT=9225 | NOW=CUST-CRM-F6313 | GO`

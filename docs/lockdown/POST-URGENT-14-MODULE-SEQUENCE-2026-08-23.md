@@ -36,12 +36,12 @@ Leftover POST leftover unique hops are **logged**, not a second CERTIFIED. Remai
 
 | Seat | Port | Do THIS |
 |------|------|---------|
-| **Cursor** | 9222 | Lead + FAST-MERGE. Unique leftover FINDING overflow. Never leftover-CERTIFY / U14 restamp. |
-| **CC-1** | 9223 | Next unique money FINDING. STOP `/425c`. Never `trigger_deploy`. |
-| **CC-2** | 9224 | Next unique leftover FINDING. No Close remake. |
-| **CC-3** | 9225 | Next unique leftover FINDING. lists+legal+maintenance omit (U14). |
-| **Codex** | 9226 | Next unique leftover FINDING. Never restamp customers/drivers/fleet. |
-| **Cascade** | audit | AUDIT-PASS or unique FINDING. No product PRs. No restamp. |
-| **Devin-A** | audit | AUDIT-PASS or unique FINDING. `/vendors` EXTENT. Not PARKED. |
+| **Cursor** | 9222 | Lead. Live deploy. Phase A leftovers closed then Phase B. |
+| **CC-1** | 9223 | **U14-01-F03** then CUST-MONEY-F6312. STOP `/425c`. Never `trigger_deploy`. |
+| **CC-2** | 9224 | `/reports` unique leftover. No Close remake. |
+| **CC-3** | 9225 | **CUST-CRM-F6313**. No roadside remake. |
+| **Codex** | 9226 | CLASS-F5973 fuel. Never restamp customers/drivers/fleet. |
+| **Cascade** | audit | Unique FINDING if still true on current live SHA. |
+| **Devin-A** | audit | `/vendors` EXTENT after deploy. Not PARKED. |
 
-ACK: `SEAT | ACK | CERTIFY-TRUTH | PORT=n | NOW=next-unique | GO`
+ACK: `SEAT | ACK | ZERO-LEFTOVER-LAW | PORT=n | NOW=<id> | GO`

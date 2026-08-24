@@ -1,7 +1,11 @@
 # INBOX-CODEX · 9226
 
-**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
+**LAW:** leftover OPEN = NOT CERTIFIED COMPLETE. `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`
 
-**NOW:** **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify each leaf vs current main. Wire only if still dead. One leaf PR. NEVER restamp customers/drivers/fleet. Never `trigger_deploy`.
+**NOW:** **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify each leaf vs `origin/main`. One dead leaf → one PR. FAST-MERGE. Never `trigger_deploy`. Never restamp customers/drivers/fleet.
 
-OUTBOX: `Codex | ACK | FUEL-CLASS-F5973 | PORT=9226 | NOW=fuel-remainder | GO`
+Empty unique on fuel → leftover POST Live Chrome `/users` then `/home` (500/dead/silent only).
+
+Pause = defect.
+
+OUTBOX: `Codex | ACK | ZERO-LEFTOVER-LAW | PORT=9226 | NOW=fuel-CLASS-F5973 | GO`

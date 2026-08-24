@@ -3,7 +3,8 @@
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
-**REMAINDER (unique leftover only):** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
+**LAW:** `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`  
+**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
 
 - **FULLY CERTIFIED (nothing pending):** U14 exclusive **14/14**. Nobody certifies them again.
 - **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
@@ -33,7 +34,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | **U14-06-F02 + F03** | Vendor A/P history. Never leftover-CERTIFY. |
+| **Cursor** | **9222** | lead + live deploy | Phase A leftovers then Phase B. |
 | **CC-1** | **9223** | **U14-01-F03** then CUST-MONEY-F6312 | Bills Claim/WO column. STOP `/425c`. |
 | **CC-2** | **9224** | leftover POST unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
 | **CC-3** | **9225** | **CUST-CRM-F6313** | No roadside remake. |

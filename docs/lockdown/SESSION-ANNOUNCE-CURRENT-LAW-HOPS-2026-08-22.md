@@ -16,11 +16,10 @@ Live SHA: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version
 ```
 CURRENT-LAW
 - USMCA only · no TRANSP/TRK · no TMS→QBO write-back
-- U14 14/14 CERTIFIED · never restamp · never recertify
-- AFTER U14 = docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md · NOW-ONE-SOURCE · unique FINDING only · HOLD = defect
-- CERTIFIED ≠ leftover hop log ≠ Rule 24 complete ≠ matrix Box 4 · do not leftover-CERTIFY U14 modules
+- CERTIFIED COMPLETE = Fully-Wired 1–12 + Live Chrome on CURRENT healthz + ZERO unique OPEN leftovers
+- Leftover OPEN = NOT CERTIFIED COMPLETE · docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md
 - CREATE-TEST-THEN-VOID · do not remake proven TESTs / Close / Book Load
-- FAST-MERGE ~4 min · local gate PASS → PR → squash SAME TURN · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
+- FAST-MERGE ~4 min · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
 MY SEAT / NOW / OPEN LEFTOVER
 - (copy YOUR row from POST-U14 sequence + NOW-ONE-SOURCE — never CERTIFIED U14 hops)
@@ -39,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | U14 omit. Lead | **DISPATCH-F2-REGRESSION** late-arrivals 500 then unique overflow. **Do not loop `/425c`.** Never leftover-CERTIFY |
-| CC-1 | 9223 | Accounting+factoring omit | **U14-06-F02 + F03** vendor A/P reverse. STOP `/425c`. HOLD forbidden |
-| CC-2 | 9224 | Settlements omit | Next unique FINDING. No Close remake |
-| CC-3 | 9225 | lists+legal+maintenance omit | Next unique FINDING. No roadside remake. No `trigger_deploy` |
-| Codex | 9226 | customers/drivers/fleet omit restamp | Next unique FINDING only |
-| Cascade | audit | CERTIFIED overlay | AUDIT-PASS or unique FINDING. Never restamp |
-| Devin-A | audit | CERTIFIED overlay | Same. `/vendors` EXTENT. Not scribe |
+| Cursor | 9222 | Lead | Live deploy + Phase A leftovers closed. **Do not loop `/425c`.** |
+| CC-1 | 9223 | money | **U14-01-F03** then CUST-MONEY-F6312. STOP `/425c`. HOLD forbidden |
+| CC-2 | 9224 | leftover POST | `/reports` unique then next leftover URL |
+| CC-3 | 9225 | FE | **CUST-CRM-F6313**. No roadside remake. No `trigger_deploy` |
+| Codex | 9226 | FE | CLASS-F5973 fuel then `/users`. Never restamp 7–9 |
+| Cascade | audit | live SHA | Unique FINDING if still true |
+| Devin-A | audit | `/vendors` | EXTENT after deploy. Not scribe |
