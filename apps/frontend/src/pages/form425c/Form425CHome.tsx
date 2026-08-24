@@ -183,6 +183,17 @@ export function Form425CHome() {
     queryFn: () => getForm425CReport(selectedReport!.id, companyId),
   });
 
+  const exhibitEntries = useMemo(() => {
+    const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
+    if (!selectedReport?.id || loadedId !== selectedReport.id) {
+      return { a: [] as Array<Record<string, unknown>>, b: [] as Array<Record<string, unknown>> };
+    }
+    return {
+      a: detailQuery.data?.exhibit_a ?? [],
+      b: detailQuery.data?.exhibit_b ?? [],
+    };
+  }, [detailQuery.data, selectedReport?.id]);
+
   useEffect(() => {
     if (!profilesQuery.data?.profiles) return;
     const merged: CompanyProfiles = {
@@ -353,7 +364,9 @@ export function Form425CHome() {
   const generateMutation = useMutation({
     mutationFn: () => generateForm425CPdf(form.reportId!, companyId),
     onSuccess: async (res) => {
-      const printHtml = res.print_html || buildPrintHTML(form, profiles[activeCompany], month, year);
+      const printHtml =
+        res.print_html ||
+        buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
       const w = window.open("", "_blank");
       if (!w) {
         pushToast("Popup blocked — allow popups to print the filing PDF", "error");
@@ -414,17 +427,6 @@ export function Form425CHome() {
     },
     onError: (error) => pushToast(userFacingApiError(error, "Attachment upload failed"), "error"),
   });
-
-  const exhibitEntries = useMemo(() => {
-    const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
-    if (!selectedReport?.id || loadedId !== selectedReport.id) {
-      return { a: [] as Array<Record<string, unknown>>, b: [] as Array<Record<string, unknown>> };
-    }
-    return {
-      a: detailQuery.data?.exhibit_a ?? [],
-      b: detailQuery.data?.exhibit_b ?? [],
-    };
-  }, [detailQuery.data, selectedReport?.id]);
 
   const exhibitMutation = useMutation({
     mutationFn: async ({ line, explanation }: { line: number; explanation: string }) => {

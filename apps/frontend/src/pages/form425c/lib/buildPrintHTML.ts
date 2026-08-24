@@ -18,7 +18,30 @@ function prevLabel(m: number, y: number) {
   return m === 0 ? `December ${y - 1}` : `${MONTHS[m - 1]} ${y}`;
 }
 
-export function buildPrintHTML(form: CurrentFormState, p: CompanyProfile, month: number, year: number) {
+type ExhibitRow = { line_number?: unknown; explanation?: unknown };
+
+function exhibitPrintBlock(title: string, flagged: number[], rows: ExhibitRow[]) {
+  if (!flagged.length && !rows.length) return "";
+  const body = flagged
+    .map((line) => {
+      const texts = rows.filter((r) => Number(r.line_number) === line).map((r) => String(r.explanation ?? "").trim()).filter(Boolean);
+      if (texts.length) {
+        return texts.map((t) => `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;font-size:7.8pt;"><strong>Line ${line}.</strong> ${t}</td></tr>`).join("");
+      }
+      return `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;font-size:7.8pt;color:#c00;"><strong>Line ${line}.</strong> No Exhibit explanation saved</td></tr>`;
+    })
+    .join("");
+  return `<div class="ph">${title}</div><table style="border:1px solid #8a9ab0;">${body}</table>`;
+}
+
+export function buildPrintHTML(
+  form: CurrentFormState,
+  p: CompanyProfile,
+  month: number,
+  year: number,
+  exhibitA: ExhibitRow[] = [],
+  exhibitB: ExhibitRow[] = [],
+) {
   const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
   const cashEnd = nv(form.openingBalance) + netCash;
   const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
@@ -222,6 +245,22 @@ export function buildPrintHTML(form: CurrentFormState, p: CompanyProfile, month:
     })
     .join("")}
 </table>
+${exhibitPrintBlock(
+  "Exhibit A — lines 1–9",
+  QUESTIONNAIRE.filter((q) => {
+    const ans = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
+    return q.num <= 9 && ((q.expectYes && ans === "no") || (!q.expectYes && ans === "yes"));
+  }).map((q) => q.num),
+  exhibitA,
+)}
+${exhibitPrintBlock(
+  "Exhibit B — lines 10–18",
+  QUESTIONNAIRE.filter((q) => {
+    const ans = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
+    return q.num >= 10 && ((q.expectYes && ans === "no") || (!q.expectYes && ans === "yes"));
+  }).map((q) => q.num),
+  exhibitB,
+)}
 </body></html>`;
 }
 

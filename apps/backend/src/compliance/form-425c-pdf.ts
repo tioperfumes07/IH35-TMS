@@ -59,7 +59,26 @@ function labelForMonth(monthDate: string) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-function buildPrintHTML(report: Record<string, unknown>, profile: Record<string, unknown> | undefined) {
+type ExhibitRow = { line_number?: unknown; explanation?: unknown };
+
+function exhibitSection(title: string, flagged: number[], rows: ExhibitRow[]) {
+  if (!flagged.length && !rows.length) return "";
+  const items = flagged.map((line) => {
+    const texts = rows.filter((r) => Number(r.line_number) === line).map((r) => String(r.explanation ?? "").trim()).filter(Boolean);
+    if (texts.length) {
+      return texts.map((t) => `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>Line ${line}.</strong> ${t}</td></tr>`).join("");
+    }
+    return `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;color:#c00;"><strong>Line ${line}.</strong> No Exhibit explanation saved</td></tr>`;
+  });
+  return `<div class="section">${title}</div><table style="border:1px solid #cbd5e1">${items.join("")}</table>`;
+}
+
+function buildPrintHTML(
+  report: Record<string, unknown>,
+  profile: Record<string, unknown> | undefined,
+  exhibitA: ExhibitRow[] = [],
+  exhibitB: ExhibitRow[] = [],
+) {
   const part1 = (report.part1_answers as Record<string, string>) ?? {};
   const part2 = (report.part2_answers as Record<string, string>) ?? {};
   const answers = { ...part1, ...part2 };
@@ -117,6 +136,22 @@ function buildPrintHTML(report: Record<string, unknown>, profile: Record<string,
     ${mrow(36, "Next month projected disbursements", fmt(report.line_36_next_proj_disbursements))}
     ${mrow(37, "Next month projected net", fmt(projNetNext))}
   </table>
+  ${exhibitSection(
+    "Exhibit A — lines 1–9",
+    QUESTIONNAIRE.filter(([n, , ey]) => {
+      const ans = String(answers[String(n)] ?? (ey ? "yes" : "no"));
+      return n <= 9 && ((ey && ans === "no") || (!ey && ans === "yes"));
+    }).map(([n]) => n),
+    exhibitA,
+  )}
+  ${exhibitSection(
+    "Exhibit B — lines 10–18",
+    QUESTIONNAIRE.filter(([n, , ey]) => {
+      const ans = String(answers[String(n)] ?? (ey ? "yes" : "no"));
+      return n >= 10 && ((ey && ans === "no") || (!ey && ans === "yes"));
+    }).map(([n]) => n),
+    exhibitB,
+  )}
 </body></html>`;
 }
 
@@ -150,7 +185,26 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
   );
   const profile = profileRes.rows[0];
 
-  const printHtml = buildPrintHTML(report, profile);
+  const exhibitARes = await client.query<ExhibitRow>(
+    `
+      SELECT line_number, explanation
+      FROM compliance.form_425c_exhibit_a_entries
+      WHERE report_id = $1
+      ORDER BY line_number, created_at
+    `,
+    [reportId]
+  );
+  const exhibitBRes = await client.query<ExhibitRow>(
+    `
+      SELECT line_number, explanation
+      FROM compliance.form_425c_exhibit_b_entries
+      WHERE report_id = $1
+      ORDER BY line_number, created_at
+    `,
+    [reportId]
+  );
+
+  const printHtml = buildPrintHTML(report, profile, exhibitARes.rows, exhibitBRes.rows);
   const htmlBuffer = Buffer.from(printHtml, "utf8");
   const sha256 = crypto.createHash("sha256").update(htmlBuffer).digest("hex");
   const keySuffix = crypto.randomUUID();
