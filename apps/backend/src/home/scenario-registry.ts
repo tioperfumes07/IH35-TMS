@@ -193,6 +193,18 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
           JOIN mdata.loads l ON l.id = s.load_id
          WHERE s.actual_departure_at IS NOT NULL
            AND s.stop_type = 'delivery'
+           AND s.status::text = 'departed'
+           AND s.soft_deleted_at IS NULL
+           AND l.soft_deleted_at IS NULL
+           AND NOT EXISTS (
+             SELECT 1
+               FROM mdata.load_stops later
+              WHERE later.load_id = s.load_id
+                AND later.stop_type = 'delivery'
+                AND later.status::text <> 'cancelled'
+                AND later.soft_deleted_at IS NULL
+                AND later.sequence_number > s.sequence_number
+           )
            AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} delivery stop(s) with a captured departure`,

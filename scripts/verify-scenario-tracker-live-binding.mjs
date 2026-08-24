@@ -47,6 +47,25 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "hop.deliver",
+    needles: [
+      "mdata.load_stops",
+      "mdata.loads",
+      "l.id = s.load_id",
+      "s.actual_departure_at IS NOT NULL",
+      "s.stop_type = 'delivery'",
+      "s.status::text = 'departed'",
+      "s.soft_deleted_at IS NULL",
+      "l.soft_deleted_at IS NULL",
+      "mdata.load_stops later",
+      "later.load_id = s.load_id",
+      "later.stop_type = 'delivery'",
+      "later.status::text <> 'cancelled'",
+      "later.soft_deleted_at IS NULL",
+      "later.sequence_number > s.sequence_number",
+    ],
+  },
+  {
     key: "hop.dispatch",
     needles: [
       "events.event_log",
@@ -493,6 +512,9 @@ function selftest() {
     ["dispatch probe accepts status without its spine event", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.event_type = 'load.status_changed'", "") })],
     ["dispatch probe accepts a non-transit transition", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.payload->>'to_status' = 'in_transit'", "") })],
     ["dispatch probe loses same-company event scope", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.operating_company_id = l.operating_company_id", "") })],
+    ["delivery probe accepts a non-final stop", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.sequence_number > s.sequence_number", "") })],
+    ["delivery probe accepts a cancelled departure", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.status::text = 'departed'", "") })],
+    ["delivery probe accepts a deleted parent load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.soft_deleted_at IS NULL\n           AND l.soft_deleted_at IS NULL", "AND s.soft_deleted_at IS NULL") })],
     ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')", "") })],
     ["trailer swap ignores a later replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.new_trailer_id <> h.new_trailer_id", "") })],
     ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
