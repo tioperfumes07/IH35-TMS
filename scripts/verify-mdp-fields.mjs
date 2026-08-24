@@ -28,4 +28,41 @@ if (!/const total = sumCents\(entries\)/.test(tab)) fail("panel total must use s
 
 // Net + KPI totals use computeProjectionTotals (income/expense/net all recompute).
 if (!/computeProjectionTotals\(entries\)/.test(tab)) fail("tab must compute income/expense/net via computeProjectionTotals");
+
+function mdpSilentMutationErrors(src) {
+  const problems = [];
+  const delIdx = src.indexOf("const deleteMutation = useMutation");
+  const delBlock = delIdx === -1 ? "" : src.slice(delIdx, delIdx + 350);
+  if (delIdx === -1 || !/onError\s*:/.test(delBlock)) {
+    problems.push("deleteMutation has no onError — Del fail is a silent no-op");
+  }
+  const openIdx = src.indexOf("const openingMutation = useMutation");
+  const openBlock = openIdx === -1 ? "" : src.slice(openIdx, openIdx + 450);
+  if (openIdx === -1 || !/onError\s*:/.test(openBlock) || !/data-testid="cash-flow-opening-error"/.test(src)) {
+    problems.push("openingMutation has no onError + visible opening-error — Save opening cash fail is a silent no-op");
+  }
+  return problems;
+}
+
+if (process.argv.includes("--selftest")) {
+  const silent = tab
+    .replace(/const deleteMutation = useMutation\([\s\S]*?\n  \}\);/, "const deleteMutation = useMutation({ mutationFn: () => null });")
+    .replace(/const openingMutation = useMutation\([\s\S]*?\n  \}\);/, "const openingMutation = useMutation({ mutationFn: () => null });")
+    .replace(/data-testid="cash-flow-opening-error"/g, "data-testid=removed");
+  const planted = mdpSilentMutationErrors(silent);
+  if (planted.length !== 2) {
+    console.error(`FAIL verify-mdp-fields SELFTEST: expected 2 planted silent-mutate problems, got ${planted.length}: ${planted.join("; ")}`);
+    process.exit(1);
+  }
+  const live = mdpSilentMutationErrors(tab);
+  if (live.length) {
+    console.error(`FAIL verify-mdp-fields SELFTEST: live files flagged: ${live.join("; ")}`);
+    process.exit(1);
+  }
+  console.log("PASS verify-mdp-fields --selftest");
+  process.exit(0);
+}
+
+const silentLive = mdpSilentMutationErrors(tab);
+if (silentLive.length) fail(silentLive.join("; "));
 console.log("PASS verify-mdp-fields");

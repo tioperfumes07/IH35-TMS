@@ -148,7 +148,11 @@ function ProjectionPanel({
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteForecastEntry(id, operatingCompanyId),
-    onSuccess: onChanged,
+    onSuccess: () => {
+      setError(null);
+      onChanged();
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "Delete failed"),
   });
 
   const editRow = (e: ForecastEntry) => {
@@ -298,7 +302,7 @@ function ProjectionPanel({
           </div>
         ) : null}
 
-        {error ? <p className="text-red-600">{error}</p> : null}
+        {error ? <p className="text-red-600" role="alert">{error}</p> : null}
         <div className="flex justify-end gap-2">
           {form.id ? (
             <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setForm(emptyRow()); setShowMore(false); }}>Cancel</button>
@@ -351,12 +355,15 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     enabled: Boolean(operatingCompanyId),
   });
 
+  const [openingError, setOpeningError] = useState<string | null>(null);
   const openingMutation = useMutation({
     mutationFn: () => putForecastOpeningBalance({ operating_company_id: operatingCompanyId, amount_cents: openingDraft ?? 0 }),
     onSuccess: () => {
+      setOpeningError(null);
       setOpeningDraft(null);
       void qc.invalidateQueries({ queryKey: ["forecast", "opening", operatingCompanyId] });
     },
+    onError: (e) => setOpeningError(e instanceof Error ? e.message : "Failed to save opening cash"),
   });
 
   const onChanged = () => void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
@@ -412,7 +419,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </span>
         <span className="ml-auto inline-flex items-center gap-1">
           <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
-          <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => openingMutation.mutate()}>Save</button>
+          <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => { setOpeningError(null); openingMutation.mutate(); }}>Save</button>
+          {openingError ? <span className="text-xs text-red-600" data-testid="cash-flow-opening-error" role="alert">{openingError}</span> : null}
         </span>
       </div>
 
