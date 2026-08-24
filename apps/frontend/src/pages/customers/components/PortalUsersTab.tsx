@@ -73,6 +73,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
       pushToast("Portal user archived", "success");
       await queryClient.invalidateQueries({ queryKey: ["portal-users", operatingCompanyId ?? "none", customerId] });
     },
+    onError: () => pushToast("Could not archive portal user", "error"),
   });
 
   return (
