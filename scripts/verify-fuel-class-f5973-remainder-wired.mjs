@@ -53,6 +53,9 @@ export function audit(src) {
   if (!/await importFuelTransactions\(operatingCompanyId/.test(src.importModal)) {
     failures.push(`${FILES.importModal}: must call importFuelTransactions(operatingCompanyId, ...) (connectivity)`);
   }
+  if (!/res\.dead_letters\} rejected/.test(src.importModal) || !/res\.dead_letters > 0 \? "error" : "success"/.test(src.importModal)) {
+    failures.push(`${FILES.importModal}: must expose parser-rejected rows as an error-bearing completion, never silent success`);
+  }
 
   if (!/await uploadLovesPrices\(operatingCompanyId/.test(src.uploadModal)) {
     failures.push(`${FILES.uploadModal}: must call uploadLovesPrices(operatingCompanyId, ...) (connectivity)`);
@@ -106,6 +109,8 @@ if (process.argv.includes("--selftest")) {
     { key: "createModal", from: 'kind="load"', to: 'kind="REMOVED_load"' },
     { key: "createModal", from: "loadExemptionReason", to: "loadExempti0nReason" },
     { key: "importModal", from: "await importFuelTransactions(operatingCompanyId", to: "await importFuelTransactions(REMOVED" },
+    { key: "importModal", from: "${res.dead_letters} rejected", to: "0 rejected" },
+    { key: "importModal", from: 'res.dead_letters > 0 ? "error" : "success"', to: '"success"' },
     { key: "uploadModal", from: "await uploadLovesPrices(operatingCompanyId", to: "await uploadLovesPrices(REMOVED" },
     {
       key: "lovesRoute",

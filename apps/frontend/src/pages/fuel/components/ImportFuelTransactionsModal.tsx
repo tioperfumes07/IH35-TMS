@@ -29,8 +29,8 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
     try {
       const res = await importFuelTransactions(operatingCompanyId, file);
       pushToast(
-        `Fuel import complete: +${res.rows_inserted} inserted, ${res.rows_duplicate} duplicate, ${res.rows_skipped} skipped`,
-        "success"
+        `Fuel import complete: +${res.rows_inserted} inserted, ${res.rows_duplicate} duplicate, ${res.rows_skipped} skipped, ${res.dead_letters} rejected`,
+        res.dead_letters > 0 ? "error" : "success"
       );
       onImported();
       onClose();
