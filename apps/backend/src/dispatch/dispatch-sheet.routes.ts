@@ -153,6 +153,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                         AND loc.operating_company_id = $2::uuid
           WHERE s.load_id = $1
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC
         `,
         [params.data.loadId, query.data.operating_company_id]
