@@ -331,6 +331,9 @@ export function Form425CHome() {
 
   const createMutation = useMutation({
     mutationFn: () => {
+      if (!String(profiles[activeCompany].name ?? "").trim()) {
+        throw new Error("Set the debtor name in Profiles before creating a report — will not create a court MOR without a debtor name");
+      }
       const petitionDate = resolveCreatePetitionDate(profiles[activeCompany].petitionDate);
       const courtDistrict = courtDistrictCaption(
         profiles[activeCompany].division,
@@ -706,6 +709,11 @@ export function Form425CHome() {
             }
             if (!courtDistrictCaption(profiles[activeCompany].division, profiles[activeCompany].district)) {
               pushToast("Set court division and district in Profiles before creating a report — will not invent a court caption", "error");
+              setTab("profile");
+              return;
+            }
+            if (!String(profiles[activeCompany].name ?? "").trim()) {
+              pushToast("Set the debtor name in Profiles before creating a report — will not create a court MOR without a debtor name", "error");
               setTab("profile");
               return;
             }
