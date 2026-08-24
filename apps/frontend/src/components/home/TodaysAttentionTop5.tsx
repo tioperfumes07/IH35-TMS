@@ -10,6 +10,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { dismissOwnerAttentionItem, fetchOwnerTodaysAttention } from "../../api/home.js";
 import { AttentionItemCard } from "./AttentionItemCard.js";
@@ -22,6 +23,7 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const cid = operatingCompanyId ?? "";
+  const [dismissError, setDismissError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["owner", "todays-attention", cid],
@@ -33,9 +35,11 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
 
   const dismissMutation = useMutation({
     mutationFn: (itemId: string) => dismissOwnerAttentionItem(cid, itemId),
+    onMutate: () => setDismissError(null),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["owner", "todays-attention", cid] });
     },
+    onError: (error) => setDismissError(error instanceof Error ? error.message : "Failed to dismiss attention item"),
   });
 
   // Hide section completely on error or when loading for the first time
@@ -70,6 +74,7 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
       </div>
 
       <div className="space-y-2 p-3">
+        {dismissError ? <p role="alert" className="text-xs text-red-700">{dismissError}</p> : null}
         {query.isLoading ? (
           <>
             <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
