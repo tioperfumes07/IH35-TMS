@@ -387,7 +387,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     });
 
     if (!created) return reply.code(500).send({ error: "failed_to_create_session" });
-    void withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
       emitBankingSpineEvent(client, {
         operating_company_id: accountContext.operating_company_id,
         actor_user_id: String(user.uuid),
@@ -1219,7 +1219,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       });
     }
 
-    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitBankingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: String(user.uuid),

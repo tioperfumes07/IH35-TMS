@@ -103,5 +103,23 @@ if (!unionBlockMatch) {
   }
 }
 
+// 5. Fire-and-forget `void withCompanyScope(emitBankingSpineEvent)` drops spine rows after
+// the mutation already committed (same class as ACCT-F6410). Mutations must await the emit.
+const BANKING_MUTATION_FILES = checks.map((c) => c.file);
+const FIRE_FORGET_RE = /void\s+withCompanyScope\([\s\S]{0,500}?emitBankingSpineEvent/;
+for (const file of BANKING_MUTATION_FILES) {
+  const src = read(file);
+  if (FIRE_FORGET_RE.test(src)) fail(`${path.basename(file)}: fire-and-forget void withCompanyScope(emitBankingSpineEvent) — await the emit`);
+  else pass(`${path.basename(file)}: spine emit is not fire-and-forget`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = `void withCompanyScope(user.uuid, companyId, (client) => emitBankingSpineEvent(client, { event_type: "transaction.categorized" }))`;
+  if (!FIRE_FORGET_RE.test(planted)) {
+    console.error("[verify-a5] SELFTEST FAIL: planted fire-and-forget did not match");
+    process.exit(1);
+  }
+}
+
 if (failed) { console.error("\n[verify-a5] FAILED"); process.exit(1); }
 console.log("\n[verify-a5] ALL CHECKS PASSED");

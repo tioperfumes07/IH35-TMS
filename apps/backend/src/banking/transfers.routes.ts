@@ -112,7 +112,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         },
         user.uuid
       );
-      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -167,7 +167,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         },
         user.uuid
       );
-      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -225,7 +225,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         },
         user.uuid
       );
-      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
@@ -363,7 +363,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
 
     try {
       const transfer = await revokeTransfer(params.data.id, query.data.operating_company_id, body.data.reason, user.uuid);
-      void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
         emitBankingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
