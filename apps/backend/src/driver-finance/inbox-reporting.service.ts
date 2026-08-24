@@ -2,6 +2,17 @@
 // B4 timeline view (views.driver_request_timeline) + cash_advance_requests. No mutations,
 // no money path, no migration.
 //
+// CASH-ADVANCE-REPORTING-F4583-SAMPLE-DATA-IN-KPIS — live-walked /driver-hub/reporting on prod
+// (2026-08-23): driver_finance.cash_advance_requests has exactly ONE row system-wide for USMCA,
+// and it belongs to a driver correctly tagged mdata.drivers.is_sample_data=true ("SAMPLE
+// Cascade-2042"). This query's JOIN mdata.drivers d had no is_sample_data exclusion, so the page's
+// "Request accountability (read-only)" KPI tiles (Total Requests/Approved/Approval Rate/Approved
+// Volume) were 100% derived from that one fixture row and presented as real business metrics with
+// no disclosure. Same defect class already fixed for the sibling driver list/picker read
+// (LV-DRIVER-HUB-SCHEDULER-TEST-FIXTURES-IN-PROD-PICKER-2026-08-23, #14909) and for units
+// (DISPATCH-4) — this reporting aggregation query was not covered by either fix. Excluded below
+// using the same `IS NOT TRUE` predicate (is_sample_data is NOT NULL DEFAULT false).
+//
 // LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK — this file used to hardcode "advance-volume-by-trip:
 // driver_advances has no load FK" as a permanent not_computed limitation. That was true when B7
 // shipped but has been stale since migration 202606251600_load_cash_advance_link.sql added a
@@ -54,6 +65,7 @@ export async function getInboxReportingData(
       LEFT JOIN views.driver_request_timeline t ON t.request_id = car.id
       LEFT JOIN mdata.loads l ON l.id = car.load_id AND l.operating_company_id = car.operating_company_id
       JOIN mdata.drivers d ON d.id = car.driver_id AND d.operating_company_id = car.operating_company_id
+        AND d.is_sample_data IS NOT TRUE
       WHERE car.operating_company_id = $1::uuid
         AND car.submitted_at::date BETWEEN $2::date AND $3::date
       ORDER BY car.submitted_at DESC
