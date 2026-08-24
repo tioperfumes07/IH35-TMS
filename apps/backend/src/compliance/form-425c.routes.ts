@@ -173,6 +173,9 @@ function sendExhibitWriteError(reply: FastifyReply, err: unknown) {
   if (e?.message === "forbidden_company_membership") {
     return sendForm425CForbiddenMembership(reply);
   }
+  if (e?.message === "form_425c_operating_company_not_found") {
+    return sendForm425CCompanyMissing(reply);
+  }
   throw err;
 }
 
@@ -461,6 +464,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       if (e?.message === "forbidden_company_membership") {
         return sendForm425CForbiddenMembership(reply);
       }
+      if (e?.message === "form_425c_operating_company_not_found") {
+        return sendForm425CCompanyMissing(reply);
+      }
       throw err;
     }
   });
@@ -584,6 +590,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       const e = err as { message?: string };
       if (e?.message === "forbidden_company_membership") {
         return sendForm425CForbiddenMembership(reply);
+      }
+      if (e?.message === "form_425c_operating_company_not_found") {
+        return sendForm425CCompanyMissing(reply);
       }
       throw err;
     }

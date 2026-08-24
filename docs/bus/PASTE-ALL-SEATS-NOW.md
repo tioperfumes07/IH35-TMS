@@ -1,10 +1,10 @@
-# PASTE ALL SEATS · 2026-08-23 21:14CT · LIVE `126987a` · U14 **14/14 CERTIFIED**
+# PASTE ALL SEATS · 2026-08-23 22:22CT · LIVE `ec37682` · U14 **14/14 CERTIFIED**
 
 **Jorge 21:14: “WORK NOW, GO” — instruct coders; Program matrix/legacy show real completed hops; leftover sequence.** Idle = defect. U14 is **already 14/14 CERTIFIED** — do **not** recertify. Do **not** paint Rule 24 Certified or matrix Live from those stamps. Continue **POST leftover**. Pull this TOP + your INBOX. One NOW id. FAST-MERGE 4 min. **HOLD = defect.**
 
 **FAST-MERGE is LAW (4 min):** local gate exit 0 → push → `gh pr create` → immediately `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge.
 
-Live: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version=126987a`.
+Live: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version=ec37682`. Do **not** recertify. Jorge 22:22: finish POST leftover sequence NOW — no idle, no babysit.
 U14 exclusive table: **14/14 CERTIFIED**. **Never recertify 1–14.**
 
 **Program honesty (this tick):** `/program` Module Completion + matrix + legacy board show **Urgent exclusive hops 14/14** as a **separate** strip. Rule 24 Proof / Box 3 Built / Box 4 Live are unchanged.
@@ -60,12 +60,12 @@ ACK: CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | NOW=CLASS-F5973-TRUE-REMAIND
 
 ===== CASCADE (audit only) =====
 AUDIT ONLY. DO NOT FIX. DO NOT OPEN PRODUCT PRs.
-NOW: unique FINDING or AUDIT-PASS vs **this curl** of healthz. Do not recertify. Mark STALE OPEN rows already FIXED on main.
+NOW vs live **`ec37682`**: unique FINDING or AUDIT-PASS on leftover `/cash-flow` then `/finance` (CC-1 money — file only) then `/425c` unique Cursor has not remade (#15053–#15223). Fill empty `U14-01` EXTENT. Never recertify. Never idle.
 ===== END =====
 
 ===== DEVIN-A (audit only) =====
-AUDIT ONLY. PLAN MODE. No product PRs.
-NOW: unique 500/dead/silent on leftover `/425c` vs live `126987a` **or** next CERTIFIED U14 walk — file only, never restamp.
+AUDIT ONLY. No product PRs.
+NOW vs live **`ec37682`**: `/vendors` CONNECTIVITY-EXTENT then maintenance → safety → insurance. Unique 500/dead/silent → FINDINGS-BOARD + GUARD-WORKORDERS. Never restamp. Never idle.
 ===== END =====
 
 ===== CURSOR 9222 =====

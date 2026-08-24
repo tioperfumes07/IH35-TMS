@@ -135,8 +135,14 @@ export function collectProblems(src) {
   if (!listChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: History list GET must 403 on forbidden_company_membership, not an uncaught 500");
   }
+  if (!listChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: History list GET must 404 a missing/inactive company, not an uncaught 500");
+  }
   if (!detailChunk.includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: report detail GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  if (!detailChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: report detail GET must 404 a missing/inactive company, not an uncaught 500");
   }
   const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split("app.get(\"/api/v1/form-425c/banking-summary\"")[0];
   if (!profilesGetChunk.includes("sendForm425CForbiddenMembership")) {
@@ -250,6 +256,9 @@ export function collectProblems(src) {
   }
   if (!routes.includes("function sendExhibitWriteError") || !(routes.split("function sendExhibitWriteError")[1] ?? "").includes("sendForm425CForbiddenMembership")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Exhibit A/B POST must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  if (!(routes.split("function sendExhibitWriteError")[1] ?? "").includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Exhibit A/B POST must 404 a missing/inactive company, not an uncaught 500");
   }
   if (!formTab.includes("onSaveExhibit") || !formTab.includes("Save Exhibit")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must save a line explanation, not only link to /425c/exhibits");
