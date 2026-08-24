@@ -59,6 +59,17 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
   });
 
   it("returns KPI payload with 200", async () => {
+    const seenSql: string[] = [];
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      seenSql.push(sql);
+      if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
+      if (sql.includes("to_regclass($1)")) {
+        return { rows: [{ ok: values?.[0] === "maintenance.work_orders" || values?.[0] === "mdata.units" }] };
+      }
+      if (sql.includes("information_schema.columns")) return { rows: [{ ok: false }] };
+      if (sql.includes("COUNT(*)::int AS count")) return { rows: [{ count: 0 }] };
+      return { rows: [] };
+    });
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/maintenance/dashboard/kpis?operating_company_id=${COMPANY}`,
@@ -67,6 +78,8 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
     const body = res.json() as { open_wos: number; pm_due: number };
     expect(typeof body.open_wos).toBe("number");
     expect(body.pm_due).toBe(0);
+    const fleetSql = seenSql.find((sql) => sql.includes("AS total_units"));
+    expect(fleetSql).toContain("owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid");
   });
 
   it("degrades to zeroed payload when work_orders table is missing", async () => {
