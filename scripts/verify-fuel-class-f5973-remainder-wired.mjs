@@ -32,6 +32,7 @@ const FILES = {
   createModal: "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx",
   importModal: "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
   uploadModal: "apps/frontend/src/pages/fuel/components/UploadLovesPricesModal.tsx",
+  lovesRoute: "apps/backend/src/fuel/loves-upload.routes.ts",
   plannerHome: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
 };
 const LABEL = "verify-fuel-class-f5973-remainder-wired";
@@ -55,6 +56,15 @@ export function audit(src) {
 
   if (!/await uploadLovesPrices\(operatingCompanyId/.test(src.uploadModal)) {
     failures.push(`${FILES.uploadModal}: must call uploadLovesPrices(operatingCompanyId, ...) (connectivity)`);
+  }
+  if (/\.catch\(\(\) => \(\{ rowCount: 0 \}\)\)/.test(src.lovesRoute)) {
+    failures.push(`${FILES.lovesRoute}: database write failures must abort, never be counted as skipped success`);
+  }
+  if (!/await client\.query\([\s\S]*UPDATE fuel\.loves_prices_daily/.test(src.lovesRoute)) {
+    failures.push(`${FILES.lovesRoute}: must retain the company-scoped Loves price update writer`);
+  }
+  if (!/await client\.query\([\s\S]*INSERT INTO fuel\.loves_prices_daily/.test(src.lovesRoute)) {
+    failures.push(`${FILES.lovesRoute}: must retain the company-scoped Loves price insert writer`);
   }
 
   if (!/getFuelSavingsSummary/.test(src.plannerHome) || !/SavingsPanel/.test(src.plannerHome)) {
@@ -97,6 +107,16 @@ if (process.argv.includes("--selftest")) {
     { key: "createModal", from: "loadExemptionReason", to: "loadExempti0nReason" },
     { key: "importModal", from: "await importFuelTransactions(operatingCompanyId", to: "await importFuelTransactions(REMOVED" },
     { key: "uploadModal", from: "await uploadLovesPrices(operatingCompanyId", to: "await uploadLovesPrices(REMOVED" },
+    {
+      key: "lovesRoute",
+      from: ");\n        if ((updateRes.rowCount ?? 0) > 0)",
+      to: ").catch(() => ({ rowCount: 0 }));\n        if ((updateRes.rowCount ?? 0) > 0)",
+    },
+    {
+      key: "lovesRoute",
+      from: ");\n        if ((insertRes.rowCount ?? 0) > 0)",
+      to: ").catch(() => ({ rowCount: 0 }));\n        if ((insertRes.rowCount ?? 0) > 0)",
+    },
     { key: "plannerHome", from: "SavingsPanel", to: "SavingsPane1" },
     { key: "plannerHome", from: "fuel-history-savings-error", to: "fuel-history-savings-removed" },
     { key: "plannerHome", from: "fuel-planner-savings-error", to: "fuel-planner-savings-removed" },

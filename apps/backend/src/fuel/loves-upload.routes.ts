@@ -119,8 +119,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
           continue;
         }
 
-        const updateRes = await client
-          .query(
+        const updateRes = await client.query(
             `
               UPDATE fuel.loves_prices_daily
               SET price_per_gallon = $1,
@@ -146,15 +145,13 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
               row.station_name,
               row.station_address,
             ]
-          )
-          .catch(() => ({ rowCount: 0 }));
+          );
         if ((updateRes.rowCount ?? 0) > 0) {
           counts.rows_updated += 1;
           continue;
         }
 
-        const insertRes = await client
-          .query(
+        const insertRes = await client.query(
             `
               INSERT INTO fuel.loves_prices_daily (
                 operating_company_id,
@@ -181,8 +178,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
               filePart.filename,
               authUser.uuid,
             ]
-          )
-          .catch(() => ({ rowCount: 0 }));
+          );
         if ((insertRes.rowCount ?? 0) > 0) counts.rows_added += 1;
         else counts.rows_skipped += 1;
       }
