@@ -72,7 +72,7 @@ Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / 
 
 | Sidebar id | Route | Leftover unique hop SHA | Who walks unique FINDING next |
 |------------|-------|-------------------------|-------------------------------|
-| docs | `/docs` | `6585a66` | **HOLD leftover POST stamp.** CC-1 unique: `DOCS-F-KPI-FILTER-RESET-STUCK` · `DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY` · `DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED`. No 500 this pass. |
+| docs | `/docs` | `6585a66` | **HOLD leftover POST stamp until live SHA includes** #15371 #15372 #15373 (all merged). |
 | form_425 | `/425c` | `189dd4c` | **Do not loop.** Unique FINDING only if new 500/dead/silent |
 
 **Who “certifies” leftover POST as U14:** **nobody.** There is no second exclusive campaign. Remaining work = unique FINDING (500 / dead click / silent no-op). One small PR. FAST-MERGE.

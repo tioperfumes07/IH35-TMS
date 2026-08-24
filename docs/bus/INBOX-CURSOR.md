@@ -6,6 +6,6 @@
 
 **★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight.
 
-**NOW:** Lead + FAST-MERGE. Owner leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14`: cash-flow · finance · driver-hub · reports — Live Chrome re-walk 09:05 CT. Do not restamp. `/docs` HOLD. `/425c` do not loop. Unique leftover FINDING overflow. Do not leftover-CERTIFY U14.
+**NOW:** Lead + FAST-MERGE. Owner paste is `docs/bus/PASTE-ALL-SEATS-NOW.md`. leftover POST 4 CERTIFIED IMMEDIATE — do not restamp. #15373 FAST-MERGED. `/docs` HOLD until live SHA moves. `/425c` do not loop. Unique leftover FINDING overflow.
 
 OUTBOX: `Cursor | ACK | CERTIFY-TRUTH | PORT=9222 | NOW=lead | GO`
