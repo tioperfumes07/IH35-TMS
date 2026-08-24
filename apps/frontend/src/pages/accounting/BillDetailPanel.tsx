@@ -1,6 +1,6 @@
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 
 type BillSummary = {
@@ -41,8 +41,16 @@ export function BillDetailPanel({ bill }: Props) {
         fields={[
           {
             label: "Bill #",
+            // ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills
+            // (live-confirmed). This panel renders the bill's OWN "Bill details" — already fully
+            // in view (vendor/amount/status right below) — so entityLabel(null, ...)'s
+            // "Bill — not visible" fallback would contradict the panel it's sitting in.
             value: bill.id ? (
-              <EntityLink kind="bill" id={bill.id} label={bill.bill_number ?? entityLabel(null, bill.id, "Bill")} />
+              <EntityLink
+                kind="bill"
+                id={bill.id}
+                label={visibleDocumentLabel(bill.bill_number ?? bill.vendor_name, bill.id, "Bill")}
+              />
             ) : (
               bill.bill_number ?? "—"
             ),
