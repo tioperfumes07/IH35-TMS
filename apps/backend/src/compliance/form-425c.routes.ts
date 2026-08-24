@@ -1347,6 +1347,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         [b.file_uuid, b.operating_company_id]
       );
       if (!fileRes.rows[0]) throw new Error("file_not_found");
+      await assertMutableForm425CReport(client, params.data.id, b.operating_company_id);
       const res = await client.query(
         `
           UPDATE compliance.form_425c_reports
@@ -1359,6 +1360,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
+            AND status <> 'filed'
           RETURNING *
         `,
         [params.data.id, b.operating_company_id, b.file_uuid]
@@ -1387,6 +1389,15 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           error: "file_not_found",
           message: "Attachment file UUID not found for this operating company",
         });
+      }
+      if ((error as Error).message === "form_425c_filed_immutable") {
+        return reply.code(409).send({
+          error: "form_425c_filed_immutable",
+          message: "This MOR is filed — use Amend on History. Attachments will not rewrite a filed court filing.",
+        });
+      }
+      if ((error as Error).message === "form_425c_report_not_found") {
+        return reply.code(404).send({ error: "report_not_found" });
       }
       throw error;
     }
