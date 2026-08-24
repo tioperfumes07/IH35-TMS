@@ -7314,6 +7314,7 @@
       "equipment_type",
       "height_ft",
       "id",
+      "is_sample_data",
       "length_ft",
       "license_plate",
       "license_state",
