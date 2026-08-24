@@ -76,6 +76,9 @@ export function ExhibitsViewer() {
           <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
           <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
           <Link to="/425c?tab=history" className="hover:underline">History</Link>
+          <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
+          <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
+          <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
           <Link to="/425c" className="hover:underline">← Form 425C</Link>
         </div>
       </div>
