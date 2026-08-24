@@ -97,7 +97,7 @@ export function CurrentPeriodTab({
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             {availableCompanies.map((k) => (
               <option key={k} value={k}>
-                {profiles[k].name}
+                {profiles[k].name || k}
               </option>
             ))}
           </SelectCombobox>
