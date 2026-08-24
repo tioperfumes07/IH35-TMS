@@ -396,9 +396,15 @@ export function Form425CHome() {
   const generateMutation = useMutation({
     mutationFn: () => generateForm425CPdf(form.reportId!, companyId),
     onSuccess: async (res) => {
-      const printHtml =
-        String(res.print_html ?? "").trim() ||
-        buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
+      let printHtml = String(res.print_html ?? "").trim();
+      if (!printHtml) {
+        const debtor = String(profiles[activeCompany].name ?? "").trim();
+        if (!debtor) {
+          pushToast("Generate returned empty filing HTML and Profiles has no debtor name — not inventing a court print", "error");
+          return;
+        }
+        printHtml = buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
+      }
       if (!printHtml.trim()) {
         pushToast("Generate returned empty filing HTML — not opening a blank print", "error");
         return;
