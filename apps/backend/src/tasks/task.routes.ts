@@ -115,6 +115,18 @@ const UpdateTaskStatusSchema = z.object({
 
 const IdParamSchema = z.object({ id: z.string().uuid() });
 
+// TASK-ID-SCOPE-FIX: every :id-scoped route below needs `operating_company_id` to set the RLS GUC
+// BEFORE it can even see the task row (tasks.task is FORCE RLS on `app.current_operating_company_id`,
+// see SET_TASK_SCOPE_SQL above). The prior pattern tried to bootstrap scope by reading the task
+// UNSCOPED first — but FORCE RLS blocks that same read, so it always returned zero rows and every
+// one of these routes 404'd "Task not found" for every real task, always (measured live: GET/POST
+// .../comments, GET .../activity, and GET /:id all 404 on a task visible on the Task Board).
+// Trusting a client-supplied operating_company_id here is the SAME pattern already used by every
+// other route in this file (ListTasksQuerySchema, PlannerQuerySchema, CreateTaskBodySchema, etc.):
+// RLS — not the app layer — is what actually enforces it, so a caller passing a company the task
+// doesn't belong to still gets a correct 404, not cross-tenant access.
+const TaskScopeQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+
 // TASK-3 Team Chat — threaded comments + @mentions body.
 const CreateCommentSchema = z.object({
   body: z.string().min(1).max(5000),
@@ -380,15 +392,16 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     const parsed = UpdateTaskStatusSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const updates: string[] = ["status = $1"];
       const params: (string | number | null)[] = [input.status, id];
@@ -413,12 +426,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
 
       const sql = `
         SELECT t.*, u.email as assigned_to_email, ab.email as assigned_by_email
@@ -486,11 +498,12 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       const res = await (client as Queryable).query(
         `SELECT id, task_id, role, target_type, target_id, note, created_at, created_by_user_id
          FROM tasks.task_link WHERE task_id = $1 AND is_active = true ORDER BY created_at ASC`,
@@ -507,15 +520,17 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     const parsed = CreateTaskLinkSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id, status FROM tasks.task WHERE task_id = $1 AND is_active = true`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1 AND is_active = true`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const linkRes = await (client as Queryable).query(
         `INSERT INTO tasks.task_link
@@ -558,17 +573,17 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     const parsed = UpdateProgressSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
       const res = await (client as Queryable).query(
         `UPDATE tasks.task SET progress_pct = $1, updated_at = NOW() WHERE task_id = $2 RETURNING task_id, progress_pct`,
         [parsed.data.progress_pct, id]
       );
+      if (res.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       return { task: res.rows[0] };
     });
   });
@@ -582,12 +597,14 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const res = await (client as Queryable).query(
         `SELECT c.id, c.task_id, c.author_user_id, c.body, c.mentions, c.created_at,
@@ -608,15 +625,17 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     const parsed = CreateCommentSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const ins = await (client as Queryable).query(
         `INSERT INTO tasks.task_comments (operating_company_id, task_id, author_user_id, body, mentions)
@@ -651,12 +670,14 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
+    const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
+    if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
-      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
-      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const res = await (client as Queryable).query(
         `SELECT a.id, a.task_id, a.actor_user_id, a.event_type, a.payload, a.created_at,

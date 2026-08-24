@@ -111,14 +111,14 @@ export function TasksChatPage() {
   const selectedTask = tasks.find((t) => t.task_id === activeTaskId);
 
   const commentsQuery = useQuery({
-    queryKey: ["tasks", "comments", activeTaskId],
-    queryFn: ({ signal }) => fetchTaskComments(activeTaskId, signal),
-    enabled: Boolean(activeTaskId),
+    queryKey: ["tasks", "comments", activeTaskId, companyId],
+    queryFn: ({ signal }) => fetchTaskComments(activeTaskId, companyId, signal),
+    enabled: Boolean(activeTaskId) && Boolean(companyId),
   });
   const activityQuery = useQuery({
-    queryKey: ["tasks", "activity", activeTaskId],
-    queryFn: ({ signal }) => fetchTaskActivity(activeTaskId, signal),
-    enabled: Boolean(activeTaskId),
+    queryKey: ["tasks", "activity", activeTaskId, companyId],
+    queryFn: ({ signal }) => fetchTaskActivity(activeTaskId, companyId, signal),
+    enabled: Boolean(activeTaskId) && Boolean(companyId),
   });
 
   // Composer + @mention state.
@@ -157,15 +157,15 @@ export function TasksChatPage() {
     mutationFn: () => {
       // Only keep mention ids whose "@Name" still appears in the final body.
       const kept = keptMentionIds(draft, mentionIds, (id) => employeeById.get(id)?.name);
-      return createTaskComment(activeTaskId, draft.trim(), kept);
+      return createTaskComment(activeTaskId, companyId, draft.trim(), kept);
     },
     onMutate: () => setCommentError(null),
     onSuccess: () => {
       setDraft("");
       setMentionIds(new Set());
       setMentionQuery(null);
-      queryClient.invalidateQueries({ queryKey: ["tasks", "comments", activeTaskId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks", "activity", activeTaskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "comments", activeTaskId, companyId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "activity", activeTaskId, companyId] });
     },
     onError: (error) => setCommentError(error instanceof Error ? error.message : "Failed to post comment"),
   });
