@@ -38,12 +38,6 @@ function assertPage(src) {
 }
 
 function selftest() {
-  const bad = `
-    const requestedUnitId = searchParams.get("unit_id");
-    const [unitPickerId, setUnitPickerId] = useState("");
-    const setUnitFilter = (unitId) => { setUnitPickerId(unitId); setSearchParams(...); };
-    row.unit_id === effectiveUnitId
-  `;
   const good = `
     useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply })
     const requestedUnitId = searchParams.get("unit_id");
@@ -57,11 +51,35 @@ function selftest() {
     <button data-testid="fleet-hos-filter-cancel" onClick={staged.cancel}>Cancel</button>
     <button data-testid="fleet-hos-filter-reset">Reset</button>
   `;
-  if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
-    console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+  const goodErrors = assertPage(good);
+  if (goodErrors.length > 0) {
+    console.error(`${LABEL} SELFTEST FAIL good fixture`, goodErrors);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest PASS`);
+  const mutations = [
+    ["useStagedListFilters", "REMOVED_STAGED_HOOK", "must use useStagedListFilters"],
+    ["onClick={staged.apply}", "onClick={() => undefined}", "must wire Apply"],
+    ["onClick={staged.cancel}", "onClick={() => undefined}", "must wire Cancel"],
+    ['data-testid="fleet-hos-filter-apply"', 'data-testid="removed-apply"', "must expose filter-apply"],
+    ['data-testid="fleet-hos-filter-cancel"', 'data-testid="removed-cancel"', "must expose filter-cancel"],
+    ['data-testid="fleet-hos-filter-reset"', 'data-testid="removed-reset"', "must expose filter-reset"],
+    ['dataTestId="fleet-hos-filter-unit"', 'dataTestId="removed-unit"', "must keep unit picker"],
+    ["allowCreate={false}", "allowCreate", "must keep allowCreate"],
+    ['searchParams.get("unit_id")', 'searchParams.get("wrong_id")', "must keep requestedUnitId"],
+    ["row.unit_id === effectiveUnitId", "true", "must keep effectiveUnitId"],
+    ["applied.unitId", "draft.unitId", "must keep effectiveUnitId"],
+    ["setSearchParams", "replaceSearchParams", "must keep setUnitFilter + setSearchParams"],
+    ["setUnitFilter", "replaceUnitFilter", "must keep setUnitFilter + setSearchParams"],
+    ["useStagedListFilters", 'useStagedListFilters const [unitPickerId, setUnitPickerId] = useState("");', "must not keep hand-rolled"],
+  ];
+  for (const [from, to, expected] of mutations) {
+    const errors = assertPage(good.replace(from, to));
+    if (!errors.some((error) => error.includes(expected))) {
+      console.error(`${LABEL} SELFTEST FAIL mutation ${from}: expected ${expected}`, errors);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} selftest PASS — ${mutations.length}/${mutations.length} staged-filter/URL/picker defects detected`);
 }
 
 if (process.argv.includes("--selftest")) {
