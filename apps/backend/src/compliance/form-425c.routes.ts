@@ -794,6 +794,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "A draft already exists for this period — use Load Draft. Create will not insert a second MOR.",
         });
       }
+      if (e?.message === "form_425c_operating_company_not_found") {
+        return sendForm425CCompanyMissing(reply);
+      }
       throw err;
     }
     if (created && typeof created === "object" && "error" in created && created.error === "petition_date_required") {
