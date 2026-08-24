@@ -597,7 +597,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                FROM accounting.bills b
                JOIN accounting.posting_batches pb
                  ON pb.source_transaction_type = 'bill'
-                AND pb.source_transaction_id = b.id
+                AND pb.source_transaction_id = b.id::text
                 AND pb.operating_company_id = b.operating_company_id
                 AND pb.batch_status = 'posted'
               WHERE b.linked_work_order_uuid = w.id
@@ -616,16 +616,75 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Accident reported through to claim + cost",
     je: "DR Accident Loss / CR A/P or Escrow",
     spec_ref: "SAF-ACC",
-    sources: ["safety.accident_reports"],
+    sources: [
+      "safety.accident_reports",
+      "safety.accident_cost_lines",
+      "insurance.claim",
+      "maintenance.work_orders",
+      "accounting.bills",
+      "accounting.posting_batches",
+      "accounting.journal_entry_postings",
+      "accounting.journal_entries",
+      "driver_finance.driver_liabilities",
+    ],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM safety.accident_reports a
-         -- safety.accidents exists on PROD but no migration creates it, so a fresh database (CI, a new
-         -- environment) would not have it and this probe would error there. safety.accident_reports is
-         -- the migration-created, entity-scoped table and holds the same 0 rows on prod today.
+        SELECT count(*)::text AS n
+          FROM safety.accident_reports a
+          JOIN insurance.claim c
+            ON c.id = a.insurance_claim_id
+           AND c.accident_report_id = a.id
+           AND c.tenant_id = a.operating_company_id
+          JOIN maintenance.work_orders w
+            ON w.insurance_claim_id = c.id
+           AND w.operating_company_id = a.operating_company_id
+           AND w.source_type = 'AC'
+           AND w.voided_at IS NULL
+          JOIN accounting.bills b
+            ON b.linked_work_order_uuid = w.id
+           AND b.operating_company_id = a.operating_company_id
+           AND b.qbo_bill_id IS NULL
+           AND b.revoked_at IS NULL
+           AND b.voided_at IS NULL
+          JOIN accounting.posting_batches pb
+            ON pb.source_transaction_type = 'bill'
+           AND pb.source_transaction_id = b.id::text
+           AND pb.operating_company_id = a.operating_company_id
+           AND pb.batch_status = 'posted'
+          JOIN accounting.journal_entry_postings jep
+            ON jep.posting_batch_id = pb.id
+           AND jep.operating_company_id = pb.operating_company_id
+           AND jep.source_transaction_type = 'bill'
+           AND jep.source_transaction_id = b.id::text
+          JOIN accounting.journal_entries je
+            ON je.id = jep.journal_entry_uuid
+           AND je.operating_company_id = jep.operating_company_id
+           AND je.status = 'posted'
+           AND je.voided_at IS NULL
          WHERE ($1::uuid IS NULL OR a.operating_company_id = $1::uuid)
+           AND a.driver_id IS NOT NULL
+           AND a.unit_id IS NOT NULL
+           AND a.load_id IS NOT NULL
+           AND EXISTS (
+             SELECT 1
+               FROM safety.accident_cost_lines acl
+              WHERE acl.accident_id = a.id
+                AND acl.operating_company_id = a.operating_company_id
+                AND acl.amount_cents > 0
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM driver_finance.driver_liabilities dl
+              WHERE dl.operating_company_id = a.operating_company_id
+                AND dl.driver_id = a.driver_id
+                AND dl.origin = 'safety_accident'
+                AND dl.origin_id::text = a.id::text
+                AND dl.type = 'accident_damage'
+                AND dl.original_amount > 0
+                AND dl.status <> 'voided'
+           )
       `,
-      describe: (n) => `${n} accident(s) recorded`,
+      describe: (n) => `${n} accident claim/cost/repair chain(s) posted to the GL`,
     },
   },
   {
