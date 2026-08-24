@@ -170,6 +170,9 @@ function sendExhibitWriteError(reply: FastifyReply, err: unknown) {
   if (e?.message === "form_425c_exhibit_insert_blocked") {
     return reply.code(404).send({ error: "exhibit_insert_blocked" });
   }
+  if (e?.message === "forbidden_company_membership") {
+    return sendForm425CForbiddenMembership(reply);
+  }
   throw err;
 }
 
@@ -1591,6 +1594,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       }
       if ((error as Error).message === "form_425c_report_not_found") {
         return reply.code(404).send({ error: "report_not_found" });
+      }
+      if ((error as Error).message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw error;
     }

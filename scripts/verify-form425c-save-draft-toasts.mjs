@@ -220,6 +220,9 @@ export function collectProblems(src) {
   if (!attachChunk.includes("assertMutableForm425CReport") || !attachChunk.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: attachment POST must refuse filed MORs — UPDATE without status was a silent rewrite");
   }
+  if (!attachChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: attachment POST must 403 on forbidden_company_membership, not an uncaught 500");
+  }
   if (!src.includes("addForm425CExhibitA") || !src.includes("addForm425CExhibitB") || !src.includes("onSaveExhibit")) {
     problems.push(`${PAGE}: flagged questionnaire must POST exhibit A/B — not a dead hop to /425c/exhibits A–F`);
   }
@@ -232,6 +235,9 @@ export function collectProblems(src) {
   const exhibitBChunk = (routes.split('app.post("/api/v1/form-425c/:id/exhibit-b"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/attachments')[0];
   if (!exhibitAChunk.includes("assertMutableForm425CReport") || !exhibitBChunk.includes("assertMutableForm425CReport")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: both exhibit A and B POSTs must assert the MOR is a non-filed report for this opco");
+  }
+  if (!routes.includes("function sendExhibitWriteError") || !(routes.split("function sendExhibitWriteError")[1] ?? "").includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Exhibit A/B POST must 403 on forbidden_company_membership, not an uncaught 500");
   }
   if (!formTab.includes("onSaveExhibit") || !formTab.includes("Save Exhibit")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must save a line explanation, not only link to /425c/exhibits");
