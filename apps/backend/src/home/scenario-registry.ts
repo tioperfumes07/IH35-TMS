@@ -494,12 +494,32 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Escrow withheld / returned",
     je: "DR Net Pay Clearing / CR Driver Escrow (liability)",
     spec_ref: "ESCROW",
-    sources: ["driver_finance.escrow_ledger"],
+    sources: ["accounting.escrow_postings", "accounting.escrow_accounts", "driver_finance.driver_settlements", "accounting.journal_entries"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM driver_finance.escrow_ledger e WHERE ($1::uuid IS NULL OR e.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM accounting.escrow_postings ep
+          JOIN accounting.escrow_accounts ea
+            ON ea.id = ep.escrow_account_id
+           AND ea.operating_company_id = ep.operating_company_id
+           AND ea.holder_type = 'driver'
+          JOIN driver_finance.driver_settlements s
+            ON s.id = ep.source_id
+           AND s.operating_company_id = ep.operating_company_id
+           AND s.driver_id = ea.holder_id
+           AND s.voided_at IS NULL
+           AND s.reversed_at IS NULL
+          JOIN accounting.journal_entries je
+            ON je.id = ep.linked_journal_entry_id
+           AND je.operating_company_id = ep.operating_company_id
+           AND je.status = 'posted'
+           AND je.voided_at IS NULL
+         WHERE ($1::uuid IS NULL OR ep.operating_company_id = $1::uuid)
+           AND ep.source_type = 'driver_settlement'
+           AND ep.posting_type IN ('deposit', 'release')
+           AND ep.amount_cents > 0
       `,
-      describe: (n) => `${n} escrow ledger entr(ies)`,
+      describe: (n) => `${n} driver escrow hold/return event(s) posted to the GL`,
     },
   },
   {

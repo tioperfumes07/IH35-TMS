@@ -47,6 +47,27 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.escrow",
+    needles: [
+      "accounting.escrow_postings",
+      "accounting.escrow_accounts",
+      "ea.operating_company_id = ep.operating_company_id",
+      "ea.holder_type = 'driver'",
+      "driver_finance.driver_settlements",
+      "s.id = ep.source_id",
+      "s.driver_id = ea.holder_id",
+      "s.voided_at IS NULL",
+      "s.reversed_at IS NULL",
+      "accounting.journal_entries",
+      "je.id = ep.linked_journal_entry_id",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "ep.source_type = 'driver_settlement'",
+      "ep.posting_type IN ('deposit', 'release')",
+      "ep.amount_cents > 0",
+    ],
+  },
+  {
     key: "scenario.deductions",
     needles: [
       "s.id = d.applied_to_settlement_id",
@@ -293,6 +314,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["escrow probe accepts a non-driver account", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND ea.holder_type = 'driver'", "") })],
+    ["escrow probe loses its linked JE", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("ON je.id = ep.linked_journal_entry_id", "ON true") })],
     ["deduction probe accepts a held deduction", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND d.is_held = false", "") })],
     ["deduction probe loses its source line", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND sl.source_reference_id = d.id", "") })],
     ["advance probe accepts an undisbursed row", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND a.disbursement_status = 'disbursed'", "") })],
