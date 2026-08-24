@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../../api/mdata";
 import { DriverLayoverHistoryPage } from "../DriverLayoverHistoryPage";
+import { ToastProvider } from "../../../components/Toast";
 
 /**
  * DISP-S19: /dispatch/layovers/driver/:driverId renders, is entity-scoped, and shows an honest
@@ -22,11 +23,13 @@ function wrap(driverIdParam: string | null) {
   const path = driverIdParam ? `/dispatch/layovers/driver/${driverIdParam}` : "/dispatch/layovers/driver/";
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path="/dispatch/layovers/driver/:driverId?" element={<DriverLayoverHistoryPage />} />
-        </Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/dispatch/layovers/driver/:driverId?" element={<DriverLayoverHistoryPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -52,8 +55,11 @@ describe("DriverLayoverHistoryPage (DISP-S19)", () => {
   });
 
   it("renders the driver's name header and scopes the layovers fetch to company + driver", async () => {
+    // The header legitimately renders "Jordan Ruiz" twice by design: the PageHeader subtitle
+    // (plain text) and the EntityLinkOrTombstone action (a real clickable link back to the
+    // driver's profile) — not a duplicate-render bug, so assert presence, not singularity.
     wrap(driverId);
-    expect(await screen.findByText("Jordan Ruiz")).toBeTruthy();
+    expect((await screen.findAllByText("Jordan Ruiz")).length).toBeGreaterThan(0);
     expect(fetch).toHaveBeenCalled();
   });
 
