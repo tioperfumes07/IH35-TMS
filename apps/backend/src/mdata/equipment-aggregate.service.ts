@@ -216,8 +216,20 @@ export async function buildEquipmentAggregate(
   }
   const lastRes = await client.query(
     `
-      SELECT w.updated_at::text AS date, w.total_actual_cost AS cost
+      SELECT
+        w.updated_at::text AS date,
+        w.total_actual_cost AS cost,
+        COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id,
+        v.vendor_name AS vendor
       FROM maintenance.work_orders w
+      LEFT JOIN LATERAL (
+        SELECT scoped_vendor.vendor_name
+        FROM mdata.get_vendor_same_company(
+          COALESCE(w.external_vendor_id, w.vendor_id),
+          w.operating_company_id
+        ) scoped_vendor
+        LIMIT 1
+      ) v ON TRUE
       WHERE w.equipment_id = $1::uuid
         AND w.operating_company_id = $2::uuid
         AND w.voided_at IS NULL
