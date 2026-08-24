@@ -17,6 +17,8 @@ const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
   /FROM fuel\.fuel_transactions[\s\S]{0,400}\.catch\(\(\) => \(\{ rows: \[\{ spend: 0, avg_price: 0 \}\] \}\)\)/;
+const SEND_TO_DRIVER_DB_ERROR_AS_404_RE =
+  /FROM fuel\.route_recommendations[\s\S]{0,450}\.catch\(\(\) => \(\{ rows: \[\]/;
 
 /**
  * @param {string} source
@@ -31,6 +33,11 @@ export function computePlannerFailures(plannerSource) {
   }
   if (!/FROM fuel\.fuel_transactions/.test(plannerSource)) {
     errors.push("planner.routes.ts must keep the MTD spend query on fuel.fuel_transactions");
+  }
+  if (SEND_TO_DRIVER_DB_ERROR_AS_404_RE.test(plannerSource)) {
+    errors.push(
+      "planner.routes.ts send-to-driver must not catch a route_recommendations query failure as empty rows (that becomes a fake 404)",
+    );
   }
   return errors;
 }
@@ -72,6 +79,24 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — planner spend fail-loud");
+  const sendCatchBad = `
+          FROM fuel.route_recommendations
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        \`,
+        [params.data.id, companyId]
+      ).catch(() => ({ rows: [] as Record<string, unknown>[] }));
+  `;
+  if (!computePlannerFailures(sendCatchBad).some((e) => e.includes("fake 404"))) {
+    console.error("SELFTEST FAIL — send-to-driver catch-as-empty should fail");
+    process.exit(1);
+  }
+  if (computePlannerFailures(plannerGood).some((e) => e.includes("fake 404"))) {
+    console.error("SELFTEST FAIL — spend-only planner source must not trip send-to-driver catch");
+    process.exit(1);
+  }
+  console.log("selftest ok — send-to-driver fail-loud");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";

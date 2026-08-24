@@ -234,7 +234,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           LIMIT 1
         `,
         [params.data.id, companyId]
-      ).catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      );
       const recommendation = recRes.rows[0] ?? null;
       if (!recommendation) return null;
 
