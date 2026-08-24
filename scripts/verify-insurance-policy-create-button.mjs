@@ -1,40 +1,49 @@
 #!/usr/bin/env node
+/** Ratchets the policy-list create action through its canonical modal submit. */
 import fs from "node:fs";
-import path from "node:path";
 
-const ROOT = process.cwd();
-const failures = [];
+const FILES = {
+  policies: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+  modal: "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+};
+const CHECKS = [
+  ["policies:create-label", "policies", /\+ Create policy/],
+  ["policies:modal-mounted", "policies", /PolicyCreateModal/],
+  ["policies:owner-rbac", "policies", /Owner/],
+  ["policies:administrator-rbac", "policies", /Administrator/],
+  ["policies:accountant-rbac", "policies", /Accountant/],
+  ["modal:type-catalog", "modal", /listInsuranceTypeCatalog/],
+  ["modal:canonical-units", "modal", /listUnits/],
+  ["modal:create-endpoint", "modal", /\/api\/v1\/insurance\/policies/],
+  ["modal:create-title", "modal", /title="Create Policy"/],
+];
 
-function read(relPath) {
-  const abs = path.resolve(ROOT, relPath);
-  if (!fs.existsSync(abs)) return "";
-  return fs.readFileSync(abs, "utf8");
+export function collectProblems(sources) {
+  return CHECKS.filter(([, key, pattern]) => !pattern.test(sources[key] ?? "")).map(([id]) => id);
 }
 
-const policiesPath = "apps/frontend/src/pages/insurance/PoliciesList.tsx";
-const modalPath = "apps/frontend/src/components/insurance/PolicyCreateModal.tsx";
-
-const policies = read(policiesPath);
-const modal = read(modalPath);
-
-if (!policies) failures.push(`missing:${policiesPath}`);
-if (!modal) failures.push(`missing:${modalPath}`);
-
-if (policies && !policies.includes("+ Create policy")) failures.push("missing_create_button_label");
-if (policies && !policies.includes("PolicyCreateModal")) failures.push("missing_policy_create_modal_usage");
-if (policies && !policies.includes("Owner")) failures.push("missing_owner_rbac_gate");
-if (policies && !policies.includes("Administrator")) failures.push("missing_administrator_rbac_gate");
-if (policies && !policies.includes("Accountant")) failures.push("missing_accountant_rbac_gate");
-
-if (modal && !modal.includes("listInsuranceTypeCatalog")) failures.push("missing_type_catalog_loader");
-if (modal && !modal.includes("listUnits")) failures.push("missing_units_loader");
-if (modal && !modal.includes("/api/v1/insurance/policies")) failures.push("missing_policies_create_endpoint_usage");
-if (modal && !modal.includes('title="Create Policy"')) failures.push("missing_create_policy_modal_title");
-
-if (failures.length > 0) {
-  console.error("verify:insurance-policy-create-button FAILED");
-  for (const failure of failures) console.error(` - ${failure}`);
-  process.exit(1);
+function readSources() {
+  return Object.fromEntries(Object.entries(FILES).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 }
 
-console.log("verify:insurance-policy-create-button OK");
+function selftest() {
+  const baseline = readSources();
+  const missed = [];
+  for (const [id, key, pattern] of CHECKS) {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    const mutated = { ...baseline, [key]: baseline[key].replace(new RegExp(pattern.source, flags), "__PLANTED_DEFECT__") };
+    if (!collectProblems(mutated).includes(id)) missed.push(id);
+  }
+  if (missed.length) throw new Error(`selftest missed: ${missed.join(", ")}`);
+  console.log(`verify-insurance-policy-create-button --selftest ${CHECKS.length}/${CHECKS.length}`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else {
+  const failures = collectProblems(readSources());
+  if (failures.length) {
+    console.error(`verify-insurance-policy-create-button FAILED:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
+    process.exit(1);
+  }
+  console.log("verify-insurance-policy-create-button PASS — visible RBAC action→canonical catalogs/units→real policy endpoint");
+}
