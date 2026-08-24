@@ -1258,7 +1258,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // do not bury operating_company_id only inside an interpolated ${whereClause}.
       const extraAnd = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.drivers WHERE operating_company_id = $${ociIdx}::uuid ${extraAnd}`,
+        `SELECT count(*)::int AS total
+           FROM mdata.drivers
+          WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca
+             WHERE canonical_list_dca.driver_id = mdata.drivers.id
+               AND canonical_list_dca.company_id = $${ociIdx}::uuid
+               AND canonical_list_dca.is_authorized = true
+               AND canonical_list_dca.deactivated_at IS NULL
+          )) ${extraAnd}`,
         values
       );
       values.push(limit);
@@ -1284,7 +1292,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
              WHERE updater.id = mdata.drivers.updated_by_user_id
              LIMIT 1) AS updated_by_user_label
           FROM mdata.drivers
-          WHERE operating_company_id = $${ociIdx}::uuid
+          WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca
+             WHERE canonical_list_dca.driver_id = mdata.drivers.id
+               AND canonical_list_dca.company_id = $${ociIdx}::uuid
+               AND canonical_list_dca.is_authorized = true
+               AND canonical_list_dca.deactivated_at IS NULL
+          ))
           ${extraAnd}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}

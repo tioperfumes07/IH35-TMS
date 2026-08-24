@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leaves":["drivers.picker.exclude_sample"],"task":"LV-DRIVER-HUB-SCHEDULER-TEST-FIXTURES-IN-PROD-PICKER-2026-08-23","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["drivers"],"cols":["driver","connectivity","reverse_link"],"leaves":["drivers.picker.exclude_sample"],"task":"DRV-F6301-CANONICAL-LIST-OMITS-SHARED-DRIVERS","vertical":"column-wave"} */
 /**
  * LV-DRIVER-HUB-SCHEDULER-TEST-FIXTURES-IN-PROD-PICKER-2026-08-23: GET /api/v1/mdata/drivers is the
  * canonical driver list/picker read — used by the Driver Hub Assign-Temp-Cover modal and every other
@@ -40,6 +40,10 @@ export function audit(src) {
         `driver picker across the app`,
     );
   }
+  const authorizationJoins = body.match(/FROM mdata\.driver_company_authorizations canonical_list_dca[\s\S]{0,260}canonical_list_dca\.driver_id = mdata\.drivers\.id[\s\S]{0,180}canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid[\s\S]{0,180}canonical_list_dca\.is_authorized = true[\s\S]{0,180}canonical_list_dca\.deactivated_at IS NULL/g) ?? [];
+  if (authorizationJoins.length !== 2) {
+    failures.push(`${FILES.routes}: canonical driver count and row reads must both admit active selected-company driver authorizations`);
+  }
   return failures;
 }
 
@@ -67,7 +71,15 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 1 mutation detected`);
+  const sharedMutation = {
+    ...good,
+    routes: good.routes.replaceAll("canonical_list_dca.is_authorized = true", "canonical_list_dca.is_authorized = false"),
+  };
+  if (audit(sharedMutation).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — shared-driver authorization mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 2 mutations detected`);
   process.exit(0);
 }
 
@@ -76,4 +88,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — canonical driver list/picker read excludes is_sample_data fixture rows`);
+console.log(`${LABEL} PASS — canonical driver list/picker excludes fixtures and admits active shared drivers`);
