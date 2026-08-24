@@ -317,13 +317,19 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "history" ? (
         <div className="space-y-2">
           <TripPlanSummaryBanner route={detail ?? activeRoute} />
-          <SavingsPanel
-            driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-            fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
-            lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
-            topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
-            topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-          />
+          {savingsQuery.isError ? (
+            <div data-testid="fuel-history-savings-error">
+              <ListErrorBanner onRetry={() => void savingsQuery.refetch()} />
+            </div>
+          ) : (
+            <SavingsPanel
+              driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+              fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
+              lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
+              topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
+              topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+            />
+          )}
           <section className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
@@ -534,13 +540,19 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               fleetTotalRecommendations={Number(complianceQuery.data?.fleet_total_recommendations ?? 0)}
               driverPct={driverPct}
             />
-            <SavingsPanel
-              driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-              fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
-              lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
-              topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
-              topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-            />
+            {savingsQuery.isError ? (
+              <div data-testid="fuel-planner-savings-error">
+                <ListErrorBanner onRetry={() => void savingsQuery.refetch()} />
+              </div>
+            ) : (
+              <SavingsPanel
+                driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+                fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
+                lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
+                topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
+                topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+              />
+            )}
           </div>
         </>
       )) : null}
