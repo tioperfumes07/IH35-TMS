@@ -44,7 +44,7 @@ Walk this graph on **live USMCA**. For **your** module, prove how **this module 
 | H13 | **At fault?** | | | Legal + claim + safety agree (no conflicting silent defaults) |
 | H14 | **Salary deduct vs escrow** | `driver_finance.*` (not RETIRE payroll) | deduction line **or** escrow liability | Settlement reverse + banking driver-escrow tile |
 | H15 | **Repair** | `maintenance.work_orders` + insurance_claim_id | vendor, unit, claim | WO → claim → accident; unit reverse |
-| H16 | **Lawsuit / legal matter** | `legal.matters` `insurance.lawsuit` | `insurance_claim_id` | Claim graph + legal list + unit/driver reverse (**you do not steal `/legal` U14 OPEN** — hop **from claim/safety/unit** only) |
+| H16 | **Lawsuit / legal matter** | `legal.matters` `insurance.lawsuit` | `insurance_claim_id` | Claim graph + legal list + unit/driver reverse (hop **from claim/safety/unit**; U14 legal is CERTIFIED — leftover unique only) |
 | H17 | **AP bill / repair invoice** | `accounting.bills` | vendor, WO, claim, GL lines | Bill → vendor; claim → bills[] |
 | H18 | **Expense** | `accounting.expenses` | if deductible/out-of-pocket posted as expense | |
 | H19 | **GL / JE** | `accounting.journal_entries` + postings | **balanced** DR=CR; poster reused; flag | Register → source document |
