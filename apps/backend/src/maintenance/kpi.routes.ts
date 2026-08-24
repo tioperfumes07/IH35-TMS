@@ -3,6 +3,11 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): mdata.units readers feeding a human-facing
+// KPI must exclude demo/phantom + is_sample_data fixture rows, same shared definition as the Fleet
+// roster/KPI (mdata/fleet-visibility.ts) — otherwise a fixture unit silently inflates operating-hour
+// and downtime denominators (MTBF reads artificially healthier than the real fleet).
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 
 const kpiQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -133,6 +138,8 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
             AND u.is_oos = true
             AND u.oos_since IS NOT NULL
             AND u.oos_since::date <= $3::date
+            AND ${excludeDemoPhantomSql("u.unit_number")}
+            AND ${excludeSampleDataSql("u.is_sample_data")}
             ${unitId ? " AND u.id = $4::uuid" : ""}
         `,
         unitId ? [companyId, startDay, endDay, unitId] : [companyId, startDay, endDay]
@@ -337,7 +344,9 @@ async function countActiveUnits(client: { query: (sql: string, values?: unknown[
     `SELECT COUNT(*)::int AS c
        FROM mdata.units
       WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-        AND deactivated_at IS NULL`,
+        AND deactivated_at IS NULL
+        AND ${excludeDemoPhantomSql("unit_number")}
+        AND ${excludeSampleDataSql()}`,
     [companyId]
   );
   return Number(res.rows[0]?.c ?? 1);
