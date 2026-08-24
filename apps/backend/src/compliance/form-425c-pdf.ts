@@ -155,7 +155,12 @@ function buildPrintHTML(
 </body></html>`;
 }
 
-export async function generateForm425CPdf({ client, userId, reportId, operatingCompanyId }: GenerateForm425CPdfInput) {
+/** Read-only court HTML. Does not INSERT docs.files or mutate the MOR (filed reprint). */
+export async function buildForm425CPrintDocument({
+  client,
+  reportId,
+  operatingCompanyId,
+}: Omit<GenerateForm425CPdfInput, "userId">) {
   const reportRes = await client.query(
     `
       SELECT *
@@ -205,14 +210,18 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
   );
 
   const printHtml = buildPrintHTML(report, profile, exhibitARes.rows, exhibitBRes.rows);
-  const htmlBuffer = Buffer.from(printHtml, "utf8");
-  const sha256 = crypto.createHash("sha256").update(htmlBuffer).digest("hex");
-  const keySuffix = crypto.randomUUID();
-  const r2Key = `org/${operatingCompanyId}/form-425c/${reportId}/${keySuffix}.html`;
   const monthLabel = labelForMonth(String(report.reporting_month ?? ""));
   const companyName = String(profile?.company_name ?? "IH 35");
   const suggestedFilename = `${companyName} – ${monthLabel} – Monthly Operating Report.pdf`;
+  return { report, printHtml, suggestedFilename };
+}
 
+export async function generateForm425CPdf({ client, userId, reportId, operatingCompanyId }: GenerateForm425CPdfInput) {
+  const built = await buildForm425CPrintDocument({ client, reportId, operatingCompanyId });
+  const htmlBuffer = Buffer.from(built.printHtml, "utf8");
+  const sha256 = crypto.createHash("sha256").update(htmlBuffer).digest("hex");
+  const keySuffix = crypto.randomUUID();
+  const r2Key = `org/${operatingCompanyId}/form-425c/${reportId}/${keySuffix}.html`;
   const fileInsert = await client.query<{ id: string }>(
     `
       INSERT INTO docs.files (
@@ -231,7 +240,7 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
     `,
     [
       operatingCompanyId,
-      `form-425c-${String(report.reporting_month ?? "").slice(0, 10)}.html`,
+      `form-425c-${String(built.report.reporting_month ?? "").slice(0, 10)}.html`,
       "text/html",
       htmlBuffer.length,
       sha256,
@@ -247,7 +256,7 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
     fileId,
     sha256,
     r2Key,
-    printHtml,
-    suggestedFilename,
+    printHtml: built.printHtml,
+    suggestedFilename: built.suggestedFilename,
   };
 }
