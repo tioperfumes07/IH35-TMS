@@ -6,10 +6,6 @@
 
 **★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Never `gh pr checks --watch`. Deploy = Cursor only, every **10**.
 
-**NOW THIS TURN:** Chrome `https://app.ih35dispatch.com/fuel` — leftover #3. CLASS-F5973-TRUE-REMAINDER-FUEL + new unique 500/dead/silent. One small PR per finding.
+**NOW THIS TURN — LEFTOVER-6 CERTIFY (not U14):** Live Chrome `https://app.ih35dispatch.com/reports` Fully-Wired 1–12. Unique 500/dead/silent. Fuel remainder in parallel if unique remains. Pack: `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md`. Never remake Close / #15228–#15243. Never idle. Never `trigger_deploy`.
 
-**THEN:** `/reports` leftover unique (#4). Stay out of CC-1 cash-flow/finance money reports.
-
-Never remake Close. Never remake #15228–#15243.
-
-OUTBOX: `CC-2 | ACK | NEXT-8 | PORT=9224 | NOW=/fuel | GO`
+OUTBOX: `CC-2 | ACK | LEFTOVER-6 | PORT=9224 | NOW=/reports | GO`
