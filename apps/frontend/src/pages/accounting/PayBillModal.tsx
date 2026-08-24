@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { billVendorDrillId, payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
@@ -190,7 +190,14 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
                 <span>Bill #</span>
                 <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px] font-normal text-slate-800">
-                  <EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />
+                  {/* ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills
+                      (live-confirmed) — this bill is already fully in view, so entityLabel's
+                      "Bill — not visible" fallback would contradict the drawer it's sitting in. */}
+                  <EntityLink
+                    kind="bill"
+                    id={bill.id}
+                    label={visibleDocumentLabel(bill.bill_number ?? bill.memo ?? bill.vendor_name, bill.id, "Bill")}
+                  />
                 </div>
               </div>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -285,7 +292,11 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   key: "bill",
                   label: "Bill #",
                   render: (row) => (
-                    <EntityLink kind="bill" id={row.id} label={entityLabel(row.bill_number, row.id, "Bill")} />
+                    <EntityLink
+                      kind="bill"
+                      id={row.id}
+                      label={visibleDocumentLabel(row.bill_number ?? row.memo ?? row.vendor_name, row.id, "Bill")}
+                    />
                   ),
                 },
                 {

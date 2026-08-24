@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -90,7 +90,12 @@ const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
     label: "Bill",
     sortable: true,
     sortValue: (row) => row.bill_number || row.id,
-    render: (row) => <EntityLink kind="bill" id={row.id} label={entityLabel(row.bill_number, row.id, "Record")} />,
+    // ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills (live-confirmed)
+    // — this row is already fully in view, so entityLabel's "Record — not visible" fallback would
+    // contradict the row it's sitting in.
+    render: (row) => (
+      <EntityLink kind="bill" id={row.id} label={visibleDocumentLabel(row.bill_number ?? row.memo, row.id, "Record")} />
+    ),
   },
   { key: "bill_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.bill_date) || "—" },
   { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
