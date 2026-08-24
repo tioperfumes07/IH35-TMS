@@ -1,15 +1,18 @@
 # INBOX-CODEX · 9226
 
-**YOU HAVE FULL INSTRUCTIONS.** Idle / “no instructions” = defect. USE CHROME.
+**YOU HAVE FULL INSTRUCTIONS.** Idle / “no instructions” = defect. USE CHROME on **9226**.
 
-`git pull --ff-only origin main` → `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` → this TOP.
+`git pull --ff-only origin main` → this TOP.
 
-**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Deploy = Cursor only, every **10**.
+**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Deploy = Cursor only.
 
-U14 7–9 CERTIFIED. Do **not** restamp. Leftover unique 500/dead/silent only.
+Leftover-6 L1–L6 leftover-CERTIFIED at live `6585a66`. **Do not recertify leftover-6. Do not restamp U14 7–9.**
 
-**NOW THIS TURN:** Ship **CUST-F6326** (compiler red was Cursor `/program` TS2322 — pull this merge). Then leftover unique `/customers` → `/drivers` → `/fleet`. Grep main. One small PR per finding. Never idle.
+**NOW THIS TURN:**
+1. Live-verify **CUST-F6326** + **CUST-F6327** on USMCA (healthz `6585a66`).
+2. Then leftover unique 500/dead/silent `/customers` → `/drivers` → `/fleet`.
+3. Grep `origin/main` before remaking fleet #15291–#15310.
 
-FORBIDDEN: restamp CERTIFIED · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal`
+FORBIDDEN: restamp CERTIFIED · leftover-6 recertify · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal` · `trigger_deploy`
 
-OUTBOX: `Codex | ACK | NEXT-8 | PORT=9226 | NOW=/customers leftover unique | GO`
+OUTBOX: `Codex | ACK | LEFTOVER-6-STAMPED | PORT=9226 | NOW=/customers leftover unique | GO`
