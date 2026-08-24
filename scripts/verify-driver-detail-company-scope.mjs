@@ -57,6 +57,10 @@ function verify(source) {
   ].every(Boolean);
   need(qualificationParentScope, "qualifications GET must validate canonical active driver authorization before reading children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(qualificationsHandler), "qualifications GET must distinguish a missing/unauthorized parent from a true empty qualifications list");
+  need(
+    /WHERE dq\.driver_id = \$1[\s\S]{0,180}ORDER BY dq\.qualified_at DESC[\s\S]{0,100}\[parsed\.data\.id\]/.test(qualificationsHandler),
+    "qualifications child query must bind exactly the one placeholder it declares",
+  );
   need(/listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/.test(source.detail), "DriverDetail safety-event reverse GET must send selected companyId");
   need(/queryKey: \["driver-safety-events", id, companyId, showVoidedSafetyEvents\]/.test(source.detail), "safety-event query key must include selected companyId");
   need(/export function listSafetyEvents\(driverId: string, operatingCompanyId: string, includeVoided = false\)/.test(source.api), "safety-event API must require operatingCompanyId");
@@ -191,6 +195,15 @@ if (process.argv.includes("--selftest")) {
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.is_authorized = true/, "TRUE", "qualification active company authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /dca\.deactivated_at IS NULL/, "TRUE", "qualification non-deactivated authorization") },
     { key: "profileBackend", text: replaceOrFail(source.profileBackend, /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)", "qualification missing parent response") },
+    {
+      key: "profileBackend",
+      text: replaceOrFail(
+        source.profileBackend,
+        /(WHERE dq\.driver_id = \$1[\s\S]{0,180}ORDER BY dq\.qualified_at DESC[\s\S]{0,100})\[parsed\.data\.id\]/,
+        "$1[parsed.data.id, companyId]",
+        "qualification child query placeholder count",
+      ),
+    },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
     { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },
