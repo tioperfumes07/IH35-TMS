@@ -56,6 +56,18 @@ function assertMigrated(src) {
   if (!/onRowClick=\{\(row\) => navigate\(`\/fleet\/units\/\$\{row\.unit_id\}`\)\}/.test(src)) {
     errors.push(`${PAGE}: must preserve row drill-through to fleet unit detail`);
   }
+  if (!/async function exportFleetHos\(\)[\s\S]*await downloadFleetLocationHosXlsx\(companyId\)[\s\S]*setExportError\(error instanceof Error \? error\.message : "Fleet HOS export failed"\)/.test(src)) {
+    errors.push(`${PAGE}: Excel export must surface rejected downloads`);
+  }
+  if (!/disabled=\{exportPending\}[\s\S]*onClick=\{\(\) => void exportFleetHos\(\)\}/.test(src)) {
+    errors.push(`${PAGE}: Excel export must prevent duplicate pending downloads`);
+  }
+  if (!/role="alert"[\s\S]*\{exportError\}/.test(src)) {
+    errors.push(`${PAGE}: Excel export error must render accessibly`);
+  }
+  if (/downloadFleetLocationHosXlsx\(companyId\)\.catch\(\(\) => undefined\)/.test(src)) {
+    errors.push(`${PAGE}: Excel export must not swallow failures`);
+  }
   return errors;
 }
 
@@ -67,14 +79,17 @@ function selftest() {
       { label: "Unit" }, { label: "Driver" }, { label: "Last Update (Laredo)" },
       { label: "Drive Rem (11h)" }, { label: "Shift Rem (14h)" }, { label: "HOS" }, { label: "Map" },
     ];
-    downloadFleetLocationHosXlsx();
+    async function exportFleetHos() {
+      try { await downloadFleetLocationHosXlsx(companyId); }
+      catch (error) { setExportError(error instanceof Error ? error.message : "Fleet HOS export failed"); }
+    }
     Offline / stale (
     <ListErrorState />
     <ParityTable
       storageKey="compliance-fleet-hos"
       emptyText="No reporting vehicles."
       tableTestId="compliance-fleet-hos-table"
-      filterBar={<input />}
+      filterBar={<><input /><button disabled={exportPending} onClick={() => void exportFleetHos()} /><p role="alert">{exportError}</p></>}
       onRowClick={(row) => navigate(\`/fleet/units/\${row.unit_id}\`)}
     />
     <ParityTable
