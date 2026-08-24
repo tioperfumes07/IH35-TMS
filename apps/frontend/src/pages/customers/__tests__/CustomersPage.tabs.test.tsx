@@ -117,6 +117,7 @@ function renderCustomersAt(path: string) {
     isLoading: false,
     isError: false,
     isUnauthenticated: false,
+    isSessionTimeout: false,
     refetch: vi.fn(),
   });
 
