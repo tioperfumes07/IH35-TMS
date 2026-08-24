@@ -17,24 +17,48 @@
 import { readFileSync } from "node:fs";
 
 const FILE = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
-const src = readFileSync(FILE, "utf8");
-const fail = [];
+export function collectProblems(src) {
+  const problems = [];
+  if (!/related_load_id:\s*string;/.test(src)) problems.push("draft type is missing `related_load_id: string;`");
+  if (!/related_load_id:\s*draft\.related_load_id\.trim\(\)\s*\|\|\s*undefined/.test(src)) {
+    problems.push("create payload does not send related_load_id from the draft");
+  }
+  const hasLoadKind = /kind="load"/.test(src);
+  const hasPickerIdentity = /safety-event-related-load-picker/.test(src);
+  if (!hasLoadKind) problems.push('log modal picker must use kind="load"');
+  if (!hasPickerIdentity) problems.push("log modal picker must expose safety-event-related-load-picker");
+  const sendsField = /related_load_id:\s*draft\.related_load_id/.test(src);
+  if ((hasLoadKind && hasPickerIdentity) !== sendsField) {
+    problems.push("UI picker and create payload disagree — one sends related_load_id, the other does not");
+  }
+  return problems;
+}
 
-if (!/related_load_id:\s*string;/.test(src))
-  fail.push("draft type is missing `related_load_id: string;`");
+if (process.argv.includes("--selftest")) {
+  const good = `
+    type Draft = { related_load_id: string; };
+    const payload = { related_load_id: draft.related_load_id.trim() || undefined };
+    <EntityPicker kind="load" data-testid="safety-event-related-load-picker" />;
+  `;
+  if (collectProblems(good).length) throw new Error(`good fixture rejected: ${collectProblems(good).join("; ")}`);
+  const mutations = [
+    [good.replace("related_load_id: string;", "removed_load_id: string;"), "draft type is missing"],
+    [good.replace("draft.related_load_id.trim() || undefined", "undefined"), "create payload does not send"],
+    [good.replace('kind="load"', 'kind="driver"'), 'must use kind="load"'],
+    [good.replace("safety-event-related-load-picker", "removed-load-picker"), "must expose safety-event-related-load-picker"],
+    [good.replace("related_load_id: draft.related_load_id", "removed_load_id: draft.related_load_id"), "UI picker and create payload disagree"],
+  ];
+  for (const [fixture, expected] of mutations) {
+    const problems = collectProblems(fixture);
+    if (!problems.some((problem) => problem.includes(expected))) {
+      throw new Error(`mutation escaped: ${expected} (${JSON.stringify(problems)})`);
+    }
+  }
+  console.log(`PASS verify-safety-event-load-link --selftest ${mutations.length}/${mutations.length}`);
+  process.exit(0);
+}
 
-if (!/related_load_id:\s*draft\.related_load_id\.trim\(\)\s*\|\|\s*undefined/.test(src))
-  fail.push("create payload does not send related_load_id from the draft");
-
-const hasLoadPicker = /kind="load"/.test(src) && /safety-event-related-load-picker/.test(src);
-if (!hasLoadPicker)
-  fail.push('log modal is missing the load EntityPicker (kind="load", testid safety-event-related-load-picker)');
-
-// Both-or-neither: a picker the payload ignores is worse than no picker.
-const sendsField = /related_load_id:\s*draft\.related_load_id/.test(src);
-if (hasLoadPicker !== sendsField)
-  fail.push("UI picker and create payload disagree — one sends related_load_id, the other does not");
-
+const fail = collectProblems(readFileSync(FILE, "utf8"));
 if (fail.length) {
   console.error("FAIL verify-safety-event-load-link:");
   for (const f of fail) console.error("  - " + f);
