@@ -44,6 +44,27 @@ const ORIGIN_REQUIRED = [
   { key: "scenario.roadside_ap", needle: "b.qbo_bill_id IS NULL", why: "QBO clone bills must not prove roadside TMS AP" },
 ];
 
+/** Scenario proof must represent the full trigger, not merely a row in its first table. */
+const CHAIN_REQUIRED = [
+  {
+    key: "scenario.maintenance",
+    needles: [
+      "w.status = 'closed'",
+      "w.voided_at IS NULL",
+      "w.unit_id IS NOT NULL",
+      "w.vendor_id IS NOT NULL",
+      "w.load_id IS NOT NULL",
+      "maintenance.work_order_lines",
+      "wol.line_type IN ('part', 'parts')",
+      "wol.line_type = 'labor'",
+      "accounting.bills",
+      "accounting.posting_batches",
+      "pb.batch_status = 'posted'",
+      "b.linked_work_order_uuid = w.id",
+    ],
+  },
+];
+
 function stripComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -92,6 +113,21 @@ function check(sources) {
         `${BACKEND}: "${key}" does not restrict to TMS-native rows (expected \`${needle}\`). ${why} — ` +
           `counting them certifies the flow GREEN on work the TMS never did.`
       );
+    }
+  }
+
+  for (const { key, needles } of CHAIN_REQUIRED) {
+    const at = backend.indexOf(`"${key}"`);
+    if (at === -1) {
+      errors.push(`${BACKEND}: scenario chain "${key}" is missing.`);
+      continue;
+    }
+    const nextKey = backend.slice(at + key.length + 2).search(/"(?:hop|scenario)\.[a-z_]+"/);
+    const block = backend.slice(at, nextKey === -1 ? undefined : at + key.length + 2 + nextKey);
+    for (const needle of needles) {
+      if (!block.includes(needle)) {
+        errors.push(`${BACKEND}: "${key}" does not prove its complete chain (missing \`${needle}\`).`);
+      }
     }
   }
 
@@ -180,6 +216,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["maintenance probe counts an unposted WO", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
+    ["maintenance probe drops labor proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND wol.line_type = 'labor'", "AND wol.line_type = 'part'") })],
     ["certifier loses its masking guard", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].split("assertNotMasked").join("skipCheck") })],
     ["scoreboard loses its masking guard", (s) => ({ ...s, [SCOREBOARD]: s[SCOREBOARD].split("assertNotMasked").join("skipCheck") })],
     ["certifier bypass becomes transaction-local", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].replace("'app.bypass_rls','lucia',false", "'app.bypass_rls','lucia',true") })],
