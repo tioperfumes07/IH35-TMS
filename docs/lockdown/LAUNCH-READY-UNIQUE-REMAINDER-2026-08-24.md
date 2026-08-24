@@ -46,7 +46,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 | drivers | U14 `@07993ac` | DRVFIN-F6169 advances 404 — **grep-closed** (`driver_company_authorizations` on main). No remake. | Unique FINDING only |
 | fleet | U14 `@07993ac` | No unique leftover verified this pass. | Unique FINDING only |
 | lists | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
-| maintenance | U14 `@a9e8d63` | U14-11-F05 roadside — **REFUTED** (modal opens). CLASS-F5973 maintenance leaves — grep-verify then unique only if dead. | **CC-3** grep-verify CLASS leaves |
+| maintenance | U14 `@a9e8d63` | U14-11-F05 roadside — **REFUTED** (modal opens). CLASS-F5973 maintenance leaves — **VERIFIED, genuinely exhausted, zero unique leftover** (CC-3, 3rd re-check w/ live Neon + live Chrome): `road_service_active` **CONFIRMED working** — real row (CC3-TEST-RS-01, unit T151) renders correctly on `/maintenance/road-service`. `convert_issue_to_wo`/`triage` **still genuinely 0-queue** — direct Neon check found only 1 `status='open'` row in `dispatch.intransit_issues`, and it already has `promoted_to_wo_id` set (a completed 2026-08-15 Codex test), so the triage-queue's own `WHERE promoted_to_wo_id IS NULL` filter correctly excludes it — "No in-transit issues in queue" on live Chrome is the honest, correct render, not a bug. `add_parts_link`/`fault_rule`/`wotime_tracking` already live-tested clean earlier this session. | Nobody — closed |
 | safety | U14 `@a9e8d63` | U14-12-F04 Spawn WO — **CLOSED correction**. | Unique FINDING only |
 | insurance | U14 `@a9e8d63` | U14-13-F06 coverage-gaps — **CLOSED correction**. | Unique FINDING only |
 | legal | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
