@@ -541,12 +541,34 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Policy bound; claim recovery received",
     je: "DR Cash / CR Insurance Recovery",
     spec_ref: "INS",
-    sources: ["insurance.claim"],
+    sources: ["insurance.policy", "insurance.claim", "accounting.insurance_claim_recovery_postings", "accounting.journal_entries"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM insurance.claim c WHERE ($1::uuid IS NULL OR c.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM insurance.claim c
+          JOIN insurance.policy p
+            ON p.id = c.policy_id
+           AND p.operating_company_id = c.operating_company_id
+           AND p.status = 'active'
+           AND p.cancelled_on IS NULL
+         WHERE ($1::uuid IS NULL OR c.operating_company_id = $1::uuid)
+           AND c.amount_paid_cents > 0
+           AND EXISTS (
+             SELECT 1
+               FROM accounting.insurance_claim_recovery_postings rp
+               JOIN accounting.journal_entries je
+                 ON je.id = rp.journal_entry_id
+                AND je.operating_company_id = rp.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
+              WHERE rp.claim_id = c.id
+                AND rp.operating_company_id = c.operating_company_id
+                AND rp.status = 'posted'
+                AND rp.is_active = true
+                AND rp.voided_at IS NULL
+           )
       `,
-      describe: (n) => `${n} insurance claim(s)`,
+      describe: (n) => `${n} active-policy claim recovery chain(s) posted to the GL`,
     },
   },
   {
