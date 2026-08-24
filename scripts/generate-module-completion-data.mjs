@@ -26,7 +26,59 @@ import { qualifiesHold } from "./verify-module-completion.mjs";
 // apps/frontend/docs/module-completion and CI perf/security builds fail ENOENT.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MANIFEST_DIR = join(ROOT, "docs", "module-completion");
+const U14_LAW = join(ROOT, "docs", "lockdown", "URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md");
 const OUT = join(ROOT, "apps", "frontend", "src", "generated", "module-completion.ts");
+
+/**
+ * Law table module id → sidebar id + docs/module-completion/*.json id.
+ * Banking is `bank` in the sidebar and `banking` in Rule 24 manifests.
+ */
+export const U14_ID_MAP = {
+  accounting: { sidebarId: "accounting", completionId: "accounting" },
+  banking: { sidebarId: "bank", completionId: "banking" },
+  settlements: { sidebarId: "settlements", completionId: "settlements" },
+  factoring: { sidebarId: "factoring", completionId: "factoring" },
+  dispatch: { sidebarId: "dispatch", completionId: "dispatch" },
+  vendors: { sidebarId: "vendors", completionId: "vendors" },
+  customers: { sidebarId: "customers", completionId: "customers" },
+  drivers: { sidebarId: "drivers", completionId: "drivers" },
+  fleet: { sidebarId: "fleet", completionId: "fleet" },
+  lists: { sidebarId: "lists", completionId: "lists" },
+  maintenance: { sidebarId: "maintenance", completionId: "maintenance" },
+  safety: { sidebarId: "safety", completionId: "safety" },
+  insurance: { sidebarId: "insurance", completionId: "insurance" },
+  legal: { sidebarId: "legal", completionId: "legal" },
+};
+
+/**
+ * Parse the exclusive certify table. CERTIFIED here is seat hops + LIVE_SHA — not Rule 24
+ * complete:true and not matrix Box 4 Live.
+ */
+export function parseU14ExclusiveLaw(md = readFileSync(U14_LAW, "utf8")) {
+  const rows = [];
+  for (const line of md.split("\n")) {
+    const m = line.match(
+      /^\| (\d+) \| ([a-z0-9-]+) \| .+ \| (CERTIFIED LIVE_SHA=([a-f0-9]+)|OPEN.*) \|\s*$/
+    );
+    if (!m) continue;
+    const lawId = m[2];
+    const ids = U14_ID_MAP[lawId];
+    if (!ids) throw new Error(`parseU14ExclusiveLaw: unknown module id ${lawId}`);
+    const certified = m[3].startsWith("CERTIFIED");
+    rows.push({
+      seq: Number(m[1]),
+      lawId,
+      sidebarId: ids.sidebarId,
+      completionId: ids.completionId,
+      status: certified ? "CERTIFIED" : "OPEN",
+      liveSha: certified ? m[4] : null,
+    });
+  }
+  if (rows.length !== 14) {
+    throw new Error(`parseU14ExclusiveLaw: expected 14 table rows, got ${rows.length}`);
+  }
+  return rows;
+}
 
 /**
  * The first 14 sidebar modules, in sidebar order — the owner's current build target. Kept here rather
@@ -101,7 +153,13 @@ export function buildData() {
       items: mapped,
     });
   }
-  return { modules, first14: FIRST_14 };
+  const u14Exclusive = parseU14ExclusiveLaw();
+  return {
+    modules,
+    first14: FIRST_14,
+    u14Exclusive,
+    u14CertifiedCount: u14Exclusive.filter((r) => r.status === "CERTIFIED").length,
+  };
 }
 
 function render(data) {
@@ -114,7 +172,20 @@ function render(data) {
     "export type ModuleCompletion = {\n  id: string;\n  total: number;\n  done: number;\n  complete: boolean;\n  prod_verified_count: number;\n  proof: ModuleCompletionProof;\n  items: ModuleCompletionItem[];\n};\n\n" +
     `export const MODULE_COMPLETION: ModuleCompletion[] = ${JSON.stringify(data.modules, null, 2)};\n\n` +
     "/** The first 14 sidebar modules, in sidebar order — the current build target. */\n" +
-    `export const FIRST_14_MODULE_IDS: string[] = ${JSON.stringify(data.first14, null, 2)};\n`
+    `export const FIRST_14_MODULE_IDS: string[] = ${JSON.stringify(data.first14, null, 2)};\n\n` +
+    "/** Urgent exclusive hops (law table). CERTIFIED ≠ Rule 24 Certified ≠ matrix Live. */\n" +
+    "export type U14ExclusiveStatus = \"CERTIFIED\" | \"OPEN\";\n\n" +
+    "export type U14ExclusiveRow = {\n" +
+    "  seq: number;\n" +
+    "  lawId: string;\n" +
+    "  sidebarId: string;\n" +
+    "  completionId: string;\n" +
+    "  status: U14ExclusiveStatus;\n" +
+    "  liveSha: string | null;\n" +
+    "};\n\n" +
+    `export const U14_EXCLUSIVE_ROWS: U14ExclusiveRow[] = ${JSON.stringify(data.u14Exclusive, null, 2)};\n\n` +
+    `export const U14_EXCLUSIVE_CERTIFIED_COUNT: number = ${data.u14CertifiedCount};\n` +
+    "export const U14_EXCLUSIVE_TOTAL: number = 14;\n"
   );
 }
 

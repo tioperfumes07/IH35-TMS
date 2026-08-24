@@ -6,9 +6,9 @@
 
 **U14 14/14 CERTIFIED.** Never recertify 1–14.
 
-**THIS TICK 20:56 CT:** Jorge: coders idle. U14 **14/14 CERTIFIED**. Never recertify. POST leftover: Cursor `/425c` unique · CC-1 `/cash-flow` · CC-2 FUEL remainder · CC-3 maintenance remainder · Codex GET-500.
+**THIS TICK 21:14 CT:** Jorge GO — instruct seats + Program matrix/legacy/completion show Urgent exclusive hops 14/14 **without** painting Rule 24 Certified or Box 4 Live. POST leftover continues.
 
-**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake Exhibit D / period / bank-remove / attachments / filed-immutable / create-pin / amended-filter / Amend-twice / attach-filed / create-duplicate / PDF exhibits.
+**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake #15096–#15158 (period, cash 19–21, debtor, history, amended filter, filed immutable, create-pin, exhibits, PDF, POST filed, amend twice, attach, duplicate month, banking-summary, amend A/B, PATCH filed, A–F print, mark-filed 409, inverted period, history filed print).
 
 FORBIDDEN: recertify · occupy other prefixes · let Codex sit on a FIXED NOW.
 

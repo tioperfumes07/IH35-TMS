@@ -17,6 +17,7 @@ import {
   type GateState,
 } from "./programScoreboard.data";
 import { ProgramModuleNav } from "./ProgramModuleNav";
+import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
 
 type ClassModuleMatrix = {
   modules: string[];
@@ -269,6 +270,9 @@ export function LegacyAuditScoreboardPage() {
         the 2026-08-03 full-system audit. It still lists TRANSP × USMCA because that audit was
         two-entity. Launch truth is <code>/program/matrix</code> on USMCA (Box 1–4 + Miss C + money).
         Do not wait for this board to move. Scenario tracker is next after matrix 100%.
+      </div>
+      <div className="px-4 py-2">
+        <U14ExclusiveStatusBanner testId="legacy-scoreboard-u14-banner" />
       </div>
 
       <header className="hd" data-testid="program-scoreboard-header">
