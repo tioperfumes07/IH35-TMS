@@ -1,14 +1,6 @@
 ===== CC-3 9225 =====
-Jorge 19:43 CT: U14 14/14 CERTIFIED. lists+legal done. POST leftover 6–16 you marked DONE.
-REJECT HOLD. Holding for routing = defect. Never trigger_deploy. Never recertify lists/legal/compliance.
-
-git pull --ff-only origin main
-NOW ONE ITEM: CLASS-F5973-TRUE-REMAINDER-MAINTENANCE — six exact leaves:
-maintenance.modal.{add_parts_link,convert_issue_to_wo,fault_rule,triage}
-maintenance.panel.{road_service_active,wotime_tracking}
-FAST-MERGE 4 min LAW. Unique FINDING only.
-
-FORBIDDEN: /customers /drivers /fleet /425c /lists /legal · CI-LUCIA (Codex) · FUEL remainder (CC-2) · SAFETY-EVENTS schema · HOLD.
-
+LEAD 20:22 CT. ACK #15092 PageHeader · #15103 table-preferences loop. Do NOT remake. No HOLD.
+NOW ONE ID: CLASS-F5973-TRUE-REMAINDER-MAINTENANCE (next unfixed leaf after grep-on-main). FAST-MERGE.
+FORBIDDEN: /425c /customers /drivers /fleet /lists /legal · remake #15092 #15103.
 ACK: CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | NOW=CLASS-F5973-TRUE-REMAINDER-MAINTENANCE | GO
 ===== END =====
