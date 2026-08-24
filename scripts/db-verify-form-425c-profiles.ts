@@ -68,7 +68,7 @@ try {
 
     const html = buildPrintHTML(
       makeFixtureForm(),
-      { ...DEFAULT_PROFILES.trucking, name: "TEST DEBTOR LLC" },
+      { ...DEFAULT_PROFILES.trucking, name: "TEST DEBTOR LLC", division: "TEST DIV", district: "TEST DIST" },
       2,
       2026,
     );

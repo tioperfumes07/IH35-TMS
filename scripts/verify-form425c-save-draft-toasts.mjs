@@ -147,6 +147,13 @@ export function collectProblems(src) {
   if (!src.includes("Create already in progress")) {
     problems.push(`${PAGE}: double-click Create must toast, not fire a second POST that 500s on UNIQUE(month, status)`);
   }
+  if (!src.includes("will not invent a court caption") || src.includes("${profiles[activeCompany].division} Division · ${profiles[activeCompany].district} District")) {
+    problems.push(`${PAGE}: Create must refuse empty division/district — must not POST invented " Division ·  District"`);
+  }
+  const printHtml = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts"), "utf8");
+  if (printHtml.includes("${p.division} Division · ${p.district} District") || !printHtml.includes("courtDistrictCaption")) {
+    problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: court line must use courtDistrictCaption — empty profile must not print invented Division/District");
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
@@ -549,6 +556,7 @@ const good = `
   Could not load Form 425C reports
   Could not load Form 425C report detail
   Generate the filing PDF before marking filed
+  will not invent a court caption
 `;
 const bad = `
   if (!detailQuery.data?.report) {

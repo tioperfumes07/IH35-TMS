@@ -143,7 +143,9 @@ export function CurrentPeriodTab({
         <div>
           <div className="font-semibold uppercase tracking-wide text-slate-500">Court</div>
           <div>
-            {profiles[activeCompany].division}, {profiles[activeCompany].district}
+            {profiles[activeCompany].division?.trim() && profiles[activeCompany].district?.trim()
+              ? `${profiles[activeCompany].division}, ${profiles[activeCompany].district}`
+              : "—"}
           </div>
         </div>
         <div>

@@ -1,4 +1,5 @@
 import { MONTHS, QUESTIONNAIRE } from "./constants";
+import { courtDistrictCaption } from "./courtDistrictCaption";
 import type { CompanyProfile, CurrentFormState } from "../types";
 
 function fmt(n: unknown) {
@@ -50,6 +51,10 @@ export function buildPrintHTML(
   const pDN = projNetPrev - netCash;
   const projNetNext = nv(form.projReceiptsNext) - nv(form.projDisbNext);
   const today = new Date().toLocaleDateString("en-US");
+  const courtCaption = courtDistrictCaption(p.division, p.district);
+  if (!courtCaption) {
+    throw new Error("form_425c_print_court_required");
+  }
 
   const mrow = (ln: number | null, label: string, value: string, opts: { shade?: boolean; bold?: boolean; color?: string } = {}) => {
     const bg = opts.shade ? "background:#eef3f9;" : "";
@@ -96,7 +101,7 @@ export function buildPrintHTML(
     </div>
     <div>
       <span style="font-size:6.5pt;font-weight:700;text-transform:uppercase;color:#555;">United States Bankruptcy Court for the:&nbsp;</span>
-      <span style="font-size:7.8pt;color:#1a3a8f;">${p.division} Division · ${p.district} District</span>
+      <span style="font-size:7.8pt;color:#1a3a8f;">${courtCaption}</span>
     </div>
     <div>
       <span style="font-size:6.5pt;font-weight:700;text-transform:uppercase;color:#555;">Case number:&nbsp;</span>
