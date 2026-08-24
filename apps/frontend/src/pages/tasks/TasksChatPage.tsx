@@ -68,6 +68,7 @@ function renderBody(body: string, mentionNames: string[]) {
 export function TasksChatPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [commentError, setCommentError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -158,6 +159,7 @@ export function TasksChatPage() {
       const kept = keptMentionIds(draft, mentionIds, (id) => employeeById.get(id)?.name);
       return createTaskComment(activeTaskId, draft.trim(), kept);
     },
+    onMutate: () => setCommentError(null),
     onSuccess: () => {
       setDraft("");
       setMentionIds(new Set());
@@ -165,6 +167,7 @@ export function TasksChatPage() {
       queryClient.invalidateQueries({ queryKey: ["tasks", "comments", activeTaskId] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "activity", activeTaskId] });
     },
+    onError: (error) => setCommentError(error instanceof Error ? error.message : "Failed to post comment"),
   });
 
   function selectTask(taskId: string) {
@@ -283,6 +286,7 @@ export function TasksChatPage() {
 
                 {/* Composer */}
                 <div className="relative border-t border-slate-200 p-3">
+                  {commentError ? <p role="alert" className="mb-2 text-xs text-red-700">{commentError}</p> : null}
                   <textarea
                     ref={textareaRef}
                     value={draft}
