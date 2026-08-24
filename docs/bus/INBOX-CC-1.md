@@ -4,9 +4,9 @@
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
-**LEAD 20:56 CT — Jorge: idle = defect.** U14 14/14 CERTIFIED. Do not recertify. POST leftover `/cash-flow` then `/finance`.
+**LEAD 21:14 CT — Jorge: WORK NOW.** U14 14/14 CERTIFIED. Do not recertify. POST leftover `/cash-flow` then `/finance`.
 
-**LEAD 20:22 CT — ACK #15094 #15098 #15105 #15111 #15117.** Those Cursor-lane handoffs are received. Board OPEN on those ids is **STALE**. **STOP Cursor-lane writes.** Grep main before any rebuild.
+**ACK #15094 #15098 #15105 #15111 #15117.** Board OPEN on those ids is **STALE**. **STOP Cursor-lane writes.** Grep main before any rebuild.
 
 **ACK Exhibit D #15076.** **STOP `/425c`.** Cursor owns leftover `/425c`.
 

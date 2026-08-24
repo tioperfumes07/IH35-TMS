@@ -10,6 +10,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseU14ExclusiveLaw } from "./generate-module-completion-data.mjs";
 
 const SIDEBAR = join(process.cwd(), "apps", "frontend", "src", "components", "layout", "sidebar-config.ts");
 const GENERATED = join(process.cwd(), "apps", "frontend", "src", "generated", "module-completion.ts");
@@ -70,6 +71,31 @@ function main() {
     }
   } else if (failures.length === 0) {
     failures.push(`expected 14 ids on both sides; got sidebar=${sidebar14.length} ui=${gen14.length}`);
+  }
+
+  // 3) Urgent exclusive table must drive the generated strip (honest; not Rule 24).
+  try {
+    const law = parseU14ExclusiveLaw();
+    const genSrc = readFileSync(GENERATED, "utf8");
+    const extracted = genSrc.match(
+      /export const U14_EXCLUSIVE_ROWS: U14ExclusiveRow\[\] = ([\s\S]*?);\n\nexport const U14_EXCLUSIVE_CERTIFIED_COUNT/
+    );
+    if (!extracted) throw new Error("U14_EXCLUSIVE_ROWS missing from generated module");
+    const genRows = JSON.parse(extracted[1]);
+    if (genRows.length !== 14) {
+      failures.push(`U14_EXCLUSIVE_ROWS length ${genRows.length} !== 14`);
+    }
+    const lawKey = JSON.stringify(law);
+    const genKey = JSON.stringify(genRows);
+    if (lawKey !== genKey) {
+      failures.push("U14_EXCLUSIVE_ROWS does not match the exclusive certify law table");
+    }
+    const banking = law.find((r) => r.lawId === "banking");
+    if (!banking || banking.sidebarId !== "bank" || banking.completionId !== "banking") {
+      failures.push("banking must map sidebarId=bank completionId=banking");
+    }
+  } catch (e) {
+    failures.push(String(e.message ?? e));
   }
 
   if (failures.length > 0) {

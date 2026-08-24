@@ -6,10 +6,13 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import {
   MODULE_COMPLETION,
   FIRST_14_MODULE_IDS,
+  U14_EXCLUSIVE_ROWS,
   type ModuleCompletionItem,
   type ModuleCompletionProof,
+  type U14ExclusiveRow,
 } from "../../generated/module-completion";
 import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
+import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
 
 type ProofFilter = "all" | ModuleCompletionProof | "undefined";
 
@@ -38,6 +41,7 @@ type ModuleRow = {
   prodVerifiedCount: number;
   proof: ModuleCompletionProof | "undefined";
   items: ModuleCompletionItem[];
+  u14: U14ExclusiveRow | undefined;
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -73,8 +77,31 @@ function buildRows(ids: readonly string[]): ModuleRow[] {
       prodVerifiedCount: m?.prod_verified_count ?? 0,
       proof: m ? m.proof : "undefined",
       items: m?.items ?? [],
+      u14: U14_EXCLUSIVE_ROWS.find((r) => r.completionId === id || r.sidebarId === id),
     };
   });
+}
+
+function U14HopBadge({ row }: { row: U14ExclusiveRow | undefined }) {
+  if (!row) {
+    return <span className="text-xs text-[#64748b]">—</span>;
+  }
+  if (row.status === "CERTIFIED") {
+    return (
+      <span
+        className="inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+        style={{ backgroundColor: NAVY }}
+        title="Urgent exclusive seat hops + live SHA — not Rule 24 Certified"
+      >
+        Hops certified · {row.liveSha}
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs font-semibold" style={{ color: AMBER }}>
+      Hops open
+    </span>
+  );
 }
 
 function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
@@ -152,7 +179,7 @@ function ProgressBar({
 }
 
 export function ModuleCompletionPage() {
-  const [scope, setScope] = useState<"first14" | "all">("first14");
+  const [scope, setScope] = useState<"first14" | "u14" | "all">("first14");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [proofFilter, setProofFilter] = useState<ProofFilter>("all");
   const staged = useStagedListFilters({
@@ -162,7 +189,12 @@ export function ModuleCompletionPage() {
   });
 
   const rows = useMemo(() => {
-    const ids = scope === "first14" ? FIRST_14_MODULE_IDS : [...SIDEBAR_ITEM_IDS];
+    const ids =
+      scope === "first14"
+        ? FIRST_14_MODULE_IDS
+        : scope === "u14"
+          ? U14_EXCLUSIVE_ROWS.map((r) => r.completionId)
+          : [...SIDEBAR_ITEM_IDS];
     return buildRows(ids);
   }, [scope]);
 
@@ -197,6 +229,12 @@ export function ModuleCompletionPage() {
         label: "Proof",
         sortable: true,
         render: (row) => <ProofBadge proof={row.proof} />,
+      },
+      {
+        key: "u14",
+        label: "Urgent hops",
+        sortable: true,
+        render: (row) => <U14HopBadge row={row.u14} />,
       },
       {
         key: "progress",
@@ -251,6 +289,7 @@ export function ModuleCompletionPage() {
         GUARD live-clicked it. Launch 100% is Module matrix Box 1–4 + money on USMCA, then Scenario
         tracker. Frozen TRANSP/TRK rows here are historical.
       </p>
+      <U14ExclusiveStatusBanner testId="module-completion-u14-banner" />
 
       <div className="flex items-center gap-2">
         <button
@@ -261,6 +300,16 @@ export function ModuleCompletionPage() {
           onClick={() => setScope("first14")}
         >
           First 14 modules
+        </button>
+        <button
+          type="button"
+          className={`rounded-sm px-2 py-1 text-xs font-semibold ${
+            scope === "u14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#334155]"
+          }`}
+          onClick={() => setScope("u14")}
+          data-testid="program-modules-scope-u14"
+        >
+          Urgent exclusive
         </button>
         <button
           type="button"
