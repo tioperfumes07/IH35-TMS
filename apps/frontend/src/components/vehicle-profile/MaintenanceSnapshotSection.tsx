@@ -110,7 +110,7 @@ export function MaintenanceSnapshotSection({
           )}
         </p>
       ) : null}
-      <Link to={`/maintenance?unit=${unitId}`}>
+      <Link to={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}>
         <Button size="sm" variant="secondary" className="mt-2">
           Create work order
         </Button>
