@@ -842,6 +842,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       });
     } catch (err) {
       const e = err as { code?: string; message?: string };
+      if (e?.message === "mor_cash_zero_with_activity") {
+        return reply.code(422).send({
+          error: "mor_cash_zero_with_activity",
+          message:
+            "Banking import found in-scope transactions but $0 receipts and $0 disbursements — will not write $0 onto a court filing",
+        });
+      }
       req.log?.error?.({ err: e, reportId: params.data.id }, "form-425c import-banking failed");
       // Surface the pg error code/message only (never connection strings). Nothing was persisted.
       return reply.code(502).send({
@@ -1204,7 +1211,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     };
     const col = colMap[line];
 
-    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+    let updated: Record<string, unknown> | null = null;
+    try {
+    updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       const fileRes = await client.query<{ id: string }>(
         `
           SELECT id
@@ -1250,6 +1259,15 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       return report;
     });
+    } catch (error) {
+      if ((error as Error).message === "file_not_found") {
+        return reply.code(404).send({
+          error: "file_not_found",
+          message: "Attachment file UUID not found for this operating company",
+        });
+      }
+      throw error;
+    }
     if (!updated) return reply.code(404).send({ error: "report_not_found" });
     return updated;
   });

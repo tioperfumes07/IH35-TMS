@@ -39,10 +39,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops (stop when CERTIFIED) |
 |------|------|---------|----------------------------|
-| Cursor | 9222 | 425c leftover | U14 1–6 + 11–13 CERTIFIED — omit. Stamp Codex/CC-3 on healthz match. **NOW leftover** `/425c` Fully-Wired 1–12. **No** `/lists` `/legal` `/customers` `/drivers` `/fleet` `/cash-flow` `/finance` `/driver-hub` |
-| CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance`. **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
-| CC-2 | 9224 | Codex help then driver-hub | Settlements CERTIFIED — omit. Kill CI-watch. Help Codex 7–9 SQL (no CDP). Empty unique → leftover `/driver-hub` 1–12. **No** `/lists` `/legal` `/banking*` |
-| CC-3 | 9225 | leftover compliance | lists+legal CERTIFIED LIVE_SHA=01385f7 — omit. **NOW leftover** `/compliance` 1–12 (tasks unique-clean). No recertify. No `trigger_deploy` |
-| Codex | 9226 | customers then drivers then fleet | **TODAY:** same hops file. Reverse SQL/GET. **Three** CERTIFIED lines (not one). **No CDP.** Cursor stamps when SHA=healthz |
+| Cursor | 9222 | 425c leftover + stamp 8–9 | U14 1–7 + 10–14 CERTIFIED — omit. **NOW leftover** `/425c` Fully-Wired 1–12. Next stamps: drivers then fleet (`07993ac` OUTBOX). **No** `/lists` `/legal` `/customers` `/cash-flow` `/finance` `/driver-hub` |
+| CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance` (POST-U14 sequence). **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
+| CC-2 | 9224 | POST-U14 leftover | Settlements CERTIFIED — omit. **STOP customers recertify.** Sequence 16/16 DONE → GUARD-WORKORDERS unique 500/dead/silent. **No** `/lists` `/legal` `/banking*` `/425c` |
+| CC-3 | 9225 | leftover compliance | lists+legal CERTIFIED LIVE_SHA=01385f7 — omit. **NOW leftover** `/compliance` then GUARD-WORKORDERS. No recertify. No `trigger_deploy` |
+| Codex | 9226 | drivers then fleet table-stamp | customers CERTIFIED `07993ac` — omit. OUTBOX drivers+fleet already `07993ac`. After table 8–9 stamped → POST-U14 leftover. **No CDP.** |
 | Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings board same folder. ACK≠audit. No OPEN prefixes |
 | Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors`→`/insurance`. OUTBOX-DEVIN-A. Not scribe. No Devin-B |
