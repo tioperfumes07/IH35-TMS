@@ -39,18 +39,21 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
       // BANK-ACCOUNT-HIDE: exclude accounts hidden for THIS entity (flag OFF by default — see
       // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
       const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
-      const bankRes = await client
-        .query(
-          `
-            SELECT COALESCE(SUM(current_balance_cents), 0)::text AS total_cents
-            FROM banking.bank_accounts
-            WHERE operating_company_id = $1::uuid
-              AND is_active = true
-            ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ total_cents: "0" }] }));
+      // REPORTS-F6364: this used to .catch(() => ({ rows: [{ total_cents: "0" }] })), painting a
+      // fake $0.00 "Operating balance" over any real query failure (RLS, connection, schema drift)
+      // with zero indication anything was wrong — exactly the deep-dive hunt's named class. A broken
+      // balance query must fail loud, same standard already applied to the /425c court exhibits in
+      // this same reports tree (exhibit-a/b/c/d: "NO .catch(): fail loud, never a blank/zero exhibit").
+      const bankRes = await client.query(
+        `
+          SELECT COALESCE(SUM(current_balance_cents), 0)::text AS total_cents
+          FROM banking.bank_accounts
+          WHERE operating_company_id = $1::uuid
+            AND is_active = true
+          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
+        `,
+        [companyId]
+      );
 
       const loadRes = await client.query(
         `
