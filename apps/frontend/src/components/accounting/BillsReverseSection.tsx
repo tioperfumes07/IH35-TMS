@@ -5,7 +5,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { entityLabel } from "../../lib/entity-label";
+import { visibleDocumentLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../CappedListNotice";
 
 const BILLS_REVERSE_LIST_LIMIT = 200;
@@ -67,7 +67,17 @@ export function BillsReverseSection({
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="text-sm text-slate-700" data-testid={`bill-reverse-${row.id}`}>
-              <EntityLink kind="bill" id={row.id} label={entityLabel(row.bill_number, row.id, "Bill")} className="font-medium" />
+              {/* ACCT-F6299-class: 550/16,301 real accounting.bills rows carry bill_number=NULL
+                  (live-confirmed, Neon prod) — entityLabel's "Bill — not visible" fallback wrongly
+                  claimed a genuinely-visible, correctly-linked bill was unresolved. Same fix as
+                  TRAILER-EXPENSE-REVERSE-LABEL-NOT-VISIBLE: visibleDocumentLabel() + a real-field
+                  fallback chain. */}
+              <EntityLink
+                kind="bill"
+                id={row.id}
+                label={visibleDocumentLabel(row.bill_number ?? row.memo ?? row.vendor_name, row.id, "Bill")}
+                className="font-medium"
+              />
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.bill_date)} · {formatMoneyCents(Number(row.amount_cents), "USD")} · {row.status}
                 {row.vendor_name || billVendorDrillId(row) ? (
