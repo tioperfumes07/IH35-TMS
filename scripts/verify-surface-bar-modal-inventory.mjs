@@ -47,6 +47,9 @@ const FILE_OWNED_BY_LEAF = {
   "components/tasks/TaskLinkPicker.tsx": "tasks.drawer.task",
   "components/customers/CustomerContractsTab.tsx": "detail.contracts",
   "pages/banking/BankTxCategorizationPage.tsx": "transactions.categorize",
+  // Info/detail Modal on the transfers list is incidental chrome for the same transfer workflow
+  // TransferModal.tsx already owns as a leaf — no separate list-page leaf exists in the matrix.
+  "pages/banking/TransfersListPage.tsx": "banking.modal.transfer",
   "pages/driver-finance/EscrowDeductionsPendingTab.tsx": "driver_escrow",
   "pages/factoring/FactoringHome.tsx": "home.summary",
   "pages/lists/accounting/CoaBatchActions.tsx": "coa",

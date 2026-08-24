@@ -284,6 +284,7 @@
       "route_hint": "surface://pages/banking/TransferModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/banking/TransferModal.tsx",
+      "owned_surface_paths": ["pages/banking/TransfersListPage.tsx"],
       "required": [
         "connectivity",
         "bank",
