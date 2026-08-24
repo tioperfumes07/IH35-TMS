@@ -147,8 +147,9 @@ export async function createTask(input: CreateTaskInput) {
   return apiRequest<{ task: Task }>("/api/v1/tasks", { method: "POST", body: input });
 }
 
-export async function updateTaskProgress(task_id: string, progress_pct: number) {
-  return apiRequest<{ task: { task_id: string; progress_pct: number } }>(`/api/v1/tasks/${task_id}/progress`, {
+export async function updateTaskProgress(task_id: string, operating_company_id: string, progress_pct: number) {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ task: { task_id: string; progress_pct: number } }>(`/api/v1/tasks/${task_id}/progress?${q}`, {
     method: "PATCH",
     body: { progress_pct },
   });
@@ -172,8 +173,9 @@ export async function fetchTasksByTarget(params: {
   return apiRequest<{ tasks: Task[]; total_count: number }>(`/api/v1/tasks?${q}`);
 }
 
-export async function fetchTaskLinks(task_id: string) {
-  return apiRequest<{ links: TaskLink[] }>(`/api/v1/tasks/${task_id}/links`);
+export async function fetchTaskLinks(task_id: string, operating_company_id: string) {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ links: TaskLink[] }>(`/api/v1/tasks/${task_id}/links?${q}`);
 }
 
 /**
@@ -181,8 +183,9 @@ export async function fetchTaskLinks(task_id: string) {
  * completion path (the new expense/bill/policy that fulfils the request marks it done).
  * Pure pointer: never an accounting write.
  */
-export async function createTaskLink(task_id: string, input: TaskLinkInput) {
-  return apiRequest<{ link: TaskLink; task: Task | null }>(`/api/v1/tasks/${task_id}/links`, {
+export async function createTaskLink(task_id: string, operating_company_id: string, input: TaskLinkInput) {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ link: TaskLink; task: Task | null }>(`/api/v1/tasks/${task_id}/links?${q}`, {
     method: "POST",
     body: input,
   });
@@ -210,18 +213,21 @@ export type TaskActivity = {
   actor_name: string | null;
 };
 
-export async function fetchTaskComments(task_id: string, signal?: AbortSignal) {
-  return apiRequest<{ comments: TaskComment[] }>(`/api/v1/tasks/${task_id}/comments`, { signal });
+export async function fetchTaskComments(task_id: string, operating_company_id: string, signal?: AbortSignal) {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ comments: TaskComment[] }>(`/api/v1/tasks/${task_id}/comments?${q}`, { signal });
 }
 
-export async function createTaskComment(task_id: string, body: string, mentions: string[]) {
+export async function createTaskComment(task_id: string, operating_company_id: string, body: string, mentions: string[]) {
   // Pass the raw object; apiRequest does the single JSON.stringify.
-  return apiRequest<{ comment: TaskComment }>(`/api/v1/tasks/${task_id}/comments`, {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ comment: TaskComment }>(`/api/v1/tasks/${task_id}/comments?${q}`, {
     method: "POST",
     body: { body, mentions },
   });
 }
 
-export async function fetchTaskActivity(task_id: string, signal?: AbortSignal) {
-  return apiRequest<{ activity: TaskActivity[] }>(`/api/v1/tasks/${task_id}/activity`, { signal });
+export async function fetchTaskActivity(task_id: string, operating_company_id: string, signal?: AbortSignal) {
+  const q = new URLSearchParams({ operating_company_id });
+  return apiRequest<{ activity: TaskActivity[] }>(`/api/v1/tasks/${task_id}/activity?${q}`, { signal });
 }

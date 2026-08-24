@@ -36,10 +36,13 @@ describe("tasks API client — request body must be a raw object (regression: do
     expect(options?.body).toEqual({ operating_company_id: "co-1", name: "Maintenance" });
   });
 
-  it("updateTaskProgress PATCHes a raw OBJECT body", async () => {
+  it("updateTaskProgress PATCHes a raw OBJECT body and scopes the URL by operating_company_id", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ task: { task_id: "t1", progress_pct: 50 } } as never);
-    await updateTaskProgress("t1", 50);
-    const [, options] = spy.mock.calls[0];
+    await updateTaskProgress("t1", "co-1", 50);
+    const [path, options] = spy.mock.calls[0];
+    // TASK-ID-SCOPE-FIX: /:id-scoped task routes need operating_company_id to set the RLS GUC
+    // before the row is even visible (tasks.task is FORCE RLS) — omitting it always 404'd.
+    expect(path).toBe("/api/v1/tasks/t1/progress?operating_company_id=co-1");
     expect(options?.method).toBe("PATCH");
     expect(typeof options?.body).toBe("object");
     expect(options?.body).toEqual({ progress_pct: 50 });
