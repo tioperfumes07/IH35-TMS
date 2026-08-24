@@ -46,7 +46,7 @@ function assertSource() {
   if (!route.includes("wrapPdfDocument")) fail("bill HTML must use wrapPdfDocument");
   if (!route.includes("renderBillBody")) fail("bill HTML must renderBillBody");
   if (!route.includes("rateLimit")) fail("bill HTML route must set rateLimit");
-  if (!route.includes("withCurrentUser") || !route.includes("FROM accounting.bills")) {
+  if (!route.includes("resolvePrintOperatingCompanyId") || !route.includes("FROM accounting.bills")) {
     fail("bill HTML must look up operating_company_id from accounting.bills when query company is missing");
   }
 

@@ -2,8 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { companyQuerySchema, currentAuthUser, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "../accounting/shared.js";
 import { enrichInvoice } from "../accounting/invoices.routes.js";
 import { docIdFromLoadNumber, escapeHtml, formatDateTime, formatMoney, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
 import {
@@ -48,13 +47,11 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
     const query = companyQuerySchema.safeParse(req.query ?? {});
     let operatingCompanyId = query.success ? query.data.operating_company_id : null;
     if (!operatingCompanyId) {
-      operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
-        const found = await client.query(
-          `SELECT operating_company_id FROM accounting.invoices WHERE id = $1::uuid LIMIT 1`,
-          [params.data.invoiceId]
-        );
-        return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
-      });
+      operatingCompanyId = await resolvePrintOperatingCompanyId(
+        user.uuid,
+        `SELECT operating_company_id FROM accounting.invoices WHERE id = $1::uuid LIMIT 1`,
+        params.data.invoiceId
+      );
     }
     if (!operatingCompanyId) {
       reply.type("text/html");

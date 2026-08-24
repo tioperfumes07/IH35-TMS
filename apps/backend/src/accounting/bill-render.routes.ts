@@ -2,9 +2,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
 import { getBillDetail } from "./bills.service.js";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "./shared.js";
 import { escapeHtml, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
 import { formatBillIssuedLines, renderBillBody, type BillHtmlModel, type BillLineRender } from "../render/bill.template.js";
 
@@ -29,12 +28,11 @@ export async function registerAccountingBillHtmlRoutes(app: FastifyInstance) {
       const query = companyQuerySchema.safeParse(req.query ?? {});
       let operatingCompanyId = query.success ? query.data.operating_company_id : null;
       if (!operatingCompanyId) {
-        operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
-          const found = await client.query(`SELECT operating_company_id FROM accounting.bills WHERE id = $1::uuid LIMIT 1`, [
-            params.data.id,
-          ]);
-          return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
-        });
+        operatingCompanyId = await resolvePrintOperatingCompanyId(
+          user.uuid,
+          `SELECT operating_company_id FROM accounting.bills WHERE id = $1::uuid LIMIT 1`,
+          params.data.id
+        );
       }
       if (!operatingCompanyId) {
         reply.type("text/html");

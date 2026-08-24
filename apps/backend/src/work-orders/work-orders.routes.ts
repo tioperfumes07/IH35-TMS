@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
-import { companyQuerySchema, validationError, withCompanyScope } from "../accounting/shared.js";
+import { companyQuerySchema, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "../accounting/shared.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
@@ -1433,12 +1433,11 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     let operatingCompanyId = query.success ? query.data.operating_company_id : null;
     if (!operatingCompanyId) {
-      operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
-        const found = await client.query(`SELECT operating_company_id FROM maintenance.work_orders WHERE id = $1::uuid LIMIT 1`, [
-          params.data.id,
-        ]);
-        return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
-      });
+      operatingCompanyId = await resolvePrintOperatingCompanyId(
+        user.uuid,
+        `SELECT operating_company_id FROM maintenance.work_orders WHERE id = $1::uuid LIMIT 1`,
+        params.data.id
+      );
     }
     if (!operatingCompanyId) {
       reply.header("Content-Type", "text/html; charset=utf-8");
