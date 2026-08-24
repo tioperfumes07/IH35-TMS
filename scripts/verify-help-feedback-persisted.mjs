@@ -31,6 +31,15 @@ export function computeFailures(source) {
   if (!/localStorage\.setItem/.test(source) && !/window\.localStorage\.setItem/.test(source)) {
     errors.push(`${PAGE}: must persist feedback via localStorage.setItem`);
   }
+  if (!/function writeHelpFeedback[\s\S]{0,500}: boolean[\s\S]{0,500}return true[\s\S]{0,500}return false/.test(source)) {
+    errors.push(`${PAGE}: persistence helper must report success/failure`);
+  }
+  if (!/if \(writeHelpFeedback\([\s\S]{0,200}\)\)[\s\S]{0,200}setFeedback/.test(source)) {
+    errors.push(`${PAGE}: UI must acknowledge feedback only after persistence succeeds`);
+  }
+  if (!/role="alert"[\s\S]{0,200}\{feedbackError\}/.test(source)) {
+    errors.push(`${PAGE}: blocked storage must render an accessible failure`);
+  }
   // Lazy init and/or effect restore — either form is fine; both count as restore-on-mount.
   const restoresOnMount =
     /useState\s*<[^>]*>\s*\(\s*\(\s*\)\s*=>/.test(source) ||
@@ -53,14 +62,20 @@ function selftest() {
     function readHelpFeedback(id) {
       return window.localStorage.getItem(helpFeedbackStorageKey(id));
     }
-    function writeHelpFeedback(id, v) {
-      window.localStorage.setItem(helpFeedbackStorageKey(id), v);
+    function writeHelpFeedback(id, v): boolean {
+      try {
+        window.localStorage.setItem(helpFeedbackStorageKey(id), v);
+        return true;
+      } catch {
+        return false;
+      }
     }
     export function HelpArticlePage() {
       const [feedback, setFeedback] = useState(() => readHelpFeedback(slug));
       useEffect(() => { setFeedback(readHelpFeedback(slug)); }, [slug]);
-      const choose = (v) => { setFeedback(v); writeHelpFeedback(slug, v); };
-      return <button onClick={() => choose("up")}>Yes</button>;
+      const [feedbackError, setFeedbackError] = useState(null);
+      const choose = (v) => { if (writeHelpFeedback(slug, v)) setFeedback(v); else setFeedbackError("Could not save"); };
+      return <><button onClick={() => choose("up")}>Yes</button><p role="alert">{feedbackError}</p></>;
     }
   `;
   const bad = `

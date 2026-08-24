@@ -22,12 +22,13 @@ function readHelpFeedback(articleId: string): HelpFeedback | null {
   return null;
 }
 
-function writeHelpFeedback(articleId: string, value: HelpFeedback): void {
-  if (!articleId || typeof window === "undefined") return;
+function writeHelpFeedback(articleId: string, value: HelpFeedback): boolean {
+  if (!articleId || typeof window === "undefined") return false;
   try {
     window.localStorage.setItem(helpFeedbackStorageKey(articleId), value);
+    return true;
   } catch {
-    // private / blocked storage
+    return false;
   }
 }
 
@@ -36,6 +37,7 @@ export function HelpArticlePage() {
   const article = useMemo(() => getHelpArticle(slug), [slug]);
   const articleKey = article?.slug ?? slug;
   const [feedback, setFeedback] = useState<HelpFeedback | null>(() => readHelpFeedback(articleKey));
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // Restore when navigating between articles (same page component, new slug).
   useEffect(() => {
@@ -43,8 +45,12 @@ export function HelpArticlePage() {
   }, [articleKey]);
 
   const chooseFeedback = (value: HelpFeedback) => {
-    setFeedback(value);
-    writeHelpFeedback(articleKey, value);
+    setFeedbackError(null);
+    if (writeHelpFeedback(articleKey, value)) {
+      setFeedback(value);
+    } else {
+      setFeedbackError("Could not save your feedback. Check browser storage permissions and try again.");
+    }
   };
 
   if (!article) {
@@ -89,6 +95,11 @@ export function HelpArticlePage() {
         {feedback ? (
           <p className="mt-2 text-sm text-gray-600" role="status">
             Thanks for the feedback.
+          </p>
+        ) : null}
+        {feedbackError ? (
+          <p className="mt-2 text-sm text-red-700" role="alert">
+            {feedbackError}
           </p>
         ) : null}
         <p className="mt-3 text-sm">
