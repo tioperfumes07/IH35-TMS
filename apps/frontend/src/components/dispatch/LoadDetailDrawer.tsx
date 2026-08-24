@@ -889,6 +889,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 // (sibling AssignmentHistoryPage). Id null → Unassigned; id+no name → honest tombstone.
                 const prevId = r.previous_driver_id != null ? String(r.previous_driver_id) : null;
                 const nextId = r.new_driver_id != null ? String(r.new_driver_id) : null;
+                const prevUnitId = r.previous_unit_id != null ? String(r.previous_unit_id) : null;
+                const nextUnitId = r.new_unit_id != null ? String(r.new_unit_id) : null;
                 return (
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
                     <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
@@ -920,6 +922,34 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         <span className="text-slate-400">Unassigned</span>
                       )}
                     </div>
+                    {prevUnitId || nextUnitId ? (
+                      <div className="text-xs text-gray-600" data-testid="load-drawer-assignment-history-unit-links">
+                        Unit{" "}
+                        {prevUnitId ? (
+                          <EntityLinkOrTombstone
+                            kind="unit"
+                            id={prevUnitId}
+                            name={r.previous_unit_number}
+                            noun="Unit"
+                            data-testid="load-drawer-assignment-prev-unit-link"
+                          />
+                        ) : (
+                          <span className="text-slate-400">Unassigned</span>
+                        )}{" "}
+                        →{" "}
+                        {nextUnitId ? (
+                          <EntityLinkOrTombstone
+                            kind="unit"
+                            id={nextUnitId}
+                            name={r.new_unit_number}
+                            noun="Unit"
+                            data-testid="load-drawer-assignment-new-unit-link"
+                          />
+                        ) : (
+                          <span className="text-slate-400">Unassigned</span>
+                        )}
+                      </div>
+                    ) : null}
                     {reason ? <div className="mt-1 text-xs text-gray-700">Reason: {reason}</div> : null}
                     {notes ? <div className="mt-1 text-xs text-gray-600">Notes: {notes}</div> : null}
                   </div>

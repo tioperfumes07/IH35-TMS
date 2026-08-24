@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.assignment_history"],"task":"DISP-F5860-ASSIGNMENT-HISTORY-REVERSE-EXACT-LEAF","vertical":"column-wave"} */
 /**
- * LoadDetailDrawer Assignment History must EntityLink previous/new drivers
- * (Exact Leaves load.drawer.assignment_history:reverse_link / driver).
+ * LoadDetailDrawer Assignment History must EntityLink previous/new drivers and units
+ * (Exact Leaves load.drawer.assignment_history:reverse_link / driver / unit).
  *
  * FAIL: plain "Driver {prev} → {next}" text with no EntityLinkOrTombstone.
  * PASS: data-testid load-drawer-assignment-prev-driver-link +
@@ -27,6 +27,9 @@ function audit(src, matrix, self) {
   if (!/data-testid=["']load-drawer-assignment-prev-driver-link["']/.test(src)) failures.push(`${TARGET}: missing previous-driver drill`);
   if (!/data-testid=["']load-drawer-assignment-new-driver-link["']/.test(src)) failures.push(`${TARGET}: missing new-driver drill`);
   if (!/data-testid=["']load-drawer-assignment-history-driver-links["']/.test(src)) failures.push(`${TARGET}: missing assignment-history driver strip`);
+  if (!/data-testid=["']load-drawer-assignment-prev-unit-link["']/.test(src)) failures.push(`${TARGET}: missing previous-unit drill`);
+  if (!/data-testid=["']load-drawer-assignment-new-unit-link["']/.test(src)) failures.push(`${TARGET}: missing new-unit drill`);
+  if (!/data-testid=["']load-drawer-assignment-history-unit-links["']/.test(src)) failures.push(`${TARGET}: missing assignment-history unit strip`);
   // Planted defect class: plain Driver {prev} → {next} without EntityLink
   if (/Driver \{prev\} → \{next\}/.test(src)) failures.push(`${TARGET}: must not render plain driver IDs`);
   try {
@@ -48,13 +51,16 @@ function selftest() {
     ["previous driver", src.replace('data-testid="load-drawer-assignment-prev-driver-link"', 'data-testid="removed-prev-driver"'), matrix, self],
     ["new driver", src.replace('data-testid="load-drawer-assignment-new-driver-link"', 'data-testid="removed-new-driver"'), matrix, self],
     ["driver strip", src.replace('data-testid="load-drawer-assignment-history-driver-links"', 'data-testid="removed-driver-strip"'), matrix, self],
+    ["previous unit", src.replace('data-testid="load-drawer-assignment-prev-unit-link"', 'data-testid="removed-prev-unit"'), matrix, self],
+    ["new unit", src.replace('data-testid="load-drawer-assignment-new-unit-link"', 'data-testid="removed-new-unit"'), matrix, self],
+    ["unit strip", src.replace('data-testid="load-drawer-assignment-history-unit-links"', 'data-testid="removed-unit-strip"'), matrix, self],
     ["Required", src, matrix.replace('"id": "load.drawer.assignment_history"', '"id": "load.drawer.assignment_history.removed"'), self],
     ["header", src, matrix, self.replace('"leaves":["load.drawer.assignment_history"]', '"leaves":["load.drawer.pre_settlement"]')],
   ];
   for (const [name, nextSrc, nextMatrix, nextSelf] of plants) {
     if (!audit(nextSrc, nextMatrix, nextSelf).length) throw new Error(`${LABEL}: planted ${name} defect escaped`);
   }
-  console.log(`${LABEL}: OK — selftest 5/5 in-memory defects rejected`);
+  console.log(`${LABEL}: OK — selftest 8/8 in-memory defects rejected`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
