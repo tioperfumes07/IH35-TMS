@@ -163,6 +163,17 @@ export function collectProblems(src) {
   if (historyTab.includes("return reports.filter((r) => r.status === statusFilter);") && !historyTab.includes('statusFilter === "amended"')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: must not filter amended by status equality alone");
   }
+  const pdf = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
+  if (!pdf.includes("form_425c_exhibit_a_entries") || !pdf.includes("form_425c_exhibit_b_entries") || !pdf.includes("exhibitSection")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate Filing PDF must include saved Exhibit A/B rows, not only [Exhibit required]");
+  }
+  const fePrint = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts"), "utf8");
+  if (!fePrint.includes("exhibitPrintBlock") || !fePrint.includes("No Exhibit explanation saved")) {
+    problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: print fallback must include Exhibit A/B explanations");
+  }
+  if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
+    problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
+  }
   return problems;
 }
 
@@ -195,6 +206,8 @@ const good = `
   addForm425CExhibitA
   addForm425CExhibitB
   onSaveExhibit
+  exhibitEntries.a
+  exhibitEntries.b
 `;
 const bad = `
   if (!detailQuery.data?.report) {
