@@ -4194,6 +4194,11 @@
     "claimed_by": "codex",
     "purpose": "verify-insurance-no-hard-delete-depth"
   },
+  "7920": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-pdf-cost-breakdown-line-fallback"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -6198,5 +6203,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1325
+  "total_claimed": 1326
 }
