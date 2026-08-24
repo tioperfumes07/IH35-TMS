@@ -39,10 +39,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | U14 omit. Lead | Unique leftover FINDING overflow. **Do not loop `/425c`.** Never leftover-CERTIFY |
-| CC-1 | 9223 | Accounting+factoring omit | Next money unique. STOP `/425c`. HOLD forbidden |
+| Cursor | 9222 | U14 omit. Lead | **DISPATCH-F2-REGRESSION** late-arrivals 500 then unique overflow. **Do not loop `/425c`.** Never leftover-CERTIFY |
+| CC-1 | 9223 | Accounting+factoring omit | **U14-06-F02 + F03** vendor A/P reverse. STOP `/425c`. HOLD forbidden |
 | CC-2 | 9224 | Settlements omit | Next unique FINDING. No Close remake |
-| CC-3 | 9225 | lists+legal+maintenance omit | Next unique FINDING. No `trigger_deploy` |
+| CC-3 | 9225 | lists+legal+maintenance omit | Next unique FINDING. No roadside remake. No `trigger_deploy` |
 | Codex | 9226 | customers/drivers/fleet omit restamp | Next unique FINDING only |
 | Cascade | audit | CERTIFIED overlay | AUDIT-PASS or unique FINDING. Never restamp |
 | Devin-A | audit | CERTIFIED overlay | Same. `/vendors` EXTENT. Not scribe |

@@ -4,6 +4,6 @@
 
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** next unique leftover FINDING. NEVER restamp customers/drivers/fleet. Do **not** recertify cash-flow/finance/driver-hub/reports. Never restamp U14. Never `trigger_deploy`.
+**NOW:** Next unique leftover FINDING only. NEVER restamp customers/drivers/fleet. Never remake Close / F6301 / fleet #15291–#15310. Never leftover-CERTIFY U14. Never `trigger_deploy`.
 
-OUTBOX: `Codex | ACK | CERTIFY-TRUTH | PORT=9226 | NOW=next-unique | GO`
+OUTBOX: `Codex | ACK | PORT=9226 | NOW=next-unique | GO`

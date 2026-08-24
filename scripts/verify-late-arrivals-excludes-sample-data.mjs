@@ -27,21 +27,26 @@ const repoRoot = process.cwd();
 const SERVICE_FILE = "apps/backend/src/dispatch/late-arrivals.service.ts";
 
 const WHERE_MARKER = "WHERE l.operating_company_id = $1::uuid";
-const SAMPLE_EXCLUSION = /l\.is_sample_data\s+IS\s+NOT\s+TRUE/i;
+const PHANTOM_VIEW_COL = /FROM\s+views\.dispatch_load_with_driver_status[\s\S]{0,2500}l\.is_sample_data/i;
+const CANONICAL_LOADS_EXCLUSION =
+  /FROM\s+mdata\.loads\s+sample_load[\s\S]{0,220}sample_load\.is_sample_data\s+IS\s+NOT\s+TRUE/i;
 
 export function checkExcludesSample(src) {
   const offenders = [];
+  if (PHANTOM_VIEW_COL.test(src)) {
+    offenders.push(
+      `${SERVICE_FILE}: listLateArrivalLoads() reads l.is_sample_data on views.dispatch_load_with_driver_status — that column does not exist (live 500 SQLSTATE 42703)`
+    );
+  }
   const whereIdx = src.indexOf(WHERE_MARKER);
   if (whereIdx === -1) {
     offenders.push(`${SERVICE_FILE}: WHERE clause marker not found — has listLateArrivalLoads()'s query moved or been rewritten? Re-verify this guard still applies.`);
     return offenders;
   }
-  // The is_sample_data exclusion must appear within the WHERE clause of this specific query (a
-  // reasonable window after the marker), not just anywhere in the file.
-  const window = src.slice(whereIdx, whereIdx + 600);
-  if (!SAMPLE_EXCLUSION.test(window)) {
+  const window = src.slice(whereIdx, whereIdx + 900);
+  if (!CANONICAL_LOADS_EXCLUSION.test(window)) {
     offenders.push(
-      `${SERVICE_FILE}: listLateArrivalLoads()'s query does not exclude is_sample_data rows — DISPATCH-F2 regression shape (HOME's "In-flight loads running late" count excludes sample loads, but the "Open late arrivals" page it links to would not)`
+      `${SERVICE_FILE}: listLateArrivalLoads() must exclude sample loads via mdata.loads.is_sample_data (view has no such column)`
     );
   }
   return offenders;
@@ -55,26 +60,43 @@ export function run() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const buggy = `
-    WHERE l.operating_company_id = $1::uuid
+  const prefix = "FROM views.dispatch_load_with_driver_status l\n        ";
+  const missing = `${prefix}WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
       AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
   `;
-  const fixed = `
-    WHERE l.operating_company_id = $1::uuid
+  const phantom500 = `${prefix}WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
       AND l.is_sample_data IS NOT TRUE
       AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
   `;
+  const fixed = `${prefix}WHERE l.operating_company_id = $1::uuid
+      AND l.soft_deleted_at IS NULL
+      AND EXISTS (
+            SELECT 1
+            FROM mdata.loads sample_load
+            WHERE sample_load.id = l.id
+              AND sample_load.is_sample_data IS NOT TRUE
+          )
+      AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
+  `;
 
-  const buggyFails = checkExcludesSample(buggy).length > 0;
+  const missingFails = checkExcludesSample(missing).length > 0;
+  const phantomFails = checkExcludesSample(phantom500).some((p) => /42703|does not exist/.test(p));
   const fixedPasses = checkExcludesSample(fixed).length === 0;
 
-  if (buggyFails && fixedPasses) {
+  if (missingFails && phantomFails && fixedPasses) {
     console.log("verify:late-arrivals-excludes-sample-data selftest OK");
     process.exit(0);
   }
-  console.error("verify:late-arrivals-excludes-sample-data selftest FAILED", { buggyFails, fixedPasses });
+  console.error("verify:late-arrivals-excludes-sample-data selftest FAILED", {
+    missingFails,
+    phantomFails,
+    fixedPasses,
+    missing: checkExcludesSample(missing),
+    phantom: checkExcludesSample(phantom500),
+    fixed: checkExcludesSample(fixed),
+  });
   process.exit(1);
 }
 

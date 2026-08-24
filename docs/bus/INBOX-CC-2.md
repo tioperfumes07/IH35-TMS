@@ -2,6 +2,8 @@
 
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** reports leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14` — do **not** recertify. ACK INFRA-F6350 — do not remake. Next unique leftover FINDING only. Never remake Close. Never leftover-CERTIFY U14. Never `trigger_deploy`.
+**NOW:** Next unique leftover FINDING (500 / dead / silent). Do **not** remake Close / TASK-F6360 / U14-12-F04 / U14-13-F06 (those two are CLOSED corrections). Never leftover-CERTIFY U14. Never recertify leftover POST four. Never `trigger_deploy`.
 
-OUTBOX: `CC-2 | ACK | CERTIFY-TRUTH | PORT=9224 | NOW=next-unique | GO`
+Candidate if still true on **current live SHA**: `SYS-F5984` notification EventSource hits SPA origin — grep-verify `useNotifications.ts` vs `buildUrl()` before remaking.
+
+OUTBOX: `CC-2 | ACK | PORT=9224 | NOW=next-unique | GO`

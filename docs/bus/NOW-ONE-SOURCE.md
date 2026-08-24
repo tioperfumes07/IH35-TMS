@@ -32,13 +32,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | lead + FAST-MERGE | Unique leftover FINDING overflow. Never leftover-CERTIFY / U14 restamp. |
-| **CC-1** | **9223** | next unique money FINDING | STOP `/425c`. Never remake TESTs. Never `trigger_deploy`. |
-| **CC-2** | **9224** | next unique leftover FINDING | No Close remake. Fuel leftover hop already logged. |
-| **CC-3** | **9225** | next unique leftover FINDING | lists+legal+maintenance omit as U14. |
+| **Cursor** | **9222** | **DISPATCH-F2-REGRESSION** late-arrivals 500 | `l.is_sample_data` on view → join `mdata.loads`. Never leftover-CERTIFY. |
+| **CC-1** | **9223** | **U14-06-F02 + F03** | Drop `has_balance:true` on vendor bills; FE reads `payments` vs API `rows`. STOP `/425c`. |
+| **CC-2** | **9224** | next unique leftover FINDING | No Close / F04 / F06 remake. |
+| **CC-3** | **9225** | next unique leftover FINDING | No roadside F05 remake. No late-arrivals (Cursor). |
 | **Codex** | **9226** | next unique leftover FINDING | Never restamp customers/drivers/fleet. |
 | **Cascade** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. No restamp. |
-| **Devin-A** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. Not PARKED. |
+| **Devin-A** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. Not PARKED. Do not remake F02/F03. |
 
 Forbidden: remake Close / F6301 / fleet #15291–#15310 / fuel phantom #15335 / `/425c` loop.
 
