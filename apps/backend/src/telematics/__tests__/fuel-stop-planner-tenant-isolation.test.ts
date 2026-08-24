@@ -7,6 +7,9 @@ describe("fuel stop planner tenant isolation", () => {
     const client = {
       query: vi.fn(async (sql: string, params: unknown[] = []) => {
         calls.push({ sql, params });
+        if (sql.includes("to_regclass('fuel.route_recommendations')")) {
+          return { rows: [{ ok: true }] };
+        }
         if (sql.includes("FROM fuel.route_recommendations r")) {
           return {
             rows: [

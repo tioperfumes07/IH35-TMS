@@ -69,6 +69,29 @@ export function run() {
     fail(`${INDEX}: missing call site initializeFuelFraudDetectorWorker(app)`);
   }
 
+  const phantomSites = [
+    "apps/backend/src/integrations/fuel/fraud-detector/rules.service.ts",
+    "apps/backend/src/telematics/fuel-stop-planner.service.ts",
+  ];
+  for (const relPath of phantomSites) {
+    if (!exists(relPath)) {
+      fail(`MISSING: ${relPath}`);
+      continue;
+    }
+    const src = read(relPath);
+    const fromIdx = src.indexOf("FROM fuel.route_recommendations");
+    if (fromIdx === -1) {
+      fail(`${relPath}: expected FROM fuel.route_recommendations (do not drop the going-forward read)`);
+      continue;
+    }
+    const prelude = src.slice(Math.max(0, fromIdx - 900), fromIdx);
+    if (!prelude.includes("to_regclass('fuel.route_recommendations')")) {
+      fail(
+        `${relPath}: FROM fuel.route_recommendations must be preceded by to_regclass('fuel.route_recommendations') in the same function — table is NULL on prod (known unbuilt); unguarded query is 42P01`
+      );
+    }
+  }
+
   return failures;
 }
 

@@ -115,6 +115,10 @@ export function deriveFuelRecommendations(args: {
 }
 
 async function fetchRouteContext(client: DbClient, input: RecommendFuelStopsInput): Promise<FuelRouteContextRow | null> {
+  const exists = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass('fuel.route_recommendations') IS NOT NULL AS ok`
+  );
+  if (!exists.rows[0]?.ok) return null;
   const res = await client.query<FuelRouteContextRow>(
     `
       SELECT
