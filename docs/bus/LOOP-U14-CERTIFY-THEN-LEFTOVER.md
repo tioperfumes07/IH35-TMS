@@ -2,7 +2,7 @@
 
 **VOID:** any paste that says “stamp OPEN U14” / “recertify 1–6” / “leftover /425c only” / `AGENT_LOOP_TICK_u14_certify` as a certify loop. U14 is **14/14 CERTIFIED**. **Never stamp. Never recertify.**
 
-**Arm:** 5-minute wake + `stop` hook. **Do not idle.** Jorge chat empty ≠ pause.
+**Arm:** NONE. Owner 2026-08-24: the 5-minute U14 wake + `stop` hook are **removed**. Do not re-arm `AGENT_LOOP_TICK_u14_certify`. Work leftover POST in the session; do not burn tokens on stamp-loop pastes.
 
 **Pack:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
 **NOW:** `docs/bus/NOW-ONE-SOURCE.md`

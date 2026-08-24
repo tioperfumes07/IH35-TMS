@@ -15,16 +15,6 @@
       {
         "command": ".cursor/hooks/dual-lane-on-subagent-stop.sh",
         "timeout": 5
-      },
-      {
-        "command": ".cursor/hooks/u14-certify-on-stop.sh",
-        "timeout": 5
-      }
-    ],
-    "stop": [
-      {
-        "command": ".cursor/hooks/u14-certify-on-stop.sh",
-        "timeout": 5
       }
     ]
   }
