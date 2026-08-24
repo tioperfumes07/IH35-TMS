@@ -235,7 +235,14 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           `SELECT
              ($2::uuid IS NULL OR EXISTS (
                SELECT 1 FROM mdata.drivers d
-               WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid
+               WHERE d.id = $2::uuid
+                 AND (d.operating_company_id = $1::uuid OR EXISTS (
+                   SELECT 1 FROM mdata.driver_company_authorizations dot_create_driver_dca
+                   WHERE dot_create_driver_dca.driver_id = d.id
+                     AND dot_create_driver_dca.company_id = $1::uuid
+                     AND dot_create_driver_dca.is_authorized = true
+                     AND dot_create_driver_dca.deactivated_at IS NULL
+                 ))
              )) AS driver_ok,
              ($3::uuid IS NULL OR EXISTS (
                SELECT 1 FROM mdata.units u
