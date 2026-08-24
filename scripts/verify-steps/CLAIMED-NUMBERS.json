@@ -1,104 +1,4 @@
 {
-  "4660": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-ocr-queue-mutation-errors-surfaced"
-  },
-  "4658": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-detention-board-mutation-errors-surfaced"
-  },
-  "4656": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-document-alerts-mutation-errors-surfaced"
-  },
-  "4654": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-user-detail-event-mutation-errors-surfaced"
-  },
-  "4652": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-inventory-part-drawer-mutation-errors-surfaced"
-  },
-  "4650": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-property-tax-rendition-mutation-errors-surfaced"
-  },
-  "4648": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-cash-gl-setup-mutation-error-surfaced"
-  },
-  "4646": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-load-detail-drawer-mutation-errors-surfaced"
-  },
-  "4644": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-audit-events-bulk-call-preview-truncation"
-  },
-  "4642": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-bill-detail-panel-visible-label"
-  },
-  "4640": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-maintenance-damage-register-visible-label"
-  },
-  "4639": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-reports-subscription-preset-filter-applied"
-  },
-  "4636": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-hos-daily-summary-non-overlapping"
-  },
-  "4635": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-reports-subscription-errors-not-500"
-  },
-  "4631": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-reports-scheduled-panel-canonical-source"
-  },
-  "4630": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-property-tax-candidate-assets-lease-scope"
-  },
-  "4628": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-rm-bucket-work-orders-unit-driver-join"
-  },
-  "4626": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-bill-expense-self-label-visible-round3"
-  },
-  "4627": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-fuel-send-to-driver-honest-disabled"
-  },
-  "4624": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-bills-reverse-section-visible-label"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3919,6 +3819,111 @@
     "claimed_by": "cc-2",
     "purpose": "verify-insurance-dashboard-excludes-fixture-data"
   },
+  "4624": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-bills-reverse-section-visible-label"
+  },
+  "4626": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-bill-expense-self-label-visible-round3"
+  },
+  "4627": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-send-to-driver-honest-disabled"
+  },
+  "4628": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-rm-bucket-work-orders-unit-driver-join"
+  },
+  "4630": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-property-tax-candidate-assets-lease-scope"
+  },
+  "4631": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reports-scheduled-panel-canonical-source"
+  },
+  "4635": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reports-subscription-errors-not-500"
+  },
+  "4636": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-hos-daily-summary-non-overlapping"
+  },
+  "4639": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reports-subscription-preset-filter-applied"
+  },
+  "4640": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-damage-register-visible-label"
+  },
+  "4642": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-bill-detail-panel-visible-label"
+  },
+  "4644": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-audit-events-bulk-call-preview-truncation"
+  },
+  "4646": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-load-detail-drawer-mutation-errors-surfaced"
+  },
+  "4648": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-cash-gl-setup-mutation-error-surfaced"
+  },
+  "4650": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-property-tax-rendition-mutation-errors-surfaced"
+  },
+  "4652": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-inventory-part-drawer-mutation-errors-surfaced"
+  },
+  "4654": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-user-detail-event-mutation-errors-surfaced"
+  },
+  "4655": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-tasks-id-scope-rls-fix"
+  },
+  "4656": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-document-alerts-mutation-errors-surfaced"
+  },
+  "4658": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-detention-board-mutation-errors-surfaced"
+  },
+  "4660": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-ocr-queue-mutation-errors-surfaced"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -5903,5 +5908,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1283
+  "total_claimed": 1284
 }
