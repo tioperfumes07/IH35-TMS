@@ -94,7 +94,9 @@ export async function fetchUnifiedFleetList(
   truckFilters.push(tenantFilter(truckValues, options.operating_company_id));
 
   const trailerValues: unknown[] = [];
-  const trailerFilters: string[] = [excludeDemoPhantomSql("equipment_number")];
+  // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (equipment half, migration 202613140000): mdata.equipment
+  // now has is_sample_data like mdata.units — exclude the same way.
+  const trailerFilters: string[] = [excludeDemoPhantomSql("equipment_number"), excludeSampleDataSql()];
   if (!options.include_inactive) trailerFilters.push("deactivated_at IS NULL");
   if (options.type) {
     trailerFilters.push(trailerTypeSqlFilter(options.type, trailerValues));

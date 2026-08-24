@@ -23,9 +23,10 @@
  * `is_sample_data=true`) were live on prod's `/fleet` roster AND counted in the KPI tiles (Total
  * Fleet/Active/etc.) — same root defect class as `LV-DRIVER-HUB-SCHEDULER-TEST-FIXTURES-IN-PROD-
  * PICKER` (#14909), one level deeper (this file's own single-source-of-truth was itself incomplete).
- * `excludeSampleDataSql` below is `mdata.units`-only — `mdata.equipment` (trailers) has NO
- * `is_sample_data` column (migration 0403 added it to 5 tables, not equipment); that is a distinct,
- * separately-schema-owned gap, not fixed here.
+ * `excludeSampleDataSql` was mdata.units-only at first — mdata.equipment (trailers) had NO
+ * `is_sample_data` column (migration 0403 added it to 5 tables, not equipment). Migration
+ * 202613140000 closed that gap; `excludeSampleDataSql` now applies to both tables (units-unified-
+ * list.service.ts's trailer query included).
  */
 
 /** Unit-number / equipment-number prefixes that are seeded fixtures or integration phantoms. */
@@ -43,8 +44,8 @@ export function excludeDemoPhantomSql(col: string): string {
 }
 
 /**
- * SQL predicate excluding `is_sample_data=true` rows. `mdata.units`-only (see file-level note above —
- * `mdata.equipment` has no such column). Complements, never replaces, `excludeDemoPhantomSql`: a
+ * SQL predicate excluding `is_sample_data=true` rows. Applies to both `mdata.units` and, since
+ * migration 202613140000, `mdata.equipment`. Complements, never replaces, `excludeDemoPhantomSql`: a
  * fixture can be caught by either the name pattern or the flag.
  *
  * @param col the (optionally table-qualified) column — `is_sample_data` or `u.is_sample_data`.

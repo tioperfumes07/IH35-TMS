@@ -16,19 +16,21 @@
  * fixture named "CODEX-AUDIT-UNIT-20260816-0349" (correctly flagged is_sample_data=true) was live on
  * the real /fleet roster AND counted in its KPI tiles — the exact same drift class this guard already
  * exists to prevent, one predicate deeper. A THIRD reader (fleet-table/rows, backing FleetTablePage)
- * had ZERO exclusion of any kind and is now enumerated below alongside the original two.
+ * had ZERO exclusion of any kind and is now enumerated below alongside the original two. Migration
+ * 202613140000 (2026-08-24) closed the mdata.equipment (trailer) half of the same gap — the roster's
+ * trailer query is now enumerated too.
  *
  * WHAT IT ENFORCES:
  *   1. The shared helpers exist and are exported from mdata/fleet-visibility.ts.
  *   2. Every reader in READERS imports both — no file re-inlines the pattern locally.
- *   3. Every enumerated mdata.units query (roster, fleet-table/kpis, fleet-table/rows) applies both
- *      the demo-phantom name pattern AND the is_sample_data flag.
+ *   3. Every enumerated mdata.units query (roster truck query, fleet-table/kpis, fleet-table/rows)
+ *      AND the roster's mdata.equipment (trailer) query apply both the demo-phantom name pattern AND
+ *      the is_sample_data flag.
  *
- * Deliberately NOT enforced: that EVERY mdata.units reader filters. Many legitimately must not (the
- * fixed-asset register, QBO reconcilers, seed importers) — a blanket rule would be over-broad and get
- * allowlisted into uselessness. This guard enumerates the human-facing fleet surfaces only. Also NOT
- * enforced: mdata.equipment (trailers) — it has no is_sample_data column (migration 0403 added it to
- * 5 tables, not equipment); a distinct, separately-schema-owned gap.
+ * Deliberately NOT enforced: that EVERY mdata.units/mdata.equipment reader filters. Many legitimately
+ * must not (the fixed-asset register, QBO reconcilers, seed importers) — a blanket rule would be
+ * over-broad and get allowlisted into uselessness. This guard enumerates the human-facing fleet
+ * surfaces only.
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -89,12 +91,28 @@ function analyse(files) {
     // truckFilters (which includes the excludeSampleDataSql() call) is built in JS BEFORE the SQL
     // template literal that references it via ${truckFilters.join(...)} — so the window must start
     // at file top, not at the literal "FROM mdata.units" text, to see the call.
-    const truckQuery = unified.slice(0, unified.indexOf("FROM mdata.equipment"));
+    const equipmentIdx = unified.indexOf("FROM mdata.equipment");
+    const truckQuery = unified.slice(0, equipmentIdx === -1 ? unified.length : equipmentIdx);
     if (!SAMPLE_CALL_RE.test(truckQuery)) {
       problems.push(
         `${READERS[0]}: the roster's truck query does not apply excludeSampleDataSql() — ` +
           `is_sample_data units would be visible on the live Fleet roster.`
       );
+    }
+    if (equipmentIdx === -1) {
+      problems.push(`${READERS[0]}: expected a "FROM mdata.equipment" trailer query was not found — re-anchor.`);
+    } else {
+      // trailerFilters (which includes its own excludeSampleDataSql() call) is built in JS BEFORE
+      // "FROM mdata.equipment" too — counting total calls (>=2: one truck, one trailer) is simpler
+      // and just as precise as re-slicing an interleaved truck/trailer filter-construction region.
+      const sampleCallCount = (unified.match(new RegExp(SAMPLE_CALL_RE.source, "g")) ?? []).length;
+      if (sampleCallCount < 2) {
+        problems.push(
+          `${READERS[0]}: expected excludeSampleDataSql() applied to BOTH the truck and trailer ` +
+            `queries (found ${sampleCallCount} call(s)) — is_sample_data trailers would be visible ` +
+            `on the live Fleet roster (FLEET-VISIBILITY-F4583, equipment half).`
+        );
+      }
     }
   }
 
@@ -160,7 +178,8 @@ function selftest() {
     "export function excludeSampleDataSql(col = 'is_sample_data') { return `${col} IS NOT TRUE`; }";
   const goodReader =
     'import { excludeDemoPhantomSql, excludeSampleDataSql } from "./fleet-visibility.js";\n' +
-    "FROM mdata.units\nexcludeDemoPhantomSql(\"unit_number\")\nexcludeSampleDataSql()\n`\nFROM mdata.equipment\n`";
+    "FROM mdata.units\nexcludeDemoPhantomSql(\"unit_number\")\nexcludeSampleDataSql()\n`\n" +
+    "FROM mdata.equipment\nexcludeDemoPhantomSql(\"equipment_number\")\nexcludeSampleDataSql()\n`";
   const goodDashboard =
     'import { excludeDemoPhantomSql, excludeSampleDataSql } from "./fleet-visibility.js";\n' +
     'FROM mdata.units\nexcludeDemoPhantomSql("unit_number")\nexcludeSampleDataSql()\n`\n' +
@@ -231,6 +250,20 @@ function selftest() {
     }).length >= 1
   );
 
+  // FAILS the equipment-half class: truck query has the predicate, trailer query does not (the real
+  // pre-migration-202613140000 shape).
+  t(
+    "trailer query missing excludeSampleDataSql FAILS (FLEET-VISIBILITY-F4583, equipment half)",
+    analyse({
+      [HELPER]: goodHelper,
+      [READERS[0]]:
+        'import { excludeDemoPhantomSql, excludeSampleDataSql } from "./fleet-visibility.js";\n' +
+        "FROM mdata.units\nexcludeDemoPhantomSql(\"unit_number\")\nexcludeSampleDataSql()\n`\n" +
+        "FROM mdata.equipment\nexcludeDemoPhantomSql(\"equipment_number\")\n`",
+      [DASHBOARD]: goodDashboard,
+    }).length >= 1
+  );
+
   // FAILS the new third-reader class: fleet-table/rows has neither predicate (the real pre-fix shape).
   t(
     "fleet-table/rows with zero exclusion FAILS (FLEET-VISIBILITY-F4583)",
@@ -257,7 +290,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 7 cases (1 pass-shape, 6 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 8 cases (1 pass-shape, 7 fail-shapes)`);
   process.exit(0);
 }
 
