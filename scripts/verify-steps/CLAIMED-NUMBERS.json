@@ -1,4 +1,9 @@
 {
+  "4628": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-rm-bucket-work-orders-unit-driver-join"
+  },
   "4626": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
