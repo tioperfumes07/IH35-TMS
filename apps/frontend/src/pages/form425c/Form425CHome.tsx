@@ -695,6 +695,10 @@ export function Form425CHome() {
               pushToast("This MOR is filed — use Amend on History", "error");
               return;
             }
+            if (form.status !== "ready_to_file") {
+              pushToast("Generate the filing PDF before marking filed — a draft has no court snapshot", "error");
+              return;
+            }
             if (dirty) {
               saveMutation.mutate(undefined, {
                 onSuccess: () => {

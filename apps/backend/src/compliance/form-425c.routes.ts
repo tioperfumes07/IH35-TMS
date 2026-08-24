@@ -1191,14 +1191,17 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     let updated: Record<string, unknown> | { caseNumberInvalid: true } | null;
     try {
       updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-        const existingRes = await client.query<{ case_number: string | null; status: string }>(
-          `SELECT case_number, status FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        const existingRes = await client.query<{ case_number: string | null; status: string; filed_pdf_uuid: string | null }>(
+          `SELECT case_number, status, filed_pdf_uuid FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [params.data.id, b.operating_company_id]
         );
         const existing = existingRes.rows[0];
         if (!existing) return null;
         if (existing.status === "filed") {
           throw new Error("form_425c_filed_immutable");
+        }
+        if (!existing.filed_pdf_uuid) {
+          throw new Error("form_425c_generate_required");
         }
         if (isInvalidCaseNumber(existing.case_number)) {
           return { caseNumberInvalid: true } as const;
@@ -1212,6 +1215,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
+            AND filed_pdf_uuid IS NOT NULL
             AND status IN ('draft', 'ready_to_file', 'amended')
           RETURNING *
         `,
@@ -1239,6 +1243,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         return reply.code(409).send({
           error: "form_425c_filed_immutable",
           message: "This MOR is filed — use Amend on History. Mark Filed will not rewrite a filed court filing.",
+        });
+      }
+      if (e?.message === "form_425c_generate_required") {
+        return reply.code(422).send({
+          error: "form_425c_generate_required",
+          message: "Generate the filing PDF before marking filed — a draft with no snapshot is not a court filing",
         });
       }
       if (e?.message === "forbidden_company_membership") {
