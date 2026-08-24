@@ -47,6 +47,33 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.breakdown_relay",
+    needles: [
+      "dispatch.intransit_issues",
+      "maintenance.work_orders",
+      "w.id = i.promoted_to_wo_id",
+      "w.source_intransit_issue_id = i.id",
+      "w.operating_company_id = i.operating_company_id",
+      "w.load_id = i.load_id",
+      "w.unit_id = i.unit_id",
+      "w.voided_at IS NULL",
+      "dispatch.load_assignment_history",
+      "h.load_id = i.load_id",
+      "h.operating_company_id = i.operating_company_id",
+      "h.previous_unit_id = i.unit_id",
+      "h.assigned_at >= i.reported_at",
+      "mdata.loads",
+      "l.assigned_unit_id = h.new_unit_id",
+      "l.soft_deleted_at IS NULL",
+      "mdata.units",
+      "dead_unit.is_oos = true OR dead_unit.is_dispatch_blocked = true",
+      "live_unit.deactivated_at IS NULL",
+      "live_unit.is_oos IS NOT TRUE",
+      "live_unit.is_dispatch_blocked IS NOT TRUE",
+      "h.previous_unit_id <> h.new_unit_id",
+    ],
+  },
+  {
     key: "scenario.driver_onboarding",
     needles: [
       "safety.onboarding_sessions",
@@ -393,6 +420,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
+    ["breakdown relay accepts a blocked replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND live_unit.is_dispatch_blocked IS NOT TRUE", "") })],
     ["driver onboarding accepts an incomplete session", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.status = 'completed'", "") })],
     ["driver onboarding accepts an expired CDL", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND d.cdl_expires_at >= CURRENT_DATE", "") })],
     ["accident probe loses its claim back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND c.accident_report_id = a.id", "") })],

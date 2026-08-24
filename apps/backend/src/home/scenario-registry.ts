@@ -821,15 +821,53 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "In-transit breakdown, WO opened, replacement unit assigned to the same load",
     je: "Roadside bill posts DR Repair / CR A/P (see scenario.roadside_ap)",
     spec_ref: "COMPLICATED-BATTERY-01",
-    sources: ["dispatch.intransit_issues", "dispatch.load_assignment_history", "maintenance.work_orders", "mdata.loads"],
+    sources: [
+      "dispatch.intransit_issues",
+      "dispatch.load_assignment_history",
+      "maintenance.work_orders",
+      "mdata.loads",
+      "mdata.units",
+    ],
     probe: {
       sql: `
         SELECT count(*)::text AS n
           FROM dispatch.intransit_issues i
-          JOIN dispatch.load_assignment_history h ON h.load_id = i.load_id
+          JOIN maintenance.work_orders w
+            ON w.id = i.promoted_to_wo_id
+           AND w.source_intransit_issue_id = i.id
+           AND w.operating_company_id = i.operating_company_id
+           AND w.load_id = i.load_id
+           AND w.unit_id = i.unit_id
+           AND w.voided_at IS NULL
+          JOIN dispatch.load_assignment_history h
+            ON h.load_id = i.load_id
+           AND h.operating_company_id = i.operating_company_id
+           AND h.previous_unit_id = i.unit_id
+           AND h.assigned_at >= i.reported_at
+          JOIN mdata.loads l
+            ON l.id = i.load_id
+           AND l.operating_company_id = i.operating_company_id
+           AND l.assigned_unit_id = h.new_unit_id
+           AND l.soft_deleted_at IS NULL
+          JOIN mdata.units dead_unit
+            ON dead_unit.id = h.previous_unit_id
+           AND (
+             dead_unit.owner_company_id = i.operating_company_id
+             OR dead_unit.currently_leased_to_company_id = i.operating_company_id
+           )
+           AND (dead_unit.is_oos = true OR dead_unit.is_dispatch_blocked = true)
+          JOIN mdata.units live_unit
+            ON live_unit.id = h.new_unit_id
+           AND (
+             live_unit.owner_company_id = i.operating_company_id
+             OR live_unit.currently_leased_to_company_id = i.operating_company_id
+           )
+           AND live_unit.deactivated_at IS NULL
+           AND live_unit.is_oos IS NOT TRUE
+           AND live_unit.is_dispatch_blocked IS NOT TRUE
          WHERE i.promoted_to_wo_id IS NOT NULL
+           AND i.load_id IS NOT NULL
            AND i.unit_id IS NOT NULL
-           AND h.previous_unit_id IS NOT NULL
            AND h.new_unit_id IS NOT NULL
            AND h.previous_unit_id <> h.new_unit_id
            AND ($1::uuid IS NULL OR i.operating_company_id = $1::uuid)
