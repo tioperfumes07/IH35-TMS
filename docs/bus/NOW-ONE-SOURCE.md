@@ -2,7 +2,8 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
+**THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
+**REMAINDER (unique leftover only):** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
 
 - **FULLY CERTIFIED (nothing pending):** U14 exclusive **14/14**. Nobody certifies them again.
 - **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
@@ -32,11 +33,11 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | **DISPATCH-F2-REGRESSION** late-arrivals 500 | `l.is_sample_data` on view → join `mdata.loads`. Never leftover-CERTIFY. |
-| **CC-1** | **9223** | **U14-06-F02 + F03** | Drop `has_balance:true` on vendor bills; FE reads `payments` vs API `rows`. STOP `/425c`. |
-| **CC-2** | **9224** | next unique leftover FINDING | No Close / F04 / F06 remake. |
-| **CC-3** | **9225** | next unique leftover FINDING | No roadside F05 remake. No late-arrivals (Cursor). |
-| **Codex** | **9226** | next unique leftover FINDING | Never restamp customers/drivers/fleet. |
+| **Cursor** | **9222** | **U14-06-F02 + F03** | Vendor A/P history. Never leftover-CERTIFY. |
+| **CC-1** | **9223** | **U14-01-F03** then CUST-MONEY-F6312 | Bills Claim/WO column. STOP `/425c`. |
+| **CC-2** | **9224** | leftover POST unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
+| **CC-3** | **9225** | **CUST-CRM-F6313** | No roadside remake. |
+| **Codex** | **9226** | **CLASS-F5973 fuel** | Grep-verify then one leaf. Never restamp 7–9. |
 | **Cascade** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. No restamp. |
 | **Devin-A** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. Not PARKED. Do not remake F02/F03. |
 

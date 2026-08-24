@@ -162,7 +162,7 @@ export function VendorDetailPage() {
 
   const billsQuery = useQuery({
     queryKey: ["vendor-ap-bills", companyId, id],
-    queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, has_balance: true, limit: 200 }),
+    queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 }),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
   const vendorExpensesQuery = useQuery({
@@ -1080,7 +1080,7 @@ export function VendorDetailPage() {
               </p>
             ) : (
               <ParityTable<VendorBillPaymentListRow>
-                rows={vendorPaymentsQuery.data?.payments ?? []}
+                rows={vendorPaymentsQuery.data?.payments ?? vendorPaymentsQuery.data?.rows ?? []}
                 rowKey={(p) => p.id}
                 loading={vendorPaymentsQuery.isLoading}
                 storageKey="vendor-detail-bill-payments"
