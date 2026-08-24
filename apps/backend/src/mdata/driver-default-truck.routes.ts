@@ -71,7 +71,7 @@ async function fetchTruckAssignments(
       SELECT u.id::text AS unit_id, u.unit_number, u.vin, vda.started_at::text, vda.source, vda.is_default
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.units u ON u.id = vda.unit_id
-                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+                         AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)
       WHERE vda.driver_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -86,7 +86,7 @@ async function fetchTruckAssignments(
       SELECT u.id::text AS unit_id, u.unit_number, u.vin, vda.started_at::text AS samsara_logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.units u ON u.id = vda.unit_id
-                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+                         AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)
       WHERE vda.driver_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
