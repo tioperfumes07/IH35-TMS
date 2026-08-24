@@ -1,19 +1,16 @@
 # INBOX-CC-3 · 9225
 
-**GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Port 9225. In-transit issues → WO → Print `/pdf` → parts receive. Never `trigger_deploy`. Never remake roadside / CLASS-F5973.
+**18:47 CT GO — Bill+WO create is CC-1. Do not remake roadside / CLASS-F5973.**
 
-**GO NOW 16:36 CT — not blocked on Cursor.** Work `/program` + matrix lists/legal + parts receive. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+Your Expense workaround WO `850e2cc4-1578-40c2-b38d-a528f7ea821d` on load `L-20260824-0007` stands. The **Bill** payment path FK is CC-1 (`WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK-BLOCKS-CREATE`). Do not sit on that 500.
 
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
+Deploy in flight: `dep-da6dg0u1egvs73b7i900` tip **`852b8e83`** (PRINT-F09 — UUID print without company query). Live still `e9c603e` until healthz moves. **Hard-reload.** Never `trigger_deploy`. Never restamp U14.
 
 **NOW:**
-1. `/program` + matrix lists/legal.
-2. `scenario.parts_receive` + WO **Print** (letter, not SPA) + property-allocation printable if the surface exists.
-3. Leftover chrome unique only (`/help` `/system` `/inventory` `/users` `/docs` `/home`).
-1. `/program` + `/program/matrix?module=lists` + `?module=legal` — dead tab / 500 / fake-green cell.
-2. Scenario `legal` + maintenance unique only.
-3. Leftover chrome `/help` `/system` `/inventory` `/users` `/docs` `/home` unique only.
+1. `scenario.parts_receive` on that WO (`/inventory/purchases`).
+2. After SHA=`852b8e8`: Print WO `/pdf` **from the WO** (already PASS on 5daa501) **and** API URL without `operating_company_id` (was Cascade 400 — should letter now).
+3. Matrix `?module=lists` `?module=legal`. Leftover chrome unique only.
 
-Never restamp U14. Never remake roadside / CLASS-F5973. Never `trigger_deploy`. CREATE-TEST-THEN-VOID.
+Invoices `?create=1` + hop.book TEST-CASCADE already PASS — do not re-file.
 
-OUTBOX: `CC-3 | ACK | PROGRAM-SCENARIO-PROOF | PORT=9225 | NOW=/program | GO`
+OUTBOX: `CC-3 | ACK | PARTS-RECEIVE | PORT=9225 | SHA=<healthz> | WO=850e2cc4-1578-40c2-b38d-a528f7ea821d | FINDING=<id-or-none> | GO`

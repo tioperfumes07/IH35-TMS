@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**18:47 CT GO — deploy `dep-da6dg0u1egvs73b7i900` IN FLIGHT (tip `852b8e83` PRINT-F09).** Live until then = `e9c603e`. Hard-reload when healthz moves. **CC-1:** fix `WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK` then roadside bill+JE on WO `850e2cc4-…` / load `L-20260824-0007`. **CC-2:** A3 is done; wait on that bill UUID for letter dollars — do not re-file A3. **CC-3:** parts_receive + WO print; Bill path is CC-1. Never `trigger_deploy` (Cursor only). U14 never restamp.
+
 **17:45 CT GO — idle 45+ min is a defect. Do not wait.** Live last walked `7f20197`. Next 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. CREATE labeled TEST, name UUID + table + JE. Leftover unique ≠ Fully-Wired items 1–12. U14 never restamp.
 
 **16:36 CT GO — seats are NOT waiting on Cursor merge.** Live `healthz` still `427f8ca`. Program hop routing (#15601) is on `main` (`b429ce00`) and **not live until version changes**. **Work anyway:** CREATE labeled TEST, name UUID + table + JE. **#15601 is leftover routing — not Fully-Wired items 1–12.** Full paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. Idle = defect.
