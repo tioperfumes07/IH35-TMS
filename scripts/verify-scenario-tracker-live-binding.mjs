@@ -47,6 +47,25 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.advance",
+    needles: [
+      "a.driver_id IS NOT NULL",
+      "a.disbursement_status = 'disbursed'",
+      "a.disbursed_at IS NOT NULL",
+      "accounting.posting_batches",
+      "accounting.journal_entry_postings",
+      "accounting.journal_entries",
+      "jep.source_transaction_type = 'driver_advance'",
+      "jep.source_transaction_id = a.id",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "pb.operating_company_id = a.operating_company_id",
+      "pb.source_transaction_type = 'driver_advance'",
+      "pb.source_transaction_id = a.id",
+      "pb.batch_status = 'posted'",
+    ],
+  },
+  {
     key: "scenario.settlement",
     needles: [
       "s.voided_at IS NULL",
@@ -253,6 +272,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["advance probe accepts an undisbursed row", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND a.disbursement_status = 'disbursed'", "") })],
+    ["advance probe drops its posting batch", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
     ["settlement probe drops payment proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("OR s.payment_state IN ('paid', 'cleared')", "") })],
     ["settlement probe accepts an unposted payrun", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pr.status = 'posted'", "") })],
     ["maintenance probe counts an unposted WO", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
