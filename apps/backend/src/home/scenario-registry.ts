@@ -478,9 +478,41 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     sources: ["maintenance.work_orders"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM maintenance.work_orders w WHERE ($1::uuid IS NULL OR w.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM maintenance.work_orders w
+         WHERE ($1::uuid IS NULL OR w.operating_company_id = $1::uuid)
+           AND w.status = 'closed'
+           AND w.voided_at IS NULL
+           AND w.unit_id IS NOT NULL
+           AND w.vendor_id IS NOT NULL
+           AND w.load_id IS NOT NULL
+           AND EXISTS (
+             SELECT 1
+               FROM maintenance.work_order_lines wol
+              WHERE wol.work_order_uuid = w.id
+                AND wol.line_type IN ('part', 'parts')
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM maintenance.work_order_lines wol
+              WHERE wol.work_order_uuid = w.id
+                AND wol.line_type = 'labor'
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM accounting.bills b
+               JOIN accounting.posting_batches pb
+                 ON pb.source_transaction_type = 'bill'
+                AND pb.source_transaction_id = b.id
+                AND pb.operating_company_id = b.operating_company_id
+                AND pb.batch_status = 'posted'
+              WHERE b.linked_work_order_uuid = w.id
+                AND b.operating_company_id = w.operating_company_id
+                AND b.revoked_at IS NULL
+                AND b.voided_at IS NULL
+           )
       `,
-      describe: (n) => `${n} work order(s)`,
+      describe: (n) => `${n} closed work order chain(s) with parts, labor and posted A/P`,
     },
   },
   {
