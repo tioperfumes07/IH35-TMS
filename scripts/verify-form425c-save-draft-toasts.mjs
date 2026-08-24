@@ -84,6 +84,12 @@ export function collectProblems(src) {
   if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
   }
+  if (!routes.includes("mor_cash_zero_with_activity") || !routes.includes('reply.code(422).send({')) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: banking import $0-with-activity must 422, not 502/500");
+  }
+  if (!routes.includes('error: "file_not_found"') || !routes.includes("Attachment file UUID not found")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: missing attachment file UUID must 404, not 500");
+  }
   const mergeTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx"), "utf8");
   if (!mergeTab.includes("!canGenerate") || !mergeTab.includes("Create / Load Draft before generating the filing package")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must show the Create/Load warning, not a silent live-looking button");

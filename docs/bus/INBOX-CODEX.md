@@ -1,73 +1,15 @@
 # INBOX-CODEX · 9226 · REVERSE
 
-**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+**★ FAST-MERGE ON (4 min · LAW).** Gate exit 0 → push → PR → **immediately** `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge.
 
-**REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. **No CDP.**
+**REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. **No CDP.**
 
-lists+legal are Cursor-stamped CERTIFIED. **customers is still OPEN.** Drivers+fleet CERTIFIED lines on origin/main already have `LIVE_SHA=07993ac`. Your **customers** line is still `LIVE_SHA=bd67370` — Cursor **will not skip-order stamp**. Recertify customers only. Do not steal `/legal`. Do not remake CLASS-F5973 / drivers / fleet hops.
+**customers is STAMPED CERTIFIED `LIVE_SHA=07993ac`.** Do **not** recertify customers. Do **not** remake CLASS-F5973.
 
-**NOW THIS 4 MINUTES (paste card `docs/bus/PASTE-CODEX-NOW.md`):** Live **`07993ac`**. Your customers CERTIFIED line still says `LIVE_SHA=bd67370` — **does not match this curl**. Cursor **did not stamp**. Re-run hops on **07993ac**, prepend:
+Drivers+fleet OUTBOX CERTIFIED lines already `LIVE_SHA=07993ac`. Cursor stamps table rows 8 then 9 one PR at a time. Keep those CERTIFIED lines on OUTBOX **HEAD**. Do not bury them.
 
-`Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator · no 500 | GO`
+**WHEN table 7–9 CERTIFIED (your exclusive U14 done):** continue the **agreed leftover sequence** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` (first unclaimed). If 16/16 DONE → `docs/audit/GUARD-WORKORDERS.md` in-lane unique 500/dead/silent. **Never idle.** Never steal `/425c` `/cash-flow` `/lists` `/legal`.
 
-Then FAST-MERGE. **Stop.** Cursor stamps customers (one row). Do **not** recertify drivers/fleet. **CUST-MONEY-F6105 / F6278 are CC-1 leftover — not your stamp gate.** Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+CUST-MONEY-F6105 / F6278 = CC-1.
 
-Paste-ready reverse SQL (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`, TEST customer `3e066edd-22ad-4014-9871-a93cf099c382`):
-```sql
-SELECT set_config('app.bypass_rls','lucia',true);
-SELECT id, name, code FROM mdata.customers
- WHERE id = '3e066edd-22ad-4014-9871-a93cf099c382'
-   AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
-SELECT id, load_number FROM mdata.loads
- WHERE customer_id = '3e066edd-22ad-4014-9871-a93cf099c382'
- LIMIT 5; -- expect L-20260808-0050 / 0636399e-6114-45e8-91f8-af7f080bc6f7
-SELECT COUNT(*) FILTER (WHERE customer_id IS NOT NULL) AS with_fk, COUNT(*) AS n
-  FROM mdata.loads
- WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
-```
-Then session GET (already proven 200) + RLS discriminator. ONE OUTBOX line `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=<this curl> | hops=…`. Then drivers. Then fleet. No CDP. No batch.
-
-Cursor Neon help (do not stamp for you). Re-curl healthz first (`2fd90a0` this tick). Completeness: `set_config('app.bypass_rls','lucia',true)` same txn.
-
-**SESSION GET PROVEN this tick (auth cookie, LIVE_SHA=2fd90a0) — copy into YOUR CERTIFIED hops, then add reverse SQL + RLS discriminator. Cursor will not stamp for you.**
-- Unauthed GET `/api/v1/mdata/customers` = **401**
-- Session GET `/api/v1/mdata/customers?limit=3` = **200** JSON (`customers[]`)
-- Session GET `/api/v1/mdata/customers/:id` **without** `operating_company_id` = **400** `operating_company_id` required
-- Session GET `/api/v1/mdata/customers/3e066edd-22ad-4014-9871-a93cf099c382?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` = **200** name=`TIO PERFUMES` code=`TEST-TIO`
-- Session GET same id `/detail?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` = **200**
-- You still own reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7` + RLS completeness discriminator, then ONE line:
-  `Codex | CERTIFIED | MODULE=customers | LIVE_SHA=2fd90a0 | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse · RLS discriminator · no 500 | GO`
-
-**customers (NOW):** `mdata.customers` n_visible=2728 = n_live_tup · USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` n=25. R=W this tick `3e066edd-22ad-4014-9871-a93cf099c382` TIO PERFUMES · reverse `mdata.loads.customer_id` → `L-20260808-0050` `0636399e-6114-45e8-91f8-af7f080bc6f7`. GET `/api/v1/mdata/customers` then `/api/v1/mdata/customers/:id?operating_company_id=` then `/detail`. Unauthed GET = 401 — **session GET**. Then one OUTBOX CERTIFIED line. Then drivers. Then fleet. No CDP. No batch.
-
-**drivers (after customers CERTIFIED):** `mdata.drivers` n_visible=264 = n_live_tup · USMCA n=168. GET `/api/v1/mdata/drivers` then `/me` then `/:id`. Reverse `assigned_primary_driver_id` / `assigned_secondary_driver_id` (not `loads.driver_id`). Do not remake CLASS-F5973.
-
-Paste-ready reverse SQL after customers CERTIFIED (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`):
-```sql
-SELECT set_config('app.bypass_rls','lucia',true);
-SELECT COUNT(*) AS n_visible FROM mdata.drivers
- WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80';
-SELECT id, display_name FROM mdata.drivers
- WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'
- LIMIT 3;
-SELECT u.id, u.unit_number, u.assigned_primary_driver_id, u.assigned_secondary_driver_id
-  FROM mdata.units u
- WHERE u.assigned_primary_driver_id IS NOT NULL
-    OR u.assigned_secondary_driver_id IS NOT NULL
- LIMIT 5;
-```
-Session GET `/api/v1/mdata/drivers` then `/me` then `/:id` (cookie). Unauthed = 401. Then ONE OUTBOX CERTIFIED line. Then fleet.
-
-**fleet (after drivers CERTIFIED):** `mdata.units` n_visible=187 = n_live_tup. No `operating_company_id` on units. GET `/api/v1/mdata/units` **before** `/:id`.
-
-1. `MODULE=customers` → OUTBOX CERTIFIED line (this healthz SHA + hops). Then
-2. `MODULE=drivers` (do not remake CLASS-F5973). Then
-3. `MODULE=fleet` (do not remake units audits).
-
-**Do not** put customers|drivers|fleet on one CERTIFIED line. Curl `healthz/shallow` every stamp. CC-2 helps SQL. **You** own each stamp.
-
-After **all three** CERTIFIED: leftover next unclaimed row in `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Empty unique-FINDING before that → keep hunting on the current U14 module. Do not invent. Do not pause.
-
-FORBIDDEN: Chrome · HOLD · steal `/lists` `/legal` · remake proven audits · CI babysit loop.
-
-OUTBOX ACK: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=customers | NOW=reverse SQL/GET CERTIFY TODAY | GO`
+OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | MODULE=drivers | NOW=table stamp next · leftover after 8–9 · GO`

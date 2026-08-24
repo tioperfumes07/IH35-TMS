@@ -302,7 +302,17 @@ export function Form425CHome() {
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
       pushToast("Lines 19-23 imported from Banking", "success");
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Banking import failed"), "error"),
+    onError: (error) => {
+      const msg = String((error as { message?: string })?.message ?? error);
+      if (msg.includes("mor_cash_zero_with_activity") || msg.includes("will not write $0 onto a court filing")) {
+        pushToast(
+          "Banking import blocked: in-scope transactions with $0 receipts and $0 disbursements — not writing $0 onto the filing",
+          "error",
+        );
+        return;
+      }
+      pushToast(userFacingApiError(error, "Banking import failed"), "error");
+    },
   });
 
   const generateMutation = useMutation({
