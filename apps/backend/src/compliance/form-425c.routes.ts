@@ -1061,6 +1061,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       if (e?.message === "forbidden_company_membership") {
         return sendForm425CForbiddenMembership(reply);
       }
+      if (e?.message === "form_425c_operating_company_not_found") {
+        return sendForm425CCompanyMissing(reply);
+      }
       req.log?.error?.({ err: e, reportId: params.data.id }, "form-425c import-banking failed");
       // Surface the pg error code/message only (never connection strings). Nothing was persisted.
       return reply.code(502).send({
