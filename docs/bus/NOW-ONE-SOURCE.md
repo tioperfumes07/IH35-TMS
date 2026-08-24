@@ -2,9 +2,11 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
+**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
 **LAW:** `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`  
-**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
+**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`  
+**FAST-MERGE 4 min ON · CONTINUOUS.** `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
 - **FULLY CERTIFIED (nothing pending):** U14 exclusive **14/14**. Nobody certifies them again.
 - **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
@@ -25,7 +27,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 - U14 14/14 CERTIFIED. **Never restamp. Never recertify.**
 - CERTIFIED ≠ leftover hop log ≠ Rule 24 `complete` ≠ matrix Box 4.
 - Unique 500 / dead click / silent no-op. One small PR. CREATE-TEST-THEN-VOID.
-- FAST-MERGE ~4 min. Never `gh pr checks --watch`. Deploy: Cursor, every **10 minutes AND 10 PRs**, one in-flight. CC never `trigger_deploy`.
+- FAST-MERGE ~4 min. Never `gh pr checks --watch`. Deploy: Cursor, every **5–10 minutes AND 5–10 PRs**, one in-flight. CC never `trigger_deploy`.
 - HOLD / idle / “no instructions” = defect.
 
 ---
@@ -34,13 +36,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | lead + live deploy | Phase A leftovers then Phase B. |
+| **Cursor** | **9222** | lead + FAST-MERGE + deploy | Phase A leftovers then Phase B. |
 | **CC-1** | **9223** | **U14-01-F03** then CUST-MONEY-F6312 | Bills Claim/WO column. STOP `/425c`. |
-| **CC-2** | **9224** | leftover POST unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
-| **CC-3** | **9225** | **CUST-CRM-F6313** | No roadside remake. |
+| **CC-2** | **9224** | `/reports` unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
+| **CC-3** | **9225** | CLASS-F5973 maintenance | CRM closed. No roadside remake. |
 | **Codex** | **9226** | **CLASS-F5973 fuel** | Grep-verify then one leaf. Never restamp 7–9. |
 | **Cascade** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. No restamp. |
-| **Devin-A** | audit | leftover unique FINDING or AUDIT-PASS | AUDIT ONLY. Not PARKED. Do not remake F02/F03. |
+| **Devin-A** | audit | next OPEN unique | AUDIT ONLY. F02/F03 closed. Late-arrivals 200. |
 
 Forbidden: remake Close / F6301 / fleet #15291–#15310 / fuel phantom #15335 / `/425c` loop.
 

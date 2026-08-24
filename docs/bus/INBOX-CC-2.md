@@ -1,11 +1,12 @@
 # INBOX-CC-2 · 9224
 
-**LAW:** leftover OPEN = NOT CERTIFIED COMPLETE. `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`
+**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
+**FAST-MERGE 4 min ON · CONTINUOUS.** Never `gh pr checks --watch`. Never `trigger_deploy`.
 
-**NOW:** Live Chrome leftover POST starting **`/reports`** on **current** `healthz/shallow`. Unique 500 / dead / silent only. One small PR. FAST-MERGE. Never `trigger_deploy`.
+**NOW:** Live Chrome leftover POST starting **`/reports`** on **current** `healthz/shallow`. Unique 500 / dead / silent only. One small PR. FAST-MERGE.
 
 Do **not** remake Close / TASK-F6360 / U14-12-F04 / U14-13-F06 / SYS-F5984.
 
-Empty unique on `/reports` → next leftover POST URL you do not share (`/tasks` then `/help`). Never idle.
+Empty unique on `/reports` → `/tasks` then `/help`. Never idle.
 
-OUTBOX: `CC-2 | ACK | ZERO-LEFTOVER-LAW | PORT=9224 | NOW=/reports | GO`
+OUTBOX: `CC-2 | ACK | FINISH-ALL | PORT=9224 | NOW=/reports | GO`

@@ -30,18 +30,20 @@ See `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`.
 
 Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version`.
 
+**FAST-MERGE 4 min ON (weekend).** Local gate exit 0 → push → `gh pr create` → squash-merge same turn. Never `gh pr checks --watch`. Continuous until remainder empty. See `docs/bus/FAST-MERGE-4MIN-LAW.md` + `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`.
+
 ---
 
 ## U14 — 14/14 CERTIFIED. Campaign closed.
 
 | Module | Stamp | Unique leftover TODAY (verified or still-OPEN on main) | Seat NOW |
 |--------|-------|--------------------------------------------------------|----------|
-| accounting | U14 `@c11bdab` | **U14-01-F03** Bills **list** has no Claim/WO **column** (filter + detail exist). | **CC-1** after F02/F03 |
+| accounting | U14 `@c11bdab` | **U14-01-F03** Bills **list** has no Claim/WO **column** (filter + detail exist). | **CC-1 NOW** |
 | banking | U14 `@36e51bb` | BANK-F5987 `mask` — **grep-closed** (`account_mask` on main). No remake. | — |
 | settlements | U14 `@b6980d6` | No unique leftover verified this pass. | Unique FINDING only |
 | factoring | U14 `@c11bdab` | FACT-F5986 DISTINCT/ORDER — **grep-closed** (`sort_key` on main). No remake. | — |
-| dispatch | U14 `@39472f2` | Late-arrivals 500 — **FIXED live** `ccdbbbb` / `dep-da65kgu`. | Do not remake |
-| vendors | U14 `@627d7d0` | **U14-06-F02 + F03** A/P Bills/Payments empty while Neon has 3 bills + 2 payments (LOVES `95307de7-…`). | **Cursor THIS PR** |
+| dispatch | U14 `@39472f2` | Late-arrivals page + API **LIVE 200** @ `d6b43ce` (`count:2`). Devin widget-500 card **REFUTED** (Cursor CDP `GET https://api.ih35dispatch.com/api/v1/dispatch/alerts/late-arrivals`). | Do not remake |
+| vendors | U14 `@627d7d0` | F02/F03 **LIVE CLOSED** @ `d6b43ce` (Devin-A + Cursor Chrome: LOVES A/P 2 bills + 2 payments). | Do not remake |
 | customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees still follow-up copy. CUST-CRM-F6313 — **VERIFIED honest empty, not a leftover** (CC-3): zero canonical backend exists for Projects/Opportunities/Conversations (grepped every `db/migrations/*.sql` — no projects table, no CRM/opportunities schema; the only `chat.*` schema is per-load driver↔office chat, `kind` CHECK has no `'customer'` option; grepped `apps/backend/src` — zero real routes, only coincidental word matches) and the current `COMING_STATE_COPY` placeholder in `Customers.tsx` is confirmed NOT faking data from loads anywhere (only 3 refs each: type def, tab list, placeholder string). Same exemption class as "Finance Hub honest flag-off" in the zero-leftover law. | **CC-1** money only |
 | drivers | U14 `@07993ac` | DRVFIN-F6169 advances 404 — **grep-closed** (`driver_company_authorizations` on main). No remake. | Unique FINDING only |
 | fleet | U14 `@07993ac` | No unique leftover verified this pass. | Unique FINDING only |
@@ -80,12 +82,12 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW |
 |------|------|-----|
-| Cursor | 9222 | Ship **U14-06-F02 + F03**. FAST-MERGE. Lead. Never recertify. |
+| Cursor | 9222 | Lead. FAST-MERGE 4 min. Deploy cadence. Unique overflow. Never recertify. |
 | CC-1 | 9223 | **U14-01-F03** Bills list Claim/WO column. Then **CUST-MONEY-F6312**. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | Unique leftover FINDING on leftover POST (not Close, not F04/F06). |
-| CC-3 | 9225 | CUST-CRM-F6313 verified honest-empty (see customers row). Next: CLASS-F5973 maintenance leaf if still dead. No roadside remake. |
-| Codex | 9226 | **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify then one leaf PR. Never restamp customers/drivers/fleet. |
+| CC-2 | 9224 | `/reports` unique leftover (not Close, not F04/F06). FAST-MERGE 4 min. Continuous. |
+| CC-3 | 9225 | CLASS-F5973 maintenance leaf if still dead. CRM closed. No roadside remake. FAST-MERGE 4 min. |
+| Codex | 9226 | **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify then one leaf PR. Never restamp customers/drivers/fleet. FAST-MERGE 4 min. |
 | Cascade | audit | Unique FINDING if still true on **current live SHA**. No restamp. |
-| Devin-A | audit | Same. `/vendors` after F02/F03 deploys. Not PARKED. |
+| Devin-A | audit | Next OPEN unique. F02/F03 closed. Late-arrivals 200. Not PARKED. |
 
 Idle / HOLD / “no instructions” = defect. You have this file.
