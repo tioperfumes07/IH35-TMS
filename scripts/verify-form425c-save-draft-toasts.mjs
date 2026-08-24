@@ -262,6 +262,9 @@ export function collectProblems(src) {
   if (!historyTab.includes("onPrint(r.id)") || !historyTab.includes("Print")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: History must Print a filing — filed MORs had no reprint hop after Generate was blocked");
   }
+  if (!src.includes("!res.print_html?.trim()") || !src.includes("the server returned empty HTML")) {
+    problems.push(`${PAGE}: History Print must toast when filing-html is empty — writing blank print_html was a silent no-op`);
+  }
   if (!src.includes("getForm425CFilingHtml") || !src.includes("historyPrintMutation")) {
     problems.push(`${PAGE}: History Print must GET filing-html — not POST generate-filing-pdf (that mutates / refuses filed)`);
   }
@@ -376,6 +379,8 @@ const good = `
   exhibitEntries.b
   getForm425CFilingHtml
   historyPrintMutation
+  if (!res.print_html?.trim())
+  the server returned empty HTML
   tab === "merge"
           historyPrintMutation.mutate(form.reportId);
           status unchanged

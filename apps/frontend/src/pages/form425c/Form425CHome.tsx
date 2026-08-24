@@ -442,6 +442,10 @@ export function Form425CHome() {
   const historyPrintMutation = useMutation({
     mutationFn: (id: string) => getForm425CFilingHtml(id, companyId),
     onSuccess: (res) => {
+      if (!res.print_html?.trim()) {
+        pushToast("Could not print that filing — the server returned empty HTML", "error");
+        return;
+      }
       const w = window.open("", "_blank");
       if (!w) {
         pushToast("Popup blocked — allow popups to print the filing", "error");
