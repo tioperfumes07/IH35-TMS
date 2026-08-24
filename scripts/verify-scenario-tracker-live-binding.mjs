@@ -47,6 +47,28 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.trailer_swap",
+    needles: [
+      "dispatch.load_assignment_history",
+      "mdata.loads",
+      "l.id = h.load_id",
+      "l.operating_company_id = h.operating_company_id",
+      "l.soft_deleted_at IS NULL",
+      "l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')",
+      "mdata.equipment",
+      "old_trailer.id = h.previous_trailer_id",
+      "old_trailer.owner_company_id = h.operating_company_id",
+      "new_trailer.id = h.new_trailer_id",
+      "new_trailer.owner_company_id = h.operating_company_id",
+      "new_trailer.deactivated_at IS NULL",
+      "new_trailer.status::text = 'Active'",
+      "h.previous_trailer_id <> h.new_trailer_id",
+      "dispatch.load_assignment_history later",
+      "later.new_trailer_id <> h.new_trailer_id",
+      "(later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)",
+    ],
+  },
+  {
     key: "scenario.breakdown_relay",
     needles: [
       "dispatch.intransit_issues",
@@ -420,6 +442,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')", "") })],
+    ["trailer swap ignores a later replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.new_trailer_id <> h.new_trailer_id", "") })],
     ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
     ["breakdown relay accepts a blocked replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND live_unit.is_dispatch_blocked IS NOT TRUE", "") })],
     ["driver onboarding accepts an incomplete session", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND s.status = 'completed'", "") })],
