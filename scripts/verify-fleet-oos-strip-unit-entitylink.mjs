@@ -16,37 +16,36 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-fleet-oos-strip-unit-entitylink";
 const FILE = path.join(ROOT, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx");
 
-function assert(cond, msg) {
-  if (!cond) throw new Error(`${LABEL}: ${msg}`);
+export function collectProblems(src) {
+  const problems = [];
+  if (!/EntityLink/.test(src)) problems.push("must use EntityLink");
+  if (!/kind=["']unit["']/.test(src)) problems.push("must EntityLink kind=unit");
+  if (!/data-testid=["']fleet-oos-unit-link["']/.test(src)) problems.push("must expose fleet-oos-unit-link");
+  if (/<span className="font-semibold text-gray-900">\{row\.unitNumber\}<\/span>/.test(src)) problems.push("must not render plain unitNumber span");
+  return problems;
 }
 
 function check() {
-  const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must use EntityLink");
-  assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
-  assert(/data-testid=["']fleet-oos-unit-link["']/.test(src), "must expose fleet-oos-unit-link");
-  assert(!/<span className="font-semibold text-gray-900">\{row\.unitNumber\}<\/span>/.test(src), "must not render plain unitNumber span");
+  const problems = collectProblems(fs.readFileSync(FILE, "utf8"));
+  if (problems.length) throw new Error(`${LABEL}: ${problems.join("; ")}`);
 }
 
 function selftest() {
-  const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']fleet-oos-unit-link["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const good = '<EntityLink kind="unit" data-testid="fleet-oos-unit-link">{row.unitNumber}</EntityLink>';
+  if (collectProblems(good).length) throw new Error("selftest good fixture must pass");
+  const mutations = [
+    [good.replaceAll("EntityLink", "PlainLink"), "must use EntityLink"],
+    [good.replace('kind="unit"', 'kind="load"'), "kind=unit"],
+    [good.replace("fleet-oos-unit-link", "removed-unit-link"), "expose fleet-oos-unit-link"],
+    [`${good}<span className="font-semibold text-gray-900">{row.unitNumber}</span>`, "must not render plain"],
+  ];
+  for (const [fixture, expected] of mutations) {
+    const problems = collectProblems(fixture);
+    if (!problems.some((problem) => problem.includes(expected))) {
+      throw new Error(`selftest mutation escaped: ${expected} (${JSON.stringify(problems)})`);
+    }
   }
-  assert(failed, "--selftest expected FAIL when unit link testid removed");
-  check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS ${mutations.length}/${mutations.length}`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
