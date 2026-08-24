@@ -1,4 +1,9 @@
 {
+  "4711": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-scenario-advance-probe-uuid-cast"
+  },
   "5924": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -6208,5 +6213,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1327
+  "total_claimed": 1328
 }
