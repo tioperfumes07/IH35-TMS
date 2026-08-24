@@ -19,6 +19,8 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -70,13 +72,18 @@ function RowActions({
   onConvert: (itemId: string, prefill: Record<string, unknown>) => void;
   onReprocessed: () => void;
 }) {
+  const { pushToast } = useToast();
+  // DISP-F6327: neither mutation had onError — no toast import anywhere in the file, no isError
+  // check, fire-and-forget .mutate(). A rejected convert/reprocess silently did nothing.
   const convertM = useMutation({
     mutationFn: () => convertOcrIntakeToBookLoad(item.id, { operating_company_id: companyId }),
     onSuccess: (res) => onConvert(item.id, res.book_load_prefill),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not convert this OCR item to a load"), "error"),
   });
   const reprocessM = useMutation({
     mutationFn: () => reprocessOcrIntakeItem(item.id, companyId),
     onSuccess: () => onReprocessed(),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not reprocess this OCR item"), "error"),
   });
 
   return (
@@ -114,6 +121,7 @@ export function OcrQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [bookOpen, setBookOpen] = useState(false);
   const [bookPrefill, setBookPrefill] = useState<Record<string, unknown> | null>(null);
   const [bookSourceItemId, setBookSourceItemId] = useState<string | null>(null);
@@ -243,15 +251,25 @@ export function OcrQueuePage() {
         }}
         onCreated={(created) => {
           if (!created?.id || !bookSourceItemId) return;
+          // DISP-F6327: the load is already created by this point — a failed finalize here
+          // silently leaves the OCR queue item unmarked as converted with zero explanation, a
+          // real data-consistency gap (load exists, queue item looks stuck) not just a UX one.
           void finalizeOcrIntakeConversion(bookSourceItemId, {
             operating_company_id: companyId,
             load_id: created.id,
-          }).then(() => {
-            setBookOpen(false);
-            setBookPrefill(null);
-            setBookSourceItemId(null);
-            void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
-          });
+          })
+            .then(() => {
+              setBookOpen(false);
+              setBookPrefill(null);
+              setBookSourceItemId(null);
+              void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+            })
+            .catch((err) => {
+              pushToast(
+                userFacingApiError(err, "Load created, but could not mark the OCR item as converted"),
+                "error",
+              );
+            });
         }}
       />
     </div>
