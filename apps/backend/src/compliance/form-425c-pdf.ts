@@ -73,6 +73,30 @@ function labelForMonth(monthDate: string) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+/** Court "Date filed" from filed_at YYYY-MM-DD only. Never print-day. Never UTC Date shift. */
+function filedDateLabel(filedAt: unknown): string {
+  const ymd = String(filedAt ?? "").trim().slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return "";
+  const monthIdx = Number(match[2]) - 1;
+  if (monthIdx < 0 || monthIdx > 11) return "";
+  return `${MONTHS[monthIdx]} ${Number(match[3])}, ${match[1]}`;
+}
+
+function fmtCount(v: unknown): string {
+  const n = optionalNum(v);
+  if (n === null) return "";
+  return String(Math.trunc(n));
+}
+
+function courtCaption(profile: Record<string, unknown> | undefined): string {
+  const division = String(profile?.court_division ?? "").trim();
+  const district = String(profile?.court_district ?? "").trim();
+  if (!division && !district) return "";
+  if (!division || !district) return [division, district].filter(Boolean).join(" · ");
+  return `${division} Division · ${district} District`;
+}
+
 type ExhibitRow = { line_number?: unknown; explanation?: unknown };
 
 function exhibitSection(title: string, flagged: number[], rows: ExhibitRow[]) {
@@ -126,6 +150,12 @@ function buildPrintHTML(
 
   const mrow = (line: number, label: string, value: string) =>
     `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>${line}.</strong> ${label}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:right;">${value ? `$${value}` : ""}</td></tr>`;
+  const crow = (line: number, label: string, value: string) =>
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #dde4ee;"><strong>${line}.</strong> ${label}</td><td style="padding:4px 8px;border-left:1px solid #dde4ee;border-bottom:1px solid #dde4ee;text-align:right;">${value}</td></tr>`;
+  const caption = courtCaption(profile);
+  const filed = filedDateLabel(report.filed_at);
+  const lob = String(profile?.line_of_business ?? "").trim();
+  const naics = String(profile?.naisc_code ?? "").trim();
   const qrow = (num: number, text: string, expectYes: boolean) => {
     const ans = String(answers[String(num)] ?? "").trim().toLowerCase();
     const flagged = (expectYes && ans === "no") || (!expectYes && ans === "yes");
@@ -135,6 +165,7 @@ function buildPrintHTML(
   return `<!doctype html><html><head><meta charset="utf-8" /><style>@page{size:letter;margin:.5in}.section{background:#1e3a6a;color:#fff;padding:4px 8px;margin-top:8px;font-weight:700}table{width:100%;border-collapse:collapse}body{font-family:Arial,sans-serif;font-size:12px}</style></head><body>
   <h2 style="margin:0">Official Form 425C — Monthly Operating Report</h2>
   <div style="margin:4px 0 10px;color:#334155;">${companyName} · ${labelForMonth(String(report.reporting_month ?? ""))}</div>
+  <div style="margin:0 0 10px;color:#334155;">${caption ? `${caption} · ` : ""}<strong>Date filed:</strong> ${filed}${lob ? ` · ${lob}` : ""}${naics ? ` · NAICS ${naics}` : ""}</div>
 
   <div class="section">1. Questionnaire</div>
   <table style="border:1px solid #cbd5e1">${QUESTIONNAIRE.map(([n, t, ey]) => qrow(n, t, ey)).join("")}</table>
@@ -152,6 +183,8 @@ function buildPrintHTML(
   <table style="border:1px solid #cbd5e1">
     ${mrow(24, "Total payables", fmt(report.line_24_payables))}
     ${mrow(25, "Total receivables", fmt(report.line_25_receivables))}
+    ${crow(26, "Employees when the case was filed", fmtCount(report.line_26_employees_at_filing))}
+    ${crow(27, "Employees as of this monthly report", fmtCount(report.line_27_employees_now))}
     ${mrow(28, "Professional fees this month", fmt(report.line_28_bk_fees_this_month))}
     ${mrow(29, "Professional fees since filing", fmt(report.line_29_bk_fees_since_filing))}
     ${mrow(30, "Other professional fees this month", fmt(report.line_30_other_fees_this_month))}
