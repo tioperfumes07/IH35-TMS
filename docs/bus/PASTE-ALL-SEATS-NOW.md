@@ -6,13 +6,13 @@
 
 U14 14/14 CERTIFIED. Never restamp. Never recertify. Idle / “no instructions” = defect.
 
-`git pull --ff-only origin main` then ACK. Unique 500/dead/silent. One small PR. FAST-MERGE 4 min. CC never `trigger_deploy`. Deploy = Cursor, 5–10 min **and** 5–10 PRs, one in-flight.
+`git pull --ff-only origin main` then ACK. Unique 500/dead/silent. One small PR. FAST-MERGE 4 min. CC never `trigger_deploy`. Deploy = Cursor, every **10 min AND 10 PRs**, one in-flight. Idle = defect. YOU HAVE INSTRUCTIONS.
 
 ===== THE NEXT 8 =====
 1–2  CC-1   `/cash-flow` then `/finance`
 3–4  CC-2   `/fuel` then `/reports` leftover unique (not CC-1 money reports)
 5–7  CC-3   `/compliance` then `/eld` then `/inventory`
-8    Cursor `/docs` leftover unique (do NOT loop `/425c`)
+8    Cursor `/docs` leftover-clean · NOW `/home` then help/program/system
 Codex leftover unique `/customers` → `/drivers` → `/fleet` (no restamp)
 ===== END =====
 
@@ -54,6 +54,6 @@ ACK: Devin-A | ACK | NEXT-8 | NOW=/vendors EXTENT | GO
 ===== END =====
 
 ===== CURSOR 9222 =====
-Lead. NOW leftover `/docs` (module #8). Do not loop `/425c`. Deploy 5–10 min AND 5–10 PRs, one in-flight.
-ACK: Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/docs | GO
+Lead. NOW leftover `/home`. Do not loop `/425c`. Deploy every **10**.
+ACK: Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/home | GO
 ===== END =====

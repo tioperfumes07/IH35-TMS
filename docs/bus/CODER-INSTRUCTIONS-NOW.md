@@ -12,7 +12,7 @@ U14 **14/14 CERTIFIED**. Never recertify. USMCA only. HOLD / “no instructions�
 
 | Seat | NOW (Next 8) |
 |------|----------------|
-| Cursor 9222 | `/docs` leftover unique (module #8). Do not loop `/425c`. Wave 2 = users/home/help/program/system |
+| Cursor 9222 | `/home` leftover unique. Docs+users shipped. Then help/program/system. Deploy every **10** |
 | CC-1 9223 | `/cash-flow` then `/finance` (modules #1–#2) |
 | CC-2 9224 | `/fuel` then `/reports` leftover (modules #3–#4) |
 | CC-3 9225 | `/compliance` then `/eld` then `/inventory` (modules #5–#7) |
@@ -20,6 +20,6 @@ U14 **14/14 CERTIFIED**. Never recertify. USMCA only. HOLD / “no instructions�
 | Cascade | audit `/accounting` EXTENT |
 | Devin-A | audit `/vendors` EXTENT |
 
-Live SHA: re-curl `https://api.ih35dispatch.com/api/v1/healthz/shallow`. CC never `trigger_deploy`. Deploy = Cursor, 5–10 min **and** 5–10 PRs, one in-flight. One small PR per unique finding.
+Live SHA: re-curl `https://api.ih35dispatch.com/api/v1/healthz/shallow`. CC never `trigger_deploy`. Deploy = Cursor, every **10 min AND 10 PRs**, one in-flight. Idle = defect. One small PR per unique finding.
 
 ACK: `SEAT | ACK | NEXT-8 | PORT=n | NOW=<url> | GO`

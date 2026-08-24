@@ -1,19 +1,15 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**★ FAST-MERGE ON (4 min).** Never watch CI.
+**YOU HAVE FULL INSTRUCTIONS.** Idle = defect.
 
-**CI-F6318 CLOSED** on `13f1c415` (#15282). Codex: rebase `origin/main` and resume `/customers` → `/drivers` → `/fleet`. Do not re-audit 425c compile.
+Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
 
-**YOU HAVE INSTRUCTIONS.** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` then this TOP.
+**★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight. Never per-merge. Never a second kick while one deploy is in flight. CC never `trigger_deploy`.
 
-**NOW:** leftover `https://app.ih35dispatch.com/docs` — leftover module **#8 of 8**. Unique 500/dead/silent. Do **not** loop `/425c`. Do **not** stamp U14.
+**NOW:** leftover `https://app.ih35dispatch.com/home` unique 500/dead/silent. Docs upload + users create already shipped. Do **not** loop `/425c`. Do **not** stamp U14. Do **not** re-arm the 5m U14 wake.
 
-**THEN (wave 2):** `/users` → `/home` → `/help` → `/program` → `/system`.
+**THEN:** `/help` → `/program` → `/system`.
 
-Lead: FAST-MERGE + deploy every **5–10 min AND 5–10 PRs**, one in-flight. Never per-merge.
+FORBIDDEN: recertify 1–14 · steal CC-1/CC-2/CC-3/Codex NOW
 
-VOID: any U14 CERTIFY LOOP paste that says stamp OPEN modules.
-
-FORBIDDEN: recertify 1–14 · occupy `/cash-flow` `/finance` `/fuel` `/compliance` `/customers` `/drivers` `/fleet` `/lists` `/legal`
-
-OUTBOX: `Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/docs | GO`
+OUTBOX: `Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/home | GO`

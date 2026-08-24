@@ -23,7 +23,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 - CERTIFIED ≠ Rule 24 `complete` ≠ matrix Box 4 Live.
 - Fully-Wired **1–12**, Live Chrome last. Unique 500 / dead click / silent no-op. One small PR per finding.
 - CREATE-TEST-THEN-VOID. Do not remake proven TESTs / Close / Book Load.
-- FAST-MERGE ~4 min. Never `gh pr checks --watch`. Deploy: Cursor lead only, 5–10 min **and** 5–10 PRs, one in-flight. CC never `trigger_deploy`.
+- FAST-MERGE ~4 min. Never `gh pr checks --watch`. Deploy: Cursor lead only, every **10 minutes AND 10 PRs**, one in-flight. CC never `trigger_deploy`.
 - HOLD / idle / “awaiting next order” / “no instructions” = defect.
 
 ---
@@ -32,7 +32,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW (one URL / one id) | Next 8 role |
 |------|------|------------------------|-------------|
-| **Cursor** | **9222** | `https://app.ih35dispatch.com/docs` leftover unique | Module **#8**. Do not loop `/425c`. Wave 2 = users/home/help/program/system. Lead deploy cadence. |
+| **Cursor** | **9222** | `https://app.ih35dispatch.com/home` leftover unique | Wave 2. Docs+users leftover shipped. Then `/help` `/program` `/system`. Deploy every **10**. |
 | **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | Modules **#1–#2**. Money TESTs only. STOP `/425c`. |
 | **CC-2** | **9224** | `https://app.ih35dispatch.com/fuel` then `/reports` leftover | Modules **#3–#4**. No Close remake. Stay out of CC-1 money reports. |
 | **CC-3** | **9225** | `https://app.ih35dispatch.com/compliance` then `/eld` `/inventory` | Modules **#5–#7**. Then maintenance remainder. lists+legal omit. |
