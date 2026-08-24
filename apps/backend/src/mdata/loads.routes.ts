@@ -686,8 +686,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `
           SELECT COUNT(*)::int AS total_count
           FROM mdata.loads l
-          JOIN mdata.customers c ON c.id = l.customer_id
-                                AND c.operating_company_id = l.operating_company_id
+          JOIN LATERAL mdata.get_customer_same_company(
+            l.customer_id,
+            l.operating_company_id
+          ) c ON true
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
@@ -753,8 +755,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 AND g.location_ref_id = l.customer_id
             ) AS geofence_ready
           FROM mdata.loads l
-          JOIN mdata.customers c ON c.id = l.customer_id
-                                AND c.operating_company_id = l.operating_company_id
+          JOIN LATERAL mdata.get_customer_same_company(
+            l.customer_id,
+            l.operating_company_id
+          ) c ON true
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           -- DISPATCH-PRIMARY-TRAILER-REVERSE: mdata.loads has no trailer FK. Resolve the latest
