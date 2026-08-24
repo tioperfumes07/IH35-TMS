@@ -1,4 +1,9 @@
 {
+  "4582": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-load-reads-shared-drivers"
+  },
   "4580": {
     "claimed_at": "2026-08-23",
     "claimed_by": "codex",
