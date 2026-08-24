@@ -26,6 +26,7 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
+import { courtDistrictCaption } from "./lib/courtDistrictCaption";
 import { casePetitionDateFromReports, resolveCreatePetitionDate } from "./lib/petitionDate";
 import type { CompanyKey, CompanyProfiles, CurrentFormState, HistoryReportRow } from "./types";
 import { CurrentPeriodTab } from "./tabs/CurrentPeriodTab";
@@ -331,10 +332,17 @@ export function Form425CHome() {
   const createMutation = useMutation({
     mutationFn: () => {
       const petitionDate = resolveCreatePetitionDate(profiles[activeCompany].petitionDate);
+      const courtDistrict = courtDistrictCaption(
+        profiles[activeCompany].division,
+        profiles[activeCompany].district,
+      );
+      if (!courtDistrict) {
+        throw new Error("Set court division and district in Profiles before creating a report — will not invent a court caption");
+      }
       return createForm425CReport(companyId, {
         reporting_month: `${monthKey(year, month)}-01`,
         case_number: profiles[activeCompany].caseNumber,
-        court_district: `${profiles[activeCompany].division} Division · ${profiles[activeCompany].district} District`,
+        court_district: courtDistrict,
         petition_date: petitionDate,
         subchapter: "V",
       });
@@ -421,6 +429,10 @@ export function Form425CHome() {
         });
         if (unanswered) {
           pushToast("Generate returned empty filing HTML and questionnaire is incomplete — not inventing Yes/No on a court print", "error");
+          return;
+        }
+        if (!courtDistrictCaption(profiles[activeCompany].division, profiles[activeCompany].district)) {
+          pushToast("Generate returned empty filing HTML and Profiles has no court — will not invent a court caption", "error");
           return;
         }
         printHtml = buildPrintHTML(form, profiles[activeCompany], month, year, exhibitEntries.a, exhibitEntries.b);
@@ -689,6 +701,11 @@ export function Form425CHome() {
             }
             if (!/^\d{4}-\d{2}-\d{2}$/.test(profiles[activeCompany].petitionDate?.trim() ?? "")) {
               pushToast("Set Petition Date in Profiles & Defaults before creating a report (court case filing date — never hardcode)", "error");
+              setTab("profile");
+              return;
+            }
+            if (!courtDistrictCaption(profiles[activeCompany].division, profiles[activeCompany].district)) {
+              pushToast("Set court division and district in Profiles before creating a report — will not invent a court caption", "error");
               setTab("profile");
               return;
             }
