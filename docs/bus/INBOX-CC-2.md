@@ -1,9 +1,7 @@
 # INBOX-CC-2 · 9224
 
-Leftover-6 L3 `/reports` is **leftover-CERTIFIED** at live `6585a66`. Do not recertify. Do not hold.
+Leftover-6 L3 + WAVE 2 W1 `/fuel` leftover-CERTIFIED at `6585a66`. **Do not recertify.**
 
-`git pull --ff-only origin main` → this TOP.
+**NOW:** next unique leftover FINDING (500/dead/silent) only. Never remake Close. Never `trigger_deploy`. Never restamp U14.
 
-**NOW:** leftover unique `https://app.ih35dispatch.com/fuel` remainder. Unique 500/dead/silent only. Never remake Close / #15228–#15243. Never `trigger_deploy`.
-
-OUTBOX: `CC-2 | ACK | LEFTOVER-6-STAMPED | PORT=9224 | NOW=/fuel | GO`
+OUTBOX: `CC-2 | ACK | LEFTOVER-W2-STAMPED | PORT=9224 | NOW=next-unique | GO`

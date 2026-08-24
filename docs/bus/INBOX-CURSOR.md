@@ -2,14 +2,10 @@
 
 **YOU HAVE FULL INSTRUCTIONS.** Idle = defect.
 
-Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
+**★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight.
 
-**★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight. Never per-merge. Never a second kick while one deploy is in flight. CC never `trigger_deploy`.
+Leftover-6 leftover-CERTIFIED. Leftover WAVE 2 leftover-CERTIFIED at live `6585a66`. Pack `docs/bus/LEFTOVER-WAVE-2-CERTIFY-NOW-2026-08-24.md` is a stamp table. **Do not recertify. Do not restamp U14.**
 
-**NOW:** Owner leftover-6 Live Chrome certify: `/cash-flow` `/finance` `/reports` `/compliance` `/eld` `/inventory`. Pack `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md`. Stamp leftover CERTIFIED only after hops + healthz. **Never restamp U14 1–14.** Deploy one in-flight (`dep-da624uj`).
+**NOW:** Lead + FAST-MERGE. Next leftover unique = Codex `/customers` live-verify. Unique FINDING only (500/dead/silent). Never loop `/425c`.
 
-**THEN:** `/program` remainder → `/system` remainder.
-
-FORBIDDEN: recertify 1–14 · steal CC-1/CC-2/CC-3/Codex NOW
-
-OUTBOX: `Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/program | GO`
+OUTBOX: `Cursor | ACK | LEFTOVER-W2-STAMPED | PORT=9222 | NOW=lead | GO`

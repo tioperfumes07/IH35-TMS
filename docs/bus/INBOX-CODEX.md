@@ -6,7 +6,7 @@
 
 **★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Deploy = Cursor only.
 
-Leftover-6 L1–L6 leftover-CERTIFIED at live `6585a66`. **Do not recertify leftover-6. Do not restamp U14 7–9.**
+Leftover-6 + leftover WAVE 2 leftover-CERTIFIED at live `6585a66`. **Do not recertify leftover-6 or WAVE 2. Do not restamp U14 7–9.**
 
 **NOW THIS TURN:**
 1. Live-verify **CUST-F6326** + **CUST-F6327** on USMCA (healthz `6585a66`).

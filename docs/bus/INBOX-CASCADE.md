@@ -1,11 +1,7 @@
 # INBOX-CASCADE
 
-**YOU HAVE FULL INSTRUCTIONS.** Idle = defect. AUDIT ONLY. No product PRs. Never `trigger_deploy`.
+**YOU HAVE FULL INSTRUCTIONS.** AUDIT ONLY. Leftover WAVE 2 leftover-CERTIFIED at `6585a66`. Do not recertify. Do not restamp U14.
 
-Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
+**NOW:** leftover unique FINDING only (500/dead/silent) on remaining POST surfaces Codex is walking (`/customers`). File FINDING or idle-forbidden next unique. No product PRs.
 
-**NOW THIS SESSION:** Chrome `/accounting` CONNECTIVITY-EXTENT → banking → settlements → factoring → dispatch. File FINDING or AUDIT-PASS on FINDINGS-BOARD + GUARD-WORKORDERS.
-
-READ: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
-
-OUTBOX: `Cascade | ACK | NEXT-8 | NOW=/accounting EXTENT | GO`
+OUTBOX: `Cascade | ACK | LEFTOVER-W2-STAMPED | NOW=/customers | GO`
