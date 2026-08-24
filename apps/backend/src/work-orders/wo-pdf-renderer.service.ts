@@ -28,6 +28,13 @@ export type WorkOrderPdfModel = {
   estimatedTotalCents: number | null;
   actualTotalCents: number | null;
   isCompleted: boolean;
+  // WO-PDF-COST-BREAKDOWN-LINES-FALLBACK: no product UI writes wo.labor_hours/parts_cost_cents —
+  // every real WO's itemized cost lives in maintenance.work_order_lines instead. These three sums
+  // (cents, grouped by line_type) are the fallback the Cost breakdown table renders when the legacy
+  // hours/rate fields are unset, so the printed letter never shows "—" while real dollars exist.
+  lineLaborCents: number | null;
+  linePartsCents: number | null;
+  lineOtherCents: number | null;
 };
 
 const EXTRA_STYLES = `
@@ -56,10 +63,13 @@ export function renderWorkOrderPdfHtml(model: WorkOrderPdfModel): string {
       ? `${laborHours.toFixed(2)} hrs × ${formatMoney(laborRate)} / hr = ${formatMoney(Math.round(laborHours * laborRate))}`
       : laborHours !== null && laborHours > 0
         ? `${laborHours.toFixed(2)} hrs`
-        : "—";
+        : moneyOrDash(model.lineLaborCents ?? null);
 
-  const parts = moneyOrDash(model.partsCostCents ?? null);
-  const other = moneyOrDash(model.otherCostCents ?? null);
+  // WO-PDF-COST-BREAKDOWN-LINES-FALLBACK: prefer the legacy hours/rate-derived fields when a WO
+  // actually has them, otherwise fall back to the real work_order_lines sums so the breakdown never
+  // reads "—" for a WO whose real itemized cost the app's own detail page already shows.
+  const parts = moneyOrDash(model.partsCostCents ?? model.linePartsCents ?? null);
+  const other = moneyOrDash(model.otherCostCents ?? model.lineOtherCents ?? null);
   const estimated = moneyOrDash(model.estimatedTotalCents ?? null);
   const actual = moneyOrDash(model.actualTotalCents ?? null);
 
