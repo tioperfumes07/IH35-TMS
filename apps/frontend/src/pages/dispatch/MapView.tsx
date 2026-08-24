@@ -9,6 +9,7 @@ import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider
 
 type MapPosition = {
   load_uuid: string;
+  unit_uuid: string;
   driver_uuid?: string | null;
   lat: number;
   lng: number;
@@ -31,6 +32,7 @@ export function MapView() {
   // Honor both canonical load_id and legacy ?load= (LoadLivePositionCell / older queue links).
   const focusLoadId = searchParams.get("load_id") ?? searchParams.get("load");
   const focusDriverId = searchParams.get("driver");
+  const focusUnitId = searchParams.get("unit_id");
   const mapConfigured = isDispatchMapProviderConfigured();
 
   const query = useQuery({
@@ -44,9 +46,10 @@ export function MapView() {
   const focused = positions.filter((p) => {
     if (focusLoadId && p.load_uuid === focusLoadId) return true;
     if (focusDriverId && p.driver_uuid === focusDriverId) return true;
+    if (focusUnitId && p.unit_uuid === focusUnitId) return true;
     return false;
   });
-  const hasFocus = Boolean(focusLoadId || focusDriverId);
+  const hasFocus = Boolean(focusLoadId || focusDriverId || focusUnitId);
 
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
@@ -69,7 +72,7 @@ export function MapView() {
         <p className="text-xs text-slate-600" data-testid="dispatch-map-focus">
           {focused.length > 0
             ? `${focused.length} matching position(s) from Samsara — map plotting unavailable until a map provider is configured.`
-            : "No GPS match for this driver/load yet."}
+            : "No GPS match for this driver/load/unit yet."}
         </p>
       ) : null}
       {companyId && !mapConfigured ? (

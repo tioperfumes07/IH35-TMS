@@ -36,7 +36,7 @@ export function ActionBar({
       >
         + Create Work Order
       </Link>
-      <a className={linkClass} href={`/dispatch/map?unit=${unitId}`}>
+      <a className={linkClass} href={`/dispatch/map?unit_id=${encodeURIComponent(unitId)}`}>
         View on Map
       </a>
       <a className={linkClass} href={pdfUrl} download data-testid="vp-export-pdf">
