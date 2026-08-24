@@ -150,7 +150,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Default Questionnaire Answers</div>
         {QUESTIONNAIRE.map((q) => {
-          const answer = profile.defaultAnswers[q.num] ?? (q.expectYes ? "yes" : "no");
+          const answer = profile.defaultAnswers[q.num];
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
           return (
             <div key={q.num} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-sm ${flagged ? "bg-slate-100" : ""}`}>

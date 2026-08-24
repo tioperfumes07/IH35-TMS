@@ -81,6 +81,9 @@ export function collectProblems(src) {
   if (formTab.includes('?? (q.expectYes ? "yes" : "no")')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: unanswered questionnaire radios must stay empty — inventing Yes/No is a silent court answer");
   }
+  if (profiles.includes('?? (q.expectYes ? "yes" : "no")')) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: unanswered default-questionnaire radios must stay empty — inventing Yes/No was a silent Save Defaults write");
+  }
   const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
   if (qbTab.includes("useState(new Date().getMonth())")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Month/Year must be the Form period, not a silent local picker");
