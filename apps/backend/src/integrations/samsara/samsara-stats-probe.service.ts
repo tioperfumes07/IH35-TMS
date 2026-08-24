@@ -58,7 +58,7 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
       WHERE (d.operating_company_id = $1::uuid OR EXISTS (
               SELECT 1 FROM mdata.driver_company_authorizations stats_mapped_dca
                WHERE stats_mapped_dca.driver_id = d.id
-                 AND stats_mapped_dca.operating_company_id = $1::uuid
+                 AND stats_mapped_dca.company_id = $1::uuid
                  AND stats_mapped_dca.is_authorized = true
                  AND stats_mapped_dca.deactivated_at IS NULL
             ))
@@ -70,7 +70,7 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
       WHERE (d.operating_company_id = $1::uuid OR EXISTS (
               SELECT 1 FROM mdata.driver_company_authorizations stats_total_dca
                WHERE stats_total_dca.driver_id = d.id
-                 AND stats_total_dca.operating_company_id = $1::uuid
+                 AND stats_total_dca.company_id = $1::uuid
                  AND stats_total_dca.is_authorized = true
                  AND stats_total_dca.deactivated_at IS NULL
             ))
@@ -139,7 +139,7 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
                             AND (d.operating_company_id = $1::uuid OR EXISTS (
                               SELECT 1 FROM mdata.driver_company_authorizations stats_clock_dca
                                WHERE stats_clock_dca.driver_id = d.id
-                                 AND stats_clock_dca.operating_company_id = $1::uuid
+                                 AND stats_clock_dca.company_id = $1::uuid
                                  AND stats_clock_dca.is_authorized = true
                                  AND stats_clock_dca.deactivated_at IS NULL
                             ))

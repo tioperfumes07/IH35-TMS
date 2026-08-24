@@ -27,6 +27,27 @@ if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(cron))
 const svc = read("apps/backend/src/integrations/samsara/samsara-hos-pull.service.ts");
 const clocksPull = read("apps/backend/src/integrations/samsara/samsara-hos-clocks-pull.service.ts");
 const roster = read("apps/backend/src/integrations/samsara/active-hos-driver-roster.service.ts");
+const dcaMigration = read("db/migrations/0018_driver_profile_expansion.sql");
+const schemaProjector = read("apps/backend/src/integrations/samsara/webhook-projectors/hos-projector.ts");
+const schemaProbe = read("apps/backend/src/integrations/samsara/samsara-stats-probe.service.ts");
+const schemaPairing = read("apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts");
+const dcaSources = [
+  ["dca", roster],
+  ["hos_projector_dca", schemaProjector],
+  ["stats_mapped_dca", schemaProbe],
+  ["stats_total_dca", schemaProbe],
+  ["stats_clock_dca", schemaProbe],
+  ["pairing_sync_dca", schemaPairing],
+  ["pairing_history_dca", schemaPairing],
+];
+if (!/CREATE TABLE IF NOT EXISTS mdata\.driver_company_authorizations[\s\S]{0,300}\bcompany_id uuid NOT NULL/.test(dcaMigration))
+  fail("canonical driver_company_authorizations schema must expose company_id");
+for (const [alias, source] of dcaSources) {
+  if (!new RegExp(`\\b${alias}\\.company_id = \\$1::uuid`).test(source))
+    fail(`${alias} must use canonical driver_company_authorizations.company_id (never phantom operating_company_id)`);
+  if (new RegExp(`\\b${alias}\\.operating_company_id`).test(source))
+    fail(`${alias} references phantom driver_company_authorizations.operating_company_id`);
+}
 // SCOPE: pull only the tenant's ACTIVE board drivers (OPEN vehicle assignment) via the board-proven key — NOT the
 // whole account (1358 drivers -> 1204 unmapped, missing the 8 that matter). Resolve their local+samsara ids here.
 if (!/JOIN telematics\.vehicle_driver_assignments[\s\S]{0,220}ended_at IS NULL/.test(roster))
@@ -35,7 +56,7 @@ if (!/mdata\.drivers[\s\S]{0,700}samsara_driver_id IS NOT NULL/.test(roster))
   fail("hos pull must resolve active drivers via mdata.drivers.samsara_driver_id (the board-proven key)");
 if (!/\ba\.operating_company_id = \$1::uuid/.test(roster))
   fail("active HOS roster must scope the open vehicle assignment to the selected company");
-if (!/driver_company_authorizations dca[\s\S]{0,260}dca\.operating_company_id = \$1::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(roster))
+if (!/driver_company_authorizations dca[\s\S]{0,260}dca\.company_id = \$1::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(roster))
   fail("active HOS roster must admit only home-company or actively authorized shared drivers");
 if (!/listActiveHosDriverRoster\(client, operatingCompanyId\)/.test(svc))
   fail("HOS logs pull must consume the canonical selected-company active-driver roster");
@@ -120,18 +141,27 @@ if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(posCron))
   fail("the */5 positions cron must write the samsara_hos_pull sync-log row so the probe sees a fresh committed pull");
 
 if (process.argv.includes("--selftest")) {
-  const planted = [
+  const scopePlanted = [
     ["assignment company scope", roster.replace("a.operating_company_id = $1::uuid", "a.operating_company_id = a.operating_company_id")],
     ["authorization active flag", roster.replace("dca.is_authorized = true", "dca.is_authorized = false")],
     ["authorization lifecycle", roster.replace("dca.deactivated_at IS NULL", "dca.deactivated_at IS NOT NULL")],
   ];
-  const catches = planted.filter(([, source]) =>
+  const schemaPlanted = dcaSources.map(([alias, source]) => [
+      `${alias} canonical company column`,
+      source.replace(`${alias}.company_id = $1::uuid`, `${alias}.operating_company_id = $1::uuid`),
+    ]);
+  const scopeCatches = scopePlanted.filter(([, source]) =>
     !/\ba\.operating_company_id = \$1::uuid/.test(source) ||
     !/dca\.is_authorized = true/.test(source) ||
     !/dca\.deactivated_at IS NULL/.test(source)
   ).length;
-  if (catches !== planted.length) fail(`selftest caught ${catches}/${planted.length} planted scope defects`);
-  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${catches}/${planted.length} planted scope defects`);
+  const schemaCatches = schemaPlanted.filter(([, source]) =>
+    /\b(?:dca|hos_projector_dca|stats_mapped_dca|stats_total_dca|stats_clock_dca|pairing_sync_dca|pairing_history_dca)\.operating_company_id/.test(source)
+  ).length;
+  const catches = scopeCatches + schemaCatches;
+  const total = scopePlanted.length + schemaPlanted.length;
+  if (catches !== total) fail(`selftest caught ${catches}/${total} planted scope/schema defects`);
+  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${catches}/${total} planted scope/schema defects`);
 } else {
   console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
 }

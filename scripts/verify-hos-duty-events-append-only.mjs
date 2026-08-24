@@ -47,7 +47,7 @@ if (!projector.includes("ON CONFLICT (operating_company_id, driver_id, duty_stat
 if (!projector.includes("FROM mdata.driver_company_authorizations hos_projector_dca")) {
   failures.push("apps/backend/src/integrations/samsara/webhook-projectors/hos-projector.ts: shared-driver authorization source missing");
 }
-if (!projector.includes("hos_projector_dca.operating_company_id = $1::uuid") ||
+if (!projector.includes("hos_projector_dca.company_id = $1::uuid") ||
     !projector.includes("hos_projector_dca.is_authorized = true") ||
     !projector.includes("hos_projector_dca.deactivated_at IS NULL")) {
   failures.push("apps/backend/src/integrations/samsara/webhook-projectors/hos-projector.ts: active selected-company authorization predicates missing");
@@ -56,12 +56,12 @@ if (!projector.includes("hos_projector_dca.operating_company_id = $1::uuid") ||
 if (failures.length > 0) fail(failures);
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    projector.replace("hos_projector_dca.operating_company_id = $1::uuid", "hos_projector_dca.operating_company_id = d.operating_company_id"),
+    projector.replace("hos_projector_dca.company_id = $1::uuid", "hos_projector_dca.company_id = d.operating_company_id"),
     projector.replace("hos_projector_dca.is_authorized = true", "hos_projector_dca.is_authorized = false"),
     projector.replace("hos_projector_dca.deactivated_at IS NULL", "hos_projector_dca.deactivated_at IS NOT NULL"),
   ];
   const caught = mutations.filter((source) =>
-    !source.includes("hos_projector_dca.operating_company_id = $1::uuid") ||
+    !source.includes("hos_projector_dca.company_id = $1::uuid") ||
     !source.includes("hos_projector_dca.is_authorized = true") ||
     !source.includes("hos_projector_dca.deactivated_at IS NULL")
   ).length;

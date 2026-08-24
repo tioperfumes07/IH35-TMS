@@ -52,7 +52,7 @@ contains("apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.s
 function pairingScopeFailures(source) {
   const missing = [];
   for (const alias of ["pairing_sync_dca", "pairing_history_dca"]) {
-    if (!new RegExp(`FROM mdata\\.driver_company_authorizations ${alias}[\\s\\S]{0,260}${alias}\\.operating_company_id = \\$1::uuid[\\s\\S]{0,180}${alias}\\.is_authorized = true[\\s\\S]{0,180}${alias}\\.deactivated_at IS NULL`).test(source)) {
+    if (!new RegExp(`FROM mdata\\.driver_company_authorizations ${alias}[\\s\\S]{0,260}${alias}\\.company_id = \\$1::uuid[\\s\\S]{0,180}${alias}\\.is_authorized = true[\\s\\S]{0,180}${alias}\\.deactivated_at IS NULL`).test(source)) {
       missing.push(`${alias} active selected-company authorization`);
     }
   }

@@ -13,7 +13,7 @@ describe("Samsara stats probe shared-driver scope", () => {
     const joined = sql.join("\n");
     for (const alias of ["stats_mapped_dca", "stats_total_dca", "stats_clock_dca"]) {
       expect(joined).toContain(`FROM mdata.driver_company_authorizations ${alias}`);
-      expect(joined).toContain(`${alias}.operating_company_id = $1::uuid`);
+      expect(joined).toContain(`${alias}.company_id = $1::uuid`);
       expect(joined).toContain(`${alias}.is_authorized = true`);
       expect(joined).toContain(`${alias}.deactivated_at IS NULL`);
     }

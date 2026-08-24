@@ -132,7 +132,7 @@ async function resolveLocalDriverId(client: DbClient, operatingCompanyId: string
                 SELECT 1
                   FROM mdata.driver_company_authorizations hos_projector_dca
                  WHERE hos_projector_dca.driver_id = d.id
-                   AND hos_projector_dca.operating_company_id = $1::uuid
+                   AND hos_projector_dca.company_id = $1::uuid
                    AND hos_projector_dca.is_authorized = true
                    AND hos_projector_dca.deactivated_at IS NULL
               )

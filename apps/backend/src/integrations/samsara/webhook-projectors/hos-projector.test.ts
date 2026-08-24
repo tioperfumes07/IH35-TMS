@@ -35,7 +35,7 @@ describe("HOS webhook projector", () => {
     expect(result).toEqual({ success: true });
     const driverSql = queries.find((sql) => sql.includes("FROM mdata.drivers d")) ?? "";
     expect(driverSql).toContain("FROM mdata.driver_company_authorizations hos_projector_dca");
-    expect(driverSql).toContain("hos_projector_dca.operating_company_id = $1::uuid");
+    expect(driverSql).toContain("hos_projector_dca.company_id = $1::uuid");
     expect(driverSql).toContain("hos_projector_dca.is_authorized = true");
     expect(driverSql).toContain("hos_projector_dca.deactivated_at IS NULL");
     expect(query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO hos.duty_status_events"), [
