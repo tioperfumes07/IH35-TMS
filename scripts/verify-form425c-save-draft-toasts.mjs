@@ -188,6 +188,9 @@ export function collectProblems(src) {
   if (mergeTab.includes("disabled={generating || !canGenerate}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must stay clickable so the parent toast fires — a disabled button is a dead click");
   }
+  if (!mergeTab.includes("Set the debtor name in Profiles before a court filename")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: empty debtor must not show a fabricated court filename");
+  }
   const mergeChunk = (src.split('tab === "merge"')[1] ?? "").split('tab === "history"')[0];
   if (mergeChunk.includes("generateMutation.mutate")) {
     problems.push(
@@ -346,6 +349,17 @@ export function collectProblems(src) {
   if (!fePrint.includes("exhibitPrintBlock") || !fePrint.includes("No Exhibit explanation saved")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: print fallback must include Exhibit A/B explanations");
   }
+  if (
+    fePrint.includes('?? (q.expectYes ? "yes" : "no")') ||
+    fePrint.includes('form.answers[q.num] || "yes"') ||
+    fePrint.includes('form.answers[q.num] || "no"') ||
+    !fePrint.includes('if (!name) return ""')
+  ) {
+    problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: must not invent Yes/No or a blank-debtor court filename");
+  }
+  if (!src.includes("Print opened without a debtor filename") || src.includes("res.suggested_filename || suggestedFilename")) {
+    problems.push(`${PAGE}: Generate toast must not invent a court PDF name when suggested_filename and Profiles name are empty`);
+  }
   if (!src.includes("exhibitEntries.a") || !src.includes("exhibitEntries.b")) {
     problems.push(`${PAGE}: Generate PDF fallback must pass saved exhibit rows into buildPrintHTML`);
   }
@@ -454,6 +468,7 @@ const good = `
   Generate returned empty filing HTML
   Profiles has no debtor name
   questionnaire is incomplete
+  Print opened without a debtor filename
   tab === "merge"
           historyPrintMutation.mutate(form.reportId);
           status unchanged

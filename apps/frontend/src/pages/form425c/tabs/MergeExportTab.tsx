@@ -22,7 +22,12 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
           file. Browser destination <strong>Save as PDF</strong>.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Suggested filename: <em>{suggestedFilename(company.name, month, year)}</em>
+          Suggested filename:{" "}
+          {suggestedFilename(company.name, month, year) ? (
+            <em>{suggestedFilename(company.name, month, year)}</em>
+          ) : (
+            <em className="font-semibold text-red-700">Set the debtor name in Profiles before a court filename</em>
+          )}
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Period: {MONTHS[month]} {year}

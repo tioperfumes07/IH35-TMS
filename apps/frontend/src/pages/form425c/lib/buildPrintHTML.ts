@@ -146,8 +146,8 @@ export function buildPrintHTML(
   ${QUESTIONNAIRE.map((q, i) =>
     i === 9
       ? `<tr style="background:#dce6f1;"><td colspan="4" style="padding:2px 7px;font-size:6.8pt;font-style:italic;color:#333;">
-        If you answer Yes to lines 10–18, attach an explanation and label it Exhibit B.</td></tr>${qrow(q.num, q.text, q.expectYes, form.answers[q.num] || "no")}`
-      : qrow(q.num, q.text, q.expectYes, form.answers[q.num] || "yes")
+        If you answer Yes to lines 10–18, attach an explanation and label it Exhibit B.</td></tr>${qrow(q.num, q.text, q.expectYes, String(form.answers[q.num] ?? "").trim().toLowerCase())}`
+      : qrow(q.num, q.text, q.expectYes, String(form.answers[q.num] ?? "").trim().toLowerCase())
   ).join("")}
 </table>
 
@@ -248,7 +248,7 @@ export function buildPrintHTML(
 ${exhibitPrintBlock(
   "Exhibit A — lines 1–9",
   QUESTIONNAIRE.filter((q) => {
-    const ans = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
+    const ans = String(form.answers[q.num] ?? "").trim().toLowerCase();
     return q.num <= 9 && ((q.expectYes && ans === "no") || (!q.expectYes && ans === "yes"));
   }).map((q) => q.num),
   exhibitA,
@@ -256,7 +256,7 @@ ${exhibitPrintBlock(
 ${exhibitPrintBlock(
   "Exhibit B — lines 10–18",
   QUESTIONNAIRE.filter((q) => {
-    const ans = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
+    const ans = String(form.answers[q.num] ?? "").trim().toLowerCase();
     return q.num >= 10 && ((q.expectYes && ans === "no") || (!q.expectYes && ans === "yes"));
   }).map((q) => q.num),
   exhibitB,
@@ -265,7 +265,9 @@ ${exhibitPrintBlock(
 }
 
 export function suggestedFilename(companyName: string, month: number, year: number) {
-  return `${companyName} – ${MONTHS[month]} ${year} – Monthly Operating Report.pdf`;
+  const name = String(companyName ?? "").trim();
+  if (!name) return "";
+  return `${name} – ${MONTHS[month]} ${year} – Monthly Operating Report.pdf`;
 }
 
 export function periodEnd(month: number, year: number) {
