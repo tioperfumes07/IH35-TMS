@@ -6,7 +6,7 @@ Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
 
 **★ FAST-MERGE ON (4 min).** Deploy every **10 minutes AND 10 PRs**, one in-flight. Never per-merge. Never a second kick while one deploy is in flight. CC never `trigger_deploy`.
 
-**NOW:** leftover `https://app.ih35dispatch.com/program` unique 500/dead/silent. Home create + system launch-copy shipped. `/help` leftover-clean (no unique 500/dead/silent). Do **not** loop `/425c`. Do **not** stamp U14. Do **not** re-arm the 5m U14 wake.
+**NOW:** Unblock Codex — `/program` TS2322 (`mutateAsync` → `Promise<void>`). Then leftover `/program` remainder unique. Home create + system launch-copy + note-clear shipped. `/help` leftover-clean. Do **not** loop `/425c`. Do **not** stamp U14.
 
 **THEN:** `/program` remainder → `/system` remainder.
 
