@@ -1507,7 +1507,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
             WHERE id = $1::uuid
               AND operating_company_id = $2::uuid
             LIMIT 1`,
-          [resolvedVendorId, query.data.operating_company_id]
+          [resolvedVendorId, operatingCompanyId]
         );
         vendor = vendorRes.rows[0] ?? null;
       }

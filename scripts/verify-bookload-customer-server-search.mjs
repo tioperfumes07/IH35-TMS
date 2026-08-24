@@ -36,6 +36,9 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*5000/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:5000 customer page`);
   }
+  if (!/label:\s*String\(c\.name\s*\|\|\s*c\.customer_code/.test(code) || /c\.legal_name/.test(code)) {
+    problems.push(`${FILE}: picker label must use the typed canonical Customer name/code contract`);
+  }
   const live = readRel(root, LIVE_WIZARD);
   if (!live) {
     problems.push(`missing ${LIVE_WIZARD}`);
@@ -47,6 +50,9 @@ export function collectProblems(root = ROOT) {
   }
   if (/limit:\s*5000/.test(liveCode) && /book-load-v4-customers/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: must not fetch silent limit:5000 for the customer picker`);
+  }
+  if (!/label:\s*String\(c\.name\s*\|\|\s*c\.customer_code/.test(liveCode) || /c\.legal_name/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer name/code contract`);
   }
   return problems;
 }

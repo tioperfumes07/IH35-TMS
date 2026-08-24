@@ -21,6 +21,7 @@ function audit(parts) {
   if (!/<EntityLinkOrTombstone\s+kind="vendor"\s+id=\{wo\.resolved_vendor_id as string \| null\}\s+name=\{wo\.resolved_vendor_name\}\s+noun="Vendor"/.test(parts.detail)) failures.push("WO detail must link the resolved vendor FK and label");
   if (!/const resolvedVendorId = wo\.external_vendor_id \?\? wo\.vendor_id \?\? null/.test(parts.pdfRoute)) failures.push("WO PDF must resolve the canonical external/vendor fallback FK");
   if (!/FROM mdata\.vendors[\s\S]{0,160}id = \$1::uuid[\s\S]{0,160}operating_company_id = \$2::uuid/.test(parts.pdfRoute)) failures.push("WO PDF vendor lookup must be company scoped");
+  if (!/\[resolvedVendorId, operatingCompanyId\]/.test(parts.pdfRoute)) failures.push("WO PDF vendor lookup must use the validated/inferred stable company id");
   if (!/shopName: wo\.shop_name \? String\(wo\.shop_name\) : vendor\?\.vendor_name \? String\(vendor\.vendor_name\) : null/.test(parts.pdfRoute)) failures.push("WO PDF must render the canonical vendor label when snapshot shop text is absent");
   if (!/shopAddress: wo\.shop_address \? String\(wo\.shop_address\) : vendorAddress/.test(parts.pdfRoute) || !/shopPhone: wo\.shop_phone \? String\(wo\.shop_phone\) : vendor\?\.phone/.test(parts.pdfRoute)) failures.push("WO PDF must render canonical vendor address/phone fallbacks");
   return failures;
@@ -40,6 +41,7 @@ if (process.argv.includes("--selftest")) {
       "WHERE id = $1::uuid",
     ],
     ["pdfRoute", "vendor?.vendor_name ? String(vendor.vendor_name) : null", "null"],
+    ["pdfRoute", "[resolvedVendorId, operatingCompanyId]", "[resolvedVendorId, query.data.operating_company_id]"],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...parts, [key]: parts[key].replace(from, to) };

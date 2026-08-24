@@ -518,7 +518,7 @@ export function BookLoadModalV4({
       (customersQuery.data?.customers ?? [])
         .map((c) => ({
           value: c.id,
-          label: String(c.name || c.legal_name || c.customer_code || "").trim() || c.id,
+          label: String(c.name || c.customer_code || "").trim() || c.id,
         }))
         .filter((o) => o.label)
         .sort((a, b) => a.label.localeCompare(b.label)),
