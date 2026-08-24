@@ -218,7 +218,10 @@ async function filingProfileIdentity(
         concat_ws(', ', nullif(concat_ws(' ', address_line1, address_line2), ''), nullif(city, ''), nullif(concat_ws(' ', state, postal_code), '')) AS filing_address
       FROM org.companies
       WHERE id = $1::uuid
-        AND is_active = true
+        -- is_active is UI-visibility only (0013). Pre-launch / hidden entities stay
+        -- reachable for 425C setup — same as assertCompanyMembership. Deactivation
+        -- (deactivated_at) is the only revoke. Gating is_active made USMCA look
+        -- "not found" (404) while the user could still select it.
         AND deactivated_at IS NULL
       LIMIT 1
     `,
