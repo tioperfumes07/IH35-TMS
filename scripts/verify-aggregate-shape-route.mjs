@@ -38,6 +38,14 @@ function unitMaintenanceVoidFailures(unitSource) {
   return failures;
 }
 
+function currentLoadCustomerFailures(unitSource) {
+  const failures = [];
+  if (!/l\.customer_id::text AS customer_id[\s\S]{0,900}LEFT JOIN LATERAL \(\s+SELECT scoped_customer\.customer_name\s+FROM mdata\.get_customer_same_company\(l\.customer_id, l\.operating_company_id\) scoped_customer\s+LIMIT 1\s+\) c ON TRUE[\s\S]{0,260}WHERE l\.assigned_unit_id = \$1::uuid\s+AND l\.operating_company_id = \$2::uuid/.test(unitSource)) {
+    failures.push("unit aggregate current-load customer reverse must use the scoped historical customer resolver");
+  }
+  return failures;
+}
+
 const routeStart = routes.indexOf('app.get("/api/v1/mdata/units/:id"');
 if (routeStart < 0) {
   console.error("verify:aggregate-shape-route FAIL: missing GET /api/v1/mdata/units/:id route");
@@ -82,6 +90,11 @@ if (unitMaintenanceVoidMissing.length > 0) {
   console.error(`verify:aggregate-shape-route FAIL: voided maintenance rows remain visible: ${unitMaintenanceVoidMissing.join(", ")}`);
   process.exit(1);
 }
+const currentLoadCustomerMissing = currentLoadCustomerFailures(aggregate);
+if (currentLoadCustomerMissing.length > 0) {
+  console.error(`verify:aggregate-shape-route FAIL: current-load customer reverse is unresolved: ${currentLoadCustomerMissing.join(", ")}`);
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const unscoped = "JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id";
@@ -95,12 +108,13 @@ if (process.argv.includes("--selftest")) {
     unitMaintenanceVoidFailures(aggregate.replace(/(FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+ORDER BY COALESCE\(w\.updated_at, w\.opened_at\))/, "$1$2")),
+    currentLoadCustomerFailures(aggregate.replace("mdata.get_customer_same_company(l.customer_id, l.operating_company_id)", "mdata.customers")),
   ];
   if (mutations.some((failures) => failures.length === 0)) {
     console.error("verify:aggregate-shape-route SELFTEST FAIL: a PM schedule company-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify:aggregate-shape-route SELFTEST PASS — 8/8 aggregate scope/vendor/void mutations red");
+  console.log("verify:aggregate-shape-route SELFTEST PASS — 9/9 aggregate scope/vendor/void/customer mutations red");
   process.exit(0);
 }
 
