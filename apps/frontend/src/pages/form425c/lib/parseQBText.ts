@@ -26,8 +26,17 @@ export function parseQBText(raw: string, bankAccounts: BankAccount[]): QBParsedL
     const typecol = (cols[1] || "").toLowerCase();
     const desccol = (cols[2] || "").toLowerCase();
     const acctcol = (cols[3] || cols[2] || "").toLowerCase();
-    const rawAmt = (cols[cols.length - 1] || "").replace(/[$,\s()]/g, "");
-    const amt = parseFloat(rawAmt);
+    // Accounting convention wraps a negative amount in parens, e.g. "(500.00)" for a reversed/NSF
+    // deposit. Stripping "()" alongside "$,\s" before parseFloat silently drops that sign — a
+    // reversed/voided deposit would then parse as a positive amount and, if its description happens
+    // to contain an income keyword (XFER_KW has no reversal/void/NSF entries to catch it), get
+    // counted as real Line 20 income in the preparer's preview instead of excluded. Detect the paren
+    // wrap first and negate explicitly so it still fails the amt <= 0 exclusion below.
+    const lastCol = (cols[cols.length - 1] || "").trim();
+    const isParenNegative = /^\(.*\)$/.test(lastCol);
+    const rawAmt = lastCol.replace(/[$,\s()]/g, "");
+    const parsedAmt = parseFloat(rawAmt);
+    const amt = isParenNegative && Number.isFinite(parsedAmt) ? -Math.abs(parsedAmt) : parsedAmt;
     if (!amt || amt <= 0) continue;
     if (XFER_KW.some((kw) => typecol.includes(kw) || desccol.includes(kw) || acctcol.includes(kw))) continue;
     const matched = bankAccounts.find(
