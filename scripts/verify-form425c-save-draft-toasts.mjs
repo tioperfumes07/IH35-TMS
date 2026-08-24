@@ -173,6 +173,9 @@ export function collectProblems(src) {
   if (routes.includes("Number(incoming32 ?? current.line_32_proj_receipts ?? 0)") || routes.includes("Number(b.line_35_next_proj_receipts ?? current.line_35_next_proj_receipts ?? 0)")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: PATCH must not invent line 34/37 nets from empty projections as $0");
   }
+  if (routes.includes("Number(prev?.line_35_next_proj_receipts ?? 0)") || routes.includes("Number(prev?.line_36_next_proj_disbursements ?? 0)")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create must not invent $0 line 32–34 when the prior month has no next-month projections");
+  }
   if (!routes.includes("form_425c_period_draft_exists")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
   }

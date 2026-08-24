@@ -781,9 +781,14 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         [b.operating_company_id, prevMonthDate]
       );
       const prev = prevRes.rows[0];
-      const line32 = Number(prev?.line_35_next_proj_receipts ?? 0);
-      const line33 = Number(prev?.line_36_next_proj_disbursements ?? 0);
-      const line34 = line32 - line33;
+      const optionalNumeric = (v: unknown): number | null => {
+        if (v === null || v === undefined || v === "") return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      const line32 = optionalNumeric(prev?.line_35_next_proj_receipts);
+      const line33 = optionalNumeric(prev?.line_36_next_proj_disbursements);
+      const line34 = line32 !== null && line33 !== null ? line32 - line33 : null;
 
       const insertRes = await client.query(
         `
