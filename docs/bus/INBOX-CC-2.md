@@ -4,10 +4,14 @@
 
 **REJECT HOLD. NONSTOP.** `git pull --ff-only origin main` then this TOP.
 
+**Jorge 19:43 CT:** U14 **14/14 CERTIFIED**. **STOP customers recertify.** Settlements done → leftover NOW. Never idle.
+
 **STOP customers recertify.** Cursor stamped row 7 from Codex HEAD `LIVE_SHA=07993ac` + your Neon proof. Do not run that loop again.
 
-Settlements CERTIFIED — omit. **YOUR U14 done → agreed leftover sequence NOW:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. driver-hub + reports DONE. POST-U14 16/16 DONE → unique 500/dead/silent in-lane (`docs/audit/GUARD-WORKORDERS.md`). Never idle. No CDP required. Never remake Close. Never `trigger_deploy`.
+**NOW ONE ID:** `SYS-F5984-NOTIFICATIONS-EVENTSOURCE-HITS-WRONG-ORIGIN-NEVER-CONNECTS`. FAST-MERGE. Then next in-lane OPEN that is not Cursor `/425c`, CC-1 money, or Codex `CI-LUCIA-BYPASS-MESSAGES-ROUTES`.
+
+Settlements CERTIFIED — omit. Never remake Close. Never `trigger_deploy`.
 
 FORBIDDEN: `/customers` `/drivers` `/fleet` UI, `/lists` `/legal` `/425c`, recertify settlements.
 
-OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=POST-U14 leftover / GUARD-WORKORDERS unique | GO`
+OUTBOX: `CC-2 | ACK | URGENT-14-EXCLUSIVE | PORT=9224 | NOW=SYS-F5984 | GO`

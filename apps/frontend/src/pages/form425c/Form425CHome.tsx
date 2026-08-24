@@ -204,9 +204,23 @@ export function Form425CHome() {
   }, [reportsQuery.data?.reports]);
 
   useEffect(() => {
-    if (detailQuery.data?.report) {
-      setForm(toFormState(detailQuery.data.report as Record<string, unknown>, profiles[activeCompany].defaultAnswers));
+    const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
+    // Period change (e.g. August → January) must not keep the prior MOR cash on screen
+    // or Import/Generate/Mark Filed will mutate the wrong month while the picker lies.
+    if (selectedReport?.id && loadedId === selectedReport.id) {
+      setForm(toFormState(detailQuery.data!.report as Record<string, unknown>, profiles[activeCompany].defaultAnswers));
       setDirty(false);
+      return;
+    }
+    // Picker changed (August → January) while React Query still holds the prior month's
+    // detail: keep showing that cash = silent wrong period. Clear until ids match.
+    if (selectedReport?.id && loadedId !== selectedReport.id) {
+      const defaults = profiles[activeCompany].defaultAnswers;
+      setForm((prev) => {
+        if (prev.reportId === selectedReport.id) return prev;
+        if (!prev.reportId) return prev;
+        return { ...emptyForm(), answers: { ...defaults }, projectionOverrideReason: prev.projectionOverrideReason };
+      });
       return;
     }
     // Save/list invalidate briefly drops detail + selectedReport. Wiping here disabled
@@ -374,7 +388,7 @@ export function Form425CHome() {
 
   useEffect(() => {
     if (!dirty) return;
-    if (!form.reportId) {
+    if (!form.reportId || form.reportId !== selectedReport?.id) {
       if (!autosaveBlockedToast.current) {
         autosaveBlockedToast.current = true;
         pushToast("Create / Load Draft before autosave", "error");
@@ -384,7 +398,7 @@ export function Form425CHome() {
     autosaveBlockedToast.current = false;
     const timer = setTimeout(() => saveMutation.mutate(), 10_000);
     return () => clearTimeout(timer);
-  }, [dirty, form.reportId, form, saveMutation, pushToast]);
+  }, [dirty, form.reportId, form, selectedReport?.id, saveMutation, pushToast]);
 
   // History is the canonical report list (draft + ready_to_file + filed + amended).
   // Status narrowing belongs on HistoryTab's filter, never a silent filed-only hide.
@@ -484,14 +498,14 @@ export function Form425CHome() {
             createMutation.mutate();
           }}
           onImportBanking={() => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before importing from Banking", "error");
               return;
             }
             importMutation.mutate();
           }}
           onSave={() => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before saving", "error");
               return;
             }
@@ -500,7 +514,7 @@ export function Form425CHome() {
             });
           }}
           onGeneratePdf={() => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing PDF", "error");
               return;
             }
@@ -516,7 +530,7 @@ export function Form425CHome() {
             generateMutation.mutate();
           }}
           onMarkFiled={() => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before marking filed", "error");
               return;
             }
@@ -532,7 +546,7 @@ export function Form425CHome() {
             markFiledMutation.mutate();
           }}
           onAttachFile={(line, file) => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before attaching a file", "error");
               return;
             }
@@ -549,10 +563,10 @@ export function Form425CHome() {
           company={profiles[activeCompany]}
           month={month}
           year={year}
-          canGenerate={Boolean(form.reportId)}
+          canGenerate={Boolean(form.reportId && form.reportId === selectedReport?.id)}
           generating={generateMutation.isPending}
           onGenerate={() => {
-            if (!form.reportId) {
+            if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing package", "error");
               return;
             }

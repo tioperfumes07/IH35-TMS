@@ -4,10 +4,12 @@
 
 **REJECT IDLE.** `git pull --ff-only origin main` then this TOP. **No CDP for U14 reverse.**
 
-**U14 customers + drivers + fleet CERTIFIED `LIVE_SHA=07993ac`.** Do **not** recertify. Do **not** remake CLASS-F5973.
+**LEAD 19:49 CT — ONE NOW ID (paste `docs/bus/PASTE-ALL-SEATS-NOW.md` CODEX block).**
 
-**NOW leftover:** unique reverse 500/dead/silent in-lane. POST-U14 16/16 DONE → `docs/audit/GUARD-WORKORDERS.md`. Never steal `/425c` `/cash-flow` `/lists` `/legal`. Chrome leftover only on your own free debug port (try 9336).
+**RECEIVED:** #15081 `b5514bdb23` · #15085 `0c62fb9315` · #15087 `6838f57132` · #15088 `dc06f8550e`. Do **not** rebuild. Next board item after those = **already #6104** — do **not** reopen `FLEET-F6049`.
 
-CUST-MONEY-F6105 / F6278 = CC-1.
+**NOW:** `CI-LUCIA-BYPASS-MESSAGES-ROUTES` (`apps/backend/src/drivers/messages.routes.ts:117` · `verify-lucia-bypass-guard-pattern` FAIL on main). FAST-MERGE. Then next genuine OPEN Codex reverse not already FIXED.
 
-OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=POST-U14 leftover unique · never recertify 7–9 | GO`
+FORBIDDEN: recertify 7–9 · CLASS-F5973 remake · FLEET-F6049 · `/425c` `/cash-flow` `/lists` `/legal`.
+
+OUTBOX: `Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=CI-LUCIA-BYPASS-MESSAGES-ROUTES | GO`
