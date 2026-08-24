@@ -1,5 +1,7 @@
 Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=POST-U14 leftover unique | U14=customers+drivers+fleet CERTIFIED 07993ac | GO
 
+Codex | WORKING | FO=DRV-F6282-ABANDONED-LOAD-NOTIFICATION-NULLS-SHARED-DRIVER | NEXT=FAST-MERGE then next genuine reverse gap | GO
+
 Codex | ACK | URGENT-14-EXCLUSIVE | PORT=9226 | NOW=CI-LUCIA-BYPASS-MESSAGES-ROUTES | GO
 
 Codex | WORKING | FO=FLEET-F6049-STALE-OPEN-DISPOSITION | implementation=#14604 | guard=step4568 extension | NEXT=FAST-MERGE then next genuine open Codex reverse | GO

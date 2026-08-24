@@ -467,7 +467,17 @@ export async function notifyAbandonedLoadStakeholders(input: {
           concat_ws(' ', d.first_name, d.last_name) AS driver_name
         FROM mdata.loads l
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                  AND d.operating_company_id = $2::uuid
+                                  AND (
+                                    d.operating_company_id = l.operating_company_id
+                                    OR EXISTS (
+                                      SELECT 1
+                                      FROM mdata.driver_company_authorizations abandoned_load_driver_dca
+                                      WHERE abandoned_load_driver_dca.driver_id = d.id
+                                        AND abandoned_load_driver_dca.company_id = l.operating_company_id
+                                        AND abandoned_load_driver_dca.is_authorized = true
+                                        AND abandoned_load_driver_dca.deactivated_at IS NULL
+                                    )
+                                  )
         WHERE l.id = $1::uuid
           AND l.operating_company_id = $2::uuid
         LIMIT 1
