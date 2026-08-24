@@ -81,6 +81,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
       }),
     onSuccess: refresh,
   });
+  const createValid = jurisdiction.trim().length > 0 && plateNumber.trim().length > 0;
 
   return (
     <div className="mt-3" data-testid="vp-plates-table">
@@ -111,16 +112,45 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           </button>
         )}
       />
+      {archiveMutation.isError ? (
+        <p className="mt-2 text-xs text-red-700" role="alert">
+          Couldn&apos;t archive plate. {(archiveMutation.error as Error)?.message ?? "Try again."}
+        </p>
+      ) : null}
       <Modal variant="drawer" open={open} title="Add plate" onClose={() => setOpen(false)}>
         <div className="space-y-2 text-sm">
           <select className="w-full border px-2 py-1" value={country} onChange={(e) => setCountry(e.target.value as "US" | "MX")}>
             <option value="US">US</option>
             <option value="MX">MX</option>
           </select>
-          <input className="w-full border px-2 py-1" placeholder="Jurisdiction" value={jurisdiction} onChange={(e) => setJurisdiction(e.target.value)} />
-          <input className="w-full border px-2 py-1" placeholder="Plate number" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} />
+          <input
+            className="w-full border px-2 py-1"
+            placeholder="Jurisdiction"
+            value={jurisdiction}
+            aria-invalid={!jurisdiction.trim()}
+            onChange={(e) => {
+              setJurisdiction(e.target.value);
+              createMutation.reset();
+            }}
+          />
+          <input
+            className="w-full border px-2 py-1"
+            placeholder="Plate number"
+            value={plateNumber}
+            aria-invalid={!plateNumber.trim()}
+            onChange={(e) => {
+              setPlateNumber(e.target.value);
+              createMutation.reset();
+            }}
+          />
           <DatePicker className="w-full" value={expiration} onChange={(next) => setExpiration(next)} />
-          <Button size="sm" loading={createMutation.isPending} onClick={() => createMutation.mutate()}>
+          {!createValid ? <p className="text-xs text-gray-600">Jurisdiction and plate number are required.</p> : null}
+          {createMutation.isError ? (
+            <p className="text-xs text-red-700" role="alert">
+              Couldn&apos;t save plate. {(createMutation.error as Error)?.message ?? "Check the jurisdiction and try again."}
+            </p>
+          ) : null}
+          <Button size="sm" loading={createMutation.isPending} disabled={!createValid} onClick={() => createMutation.mutate()}>
             Save plate
           </Button>
         </div>
