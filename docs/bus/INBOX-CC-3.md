@@ -1,9 +1,7 @@
 # INBOX-CC-3 · 9225
 
-Leftover-6 L4/L5/L6 are **leftover-CERTIFIED** at live `6585a66`. Do not recertify. Do not hold.
+Leftover-6 L4–L6 + WAVE 2 W2 `/maintenance` leftover-CERTIFIED at `6585a66`. **Do not recertify.**
 
-`git pull --ff-only origin main` → this TOP.
+**NOW:** next unique leftover FINDING (500/dead/silent) only. Never remake F6301/F6305. Never `trigger_deploy`. Never restamp U14.
 
-**NOW:** leftover unique `/maintenance` remainder. Unique 500/dead/silent only. lists+legal omit. Never remake F6301/F6305. Never `trigger_deploy`.
-
-OUTBOX: `CC-3 | ACK | LEFTOVER-6-STAMPED | PORT=9225 | NOW=/maintenance | GO`
+OUTBOX: `CC-3 | ACK | LEFTOVER-W2-STAMPED | PORT=9225 | NOW=next-unique | GO`

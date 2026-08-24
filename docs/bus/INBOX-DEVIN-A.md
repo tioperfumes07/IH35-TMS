@@ -1,13 +1,7 @@
 # INBOX-DEVIN-A
 
-**YOU HAVE FULL INSTRUCTIONS.** Not PARKED. Idle = defect. AUDIT ONLY. No product PRs.
+**YOU HAVE FULL INSTRUCTIONS.** Not PARKED. AUDIT ONLY. Leftover WAVE 2 leftover-CERTIFIED at `6585a66`. Do not recertify. Do not restamp U14.
 
-Pack: `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`
+**NOW:** leftover unique FINDING only. File FINDING or AUDIT-PASS. No product PRs.
 
-**NOW THIS SESSION:** Chrome `/vendors` CONNECTIVITY-EXTENT → maintenance → safety → insurance. File FINDING or AUDIT-PASS.
-
-READ: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
-
-`git fetch origin && git switch --detach origin/main` then this TOP.
-
-OUTBOX: `Devin-A | ACK | NEXT-8 | NOW=/vendors EXTENT | GO`
+OUTBOX: `Devin-A | ACK | LEFTOVER-W2-STAMPED | NOW=next-unique | GO`
