@@ -409,7 +409,14 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
           -- verified on prod) via a real JOIN (not a projected subquery) so the predicate is a
           -- COMPARISON, not merely a projection.
-          JOIN mdata.drivers drv ON drv.id = $3 AND drv.operating_company_id = l.operating_company_id
+          JOIN mdata.drivers drv ON drv.id = $3
+                                 AND (drv.operating_company_id = l.operating_company_id OR EXISTS (
+                                   SELECT 1 FROM mdata.driver_company_authorizations departure_stop_dca
+                                   WHERE departure_stop_dca.driver_id = drv.id
+                                     AND departure_stop_dca.company_id = l.operating_company_id
+                                     AND departure_stop_dca.is_authorized = true
+                                     AND departure_stop_dca.deactivated_at IS NULL
+                                 ))
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1

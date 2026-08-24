@@ -558,7 +558,16 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             -- verified on prod). Selecting l.operating_company_id for the revenue latch does NOT scope
             -- the query — a scope column must be COMPARED, not merely projected — and this is the
             -- predicate that makes the value we hand to the latch provably the driver's own entity.
-            AND l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
+            AND (
+              l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations driver_loads_depart_dca
+                WHERE driver_loads_depart_dca.driver_id = $3
+                  AND driver_loads_depart_dca.company_id = l.operating_company_id
+                  AND driver_loads_depart_dca.is_authorized = true
+                  AND driver_loads_depart_dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.stopId, params.data.id, driver.id]
