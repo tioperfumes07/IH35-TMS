@@ -24,17 +24,17 @@ ACK: CC-1 | ACK | LEFTOVER-6 | PORT=9223 | NOW=/cash-flow | GO
 ===== END =====
 
 ===== CC-2 9224 =====
-REJECT HOLD. YOU HAVE INSTRUCTIONS (LEFTOVER-6).
+REJECT HOLD / poll-mode / “cycle complete.” YOU HAVE INSTRUCTIONS (LEFTOVER-6) on main `c582ee048b`.
 NOW: `https://app.ih35dispatch.com/reports` CERTIFY Fully-Wired 1–12. Fuel remainder parallel.
-Never remake Close or #15228–#15243. Never trigger_deploy.
+Never remake Close or #15228–#15243. Never trigger_deploy. Not poll mode.
 ACK: CC-2 | ACK | LEFTOVER-6 | PORT=9224 | NOW=/reports | GO
 ===== END =====
 
 ===== CC-3 9225 =====
-REJECT HOLD. YOU HAVE INSTRUCTIONS (NEXT-8).
+REJECT HOLD / “zero new findings.” YOU HAVE INSTRUCTIONS (LEFTOVER-6) on main `c582ee048b`.
 NOW: `https://app.ih35dispatch.com/compliance` CERTIFY leftover 1–12. Then `/eld` then `/inventory`.
-lists+legal omit. Never trigger_deploy.
-ACK: CC-3 | ACK | NEXT-8 | PORT=9225 | NOW=/compliance | GO
+lists+legal omit. Never trigger_deploy. Not poll mode.
+ACK: CC-3 | ACK | LEFTOVER-6 | PORT=9225 | NOW=/compliance | GO
 ===== END =====
 
 ===== CODEX 9226 =====

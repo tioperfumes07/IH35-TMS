@@ -22,4 +22,4 @@ U14 **14/14 CERTIFIED**. Never recertify. USMCA only. HOLD / â€œno instructionsâ
 
 Live SHA: re-curl `https://api.ih35dispatch.com/api/v1/healthz/shallow`. CC never `trigger_deploy`. Deploy = Cursor, every **10 min AND 10 PRs**, one in-flight. Idle = defect. One small PR per unique finding.
 
-ACK: `SEAT | ACK | NEXT-8 | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | LEFTOVER-6 | PORT=n | NOW=<url> | GO`

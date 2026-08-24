@@ -2,8 +2,9 @@
 
 **This file is the only NOW.** Every session, every seat: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
-**Instruction pack (NEXT 8 leftover modules):** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
-If a seat claims “no instructions,” they did not pull that file.
+**THIS TURN PACK:** `docs/bus/LEFTOVER-6-CERTIFY-NOW-2026-08-24.md` (cash-flow · finance · reports · compliance · eld · inventory).  
+**Also:** `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md`  
+If a seat claims “no instructions” / “poll mode” / “cycle complete” / “zero new findings,” they did not pull. That is a defect. GO leftover-6 until leftover-CERTIFIED.
 
 **U14 14/14 CERTIFIED** = exclusive 14-module pass finished — not stop. Never restamp. Never recertify. Certify leftover POST in parallel. Idle = defect.
 
@@ -56,4 +57,4 @@ Forbidden steal: CC-1 `/cash-flow` `/finance` · CC-2 `/fuel` · CC-3 `/complian
 
 ---
 
-ACK: `SEAT | ACK | NEXT-8 | PORT=n | NOW=<url> | GO`
+ACK: `SEAT | ACK | LEFTOVER-6 | PORT=n | NOW=<url> | GO`
