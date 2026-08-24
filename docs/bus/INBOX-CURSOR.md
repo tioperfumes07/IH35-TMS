@@ -8,7 +8,7 @@
 
 **THIS TICK 21:14 CT:** Jorge GO — instruct seats + Program matrix/legacy/completion show Urgent exclusive hops 14/14 **without** painting Rule 24 Certified or Box 4 Live. POST leftover continues.
 
-**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake #15096–#15158 (period, cash 19–21, debtor, history, amended filter, filed immutable, create-pin, exhibits, PDF, POST filed, amend twice, attach, duplicate month, banking-summary, amend A/B, PATCH filed, A–F print, mark-filed 409, inverted period, history filed print).
+**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake #15096–#15216 (incl. Generate print whitespace, import-banking company 404, Exhibit F 422).
 
 FORBIDDEN: recertify · occupy other prefixes · let Codex sit on a FIXED NOW.
 
