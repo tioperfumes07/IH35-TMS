@@ -808,7 +808,7 @@ export function ProgramBoardPage() {
                               blockId={r.id}
                               questions={qs}
                               answers={ans}
-                              onSubmit={(body) => mutation.mutate({ block_id: r.id, kind: "answer", body })}
+                              onSubmit={(body) => mutation.mutateAsync({ block_id: r.id, kind: "answer", body })}
                               submitting={mutation.isPending}
                             />
                           </td>
@@ -991,7 +991,7 @@ export function ProgramBoardPage() {
                   blockId={q.block_id ?? null}
                   questions={[]}
                   answers={ans}
-                  onSubmit={(body) => mutation.mutate({ block_id: q.block_id ?? null, kind: "answer", body })}
+                  onSubmit={(body) => mutation.mutateAsync({ block_id: q.block_id ?? null, kind: "answer", body })}
                   submitting={mutation.isPending}
                 />
               </div>
@@ -1005,7 +1005,7 @@ export function ProgramBoardPage() {
         <div className="space-y-3">
           <AddNote
             placeholder="Add an idea — your own, in your words. It is timestamped (CT) and kept forever."
-            onSubmit={(body) => mutation.mutate({ kind: "idea", body })}
+            onSubmit={(body) => mutation.mutateAsync({ kind: "idea", body })}
             submitting={mutation.isPending}
           />
           {ideas.length === 0 ? <div className="py-6 text-center text-slate-400">No ideas yet.</div> : null}
@@ -1467,7 +1467,7 @@ function ThreadPanel({
   blockId: string | null;
   questions: BoardNote[];
   answers: BoardNote[];
-  onSubmit: (body: string) => void;
+  onSubmit: (body: string) => void | Promise<void>;
   submitting: boolean;
 }) {
   return (
@@ -1505,7 +1505,7 @@ function AddNote({
   compact,
 }: {
   placeholder: string;
-  onSubmit: (body: string) => void;
+  onSubmit: (body: string) => void | Promise<void>;
   submitting: boolean;
   compact?: boolean;
 }) {
@@ -1527,8 +1527,10 @@ function AddNote({
           onClick={() => {
             const body = value.trim();
             if (!body) return;
-            onSubmit(body);
-            setValue("");
+            void Promise.resolve(onSubmit(body)).then(
+              () => setValue(""),
+              () => undefined,
+            );
           }}
         >
           Save
