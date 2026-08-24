@@ -110,7 +110,12 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
       const whereClauses = ["f.operating_company_id = $1::uuid", "f.deleted_at IS NULL"];
 
       if (query.type) {
-        params.push(query.type);
+        // DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY: the raw value used to be pushed with no wildcards,
+        // so ILIKE required an exact case-insensitive match. The placeholder ("Category code,
+        // label, mime type") and every other list-page search box in this app promise substring
+        // matching — typing "medical" against a real "DOT Medical Card" row silently returned zero
+        // rows with no indication an exact string was required.
+        params.push(`%${query.type}%`);
         const idx = params.length;
         whereClauses.push(`(fc.code ILIKE $${idx} OR fc.label ILIKE $${idx} OR f.mime_type ILIKE $${idx})`);
       }
