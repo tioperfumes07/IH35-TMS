@@ -583,7 +583,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/docs/files/:file_id/download-url", async (req, reply) => {
+  app.get("/api/v1/docs/files/:file_id/download-url", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -630,7 +630,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     };
   });
 
-  app.patch("/api/v1/docs/files/:file_id", async (req, reply) => {
+  app.patch("/api/v1/docs/files/:file_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager"])) return;
@@ -693,7 +693,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/docs/files/:file_id/links", async (req, reply) => {
+  app.post("/api/v1/docs/files/:file_id/links", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager", "Dispatcher", "Safety", "Accountant"])) return;
@@ -751,7 +751,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/docs/files/:file_id/links/:link_id", async (req, reply) => {
+  app.delete("/api/v1/docs/files/:file_id/links/:link_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager"])) return;
@@ -795,7 +795,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     return { ok: true, link_id: parsedParams.data.link_id };
   });
 
-  app.delete("/api/v1/docs/files/:file_id", async (req, reply) => {
+  app.delete("/api/v1/docs/files/:file_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator"])) return;
@@ -840,7 +840,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     return { ok: true, file_id: parsedParams.data.file_id };
   });
 
-  app.post("/api/v1/docs/files/:file_id/restore", async (req, reply) => {
+  app.post("/api/v1/docs/files/:file_id/restore", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner"])) return;
@@ -882,7 +882,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     return { ok: true, file_id: parsedParams.data.file_id };
   });
 
-  app.post("/api/v1/docs/files/:file_id/versions", async (req, reply) => {
+  app.post("/api/v1/docs/files/:file_id/versions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager"])) return;
