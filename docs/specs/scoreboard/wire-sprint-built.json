@@ -2429,6 +2429,14 @@
       "leafRe": "^leave_requests\\.detail$",
       "guard": "scripts/verify-driver-scheduler-request-detail-failure-truth.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "SAFETY-PHOTO-COMPARISON-DETAIL-FAILURE-TRUTH",
+      "modules": ["safety"],
+      "cols": ["connectivity"],
+      "leafRe": "^photo_comparison\\.detail$",
+      "guard": "scripts/verify-photo-comparison-detail-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }

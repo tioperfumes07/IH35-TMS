@@ -420,6 +420,18 @@
       ]
     },
     {
+      "id": "photo_comparison.detail",
+      "tab": "Photo Comparison",
+      "sub": "Session detail",
+      "route_hint": "/safety/photo-comparison/:sessionUuid",
+      "owned_surface_paths": [
+        "pages/safety/photo-comparison/SessionDetail.tsx"
+      ],
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
       "id": "internal_fines.list",
       "tab": "Internal Fines",
       "sub": "List",

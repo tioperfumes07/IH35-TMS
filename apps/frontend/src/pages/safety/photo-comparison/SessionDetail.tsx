@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "../../../api/client";
+import { ApiError, apiRequest } from "../../../api/client";
 import { DiffFindingsList } from "../../../components/safety/DiffFindingsList";
 import { PhotoDiffViewer } from "../../../components/safety/PhotoDiffViewer";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type PhotoDetail = {
   id: string;
@@ -67,12 +68,25 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
     [angleFindings]
   );
 
+  if (query.isError) {
+    return (
+      <section className="rounded-sm border border-slate-200 bg-white p-4" data-testid="photo-comparison-session-detail-error">
+        <ListErrorState
+          title="Couldn't load photo comparison session"
+          status={query.error instanceof ApiError ? query.error.status : 0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4" data-testid="photo-comparison-session-detail">
       <header>
         <h2 className="text-base font-semibold text-slate-900">Photo comparison session</h2>
         <p className="text-xs text-slate-500">
-          Status: <span className="font-semibold">{session?.diff_status ?? "loading"}</span>
+          Status: <span className="font-semibold">{query.isLoading ? "loading" : (session?.diff_status ?? "not found")}</span>
         </p>
         {session?.diff_summary ? <p className="mt-1 text-sm text-slate-700">{session.diff_summary}</p> : null}
         {session?.auto_damage_report_uuid ? (
