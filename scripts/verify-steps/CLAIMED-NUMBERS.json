@@ -1,4 +1,9 @@
 {
+  "4635": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reports-subscription-errors-not-500"
+  },
   "4631": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
@@ -5833,5 +5838,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1281
+  "total_claimed": 1282
 }
