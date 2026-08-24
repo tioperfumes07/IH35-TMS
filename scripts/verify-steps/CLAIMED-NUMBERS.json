@@ -1,4 +1,9 @@
 {
+  "4664": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-intransit-issues-resolve-mutation-error-surfaced"
+  },
   "4662": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
