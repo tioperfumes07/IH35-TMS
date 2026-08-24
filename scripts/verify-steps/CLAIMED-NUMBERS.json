@@ -4139,6 +4139,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-sync-panel-pull-reconcile-errors-surfaced"
   },
+  "7020": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-portal-users-archive-error-surfaced"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6123,5 +6128,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1317
+  "total_claimed": 1318
 }
