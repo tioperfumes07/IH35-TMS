@@ -44,20 +44,55 @@ function fieldOrDash(value: unknown): string {
   return String(value);
 }
 
+/** Per-event-type readable summaries for the backend's known system events (see matters.service.ts appendMatterEvent callers). */
+const LEGAL_MATTER_EVENT_SUMMARIZERS: Record<string, (body: Record<string, unknown>) => string | null> = {
+  matter_created: (body) => {
+    const num = body.matter_number;
+    return typeof num === "string" && num.trim() ? `Matter ${num.trim()} created.` : "Matter created.";
+  },
+  matter_updated: (body) => {
+    const fields = body.fields;
+    if (Array.isArray(fields) && fields.length) {
+      const names = fields.filter((f): f is string => typeof f === "string");
+      if (names.length) return `Updated: ${names.join(", ")}.`;
+    }
+    return "Matter details updated.";
+  },
+  matter_closed: (body) => {
+    const summary = body.outcome_summary;
+    return typeof summary === "string" && summary.trim() ? `Matter closed. Outcome: ${summary.trim()}` : "Matter closed.";
+  },
+  document_uploaded: (body) => {
+    const title = body.title;
+    const privileged = body.is_privileged === true;
+    const label = typeof title === "string" && title.trim() ? `"${title.trim()}"` : "a document";
+    return `Uploaded ${label}${privileged ? " (privileged)" : ""}.`;
+  },
+  deadline_added: (body) => {
+    const type = body.deadline_type;
+    return typeof type === "string" && type.trim() ? `Deadline added: ${type.trim()}.` : "Deadline added.";
+  },
+  deadline_completed: () => "Deadline completed.",
+};
+
 /** Human timeline body for manual notes; other system events keep a readable summary (never raw JSON UI). */
 export function formatLegalMatterEventBody(ev: { event_type?: unknown; event_body?: unknown }): string {
   const body = ev.event_body;
+  const eventType = typeof ev.event_type === "string" ? ev.event_type.trim() : "";
   if (body && typeof body === "object" && !Array.isArray(body)) {
-    const note = (body as Record<string, unknown>).note;
+    const record = body as Record<string, unknown>;
+    const note = record.note;
     if (typeof note === "string" && note.trim()) return note.trim();
+    const summarize = LEGAL_MATTER_EVENT_SUMMARIZERS[eventType];
+    if (summarize) {
+      const summary = summarize(record);
+      if (summary) return summary;
+    }
   }
   if (typeof body === "string" && body.trim()) return body.trim();
   if (body == null) return "—";
-  try {
-    return JSON.stringify(body);
-  } catch {
-    return "—";
-  }
+  // Last-resort fallback for an unrecognized event_type — never dump raw JSON in the UI.
+  return `Recorded ${eventType || "system event"}.`;
 }
 
 export function LegalMatterDetailPage() {
