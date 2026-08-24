@@ -507,6 +507,15 @@
       ]
     },
     {
+      "id": "anomaly_alerts.list",
+      "tab": "Anomaly Alerts",
+      "sub": "Critical alert list",
+      "route_hint": "/safety/anomaly-alerts",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
       "id": "insurance_tab.list",
       "tab": "Insurance",
       "sub": "Safety insurance leaf",
