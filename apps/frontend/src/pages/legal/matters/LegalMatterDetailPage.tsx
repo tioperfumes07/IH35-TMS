@@ -100,6 +100,10 @@ export function LegalMatterDetailPage() {
     void qc.invalidateQueries({ queryKey: ["legal", "matters", companyId] });
   };
 
+  // LEGAL-F6331: none of these 5 mutations had onError, unlike the sibling updateMut below
+  // (which already establishes the correct pattern in this exact file — pushToast +
+  // userFacingApiError, both already imported). A rejected note/deadline/close/upload silently
+  // did nothing.
   const addEventMut = useMutation({
     mutationFn: () => {
       const note = noteText.trim();
@@ -113,6 +117,7 @@ export function LegalMatterDetailPage() {
       invalidate();
       setNoteText("");
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not add the note"), "error"),
   });
 
   const addDlMut = useMutation({
@@ -128,16 +133,19 @@ export function LegalMatterDetailPage() {
       setDlTitle("");
       setDlAt("");
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not add the deadline"), "error"),
   });
 
   const closeMut = useMutation({
     mutationFn: () => legalMattersApi.close(companyId, id, { outcome_summary: closeNotes.trim() }),
     onSuccess: invalidate,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not close the matter"), "error"),
   });
 
   const completeDlMut = useMutation({
     mutationFn: (deadlineId: string) => legalMattersApi.completeDeadline(companyId, id, deadlineId),
     onSuccess: invalidate,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not complete the deadline"), "error"),
   });
 
   const uploadMut = useMutation({
@@ -151,6 +159,7 @@ export function LegalMatterDetailPage() {
       setDocTitle("");
       setDocPriv(false);
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not upload the document"), "error"),
   });
 
   const updateMut = useMutation({
