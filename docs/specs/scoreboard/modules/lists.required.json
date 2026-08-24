@@ -1200,6 +1200,8 @@
       "tab": "Maintenance",
       "sub": "+ Create — Maintenance Parts",
       "route_hint": "/lists/maintenance/parts-catalog",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/CreateMaintPartModal.tsx",
       "required": [
         "picker_law",
         "qbo_chrome",
@@ -1286,8 +1288,10 @@
     {
       "id": "catalog.maintenance.services_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create — OEM Parts Reference",
+      "sub": "+ Create — Maintenance Services",
       "route_hint": "/lists/maintenance/services-catalog",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/MaintenanceServicesCatalog.tsx",
       "required": [
         "picker_law",
         "qbo_chrome",
