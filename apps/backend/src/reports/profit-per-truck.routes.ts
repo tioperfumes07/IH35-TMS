@@ -203,8 +203,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               GROUP BY COALESCE(l.assigned_unit_id, ft.unit_id)
             `,
             [companyId, pStart, pEnd]
-          )
-          .catch(() => ({ rows: [] as Array<{ unit_id: string; fuel_cents: string }> }));
+          );
 
         const fuelRows = fuelRes.rows as Array<{ unit_id: string; fuel_cents: string }>;
         const fuelMap = new Map<string, number>(fuelRows.map((r) => [String(r.unit_id), num(r.fuel_cents)]));

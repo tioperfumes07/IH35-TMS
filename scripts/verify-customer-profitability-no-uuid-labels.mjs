@@ -29,6 +29,12 @@ function analyze() {
   if (!/Customer — not visible/.test(api)) {
     failures.push('API must tombstone unresolved names as "Customer — not visible"');
   }
+  if (/\.catch\(\(\) => \(\{ rows: \[\] as Array<\{ customer_id: string; cost_cents/.test(api)) {
+    failures.push("API must not catch a failed driver-bill cost aggregate as empty — that paints $0 cost");
+  }
+  if (/\.catch\(\(\) => \(\{ rows: \[\] as Array<\{ customer_id: string; open_cents/.test(api)) {
+    failures.push("API must not catch a failed AR-open aggregate as empty — that paints $0 AR");
+  }
   const page = read(PAGE);
   if (!/isUnresolvedCustomerTombstone/.test(page)) {
     failures.push("page must gate drills with isUnresolvedCustomerTombstone");
@@ -110,6 +116,19 @@ function selftest() {
     fs.writeFileSync(apiPath, bad);
     const planted = analyze();
     if (!planted.some((m) => /raw customerId/.test(m))) fail("selftest expected UUID fallback to fail");
+  } finally {
+    fs.writeFileSync(apiPath, apiOriginal);
+  }
+
+  try {
+    const withCatch =
+      apiOriginal +
+      `\n.catch(() => ({ rows: [] as Array<{ customer_id: string; cost_cents: string }> }));\n`;
+    fs.writeFileSync(apiPath, withCatch);
+    const plantedCatch = analyze();
+    if (!plantedCatch.some((m) => /cost aggregate as empty/.test(m))) {
+      fail(`selftest expected cost catch fail; got: ${plantedCatch.join("; ")}`);
+    }
   } finally {
     fs.writeFileSync(apiPath, apiOriginal);
   }

@@ -53,6 +53,15 @@ export function run(root = process.cwd()) {
     if (!/ft\.archived_at\s+IS\s+NULL/i.test(src)) {
       failures.push(`${label} (${file}) must exclude archived fuel_transactions rows (ft.archived_at IS NULL)`);
     }
+
+    if (
+      file.endsWith("profit-per-truck.routes.ts") &&
+      /\.catch\(\(\) => \(\{ rows: \[\] as Array<\{ unit_id: string; fuel_cents/.test(src)
+    ) {
+      failures.push(
+        `${label} (${file}) must not catch a failed fuel aggregate as empty rows — that paints $0 fuel on every truck`,
+      );
+    }
   }
 
   return failures;
@@ -101,6 +110,18 @@ if (process.argv.includes("--selftest")) {
   mk(TARGETS[2].file, good.replace("AND ft.archived_at IS NULL\n", ""));
   f = run(tmp);
   if (!f.length) throw new Error("FAIL fail: missing archived_at IS NULL should be caught");
+  mk(TARGETS[2].file, good);
+
+  mk(
+    TARGETS[1].file,
+    `${good}
+          .catch(() => ({ rows: [] as Array<{ unit_id: string; fuel_cents: string }> }));
+    `,
+  );
+  f = run(tmp);
+  if (!f.some((m) => /catch a failed fuel aggregate/.test(m))) {
+    throw new Error("FAIL fail: empty-row fuel catch should be caught on Profit-per-Truck");
+  }
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-fleet-fuel-cost-attributes-via-unit-id --selftest OK");
