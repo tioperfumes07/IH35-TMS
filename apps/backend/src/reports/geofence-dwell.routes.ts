@@ -40,6 +40,7 @@ export async function registerGeofenceDwellRoutes(app: FastifyInstance) {
               ev.geofence_id,
               ev.unit_id,
               ev.driver_id,
+              ev.operating_company_id,
               ev.event_kind::text,
               ev.occurred_at,
               LEAD(ev.event_kind::text) OVER (PARTITION BY ev.geofence_id, ev.unit_id ORDER BY ev.occurred_at, ev.created_at) AS next_kind,
