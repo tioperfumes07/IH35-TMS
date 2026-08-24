@@ -21,4 +21,9 @@ describe("equipment aggregate trailer load history", () => {
     expect(source).toContain("latest_trailer.new_trailer_id = $1::uuid");
     expect(source).not.toContain("WHERE l.assigned_unit_id = $1::uuid");
   });
+
+  it("resolves the attached unit for either its owner or current lessee", () => {
+    expect(source).toContain("owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid");
+    expect(source).not.toContain("COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid");
+  });
 });
