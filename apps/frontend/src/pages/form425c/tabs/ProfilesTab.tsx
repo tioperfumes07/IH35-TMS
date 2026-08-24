@@ -29,7 +29,13 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
             {profiles[k].name}
           </button>
         ))}
-        <button type="button" onClick={onSave} disabled={saving || !canSave} className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white">
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          aria-disabled={!canSave}
+          className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        >
           {saving ? "Saving..." : "Save Defaults"}
         </button>
       </div>
