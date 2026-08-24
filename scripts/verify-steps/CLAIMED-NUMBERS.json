@@ -1,4 +1,9 @@
 {
+  "4599": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-class-f5973-remainder-wired"
+  },
   "4577": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -5758,5 +5763,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1272
+  "total_claimed": 1273
 }
