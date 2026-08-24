@@ -27,6 +27,7 @@ import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
 import { courtDistrictCaption } from "./lib/courtDistrictCaption";
+import { optionalFormInt, optionalFormNumber } from "./lib/optionalFormNumber";
 import { casePetitionDateFromReports, resolveCreatePetitionDate } from "./lib/petitionDate";
 import type { CompanyKey, CompanyProfiles, CurrentFormState, HistoryReportRow } from "./types";
 import { CurrentPeriodTab } from "./tabs/CurrentPeriodTab";
@@ -373,18 +374,18 @@ export function Form425CHome() {
         operating_company_id: companyId,
         part1_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) <= 9)),
         part2_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) >= 10)),
-        line_24_payables: Number(form.totalPayables || 0),
-        line_25_receivables: Number(form.totalReceivables || 0),
-        line_26_employees_at_filing: Number(form.numEmployeesAtFiling || 0),
-        line_27_employees_now: Number(form.numEmployeesNow || 0),
-        line_28_bk_fees_this_month: Number(form.proFeesThisMonth || 0),
-        line_29_bk_fees_since_filing: Number(form.proFeesSinceFiling || 0),
-        line_30_other_fees_this_month: Number(form.otherProFeesThisMonth || 0),
-        line_31_other_fees_since_filing: Number(form.otherProFeesSinceFiling || 0),
-        line_32_proj_receipts: Number(form.projReceiptsLast || 0),
-        line_33_proj_disbursements: Number(form.projDisbLast || 0),
-        line_35_next_proj_receipts: Number(form.projReceiptsNext || 0),
-        line_36_next_proj_disbursements: Number(form.projDisbNext || 0),
+        line_24_payables: optionalFormNumber(form.totalPayables),
+        line_25_receivables: optionalFormNumber(form.totalReceivables),
+        line_26_employees_at_filing: optionalFormInt(form.numEmployeesAtFiling),
+        line_27_employees_now: optionalFormInt(form.numEmployeesNow),
+        line_28_bk_fees_this_month: optionalFormNumber(form.proFeesThisMonth),
+        line_29_bk_fees_since_filing: optionalFormNumber(form.proFeesSinceFiling),
+        line_30_other_fees_this_month: optionalFormNumber(form.otherProFeesThisMonth),
+        line_31_other_fees_since_filing: optionalFormNumber(form.otherProFeesSinceFiling),
+        line_32_proj_receipts: optionalFormNumber(form.projReceiptsLast),
+        line_33_proj_disbursements: optionalFormNumber(form.projDisbLast),
+        line_35_next_proj_receipts: optionalFormNumber(form.projReceiptsNext),
+        line_36_next_proj_disbursements: optionalFormNumber(form.projDisbNext),
         projection_override_reason: form.projectionOverrideReason,
       });
     },

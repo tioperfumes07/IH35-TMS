@@ -898,7 +898,23 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
       const incoming32 = b.line_32_proj_receipts;
       const incoming33 = b.line_33_proj_disbursements;
-      if ((incoming32 !== undefined || incoming33 !== undefined) && current.carry_forward_source_report_id) {
+      const optionalNumeric = (v: unknown): number | null => {
+        if (v === null || v === undefined || v === "") return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      const next32 = incoming32 !== undefined ? optionalNumeric(incoming32) : optionalNumeric(current.line_32_proj_receipts);
+      const next33 = incoming33 !== undefined ? optionalNumeric(incoming33) : optionalNumeric(current.line_33_proj_disbursements);
+      const next35 = b.line_35_next_proj_receipts !== undefined
+        ? optionalNumeric(b.line_35_next_proj_receipts)
+        : optionalNumeric(current.line_35_next_proj_receipts);
+      const next36 = b.line_36_next_proj_disbursements !== undefined
+        ? optionalNumeric(b.line_36_next_proj_disbursements)
+        : optionalNumeric(current.line_36_next_proj_disbursements);
+      const projChanged =
+        next32 !== optionalNumeric(current.line_32_proj_receipts) ||
+        next33 !== optionalNumeric(current.line_33_proj_disbursements);
+      if (projChanged && current.carry_forward_source_report_id) {
         const reason = String(b.projection_override_reason ?? "").trim();
         if (reason.length < 30) {
           throw new Error("projection_override_reason_required_min_30_chars");
@@ -910,14 +926,10 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         updates.push(`projection_override_at = now()`);
       }
 
-      const line32 = Number(incoming32 ?? current.line_32_proj_receipts ?? 0);
-      const line33 = Number(incoming33 ?? current.line_33_proj_disbursements ?? 0);
-      values.push(line32 - line33);
+      values.push(next32 !== null && next33 !== null ? next32 - next33 : null);
       updates.push(`line_34_proj_net_cash_flow = $${values.length}`);
 
-      const line35 = Number(b.line_35_next_proj_receipts ?? current.line_35_next_proj_receipts ?? 0);
-      const line36 = Number(b.line_36_next_proj_disbursements ?? current.line_36_next_proj_disbursements ?? 0);
-      values.push(line35 - line36);
+      values.push(next35 !== null && next36 !== null ? next35 - next36 : null);
       updates.push(`line_37_next_proj_net_cash_flow = $${values.length}`);
 
       if (updates.length === 0) return current;
