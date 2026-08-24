@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest, ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -13,6 +14,30 @@ import { useAuth } from "../../auth/useAuth";
 import { MobileOptimizedTable } from "../../components/shared/MobileOptimizedTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
+
+// SUBSCRIPTIONS-PRESET-FILTER-SILENT-NOOP: the "Saved" category's "Owner weekly pack" /
+// "Quarter close package" shortcuts (CategoryHoverNav.tsx, ReportsRunner.tsx's
+// CANONICAL_REPORT_ALIASES) both land here with a real ?preset= query param, but this page never
+// read it -- every preset showed the exact same unfiltered 6-row list, live-confirmed (row count
+// identical with and without ?preset=owner-weekly). ScheduledReportsPage.tsx (the OTHER scheduled-
+// reports surface, /reports/scheduled-custom) already implements this same preset pattern, but its
+// REPORT_PRESETS key off the canonical reporting.scheduled_reports slugs (dispatch-board,
+// cash-position-ar, ...) -- a disjoint namespace from THIS page's Q8 subscription slugs
+// (weekly-cash-position, monthly-pnl, ...), so that definition cannot be reused directly. Grouped by
+// cadence, matching each preset's own name: "weekly pack" = the 3 weekly subscriptions; "quarter
+// close package" = the period-close artifacts (the monthly P&L and the quarterly IFTA preview).
+const Q8_PRESETS: Record<string, { title: string; subtitle: string; slugs: Set<string> }> = {
+  "owner-weekly": {
+    title: "Owner weekly pack",
+    subtitle: "The 3 weekly-cadence Q8 subscriptions",
+    slugs: new Set(["weekly-cash-position", "weekly-driver-settlement-preview", "weekly-ar-aging-60"]),
+  },
+  "quarter-close": {
+    title: "Quarter close package",
+    subtitle: "Period-close Q8 subscriptions (monthly P&L + quarterly IFTA)",
+    slugs: new Set(["monthly-pnl", "quarterly-ifta-preview"]),
+  },
+};
 
 function subscriptionStatusLabel(isActive: boolean): "Active" | "Inactive" {
   return isActive ? "Active" : "Inactive";
@@ -75,6 +100,8 @@ function cadenceLabel(row: SubscriptionRow) {
 }
 
 export function SubscriptionManager() {
+  const [searchParams] = useSearchParams();
+  const preset = Q8_PRESETS[searchParams.get("preset") ?? ""] ?? null;
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -170,15 +197,16 @@ export function SubscriptionManager() {
     [],
   );
 
-  const rows = subsQuery.data?.rows ?? [];
+  const allRows = subsQuery.data?.rows ?? [];
+  const rows = preset ? allRows.filter((row) => preset.slugs.has(row.report_slug)) : allRows;
   const logRows = logQuery.data?.rows ?? [];
 
   return (
     <div className="space-y-4 p-2 md:p-4" data-testid="subscription-manager">
       <ReportsSubNav />
       <PageHeader
-        title="Scheduled report subscriptions"
-        subtitle="Q8 auto-emailed reports — Owner manages cadence and recipients"
+        title={preset ? preset.title : "Scheduled report subscriptions"}
+        subtitle={preset ? preset.subtitle : "Q8 auto-emailed reports — Owner manages cadence and recipients"}
         backHref="/reports"
         breadcrumb={["Reports", "Scheduled Subscriptions"]}
         actions={
