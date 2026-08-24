@@ -4209,6 +4209,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-property-tax-rendition-print"
   },
+  "8920": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-bill-lines-expense-category-resolved"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
