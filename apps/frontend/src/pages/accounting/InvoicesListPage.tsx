@@ -63,9 +63,11 @@ export function isVoidInvoice(row: Pick<Invoice, "status" | "voided_at">): boole
   return row.status === "void" || Boolean(row.voided_at);
 }
 
-/** amount_open_cents is GENERATED (total − paid) and stays non-zero after void — UI must force $0. */
+/** amount_open_cents is GENERATED (total − paid) and stays non-zero after void — UI must force $0.
+ * CUST-AR-AGING: drafts are not A/R (QBO + `getCustomerBillingSummary` `status IN ('sent','partial')`). */
 export function invoiceOpenCentsForDisplay(row: Pick<Invoice, "status" | "voided_at" | "amount_open_cents">): number {
   if (isVoidInvoice(row)) return 0;
+  if (row.status !== "sent" && row.status !== "partial") return 0;
   return Number(row.amount_open_cents ?? 0) || 0;
 }
 

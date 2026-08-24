@@ -46,6 +46,9 @@ function check(src, label = pageRel) {
   if (/money\(\s*row\.amount_open_cents\s*\)/.test(src)) {
     findings.push(`${label}: Open column must not money(row.amount_open_cents) — use invoiceOpenCentsForDisplay`);
   }
+  if (!/row\.status\s*!==\s*["']sent["']\s*&&\s*row\.status\s*!==\s*["']partial["']/.test(src)) {
+    findings.push(`${label}: invoiceOpenCentsForDisplay must treat only sent/partial as open A/R (drafts are not A/R)`);
+  }
   return findings;
 }
 
@@ -64,7 +67,7 @@ function selftest() {
   }
   const good = `
     export function isVoidInvoice(row) { return row.status === "void" || Boolean(row.voided_at); }
-    export function invoiceOpenCentsForDisplay(row) { if (isVoidInvoice(row)) return 0; return Number(row.amount_open_cents ?? 0) || 0; }
+    export function invoiceOpenCentsForDisplay(row) { if (isVoidInvoice(row)) return 0; if (row.status !== "sent" && row.status !== "partial") return 0; return Number(row.amount_open_cents ?? 0) || 0; }
     export function invoiceTotalCentsForAggregate(row) { if (isVoidInvoice(row)) return 0; return Number(row.total_cents ?? 0) || 0; }
     const totals = invoices.reduce((acc, row) => {
       acc.total += invoiceTotalCentsForAggregate(row);
