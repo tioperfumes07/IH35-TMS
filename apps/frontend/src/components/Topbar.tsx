@@ -266,6 +266,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 data-testid="global-create-menu"
               >
                 {([
+                  [t("topbar.create_customer", "Customer"), "/customers?create=1"],
                   [t("topbar.create_invoice", "Invoice"), "/accounting/invoices?create=1"],
                   [t("topbar.create_bill", "Bill"), "/accounting/bills/vendor?create=1"],
                   [t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"],

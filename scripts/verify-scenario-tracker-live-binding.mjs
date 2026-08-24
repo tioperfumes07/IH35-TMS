@@ -355,6 +355,16 @@ function check(sources) {
     }
   }
 
+  const hopSection =
+    (sources[FE] ?? "").split("export const HOP_IDENTITY")[1]?.split("export const SCENARIO_IDENTITY")[0] ?? "";
+  const hopHrefs = [...hopSection.matchAll(/href: "([^"]+)"/g)].map((m) => m[1]);
+  const dupHrefs = hopHrefs.filter((h, i) => hopHrefs.indexOf(h) !== i);
+  if (dupHrefs.length) {
+    errors.push(
+      `${FE}: duplicate hop hrefs (${[...new Set(dupHrefs)].join(", ")}) — PROGRAM-TRACKER-F07 hops must land on distinct screens.`,
+    );
+  }
+
   return errors;
 }
 
@@ -405,7 +415,8 @@ function selftest() {
     ["scoreboard loses its masking guard", (s) => ({ ...s, [SCOREBOARD]: s[SCOREBOARD].split("assertNotMasked").join("skipCheck") })],
     ["certifier bypass becomes transaction-local", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].replace("'app.bypass_rls','lucia',false", "'app.bypass_rls','lucia',true") })],
     ["a Part B slice is dropped", (s) => ({ ...s, [BACKEND]: s[BACKEND].split('"scenario.escrow"').join('"scenario.gone"') })],
-    ["hop.book loses its href", (s) => ({ ...s, [FE]: s[FE].replace('href: "/dispatch/book-load"', "href_missing: true") })],
+    ["hop.book loses its href", (s) => ({ ...s, [FE]: s[FE].replace('href: "/dispatch/book-load?book_load=1"', "href_missing: true") })],
+    ["duplicate hop hrefs", (s) => ({ ...s, [FE]: s[FE].replace('href: "/dispatch/assignments"', 'href: "/dispatch/loads"') })],
     ["hop Link wiring removed", (s) => ({ ...s, [HOME]: s[HOME].replace("to={hop.href}", "to=\"/program\"") })],
   ];
   for (const [name, mutate] of mutations) {

@@ -44,11 +44,11 @@ vi.mock("../../../api/catalogs", () => ({
 
 import { createCustomer } from "../../../api/mdata";
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, initialEntries: string[] = ["/customers"]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <ToastProvider>{ui}</ToastProvider>
       </MemoryRouter>
     </QueryClientProvider>
@@ -56,6 +56,11 @@ function wrap(ui: ReactElement) {
 }
 
 describe("CustomersPage create validation", () => {
+  it("opens the create drawer from ?create=1 (chrome Create → Customer)", async () => {
+    render(wrap(<CustomersPage />, ["/customers?create=1"]));
+    expect(await screen.findByRole("heading", { name: /create customer/i })).toBeTruthy();
+  });
+
   it("shows legal_name error on empty submit", async () => {
     const user = userEvent.setup();
     vi.mocked(createCustomer).mockResolvedValue({ ok: true } as never);

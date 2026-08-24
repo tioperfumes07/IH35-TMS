@@ -377,7 +377,19 @@ export function CustomersPage() {
   });
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get("create") === "1");
+  useEffect(() => {
+    if (searchParams.get("create") !== "1") return;
+    setCreateOpen(true);
+  }, [searchParams]);
+  const closeCreate = () => {
+    setCreateOpen(false);
+    if (searchParams.get("create") === "1") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("create");
+      setSearchParams(next, { replace: true });
+    }
+  };
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string; email?: string }>({});
@@ -853,9 +865,16 @@ export function CustomersPage() {
                 </SelectCombobox>
               </div>
             </CollapsedListFilters>
-            <ActionButton onClick={() => setCreateOpen(true)}>
-              + Create Customer
-            </ActionButton>
+            <div className="relative z-50" onClick={(event) => event.stopPropagation()}>
+              <ActionButton
+                type="button"
+                className="relative z-50"
+                data-testid="customers-create-open"
+                onClick={() => setCreateOpen(true)}
+              >
+                + Create Customer
+              </ActionButton>
+            </div>
           </div>
         }
       />
@@ -1209,7 +1228,7 @@ export function CustomersPage() {
         </main>
       </div>
       )}
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer" modalKind="customer-create" sizePreset="xl">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Customer" modalKind="customer-create" sizePreset="xl">
         <form
           className="space-y-3"
           onSubmit={(event) => {

@@ -1,4 +1,7 @@
 const MapView = React.lazy(() => import("../pages/dispatch/MapView").then((m) => ({ default: m.MapView })));
+const ApiDocumentPassthrough = React.lazy(() =>
+  import("../pages/ApiDocumentPassthrough").then((m) => ({ default: m.ApiDocumentPassthrough }))
+);
 const LoadBankingLinkagePage = React.lazy(() =>
   import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
 );
@@ -1318,6 +1321,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        <Route path="/dispatch/book_load" element={<Navigate to="/dispatch/book-load?book_load=1" replace />} />
         <Route
           path="/dispatch/assignments"
           element={
@@ -4508,6 +4512,7 @@ export const ROUTES = React.Children.toArray(
             PreserveSearchNavigate keeps driver_id / settlement_id (LAW — never drop deep-link params). */}
         <Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />
         <Route path="/finance-hub" element={<ProtectedRoute><Navigate to="/finance/hub" replace /></ProtectedRoute>} />
+        <Route path="/api/*" element={<ApiDocumentPassthrough />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
   </>

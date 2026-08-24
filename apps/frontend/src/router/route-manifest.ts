@@ -148,6 +148,7 @@ export function maintenanceTabFromPath(pathname: string): string | null {
   // Bare hub — let MaintenanceHomePage initialTab decide (R&M board by default).
   if (norm === "/maintenance") return null;
   if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage") return "in_transit_issues";
+  if (norm.includes("in-transit")) return "in_transit_issues";
   // Live operators + Devin still hit the short alias; map it to the canonical pre-flight leaf.
   if (norm === "/maintenance/dvir") return "pre_flight_dvir";
   for (const [id, routePath] of Object.entries(MAINTENANCE_TAB_PATH)) {

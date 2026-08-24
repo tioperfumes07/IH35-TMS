@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
@@ -203,14 +203,24 @@ export function DispatchPage({
   const loadId = pinnedLoadId ?? routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
 
-  // "Reserve a Load" deep link (?book_load=1) must open the book-load modal — previously unread.
+  // PROGRAM-TRACKER-F07: /dispatch/book-load used to render a stub ("use the Book Load flow")
+  // because only ?book_load=1 opened the wizard. Path AND query must open it once per visit.
+  const autoOpenedBookRef = useRef(false);
   useEffect(() => {
-    if (searchParams.get("book_load") !== "1") return;
+    const onBookPath = location.pathname.replace(/\/$/, "") === "/dispatch/book-load";
+    const q = searchParams.get("book_load") === "1";
+    if (!onBookPath && !q) {
+      autoOpenedBookRef.current = false;
+      return;
+    }
+    if (autoOpenedBookRef.current && !q) return;
+    autoOpenedBookRef.current = true;
     setNewLoadOpen(true);
+    if (!q) return;
     const next = new URLSearchParams(searchParams);
     next.delete("book_load");
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [location.pathname, searchParams, setSearchParams]);
 
   const loads = loadsQuery.data?.loads ?? [];
 
