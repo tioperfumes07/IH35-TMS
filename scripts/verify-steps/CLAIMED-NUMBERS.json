@@ -4149,6 +4149,11 @@
     "claimed_by": "codex",
     "purpose": "verify-insurance-coverage-gap-units"
   },
+  "7298": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-insurance-creator-contract-depth"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
