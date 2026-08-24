@@ -21,7 +21,7 @@ Seat NOW (one source): `docs/bus/NOW-ONE-SOURCE.md`.
 | 1 | CASH FLOW | `cash-flow` | `/cash-flow` | **CC-1 NOW** — Next-8 #1. Fully-Wired 1–12 leftover unique. Then row 2. |
 | 2 | FINANCE HUB | `finance` | `/finance` | **CC-1** after cash-flow unique-clean. Next-8 #2. |
 | 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | Walked. Do not remake Close / proven TESTs. Not in Next-8. |
-| 4 | 425C | `form_425` | `/425c` | Cursor leftover shipped #15053–#15279 — **do not loop**. Not in Next-8. |
+| 4 | 425C | `form_425` | `/425c` | leftover-CERTIFIED WAVE 4 @ `189dd4c`. **Do not loop.** Not in Next-8. |
 | 5 | REPORTS | `reports` | `/reports` | **CC-2** after fuel unique-clean. Next-8 #4. Stay out of CC-1 money reports. |
 | 6 | TASKS | `tasks` | `/tasks` | Leftover-clean #15279. Not in Next-8. |
 | 7 | COMPLIANCE | `compliance` | `/compliance` | **CC-3 NOW** — Next-8 #5. CERTIFY leftover 1–12. Then row 8. |
