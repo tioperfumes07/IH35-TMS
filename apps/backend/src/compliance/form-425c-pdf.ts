@@ -67,10 +67,24 @@ function fmt(v: unknown) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function labelForMonth(monthDate: string) {
-  const d = new Date(monthDate);
-  if (Number.isNaN(d.getTime())) return monthDate;
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+/** pg `date` arrives as Date; String(date).slice(0, 10) is "Fri Aug 01", not YYYY-MM-DD. */
+function reportingMonthYmd(value: unknown): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  const raw = String(value ?? "").trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  return "";
+}
+
+function labelForMonth(monthDate: unknown) {
+  const ymd = reportingMonthYmd(monthDate);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return String(monthDate ?? "");
+  const monthIdx = Number(match[2]) - 1;
+  if (monthIdx < 0 || monthIdx > 11) return ymd;
+  return `${MONTHS[monthIdx]} ${match[1]}`;
 }
 
 /** Court "Date filed" from filed_at YYYY-MM-DD only. Never print-day. Never UTC Date shift. */
@@ -164,7 +178,7 @@ function buildPrintHTML(
 
   return `<!doctype html><html><head><meta charset="utf-8" /><style>@page{size:letter;margin:.5in}.section{background:#1e3a6a;color:#fff;padding:4px 8px;margin-top:8px;font-weight:700}table{width:100%;border-collapse:collapse}body{font-family:Arial,sans-serif;font-size:12px}</style></head><body>
   <h2 style="margin:0">Official Form 425C — Monthly Operating Report</h2>
-  <div style="margin:4px 0 10px;color:#334155;">${companyName} · ${labelForMonth(String(report.reporting_month ?? ""))}</div>
+  <div style="margin:4px 0 10px;color:#334155;">${companyName} · ${labelForMonth(report.reporting_month)}</div>
   <div style="margin:0 0 10px;color:#334155;">${caption ? `${caption} · ` : ""}<strong>Date filed:</strong> ${filed}${lob ? ` · ${lob}` : ""}${naics ? ` · NAICS ${naics}` : ""}</div>
 
   <div class="section">1. Questionnaire</div>
@@ -278,7 +292,7 @@ export async function buildForm425CPrintDocument({
   );
 
   const printHtml = buildPrintHTML(report, profile, exhibitARes.rows, exhibitBRes.rows);
-  const monthLabel = labelForMonth(String(report.reporting_month ?? ""));
+  const monthLabel = labelForMonth(report.reporting_month);
   const companyName = String(profile.company_name ?? "").trim();
   if (!companyName) throw new Error("form_425c_profile_required");
   const suggestedFilename = `${companyName} – ${monthLabel} – Monthly Operating Report.pdf`;
@@ -317,7 +331,7 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
     `,
     [
       operatingCompanyId,
-      `form-425c-${String(built.report.reporting_month ?? "").slice(0, 10)}.html`,
+      `form-425c-${reportingMonthYmd(built.report.reporting_month) || "unknown-month"}.html`,
       "text/html",
       htmlBuffer.length,
       sha256,

@@ -431,6 +431,14 @@ export function collectProblems(src) {
   if (pdfLib.includes("Date filed:") && pdfLib.includes("toLocaleDateString")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Date filed must not invent print-day via toLocaleDateString");
   }
+  if (
+    !pdfLib.includes("function reportingMonthYmd") ||
+    pdfLib.includes('String(built.report.reporting_month ?? "").slice(0, 10)')
+  ) {
+    problems.push(
+      "apps/backend/src/compliance/form-425c-pdf.ts: docs.files original_filename must use reportingMonthYmd — String(Date).slice(0,10) wrote Fri Aug 01 onto the court snapshot",
+    );
+  }
   if (!historyTab.includes('statusFilter === "amended"') || !historyTab.includes("amended_from_uuid")) {
     problems.push(
       "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx: Status=amended must match amended_from_uuid drafts — status==='amended' is never written by Amend",
