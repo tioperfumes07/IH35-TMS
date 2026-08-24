@@ -170,6 +170,9 @@ export function collectProblems(src) {
   if (!src.includes("Select an operating company before saving profile defaults")) {
     problems.push(`${PAGE}: Save Defaults without an operating company must toast, not POST an empty uuid`);
   }
+  if (profiles.includes("disabled={saving || !canSave}")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Save Defaults must stay clickable when canSave is false so the parent toast fires — disabled is a leftover dead click");
+  }
   if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
   }
