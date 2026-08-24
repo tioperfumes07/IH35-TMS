@@ -7,8 +7,8 @@
 
 **U14 14/14 CERTIFIED.** Never recertify. Never remake Close. Never `trigger_deploy`.
 
-**NOW:** `CLASS-F5973-TRUE-REMAINDER-FUEL` — Chrome `/fuel` leftover leaves. FAST-MERGE.
+**NOW:** `CLASS-F5973-TRUE-REMAINDER-FUEL` — Chrome `/fuel` **new** unique 500/dead/silent only. Do not remake #15228–#15243 (insurance fixture + Send to driver). POST 3/5/12 walked. Empty unique → poll; do not steal `/425c` `/cash-flow` `/finance`.
 
-FORBIDDEN: `/425c` `/lists` `/legal` · rebuild SYS-F5984 · recertify
+FORBIDDEN: `/425c` `/lists` `/legal` · rebuild SYS-F5984 · recertify · remake Close
 
 OUTBOX: `CC-2 | ACK | POST-U14-SEQUENCE | PORT=9224 | NOW=CLASS-F5973-TRUE-REMAINDER-FUEL | GO`

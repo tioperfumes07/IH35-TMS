@@ -81,6 +81,15 @@ export function collectProblems(src) {
   if (formTab.includes('?? (q.expectYes ? "yes" : "no")')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: unanswered questionnaire radios must stay empty — inventing Yes/No is a silent court answer");
   }
+  if (
+    formTab.includes("${netCash.toFixed(2)}") ||
+    formTab.includes("${cashEnd.toFixed(2)}") ||
+    formTab.includes("${nv(form.totalReceipts).toFixed(2)}") ||
+    !formTab.includes("function moneyCell") ||
+    !formTab.includes("function computedDiff")
+  ) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: empty banking/projection fields must render — not $0.00 (silent invented court cash)");
+  }
   if (profiles.includes('?? (q.expectYes ? "yes" : "no")')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: unanswered default-questionnaire radios must stay empty — inventing Yes/No was a silent Save Defaults write");
   }
