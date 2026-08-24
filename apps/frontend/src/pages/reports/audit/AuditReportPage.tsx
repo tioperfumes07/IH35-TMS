@@ -190,6 +190,15 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
           storageKey="audit-report-page"
           emptyText="No records for the selected filters."
           tableTestId="audit-report-table"
+          // REPORTS-F6363: `rows` here is already ONE server-paged batch (offset/limit below owns
+          // the real page). Without pageSize+hidePager, ParityTable's own uncontrolled pager
+          // silently re-slices that batch into its own 15-per-page pages ("Page 1 of 7") on top
+          // of the real "Prev/Next Page 1 of 3" pager beneath it — two disconnected, conflicting
+          // pagers on one table, the top one going stale (still "Page 1 of 7") the moment the
+          // bottom pager fetches a new batch. Per ParityTable's own documented "caller pre-pages"
+          // combo: pageSize = server page size + hidePager — no double slicing.
+          pageSize={PAGE_SIZE}
+          hidePager
           toolbar={
             <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
               Export CSV
