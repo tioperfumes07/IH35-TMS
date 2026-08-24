@@ -85,6 +85,7 @@ const CHECKS = [
   ["apps/backend/src/safety/driver-scheduler.service.ts", /pending_leave_dca\.driver_id = d\.id[\s\S]{0,180}pending_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}pending_leave_dca\.is_authorized = true[\s\S]{0,180}pending_leave_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/driver-scheduler.service.ts", /all_leave_dca\.driver_id = d\.id[\s\S]{0,180}all_leave_dca\.company_id = \$1::uuid[\s\S]{0,180}all_leave_dca\.is_authorized = true[\s\S]{0,180}all_leave_dca\.deactivated_at IS NULL/],
   ["apps/backend/src/safety/driver-scheduler.service.ts", /leave_detail_dca\.driver_id = d\.id[\s\S]{0,180}leave_detail_dca\.company_id = \$1::uuid[\s\S]{0,180}leave_detail_dca\.is_authorized = true[\s\S]{0,180}leave_detail_dca\.deactivated_at IS NULL/],
+  ["apps/backend/src/safety/driver-scheduler.service.ts", /scheduler_fleet_dca\.driver_id = d\.id[\s\S]{0,180}scheduler_fleet_dca\.company_id = \$1::uuid[\s\S]{0,180}scheduler_fleet_dca\.is_authorized = true[\s\S]{0,180}scheduler_fleet_dca\.deactivated_at IS NULL/],
 ];
 
 export function audit(files) {

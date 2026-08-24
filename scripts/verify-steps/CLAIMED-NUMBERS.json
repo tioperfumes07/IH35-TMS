@@ -1,4 +1,14 @@
 {
+  "4619": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-profit-per-truck-cpm-excludes-sample-data"
+  },
+  "4615": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-dashboard-kpis-excludes-sample-data"
+  },
   "4611": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
@@ -5783,5 +5793,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1276
+  "total_claimed": 1278
 }

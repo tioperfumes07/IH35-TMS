@@ -149,12 +149,23 @@ export function Form425CHome() {
   const [form, setForm] = useState<CurrentFormState>(emptyForm());
   const [dirty, setDirty] = useState(false);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
+  const profileErrorToast = useRef(false);
 
   const profilesQuery = useQuery({
     queryKey: ["form-425c", "profiles", companyId],
     enabled: Boolean(companyId),
     queryFn: () => listForm425CProfiles(companyId),
   });
+
+  useEffect(() => {
+    if (!profilesQuery.isError) {
+      profileErrorToast.current = false;
+      return;
+    }
+    if (profileErrorToast.current) return;
+    profileErrorToast.current = true;
+    pushToast(userFacingApiError(profilesQuery.error, "Could not load Form 425C profile"), "error");
+  }, [profilesQuery.isError, profilesQuery.error, pushToast]);
 
   const availableCompanies = useMemo<CompanyKey[]>(() => {
     const keys = profilesQuery.data?.profiles?.map((row) => row.company_key) ?? [];
@@ -166,6 +177,16 @@ export function Form425CHome() {
     enabled: Boolean(companyId),
     queryFn: () => listForm425CReports(companyId),
   });
+  const reportsErrorToast = useRef(false);
+  useEffect(() => {
+    if (!reportsQuery.isError) {
+      reportsErrorToast.current = false;
+      return;
+    }
+    if (reportsErrorToast.current) return;
+    reportsErrorToast.current = true;
+    pushToast(userFacingApiError(reportsQuery.error, "Could not load Form 425C reports"), "error");
+  }, [reportsQuery.isError, reportsQuery.error, pushToast]);
 
   const selectedReport = useMemo(() => {
     const reports = reportsQuery.data?.reports ?? [];
@@ -183,6 +204,16 @@ export function Form425CHome() {
     enabled: Boolean(companyId && selectedReport?.id),
     queryFn: () => getForm425CReport(selectedReport!.id, companyId),
   });
+  const detailErrorToast = useRef(false);
+  useEffect(() => {
+    if (!detailQuery.isError) {
+      detailErrorToast.current = false;
+      return;
+    }
+    if (detailErrorToast.current) return;
+    detailErrorToast.current = true;
+    pushToast(userFacingApiError(detailQuery.error, "Could not load Form 425C report detail"), "error");
+  }, [detailQuery.isError, detailQuery.error, pushToast]);
 
   const exhibitEntries = useMemo(() => {
     const loadedId = String((detailQuery.data?.report as { id?: string } | undefined)?.id ?? "");
@@ -214,7 +245,7 @@ export function Form425CHome() {
         lineOfBusiness: row.line_of_business,
         naiscCode: row.naisc_code,
         bankAccounts: row.bank_accounts,
-        defaultAnswers: Object.fromEntries(Object.entries(row.default_questionnaire_answers).map(([k, v]) => [Number(k), v])) as CompanyProfiles[CompanyKey]["defaultAnswers"],
+        defaultAnswers: Object.fromEntries(Object.entries(row.default_questionnaire_answers ?? {}).map(([k, v]) => [Number(k), v])) as CompanyProfiles[CompanyKey]["defaultAnswers"],
       };
     }
     setProfiles(merged);
@@ -539,7 +570,13 @@ export function Form425CHome() {
           onChange={(company, updater) => {
             setProfiles((prev) => ({ ...prev, [company]: updater(prev[company]) }));
           }}
-          onSave={() => saveProfileMutation.mutate()}
+          onSave={() => {
+            if (!companyId) {
+              pushToast("Select an operating company before saving profile defaults", "error");
+              return;
+            }
+            saveProfileMutation.mutate();
+          }}
           saving={saveProfileMutation.isPending}
         />
       ) : null}
@@ -573,6 +610,10 @@ export function Form425CHome() {
             setDirty(true);
           }}
           onCreateOrLoad={() => {
+            if (!companyId) {
+              pushToast("Select an operating company before creating a report", "error");
+              return;
+            }
             if (createMutation.isPending) {
               pushToast("Create already in progress", "error");
               return;
@@ -698,26 +739,24 @@ export function Form425CHome() {
           month={month}
           year={year}
           canGenerate={Boolean(form.reportId && form.reportId === selectedReport?.id)}
-          generating={generateMutation.isPending}
+          generating={historyPrintMutation.isPending}
           onGenerate={() => {
             if (!form.reportId || form.reportId !== selectedReport?.id) {
               pushToast("Create / Load Draft before generating the filing package", "error");
               return;
             }
-            if (form.status === "filed") {
-              pushToast("This MOR is filed — use Amend on History", "error");
-              return;
-            }
-            if (dirty) {
+            // Merge print is read-only (same GET as History Print). Form "Generate PDF"
+            // is the write path that inserts docs.files and sets ready_to_file.
+            if (dirty && form.status !== "filed") {
               saveMutation.mutate(undefined, {
                 onSuccess: () => {
-                  pushToast("Draft saved — generating filing PDF", "success");
-                  generateMutation.mutate();
+                  pushToast("Draft saved — opening print window (status unchanged)", "success");
+                  historyPrintMutation.mutate(form.reportId!);
                 },
               });
               return;
             }
-            generateMutation.mutate();
+            historyPrintMutation.mutate(form.reportId);
           }}
         />
       ) : null}

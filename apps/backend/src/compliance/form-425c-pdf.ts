@@ -249,7 +249,10 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
       userId,
     ]
   );
-  const fileId = fileInsert.rows[0]?.id ?? null;
+  const fileId = fileInsert.rows[0]?.id;
+  if (!fileId) {
+    throw new Error("form_425c_filing_file_insert_failed");
+  }
 
   return {
     filingRecordId: reportId,

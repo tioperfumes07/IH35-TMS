@@ -117,6 +117,44 @@ export function collectProblems(src) {
   if (!routes.includes("form_425c_period_draft_exists")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
   }
+  const createChunk = (routes.split('app.post("/api/v1/form-425c", {')[1] ?? "").split('app.patch("/api/v1/form-425c/:id"')[0];
+  if (!createChunk.includes("form_425c_operating_company_not_found") || !createChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create on a missing/inactive company must 404, not an uncaught 500 from ensureDefaultProfile");
+  }
+  if (!src.includes("Select an operating company before creating a report")) {
+    problems.push(`${PAGE}: Create / Load Draft without an operating company must toast, not POST an empty uuid`);
+  }
+  if (!src.includes("Could not load Form 425C reports")) {
+    problems.push(`${PAGE}: reports GET failure must toast — History empty with no toast was a silent miss`);
+  }
+  if (!src.includes("Could not load Form 425C report detail")) {
+    problems.push(`${PAGE}: report detail GET failure must toast — Form cash empty with no toast was a silent miss`);
+  }
+  const listChunk = (routes.split('app.get("/api/v1/form-425c", {')[1] ?? "").split("app.get(\"/api/v1/form-425c/profiles\"")[0];
+  const detailChunk = (routes.split('app.get("/api/v1/form-425c/:id", {')[1] ?? "").split("app.get(\"/api/v1/form-425c/:id/filing-html\"")[0];
+  if (!listChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: History list GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  if (!detailChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: report detail GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split("app.get(\"/api/v1/form-425c/banking-summary\"")[0];
+  if (!profilesGetChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: profiles GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  const profilesPostChunk = (routes.split('app.post("/api/v1/form-425c/profiles"')[1] ?? "").split('app.post("/api/v1/form-425c"')[0];
+  if (!profilesGetChunk.includes("form_425c_operating_company_not_found") || !profilesGetChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET profiles on a missing/inactive company must 404, not an uncaught 500");
+  }
+  if (!profilesPostChunk.includes("form_425c_operating_company_not_found") || !profilesPostChunk.includes("rateLimit") || !profilesPostChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: POST profiles must rate-limit and 404 missing company / 403 membership — uncaught throw was a 500");
+  }
+  if (!src.includes("Could not load Form 425C profile")) {
+    problems.push(`${PAGE}: Profiles GET failure must toast — keeping DEFAULT_PROFILES with no toast was a silent wrong debtor`);
+  }
+  if (!src.includes("Select an operating company before saving profile defaults")) {
+    problems.push(`${PAGE}: Save Defaults without an operating company must toast, not POST an empty uuid`);
+  }
   if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
   }
@@ -136,6 +174,17 @@ export function collectProblems(src) {
   }
   if (mergeTab.includes("disabled={generating || !canGenerate}")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must stay clickable so the parent toast fires — a disabled button is a dead click");
+  }
+  const mergeChunk = (src.split('tab === "merge"')[1] ?? "").split('tab === "history"')[0];
+  if (mergeChunk.includes("generateMutation.mutate")) {
+    problems.push(
+      `${PAGE}: Merge Generate must not POST generate-filing-pdf — that silently flipped draft → ready_to_file`,
+    );
+  }
+  if (!mergeChunk.includes("historyPrintMutation.mutate") || !mergeChunk.includes("status unchanged")) {
+    problems.push(
+      `${PAGE}: Merge Generate must use History Print GET (read-only) and toast that status is unchanged`,
+    );
   }
   if (!src.includes("This MOR is filed — use Amend on History")) {
     problems.push(`${PAGE}: Save/Import/Generate on a filed MOR must toast Amend — not silently rewrite the court filing`);
@@ -171,6 +220,9 @@ export function collectProblems(src) {
   if (!attachChunk.includes("assertMutableForm425CReport") || !attachChunk.includes("AND status <> 'filed'")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: attachment POST must refuse filed MORs — UPDATE without status was a silent rewrite");
   }
+  if (!attachChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: attachment POST must 403 on forbidden_company_membership, not an uncaught 500");
+  }
   if (!src.includes("addForm425CExhibitA") || !src.includes("addForm425CExhibitB") || !src.includes("onSaveExhibit")) {
     problems.push(`${PAGE}: flagged questionnaire must POST exhibit A/B — not a dead hop to /425c/exhibits A–F`);
   }
@@ -183,6 +235,9 @@ export function collectProblems(src) {
   const exhibitBChunk = (routes.split('app.post("/api/v1/form-425c/:id/exhibit-b"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/attachments')[0];
   if (!exhibitAChunk.includes("assertMutableForm425CReport") || !exhibitBChunk.includes("assertMutableForm425CReport")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: both exhibit A and B POSTs must assert the MOR is a non-filed report for this opco");
+  }
+  if (!routes.includes("function sendExhibitWriteError") || !(routes.split("function sendExhibitWriteError")[1] ?? "").includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Exhibit A/B POST must 403 on forbidden_company_membership, not an uncaught 500");
   }
   if (!formTab.includes("onSaveExhibit") || !formTab.includes("Save Exhibit")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Exhibit required must save a line explanation, not only link to /425c/exhibits");
@@ -206,7 +261,21 @@ export function collectProblems(src) {
   if (!routes.includes("/filing-html") || !routes.includes("buildForm425CPrintDocument")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET filing-html must reprint without INSERT/UPDATE");
   }
+  const filingHtmlChunk = (routes.split('app.get("/api/v1/form-425c/:id/filing-html"')[1] ?? "").split('app.post("/api/v1/form-425c/profiles"')[0];
+  if (!filingHtmlChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: History/Merge print GET filing-html must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  const generateChunk = (routes.split('app.post("/api/v1/form-425c/:id/generate-filing-pdf"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/mark-filed"')[0];
+  if (!generateChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate PDF must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  if (!generateChunk.includes("form_425c_filing_file_insert_failed") || !generateChunk.includes("502")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Generate must 502 when the filing snapshot INSERT returns no file — not ready_to_file with a null PDF");
+  }
   const pdfLib = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c-pdf.ts"), "utf8");
+  if (!pdfLib.includes("form_425c_filing_file_insert_failed") || pdfLib.includes("fileInsert.rows[0]?.id ?? null")) {
+    problems.push("apps/backend/src/compliance/form-425c-pdf.ts: Generate must throw when docs.files INSERT returns no id — null fileId marked the MOR ready");
+  }
   if (!pdfLib.includes("export async function buildForm425CPrintDocument") || !pdfLib.includes("Read-only court HTML")) {
     problems.push("apps/backend/src/compliance/form-425c-pdf.ts: reprint must be a read-only builder, not generateForm425CPdf");
   }
@@ -300,6 +369,15 @@ const good = `
   exhibitEntries.b
   getForm425CFilingHtml
   historyPrintMutation
+  tab === "merge"
+          historyPrintMutation.mutate(form.reportId);
+          status unchanged
+  tab === "history"
+  Could not load Form 425C profile
+  Select an operating company before saving profile defaults
+  Select an operating company before creating a report
+  Could not load Form 425C reports
+  Could not load Form 425C report detail
 `;
 const bad = `
   if (!detailQuery.data?.report) {
@@ -308,6 +386,9 @@ const bad = `
   }
   onOpen={(id) => { setTab("form"); }}
   setForm((prev) => ({ ...prev, [key]: e.target.checked }))
+  tab === "merge"
+          generateMutation.mutate();
+  tab === "history"
 `;
 
 if (process.argv.includes("--selftest")) {

@@ -57,7 +57,11 @@ const permitService = read("apps/backend/src/master-data/units/permits/service.t
 contains("apps/backend/src/master-data/units/permits/service.ts", permitService, [
   { pattern: /scanUnitPermitExpiries/, label: "unit permit expiry scan" },
   { pattern: /master_data\.unit_permits/, label: "permit monitor query" },
+  { pattern: /u\.owner_company_id = \$1::uuid OR u\.currently_leased_to_company_id = \$1::uuid/, label: "permit monitor preserves owner-or-lessee visibility" },
 ]);
+if (/COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$1::uuid/.test(permitService)) {
+  fail("apps/backend/src/master-data/units/permits/service.ts: permit monitor must not hide the owner when a unit is leased");
+}
 
 const certMonitorJob = read("apps/backend/src/jobs/cert-expiry-monitor.ts");
 contains("apps/backend/src/jobs/cert-expiry-monitor.ts", certMonitorJob, [
@@ -106,6 +110,22 @@ contains("apps/backend/src/index.ts", indexTs, [
   { pattern: /registerUnitPermitsRoutes/, label: "permits routes wired in index" },
   { pattern: /registerUnitTollTagsRoutes/, label: "toll tag routes wired in index" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const planted = permitService.replace(
+    "(u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)",
+    "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid"
+  );
+  const catchesOwnerTombstone =
+    !/u\.owner_company_id = \$1::uuid OR u\.currently_leased_to_company_id = \$1::uuid/.test(planted) &&
+    /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$1::uuid/.test(planted);
+  if (!catchesOwnerTombstone) {
+    console.error("verify:permits-toll-tags SELFTEST FAILED — planted owner-tombstone scope escaped");
+    process.exit(1);
+  }
+  console.log("verify:permits-toll-tags SELFTEST PASS — planted owner-tombstone scope rejected");
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:permits-toll-tags — FAILED");
