@@ -161,6 +161,17 @@ function failures(sources) {
   if (!/error\.status === 408/.test(authHook)) {
     out.push("useAuth must not retry 408 session timeouts");
   }
+  if (!getMeSlice.includes("timedOut && !callerAborted")) {
+    out.push("identity.ts getMe must not map React Query cancel to 408 (callerAborted)");
+  }
+  const loginPage = fs.readFileSync("apps/frontend/src/pages/Login.tsx", "utf8");
+  if (!loginPage.includes("isError && !isUnauthenticated")) {
+    out.push("Login.tsx must not treat 401 as Session check timed out / API hung");
+  }
+  const routes = fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
+  if (!routes.includes("function sessionGate") || !routes.includes("isUnauthenticated")) {
+    out.push("manifest sessionGate must send 401 to /login and keep 408 on-URL with retry");
+  }
   return out;
 }
 
