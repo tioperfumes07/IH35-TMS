@@ -78,7 +78,9 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             AND purchased_at >= date_trunc('month', now())
         `,
         [companyId]
-      ).catch(() => ({ rows: [{ spend: 0, avg_price: 0 }] }));
+      );
+      // FUEL-PLANNER-DASHBOARD-SPEND-QUERY-FAILS-AS-ZERO: a failed spend query must not become
+      // authoritative $0 / $0. Genuine empty month is COALESCE(sum)=0 from a successful query.
       const savingsRes = await client.query<{ savings: number }>(
         `
           SELECT COALESCE(sum(savings_estimate), 0)::numeric AS savings

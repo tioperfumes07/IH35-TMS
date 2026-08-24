@@ -2,6 +2,8 @@
 
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
+**THIS HOUR:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md` — U14 + next 6 launch-ready on current `healthz`. CREATE-TEST-THEN-VOID.
+
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
 **LAW:** `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`  
@@ -36,13 +38,13 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW | Role |
 |------|------|-----|------|
-| **Cursor** | **9222** | lead + FAST-MERGE + deploy | CUST-MONEY-F6312 then unique overflow. |
-| **CC-1** | **9223** | next unique money leftover only | F03 + F6312 taken. STOP `/425c`. Inventory #13931 closed. |
-| **CC-2** | **9224** | `/reports` unique FINDING | No Close / F04 / F06 / SYS-F5984 remake. |
-| **CC-3** | **9225** | leftover POST unique | CLASS-F5973 maint closed. No roadside remake. |
-| **Codex** | **9226** | **CLASS-F5973 fuel** if still dead vs main | Never restamp 7–9. |
-| **Cascade** | audit | **LIVE WALK now** on current `healthz` | Unique FINDING if still true. No U14 restamp. |
-| **Devin-A** | audit | **LIVE WALK now** customers + leftover POST | AUDIT ONLY. F02/F03/F03-cols closed. |
+| **Cursor** | **9222** | fuel spend fail-loud + `/customers` TEST | Stamp launch-ready only after live unique=none. |
+| **CC-1** | **9223** | `/accounting` TEST | STOP `/425c`. Never `trigger_deploy`. |
+| **CC-2** | **9224** | `/reports` `/tasks` `/cash-flow` | Next 6. CREATE TEST. |
+| **CC-3** | **9225** | `/lists` `/maintenance` `/legal` | No roadside remake. |
+| **Codex** | **9226** | `/drivers` `/fleet` `/safety` `/insurance` | Never restamp U14 table. |
+| **Cascade** | audit | `/banking` `/settlements` `/factoring` `/finance` | Unique FINDING if still true. |
+| **Devin-A** | audit | `/customers` 3 tabs + `/vendors` + `/dispatch` | CREATE TEST. Not PARKED. |
 
 Forbidden: remake Close / F6301 / fleet #15291–#15310 / fuel phantom #15335 / `/425c` loop.
 

@@ -1,12 +1,9 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
-**FAST-MERGE 4 min ON · CONTINUOUS.** Never `gh pr checks --watch`. Never `trigger_deploy`. Never pause.
+**RUNBOOK:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md`
 
-**NOW:** Next unique **money** leftover only (500 / dead / silent / reverse-empty with Neon rows). Grep-verify vs main first.
+**NOW THIS TURN:** `/accounting` on **current** `healthz/shallow`. CREATE-TEST-THEN-VOID — labeled TEST invoice or bill if the list is empty. Prove Bills **Claim** + **Work order** columns still render. Unique 500 / dead / silent only. FAST-MERGE.
 
-**CLOSED — do not remake:** U14-01-F03 Claim/WO columns · CUST-MONEY-F6312 (Cursor) · INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE **#13931** · F02/F03 · BANK-F5987 · FACT-F5986 · `/425c`.
+**CLOSED — do not remake:** F03 columns · F6312 · inventory #13931 · F02/F03 · `/425c`. Never `trigger_deploy`.
 
-Never `trigger_deploy`. Never `gh pr checks --watch`.
-
-OUTBOX: `CC-1 | ACK | FINISH-ALL | PORT=9223 | NOW=next-unique-money | GO`
+OUTBOX: `CC-1 | ACK | U14+6 | PORT=9223 | NOW=/accounting | GO`
