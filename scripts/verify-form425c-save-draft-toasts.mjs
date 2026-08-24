@@ -101,6 +101,9 @@ export function collectProblems(src) {
   if (!src.includes("setOpenedReportId(id)") || !src.includes("openedReportId")) {
     problems.push(`${PAGE}: History Open must select the clicked report id — same-month filed+amendment find() kept the wrong row`);
   }
+  if (!src.includes("setOpenedReportId(created.id)")) {
+    problems.push(`${PAGE}: Create / Amend must pin created.id — month-only find() can hydrate the other same-month MOR`);
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
@@ -168,6 +171,7 @@ const good = `
   month={month}
   <QBImportTab
   setOpenedReportId(id)
+  setOpenedReportId(created.id)
   openedReportId
   matches.find((r) => r.status !== "filed")
   throw new Error("Carry-forward override needs a reason of at least 30 characters");
