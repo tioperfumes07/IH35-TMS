@@ -85,7 +85,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
         </div>
         <div className="space-y-2">
           {profile.bankAccounts.map((account, idx) => (
-            <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-4">
+            <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_2fr_1fr_auto]">
               <input
                 className="rounded-sm border px-2 py-1.5 text-sm"
                 value={account.id}
@@ -99,7 +99,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 }
               />
               <input
-                className="rounded-sm border px-2 py-1.5 text-sm md:col-span-2"
+                className="rounded-sm border px-2 py-1.5 text-sm"
                 value={account.label}
                 placeholder="Label"
                 onChange={(e) =>
@@ -122,6 +122,19 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                   })
                 }
               />
+              <button
+                type="button"
+                aria-label={`Remove bank account ${account.label || account.id || idx + 1}`}
+                className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() =>
+                  onChange(activeCompany, (draft) => ({
+                    ...draft,
+                    bankAccounts: draft.bankAccounts.filter((_, i) => i !== idx),
+                  }))
+                }
+              >
+                Remove
+              </button>
             </div>
           ))}
         </div>
