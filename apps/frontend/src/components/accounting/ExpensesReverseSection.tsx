@@ -4,7 +4,7 @@ import { listExpenses } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 (CC-2) — Built reverse_link on create-path surfaces.
@@ -70,7 +70,24 @@ export function ExpensesReverseSection({
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="text-sm text-slate-700" data-testid={`expense-reverse-${row.id}`}>
-              <EntityLink kind="expense" id={row.id} label={entityLabel(row.expense_number, row.id, "Expense")} className="font-medium" />
+              {/* TRAILER-EXPENSE-REVERSE-LABEL-NOT-VISIBLE — this row is already fetched and
+                  rendering right here with real date/amount/status/vendor data; `entityLabel`'s
+                  "Expense — not visible" fallback is for an UNRESOLVED cross-entity join, not a
+                  row already in hand, so a null expense_number wrongly claimed the visible
+                  expense was invisible. visibleDocumentLabel() is the established fix for exactly
+                  this "genuinely visible list row" class (see its doc comment in entity-label.ts,
+                  same pattern already used in ManualJEListPage.tsx / DriverEscrowTabContent.tsx).
+                  Fall back through other real fields on the row before the bare noun. */}
+              <EntityLink
+                kind="expense"
+                id={row.id}
+                label={visibleDocumentLabel(
+                  row.expense_number ?? row.memo ?? row.line_description ?? row.vendor_name,
+                  row.id,
+                  "Expense"
+                )}
+                className="font-medium"
+              />
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.transaction_date)} · {formatMoneyCents(Number(row.total_amount_cents), "USD")} · {row.status}
                 {row.vendor_name ? ` · ${row.vendor_name}` : ""}
