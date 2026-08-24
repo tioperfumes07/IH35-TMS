@@ -190,7 +190,7 @@ export function buildPrintHTML(
   ${mrow(19, `Total opening balance of all accounts <em style='font-size:6.8pt;color:#888;'>(must equal prior month ending balance — ${prevLabel(month, year)})</em>`, fmt(form.openingBalance), { shade: true })}
   ${mrow(20, "Total cash receipts", fmt(form.totalReceipts))}
   ${mrow(21, "Total cash disbursements", fmt(form.totalDisbursements), { shade: true })}
-  ${mrow(22, "Net cash flow (line 20 minus line 21)", fmt(netCash), { bold: true, color: netCash >= 0 ? "#006400" : "#c00" })}
+  ${mrow(22, "Net cash flow (line 20 minus line 21)", fmt(netCash), { bold: true, color: netCash === null ? undefined : netCash >= 0 ? "#006400" : "#c00" })}
   ${mrow(23, "Cash on hand at end of month (line 22 + line 19)", fmt(cashEnd), { bold: true, shade: true, color: "#1e3a6a" })}
 </table>
 
