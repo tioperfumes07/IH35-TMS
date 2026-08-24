@@ -117,6 +117,20 @@ export function collectProblems(src) {
   if (!routes.includes("form_425c_period_draft_exists")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
   }
+  const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split('app.get("/api/v1/form-425c/banking-summary"')[0];
+  const profilesPostChunk = (routes.split('app.post("/api/v1/form-425c/profiles"')[1] ?? "").split('app.post("/api/v1/form-425c"')[0];
+  if (!profilesGetChunk.includes("form_425c_operating_company_not_found") || !profilesGetChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET profiles on a missing/inactive company must 404, not an uncaught 500");
+  }
+  if (!profilesPostChunk.includes("form_425c_operating_company_not_found") || !profilesPostChunk.includes("rateLimit")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: POST profiles must rate-limit and 404 missing company — uncaught throw was a 500");
+  }
+  if (!src.includes("Could not load Form 425C profile")) {
+    problems.push(`${PAGE}: Profiles GET failure must toast — keeping DEFAULT_PROFILES with no toast was a silent wrong debtor`);
+  }
+  if (!src.includes("Select an operating company before saving profile defaults")) {
+    problems.push(`${PAGE}: Save Defaults without an operating company must toast, not POST an empty uuid`);
+  }
   if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
   }
@@ -315,6 +329,8 @@ const good = `
           historyPrintMutation.mutate(form.reportId);
           status unchanged
   tab === "history"
+  Could not load Form 425C profile
+  Select an operating company before saving profile defaults
 `;
 const bad = `
   if (!detailQuery.data?.report) {
