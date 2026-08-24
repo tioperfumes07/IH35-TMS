@@ -92,11 +92,12 @@ export async function bulkCategorizeTransactions(
     await assertBankTxnsNotInReconciledSession(client, input.txnIds, input.operatingCompanyId);
 
     const categoryKind = `${input.psCategory}::${input.psItem}`;
-    const memo = JSON.stringify({
-      ps_category: input.psCategory,
-      ps_item: input.psItem,
-      qbo_account_id: input.qboAccountId,
-    });
+    // ACCT-F6284 — categorization_memo is read as a plain-text memo fallback elsewhere (e.g.
+    // transfers.service.ts's mintTransferForBankFeedLineInClient), not JSON.parse()'d anywhere; a
+    // human sentence here instead of a serialized object avoids poisoning that fallback. The
+    // structured fields (category/category_kind, categorization_gl_account_id/coa_account_id) are
+    // already stored losslessly in their own dedicated columns by the UPDATE below.
+    const memo = `${input.psCategory} — ${input.psItem}`;
 
     const updateRes = await client.query(
       `
@@ -268,13 +269,11 @@ export async function bulkPostTransactionsAsBills(
           txn.transaction_date,
           amountCents,
           amountCents / 100,
-          JSON.stringify({
-            source: "bank_tx_bulk_post",
-            bank_transaction_id: txn.id,
-            ps_category: input.psCategory,
-            ps_item: input.psItem,
-            description: txn.description,
-          }),
+          // ACCT-F6284 — see the memo comment above; plain sentence, not a serialized object, in a
+          // free-text memo column. bank_transaction_id is already carried losslessly by
+          // source_bank_transaction_id (bound below); ps_category/ps_item are already the bill_lines
+          // description text two statements down.
+          `Bank transaction bulk-post: ${input.psCategory} — ${input.psItem} (bank_txn ${txn.id})`,
           userId,
           mdataVendorId,
           vendorIsSampleData,
@@ -329,7 +328,9 @@ export async function bulkPostTransactionsAsBills(
           amountCents,
           amountCents / 100,
           txn.bank_account_id,
-          JSON.stringify({ source: "bank_tx_bulk_post", bank_transaction_id: txn.id }),
+          // ACCT-F6284 — same reasoning; source_bank_transaction_id (bound below) already carries
+          // the transaction reference.
+          `Bank transaction bulk-post payment (bank_txn ${txn.id})`,
           txn.id,
           userId,
           vendorIsSampleData,
@@ -360,7 +361,9 @@ export async function bulkPostTransactionsAsBills(
           `${input.psCategory}::${input.psItem}`,
           billId,
           vendorId,
-          JSON.stringify({ ps_category: input.psCategory, ps_item: input.psItem, bill_id: billId }),
+          // ACCT-F6284 — plain sentence; linked_entity_id (bound above) already carries billId
+          // losslessly and category_kind already carries ps_category/ps_item.
+          `${input.psCategory} — ${input.psItem} (bill ${billId})`,
           input.operatingCompanyId,
         ]
       );

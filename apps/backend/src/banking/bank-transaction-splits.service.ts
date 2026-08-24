@@ -843,12 +843,14 @@ async function commitVendorBillSplitLineAtomic(input: {
         input.txnPostingDate,
         input.amountCents,
         input.amountCents / 100,
-        JSON.stringify({
-          source: "bank_tx_split",
-          bank_transaction_id: input.bankTransactionId,
-          split_line_no: input.lineNo,
-          category_kind: input.categoryKind,
-        }),
+        // ACCT-F6284 — memo is a human-readable free-text column, not internal audit metadata; the
+        // structured shape (source/bank_transaction_id/split_line_no) previously JSON.stringify()'d
+        // here leaked verbatim into any reader that treats memo as a display fallback (Accounting
+        // hub "Find Transactions" panel, etc.). The transaction id is already carried losslessly by
+        // source_bank_transaction_id (bound below) and category_kind is already reflected in
+        // input.glAccountId/coa_account_id — nothing structured is lost by writing a plain sentence
+        // here, matching the human string bill_lines.description already uses for the same row.
+        `Bank-split vendor bill (bank_txn ${input.bankTransactionId}, line ${input.lineNo})`,
         input.glAccountId,
         input.bankTransactionId,
         input.actorUserUuid,
@@ -891,11 +893,10 @@ async function commitVendorBillSplitLineAtomic(input: {
         input.amountCents,
         input.amountCents / 100,
         input.bankAccountId,
-        JSON.stringify({
-          source: "bank_tx_split",
-          bank_transaction_id: input.bankTransactionId,
-          split_line_no: input.lineNo,
-        }),
+        // ACCT-F6284 — same reasoning as the accounting.bills insert above: a human sentence, not a
+        // serialized audit object, in this free-text memo column. source_bank_transaction_id (bound
+        // below) already carries the transaction reference losslessly.
+        `Bank-split vendor bill payment (bank_txn ${input.bankTransactionId}, line ${input.lineNo})`,
         input.bankTransactionId,
         input.actorUserUuid,
         vendorIsSampleData,
