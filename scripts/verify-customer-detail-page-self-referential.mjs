@@ -113,9 +113,12 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   // CUST-MONEY-F6057A — recent-invoices and open-invoices-for-payment failures collapsed into
   // "no invoices" instead of an honest error+retry; checks the DERIVED listState's isError (not the
   // raw query) since both render sites gate on recentInvoicesListState/openInvoicesListState.
+  // CUST-MONEY-F6278 — same class: payment history collapsed a GET failure into "No payments
+  // recorded." because nothing branched on customerPaymentsListState.isError.
   for (const [state, query, title] of [
     ["recentInvoicesListState", "recentInvoicesQuery", "Couldn't load recent invoices"],
     ["openInvoicesListState", "paymentInvoicesQuery", "Couldn't load open invoices"],
+    ["customerPaymentsListState", "customerPaymentsQuery", "Couldn't load payment history"],
   ]) {
     const pattern = new RegExp(`${state}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
     if (!pattern.test(src)) failures.push(`${FILE}: ${state} money GET failure must render exact-query retry, not a false empty`);
@@ -177,8 +180,11 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
-  for (const [state, query] of [["recentInvoicesListState", "recentInvoicesQuery"], ["openInvoicesListState", "paymentInvoicesQuery"]]) {
-    const mutated = good.replace(`${query}.refetch()`, "retryRemoved()");
+  for (const [state, query] of [["recentInvoicesListState", "recentInvoicesQuery"], ["openInvoicesListState", "paymentInvoicesQuery"], ["customerPaymentsListState", "customerPaymentsQuery"]]) {
+    // customerPaymentsQuery.refetch() appears twice (the paymentsBackendPending retry button, and
+    // the isError branch this finding adds) — replace ALL occurrences so the mutation actually
+    // strips the assertion's target instead of the first, unrelated call site.
+    const mutated = good.split(`${query}.refetch()`).join("retryRemoved()");
     if (mutated === good || !audit(mutated, fmcsaGood, requiredGood, selfGood, feedGood, lateArrivalGood, relationshipGood).some((f) => f.includes(`${state} money GET failure`))) {
       console.error(`${LABEL} SELFTEST FAIL — ${state} money retry mutation escaped`);
       process.exit(1);
