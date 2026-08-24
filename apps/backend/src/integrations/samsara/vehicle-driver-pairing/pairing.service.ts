@@ -265,7 +265,7 @@ async function resolveLocalUnitAndDriver(
       WHERE (d.operating_company_id = $1::uuid OR EXISTS (
               SELECT 1 FROM mdata.driver_company_authorizations pairing_sync_dca
                WHERE pairing_sync_dca.driver_id = d.id
-                 AND pairing_sync_dca.operating_company_id = $1::uuid
+                 AND pairing_sync_dca.company_id = $1::uuid
                  AND pairing_sync_dca.is_authorized = true
                  AND pairing_sync_dca.deactivated_at IS NULL
             ))
@@ -646,7 +646,7 @@ export async function getDriverPairingHistory(
                                 AND (d.operating_company_id = $1::uuid OR EXISTS (
                                   SELECT 1 FROM mdata.driver_company_authorizations pairing_history_dca
                                    WHERE pairing_history_dca.driver_id = d.id
-                                     AND pairing_history_dca.operating_company_id = $1::uuid
+                                     AND pairing_history_dca.company_id = $1::uuid
                                      AND pairing_history_dca.is_authorized = true
                                      AND pairing_history_dca.deactivated_at IS NULL
                                 ))

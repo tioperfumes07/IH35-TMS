@@ -11,7 +11,7 @@ describe("active HOS driver roster tenant scope", () => {
     expect(sql).toContain("a.operating_company_id = $1::uuid");
     expect(sql).toContain("d.operating_company_id = $1::uuid");
     expect(sql).toContain("FROM mdata.driver_company_authorizations dca");
-    expect(sql).toContain("dca.operating_company_id = $1::uuid");
+    expect(sql).toContain("dca.company_id = $1::uuid");
     expect(sql).toContain("dca.is_authorized = true");
     expect(sql).toContain("dca.deactivated_at IS NULL");
     expect(sql).toContain("a.ended_at IS NULL");

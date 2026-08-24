@@ -34,7 +34,7 @@ export async function listActiveHosDriverRoster(
                SELECT 1
                  FROM mdata.driver_company_authorizations dca
                 WHERE dca.driver_id = d.id
-                  AND dca.operating_company_id = $1::uuid
+                  AND dca.company_id = $1::uuid
                   AND dca.is_authorized = true
                   AND dca.deactivated_at IS NULL
              )
