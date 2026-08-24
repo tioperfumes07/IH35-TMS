@@ -264,7 +264,17 @@ export function DocsHomePage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={(typeFilter ? 1 : 0) + (expiresBefore ? 1 : 0) + (kpiFilter !== "none" ? 1 : 0)}
-      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+      onApply={staged.apply}
+      onReset={() => {
+        // DOCS-F-KPI-FILTER-RESET-STUCK: Reset only cleared staged.draft (typeFilter/expiresBefore).
+        // kpiFilter (the "Missing required" / "Recent uploads" KPI drill-down) is separate state — the
+        // "1 active filter" badge and the panel's own KPI-filter description line both counted it, but
+        // clicking Reset left it applied with no visible reason why nothing changed. Only clicking the
+        // unrelated "Total Docs" KPI card (clearListFilters) ever cleared it.
+        staged.reset();
+        setKpiFilter("none");
+      }}
+      onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="docs"
       dataAttributes={{ "data-docs-filter-toolbar": "collapsed" }}
     >
