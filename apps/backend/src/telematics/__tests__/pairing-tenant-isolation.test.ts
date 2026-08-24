@@ -34,6 +34,12 @@ describe("vehicle-driver pairing tenant isolation", () => {
 
     const unitLookup = calls.find((entry) => entry.sql.includes("FROM mdata.equipment e"));
     expect(unitLookup?.params[0]).toBe("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    const driverLookup = calls.find((entry) => entry.sql.includes("FROM mdata.drivers d"));
+    expect(driverLookup?.sql).toContain("FROM mdata.driver_company_authorizations webhook_pairing_driver_dca");
+    expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.company_id = $1::uuid");
+    expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.is_authorized = true");
+    expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.deactivated_at IS NULL");
+    expect(driverLookup?.params[0]).toBe("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
     await getDriverForVehicleAtTime(
       client,
