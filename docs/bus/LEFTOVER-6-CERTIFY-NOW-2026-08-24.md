@@ -13,6 +13,6 @@ Cursor Live Chrome + matching `healthz/shallow` `version` **`6585a66`** (`dep-da
 | L5 | eld | `/eld` | `6585a66` — Live Duty Status roster |
 | L6 | inventory | `/inventory` | `6585a66` — Parts & Stock + CC3 TEST part row |
 
-Do **not** recertify. Next = POST leftover unique (fuel remainder · maintenance remainder · `/docs` `/program` `/system` · Codex customers live-verify). Idle = defect.
+Do **not** recertify. WAVE 2 + WAVE 3 leftover-CERTIFIED at `6585a66`. Next = unique leftover FINDING only. Idle = defect.
 
 ACK: `SEAT | ACK | LEFTOVER-6-STAMPED | PORT=n | NOW=<next> | GO`

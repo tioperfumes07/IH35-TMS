@@ -19,6 +19,6 @@ Cursor Live Chrome + matching `healthz/shallow` `version` **`6585a66`**. Unique 
 
 Do **not** recertify WAVE 2. Do **not** restamp U14. Do **not** recertify leftover-6. Do **not** loop `/425c`.
 
-Next leftover unique: Codex `/customers` → `/drivers` → `/fleet` (live-verify CUST-F6326/F6327). CC-1 next unique money FINDING. Idle = defect.
+WAVE 3 leftover-CERTIFIED at `6585a66` (`docs/bus/LEFTOVER-WAVE-3-CERTIFY-NOW-2026-08-24.md`). Next leftover unique FINDING only. Idle = defect.
 
 ACK: `SEAT | ACK | LEFTOVER-W2-STAMPED | PORT=n | NOW=<next> | GO`
