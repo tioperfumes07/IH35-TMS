@@ -22,6 +22,7 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const createEquipmentLogBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
   equipment_id: z.string().uuid(),
   event_type: eventTypeSchema,
   event_at: z.string().datetime(),
@@ -149,9 +150,58 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     const parsedBody = createEquipmentLogBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const effectiveToUnitId = b.new_unit_id ?? b.to_unit_id ?? null;
+    const effectiveToLocationId = b.new_location_id ?? b.to_location_id ?? null;
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        // FLT-F6163: the caller supplied equipment/unit/location UUIDs with no company resolved and
+        // no FK-ownership check — an Owner session (RLS is not a scope backstop for Owner) could write
+        // a cross-entity history edge (e.g. USMCA equipment coupled to a TRK unit) since a foreign key
+        // only proves the row exists somewhere, never that it belongs to the acting entity.
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!scopedCompanyId) throw new Error("equipment_log_company_not_resolvable");
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
+
+        const links = await client.query<{
+          equipment_ok: boolean;
+          from_unit_ok: boolean;
+          to_unit_ok: boolean;
+          from_location_ok: boolean;
+          to_location_ok: boolean;
+        }>(
+          `SELECT
+             EXISTS (
+               SELECT 1 FROM mdata.equipment e
+               WHERE e.id = $2 AND (e.owner_company_id = $1 OR e.currently_leased_to_company_id = $1)
+             ) AS equipment_ok,
+             ($3::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.units u
+               WHERE u.id = $3 AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+             )) AS from_unit_ok,
+             ($4::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.units u
+               WHERE u.id = $4 AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+             )) AS to_unit_ok,
+             ($5::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.locations loc WHERE loc.id = $5 AND loc.operating_company_id = $1
+             )) AS from_location_ok,
+             ($6::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.locations loc WHERE loc.id = $6 AND loc.operating_company_id = $1
+             )) AS to_location_ok`,
+          [scopedCompanyId, b.equipment_id, b.from_unit_id ?? null, effectiveToUnitId, b.from_location_id ?? null, effectiveToLocationId]
+        );
+        const integrity = links.rows[0];
+        if (
+          !integrity?.equipment_ok ||
+          !integrity.from_unit_ok ||
+          !integrity.to_unit_ok ||
+          !integrity.from_location_ok ||
+          !integrity.to_location_ok
+        ) {
+          throw new Error("equipment_log_entity_not_in_operating_company");
+        }
+
         const res = await client.query(
           `
             INSERT INTO mdata.equipment_log (
@@ -182,9 +232,9 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
             b.event_type,
             b.event_at,
             b.from_unit_id ?? null,
-            b.new_unit_id ?? b.to_unit_id ?? null,
+            effectiveToUnitId,
             b.from_location_id ?? null,
-            b.new_location_id ?? b.to_location_id ?? null,
+            effectiveToLocationId,
             b.status_before ?? null,
             b.new_status ?? b.status_after ?? null,
             b.notes ?? null,
@@ -204,6 +254,13 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
       });
       return reply.code(201).send(created);
     } catch (err) {
+      const message = (err as Error).message;
+      if (message === "equipment_log_company_not_resolvable") {
+        return reply.code(400).send({ error: "equipment_log_company_not_resolvable" });
+      }
+      if (message === "equipment_log_entity_not_in_operating_company") {
+        return reply.code(400).send({ error: "equipment_log_entity_not_in_operating_company" });
+      }
       const code = (err as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_equipment_log_fk_reference" });
       if (code === "23514") return reply.code(400).send({ error: "invalid_equipment_log_payload" });
