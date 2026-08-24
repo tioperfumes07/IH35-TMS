@@ -382,6 +382,13 @@ export function CustomersPage() {
     if (searchParams.get("create") !== "1") return;
     setCreateOpen(true);
   }, [searchParams]);
+  const openCreate = () => {
+    setCreateOpen(true);
+    if (searchParams.get("create") === "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.set("create", "1");
+    setSearchParams(next, { replace: true });
+  };
   const closeCreate = () => {
     setCreateOpen(false);
     if (searchParams.get("create") === "1") {
@@ -870,7 +877,7 @@ export function CustomersPage() {
                 type="button"
                 className="relative z-50"
                 data-testid="customers-create-open"
-                onClick={() => setCreateOpen(true)}
+                onClick={openCreate}
               >
                 + Create Customer
               </ActionButton>

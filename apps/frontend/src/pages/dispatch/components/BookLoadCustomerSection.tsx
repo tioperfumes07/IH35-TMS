@@ -69,7 +69,10 @@ export function BookLoadCustomerSection({
   const customerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? [])
-        .map((c) => ({ value: c.id, label: c.name }))
+        .map((c) => ({
+          value: c.id,
+          label: String(c.name || c.legal_name || c.customer_code || "").trim() || c.id,
+        }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [customersQuery.data?.customers]
   );

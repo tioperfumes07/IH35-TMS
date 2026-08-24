@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bookload-customer-server-search";
 const FILE = "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx";
+const LIVE_WIZARD = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -34,6 +35,18 @@ export function collectProblems(root = ROOT) {
   }
   if (/limit:\s*5000/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:5000 customer page`);
+  }
+  const live = readRel(root, LIVE_WIZARD);
+  if (!live) {
+    problems.push(`missing ${LIVE_WIZARD}`);
+    return problems;
+  }
+  const liveCode = live.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  if (!/customerSearch/.test(liveCode) || !/onSearch=\{setCustomerSearch\}/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: live Book Load wizard must wire customerSearch + onSearch (not a silent 5000-row dump)`);
+  }
+  if (/limit:\s*5000/.test(liveCode) && /book-load-v4-customers/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: must not fetch silent limit:5000 for the customer picker`);
   }
   return problems;
 }

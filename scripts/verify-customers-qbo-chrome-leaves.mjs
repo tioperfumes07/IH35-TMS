@@ -66,6 +66,8 @@ const EXACT_ROUTES = new Map([
 
 const CHECKS = [
   { name: "list.view_master_detail / list.create: Customers.tsx real Modal variant=drawer create + ActionButton", file: "apps/frontend/src/pages/Customers.tsx", pattern: /<Modal variant="drawer" open=\{createOpen\}[\s\S]*title="Create Customer"/ },
+  { name: "list.create door: + Create Customer writes ?create=1 (same proven drawer as Topbar / deep-link)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /const openCreate = \(\) => \{[\s\S]*next\.set\("create", "1"\)[\s\S]*data-testid="customers-create-open"[\s\S]*onClick=\{openCreate\}/ },
+  { name: "scenario.customer hop lands on the create drawer, not a second dead + Create click", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.customer"[\s\S]{0,500}href: "\/customers\?create=1"/ },
   { name: "list.filters: CustomersListView real CollapsedListFilters + ParityTable", file: "apps/frontend/src/pages/customers/CustomersListView.tsx", pattern: /<ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*<ParityTable/ },
   { name: "md.transaction_list: Customers.tsx ?tab=transaction_list real ParityTable", file: "apps/frontend/src/pages/Customers.tsx", pattern: /activeTab === "transaction_list"[\s\S]{0,400}<ParityTable/ },
   { name: "md.customer_details: CustomerDetailsTab real DetailRow grid + EntityLinkOrTombstone + Edit action", file: "apps/frontend/src/pages/Customers.tsx", pattern: /function CustomerDetailsTab\(\{[\s\S]{0,800}data-testid="customer-details-edit"[\s\S]{0,3000}EntityLinkOrTombstone/ },

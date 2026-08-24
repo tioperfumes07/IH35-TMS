@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Port 9223. `/accounting/invoices?create=1` + TEST invoice/bill + JE + letter. Never `trigger_deploy`. Never `/425c`.
+
 **GO NOW 16:36 CT — you are NOT waiting on Cursor merge.** #15601 is on `main` (`b429ce00`). Live healthz still `427f8ca` until next deploy. **Work anyway.** CREATE TEST. Prove JE. Full text: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
 
 
