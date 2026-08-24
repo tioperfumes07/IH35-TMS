@@ -150,6 +150,9 @@ export function collectProblems(src) {
   if (!src.includes("will not invent a court caption") || src.includes("${profiles[activeCompany].division} Division · ${profiles[activeCompany].district} District")) {
     problems.push(`${PAGE}: Create must refuse empty division/district — must not POST invented " Division ·  District"`);
   }
+  if (!src.includes("will not create a court MOR without a debtor name")) {
+    problems.push(`${PAGE}: Create must refuse empty debtor name after DEFAULT_PROFILES emptied — must not POST a nameless court MOR`);
+  }
   const printHtml = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts"), "utf8");
   if (printHtml.includes("${p.division} Division · ${p.district} District") || !printHtml.includes("courtDistrictCaption")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: court line must use courtDistrictCaption — empty profile must not print invented Division/District");
@@ -557,6 +560,7 @@ const good = `
   Could not load Form 425C report detail
   Generate the filing PDF before marking filed
   will not invent a court caption
+  will not create a court MOR without a debtor name
 `;
 const bad = `
   if (!detailQuery.data?.report) {
