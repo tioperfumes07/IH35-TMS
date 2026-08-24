@@ -1152,6 +1152,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           message: "This MOR is filed — use Amend on History. Generate will not un-file a court filing.",
         });
       }
+      if (e?.message === "form_425c_filing_file_insert_failed") {
+        return reply.code(502).send({
+          error: "form_425c_filing_file_insert_failed",
+          message: "Generate could not write the filing snapshot — status was not set to ready to file",
+        });
+      }
       if (e?.message === "forbidden_company_membership") {
         return sendForm425CForbiddenMembership(reply);
       }
