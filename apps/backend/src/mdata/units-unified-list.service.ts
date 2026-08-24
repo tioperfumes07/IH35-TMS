@@ -2,7 +2,7 @@ import type { FleetTypeFilter } from "./fleet-type-filter.js";
 import { trailerTypeSqlFilter, truckTypeSqlFilter } from "./fleet-type-filter.js";
 // Demo/phantom hygiene (E1) now lives in ONE place so the roster and the maintenance fleet KPI cannot
 // drift apart again — see fleet-visibility.ts for the live divergence that caused the move.
-import { excludeDemoPhantomSql } from "./fleet-visibility.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "./fleet-visibility.js";
 
 type PgClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -71,7 +71,10 @@ export async function fetchUnifiedFleetList(
   }
 ): Promise<{ rows: UnifiedFleetRow[]; total: number }> {
   const truckValues: unknown[] = [];
-  const truckFilters: string[] = [excludeDemoPhantomSql("unit_number")];
+  // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP: is_sample_data rows (e.g. "CODEX-AUDIT-UNIT-...") are
+  // not always caught by the name-pattern predicate above — mdata.units-only, mdata.equipment has
+  // no such column.
+  const truckFilters: string[] = [excludeDemoPhantomSql("unit_number"), excludeSampleDataSql()];
   if (!options.include_inactive) truckFilters.push("deactivated_at IS NULL");
   if (options.type) {
     truckFilters.push(truckTypeSqlFilter(options.type));
