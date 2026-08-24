@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**GO NOW 16:36 CT — not blocked on Cursor.** Work `/program` + matrix lists/legal + parts receive. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+
 **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
 
 **NOW:**

@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**16:36 CT GO — seats are NOT waiting on Cursor merge.** Live `healthz` still `427f8ca`. Program hop routing (#15601) is on `main` (`b429ce00`) and **not live until version changes**. **Work anyway:** CREATE labeled TEST, name UUID + table + JE. **#15601 is leftover routing — not Fully-Wired items 1–12.** Full paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. Idle = defect.
+
 **This file is the only NOW.** Every session: `git pull --ff-only origin main` then this page + `INBOX-<SEAT>.md` TOP.
 
 **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + **`docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`**. Program hops + **breakdown/replacement-truck battery** + printable letters. **USMCA posting LIVE.** Only QBO + TRANSP/TRK flags stay OFF. Prove TESTs in real tables/JEs. Unique hunt still on. U14 never restamp. CREATE-TEST-THEN-VOID (void at launch).

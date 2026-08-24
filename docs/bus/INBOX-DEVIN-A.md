@@ -1,5 +1,7 @@
 # INBOX-DEVIN-A
 
+**GO NOW 16:36 CT — not PARKED, not waiting on Cursor.** CREATE TEST customer + hop.book on live SHA. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
+
 Not PARKED. AUDIT + CREATE TEST.
 
 **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + complicated battery.
