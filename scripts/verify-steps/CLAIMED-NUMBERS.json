@@ -1,4 +1,9 @@
 {
+  "4682": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-clear-default-driver-visible-errors-wired"
+  },
   "4680": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5958,5 +5963,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1291
+  "total_claimed": 1292
 }
