@@ -47,6 +47,9 @@ const STEPS = [
   // Rule 25/37 — number must already be on origin/main before authoring verify-steps/NNNN-*.mjs
   // (#4421–#4455 class: opened feature PRs before claim-reserve merged).
   ["verify-verify-step-claimed-on-main", "scripts/verify-verify-step-claimed-on-main.mjs"],
+  // Concurrent claim/repair races can survive the JSON union merge driver as duplicate registry keys
+  // plus two NNNN-* files. Catch the ambiguity locally before any feature push (#15449/#15448, #15453).
+  ["verify-verify-step-numbers-unique", "scripts/verify-verify-step-numbers-unique.mjs"],
   // TOOL-F04 — data-mutating migrations need REHEARSED: in a branch commit (#4009).
   ["verify-data-migrations-rehearsed", "scripts/verify-data-migrations-rehearsed.mjs"],
   // EntityLink adoption ratchet — #4010 FactoringHome AST shift + bare UUID (~1.5s).

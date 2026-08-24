@@ -60,6 +60,7 @@ export function assertMoneyPrLocalGate(sources) {
       "verify-verify-step-lane-band",
       "verify-no-claimed-numbers-edits",
       "verify-verify-step-claimed-on-main",
+      "verify-verify-step-numbers-unique",
       "verify-data-migrations-rehearsed",
       "verify-entity-link-adoption",
       "verify-no-guard-file-deletion",
@@ -143,6 +144,17 @@ if (SELFTEST) {
     "gate-no-theater",
     { ...live, [GATE]: live[GATE].replace(/verify-no-money-theater/g, "verify-something-else") },
     "verify-no-money-theater"
+  );
+  expectCaught(
+    "gate-no-step-collision-ratchet",
+    {
+      ...live,
+      [GATE]: live[GATE].replace(
+        /\s*\["verify-verify-step-numbers-unique", "scripts\/verify-verify-step-numbers-unique\.mjs"\],/,
+        ""
+      ),
+    },
+    "verify-verify-step-numbers-unique"
   );
   expectCaught(
     "precheck-unwired",
