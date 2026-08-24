@@ -1,4 +1,9 @@
 {
+  "5620": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-pm-auto-engine-mutation-errors-surfaced"
+  },
   "5120": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
