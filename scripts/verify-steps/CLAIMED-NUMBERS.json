@@ -1,4 +1,9 @@
 {
+  "4627": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-send-to-driver-honest-disabled"
+  },
   "4624": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -5808,5 +5813,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1279
+  "total_claimed": 1280
 }
