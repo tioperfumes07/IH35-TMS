@@ -1,4 +1,9 @@
 {
+  "4676": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-users-returning-check-fails-closed-wired"
+  },
   "4674": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5943,5 +5948,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1288
+  "total_claimed": 1289
 }
