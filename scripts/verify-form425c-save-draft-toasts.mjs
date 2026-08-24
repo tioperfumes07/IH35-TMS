@@ -166,6 +166,11 @@ export function collectProblems(src) {
   if (/Date filed:[\s\S]{0,120}\$\{today\}/.test(printHtml) || !printHtml.includes("filedDateLabel")) {
     problems.push("apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: Date filed must use filed_at — must not invent print-day as the court filed date");
   }
+  if (/color:\s*netCash\s*>=\s*0/.test(printHtml) || !printHtml.includes("netCash === null")) {
+    problems.push(
+      "apps/frontend/src/pages/form425c/lib/buildPrintHTML.ts: line 22 color must be null-aware — netCash >= 0 on number|null is TS18047 and paints empty cash green/red",
+    );
+  }
   if (!src.includes("matches.find((r) => r.status !== \"filed\")") && !src.includes("r.status !== \"filed\"")) {
     problems.push(`${PAGE}: period picker must prefer a non-filed row when several share the month`);
   }
