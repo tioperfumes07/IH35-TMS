@@ -9,6 +9,19 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "CUST-F6310-CUSTOMER-ACTIVITY-FEED-REAL-SPINE",
+      "modules": [
+        "customers"
+      ],
+      "cols": [
+        "customer",
+        "connectivity"
+      ],
+      "leafRe": "^md\\.activity_feed$",
+      "guard": "scripts/verify-customer-activity-feed-wired.mjs",
+      "live": "BLOCKED"
+    },
+    {
       "task": "VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL",
       "modules": [
         "maintenance"
