@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function PmAutoEnginePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -26,6 +27,9 @@ export function PmAutoEnginePage() {
     enabled: Boolean(companyId),
   });
 
+  // MAINT-F6333: both mutations pushToast on success only — pushToast/useToast are already
+  // imported and used right here, just never wired to onError. A rejected pause/resume or manual
+  // run silently did nothing, on a control that automatically creates real work orders.
   const settingsM = useMutation({
     mutationFn: (isPaused: boolean) =>
       updateMaintenancePmAutoEngineSettings({ operating_company_id: companyId, is_paused: isPaused }),
@@ -33,6 +37,7 @@ export function PmAutoEnginePage() {
       await qc.invalidateQueries({ queryKey: ["maintenance", "pm-auto-engine", companyId] });
       pushToast(isPaused ? "PM auto-engine paused" : "PM auto-engine resumed", "success");
     },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not update the PM auto-engine setting"), "error"),
   });
 
   const runNowM = useMutation({
@@ -44,6 +49,7 @@ export function PmAutoEnginePage() {
         "success"
       );
     },
+    onError: (err) => pushToast(userFacingApiError(err, "PM auto-engine run failed"), "error"),
   });
 
   const isPaused = Boolean(dashboardQ.data?.settings?.is_paused);
