@@ -375,12 +375,33 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Settlement period closes and pays the driver",
     je: "DR Driver Pay / CR Net Pay Clearing",
     spec_ref: "SETTLE",
-    sources: ["driver_finance.driver_settlements"],
+    sources: ["driver_finance.driver_settlements", "driver_finance.payrun_gl_runs", "accounting.journal_entries"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM driver_finance.driver_settlements s WHERE ($1::uuid IS NULL OR s.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM driver_finance.driver_settlements s
+         WHERE ($1::uuid IS NULL OR s.operating_company_id = $1::uuid)
+           AND s.voided_at IS NULL
+           AND s.reversed_at IS NULL
+           AND (
+             s.status = 'paid'
+             OR s.paid_at IS NOT NULL
+             OR s.payment_state IN ('paid', 'cleared')
+           )
+           AND EXISTS (
+             SELECT 1
+               FROM driver_finance.payrun_gl_runs pr
+               JOIN accounting.journal_entries je
+                 ON je.id = pr.journal_entry_id
+                AND je.operating_company_id = pr.operating_company_id
+                AND je.status = 'posted'
+                AND je.voided_at IS NULL
+              WHERE pr.settlement_id = s.id
+                AND pr.operating_company_id = s.operating_company_id
+                AND pr.status = 'posted'
+           )
       `,
-      describe: (n) => `${n} settlement(s) created`,
+      describe: (n) => `${n} paid settlement(s) closed through a posted pay-run JE`,
     },
   },
   {

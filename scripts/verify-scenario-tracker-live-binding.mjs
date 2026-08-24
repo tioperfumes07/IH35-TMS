@@ -47,6 +47,24 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "scenario.settlement",
+    needles: [
+      "s.voided_at IS NULL",
+      "s.reversed_at IS NULL",
+      "s.status = 'paid'",
+      "s.paid_at IS NOT NULL",
+      "s.payment_state IN ('paid', 'cleared')",
+      "driver_finance.payrun_gl_runs",
+      "accounting.journal_entries",
+      "je.operating_company_id = pr.operating_company_id",
+      "je.status = 'posted'",
+      "je.voided_at IS NULL",
+      "pr.settlement_id = s.id",
+      "pr.operating_company_id = s.operating_company_id",
+      "pr.status = 'posted'",
+    ],
+  },
+  {
     key: "scenario.maintenance",
     needles: [
       "w.status = 'closed'",
@@ -235,6 +253,8 @@ function selftest() {
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],
     ["fuel probe drops the load link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("WHERE f.load_id IS NOT NULL", "WHERE true") })],
+    ["settlement probe drops payment proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("OR s.payment_state IN ('paid', 'cleared')", "") })],
+    ["settlement probe accepts an unposted payrun", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pr.status = 'posted'", "") })],
     ["maintenance probe counts an unposted WO", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
     ["maintenance probe drops labor proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND wol.line_type = 'labor'", "AND wol.line_type = 'part'") })],
     ["insurance probe drops recovery posting", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND rp.status = 'posted'", "") })],
