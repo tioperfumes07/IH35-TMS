@@ -117,6 +117,16 @@ export function collectProblems(src) {
   if (!routes.includes("form_425c_period_draft_exists")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create when a draft already exists for the month must 409, not UNIQUE 500");
   }
+  const createChunk = (routes.split('app.post("/api/v1/form-425c", {')[1] ?? "").split('app.patch("/api/v1/form-425c/:id"')[0];
+  if (!createChunk.includes("form_425c_operating_company_not_found") || !createChunk.includes("sendForm425CCompanyMissing")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: Create on a missing/inactive company must 404, not an uncaught 500 from ensureDefaultProfile");
+  }
+  if (!src.includes("Select an operating company before creating a report")) {
+    problems.push(`${PAGE}: Create / Load Draft without an operating company must toast, not POST an empty uuid`);
+  }
+  if (!src.includes("Could not load Form 425C reports")) {
+    problems.push(`${PAGE}: reports GET failure must toast — History empty with no toast was a silent miss`);
+  }
   const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split('app.get("/api/v1/form-425c/banking-summary"')[0];
   const profilesPostChunk = (routes.split('app.post("/api/v1/form-425c/profiles"')[1] ?? "").split('app.post("/api/v1/form-425c"')[0];
   if (!profilesGetChunk.includes("form_425c_operating_company_not_found") || !profilesGetChunk.includes("sendForm425CCompanyMissing")) {
@@ -331,6 +341,8 @@ const good = `
   tab === "history"
   Could not load Form 425C profile
   Select an operating company before saving profile defaults
+  Select an operating company before creating a report
+  Could not load Form 425C reports
 `;
 const bad = `
   if (!detailQuery.data?.report) {

@@ -177,6 +177,16 @@ export function Form425CHome() {
     enabled: Boolean(companyId),
     queryFn: () => listForm425CReports(companyId),
   });
+  const reportsErrorToast = useRef(false);
+  useEffect(() => {
+    if (!reportsQuery.isError) {
+      reportsErrorToast.current = false;
+      return;
+    }
+    if (reportsErrorToast.current) return;
+    reportsErrorToast.current = true;
+    pushToast(userFacingApiError(reportsQuery.error, "Could not load Form 425C reports"), "error");
+  }, [reportsQuery.isError, reportsQuery.error, pushToast]);
 
   const selectedReport = useMemo(() => {
     const reports = reportsQuery.data?.reports ?? [];
@@ -590,6 +600,10 @@ export function Form425CHome() {
             setDirty(true);
           }}
           onCreateOrLoad={() => {
+            if (!companyId) {
+              pushToast("Select an operating company before creating a report", "error");
+              return;
+            }
             if (createMutation.isPending) {
               pushToast("Create already in progress", "error");
               return;
