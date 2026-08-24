@@ -6,6 +6,7 @@ import process from "node:process";
 const LABEL = "verify-task-link-contract";
 const MIGRATION = "db/migrations/202607031700_tasks_connectivity.sql";
 const ROUTES = "apps/backend/src/tasks/task.routes.ts";
+const PICKER = "apps/frontend/src/components/tasks/TaskLinkPicker.tsx";
 const checks = [
   ["migration", /CREATE TABLE IF NOT EXISTS\s+tasks\.task_link/i, "creates tasks.task_link"],
   ["migration", /role\s+text[\s\S]{0,120}CHECK\s*\(\s*role\s+IN\s*\(\s*'about'\s*,\s*'result'\s*\)/i, "role is about/result"],
@@ -20,10 +21,15 @@ const checks = [
   ["routes", /role\s*===?\s*["']result["']/, "result completion trigger"],
   ["routes", /status\s*=\s*'completed'/i, "completed status writer"],
   ["routes", /tasks\.task_link tl[\s\S]{0,200}target_type/i, "reverse target lookup"],
+  ["picker", /createTaskLink\(task\.task_id,\s*operatingCompanyId,\s*\{\s*role:\s*["']result["']/, "picker forwards selected company to task-link writer"],
 ];
 
 function readSources(root = process.cwd()) {
-  return { migration: fs.readFileSync(`${root}/${MIGRATION}`, "utf8"), routes: fs.readFileSync(`${root}/${ROUTES}`, "utf8") };
+  return {
+    migration: fs.readFileSync(`${root}/${MIGRATION}`, "utf8"),
+    routes: fs.readFileSync(`${root}/${ROUTES}`, "utf8"),
+    picker: fs.readFileSync(`${root}/${PICKER}`, "utf8"),
+  };
 }
 
 export function run(sources = readSources()) {

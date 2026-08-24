@@ -42,7 +42,8 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
   );
 
   const linkMutation = useMutation({
-    mutationFn: (task: Task) => createTaskLink(task.task_id, { role: "result", target_type: targetType, target_id: targetId }),
+    mutationFn: (task: Task) =>
+      createTaskLink(task.task_id, operatingCompanyId, { role: "result", target_type: targetType, target_id: targetId }),
     onSuccess: () => {
       pushToast("Task linked and completed", "success");
       void queryClient.invalidateQueries({ queryKey: ["tasks-by-target"] });
