@@ -33,7 +33,7 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
         <button
           type="button"
           onClick={onGenerate}
-          disabled={generating || !canGenerate}
+          disabled={generating}
           className="mt-3 rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {generating ? "Generating..." : "Generate Filing HTML + Print PDF"}
