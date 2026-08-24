@@ -35,6 +35,20 @@ function nv(s: string) {
   return parseFloat(String(s || "").replace(/[$,]/g, "")) || 0;
 }
 
+function hasMoney(s: string) {
+  return String(s ?? "").trim() !== "";
+}
+
+function moneyCell(s: string) {
+  if (!hasMoney(s)) return "—";
+  return `$${nv(s).toFixed(2)}`;
+}
+
+function computedDiff(left: string, right: string) {
+  if (!hasMoney(left) || !hasMoney(right)) return "—";
+  return `$${(nv(left) - nv(right)).toFixed(2)}`;
+}
+
 export function CurrentPeriodTab({
   activeCompany,
   setActiveCompany,
@@ -61,13 +75,19 @@ export function CurrentPeriodTab({
   autoSaveLabel,
 }: Props) {
   const [exhibitDrafts, setExhibitDrafts] = useState<Record<number, string>>({});
-  const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
-  const cashEnd = nv(form.openingBalance) + netCash;
-  const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
-  const pDR = nv(form.projReceiptsLast) - nv(form.totalReceipts);
-  const pDD = nv(form.projDisbLast) - nv(form.totalDisbursements);
-  const pDN = projNetPrev - netCash;
-  const projNetNext = nv(form.projReceiptsNext) - nv(form.projDisbNext);
+  const netCashLabel = computedDiff(form.totalReceipts, form.totalDisbursements);
+  const cashEndLabel =
+    hasMoney(form.openingBalance) && hasMoney(form.totalReceipts) && hasMoney(form.totalDisbursements)
+      ? `$${(nv(form.openingBalance) + nv(form.totalReceipts) - nv(form.totalDisbursements)).toFixed(2)}`
+      : "—";
+  const projNetPrevLabel = computedDiff(form.projReceiptsLast, form.projDisbLast);
+  const pDRLabel = computedDiff(form.projReceiptsLast, form.totalReceipts);
+  const pDDLabel = computedDiff(form.projDisbLast, form.totalDisbursements);
+  const pDNLabel =
+    projNetPrevLabel !== "—" && netCashLabel !== "—"
+      ? `$${(nv(form.projReceiptsLast) - nv(form.projDisbLast) - (nv(form.totalReceipts) - nv(form.totalDisbursements))).toFixed(2)}`
+      : "—";
+  const projNetNextLabel = computedDiff(form.projReceiptsNext, form.projDisbNext);
 
   return (
     <div className="space-y-4 p-4">
@@ -226,11 +246,11 @@ export function CurrentPeriodTab({
         ))}
         <div className="grid grid-cols-[1fr_220px] items-center gap-2 border-b bg-slate-50 px-3 py-2 text-sm font-semibold">
           <span>22. Net cash flow (20 - 21)</span>
-          <span className="text-right">${netCash.toFixed(2)}</span>
+          <span className="text-right">{netCashLabel}</span>
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center gap-2 bg-slate-50 px-3 py-2 text-sm font-semibold">
           <span>23. Cash on hand at end of month (19 + 22)</span>
-          <span className="text-right">${cashEnd.toFixed(2)}</span>
+          <span className="text-right">{cashEndLabel}</span>
         </div>
       </div>
 
@@ -272,20 +292,20 @@ export function CurrentPeriodTab({
         <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b px-3 py-2 text-sm">
           <span>32. Cash receipts</span>
           <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projReceiptsLast} onChange={(e) => setForm((prev) => ({ ...prev, projReceiptsLast: e.target.value }))} />
-          <span className="text-right">${nv(form.totalReceipts).toFixed(2)}</span>
-          <span className="text-right">${pDR.toFixed(2)}</span>
+          <span className="text-right">{moneyCell(form.totalReceipts)}</span>
+          <span className="text-right">{pDRLabel}</span>
         </div>
         <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b px-3 py-2 text-sm">
           <span>33. Cash disbursements</span>
           <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projDisbLast} onChange={(e) => setForm((prev) => ({ ...prev, projDisbLast: e.target.value }))} />
-          <span className="text-right">${nv(form.totalDisbursements).toFixed(2)}</span>
-          <span className="text-right">${pDD.toFixed(2)}</span>
+          <span className="text-right">{moneyCell(form.totalDisbursements)}</span>
+          <span className="text-right">{pDDLabel}</span>
         </div>
         <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b bg-slate-50 px-3 py-2 text-sm font-semibold">
           <span>34. Net cash flow</span>
-          <span className="text-right">${projNetPrev.toFixed(2)}</span>
-          <span className="text-right">${netCash.toFixed(2)}</span>
-          <span className="text-right">${pDN.toFixed(2)}</span>
+          <span className="text-right">{projNetPrevLabel}</span>
+          <span className="text-right">{netCashLabel}</span>
+          <span className="text-right">{pDNLabel}</span>
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center border-b px-3 py-2 text-sm">
           <span>35. Next month projected receipts</span>
@@ -297,7 +317,7 @@ export function CurrentPeriodTab({
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center bg-slate-50 px-3 py-2 text-sm font-semibold">
           <span>37. Next month projected net cash flow</span>
-          <span className="text-right">${projNetNext.toFixed(2)}</span>
+          <span className="text-right">{projNetNextLabel}</span>
         </div>
         <label className="block border-t px-3 py-2 text-xs font-semibold uppercase text-slate-600">
           Override Reason (required for carry-forward overrides)
