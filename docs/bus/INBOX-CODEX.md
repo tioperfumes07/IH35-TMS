@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Port 9226. Hops 2–5 + T-DEAD≠T-LIVE + dispatch-sheet print. Never `trigger_deploy`. Never remake CLASS-F5973. Never restamp U14.
+
 **GO NOW 16:36 CT — not blocked on Cursor.** Hops 2–5 + breakdown relay TESTs. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
 
 **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`

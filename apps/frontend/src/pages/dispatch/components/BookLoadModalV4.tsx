@@ -285,6 +285,7 @@ export function BookLoadModalV4({
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [creditLimitBlock, setCreditLimitBlock] = useState<{ exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
@@ -502,15 +503,24 @@ export function BookLoadModalV4({
   const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
 
   const customersQuery = useQuery({
-    queryKey: ["book-load-v4-customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }),
+    queryKey: ["book-load-v4-customers", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
-    staleTime: 60_000,
+    staleTime: 15_000,
   });
   const customerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? [])
-        .map((c) => ({ value: c.id, label: c.name }))
+        .map((c) => ({
+          value: c.id,
+          label: String(c.name || c.legal_name || c.customer_code || "").trim() || c.id,
+        }))
+        .filter((o) => o.label)
         .sort((a, b) => a.label.localeCompare(b.label)),
     [customersQuery.data?.customers]
   );
@@ -1314,13 +1324,18 @@ export function BookLoadModalV4({
                           options={customerOptions}
                           createKind="customer"
                           operatingCompanyId={operatingCompanyId}
-                          placeholder="Select customer..."
+                          placeholder="Search customers…"
+                          onSearch={setCustomerSearch}
+                          loading={customersQuery.isLoading}
                           onOptionCreated={(opt) => {
                             void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers"] });
                             form.setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
                             form.setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
                           }}
                         />
+                        {customersQuery.isError ? (
+                          <span className="mt-0.5 block normal-case tracking-normal text-red-600">Could not load customers. Retry search.</span>
+                        ) : null}
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>

@@ -20,6 +20,7 @@ const TARGETS = {
   cashAdvance: path.join(ROOT, "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx"),
   wrap: path.join(ROOT, "apps/backend/src/render/pdf-template.ts"),
   spaPrint: path.join(ROOT, "apps/frontend/src/index.css"),
+  invoiceHtml: path.join(ROOT, "apps/backend/src/accounting/invoice-render.routes.ts"),
 };
 
 function fail(msg) {
@@ -56,6 +57,11 @@ function assertSource() {
   }
   if (!invoice.includes("/api/v1/accounting/invoices/") || !invoice.includes(".html")) {
     fail("InvoiceDetailPage must open invoices/:id.html");
+  }
+
+  const invoiceHtml = fs.readFileSync(TARGETS.invoiceHtml, "utf8");
+  if (!invoiceHtml.includes("withCurrentUser") || !invoiceHtml.includes("FROM accounting.invoices")) {
+    fail("invoice .html must look up operating_company_id from accounting.invoices when query company is missing");
   }
 
   const settlement = fs.readFileSync(TARGETS.settlement, "utf8");

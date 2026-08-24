@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { withCurrentUser } from "../auth/db.js";
 import { getBillDetail } from "./bills.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { escapeHtml, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
@@ -26,18 +27,35 @@ export async function registerAccountingBillHtmlRoutes(app: FastifyInstance) {
       const params = paramsSchema.safeParse(req.params ?? {});
       if (!params.success) return validationError(reply, params.error);
       const query = companyQuerySchema.safeParse(req.query ?? {});
-      if (!query.success) return validationError(reply, query.error);
+      let operatingCompanyId = query.success ? query.data.operating_company_id : null;
+      if (!operatingCompanyId) {
+        operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
+          const found = await client.query(`SELECT operating_company_id FROM accounting.bills WHERE id = $1::uuid LIMIT 1`, [
+            params.data.id,
+          ]);
+          return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
+        });
+      }
+      if (!operatingCompanyId) {
+        reply.type("text/html");
+        return reply.code(400).send(
+          wrapPdfDocument({
+            title: "Bill",
+            body: "<p>This print URL needs a real bill UUID. Create a TEST bill, then Print from the bill (or pass operating_company_id).</p>",
+          })
+        );
+      }
 
-      const detail = await getBillDetail(String(user.uuid), query.data.operating_company_id, params.data.id);
+      const detail = await getBillDetail(String(user.uuid), operatingCompanyId, params.data.id);
       if (!detail) return reply.code(404).type("text/plain").send("bill_not_found");
 
       const bill = detail.bill as Record<string, unknown>;
       const lines = (detail.lines as Array<Record<string, unknown>> | undefined) ?? [];
 
-      const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const payload = await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
         const companyRes = await client.query(
           `SELECT legal_name, short_name, phone, email, address_line1, city, state, postal_code FROM org.companies WHERE id = $1 LIMIT 1`,
-          [query.data.operating_company_id]
+          [operatingCompanyId]
         );
         const company = companyRes.rows[0] ?? {};
 
@@ -46,7 +64,7 @@ export async function registerAccountingBillHtmlRoutes(app: FastifyInstance) {
           const vendorRes = await client.query(
             `SELECT vendor_name, address_line1, city, state, postal_code, phone, email
              FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-            [bill.vendor_id, query.data.operating_company_id]
+            [bill.vendor_id, operatingCompanyId]
           );
           const vendor = vendorRes.rows[0] ?? {};
           vendorAddrHtml = joinBrandAddrLines([
@@ -110,7 +128,7 @@ export async function registerAccountingBillHtmlRoutes(app: FastifyInstance) {
           user.uuid,
           "accounting.bill.html_viewed",
           {
-            operating_company_id: query.data.operating_company_id,
+            operating_company_id: operatingCompanyId,
             bill_id: params.data.id,
             bill_number: bill.bill_number ?? null,
           },

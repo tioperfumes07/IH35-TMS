@@ -49,7 +49,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
           layout instead of overlapping it. No other prop of this shared component changes; the title/
           subtitle-vs-title truncation math below is unaffected.
         */}
-        <div className="flex flex-1 items-end gap-2">
+        <div className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">
           <button
             type="button"
             aria-label="Back"
@@ -110,7 +110,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
             </span>
           ) : null}
         </div>
-        <div className="w-full sm:w-auto">{actions}</div>
+        <div className="relative z-50 w-full shrink-0 sm:w-auto">{actions}</div>
       </div>
     </div>
   );

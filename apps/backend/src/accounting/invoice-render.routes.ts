@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { withCurrentUser } from "../auth/db.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { enrichInvoice } from "../accounting/invoices.routes.js";
 import { docIdFromLoadNumber, escapeHtml, formatDateTime, formatMoney, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
@@ -45,10 +46,28 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
     const params = paramsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
+    let operatingCompanyId = query.success ? query.data.operating_company_id : null;
+    if (!operatingCompanyId) {
+      operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
+        const found = await client.query(
+          `SELECT operating_company_id FROM accounting.invoices WHERE id = $1::uuid LIMIT 1`,
+          [params.data.invoiceId]
+        );
+        return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
+      });
+    }
+    if (!operatingCompanyId) {
+      reply.type("text/html");
+      return reply.code(400).send(
+        wrapPdfDocument({
+          title: "Invoice",
+          body: "<p>This print URL needs a real invoice UUID. Create a TEST invoice, then Print from the invoice (or pass operating_company_id).</p>",
+        })
+      );
+    }
 
-    const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const enriched = await enrichInvoice(client, params.data.invoiceId, query.data.operating_company_id);
+    const payload = await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
+      const enriched = await enrichInvoice(client, params.data.invoiceId, operatingCompanyId);
       if (!enriched) return { kind: "not_found" as const };
       const invoice = enriched as Record<string, unknown>;
 
@@ -60,7 +79,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       if (loadId) {
         const loadRes = await client.query(`SELECT * FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           loadId,
-          query.data.operating_company_id,
+          operatingCompanyId,
         ]);
         load = loadRes.rows[0] ?? null;
         const stopsRes = await client.query(
@@ -76,13 +95,13 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
 
       const customerRes = await client.query(`SELECT * FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         invoice.customer_id,
-        query.data.operating_company_id,
+        operatingCompanyId,
       ]);
       const customer = customerRes.rows[0] ?? {};
 
       const companyRes = await client.query(
         `SELECT legal_name, short_name, tax_id, phone, email, address_line1, city, state, postal_code FROM org.companies WHERE id = $1 LIMIT 1`,
-        [query.data.operating_company_id]
+        [operatingCompanyId]
       );
       const company = companyRes.rows[0] ?? {};
 
@@ -109,7 +128,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
               AND fa.operating_company_id = $2::uuid
             LIMIT 1
           `,
-          [invoice.factoring_advance_id, query.data.operating_company_id]
+          [invoice.factoring_advance_id, operatingCompanyId]
         );
         const factorRow = factorRes.rows[0];
         if (factorRow) {
@@ -148,7 +167,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
           ORDER BY a.effective_from DESC
           LIMIT 1
         `,
-        [query.data.operating_company_id, invoice.customer_id, invoiceDate]
+        [operatingCompanyId, invoice.customer_id, invoiceDate]
       );
       const noaRow = noaAssignmentRes.rows[0] ?? null;
       if (noaRow) {
@@ -343,7 +362,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         user.uuid,
         "accounting.invoice.html_viewed",
         {
-          operating_company_id: query.data.operating_company_id,
+          operating_company_id: operatingCompanyId,
           invoice_id: params.data.invoiceId,
           invoice_display_id: invoice.display_id ?? null,
         },
@@ -352,7 +371,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       );
 
       await enqueueInvoiceHtmlOutbox(client, {
-        operating_company_id: query.data.operating_company_id,
+        operating_company_id: operatingCompanyId,
         invoice_id: params.data.invoiceId,
         invoice_display_id: invoice.display_id ?? null,
         requested_by_user_id: user.uuid,

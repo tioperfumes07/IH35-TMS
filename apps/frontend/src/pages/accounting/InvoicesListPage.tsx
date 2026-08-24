@@ -202,12 +202,13 @@ export function InvoicesListPage() {
 
   useEffect(() => {
     if (!createDeepLink) return;
+    if (!selectedCompanyId) return;
     if (createType === "from_load") {
       setCreateFlowOpen(true);
       return;
     }
     setOpenModalType(createType);
-  }, [createDeepLink, createType]);
+  }, [createDeepLink, createType, selectedCompanyId]);
 
   const query = useQuery({
     queryKey: [
@@ -669,8 +670,8 @@ export function InvoicesListPage() {
             }}
           />
           <InvoiceCreateModal
-            open={createFlowOpen}
-            operatingCompanyId={selectedCompanyId}
+            open={createFlowOpen && Boolean(selectedCompanyId)}
+            operatingCompanyId={selectedCompanyId ?? ""}
             onClose={() => {
               setCreateFlowOpen(false);
               clearCreateDeepLink();

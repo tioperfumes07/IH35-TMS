@@ -20,6 +20,8 @@ import {
 } from "./validation.service.js";
 import { generateWorkOrderNumber } from "./wo-number.service.js";
 import { renderWorkOrderPdfHtml, type WorkOrderPdfModel } from "./wo-pdf-renderer.service.js";
+import { withCurrentUser } from "../auth/db.js";
+import { wrapPdfDocument } from "../render/pdf-template.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -1429,25 +1431,42 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
+    let operatingCompanyId = query.success ? query.data.operating_company_id : null;
+    if (!operatingCompanyId) {
+      operatingCompanyId = await withCurrentUser(user.uuid, async (client) => {
+        const found = await client.query(`SELECT operating_company_id FROM maintenance.work_orders WHERE id = $1::uuid LIMIT 1`, [
+          params.data.id,
+        ]);
+        return (found.rows[0]?.operating_company_id as string | undefined) ?? null;
+      });
+    }
+    if (!operatingCompanyId) {
+      reply.header("Content-Type", "text/html; charset=utf-8");
+      return reply.code(400).send(
+        wrapPdfDocument({
+          title: "Work order",
+          body: "<p>This print URL needs a real work-order UUID. Open the WO and Print, or pass operating_company_id.</p>",
+        })
+      );
+    }
 
-    const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const payload = await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
       const woRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
-        query.data.operating_company_id,
+        operatingCompanyId,
       ]);
       const wo = woRes.rows[0];
       if (!wo) return { kind: "missing" as const };
 
-      const companyRes = await client.query(`SELECT * FROM org.companies WHERE id = $1 LIMIT 1`, [query.data.operating_company_id]);
+      const companyRes = await client.query(`SELECT * FROM org.companies WHERE id = $1 LIMIT 1`, [operatingCompanyId]);
       const company = companyRes.rows[0] ?? {};
 
       let unit: Record<string, unknown> | null = null;
       if (wo.unit_id) {
         const unitRes = await client.query(
           `SELECT * FROM mdata.units WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
-          [wo.unit_id, query.data.operating_company_id]
+          [wo.unit_id, operatingCompanyId]
         );
         unit = unitRes.rows[0] ?? null;
       }
@@ -1470,7 +1489,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
                )
              )
            LIMIT 1`,
-          [wo.driver_id, query.data.operating_company_id]
+          [wo.driver_id, operatingCompanyId]
         );
         driver = driverRes.rows[0] ?? null;
       }
