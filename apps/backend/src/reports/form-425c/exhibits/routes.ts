@@ -55,6 +55,12 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
       );
     } catch (err) {
       const e = err as { code?: string; message?: string };
+      if (e?.message === "forbidden_company_membership") {
+        return reply.code(403).send({
+          error: "forbidden_company_membership",
+          message: "Not a member of that operating company — exhibits will not build another entity's court package",
+        });
+      }
       req.log?.error?.({ err: e }, "form-425c exhibits build failed");
       return reply.code(502).send({
         error: "mor_cash_source_error",
