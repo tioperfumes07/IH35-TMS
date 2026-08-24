@@ -347,9 +347,10 @@ function buildPdfModel(params: {
   wo: Record<string, unknown>;
   unit: Record<string, unknown> | null;
   driver: Record<string, unknown> | null;
+  vendor: Record<string, unknown> | null;
   lineTotals: { laborCents: number | null; partsCents: number | null; otherCents: number | null };
 }): WorkOrderPdfModel {
-  const { company, wo, unit, driver, lineTotals } = params;
+  const { company, wo, unit, driver, vendor, lineTotals } = params;
   const legalName = String(company.legal_name ?? company.short_name ?? "Carrier");
   const ein = company.tax_id ? `EIN ${String(company.tax_id)}` : "Motor carrier identifiers on file";
 
@@ -364,6 +365,10 @@ function buildPdfModel(params: {
       ? `${String(driver?.first_name ?? "").trim()} ${String(driver?.last_name ?? "").trim()}`.trim()
       : null;
   const driverPhone = String(driver?.phone_mobile ?? driver?.phone ?? driver?.mobile_phone ?? "").trim() || null;
+  const vendorAddress = [vendor?.address_line1, vendor?.address_line2, vendor?.city, vendor?.state, vendor?.postal_code]
+    .map((part) => (part === null || part === undefined ? "" : String(part).trim()))
+    .filter(Boolean)
+    .join(", ") || null;
 
   const { vendor_invoice_number, vendor_work_order_number } = resolveVendorReferences({
     wo_billing_type: String(wo.wo_billing_type ?? "external") as "internal" | "external",
@@ -412,9 +417,9 @@ function buildPdfModel(params: {
     driverName,
     driverPhone,
     linkedLoadNumber: wo.linked_load_number ? String(wo.linked_load_number) : null,
-    shopName: wo.shop_name ? String(wo.shop_name) : null,
-    shopAddress: wo.shop_address ? String(wo.shop_address) : null,
-    shopPhone: wo.shop_phone ? String(wo.shop_phone) : null,
+    shopName: wo.shop_name ? String(wo.shop_name) : vendor?.vendor_name ? String(vendor.vendor_name) : null,
+    shopAddress: wo.shop_address ? String(wo.shop_address) : vendorAddress,
+    shopPhone: wo.shop_phone ? String(wo.shop_phone) : vendor?.phone ? String(vendor.phone) : null,
     vendorInvoiceNumber: vendor_invoice_number || null,
     vendorWorkOrderNumber: vendor_work_order_number || null,
     description: wo.description ? String(wo.description) : null,
@@ -1470,6 +1475,24 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         driver = driverRes.rows[0] ?? null;
       }
 
+      // A canonical vendor selection is sufficient for an external WO. The printable previously
+      // read only optional free-text shop fields, so vendor-selected WOs printed a blank shop even
+      // though their canonical FK was intact. Resolve the same fallback FK as list/detail, scoped
+      // to this company, and let explicit snapshot text win when it exists.
+      let vendor: Record<string, unknown> | null = null;
+      const resolvedVendorId = wo.external_vendor_id ?? wo.vendor_id ?? null;
+      if (resolvedVendorId) {
+        const vendorRes = await client.query(
+          `SELECT vendor_name, phone, address_line1, address_line2, city, state, postal_code
+             FROM mdata.vendors
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [resolvedVendorId, query.data.operating_company_id]
+        );
+        vendor = vendorRes.rows[0] ?? null;
+      }
+
       // WO-PDF-COST-BREAKDOWN-LINES-FALLBACK: wo.labor_hours/parts_cost_cents are never written by
       // any product write path (create/two-section/WAVE3 proof-of-path all skip them) — every real
       // WO's itemized cost lives in work_order_lines instead, so the printed Cost breakdown table
@@ -1492,7 +1515,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         else otherCents = (otherCents ?? 0) + cents;
       }
 
-      const model = buildPdfModel({ company, wo, unit, driver, lineTotals: { laborCents, partsCents, otherCents } });
+      const model = buildPdfModel({ company, wo, unit, driver, vendor, lineTotals: { laborCents, partsCents, otherCents } });
       return { kind: "html" as const, html: renderWorkOrderPdfHtml(model) };
     });
 
