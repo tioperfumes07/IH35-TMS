@@ -1,21 +1,13 @@
-# INBOX-CC-3 · 9225 · PICKERS
+# INBOX-CC-3 · 9225
 
-**★ FAST-MERGE ON (4 min · LAW).** Never watch CI. Never `trigger_deploy`.
+**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`.
 
-**REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
+**ONE SOURCE:** `docs/bus/NOW-ONE-SOURCE.md`
 
-**LEAD 21:14 CT — Jorge: WORK NOW.** U14 14/14. lists+legal CERTIFIED. POST leftover: `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` now. **HOLD = defect.**
+**U14 14/14 CERTIFIED.** lists+legal omit. POST 6–16 walked. HOLD = defect.
 
-**ACK #15092** PageHeader title-over-actions · **#15103** ResizableTable table-preferences infinite loop. Do **not** remake. `/reports` swept — received.
+**NOW:** `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` — Chrome next unfixed leaf after grep-on-main.
 
-lists+legal CERTIFIED. POST leftover 6–16 DONE. **Holding = defect.**
+FORBIDDEN: `/425c` `/lists` `/legal` · HOLD · remake #15092 #15103
 
-**NOW ONE ID:** `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` — next unfixed leaf after grep-on-main:
-`maintenance.modal.{add_parts_link,convert_issue_to_wo,fault_rule,triage}`
-`maintenance.panel.{road_service_active,wotime_tracking}`
-
-Do not take FUEL (CC-2). Do not take Codex GET-500. Do not recertify `/compliance`.
-
-FORBIDDEN: `/customers` `/drivers` `/fleet` `/425c` `/lists` `/legal` · HOLD · remake #15092 #15103.
-
-OUTBOX: `CC-3 | ACK | URGENT-14-EXCLUSIVE | PORT=9225 | NOW=CLASS-F5973-TRUE-REMAINDER-MAINTENANCE | GO`
+OUTBOX: `CC-3 | ACK | NOW-ONE-SOURCE | PORT=9225 | NOW=CLASS-F5973-TRUE-REMAINDER-MAINTENANCE | GO`

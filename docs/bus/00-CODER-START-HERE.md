@@ -1,6 +1,9 @@
 # START HERE
 
 1. `git pull --ff-only origin main`
-2. `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
-3. `docs/bus/INBOX-<SEAT>.md`
-4. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+2. `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow`
+3. **`docs/bus/NOW-ONE-SOURCE.md`** — the only NOW
+4. `docs/bus/INBOX-<SEAT>.md` TOP
+5. `docs/bus/FAST-MERGE-4MIN-LAW.md`
+
+Ignore WAVE* / 2026-08-20 FINAL-CODER / URGENT-BLOCKS tables / any file that still says OPEN U14 7–14.

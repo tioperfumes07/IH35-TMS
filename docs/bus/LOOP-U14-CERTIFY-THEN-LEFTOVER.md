@@ -12,7 +12,7 @@
    - hops cover Fully-Wired 1–12 (Codex: reverse SQL/GET hops in `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`)
 4. **Never recertify** rows already CERTIFIED (1–6, 11–13, lists, legal after stamped).
 5. OPEN remaining (until stamped): **customers → drivers → fleet** (Codex reverse; Cursor stamps). Help Codex with SQL/GET on this tick if their CERTIFIED line is missing — still one stamp per PR.
-6. If no stamp this tick: leftover **`/425c`** unique FINDING only (500 / dead click / silent no-op). Empty unique → keep walking 425c. Do not steal `/customers` `/drivers` `/fleet` `/legal` `/lists` `/cash-flow` `/finance` `/driver-hub`.
+6. If no stamp this tick: leftover **`/425c`** unique FINDING only (500 / dead click / silent no-op). Empty unique → keep walking 425c. Do not steal `/cash-flow` `/finance` `/driver-hub` (CC-1 / CC-2). Seat NOW: `docs/bus/NOW-ONE-SOURCE.md`.
 7. FAST-MERGE docs/fix PRs. Never `gh pr checks --watch`. Never `trigger_deploy` from CC.
 8. When **all 14 U14 rows CERTIFIED**: continue `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` unclaimed rows (Cursor owns 425c until unique-clean, then next unclaimed). Stop the loop only when Jorge says stop **or** leftover table has no unclaimed row and U14 is closed.
 

@@ -43,6 +43,6 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | CC-1 | 9223 | cash-flow leftover | Accounting+factoring CERTIFIED — omit. **NOW leftover** `/cash-flow` 1–12 then `/finance` (POST-U14 sequence). **No** `/banking*` `/lists` `/legal`. HOLD forbidden |
 | CC-2 | 9224 | POST-U14 leftover | Settlements CERTIFIED — omit. **STOP customers recertify.** Sequence 16/16 DONE → GUARD-WORKORDERS unique 500/dead/silent. **No** `/lists` `/legal` `/banking*` `/425c` |
 | CC-3 | 9225 | leftover maintenance remainder | lists+legal CERTIFIED LIVE_SHA=01385f7 — omit. **NOW** `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE`. No recertify. No `trigger_deploy` |
-| Codex | 9226 | POST-U14 leftover | U14 customers+drivers+fleet CERTIFIED `07993ac` — omit recertify. **NOW leftover** unique reverse 500/dead/silent in-lane (GUARD-WORKORDERS / first unclaimed POST-U14). **No CDP.** Never steal `/425c` `/cash-flow` `/lists` `/legal` |
+| Codex | 9226 | POST-U14 leftover | U14 customers+drivers+fleet CERTIFIED `07993ac` — omit recertify. **NOW Chrome leftover unique** `/customers` → `/drivers` → `/fleet` (500/dead/silent). Never restamp. Never steal `/425c` `/cash-flow` `/lists` `/legal` |
 | Cascade | audit | CERTIFIED 1–5 | Method `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`. Findings board same folder. ACK≠audit. No OPEN prefixes |
 | Devin-A | audit | CERTIFIED 6,11–13 | Same method. Live `/vendors`→`/insurance`. OUTBOX-DEVIN-A. Not scribe. No Devin-B |

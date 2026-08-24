@@ -1,6 +1,8 @@
 # U14 OPEN MODULE-BY-MODULE HOPS (owner 2026-08-23)
 
-**Purpose:** seats finish **one module at a time**. Cursor stamps `CERTIFIED` only when **this pull’s** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` equals the OUTBOX `LIVE_SHA` **and** hops cover Fully-Wired **1–12**.
+**SUPERSEDED FOR DISPATCH.** U14 is **14/14 CERTIFIED**. Do **not** recertify from this file. Seat NOW: `docs/bus/NOW-ONE-SOURCE.md`.
+
+**Purpose (historical):** seats finish **one module at a time**. Cursor stamps `CERTIFIED` only when **this pull’s** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` equals the OUTBOX `LIVE_SHA` **and** hops cover Fully-Wired **1–12**.
 
 Unique-FINDING-CLEAN ≠ CERTIFIED. Clicked ≠ CERTIFIED. Scoreboard Built ≠ CERTIFIED.
 

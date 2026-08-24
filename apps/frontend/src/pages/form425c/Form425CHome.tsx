@@ -452,7 +452,8 @@ export function Form425CHome() {
   const historyPrintMutation = useMutation({
     mutationFn: (id: string) => getForm425CFilingHtml(id, companyId),
     onSuccess: (res) => {
-      if (!res.print_html?.trim()) {
+      const printHtml = String(res.print_html ?? "").trim();
+      if (!printHtml) {
         pushToast("Could not print that filing — the server returned empty HTML", "error");
         return;
       }
@@ -461,7 +462,7 @@ export function Form425CHome() {
         pushToast("Popup blocked — allow popups to print the filing", "error");
         return;
       }
-      w.document.write(res.print_html);
+      w.document.write(printHtml);
       w.document.close();
       setTimeout(() => w.print(), 600);
       pushToast(`Ready to print: ${res.suggested_filename}`, "success");
@@ -589,9 +590,19 @@ export function Form425CHome() {
               pushToast("Select an operating company before saving profile defaults", "error");
               return;
             }
+            if (!profilesQuery.isSuccess) {
+              pushToast("Wait for the filing profile to load — Save Defaults will not send a trucking key onto this entity", "error");
+              return;
+            }
+            const loadedKeys = [...new Set((profilesQuery.data?.profiles ?? []).map((row) => row.company_key))];
+            if (!loadedKeys.includes(activeCompany)) {
+              pushToast("Active debtor key is not this entity's filing profile — not saving the wrong debtor", "error");
+              return;
+            }
             saveProfileMutation.mutate();
           }}
           saving={saveProfileMutation.isPending}
+          canSave={Boolean(companyId && profilesQuery.isSuccess && availableCompanies.includes(activeCompany))}
         />
       ) : null}
 

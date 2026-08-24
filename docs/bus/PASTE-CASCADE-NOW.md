@@ -1,19 +1,9 @@
-# PASTE CASCADE NOW · 2026-08-23
+# PASTE CASCADE NOW
 
-Jorge: you are **not** auditing yet. ACK + CDP-BLOCKED with empty trackers is rejected.
+See `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-CASCADE.md`
 
-```text
-git pull --ff-only origin main
-```
-
-Then read **only**:
-1. `docs/bus/INBOX-CASCADE.md`
-2. `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
-3. `docs/audit/ACCIDENT-CLAIM-WEB-AUDIT-MODEL-2026-08-23.md`
-4. `docs/audit/scenario-trackers/certified-u14/FINDINGS-BOARD.md`
-
-NOW `/accounting`. Fill `U14-01-accounting.md`. Prepend CONNECTIVITY-EXTENT on `OUTBOX-CASCADE.md`. Unique 500/dead/silent → FINDINGS-BOARD + GUARD-WORKORDERS same turn. Chrome down → SQL/GET, do not idle. AUDIT ONLY — no product PRs.
+AUDIT ONLY. Chrome `/accounting` EXTENT. ACK ≠ audit. No product PRs. Never recertify.
 
 ```text
-Cascade | ACK | METHOD=HOW-TO-AUDIT-AND-FILE-FINDINGS | NOW=/accounting | GO
+Cascade | ACK | NOW-ONE-SOURCE | NOW=/accounting EXTENT | GO
 ```

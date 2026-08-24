@@ -1,12 +1,9 @@
 # PASTE DEVIN-A NOW
 
-**Same paste as Jorge `devin-`:** `docs/bus/PASTE-DEVIN-NOW.md`
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md` — Chrome `/vendors` EXTENT. Not PARKED.
 
-Do **not** `git checkout main`. Use:
+Same paste as Jorge `devin-`: `docs/bus/PASTE-DEVIN-NOW.md`
 
 ```text
 git fetch origin && git switch --detach origin/main
 ```
-
-Glob alias on main: `docs/audit/HOW-TO-AUDIT.md`  
-Canonical: `docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md`
