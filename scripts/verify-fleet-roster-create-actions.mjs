@@ -126,16 +126,10 @@ export function collectFailures({
   }
 
   // API helpers wired to canonical endpoints
-  if (!/export function createUnit\b/.test(api)) {
-    failures.push("mdata.ts must export createUnit");
-  }
-  if (!api.includes('"/api/v1/mdata/units"') || !/createUnit[\s\S]*?method:\s*"POST"/.test(api)) {
+  if (!/export function createUnit\b[^{]*\{\s*return apiRequest<[^>]+>\("\/api\/v1\/mdata\/units", \{ method: "POST", body \}\);\s*\}/.test(api)) {
     failures.push("createUnit must POST /api/v1/mdata/units");
   }
-  if (!/export function createEquipment\b/.test(api)) {
-    failures.push("mdata.ts must export createEquipment");
-  }
-  if (!api.includes('"/api/v1/mdata/equipment"') || !/createEquipment[\s\S]*?method:\s*"POST"/.test(api)) {
+  if (!/export function createEquipment\b[^{]*\{\s*return apiRequest<[^>]+>\("\/api\/v1\/mdata\/equipment", \{ method: "POST", body \}\);\s*\}/.test(api)) {
     failures.push("createEquipment must POST /api/v1/mdata/equipment");
   }
 
@@ -163,78 +157,54 @@ function selftest() {
       'createUnit({ unit_number, vin, currently_leased_to_company_id: operatingCompanyId }) fleet-create-unit-form + Create userFacingApiError(error, "Failed to create unit")',
     createTrailer:
       'createEquipment({ equipment_number, equipment_type, currently_leased_to_company_id: operatingCompanyId }) fleet-create-trailer-form + Create userFacingApiError(error, "Failed to create trailer")',
-    api: `export function createUnit() { fetch("/api/v1/mdata/units", { method: "POST" }); }
-export function createEquipment() { fetch("/api/v1/mdata/equipment", { method: "POST" }); }`,
+    api: `export function createUnit(body: CreateUnitInput) { return apiRequest<MdataUnit>("/api/v1/mdata/units", { method: "POST", body }); }
+export function createEquipment(body: CreateEquipmentInput) { return apiRequest<MdataEquipment>("/api/v1/mdata/equipment", { method: "POST", body }); }`,
     unitsRoutes: 'app.post("/api/v1/mdata/units"',
     equipmentRoutes: 'app.post("/api/v1/mdata/equipment"',
     listsCatalog: "+ Create",
   };
 
-  const good = collectFailures(base);
-  if (good.length) {
+  const goodFailures = collectFailures(base);
+  if (goodFailures.length) {
     console.error(`${LABEL} --selftest FAIL: well-formed fixtures must PASS, got:`);
-    for (const f of good) console.error(`  - ${f}`);
+    for (const f of goodFailures) console.error(`  - ${f}`);
     process.exit(1);
   }
 
-  // Planted failure: drop lease scope from CreateUnitModal payload → must FAIL
-  const badUnit = collectFailures({
-    ...base,
-    createUnit: base.createUnit.replace(/currently_leased_to_company_id\s*:\s*operatingCompanyId,?/, ""),
-  });
-  if (!badUnit.some((f) => f.includes("CreateUnitModal") && f.includes("currently_leased_to_company_id"))) {
-    console.error(
-      `${LABEL} --selftest FAIL: removing currently_leased_to_company_id from CreateUnitModal must be caught`,
-    );
-    console.error(`  got: ${JSON.stringify(badUnit)}`);
-    process.exit(1);
+  const mutations = [
+    ["home", "fleet-roster-create-actions", "roster-create-actions"],
+    ["home", "+ Create Unit", "show + Create Unit"],
+    ["home", "+ Create Trailer", "show + Create Trailer"],
+    ["home", "CreateUnitModal", "mount CreateUnitModal"],
+    ["home", "CreateTrailerModal", "mount CreateUnitModal and CreateTrailerModal"],
+    ["home", "FleetTablePage", "still mount FleetTablePage"],
+    ["createUnit", "createUnit({", "call createUnit"],
+    ["createUnit", "fleet-create-unit-form", "expose form"],
+    ["createUnit", "unit_number", "collect unit_number and vin"],
+    ["createUnit", "currently_leased_to_company_id: operatingCompanyId", "currently_leased_to_company_id"],
+    ["createUnit", 'userFacingApiError(error, "Failed to create unit")', "raw backend errors"],
+    ["createTrailer", "createEquipment({", "call createEquipment"],
+    ["createTrailer", "fleet-create-trailer-form", "expose form"],
+    ["createTrailer", "equipment_number", "collect equipment_number and equipment_type"],
+    ["createTrailer", "currently_leased_to_company_id: operatingCompanyId", "currently_leased_to_company_id"],
+    ["createTrailer", 'userFacingApiError(error, "Failed to create trailer")', "raw backend errors"],
+    ["api", '"/api/v1/mdata/units"', "createUnit must POST"],
+    ["api", '"/api/v1/mdata/equipment"', "createEquipment must POST"],
+    ["unitsRoutes", 'app.post("/api/v1/mdata/units"', "units.routes must keep POST"],
+    ["equipmentRoutes", 'app.post("/api/v1/mdata/equipment"', "equipment.routes must keep POST"],
+    ["listsCatalog", "+ Create", "retain + Create"],
+  ];
+
+  for (const [field, token, expected] of mutations) {
+    const mutated = { ...base, [field]: base[field].replace(token, "REMOVED_BY_SELFTEST") };
+    const failures = collectFailures(mutated);
+    if (!failures.some((failure) => failure.includes(expected))) {
+      console.error(`${LABEL} --selftest FAIL: mutation ${field}:${token} escaped; got ${JSON.stringify(failures)}`);
+      process.exit(1);
+    }
   }
 
-  const rawErrorUnit = collectFailures({
-    ...base,
-    createUnit: base.createUnit.replace(
-      /userFacingApiError\(error, "Failed to create unit"\)/,
-      'error instanceof Error ? error.message : "Failed to create unit"',
-    ),
-  });
-  if (!rawErrorUnit.some((f) => f.includes("raw backend errors"))) {
-    console.error(`${LABEL} --selftest FAIL: raw CreateUnitModal backend error toast must be caught`);
-    process.exit(1);
-  }
-
-  // Planted failure: drop lease scope from CreateTrailerModal payload → must FAIL
-  const badTrailer = collectFailures({
-    ...base,
-    createTrailer: base.createTrailer.replace(
-      /currently_leased_to_company_id\s*:\s*operatingCompanyId,?/,
-      "",
-    ),
-  });
-  if (
-    !badTrailer.some((f) => f.includes("CreateTrailerModal") && f.includes("currently_leased_to_company_id"))
-  ) {
-    console.error(
-      `${LABEL} --selftest FAIL: removing currently_leased_to_company_id from CreateTrailerModal must be caught`,
-    );
-    console.error(`  got: ${JSON.stringify(badTrailer)}`);
-    process.exit(1);
-  }
-
-  const rawErrorTrailer = collectFailures({
-    ...base,
-    createTrailer: base.createTrailer.replace(
-      /userFacingApiError\(error, "Failed to create trailer"\)/,
-      'error instanceof Error ? error.message : "Failed to create trailer"',
-    ),
-  });
-  if (!rawErrorTrailer.some((f) => f.includes("raw backend errors"))) {
-    console.error(`${LABEL} --selftest FAIL: raw CreateTrailerModal backend error toast must be caught`);
-    process.exit(1);
-  }
-
-  console.log(
-    `${LABEL} --selftest PASS (good fixtures clean; planted missing currently_leased_to_company_id fails for both modals)`,
-  );
+  console.log(`${LABEL} --selftest PASS — ${mutations.length}/${mutations.length} create-action/API/backend/scope/error/List defects detected`);
 }
 
 function main() {
