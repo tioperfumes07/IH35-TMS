@@ -233,20 +233,25 @@ async function fetchTankCapacityGal(
   loadId: string | null
 ): Promise<number | null> {
   if (loadId) {
-    const routeRes = await client.query<{ fuel_capacity_gallons: number | null }>(
-      `
-        SELECT r.fuel_capacity_gallons::float8 AS fuel_capacity_gallons
-        FROM fuel.route_recommendations r
-        WHERE r.operating_company_id = $1::uuid
-          AND r.load_id = $2::uuid
-          AND r.fuel_capacity_gallons IS NOT NULL
-        ORDER BY r.computed_at DESC
-        LIMIT 1
-      `,
-      [operatingCompanyId, loadId]
+    const exists = await client.query<{ ok: boolean }>(
+      `SELECT to_regclass('fuel.route_recommendations') IS NOT NULL AS ok`
     );
-    if (routeRes.rows[0]?.fuel_capacity_gallons != null) {
-      return Number(routeRes.rows[0].fuel_capacity_gallons);
+    if (exists.rows[0]?.ok) {
+      const routeRes = await client.query<{ fuel_capacity_gallons: number | null }>(
+        `
+          SELECT r.fuel_capacity_gallons::float8 AS fuel_capacity_gallons
+          FROM fuel.route_recommendations r
+          WHERE r.operating_company_id = $1::uuid
+            AND r.load_id = $2::uuid
+            AND r.fuel_capacity_gallons IS NOT NULL
+          ORDER BY r.computed_at DESC
+          LIMIT 1
+        `,
+        [operatingCompanyId, loadId]
+      );
+      if (routeRes.rows[0]?.fuel_capacity_gallons != null) {
+        return Number(routeRes.rows[0].fuel_capacity_gallons);
+      }
     }
   }
   if (!unitId) return null;
