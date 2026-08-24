@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CreateTaskModal } from "../../components/tasks/CreateTaskModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
+import { useToast } from "../../components/Toast";
 
 const tabs = [
   { id: "board", label: "Task Board", to: "/tasks" },
@@ -17,6 +18,7 @@ export function TasksModuleTabs() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -47,9 +49,14 @@ export function TasksModuleTabs() {
         </nav>
         <button
           type="button"
-          onClick={() => setCreateOpen(true)}
-          disabled={!companyId}
-          className="mb-1 rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+          onClick={() => {
+            if (!companyId) {
+              pushToast("Select an operating company before creating a task", "error");
+              return;
+            }
+            setCreateOpen(true);
+          }}
+          className="mb-1 rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
         >
           + Create Task
         </button>
