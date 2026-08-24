@@ -491,7 +491,12 @@ export function Form425CHome() {
       w.document.write(printHtml);
       w.document.close();
       setTimeout(() => w.print(), 600);
-      pushToast(`Ready to print: ${res.suggested_filename}`, "success");
+      const fileName = String(res.suggested_filename ?? "").trim();
+      if (!fileName) {
+        pushToast("Print opened without a debtor filename — will not invent a court PDF name", "error");
+      } else {
+        pushToast(`Ready to print: ${fileName}`, "success");
+      }
     },
     onError: (error) => pushToast(userFacingApiError(error, "Could not print that filing"), "error"),
   });
