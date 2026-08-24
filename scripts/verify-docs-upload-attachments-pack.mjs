@@ -58,8 +58,11 @@ function assertWiring(readSourceFn = readSource) {
     problems.push(`${UPLOAD_MODAL}: must not use ReferenceSelect for customer — use EntityPicker`);
   }
 
-  if (!/disabled=\{!companyId\}/.test(home)) {
-    problems.push(`${DOCS_HOME}: upload button must disable when no operating company selected`);
+  if (/disabled=\{!companyId\}/.test(home)) {
+    problems.push(`${DOCS_HOME}: + Upload Document must toast when no company — disabled-only was a dead click`);
+  }
+  if (!home.includes("Select an operating company before uploading a document")) {
+    problems.push(`${DOCS_HOME}: missing toast for + Upload Document with no operating company`);
   }
 
   return problems;

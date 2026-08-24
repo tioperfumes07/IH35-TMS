@@ -40,6 +40,12 @@ function analyze(page, backend) {
   if (!/NULLIF\(TRIM\(d\.customer_name\)/.test(backend)) {
     failures.push("customer label must NULLIF empty customer_name");
   }
+  if (/disabled=\{!companyId\}/.test(page)) {
+    failures.push("+ Upload Document must toast when no company — disabled-only was a dead click");
+  }
+  if (!page.includes("Select an operating company before uploading a document")) {
+    failures.push("DocsHomePage must toast before upload when no operating company");
+  }
   return failures;
 }
 
@@ -55,6 +61,7 @@ function selftest() {
       return <span data-testid={kind ? "docs-entity-unresolved" : "docs-entity-plain"}>{entityLabel(rawLabel, link.entity_id, noun)}</span>;
     }
     <EntityLink label={String(rawLabel).trim()} />
+    Select an operating company before uploading a document
   `;
   const badPage = `
     const label = link.entity_label ?? undefined;
