@@ -44,6 +44,21 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const serverLoadedRef = useRef(false);
 
+  // RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP: callers (ResizableTable) build `defaultWidths` as a
+  // fresh object literal every render (`Object.fromEntries(columns.map(...))`, no memo) from a
+  // `columns` prop that is ITSELF a fresh array literal every render — so no amount of memoizing the
+  // caller alone fixes this; the caller's identity churn is effectively unavoidable without a bigger
+  // refactor. With `defaultWidths` in this effect's dependency array, every render re-ran the fetch,
+  // whose `setWidths` triggered another render, whose new `defaultWidths` re-ran the fetch again — an
+  // infinite GET /api/v1/users/me/table-preferences loop for as long as the table stayed mounted.
+  // Live-confirmed on /vendors: 130+ identical requests fired back-to-back, still climbing after
+  // navigating away to an unrelated page (the effect from the unmounted Vendors tree was still
+  // in-flight releasing new fetches). Fix: a ref carries the LATEST defaultWidths into the effect
+  // without being a dependency, so the effect only re-runs on a real `tableId` change — exactly the
+  // one thing that should ever require a fresh server fetch.
+  const defaultWidthsRef = useRef(defaultWidths);
+  defaultWidthsRef.current = defaultWidths;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -54,7 +69,7 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
         if (cancelled || !response.column_widths) return;
         serverLoadedRef.current = true;
         setWidths((prev) => ({
-          ...defaultWidths,
+          ...defaultWidthsRef.current,
           ...prev,
           ...Object.fromEntries(
             Object.entries(response.column_widths ?? {}).map(([k, v]) => [k, clampWidth(Number(v) || MIN_WIDTH)])
@@ -67,7 +82,7 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
     return () => {
       cancelled = true;
     };
-  }, [tableId, defaultWidths]);
+  }, [tableId]);
 
   const persistServer = useCallback(
     (next: ColumnWidths) => {

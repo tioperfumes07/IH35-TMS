@@ -56,7 +56,16 @@ export function useListView(
     return () => {
       cancelled = true;
     };
-  }, [tableId, columns]);
+    // RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP: `columns` is never read inside this effect (the fetch
+    // only needs `tableId`) but was listed as a dependency anyway. ListView's caller passes `columns`
+    // as `columns as ListViewColumn<unknown>[]` — a value that is not stable across renders wherever a
+    // caller builds its column list inline (the same unmemoized-array-literal pattern that caused the
+    // sibling ResizableTable/useColumnWidths loop). With `columns` as a dependency, `setLoading(true)`
+    // → re-render → new `columns` reference → effect re-fires → `setLoading` again, forever: an
+    // infinite GET /api/v1/users/me/table-preferences loop for as long as the ListView stayed mounted,
+    // live-confirmed on the sibling hook via 130+ back-to-back identical requests on /vendors. Only
+    // `tableId` should ever trigger a fresh server fetch.
+  }, [tableId]);
 
   const persistView = useCallback(
     (data: SavedViewData) => {
