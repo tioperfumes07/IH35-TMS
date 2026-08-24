@@ -23,7 +23,7 @@ function canAccess425cExhibits(role: string) {
 }
 
 export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
-  app.post("/api/v1/reports/form-425c/exhibits/build", async (req, reply) => {
+  app.post("/api/v1/reports/form-425c/exhibits/build", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccess425cExhibits(String(user.role ?? ""))) {
@@ -32,6 +32,12 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
 
     const parsed = buildBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    if (parsed.data.period_end < parsed.data.period_start) {
+      return reply.code(422).send({
+        error: "period_end_before_start",
+        message: "Period end must be on or after period start — an inverted window will not build a silent empty court package",
+      });
+    }
 
     // FAIL-LOUD (REPAIR spec §4): the Exhibit A–D bank queries no longer swallow errors to blank rows.
     // A broken banking-source query must surface as a structured 502 so a blank court exhibit is never
@@ -60,7 +66,7 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
     return reply.code(200).send(built);
   });
 
-  app.get("/api/v1/reports/form-425c/exhibits/:filing_uuid", async (req, reply) => {
+  app.get("/api/v1/reports/form-425c/exhibits/:filing_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccess425cExhibits(String(user.role ?? ""))) {
@@ -81,7 +87,7 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
     return built;
   });
 
-  app.get("/api/v1/reports/form-425c/exhibits/:filing_uuid/exhibit/:letter", async (req, reply) => {
+  app.get("/api/v1/reports/form-425c/exhibits/:filing_uuid/exhibit/:letter", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccess425cExhibits(String(user.role ?? ""))) {

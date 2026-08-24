@@ -111,6 +111,10 @@ export function ExhibitsViewer() {
                 pushToast("Select an operating company before building exhibits", "error");
                 return;
               }
+              if (period.period_end < period.period_start) {
+                pushToast("Period end must be on or after period start", "error");
+                return;
+              }
               buildMut.mutate();
             }}
             className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
