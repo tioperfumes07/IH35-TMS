@@ -26,7 +26,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
             onClick={() => setActiveCompany(k)}
             className={`rounded-sm px-3 py-2 text-sm font-semibold ${activeCompany === k ? "bg-slate-800 text-white" : "bg-white text-slate-700 border"}`}
           >
-            {profiles[k].name}
+            {profiles[k].name || k}
           </button>
         ))}
         <button

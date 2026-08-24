@@ -100,6 +100,15 @@ export function collectProblems(src) {
   if (constants.includes("WF-3500") || constants.includes("WF-1") || constants.includes("xxxx3500")) {
     problems.push("apps/frontend/src/pages/form425c/lib/constants.ts: client DEFAULT_PROFILES must not seed invented DIP bank accounts before the filing profile loads");
   }
+  if (
+    constants.includes("IH 35 TRUCKING") ||
+    constants.includes("IH 35 TRANSPORTATION") ||
+    constants.includes("San Antonio") ||
+    constants.includes("Laredo") ||
+    constants.includes("484121")
+  ) {
+    problems.push("apps/frontend/src/pages/form425c/lib/constants.ts: client DEFAULT_PROFILES must not seed an invented debtor name/address before the filing profile loads");
+  }
   const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
   if (qbTab.includes("useState(new Date().getMonth())")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Month/Year must be the Form period, not a silent local picker");

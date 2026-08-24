@@ -61,17 +61,22 @@ try {
 
     const parsed = parseQBText(
       "Date\tType\tDescription\tAccount\tAmount\n01/01/2026\tDeposit\tCustomer Payment\tWF-3500\t100.00\n01/01/2026\tTransfer\tFunds transfer\tWF-3500\t90.00",
-      DEFAULT_PROFILES.trucking.bankAccounts
+      [{ id: "WF-3500", label: "TEST DIP", number: "xxxx3500" }]
     );
     if (parsed.length !== 1) throw new Error("parseQBText edge case failed");
     console.log("PASS: parseQBText transfer exclusion and account matching");
 
-    const html = buildPrintHTML(makeFixtureForm(), DEFAULT_PROFILES.trucking, 2, 2026);
+    const html = buildPrintHTML(
+      makeFixtureForm(),
+      { ...DEFAULT_PROFILES.trucking, name: "TEST DEBTOR LLC" },
+      2,
+      2026,
+    );
     if (!html.includes("Did the business operate during the entire reporting period?")) throw new Error("buildPrintHTML questionnaire content missing");
     if (!html.toLowerCase().includes("<html>")) throw new Error("buildPrintHTML did not produce html");
     console.log("PASS: buildPrintHTML includes questionnaire and valid HTML");
 
-    const filename = suggestedFilename(DEFAULT_PROFILES.trucking.name, 2, 2026);
+    const filename = suggestedFilename("TEST DEBTOR LLC", 2, 2026);
     if (!filename.includes("March 2026")) throw new Error("suggested filename format mismatch");
     console.log(`PASS: suggested filename format (${filename})`);
   } finally {
