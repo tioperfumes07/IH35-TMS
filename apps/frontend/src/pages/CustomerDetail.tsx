@@ -2350,6 +2350,18 @@ export function CustomerDetailPage() {
               <p className="text-sm text-slate-700">
                 Backend pending — payment history unavailable until backend ships (P6-T11204).
               </p>
+            ) : customerPaymentsListState.isError ? (
+              // CUST-MONEY-F6278 — customerPaymentsListState computes .isError but nothing here
+              // branched on it: a settled GET failure left `.data` undefined, `?? []` made it an
+              // empty array, and the table rendered "No payments recorded." — a real fetch failure
+              // looked identical to an honest empty history, same class already fixed for open
+              // invoices above (CUST-MONEY-F6057A).
+              <ListErrorState
+                title="Couldn't load payment history"
+                status={0}
+                message={customerPaymentsQuery.error instanceof Error ? customerPaymentsQuery.error.message : undefined}
+                onRetry={() => void customerPaymentsQuery.refetch()}
+              />
             ) : (
               <ParityTable<CustomerPaymentListRow>
                 rows={customerPaymentsQuery.data?.rows ?? []}
