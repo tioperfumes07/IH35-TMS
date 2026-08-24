@@ -13,7 +13,12 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
-  return entityLabel(null, id, "Record");
+  // bulk_call_id is a literal batch-operation token being matched for a filter, not a linked
+  // entity to resolve a name for — entityLabel(null, id, "Record") always renders "Record — not
+  // visible" here (there is never a name to pass), which broke both this column's cell text AND
+  // the click-to-filter button's own visible label on every row with a bulk_call_id. Show a short
+  // id preview instead, same shape this file's own pre-existing test already expected.
+  return id.length > 8 ? `${id.slice(0, 8)}…` : id;
 }
 
 export { bulkCallPreview };
