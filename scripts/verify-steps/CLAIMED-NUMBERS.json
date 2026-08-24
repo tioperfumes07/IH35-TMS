@@ -1,4 +1,9 @@
 {
+  "4694": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-location-hos-shared-drivers-wired"
+  },
   "4692": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -5988,5 +5993,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1297
+  "total_claimed": 1298
 }
