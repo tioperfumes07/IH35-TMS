@@ -238,19 +238,32 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   <ActionButton disabled>+ Plan trip</ActionButton>
                 </span>
                 <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
-                <ActionButton
-                  onClick={() => {
-                    if (!activeRoute || !companyId) return;
-                    void sendFuelRecommendationToDriver(activeRoute.id, companyId)
-                      .then(() => {
-                        pushToast("Recommendation sent to driver app", "success");
-                        void queryClient.invalidateQueries({ queryKey: ["fuel", "planner"] });
-                      })
-                      .catch((error) => pushToast(userFacingApiError(error, "Send failed"), "error"));
-                  }}
+                {/* SILENT-NO-OP (leftover leaf, sibling of the +Plan trip fix in #1663): the handler
+                    below silently returned when there was no active route, so a click produced zero
+                    DOM change, toast, or network call — indistinguishable from a dead button. Same
+                    honest-disabled-affordance treatment as "+ Plan trip" above. */}
+                <span
+                  title={
+                    activeRoute
+                      ? undefined
+                      : "There is no active dispatch route to send — trip planning is generated from active dispatch loads"
+                  }
                 >
-                  Send to driver app
-                </ActionButton>
+                  <ActionButton
+                    disabled={!activeRoute || !companyId}
+                    onClick={() => {
+                      if (!activeRoute || !companyId) return;
+                      void sendFuelRecommendationToDriver(activeRoute.id, companyId)
+                        .then(() => {
+                          pushToast("Recommendation sent to driver app", "success");
+                          void queryClient.invalidateQueries({ queryKey: ["fuel", "planner"] });
+                        })
+                        .catch((error) => pushToast(userFacingApiError(error, "Send failed"), "error"));
+                    }}
+                  >
+                    Send to driver app
+                  </ActionButton>
+                </span>
               </>
             ) : null}
           </div>
