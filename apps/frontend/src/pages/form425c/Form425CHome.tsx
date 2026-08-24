@@ -282,7 +282,8 @@ export function Form425CHome() {
         subchapter: "V",
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
+      setOpenedReportId(created.id);
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "reports", companyId] });
       pushToast("Report created", "success");
     },
