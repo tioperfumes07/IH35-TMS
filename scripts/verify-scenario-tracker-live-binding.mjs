@@ -47,6 +47,22 @@ const ORIGIN_REQUIRED = [
 /** Scenario proof must represent the full trigger, not merely a row in its first table. */
 const CHAIN_REQUIRED = [
   {
+    key: "hop.dispatch",
+    needles: [
+      "events.event_log",
+      "e.source_table = 'mdata.loads'",
+      "e.source_reference_id = l.id",
+      "e.subject_type = 'load'",
+      "e.subject_id = l.id",
+      "e.operating_company_id = l.operating_company_id",
+      "e.event_type = 'load.status_changed'",
+      "e.payload->>'to_status' = 'in_transit'",
+      "e.actor_user_id IS NOT NULL",
+      "e.is_active = true",
+      "l.soft_deleted_at IS NULL",
+    ],
+  },
+  {
     key: "hop.assign",
     needles: [
       "dispatch.load_assignment_history",
@@ -474,6 +490,9 @@ function selftest() {
     ["assignment probe accepts a bill for another driver", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.driver_id = l.assigned_primary_driver_id", "") })],
     ["assignment probe loses current unit history", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND h.new_unit_id = l.assigned_unit_id", "") })],
     ["assignment probe ignores a later reassignment", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND (later.new_driver_id IS DISTINCT FROM h.new_driver_id OR later.new_unit_id IS DISTINCT FROM h.new_unit_id)", "") })],
+    ["dispatch probe accepts status without its spine event", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.event_type = 'load.status_changed'", "") })],
+    ["dispatch probe accepts a non-transit transition", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.payload->>'to_status' = 'in_transit'", "") })],
+    ["dispatch probe loses same-company event scope", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND e.operating_company_id = l.operating_company_id", "") })],
     ["trailer swap accepts a completed load", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')", "") })],
     ["trailer swap ignores a later replacement", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND later.new_trailer_id <> h.new_trailer_id", "") })],
     ["breakdown relay loses the WO back-link", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.source_intransit_issue_id = i.id", "") })],
