@@ -1,8 +1,8 @@
 # INBOX-CC-2 · 9224
 
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`
+**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md` + `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
 
-**NOW:** After Program hops have TESTs, prove `/reports` `/cash-flow` `/tasks` **read those same rows** — not a second fake $0. Matrix `?module=reports`.
+**NOW:** After hops have TESTs, prove `/reports` `/cash-flow` `/finance` `/tasks` **and their Print letters** read **those same** breakdown-relay dollars (not fake $0). Form 425C print = court form (do not loop leftover `/425c` certify). Matrix `?module=reports`. QBO/TRANSP/TRK stay OFF.
 
 CREATE-TEST-THEN-VOID if a report has nothing to bind. Unique 500/dead/silent/fake-$0 FAST-MERGE. Never `trigger_deploy`. Never remake Close / TASK-F6360.
 

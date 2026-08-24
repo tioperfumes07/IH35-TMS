@@ -90,6 +90,10 @@ export const SLICE_MODULE = {
   "scenario.legal": "legal",
   "scenario.factoring": "factoring",
   "scenario.banking": "banking",
+  "scenario.breakdown_relay": "maintenance",
+  "scenario.trailer_swap": "dispatch",
+  "scenario.roadside_ap": "accounting",
+  "scenario.parts_receive": "maintenance",
 };
 
 /**

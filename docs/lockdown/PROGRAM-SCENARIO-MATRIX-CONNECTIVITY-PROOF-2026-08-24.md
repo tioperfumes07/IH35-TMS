@@ -4,6 +4,8 @@
 
 This is **not** a U14 recertify. Do **not** restamp CERTIFIED modules. Unique leftover hunt stays in force; this wave **adds** the Program hop/matrix proof.
 
+**Complicated TESTs + every printable:** `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md` — truck breakdown → replacement unit on the same load, trailer swap, roadside A/P, parts receive, and letter-format invoices / proforma / dispatch / WO / 425C / cash-flow / finance.
+
 ---
 
 ## Surfaces (live USMCA)
@@ -30,12 +32,16 @@ Canonical keys from `HOP_IDENTITY`. Every hop: click the Program title → live 
 | 3 | `hop.dispatch` | Dispatch / in transit | `/dispatch` | in-transit; `actual_departure_at` on Delivered drag |
 | 4 | `hop.deliver` | Deliver — record time | `/dispatch` | delivered_pending_docs + departure timestamp |
 | 5 | `hop.pod_bol` | POD + BOL | `/dispatch` | completed_docs_received; billing trigger |
-| 6 | `hop.revenue` | Earn the revenue | `/accounting/invoices` | Event 1 JE **or loud flag-OFF** (never silent $0) |
+| 6 | `hop.revenue` | Earn the revenue | `/accounting/invoices` | Event 1 JE **must post live** (DR Unbilled / CR Line-haul). Missing JE = FINDING |
 | 7 | `hop.invoice` | Make the invoice | `/accounting/invoices` | `accounting.invoices` + lines; customer_id; load_id |
 | 8 | `hop.gl` | Money in the books | `/accounting/journal-entries` | balanced `journal_entries` + postings; USMCA opco |
 | 9 | `hop.bank` | Match the bank | `/banking/transactions` | payment apply; A/R down; bank match |
 
-**Posting flags default OFF** until owner says turn on. If JE is skipped: **loud skip + named flag**, never silent $0. Empty TMS before create is expected.
+**OWNER 2026-08-24 15:16 CT — POSTING IS LIVE.** Every TMS posting flag / money write for **USMCA is ON**. A hop that skips the JE, invoice, bill, payment, settlement, or bank match is a **FINDING**, not “flag off.”
+
+**The only flags that stay OFF in the entire app:** QuickBooks (no TMS→QBO write-back, no QBO sync campaign) and **Trucking / Transportation** entities (TRANSP / TRK). Do not turn those on. Do not post as those companies.
+
+Empty TMS before you CREATE TEST is expected. After save, the ledger row must exist.
 
 ---
 
@@ -60,8 +66,12 @@ Run **your lane’s scenarios** from `SCENARIO_IDENTITY`. Same bar: create TEST 
 | `scenario.accident` | `/safety` | Codex |
 | `scenario.insurance` | `/safety/insurance` | Codex |
 | `scenario.legal` | `/legal/matters` | CC-3 |
+| `scenario.breakdown_relay` | `/maintenance/in-transit-issues` | Codex + Cursor + Cascade |
+| `scenario.trailer_swap` | `/dispatch` | Codex |
+| `scenario.roadside_ap` | `/accounting/bills` | CC-1 |
+| `scenario.parts_receive` | `/inventory/purchases` | CC-3 |
 
-**CC-2:** after hops exist, prove `/reports` `/cash-flow` `/tasks` **read the same TESTs** (not a second set of fake zeros).
+**CC-2:** after hops exist, prove `/reports` `/cash-flow` `/finance` `/tasks` **read the same TESTs** and **Print letters** (not fake zeros). Form 425C print = court form — do not loop leftover `/425c` certify.
 
 **CC-3:** `/program` + `/program/matrix` chrome (500 / dead tab) **and** mapping cells for lists/legal/maintenance.
 
@@ -98,20 +108,22 @@ File in `docs/audit/GUARD-WORKORDERS.md` (or OUTBOX if audit-only) **same turn**
 - Reverse-empty: Neon has the TEST row, UI shows none
 - Fake $0 / swallow `.catch([])`
 - **Linkage miss:** invoice without `customer_id`/`load_id`; JE without postings; payment that does not reduce Open; matrix leaf with no live target
+- **Posting miss:** save succeeded and USMCA posting is ON, but no JE / no invoice / no bill / no payment row
 
-Not a finding: empty table **after** you created TEST and it persisted; posting flag OFF with a **visible** skip; U14 recertify noise.
+Not a finding: empty table **after** you created TEST and it persisted; U14 recertify noise; QBO/TRANSP/TRK still dark (that is correct).
 
 OUTBOX one-liner:
 
 ```
-SEAT | ACK | PROGRAM-SCENARIO-PROOF | NOW=/program | SHA=<healthz> | HOP=<key> | TABLE=<schema.table> | UUID=<id> | JE=<id-or-FLAG-OFF> | FINDING=<id-or-none> | GO
+SEAT | ACK | PROGRAM-SCENARIO-PROOF | NOW=/program | SHA=<healthz> | HOP=<key> | TABLE=<schema.table> | UUID=<id> | JE=<id> | FINDING=<id-or-none> | GO
 ```
 
 ---
 
 ## Law that still binds
 
-- USMCA only. No TRANSP/TRK. No TMS→QBO write-back.
+- USMCA only. TRANSP/TRK flags OFF. QBO flags OFF. No TMS→QBO write-back.
+- **All other posting flags ON.** TESTs must write real TMS books.
 - U14 14/14 CERTIFIED — never restamp.
 - CREATE-TEST-THEN-VOID — void at launch, not now.
 - FAST-MERGE ~4 min. CC never `trigger_deploy`.
