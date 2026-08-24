@@ -335,8 +335,11 @@ export async function buildUnitAggregate(
           LIMIT 1
         ) AS eta
       FROM mdata.loads l
-      LEFT JOIN mdata.customers c ON c.id = l.customer_id
-                                 AND c.operating_company_id = l.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT scoped_customer.customer_name
+        FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id) scoped_customer
+        LIMIT 1
+      ) c ON TRUE
       WHERE l.assigned_unit_id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
