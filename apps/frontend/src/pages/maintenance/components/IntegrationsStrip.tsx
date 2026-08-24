@@ -51,6 +51,40 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
   const qboVis = qboConnectionLabel(qboQuery.data?.connected, qboQuery.data?.needs_reauth);
   const relayVis = resolveRelayVisualStatus(relayQuery.data);
 
+  const samsaraStatus = samsaraQuery.isError ? (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 text-red-700 underline"
+      title="Samsara health couldn't be loaded. Retry."
+      onClick={() => void samsaraQuery.refetch()}
+    >
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass("red")}`} />
+      Samsara: unavailable
+    </button>
+  ) : (
+    <span className="inline-flex items-center gap-1" title={samsaraVis.title}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(samsaraVis.dot)}`} />
+      {samsaraVis.label}
+    </span>
+  );
+
+  const relayStatus = relayQuery.isError ? (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 text-red-700 underline"
+      title="Relay health couldn't be loaded. Retry."
+      onClick={() => void relayQuery.refetch()}
+    >
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass("red")}`} />
+      Relay: unavailable
+    </button>
+  ) : (
+    <span className="inline-flex items-center gap-1" title={relayVis.title}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(relayVis.dot)}`} />
+      {relayVis.label}
+    </span>
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600">
       {qboCapable ? (
@@ -62,15 +96,9 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
           <span className="text-gray-300">·</span>
         </>
       ) : null}
-      <span className="inline-flex items-center gap-1" title={samsaraVis.title}>
-        <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(samsaraVis.dot)}`} />
-        {samsaraVis.label}
-      </span>
+      {samsaraStatus}
       <span className="text-gray-300">·</span>
-      <span className="inline-flex items-center gap-1" title={relayVis.title}>
-        <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(relayVis.dot)}`} />
-        {relayVis.label}
-      </span>
+      {relayStatus}
       {qboCapable ? (
         <>
           <span className="text-gray-300">·</span>

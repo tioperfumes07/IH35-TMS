@@ -721,6 +721,17 @@
       ]
     },
     {
+      "id": "maintenance.panel.integrations",
+      "tab": "Panels",
+      "sub": "Panel: Telematics integration health",
+      "route_hint": "surface://pages/maintenance/components/IntegrationsStrip.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/maintenance/components/IntegrationsStrip.tsx",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
       "id": "maintenance.modal.fault_rule",
       "tab": "Modals",
       "sub": "Modal: Fault Rule",
