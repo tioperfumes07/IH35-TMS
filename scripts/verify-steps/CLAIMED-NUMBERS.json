@@ -4029,6 +4029,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-equipment-log-create-entity-scope-wired"
   },
+  "5098": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-comparable-units-detail"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6013,5 +6018,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1299
+  "total_claimed": 1300
 }
