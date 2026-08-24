@@ -17,6 +17,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -43,17 +45,25 @@ function EventActions({
   companyId: string;
   onAction: () => void;
 }) {
+  const { pushToast } = useToast();
+  // DISP-F6326: none of this row's 3 mutations (nor the board's syncM) had onError — no toast
+  // import anywhere in the file, no isError check, all fire-and-forget .mutate(). A rejected
+  // close/bridge/notify silently did nothing: no error, no explanation, the button just went
+  // back to enabled with zero feedback.
   const closeM = useMutation({
     mutationFn: () => closeDetentionEvent(event.id, { operating_company_id: companyId }),
     onSuccess: onAction,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not stop the detention accrual"), "error"),
   });
   const bridgeM = useMutation({
     mutationFn: () => bridgeDetentionBilling(event.id, { operating_company_id: companyId }),
     onSuccess: onAction,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not bridge detention to billing"), "error"),
   });
   const notifyM = useMutation({
     mutationFn: () => notifyDetentionCustomer(event.id, { operating_company_id: companyId }),
     onSuccess: onAction,
+    onError: (err) => pushToast(userFacingApiError(err, "Could not notify the customer"), "error"),
   });
 
   return (
@@ -96,6 +106,7 @@ export function DetentionBoardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -110,9 +121,11 @@ export function DetentionBoardPage() {
     refetchInterval: 60_000,
   });
 
+  // DISP-F6326: see EventActions above — same file-wide gap.
   const syncM = useMutation({
     mutationFn: () => syncDetentionFromArrivals(companyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] }),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not sync detention from arrivals"), "error"),
   });
 
   const invalidate = () =>
