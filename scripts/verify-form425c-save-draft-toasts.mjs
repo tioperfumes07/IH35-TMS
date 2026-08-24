@@ -19,6 +19,9 @@ export function collectProblems(src) {
   if (!src.includes("loadedId === selectedReport.id")) {
     problems.push(`${PAGE}: hydrate only when detail report id matches the selected period — leftover month change kept prior MOR cash`);
   }
+  if (src.includes("{ ...defaults, ...(report.part1_answers") || !src.includes("function answersFromReport")) {
+    problems.push(`${PAGE}: hydrate must not spread profile defaults over unanswered lines — autosave then wrote invented Yes/No onto the MOR`);
+  }
   if (!src.includes("loadedId !== selectedReport.id")) {
     problems.push(`${PAGE}: must clear stale MOR cash when the selected period id is not the loaded detail id`);
   }
@@ -71,6 +74,9 @@ export function collectProblems(src) {
   const formTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx"), "utf8");
   if (formTab.includes("setForm((prev) => ({ ...prev, [key]: e.target.checked }))")) {
     problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Part 8 checkboxes must not be a manually-toggleable local boolean — attach a real file instead");
+  }
+  if (formTab.includes('?? (q.expectYes ? "yes" : "no")')) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: unanswered questionnaire radios must stay empty — inventing Yes/No is a silent court answer");
   }
   const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
   if (qbTab.includes("useState(new Date().getMonth())")) {
@@ -427,6 +433,7 @@ export function collectProblems(src) {
 
 const good = `
   if (detailQuery.isFetching || selectedReport?.id) return;
+  function answersFromReport
   if (selectedReport?.id && loadedId === selectedReport.id) {
   if (selectedReport?.id && loadedId !== selectedReport.id) {
   if (!form.reportId || form.reportId !== selectedReport?.id) {
