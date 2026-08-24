@@ -15,7 +15,6 @@ import {
   getFrequentlyRun,
   getIftaStatus,
   getKpiSummary,
-  getScheduledReports,
   type FrequentlyRunReport,
   type ReportCategory,
 } from "../../api/reports";
@@ -68,11 +67,6 @@ export function ReportsHomePage() {
   const frequentQuery = useQuery({
     queryKey: ["reports", "frequently-run", companyId],
     queryFn: () => getFrequentlyRun(companyId),
-    enabled: Boolean(companyId),
-  });
-  const scheduledQuery = useQuery({
-    queryKey: ["reports", "scheduled", companyId],
-    queryFn: () => getScheduledReports(companyId),
     enabled: Boolean(companyId),
   });
   const iftaQuery = useQuery({
@@ -295,7 +289,7 @@ export function ReportsHomePage() {
           </section>
           <FrequentlyRunTable rows={frequentRows} onRun={handleRunReport} />
         </div>
-        <ScheduledReportsPanel rows={scheduledQuery.data ?? []} />
+        <ScheduledReportsPanel />
       </div>
 
       {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
