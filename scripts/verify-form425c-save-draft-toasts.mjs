@@ -123,6 +123,10 @@ export function collectProblems(src) {
   if (!routes.includes("mor_cash_zero_with_activity") || !routes.includes('reply.code(422).send({')) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: banking import $0-with-activity must 422, not 502/500");
   }
+  const summaryChunk = routes.split('app.get("/api/v1/form-425c/banking-summary"')[1] ?? "";
+  if (!summaryChunk.includes("mor_cash_zero_with_activity") || !summaryChunk.includes("reply.code(422)")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET banking-summary $0-with-activity must 422, not an uncaught 500");
+  }
   if (!routes.includes('error: "file_not_found"') || !routes.includes("Attachment file UUID not found")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: missing attachment file UUID must 404, not 500");
   }

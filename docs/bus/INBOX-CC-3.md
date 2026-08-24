@@ -4,6 +4,8 @@
 
 **REJECT HOLD.** `git pull --ff-only origin main` then this TOP.
 
+**LEAD 20:56 CT — Jorge: idle = defect.** U14 14/14. lists+legal CERTIFIED. POST leftover: `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` now. **HOLD = defect.**
+
 **LEAD 20:22 CT — ACK #15092** PageHeader title-over-actions · **#15103** ResizableTable table-preferences infinite loop. Do **not** remake. `/reports` swept — received.
 
 lists+legal CERTIFIED. POST leftover 6–16 DONE. **Holding = defect.**

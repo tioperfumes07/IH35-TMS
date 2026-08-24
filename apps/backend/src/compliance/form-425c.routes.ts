@@ -466,16 +466,32 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return { profiles };
   });
 
-  app.get("/api/v1/form-425c/banking-summary", async (req, reply) => {
+  app.get("/api/v1/form-425c/banking-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = MONTH_QUERY.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const q = query.data;
-    const summary = await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
-      computeBankingSummary(client, q.operating_company_id, q.month)
-    );
-    return summary;
+    try {
+      return await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
+        computeBankingSummary(client, q.operating_company_id, q.month)
+      );
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      if (e?.message === "mor_cash_zero_with_activity") {
+        return reply.code(422).send({
+          error: "mor_cash_zero_with_activity",
+          message:
+            "Banking summary found in-scope transactions but $0 receipts and $0 disbursements — will not return $0 as court cash",
+        });
+      }
+      req.log?.error?.({ err: e, month: q.month }, "form-425c banking-summary failed");
+      return reply.code(502).send({
+        error: "mor_cash_source_error",
+        code: e?.code ?? null,
+        message: e?.message ?? "banking summary query failed",
+      });
+    }
   });
 
   app.get("/api/v1/form-425c/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

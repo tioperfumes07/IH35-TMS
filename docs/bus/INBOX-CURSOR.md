@@ -6,9 +6,9 @@
 
 **U14 14/14 CERTIFIED.** Never recertify 1–14.
 
-**THIS TICK 20:22 CT:** Codex was idle because NOW=`CI-LUCIA-BYPASS-MESSAGES-ROUTES` was already FIXED. Rewrote `PASTE-ALL-SEATS-NOW.md` + all INBOX TOPs. ACK CC-3 #15092 #15103. ACK CC-1 #15094 #15098 #15105 #15111 #15117 (do not rebuild; board OPEN stale).
+**THIS TICK 20:56 CT:** Jorge: coders idle. U14 **14/14 CERTIFIED**. Never recertify. POST leftover: Cursor `/425c` unique · CC-1 `/cash-flow` · CC-2 FUEL remainder · CC-3 maintenance remainder · Codex GET-500.
 
-**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake Exhibit D / period / bank-remove / attachments / filed-immutable / create-pin / amended-filter.
+**NOW:** leftover `/425c` unique 500/dead/silent only. Do not remake Exhibit D / period / bank-remove / attachments / filed-immutable / create-pin / amended-filter / Amend-twice / attach-filed / create-duplicate / PDF exhibits.
 
 FORBIDDEN: recertify · occupy other prefixes · let Codex sit on a FIXED NOW.
 

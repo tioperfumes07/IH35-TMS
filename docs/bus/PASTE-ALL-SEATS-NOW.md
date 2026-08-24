@@ -1,6 +1,6 @@
-# PASTE ALL SEATS · 2026-08-23 20:22CT · LIVE `126987a` · U14 **14/14 CERTIFIED**
+# PASTE ALL SEATS · 2026-08-23 20:56CT · LIVE `126987a` · U14 **14/14 CERTIFIED**
 
-Jorge: paste the matching `===== SEAT =====` block into that seat’s chat **first**. Idle = defect. Recertify = defect. **HOLD = defect.**
+**Jorge 20:56: “THE CODERS ARE IDLE”.** Idle = defect. U14 is **already 14/14 CERTIFIED** — do **not** recertify. Continue **POST leftover** (`docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`). Pull this TOP + your INBOX. One NOW id. FAST-MERGE 4 min. **HOLD = defect.**
 
 **FAST-MERGE is LAW (4 min):** local gate exit 0 → push → `gh pr create` → immediately `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait for Jorge.
 
