@@ -83,6 +83,8 @@ export function run() {
   // S05: program board has merged-PR tab.
   assert(board.includes('id: "merged"') || board.includes("merged"), "ProgramBoardPage must have merged tab", errors);
   assert(board.includes("merged_pr_total") || board.includes("recent_merged"), "ProgramBoardPage must show merged PR data", errors);
+  assert(board.includes("mutateAsync"), "ProgramBoardPage notes must save via mutateAsync so a failed POST keeps the draft", errors);
+  assert(!/onSubmit\(body\);\s*setValue\(""\)/.test(board), "AddNote must not clear the draft before the save resolves", errors);
 
   // Existing per-page guards stay green.
   const guards = [
