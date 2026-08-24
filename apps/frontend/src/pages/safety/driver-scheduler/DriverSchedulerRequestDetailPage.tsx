@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { ApiError } from "../../../api/client";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 export function DriverSchedulerRequestDetailPage() {
   const { id = "" } = useParams();
@@ -60,7 +61,15 @@ export function DriverSchedulerRequestDetailPage() {
       </div>
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading…</div> : null}
-      {!query.isLoading && !req ? <div className="text-sm text-red-700">Request not found.</div> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load leave request"
+          status={query.error instanceof ApiError ? query.error.status : 0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
+      {!query.isLoading && !query.isError && !req ? <div className="text-sm text-red-700">Request not found.</div> : null}
 
       {req ? (
         <div className="grid gap-3 md:grid-cols-2">

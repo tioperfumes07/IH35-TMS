@@ -600,6 +600,20 @@
       ]
     },
     {
+      "id": "leave_requests.detail",
+      "tab": "Leave Requests",
+      "sub": "Request detail",
+      "route_hint": "/safety/scheduler/requests/:id",
+      "owned_surface_paths": [
+        "pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx"
+      ],
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "leave_balances.list",
       "tab": "Leave Balances",
       "sub": "Balances",
