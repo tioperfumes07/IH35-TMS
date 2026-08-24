@@ -115,6 +115,11 @@ export function TerminationReasonsListPage() {
     onError: (error) => setConflictError(parseConflict(error)),
   });
 
+  // LISTS-F6334: unlike createMutation/updateMutation above (both wire onError to
+  // setConflictError, rendered in the modal), deactivateMutation had no onError at all, and its
+  // "Deactivate" button call site uses `void onDeactivate()` — explicitly discarding the promise.
+  // A rejected deactivate (e.g. a 409 because the reason is still referenced) silently did
+  // nothing.
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => deactivateDriverTerminationReason(companyId, id),
     onSuccess: async () => {
@@ -122,6 +127,7 @@ export function TerminationReasonsListPage() {
       setModalOpen(false);
       setActiveRow(null);
     },
+    onError: (error) => setConflictError(parseConflict(error) ?? "Could not deactivate this termination reason."),
   });
 
   const allRows = listQuery.data?.reasons ?? [];

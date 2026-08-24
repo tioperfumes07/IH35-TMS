@@ -137,6 +137,8 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
     onError: (error) => setCodeError(parseCodeError(error)),
   });
 
+  // LISTS-F6334: unlike createMutation/updateMutation above (both wire onError to setCodeError),
+  // deactivateMutation had no onError at all — a rejected deactivate silently did nothing.
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => client.deactivate(companyId, id),
     onSuccess: async () => {
@@ -144,6 +146,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
       setModalMode(null);
       setActiveRow(null);
     },
+    onError: (error) => setCodeError(parseCodeError(error) ?? "Could not deactivate this entry."),
   });
 
   const rows = listQuery.data?.rows ?? [];
