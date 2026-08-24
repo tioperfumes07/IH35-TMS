@@ -157,8 +157,26 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
         listValues
       );
 
+      const payments = rowsRes.rows.map((row: {
+        group_id?: string;
+        date?: string;
+        amount_cents?: string | number;
+        source_kind?: string | null;
+        qbo_bill_payment_id?: string | null;
+      }) => {
+        const amount = Number(row.amount_cents ?? 0);
+        return {
+          id: String(row.group_id ?? ""),
+          payment_date: String(row.date ?? ""),
+          amount_cents: amount,
+          payment_method: row.source_kind ?? undefined,
+          amount_applied_cents: amount,
+          reference: row.qbo_bill_payment_id ?? null,
+        };
+      });
       return {
-        rows: rowsRes.rows,
+        payments,
+        rows: payments,
         total: Number(countRes.rows[0]?.total ?? 0),
       };
     });

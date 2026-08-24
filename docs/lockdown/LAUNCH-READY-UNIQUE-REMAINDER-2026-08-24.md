@@ -1,0 +1,92 @@
+# LAUNCH-READY — THE ONE DEFINITION + PER-MODULE REMAINDER (2026-08-24)
+
+**This is not a second certify. This is not a new bar.**  
+It is the leftover unique work list under the bar Jorge already locked.
+
+Canonical sources (do not invent a 15th):
+
+- `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — items **1–12**
+- `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` — **14/14 CERTIFIED. Never recertify.**
+- `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md` — THE LIST
+- `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — empty TMS is expected
+- Unique FINDING class = **500 / dead click / silent no-op** (and money reverse that shows 0 while Neon has rows)
+
+---
+
+## THE ONE DEFINITION (follow this; do not change it)
+
+**A module is CERTIFIED / launch-ready for USMCA when:**
+
+1. Fully-Wired items **1–12** were walked on that module (create→canonical, money when owed **or honest flag-off**, F+R, surface bar, chrome, pickers, RLS, guard, **Live Chrome last**).
+2. Live Chrome unique **500 / dead click / silent no-op = none** on that stamp walk.
+3. Cursor stamped CERTIFIED (U14) or leftover POST Live Chrome (non-U14) against matching `healthz/shallow` `version`.
+
+**After that stamp:**
+
+- A new unique 500 / dead / silent / reverse-empty is a **FINDING**. Fix it. **Do not un-certify. Do not recertify.**
+- Empty tables, posting flags **OFF** until Jorge says “turn it on”, Finance Hub honest flag-off, ELD hidden stub, `/425c` do-not-loop = **not missing work**.
+- Rule 24 `complete:true`, matrix Box 4, leftover hop logs = **other meters. Not this definition.**
+
+**I will not use a second “Alvys 100% no possible missing feature” meter to un-stamp CERTIFIED modules.**
+
+Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `version`.
+
+---
+
+## U14 — 14/14 CERTIFIED. Campaign closed.
+
+| Module | Stamp | Unique leftover TODAY (verified or still-OPEN on main) | Seat NOW |
+|--------|-------|--------------------------------------------------------|----------|
+| accounting | U14 `@c11bdab` | **U14-01-F03** Bills **list** has no Claim/WO **column** (filter + detail exist). | **CC-1** after F02/F03 |
+| banking | U14 `@36e51bb` | BANK-F5987 `mask` — **grep-closed** (`account_mask` on main). No remake. | — |
+| settlements | U14 `@b6980d6` | No unique leftover verified this pass. | Unique FINDING only |
+| factoring | U14 `@c11bdab` | FACT-F5986 DISTINCT/ORDER — **grep-closed** (`sort_key` on main). No remake. | — |
+| dispatch | U14 `@39472f2` | Late-arrivals 500 — **FIXED live** `ccdbbbb` / `dep-da65kgu`. | Do not remake |
+| vendors | U14 `@627d7d0` | **U14-06-F02 + F03** A/P Bills/Payments empty while Neon has 3 bills + 2 payments (LOVES `95307de7-…`). | **Cursor THIS PR** |
+| customers | U14 `@07993ac` | **CUST-MONEY-F6312** Statements / Recurring / Late Fees still follow-up copy. **CUST-CRM-F6313** Projects / Opportunities / Conversations still follow-up copy. | **CC-1** money · **CC-3** CRM |
+| drivers | U14 `@07993ac` | DRVFIN-F6169 advances 404 — **grep-closed** (`driver_company_authorizations` on main). No remake. | Unique FINDING only |
+| fleet | U14 `@07993ac` | No unique leftover verified this pass. | Unique FINDING only |
+| lists | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
+| maintenance | U14 `@a9e8d63` | U14-11-F05 roadside — **REFUTED** (modal opens). CLASS-F5973 maintenance leaves — grep-verify then unique only if dead. | **CC-3** grep-verify CLASS leaves |
+| safety | U14 `@a9e8d63` | U14-12-F04 Spawn WO — **CLOSED correction**. | Unique FINDING only |
+| insurance | U14 `@a9e8d63` | U14-13-F06 coverage-gaps — **CLOSED correction**. | Unique FINDING only |
+| legal | U14 `@01385f7` | No unique leftover verified this pass. | Unique FINDING only |
+
+---
+
+## Leftover POST (never U14). Live Chrome stamped. Unique FINDING only.
+
+| Module | Stamp | Unique leftover TODAY | Seat NOW |
+|--------|-------|----------------------|----------|
+| cash-flow | leftover `@97d6a14` | CF-F6361 silent mutate — **on main** `76d2e6e` (live after current/next deploy ancestry). | Do not remake |
+| finance | leftover `@97d6a14` | Hub honest flag-off = **not a FINDING**. | Unique FINDING only |
+| driver-hub | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
+| reports | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
+| compliance | leftover `@97d6a14` | Form 2290 errors — shipped Codex. | Unique FINDING only |
+| eld | leftover `@97d6a14` | Hidden stub — **not missing**. | Unique FINDING only |
+| inventory | leftover `@97d6a14` | INVENTORY-PARTS-ASSIGNMENT-PHYSICAL-DELETE still OPEN (WORM). Grep-verify then fix. | **CC-1** after F02/F03/F031 |
+| fuel | leftover `@97d6a14` | CLASS-F5973 fuel leaves — grep-verify; wire only if still dead. | **Codex** |
+| users | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
+| home | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
+| help | leftover `@97d6a14` | Feedback persist — Codex shipped. | Unique FINDING only |
+| tasks | leftover `@97d6a14` | TASK-F6360 — **already live** (ancestor of `dc1f25c`). No remake. | Unique FINDING only |
+| program | leftover `@97d6a14` | None verified this pass. | Unique FINDING only |
+| system | leftover `@97d6a14` | SYS-F5984 EventSource — **grep-closed** (`resolveApiUrl`). No remake. | Unique FINDING only |
+| docs | leftover `@b47307e` | #15371–#15373 live. | Unique FINDING only |
+| form_425 | hop `@189dd4c` | **Do not loop.** | Nobody |
+
+---
+
+## Seat NOW (urgent · this turn)
+
+| Seat | Port | NOW |
+|------|------|-----|
+| Cursor | 9222 | Ship **U14-06-F02 + F03**. FAST-MERGE. Lead. Never recertify. |
+| CC-1 | 9223 | **U14-01-F03** Bills list Claim/WO column. Then **CUST-MONEY-F6312**. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | Unique leftover FINDING on leftover POST (not Close, not F04/F06). |
+| CC-3 | 9225 | **CUST-CRM-F6313** (or CLASS-F5973 maintenance leaf if still dead). No roadside remake. |
+| Codex | 9226 | **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify then one leaf PR. Never restamp customers/drivers/fleet. |
+| Cascade | audit | Unique FINDING if still true on **current live SHA**. No restamp. |
+| Devin-A | audit | Same. `/vendors` after F02/F03 deploys. Not PARKED. |
+
+Idle / HOLD / “no instructions” = defect. You have this file.

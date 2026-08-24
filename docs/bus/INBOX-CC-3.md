@@ -1,9 +1,7 @@
 # INBOX-CC-3 · 9225
 
-**THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
+**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
 
-**NOW:** Next unique leftover FINDING. **Do not remake** `U14-11-F05` roadside (live modal opens — file CLOSED correction if board still says OPEN). **Do not remake** late-arrivals — Cursor owns `DISPATCH-F2-REGRESSION` this turn.
+**NOW:** **CUST-CRM-F6313** — Customer Projects / Opportunities / Conversations still follow-up copy. Canonical persist or honest empty — do not fake from loads. No roadside F05 remake. No late-arrivals remake. Never leftover-CERTIFY U14. Never `trigger_deploy`.
 
-lists+legal+maintenance omit as U14 restamp. Never leftover-CERTIFY U14. Never `trigger_deploy`.
-
-OUTBOX: `CC-3 | ACK | PORT=9225 | NOW=next-unique | GO`
+OUTBOX: `CC-3 | ACK | CUST-CRM-F6313 | PORT=9225 | NOW=customer-crm | GO`

@@ -33,9 +33,11 @@ const CHECKS = [
   ["safer_verify", /"fmcsa-safer-status", "vendor", id,/],
   ["ap.record_bill_payment", /recordVendorBillPayment\(id, \{/],
   ["ap.bills", /listVendorBills\(companyId, \{ vendor_id: id,/],
+  ["ap.bills_history", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, limit:/],
   ["ap.expenses", /listExpenses\(companyId, \{ vendor_uuid: id,/],
   ["ap.vendor_credits", /listVendorCredits\(companyId, \{ vendor_id: id \}\)/],
   ["ap.bill_payments", /listVendorBillPayments\(id, \{ operating_company_id: companyId/],
+  ["ap.bill_payments_rows", /data\?\.payments \?\? vendorPaymentsQuery\.data\?\.rows/],
   ["documents", /<DocumentsTab entityType="vendor" entityId=\{vendor\.id\}/],
   ["audit_history", /<EntityAuditHistoryTab operatingCompanyId=\{companyId\} entityType="vendor" entityId=\{vendor\.id\}/],
   ["tasks", /<TasksTab operatingCompanyId=\{companyId\} targetType="vendor" targetId=\{vendor\.id\}/],
@@ -46,6 +48,9 @@ export function audit(src) {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src.detail)) failures.push(`${FILE}: ${name} tab is missing its self-referential vendor scoping`);
+  }
+  if (/listVendorBills\([^)]*has_balance:\s*true/.test(src.detail)) {
+    failures.push(`${FILE}: ap.bills history must not pass has_balance:true (drops paid/void — U14-06-F02)`);
   }
   if (!/\/api\/v1\/qbo-sync\/vendors\/status/.test(src.sync) || !/\/api\/v1\/qbo-sync\/vendors\/(pull-now|reconcile-now)/.test(src.sync)) {
     failures.push(`${SYNC_FILE}: vendors sync panel must hit the real qbo-sync/vendors endpoints`);
@@ -83,6 +88,18 @@ if (process.argv.includes("--selftest")) {
   const mutatedSync = { ...good, sync: good.sync.replace(/\/api\/v1\/qbo-sync\/vendors\/status/, "/api/v1/qbo-sync/vendors/unused") };
   if (!audit(mutatedSync).some((f) => f.includes("sync panel"))) {
     console.error(`${LABEL} SELFTEST FAIL — sync-endpoint: mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
+  const mutatedBalance = {
+    ...good,
+    detail: good.detail.replace(
+      "listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 })",
+      "listVendorBills(companyId, { vendor_id: id, include_balance: true, has_balance: true, limit: 200 })"
+    ),
+  };
+  if (!audit(mutatedBalance).some((f) => f.includes("has_balance"))) {
+    console.error(`${LABEL} SELFTEST FAIL — has_balance: mutation escaped`);
     process.exit(1);
   }
   caught++;
