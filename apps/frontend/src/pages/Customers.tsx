@@ -35,9 +35,10 @@ import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
+import { listSpineEvents, type SpineEvent } from "../api/audit";
 
 type CustomerTabId =
   | "transaction_list"
@@ -173,8 +174,93 @@ function CustomerDetailsTab({
   );
 }
 
+function humanizeCustomerEvent(value: string) {
+  return value
+    .replace(/^mdata\.customer\./, "")
+    .replace(/^customer\./, "")
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function CustomerActivityFeed({
+  operatingCompanyId,
+  customerId,
+}: {
+  operatingCompanyId: string;
+  customerId: string;
+}) {
+  const activityQuery = useQuery({
+    queryKey: ["customers", "activity-feed", operatingCompanyId, customerId],
+    queryFn: () =>
+      listSpineEvents({
+        operatingCompanyId,
+        entityType: "customer",
+        entityId: customerId,
+        limit: 250,
+      }),
+    enabled: Boolean(operatingCompanyId && customerId),
+  });
+
+  const columns = useMemo<Array<ParityColumn<SpineEvent>>>(() => [
+    {
+      key: "occurred_at",
+      label: "When",
+      sortable: true,
+      sortValue: (row) => new Date(row.occurred_at).getTime(),
+      render: (row) => formatDateTimeUS(row.occurred_at),
+    },
+    {
+      key: "event_type",
+      label: "Activity",
+      sortable: true,
+      render: (row) => <span className="font-medium text-gray-900">{humanizeCustomerEvent(row.event_type)}</span>,
+    },
+    {
+      key: "actor",
+      label: "Actor",
+      sortable: true,
+      sortValue: (row) => row.actor_email ?? row.actor_type,
+      render: (row) =>
+        row.actor_user_id ? (
+          <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_email} noun="User" />
+        ) : (
+          <span className="text-gray-600">{humanizeCustomerEvent(row.actor_type || "System")}</span>
+        ),
+    },
+    {
+      key: "source",
+      label: "Source",
+      sortable: true,
+      sortValue: (row) => row.source_table ?? row.source ?? "",
+      render: (row) => <span className="text-gray-600">{humanizeCustomerEvent(row.source_table ?? row.source ?? "Application")}</span>,
+    },
+  ], []);
+
+  if (activityQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load customer activity"
+        status={0}
+        message={(activityQuery.error as Error)?.message}
+        onRetry={() => void activityQuery.refetch()}
+      />
+    );
+  }
+
+  return (
+    <ParityTable
+      rows={activityQuery.data?.events ?? []}
+      columns={columns}
+      rowKey={(event) => event.event_id}
+      loading={activityQuery.isPending || (activityQuery.isFetching && !activityQuery.data)}
+      storageKey="customer-activity-feed"
+      emptyText="No recorded activity for this customer."
+      exportFilename="customer-activity-feed"
+    />
+  );
+}
+
 const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
-  activity_feed: "Activity Feed shows create/edit/payment events for this customer. It needs a customer-scoped activity endpoint (events.event_log by entity) — flagged as a follow-up.",
   statements: "Statements will render billing statements for a date range. Needs a customer statement generator endpoint — flagged as a follow-up.",
   recurring_transactions: "Recurring Transactions lists recurring invoice/charge templates for this customer. Needs a recurring-templates data source — flagged as a follow-up.",
   projects: "Projects groups loads/invoices under a customer project. Needs a projects data source — flagged as a follow-up.",
@@ -893,6 +979,11 @@ export function CustomersPage() {
                   customer={selectedCustomer}
                   summary={summaryQuery.data}
                   onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
+                />
+              ) : activeTab === "activity_feed" ? (
+                <CustomerActivityFeed
+                  operatingCompanyId={companyId}
+                  customerId={selectedCustomer.id}
                 />
               ) : activeTab === "tasks" ? (
                 <TasksTab
