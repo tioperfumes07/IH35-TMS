@@ -130,13 +130,24 @@ export function collectProblems(src) {
   if (!src.includes("Could not load Form 425C report detail")) {
     problems.push(`${PAGE}: report detail GET failure must toast — Form cash empty with no toast was a silent miss`);
   }
-  const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split('app.get("/api/v1/form-425c/banking-summary"')[0];
+  const listChunk = (routes.split('app.get("/api/v1/form-425c", {')[1] ?? "").split("app.get(\"/api/v1/form-425c/profiles\"")[0];
+  const detailChunk = (routes.split('app.get("/api/v1/form-425c/:id", {')[1] ?? "").split("app.get(\"/api/v1/form-425c/:id/filing-html\"")[0];
+  if (!listChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: History list GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  if (!detailChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: report detail GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
+  const profilesGetChunk = (routes.split('app.get("/api/v1/form-425c/profiles"')[1] ?? "").split("app.get(\"/api/v1/form-425c/banking-summary\"")[0];
+  if (!profilesGetChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: profiles GET must 403 on forbidden_company_membership, not an uncaught 500");
+  }
   const profilesPostChunk = (routes.split('app.post("/api/v1/form-425c/profiles"')[1] ?? "").split('app.post("/api/v1/form-425c"')[0];
   if (!profilesGetChunk.includes("form_425c_operating_company_not_found") || !profilesGetChunk.includes("sendForm425CCompanyMissing")) {
     problems.push("apps/backend/src/compliance/form-425c.routes.ts: GET profiles on a missing/inactive company must 404, not an uncaught 500");
   }
-  if (!profilesPostChunk.includes("form_425c_operating_company_not_found") || !profilesPostChunk.includes("rateLimit")) {
-    problems.push("apps/backend/src/compliance/form-425c.routes.ts: POST profiles must rate-limit and 404 missing company — uncaught throw was a 500");
+  if (!profilesPostChunk.includes("form_425c_operating_company_not_found") || !profilesPostChunk.includes("rateLimit") || !profilesPostChunk.includes("sendForm425CForbiddenMembership")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: POST profiles must rate-limit and 404 missing company / 403 membership — uncaught throw was a 500");
   }
   if (!src.includes("Could not load Form 425C profile")) {
     problems.push(`${PAGE}: Profiles GET failure must toast — keeping DEFAULT_PROFILES with no toast was a silent wrong debtor`);

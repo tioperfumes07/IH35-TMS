@@ -115,6 +115,13 @@ function sendForm425CCompanyMissing(reply: FastifyReply) {
   });
 }
 
+function sendForm425CForbiddenMembership(reply: FastifyReply) {
+  return reply.code(403).send({
+    error: "forbidden_company_membership",
+    message: "Not a member of that operating company — Form 425C will not load another entity's filing",
+  });
+}
+
 async function withCompanyScope<T>(
   userId: string,
   operatingCompanyId: string,
@@ -432,19 +439,27 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
 
-    const reports = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const res = await client.query(
-        `
+    try {
+      const reports = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const res = await client.query(
+          `
           SELECT id, reporting_month, status, petition_date, case_number, filed_at, filed_by_user_id, amended_from_uuid, created_at, updated_at
           FROM compliance.form_425c_reports
           WHERE operating_company_id = $1::uuid
           ORDER BY reporting_month DESC, created_at DESC
         `,
-        [companyId]
-      );
-      return res.rows;
-    });
-    return { reports };
+          [companyId]
+        );
+        return res.rows;
+      });
+      return { reports };
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
+      throw err;
+    }
   });
 
   // Static paths MUST register before GET /:id. Fastify matches in order; otherwise
@@ -476,6 +491,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       const e = err as { message?: string };
       if (e?.message === "form_425c_operating_company_not_found") {
         return sendForm425CCompanyMissing(reply);
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw err;
     }
@@ -518,39 +536,48 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
 
-    const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const reportRes = await client.query(
-        `
+    let payload: { report: Record<string, unknown>; exhibit_a: unknown[]; exhibit_b: unknown[] } | null;
+    try {
+      payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const reportRes = await client.query(
+          `
           SELECT *
           FROM compliance.form_425c_reports
           WHERE id = $1
             AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [params.data.id, companyId]
-      );
-      const report = reportRes.rows[0];
-      if (!report) return null;
-      const exhibitARes = await client.query(
-        `
+          [params.data.id, companyId]
+        );
+        const report = reportRes.rows[0];
+        if (!report) return null;
+        const exhibitARes = await client.query(
+          `
           SELECT *
           FROM compliance.form_425c_exhibit_a_entries
           WHERE report_id = $1
           ORDER BY line_number, created_at
         `,
-        [params.data.id]
-      );
-      const exhibitBRes = await client.query(
-        `
+          [params.data.id]
+        );
+        const exhibitBRes = await client.query(
+          `
           SELECT *
           FROM compliance.form_425c_exhibit_b_entries
           WHERE report_id = $1
           ORDER BY line_number, created_at
         `,
-        [params.data.id]
-      );
-      return { report, exhibit_a: exhibitARes.rows, exhibit_b: exhibitBRes.rows };
-    });
+          [params.data.id]
+        );
+        return { report, exhibit_a: exhibitARes.rows, exhibit_b: exhibitBRes.rows };
+      });
+    } catch (err) {
+      const e = err as { message?: string };
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
+      throw err;
+    }
 
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
     return payload;
@@ -666,6 +693,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       const e = err as { message?: string };
       if (e?.message === "form_425c_operating_company_not_found") {
         return sendForm425CCompanyMissing(reply);
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw err;
     }
@@ -796,6 +826,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       }
       if (e?.message === "form_425c_operating_company_not_found") {
         return sendForm425CCompanyMissing(reply);
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
       }
       throw err;
     }
