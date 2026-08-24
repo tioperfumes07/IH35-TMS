@@ -1,7 +1,46 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { canAssignLoadToDriver } from "./driver-availability.service.js";
 
 describe("canAssignLoadToDriver", () => {
+  it("DISP-F6222: HOS query admits home-company OR an active mdata.driver_company_authorizations row, not company equality alone", () => {
+    // The mock db in the tests below returns canned rows by call order and never inspects the SQL
+    // text, so it cannot catch a regression back to `operating_company_id = $2` alone — assert the
+    // real source directly, mirroring the pattern used across the DRV-F61xx/F62xx sweep.
+    const src = readFileSync(fileURLToPath(new URL("./driver-availability.service.ts", import.meta.url)), "utf8");
+    expect(src).toMatch(
+      /dispatch_hos_dca\.driver_id = d\.id[\s\S]{0,180}dispatch_hos_dca\.company_id = \$2::uuid[\s\S]{0,180}dispatch_hos_dca\.is_authorized = true[\s\S]{0,180}dispatch_hos_dca\.deactivated_at IS NULL/
+    );
+  });
+
+  it("still blocks an HOS-violating driver (the check the DISP-F6222 fix must not weaken)", async () => {
+    const db = {
+      async query<T = Record<string, unknown>>(_sql: string, _values?: unknown[]): Promise<{ rows: T[] }> {
+        if (_sql.includes("drivers_with_hos_status")) {
+          return {
+            rows: [
+              { full_name: "Shared Driver", display_id: "D-042", is_in_violation: true },
+            ] as T[],
+          };
+        }
+        return { rows: [] };
+      },
+    };
+
+    const result = await canAssignLoadToDriver(
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      db
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      code: "E_DRIVER_HOS_VIOLATION",
+      blocker: "Shared Driver is in HOS violation",
+    });
+  });
+
   it("returns ok=true when no active work order exists", async () => {
     const db = {
       async query<T = Record<string, unknown>>(_sql: string, _values?: unknown[]): Promise<{ rows: T[] }> {

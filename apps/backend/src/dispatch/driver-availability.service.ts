@@ -25,18 +25,35 @@ export async function canAssignLoadToDriver(
   const run = async (db: Queryable): Promise<DriverAssignmentAvailability> => {
     // HOS first — same gate Book uses. Quick-assign previously only checked repair WO and could
     // seat an HOS violator from the board while Book correctly refused.
+    // DISP-F6222: views.drivers_with_hos_status.operating_company_id is the driver's HOME company
+    // (mdata.drivers.operating_company_id passthrough), not the dispatching tenant. A bare
+    // `operating_company_id = $2` equality returned 0 rows for an actively authorized shared driver
+    // dispatched under a company that isn't their home company — hos was undefined,
+    // hos?.is_in_violation silently false, and this eligibility check failed OPEN instead of closed.
+    // Scope through mdata.drivers + mdata.driver_company_authorizations instead, retaining the
+    // view's own HOS-threshold math untouched.
     const hosRes = await db.query<{
       full_name: string | null;
       display_id: string | null;
       is_in_violation: boolean;
     }>(
       `
-        SELECT full_name::text AS full_name,
-               display_id::text AS display_id,
-               COALESCE(is_in_violation, false) AS is_in_violation
-        FROM views.drivers_with_hos_status
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
+        SELECT hos.full_name::text AS full_name,
+               hos.display_id::text AS display_id,
+               COALESCE(hos.is_in_violation, false) AS is_in_violation
+        FROM views.drivers_with_hos_status hos
+        JOIN mdata.drivers d ON d.id = hos.id
+        WHERE hos.id = $1
+          AND (
+            d.operating_company_id = $2::uuid
+            OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations dispatch_hos_dca
+              WHERE dispatch_hos_dca.driver_id = d.id
+                AND dispatch_hos_dca.company_id = $2::uuid
+                AND dispatch_hos_dca.is_authorized = true
+                AND dispatch_hos_dca.deactivated_at IS NULL
+            )
+          )
         LIMIT 1
       `,
       [driverId, tenantId]
