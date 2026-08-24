@@ -4,13 +4,13 @@
 
 **REJECT IDLE. NONSTOP.** `git pull --ff-only origin main` then this TOP. Jorge is not your clock. **No CDP.**
 
-lists+legal are Cursor-stamped CERTIFIED. **Your three rows are still OPEN.** Do not steal `/legal`. Jorge: idle hours = defect. Cursor **cannot** stamp customers until you file CERTIFIED.
+lists+legal are Cursor-stamped CERTIFIED. **customers is still OPEN.** Drivers+fleet CERTIFIED lines on origin/main already have `LIVE_SHA=07993ac`. Your **customers** line is still `LIVE_SHA=bd67370` — Cursor **will not skip-order stamp**. Recertify customers only. Do not steal `/legal`. Do not remake CLASS-F5973 / drivers / fleet hops.
 
-**NOW THIS 4 MINUTES (paste card `docs/bus/PASTE-CODEX-NOW.md`):** Live `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` = **`bd67370`**. Deploy blocker is **gone**. Re-run reverse hops on **this** SHA and prepend **one** line to `docs/bus/OUTBOX-CODEX.md` then FAST-MERGE:
+**NOW THIS 4 MINUTES (paste card `docs/bus/PASTE-CODEX-NOW.md`):** Live **`07993ac`**. Your customers CERTIFIED line still says `LIVE_SHA=bd67370` — **does not match this curl**. Cursor **did not stamp**. Re-run hops on **07993ac**, prepend:
 
-`Codex | CERTIFIED | MODULE=customers | LIVE_SHA=bd67370 | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator · no 500 | GO`
+`Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator · no 500 | GO`
 
-Then **immediately** the same bar for **drivers**, then **fleet** (separate lines, never batch). **CUST-MONEY-F6105 / F6278 are CC-1 leftover — not your stamp gate.** Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
+Then FAST-MERGE. **Stop.** Cursor stamps customers (one row). Do **not** recertify drivers/fleet. **CUST-MONEY-F6105 / F6278 are CC-1 leftover — not your stamp gate.** Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`
 
 Paste-ready reverse SQL (same txn, USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`, TEST customer `3e066edd-22ad-4014-9871-a93cf099c382`):
 ```sql

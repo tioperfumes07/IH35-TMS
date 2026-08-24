@@ -86,7 +86,6 @@ const PROTECTED = new Set([
   // is now fully drained.
   // CLASS-F5973 parser correction exposed these exact, genuine owner-lane gaps. They remain visible
   // here (and stale protections fail) while their owning atomic PRs drain them; they grant no Built.
-  "connectivity\tdriver-hub:reporting", // Codex — next after the instructed drivers reverse hop.
   "connectivity\tfuel:fuel.modal.create_fuel_transaction", // Fuel FE/create lane; off current Codex hop.
   "connectivity\tfuel:fuel.modal.import_fuel_transactions",
   "connectivity\tfuel:fuel.modal.upload_loves_prices",

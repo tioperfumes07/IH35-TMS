@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,8 +12,10 @@ import {
   patchForm425CReport,
   upsertForm425CProfile,
   amendForm425CReport,
+  attachForm425CLineFile,
   type Form425CReport,
 } from "../../api/form425c";
+import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -263,6 +265,9 @@ export function Form425CHome() {
       if (!form.reportId) {
         throw new Error("Create / Load Draft before saving");
       }
+      if (form.hasCarryForward && String(form.projectionOverrideReason ?? "").trim().length < 30) {
+        throw new Error("Carry-forward override needs a reason of at least 30 characters");
+      }
       await patchForm425CReport(form.reportId, companyId, {
         operating_company_id: companyId,
         part1_answers: Object.fromEntries(Object.entries(form.answers).filter(([k]) => Number(k) <= 9)),
@@ -336,11 +341,40 @@ export function Form425CHome() {
     onError: (error) => pushToast(userFacingApiError(error, "Amend failed"), "error"),
   });
 
+  const autosaveBlockedToast = useRef(false);
+
+  // Part 8 checkboxes (att38-42) are display-only — a real attachment requires an uploaded file.
+  // Save Draft never sent these booleans to the server (no such columns); the actual truth is
+  // attachment_3X_..._uuids arrays, written only by this upload → confirm → link chain.
+  const attachMutation = useMutation({
+    mutationFn: async ({ line, file }: { line: number; file: File }) => {
+      const reportId = form.reportId;
+      if (!reportId) throw new Error("Create / Load Draft before attaching a file");
+      const { file_id, presigned_url } = await requestUploadUrlFromFile(file, { operating_company_id: companyId });
+      await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
+      await confirmUpload(file_id);
+      await attachForm425CLineFile(reportId, companyId, line, file_id);
+    },
+    onSuccess: async () => {
+      pushToast("File attached", "success");
+      await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Attachment upload failed"), "error"),
+  });
+
   useEffect(() => {
-    if (!dirty || !form.reportId) return;
+    if (!dirty) return;
+    if (!form.reportId) {
+      if (!autosaveBlockedToast.current) {
+        autosaveBlockedToast.current = true;
+        pushToast("Create / Load Draft before autosave", "error");
+      }
+      return;
+    }
+    autosaveBlockedToast.current = false;
     const timer = setTimeout(() => saveMutation.mutate(), 10_000);
     return () => clearTimeout(timer);
-  }, [dirty, form.reportId, form, saveMutation]);
+  }, [dirty, form.reportId, form, saveMutation, pushToast]);
 
   // History is the canonical report list (draft + ready_to_file + filed + amended).
   // Status narrowing belongs on HistoryTab's filter, never a silent filed-only hide.
@@ -392,7 +426,21 @@ export function Form425CHome() {
         />
       ) : null}
 
-      {tab === "qb" ? <QBImportTab activeCompany={activeCompany} setActiveCompany={setActiveCompany} profiles={profiles} onApplyTotal={(total) => setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }))} /> : null}
+      {tab === "qb" ? (
+        <QBImportTab
+          activeCompany={activeCompany}
+          setActiveCompany={setActiveCompany}
+          month={month}
+          year={year}
+          setMonth={setMonth}
+          setYear={setYear}
+          profiles={profiles}
+          onApplyTotal={(total) => {
+            setForm((prev) => ({ ...prev, totalReceipts: total.toFixed(2) }));
+            setDirty(true);
+          }}
+        />
+      ) : null}
 
       {tab === "form" ? (
         <CurrentPeriodTab
@@ -446,6 +494,15 @@ export function Form425CHome() {
               pushToast("Create / Load Draft before generating the filing PDF", "error");
               return;
             }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — generating filing PDF", "success");
+                  generateMutation.mutate();
+                },
+              });
+              return;
+            }
             generateMutation.mutate();
           }}
           onMarkFiled={() => {
@@ -453,8 +510,25 @@ export function Form425CHome() {
               pushToast("Create / Load Draft before marking filed", "error");
               return;
             }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — marking filed", "success");
+                  markFiledMutation.mutate();
+                },
+              });
+              return;
+            }
             markFiledMutation.mutate();
           }}
+          onAttachFile={(line, file) => {
+            if (!form.reportId) {
+              pushToast("Create / Load Draft before attaching a file", "error");
+              return;
+            }
+            attachMutation.mutate({ line, file });
+          }}
+          attaching={attachMutation.isPending}
           loading={importMutation.isPending || saveMutation.isPending}
           autoSaveLabel={dirty ? "Auto-save pending..." : autoSavedAt ? `Auto-saved at ${new Date(autoSavedAt).toLocaleTimeString()}` : "No unsaved changes"}
         />
@@ -470,6 +544,15 @@ export function Form425CHome() {
           onGenerate={() => {
             if (!form.reportId) {
               pushToast("Create / Load Draft before generating the filing package", "error");
+              return;
+            }
+            if (dirty) {
+              saveMutation.mutate(undefined, {
+                onSuccess: () => {
+                  pushToast("Draft saved — generating filing PDF", "success");
+                  generateMutation.mutate();
+                },
+              });
               return;
             }
             generateMutation.mutate();
@@ -488,10 +571,12 @@ export function Form425CHome() {
               return;
             }
             const d = new Date(row.reporting_month);
-            if (!Number.isNaN(d.getTime())) {
-              setYear(d.getUTCFullYear());
-              setMonth(d.getUTCMonth());
+            if (Number.isNaN(d.getTime())) {
+              pushToast("Could not open that report — reporting month is invalid", "error");
+              return;
             }
+            setYear(d.getUTCFullYear());
+            setMonth(d.getUTCMonth());
             setTab("form");
             pushToast("Opened report in Form 425C", "success");
           }}

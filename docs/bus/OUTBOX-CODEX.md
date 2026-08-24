@@ -1,3 +1,7 @@
+Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator 2728=2728/USMCA25 · loads FK 32/32 · unauth 401 · no 500 | GO
+
+Codex | WORKING | FO=CLASS-F5973-TRUE-REMAINDER-CODEX | MODULE=driver-hub | leaf=reporting:connectivity | NEXT=first genuine non-money OPEN after merge | GO
+
 Codex | CERTIFIED | MODULE=fleet | LIVE_SHA=07993ac | hops=GET units list 200 · GET unit detail 200 T149 VIN 1XPCDP9X3LD649118 · unauth 401 · mdata.units 187=187 · owner/lease USMCA 44 · reverse load L-20260816-0168 · no 500 | GO
 
 Codex | CERTIFIED | MODULE=drivers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 PEDRO ABRAHAM LOPEZ COLLADO · GET reverse loads 200 · /me honest 404 unlinked owner · unauth 401 · mdata.drivers 264=264 · USMCA 168 · reverse load L-20260816-0168 + assigned unit · RLS discriminator · no 500 | GO
@@ -1100,3 +1104,13 @@ Codex | WORKING | FO=ACCT-F5668 | leaf=reports:report.trip_profitability:{driver
 Codex | FINDING OPEN | FO=CODEX-LOAD-COLUMN-DOCS-MAP-SELFTEST-ANCHOR-DRIFT | file=scripts/verify-load-column-all-modules.mjs:78 | BLOCKS=ACCT-F5668-followup | OWNER=Codex | NEXT=ship ACCT-F5668 then fix guard atomically | GO
 Codex | WORKING | merged customers #13317 @ 5c7e88a51b | NOW=banking transactions reverse exact guard | NEXT=settlements reverse | GO
 Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse exact seven-leaf guard | NEXT=factoring reverse | GO
+Codex | WORKING | FO=DISP-F6281-MDATA-LOAD-CREATE-TRAILER-EQUIPMENT-NOT-NULL | live pre-fix POST=500/23502 | guard=9/9+selftest | NEXT=FAST-MERGE then deployed TEST fixture retry | GO
+Codex | CERTIFIED | MODULE=customers | LIVE_SHA=07993ac | hops=GET list 200 · GET :id+opco 200 TIO PERFUMES/TEST-TIO · GET detail 200 · loads reverse L-20260808-0050 · RLS discriminator 2728=2728/USMCA25 · unauth 401 · no 500 | GO
+Codex | WORKING | FO=DISP-F6281-GUARD-ORPHAN-CI-REGISTRATION | claim=#15031 step=4566 | guard=9/9+normal | NEXT=FAST-MERGE then fresh board | GO
+Codex | WORKING | FO=CODEX-MERGED-FINDINGS-DISPOSITION-GUARD-ORPHAN | claim=#15034 step=4568 | NEXT=FAST-MERGE then fresh board | GO
+Codex | WORKING | FO=CUSTOMER-LIFECYCLE-SELECTED-COMPANY-SCOPE-GUARD-ORPHAN | claim=#15036 step=4570 | NEXT=FAST-MERGE then fresh board | GO
+Codex | WORKING | FO=DRIVER-AUDIT-SHARED-REVERSE-GUARD-ORPHAN | claim=#15038 step=4572 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRIVER-MANAGER-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15040 step=4574 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRIVER-METRICS-SHARED-ROSTER-GUARD-ORPHAN | claim=#15042 step=4576 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=ANOMALY-MEDCARD-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15044 step=4578 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRIVER-PWA-SHARED-DISPATCH-VIEW-GUARD-ORPHAN | claim=#15047 step=4580 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO

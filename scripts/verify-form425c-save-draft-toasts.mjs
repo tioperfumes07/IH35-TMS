@@ -25,6 +25,9 @@ export function collectProblems(src) {
   if (!src.includes("Could not open that report")) {
     problems.push(`${PAGE}: History Open without reporting_month must toast, not silent tab switch`);
   }
+  if (!src.includes("reporting month is invalid")) {
+    problems.push(`${PAGE}: History Open with an unparseable reporting_month must toast, not switch tabs onto the wrong period`);
+  }
   if (!src.includes("Opened report in Form 425C")) {
     problems.push(`${PAGE}: History Open must toast when a report loads`);
   }
@@ -40,6 +43,51 @@ export function collectProblems(src) {
   if (!src.includes("Create / Load Draft before marking filed")) {
     problems.push(`${PAGE}: Form Mark Filed without reportId must toast, not a dead disabled button`);
   }
+  if (!src.includes("Draft saved — generating filing PDF")) {
+    problems.push(`${PAGE}: dirty Generate PDF must save first then toast, not silently print a stale PDF`);
+  }
+  if (!src.includes("Draft saved — marking filed")) {
+    problems.push(`${PAGE}: dirty Mark Filed must save first then toast, not silently file a stale draft`);
+  }
+  if (!src.includes("Create / Load Draft before autosave")) {
+    problems.push(`${PAGE}: dirty autosave without reportId must toast, not silently skip`);
+  }
+  const profiles = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx"), "utf8");
+  if (!profiles.includes('bankAccounts: [...draft.bankAccounts, { id: "", label: "", number: "" }]')) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Bank Accounts must + Create a new row, not a dead heading with no add");
+  }
+  // F425C-ATTACHMENTS-CHECKBOX-NO-UPLOAD superseded the toast-only patch with a real upload —
+  // the durable invariant is that the box can never again be a manually-settable local boolean.
+  // See scripts/verify-form425c-attachments-upload-wired.mjs for the full upload-wiring assertions.
+  const formTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx"), "utf8");
+  if (formTab.includes("setForm((prev) => ({ ...prev, [key]: e.target.checked }))")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Part 8 checkboxes must not be a manually-toggleable local boolean — attach a real file instead");
+  }
+  const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
+  if (qbTab.includes("useState(new Date().getMonth())")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Month/Year must be the Form period, not a silent local picker");
+  }
+  if (!qbTab.includes("qbDateInPeriod") || !qbTab.includes("month/year filter excluded pasted rows")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx: Parse must filter to selected month/year and toast when the filter drops all rows");
+  }
+  if (!src.includes("month={month}") || !src.includes("<QBImportTab")) {
+    problems.push(`${PAGE}: QB Import must receive the Form month/year, not a disconnected local period`);
+  }
+  const applyChunk = src.split("onApplyTotal")[1] ?? "";
+  if (!applyChunk.includes("setDirty(true)")) {
+    problems.push(`${PAGE}: Apply to Line 20 must setDirty so Generate PDF cannot silently print a stale total`);
+  }
+  if (!src.includes("Carry-forward override needs a reason of at least 30 characters")) {
+    problems.push(`${PAGE}: carry-forward save without 30-char reason must throw/toast, not hit a 500`);
+  }
+  const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/compliance/form-425c.routes.ts"), "utf8");
+  if (!routes.includes('reply.code(422).send({') || !routes.includes("projection_override_reason_required_min_30_chars")) {
+    problems.push("apps/backend/src/compliance/form-425c.routes.ts: short carry-forward reason must 422, not 500");
+  }
+  const mergeTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx"), "utf8");
+  if (!mergeTab.includes("!canGenerate") || !mergeTab.includes("Create / Load Draft before generating the filing package")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx: Generate without a draft must show the Create/Load warning, not a silent live-looking button");
+  }
   return problems;
 }
 
@@ -48,11 +96,20 @@ const good = `
   pushToast("Create / Load Draft before saving", "error");
   pushToast("Draft saved", "success");
   pushToast("Could not open that report", "error");
+  pushToast("Could not open that report — reporting month is invalid", "error");
   pushToast("Opened report in Form 425C", "success");
   pushToast("Create / Load Draft before generating the filing package", "error");
   pushToast("Create / Load Draft before importing from Banking", "error");
   pushToast("Create / Load Draft before generating the filing PDF", "error");
   pushToast("Create / Load Draft before marking filed", "error");
+  pushToast("Draft saved — generating filing PDF", "success");
+  pushToast("Draft saved — marking filed", "success");
+  pushToast("Create / Load Draft before autosave", "error");
+  month={month}
+  <QBImportTab
+  onApplyTotal={(total) => {
+  setDirty(true);
+  throw new Error("Carry-forward override needs a reason of at least 30 characters");
 `;
 const bad = `
   if (!detailQuery.data?.report) {
@@ -60,6 +117,7 @@ const bad = `
     return;
   }
   onOpen={(id) => { setTab("form"); }}
+  setForm((prev) => ({ ...prev, [key]: e.target.checked }))
 `;
 
 if (process.argv.includes("--selftest")) {

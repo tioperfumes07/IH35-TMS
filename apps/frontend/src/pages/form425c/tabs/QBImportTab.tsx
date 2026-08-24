@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { MONTHS, YEARS } from "../lib/constants";
-import { parseQBText } from "../lib/parseQBText";
+import { parseQBText, qbDateInPeriod } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -10,6 +10,10 @@ import { useToast } from "../../../components/Toast";
 type Props = {
   activeCompany: CompanyKey;
   setActiveCompany: (company: CompanyKey) => void;
+  month: number;
+  year: number;
+  setMonth: (month: number) => void;
+  setYear: (year: number) => void;
   profiles: CompanyProfiles;
   onApplyTotal: (totalReceipts: number) => void;
 };
@@ -17,10 +21,17 @@ type Props = {
 /** Parsed line + its position in the parsed array so the include-toggle targets the right row after sort/page. */
 type ParsedRow = QBParsedLine & { idx: number };
 
-export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApplyTotal }: Props) {
+export function QBImportTab({
+  activeCompany,
+  setActiveCompany,
+  month,
+  year,
+  setMonth,
+  setYear,
+  profiles,
+  onApplyTotal,
+}: Props) {
   const { pushToast } = useToast();
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
   const [raw, setRaw] = useState("");
   const [parsed, setParsed] = useState<QBParsedLine[]>([]);
   const profile = profiles[activeCompany];
@@ -32,8 +43,16 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       pushToast("Paste a tab-delimited deposit export first", "error");
       return;
     }
-    const rows = parseQBText(raw, profile.bankAccounts);
+    const allRows = parseQBText(raw, profile.bankAccounts);
+    const rows = allRows.filter((row) => qbDateInPeriod(row.date, month, year));
     setParsed(rows);
+    if (allRows.length > 0 && rows.length === 0) {
+      pushToast(
+        `No DIP deposits in ${MONTHS[month]} ${year} — month/year filter excluded pasted rows`,
+        "error",
+      );
+      return;
+    }
     if (rows.length === 0) {
       pushToast(
         "No matching DIP deposits — check tab-separated columns and bank account codes on Profiles",

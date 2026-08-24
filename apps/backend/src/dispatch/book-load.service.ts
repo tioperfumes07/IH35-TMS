@@ -263,7 +263,7 @@ async function resolveFactoringVendorId(
 // P44 (202612511200): load_trailer_equipment_id is NOT NULL on mdata.loads. Book-load must always
 // persist a canonical catalogs.load_trailer_equipment row for the operating company — default DRY_VAN
 // when the wizard omits an explicit pick (same default the migration backfill used).
-async function resolveLoadTrailerEquipmentIdForInsert(
+export async function resolveLoadTrailerEquipmentIdForInsert(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   explicitId?: string | null

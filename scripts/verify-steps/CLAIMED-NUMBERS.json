@@ -1,59 +1,4 @@
 {
-  "4569": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-docs-file-links-company-scope"
-  },
-  "4565": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-training-completions-excludes-voided"
-  },
-  "4561": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-dispatch-overview-panel-error-states"
-  },
-  "4557": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-late-arrivals-excludes-sample-data"
-  },
-  "4553": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-insurance-claims-graph-error-state"
-  },
-  "4549": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-users-change-role-current-role-label"
-  },
-  "4545": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-hos-detail-ambiguous-id"
-  },
-  "4541": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cash-flow-adjustment-archive-wired"
-  },
-  "4537": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cash-flow-overview-avg-flow-sign"
-  },
-  "4533": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cash-flow-statement-reconciled-badge-honest"
-  },
-  "4515": {
-    "claimed_at": "2026-08-23",
-    "claimed_by": "cc-2",
-    "purpose": "verify-report-runner-required-filter-indicator"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3659,6 +3604,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-dispatcher-safety-events-write-scope"
   },
+  "4515": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-2",
+    "purpose": "verify-report-runner-required-filter-indicator"
+  },
   "4517": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-1",
@@ -3678,6 +3628,101 @@
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-3",
     "purpose": "verify-admin-activity-log-reads-url-filters"
+  },
+  "4533": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-flow-statement-reconciled-badge-honest"
+  },
+  "4537": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-flow-overview-avg-flow-sign"
+  },
+  "4541": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cash-flow-adjustment-archive-wired"
+  },
+  "4545": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-hos-detail-ambiguous-id"
+  },
+  "4549": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-users-change-role-current-role-label"
+  },
+  "4553": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-claims-graph-error-state"
+  },
+  "4557": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-late-arrivals-excludes-sample-data"
+  },
+  "4561": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dispatch-overview-panel-error-states"
+  },
+  "4565": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-training-completions-excludes-voided"
+  },
+  "4566": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-mdata-load-create-trailer-equipment-default"
+  },
+  "4568": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-merged-findings-not-open"
+  },
+  "4569": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "cc-3",
+    "purpose": "verify-docs-file-links-company-scope"
+  },
+  "4570": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-customer-lifecycle-selected-company-scope"
+  },
+  "4572": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-audit-shared-reverse"
+  },
+  "4574": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-manager-shared-drivers"
+  },
+  "4576": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-metrics-shared-roster"
+  },
+  "4578": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-anomaly-medcard-shared-drivers"
+  },
+  "4580": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-pwa-shared-dispatch-view"
+  },
+  "4582": {
+    "claimed_at": "2026-08-23",
+    "claimed_by": "codex",
+    "purpose": "verify-load-reads-shared-drivers"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -5663,5 +5708,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1267
+  "total_claimed": 1270
 }
