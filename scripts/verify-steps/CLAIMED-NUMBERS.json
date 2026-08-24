@@ -1,4 +1,9 @@
 {
+  "4646": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-load-detail-drawer-mutation-errors-surfaced"
+  },
   "4644": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
