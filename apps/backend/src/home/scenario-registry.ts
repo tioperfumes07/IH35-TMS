@@ -343,12 +343,50 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Driver hired, qualified and activated",
     je: "—",
     spec_ref: "DRV-ONBOARD",
-    sources: ["mdata.drivers"],
+    sources: ["mdata.drivers", "mdata.driver_company_authorizations", "safety.onboarding_sessions"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM mdata.drivers d WHERE ($1::uuid IS NULL OR d.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n
+          FROM safety.onboarding_sessions s
+          JOIN mdata.drivers d
+            ON d.id = s.driver_id
+           AND (
+             d.operating_company_id = s.operating_company_id
+             OR EXISTS (
+               SELECT 1
+                 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = s.operating_company_id
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+             )
+           )
+         WHERE ($1::uuid IS NULL OR s.operating_company_id = $1::uuid)
+           AND s.status = 'completed'
+           AND s.current_step = 7
+           AND s.completed_at IS NOT NULL
+           AND (
+             (
+               s.step_data ?& ARRAY[
+                 'identity', 'cdl_upload', 'medical_card', 'dqf_docs',
+                 'signatures', 'i9', 'vehicle_assignment'
+               ]
+             )
+             OR (
+               s.admin_override = true
+               AND NULLIF(BTRIM(s.admin_override_reason), '') IS NOT NULL
+             )
+           )
+           AND d.status = 'Active'
+           AND d.archived_at IS NULL
+           AND d.deactivated_at IS NULL
+           AND d.hire_date IS NOT NULL
+           AND NULLIF(BTRIM(d.cdl_number), '') IS NOT NULL
+           AND NULLIF(BTRIM(d.cdl_state), '') IS NOT NULL
+           AND d.cdl_expires_at >= CURRENT_DATE
+           AND d.dot_medical_expires_at >= CURRENT_DATE
       `,
-      describe: (n) => `${n} driver(s) on file`,
+      describe: (n) => `${n} qualified driver onboarding chain(s) completed`,
     },
   },
   {
