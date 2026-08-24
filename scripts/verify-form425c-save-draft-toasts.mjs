@@ -56,9 +56,12 @@ export function collectProblems(src) {
   if (!profiles.includes('bankAccounts: [...draft.bankAccounts, { id: "", label: "", number: "" }]')) {
     problems.push("apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: Bank Accounts must + Create a new row, not a dead heading with no add");
   }
+  // F425C-ATTACHMENTS-CHECKBOX-NO-UPLOAD superseded the toast-only patch with a real upload —
+  // the durable invariant is that the box can never again be a manually-settable local boolean.
+  // See scripts/verify-form425c-attachments-upload-wired.mjs for the full upload-wiring assertions.
   const formTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx"), "utf8");
-  if (!formTab.includes("checking the box does not attach a document")) {
-    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Part 8 checkboxes must toast instead of silently pretending a file was attached");
+  if (formTab.includes("setForm((prev) => ({ ...prev, [key]: e.target.checked }))")) {
+    problems.push("apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx: Part 8 checkboxes must not be a manually-toggleable local boolean — attach a real file instead");
   }
   const qbTab = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx"), "utf8");
   if (qbTab.includes("useState(new Date().getMonth())")) {
@@ -114,6 +117,7 @@ const bad = `
     return;
   }
   onOpen={(id) => { setTab("form"); }}
+  setForm((prev) => ({ ...prev, [key]: e.target.checked }))
 `;
 
 if (process.argv.includes("--selftest")) {

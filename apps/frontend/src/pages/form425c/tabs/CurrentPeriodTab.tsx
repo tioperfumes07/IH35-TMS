@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { useToast } from "../../../components/Toast";
 
 type Props = {
   activeCompany: CompanyKey;
@@ -19,6 +18,8 @@ type Props = {
   onSave: () => void;
   onGeneratePdf: () => void;
   onMarkFiled: () => void;
+  onAttachFile: (line: number, file: File) => void;
+  attaching: boolean;
   loading: boolean;
   autoSaveLabel: string;
 };
@@ -42,10 +43,11 @@ export function CurrentPeriodTab({
   onSave,
   onGeneratePdf,
   onMarkFiled,
+  onAttachFile,
+  attaching,
   loading,
   autoSaveLabel,
 }: Props) {
-  const { pushToast } = useToast();
   const netCash = nv(form.totalReceipts) - nv(form.totalDisbursements);
   const cashEnd = nv(form.openingBalance) + netCash;
   const projNetPrev = nv(form.projReceiptsLast) - nv(form.projDisbLast);
@@ -264,30 +266,41 @@ export function CurrentPeriodTab({
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 8 — Attachments</div>
         {[
-          ["att38", "38. Bank statements"],
-          ["att39", "39. Bank reconciliation reports"],
-          ["att40", "40. Financial reports (P&L / balance sheet)"],
-          ["att41", "41. Budget / forecast reports"],
-          ["att42", "42. Job costing / WIP reports"],
-        ].map(([key, label]) => (
-          <label key={key} className="flex items-center gap-2 border-b px-3 py-2 text-sm">
-            <input
-              type="checkbox"
-              checked={Boolean((form as unknown as Record<string, boolean>)[key])}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  pushToast(
-                    "Lines 38–42 need a file on the report — checking the box does not attach a document",
-                    "error",
-                  );
-                  return;
-                }
-                setForm((prev) => ({ ...prev, [key]: false }));
-              }}
-            />
-            <span>{label}</span>
-          </label>
-        ))}
+          ["att38", 38, "Bank statements"],
+          ["att39", 39, "Bank reconciliation reports"],
+          ["att40", 40, "Financial reports (P&L / balance sheet)"],
+          ["att41", 41, "Budget / forecast reports"],
+          ["att42", 42, "Job costing / WIP reports"],
+        ].map(([key, line, label]) => {
+          const attached = Boolean((form as unknown as Record<string, boolean>)[key as string]);
+          const inputId = `form425c-attach-${key}`;
+          return (
+            <div key={key as string} className="flex items-center justify-between gap-2 border-b px-3 py-2 text-sm">
+              <span className="flex items-center gap-2">
+                {/* Checked state is derived from an actually-uploaded file — never manually settable. */}
+                <input type="checkbox" checked={attached} disabled readOnly />
+                <span>
+                  {line}. {label}
+                </span>
+                {attached ? <span className="text-xs font-semibold text-slate-700">Attached</span> : null}
+              </span>
+              <label htmlFor={inputId} className="rounded-sm border px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                {attaching ? "Uploading…" : attached ? "Attach another" : "Attach file"}
+                <input
+                  id={inputId}
+                  type="file"
+                  className="hidden"
+                  disabled={attaching}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) onAttachFile(line as number, file);
+                  }}
+                />
+              </label>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-wrap gap-2">
