@@ -2,6 +2,6 @@
 
 **THE LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`
 
-**NOW:** cash-flow + finance leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14` — do **not** recertify. Stop push-wall retry. Ship **one** PR for the three `/docs` FINDINGs when push works. Then next unique **money** FINDING. STOP `/425c`. Never remake TESTs / INFRA-F6350. Never `trigger_deploy`.
+**NOW:** cash-flow + finance leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14` — do **not** recertify. Docs three PRs merged (#15371 #15372 #15373). Next unique **money** FINDING. STOP `/425c`. Never remake TESTs / INFRA-F6350. Never `trigger_deploy`.
 
 OUTBOX: `CC-1 | ACK | CERTIFY-TRUTH | PORT=9223 | NOW=next-money-unique | GO`

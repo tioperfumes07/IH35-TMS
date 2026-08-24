@@ -8,7 +8,7 @@
 - **NOT U14 CERTIFIED:** leftover POST leftover unique hop clean. Not a second exclusive campaign.
 - **OWNER leftover POST CERTIFIED IMMEDIATE (not U14) @ `97d6a14` Live Chrome 09:05 CT:** cash-flow · finance · driver-hub · reports. Seats do not recertify.
 - **leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`:** also compliance · eld · inventory · fuel · users · home · help · tasks · program · system. Next = unique FINDING only.
-- **HOLD leftover POST stamp:** `/docs` — CC-1 unique `DOCS-F-KPI-FILTER-RESET-STUCK` · `DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY` · `DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED`. `/425c` do not loop.
+- **HOLD leftover POST stamp:** `/docs` until live SHA includes #15371 #15372 #15373 (all merged; live still `97d6a14`). `/425c` do not loop.
 - **VOID as second CERTIFY:** WAVE 3/4 leftover stamps on already-U14 modules (customers/drivers/fleet/vendors/lists/legal/safety) and WAVE 2 maintenance.
 
 If WAVE packs / PASTE / OUTBOX / Desktop INBOX still say leftover-CERTIFIED on a U14 module — **that line is void.**
