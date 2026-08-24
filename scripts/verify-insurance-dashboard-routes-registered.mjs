@@ -1,37 +1,46 @@
 #!/usr/bin/env node
-// Guard (insurance dashboard): every backend endpoint the insurance dashboard depends on
-// must be REGISTERED — a missing route 404'd the dashboard ("Failed to load widgets").
-// The dashboard now uses a single /api/v1/insurance/summary aggregate; assert it exists
-// end-to-end (frontend api fn → backend route registered + wired into index.ts).
+/** Ratchets the insurance dashboard summary route across every FE/BE hop. */
 import { readFileSync } from "node:fs";
 
-const failures = [];
-const read = (p) => { try { return readFileSync(p, "utf8"); } catch { failures.push(`${p}: missing`); return ""; } };
+const FILES = {
+  landing: "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
+  api: "apps/frontend/src/api/insurance.ts",
+  route: "apps/backend/src/insurance/summary.routes.ts",
+  index: "apps/backend/src/index.ts",
+};
+const CHECKS = [
+  ["landing:summary-client", "landing", /getInsuranceSummary/],
+  ["api:summary-path", "api", /\/api\/v1\/insurance\/summary/],
+  ["route:registered-get", "route", /app\.get\("\/api\/v1\/insurance\/summary"/],
+  ["index:route-mounted", "index", /registerInsuranceSummaryRoutes\(app\)/],
+];
 
-// 1. Frontend dashboard calls the summary aggregate.
-const landing = read("apps/frontend/src/pages/insurance/InsuranceLanding.tsx");
-if (landing && !/getInsuranceSummary/.test(landing)) {
-  failures.push("InsuranceLanding.tsx: must source its KPIs from getInsuranceSummary (the registered aggregate)");
-}
-// 2. The api fn targets /api/v1/insurance/summary.
-const api = read("apps/frontend/src/api/insurance.ts");
-if (api && !/\/api\/v1\/insurance\/summary/.test(api)) {
-  failures.push("api/insurance.ts: getInsuranceSummary must call /api/v1/insurance/summary");
-}
-// 3. Backend registers the route.
-const route = read("apps/backend/src/insurance/summary.routes.ts");
-if (route && !/app\.get\("\/api\/v1\/insurance\/summary"/.test(route)) {
-  failures.push("summary.routes.ts: must register GET /api/v1/insurance/summary");
-}
-// 4. The route is wired into the server.
-const index = read("apps/backend/src/index.ts");
-if (index && !/registerInsuranceSummaryRoutes\(app\)/.test(index)) {
-  failures.push("index.ts: registerInsuranceSummaryRoutes(app) must be called");
+export function collectProblems(sources) {
+  return CHECKS.filter(([, key, pattern]) => !pattern.test(sources[key] ?? "")).map(([id]) => id);
 }
 
-if (failures.length) {
-  console.error("verify:insurance-dashboard-routes-registered — FAIL");
-  for (const f of failures) console.error("  - " + f);
-  process.exit(1);
+function readSources() {
+  return Object.fromEntries(Object.entries(FILES).map(([key, path]) => [key, readFileSync(path, "utf8")]));
 }
-console.log("verify:insurance-dashboard-routes-registered — OK (dashboard summary route registered end-to-end)");
+
+function selftest() {
+  const baseline = readSources();
+  const missed = [];
+  for (const [id, key, pattern] of CHECKS) {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    const mutated = { ...baseline, [key]: baseline[key].replace(new RegExp(pattern.source, flags), "__PLANTED_DEFECT__") };
+    if (!collectProblems(mutated).includes(id)) missed.push(id);
+  }
+  if (missed.length) throw new Error(`selftest missed: ${missed.join(", ")}`);
+  console.log(`verify-insurance-dashboard-routes-registered --selftest ${CHECKS.length}/${CHECKS.length}`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else {
+  const failures = collectProblems(readSources());
+  if (failures.length) {
+    console.error(`verify-insurance-dashboard-routes-registered FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
+    process.exit(1);
+  }
+  console.log("verify-insurance-dashboard-routes-registered PASS — landing→API→GET route→server mount");
+}
