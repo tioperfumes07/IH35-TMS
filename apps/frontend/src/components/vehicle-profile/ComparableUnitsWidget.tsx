@@ -44,11 +44,49 @@ export function ComparableUnitsWidget({
         {usdPerMile(comparable.fleet_avg_maintenance_per_mile_cents)}
         {dev !== 0 ? `, ${dev > 0 ? "+" : ""}${dev}%` : ""})
       </p>
-      <button type="button" className="mt-2 text-xs text-slate-700 underline" onClick={() => setOpen(!open)}>
-        View detailed comparison
+      <button
+        type="button"
+        className="mt-2 text-xs text-slate-700 underline"
+        aria-expanded={open}
+        aria-controls="fleet-unit-comparison-detail"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? "Hide detailed comparison" : "View detailed comparison"}
       </button>
       {open ? (
-        <p className="mt-2 text-xs text-gray-500">Fleet comparison table (modal V1 placeholder).</p>
+        <div
+          id="fleet-unit-comparison-detail"
+          role="region"
+          aria-label={`Fleet comparison for unit ${unitNumber}`}
+          className="mt-2 overflow-hidden rounded-sm border border-gray-200"
+        >
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="px-2 py-1.5 font-medium">Metric</th>
+                <th className="px-2 py-1.5 text-right font-medium">This unit</th>
+                <th className="px-2 py-1.5 text-right font-medium">Fleet</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 text-gray-800">
+              <tr>
+                <td className="px-2 py-1.5">Maintenance per mile</td>
+                <td className="px-2 py-1.5 text-right">{usdPerMile(comparable.this_unit_maintenance_per_mile_cents)}</td>
+                <td className="px-2 py-1.5 text-right">{usdPerMile(comparable.fleet_avg_maintenance_per_mile_cents)}</td>
+              </tr>
+              <tr>
+                <td className="px-2 py-1.5">Difference from fleet</td>
+                <td className="px-2 py-1.5 text-right">{comparable.deviation_pct == null ? "—" : `${dev > 0 ? "+" : ""}${dev}%`}</td>
+                <td className="px-2 py-1.5 text-right">Baseline</td>
+              </tr>
+              <tr>
+                <td className="px-2 py-1.5">Fleet rank</td>
+                <td className="px-2 py-1.5 text-right">{comparable.rank_in_fleet ?? "—"}</td>
+                <td className="px-2 py-1.5 text-right">of {comparable.total_units_in_fleet ?? "—"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       ) : null}
     </div>
   );
