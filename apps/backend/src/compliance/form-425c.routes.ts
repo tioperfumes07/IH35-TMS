@@ -514,6 +514,12 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
     } catch (err) {
       const e = err as { code?: string; message?: string };
+      if (e?.message === "form_425c_operating_company_not_found") {
+        return sendForm425CCompanyMissing(reply);
+      }
+      if (e?.message === "forbidden_company_membership") {
+        return sendForm425CForbiddenMembership(reply);
+      }
       if (e?.message === "mor_cash_zero_with_activity") {
         return reply.code(422).send({
           error: "mor_cash_zero_with_activity",
