@@ -1111,3 +1111,4 @@ Codex | WORKING | FO=DRIVER-AUDIT-SHARED-REVERSE-GUARD-ORPHAN | claim=#15038 ste
 Codex | WORKING | FO=DRIVER-MANAGER-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15040 step=4574 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=DRIVER-METRICS-SHARED-ROSTER-GUARD-ORPHAN | claim=#15042 step=4576 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
 Codex | WORKING | FO=ANOMALY-MEDCARD-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15044 step=4578 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
+Codex | WORKING | FO=DRIVER-PWA-SHARED-DISPATCH-VIEW-GUARD-ORPHAN | claim=#15047 step=4580 | NEXT=FAST-MERGE then next unique driver/fleet guard | GO
