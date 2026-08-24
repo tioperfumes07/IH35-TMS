@@ -39,6 +39,25 @@ function requireOwner(user: { role: string }, reply: FastifyReply): boolean {
   return true;
 }
 
+// GAP43-SUBSCRIPTIONS-500-ON-EXPECTED-STATE: updateSubscription/deactivateSubscription throw a plain
+// Error() for an ordinary business condition (the row was already deleted, or already inactive) —
+// with no try/catch at the call site, Fastify's default handler turned that into an uncaught 500
+// Internal Server Error. Live-confirmed on prod: deactivating an already-inactive subscription
+// returned `{"statusCode":500,...,"message":"scheduled_subscription_not_found_or_already_inactive"}`,
+// which the frontend surfaced as a generic "Deactivate failed" toast — indistinguishable from a real
+// server fault. Neither condition is a server fault: map the two known service-layer error messages
+// to the correct 4xx status instead of letting them fall through to 500.
+function replyForSubscriptionError(reply: FastifyReply, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === "scheduled_subscription_not_found_or_already_inactive") {
+    return reply.code(409).send({ error: "already_inactive_or_not_found" });
+  }
+  if (message === "scheduled_subscription_not_found") {
+    return reply.code(404).send({ error: "not_found" });
+  }
+  throw error;
+}
+
 export async function registerScheduledSubscriptionRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/scheduled/subscriptions", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
@@ -85,22 +104,26 @@ export async function registerScheduledSubscriptionRoutes(app: FastifyInstance) 
     if (!query.success) return validationError(reply, query.error);
     const body = updateBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    const row = await updateSubscription(
-      params.data.uuid,
-      query.data.operating_company_id,
-      {
-        cadence: body.data.cadence,
-        dayOfWeek: body.data.day_of_week,
-        dayOfMonth: body.data.day_of_month,
-        timeOfDay: body.data.time_of_day,
-        timezone: body.data.timezone,
-        recipientEmails: body.data.recipient_emails,
-        recipientUserUuids: body.data.recipient_user_uuids,
-        deliveryFormat: body.data.delivery_format,
-      },
-      String(user.uuid)
-    );
-    return { row };
+    try {
+      const row = await updateSubscription(
+        params.data.uuid,
+        query.data.operating_company_id,
+        {
+          cadence: body.data.cadence,
+          dayOfWeek: body.data.day_of_week,
+          dayOfMonth: body.data.day_of_month,
+          timeOfDay: body.data.time_of_day,
+          timezone: body.data.timezone,
+          recipientEmails: body.data.recipient_emails,
+          recipientUserUuids: body.data.recipient_user_uuids,
+          deliveryFormat: body.data.delivery_format,
+        },
+        String(user.uuid)
+      );
+      return { row };
+    } catch (error) {
+      return replyForSubscriptionError(reply, error);
+    }
   });
 
   app.patch(
@@ -113,8 +136,12 @@ export async function registerScheduledSubscriptionRoutes(app: FastifyInstance) 
       if (!params.success) return validationError(reply, params.error);
       const query = companyQuerySchema.safeParse(req.query ?? {});
       if (!query.success) return validationError(reply, query.error);
-      await deactivateSubscription(params.data.uuid, query.data.operating_company_id, String(user.uuid));
-      return reply.code(204).send();
+      try {
+        await deactivateSubscription(params.data.uuid, query.data.operating_company_id, String(user.uuid));
+        return reply.code(204).send();
+      } catch (error) {
+        return replyForSubscriptionError(reply, error);
+      }
     }
   );
 
