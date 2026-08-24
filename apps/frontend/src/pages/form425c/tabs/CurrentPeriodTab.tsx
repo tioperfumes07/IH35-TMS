@@ -11,6 +11,7 @@ type Props = {
   setMonth: (month: number) => void;
   setYear: (year: number) => void;
   profiles: CompanyProfiles;
+  availableCompanies: CompanyKey[];
   form: CurrentFormState;
   setForm: (updater: (prev: CurrentFormState) => CurrentFormState) => void;
   onCreateOrLoad: () => void;
@@ -36,6 +37,7 @@ export function CurrentPeriodTab({
   setMonth,
   setYear,
   profiles,
+  availableCompanies,
   form,
   setForm,
   onCreateOrLoad,
@@ -62,8 +64,11 @@ export function CurrentPeriodTab({
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
-            <option value="trucking">{profiles.trucking.name}</option>
-            <option value="transportation">{profiles.transportation.name}</option>
+            {availableCompanies.map((k) => (
+              <option key={k} value={k}>
+                {profiles[k].name}
+              </option>
+            ))}
           </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">

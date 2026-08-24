@@ -13,6 +13,8 @@ const LABEL = "verify-form425c-tabs-url-sync";
 const FILES = {
   home: "apps/frontend/src/pages/form425c/Form425CHome.tsx",
   profiles: "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx",
+  form: "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx",
+  qb: "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx",
   routes: "apps/backend/src/compliance/form-425c.routes.ts",
   pdf: "apps/backend/src/compliance/form-425c-pdf.ts",
 };
@@ -44,6 +46,17 @@ export function collectProblems(source = readSources()) {
   if (source.home.includes(">IH 35 GROUP<")) problems.push("home regressed to a hardcoded cross-entity group heading");
   if (!source.profiles.includes("availableCompanies.map((k)")) problems.push("profiles tab does not render only scoped filing profiles");
   if (source.profiles.includes('(["trucking", "transportation"] as const).map')) problems.push("profiles tab regressed to both hardcoded entities");
+  if (!source.form.includes("availableCompanies.map((k)")) problems.push("form tab does not render only scoped filing profiles");
+  if (source.form.includes('<option value="trucking">') || source.form.includes('<option value="transportation">')) {
+    problems.push("form tab hardcoded both debtor options — Save Defaults 400s form_425c_profile_company_key_mismatch on the foreign key");
+  }
+  if (!source.qb.includes("availableCompanies.map((k)")) problems.push("deposit import tab does not render only scoped filing profiles");
+  if (source.qb.includes('<option value="trucking">') || source.qb.includes('<option value="transportation">')) {
+    problems.push("deposit import tab hardcoded both debtor options — picking the sibling key is a silent/400 foreign debtor");
+  }
+  if ((source.home.match(/availableCompanies=\{availableCompanies\}/g) ?? []).length < 3) {
+    problems.push("home must pass availableCompanies to Profiles, Form, and Deposit Import tabs");
+  }
 
   if (!source.pdf.includes("JOIN org.companies c ON c.id = p.operating_company_id")) problems.push("PDF profile lookup does not resolve the selected filing entity");
   if (!source.pdf.includes("p.company_key = CASE WHEN c.code = 'TRK' THEN 'trucking' ELSE 'transportation' END")) problems.push("PDF lookup can select a sibling legacy profile");
@@ -66,6 +79,8 @@ function selftest() {
     ["returned-profile selection", "home", "profilesQuery.data.profiles[0]?.company_key", '"trucking"'],
     ["dynamic heading", "home", '{profiles[activeCompany].name || "Form 425C"}', "IH 35 GROUP"],
     ["scoped profile tabs", "profiles", "availableCompanies.map((k)", '(["trucking", "transportation"] as const).map((k)'],
+    ["form scoped debtor", "form", "availableCompanies.map((k)", '<option value="trucking">'],
+    ["qb scoped debtor", "qb", "availableCompanies.map((k)", '<option value="transportation">'],
     ["PDF selected entity", "pdf", "JOIN org.companies c ON c.id = p.operating_company_id", ""],
   ];
   for (const [name, file, before, after] of cases) {

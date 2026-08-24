@@ -459,6 +459,7 @@ export function Form425CHome() {
           setMonth={setMonth}
           setYear={setYear}
           profiles={profiles}
+          availableCompanies={availableCompanies}
         />
       ) : null}
 
@@ -471,6 +472,7 @@ export function Form425CHome() {
           setMonth={setMonth}
           setYear={setYear}
           profiles={profiles}
+          availableCompanies={availableCompanies}
           form={form}
           setForm={(updater) => {
             setForm((prev) => updater(prev));
