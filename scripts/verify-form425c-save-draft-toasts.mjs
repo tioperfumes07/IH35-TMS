@@ -336,6 +336,14 @@ export function collectProblems(src) {
       `${PAGE}: Form Generate must trim print_html before the client fallback and toast if still empty — whitespace-only HTML was a silent blank print`,
     );
   }
+  if (
+    src.includes('String(res.print_html ?? "").trim() ||') ||
+    !src.includes("Profiles has no debtor name")
+  ) {
+    problems.push(
+      `${PAGE}: empty Generate HTML must not fall through to buildPrintHTML when Profiles has no debtor name — that invented a court print after the server refused`,
+    );
+  }
   const markChunk = (routes.split('app.post("/api/v1/form-425c/:id/mark-filed"')[1] ?? "").split('app.post("/api/v1/form-425c/:id/amend"')[0];
   if (
     !markChunk.includes('SELECT case_number, status') ||
@@ -420,6 +428,7 @@ const good = `
   the server returned empty HTML
   String(res.print_html ?? "").trim()
   Generate returned empty filing HTML
+  Profiles has no debtor name
   tab === "merge"
           historyPrintMutation.mutate(form.reportId);
           status unchanged
