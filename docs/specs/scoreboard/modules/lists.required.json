@@ -1440,7 +1440,6 @@
       "sub": "Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1451,7 +1450,6 @@
       "sub": "+ Create — Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1462,7 +1460,6 @@
       "sub": "Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1473,7 +1470,6 @@
       "sub": "+ Create — Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1484,7 +1480,6 @@
       "sub": "Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1495,7 +1490,6 @@
       "sub": "+ Create — Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1506,7 +1500,6 @@
       "sub": "Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1517,7 +1510,6 @@
       "sub": "+ Create — Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1568,7 +1560,6 @@
       "sub": "Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1579,7 +1570,6 @@
       "sub": "+ Create — Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1590,7 +1580,6 @@
       "sub": "MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1601,7 +1590,6 @@
       "sub": "+ Create — MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1612,7 +1600,6 @@
       "sub": "Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1623,7 +1610,6 @@
       "sub": "+ Create — Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1634,7 +1620,6 @@
       "sub": "Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1645,7 +1630,6 @@
       "sub": "+ Create — Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1656,7 +1640,6 @@
       "sub": "Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1667,7 +1650,6 @@
       "sub": "+ Create — Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1678,7 +1660,6 @@
       "sub": "Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1689,7 +1670,6 @@
       "sub": "+ Create — Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7974,6 +7954,32 @@
         { "id": "catalog.fleet.tire_positions.create", "removed": ["picker_law"] },
         { "id": "catalog.fleet.ownership_types.list", "removed": ["picker_law"] },
         { "id": "catalog.fleet.ownership_types.create", "removed": ["picker_law"] }
+      ]
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_23_batch2": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "Continues picker_law_flat_catalog_overreach_drops_2026_08_23_batch1 (batch 1: 6 safety/fleet catalogs). This batch covers all 10 fuel catalogs (20 leaves: .list + .create). Verified via direct read at every layer, not inferred: frontend UI factory apps/frontend/src/pages/lists/fuel/FuelCatalogModal.tsx (FormState = code, display_name, description, sort_order, is_active — zero FK/reference fields across all 10 *ListPage.tsx wrappers); frontend API client apps/frontend/src/api/catalogs-fuel.ts (FuelCatalogCreateBody, same fields, all 10 clients built from the identical createFuelCatalogClient factory); backend schema apps/backend/src/catalogs/fuel/factory.ts (createBodySchema, same fields, all 10 tables registered through the same createCatalogRoutes factory); DB schema db/migrations/0067_p3_t11_21_6a_fuel_catalogs.sql + 0151_p6_t11187_lists_hub_fuel_catalog_completion.sql (identical column set for all 10 tables: id, operating_company_id (tenant scope, not a form field), code, display_name, description, metadata jsonb, is_active, sort_order — no FK column). Matches the same reasoning already recorded for the load/vendor/unit/driver/reverse_link drops on these identical leaves (load_column_2026_08_14 entry).",
+      "drops_applied": [
+        { "id": "catalog.fuel.brands.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.brands.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.card_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.card_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.dispatch_routes.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.dispatch_routes.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.exception_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.exception_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.grades.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.grades.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.pump_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.pump_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.station_brands.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.station_brands.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.station_states.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.station_states.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.stop_reason_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.stop_reason_codes.create", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.tax_jurisdictions.list", "removed": ["picker_law"] },
+        { "id": "catalog.fuel.tax_jurisdictions.create", "removed": ["picker_law"] }
       ]
     }
   }
