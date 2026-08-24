@@ -8,6 +8,8 @@ Codex | WORKING | FO=FLEET-CROSS-ENTITY-ASSIGNMENT-CLOSE-GUARD-ORPHAN | claim=#1
 
 Codex | WORKING | FO=DRIVER-QUALIFICATION-CREATE-SHARED-GUARD-ORPHAN | claim=#15078 step=4590 | NEXT=FAST-MERGE then next unique driver lifecycle guard | GO
 
+Codex | WORKING | FO=DRIVER-QUALIFICATION-LIFECYCLE-SCOPE-GUARD-ORPHAN | claim=#15080 step=4592 | NEXT=FAST-MERGE then next unique driver lifecycle guard | GO
+
 Codex | CERTIFIED | MODULE=fleet | LIVE_SHA=07993ac | hops=GET units list 200 · GET unit detail 200 T149 VIN 1XPCDP9X3LD649118 · unauth 401 · mdata.units 187=187 · owner/lease USMCA 44 · reverse load L-20260816-0168 · no 500 | GO
 
 Codex | WORKING | FO=LOAD-READS-SHARED-DRIVERS-GUARD-ORPHAN | claim=#15049 step=4582 | U14=14/14 CERTIFIED | NEXT=FAST-MERGE then next unique reverse guard | GO
