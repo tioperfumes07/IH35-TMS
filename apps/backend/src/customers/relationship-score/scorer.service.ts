@@ -256,13 +256,15 @@ async function computeComplaintSubscore(
     `
       SELECT
         COUNT(*) FILTER (
-          WHERE event_type <> 'commendation'
-            AND voided_at IS NULL
-            AND event_date >= current_date - interval '30 days'
+          WHERE q.event_type <> 'commendation'
+            AND q.voided_at IS NULL
+            AND q.event_date >= current_date - interval '30 days'
         )::int::text AS complaint_count
-      FROM mdata.customer_quality_events
-      WHERE operating_company_id = $1::uuid
-        AND customer_id = $2::uuid
+      FROM mdata.customer_quality_events q
+      INNER JOIN mdata.customers c
+        ON c.id = q.customer_id
+       AND c.operating_company_id = $1::uuid
+      WHERE q.customer_id = $2::uuid
     `,
     [operatingCompanyId, customerUuid]
   );
