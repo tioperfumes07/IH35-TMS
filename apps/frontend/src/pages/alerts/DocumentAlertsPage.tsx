@@ -13,6 +13,8 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function severityClass(severity: string, days: number) {
   if (days <= 0 || severity === "critical") return "text-red-700 bg-red-50";
@@ -32,6 +34,7 @@ function RuleEditor({
 }) {
   const [daysText, setDaysText] = useState(rule.days_before_expiry.join(", "));
   const [enabled, setEnabled] = useState(rule.enabled);
+  const { pushToast } = useToast();
   const saveMutation = useMutation({
     mutationFn: () => {
       const parsed = daysText
@@ -44,6 +47,10 @@ function RuleEditor({
       });
     },
     onSuccess: onSaved,
+    // ALERTS-F6325: zero error handling anywhere in this file — no toast import at all, no
+    // isError render, no try/catch at the fire-and-forget .mutate() call sites. A rejected save
+    // silently did nothing on this CDL/medical/permit expiry-alerts page.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not save the alert rule"), "error"),
   });
 
   return (
@@ -89,9 +96,12 @@ function InboxRow({
   operatingCompanyId: string;
   onAcknowledged: () => void;
 }) {
+  const { pushToast } = useToast();
   const ackMutation = useMutation({
     mutationFn: () => acknowledgeDocumentAlert(event.id, operatingCompanyId, "Reviewed from alerts inbox"),
     onSuccess: onAcknowledged,
+    // ALERTS-F6325: see saveMutation above — same file-wide gap.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not acknowledge the alert"), "error"),
   });
 
   const profileLink = event.driver_id ? `/drivers/${event.driver_id}/profile` : "/safety/permits";
@@ -136,6 +146,7 @@ export function DocumentAlertsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = parseDocumentAlertsTab(searchParams.get("tab"));
   const setTab = (next: DocumentAlertsTab) => {
@@ -162,6 +173,8 @@ export function DocumentAlertsPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["drivers", "document-alerts"] });
     },
+    // ALERTS-F6325: see saveMutation above — same file-wide gap.
+    onError: (err) => pushToast(userFacingApiError(err, "Could not run the alert evaluator"), "error"),
   });
 
   const events = inboxQuery.data?.events ?? [];
