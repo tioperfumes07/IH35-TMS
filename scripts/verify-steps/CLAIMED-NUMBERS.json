@@ -1,4 +1,9 @@
 {
+  "5922": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-stale-lazy-chunk-recovery"
+  },
   "4707": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
