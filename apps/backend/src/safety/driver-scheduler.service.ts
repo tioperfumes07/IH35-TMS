@@ -979,7 +979,17 @@ export async function getFleetSchedule(
         ON u.id = al.assigned_unit_id
         AND u.deactivated_at IS NULL
         AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations scheduler_fleet_dca
+            WHERE scheduler_fleet_dca.driver_id = d.id
+              AND scheduler_fleet_dca.company_id = $1::uuid
+              AND scheduler_fleet_dca.is_authorized = true
+              AND scheduler_fleet_dca.deactivated_at IS NULL
+          )
+        )
         AND d.deactivated_at IS NULL
         -- DRIVERHUB-2: never list non-genuine drivers on the Scheduler. Exclude onboarding sample
         -- rows (is_sample_data) plus DEMO/DUMMY/TEST seed-marker name rows. Read-only filter — the
