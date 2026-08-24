@@ -262,8 +262,15 @@ async function resolveLocalUnitAndDriver(
     `
       SELECT d.id::text AS driver_id
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid
+      WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+              SELECT 1 FROM mdata.driver_company_authorizations pairing_sync_dca
+               WHERE pairing_sync_dca.driver_id = d.id
+                 AND pairing_sync_dca.operating_company_id = $1::uuid
+                 AND pairing_sync_dca.is_authorized = true
+                 AND pairing_sync_dca.deactivated_at IS NULL
+            ))
         AND d.samsara_driver_id = $2
+        AND d.deactivated_at IS NULL
       LIMIT 1
     `,
     [operatingCompanyId, samsaraDriverId]
@@ -636,7 +643,13 @@ export async function getDriverPairingHistory(
       JOIN mdata.units u ON u.id = a.unit_id
                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       LEFT JOIN mdata.drivers d ON d.id = a.driver_id
-                                AND d.operating_company_id = $1::uuid
+                                AND (d.operating_company_id = $1::uuid OR EXISTS (
+                                  SELECT 1 FROM mdata.driver_company_authorizations pairing_history_dca
+                                   WHERE pairing_history_dca.driver_id = d.id
+                                     AND pairing_history_dca.operating_company_id = $1::uuid
+                                     AND pairing_history_dca.is_authorized = true
+                                     AND pairing_history_dca.deactivated_at IS NULL
+                                ))
       WHERE a.operating_company_id = $1::uuid
         AND a.driver_id = $2::uuid
         AND a.started_at <= $4::timestamptz
