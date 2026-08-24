@@ -1,4 +1,9 @@
 {
+  "4707": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-cash-flow-report-route-fix-no-fake-zero"
+  },
   "4703": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
@@ -6183,5 +6188,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1324
+  "total_claimed": 1325
 }
