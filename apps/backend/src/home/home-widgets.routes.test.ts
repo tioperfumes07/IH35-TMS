@@ -9,6 +9,17 @@ import { registerHomeWidgetRoutes } from "./home-widgets.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
+describe("home drivers-on-duty selected-company roster", () => {
+  const routesSrc = readFileSync(fileURLToPath(new URL("./home-widgets.routes.ts", import.meta.url)), "utf8");
+
+  it("counts active authorized shared drivers in the denominator", () => {
+    expect(routesSrc).toContain("driver_company_authorizations home_duty_roster_dca");
+    expect(routesSrc).toContain("home_duty_roster_dca.company_id = $1::uuid");
+    expect(routesSrc).toContain("home_duty_roster_dca.is_authorized = true");
+    expect(routesSrc).toContain("home_duty_roster_dca.deactivated_at IS NULL");
+  });
+});
+
 // 0280-02 static guard: today/weekly revenue must call dual-basis linkage (not raw invoice SUM).
 describe("home-widgets revenue GL linkage (0280-02)", () => {
   const routesSrc = readFileSync(

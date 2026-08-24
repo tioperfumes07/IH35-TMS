@@ -494,10 +494,19 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const rosterRes = await client.query(
           `
             SELECT count(*)::text AS c
-            FROM mdata.drivers
-            WHERE operating_company_id = $1::uuid
-              AND deactivated_at IS NULL
-              AND is_sample_data = false
+            FROM mdata.drivers d
+            WHERE (
+                d.operating_company_id = $1::uuid
+                OR EXISTS (
+                  SELECT 1 FROM mdata.driver_company_authorizations home_duty_roster_dca
+                  WHERE home_duty_roster_dca.driver_id = d.id
+                    AND home_duty_roster_dca.company_id = $1::uuid
+                    AND home_duty_roster_dca.is_authorized = true
+                    AND home_duty_roster_dca.deactivated_at IS NULL
+                )
+              )
+              AND d.deactivated_at IS NULL
+              AND d.is_sample_data = false
           `,
           [parsed.data.operating_company_id]
         );

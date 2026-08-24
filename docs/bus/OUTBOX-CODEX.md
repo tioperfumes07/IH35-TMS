@@ -1148,3 +1148,4 @@ Codex | WORKING | FO=FLT-F6290-SAMSARA-DCA-PHANTOM-OPERATING-COMPANY-COLUMN | sc
 Codex | WORKING | FO=FLT-F6291-HOS-MAP-PREVIEW-OMITS-SHARED-DRIVERS | leaf=system.samsara_hos_driver_map:driver · scope=preview+active diagnostic GET | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
 Codex | WORKING | FO=FLT-F6292-MAINT-DASHBOARD-KPI-OMITS-LEASED-UNITS | scope=fleet dashboard GET owner-or-lessee parity · no money/CDP | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
 Codex | WORKING | FO=FLT-F6294-TRAILER-ATTACHED-UNIT-OWNER-REVERSE-TOMBSTONE | leaf=fleet:trailer.profile.assignment:{unit,reverse_link} · HANDOFF=TAX-F6293→CC-1 | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO
+Codex | WORKING | FO=DRV-F6295-HOME-DUTY-DENOMINATOR-EXCLUDES-SHARED-DRIVERS | leaf=home:home.widget.drivers_on_duty:{driver,connectivity} | NEXT=FAST-MERGE then next genuine GET/SQL gap | GO

@@ -55,6 +55,17 @@ export function audit(src) {
     );
   }
 
+  const driverRoster = src.routes.match(/app\.get\("\/api\/v1\/home\/drivers-on-duty"[\s\S]*?return \{ active, total_drivers, on_break: 0 \};/i)?.[0] ?? "";
+  for (const token of [
+    "driver_company_authorizations home_duty_roster_dca",
+    "home_duty_roster_dca.driver_id = d.id",
+    "home_duty_roster_dca.company_id = $1::uuid",
+    "home_duty_roster_dca.is_authorized = true",
+    "home_duty_roster_dca.deactivated_at IS NULL",
+  ]) {
+    if (!driverRoster.includes(token)) failures.push(`${FILES.routes}: drivers-on-duty denominator missing ${token}`);
+  }
+
   return failures;
 }
 
@@ -74,6 +85,8 @@ if (process.argv.includes("--selftest")) {
     { from: '\n              AND ${excludeDemoPhantomSql("u.unit_number")}', to: "" },
     { from: '\n              AND ${excludeSampleDataSql("u.is_sample_data")}', to: "" },
     { from: "\n              AND is_sample_data IS NOT TRUE", to: "" },
+    { from: "home_duty_roster_dca.is_authorized = true", to: "home_duty_roster_dca.is_authorized = false" },
+    { from: "home_duty_roster_dca.deactivated_at IS NULL", to: "home_duty_roster_dca.deactivated_at IS NOT NULL" },
   ];
   let detected = 0;
   for (const m of mutations) {
