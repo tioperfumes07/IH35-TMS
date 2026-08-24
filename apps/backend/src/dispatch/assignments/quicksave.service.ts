@@ -112,6 +112,29 @@ async function assertDriverActive(client: PoolClient, driverId: string, operatin
   return row.id;
 }
 
+// DISP-F6157: mdata.loads.assigned_secondary_driver_id is the CO-DRIVER column (FK -> mdata.drivers,
+// migration 0034), never a trailer/equipment id. mdata.loads has NO trailer column; the only real
+// trailer<->load link is dispatch.load_assignment_history.new_trailer_id (FK -> mdata.equipment).
+// Any call site that wrote load.assigned_secondary_driver_id into a *_trailer_id history field
+// either 500'd with a foreign-key violation (a co-driver is a real mdata.drivers row, not
+// mdata.equipment) or silently recorded NULL/lost the existing trailer history (no co-driver).
+// Resolve the canonical current trailer from history instead, exactly like reassignTrailer already
+// does for its own previous_trailer_id.
+async function resolveCanonicalTrailerId(client: PoolClient, loadId: string): Promise<string | null> {
+  const res = await client.query<{ new_trailer_id: string | null }>(
+    `
+      SELECT new_trailer_id::text
+      FROM dispatch.load_assignment_history
+      WHERE load_id = $1::uuid
+        AND new_trailer_id IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [loadId]
+  );
+  return res.rows[0]?.new_trailer_id ?? null;
+}
+
 async function recordAssignment(
   client: PoolClient,
   input: {
@@ -170,6 +193,10 @@ export async function reassignUnit(
         [input.load_uuid, input.unit_uuid]
       );
 
+      // DISP-F6157: unit reassignment doesn't touch the trailer — carry the canonical current
+      // trailer through unchanged rather than the co-driver uuid.
+      const canonicalTrailerId = await resolveCanonicalTrailerId(client, input.load_uuid);
+
       await recordAssignment(client, {
         operating_company_id: input.operating_company_id,
         load_id: input.load_uuid,
@@ -178,8 +205,8 @@ export async function reassignUnit(
         new_driver_id: load.assigned_primary_driver_id,
         previous_unit_id: load.assigned_unit_id,
         new_unit_id: input.unit_uuid,
-        previous_trailer_id: load.assigned_secondary_driver_id,
-        new_trailer_id: load.assigned_secondary_driver_id,
+        previous_trailer_id: canonicalTrailerId,
+        new_trailer_id: canonicalTrailerId,
         user_id: userId,
       });
 
@@ -216,23 +243,11 @@ export async function reassignTrailer(
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
       await assertTrailerAvailable(client, input.trailer_uuid, input.operating_company_id);
 
-      // DISP-1 corruption fix: the trailer is an mdata.equipment id and must NOT be written into
-      // mdata.loads.assigned_secondary_driver_id — that is the CO-DRIVER column (FK -> mdata.drivers,
-      // migration 0034). Writing a trailer/equipment id there is a guaranteed FK violation / data
-      // corruption. mdata.loads has NO trailer column; the only real trailer<->load link is
-      // dispatch.load_assignment_history.new_trailer_id (FK -> mdata.equipment), recorded below.
-      const prevTrailerRes = await client.query<{ new_trailer_id: string | null }>(
-        `
-          SELECT new_trailer_id::text
-          FROM dispatch.load_assignment_history
-          WHERE load_id = $1::uuid
-            AND new_trailer_id IS NOT NULL
-          ORDER BY created_at DESC
-          LIMIT 1
-        `,
-        [input.load_uuid]
-      );
-      const previousTrailerId = prevTrailerRes.rows[0]?.new_trailer_id ?? null;
+      // DISP-1 / DISP-F6157 corruption fix: the trailer is an mdata.equipment id and must NOT be
+      // written into mdata.loads.assigned_secondary_driver_id — that is the CO-DRIVER column
+      // (FK -> mdata.drivers, migration 0034). mdata.loads has NO trailer column; resolve the prior
+      // canonical trailer from history instead (see resolveCanonicalTrailerId above).
+      const previousTrailerId = await resolveCanonicalTrailerId(client, input.load_uuid);
 
       await recordAssignment(client, {
         operating_company_id: input.operating_company_id,
@@ -298,6 +313,10 @@ export async function reassignDriver(
         [input.load_uuid, input.driver_uuid]
       );
 
+      // DISP-F6157: driver reassignment doesn't touch the trailer — carry the canonical current
+      // trailer through unchanged rather than the co-driver uuid.
+      const canonicalTrailerId = await resolveCanonicalTrailerId(client, input.load_uuid);
+
       await recordAssignment(client, {
         operating_company_id: input.operating_company_id,
         load_id: input.load_uuid,
@@ -306,8 +325,8 @@ export async function reassignDriver(
         new_driver_id: input.driver_uuid,
         previous_unit_id: load.assigned_unit_id,
         new_unit_id: load.assigned_unit_id,
-        previous_trailer_id: load.assigned_secondary_driver_id,
-        new_trailer_id: load.assigned_secondary_driver_id,
+        previous_trailer_id: canonicalTrailerId,
+        new_trailer_id: canonicalTrailerId,
         user_id: userId,
       });
 
