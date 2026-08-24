@@ -1,12 +1,9 @@
 # INBOX-CODEX · 9226
 
-**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
-**FAST-MERGE 4 min ON · CONTINUOUS.** Never `gh pr checks --watch`. Never `trigger_deploy`.
+**RUNBOOK:** `docs/lockdown/U14-PLUS-NEXT6-LAUNCH-NOW-2026-08-24.md`
 
-**NOW:** **CLASS-F5973-TRUE-REMAINDER-FUEL** — grep-verify each leaf vs `origin/main`. One dead leaf → one PR. FAST-MERGE. Never restamp customers/drivers/fleet.
+**NOW THIS TURN (U14):** `/drivers` then `/fleet` then `/safety` then `/insurance`. Current `healthz`. CREATE labeled TEST (driver/unit) if empty. Unique 500 / dead / silent only.
 
-Empty unique on fuel → leftover POST Live Chrome `/users` then `/home` (500/dead/silent only).
+Fuel CLASS-F5973 five leaves **drained**. Spend fake-$0 is Cursor. Never restamp U14 table. Never `trigger_deploy`.
 
-Pause = defect.
-
-OUTBOX: `Codex | ACK | FINISH-ALL | PORT=9226 | NOW=fuel-CLASS-F5973 | GO`
+OUTBOX: `Codex | ACK | U14+6 | PORT=9226 | NOW=/drivers | GO`

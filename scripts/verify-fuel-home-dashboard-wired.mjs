@@ -13,12 +13,28 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelHome.tsx");
+const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
+const SPEND_FAKE_ZERO_RE =
+  /FROM fuel\.fuel_transactions[\s\S]{0,400}\.catch\(\(\) => \(\{ rows: \[\{ spend: 0, avg_price: 0 \}\] \}\)\)/;
 
 /**
  * @param {string} source
  * @returns {string[]}
  */
+export function computePlannerFailures(plannerSource) {
+  const errors = [];
+  if (SPEND_FAKE_ZERO_RE.test(plannerSource)) {
+    errors.push(
+      "planner.routes.ts must not coerce a failed fuel.fuel_transactions spend query to { spend: 0, avg_price: 0 }",
+    );
+  }
+  if (!/FROM fuel\.fuel_transactions/.test(plannerSource)) {
+    errors.push("planner.routes.ts must keep the MTD spend query on fuel.fuel_transactions");
+  }
+  return errors;
+}
+
 export function computeFailures(source) {
   const errors = [];
   if (!/getFuelDashboard/.test(source) && !/\/api\/v1\/fuel\/planner\/dashboard/.test(source)) {
@@ -37,6 +53,25 @@ export function computeFailures(source) {
 }
 
 function selftest() {
+  const plannerGood = `
+      const spendRes = await client.query(\`SELECT COALESCE(sum(total_cost), 0)::numeric AS spend FROM fuel.fuel_transactions\`);
+  `;
+  const plannerBad = `
+      FROM fuel.fuel_transactions
+          WHERE operating_company_id = $1::uuid
+      ).catch(() => ({ rows: [{ spend: 0, avg_price: 0 }] }));
+  `;
+  const plannerGoodFails = computePlannerFailures(plannerGood);
+  if (plannerGoodFails.length) {
+    console.error(`SELFTEST FAIL — planner good: ${JSON.stringify(plannerGoodFails)}`);
+    process.exit(1);
+  }
+  const plannerBadFails = computePlannerFailures(plannerBad);
+  if (!plannerBadFails.length) {
+    console.error("SELFTEST FAIL — planner fake-zero catch should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — planner spend fail-loud");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
@@ -71,13 +106,14 @@ function selftest() {
 
 function run() {
   const source = fs.readFileSync(PAGE, "utf8");
-  const failures = computeFailures(source);
+  const planner = fs.readFileSync(PLANNER, "utf8");
+  const failures = [...computeFailures(source), ...computePlannerFailures(planner)];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — Fuel Home dashboard KPIs wired`);
+  console.log(`[${LABEL}] OK — Fuel Home dashboard KPIs wired; spend query fail-loud`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
