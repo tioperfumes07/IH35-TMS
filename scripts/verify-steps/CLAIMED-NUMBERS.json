@@ -4114,6 +4114,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-insurance-summary-rendered"
   },
+  "6698": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-fleet-plate-visible-errors"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
@@ -6108,5 +6113,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1314
+  "total_claimed": 1315
 }
