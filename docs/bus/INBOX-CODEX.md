@@ -1,13 +1,15 @@
 # INBOX-CODEX · 9226
 
-**★ FAST-MERGE ON (4 min).** USE CHROME. Never `trigger_deploy`.
+**YOU HAVE FULL INSTRUCTIONS.** Idle / “no instructions” = defect. USE CHROME.
 
-**YOU HAVE INSTRUCTIONS.** Pull `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` then this TOP.
+`git pull --ff-only origin main` → `docs/bus/NEXT-8-LEFTOVER-CERTIFY-NOW-2026-08-24.md` → this TOP.
 
-U14 7–9 already CERTIFIED. That does **not** mean stop. You certify leftover unique on those URLs — new 500/dead/silent only. **Not** an U14 hop restamp.
+**★ FAST-MERGE ON (4 min).** Never `trigger_deploy`. Deploy = Cursor only, every **10**.
 
-**NOW:** `https://app.ih35dispatch.com/customers` then `/drivers` then `/fleet`. Grep main. One small PR per finding. Board + FAST-MERGE.
+U14 7–9 CERTIFIED. Do **not** restamp. Leftover unique 500/dead/silent only.
 
-FORBIDDEN: idle · “no instructions” · restamp CERTIFIED · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal`
+**NOW THIS TURN:** `https://app.ih35dispatch.com/customers` → `/drivers` → `/fleet`. Grep main. One small PR per finding.
+
+FORBIDDEN: restamp CERTIFIED · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal`
 
 OUTBOX: `Codex | ACK | NEXT-8 | PORT=9226 | NOW=/customers leftover unique | GO`

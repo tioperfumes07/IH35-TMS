@@ -89,4 +89,4 @@ ACK: `Devin-A | ACK | NEXT-8 | NOW=/vendors EXTENT | GO`
 
 - Max one unique finding per PR. Prefer <15 files. Extend an **existing** verify-step (Cursor EVEN). Do **not** edit `CLAIMED-NUMBERS.json` in feature PRs.
 - Do **not** stack 2–N same-area PRs (Rule 27). One open PR per area.
-- Cursor kicks Render only when **both** clocks fire: ≥5 min since last live **and** ≥5 merged PRs (cap 10). Never per-merge. Never a second kick while one deploy is in flight.
+- Cursor kicks Render only when **both** clocks fire: ≥**10 min** since last live **and** ≥**10** merged PRs. Never per-merge. Never a second kick while one deploy is in flight.
