@@ -1,4 +1,0 @@
-# STALE — DO NOT FOLLOW
-
-Canonical: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  
-Seat: `docs/bus/INBOX-<SEAT>.md`

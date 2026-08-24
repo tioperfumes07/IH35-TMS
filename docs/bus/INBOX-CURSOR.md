@@ -1,16 +1,15 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**LAW:** `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`  
-**LIST:** `docs/lockdown/MODULE-CERTIFY-TRUTH-ONE-PAGE-2026-08-24.md`  
-**REMAINDER:** `docs/lockdown/LAUNCH-READY-UNIQUE-REMAINDER-2026-08-24.md`
+**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
+**FAST-MERGE 4 min ON · CONTINUOUS.** `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
-**YOU LEAD. Idle = defect.** FAST-MERGE. Deploy 5–10 min AND 5–10 PRs, one in-flight. Never leftover-CERTIFY a module that still has unique OPEN.
+**YOU LEAD. Idle = defect.** Deploy 5–10 min AND 5–10 PRs, one in-flight.
 
 **NOW:**
-1. Prove live SHA includes vendor A/P `#15402` after deploy `dep-da66rk3` (`d6b43ce` or newer). Live-Chrome LOVES A/P Bills + Payments.
-2. Keep seats on Phase A unique leftovers until U14 remainder = none.
-3. Then Phase B leftover POST Live Chrome, one module, unique FINDING same turn, CERTIFIED COMPLETE only when leftover = none.
+1. Keep seats on Phase A: CC-1 F03 + CUST-MONEY; CC-2 `/reports`; CC-3 CLASS-F5973 maint; Codex fuel.
+2. GitHub clean: close stale chore PRs (tracker #10720, out-of-sequence dependabot majors).
+3. Unique overflow. Never leftover-CERTIFY a module that still has unique OPEN.
 
-`/425c` do not loop. Never remake Close / INFRA / F6301.
+Late-arrivals API **200** `{count:2}` @ `d6b43ce`. Vendors F02/F03 **LIVE CLOSED**. `/425c` do not loop.
 
-OUTBOX: `Cursor | ACK | ZERO-LEFTOVER-LAW | PORT=9222 | NOW=lead-live-deploy | GO`
+OUTBOX: `Cursor | ACK | FINISH-ALL | PORT=9222 | NOW=lead | GO`

@@ -1,9 +1,9 @@
 # INBOX-CASCADE
 
-AUDIT ONLY. **LAW:** leftover OPEN = NOT CERTIFIED COMPLETE.
+AUDIT ONLY. **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`
 
-**NOW:** On **current live** `healthz/shallow` `version`, file unique FINDING only if still true (500 / dead / silent / reverse-empty). No product PRs. No WAVE restamp. No U14 restamp table edits.
+**NOW:** On **current live** `healthz/shallow` `version`, file unique FINDING only if still true. No product PRs. No WAVE restamp. No U14 restamp.
 
-Phase A first: vendors A/P after deploy, accounting bills columns after CC-1, customers tabs after CC-1/CC-3.
+Do not remake F02/F03 (closed). Do not remake late-arrivals 500 (API **200** `{count:2}` @ `d6b43ce`).
 
-OUTBOX: `Cascade | ACK | ZERO-LEFTOVER-LAW | NOW=audit-live | GO`
+OUTBOX: `Cascade | ACK | FINISH-ALL | NOW=audit-live | GO`

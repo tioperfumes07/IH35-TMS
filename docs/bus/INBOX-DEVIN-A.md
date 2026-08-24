@@ -2,10 +2,10 @@
 
 Not PARKED. AUDIT ONLY.
 
-**LAW:** leftover OPEN = NOT CERTIFIED COMPLETE. `docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md`
+**RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`
 
-**NOW:** Live Chrome `/vendors` EXTENT on **current** healthz after deploy `dep-da66rk3`. Confirm F02/F03 (LOVES A/P bills + payments). File only if still empty/500. Do not remake F02/F03 as new cards if live shows rows.
+**NOW:** Next U14 leftover URL that still has OPEN unique (**accounting `/accounting/bills` F03** after CC-1, or leftover POST). Never restamp. No product PRs.
 
-Then next U14 leftover URL that still has OPEN unique. Never restamp. No product PRs.
+F02/F03 **LIVE CLOSED**. Late-arrivals API **200** `{count:2}` @ `d6b43ce` — do not refile the 500 card.
 
-OUTBOX: `Devin-A | ACK | ZERO-LEFTOVER-LAW | NOW=/vendors EXTENT | GO`
+OUTBOX: `Devin-A | ACK | FINISH-ALL | NOW=next-OPEN-unique | GO`
