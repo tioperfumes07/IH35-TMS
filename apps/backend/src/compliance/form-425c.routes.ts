@@ -1075,7 +1075,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const amended = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+    let amended: Record<string, unknown> | null;
+    try {
+    amended = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       const srcRes = await client.query(
         `
           SELECT *
@@ -1088,6 +1090,23 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       const src = srcRes.rows[0];
       if (!src) return null;
+      if (src.status !== "filed") {
+        throw new Error("form_425c_amend_source_not_filed");
+      }
+      const openRes = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM compliance.form_425c_reports
+          WHERE operating_company_id = $1::uuid
+            AND reporting_month = $2
+            AND status <> 'filed'
+          LIMIT 1
+        `,
+        [b.operating_company_id, src.reporting_month]
+      );
+      if (openRes.rows[0]) {
+        throw new Error("form_425c_amendment_already_open");
+      }
       const res = await client.query(
         `
           INSERT INTO compliance.form_425c_reports (
@@ -1188,6 +1207,22 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       return report;
     });
+    } catch (err) {
+      const e = err as { message?: string; code?: string; cause?: { code?: string } };
+      if (e?.message === "form_425c_amend_source_not_filed") {
+        return reply.code(409).send({
+          error: "form_425c_amend_source_not_filed",
+          message: "Only a filed MOR can be amended. Open the draft on History.",
+        });
+      }
+      if (e?.message === "form_425c_amendment_already_open" || e?.code === "23505" || e?.cause?.code === "23505") {
+        return reply.code(409).send({
+          error: "form_425c_amendment_already_open",
+          message: "An amendment draft already exists for this period — Open it on History. Amend will not create a second draft.",
+        });
+      }
+      throw err;
+    }
     if (!amended) return reply.code(404).send({ error: "report_not_found" });
     return reply.code(201).send(amended);
   });
