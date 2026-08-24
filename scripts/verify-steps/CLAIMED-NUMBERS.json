@@ -1,49 +1,4 @@
 {
-  "4620": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-expenses-reverse-section-visible-label"
-  },
-  "4619": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-profit-per-truck-cpm-excludes-sample-data"
-  },
-  "4615": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-maintenance-dashboard-kpis-excludes-sample-data"
-  },
-  "4611": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-load-profitability-insurance-excludes-sample-data"
-  },
-  "4607": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-safety-home-active-drivers-excludes-sample-data"
-  },
-  "4603": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-home-fleet-utilization-excludes-sample-data"
-  },
-  "4581": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-entity-label-rejects-serialized-json"
-  },
-  "4599": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-fuel-class-f5973-remainder-wired"
-  },
-  "4577": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-resizable-table-column-widths-no-fetch-loop"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -3759,6 +3714,11 @@
     "claimed_by": "codex",
     "purpose": "verify-driver-metrics-shared-roster"
   },
+  "4577": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-resizable-table-column-widths-no-fetch-loop"
+  },
   "4578": {
     "claimed_at": "2026-08-23",
     "claimed_by": "codex",
@@ -3768,6 +3728,11 @@
     "claimed_at": "2026-08-23",
     "claimed_by": "codex",
     "purpose": "verify-driver-pwa-shared-dispatch-view"
+  },
+  "4581": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-entity-label-rejects-serialized-json"
   },
   "4582": {
     "claimed_at": "2026-08-23",
@@ -3813,6 +3778,46 @@
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
     "purpose": "verify-maintenance-kpi-excludes-sample-units"
+  },
+  "4599": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-class-f5973-remainder-wired"
+  },
+  "4603": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-home-fleet-utilization-excludes-sample-data"
+  },
+  "4607": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-safety-home-active-drivers-excludes-sample-data"
+  },
+  "4611": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-load-profitability-insurance-excludes-sample-data"
+  },
+  "4615": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-dashboard-kpis-excludes-sample-data"
+  },
+  "4619": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-profit-per-truck-cpm-excludes-sample-data"
+  },
+  "4620": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-expenses-reverse-section-visible-label"
+  },
+  "4623": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-insurance-dashboard-excludes-fixture-data"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -5798,5 +5803,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1278
+  "total_claimed": 1279
 }
