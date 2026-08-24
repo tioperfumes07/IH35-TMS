@@ -53,24 +53,24 @@ Live `healthz/shallow` `version` = `97d6a14` (USMCA). Unique 500 / dead click / 
 | finance | `/finance` | `97d6a14` | Overview · Projections · Scenarios · Hub · Statements · AR/AP Aging · Break-Even · Loan Wizard · Calculator · Amortization |
 | driver-hub | `/driver-hub` | `97d6a14` | Overview · Driver Scheduler · Leave Requests |
 | reports | `/reports` | `97d6a14` | category tabs All→Saved · Trial balance · Profit & loss |
+| compliance | `/compliance` | `97d6a14` | Filings · Overview · HOS Tracker · HOS Viewer · Violations · HOS History · Required Documents |
+| eld | `/eld` | `97d6a14` | Live Duty · HOS Violations · Unidentified · Certifications · Settings (honest empty) |
+| inventory | `/inventory` | `97d6a14` | Parts & Stock · Assignments · Purchase History |
+| fuel | `/fuel` | `97d6a14` | Home · Planner · Relay inbox · Settings · Expense mapping · History · Loves prices · Compliance |
+| users | `/users` | `97d6a14` | All / Active / Pending / Deactivated · + Create User present |
+| home | `/home` | `97d6a14` | landing · 7d · 30d · + Book Load present |
+| help | `/help` | `97d6a14` | Help center · article `/help/welcome` |
+| tasks | `/tasks` | `97d6a14` | Task Board · Calendar · My Tasks · Team Chat · Admin Report |
+| program | `/program` | `97d6a14` | Scenario tracker · matrix · legacy board · tracker · modules · final-additions |
+| system | `/system` | `97d6a14` | Overview · Program Tracker · Software / Build · Claude Coder. QBO tabs hidden (USMCA; not a FINDING). `background_jobs.stale` expected until next cron tick (CC-2) |
 
-**Who restamps these as U14:** **nobody.** Next on these four = unique FINDING only.
+**Who restamps these as U14:** **nobody.** Next = unique FINDING only.
 
 ### B2 — leftover POST hop log (not leftover POST Live Chrome CERTIFIED yet)
 
 | Sidebar id | Route | Leftover unique hop SHA | Who walks unique FINDING next |
 |------------|-------|-------------------------|-------------------------------|
-| compliance | `/compliance` | `6585a66` | CC-3 |
-| eld | `/eld` | `6585a66` | CC-3 |
-| inventory | `/inventory` | `6585a66` | CC-3 |
-| fuel | `/fuel` | `6585a66` | CC-2 |
-| docs | `/docs` | `6585a66` | Cursor (overflow only) |
-| users | `/users` | `6585a66` | Cursor |
-| home | `/home` | `6585a66` | Cursor |
-| help | `/help` | `6585a66` | Cursor |
-| program | `/program` | `6585a66` | Cursor |
-| system | `/system` | `6585a66` | Cursor |
-| tasks | `/tasks` | `6585a66` | Cursor |
+| docs | `/docs` | `6585a66` | **HOLD leftover POST stamp.** CC-1 unique: `DOCS-F-KPI-FILTER-RESET-STUCK` · `DOCS-F-TYPE-FILTER-EXACT-MATCH-ONLY` · `DOCS-F-PREVIEW-CATEGORY-ALWAYS-UNCATEGORIZED`. No 500 this pass. |
 | form_425 | `/425c` | `189dd4c` | **Do not loop.** Unique FINDING only if new 500/dead/silent |
 
 **Who “certifies” leftover POST as U14:** **nobody.** There is no second exclusive campaign. Remaining work = unique FINDING (500 / dead click / silent no-op). One small PR. FAST-MERGE.

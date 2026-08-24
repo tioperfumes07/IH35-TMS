@@ -18,17 +18,17 @@ Leftover POST leftover unique hops are **logged**, not a second CERTIFIED. Remai
 | 3 | DRIVER HUB | `driver-hub` | `/driver-hub` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 | 4 | 425C | `form_425` | `/425c` | leftover unique hop @ `189dd4c`. **Do not loop.** |
 | 5 | REPORTS | `reports` | `/reports` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
-| 6 | TASKS | `tasks` | `/tasks` | leftover unique hop @ `6585a66`. |
-| 7 | COMPLIANCE | `compliance` | `/compliance` | leftover unique hop @ `6585a66`. CC-3 unique FINDING. |
-| 8 | ELD | `eld` | `/eld` | leftover unique hop @ `6585a66`. |
-| 9 | INVENTORY | `inventory` | `/inventory` | leftover unique hop @ `6585a66`. |
-| 10 | USERS | `users` | `/users` | leftover unique hop @ `6585a66`. |
-| 11 | HOME | `home` | `/home` | leftover unique hop @ `6585a66`. |
-| 12 | FUEL | `fuel` | `/fuel` | leftover unique hop @ `6585a66`. CC-2 unique FINDING. |
-| 13 | DOCS | `docs` | `/docs` | leftover unique hop @ `6585a66`. |
-| 14 | HELP | `help` | `/help` | leftover unique hop @ `6585a66`. |
-| 15 | PROGRAM | `program` | `/program` | leftover unique hop @ `6585a66`. |
-| 16 | SYSTEM | `system` | `/system` | leftover unique hop @ `6585a66`. |
+| 6 | TASKS | `tasks` | `/tasks` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 7 | COMPLIANCE | `compliance` | `/compliance` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 8 | ELD | `eld` | `/eld` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 9 | INVENTORY | `inventory` | `/inventory` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 10 | USERS | `users` | `/users` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 11 | HOME | `home` | `/home` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 12 | FUEL | `fuel` | `/fuel` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 13 | DOCS | `docs` | `/docs` | **HOLD leftover POST stamp.** CC-1 three unique FINDINGs staged. No 500 this pass. |
+| 14 | HELP | `help` | `/help` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 15 | PROGRAM | `program` | `/program` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
+| 16 | SYSTEM | `system` | `/system` | leftover POST Live Chrome CERTIFIED (not U14) @ `97d6a14`. Unique FINDING only. |
 
 ---
 
