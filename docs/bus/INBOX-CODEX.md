@@ -8,7 +8,7 @@
 
 U14 7–9 CERTIFIED. Do **not** restamp. Leftover unique 500/dead/silent only.
 
-**NOW THIS TURN:** `https://app.ih35dispatch.com/customers` → `/drivers` → `/fleet`. Grep main. One small PR per finding.
+**NOW THIS TURN:** Ship **CUST-F6326** (compiler red was Cursor `/program` TS2322 — pull this merge). Then leftover unique `/customers` → `/drivers` → `/fleet`. Grep main. One small PR per finding. Never idle.
 
 FORBIDDEN: restamp CERTIFIED · `/425c` `/cash-flow` `/compliance` `/docs` `/fuel` `/lists` `/legal`
 
