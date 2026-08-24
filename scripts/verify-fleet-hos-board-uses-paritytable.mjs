@@ -53,8 +53,9 @@ function assertMigrated(src) {
       errors.push(`${PAGE}: missing preserved ParityTable contract: ${required}`);
     }
   }
-  if (!/onRowClick=\{\(row\) => navigate\(`\/fleet\/units\/\$\{row\.unit_id\}`\)\}/.test(src)) {
-    errors.push(`${PAGE}: must preserve row drill-through to fleet unit detail`);
+  const rowDrills = (src.match(/onRowClick=\{\(row\) => navigate\(`\/fleet\/units\/\$\{row\.unit_id\}`\)\}/g) ?? []).length;
+  if (rowDrills < 2) {
+    errors.push(`${PAGE}: must preserve live + offline row drill-through to fleet unit detail`);
   }
   if (!/async function exportFleetHos\(\)[\s\S]*await downloadFleetLocationHosXlsx\(companyId\)[\s\S]*setExportError\(error instanceof Error \? error\.message : "Fleet HOS export failed"\)/.test(src)) {
     errors.push(`${PAGE}: Excel export must surface rejected downloads`);
@@ -98,22 +99,46 @@ function selftest() {
       onRowClick={(row) => navigate(\`/fleet/units/\${row.unit_id}\`)}
     />
   `;
-  const bad = `
-    export function FleetHosBoardSection() {
-      return <table><thead><tr><th>Unit</th></tr></thead></table>;
-    }
-  `;
   const goodErrors = assertMigrated(good);
-  const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
-  if (badErrors.length < 8) {
-    console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
-    process.exit(1);
+  const mutations = [
+    ['from "../../components/parity/ParityTable"', 'from "./LegacyTable"', "import shared ParityTable"],
+    ['from "../../components/ListErrorState"', 'from "./LegacyError"', "import ListErrorState"],
+    ["<ParityTable", "<LegacyTable", "expected live + offline"],
+    ["const columns", "<table></table> const columns", "hand-rolled table"],
+    ["<ListErrorState", "<LegacyErrorState", "query failures must render"],
+    ['label: "Unit"', 'label: "Vehicle"', 'label: "Unit"'],
+    ['label: "Driver"', 'label: "Operator"', 'label: "Driver"'],
+    ['label: "Last Update (Laredo)"', 'label: "Last Update"', 'label: "Last Update (Laredo)"'],
+    ['label: "Drive Rem (11h)"', 'label: "Drive"', 'label: "Drive Rem (11h)"'],
+    ['label: "Shift Rem (14h)"', 'label: "Shift"', 'label: "Shift Rem (14h)"'],
+    ['label: "HOS"', 'label: "Hours"', 'label: "HOS"'],
+    ['label: "Map"', 'label: "Location"', 'label: "Map"'],
+    ['storageKey="compliance-fleet-hos"', 'storageKey="wrong-live"', 'storageKey="compliance-fleet-hos"'],
+    ['storageKey="compliance-fleet-hos-offline"', 'storageKey="wrong-offline"', 'storageKey="compliance-fleet-hos-offline"'],
+    ['emptyText="No reporting vehicles."', 'emptyText="None"', 'emptyText="No reporting vehicles."'],
+    ['tableTestId="compliance-fleet-hos-table"', 'tableTestId="wrong-live"', 'tableTestId="compliance-fleet-hos-table"'],
+    ['tableTestId="compliance-fleet-hos-offline-table"', 'tableTestId="wrong-offline"', 'tableTestId="compliance-fleet-hos-offline-table"'],
+    ["filterBar={", "toolbar={", "filterBar={"],
+    ["downloadFleetLocationHosXlsx", "downloadWrongExport", "downloadFleetLocationHosXlsx"],
+    ["Offline / stale (", "Offline (", "Offline / stale ("],
+    ["onRowClick", "onOfflineRowClick", "live + offline row drill-through"],
+    ['setExportError(error instanceof Error ? error.message : "Fleet HOS export failed")', "setExportError(undefined)", "surface rejected downloads"],
+    ["disabled={exportPending}", "disabled={false}", "prevent duplicate pending downloads"],
+    ['role="alert"', 'role="status"', "render accessibly"],
+    ["async function exportFleetHos()", 'async function exportFleetHos() { downloadFleetLocationHosXlsx(companyId).catch(() => undefined); } function oldExport()', "must not swallow failures"],
+  ];
+  for (const [from, to, expected] of mutations) {
+    const errors = assertMigrated(good.replace(from, to));
+    if (!errors.some((error) => error.includes(expected))) {
+      console.error(`${LABEL} --selftest FAIL mutation ${from}: expected ${expected}`, errors);
+      process.exit(1);
+    }
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS — ${mutations.length}/${mutations.length} ParityTable/drill/export/error defects detected`);
 }
 
 function main() {
