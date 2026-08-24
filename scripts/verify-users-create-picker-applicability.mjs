@@ -51,6 +51,9 @@ function analyze() {
   if (/EntityPicker|ReferenceSelect/.test(page)) {
     failures.push("Users.tsx must not mount EntityPicker/ReferenceSelect while create picker_law is dropped");
   }
+  if (!page.includes("Select an operating company before creating a user")) {
+    failures.push("Users.tsx + Create User must toast when no operating company — opening the drawer anyway was a silent POST");
+  }
   return failures;
 }
 

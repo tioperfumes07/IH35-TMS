@@ -546,6 +546,10 @@ export function UsersPage() {
   }
 
   const openInvite = () => {
+    if (!selectedCompanyId) {
+      pushToast("Select an operating company before creating a user", "error");
+      return;
+    }
     resetInviteFields();
     setInviteOpen(true);
   };
