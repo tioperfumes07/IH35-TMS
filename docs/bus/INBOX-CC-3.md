@@ -8,8 +8,7 @@
 
 **lists CERTIFIED** `LIVE_SHA=01385f7`. **legal CERTIFIED** `LIVE_SHA=01385f7`. Do **not** recertify.
 
-**YOUR U14 done → agreed leftover sequence NOW.** POST-U14 16/16 DONE. Empty unique ≠ idle.
-NOW: unique 500/dead/silent Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance` then `docs/audit/GUARD-WORKORDERS.md` in-lane.
+**NOW ONE ID:** unique 500/dead/silent Fully-Wired 1–12 on `https://app.ih35dispatch.com/compliance`. THEN `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE`. Do not take `CI-LUCIA-BYPASS-MESSAGES-ROUTES` (Codex). Do not take SAFETY-EVENTS schema.
 
 FORBIDDEN: recertify lists/legal · `/customers` `/drivers` `/fleet` `/425c` · `trigger_deploy`.
 
