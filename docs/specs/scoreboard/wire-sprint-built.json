@@ -2445,6 +2445,14 @@
       "leafRe": "^maintenance\\.panel\\.pm_alerts$",
       "guard": "scripts/verify-maintenance-pm-alerts-range.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "MAINTENANCE-INTEGRATION-STRIP-FAILURE-TRUTH",
+      "modules": ["maintenance"],
+      "cols": ["connectivity"],
+      "leafRe": "^maintenance\\.panel\\.integrations$",
+      "guard": "scripts/verify-maintenance-integration-strip-failure-truth.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
