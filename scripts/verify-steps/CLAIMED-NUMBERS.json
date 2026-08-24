@@ -1,4 +1,9 @@
 {
+  "4703": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-daily-tasks-cancel-wired"
+  },
   "4699": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
@@ -6178,5 +6183,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1323
+  "total_claimed": 1324
 }
