@@ -154,6 +154,20 @@ export function computeSystemModuleFailures(files) {
     errors.push("SystemModulePage.tsx: overview and Program cards must share the active status denominator");
   }
 
+  // SYSTEM-LAUNCH-COPY-SILENT: Launch/Copy must not paint Copied after a swallowed clipboard write.
+  if (/clipboard\?\.writeText\(LAUNCH_COMMAND\)\.catch\(\s*\(\)\s*=>\s*undefined\)/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must not fire-and-forget clipboard write");
+  }
+  if (!/useToast/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder copy must use useToast");
+  }
+  if (!/Could not copy the launch command/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must toast clipboard write failure");
+  }
+  if (!/await navigator\.clipboard\.writeText\(LAUNCH_COMMAND\)/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must await clipboard write before Copied");
+  }
+
   return errors;
 }
 
@@ -215,6 +229,9 @@ if (process.argv.includes("--selftest")) {
     'inSync ? "IN SYNC" : "DEPLOY MISMATCH";\n' +
     'function activeTrackerCount(tracker: ProgramTracker) { const { pending, in_progress, completed } = tracker.view_counts; return pending + in_progress + completed; }\n' +
     '<Row label="Active tracked blocks">{activeTrackerCount(tracker.data)}</Row>; <Row label="Active tracked blocks">{activeTrackerCount(t)}</Row>;\n' +
+    'useToast();\n' +
+    'await navigator.clipboard.writeText(LAUNCH_COMMAND);\n' +
+    'pushToast("Could not copy the launch command", "error");\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -279,6 +296,14 @@ if (process.argv.includes("--selftest")) {
     page: goodPage.replaceAll("activeTrackerCount(", "tracker.data.registered_total || (")
       .replace("pending + in_progress + completed", "tracker.registered_total"),
   });
+  const failSilentLaunchCopy = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage
+      .replace("useToast();", "")
+      .replace("await navigator.clipboard.writeText(LAUNCH_COMMAND);", "void navigator.clipboard?.writeText(LAUNCH_COMMAND).catch(() => undefined);")
+      .replace('pushToast("Could not copy the launch command", "error");', "setCopied(which);"),
+  });
   const goodGlobalQbo = {
     topbar: 'const qboAvailable = selectedCompany?.code === "TRANSP"; enabled: Boolean(companyId) && office && qboAvailable; enabled: Boolean(companyId) && office && qboAvailable; <TopStatusBar qboAvailable={qboAvailable} />',
     statusBar: 'qboAvailable ? <span>{qboVis.label}</span> : null; qboAvailable && qboSyncPill',
@@ -305,6 +330,7 @@ if (process.argv.includes("--selftest")) {
     ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
     ["deploy mismatch direction guess is flagged", failDeployDirectionGuess.filter((e) => e.includes("deploy parity") || e.includes("DEPLOY MISMATCH")).length === 2],
     ["mixed Program Tracker denominator is flagged", failMixedTrackerDenominator.filter((e) => e.includes("status denominator") || e.includes("active status denominator")).length === 2],
+    ["silent Claude launch copy is flagged", failSilentLaunchCopy.filter((e) => /clipboard|useToast|launch command/.test(e)).length >= 3],
     ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
     ["global USMCA QBO chrome/query/copy leak is flagged", failGlobalQbo.length === 6],
   ];

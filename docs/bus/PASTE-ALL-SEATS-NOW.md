@@ -12,7 +12,7 @@ U14 14/14 CERTIFIED. Never restamp. Never recertify. Idle / “no instructions�
 1–2  CC-1   `/cash-flow` then `/finance`
 3–4  CC-2   `/fuel` then `/reports` leftover unique (not CC-1 money reports)
 5–7  CC-3   `/compliance` then `/eld` then `/inventory`
-8    Cursor `/docs` leftover-clean · NOW `/home` then help/program/system
+8    Cursor `/docs` leftover-clean · NOW `/program` then `/system` remainder
 Codex leftover unique `/customers` → `/drivers` → `/fleet` (no restamp)
 ===== END =====
 

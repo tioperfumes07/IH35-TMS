@@ -10,7 +10,7 @@ Canonical sequence: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 NOW table: `docs/bus/NOW-ONE-SOURCE.md`  
 Bar: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
 Merge: `docs/bus/FAST-MERGE-4MIN-LAW.md`  
-Deploy: Cursor lead only — every **5–10 min AND 5–10 PRs**, one in-flight. **CC / Codex / Cascade / Devin never `trigger_deploy`.**
+Deploy: Cursor lead only — every **10 min AND 10 PRs**, one in-flight. **CC / Codex / Cascade / Devin never `trigger_deploy`.**
 
 ---
 
@@ -38,7 +38,7 @@ Deploy: Cursor lead only — every **5–10 min AND 5–10 PRs**, one in-flight.
 | 5 | COMPLIANCE | `/compliance` | **CC-3** | **YES — start here** | #6 `/eld` |
 | 6 | ELD | `/eld` | **CC-3** | after #5 unique-clean | #7 `/inventory` |
 | 7 | INVENTORY | `/inventory` | **CC-3** | after #6 unique-clean | then `/maintenance` remainder unique only |
-| 8 | DOCS | `/docs` | **Cursor** | **YES — start here** | `/users` → `/home` → `/help` → `/program` → `/system` (wave 2) |
+| 8 | DOCS | `/docs` | **Cursor** | leftover-clean | Wave 2 NOW `/program` then `/system` remainder (`/help` leftover-clean) |
 
 **Not in this 8 (do not jump ahead):** `/425c` leftover (Cursor already shipped #15053–#15279 — do not loop), `/tasks` leftover-clean (#15279), `/driver-hub` walked.
 
@@ -66,9 +66,9 @@ FORBIDDEN: idle · recertify lists/legal · `/425c` `/cash-flow` `/docs` · `tri
 ACK: `CC-3 | ACK | NEXT-8 | PORT=9225 | NOW=/compliance | GO`
 
 ### Cursor · 9222 · lead
-**NOW:** `https://app.ih35dispatch.com/docs` leftover unique. Do **not** loop `/425c`. Lead FAST-MERGE + deploy cadence (5–10 min **and** 5–10 PRs, one in-flight). Wave 2 = users/home/help/program/system.
+**NOW:** `https://app.ih35dispatch.com/program` leftover unique. Do **not** loop `/425c`. Lead FAST-MERGE + deploy every **10 min AND 10 PRs**, one in-flight. `/help` leftover-clean. Then `/system` remainder.
 FORBIDDEN: recertify U14 · steal CC-1/CC-2/CC-3 NOW · mega-PRs
-ACK: `Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/docs | GO`
+ACK: `Cursor | ACK | NEXT-8 | PORT=9222 | NOW=/program | GO`
 
 ### Codex · 9226
 **NOW:** Chrome `https://app.ih35dispatch.com/customers` leftover unique → `/drivers` → `/fleet`. No CERTIFIED restamp.

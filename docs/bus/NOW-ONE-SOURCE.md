@@ -32,7 +32,7 @@ Live SHA: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` → `ve
 
 | Seat | Port | NOW (one URL / one id) | Next 8 role |
 |------|------|------------------------|-------------|
-| **Cursor** | **9222** | `https://app.ih35dispatch.com/home` leftover unique | Wave 2. Docs+users leftover shipped. Then `/help` `/program` `/system`. Deploy every **10**. |
+| **Cursor** | **9222** | `https://app.ih35dispatch.com/program` leftover unique | Wave 2. Home+system launch-copy shipped. `/help` leftover-clean. Then `/program` `/system` remainder. Deploy every **10**. |
 | **CC-1** | **9223** | `https://app.ih35dispatch.com/cash-flow` then `/finance` | Modules **#1–#2**. Money TESTs only. STOP `/425c`. |
 | **CC-2** | **9224** | `https://app.ih35dispatch.com/fuel` then `/reports` leftover | Modules **#3–#4**. No Close remake. Stay out of CC-1 money reports. |
 | **CC-3** | **9225** | `https://app.ih35dispatch.com/compliance` then `/eld` `/inventory` | Modules **#5–#7**. Then maintenance remainder. lists+legal omit. |
