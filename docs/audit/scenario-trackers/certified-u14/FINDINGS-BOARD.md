@@ -13,7 +13,7 @@ Unique class only: HTTP 500 · dead click · silent no-op · missing reverse on 
 
 | Date | Id | Seat (auditor) | Module | Hop | Class | LIVE_SHA | Evidence (URL or SQL) | OWNER (fixer) | Status |
 |------|----|----------------|--------|-----|-------|----------|----------------------|---------------|--------|
-| 2026-08-23 | *(none yet — Cascade ACK’d without EXTENT; Devin-A OUTBOX was retired. Re-walk required.)* | — | — | — | — | 01385f7 | Empty trackers U14-01…U14-13 | Cursor (bus) | PROCESS — auditors must fill EXTENT this session |
+| 2026-08-23 | U14-CLOSED-AUDITORS-WALK-LEFTOVER | Cascade + Devin-A | leftover | POST-U14 | PROCESS | 6723148 | U14 14/14 CERTIFIED — do not recertify. File unique 500/dead/silent on leftover NOW (accounting EXTENT / vendors EXTENT then POST leftovers). Empty unique → AUDIT-PASS on that surface. | Cursor (bus) + named OWNER | OPEN — auditors must write a real FINDING or AUDIT-PASS this session |
 
 ## OWNER map
 

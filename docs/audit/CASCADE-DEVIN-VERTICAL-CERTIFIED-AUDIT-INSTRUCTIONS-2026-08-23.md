@@ -92,7 +92,7 @@ If healthz ≠ `origin/main` short: audit **live** anyway; write `LIVE_SHA_LAG`.
 23. `docs/audit/scenario-trackers/certified-u14/VERTICAL-LEAF-WORKSHEET.md`
 24. Module file `U14-0N-*.md`
 
-**Never steal:** lists/legal/customers/drivers/fleet Required JSON — those modules are still OPEN U14.
+**Never steal leftover product prefixes** (Cursor `/425c`, CC-1 `/cash-flow` `/finance`). U14 is 14/14 CERTIFIED — lists/legal/customers/drivers/fleet are **not OPEN**.
 
 ---
 

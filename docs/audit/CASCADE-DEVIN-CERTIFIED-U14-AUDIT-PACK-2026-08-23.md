@@ -84,7 +84,7 @@ For each module:
    - unique FINDING only for 500 / dead click / silent no-op → FAST-MERGE a fix in-lane **or** write `docs/audit/GUARD-WORKORDERS.md` OPEN row if another lane owns money
 7. Prepend OUTBOX one line. Next module same turn.
 
-Forbidden: HOLD · recertify · occupy OPEN U14 prefixes · wait for Jorge · CI watch · second Render deploy.
+Forbidden: HOLD · recertify · occupy leftover NOW prefixes · wait for Jorge · CI watch · second Render deploy. U14 is 14/14 CLOSED.
 
 ---
 

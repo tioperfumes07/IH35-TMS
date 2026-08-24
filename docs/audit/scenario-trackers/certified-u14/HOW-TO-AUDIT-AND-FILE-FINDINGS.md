@@ -109,4 +109,4 @@ Unique FINDING = HTTP 500, dead click, silent no-op, missing reverse that the go
 - Treating Devin-A as a scribe who only copies files
 - Calling CERTIFIED SHA from last week complete on a new healthz without re-walking
 - Inventing load/claim FKs
-- Occupying OPEN U14 prefixes
+- Occupying another seat’s leftover NOW (Cursor `/425c`, CC-1 money). U14 is closed — do not recertify.

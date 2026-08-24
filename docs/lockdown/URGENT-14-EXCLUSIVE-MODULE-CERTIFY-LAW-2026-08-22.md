@@ -1,6 +1,8 @@
-# URGENT 14 — EXCLUSIVE MODULE CERTIFY (owner-locked 2026-08-22 — PERMANENT UNTIL CONCLUDED)
+# URGENT 14 — EXCLUSIVE MODULE CERTIFY (CONCLUDED 2026-08-23)
 
-**Reload every session until all 14 rows below are CERTIFIED.** Answered = closed. Do not invent a 15th queue. Do not share a URL prefix. Do not HOLD.
+**ALL 14 ROWS ARE CERTIFIED. THIS CAMPAIGN IS CLOSED.** Do not reload as OPEN work. Do not stamp. Do not recertify. Do not invent a 15th U14 queue.
+
+Work is leftover only: `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` + `docs/bus/NOW-ONE-SOURCE.md`.
 
 **Canonical NOW.** Older bus timestamps (12:05 / 12:28 / 16:55 / 17:14 CT), “help Cursor wherever,” and “awaiting next order” are **void**.
 
@@ -57,7 +59,7 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 
 **Specialist overlays (not a second queue):** CC-1 = money math on CC-1 modules only. Codex = reverse SQL/GET, no Chrome. CC-2 = live-verify, no GL math, no rebuild of proven hops. Cursor = Live Chrome stamp + bus + **one** deploy cadence. Cascade/Devin = re-walk Fully-Wired 1–12 on CERTIFIED modules vs **current** healthz (AUDIT-PASS or unique FINDING; never restamp the table). Devin-A = finish `docs/audit/scenario-trackers/certified-u14/`.
 
-**Stamp one OPEN module at a time.** Hops: `docs/bus/U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md`. `LIVE_SHA` must equal **this curl** of `healthz/shallow`. Do not batch lists+legal or customers+drivers+fleet.
+**Stamps are frozen.** Do not add, rewrite, or restamp any Status cell. Hops file is a CLOSED stub.
 
 ---
 
@@ -65,10 +67,8 @@ Ports: Cursor **9222** · CC-1 **9223** · CC-2 **9224** · CC-3 **9225** · Cod
 
 HOLD · awaiting next order · idle after your U14 rows CERTIFIED · occupy another seat’s prefix · remake proven TESTs / Close / Book Load · per-merge Render · CC `trigger_deploy` · guess live SHA · claim CERTIFIED without `healthz` SHA + hops
 
-If **your** exclusive U14 rows are CERTIFIED and Jorge did not give a different NOW: start `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` (first unclaimed leftover). That is not a 15th Urgent-14 plan — it is anti-idle. Codex/CC-3 still finish their OPEN U14 rows first.
+**All 14 Status cells are CERTIFIED.** This law does not expire back to OPEN. ACK leftover only.
 
-ACK: `SEAT | ACK | URGENT-14-EXCLUSIVE | PORT=n | MODULE=<id> | NOW=<url> | GO`
+ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url> | GO`
 
-**This law expires only when all 14 Status cells are CERTIFIED with a live SHA.** Until then it is session boot.
-
-**Leftover sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`. Seats whose **own** U14 rows are CERTIFIED start it **now** (first unclaimed row). Codex/CC-3 do not start leftover until their OPEN U14 rows CERTIFIED.
+**Leftover sequence (all seats, now):** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`.

@@ -19,4 +19,4 @@ One file per module. Copy template. Do not delete. Empty unique-FINDING → `AUD
 | `U14-12-safety.md` | safety | Devin |
 | `U14-13-insurance.md` | insurance | Devin |
 
-OPEN U14 (lists / legal / customers / drivers / fleet) are **not** in this folder until Cursor stamps CERTIFIED.
+U14 is **14/14 CERTIFIED**. lists / legal / customers / drivers / fleet are **not OPEN**. Audit leftover unique only. Do not recertify.

@@ -1,0 +1,17 @@
+---
+description: U14 is 14/14 CLOSED — never recertify, never say OPEN U14
+alwaysApply: true
+---
+
+# U14 CLOSED (owner 2026-08-23 22:45 CT)
+
+Urgent 14 exclusive certify is **DONE. 14/14 CERTIFIED. CONCLUDED.**
+
+- **Never** stamp, restamp, or recertify any of the 14 modules.
+- **Never** print OPEN hops for accounting/banking/settlements/factoring/dispatch/vendors/customers/drivers/fleet/lists/maintenance/safety/insurance/legal.
+- **Never** tell Codex/CC-3 to “finish U14 first.”
+- **Never** treat `U14-OPEN-MODULE-BY-MODULE-HOPS` as work. That file is a CLOSED stub.
+- Next work is **only** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md` + `docs/bus/NOW-ONE-SOURCE.md` leftover unique (500 / dead / silent).
+- Auditors file unique FINDING on leftover / certified surfaces. They do not reopen U14 certify.
+
+If a bus/INBOX/PASTE/OUTBOX line says U14 is OPEN — that line is **void**. Rewrite it. Do not follow it.
