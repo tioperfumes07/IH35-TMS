@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 function formatMinutes(min: number | null | undefined): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -122,9 +123,10 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
       ) : null}
 
       {query.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-          Failed to load live duty roster. Retry or check telematics HOS ingest health.
-        </p>
+        <ListErrorBanner
+          message="Failed to load live duty roster. Retry or check telematics HOS ingest health."
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
       <ParityTable<HosRosterDriver>

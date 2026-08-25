@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEldHosViolations, type EldHosViolation } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 type Props = { operatingCompanyId: string };
 
@@ -91,9 +92,10 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
       </div>
 
       {query.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-          Failed to load HOS violations.
-        </p>
+        <ListErrorBanner
+          message="Failed to load HOS violations."
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
       <ParityTable<EldHosViolation>
