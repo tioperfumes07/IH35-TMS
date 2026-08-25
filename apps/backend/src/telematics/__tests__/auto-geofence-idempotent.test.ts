@@ -33,7 +33,7 @@ describe("auto geofence idempotency", () => {
         if (sql.includes("INSERT INTO geo.geofences")) {
           existingByAddress.add(String(params[1]).toLowerCase());
           inserts += 1;
-          return { rows: [] };
+          return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
         }
         return { rows: [] };
       }),
@@ -48,5 +48,8 @@ describe("auto geofence idempotency", () => {
     await autoCreateGeofencesForLoadWithClient(client, "33333333-3333-4333-8333-333333333333", input);
 
     expect(inserts).toBe(1);
+    const outboxCalls = client.query.mock.calls.filter((call) => String(call[0]).includes("INSERT INTO outbox.events"));
+    expect(outboxCalls).toHaveLength(1);
+    expect(outboxCalls[0]?.[1]?.[0]).toBe("samsara.create_geofence");
   });
 });

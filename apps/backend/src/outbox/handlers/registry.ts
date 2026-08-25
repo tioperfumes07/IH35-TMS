@@ -10,6 +10,7 @@ import { TmsInvoicePushHandler } from "./tms-invoice-push.handler.js";
 import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
+import { SamsaraCreateGeofenceHandler } from "./samsara-create-geofence.handler.js";
 import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
 // WF-064: dispatch.wf064.override_notice and dispatch.wf064.distribution_failure had NO consumer.
 // Corrected 2026-08-03: the override notice was not "failing permanently" — it was written to
@@ -100,6 +101,7 @@ export function buildOutboxHandlerRegistry() {
     new TmsInvoicePushHandler(),
     new TmsBillPushHandler(),
     new SamsaraMasterDataPushHandler(),
+    new SamsaraCreateGeofenceHandler(),
     new FmcsaCustomerVerifyHandler(),
     new DispatchOverrideNoticeHandler(),
     new DispatchDistributionFailureHandler(),

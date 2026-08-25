@@ -732,4 +732,66 @@ export class SamsaraClient {
       return null;
     }
   }
+
+  /**
+   * Blueprint §5.2.3 outbound geofence: POST /addresses (Samsara Addresses API).
+   * Circle radius is WF-051 250 ft, integer meters.
+   */
+  async createAddress(input: {
+    name: string;
+    formattedAddress: string;
+    latitude: number;
+    longitude: number;
+    radiusMeters: number;
+    geofenceId: string;
+  }): Promise<{ id: string }> {
+    const token = this._token();
+    if (!token) {
+      throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    }
+    const url = new URL(`${SAMSARA_API_BASE}/addresses`);
+    const body = {
+      name: input.name.slice(0, 255),
+      formattedAddress: input.formattedAddress.slice(0, 1024),
+      latitude: input.latitude,
+      longitude: input.longitude,
+      geofence: {
+        circle: {
+          latitude: input.latitude,
+          longitude: input.longitude,
+          radiusMeters: Math.round(input.radiusMeters),
+        },
+      },
+      externalIds: { ih35GeofenceId: input.geofenceId },
+    };
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () =>
+        samsaraFetch(url, {
+          method: "POST",
+          headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      );
+    } catch (error) {
+      throw new SamsaraApiError(
+        `samsara_network_error:${String((error as Error)?.message ?? error)}`,
+        null,
+        null,
+        true
+      );
+    }
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      const retryable = res.status === 429 || res.status >= 500;
+      throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, retryable);
+    }
+    const nested = asObject(json.data);
+    const idRaw = json.id ?? nested?.id;
+    const id = typeof idRaw === "string" && idRaw.trim().length > 0 ? idRaw.trim() : "";
+    if (!id) {
+      throw new SamsaraApiError("samsara_address_missing_id", res.status, json, false);
+    }
+    return { id };
+  }
 }
