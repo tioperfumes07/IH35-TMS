@@ -58,6 +58,18 @@ export function auditSources({ cron, health, inProcess, index }) {
   if (!/idempotency\.cleanup_cron[\s\S]{0,80}maxStaleMinutes:\s*2880/.test(inProcessCode)) {
     failures.push("idempotency cleanup catch-up window is not 2880m");
   }
+  if (!/email\.queue_processor[\s\S]{0,80}maxStaleMinutes:\s*5/.test(inProcessCode)) {
+    failures.push("email.queue_processor catch-up window is not 5m (health two-period window)");
+  }
+  if (!/chat\.confirmation_escalation[\s\S]{0,80}maxStaleMinutes:\s*5/.test(inProcessCode)) {
+    failures.push("chat.confirmation_escalation catch-up window is not 5m (health two-period window)");
+  }
+  if (!/case\s+["']email\.queue_processor["'][\s\S]{0,200}maxStaleMinutes:\s*5/.test(healthCode)) {
+    failures.push("health.routes email.queue_processor window drifted from 5m");
+  }
+  if (!/case\s+["']chat\.confirmation_escalation["'][\s\S]{0,200}maxStaleMinutes:\s*5/.test(healthCode)) {
+    failures.push("health.routes chat.confirmation_escalation window drifted from 5m");
+  }
   if (/sync\.qbo_/.test(inProcessCode) || /qbo_vendors_push/.test(inProcessCode)) {
     failures.push("in-process catch-up must not run TMS→QBO push jobs");
   }
@@ -127,6 +139,26 @@ function selftest() {
         inProcess: clean.inProcess.replace(
           'jobName: "samsara.webhook_projection_cron", maxStaleMinutes: 15',
           'jobName: "samsara.webhook_projection_cron", maxStaleMinutes: 9999'
+        ),
+      },
+    },
+    {
+      name: "email queue catch-up window widened to hide DOWN",
+      value: {
+        ...clean,
+        inProcess: clean.inProcess.replace(
+          'jobName: "email.queue_processor", maxStaleMinutes: 5',
+          'jobName: "email.queue_processor", maxStaleMinutes: 9999'
+        ),
+      },
+    },
+    {
+      name: "chat escalation catch-up window widened to hide DOWN",
+      value: {
+        ...clean,
+        inProcess: clean.inProcess.replace(
+          'jobName: "chat.confirmation_escalation", maxStaleMinutes: 5',
+          'jobName: "chat.confirmation_escalation", maxStaleMinutes: 9999'
         ),
       },
     },

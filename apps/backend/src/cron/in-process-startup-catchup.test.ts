@@ -14,6 +14,8 @@ describe("in-process startup catch-up windows", () => {
     expect(byName["safety.cert_expiry_monitor"]).toBe(2880);
     expect(byName["search.indexer_incremental"]).toBe(2880);
     expect(byName["idempotency.cleanup_cron"]).toBe(2880);
+    expect(byName["email.queue_processor"]).toBe(5);
+    expect(byName["chat.confirmation_escalation"]).toBe(5);
   });
 
   it("does not include QBO push or money poster jobs", () => {
