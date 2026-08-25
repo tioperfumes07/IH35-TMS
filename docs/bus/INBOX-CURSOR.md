@@ -1,6 +1,8 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**22:18 CT:** Spine GO. Owner: not everything is wired. **FIX NOW:** `BOOK-LOAD-NOOP` / `BOOK-LOAD-UI-NOOP` — filled Book Load, clicks, **no POST**. Geocode patches city/zip but **not lat/lng**; API create needs numeric stop coords. Loud validation already exists (`onInvalidSubmit`) — prove whether Cascade missed the banner or submit never fires. Ship one PR. Do not second-kick API (`dep-da6gklu7bikc738hkn4g` in flight). Coordinate testers vs fixers in NOW-ONE-SOURCE. U14 never restamp.
+**22:34 CT:** Owner ruling — proforma **on cash flow** as Projected/Pre-invoice; invoice# = load#. Law file in lockdown. **YOU FIX TONIGHT:** `BOOK-LOAD-NOOP` (geocode `lat`/`lon` into stop payload + POST). After CC-1 ships forecast/prediction labels, FE must show **Proforma / Pre-invoice** + **load_number** on Daily Prediction lines (if backend already sends it, wire the label only — no GL math). Live `20c02fd`. Do not second-kick deploy. U14 never restamp.
+
+**22:18 CT:** Spine GO. **FIX NOW:** `BOOK-LOAD-NOOP`. Geocode patches city/zip but **not lat/lng**.
 
 **21:57 CT:** API live `d60fcd9`. Kicked follow-up `dep-da6g9cf10e5c73bkh760` tip `ab737d38`. SPA #15687 autoDeploy queued. Do not second-kick until that deploy finishes.
 

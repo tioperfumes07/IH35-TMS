@@ -1,6 +1,8 @@
 # INBOX-CASCADE
 
-**22:18 CT GO — TESTER. Walk hops 1–9 + breakdown battery. Program cards must update. AUDIT only. No product PR. No U14 restamp.** Hard-reload when healthz=`20c02fd`. Live until then `9531b42`. FINDING class: 500 / dead / silent / missing JE / missing FK / Program `--` after a real Neon row. Book-load silent no-op is Cursor. Proforma on cash forecast is CC-1. OUTBOX: `HOP=` + `TABLE=` + `UUID=` + `FINDING=`.
+**22:34 CT GO — TESTER.** Live `20c02fd`. Owner: cash flow **should** show proforma as Projected/Pre-invoice (not a FINDING). FINDING if it is missing **or** if A/R aging lists proforma as Open A/R. Invoice number on that line must equal **load_number** after CC-1. Walk hops 1–9. Book-load no-op is Cursor. AUDIT only. No U14 restamp.
+
+**22:18 CT GO — TESTER.** Walk hops 1–9 + battery. Program must update. AUDIT only.
 
 **GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Live `7f20197`. Re-walk hops 1–9 + battery + real-UUID print. PRINT-F09 still OPEN (missing company). AUDIT only. No product PR. No U14 restamp.
 

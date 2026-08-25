@@ -1,6 +1,8 @@
 # INBOX-CC-3 · 9225
 
-**22:18 CT GO — FIXER then prove Program `scenario.parts_receive` green.** Hard-reload SPA + when healthz=`20c02fd`. Never remake CLASS-F5973 / bill `2153f5dc-…`. Never `trigger_deploy`.
+**22:34 CT GO — FIXER.** Live `20c02fd`. `scenario.parts_receive` on WO `850e2cc4-…`. Program card must leave `--`. Invoice#=load# is CC-1. Book Load is Cursor. Never remake CLASS-F5973. Never `trigger_deploy`.
+
+**22:18 CT GO — FIXER then prove Program `scenario.parts_receive` green.** Hard-reload SPA. Live `20c02fd`. Never remake CLASS-F5973 / bill `2153f5dc-…`. Never `trigger_deploy`.
 
 **NOW:** Receive parts onto WO `850e2cc4-1578-40c2-b38d-a528f7ea821d` via `/inventory/purchases`. Name `maintenance.parts_purchases` UUID. `/program` card `scenario.parts_receive` must leave `--`. Then leftover unique (WO `.html` 400 if still true). Book-load is Cursor. Money JE is CC-1.
 

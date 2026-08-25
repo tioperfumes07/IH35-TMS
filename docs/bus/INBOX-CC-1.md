@@ -1,11 +1,18 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**22:18 CT GO — FIXER. Spine money. Hard-reload when healthz=`20c02fd`.** Do not wait idle. Never `trigger_deploy`. Never `/425c`.
+**22:34 CT GO — OWNER RULING. Live `20c02fd`. Never `trigger_deploy`. Never `/425c`.**
 
-**NOW (serial, one PR at a time):**
-1. `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-f06a-4fa3-ad67-877eb2e64b0f` — reuse poster. Document `posted` / GL `unposted` is not done.
-2. `INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE` — cannot send (or must fail loud) without Event-2 A/R JE / approved POD. Aging vs BS A/R must tie.
-3. **NEW:** `CASH-FORECAST-INCLUDES-PROFORMA` — `apps/backend/src/accounting/cash-forecast.routes.ts` AR query has **no** `status` filter. Live USMCA proformas with `amount_open_cents>0` + due dates (`INV-2026-00046` $2,500, `INV-2026-00036`, `INV-2026-00035`) leak into cash forecast. Match overview: `sent`/`partial` only (same as A/R aging / ACCT-F223). Guard the predicate.
+Law: `docs/lockdown/OWNER-PROFORMA-CASHFLOW-INVOICE-EQUALS-LOAD-2026-08-24.md`
+
+**VOID:** exclude proforma from cash forecast.
+
+**NOW (serial):**
+1. `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER` — from-load `display_id = load_number`; never remint on send; widen CHECK if needed. Historical INV-* stay. No TRANSP rewrite.
+2. `CASHFLOW-PROFORMA-PROJECTED-LABELED` — Daily Prediction + forecast: include proforma as **Projected / Pre-invoice** on **delivery date**, number = load_number. **A/R aging still excludes proforma.**
+3. `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` — reuse poster.
+4. `INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE` — still leftover; do not skip.
+
+**22:18 CT GO — FIXER.** Hard-reload `20c02fd`. Do not wait idle. Never `trigger_deploy`. Never `/425c`.
 
 Do not remake BILL-2026-00015. Book-load UI is Cursor. Invoice `/pdf` 404 is leftover unique if still true after PRINT-F09.
 
