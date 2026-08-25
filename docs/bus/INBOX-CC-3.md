@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. Leftover **62–75**. Do **not** remake **#15933**. `#64` waits CC-1 #6. ACK `GO-1758`. Never `trigger_deploy`.
+
 **17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Leftover **62–75**. Do **not** remake **#15933**. `#64` waits money #6. ACK `GO-1715`. Never `trigger_deploy`.
 
 **16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**

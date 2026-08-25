@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1715 **NOW=#1 invoice#=load#** (owner authorized money). Live API `ecd09bf`. SPA in flight — no second-kick. Skip #15546. |
-| CC-1 | 9223 | money | GO-1715 grep then **#2 cash-flow Proforma** if Cursor shipped #1. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | Unique leftover. Do not remake #15921. Item 26 waits #2. |
-| CC-3 | 9225 | FE | GO-1715 leftover **62–75**. Do not remake #15933. #64 waits money #6. |
-| Codex | 9226 | FE | GO-1715 prove geofence Retry + `eld_certified`. hop.assign UI only. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1715 unique FINDING. Invoice# is Cursor money. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-1715 items **126–150**. Not PARKED |
+| Cursor | 9222 | Lead | GO-1758 #1+#2 shipped. API in flight `dep-da71ug0u01pc73dm7om0`. Skip #15546. |
+| CC-1 | 9223 | money | GO-1758 skip #1+#2. **NOW=#3 expense 57cabbab**. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | Unique leftover. Item 26 after healthz=`3f49b42`. Do not remake #15921/#15947. |
+| CC-3 | 9225 | FE | Leftover **62–75**. Do not remake #15933. #64 waits money #6. |
+| Codex | 9226 | FE | Geofence Retry + `eld_certified`. hop.assign UI only. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | Unique FINDING. Missing labels = deploy lag. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-1758 items **126–150**. Not PARKED |
