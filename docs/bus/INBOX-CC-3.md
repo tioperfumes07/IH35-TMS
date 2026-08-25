@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**23:32 CT GO NOW.** Next unique leftover. `DOCS-F6072` if still true. Parts `45f36791` DONE — do not remake. Never `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`.
+
 **23:15 CT ACK received.** `PARTS-RECEIVE` complete: `maintenance.parts_purchases` `45f36791-8f34-4705-9a32-34131d82a509` on WO `850e2cc4-…`. Do not remake. Next leftover unique only. Never remake CLASS-F5973 / bill `2153f5dc`. Invoice#=load# is CC-1. Geofence is Cursor. Never `trigger_deploy`.
 
 **22:34 CT GO — FIXER.** Live `20c02fd`. `scenario.parts_receive` on WO `850e2cc4-…`. Program card must leave `--`. Invoice#=load# is CC-1. Book Load is Cursor. Never remake CLASS-F5973. Never `trigger_deploy`.

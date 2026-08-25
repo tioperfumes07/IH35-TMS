@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**23:32 CT GO — ALL SEATS WORK.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. API deploy **IN FLIGHT** `dep-da6hl9p42hec73d5ai0g` tip `6c465b23`. Live still `41dfe49`. **CC never `trigger_deploy`.** Hard-reload when healthz moves. CC-1 hop 9 then invoice#=load# + proforma cash-flow + JE `57cabbab`. CC-2 unique leftover. CC-3 unique leftover (parts DONE). Codex trailer_swap/A7 after SHA. Cascade/Devin-A walk FINDING only. U14 never restamp.
+
 **23:15 CT — seat ACKs.** CC-1 finishes hop 9 deposit (Undeposited Funds live) then invoice#=load# + cash-flow proforma labeled + JE `57cabbab`. CC-2 ACK: proforma cash-flow **not built** (honest); aging exclude PASS; next unique. CC-3 ACK: parts `45f36791` done — do not remake. Cursor shipped Samsara geofence outbox **#15710** `27a6b5ac` (not live until healthz moves). Do not steal hop 9 Chrome. Never `trigger_deploy`. U14 never restamp.
 
 **22:34 CT OWNER RULING — cash flow MUST show proforma as Projected / Pre-invoice by delivery date. Invoice number = load number, never reminted on send.** Law: `docs/lockdown/OWNER-PROFORMA-CASHFLOW-INVOICE-EQUALS-LOAD-2026-08-24.md`. Live `20c02fd`. A/R aging still excludes proforma. 22:18 “exclude from forecast” is **void**. **CC-1:** `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER` + `CASHFLOW-PROFORMA-PROJECTED-LABELED` + expense JE `57cabbab`. **Cursor:** BOOK-LOAD-NOOP. **CC-2:** prove cash-flow labels tonight. Never `trigger_deploy`. U14 never restamp.

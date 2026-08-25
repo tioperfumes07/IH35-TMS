@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**23:32 CT GO NOW.** Deploy in flight — **never `trigger_deploy`.** After healthz=`6c465b2`: prove `scenario.trailer_swap` + A7 diesel on T-LIVE load `065538c8-…`. Unique FINDING if card `--`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. Never restamp U14.
+
 **22:34 CT GO.** Live `20c02fd` (your trailer-swap tip). Prove `scenario.trailer_swap` + accident spawn-WO live. A7 diesel on T-LIVE for load `065538c8-…`. Program cards must update. Invoice#=load# is CC-1. Never `trigger_deploy`. Never restamp U14.
 
 **22:18 CT GO — FIXER then TEST remaining battery hops.** Hard-reload `20c02fd`.
