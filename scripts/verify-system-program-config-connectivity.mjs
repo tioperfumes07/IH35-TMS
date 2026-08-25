@@ -13,6 +13,10 @@ function failures(pageSource = page) {
   return [
     ["program tab mounted", pageSource.includes('tab === "program" ? <ProgramTab data={data} />')],
     ["tracker client", pageSource.includes("queryFn: getProgramTracker") && api.includes('"/api/v1/program/tracker"')],
+    [
+      "program tracker exact retry",
+      /if \(tracker\.isError\)[\s\S]*?<ListErrorState[\s\S]*?onRetry=\{\(\) => void tracker\.refetch\(\)\}/.test(pageSource),
+    ],
     ["authenticated tracker route", routes.includes('app.get("/api/v1/program/tracker"') && routes.includes("requireAuth(req, reply)")],
     ["versioned R2 source", tracker.includes("getObjectTextIfExists") && tracker.includes("loadReconFromR2")],
     [
@@ -33,11 +37,12 @@ if (process.argv.includes("--selftest")) {
     ["claude read-only activity", page.replace('tab === "claude-coder"', 'tab === "claude-coder-broken"')],
     ["claude read-only activity", page.replace("tracker.data?.recent_merged", "tracker.data?.recent_removed")],
     ["claude read-only activity", page.replace("rows={recentMerged.slice(0, 8)}", "rows={[]}")],
+    ["program tracker exact retry", page.replace("onRetry={() => void tracker.refetch()}", "onRetry={() => undefined}")],
   ];
   for (const [expected, planted] of mutations) {
     if (!failures(planted).includes(expected)) process.exit(1);
   }
-  console.log("verify-system-program-config-connectivity selftest PASS — 4 route/activity mutations red");
+  console.log("verify-system-program-config-connectivity selftest PASS — 5 route/activity/recovery mutations red");
   process.exit(0);
 }
 const missing = failures();
