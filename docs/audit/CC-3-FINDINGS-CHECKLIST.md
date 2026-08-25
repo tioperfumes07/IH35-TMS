@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `DRV-ONBOARD-COMPLETE-ACCEPTS-EMPTY-QUALIFICATION` | **B** | Drivers onboarding data integrity | Codex | this PR | 2026-08-24 | Completion atomically rejects missing steps 1–6; audited admin override remains the only bypass. | backend tests; existing CI guard normal + selftest | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `DRV-ONBOARD-RESUME-REOPENS-IDENTITY-AND-MASKS-READ-FAILURE` | **C** | Drivers onboarding connectivity | Codex | this PR | 2026-08-24 | Resume opens the persisted step; rejected session reads render exact retry rather than false not-found. | focused tests; existing CI guard normal + selftest | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `CLASS-MODAL-SIZE-PREFERENCE-FAILURE-SILENT` | **C** | Shared modal connectivity/chrome | Codex | this PR | 2026-08-24 | Centered modal preference reads/saves expose exact retryable failures instead of reverting silently. | focused test; existing CI-wired `verify-all-modals-have-x-close.mjs` normal + selftest | OWNER-GATED=no · Live=post-deploy UNVERIFIED |

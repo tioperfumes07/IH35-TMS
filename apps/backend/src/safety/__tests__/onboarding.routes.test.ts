@@ -51,6 +51,17 @@ function baseSession(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function completeStepData() {
+  return {
+    identity: { first_name: "Jane", last_name: "Driver", phone: "+15551234567" },
+    cdl_upload: { file_id: "cdl-file" },
+    medical_card: { file_id: "medical-file", expires_at: "2027-06-04" },
+    dqf_docs: { mvr: { file_id: "mvr-file" } },
+    signatures: { acknowledged: true },
+    i9: { section1_completed: true, file_id: "i9-file" },
+  };
+}
+
 describe("safety onboarding routes (A24-8)", () => {
   let app: FastifyInstance;
 
@@ -185,6 +196,9 @@ describe("safety onboarding routes (A24-8)", () => {
   it("POST complete marks session completed", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("SELECT step_data, status")) {
+        return { rows: [baseSession({ step_data: completeStepData() })], rowCount: 1 };
+      }
       if (sql.includes("UPDATE safety.onboarding_sessions") && sql.includes("status = 'completed'")) {
         return { rows: [baseSession({ status: "completed", current_step: 7, completed_at: "2026-06-04T13:00:00Z" })], rowCount: 1 };
       }
@@ -198,6 +212,25 @@ describe("safety onboarding routes (A24-8)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().session.status).toBe("completed");
     expect(mockAppendCrudAudit).toHaveBeenCalled();
+  });
+
+  it("POST complete rejects missing qualification evidence without updating or auditing", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("SELECT step_data, status")) {
+        return { rows: [baseSession({ step_data: { identity: { first_name: "Jane" } } })], rowCount: 1 };
+      }
+      if (sql.includes("UPDATE safety.onboarding_sessions")) throw new Error("must not complete");
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/onboarding/sessions/${SESSION_ID}/complete?operating_company_id=${COMPANY}`,
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toEqual({ error: "onboarding_incomplete", missing_steps: [1, 2, 3, 4, 5, 6] });
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 
   it("POST admin-override completes with reason", async () => {
