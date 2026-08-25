@@ -66,8 +66,8 @@ try {
   assertIncludes(formPageHeader, "navigate(-1)", "Form PageHeader back navigation missing");
   assertIncludes(layoutPageHeader, "lastModuleHref", "Layout PageHeader must remember last sidebar module");
   assertIncludes(formPageHeader, "lastModuleHref", "Form PageHeader must remember last sidebar module");
-  const shell = read("apps/frontend/src/components/Shell.tsx");
-  assertIncludes(shell, "RouteScrollReset", "Shell must reset scroll on module navigation");
+  const app = read("apps/frontend/src/App.tsx");
+  assertIncludes(app, "<ScrollToTop", "App must mount CC-2 ScrollToTop (do not duplicate RouteScrollReset)");
   const statementsPrint = read("apps/frontend/src/pages/finance/FinancialStatementsPage.tsx");
   assertIncludes(statementsPrint, "getShowAccountNumbers", "Financial statements print must respect CoA number toggle");
   const accountingChrome = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");

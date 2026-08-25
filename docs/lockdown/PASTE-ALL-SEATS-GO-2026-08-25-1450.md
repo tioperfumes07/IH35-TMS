@@ -12,7 +12,7 @@ Reuse load `065538c8-…` (`L-20260824-0007`), T-LIVE `1a3c98da-…`, WO `850e2c
 
 1. **Program scenarios** — find unique 500 / dead / silent; **fix completely** (Fully-Wired 1–12, Live Chrome last).
 2. **CC-1 money clone** — items **1–10** serial (invoice#=load#, cash-flow labels, expense JE, bank honesty, roadside JE, WO bill JE, settlement JE, hop.assign bills, print letters, official invoice). **Not** Cursor lead tree.
-3. **CC-2 leftover + chrome** — back arrows that still miss (dispatch map, fleet home, finance loan/calc/amort, drivers alerts, maintenance defect). Scroll-to-top is Cursor this hour; do not remake. Prove leftover unique.
+3. **CC-2 leftover + chrome** — **#15860/`9d24536` DONE** (scroll + smart-back). Continue **no-header** missing ← only. Do not remake ScrollToTop/PageHeader. Prove leftover unique.
 4. **CC-3 FE** — remaining no-underscore combobox/create-path labels; title-case names/addresses on **create payload**. Do not steal money.
 5. **Codex** — prove **Samsara HOS on Dispatch** (`DriverHosClockValue` + `eld_certified`). If clocks are "—" after a live Samsara driver is assigned, FINDING + fix. hop.assign UI prove only.
 6. **Cascade / Devin-A** — **LIVE WALK `/program` now**. OUTBOX same turn. Idle = defect.

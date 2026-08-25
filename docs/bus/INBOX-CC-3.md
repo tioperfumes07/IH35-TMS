@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Title-case create payloads + remaining underscore comboboxes. Leftover 62–75. Never steal CC-1. Never remake #15860. Never `trigger_deploy`.
+
 **14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Title-case + no-underscore on create payloads and remaining comboboxes. Leftover 62–75. Never steal CC-1. Never `trigger_deploy`.
 
 

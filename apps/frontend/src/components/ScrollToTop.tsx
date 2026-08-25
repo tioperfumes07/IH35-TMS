@@ -18,13 +18,14 @@ import { useLocation, useNavigationType } from "react-router-dom";
  * which `history.scrollRestoration`'s browser-default "auto" already handles on its own.
  */
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const navigationType = useNavigationType();
 
   useEffect(() => {
     if (navigationType === "POP") return;
+    if (hash) return;
     window.scrollTo(0, 0);
-  }, [pathname, navigationType]);
+  }, [pathname, hash, navigationType]);
 
   return null;
 }

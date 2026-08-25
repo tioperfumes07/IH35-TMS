@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Prove **Samsara HOS on Dispatch** (`eld_certified`). hop.assign UI. Never restamp U14. Never remake #15860. Never `trigger_deploy`.
+
 **14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Prove **Samsara HOS on Dispatch** (`eld_certified`). hop.assign UI. Items 76–100. Never restamp U14. Never `trigger_deploy`.
 
 

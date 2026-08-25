@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. **#15860/`9d24536` is law** — do not remake ScrollToTop or PageHeader smart-back. **NOW = pages with no header** (missing ←). Continue #15871/#15882 class. Never `trigger_deploy`.
+
 **14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Owner asked **back-arrow + scroll audit**. Cursor ships scroll + accounting ← this hour. You: remaining missing arrows (map, fleet home, finance loan/calc, alerts, defect) + leftover unique. Do not remake scroll. Never `trigger_deploy`.
 
 
