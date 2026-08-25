@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-legal-fuel-reverse-link-remainder";
 const FILE = "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx";
+const FUEL_REVERSE_FILE = "apps/frontend/src/components/fuel/FuelTransactionsReverseSection.tsx";
 
 function fails(src) {
   const out = [];
@@ -22,8 +23,20 @@ function fails(src) {
   return out;
 }
 
+function fuelFails(src) {
+  const out = [];
+  if (!/<ListErrorState[\s\S]*?userFacingApiError\(fuelQ\.error[\s\S]*?onRetry=\{\(\) => void fuelQ\.refetch\(\)\}/.test(src)) {
+    out.push("fuel reverse GET failure has no detailed retry path");
+  }
+  if (!/!fuelQ\.isLoading\s*&&\s*!fuelQ\.isError\s*&&\s*rows\.length === 0/.test(src)) {
+    out.push("fuel reverse empty state is not gated away from failures");
+  }
+  return out;
+}
+
 if (process.argv.includes("--selftest")) {
   const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+  const fuelLive = fs.readFileSync(path.join(ROOT, FUEL_REVERSE_FILE), "utf8");
   if (fails(live).length) {
     console.error(`${LABEL} SELFTEST FAIL live`);
     process.exit(1);
@@ -32,11 +45,18 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL poison`);
     process.exit(1);
   }
+  if (fuelFails(fuelLive).length || !fuelFails(fuelLive.replace("onRetry={() => void fuelQ.refetch()}", "onRetry={() => undefined}")).length) {
+    console.error(`${LABEL} SELFTEST FAIL fuel retry mutation`);
+    process.exit(1);
+  }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);
 }
 
-const f = fails(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const f = [
+  ...fails(fs.readFileSync(path.join(ROOT, FILE), "utf8")),
+  ...fuelFails(fs.readFileSync(path.join(ROOT, FUEL_REVERSE_FILE), "utf8")),
+];
 if (f.length) {
   console.error(`${LABEL} FAIL:\n- ${f.join("\n- ")}`);
   process.exit(1);
