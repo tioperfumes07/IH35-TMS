@@ -539,6 +539,16 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
   const jobsOk = byName("background_jobs.stale")?.ok;
   const visibleChecks = (h?.checks ?? []).filter((check) => qboAvailable || !check.name.startsWith("qbo."));
   const trio = (a?: boolean, b?: boolean, c?: boolean) => a && b && c;
+  if (health.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load software and service health"
+        status={0}
+        message={(health.error as Error)?.message}
+        onRetry={() => void health.refetch()}
+      />
+    );
+  }
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
@@ -562,10 +572,7 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
       </Card>
 
       <Card title="Service checks" sub="Deep health checks, live.">
-        {health.isError ? (
-          <p className="text-[12px] text-slate-500">Health endpoint unreachable.</p>
-        ) : (
-          <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }>
+        <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }>
             rows={visibleChecks}
             rowKey={(c) => c.name}
             loading={!h}
@@ -586,8 +593,7 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
                 render: (c) => (c.ok ? <Pill tone="ok">OK</Pill> : <Pill tone="off">DOWN</Pill>),
               },
             ]}
-          />
-        )}
+        />
       </Card>
     </div>
   );
