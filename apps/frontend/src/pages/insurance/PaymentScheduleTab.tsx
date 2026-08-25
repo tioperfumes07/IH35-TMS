@@ -14,6 +14,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId?: string;
@@ -118,27 +120,32 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
       </div>
 
       {query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load payment schedule.</div>
-      ) : null}
-
-      <ParityTable
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.id}
-        loading={listState.isLoading}
-        storageKey="insurance-payment-schedule"
-        emptyText="No payment schedule records found."
-        rowActions={(row) => (
-          <Button
-            size="sm"
-            onClick={() => markPaidMutation.mutate(row.id)}
-            disabled={!canMarkPaid(row)}
-            loading={markPaidMutation.isPending && markPaidMutation.variables === row.id}
-          >
-            Mark paid
-          </Button>
-        )}
-      />
+        <ListErrorState
+          title="Couldn't load payment schedule"
+          status={0}
+          message={userFacingApiError(query.error, "Payment schedule is unavailable")}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={listState.isLoading}
+          storageKey="insurance-payment-schedule"
+          emptyText="No payment schedule records found."
+          rowActions={(row) => (
+            <Button
+              size="sm"
+              onClick={() => markPaidMutation.mutate(row.id)}
+              disabled={!canMarkPaid(row)}
+              loading={markPaidMutation.isPending && markPaidMutation.variables === row.id}
+            >
+              Mark paid
+            </Button>
+          )}
+        />
+      )}
     </DataPanel>
   );
 }
