@@ -48,6 +48,9 @@ function main() {
   if (!/data-testid=["']load-detail-drawer["']/.test(drawer)) {
     fail("LoadDetailDrawer must expose data-testid=load-detail-drawer when open");
   }
+  if (!/<header className=["']sticky top-0 z-(?:10|20|30|40|50)\b/.test(drawer)) {
+    fail("LoadDetailDrawer sticky tab header must have a positive z-index so scrolled content cannot intercept pointer clicks");
+  }
   if (!/export const loadRefParamSchema/.test(loadRef) || !/export function loadRefMatchSql/.test(loadRef)) {
     fail("apps/backend/src/lib/load-ref.ts must export loadRefParamSchema + loadRefMatchSql");
   }
@@ -103,6 +106,12 @@ function selftest() {
   }
   process.exit = orig;
   if (!failed) fail("selftest: missing deepLinkLoadId did not fail");
+  const goodStickyHeader = '<header className="sticky top-0 z-20 border-b">';
+  const plantedNoZIndex = goodStickyHeader.replace(" z-20", "");
+  const stickyHeaderGuard = /<header className=["']sticky top-0 z-(?:10|20|30|40|50)\b/;
+  if (!stickyHeaderGuard.test(goodStickyHeader) || stickyHeaderGuard.test(plantedNoZIndex)) {
+    fail("selftest: sticky drawer header z-index mutation was not caught");
+  }
   console.log("OK verify-dispatch-load-deeplink-opens-drawer --selftest");
 }
 

@@ -342,7 +342,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         role="dialog"
         aria-modal="true"
       >
-        <header className="sticky top-0 border-b border-gray-200 bg-white p-4">
+        {/* The drawer body scrolls beneath this header. Keep the tab strip in a
+            higher stacking layer so pointer clicks reach the buttons after a
+            long Overview scroll; keyboard activation alone is not sufficient. */}
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
