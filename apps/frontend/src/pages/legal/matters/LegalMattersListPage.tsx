@@ -15,6 +15,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../../components/
 import { formatDateUS } from "../../../lib/formatDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 
 const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -130,7 +131,7 @@ export function LegalMattersListPage() {
           />
         ),
       },
-      { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "") },
+      { key: "type", label: "Type", sortable: true, render: (row) => properEnumOrFilterLabel(row.type) },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "") },
       { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "") },
       {
@@ -259,7 +260,7 @@ export function LegalMattersListPage() {
                   <option value="">All types</option>
                   {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                     <option key={s} value={s}>
-                      {s}
+                      {properEnumOrFilterLabel(s)}
                     </option>
                   ))}
                 </SelectCombobox>

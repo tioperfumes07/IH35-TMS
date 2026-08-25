@@ -4,6 +4,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 
 export type LegalMatterFormState = {
   matter_number: string;
@@ -191,7 +192,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
         >
           {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((t) => (
             <option key={t} value={t}>
-              {t}
+              {properEnumOrFilterLabel(t)}
             </option>
           ))}
         </SelectCombobox>
