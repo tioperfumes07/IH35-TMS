@@ -104,4 +104,46 @@ describe("MultiStopEditor (P5-T18)", () => {
     await user.click(saveBtn);
     await vi.waitFor(() => expect(replaceLoadStopsDispatch).toHaveBeenCalled());
   });
+
+  it("keeps a failed stop read recoverable", async () => {
+    const user = userEvent.setup();
+    const getStops = vi.mocked(getLoadStopsForDispatch);
+    getStops.mockClear();
+    const recovered = {
+      stops: [
+        {
+          id: "s-recovered",
+          load_id: "L1",
+          sequence_number: 1,
+          stop_type: "pickup" as const,
+          city: "Laredo",
+          state: "TX",
+          country: "US",
+          address_line1: "100 Test Way",
+          scheduled_arrival_at: null,
+          appointment_start_at: null,
+          appointment_end_at: null,
+          notes: null,
+          latitude: null,
+          longitude: null,
+          signature_required: false,
+          photo_required: false,
+          pickup_time_type_id: null,
+        },
+      ],
+    };
+    getStops.mockRejectedValueOnce(new Error("network")).mockResolvedValueOnce(recovered);
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={qc}>
+        <MultiStopEditor loadId="00000000-0000-4000-8000-000000000099" operatingCompanyId="00000000-0000-4000-8000-000000000088" />
+      </QueryClientProvider>
+    );
+
+    const retry = await screen.findByRole("button", { name: "Retry stops" });
+    await user.click(retry);
+    await screen.findByText("#1 Type");
+    expect(getStops).toHaveBeenCalledTimes(2);
+  });
 });
