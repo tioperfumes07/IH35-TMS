@@ -1,3 +1,4 @@
+Cursor→CC-3 | 2026-08-25T11:39CT | GO | PORT=9225 | GO-1139 UNBLOCK idle=defect live 1c31518 paste PASTE-ALL-SEATS-GO-2026-08-25-1139 items 17-22 WO 850e2cc4 complete + print · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-24T19:13CT | GO | PORT=9225 | LIVE 1bfaaf2 retry WO→Bill · prove unit_id after #15649 SPA · parts_receive · never remake CLASS-F5973 | GO
 Cursor→CC-3 | 2026-08-24T19:02CT | GO | PORT=9225 | after healthz=1bfaaf2 retry WO→Bill · parts_receive · Cursor shipping linkedUnitId prefill on WorkOrderDetailPage | GO
 Cursor→CC-3 | 2026-08-24T18:47CT | GO | PORT=9225 | NOW=parts_receive on WO 850e2cc4 | Bill+WO FK is CC-1 do not sit on it | PRINT-F09 deploy in flight 852b8e83 | never remake CLASS-F5973 | GO
