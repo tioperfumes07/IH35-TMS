@@ -26,6 +26,8 @@ describe("NotificationCenterPage", () => {
       ],
       unreadCount: 1,
       loading: false,
+      error: null,
+      isError: false,
       refresh: vi.fn(),
       markRead: vi.fn(),
       dismiss: vi.fn(),
@@ -43,6 +45,29 @@ describe("NotificationCenterPage", () => {
         updated_at: "2026-06-02T12:00:00Z",
       },
     });
+  });
+
+  it("renders a retryable list failure instead of a false empty state", async () => {
+    vi.spyOn(notificationsHook, "useNotifications").mockReturnValue({
+      notifications: [],
+      unreadCount: 0,
+      loading: false,
+      error: new Error("notifications unavailable"),
+      isError: true,
+      refresh: vi.fn(),
+      markRead: vi.fn(),
+      dismiss: vi.fn(),
+      markAllRead: vi.fn(),
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter><NotificationCenterPage /></MemoryRouter>
+      </QueryClientProvider>
+    );
+    expect(await screen.findByText(/notifications unavailable/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    expect(screen.queryByText("No notifications match filters.")).toBeNull();
   });
 
   it("renders notification center with preferences panel", async () => {

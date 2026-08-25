@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `SYSTEM-NOTIFICATIONS-POLL-FAILURE-INFINITE-LOADING` | **C** | Codex System connectivity | Codex | this PR | 2026-08-24 | Notification reads and mutations now settle into explicit retryable errors; preferences fail independently; the exact mounted leaf is inventoried under System. | `verify-list-error-state-coverage.mjs` normal + 3/3 planted mutations; focused tests 4/4 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☐ | `SETL-EVIDENCE-UPLOAD-SILENT-DROP` | **B** | CC-1 settlements money surface | Codex handoff | OPEN | 2026-08-24 | Settlement Dispute swallows evidence upload failures, submits anyway, and persists no evidence document linkage. | Current-main source trace in `SettlementDisputeModal.tsx`; board carries atomic fix bar. | OWNER-GATED=no |
 
 - ☑ `DRV-F6253-PREDISPATCH-SHARED-DRIVER-CHECKS-FAIL-OPEN` — Codex vertical driver connectivity — FIXED this PR; CDL, medical-card, and active-driver checks now evaluate active selected-company authorizations instead of silently returning no blockers.
