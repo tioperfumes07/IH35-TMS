@@ -64,6 +64,7 @@ try {
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
   assertIncludes(layoutPageHeader, "navigate(-1)", "Layout PageHeader back navigation missing");
   assertIncludes(formPageHeader, "navigate(-1)", "Form PageHeader back navigation missing");
+  assertIncludes(formPageHeader, "string | BreadcrumbItem", "Form PageHeader must accept string[] breadcrumbs from leaf pages");
   assertIncludes(layoutPageHeader, "lastModuleHref", "Layout PageHeader must remember last sidebar module");
   assertIncludes(formPageHeader, "lastModuleHref", "Form PageHeader must remember last sidebar module");
   const app = read("apps/frontend/src/App.tsx");
