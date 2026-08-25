@@ -38,6 +38,7 @@ const GATES = [
   "apps/backend/src/dispatch/assignments/quicksave.service.ts",
   "apps/backend/src/dispatch/book-load.service.ts",
   "apps/backend/src/dispatch/quick-assign.service.ts",
+  "apps/backend/src/dispatch/loads.routes.ts",
 ];
 
 function stripComments(src) {
@@ -98,11 +99,24 @@ export function auditGate(rel, srcRaw) {
   return problems;
 }
 
+export function auditDispatchStatusRoute(src) {
+  const problems = [];
+  const route = src.match(/app\.get\(["']\/api\/v1\/dispatch\/units\/:unit_id\/dispatch-status["'][\s\S]*?app\.get\(["']\/api\/v1\/dispatch\/units\/:unit_id\/insurance-status["']/)?.[0] ?? "";
+  if (!route) return ["loads.routes.ts: mounted unit dispatch-status route missing"];
+  if (/\.catch\s*\(/.test(route)) problems.push("loads.routes.ts: dispatch-status must not mask query failures with catch fallback");
+  if (!/FROM\s+mdata\.units\s+u/i.test(route)) problems.push("loads.routes.ts: dispatch-status must drive from mdata.units");
+  if (!/COALESCE\(u\.currently_leased_to_company_id,\s*u\.owner_company_id\)\s*=\s*\$2::uuid/.test(route)) problems.push("loads.routes.ts: dispatch-status must enforce lease-aware selected-company scope");
+  if (!/COALESCE\(u\.is_oos,\s*false\)\s+AS\s+is_oos/i.test(route)) problems.push("loads.routes.ts: dispatch-status must read canonical mdata.units.is_oos");
+  if (!/is_blocked:\s*Boolean\(row\.is_dispatch_blocked\)\s*\|\|\s*Boolean\(row\.is_oos\)/.test(route)) problems.push("loads.routes.ts: dispatch-status response must block canonical OOS units");
+  return problems;
+}
+
 function auditTree() {
   const problems = [];
   for (const rel of GATES) {
     problems.push(...auditGate(rel, readFileSync(join(ROOT, rel), "utf8")));
   }
+  problems.push(...auditDispatchStatusRoute(readFileSync(join(ROOT, "apps/backend/src/dispatch/loads.routes.ts"), "utf8")));
   return problems;
 }
 
@@ -144,6 +158,15 @@ function selftest() {
       WHERE u.id = $1 AND u.owner_company_id = $2\`);`;
   if (!auditGate("g.ts", notLeaseAware).some((p) => p.includes("lease-aware")))
     failures.push("case4 FAIL — owner-only scoping (which hides every OOS unit) was NOT caught");
+
+  const statusFixture = `app.get("/api/v1/dispatch/units/:unit_id/dispatch-status", async () => {
+    const res = await client.query(\`SELECT COALESCE(u.is_oos, false) AS is_oos FROM mdata.units u LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid\`);
+    return { is_blocked: Boolean(row.is_dispatch_blocked) || Boolean(row.is_oos) };
+  }); app.get("/api/v1/dispatch/units/:unit_id/insurance-status", async () => {});`;
+  if (auditDispatchStatusRoute(statusFixture).length) failures.push(`case5 FAIL — corrected dispatch-status fixture rejected: ${auditDispatchStatusRoute(statusFixture).join(" | ")}`);
+  if (!auditDispatchStatusRoute(statusFixture.replace(");\n    return", ").catch(() => ({ rows: [] }));\n    return")).some((p) => p.includes("catch fallback"))) failures.push("case6 FAIL — catch-to-empty dispatch-status mutation was NOT caught");
+  if (!auditDispatchStatusRoute(statusFixture.replace("FROM mdata.units u", "FROM views.units_with_dispatch_status u")).some((p) => p.includes("drive from mdata.units"))) failures.push("case7 FAIL — view-driven dispatch-status mutation was NOT caught");
+  if (!auditDispatchStatusRoute(statusFixture.replace("Boolean(row.is_dispatch_blocked) || Boolean(row.is_oos)", "Boolean(row.is_dispatch_blocked)")).some((p) => p.includes("block canonical OOS"))) failures.push("case8 FAIL — OOS response mutation was NOT caught");
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
