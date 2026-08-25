@@ -206,6 +206,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "rm-status", companyId] }),
         queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "recent", companyId] }),
+        // WO-DETAIL-MODAL-COMPLETE-DEAD-BUTTON: without this, WorkOrderDetailModal's Status/V5
+        // fields stay stale after a transition fired from inside the open modal (e.g. Mark
+        // Completed), even though the write succeeded — only a full page reload showed it.
+        queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", companyId] }),
       ]);
       pushToast("R&M status updated", "success");
     },
@@ -556,6 +560,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       <WorkOrderDetailModal
         open={Boolean(selectedWorkOrderId)}
         workOrder={(workOrderDetailQuery.data ?? null) as Record<string, unknown> | null}
+        onComplete={
+          selectedWorkOrderId
+            ? () => statusMutation.mutate({ id: selectedWorkOrderId, status: "complete" })
+            : undefined
+        }
         onClose={() => setSelectedWorkOrderId(null)}
       />
 
