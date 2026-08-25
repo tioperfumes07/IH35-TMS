@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -16,6 +17,10 @@ vi.mock("./components/ManageAccountsModal", () => ({
 }));
 vi.mock("../accounting/ManualJEModal", () => ({ ManualJEModal: () => null }));
 vi.mock("./TransferModal", () => ({ TransferModal: () => null }));
+vi.mock("./RecordTransferModal", () => ({
+  RecordTransferModal: (props: { open: boolean; defaultTransferType?: string }) =>
+    props.open ? <div data-testid="record-transfer-modal-stub" data-default-type={props.defaultTransferType} /> : null,
+}));
 vi.mock("./RecordCCPaymentModal", () => ({ RecordCCPaymentModal: () => null }));
 vi.mock("./components/DriverEscrowTabContent", () => ({ DriverEscrowTabContent: () => null }));
 vi.mock("./components/BankingReportsTabContent", () => ({ BankingReportsTabContent: () => null }));
@@ -201,5 +206,32 @@ describe("BankingHomePage accounts summary", () => {
     expect(await screen.findByText("Drivers with escrow:")).toBeInTheDocument();
     expect(await screen.findByText("5")).toBeInTheDocument();
     expect(screen.queryByText("Active drivers")).not.toBeInTheDocument();
+  });
+});
+
+describe("DISP-F6XXX — Record Deposit reaches Cash Deposit (undeposited funds -> bank)", () => {
+  it('"+ Record Deposit" opens RecordTransferModal defaulted to cash_deposit', async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      total_cash: 0,
+      dip_operating: 0,
+      dip_payroll: 0,
+      total_uncategorized: 0,
+      factoring_reserve: 0,
+      driver_escrow: 0,
+      drivers_with_escrow_balance: 0,
+      active_drivers: 0,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(screen.queryByTestId("record-transfer-modal-stub")).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByTestId("banking-home-record-deposit"));
+    const stub = await screen.findByTestId("record-transfer-modal-stub");
+    expect(stub).toHaveAttribute("data-default-type", "cash_deposit");
   });
 });
