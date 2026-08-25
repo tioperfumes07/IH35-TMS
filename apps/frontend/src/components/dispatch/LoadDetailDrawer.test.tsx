@@ -303,3 +303,42 @@ describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice",
     await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
   });
 });
+
+describe("DISP-F6XXX — delivered_pending_docs must not dead-click the invoice button", () => {
+  // The real, authorized write path (PATCH /api/v1/dispatch/loads/:id/transition, LV-TXN-004 / WIRE-07)
+  // has NO plain "delivered" DispatchStatus value — it only ever lands a load on
+  // "delivered_pending_docs" or "completed_docs_received". Confirmed live (load L-20260824-0007): the
+  // button rendered enabled-looking but fired zero network requests on click before this fix, because
+  // canInvoiceFromLoad only allowlisted the literal "delivered" string.
+  function renderStatus(status: string) {
+    const load = mockLoadDetail({ status, rate_total_cents: 120000 } as never);
+    mockUseDispatchLoad.mockReturnValue({ data: load, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+    return screen.getByRole("button", { name: /Create \/ View Invoice/i });
+  }
+
+  it("delivered_pending_docs (the real transition endpoint's actual output) enables the button", async () => {
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
+    const button = renderStatus("delivered_pending_docs");
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
+  });
+
+  it("completed_docs_received also enables the button", async () => {
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
+    const button = renderStatus("completed_docs_received");
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
+  });
+
+  it("a load still in transit stays disabled (gate is narrowed, not removed)", () => {
+    const button = renderStatus("in_transit");
+    expect(button).toBeDisabled();
+  });
+});

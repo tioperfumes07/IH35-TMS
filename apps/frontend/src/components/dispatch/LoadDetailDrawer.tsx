@@ -235,7 +235,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   }, [load]);
   const canInvoiceFromLoad = useMemo(() => {
     if (!load) return false;
-    return ["delivered", "invoiced", "paid", "closed"].includes(load.status);
+    // DISP-F6XXX (breakdown-relay hop.invoice) — the real, authorized write path for a delivered load
+    // is PATCH /api/v1/dispatch/loads/:id/transition (LV-TXN-004 / WIRE-07), whose DispatchStatus enum
+    // has NO plain "delivered" value — it only ever lands a load on "delivered_pending_docs" or
+    // "completed_docs_received" (apps/frontend/src/api/dispatch.ts). The bare "delivered" LoadStatus
+    // value is reachable only through the forbidden mdata /status shortcut, so this gate was checking a
+    // status the correct flow can never produce — every load delivered the right way hit a permanently
+    // disabled "Create / View Invoice" button with zero network requests on click. The backend
+    // /accounting/invoices/from-load route itself has no status gate at all (only load_not_found /
+    // load_has_no_rate), so this FE check was strictly narrower than the real business rule.
+    return ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"].includes(load.status);
   }, [load]);
   const packageState = useMemo(() => parseFactoringPackageNotes(load?.notes), [load?.notes]);
   const loadDocsQuery = useQuery({
