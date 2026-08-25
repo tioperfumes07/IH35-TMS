@@ -72,6 +72,14 @@ const CHECKS = [
       /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?load_id/.test(s) &&
       /accident\.load_id \?\? null/.test(s),
   },
+  {
+    id: "vendor-forward-fk",
+    file: ROUTES,
+    describe: "spawned AC work order must persist the accident repair vendor_id",
+    test: (s) =>
+      /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?vendor_id/.test(s) &&
+      /accident\.vendor_id \?\? null/.test(s),
+  },
 ];
 
 export function run() {
@@ -106,6 +114,20 @@ function selftest() {
       process.exit(1);
     }
     console.log("  caught: spawn-reuses plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
+  }
+  const noVendorFk = original
+    .replace(/\n\s*vendor_id,/, "")
+    .replace(/\n\s*accident\.vendor_id \?\? null,/, "");
+  try {
+    writeFileSync(ROUTES, noVendorFk, "utf8");
+    const caught = run();
+    if (caught.ok || !/vendor-forward-fk/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: vendor-forward-fk plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: vendor-forward-fk plant");
   } finally {
     writeFileSync(ROUTES, original, "utf8");
   }

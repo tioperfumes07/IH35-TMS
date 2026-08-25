@@ -137,9 +137,10 @@ describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () =>
   it("spawn-wo: persists the accident insurance claim FK into the AC work order", async () => {
     const claimId = "88888888-8888-4888-8888-888888888888";
     const loadId = "77777777-7777-4777-8777-777777777777";
+    const vendorId = "55555555-5555-4555-8555-555555555555";
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SELECT *") && sql.includes("FROM safety.accident_reports")) {
-        return { rows: [{ id: ACCIDENT_ID, unit_id: null, driver_id: null, load_id: loadId, insurance_claim_id: claimId }], rowCount: 1 };
+        return { rows: [{ id: ACCIDENT_ID, unit_id: null, driver_id: null, load_id: loadId, vendor_id: vendorId, insurance_claim_id: claimId }], rowCount: 1 };
       }
       if (sql.includes("FROM maintenance.work_orders") && sql.includes("description ILIKE")) return { rows: [], rowCount: 0 };
       if (sql.includes("FROM maintenance.next_wo_display_id")) {
@@ -158,7 +159,9 @@ describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () =>
     const insert = mockQuery.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO maintenance.work_orders"));
     expect(String(insert?.[0])).toContain("insurance_claim_id");
     expect(String(insert?.[0])).toContain("load_id");
+    expect(String(insert?.[0])).toContain("vendor_id");
     expect(insert?.[1]).toContain(loadId);
+    expect(insert?.[1]).toContain(vendorId);
     expect(insert?.[1]).toContain(claimId);
   });
 });

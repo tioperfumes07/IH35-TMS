@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `SAF-ACCIDENT-SPAWN-WO-DROPS-VENDOR-FK` | **B** | Vertical vendor linkage | Codex | this PR | 2026-08-24 | Spawned AC work orders persist the source accident's canonical repair vendor FK. | focused tests 5/5; spawn-WO guard 7/7 + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `SAF-ACCIDENT-SPAWN-WO-DROPS-LOAD-FK` | **B** | Vertical load linkage | Codex | this PR | 2026-08-24 | Newly spawned AC work orders persist the source accident's proven load FK for reverse trip reads. | focused tests 5/5; spawn-WO guard 6/6 + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `SAF-ACCIDENT-SPAWN-WO-DROPS-CLAIM-FK` | **B** | Accident/insurance/maintenance connectivity | Codex | this PR | 2026-08-24 | Newly spawned AC work orders persist the source accident's canonical insurance claim FK. | focused tests 5/5; existing spawn-WO guard 5/5 + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
