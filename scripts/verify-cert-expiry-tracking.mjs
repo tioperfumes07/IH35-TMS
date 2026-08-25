@@ -64,6 +64,26 @@ contains("apps/backend/src/jobs/cert-expiry-monitor.ts", worker, [
   { pattern: /notifyCriticalExpiries/, label: "critical notifier integration" },
 ]);
 
+const alerter = read("apps/backend/src/safety/expiry-tracking/alerter.service.ts");
+const deliveryHandler = read("apps/backend/src/outbox/handlers/safety-cert-expiry-critical-notification.handler.ts");
+const outboxRegistry = read("apps/backend/src/outbox/handlers/registry.ts");
+contains("apps/backend/src/safety/expiry-tracking/alerter.service.ts", alerter, [
+  { pattern: /enqueueOutboxEvent\(/, label: "canonical durable notification enqueue" },
+  { pattern: /"safety\.cert_expiry\.critical_notification"/, label: "typed critical expiry event" },
+  { pattern: /safety-cert-expiry:\$\{operatingCompanyId\}:\$\{alert\.driver_uuid\}:\$\{alert\.cert_type\}:\$\{alert\.expiry_date\}/, label: "company+driver+cert+expiry dedupe key" },
+]);
+if (/sendEmail\(/.test(alerter) || /createNotification\(/.test(alerter)) {
+  fail("apps/backend/src/safety/expiry-tracking/alerter.service.ts: daily scan must not directly redeliver provider/in-app notifications");
+}
+contains("apps/backend/src/outbox/handlers/safety-cert-expiry-critical-notification.handler.ts", deliveryHandler, [
+  { pattern: /requiresDelivery\s*=\s*true/, label: "required delivery contract" },
+  { pattern: /await sendEmail\(/, label: "awaited email delivery" },
+  { pattern: /await createNotification\(/, label: "awaited in-app delivery" },
+]);
+contains("apps/backend/src/outbox/handlers/registry.ts", outboxRegistry, [
+  { pattern: /new SafetyCertExpiryCriticalNotificationHandler\(\)/, label: "registered critical expiry handler" },
+]);
+
 read("apps/backend/src/safety/expiry-tracking/__tests__/cert-monitor.test.ts");
 
 const dashboard = read("apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx");
@@ -135,7 +155,25 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  const durabilityMutations = [
+    ["outbox bypass", alerter, "enqueueOutboxEvent(", "sendEmail("],
+    ["dedupe identity", alerter, "${alert.cert_type}:${alert.expiry_date}", "static-key"],
+    ["required delivery", deliveryHandler, "requiresDelivery = true", "requiresDelivery = false"],
+    ["handler registration", outboxRegistry, "new SafetyCertExpiryCriticalNotificationHandler(),", ""],
+  ];
+  for (const [name, source, before, after] of durabilityMutations) {
+    const mutated = source.replace(before, after);
+    const stillValid =
+      name === "outbox bypass" ? /enqueueOutboxEvent\(/.test(mutated) && !/sendEmail\(/.test(mutated) :
+      name === "dedupe identity" ? /\$\{alert\.cert_type\}:\$\{alert\.expiry_date\}/.test(mutated) :
+      name === "required delivery" ? /requiresDelivery\s*=\s*true/.test(mutated) :
+      /new SafetyCertExpiryCriticalNotificationHandler\(\)/.test(mutated);
+    if (mutated === source || stillValid) {
+      console.error(`verify:cert-expiry-tracking --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutations.length + durabilityMutations.length}/${mutations.length + durabilityMutations.length} mutations detected`);
   process.exit(0);
 }
 

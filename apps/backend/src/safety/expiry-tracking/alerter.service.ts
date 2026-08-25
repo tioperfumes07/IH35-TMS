@@ -1,5 +1,5 @@
-import { sendEmail } from "../../notifications/email.service.js";
-import { createNotification, listCompanyNotifyUserIds } from "../../notifications/notification.service.js";
+import { listCompanyNotifyUserIds } from "../../notifications/notification.service.js";
+import { enqueueOutboxEvent } from "../../outbox/enqueue-outbox-event.js";
 import type { CertExpiryAlert } from "./cert-monitor.service.js";
 
 type Queryable = {
@@ -36,36 +36,23 @@ export async function notifyCriticalExpiries(
     const title = `${alert.cert_label} expires soon`;
     const body = `${alert.driver_name} has ${alert.cert_label} expiring on ${alert.expiry_date} (${alert.days_until_expiry} days).`;
 
-    for (const userId of recipientUserIds) {
-      await createNotification(
-        {
-          operating_company_id: operatingCompanyId,
-          user_id: userId,
-          type: "compliance_expiring",
-          severity: "critical",
-          title,
-          body,
-          action_link: `/drivers/${alert.driver_uuid}`,
-          entity_type: "driver",
-          entity_id: alert.driver_uuid,
-          source_block: "gap-82-cert-expiry",
-        },
-        client
-      );
-      inAppCount += 1;
-    }
-
-    try {
-      await sendEmail({
+    const result = await enqueueOutboxEvent(
+      client,
+      "safety.cert_expiry.critical_notification",
+      { aggregate_type: "mdata.drivers", aggregate_id: alert.driver_uuid },
+      {
+        operating_company_id: operatingCompanyId,
+        recipient_user_ids: recipientUserIds,
         to: process.env.CERT_EXPIRY_ALERT_EMAIL ?? "safety@ih35dispatch.com",
         subject: `[Critical] ${alert.cert_label} expiry — ${alert.driver_name}`,
-        html: `<p>${body}</p><p>Driver: ${alert.driver_uuid}</p>`,
-        sender: "noreply",
-        eventClass: "safety.cert_expiry.critical",
-      });
+        body,
+        body_html: `<p>${body}</p><p>Driver: ${alert.driver_uuid}</p>`,
+      },
+      `safety-cert-expiry:${operatingCompanyId}:${alert.driver_uuid}:${alert.cert_type}:${alert.expiry_date}`
+    );
+    if (result.enqueued) {
+      inAppCount += recipientUserIds.length;
       emailCount += 1;
-    } catch {
-      // Email failures are non-blocking for this alert pipeline.
     }
   }
 
