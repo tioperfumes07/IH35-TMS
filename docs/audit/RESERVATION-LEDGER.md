@@ -140,3 +140,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T10:32:00-05:00 | Codex | SAFETY-CSA-LATEST-QUERY-FAILURE-MASKED-AS-NO-DATA | apps/backend/src/safety/safety.routes.ts, scripts/verify-csa-hazmat-source-integrity.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-csa-latest-honesty |
 | 2026-08-25T10:36:00-05:00 | Codex | SAFETY-CSA-LATEST-QUERY-FAILURE-MASKED-AS-NO-DATA | — | RELEASED-ON-MERGE | codex/csa-latest-honesty |
 | 2026-08-25T10:42:00-05:00 | Codex | SAFETY-KPI-QUERY-FAILURES-FALSE-ZERO | apps/backend/src/safety/safety.routes.ts, apps/backend/src/safety/foundation-kpis.routes.ts, scripts/verify-safety-dashboard-kpis-wired.mjs, scripts/verify-safety-count-nav-integrity.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-safety-kpi-honesty |
+| 2026-08-25T10:47:00-05:00 | Codex | SAFETY-KPI-QUERY-FAILURES-FALSE-ZERO | — | RELEASED-ON-MERGE | codex/safety-kpi-honesty |
