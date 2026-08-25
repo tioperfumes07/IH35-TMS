@@ -1121,7 +1121,9 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
              OR new_trailer.currently_leased_to_company_id = h.operating_company_id
            )
            AND new_trailer.deactivated_at IS NULL
-           AND new_trailer.status::text = 'Active'
+           -- mdata.equipment uses the canonical InService/OutOfService lifecycle vocabulary.
+           -- 'Active' is a driver status and made every real trailer swap permanently count as 0.
+           AND new_trailer.status::text = 'InService'
          WHERE h.previous_trailer_id IS NOT NULL
            AND h.new_trailer_id IS NOT NULL
            AND h.previous_trailer_id <> h.new_trailer_id
