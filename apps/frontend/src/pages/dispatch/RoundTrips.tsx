@@ -252,6 +252,25 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
   }
 
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;
+  const pairingReadFailed = preSettlementsQuery.isError || idleUnitsQuery.isError;
+
+  if (pairingReadFailed) {
+    const failedFeeds = [
+      preSettlementsQuery.isError ? "pre-settlement pairings" : null,
+      idleUnitsQuery.isError ? "idle units" : null,
+    ].filter(Boolean).join(" and ");
+    return (
+      <ListErrorState
+        title="Round-trip pairing unavailable"
+        status={0}
+        message={`Could not load ${failedFeeds}. Existing loads were not treated as an honest empty pairing.`}
+        onRetry={() => {
+          if (preSettlementsQuery.isError) void preSettlementsQuery.refetch();
+          if (idleUnitsQuery.isError) void idleUnitsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-2" data-testid="dispatch-round-trips-view">
