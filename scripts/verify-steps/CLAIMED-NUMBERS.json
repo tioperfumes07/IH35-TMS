@@ -1,4 +1,9 @@
 {
+  "9750": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-docs-home-no-double-pagination"
+  },
   "9746": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
