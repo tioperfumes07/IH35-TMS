@@ -57,6 +57,17 @@ function main() {
   if (!/className=["'][^"']*\bmin-h-0\b[^"']*\bflex-1\b[^"']*\boverflow-y-auto\b[^"']*["'] data-testid=["']load-detail-drawer-scroll-body["']/.test(drawer)) {
     fail("LoadDetailDrawer body must own vertical scrolling independently of the header and footer");
   }
+  if (!/import\s*\{[^}]*\bgetDownloadUrl\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/api\/docs["']/.test(drawer)) {
+    fail("LoadDetailDrawer must use the canonical docs getDownloadUrl client for driver instructions");
+  }
+  const instructionsHelperGuard = /async function openDriverInstructionsFile\(\)[\s\S]{0,520}await getDownloadUrl\(load\.driver_instructions_file_id\)[\s\S]{0,240}window\.open\(result\.presigned_url,[\s\S]{0,260}catch\s*\(error\)[\s\S]{0,240}pushToast\(userFacingApiError\(error, ["']Driver instructions download failed["']\), ["']error["']\)/;
+  if (!instructionsHelperGuard.test(drawer)) {
+    fail("Driver instructions Preview/Download must open the returned presigned URL and surface request failures");
+  }
+  const driverInstructionsConsumers = drawer.match(/onClick=\{\(\) => void openDriverInstructionsFile\(\)\}/g) ?? [];
+  if (driverInstructionsConsumers.length !== 2) {
+    fail(`Driver instructions Preview and Download must share the canonical helper (found ${driverInstructionsConsumers.length}/2)`);
+  }
   if (!/export const loadRefParamSchema/.test(loadRef) || !/export function loadRefMatchSql/.test(loadRef)) {
     fail("apps/backend/src/lib/load-ref.ts must export loadRefParamSchema + loadRefMatchSql");
   }
@@ -129,6 +140,13 @@ function selftest() {
   ) {
     fail("selftest: drawer shell/header/body scroll ownership mutations were not caught");
   }
+  const driverInstructionsFixture = `import { getDownloadUrl } from "../../api/docs";
+async function openDriverInstructionsFile() { try { const result = await getDownloadUrl(load.driver_instructions_file_id); window.open(result.presigned_url, "_blank", "noopener,noreferrer"); } catch (error) { pushToast(userFacingApiError(error, "Driver instructions download failed"), "error"); } }
+<Button onClick={() => void openDriverInstructionsFile()}>Preview</Button><Button onClick={() => void openDriverInstructionsFile()}>Download</Button>`;
+  const instructionsHelperGuard = /async function openDriverInstructionsFile\(\)[\s\S]{0,520}await getDownloadUrl\(load\.driver_instructions_file_id\)[\s\S]{0,240}window\.open\(result\.presigned_url,[\s\S]{0,260}catch\s*\(error\)[\s\S]{0,240}pushToast\(userFacingApiError\(error, ["']Driver instructions download failed["']\), ["']error["']\)/;
+  if (!instructionsHelperGuard.test(driverInstructionsFixture)) fail("selftest: good driver-instructions helper rejected");
+  if (instructionsHelperGuard.test(driverInstructionsFixture.replace("result.presigned_url", '"/api/v1/docs/files/file/download-url"'))) fail("selftest: JSON endpoint opening was not caught");
+  if (instructionsHelperGuard.test(driverInstructionsFixture.replace('pushToast(userFacingApiError(error, "Driver instructions download failed"), "error");', "void error;"))) fail("selftest: driver-instructions error removal was not caught");
   console.log("OK verify-dispatch-load-deeplink-opens-drawer --selftest");
 }
 
