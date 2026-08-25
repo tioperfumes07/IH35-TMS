@@ -47,6 +47,10 @@ export function check(sources) {
     if (!/source_intransit_issue_id/.test(src)) {
       problems.push(`${label} must stamp source_intransit_issue_id on convert-to-WO`);
     }
+    const sourceLoadStamped = label === "triage.routes.ts" ? /issue\.load_id/.test(src) : /load\.id/.test(src);
+    if (!/\bload_id\b/.test(src) || !sourceLoadStamped) {
+      problems.push(`${label} must preserve the in-transit issue load_id on the created WO`);
+    }
   }
   return problems;
 }
@@ -58,8 +62,8 @@ function read(p) {
 function selftest() {
   const good = {
     mig: `HOLD-FOR-JORGE\nDO NOT RUN ON PROD\nABORT dangling\nADD COLUMN source_intransit_issue_id\nADD CONSTRAINT work_orders_source_intransit_issue_id_fkey\nREFERENCES dispatch.intransit_issues(id)`,
-    arriving: `source_intransit_issue_id`,
-    triage: `source_intransit_issue_id`,
+    arriving: `load_id source_intransit_issue_id load.id`,
+    triage: `load_id source_intransit_issue_id issue.load_id`,
   };
   const bad = {
     mig: `REFERENCES dispatch.in_transit_issues(id)`,

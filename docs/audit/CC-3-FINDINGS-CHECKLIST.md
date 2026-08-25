@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `MNT-TRIAGE-CONVERT-WO-DROPS-LOAD-FK` | **B** | Vertical load connectivity | Codex | this PR | 2026-08-24 | Primary in-transit triage conversion preserves the canonical load FK on both WO INSERT shapes. | existing MNT-LINK-03b guard normal + selftest; gate | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `SAF-ACCIDENT-SPAWN-WO-DROPS-TRAILER-FK` | **B** | Vertical trailer linkage | Codex | this PR | 2026-08-24 | Spawned AC work orders map accident trailer_id into canonical equipment_id. | focused tests 5/5; spawn-WO guard 8/8 + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `SAF-ACCIDENT-SPAWN-WO-DROPS-VENDOR-FK` | **B** | Vertical vendor linkage | Codex | this PR | 2026-08-24 | Spawned AC work orders persist the source accident's canonical repair vendor FK. | focused tests 5/5; spawn-WO guard 7/7 + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
