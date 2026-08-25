@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type AnnualRateStatus = {
   year: number;
@@ -84,6 +85,13 @@ export function DrugAlcoholDashboard() {
   const rate = rateQ.data;
   const poolSize = rate?.pool_size ?? (poolQ.data as { members?: unknown[] })?.members?.length ?? 0;
   const openRtd = ((rtdQ.data as { processes?: unknown[] })?.processes ?? []).length;
+  const retryFailedDashboardQueries = async () => {
+    await Promise.all([
+      rateQ.isError ? rateQ.refetch() : Promise.resolve(),
+      poolQ.isError ? poolQ.refetch() : Promise.resolve(),
+      rtdQ.isError ? rtdQ.refetch() : Promise.resolve(),
+    ]);
+  };
 
   if (!companyId) {
     return <p className="text-xs text-slate-600">Select an operating company.</p>;
@@ -108,12 +116,15 @@ export function DrugAlcoholDashboard() {
         </p>
       ) : null}
       {rateQ.isError || poolQ.isError || rtdQ.isError ? (
-        <p className="text-xs text-red-700" data-testid="drug-alcohol-dashboard-query-error">
-          {userFacingApiError(
-            rateQ.error ?? poolQ.error ?? rtdQ.error,
-            "Could not load drug/alcohol compliance rates.",
-          )}
-        </p>
+        <div data-testid="drug-alcohol-dashboard-query-error">
+          <ListErrorState
+            title="Couldn't load drug/alcohol compliance status"
+            status={0}
+            message={userFacingApiError(rateQ.error ?? poolQ.error ?? rtdQ.error, "Could not load drug/alcohol compliance rates.")}
+            onRetry={() => void retryFailedDashboardQueries()}
+            className="py-4"
+          />
+        </div>
       ) : null}
 
       {/* Flat KPI grid — each tile is its own single frame; no outer bordered card (CLS-BOX-IN-BOX). */}

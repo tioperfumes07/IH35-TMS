@@ -15,6 +15,12 @@ const NEEDLES = [
   "poolQ.isError",
   "rtdQ.isError",
   "drug-alcohol-dashboard-query-error",
+  "ListErrorState",
+  "retryFailedDashboardQueries",
+  "rateQ.isError ? rateQ.refetch()",
+  "poolQ.isError ? poolQ.refetch()",
+  "rtdQ.isError ? rtdQ.refetch()",
+  "onRetry={() => void retryFailedDashboardQueries()}",
 ];
 
 function assertFile(rel, needles) {
@@ -23,28 +29,22 @@ function assertFile(rel, needles) {
 }
 
 function selftest() {
-  const bad = `const poolSize = rate?.pool_size ?? 0;`;
-  const good = NEEDLES.join("\n");
-  const tmp = path.join(process.cwd(), ".tmp-da-dashboard-query-selftest.tsx");
-  fs.writeFileSync(tmp, bad);
-  try {
-    if (assertFile(".tmp-da-dashboard-query-selftest.tsx", ["rateQ.isError"]).length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL bad`);
+  const source = fs.readFileSync(path.join(process.cwd(), FILE), "utf8");
+  const mutations = [
+    ["rate retry", "rateQ.isError ? rateQ.refetch()", "rateQ.isError ? Promise.resolve()"],
+    ["pool retry", "poolQ.isError ? poolQ.refetch()", "poolQ.isError ? Promise.resolve()"],
+    ["rtd retry", "rtdQ.isError ? rtdQ.refetch()", "rtdQ.isError ? Promise.resolve()"],
+    ["retry action", "onRetry={() => void retryFailedDashboardQueries()}", "onRetry={() => undefined}"],
+  ];
+  for (const [name, from, to] of mutations) {
+    const planted = source.replace(from, to);
+    const missing = NEEDLES.filter((needle) => !planted.includes(needle));
+    if (missing.length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name} mutation stayed green`);
       process.exit(1);
     }
-  } finally {
-    fs.unlinkSync(tmp);
   }
-  fs.writeFileSync(tmp, good);
-  try {
-    if (assertFile(".tmp-da-dashboard-query-selftest.tsx", NEEDLES).length > 0) {
-      console.error(`${LABEL} SELFTEST FAIL good`);
-      process.exit(1);
-    }
-  } finally {
-    fs.unlinkSync(tmp);
-  }
-  console.log(`${LABEL} selftest PASS`);
+  console.log(`${LABEL} selftest PASS — 4 independent recovery mutations red`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -62,4 +62,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — DrugAlcoholDashboard surfaces rateQ/poolQ/rtdQ isError`);
+console.log(`${LABEL} PASS — DrugAlcoholDashboard surfaces and exactly retries failed rateQ/poolQ/rtdQ reads`);
