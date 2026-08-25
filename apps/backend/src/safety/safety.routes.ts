@@ -300,8 +300,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      const testsRes = await client
-        .query<{ count: number }>(
+      const testsRes = await client.query<{ count: number }>(
           `
             SELECT COUNT(*)::int AS count
             FROM safety.drug_test
@@ -310,10 +309,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               AND voided_at IS NULL
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const csaRes = await client
-        .query<{ score: number | null }>(
+        );
+      const csaRes = await client.query<{ score: number | null }>(
           `
             SELECT CASE
               WHEN num_nonnulls(
@@ -339,8 +336,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [{ score: null }] }));
+        );
       const k = kpiRes.rows[0];
       const pendingAcknowledgments = Number(k?.pending_acknowledgments ?? 0);
       return {
