@@ -1,5 +1,9 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**19:39 CT GO — API deploy in flight (`a44357d8` job catch-up). Live still `1bfaaf2` until healthz moves.**
+
+**STILL NOW:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-f06a-4fa3-ad67-877eb2e64b0f` — Neon: `status=posted`, `posting_status=unposted`, no `posted_at`. Reuse poster. Do not remake BILL-2026-00015. Transition still authorized on `L-20260824-0007`. Never `trigger_deploy`. Never `/425c`.
+
 **19:17 CT RULING — Kanban drag is not a stop. PATCH the same path the board uses.**
 
 **AUTHORIZED** for labeled TEST load `065538c8-af72-4dfd-9929-6ee71d8eb7f5` (`L-20260824-0007`):
