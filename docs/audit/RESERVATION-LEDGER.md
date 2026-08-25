@@ -118,3 +118,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T00:17:39-05:00 | Codex | DISPATCH-BOL-STORED-DOWNLOAD-SILENT-FAILURE | apps/frontend/src/components/dispatch/LoadBolPanel.tsx, scripts/verify-disp-wire-09-bol-generate.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-bol-download-error |
 | 2026-08-25T00:20:00-05:00 | Codex | DISPATCH-BOL-STORED-DOWNLOAD-SILENT-FAILURE | — | RELEASED-ON-MERGE | codex/bol-download-visible-error |
 | 2026-08-25T00:25:00-05:00 | Codex | DISPATCH-DRIVER-INSTRUCTIONS-DOWNLOAD-URL-JSON-DEAD-END | apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx, scripts/verify-dispatch-load-deeplink-opens-drawer.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-driver-instructions-download |
+| 2026-08-25T00:28:00-05:00 | Codex | DISPATCH-DRIVER-INSTRUCTIONS-DOWNLOAD-URL-JSON-DEAD-END | — | RELEASED-ON-MERGE | codex/driver-instructions-signed-download |

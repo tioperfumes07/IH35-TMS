@@ -13,7 +13,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
-import { listFiles } from "../../api/docs";
+import { getDownloadUrl, listFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadBolPanel } from "./LoadBolPanel";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
@@ -323,6 +323,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
       invoice_id: linkedInvoice?.id ?? null,
     });
     if (!auto) pushToast("Factoring package generated", "success");
+  }
+
+  async function openDriverInstructionsFile() {
+    if (!load?.driver_instructions_file_id) return;
+    try {
+      const result = await getDownloadUrl(load.driver_instructions_file_id);
+      window.open(result.presigned_url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Driver instructions download failed"), "error");
+    }
   }
 
   useEffect(() => {
@@ -838,14 +848,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         size="sm"
                         variant="secondary"
                         disabled={!load.driver_instructions_file_id}
-                        onClick={() => {
-                          if (!load.driver_instructions_file_id) return;
-                          window.open(
-                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
-                            "_blank",
-                            "noopener,noreferrer"
-                          );
-                        }}
+                        onClick={() => void openDriverInstructionsFile()}
                       >
                         Preview
                       </Button>
@@ -853,14 +856,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         size="sm"
                         variant="secondary"
                         disabled={!load.driver_instructions_file_id}
-                        onClick={() => {
-                          if (!load.driver_instructions_file_id) return;
-                          window.open(
-                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
-                            "_blank",
-                            "noopener,noreferrer"
-                          );
-                        }}
+                        onClick={() => void openDriverInstructionsFile()}
                       >
                         Download
                       </Button>
