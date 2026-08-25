@@ -80,6 +80,14 @@ const CHECKS = [
       /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?vendor_id/.test(s) &&
       /accident\.vendor_id \?\? null/.test(s),
   },
+  {
+    id: "trailer-forward-fk",
+    file: ROUTES,
+    describe: "spawned AC work order must map accident trailer_id to canonical equipment_id",
+    test: (s) =>
+      /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?equipment_id/.test(s) &&
+      /accident\.trailer_id \?\? null/.test(s),
+  },
 ];
 
 export function run() {
@@ -128,6 +136,20 @@ function selftest() {
       process.exit(1);
     }
     console.log("  caught: vendor-forward-fk plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
+  }
+  const noTrailerFk = original
+    .replace(/\n\s*equipment_id,/, "")
+    .replace(/\n\s*accident\.trailer_id \?\? null,/, "");
+  try {
+    writeFileSync(ROUTES, noTrailerFk, "utf8");
+    const caught = run();
+    if (caught.ok || !/trailer-forward-fk/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: trailer-forward-fk plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: trailer-forward-fk plant");
   } finally {
     writeFileSync(ROUTES, original, "utf8");
   }
