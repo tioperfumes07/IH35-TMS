@@ -50,8 +50,7 @@ export async function registerSafetyDriverProfileRoutes(app: FastifyInstance) {
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
 
     const profile = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
-      const profileRes = await client
-        .query(
+      const profileRes = await client.query(
           `
             SELECT *
             FROM safety.driver_safety_profiles
@@ -61,8 +60,7 @@ export async function registerSafetyDriverProfileRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [company.data.operating_company_id, params.data.driver_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const row = profileRes.rows[0] ?? null;
       if (!row) return null;
       const days = Number((row as { medical_days_to_expiry?: number }).medical_days_to_expiry ?? NaN);
