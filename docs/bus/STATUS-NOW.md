@@ -5,16 +5,16 @@
 
 U14 **14/14 CERTIFIED** — never recertify.
 
-**19:02 CT:** Deploy `dep-da6dmmvavr4c73et8hvg` IN FLIGHT tip `1bfaaf26` (WO-bill FK). Live until healthz moves = `852b8e8`. Never second-kick.
+**19:13 CT:** Live `1bfaaf2`. No API deploy in flight.
 
 | Seat | NOW |
 |------|-----|
-| Cursor 9222 | `WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL` + lead |
-| CC-1 9223 | Hops 6–9 on BILL-2026-00015 / JE `955c6d97` — do not remake |
-| CC-2 9224 | Letters DONE. Next leftover unique only. |
-| CC-3 9225 | After SHA: retry WO→Bill; `parts_receive` |
+| Cursor 9222 | Lead. Next leftover unique. SYSTEM job ledger still OPEN (not this hop). |
+| CC-1 9223 | `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` |
+| CC-2 9224 | Next leftover unique. Print battery done. |
+| CC-3 9225 | Retry WO→Bill on `1bfaaf2`; prove `unit_id` after #15649 SPA |
 | Codex 9226 | Leftover unique. No restamp. |
-| Cascade | Print UUID without query (PRINT-F09 live). No U14 restamp. |
+| Cascade | Unique FINDING only. No U14 restamp. |
 | Devin-A | Leftover unique. |
 
-ACK: `SEAT | ACK | DEPLOY-1bfaaf2 | PORT=n | SHA=<healthz> | FINDING=<id-or-none> | GO`
+ACK: `SEAT | ACK | LIVE-1bfaaf2 | PORT=n | SHA=<healthz> | FINDING=<id-or-none> | GO`
