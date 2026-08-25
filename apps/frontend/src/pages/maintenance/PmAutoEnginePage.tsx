@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export function PmAutoEnginePage() {
@@ -68,27 +69,28 @@ export function PmAutoEnginePage() {
 
   return (
     <div className="space-y-4" data-testid="maint-pm-auto-engine">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">PM Auto Engine</h2>
-          <p className="text-xs text-gray-500">
-            Hourly evaluation of PM schedules — auto-creates work orders at due thresholds and near-due alerts.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!companyId || settingsM.isPending}
-            onClick={() => settingsM.mutate(!isPaused)}
-          >
-            {isPaused ? "Resume engine" : "Pause engine"}
-          </Button>
-          <Button type="button" disabled={!companyId || runNowM.isPending || isPaused} onClick={() => runNowM.mutate()}>
-            Run now
-          </Button>
-        </div>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="PM Auto Engine"
+        subtitle="Hourly evaluation of PM schedules — auto-creates work orders at due thresholds and near-due alerts."
+        breadcrumb={["Maintenance", "PM Auto Engine"]}
+        backHref="/maintenance"
+        actions={
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!companyId || settingsM.isPending}
+              onClick={() => settingsM.mutate(!isPaused)}
+            >
+              {isPaused ? "Resume engine" : "Pause engine"}
+            </Button>
+            <Button type="button" disabled={!companyId || runNowM.isPending || isPaused} onClick={() => runNowM.mutate()}>
+              Run now
+            </Button>
+          </div>
+        }
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-600">

@@ -4,6 +4,7 @@ import { getMaintenanceReportRows, getMaintenanceReportXlsxUrl } from "../../../
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 type ReportRow = Record<string, unknown>;
 
@@ -46,17 +47,22 @@ export function MaintenanceReportsPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900">Maintenance Reports</h2>
-        <a
-          className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
-          href={getMaintenanceReportXlsxUrl(report, companyId)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Export XLSX
-        </a>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="Maintenance Reports"
+        breadcrumb={["Maintenance", "Reports"]}
+        backHref="/maintenance"
+        actions={
+          <a
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
+            href={getMaintenanceReportXlsxUrl(report, companyId)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Export XLSX
+          </a>
+        }
+      />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <label className="mb-2 block text-xs text-gray-600">
           Report

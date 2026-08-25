@@ -4,6 +4,7 @@ import { listMaintenanceCompliance425cLog } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Compliance425cRow = Record<string, unknown>;
@@ -41,7 +42,8 @@ export function Compliance425CPage() {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900">Compliance / 425C Linkage</h2>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader title="Compliance / 425C Linkage" breadcrumb={["Maintenance", "Compliance"]} backHref="/maintenance" />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs text-gray-600">Read-only 425C audit linkage feed for maintenance events.</div>
         {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a clean 425C compliance record. */}

@@ -15,6 +15,7 @@ import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -181,25 +182,34 @@ export function VehiclesMasterDataPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
-        <div>
-          <h1 className="text-base font-semibold text-gray-900">Maintenance Vehicles</h1>
-          <p className="text-xs text-gray-600">Create, edit, void, and review projected source status.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* MAINT-F3520: server-bound vehicles search — keep; ParityTable toolbar Search suppressed */}
-          <input
-            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-            aria-label="Search vehicles"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search vehicles"
-          />
-          <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
-            + Create
-          </Button>
-        </div>
-      </div>
+      {/*
+        UI-BACK-BUTTON-MISSING-ENTIRELY: this leaf route (/maintenance/vehicles) had a bespoke
+        title bar with no back control at all -- part of a systemwide route-manifest audit that
+        found 13 such Maintenance leaves with no shared wrapper to fix in one shot. Replaced with
+        the standard PageHeader (backHref="/maintenance", the module hub) so it gets the same
+        smart-back wiring as the rest of the app instead of yet another bespoke back button.
+      */}
+      <PageHeader
+        title="Maintenance Vehicles"
+        subtitle="Create, edit, void, and review projected source status."
+        breadcrumb={["Maintenance", "Vehicles"]}
+        backHref="/maintenance"
+        actions={
+          <div className="flex items-center gap-2">
+            {/* MAINT-F3520: server-bound vehicles search — keep; ParityTable toolbar Search suppressed */}
+            <input
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+              aria-label="Search vehicles"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search vehicles"
+            />
+            <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+              + Create
+            </Button>
+          </div>
+        }
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
