@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**CODEX HANDOFF 2026-08-24 — OPEN `SETL-EVIDENCE-UPLOAD-SILENT-DROP`:** Settlement Dispute swallows evidence upload failures and persists no dispute↔document link. Full root cause/fix bar is in `docs/audit/GUARD-WORKORDERS.md`. `BLOCKS=settlements Fully-Wired evidence chain`; OWNER-GATED=no.
+
 **19:39 CT GO — API deploy in flight (`a44357d8` job catch-up). Live still `1bfaaf2` until healthz moves.**
 
 **STILL NOW:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-f06a-4fa3-ad67-877eb2e64b0f` — Neon: `status=posted`, `posting_status=unposted`, no `posted_at`. Reuse poster. Do not remake BILL-2026-00015. Transition still authorized on `L-20260824-0007`. Never `trigger_deploy`. Never `/425c`.
