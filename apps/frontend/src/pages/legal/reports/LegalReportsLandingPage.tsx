@@ -5,6 +5,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatUsd } from "../../../lib/money";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // C8: every legal-report figure opens the matters list it was rolled up from, and a figure the
 // payload does not carry renders "—" rather than "$0 at risk" / "0 deadlines".
@@ -62,7 +64,11 @@ export function LegalReportsLandingPage() {
       ) : q.isLoading ? (
         <p className="text-sm text-gray-600">Loading…</p>
       ) : q.isError ? (
-        <p className="text-sm text-red-600">Could not load reports.</p>
+        <ListErrorState
+          status={0}
+          message={userFacingApiError(q.error, "Could not load legal reports.")}
+          onRetry={() => void q.refetch()}
+        />
       ) : (
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">

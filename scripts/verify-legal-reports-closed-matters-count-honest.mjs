@@ -47,6 +47,9 @@ export function checkBackend(text) {
 
 export function checkFrontend(text) {
   const problems = [];
+  if (!/q\.isError\s*\?\s*\([\s\S]{0,220}<ListErrorState[\s\S]{0,260}userFacingApiError\(q\.error[\s\S]{0,180}q\.refetch\(\)/.test(text)) {
+    problems.push("Legal Reports failed reads do not preserve API detail and retry the exact summary query.");
+  }
   const cardMatch = text.match(/label="Closed matters \(count\)"[\s\S]{0,200}?\/>/);
   if (!cardMatch) {
     problems.push('could not find the "Closed matters (count)" Card element.');
@@ -101,12 +104,19 @@ function selftest() {
     failures.push(`offender-2 (FE reverted to closed_n) NOT caught: ${p2.join(" | ") || "none"}`);
   }
 
+  // Offender 3: retry renders but no longer refetches the failed summary query.
+  const retryNoOp = feReal.replace("onRetry={() => void q.refetch()}", "onRetry={() => undefined}");
+  const p3 = checkFrontend(retryNoOp);
+  if (!p3.some((m) => m.includes("retry the exact summary query"))) {
+    failures.push(`offender-3 (Legal Reports retry no-op) NOT caught: ${p3.join(" | ") || "none"}`);
+  }
+
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 2/2 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — 3/3 offenders caught, baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {
