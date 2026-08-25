@@ -289,6 +289,18 @@ export function AuditLogViewer() {
             tableTestId="audit-log-viewer-table"
             rowTestId={(row) => `audit-log-viewer-row-${row.id}`}
             onRowClick={handleRowClick}
+            // ADMIN-F-PARITYTABLE-DOUBLE-PAGINATION: `rows` is already one server page (limit=
+            // PAGE_SIZE of `totalCount` real rows, offset-driven). Without pageSize+hidePager,
+            // ParityTable's own uncontrolled pager re-derives "total" from rows.length and renders
+            // a second, contradictory pager (defaults to 15/page, "1-25 of 100" with real working
+            // Next/Prev across the 100-row batch it was handed) directly above the real server
+            // pager below ("Page {currentPage} of {totalPages}" — live-confirmed 2,088 real pages
+            // / 208,800 real events, vs the fake pager's "100"). Same class as the already-fixed
+            // REPORTS-F6363 (AuditReportPage.tsx) and DOCS-F-PARITYTABLE-DOUBLE-PAGINATION
+            // (DocsHomePage.tsx). Per ParityTable's own documented "caller pre-pages" combo:
+            // pageSize = server page size + hidePager — no double slicing.
+            pageSize={PAGE_SIZE}
+            hidePager
           />
         </div>
       )}
