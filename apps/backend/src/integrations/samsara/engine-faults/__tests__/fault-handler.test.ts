@@ -24,7 +24,7 @@ vi.mock("../../../../maintenance/work-orders/auto-create-from-fault.js", () => (
 }));
 
 vi.mock("../../../../notifications/fault-notifications.js", () => ({
-  notifyEngineFaultWorkOrder: vi.fn(async () => ({ in_app: 1, email: 0, push: 0, sms: 0 })),
+  notifyEngineFaultWorkOrder: vi.fn(async () => ({ in_app: 1, queued: true })),
 }));
 
 vi.mock("../../samsara.service.js", async () => {
