@@ -166,8 +166,17 @@ export function RecordTransferModal({
     if (transferType === "bank_to_bank") return bankToBankOptions;
     if (transferType === "cc_payment" || transferType === "owner_distribution") return bankOptions;
     if (transferType === "cash_deposit") {
+      // DISP-F6XXX (hop.bank) -- this filter originally matched only /cash|petty/i, built for the
+      // narrower "deposit physical cash-on-hand" case. The QBO-parity "Bank Deposit" use case --
+      // moving a customer payment out of Undeposited Funds into a real bank account, the ONLY route
+      // a payment can ever reach the reconciliation workspace -- needs its "Undeposited Funds" CoA
+      // account to show up here too. Confirmed live: catalogs.accounts account_name "Undeposited
+      // Funds" (id 09d53946-..., the entity's own undeposited_funds CoA role target, same account
+      // UndepositedFundsPage.tsx resolves) did not match /cash|petty/i and the From Account picker
+      // showed "No matches" for a real, existing, correctly-named account. Additive widening only --
+      // every account that matched before still matches.
       return coaAccounts
-        .filter((account) => /cash|petty/i.test(account.name))
+        .filter((account) => /cash|petty|undeposited/i.test(account.name))
         .map((account) => ({ id: account.id, name: account.name, kind: "coa" as const }));
     }
     if (transferType === "owner_contribution") {
