@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**16:10 CT GO-1610.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1610.md`. Deploy `dep-da70a5q6iojc7381oo6g` IN FLIGHT — do not second-kick. Launch ~4h. Unique leftover. Skip #15546. Do not steal CC-1 1–10.
+
 **15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Deploy `dep-da6vs5c9v7es739mjcbg` IN FLIGHT — do not second-kick. Ship unique print/break-even leftover. **#15860 is law** — do not remake scroll/smart-back. Skip #15546. U14 never restamp.
 
 **14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Fan-out scenarios. Ship launch hygiene (scroll/back/print codes/break-even Excel). Enable USMCA finance UI flags. Do not steal CC-1 1–10. Skip #15546. U14 never restamp.

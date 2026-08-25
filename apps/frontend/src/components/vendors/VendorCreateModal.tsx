@@ -13,6 +13,7 @@ import { useToast } from "../Toast";
 import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
 import { isTestVendorFixtureName } from "../../lib/testVendorFixtureName";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 
 // V4/V5 — full QuickBooks-style vendor creator (QBO parity spec §1B: Name and contact / Address / Notes),
 // extended with the trucking classification fields (vendor type / tax ID / vendor code) the profile edits.
@@ -206,13 +207,13 @@ export function VendorCreateModal({
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const displayName = name.trim();
-      if (!displayName) {
+      const displayName = properPersonOrPlaceName(name.trim());
+      if (!name.trim()) {
         const error = new Error("Vendor name is required.");
         (error as Error & { code?: string }).code = "name_required";
         throw error;
       }
-      if (import.meta.env.PROD && isTestVendorFixtureName(displayName)) {
+      if (import.meta.env.PROD && isTestVendorFixtureName(name.trim())) {
         const error = new Error("TEST-VENDOR fixture names are not allowed in production.");
         (error as Error & { code?: string }).code = "mdata_vendor_test_fixture_rejected";
         throw error;
@@ -223,8 +224,8 @@ export function VendorCreateModal({
         telephone: phone.trim(),
         address,
         generalEmail: email.trim(),
-        primaryContactName: contactName.trim(),
-        primaryContactTitle: contactTitle.trim(),
+        primaryContactName: properPersonOrPlaceName(contactName.trim()),
+        primaryContactTitle: properPersonOrPlaceName(contactTitle.trim()),
         primaryContactPhone: contactPhone.trim(),
         primaryContactEmail: contactEmail.trim(),
       };
@@ -233,8 +234,8 @@ export function VendorCreateModal({
         vendor_type: vendorType,
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
-        address: address || undefined,
-        city: city.trim() || undefined,
+        address: address ? properPersonOrPlaceName(address) : undefined,
+        city: city.trim() ? properPersonOrPlaceName(city.trim()) : undefined,
         state: state.trim() || undefined,
         postal_code: zip.trim() || undefined,
         tax_id: taxId.trim() || undefined,
@@ -243,7 +244,9 @@ export function VendorCreateModal({
         notes: serializeVendorNotes(meta, notes.trim()),
         // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
         website: website.trim() || undefined,
-        print_on_check_name: printOnCheckName.trim() || undefined,
+        print_on_check_name: printOnCheckName.trim()
+          ? properPersonOrPlaceName(printOnCheckName.trim())
+          : undefined,
         eligible_1099: eligible1099,
         payment_terms_id: paymentTermsId,
         default_expense_account_id: defaultExpenseAccountId,

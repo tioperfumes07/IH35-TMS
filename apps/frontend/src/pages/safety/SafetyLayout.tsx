@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CSAScoreCard } from "./components/CSAScoreCard";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { hasInAppHistory } from "../../lib/smart-back";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
@@ -161,7 +162,14 @@ export function SafetyLayout() {
             <div className="flex items-center gap-2 text-[11px] text-slate-400">
               <button
                 type="button"
-                onClick={() => navigate("/home")}
+                aria-label="Back"
+                onClick={() => {
+                  if (hasInAppHistory(window.history.state)) {
+                    navigate(-1);
+                    return;
+                  }
+                  navigate("/home");
+                }}
                 className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
