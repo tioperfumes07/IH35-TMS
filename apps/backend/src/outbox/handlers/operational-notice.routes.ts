@@ -61,6 +61,22 @@ function label(p: NoticePayload, preferredKey: string, idKey: string): string {
 
 export const NOTICE_ROUTES: NoticeRoute[] = [
   {
+    // The canonical PWA helper emits this only when its inbox relation is unavailable. Without a
+    // consumer the fail-loud event itself retries forever and nobody learns that driver notices are
+    // being lost. Route it to humans who can contact the driver while the PWA surface is repaired.
+    eventType: "pwa.driver_notification.undelivered",
+    severity: "high",
+    entityType: "mdata.drivers",
+    entityIdKey: "driver_id",
+    audience: { kind: "roles", roles: ["Owner", "Administrator", "Dispatcher"] },
+    sourceBlock: "PWA-DRIVER-NOTIFICATION-UNDELIVERED",
+    title: (p) => `Driver notification could not be delivered — ${label(p, "driver_name", "driver_id")}`,
+    body: (p) =>
+      `The driver PWA inbox was unavailable, so this notice was not delivered: ` +
+      `${text(p, "title") ?? "Untitled driver notice"}. Contact the driver directly and repair the PWA inbox.`,
+    actionLink: (p) => `/drivers/${text(p, "driver_id") ?? ""}`,
+  },
+  {
     eventType: "load.assigned_to_driver",
     severity: "info",
     entityType: "mdata.loads",

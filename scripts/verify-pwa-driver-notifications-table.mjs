@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MIG = "db/migrations/202608161500_pwa_driver_notifications.sql";
 const HELPER = "apps/backend/src/pwa/driver-notifications.ts";
+const NOTICE_ROUTES = "apps/backend/src/outbox/handlers/operational-notice.routes.ts";
 const CALL_SITES = [
   "apps/backend/src/driver-finance/cash-advance-requests.service.ts",
   "apps/backend/src/driver-finance/cash-advance-owner-approval.service.ts",
@@ -46,6 +47,13 @@ function check(root = ROOT) {
   if (/if\s*\(!ok\)\s*return\s*;/.test(helper)) {
     errors.push(`${HELPER}: bare if (!ok) return is forbidden`);
   }
+  const routes = fs.readFileSync(path.join(root, NOTICE_ROUTES), "utf8");
+  if (!/eventType:\s*["']pwa\.driver_notification\.undelivered["']/.test(routes)) {
+    errors.push(`${NOTICE_ROUTES}: undelivered PWA event must have a registered operational handler`);
+  }
+  if (!/sourceBlock:\s*["']PWA-DRIVER-NOTIFICATION-UNDELIVERED["']/.test(routes)) {
+    errors.push(`${NOTICE_ROUTES}: undelivered PWA handler must remain an explicit operational alert`);
+  }
 
   for (const site of CALL_SITES) {
     const src = fs.readFileSync(path.join(root, site), "utf8");
@@ -65,11 +73,13 @@ function selftest() {
   try {
     fs.mkdirSync(path.join(tmp, "db/migrations"), { recursive: true });
     fs.mkdirSync(path.join(tmp, "apps/backend/src/pwa"), { recursive: true });
+    fs.mkdirSync(path.join(tmp, "apps/backend/src/outbox/handlers"), { recursive: true });
     for (const site of CALL_SITES) {
       fs.mkdirSync(path.join(tmp, path.dirname(site)), { recursive: true });
       fs.copyFileSync(path.join(ROOT, site), path.join(tmp, site));
     }
     fs.copyFileSync(path.join(ROOT, MIG), path.join(tmp, MIG));
+    fs.copyFileSync(path.join(ROOT, NOTICE_ROUTES), path.join(tmp, NOTICE_ROUTES));
     let helper = fs.readFileSync(path.join(ROOT, HELPER), "utf8");
     // Replant the silent-drop defect.
     helper = helper.replace(
@@ -87,6 +97,21 @@ function selftest() {
       process.exit(1);
     }
     console.log(`${LABEL} selftest PASS — ${errs.length} error(s) on silent-drop replant`);
+
+    // Independently remove the consumer while preserving the producer: the fail-loud row must not
+    // be allowed to become an unhandled permanent retry loop again.
+    fs.writeFileSync(path.join(tmp, HELPER), fs.readFileSync(path.join(ROOT, HELPER), "utf8"));
+    const withoutHandler = fs.readFileSync(path.join(ROOT, NOTICE_ROUTES), "utf8").replace(
+      'eventType: "pwa.driver_notification.undelivered"',
+      'eventType: "pwa.driver_notification.REMOVED"'
+    );
+    fs.writeFileSync(path.join(tmp, NOTICE_ROUTES), withoutHandler);
+    const handlerErrors = check(tmp);
+    if (!handlerErrors.some((error) => error.includes("registered operational handler"))) {
+      console.error(`${LABEL} selftest FAIL — missing-handler replant did not redden`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} selftest PASS — missing-handler replant rejected`);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -103,4 +128,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — pwa.driver_notifications migration + no silent drop`);
+console.log(`${LABEL} PASS — PWA inbox migration + fail-loud producer + registered operational consumer`);
