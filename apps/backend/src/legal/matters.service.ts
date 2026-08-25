@@ -964,6 +964,20 @@ export async function legalMattersReportsSummary(client: QueryableClient, operat
     `,
     [operatingCompanyId]
   );
+  // LEGAL-REPORTS-CLOSED-COUNT-SCOPED-TO-CLAIM-AMOUNT: total_closed is the true, unscoped count of
+  // status='closed' matters -- the FE's "Closed matters (count)" card must read this, not closed_n.
+  // closed_n/avg_settled_claim stay scoped to matters WITH a claim amount (correct math for an
+  // average), but a closed matter with no monetary claim was previously invisible on the report
+  // because the FE reused closed_n as if it were the total closed-matter count.
+  const totalClosed = await client.query(
+    `
+      SELECT count(*)::int AS n
+      FROM legal.matters
+      WHERE operating_company_id = $1::uuid
+        AND status = 'closed'
+    `,
+    [operatingCompanyId]
+  );
   const settlements = await client.query(
     `
       SELECT
@@ -1003,6 +1017,7 @@ export async function legalMattersReportsSummary(client: QueryableClient, operat
     open_by_severity: Object.fromEntries(counts.rows.map((r) => [r.severity, r.n])) as Record<string, number>,
     total_amount_at_risk: atRisk.rows[0]?.total ?? 0,
     total_amount_we_seek: weSeek.rows[0]?.total ?? 0,
+    total_closed_matters: totalClosed.rows[0]?.n ?? 0,
     settlement_history: settlements.rows[0] ?? { closed_n: 0, avg_settled_claim: null },
     deadlines_next_30_days: deadlines30.rows[0]?.n ?? 0,
     statute_limitations_approaching_90d: sol90.rows[0]?.n ?? 0,

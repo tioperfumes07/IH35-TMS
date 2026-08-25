@@ -81,7 +81,7 @@ export function LegalReportsLandingPage() {
           />
           <Card
             label="Closed matters (count)"
-            value={countOrNull((s.settlement_history as { closed_n?: number })?.closed_n)}
+            value={countOrNull(s.total_closed_matters as number | undefined)}
             to="/legal/matters"
           />
           <Card
