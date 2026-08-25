@@ -31,6 +31,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { LegalMatterCostsReverseSection } from "../../../components/accounting/LegalMatterCostsReverseSection";
 import { CreateBillModal } from "../../maintenance/components/CreateBillModal";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
@@ -273,7 +274,14 @@ export function LegalMatterDetailPage() {
         <p className="text-sm text-gray-600">Missing company or matter.</p>
       ) : detailQuery.isLoading ? (
         <p className="text-sm text-gray-600">Loading…</p>
-      ) : detailQuery.isError || !detailQuery.data ? (
+      ) : detailQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load legal matter"
+          status={0}
+          message={userFacingApiError(detailQuery.error, "Could not load this legal matter.")}
+          onRetry={() => void detailQuery.refetch()}
+        />
+      ) : !detailQuery.data ? (
         <p className="text-sm text-red-600">Matter not found or access denied.</p>
       ) : (
         <>
