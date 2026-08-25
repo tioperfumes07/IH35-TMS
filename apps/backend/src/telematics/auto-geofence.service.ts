@@ -1,5 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { TMS_AUTO_GEOFENCE_SIDE_METERS } from "../integrations/samsara/geofences/wf-051-radius.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -44,7 +46,7 @@ type LatLngVertex = {
   lng: number;
 };
 
-const DEFAULT_GEOFENCE_SIDE_METERS = 100;
+const DEFAULT_GEOFENCE_SIDE_METERS = TMS_AUTO_GEOFENCE_SIDE_METERS;
 
 function buildAddressLabel(stop: LoadStopRow): string {
   const parts = [stop.address_line1, stop.city, stop.state, stop.country]
@@ -174,7 +176,7 @@ export async function autoCreateGeofencesForLoadWithClient(
     }
 
     const label = buildAddressLabel(stop);
-    await client.query(
+    const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO geo.geofences (
           operating_company_id,
@@ -198,9 +200,36 @@ export async function autoCreateGeofencesForLoadWithClient(
           $5::uuid,
           $5::uuid
         )
+        RETURNING id::text AS id
       `,
-      [input.operating_company_id, label, stop.customer_id, JSON.stringify(squareVerticesFromCenter(center.latitude, center.longitude)), actorUserId]
+      [
+        input.operating_company_id,
+        label,
+        stop.customer_id,
+        JSON.stringify(squareVerticesFromCenter(center.latitude, center.longitude)),
+        actorUserId,
+      ]
     );
+    const geofenceId = inserted.rows[0]?.id ?? null;
+    if (geofenceId) {
+      await enqueueOutboxEvent(
+        client,
+        "samsara.create_geofence",
+        { aggregate_type: "geo.geofences", aggregate_id: geofenceId },
+        {
+          operating_company_id: input.operating_company_id,
+          geofence_id: geofenceId,
+          load_id: input.load_id,
+          stop_id: stop.stop_id,
+          latitude: center.latitude,
+          longitude: center.longitude,
+          formatted_address: label,
+          label,
+          actor_user_id: actorUserId,
+        },
+        `samsara.create_geofence:${geofenceId}`
+      );
+    }
     created += 1;
   }
 

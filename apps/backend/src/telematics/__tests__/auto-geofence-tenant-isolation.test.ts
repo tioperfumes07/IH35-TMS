@@ -26,7 +26,7 @@ describe("auto geofence tenant isolation", () => {
           };
         }
         if (sql.includes("FROM geo.geofences g")) return { rows: [] };
-        if (sql.includes("INSERT INTO geo.geofences")) return { rows: [] };
+        if (sql.includes("INSERT INTO geo.geofences")) return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
         return { rows: [] };
       }),
     };
