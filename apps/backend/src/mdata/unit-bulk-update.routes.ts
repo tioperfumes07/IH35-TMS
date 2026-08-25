@@ -88,9 +88,9 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
           add("status", dbStatus);
           add("status_changed_at", new Date().toISOString());
           add("status_changed_by_user_id", authUser.uuid);
-          if (dbStatus === "OutOfService") {
-            add("is_oos", true);
-          }
+          // Status is authoritative: entering OOS sets the dispatch guard, and returning to any
+          // other canonical fleet status clears a stale OOS flag.
+          add("is_oos", dbStatus === "OutOfService");
         }
 
         if (patch.vehicle_type) {
