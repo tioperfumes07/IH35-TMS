@@ -5,7 +5,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { enforceOfficePasswordResetRequestLimits } from "../middleware/rate-limit.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { officePasswordSchema } from "./office-password-policy.js";
 
 const RESET_GENERIC_OK = "If that email exists, you'll receive a reset link.";
@@ -88,31 +88,17 @@ export async function registerPasswordResetRoutes(app: FastifyInstance) {
         "info",
         "P7-BLOCK-F-AUTH"
       );
+      await enqueueOutboxEvent(
+        client,
+        "identity.password_reset.email_requested",
+        { aggregate_type: "identity.users", aggregate_id: user.id },
+        {
+          to: email,
+          confirm_url: frontendResetConfirmUrl(token),
+          recipient_user_id: user.id,
+        }
+      );
     });
-
-    const confirmUrl = frontendResetConfirmUrl(token);
-    try {
-      await sendEmail({
-        to: email,
-        subject: "Reset your IH 35 Dispatch password",
-        html: `
-          <p>You requested a password reset for your IH 35 Dispatch account.</p>
-          <p><a href="${confirmUrl}">Choose a new password</a> (link expires in one hour).</p>
-          <p>If you did not request this, you can ignore this email.</p>
-        `,
-        text: `Reset your password (expires in one hour): ${confirmUrl}`,
-        sender: "noreply",
-        eventClass: "identity.password_reset.email",
-        recipientUserUuid: user.id,
-        actorUserId: null,
-        tags: [
-          { name: "type", value: "office_password_reset" },
-          { name: "user_id", value: user.id },
-        ],
-      });
-    } catch {
-      // Stay generic to callers.
-    }
 
     return reply.code(200).send({ ok: true, message: RESET_GENERIC_OK });
   });

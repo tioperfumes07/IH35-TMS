@@ -23,6 +23,7 @@ import { WorkOrderApprovedHandler } from "./work-order-approved.handler.js";
 import { AuthEmailVerificationHandler } from "./auth-email-verification.handler.js";
 import { IdentityUserPasswordSetupHandler } from "./identity-user-password-setup.handler.js";
 import { OnboardingTeamInviteHandler } from "./onboarding-team-invite.handler.js";
+import { IdentityPasswordResetEmailHandler } from "./identity-password-reset-email.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -118,6 +119,7 @@ export function buildOutboxHandlerRegistry() {
     new AuthEmailVerificationHandler(),
     new IdentityUserPasswordSetupHandler(),
     new OnboardingTeamInviteHandler(),
+    new IdentityPasswordResetEmailHandler(),
     // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),

@@ -12,6 +12,8 @@ export default {
     ctx.run("node", ["scripts/verify-identity-user-password-setup-delivery-durable.mjs"]);
     ctx.run("node", ["scripts/verify-onboarding-team-invite-delivery-durable.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-onboarding-team-invite-delivery-durable.mjs"]);
+    ctx.run("node", ["scripts/verify-identity-password-reset-delivery-durable.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-identity-password-reset-delivery-durable.mjs"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs"]);
   },
