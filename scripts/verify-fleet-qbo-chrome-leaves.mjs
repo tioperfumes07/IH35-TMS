@@ -103,9 +103,16 @@ const CHECKS = [
     pattern: /photosSlot=\{[\s\S]{0,50}<PhotoGallery/,
   },
   {
+    // FLEET-CHROME-F6086-QBO-CHROME-GUARD-ANCHOR-DRIFT: was anchored from the section header
+    // ("QBO mapping") to the field label with a {0,300} cap. The header is now capability-gated
+    // ({qboAvailable ? "QBO mapping" : "Asset classification"}) and a real classesQuery.isError
+    // ListErrorState block was added between them, widening the real gap to ~390 chars and
+    // tripping the cap on a genuine, correct addition. Re-anchored directly from the field label
+    // to its own real QboCombobox component (tight, structural, immune to unrelated additions
+    // elsewhere in the same card).
     name: "unit.profile.qbo_mapping: VehicleProfilePage real QBO vendor mapping field",
     file: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
-    pattern: /QBO mapping[\s\S]{0,300}QBO vendor \(ownership/,
+    pattern: /QBO vendor \(ownership \/ lease entity\)[\s\S]{0,150}<QboCombobox/,
   },
   {
     name: "unit.profile.action_bar: VehicleProfilePage mounts the real ActionBar (Edit/Archive), which itself renders a real Export PDF link",
@@ -143,9 +150,21 @@ const CHECKS = [
     pattern: /Export PDF/,
   },
   {
-    name: "trailer.edit: EditTrailerModal is a real Modal with a real Combobox field",
+    // FLEET-CHROME-F6086-QBO-CHROME-GUARD-ANCHOR-DRIFT: was anchored from <Modal open=...> all
+    // the way to <Combobox with a {0,2200} cap. Two real ListErrorState blocks (profileQuery +
+    // companiesQuery explicit GET-failure UI) were added between them, widening the real gap to
+    // ~2455 chars and tripping the cap on a genuine, correct addition. Split into two checks:
+    // the Modal itself is present, and the real Combobox sits directly under its own
+    // "Leased To Company" field label (tight, structural, immune to unrelated additions
+    // elsewhere in the modal body).
+    name: "trailer.edit: EditTrailerModal is a real Modal that mounts",
     file: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
-    pattern: /<Modal open=\{open\} title="Edit trailer"[\s\S]{0,2200}<Combobox/,
+    pattern: /<Modal open=\{open\} title="Edit trailer"/,
+  },
+  {
+    name: "trailer.edit: EditTrailerModal's Leased To Company field is a real Combobox",
+    file: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
+    pattern: /label="Leased To Company"[\s\S]{0,300}<Combobox/,
   },
   {
     name: "fleet.modal.status_change: StatusChangeModal is a real Modal with a real status select",
