@@ -69,6 +69,11 @@ export function CashForecastPage() {
   const forecastColumns: Array<ParityColumn<CashForecastWeek>> = [
     { key: "week_start", label: "Week start", alwaysVisible: true },
     { key: "invoices", label: "Invoices", render: (week) => money(week.expected_inflows.invoices) },
+    {
+      key: "proforma",
+      label: "Proforma / Pre-invoice",
+      render: (week) => money(week.expected_inflows.other),
+    },
     { key: "factoring", label: "Factoring inflow", render: (week) => money(week.expected_inflows.factoring) },
     { key: "bills", label: "Bills", render: (week) => money(week.expected_outflows.bills) },
     { key: "payroll", label: "Payroll", render: (week) => money(week.expected_outflows.payroll) },

@@ -22,5 +22,29 @@ describe("cash forecast math", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]?.projected_balance).toBe(105_600_00);
     expect(rows[1]?.projected_balance).toBe(105_500_00);
+    expect(rows[0]?.expected_inflows.other).toBe(0);
+  });
+
+  it("adds proforma/pre-invoice inflows via expected_inflows.other without mixing Open A/R", () => {
+    const rows = buildForecastWeeks({
+      startWeek: "2026-05-25",
+      weeks: 1,
+      openingBalance: 100_000_00,
+      settings: {
+        fuel_estimate_weekly_cents: 0,
+        insurance_weekly_cents: 0,
+        lease_weekly_cents: 0,
+        payroll_weekly_cents: 0,
+      },
+      inflowInvoices: new Map([["2026-05-25", 1_000_00]]),
+      inflowFactoring: new Map(),
+      inflowOther: new Map([["2026-05-25", 2_500_00]]),
+      outflowBills: new Map(),
+      outflowFactoringFee: new Map(),
+    });
+
+    expect(rows[0]?.expected_inflows.invoices).toBe(1_000_00);
+    expect(rows[0]?.expected_inflows.other).toBe(2_500_00);
+    expect(rows[0]?.projected_balance).toBe(103_500_00);
   });
 });

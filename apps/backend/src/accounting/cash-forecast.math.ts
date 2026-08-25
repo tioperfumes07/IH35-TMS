@@ -25,6 +25,8 @@ export function buildForecastWeeks(input: {
   settings: ForecastSettings;
   inflowInvoices: Map<string, number>;
   inflowFactoring: Map<string, number>;
+  /** Proforma / pre-invoice projected inflows (not Open A/R). */
+  inflowOther?: Map<string, number>;
   outflowBills: Map<string, number>;
   outflowFactoringFee: Map<string, number>;
 }): ForecastWeek[] {
@@ -35,7 +37,7 @@ export function buildForecastWeeks(input: {
     const weekStart = addDays(input.startWeek, i * 7);
     const invoices = Number(input.inflowInvoices.get(weekStart) ?? 0);
     const factoring = Number(input.inflowFactoring.get(weekStart) ?? 0);
-    const other = 0;
+    const other = Number(input.inflowOther?.get(weekStart) ?? 0);
 
     const bills =
       Number(input.outflowBills.get(weekStart) ?? 0) +

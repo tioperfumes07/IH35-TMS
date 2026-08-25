@@ -255,7 +255,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   to a link. Same pattern as ExpensesListPage.tsx (`navigate('/dispatch/loads/${id}')`). */}
               {data?.income_items.map((item) => (
                 <div
-                  key={item.load_id}
+                  key={`${item.basis}-${item.load_id}-${item.load_number}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => navigate(`/dispatch/loads/${item.load_id}`)}
@@ -292,14 +292,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                         {new Date(item.delivery_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                       </span>
                     )}
-                    <span className={`ml-2 inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${
-                      item.basis === "Confirmed"
-                        ? "bg-slate-100 text-slate-700"
-                        : item.basis === "Predicted"
-                        ? "bg-slate-100 text-slate-700"
-                        : "bg-slate-100 text-slate-700"
-                    }`}>
-                      {item.basis}
+                    <span className="ml-2 inline-flex rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                      {item.basis === "Proforma" ? "Proforma / Pre-invoice" : item.basis}
                     </span>
                   </div>
                   <span className="ml-4 shrink-0 font-semibold text-gray-900">
