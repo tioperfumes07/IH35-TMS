@@ -51,6 +51,22 @@ async function hasRelation(client: { query: (sql: string, values?: unknown[]) =>
   return Boolean(res.rows[0]?.ok);
 }
 
+async function hasColumn(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> },
+  schema: string,
+  table: string,
+  column: string
+) {
+  const res = await client.query(
+    `SELECT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = $2 AND column_name = $3
+     ) AS ok`,
+    [schema, table, column]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
 export async function registerFuelPlannerRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/planner/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -177,37 +193,28 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
       let stops: Record<string, unknown>[] = [];
       if (await hasRelation(client, "fuel.recommended_stops")) {
-        const byRecommendationId = await client
-          .query(
+        const recommendationColumn = (await hasColumn(client, "fuel", "recommended_stops", "recommendation_id"))
+          ? "recommendation_id"
+          : (await hasColumn(client, "fuel", "recommended_stops", "route_recommendation_id"))
+            ? "route_recommendation_id"
+            : null;
+        if (recommendationColumn) {
+          const stopResult = await client.query(
             `
               SELECT *
               FROM fuel.recommended_stops
-              WHERE recommendation_id = $1
+              WHERE ${recommendationColumn} = $1
               ORDER BY mile_marker ASC NULLS LAST, sequence_number ASC NULLS LAST
             `,
             [params.data.id]
-          )
-          .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-        stops = byRecommendationId.rows;
-        if (stops.length === 0) {
-          const byRouteRecommendationId = await client
-            .query(
-              `
-                SELECT *
-                FROM fuel.recommended_stops
-                WHERE route_recommendation_id = $1
-                ORDER BY mile_marker ASC NULLS LAST, sequence_number ASC NULLS LAST
-              `,
-              [params.data.id]
-            )
-            .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-          stops = byRouteRecommendationId.rows;
+          );
+          stops = stopResult.rows;
         }
       }
       const hosAware = await recommendFuelStopsForRecommendation(client, {
         operating_company_id: companyId,
         recommendation_id: params.data.id,
-      }).catch(() => []);
+      });
       return { ...recommendation, stops, hos_aware_recommendations: hosAware };
     });
 

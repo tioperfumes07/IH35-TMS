@@ -19,6 +19,8 @@ const SPEND_FAKE_ZERO_RE =
   /FROM fuel\.fuel_transactions[\s\S]{0,400}\.catch\(\(\) => \(\{ rows: \[\{ spend: 0, avg_price: 0 \}\] \}\)\)/;
 const SEND_TO_DRIVER_DB_ERROR_AS_404_RE =
   /FROM fuel\.route_recommendations[\s\S]{0,450}\.catch\(\(\) => \(\{ rows: \[\]/;
+const DETAIL_FALSE_EMPTY_RE =
+  /FROM fuel\.recommended_stops[\s\S]{0,500}\.catch\(\(\) => \(\{ rows: \[\]|recommendFuelStopsForRecommendation\([\s\S]{0,250}\.catch\(\(\) => \[\]\)/;
 
 /**
  * @param {string} source
@@ -38,6 +40,9 @@ export function computePlannerFailures(plannerSource) {
     errors.push(
       "planner.routes.ts send-to-driver must not catch a route_recommendations query failure as empty rows (that becomes a fake 404)",
     );
+  }
+  if (DETAIL_FALSE_EMPTY_RE.test(plannerSource)) {
+    errors.push("planner.routes.ts detail stop/HOS query failures must propagate instead of rendering empty recommendations");
   }
   return errors;
 }
@@ -97,6 +102,16 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — send-to-driver fail-loud");
+  const detailCatchBad = `${plannerGood}
+    FROM fuel.recommended_stops WHERE recommendation_id = $1
+    ).catch(() => ({ rows: [] }));
+    recommendFuelStopsForRecommendation(client, input).catch(() => []);
+  `;
+  if (!computePlannerFailures(detailCatchBad).some((e) => e.includes("stop/HOS"))) {
+    console.error("SELFTEST FAIL — planner detail catch-as-empty should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — planner detail fail-loud");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
