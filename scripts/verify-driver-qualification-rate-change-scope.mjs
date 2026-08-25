@@ -4,13 +4,16 @@ const LABEL = "verify-driver-qualification-rate-change-scope";
 const backend = fs.readFileSync("apps/backend/src/mdata/driver-profile.routes.ts", "utf8");
 const api = fs.readFileSync("apps/frontend/src/api/mdata.ts", "utf8");
 const page = fs.readFileSync("apps/frontend/src/pages/DriverDetail.tsx", "utf8");
-const start = backend.indexOf('app.post<{ Params: { id: string; qual_id: string }; Querystring: { operating_company_id: string } }>(');
-const end = backend.indexOf('app.delete<{ Params: { id: string; qual_id: string } }>', start);
+const routeMarker = '"/api/v1/mdata/drivers/:id/qualifications/:qual_id/rates/change"';
+const routePosition = backend.indexOf(routeMarker);
+const start = routePosition >= 0 ? backend.lastIndexOf("app.post<", routePosition) : -1;
+const end = routePosition >= 0 ? backend.indexOf("\n  app.", routePosition + routeMarker.length) : -1;
 const handler = start >= 0 && end > start ? backend.slice(start, end) : "";
 const apiStart = api.indexOf("export function changeDriverQualificationRate(");
 const apiEnd = api.indexOf("export function listDriverCompanyAuthorizations", apiStart);
 const apiHandler = apiStart >= 0 && apiEnd > apiStart ? api.slice(apiStart, apiEnd) : "";
 const checks = [
+  ["backend", handler, routeMarker.slice(1, -1)],
   ["backend", handler, "qualificationHistoryQuerySchema.safeParse(req.query ?? {})"],
   ["backend", handler, "resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)"],
   ["backend", handler, "JOIN mdata.drivers d ON d.id = dq.driver_id"],
