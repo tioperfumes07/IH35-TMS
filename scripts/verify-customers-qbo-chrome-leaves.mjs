@@ -71,6 +71,7 @@ const CHECKS = [
   { name: "scenario.customer hop lands on the create drawer, not a second dead + Create click", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.customer"[\s\S]{0,500}href: "\/customers\?create=1"/ },
   { name: "scenario.driver_onboarding hop lands on Create Driver drawer via ?create=1", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.driver_onboarding"[\s\S]{0,500}href: "\/drivers\?create=1"/ },
   { name: "Drivers roster honors ?create=1 (Program hop + page + Create same drawer)", file: "apps/frontend/src/pages/Drivers.tsx", pattern: /searchParams\.get\("create"\) === "1"[\s\S]*data-testid="drivers-create-open"[\s\S]*onClick=\{openCreate\}/ },
+  { name: "Drivers create open is URL-only (same CUSTOMER-CREATE-DEAD-CLICK class)", file: "apps/frontend/src/pages/Drivers.tsx", pattern: /const addOpen = searchParams\.get\("create"\) === "1"/ },
   { name: "list.filters: CustomersListView real CollapsedListFilters + ParityTable", file: "apps/frontend/src/pages/customers/CustomersListView.tsx", pattern: /<ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*<ParityTable/ },
   { name: "md.transaction_list: Customers.tsx ?tab=transaction_list real ParityTable", file: "apps/frontend/src/pages/Customers.tsx", pattern: /activeTab === "transaction_list"[\s\S]{0,400}<ParityTable/ },
   { name: "md.customer_details: CustomerDetailsTab real DetailRow grid + EntityLinkOrTombstone + Edit action", file: "apps/frontend/src/pages/Customers.tsx", pattern: /function CustomerDetailsTab\(\{[\s\S]{0,800}data-testid="customer-details-edit"[\s\S]{0,3000}EntityLinkOrTombstone/ },
@@ -99,6 +100,10 @@ function runChecks(root = ROOT) {
   const customersSrc = fs.readFileSync(path.join(root, "apps/frontend/src/pages/Customers.tsx"), "utf8");
   if (customersSrc.includes('useState(() => searchParams.get("create")')) {
     fails.push("Customers.tsx must not dual-store createOpen in useState (CUSTOMER-CREATE-DEAD-CLICK)");
+  }
+  const driversSrc = fs.readFileSync(path.join(root, "apps/frontend/src/pages/Drivers.tsx"), "utf8");
+  if (driversSrc.includes('useState(() => searchParams.get("create")')) {
+    fails.push("Drivers.tsx must not dual-store addOpen in useState (DRIVERS-CREATE-DEAD-CLICK)");
   }
   return fails;
 }

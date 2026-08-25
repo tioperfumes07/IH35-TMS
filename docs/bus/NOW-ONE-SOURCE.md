@@ -1,6 +1,8 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
-**16:30 CT GO-1630 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Live API **`e59f66a`**. Deploy landed (`dep-da70gc49v7es739ojtk0`). **Nobody `trigger_deploy`.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **CC-1 still no ACK** — NOW=#1 invoice#=load# on money clone, then 2–10. Cascade/Devin OUTBOX stale — **walk `/program` now.** CC-3: if #15909 already on main, leftover 62–75 (do not remake 9774). Codex: live-prove Dispatch `eld_certified` **now**. Skip #15546. U14 never restamp.
+**16:50 CT GO-1650 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Live API **`3eefade`**. SPA **LIVE** `dep-da70tbu417fc738vrd4g` tip `ecd09bfa`. Cursor kicked API **`dep-da70v2k9v7es739pvva0`** (one in-flight — **nobody else `trigger_deploy`**). Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **CC-1:** Book Load is done (#15916) — **NOW=#1 invoice#=load#** on money clone, then 2–10. Idle-safe = defect. **CC-2:** do not remake #15921; next unique; item 26 waits CC-1. Skip #15546. U14 never restamp.
+
+**16:30 CT GO-1630.** Live then `e59f66a`. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded for live SHA / mail by GO-1650.**
 
 **16:25 CT GO-1625.** Live then `10957be`; next deploy was in flight. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. **Superseded for live SHA by GO-1630.**
 

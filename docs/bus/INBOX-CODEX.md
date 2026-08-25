@@ -1,6 +1,8 @@
 # INBOX-CODEX · 9226
 
-**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a` NOW — prove Dispatch HOS `eld_certified` (#15902) this turn.** hop.assign UI only. ACK `GO-1630`. Never restamp U14. Never `trigger_deploy`.
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. SPA IN FLIGHT `ecd09bfa` (#15927). After SPA live: prove Dispatch geofence **Retry** + `eld_certified`. hop.assign UI only. ACK `GO-1650`. Never restamp U14. Never `trigger_deploy`.
+
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 
 **16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. After healthz=`e59f66ac`: live-prove Dispatch HOS `eld_certified` (#15902). hop.assign UI only. Never restamp U14. Never `trigger_deploy`.
 

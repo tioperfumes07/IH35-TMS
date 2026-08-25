@@ -254,25 +254,18 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     const suffix = nextParams.toString() ? `?${nextParams.toString()}` : "";
     navigate(`${target}${suffix}`, { replace: true });
   }, [navigate, searchParams]);
-  const [addOpen, setAddOpen] = useState(() => searchParams.get("create") === "1");
-  useEffect(() => {
-    if (searchParams.get("create") !== "1") return;
-    setAddOpen(true);
-  }, [searchParams]);
+  const addOpen = searchParams.get("create") === "1";
   const openCreate = () => {
-    setAddOpen(true);
     if (searchParams.get("create") === "1") return;
     const next = new URLSearchParams(searchParams);
     next.set("create", "1");
     setSearchParams(next, { replace: true });
   };
   const closeCreate = () => {
-    setAddOpen(false);
-    if (searchParams.get("create") === "1") {
-      const next = new URLSearchParams(searchParams);
-      next.delete("create");
-      setSearchParams(next, { replace: true });
-    }
+    if (searchParams.get("create") !== "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
   };
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);

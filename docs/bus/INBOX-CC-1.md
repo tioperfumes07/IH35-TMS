@@ -1,6 +1,8 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**16:30 CT GO-1630 — YOU ALREADY HAVE THIS. ACK OR CODE. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. **NOW=#1 invoice#=load#** then 2–10. Money clone. **OUTBOX has no ACK.** Never `/425c`. Never `trigger_deploy`. Blocks Program Complete.
+**16:50 CT GO-1650 — CODE NOW. Idle-safe = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. **The Book Load / /program / idle-safe round is NOT yours** — that was Cursor leftover (#15916). **Do not remake Book Load.** **NOW=#1 `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER`** then 2–10 on the **money clone** (not `IH35-TMS-clean`). Never `/425c`. Never `trigger_deploy`. Blocks Program Complete. ACK `GO-1650`.
+
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Same NOW=#1. **Superseded by GO-1650.**
 
 **16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. **NOW=#1 invoice#=load#** then 2–10. Money clone. ACK this turn. Never `/425c`. Never `trigger_deploy`. Blocks Program Complete. Idle = defect.
 

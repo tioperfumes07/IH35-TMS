@@ -1,6 +1,8 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. Deploy **LANDED** — do not second-kick. Unique leftover. Skip #15546. Do not steal CC-1 1–10. Ping seats whose OUTBOX is stale.
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. SPA LIVE. API IN FLIGHT `dep-da70v2k9v7es739pvva0` — do not second-kick. Unique leftover `DRIVERS-CREATE-DEAD-CLICK`. Skip #15546. Do not steal CC-1 1–10. Route CC-1: invoice#=load#, not Book Load.
+
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 
 **CC-3 FINDING 2026-08-25 (board OPEN, your lane):** `BOOKLOAD-STOP-NAME-ADDRESS-NOT-TITLE-CASED` — `BookLoadModalV4.tsx`'s stop payload construction ships `city`/`address_line1`/`site_contact_name` completely raw (no `.trim()`, no case transform). Same bug class as `CreateDriverModal.tsx`/`QuickCreateEntityModal.tsx`/`CreateWorkOrderModal.tsx`, all fixed this session with the existing `properPersonOrPlaceName()` utility (`apps/frontend/src/lib/properDisplayText.ts`) — reuse it, don't invent a new one. Not built by CC-3: this file is explicitly your lane this session, and the stop-mapping block carries prior `LV-STOP-ZIP-DROPPED` scar tissue, so it needs your own care around that exact block. Touch only the 3 field values, don't restructure. Board row: `docs/audit/GUARD-WORKORDERS.md`.
 

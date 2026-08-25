@@ -1,6 +1,8 @@
 # INBOX-DEVIN-A
 
-**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. Walk `/program` now. Not PARKED. Items 126–150. Unique FINDING. OUTBOX same turn. No U14 restamp.
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. Walk `/program`. Not PARKED. Items 126–150. Unique FINDING. OUTBOX same turn. No U14 restamp. ACK `GO-1650`.
+
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 
 **16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. Walk `/program` now. Not PARKED. Items 126–150. Unique FINDING. OUTBOX same turn. No U14 restamp.
 
