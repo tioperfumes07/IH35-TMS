@@ -519,6 +519,23 @@ async function copyToAccountingLines(
         parent_line_uuid, expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes
       FROM maintenance.work_order_lines
       WHERE work_order_uuid = $1
+        -- WO-BILL-ZERO-LINE-JE-CHECK-VIOLATION: a Section B "item line" that carries typed
+        -- part/labor sub_rows (the normal, expected shape — see SectionBLine's own sub_rows
+        -- field) always has its OWN total_cost = 0; the real cost lives entirely in its
+        -- children (copied separately, each its own row here with parent_line_uuid = this
+        -- row's id). Copying that $0 container row into accounting.bill_lines/expense_lines
+        -- was harmless while nothing read those rows for posting, but the moment a poster
+        -- builds one JE debit per line unconditionally (postSourceTransaction's bill/expense
+        -- line resolver), the $0 line violates journal_entry_postings' amount_cents > 0
+        -- CHECK and the entire WO+Bill create 500s and rolls back — reproduced live creating
+        -- a real typed parts+labor WO through the canonical "Create work order & Bill" flow.
+        -- A $0 line is never a real financial line item (it already contributes nothing to
+        -- Section B's own total via the max(own, sub_total) computation above), so it is
+        -- excluded here at the source rather than taught to either poster: the fix is the
+        -- same for both the bill and expense branches this function already serves, and adds
+        -- no new GL math — sub_rows still copy with their real amounts, just without a
+        -- bill_lines-level parent reference when their own container was $0.
+        AND total_cost <> 0
       ORDER BY created_at ASC
     `,
     [sourceWoId]
