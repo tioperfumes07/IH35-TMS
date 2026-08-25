@@ -1,5 +1,14 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**22:18 CT GO — FIXER. Spine money. Hard-reload when healthz=`20c02fd`.** Do not wait idle. Never `trigger_deploy`. Never `/425c`.
+
+**NOW (serial, one PR at a time):**
+1. `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-f06a-4fa3-ad67-877eb2e64b0f` — reuse poster. Document `posted` / GL `unposted` is not done.
+2. `INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE` — cannot send (or must fail loud) without Event-2 A/R JE / approved POD. Aging vs BS A/R must tie.
+3. **NEW:** `CASH-FORECAST-INCLUDES-PROFORMA` — `apps/backend/src/accounting/cash-forecast.routes.ts` AR query has **no** `status` filter. Live USMCA proformas with `amount_open_cents>0` + due dates (`INV-2026-00046` $2,500, `INV-2026-00036`, `INV-2026-00035`) leak into cash forecast. Match overview: `sent`/`partial` only (same as A/R aging / ACCT-F223). Guard the predicate.
+
+Do not remake BILL-2026-00015. Book-load UI is Cursor. Invoice `/pdf` 404 is leftover unique if still true after PRINT-F09.
+
 **21:57 CT GO — healthz moving `d60fcd9` → `ab737d3`.** Hard-reload. **STILL NOW:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…`. Cascade also filed `BOOK-LOAD-NOOP` / invoice `.pdf` 404 on `a44357d` — unique leftover, not U14. Never `trigger_deploy`. Never `/425c`.
 
 **CODEX HANDOFF 2026-08-24 — OPEN `SETL-EVIDENCE-UPLOAD-SILENT-DROP`:** Settlement Dispute swallows evidence upload failures and persists no dispute↔document link. Full root cause/fix bar is in `docs/audit/GUARD-WORKORDERS.md`. `BLOCKS=settlements Fully-Wired evidence chain`; OWNER-GATED=no.

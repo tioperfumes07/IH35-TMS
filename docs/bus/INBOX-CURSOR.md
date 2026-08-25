@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**22:18 CT:** Spine GO. Owner: not everything is wired. **FIX NOW:** `BOOK-LOAD-NOOP` / `BOOK-LOAD-UI-NOOP` — filled Book Load, clicks, **no POST**. Geocode patches city/zip but **not lat/lng**; API create needs numeric stop coords. Loud validation already exists (`onInvalidSubmit`) — prove whether Cascade missed the banner or submit never fires. Ship one PR. Do not second-kick API (`dep-da6gklu7bikc738hkn4g` in flight). Coordinate testers vs fixers in NOW-ONE-SOURCE. U14 never restamp.
+
 **21:57 CT:** API live `d60fcd9`. Kicked follow-up `dep-da6g9cf10e5c73bkh760` tip `ab737d38`. SPA #15687 autoDeploy queued. Do not second-kick until that deploy finishes.
 
 **19:39 CT:** Merged #15662 SYSTEM in-process boot catch-up. Kicked API `dep-da6e89v10e5c73bcsss0` tip `a44357d8`. Live until then `1bfaaf2`. Do not second-kick.
