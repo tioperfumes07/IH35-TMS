@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as accountingApi from "../../api/accounting";
 import { ToastProvider } from "../../components/Toast";
-import { CreateMultipleBillsPage } from "./CreateMultipleBillsPage";
+import { allocateBillDocumentNumbers, CreateMultipleBillsPage } from "./CreateMultipleBillsPage";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -48,6 +48,7 @@ vi.mock("../../api/accounting", async (importOriginal) => {
   return {
     ...actual,
     createVendorBill: vi.fn().mockResolvedValue({ bill: { id: "bill-1" } }),
+    getNextBillDocumentNumber: vi.fn().mockResolvedValue({ document_number: "BILL-2026-00001" }),
   };
 });
 
@@ -113,6 +114,14 @@ function wrap(ui: ReactElement) {
 }
 
 describe("CreateMultipleBillsPage", () => {
+  it("allocates sequential BILL-YYYY-##### previews", () => {
+    expect(allocateBillDocumentNumbers("BILL-2026-00001", 3)).toEqual([
+      "BILL-2026-00001",
+      "BILL-2026-00002",
+      "BILL-2026-00003",
+    ]);
+  });
+
   it("creates seeded bill rows with backend contract", async () => {
     const user = userEvent.setup();
     render(
@@ -143,6 +152,7 @@ describe("CreateMultipleBillsPage", () => {
 
     await waitFor(() => expect(screen.getByTestId("create-multiple-bills-page")).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole("option", { name: "Acme Repair" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("Bill no.")).toHaveValue("BILL-2026-00001"));
 
     await user.selectOptions(screen.getByLabelText("Select vendor…"), "ven-1");
     await user.selectOptions(screen.getByLabelText("A/P account *"), "acc-ap");
@@ -157,6 +167,7 @@ describe("CreateMultipleBillsPage", () => {
         bill_date: "2026-05-27",
         due_date: "2026-06-26",
         amount_cents: 12500,
+        bill_number: "BILL-2026-00001",
         coa_account_id: "acc-ap",
         lines: [
           expect.objectContaining({

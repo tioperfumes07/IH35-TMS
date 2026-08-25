@@ -76,6 +76,7 @@ vi.mock("../modals/VendorChargebackModal", () => ({ VendorChargebackModal: () =>
 vi.mock("../../../api/accounting", () => ({
   createRecurringBillTemplate: vi.fn(),
   createVendorBill: vi.fn(),
+  getNextBillDocumentNumber: vi.fn(),
   listBillPayments: vi.fn(),
   listBills: vi.fn(),
   listFactoringCandidateInvoices: vi.fn(),
@@ -132,6 +133,7 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries CreateMultipleBillsPage vendorsQuery without a coaQuery error", () => {
     const failed = failure("vendors unavailable");
     results.set(keyOf(["multi-bills", "vendors", "company-1"]), failed);
+    results.set(keyOf(["multi-bills", "next-number", "company-1"]), success({ document_number: "BILL-2026-00001" }));
     results.set(keyOf(["multi-bills", "coa", "company-1"]), success({ accounts: [] }));
 
     render(<CreateMultipleBillsPage />);
@@ -142,6 +144,7 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries CreateMultipleBillsPage coaQuery without a vendorsQuery error", () => {
     const failed = failure("accounts unavailable");
     results.set(keyOf(["multi-bills", "vendors", "company-1"]), success({ vendors: [] }));
+    results.set(keyOf(["multi-bills", "next-number", "company-1"]), success({ document_number: "BILL-2026-00001" }));
     results.set(keyOf(["multi-bills", "coa", "company-1"]), failed);
 
     render(<CreateMultipleBillsPage />);
