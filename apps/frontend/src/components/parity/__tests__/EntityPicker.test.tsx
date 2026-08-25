@@ -9,7 +9,7 @@
  *   - picking an option hands the parent the CANONICAL ID plus its human-labelled roster option;
  *   - a filter (allowCreate={false}) shows no create row;
  *   - a kind that refuses inline create (for example, load) shows no create row even by default;
- *   - an audited entity with a real canonical nested creator (insurance claim) returns and selects
+ *   - audited entities with real canonical nested creators (insurance policy/claim) return and select
  *     its persisted id and human label;
  *   - a value that is not in the roster stays visible instead of silently blanking.
  */
@@ -48,7 +48,10 @@ vi.mock("../../drivers/CreateDriverModal", () => ({
     open ? <div data-testid="create-driver-surface" data-shell={shell} /> : null,
 }));
 vi.mock("../../fleet/CreateUnitModal", () => ({ CreateUnitModal: () => null }));
-vi.mock("../../insurance/PolicyCreateModal", () => ({ PolicyCreateModal: () => null }));
+vi.mock("../../insurance/PolicyCreateModal", () => ({
+  PolicyCreateModal: ({ open, onCreated }: { open: boolean; onCreated: (id: string, label: string) => void }) =>
+    open ? <button type="button" onClick={() => onCreated("policy-created", "TEST-POLICY")}>Complete policy create</button> : null,
+}));
 vi.mock("../../insurance/ClaimCreateModal", () => ({
   ClaimCreateModal: ({ open, onCreated }: { open: boolean; onCreated: (id: string, label: string) => void }) =>
     open ? <button type="button" onClick={() => onCreated("claim-created", "CLM-CREATED")}>Complete claim create</button> : null,
@@ -258,6 +261,16 @@ describe("EntityPicker (C1 picker law)", () => {
     await user.click(createRow);
     await user.click(await screen.findByText("Complete claim create"));
     expect(onChange).toHaveBeenCalledWith("claim-created", { value: "claim-created", label: "CLM-CREATED" });
+  });
+
+  it("creates a policy through the canonical creator and auto-selects its human policy number", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="insurance_policy" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
+    await user.click(await screen.findByPlaceholderText("Select policy"));
+    await user.click(await screen.findByText("+ Add new policy"));
+    await user.click(await screen.findByText("Complete policy create"));
+    expect(onChange).toHaveBeenCalledWith("policy-created", { value: "policy-created", label: "TEST-POLICY" });
   });
 
   it("creates a lawsuit through the canonical creator and auto-selects the returned row", async () => {

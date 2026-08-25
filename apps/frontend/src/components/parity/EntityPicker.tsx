@@ -278,7 +278,7 @@ export function EntityPicker({
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}
-          onCreated={(id) => (id ? handleCreated(id) : setCreateOpen(false))}
+          onCreated={(id, label) => (id ? handleCreated(id, label) : setCreateOpen(false))}
         />
       ) : null}
 
