@@ -4,6 +4,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { listCashAdvances } from "../../api/cashAdvances";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Props = {
   operatingCompanyId: string;
@@ -71,8 +72,12 @@ export function DriverCashAdvancesReverseSection({
       <p className="text-sm text-gray-600">Pending requests and disbursed cash advances for this driver.</p>
 
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {pendingFailed ? <p className="text-sm text-red-600">Failed to load pending requests.</p> : null}
-      {advancesFailed ? <p className="text-sm text-red-600">Failed to load cash advances.</p> : null}
+      {pendingFailed ? (
+        <ListErrorBanner message="Failed to load pending requests." onRetry={() => void pendingQuery.refetch()} />
+      ) : null}
+      {advancesFailed ? (
+        <ListErrorBanner message="Failed to load cash advances." onRetry={() => void advancesQuery.refetch()} />
+      ) : null}
       {!isLoading && !pendingFailed && !advancesFailed && total === 0 ? (
         <p className="text-sm text-gray-500">No pending requests or cash advances for this driver.</p>
       ) : null}

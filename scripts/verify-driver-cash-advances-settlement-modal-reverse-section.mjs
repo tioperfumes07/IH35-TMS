@@ -173,6 +173,8 @@ export function assertSettlementsClusterReverse(sources) {
     problems.push(`${ENTITY_LINK}: cash_advance_request must resolve to the canonical exact request route`);
   }
   if (!/Failed to load pending requests\./.test(driverSection) || !/Failed to load cash advances\./.test(driverSection)) problems.push(`${DRIVER_SECTION}: both reverse readers must expose failures`);
+  if (!/Failed to load pending requests\.[\s\S]{0,160}pendingQuery\.refetch\(\)/.test(driverSection)) problems.push(`${DRIVER_SECTION}: pending-request failure must retry its exact query`);
+  if (!/Failed to load cash advances\.[\s\S]{0,160}advancesQuery\.refetch\(\)/.test(driverSection)) problems.push(`${DRIVER_SECTION}: cash-advance failure must retry its exact query`);
   if (!/No pending requests or cash advances for this driver\./.test(driverSection)) problems.push(`${DRIVER_SECTION}: reverse section must expose a true empty state`);
   if (!/import\s*\{\s*DriverCashAdvancesReverseSection\s*\}/.test(driverProfile)) {
     problems.push(`${DRIVER_PROFILE}: must import DriverCashAdvancesReverseSection`);
@@ -208,6 +210,8 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/kind="liability"/.test(settlementFinanceSection)) {
     problems.push(`${SETTLEMENT_FINANCE_SECTION}: liability rows must EntityLink kind=liability (pre-existing chain, #6740)`);
   }
+  if (!/Failed to load settlement disputes\.[\s\S]{0,160}disputesQuery\.refetch\(\)/.test(settlementFinanceSection)) problems.push(`${SETTLEMENT_FINANCE_SECTION}: dispute failure must retry its exact query`);
+  if (!/Failed to load liabilities\.[\s\S]{0,160}liabilitiesQuery\.refetch\(\)/.test(settlementFinanceSection)) problems.push(`${SETTLEMENT_FINANCE_SECTION}: liability failure must retry its exact query`);
   if (!/deepLinkLiabilityId\s*=\s*searchParams\.get\("liability_id"\)/.test(liabilitiesHome)) {
     problems.push(`${LIABILITIES_HOME}: must read liability_id from URL search params (pre-existing chain)`);
   }
@@ -274,7 +278,9 @@ function selftest() {
       <EntityLink kind="cash_advance_request" id={id} label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")} />
       <EntityLink kind="cash_advance" id={id} label={entityLabel(row.display_id as string | null, id, "Advance")} />
       Failed to load pending requests.
+      pendingQuery.refetch()
       Failed to load cash advances.
+      advancesQuery.refetch()
       No pending requests or cash advances for this driver.
     `,
     [ENTITY_LINK]: `case "cash_advance_request": return \`/driver-finance/cash-advance-requests?request_id=\${id}\`;`,
@@ -298,7 +304,13 @@ function selftest() {
       <LiabilityBreakdownModal open={liabilityOpen} settlementId={settlementId} />
       <HoldDeductionModal open={Boolean(holdTarget)} settlementId={settlementId} />
     `,
-    [SETTLEMENT_FINANCE_SECTION]: `kind="liability"`,
+    [SETTLEMENT_FINANCE_SECTION]: `
+      kind="liability"
+      Failed to load settlement disputes.
+      disputesQuery.refetch()
+      Failed to load liabilities.
+      liabilitiesQuery.refetch()
+    `,
     [LIABILITIES_HOME]: `
       const deepLinkLiabilityId = searchParams.get("liability_id");
       const driverIdFilter = searchParams.get("driver_id");
@@ -388,6 +400,8 @@ function selftest() {
     [DRIVER_SECTION, /id=\{id\}\s+label=\{entityLabel\(row\.display_id as string \| null, id, "Advance"\)\}/, 'id={driverId} label="Advance"'],
     [DRIVER_SECTION, /Failed to load pending requests\./, "Loading requests"],
     [DRIVER_SECTION, /Failed to load cash advances\./, "Loading advances"],
+    [DRIVER_SECTION, /pendingQuery\.refetch\(\)/, "pendingQuery.remove()"],
+    [DRIVER_SECTION, /advancesQuery\.refetch\(\)/, "advancesQuery.remove()"],
     [DRIVER_SECTION, /No pending requests or cash advances for this driver\./, "No rows"],
     [ENTITY_LINK, /case "cash_advance_request":/, 'case "removed_cash_advance_request":'],
     [DRIVER_PROFILE, /import\s*\{\s*DriverCashAdvancesReverseSection\s*\}/, "import { RemovedCashAdvancesReverseSection }"],
@@ -404,6 +418,8 @@ function selftest() {
     [SETTLEMENT_DETAIL, /import \{ HoldDeductionModal \}/, "import { RemovedHoldDeductionModal }"],
     [SETTLEMENT_DETAIL, /<HoldDeductionModal/, "<RemovedHoldDeductionModal"],
     [SETTLEMENT_FINANCE_SECTION, /kind="liability"/, 'kind="driver"'],
+    [SETTLEMENT_FINANCE_SECTION, /disputesQuery\.refetch\(\)/, "disputesQuery.remove()"],
+    [SETTLEMENT_FINANCE_SECTION, /liabilitiesQuery\.refetch\(\)/, "liabilitiesQuery.remove()"],
     [LIABILITIES_HOME, /searchParams\.get\("liability_id"\)/, 'searchParams.get("x")'],
     [LIABILITIES_HOME, /setSelectedLiabilityId\(deepLinkLiabilityId\)/, "setSelectedLiabilityId(null)"],
     [LIABILITIES_HOME, /setDetailOpen\(true\)/g, "setDetailOpen(false)"],

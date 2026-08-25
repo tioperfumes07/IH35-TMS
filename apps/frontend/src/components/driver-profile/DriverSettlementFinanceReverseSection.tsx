@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listSettlementDisputes } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Props = {
   operatingCompanyId: string;
@@ -66,8 +67,12 @@ export function DriverSettlementFinanceReverseSection({
       </p>
 
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {disputesFailed ? <p className="text-sm text-red-600">Failed to load settlement disputes.</p> : null}
-      {liabilitiesFailed ? <p className="text-sm text-red-600">Failed to load liabilities.</p> : null}
+      {disputesFailed ? (
+        <ListErrorBanner message="Failed to load settlement disputes." onRetry={() => void disputesQuery.refetch()} />
+      ) : null}
+      {liabilitiesFailed ? (
+        <ListErrorBanner message="Failed to load liabilities." onRetry={() => void liabilitiesQuery.refetch()} />
+      ) : null}
       {!isLoading && !disputesFailed && !liabilitiesFailed && total === 0 ? (
         <p className="text-sm text-gray-500">No open disputes or liabilities for this driver.</p>
       ) : null}
