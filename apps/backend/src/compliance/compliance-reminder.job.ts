@@ -3,8 +3,8 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
-import { sendEmail } from "../notifications/email.service.js";
 import { createNotification } from "../notifications/notification.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
 
 let initialized = false;
@@ -37,54 +37,55 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
           c.days_until_expiration !== null &&
           daysSet.has(c.days_until_expiration)
       );
-      const recipients = (rule.recipient_emails ?? []).filter(Boolean);
       for (const cred of matching) {
-        for (const channel of rule.channel ?? []) {
-          for (const recipient of recipients.length ? recipients : ["ops@ih35dispatch.com"]) {
-            let status: "sent" | "failed" = "sent";
-            if (channel === "email") {
-              try {
-                await sendEmail({
-                  to: recipient,
-                  subject: `Compliance reminder: ${cred.label} for ${cred.owner_name}`,
-                  html: `<p>${cred.label} for ${cred.owner_name} expires ${cred.expiration_date ?? "soon"} (${cred.days_until_expiration} days).</p>`,
-                  sender: "noreply",
-                  eventClass: "compliance.reminder",
-                });
-              } catch {
-                status = "failed";
-              }
-            }
-            if (channel === "in_app") {
-              const userIds = (rule.recipient_user_ids ?? []).filter(Boolean);
-              const notifType =
-                cred.days_until_expiration !== null && cred.days_until_expiration <= 0
-                  ? "compliance_expired"
-                  : "compliance_expiring";
-              const severity =
-                cred.days_until_expiration !== null && cred.days_until_expiration <= 7 ? "high" : "medium";
-              for (const userId of userIds) {
-                try {
-                  await createNotification(
-                    {
-                      operating_company_id: operatingCompanyId,
-                      user_id: userId,
-                      type: notifType,
-                      severity,
-                      title: `Compliance: ${cred.label}`,
-                      body: `${cred.label} for ${cred.owner_name} expires ${cred.expiration_date ?? "soon"}.`,
-                      action_link: cred.action_link ?? `/compliance`,
-                      entity_type: cred.owner_type,
-                      entity_id: cred.owner_id,
-                      source_block: "compliance_reminder",
-                    },
-                    client
-                  );
-                } catch {
-                  status = "failed";
-                }
-              }
-            }
+        if ((rule.channel ?? []).includes("email")) {
+          const emailRecipients = (rule.recipient_emails ?? []).filter(Boolean);
+          for (const recipient of emailRecipients.length ? emailRecipients : ["ops@ih35dispatch.com"]) {
+            await enqueueOutboxEvent(
+              client,
+              "compliance.reminder_email",
+              { aggregate_type: `compliance.${cred.owner_type}`, aggregate_id: cred.owner_id },
+              {
+                operating_company_id: operatingCompanyId,
+                rule_id: rule.id,
+                credential_type: cred.type,
+                entity_type: cred.owner_type,
+                entity_id: cred.owner_id,
+                expiration_date: cred.expiration_date,
+                days_until_expiration: cred.days_until_expiration,
+                recipient,
+                subject: `Compliance reminder: ${cred.label} for ${cred.owner_name}`,
+                body_html: `<p>${cred.label} for ${cred.owner_name} expires ${cred.expiration_date ?? "soon"} (${cred.days_until_expiration} days).</p>`,
+              },
+              `compliance-reminder-email:${rule.id}:${cred.owner_type}:${cred.owner_id}:${cred.expiration_date ?? "none"}:${cred.days_until_expiration}:${recipient}`
+            );
+          }
+        }
+
+        if ((rule.channel ?? []).includes("in_app")) {
+          const userIds = (rule.recipient_user_ids ?? []).filter(Boolean);
+          const notifType =
+            cred.days_until_expiration !== null && cred.days_until_expiration <= 0
+              ? "compliance_expired"
+              : "compliance_expiring";
+          const severity =
+            cred.days_until_expiration !== null && cred.days_until_expiration <= 7 ? "high" : "medium";
+          for (const userId of userIds) {
+            await createNotification(
+              {
+                operating_company_id: operatingCompanyId,
+                user_id: userId,
+                type: notifType,
+                severity,
+                title: `Compliance: ${cred.label}`,
+                body: `${cred.label} for ${cred.owner_name} expires ${cred.expiration_date ?? "soon"}.`,
+                action_link: cred.action_link ?? `/compliance`,
+                entity_type: cred.owner_type,
+                entity_id: cred.owner_id,
+                source_block: "compliance_reminder",
+              },
+              client
+            );
             await client.query(
               `
                 INSERT INTO compliance.notification_log (
@@ -100,9 +101,9 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
                 cred.owner_id,
                 cred.expiration_date,
                 cred.days_until_expiration,
-                channel,
-                recipient,
-                status,
+                "in_app",
+                userId,
+                "sent",
               ]
             );
           }
