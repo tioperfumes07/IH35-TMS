@@ -5,6 +5,8 @@ import {
   getLoadPodBolSummary,
   type BolDocumentSummary,
 } from "../../api/dispatch";
+import { useToast } from "../Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -13,6 +15,7 @@ import {
  */
 export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string }) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const summaryQuery = useQuery({
     queryKey: ["pod-bol-summary", companyId, loadId],
     queryFn: () => getLoadPodBolSummary(loadId, companyId),
@@ -70,11 +73,15 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
               <button
                 type="button"
                 className="text-xs text-[#1f2a44] underline"
-                onClick={() =>
-                  void downloadBolDocument(bol.id, companyId).then((res) =>
-                    window.open(res.download_url, "_blank")
-                  )
-                }
+                data-testid="bol-stored-download-button"
+                onClick={async () => {
+                  try {
+                    const result = await downloadBolDocument(bol.id, companyId);
+                    window.open(result.download_url, "_blank");
+                  } catch (error) {
+                    pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");
+                  }
+                }}
               >
                 Download stored copy
               </button>
