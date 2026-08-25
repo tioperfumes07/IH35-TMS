@@ -14,6 +14,7 @@ function audit(text) {
   need(/role="alert"[\s\S]*\{generateError\}/.test(text), "draft failure must render accessibly");
   need(/error instanceof Error \? error\.message/.test(text), "backend error detail must be preserved");
   need(/disabled=\{generateMutation\.isPending\}/.test(text), "duplicate draft attempts must remain disabled");
+  need(/deadlineQ\.isError[\s\S]*Couldn't load Form 2290 filing deadlines[\s\S]*onRetry=\{\(\) => void deadlineQ\.refetch\(\)\}/.test(text), "deadline read failure must be visible and retry its exact query");
   return failures;
 }
 
@@ -30,6 +31,7 @@ if (process.argv.includes("--selftest")) {
     source.replace(/\n      \{generateError \? \([\s\S]*?\n      \) : null\}/, ""),
     source.replace("error instanceof Error ? error.message", '"Request failed"'),
     source.replace("disabled={generateMutation.isPending}", "disabled={false}"),
+    source.replace("deadlineQ.refetch()", "filingsQ.refetch()"),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (mutation === source || audit(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);

@@ -226,6 +226,15 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         </p>
       ) : null}
 
+      {deadlineQ.isError ? (
+        <ListErrorState
+          title="Couldn't load Form 2290 filing deadlines"
+          status={0}
+          message={(deadlineQ.error as Error)?.message}
+          onRetry={() => void deadlineQ.refetch()}
+        />
+      ) : null}
+
       {filingsQ.isError ? (
         <ListErrorState
           title="Couldn't load Form 2290 filings"
