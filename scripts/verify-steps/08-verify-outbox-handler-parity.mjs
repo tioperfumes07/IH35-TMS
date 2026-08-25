@@ -13,5 +13,8 @@ export default {
     if (ctx.run("node", ["scripts/verify-engine-fault-notification-durability.mjs"]) !== 0) {
       process.exit(1);
     }
+    if (ctx.run("node", ["scripts/verify-compliance-reminder-delivery-durability.mjs"]) !== 0) {
+      process.exit(1);
+    }
   },
 };

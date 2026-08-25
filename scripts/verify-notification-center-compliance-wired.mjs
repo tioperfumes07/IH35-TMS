@@ -10,7 +10,7 @@ if (!job.includes("createNotification")) {
   console.error("verify:notification-center-compliance-wired FAIL: compliance reminder must call createNotification");
   process.exit(1);
 }
-if (!job.includes('channel === "in_app"')) {
+if (!job.includes('(rule.channel ?? []).includes("in_app")')) {
   console.error("verify:notification-center-compliance-wired FAIL: in_app channel branch missing");
   process.exit(1);
 }

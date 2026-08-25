@@ -488,6 +488,7 @@
     "verify:compliance-dashboard-aggregate-sources": "node scripts/verify-compliance-dashboard-aggregate-sources.mjs",
     "verify:compliance-notification-rules-rls": "node scripts/verify-compliance-notification-rules-rls.mjs",
     "verify:compliance-reminder-job-registered": "node scripts/verify-compliance-reminder-job-registered.mjs",
+    "verify:compliance-reminder-delivery-durability": "node scripts/verify-compliance-reminder-delivery-durability.mjs",
     "verify:compliance-severity-thresholds": "node scripts/verify-compliance-severity-thresholds.mjs",
     "verify:hos-viewer-picker": "node scripts/verify-hos-viewer-picker.mjs",
     "verify:hos-driver-map-preview": "node scripts/verify-hos-driver-map-preview.mjs",
