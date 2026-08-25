@@ -107,7 +107,7 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
 
             // Heartbeat + enabled check in ONE committed tx — the heartbeat proves the */5 tick fired and
             // reached this tenant even if every sync below fails (it can't be lost to a later rollback).
-            let enabled = false;
+            let enabled: boolean;
             try {
               enabled = await runScoped(operatingCompanyId, async (c) => {
                 await c.query(
@@ -120,6 +120,14 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
               });
             } catch (err) {
               app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara cron heartbeat/enabled tx failed");
+              await withLuciaBypass((c) =>
+                appendCronAuditEvent(c, "cron_samsara_enabled_check_failed", "warning", {
+                  cron_name: CRON_NAME,
+                  operating_company_id: operatingCompanyId,
+                  reason: String((err as Error)?.message ?? err),
+                })
+              ).catch(() => undefined);
+              continue;
             }
             if (!enabled) {
               await runScoped(operatingCompanyId, (c) =>
