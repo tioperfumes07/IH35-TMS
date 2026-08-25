@@ -232,6 +232,35 @@ export function SubscriptionManager() {
         <p className="text-sm text-gray-500">Loading subscriptions…</p>
       ) : null}
 
+      {/*
+        Q8-SUBSCRIPTIONS-SILENT-NO-DELIVERY (2026-08-24): the CRUD API/table (reports.scheduled_subscriptions)
+        is real and correctly saves cadence/recipients, and createSubscription() does compute a real
+        next_scheduled_at -- but no backend worker anywhere in the repo ever reads this table to send an
+        email. Confirmed live on Neon: 17 of 18 rows are is_active=true, 0 have ever had last_sent_at set,
+        0 have a non-null next_scheduled_at (the oldest active row was created 2026-06-08, so this has been
+        silently true for 2.5+ months), and reports.scheduled_delivery_log has 0 rows total, ever. Even a
+        freshly-created subscription cannot deliver today: none of the 6 Q8 report_slugs (weekly-cash-position,
+        weekly-driver-settlement-preview, weekly-ar-aging-60, monthly-pnl, quarterly-ifta-preview,
+        daily-safety-alerts-digest) are in the OTHER scheduled-reports worker's report generator whitelist
+        (apps/backend/src/scheduled-reports/report-file-builder.ts LEGACY_IDS), so wiring a worker to that
+        existing delivery primitive as-is would immediately throw unsupported_report_id for every row.
+        Until a real worker + report generator ships for this table, showing "Active" with a plain "—" for
+        Last sent/Next silently misleads the Owner into believing a weekly email is going out when nothing
+        ever will. This banner makes that honest instead of silent -- it is not the full fix (that is a
+        real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
+      */}
+      <div
+        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm"
+        data-testid="q8-subscriptions-delivery-not-implemented"
+      >
+        <p className="font-semibold text-slate-700">Email delivery is not implemented yet</p>
+        <p className="mt-1 text-slate-600">
+          Subscriptions below save correctly, but no backend worker exists to send them — "Active" status
+          does not mean emails are going out. Last sent / Next will stay empty for every subscription until
+          report delivery ships.
+        </p>
+      </div>
+
       <div className="rounded-sm border border-gray-200 bg-white p-2">
         <MobileOptimizedTable
           rows={rows}
