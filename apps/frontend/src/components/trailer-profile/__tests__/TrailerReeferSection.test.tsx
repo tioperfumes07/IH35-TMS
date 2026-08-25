@@ -86,4 +86,19 @@ describe("TrailerReeferSection (A19)", () => {
       );
     });
   });
+
+  it("surfaces manual hours write failures", async () => {
+    vi.mocked(maintenanceApi.createMaintenanceReeferHoursLogEntry).mockRejectedValueOnce(new Error("scope rejected"));
+    renderSection();
+    fireEvent.change(await screen.findByTestId("reefer-hours-input"), { target: { value: "4500" } });
+    fireEvent.click(screen.getByTestId("reefer-hours-record-btn"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("scope rejected");
+  });
+
+  it("surfaces mark-service write failures", async () => {
+    vi.mocked(maintenanceApi.updateMaintenanceReeferSpecs).mockRejectedValueOnce(new Error("service rejected"));
+    renderSection();
+    fireEvent.click(await screen.findByTestId("reefer-mark-service-btn"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("service rejected");
+  });
 });
