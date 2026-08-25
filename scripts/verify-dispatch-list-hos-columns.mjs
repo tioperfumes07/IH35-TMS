@@ -6,6 +6,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+const selftest = process.argv.includes("--selftest");
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-dispatch-list-hos-columns: ${m}`); process.exit(1); };
 const clocks = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/hosClocks.ts"), "utf8");
@@ -37,4 +38,32 @@ if (!/<DriverHosClockCells\b/.test(list) && !/<DriverHosClockValue\b/.test(list)
 }
 const cells = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 if (!/getDriverHosStatus/.test(cells)) fail("HOS cells must read the in-app HOS store (getDriverHosStatus, #1109)");
-console.log("PASS verify-dispatch-list-hos-columns");
+function checkRecovery(source) {
+  const requirements = [
+    ["shared retry control", /function HosRetryButton[\s\S]*?data-hos-retry[\s\S]*?onRetry\(\)/],
+    ["status dot query error", /function DriverHosStatusDot[\s\S]*?if \(q\.isError\) return <HosRetryButton compact onRetry=\{\(\) => void q\.refetch\(\)\}/],
+    ["clock value query error", /function DriverHosClockValue[\s\S]*?if \(q\.isError\) return <HosRetryButton onRetry=\{\(\) => void q\.refetch\(\)\}/],
+    ["legacy clock cells query error", /function DriverHosClockCells[\s\S]*?if \(q\.isError\)[\s\S]*?<HosRetryButton onRetry=\{\(\) => void q\.refetch\(\)\}/],
+  ];
+  return requirements.filter(([, pattern]) => !pattern.test(source)).map(([message]) => message);
+}
+const missing = checkRecovery(cells);
+if (missing.length) fail(`HOS read failures must stay visible and retryable across every shared consumer: ${missing.join(", ")}`);
+
+if (selftest) {
+  const mutations = [
+    cells.replace("data-hos-retry", "data-hos-hidden"),
+    cells.replace("if (q.isError) return <HosRetryButton compact", "if (false) return <HosRetryButton compact"),
+    cells.replace("if (q.isError) return <HosRetryButton onRetry", "if (false) return <HosRetryButton onRetry"),
+    cells.replace(
+      "if (q.isError) {\n    return (\n      <>\n        {HOS_COLUMNS.map",
+      "if (false) {\n    return (\n      <>\n        {HOS_COLUMNS.map"
+    ),
+  ];
+  for (let index = 0; index < mutations.length; index += 1) {
+    if (checkRecovery(mutations[index]).length === 0) fail(`mutation ${index + 1} survived`);
+  }
+  console.log(`PASS verify-dispatch-list-hos-columns selftest ${mutations.length}/${mutations.length}`);
+} else {
+  console.log("PASS verify-dispatch-list-hos-columns");
+}

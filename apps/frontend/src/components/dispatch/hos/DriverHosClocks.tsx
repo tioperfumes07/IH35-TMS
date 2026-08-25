@@ -27,11 +27,30 @@ function useDriverHos(driverId: string | null | undefined, operatingCompanyId: s
   });
 }
 
+function HosRetryButton({ onRetry, compact = false }: { onRetry: () => void; compact?: boolean }) {
+  return (
+    <button
+      type="button"
+      data-hos-retry
+      className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+      aria-label="Retry driver HOS"
+      title="Driver HOS unavailable — retry"
+      onClick={(event) => {
+        event.stopPropagation();
+        onRetry();
+      }}
+    >
+      {compact ? "!" : "Retry"}
+    </button>
+  );
+}
+
 // Small duty/HOS-health dot for next to a driver name (ITEM 5 + ITEM 3). HOS-PRC2: prefer the
 // certified Samsara ELD violation flag; fall back to the in-app recompute only when Samsara has
 // never polled this driver.
 export function DriverHosStatusDot({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | undefined }) {
   const q = useDriverHos(driverId, operatingCompanyId);
+  if (q.isError) return <HosRetryButton compact onRetry={() => void q.refetch()} />;
   const eld = q.data?.eld_certified ?? null;
   const dot = eld ? eldStatusDot(eld) : hosStatusDot(q.data?.status ?? null);
   return <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${dot.cls}`} title={dot.label} aria-label={dot.label} />;
@@ -134,6 +153,7 @@ export function DriverHosClockValue({
   const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
   const col = HOS_COLUMNS.find((c) => c.key === colKey);
   if (!driverId) return <span className="text-gray-300">—</span>;
+  if (q.isError) return <HosRetryButton onRetry={() => void q.refetch()} />;
   return (
     <span
       className="font-mono text-[11px] text-gray-700"
@@ -151,6 +171,17 @@ export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId
   const q = useDriverHos(driverId, operatingCompanyId);
   // HOS-PRC2 — roster reads the same certified Samsara ELD snapshot verbatim as the board.
   const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
+  if (q.isError) {
+    return (
+      <>
+        {HOS_COLUMNS.map((col, index) => (
+          <td key={col.key} className="px-3 py-2 text-[11px] text-slate-500" data-hos-col={col.key}>
+            {index === 0 ? <HosRetryButton onRetry={() => void q.refetch()} /> : "—"}
+          </td>
+        ))}
+      </>
+    );
+  }
   return (
     <>
       {HOS_COLUMNS.map((col) => (
