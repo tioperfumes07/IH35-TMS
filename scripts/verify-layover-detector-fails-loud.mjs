@@ -32,6 +32,8 @@ import { resolve } from "node:path";
 
 const SERVICE = "apps/backend/src/dispatch/layovers/detection.service.ts";
 const WORKER = "apps/backend/src/jobs/layover-detector-worker.ts";
+const BOOKING_WORKER = "apps/backend/src/jobs/booking-gap-aggregator-worker.ts";
+const GEOFENCE_WORKER = "apps/backend/src/jobs/geofence-reconciliation-daily.ts";
 
 /** Strip comments — a comment documenting the old defect must not re-trigger the guard. */
 export function strip(text) {
@@ -87,6 +89,18 @@ export const ASSERTIONS = [
     test: (s) => /DID NOT RUN/.test(s) && /NO EVALUABLE DATA/.test(s),
     fail: "layover-detector-worker.ts does not distinguish 'did not run' / 'no evaluable data' from a genuine zero in its logs",
   },
+  {
+    id: "A9-BOOKING-CENSUS-FAILS-LOUD",
+    file: "booking",
+    test: (s) => /FROM org\.companies WHERE is_active = true/.test(s) && !/org\.companies[\s\S]{0,300}?\.catch\s*\(/.test(s),
+    fail: "booking-gap-aggregator-worker.ts converts a failed active-company census into a healthy zero-company tick",
+  },
+  {
+    id: "A10-GEOFENCE-CENSUS-FAILS-LOUD",
+    file: "geofence",
+    test: (s) => /FROM org\.companies WHERE is_active = true AND deactivated_at IS NULL/.test(s) && !/org\.companies[\s\S]{0,300}?\.catch\s*\(/.test(s),
+    fail: "geofence-reconciliation-daily.ts converts a failed active-company census into a healthy zero-company run",
+  },
 ];
 
 function read(p) {
@@ -98,12 +112,13 @@ function read(p) {
   return strip(readFileSync(abs, "utf8"));
 }
 
-export function evaluate(service, worker) {
-  return ASSERTIONS.filter((a) => !a.test(a.file === "service" ? service : worker));
+export function evaluate(service, worker, booking, geofence) {
+  const sources = { service, worker, booking, geofence };
+  return ASSERTIONS.filter((a) => !a.test(sources[a.file]));
 }
 
 function run() {
-  const failures = evaluate(read(SERVICE), read(WORKER));
+  const failures = evaluate(read(SERVICE), read(WORKER), read(BOOKING_WORKER), read(GEOFENCE_WORKER));
   if (failures.length) {
     console.error(`[verify-layover-detector-fails-loud] FAILED — ${failures.length} of ${ASSERTIONS.length} assertions unmet:`);
     for (const f of failures) console.error(`  ✗ [${f.id}] ${f.fail}`);
@@ -117,8 +132,10 @@ function selftest() {
   let ok = true;
   const service = read(SERVICE);
   const worker = read(WORKER);
+  const booking = read(BOOKING_WORKER);
+  const geofence = read(GEOFENCE_WORKER);
 
-  if (evaluate(service, worker).length) {
+  if (evaluate(service, worker, booking, geofence).length) {
     console.error("SELFTEST FAIL: the real (fixed) sources are flagged — false positive");
     ok = false;
   } else {
@@ -127,22 +144,24 @@ function selftest() {
 
   // Every assertion must be able to FAIL on a real planted defect.
   const planted = [
-    ["A1-NO-PHANTOM-ASSIGNMENTS-TABLE", service + "\nJOIN mdata.load_assignments la ON 1=1", worker],
-    ["A2-NO-PHANTOM-LOAD-COLUMNS", service + "\nSELECT l.uuid FROM x", worker],
-    ["A3-CANONICAL-DRIVER-SOURCE", service.replace(/assigned_primary_driver_id/g, "driver_uuid"), worker],
-    ["A4-UNAVAILABLE-THROWS-NOT-ZERO", service.replace(/throw new LayoverDetectionUnavailableError/g, "return 0; //"), worker],
-    ["A5-REPORTS-A-DENOMINATOR", service.replace(/resolvable_deliveries/g, "n"), worker],
-    ["A6-WORKER-USES-REAL-COLUMN", service, worker.replace(/is_active\s*=\s*true/g, "active = true")],
-    ["A7-NO-SWALLOWING-CATCH", service, worker + "\n.catch(() => ({ rows: [] }))"],
-    ["A8-DISTINGUISHES-NO-DATA", service, worker.replace(/NO EVALUABLE DATA/g, "fine")],
+    ["A1-NO-PHANTOM-ASSIGNMENTS-TABLE", service + "\nJOIN mdata.load_assignments la ON 1=1", worker, booking, geofence],
+    ["A2-NO-PHANTOM-LOAD-COLUMNS", service + "\nSELECT l.uuid FROM x", worker, booking, geofence],
+    ["A3-CANONICAL-DRIVER-SOURCE", service.replace(/assigned_primary_driver_id/g, "driver_uuid"), worker, booking, geofence],
+    ["A4-UNAVAILABLE-THROWS-NOT-ZERO", service.replace(/throw new LayoverDetectionUnavailableError/g, "return 0; //"), worker, booking, geofence],
+    ["A5-REPORTS-A-DENOMINATOR", service.replace(/resolvable_deliveries/g, "n"), worker, booking, geofence],
+    ["A6-WORKER-USES-REAL-COLUMN", service, worker.replace(/is_active\s*=\s*true/g, "active = true"), booking, geofence],
+    ["A7-NO-SWALLOWING-CATCH", service, worker + "\n.catch(() => ({ rows: [] }))", booking, geofence],
+    ["A8-DISTINGUISHES-NO-DATA", service, worker.replace(/NO EVALUABLE DATA/g, "fine"), booking, geofence],
+    ["A9-BOOKING-CENSUS-FAILS-LOUD", service, worker, booking.replace("      );\n\n    let count", "      ).catch(() => ({ rows: [] }));\n\n    let count"), geofence],
+    ["A10-GEOFENCE-CENSUS-FAILS-LOUD", service, worker, booking, geofence.replace("    );\n\n    let total", "    ).catch(() => ({ rows: [] }));\n\n    let total")],
   ];
-  for (const [id, s, w] of planted) {
-    if (s === service && w === worker) {
+  for (const [id, s, w, b, g] of planted) {
+    if (s === service && w === worker && b === booking && g === geofence) {
       console.error(`SELFTEST FAIL: mutation for ${id} was INERT — it proves nothing`);
       ok = false;
       continue;
     }
-    if (!evaluate(s, w).some((f) => f.id === id)) {
+    if (!evaluate(s, w, b, g).some((f) => f.id === id)) {
       console.error(`SELFTEST FAIL: ${id} did NOT fire on its planted defect`);
       ok = false;
     } else {
