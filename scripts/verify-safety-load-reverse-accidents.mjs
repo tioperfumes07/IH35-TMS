@@ -72,6 +72,26 @@ export function assertLoadSafetyReverse(sources) {
   if (!/openKind: "damage_reports_load"/.test(src[SECTION]) || !/kind=\{kind\.openKind\}/.test(src[SECTION])) {
     problems.push(`${SECTION}: Open Damage/Interchange/Cargo must EntityLink filtered incident queues.`);
   }
+  for (const [name, pattern] of [
+    ["accidents", /onRetry=\{\(\) => void accidentsQ\.refetch\(\)\}/],
+    ["HOS violations", /onRetry=\{\(\) => void hosViolationsQ\.refetch\(\)\}/],
+    ["internal fines", /onRetry=\{\(\) => void internalFinesQ\.refetch\(\)\}/],
+  ]) {
+    if (!pattern.test(src[SECTION])) problems.push(`${SECTION}: ${name} reverse read must expose exact retry.`);
+  }
+  if ((src[SECTION].match(/onRetry=\{\(\) => void query\.refetch\(\)\}/g) ?? []).length < 2) {
+    problems.push(`${SECTION}: safety-event and incident reverse reads must expose exact retry.`);
+  }
+  for (const pattern of [
+    /!accidentsQ\.isError && accidents\.length > 0/,
+    /!hosViolationsQ\.isError \? hosViolations\.map/,
+    /!internalFinesQ\.isError \? internalFines\.map/,
+  ]) {
+    if (!pattern.test(src[SECTION])) problems.push(`${SECTION}: failed reverse reads must suppress stale rows.`);
+  }
+  if ((src[SECTION].match(/!query\.isError && rows\.length > 0/g) ?? []).length < 2) {
+    problems.push(`${SECTION}: failed safety-event and incident reads must suppress stale rows.`);
+  }
 
   return problems;
 }
@@ -129,6 +149,31 @@ if (SELFTEST) {
     "open-incident-queues",
     { ...live, [SECTION]: live[SECTION].replace(/kind=\{kind\.openKind\}/g, "to={kind.route}") },
     "Open Damage/Interchange/Cargo must EntityLink"
+  );
+  expectCaught(
+    "accidents-retry",
+    { ...live, [SECTION]: live[SECTION].replace("onRetry={() => void accidentsQ.refetch()}", "onRetry={() => undefined}") },
+    "accidents reverse read must expose exact retry"
+  );
+  expectCaught(
+    "hos-retry",
+    { ...live, [SECTION]: live[SECTION].replace("onRetry={() => void hosViolationsQ.refetch()}", "onRetry={() => undefined}") },
+    "HOS violations reverse read must expose exact retry"
+  );
+  expectCaught(
+    "internal-fines-retry",
+    { ...live, [SECTION]: live[SECTION].replace("onRetry={() => void internalFinesQ.refetch()}", "onRetry={() => undefined}") },
+    "internal fines reverse read must expose exact retry"
+  );
+  expectCaught(
+    "shared-event-retry",
+    { ...live, [SECTION]: live[SECTION].replaceAll("onRetry={() => void query.refetch()}", "onRetry={() => undefined}") },
+    "safety-event and incident reverse reads must expose exact retry"
+  );
+  expectCaught(
+    "stale-rows",
+    { ...live, [SECTION]: live[SECTION].replaceAll("!query.isError && rows.length > 0", "rows.length > 0") },
+    "failed safety-event and incident reads must suppress stale rows"
   );
 
   const liveProblems = assertLoadSafetyReverse(live);
