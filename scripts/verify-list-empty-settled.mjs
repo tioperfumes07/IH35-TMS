@@ -47,6 +47,12 @@ const attorneyReviewSrc = read("apps/frontend/src/pages/legal/LegalAttorneyRevie
 if (!/query\.isError[\s\S]*?<ListErrorState[\s\S]*?query\.refetch\(\)/.test(attorneyReviewSrc)) {
   fail("Legal Attorney Review must render a retryable ListErrorState before its empty queue");
 }
+const insurancePaymentScheduleSrc = read("apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx");
+const insurancePaymentScheduleErrorContract =
+  /query\.isError\s*\?\s*\([\s\S]*?<ListErrorState[\s\S]*?userFacingApiError\(query\.error[\s\S]*?query\.refetch\(\)[\s\S]*?\)\s*:\s*\([\s\S]*?<ParityTable/;
+if (!insurancePaymentScheduleErrorContract.test(insurancePaymentScheduleSrc)) {
+  fail("Insurance Payment Schedule must render a retryable detailed error instead of its empty table");
+}
 
 // 2) Migrated list surfaces: each MUST import the primitive and gate every
 //    empty literal on the resolved settled state (listState.isEmpty / === "empty").
@@ -348,7 +354,11 @@ if (process.argv.includes("--selftest")) {
   if (!expected || !source.includes(expected) || mutant.includes(expected)) {
     fail("selftest did not reject the planted stale insurance-lawsuit empty-state literal");
   }
-  console.log(`${TAG} SELFTEST OK — stale insurance-lawsuit empty copy rejected`);
+  const retryMutant = insurancePaymentScheduleSrc.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
+  if (insurancePaymentScheduleErrorContract.test(retryMutant)) {
+    fail("selftest did not reject the planted Insurance Payment Schedule retry no-op");
+  }
+  console.log(`${TAG} SELFTEST OK — stale insurance-lawsuit copy and Insurance Payment Schedule retry no-op rejected`);
   process.exit(0);
 }
 
