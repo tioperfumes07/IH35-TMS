@@ -1,5 +1,7 @@
 # INBOX-DEVIN
 
+**23:50 CT GO NOW.** Same as `INBOX-DEVIN-A.md` TOP. Live `c6f70e3`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Not PARKED.
+
 **GO NOW 17:45 CT — same as INBOX-DEVIN-A.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Not PARKED.
 
 **GO NOW 16:36 CT — not PARKED, not waiting on Cursor.** Same as `INBOX-DEVIN-A.md` TOP. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.

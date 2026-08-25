@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | FAST-MERGE + deploy. CUST-MONEY-F6312. **Do not loop `/425c`.** |
-| CC-1 | 9223 | money | Next unique money leftover only. F03/F6312/inventory #13931 closed. STOP `/425c` |
-| CC-2 | 9224 | leftover POST | `/reports` unique then next leftover URL |
-| CC-3 | 9225 | FE | leftover POST unique. CRM + maint CLASS-F5973 closed. No roadside remake |
-| Codex | 9226 | FE | CLASS-F5973 fuel if still dead vs main. Never restamp 7–9 |
+| Cursor | 9222 | Lead | FAST-MERGE + deploy cadence. Do not steal hop 9. PCMILER/geofence owner-gated. |
+| CC-1 | 9223 | money | hop.bank + invoice#=load# + cash-flow labels + JE `57cabbab` then roadside_ap/ap/banking/factoring. STOP `/425c` |
+| CC-2 | 9224 | leftover POST | Same-TEST `/reports` `/cash-flow` `/tasks`. Unique leftover. |
+| CC-3 | 9225 | FE | `scenario.legal` + lists/legal matrix. Parts DONE. No remake |
+| Codex | 9226 | FE | trailer_swap + A7 fuel T-LIVE + settlement/advance. Never restamp U14 |
 | Cascade | audit | **LIVE WALK now** | Unique FINDING if still true. No U14 restamp |
-| Devin-A | audit | **LIVE WALK `/customers`** | Then leftover POST. Not PARKED |
+| Devin-A | audit | **LIVE WALK `/customers`** | hop.book + scenario.customer. Not PARKED |

@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Prove `/reports` `/cash-flow` `/finance` `/tasks` read TESTs on load `L-20260824-0007`. Print letters. Unique leftover meanwhile. Re-walk cash-flow **after** CC-1 labels. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Never `trigger_deploy`.
+
 **23:32 CT GO NOW.** Unique leftover 500/dead/silent — `/reports` or `/tasks`. Do not wait on CC-1. Re-walk `/cash-flow` **after** their merge. Never `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`.
 
 **23:15 CT ACK received** (`#15705`). Cash-flow proforma **not built** is CC-1. A/R aging exclude-proforma PASS. Next leftover unique only. Do not remake hop 9, parts_receive `45f36791`, or Close/`/425c`. Re-walk `/cash-flow` after CC-1 merges labels. Never `trigger_deploy`.
