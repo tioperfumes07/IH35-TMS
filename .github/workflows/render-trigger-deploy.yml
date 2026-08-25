@@ -1,0 +1,37 @@
+# Trigger a Render production deploy manually (Render auto-deploy is OFF).
+# Per NO-PER-MERGE-PROD-DEPLOY-LAW: only run this on owner demand or when 5+ PRs have merged.
+name: render-trigger-deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual deploy trigger"
+        required: false
+        default: "manual"
+
+permissions:
+  contents: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger Render production deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RENDER_API_KEY:-}" ]; then
+            echo "RENDER_API_KEY secret missing"
+            exit 1
+          fi
+          SID="${SERVICE_ID:-srv-d7rpem7avr4c73fhp4n0}"
+          echo "POST /v1/services/${SID}/deploys (triggering manual deploy)"
+          curl -fsS -X POST "https://api.render.com/v1/services/${SID}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}' | jq .
