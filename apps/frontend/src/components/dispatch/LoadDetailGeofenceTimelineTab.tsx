@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { Button } from "../Button";
 
 type StopSource = "geofence" | "driver_pwa" | "dispatcher_manual";
 type DetentionStatus = "accruing" | "closed" | "billed" | null;
@@ -178,8 +179,11 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
 
   if (query.error) {
     return (
-      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Failed to load geofence timeline.
+      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" role="alert" data-geofence-timeline-read-error>
+        <div>Failed to load geofence timeline.</div>
+        <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
+          Retry timeline
+        </Button>
       </div>
     );
   }
