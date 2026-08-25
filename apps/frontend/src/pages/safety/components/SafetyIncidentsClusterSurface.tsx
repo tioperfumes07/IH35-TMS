@@ -127,6 +127,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   // S-08 + s-04 + LV-SAFETY-INCIDENTS-CLUSTER-FILTER-SILENT-APPLY — stage until Apply;
   // date range is sent as date_from/date_to query params (backend list route).
   const [searchParams, setSearchParams] = useSearchParams();
@@ -323,6 +324,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     setVoidReason("");
     setVoidError(null);
     setSavedHint(false);
+    setActionError(null);
   };
 
   const refresh = () => {
@@ -373,6 +375,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     }
 
     setSaving(true);
+    setActionError(null);
     try {
       const res = await createSafetyIncident(payload);
       const created = res.incident;
@@ -385,6 +388,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       } else {
         closeDrawer();
       }
+    } catch (err) {
+      setActionError(userFacingApiError(err, "Could not create the safety incident"));
     } finally {
       setSaving(false);
     }
@@ -419,11 +424,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     }
 
     setSaving(true);
+    setActionError(null);
     try {
       await updateSafetyIncident(String(selected.id), operatingCompanyId, payload);
       setEditMode(false);
       refresh();
       await detailQuery.refetch();
+    } catch (err) {
+      setActionError(userFacingApiError(err, "Could not save the safety incident"));
     } finally {
       setSaving(false);
     }
@@ -432,10 +440,13 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const onPhotoSelected = async (file: File | null) => {
     if (!file || createMode || !selected?.id) return;
     setUploading(true);
+    setActionError(null);
     try {
       await uploadSafetyIncidentPhoto(String(selected.id), operatingCompanyId, file);
       refresh();
       void detailQuery.refetch();
+    } catch (err) {
+      setActionError(userFacingApiError(err, "Could not upload the incident photo"));
     } finally {
       setUploading(false);
     }
@@ -723,6 +734,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               data-testid={`${config.pageTestId}-saved-hint`}
             >
               Report saved — add photos now.
+            </div>
+          ) : null}
+          {actionError ? (
+            <div role="alert" className="mb-2 text-xs text-red-700" data-testid={`${config.pageTestId}-action-error`}>
+              {actionError}
             </div>
           ) : null}
 

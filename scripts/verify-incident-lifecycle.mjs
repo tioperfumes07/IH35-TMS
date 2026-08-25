@@ -74,6 +74,18 @@ export function assertIncidentLifecycle(sources) {
   if (!/-status-reason/.test(src[SURFACE])) {
     problems.push(`${SURFACE}: the status control collects no reason — the server requires one, so the UI would only ever produce a 400.`);
   }
+  for (const [action, fallback] of [
+    ["create", "Could not create the safety incident"],
+    ["save", "Could not save the safety incident"],
+    ["upload", "Could not upload the incident photo"],
+  ]) {
+    if (!new RegExp(`userFacingApiError\\(err,\\s*["']${fallback}["']\\)`).test(src[SURFACE])) {
+      problems.push(`${SURFACE}: ${action} rejection must preserve backend detail.`);
+    }
+  }
+  if (!/actionError\s*\?[\s\S]{0,140}?role=["']alert["']/.test(src[SURFACE])) {
+    problems.push(`${SURFACE}: incident create/edit/photo failures need one accessible operator alert.`);
+  }
 
   return problems;
 }
@@ -122,6 +134,14 @@ if (SELFTEST) {
   expectCaught("surface-stops-calling-update",
     { ...live, [SURFACE]: live[SURFACE].split("updateSafetyIncident").join("somethingElse") },
     "does not call updateSafetyIncident");
+  for (const [name, needle, replacement] of [
+    ["create-error-hidden", "Could not create the safety incident", "Create failed"],
+    ["edit-error-hidden", "Could not save the safety incident", "Save failed"],
+    ["photo-error-hidden", "Could not upload the incident photo", "Upload failed"],
+    ["action-alert-demoted", 'role="alert"', 'role="status"'],
+  ]) {
+    expectCaught(name, { ...live, [SURFACE]: live[SURFACE].replace(needle, replacement) }, name.includes("alert") ? "accessible operator alert" : "preserve backend detail");
+  }
 
   const liveProblems = assertIncidentLifecycle(live);
   if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);
@@ -131,7 +151,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
