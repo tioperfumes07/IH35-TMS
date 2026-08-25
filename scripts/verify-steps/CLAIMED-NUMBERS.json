@@ -1,4 +1,14 @@
 {
+  "9747": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-scroll-to-top-wired"
+  },
+  "9751": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-pageheader-smart-back-wired"
+  },
   "9750": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
