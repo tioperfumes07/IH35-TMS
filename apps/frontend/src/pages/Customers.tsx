@@ -401,7 +401,7 @@ export function CustomersPage() {
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string; email?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
-  const { viewMode, setViewMode } = useViewModePref("customers", "master-detail");
+  const { viewMode, setViewMode, viewModeSaveError, retryViewModeSave } = useViewModePref("customers", "master-detail");
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -795,6 +795,12 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-3">
+      {viewModeSaveError && (
+        <div role="alert" data-view-mode-save-error="customers" className="flex items-center justify-between gap-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>{viewModeSaveError}</span>
+          <button type="button" className="font-semibold underline" onClick={retryViewModeSave}>Retry save</button>
+        </div>
+      )}
       <PageHeader
         title="Customers"
         subtitle="Customer list and transactions"

@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `CLASS-CUSTOMER-VENDOR-VIEW-PREFERENCE-SILENT-FAILURE` | **C** | Codex Customer/Vendor connectivity | Codex | this PR | 2026-08-24 | Both view-mode toggles now expose failed persistence and retry the exact selected mode. | `verify-customers-vendors-default-is-prior-design.mjs` normal + 6/6 planted defects; focused test 1/1 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `CLASS-LISTVIEW-PREFERENCE-SAVE-SILENT-FAILURE` | **C** | Codex vertical shared list connectivity | Codex | this PR | 2026-08-24 | Failed ListView preference saves now remain visibly temporary and retry the exact draft instead of disappearing. | `verify-all-module-list-toolbar-connectivity.mjs` normal + 86 planted defects; focused tests 2/2 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `SYSTEM-NOTIFICATIONS-POLL-FAILURE-INFINITE-LOADING` | **C** | Codex System connectivity | Codex | this PR | 2026-08-24 | Notification reads and mutations now settle into explicit retryable errors; preferences fail independently; the exact mounted leaf is inventoried under System. | `verify-list-error-state-coverage.mjs` normal + 3/3 planted mutations; focused tests 4/4 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
