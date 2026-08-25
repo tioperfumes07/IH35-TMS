@@ -64,6 +64,17 @@ try {
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
   assertIncludes(layoutPageHeader, "navigate(-1)", "Layout PageHeader back navigation missing");
   assertIncludes(formPageHeader, "navigate(-1)", "Form PageHeader back navigation missing");
+  assertIncludes(formPageHeader, "string | BreadcrumbItem", "Form PageHeader must accept string[] breadcrumbs from leaf pages");
+  assertIncludes(layoutPageHeader, "lastModuleHref", "Layout PageHeader must remember last sidebar module");
+  assertIncludes(formPageHeader, "lastModuleHref", "Form PageHeader must remember last sidebar module");
+  const app = read("apps/frontend/src/App.tsx");
+  assertIncludes(app, "<ScrollToTop", "App must mount CC-2 ScrollToTop (do not duplicate RouteScrollReset)");
+  const statementsPrint = read("apps/frontend/src/pages/finance/FinancialStatementsPage.tsx");
+  assertIncludes(statementsPrint, "getShowAccountNumbers", "Financial statements print must respect CoA number toggle");
+  const accountingChrome = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
+  if (!accountingChrome.includes("<PageHeader") && !accountingChrome.includes('aria-label="Back"')) {
+    throw new Error("Accounting wrapper must render a back control");
+  }
 
   const dispatch = read("apps/frontend/src/pages/Dispatch.tsx");
   // orphan-triage F1: AccountingSubNav.tsx (verified-dead, zero-consumer duplicate of the live

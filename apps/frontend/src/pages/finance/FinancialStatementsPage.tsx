@@ -24,6 +24,8 @@ import {
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { getShowAccountNumbers } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
 // FIN-19 — Finance-Hub financial statements (P&L / Balance Sheet / Trial Balance).
 // READ-ONLY: every fetch is a GET against the existing accounting report endpoints; nothing
@@ -122,23 +124,30 @@ type StatementLine = {
   amount: number;
 };
 
-function statementColumns(showType: boolean, fromDate: string, toDate: string, basis: string): Array<ParityColumn<StatementLine>> {
-  const columns: Array<ParityColumn<StatementLine>> = [
-    {
+function statementColumns(
+  showType: boolean,
+  fromDate: string,
+  toDate: string,
+  basis: string,
+  showCodes: boolean,
+): Array<ParityColumn<StatementLine>> {
+  const columns: Array<ParityColumn<StatementLine>> = [];
+  if (showCodes) {
+    columns.push({
       key: "account_code",
       label: "Account #",
       sortable: true,
       render: (line) => <span className="font-medium text-slate-900">{line.account_code || "—"}</span>,
-    },
-    {
+    });
+  }
+  columns.push({
       key: "account_name",
       label: "Account",
       sortable: true,
       render: (line) => (
         <AccountCell code={line.account_code} name={line.account_name} accountId={line.account_id} fromDate={fromDate} toDate={toDate} basis={basis} />
       ),
-    },
-  ];
+    });
   if (showType) {
     columns.push({
       key: "account_type",
@@ -158,54 +167,64 @@ function statementColumns(showType: boolean, fromDate: string, toDate: string, b
   return columns;
 }
 
-function trialBalanceColumns(fromDate: string, toDate: string, basis: string): Array<ParityColumn<AccountingTrialBalanceRow>> {
-  return [
-  {
-    key: "account_code",
-    label: "Account #",
-    sortable: true,
-    render: (row) => <span className="font-medium text-slate-900">{row.account_code || "—"}</span>,
-  },
-  {
-    key: "account_name",
-    label: "Account",
-    sortable: true,
-    render: (row) => (
-      <AccountCell code={row.account_code} name={row.account_name} accountId={row.account_id} fromDate={fromDate} toDate={toDate} basis={basis} />
-    ),
-  },
-  { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type || "—" },
-  {
-    key: "total_debits",
-    label: "Debits",
-    sortable: true,
-    className: "text-right",
-    cellClass: "text-right",
-    render: (row) => money(row.total_debits),
-  },
-  {
-    key: "total_credits",
-    label: "Credits",
-    sortable: true,
-    className: "text-right",
-    cellClass: "text-right",
-    render: (row) => money(row.total_credits),
-  },
-  {
-    key: "net_balance",
-    label: "Net",
-    sortable: true,
-    className: "text-right",
-    cellClass: "text-right",
-    render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
-  },
-  ];
+function trialBalanceColumns(
+  fromDate: string,
+  toDate: string,
+  basis: string,
+  showCodes: boolean,
+): Array<ParityColumn<AccountingTrialBalanceRow>> {
+  const columns: Array<ParityColumn<AccountingTrialBalanceRow>> = [];
+  if (showCodes) {
+    columns.push({
+      key: "account_code",
+      label: "Account #",
+      sortable: true,
+      render: (row) => <span className="font-medium text-slate-900">{row.account_code || "—"}</span>,
+    });
+  }
+  columns.push(
+    {
+      key: "account_name",
+      label: "Account",
+      sortable: true,
+      render: (row) => (
+        <AccountCell code={row.account_code} name={row.account_name} accountId={row.account_id} fromDate={fromDate} toDate={toDate} basis={basis} />
+      ),
+    },
+    { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type || "—" },
+    {
+      key: "total_debits",
+      label: "Debits",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.total_debits),
+    },
+    {
+      key: "total_credits",
+      label: "Credits",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.total_credits),
+    },
+    {
+      key: "net_balance",
+      label: "Net",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
+    },
+  );
+  return columns;
 }
 
 export function FinancialStatementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_STATEMENTS_UI_FLAG, companyId);
+  const [showCodes] = useShowAccountNumbers();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = parseFinancialStatementsTab(searchParams.get("tab"));
@@ -275,7 +294,6 @@ export function FinancialStatementsPage() {
   const bsEquity = useMemo(() => sortByCode(bsQuery.data?.equity.lines ?? []), [bsQuery.data?.equity.lines]);
   const tbRows = useMemo(() => sortByCode(tbQuery.data?.rows ?? []), [tbQuery.data?.rows]);
 
-  // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
   const header = <PageHeader backHref="/finance/overview" title="Financial statements" subtitle="Profit & loss, balance sheet, and trial balance for the selected entity. Read-only — nothing is posted." />;
 
   if (flagLoading) {
@@ -309,6 +327,7 @@ export function FinancialStatementsPage() {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    const showCodes = getShowAccountNumbers();
     const basisLabel = basis === "cash" ? "Cash" : "Accrual";
     const printed = new Date().toLocaleString();
 
@@ -319,20 +338,21 @@ export function FinancialStatementsPage() {
         const rows = lines
           .map(
             (line) => `<tr>
-            <td>${esc(line.account_code || "—")}</td>
+            ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
             <td style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
           )
           .join("");
+        const colSpan = showCodes ? 3 : 2;
         return `
         <h1 style="margin-top:16px">${esc(title)}</h1>
         <table>
-          <thead><tr><th>Account #</th><th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+          <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
-            ${rows || `<tr><td colspan="4">No rows</td></tr>`}
-            <tr><th colspan="3">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            ${rows || `<tr><td colspan="${showCodes ? 4 : 3}">No rows</td></tr>`}
+            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
       };
@@ -365,19 +385,20 @@ export function FinancialStatementsPage() {
         const rows = lines
           .map(
             (line) => `<tr>
-            <td>${esc(line.account_code || "—")}</td>
+            ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
           )
           .join("");
+        const colSpan = showCodes ? 2 : 1;
         return `
         <h1 style="margin-top:16px">${esc(title)}</h1>
         <table>
-          <thead><tr><th>Account #</th><th>Account</th><th style="text-align:right">Amount</th></tr></thead>
+          <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
-            ${rows || `<tr><td colspan="3">No rows</td></tr>`}
-            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            ${rows || `<tr><td colspan="${showCodes ? 3 : 2}">No rows</td></tr>`}
+            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
       };
@@ -411,7 +432,7 @@ export function FinancialStatementsPage() {
     const rowsHtml = tbRows
       .map(
         (row) => `<tr>
-          <td>${esc(row.account_code || "—")}</td>
+          ${showCodes ? `<td>${esc(row.account_code || "—")}</td>` : ""}
           <td>${esc(row.account_name || "—")}</td>
           <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
           <td style="text-align:right">${esc(money(row.total_debits))}</td>
@@ -439,14 +460,14 @@ export function FinancialStatementsPage() {
         <table>
           <thead>
             <tr>
-              <th>Account #</th><th>Account</th><th>Type</th>
+              <th>${showCodes ? "Account #</th><th>" : ""}Account</th><th>Type</th>
               <th style="text-align:right">Debits</th>
               <th style="text-align:right">Credits</th>
               <th style="text-align:right">Net</th>
             </tr>
           </thead>
           <tbody>
-            ${rowsHtml || `<tr><td colspan="6">No rows</td></tr>`}
+            ${rowsHtml || `<tr><td colspan="${showCodes ? 6 : 5}">No rows</td></tr>`}
           </tbody>
         </table>
       `,
@@ -455,9 +476,17 @@ export function FinancialStatementsPage() {
 
   function exportCurrentCsv() {
     if (tab === "pl" && plQuery.data) {
-      const rows: string[][] = [["Section", "Account #", "Account", "Type", "Amount (USD)"]];
+      const rows: string[][] = showCodes
+        ? [["Section", "Account #", "Account", "Type", "Amount (USD)"]]
+        : [["Section", "Account", "Type", "Amount (USD)"]];
       const push = (section: string, lines: AccountingProfitLossLine[]) =>
-        lines.forEach((l) => rows.push([section, l.account_code, l.account_name, l.account_type, (l.amount / 100).toFixed(2)]));
+        lines.forEach((l) =>
+          rows.push(
+            showCodes
+              ? [section, l.account_code, l.account_name, l.account_type, (l.amount / 100).toFixed(2)]
+              : [section, l.account_name, l.account_type, (l.amount / 100).toFixed(2)],
+          ),
+        );
       push("Revenue", plRevenue);
       push("COGS", plCogs);
       push("Operating expenses", plExpenses);
@@ -466,9 +495,17 @@ export function FinancialStatementsPage() {
       return;
     }
     if (tab === "bs" && bsQuery.data) {
-      const rows: string[][] = [["Section", "Account #", "Account", "Type", "Amount (USD)"]];
+      const rows: string[][] = showCodes
+        ? [["Section", "Account #", "Account", "Type", "Amount (USD)"]]
+        : [["Section", "Account", "Type", "Amount (USD)"]];
       const push = (section: string, lines: AccountingBalanceSheetLine[]) =>
-        lines.forEach((l) => rows.push([section, l.account_code, l.account_name, l.account_type, (l.amount / 100).toFixed(2)]));
+        lines.forEach((l) =>
+          rows.push(
+            showCodes
+              ? [section, l.account_code, l.account_name, l.account_type, (l.amount / 100).toFixed(2)]
+              : [section, l.account_name, l.account_type, (l.amount / 100).toFixed(2)],
+          ),
+        );
       push("Assets", bsAssets);
       push("Liabilities", bsLiabilities);
       push("Equity", bsEquity);
@@ -478,16 +515,28 @@ export function FinancialStatementsPage() {
       return;
     }
     if (tab === "tb" && tbQuery.data) {
-      const rows: string[][] = [["Account #", "Account", "Type", "Debits (USD)", "Credits (USD)", "Net (USD)"]];
+      const rows: string[][] = showCodes
+        ? [["Account #", "Account", "Type", "Debits (USD)", "Credits (USD)", "Net (USD)"]]
+        : [["Account", "Type", "Debits (USD)", "Credits (USD)", "Net (USD)"]];
       tbRows.forEach((r: AccountingTrialBalanceRow) =>
-        rows.push([
-          r.account_code,
-          r.account_name,
-          r.account_type,
-          (r.total_debits / 100).toFixed(2),
-          (r.total_credits / 100).toFixed(2),
-          (r.net_balance / 100).toFixed(2),
-        ]),
+        rows.push(
+          showCodes
+            ? [
+                r.account_code,
+                r.account_name,
+                r.account_type,
+                (r.total_debits / 100).toFixed(2),
+                (r.total_credits / 100).toFixed(2),
+                (r.net_balance / 100).toFixed(2),
+              ]
+            : [
+                r.account_name,
+                r.account_type,
+                (r.total_debits / 100).toFixed(2),
+                (r.total_credits / 100).toFixed(2),
+                (r.net_balance / 100).toFixed(2),
+              ],
+        ),
       );
       rows.push([
         "Grand total",
@@ -745,7 +794,7 @@ export function FinancialStatementsPage() {
             <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">Trial balance</div>
             <ParityTable
               embedded
-              columns={trialBalanceColumns(applied.start, applied.end, basis)}
+              columns={trialBalanceColumns(applied.start, applied.end, basis, showCodes)}
               rows={tbRows}
               rowKey={(row) => row.account_id}
               loading={tbQuery.isLoading}
@@ -809,7 +858,11 @@ function StatementSection({
   toDate: string;
   basis: string;
 }) {
-  const columns = useMemo(() => statementColumns(showType, fromDate, toDate, basis), [showType, fromDate, toDate, basis]);
+  const [showCodes] = useShowAccountNumbers();
+  const columns = useMemo(
+    () => statementColumns(showType, fromDate, toDate, basis, showCodes),
+    [showType, fromDate, toDate, basis, showCodes],
+  );
   return (
     <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">{title}</div>

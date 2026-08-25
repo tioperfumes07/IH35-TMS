@@ -20,14 +20,26 @@ export const BREAK_EVEN_WORKBOOK_NOTE = "break-even workbook · 2025 IH35 analys
 
 const DEFAULT_LINES: LineTemplate[] = [
   { category_kind: "revenue", category_label: "Freight revenue", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
-  { category_kind: "expense", category_label: "Equipment notes / leases (BMO, ENGS, PNC, AMUR, Continental, TBK, Hitachi, Volvo, United Leasing)", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "BMO note / lease", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "ENGS / Mitsubishi", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "PNC", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "AMUR", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Continental", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "TBK", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Hitachi", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Auxilior", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "North Mills", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Crossroads", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Volvo Financial", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "United Leasing", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "Vehicle T139–T146", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
+  { category_kind: "expense", category_label: "CCG reefers", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Insurance", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Fuel", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Driver pay / labor", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Maintenance, tires, roadside", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Licenses / permits / HVUT 2290", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
   { category_kind: "expense", category_label: "Factoring / cash cost", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
-  { category_kind: "expense", category_label: "Assets / other fixed", assumption_note: BREAK_EVEN_WORKBOOK_NOTE, monthly_estimate_cents: 0 },
 ];
 
 type Props = {
@@ -44,6 +56,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
   const [periodStart, setPeriodStart] = useState(() => new Date().toISOString().slice(0, 10));
   const [miles, setMiles] = useState(String(liveMiles || ""));
   const [lines, setLines] = useState<LineTemplate[]>(() => DEFAULT_LINES.map((l) => ({ ...l })));
+  const [newVehicle, setNewVehicle] = useState("");
 
   const historyQuery = useQuery({
     queryKey: ["finance", "scenarios", operatingCompanyId, "break-even-workbook"],
@@ -98,7 +111,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
         <div>
           <h2 className="text-sm font-semibold text-slate-900">+ Create break-even analysis</h2>
           <p className="text-xs text-slate-500">
-            Input monthly amounts (equipment notes, insurance, fuel, labor, assets). Saves as a versioned Finance Scenario — same history as Overview/Projections. Source layout: Desktop <code>BREAK EVEN ANALYSIS IH 35 TRUCKINGS.xlsx</code>.
+            Input the 2025 workbook shape: per-lender notes/leases, vehicle clusters (T139–T146, CCG reefers), plus operating costs. Use + Add vehicle for another unit. Saves as a Finance Scenario.
           </p>
         </div>
         <Link className="text-xs font-semibold text-slate-700 underline" to="/finance/scenarios">
@@ -138,6 +151,37 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
             />
           </div>
         ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <label className="text-xs font-medium text-slate-600">
+          Add vehicle / unit
+          <input
+            className="mt-1 h-8 w-48 rounded-sm border border-slate-300 px-2 text-sm"
+            value={newVehicle}
+            onChange={(e) => setNewVehicle(e.target.value)}
+            placeholder="T147"
+          />
+        </label>
+        <button
+          type="button"
+          className="h-8 rounded-sm border border-slate-300 px-3 text-xs font-semibold text-slate-800"
+          onClick={() => {
+            const label = newVehicle.trim();
+            if (!label) return;
+            setLines((prev) => [
+              ...prev,
+              {
+                category_kind: "expense",
+                category_label: `Vehicle ${label}`,
+                assumption_note: BREAK_EVEN_WORKBOOK_NOTE,
+                monthly_estimate_cents: 0,
+              },
+            ]);
+            setNewVehicle("");
+          }}
+        >
+          + Add vehicle
+        </button>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs">
         <span>

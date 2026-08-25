@@ -17,6 +17,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { getShowAccountNumbers } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -43,6 +45,7 @@ type SortKey = keyof AccountingTrialBalanceRow;
 export function TrialBalancePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [showCodes] = useShowAccountNumbers();
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
@@ -124,10 +127,11 @@ export function TrialBalancePage() {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    const showCodes = getShowAccountNumbers();
     const rowsHtml = rows
       .map(
         (row) => `<tr>
-          <td>${esc(row.account_code || "—")}</td>
+          ${showCodes ? `<td>${esc(row.account_code || "—")}</td>` : ""}
           <td>${esc(row.account_name || "—")}</td>
           <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
           <td style="text-align:right">${esc(money(row.total_debits))}</td>
@@ -155,7 +159,7 @@ export function TrialBalancePage() {
         <table>
           <thead>
             <tr>
-              <th>Account #</th><th>Account</th><th>Type</th>
+              <th>${showCodes ? "Account #</th><th>" : ""}Account</th><th>Type</th>
               <th style="text-align:right">Debits</th>
               <th style="text-align:right">Credits</th>
               <th style="text-align:right">Net</th>
@@ -274,9 +278,11 @@ export function TrialBalancePage() {
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
-              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_code")}>
-                Account #
-              </th>
+              {showCodes ? (
+                <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_code")}>
+                  Account #
+                </th>
+              ) : null}
               <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_name")}>
                 Account
               </th>
@@ -297,14 +303,14 @@ export function TrialBalancePage() {
           <tbody>
             {query.isLoading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-gray-500">
+                <td colSpan={showCodes ? 6 : 5} className="px-3 py-4 text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {!query.isLoading && rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-gray-500">
+                <td colSpan={showCodes ? 6 : 5} className="px-3 py-4 text-gray-500">
                   No rows
                 </td>
               </tr>
@@ -313,7 +319,7 @@ export function TrialBalancePage() {
               const canDrill = row.account_id && !SYNTHETIC_ACCOUNT_IDS.has(row.account_id);
               return (
                 <tr key={row.account_id} className="border-b border-gray-100">
-                  <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td>
+                  {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td> : null}
                   <td className="px-3 py-2">
                     {canDrill ? (
                       <Link

@@ -1,15 +1,25 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { lastModuleHref, shouldUseLastModuleBack } from "../../../lib/lastModuleNav";
 import { hasInAppHistory } from "../../../lib/smart-back";
 import "./PageHeader.css";
 
 export type BreadcrumbItem = { label: string; href?: string };
 
+function breadcrumbLabel(item: string | BreadcrumbItem): string {
+  return typeof item === "string" ? item : item.label;
+}
+
+function breadcrumbHref(item: string | BreadcrumbItem): string | undefined {
+  return typeof item === "string" ? undefined : item.href;
+}
+
 export type PageHeaderProps = {
   title: string;
   backHref?: string;
-  breadcrumb?: BreadcrumbItem[];
+  // string[] is what leaf pages pass after #15882; object form keeps optional hrefs.
+  breadcrumb?: Array<string | BreadcrumbItem>;
   subtitle?: string;
   actions?: ReactNode;
 };
@@ -21,6 +31,7 @@ export type PageHeaderProps = {
  */
 export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: PageHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const showBreadcrumb = breadcrumb != null && breadcrumb.length > 1;
 
   return (
@@ -28,11 +39,11 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
       {showBreadcrumb ? (
         <nav className="page-header-breadcrumb" aria-label="Breadcrumb" data-testid="page-header-breadcrumb">
           {breadcrumb!.map((item, i) => (
-            <Fragment key={`${item.label}-${i}`}>
-              {item.href ? (
-                <Link to={item.href}>{item.label}</Link>
+            <Fragment key={`${breadcrumbLabel(item)}-${i}`}>
+              {breadcrumbHref(item) ? (
+                <Link to={breadcrumbHref(item)!}>{breadcrumbLabel(item)}</Link>
               ) : (
-                <span>{item.label}</span>
+                <span>{breadcrumbLabel(item)}</span>
               )}
               {i < breadcrumb!.length - 1 ? <span className="breadcrumb-separator"> · </span> : null}
             </Fragment>
@@ -58,6 +69,11 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
               }
               if (backHref) {
                 navigate(backHref);
+                return;
+              }
+              const remembered = lastModuleHref();
+              if (shouldUseLastModuleBack(location.pathname, remembered) && remembered) {
+                navigate(remembered);
                 return;
               }
               navigate(-1);

@@ -30,6 +30,10 @@ describe("referenceOptionLabels — QBO Name + Type", () => {
     });
   });
 
+  it("formatReferenceTypeLabel humanizes snake_case", () => {
+    expect(vendorReferenceOption({ id: "v2", name: "Pilot", vendor_type: "fuel_card" }).type).toBe("Fuel card");
+  });
+
   it("customerReferenceOption humanizes customer_type", () => {
     expect(formatCustomerTypeLabel("direct_shipper")).toBe("Direct shipper");
     expect(customerReferenceOption({ id: "c1", name: "Acme Logistics", customer_type: "broker" })).toEqual({
