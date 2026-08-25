@@ -59,6 +59,12 @@ export function assertGuard(sources) {
   if (!/searchParams\.get\("assign_truck"\)/.test(profilePage) || !/AssignTruckModal/.test(profilePage)) {
     errors.push(`${FILES.profilePage}: must consume assign_truck query and render AssignTruckModal`);
   }
+  if (!/catch\s*\(\s*err\s*\)[\s\S]{0,180}?userFacingApiError\s*\(\s*err\s*,\s*["']Could not update driver list visibility["']\s*\)/.test(profilePage)) {
+    errors.push(`${FILES.profilePage}: hide/show list visibility failures must preserve backend detail`);
+  }
+  if (!/visibilityError\s*\?[\s\S]{0,100}?role=["']alert["']/.test(profilePage)) {
+    errors.push(`${FILES.profilePage}: hide/show list visibility failures must render an accessible alert`);
+  }
   if (!/setDriverDefaultTruck/.test(assignModal) || !/default-truck/.test(mdataApi)) {
     errors.push(`${FILES.assignModal}: must call setDriverDefaultTruck backed by POST /default-truck`);
   }
@@ -149,6 +155,8 @@ function selftest() {
     assignModal: "await setDriverDefaultTruck(driverId, companyId, unitId);",
     profilePage: `
       const assignTruckOpen = searchParams.get("assign_truck") === "1";
+      try { await deactivateDriver(driverId); } catch (err) { setVisibilityError(userFacingApiError(err, "Could not update driver list visibility")); }
+      visibilityError ? <span role="alert">{visibilityError}</span> : null;
       <AssignTruckModal open={assignTruckOpen} />
     `,
     assignment: '<EntityLink kind="load" id={String(load.load_id)} label="Load" />',
@@ -193,6 +201,17 @@ function selftest() {
   if (!noPathParam.some((error) => error.includes("PATH param"))) {
     console.error(`[${LABEL}] --selftest FAIL: a searchParams-only reader was not rejected`, noPathParam);
     process.exit(1);
+  }
+
+  for (const [name, profilePage] of [
+    ["visibility catch", good.profilePage.replace(/catch \(err\) \{[^}]+\}/, "")],
+    ["visibility detail", good.profilePage.replace("Could not update driver list visibility", "Update failed")],
+    ["visibility alert", good.profilePage.replace('role="alert"', 'role="status"')],
+  ]) {
+    if (!assertGuard({ ...good, profilePage }).length) {
+      console.error(`[${LABEL}] --selftest FAIL: ${name} mutation was not rejected`);
+      process.exit(1);
+    }
   }
 
 

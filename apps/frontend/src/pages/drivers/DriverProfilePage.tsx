@@ -6,6 +6,7 @@ import { apiRequest } from "../../api/client";
 import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
@@ -189,11 +190,15 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   // Hide/Show from TMS lists — reversible soft toggle (status Active<->Inactive). NOT a Samsara/HR action;
   // just keeps non-working drivers out of the dispatch pickers/roster. 'Terminated' is left untouched.
   const [visibilitySaving, setVisibilitySaving] = useState(false);
+  const [visibilityError, setVisibilityError] = useState("");
   const toggleVisibility = async (driverId: string, isHidden: boolean) => {
+    setVisibilityError("");
     setVisibilitySaving(true);
     try {
       await (isHidden ? reactivateDriver(driverId) : deactivateDriver(driverId));
       refreshDriver();
+    } catch (err) {
+      setVisibilityError(userFacingApiError(err, "Could not update driver list visibility"));
     } finally {
       setVisibilitySaving(false);
     }
@@ -317,6 +322,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 {visibilitySaving ? "Saving…" : driver.status === "Inactive" ? "Show in lists" : "Hide from lists"}
               </button>
             ) : null}
+            {visibilityError ? <span role="alert" className="text-xs text-red-600">{visibilityError}</span> : null}
             <EntityLink
               kind="driver"
               id={driver.id}
