@@ -31,6 +31,7 @@ export { unitStatusSchema, updateUnitBodySchema, UNIT_PATCHABLE_FIELD_KEYS } fro
 
 export const UNIT_PROFILE_AUDIT_FIELD_KEYS = [
   "status",
+  "is_oos",
   "status_change_reason",
   "quick_availability",
   "sold_date",
@@ -237,7 +238,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedBody = createUnitBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
-
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const { resolvedOwnerId, resolvedLeasedId } = await resolveAssetCompanyIds(
@@ -401,6 +401,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedBody = updateUnitBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    // A fleet status transition is the canonical operational-state write. Keep the legacy
+    // dispatch guard flag in lockstep so Change Status cannot render OutOfService while
+    // dispatch and Program probes still treat the unit as available.
+    const normalizedPatch =
+      "status" in b && typeof b.status === "string"
+        ? { ...b, is_oos: b.status === "OutOfService" }
+        : b;
     const ownerViolation = ownerOnlyPatchViolation(authUser.role, b as Record<string, unknown>);
     if (ownerViolation) {
       return reply.code(403).send({ error: "owner_only_field", field: ownerViolation });
@@ -428,7 +435,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       values.push(val);
       setParts.push(`${col} = $${values.length}`);
     };
-    applyUnitPatchFields(b, add);
+    applyUnitPatchFields(normalizedPatch, add);
     if ("status" in b && typeof b.status === "string" && ARCHIVE_STATUSES.has(b.status)) {
       add("deactivated_at", new Date().toISOString().slice(0, 10));
     } else if ("status" in b && typeof b.status === "string" && ACTIVE_FLEET_STATUSES.has(b.status)) {
@@ -478,12 +485,12 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         if (!updatedRow) return null;
 
         const changes = buildPatchChanges(
-          b as unknown as Record<string, unknown>,
+          normalizedPatch as unknown as Record<string, unknown>,
           oldRow as Record<string, unknown>,
           updatedRow as Record<string, unknown>
         );
         const profileAuditFields = Object.fromEntries(
-          UNIT_PROFILE_AUDIT_FIELD_KEYS.filter((key) => key in b).map((key) => [key, (b as Record<string, unknown>)[key]])
+          UNIT_PROFILE_AUDIT_FIELD_KEYS.filter((key) => key in normalizedPatch).map((key) => [key, (normalizedPatch as Record<string, unknown>)[key]])
         );
         const statusChanged = "status" in b && oldRow.status !== updatedRow.status;
         const auditAction = statusChanged ? "mdata.unit.status_changed" : "mdata.units.updated";
