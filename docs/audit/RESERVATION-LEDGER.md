@@ -138,3 +138,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T10:23:00-05:00 | Codex | SAFETY-DRUG-TEST-LIST-QUERY-FAILURE-FALSE-CLEAR | apps/backend/src/safety/safety.routes.ts, scripts/verify-comp01-drug-alcohol-unified-source.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-drug-test-list-honesty |
 | 2026-08-25T10:27:00-05:00 | Codex | SAFETY-DRUG-TEST-LIST-QUERY-FAILURE-FALSE-CLEAR | — | RELEASED-ON-MERGE | codex/drug-test-list-honesty |
 | 2026-08-25T10:32:00-05:00 | Codex | SAFETY-CSA-LATEST-QUERY-FAILURE-MASKED-AS-NO-DATA | apps/backend/src/safety/safety.routes.ts, scripts/verify-csa-hazmat-source-integrity.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-csa-latest-honesty |
+| 2026-08-25T10:36:00-05:00 | Codex | SAFETY-CSA-LATEST-QUERY-FAILURE-MASKED-AS-NO-DATA | — | RELEASED-ON-MERGE | codex/csa-latest-honesty |
