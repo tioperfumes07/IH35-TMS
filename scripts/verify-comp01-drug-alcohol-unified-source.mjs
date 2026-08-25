@@ -74,6 +74,7 @@ const SAFETY_STATUS = "apps/backend/src/safety/drug-program.routes.ts";
 const SAFETY_HOME = "apps/backend/src/safety-officer/role-views/safety-home.service.ts";
 const DA_PROGRAM = "apps/backend/src/safety/drug-alcohol/program.service.ts";
 const DA_RANDOM_POOL = "apps/backend/src/safety/drug-alcohol/random-pool.service.ts";
+const SAFETY_LEGACY_ROUTES = "apps/backend/src/safety/safety.routes.ts";
 /** Every file that scopes a safety.da_test_records read. See the COMP-01-B assertion below. */
 const DA_TEST_RECORDS_READERS = [GATE, SAFETY_HOME];
 const LABEL = "verify-comp01-drug-alcohol-unified-source";
@@ -107,7 +108,19 @@ export function auditUnifiedDrugAlcoholSource(sources) {
   const safetyStatus = strip(sources?.[SAFETY_STATUS] ?? read(SAFETY_STATUS));
   const daProgram = strip(sources?.[DA_PROGRAM] ?? read(DA_PROGRAM));
   const daRandomPool = strip(sources?.[DA_RANDOM_POOL] ?? read(DA_RANDOM_POOL));
+  const safetyLegacyRoutes = strip(sources?.[SAFETY_LEGACY_ROUTES] ?? read(SAFETY_LEGACY_ROUTES));
   const problems = [];
+
+  const legacyDrugTestList = between(
+    safetyLegacyRoutes,
+    'app.get("/api/v1/safety/drug-alcohol/tests"',
+    'app.get(\n    "/api/v1/safety/accidents"'
+  );
+  if (!legacyDrugTestList) {
+    problems.push(`${SAFETY_LEGACY_ROUTES}: mounted selected-company drug-test list route is missing`);
+  } else if (/FROM safety\.drug_test[\s\S]*?\.catch\s*\(/.test(legacyDrugTestList)) {
+    problems.push(`${SAFETY_LEGACY_ROUTES}: selected-company drug-test list query failure is converted to a false empty compliance roster`);
+  }
 
   const violations = between(gate, "WITH violations AS", "clearances AS");
   const clearances = between(gate, "clearances AS", "SELECT v.at");
@@ -321,6 +334,7 @@ if (SELFTEST) {
     [SAFETY_HOME]: read(SAFETY_HOME),
     [DA_PROGRAM]: read(DA_PROGRAM),
     [DA_RANDOM_POOL]: read(DA_RANDOM_POOL),
+    [SAFETY_LEGACY_ROUTES]: read(SAFETY_LEGACY_ROUTES),
   };
   const failures = [];
   const expectCaught = (name, overrides, needle) => {
@@ -336,6 +350,16 @@ if (SELFTEST) {
   };
 
   // THE COMP-01 DEFECT ITSELF: the third live table drops out of the union.
+  expectCaught(
+    "legacy-drug-test-list-swallows-query-failure",
+    {
+      [SAFETY_LEGACY_ROUTES]: live[SAFETY_LEGACY_ROUTES].replace(
+        "          [query.data.operating_company_id]\n        );\n      return res.rows;",
+        "          [query.data.operating_company_id]\n        ).catch(() => ({ rows: [] }));\n      return res.rows;"
+      ),
+    },
+    "false empty compliance roster"
+  );
   expectCaught(
     "comp01-reopened-compliance-table-dropped",
     { [GATE]: live[GATE].split("compliance.drug_alcohol_test_results").join("compliance.some_other_table") },
@@ -458,7 +482,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 22 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 23 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
