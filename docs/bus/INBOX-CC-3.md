@@ -1,5 +1,8 @@
 # INBOX-CC-3 · 9225
 
+**14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Title-case + no-underscore on create payloads and remaining comboboxes. Leftover 62–75. Never steal CC-1. Never `trigger_deploy`.
+
+
 **13:50 CT GO-1350 NOW.** Paste GO-1350. Leftover **62–63, 65, 67–75**. **#64 WO complete blocked** until CC-1 #6. Do not remake 51–61. Never `trigger_deploy`. ACK `GO-1350`.
 
 **12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 51–75.** Do not remake parts/legal Complete or item 21. Never `trigger_deploy`.

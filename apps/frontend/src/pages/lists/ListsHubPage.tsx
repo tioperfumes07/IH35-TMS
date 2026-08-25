@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { getListsInventory, getListsQboSyncHealth, getListsRecentActivity, postForceListsQboSync } from "../../api/listsHub";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -37,6 +37,7 @@ export function readScrollPosition(storage: Pick<Storage, "getItem">, pathname: 
 export function ListsHubPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const navType = useNavigationType();
   const { pushToast } = useToast();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -77,9 +78,13 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (navType !== "POP") {
+      window.scrollTo(0, 0);
+      return;
+    }
     const y = readScrollPosition(window.sessionStorage, location.pathname);
     if (y > 0) window.scrollTo(0, y);
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, navType]);
 
   // Persist scroll offset continuously + on unmount so it survives navigation away.
   useEffect(() => {

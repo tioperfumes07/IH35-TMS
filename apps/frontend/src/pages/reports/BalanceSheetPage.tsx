@@ -16,6 +16,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -84,23 +85,25 @@ export function BalanceSheetPage() {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    const showCodes = getShowAccountNumbers();
     const sectionHtml = (title: string, lines: AccountingBalanceSheetLine[], total: number) => {
       const rows = lines
         .map(
           (line) => `<tr>
-            <td>${esc(line.account_code || "—")}</td>
+            ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
         )
         .join("");
+      const colSpan = showCodes ? 2 : 1;
       return `
         <h1 style="margin-top:16px">${esc(title)}</h1>
         <table>
-          <thead><tr><th>Account #</th><th>Account</th><th style="text-align:right">Amount</th></tr></thead>
+          <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
-            ${rows || `<tr><td colspan="3">No rows</td></tr>`}
-            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            ${rows || `<tr><td colspan="${showCodes ? 3 : 2}">No rows</td></tr>`}
+            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
     };

@@ -1,7 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { colors, typography } from "../../design/tokens";
+import { lastModuleHref, shouldUseLastModuleBack } from "../../lib/lastModuleNav";
 import { hasInAppHistory } from "../../lib/smart-back";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 
 export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, actions }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="mb-4">
@@ -71,6 +73,11 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
               }
               if (backHref) {
                 navigate(backHref);
+                return;
+              }
+              const remembered = lastModuleHref();
+              if (shouldUseLastModuleBack(location.pathname, remembered) && remembered) {
+                navigate(remembered);
                 return;
               }
               navigate(-1);

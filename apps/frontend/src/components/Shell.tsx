@@ -9,6 +9,7 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { OnboardingTourHost } from "./onboarding/OnboardingTourHost";
 import { AppLayout } from "../layouts/AppLayout";
+import { RouteScrollReset } from "./layout/RouteScrollReset";
 import "../styles/responsive-breakpoints.css";
 import "../styles/responsive-shell.css";
 
@@ -22,6 +23,7 @@ export function Shell({ auth, children }: Props) {
 
   return (
     <AppLayout>
+      <RouteScrollReset />
       <div
         className="ih35-responsive-shell flex min-h-screen flex-col"
         data-ih35-shell="laptop-desktop-tv"

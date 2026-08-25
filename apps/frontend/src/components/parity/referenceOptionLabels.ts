@@ -1,10 +1,12 @@
 import type { ReferenceOption } from "./ReferenceSelect";
+import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 /** QBO-style secondary label shown after the primary name in ReferenceSelect dropdowns. */
 export function formatReferenceTypeLabel(raw: string | null | undefined): string | undefined {
   const trimmed = String(raw ?? "").trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+  if (!trimmed) return undefined;
+  return properEnumOrFilterLabel(trimmed);
 }
 
 /** Humanize enum-ish customer types for the Type column (e.g. direct_shipper → Direct shipper). */
@@ -13,7 +15,7 @@ export function formatCustomerTypeLabel(customerType: string | null | undefined)
   if (!raw) return undefined;
   if (raw === "direct_shipper") return "Direct shipper";
   if (raw === "broker") return "Broker";
-  return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return properEnumOrFilterLabel(raw);
 }
 
 export function vendorReferenceOption(vendor: {

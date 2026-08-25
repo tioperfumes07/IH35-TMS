@@ -1,5 +1,8 @@
 # INBOX-CODEX · 9226
 
+**14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Prove **Samsara HOS on Dispatch** (`eld_certified`). hop.assign UI. Items 76–100. Never restamp U14. Never `trigger_deploy`.
+
+
 **13:50 CT GO-1350 NOW.** Paste GO-1350. **Items 76–100.** ACK required. hop.assign prove (mint is CC-1). Grep SETL-EVIDENCE before remake. Never restamp U14. Never `trigger_deploy`.
 
 **12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 76–100.** Attach. Settlement mint is CC-1. Never restamp U14. Never `trigger_deploy`.

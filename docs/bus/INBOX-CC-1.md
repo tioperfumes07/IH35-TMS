@@ -1,5 +1,8 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. **NOW=#1 invoice#=load#** then 2–10 serial. Money clone, not `IH35-TMS-clean`. Never `/425c`. Never `trigger_deploy`. Idle = defect.
+
+
 **13:50 CT GO-1350 NOW.** Paste GO-1350. **Items 1–25 serial.** NOW=#1 `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER`. Money clone, not `IH35-TMS-clean`. Never `/425c`. Never `trigger_deploy`. ACK `GO-1350`.
 
 **12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 1–25 serial.** NOW=#1 invoice#=load#. Money clone, not `IH35-TMS-clean`. Never `/425c`. Never `trigger_deploy`.

@@ -6,6 +6,7 @@ import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
+import { rememberModuleHref } from "../lib/lastModuleNav";
 import { resolveSidebarOrder, SIDEBAR_ITEM_META } from "./layout/sidebar-config";
 
 type SidebarProps = {
@@ -74,7 +75,10 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                 <NavLink
                   to={meta.to}
                   data-tour={meta.dataTour}
-                  onClick={() => onMobileClose?.()}
+                  onClick={() => {
+                    rememberModuleHref(meta.to);
+                    onMobileClose?.();
+                  }}
                   className={({ isActive }: { isActive: boolean }) =>
                     `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceActive ? "bg-white/10" : ""}`
                   }

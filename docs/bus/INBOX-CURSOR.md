@@ -1,5 +1,8 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**14:50 CT GO-1450.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1450.md`. Fan-out scenarios. Ship launch hygiene (scroll/back/print codes/break-even Excel). Enable USMCA finance UI flags. Do not steal CC-1 1–10. Skip #15546. U14 never restamp.
+
+
 **13:50 CT GO-1350.** Paste GO-1350. **Items 151–175.** Lead + unique leftover. One in-flight deploy — do not second-kick. Do not steal CC-1 1–25. U14 never restamp.
 
 **12:42 CT GO.** Live **`80cf40e`**. Paste GO-1242. **Items 151–175.** Unique leftover overflow. Do not steal CC-1 1–25. PCMILER owner-gated. Do not second-kick. U14 never restamp.

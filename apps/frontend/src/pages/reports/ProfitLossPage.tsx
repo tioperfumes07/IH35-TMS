@@ -17,6 +17,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { getShowAccountNumbers } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -41,6 +43,7 @@ function registerHref(accountId: string, fromDate: string, toDate: string, basis
 export function ProfitLossPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [showCodes] = useShowAccountNumbers();
   const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
@@ -75,6 +78,7 @@ export function ProfitLossPage() {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    const showCodes = getShowAccountNumbers();
     const sectionHtml = (
       title: string,
       lines: AccountingProfitLossLine[],
@@ -83,20 +87,21 @@ export function ProfitLossPage() {
       const rows = lines
         .map(
           (line) => `<tr>
-            <td>${esc(line.account_code || "—")}</td>
+            ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
             <td style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
         )
         .join("");
+      const colSpan = showCodes ? 3 : 2;
       return `
         <h1 style="margin-top:16px">${esc(title)}</h1>
         <table>
-          <thead><tr><th>Account #</th><th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+          <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
-            ${rows || `<tr><td colspan="4">No rows</td></tr>`}
-            <tr><th colspan="3">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            ${rows || `<tr><td colspan="${showCodes ? 4 : 3}">No rows</td></tr>`}
+            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
     };
@@ -240,7 +245,7 @@ export function ProfitLossPage() {
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
-                    <th className="px-3 py-2">Account #</th>
+                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
                     <th className="px-3 py-2">Type</th>
                     <th className="px-3 py-2 text-right">Amount</th>
@@ -249,14 +254,14 @@ export function ProfitLossPage() {
                 <tbody>
                   {section.lines.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-3 py-4 text-gray-500">
+                      <td colSpan={showCodes ? 4 : 3} className="px-3 py-4 text-gray-500">
                         No rows
                       </td>
                     </tr>
                   ) : (
                     section.lines.map((line) => (
                       <tr key={`${section.key}-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
+                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
                           {line.account_id ? (
                             <Link
@@ -275,7 +280,7 @@ export function ProfitLossPage() {
                     ))
                   )}
                   <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={3} className="px-3 py-2 text-right">
+                    <td colSpan={showCodes ? 3 : 2} className="px-3 py-2 text-right">
                       Section total
                     </td>
                     <td className="px-3 py-2 text-right">{money(section.total)}</td>
