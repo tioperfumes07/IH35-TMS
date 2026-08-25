@@ -120,7 +120,14 @@ export async function getReconWorklist(input: {
         FROM accounting.journal_entries je
         LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
         WHERE je.operating_company_id = $1::uuid
-          AND je.source = 'bank_reconciliation'
+          -- DISP-F6XXX -- match.service.ts's postDifferenceJournalEntry now inserts source='auto'
+          -- (the only two valid values are 'manual'/'auto' per journal_entries_source_check; the
+          -- literal 'bank_reconciliation' this filter used to check for was never a legal value, so
+          -- this read has never matched a real row -- the INSERT it was meant to find always 500'd
+          -- before writing one). The memo LIKE filter below is this query's real, sufficient
+          -- discriminator (only this one function ever writes that exact 'bank-recon:' prefix); kept
+          -- as defense-in-depth, updated to match the now-correct insert.
+          AND je.source = 'auto'
           AND je.entry_date BETWEEN $2::date AND $3::date
           AND COALESCE(je.memo, '') LIKE 'bank-recon:%'
         GROUP BY je.id
