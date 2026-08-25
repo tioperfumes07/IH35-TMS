@@ -20,6 +20,22 @@ export function isFuelDeltaSuspicious(cardCents: number, woCents: number, thresh
   return Math.abs(cardCents - woCents) / denom > threshold;
 }
 
+/**
+ * FUEL-RECON-MATCH-RATE-VS-ROW-MISMATCH: the aggregate "match rate" must use the SAME real-dollar
+ * definition of "matched" as each row's own `matched_pct` (card_amount_cents > 0 AND
+ * wo_amount_cents > 0) — never a looser one (e.g. "this unit appears in both source queries", which
+ * can be true even when one side's dollar amount is 0, because the WO-side query has no
+ * fuel_cost_cents > 0 filter). A looser aggregate definition can show a nonzero match rate while
+ * every visible row honestly reports 0% matched, which is a self-contradicting report.
+ */
+export function computeFuelMatchRatePct(
+  byTruck: Array<{ card_amount_cents: number; wo_amount_cents: number }>
+): number {
+  const matchedUnits = byTruck.filter((t) => t.card_amount_cents > 0 && t.wo_amount_cents > 0).length;
+  const activeUnitCount = byTruck.filter((t) => t.card_amount_cents > 0 || t.wo_amount_cents > 0).length;
+  return activeUnitCount === 0 ? 100 : Math.round((matchedUnits / activeUnitCount) * 1000) / 10;
+}
+
 function num(v: unknown): number {
   const n = Number(v ?? 0);
   return Number.isFinite(n) ? n : 0;
@@ -232,14 +248,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
 
       byTruck.sort((a, b) => Math.abs(b.delta_cents) - Math.abs(a.delta_cents));
 
-      const unitsWithCard = new Set(cardMap.keys());
-      const unitsWithWo = new Set(woMap.keys());
-      let matchedUnits = 0;
-      for (const id of unitsWithCard) {
-        if (unitsWithWo.has(id)) matchedUnits += 1;
-      }
-      const activeUnits = new Set<string>([...unitsWithCard, ...unitsWithWo]);
-      const match_rate_pct = activeUnits.size === 0 ? 100 : Math.round((matchedUnits / activeUnits.size) * 1000) / 10;
+      const match_rate_pct = computeFuelMatchRatePct(byTruck);
 
       const unmatched_full_card_res = await client.query<{ c: string }>(
         `
