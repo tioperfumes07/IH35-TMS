@@ -54,6 +54,9 @@ function analyze() {
   if (!wiz.includes('aria-labelledby="configured-edi-partners"') || !wiz.includes("partnersQuery.isError")) {
     failures.push("EdiSetupWizard must render configured partners and honest reload errors outside the create step");
   }
+  if (!/<ListErrorState[\s\S]*?Couldn't load configured partners[\s\S]*?onRetry=\{\(\) => void partnersQuery\.refetch\(\)\}/.test(wiz)) {
+    failures.push("EdiSetupWizard configured-partners failure must retry the exact query");
+  }
   if (!wiz.includes("Validate configuration") || wiz.includes("Test connection")) {
     failures.push("EDI configuration validation must not claim a live transport connection test");
   }
@@ -93,6 +96,9 @@ function selftest() {
   try {
     fs.writeFileSync(wizPath, originalWizard.replace('aria-labelledby="configured-edi-partners"', 'aria-labelledby="broken"'));
     if (!analyze().some((m) => /render configured partners/.test(m))) fail("selftest expected reload visibility mutation to fail");
+    fs.writeFileSync(wizPath, originalWizard);
+    fs.writeFileSync(wizPath, originalWizard.replace("onRetry={() => void partnersQuery.refetch()}", "onRetry={() => undefined}"));
+    if (!analyze().some((m) => /retry the exact query/.test(m))) fail("selftest expected configured-partners retry mutation to fail");
     fs.writeFileSync(wizPath, originalWizard);
     fs.writeFileSync(servicePath, originalService.replace("supported_transactions,", "connection_config,\n        supported_transactions,"));
     if (!analyze().some((m) => /must not return connection_config/.test(m))) fail("selftest expected secret projection mutation to fail");

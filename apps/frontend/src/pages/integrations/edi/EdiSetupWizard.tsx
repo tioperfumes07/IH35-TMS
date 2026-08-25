@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -163,7 +164,12 @@ export function EdiSetupWizard() {
         <section aria-labelledby="configured-edi-partners" className="space-y-2 pt-4">
           <h2 id="configured-edi-partners" className="text-sm font-semibold">Configured partners</h2>
           {partnersQuery.isError ? (
-            <p className="text-sm text-red-700">Configured partners could not be loaded.</p>
+            <ListErrorState
+              title="Couldn't load configured partners"
+              status={0}
+              message={(partnersQuery.error as Error)?.message}
+              onRetry={() => void partnersQuery.refetch()}
+            />
           ) : (partnersQuery.data ?? []).length === 0 ? (
             <p className="text-sm text-gray-600">No EDI partners configured.</p>
           ) : (
