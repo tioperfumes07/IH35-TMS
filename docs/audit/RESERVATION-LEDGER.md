@@ -134,3 +134,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T10:04:00-05:00 | Codex | SAFETY-INCIDENT-AUTO-WORKFLOW-INSERT-FAILURES-SILENT | apps/backend/src/safety/incidents/auto-workflow-trigger.ts, scripts/verify-incidents-work-order-fk.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-incident-workflow-honesty |
 | 2026-08-25T10:10:00-05:00 | Codex | SAFETY-INCIDENT-AUTO-WORKFLOW-INSERT-FAILURES-SILENT | — | RELEASED-ON-MERGE | codex/incident-workflow-honesty |
 | 2026-08-25T10:15:00-05:00 | Codex | SAFETY-EVENT-LIST-QUERY-FAILURES-FALSE-ALL-CLEAR | apps/backend/src/safety/safety.service.ts, scripts/verify-safety-event-detail-list-fallback.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-safety-events-list-honesty |
+| 2026-08-25T10:18:00-05:00 | Codex | SAFETY-EVENT-LIST-QUERY-FAILURES-FALSE-ALL-CLEAR | — | RELEASED-ON-MERGE | codex/safety-events-list-honesty |
