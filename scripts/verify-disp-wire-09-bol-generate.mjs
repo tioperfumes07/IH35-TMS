@@ -8,6 +8,7 @@
  *   (c) registerDispatchPodBolRoutes not mounted from apps/backend/src/index.ts
  *   (d) FE generateLoadBol client missing
  *   (e) LoadBolPanel missing bol-generate-button / not used on PodReview + LoadDetailDrawer
+ *   (f) Stored-copy download rejects silently instead of surfacing an operator error
  *
  * Mutation-tested both directions.
  *
@@ -73,6 +74,9 @@ export function auditBolWire(sources) {
   }
   if (!/generateLoadBol/.test(panel)) {
     problems.push(`${PATHS.panel}: LoadBolPanel does not call generateLoadBol`);
+  }
+  if (!/data-testid=["']bol-stored-download-button["'][\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,360}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
   }
   if (!/<LoadBolPanel\b/.test(podReview)) {
     problems.push(`${PATHS.podReview}: Pod Review must mount <LoadBolPanel /> (entry kept)`);
@@ -154,6 +158,20 @@ function selftest() {
         }),
       expect: "bol-generate-button",
     },
+    {
+      label: "stored download rejection handler removed",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(
+            real.panel,
+            'pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");',
+            'void error;',
+            "stored download error toast",
+          ),
+        }),
+      expect: "stored BOL download must surface",
+    },
   ];
 
   for (const c of cases) {
@@ -186,7 +204,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `${LABEL}: OK — bol/generate → generateAndStoreBol → bol_documents; FE LoadBolPanel on PodReview + LoadDetailDrawer`,
+    `${LABEL}: OK — bol/generate → generateAndStoreBol → bol_documents; shared panel mounts and stored-download failures surface visibly`,
   );
 }
 
