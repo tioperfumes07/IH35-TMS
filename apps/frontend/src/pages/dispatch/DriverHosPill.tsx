@@ -38,6 +38,22 @@ export function DriverHosPill({ driverId, operatingCompanyId }: Props) {
 
   if (!enabled) return <span className="text-[10px] text-gray-300">—</span>;
   if (hosQuery.isLoading) return <span className="text-[10px] text-gray-400">HOS ...</span>;
+  if (hosQuery.isError) {
+    return (
+      <button
+        type="button"
+        data-hos-pill-retry
+        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+        title="Driver HOS unavailable — retry"
+        onClick={(event) => {
+          event.stopPropagation();
+          void hosQuery.refetch();
+        }}
+      >
+        Retry HOS
+      </button>
+    );
+  }
   if (!hosQuery.data) return <span className="text-[10px] text-gray-300">—</span>;
 
   const row = hosQuery.data;
