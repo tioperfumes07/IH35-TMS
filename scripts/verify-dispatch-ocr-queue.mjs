@@ -32,6 +32,17 @@ function fail(msg) {
   process.exit(1);
 }
 
+function processorFailureSignals(processor) {
+  const failures = [];
+  if (/processOcrIntakeQueueItem\([\s\S]{0,180}?\.catch\(\(\) => undefined\)/.test(processor)) {
+    failures.push("OCR scheduler must not swallow processing failures");
+  }
+  if (!/scheduled_processing_failed/.test(processor) || !/item_id:\s*itemId/.test(processor) || !/operating_company_id:\s*operatingCompanyId/.test(processor)) {
+    failures.push("OCR scheduler failures must name item and operating company");
+  }
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const page = read(paths.page);
@@ -59,6 +70,7 @@ function main() {
   if (!routes.includes("/api/v1/dispatch/ocr-intake/webhook/email")) failures.push("ocr routes must expose email webhook");
   if (!processor.includes("createOcrIntakeFromEmail")) failures.push("processor must intake email attachments to R2");
   if (!processor.includes("processOcrIntakeQueueItem")) failures.push("processor must run async OCR extraction");
+  failures.push(...processorFailureSignals(processor));
   if (!processor.includes("book_load_prefill")) failures.push("processor must build book load prefill on convert");
   if (!index.includes("registerDispatchOcrIntakeRoutes")) failures.push("backend index must register ocr intake routes");
 
@@ -88,6 +100,18 @@ function main() {
   }
 
   console.log("verify:dispatch-ocr-queue PASS");
+
+  if (process.argv.includes("--selftest")) {
+    const swallowed = processor.replace(/\.catch\(\(error: unknown\) => \{[\s\S]*?\n\s*\}\)/, ".catch(() => undefined)");
+    const unnamed = processor.replace("scheduled_processing_failed", "scheduled_processing_error");
+    if (!processorFailureSignals(swallowed).some((message) => message.includes("swallow"))) {
+      fail("selftest swallowed scheduler mutation escaped");
+    }
+    if (!processorFailureSignals(unnamed).some((message) => message.includes("must name"))) {
+      fail("selftest unnamed scheduler mutation escaped");
+    }
+    console.log("verify:dispatch-ocr-queue SELFTEST PASS (2/2 planted defects rejected)");
+  }
 }
 
 main();
