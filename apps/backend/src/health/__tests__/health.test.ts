@@ -203,6 +203,27 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
       else process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = prior;
     }
   });
+
+  // SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS — this rule used to be unconditionally
+  // enabled while the cron itself (samsara-webhook-projection.cron.ts) and its in-process catch-up
+  // both default-ON-unless-explicitly-"false" gate on ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON. A
+  // deliberately-disabled cron could never satisfy this rule's 15-minute window, so it alarmed DOWN
+  // forever. Live-confirmed 2026-08-25: this job sat 5,305 minutes stale, the largest single
+  // contributor to background_jobs.stale.
+  it("samsara webhook projection rule respects the same default-ON-unless-false env gate as the cron itself", () => {
+    const prior = process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
+    try {
+      delete process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
+      expect(backgroundJobRule("samsara.webhook_projection_cron", false)?.enabled).toBe(true);
+      process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = "false";
+      expect(backgroundJobRule("samsara.webhook_projection_cron", false)?.enabled).toBe(false);
+      process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = "true";
+      expect(backgroundJobRule("samsara.webhook_projection_cron", false)?.enabled).toBe(true);
+    } finally {
+      if (prior === undefined) delete process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
+      else process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = prior;
+    }
+  });
 });
 
 // A1-1 guard: the QBO master-data mirror-staleness alarm must not self-disable when the
