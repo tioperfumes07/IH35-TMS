@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `DISP-ASSIGNMENT-WRITERS-PREMATURE-COMMIT` | **B** | Assignment connectivity/security | Codex | this PR | 2026-08-24 | All five assignment writers leave authenticated transaction ownership to withCurrentUser. | focused tests 4/4; quick-assign guard normal + 19 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `DISP-QUICKSAVE-DRAFT-DROPS-UNIT-HISTORY` | **B** | Vertical unit connectivity | Codex | this PR | 2026-08-24 | Draft completion atomically persists previous/new unit and trailer assignment history. | focused tests 3/3; quick-assign guard normal + 18 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `DISP-QUICK-ASSIGN-TRAILER-SWAP-DROPS-PREVIOUS-FK` | **B** | Vertical trailer connectivity | Codex | this PR | 2026-08-24 | Both Quick Assign paths preserve the prior canonical trailer FK when recording a swap. | focused tests 2/2; existing quick-assign trailer guard normal + 14 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |

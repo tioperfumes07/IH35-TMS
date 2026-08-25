@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 const dispatchDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const root = path.resolve(dispatchDir, "../../../..");
 const service = fs.readFileSync(path.join(dispatchDir, "quick-assign.service.ts"), "utf8");
+const inlineService = fs.readFileSync(path.join(dispatchDir, "assignments/quicksave.service.ts"), "utf8");
 const routes = fs.readFileSync(path.join(dispatchDir, "quicksave.routes.ts"), "utf8");
 const aggregate = fs.readFileSync(path.join(root, "apps/backend/src/mdata/equipment-aggregate.service.ts"), "utf8");
 const profile = fs.readFileSync(path.join(root, "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx"), "utf8");
@@ -46,11 +47,15 @@ describe("quick-assign trailer linkage", () => {
       /export async function completeQuicksaveDraft[\s\S]*?export async function listQuicksaveDrafts/
     )?.[0];
     expect(draftPath).toBeTruthy();
-    expect(draftPath).toContain('await client.query("BEGIN")');
-    expect(draftPath).toContain('await client.query("COMMIT")');
-    expect(draftPath).toContain('await client.query("ROLLBACK")');
+    expect(draftPath).not.toMatch(/client\.query\(["'`]\s*(?:BEGIN|COMMIT|ROLLBACK)\s*["'`]\)/);
     expect(draftPath).toMatch(/SELECT assigned_unit_id::text[\s\S]{0,220}FOR UPDATE/);
     expect(draftPath).toContain("previous_unit_id, new_unit_id");
     expect(draftPath).toMatch(/before\.assigned_unit_id,\s*unitId \?\? before\.assigned_unit_id/);
+  });
+
+  it("leaves transaction ownership to withCurrentUser on every assignment writer", () => {
+    const nestedTransaction = /client\.query\(["'`]\s*(?:BEGIN|COMMIT|ROLLBACK)\s*["'`]\)/;
+    expect(service).not.toMatch(nestedTransaction);
+    expect(inlineService).not.toMatch(nestedTransaction);
   });
 });
