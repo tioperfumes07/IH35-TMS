@@ -4,6 +4,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEldUnidentifiedDriving, type FleetLocationHosRow } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 function formatSpeed(speed: number | null | undefined): string {
   if (speed == null || Number.isNaN(Number(speed))) return "—";
@@ -91,9 +92,10 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
       </div>
 
       {query.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-          Failed to load fleet location / HOS feed for unidentified driving.
-        </p>
+        <ListErrorBanner
+          message="Failed to load fleet location / HOS feed for unidentified driving."
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
       <ParityTable<FleetLocationHosRow>
