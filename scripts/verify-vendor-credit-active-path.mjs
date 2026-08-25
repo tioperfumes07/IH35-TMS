@@ -27,6 +27,8 @@ function assertActivePath(input) {
     [input.page, "voidMut.mutateAsync(reason)", `${PAGE}: Void must submit the governed void reason`],
     [input.page, "VendorCreditApplications", `${PAGE}: credit detail must render applied-bill links`],
     [input.api, "getVendorCredit", `${API}: client must expose the credit detail endpoint`],
+    [input.api, "getNextVendorCreditDocumentNumber", `${API}: client must expose next-number preview`],
+    [input.routes, 'app.get("/api/v1/accounting/vendor-credits/next-number"', `${ROUTES}: next-number preview route missing`],
     [input.api, '`/api/v1/accounting/vendor-credits?operating_company_id=${encodeURIComponent(operatingCompanyId)}`', `${API}: create must target the canonical scoped route`],
     [input.api, '{ method: "POST", body: payload }', `${API}: create must submit its payload with POST`],
     [input.routes, 'app.post("/api/v1/accounting/vendor-credits"', `${ROUTES}: canonical create route missing`],
@@ -66,6 +68,7 @@ function selftest() {
   assertRejectsMutatedSource("void mutation", sources, (s) => ({ ...s, page: s.page.replace("voidMut.mutateAsync(reason)", "voidRemoved(reason)") }));
   assertRejectsMutatedSource("credit-to-bill query", sources, (s) => ({ ...s, routes: s.routes.replace("JOIN accounting.bills b", "JOIN removed_bills b") }));
   assertRejectsMutatedSource("bill reverse panel", sources, (s) => ({ ...s, billPage: s.billPage.replace("bill-detail-vendor-credit-applications", "removed-credit-panel") }));
+  assertRejectsMutatedSource("next-number preview", sources, (s) => ({ ...s, routes: s.routes.replace('app.get("/api/v1/accounting/vendor-credits/next-number"', 'app.get("/api/v1/accounting/vendor-credits/removed-next"') }));
 }
 
 try {

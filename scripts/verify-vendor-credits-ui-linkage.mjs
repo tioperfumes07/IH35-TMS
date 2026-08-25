@@ -52,6 +52,12 @@ export function assertVendorCreditsUiLinkage() {
   if (!/v\.vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors/.test(routes)) {
     errors.push("vendor-credits.routes: list/detail must LEFT JOIN mdata.vendors for vendor_name");
   }
+  if (!page.includes("getNextVendorCreditDocumentNumber")) {
+    errors.push(`${PAGE}: create drawer must preview next document number`);
+  }
+  if (!/aria-label=["']Ref no\.["']/.test(page) || !page.includes("qbo-vendor-credit-header")) {
+    errors.push(`${PAGE}: create drawer must show QBO Ref no. top-right`);
+  }
   if (!page.includes("ReferenceSelect") || !page.includes('createKind="vendor"')) {
     errors.push(`${PAGE}: create flow must use ReferenceSelect createKind=vendor (+ Create)`);
   }

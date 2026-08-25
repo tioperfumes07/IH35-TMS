@@ -38,6 +38,7 @@ const REQUIRED = [
   [ROUTES, "applied_cents_exceeds_bill_balance", "apply must refuse more than the bill balance"],
   [ROUTES, "coa_account_id_not_persisted", "create must refuse a GL account it cannot persist"],
   [ROUTES, "nextVendorCreditDisplayId", "create must use the canonical display-id generator"],
+  [ROUTES, 'app.get("/api/v1/accounting/vendor-credits/next-number"', "create chrome must preview the same generator"],
   [INDEX, "registerVendorCreditsRoutes", "vendor credit routes must stay mounted"],
   [SUITE, "createIsolatedOperatingCompany", "lifecycle proof must run against real Postgres"],
   [SUITE, "lists the vendor's QBO-keyed bills", "proof that the mdata↔QBO bridge resolves bills"],

@@ -36,6 +36,12 @@ export type CreditLimitExceededError = {
   new_load_cents?: number;
 };
 
+export function getNextVendorCreditDocumentNumber(operatingCompanyId: string) {
+  return apiRequest<{ document_number: string }>(
+    `/api/v1/accounting/vendor-credits/next-number?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function listVendorCredits(
   operatingCompanyId: string,
   params: { vendor_id?: string; status?: VendorCreditStatus }
