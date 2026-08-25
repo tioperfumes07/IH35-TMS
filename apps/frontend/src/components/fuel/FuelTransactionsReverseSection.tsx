@@ -4,6 +4,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 (CC-2) — Built reverse_link on create-path surfaces.
@@ -69,7 +71,14 @@ export function FuelTransactionsReverseSection({
         />
       </div>
       {fuelQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {fuelQ.isError ? <p className="text-sm text-red-600">Could not load fuel transactions for {contextLabel}.</p> : null}
+      {fuelQ.isError ? (
+        <ListErrorState
+          title={`Couldn't load fuel transactions for ${contextLabel}`}
+          status={0}
+          message={userFacingApiError(fuelQ.error, "Fuel history is unavailable")}
+          onRetry={() => void fuelQ.refetch()}
+        />
+      ) : null}
       {!fuelQ.isLoading && !fuelQ.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500">No fuel transactions linked to {contextLabel}.</p>
       ) : null}
