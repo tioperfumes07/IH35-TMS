@@ -21,11 +21,9 @@ async function tick(app: FastifyInstance) {
   const from = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
   const processed = await withLuciaBypass(async (client) => {
-    const companies = await client
-      .query<{ id: string }>(
+    const companies = await client.query<{ id: string }>(
         `SELECT id::text AS id FROM org.companies WHERE is_active = true LIMIT 100`
-      )
-      .catch(() => ({ rows: [] as { id: string }[] }));
+      );
 
     let count = 0;
     for (const { id } of companies.rows) {

@@ -25,7 +25,7 @@ async function runReconciliation(app: FastifyInstance) {
   await withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL LIMIT 100`
-    ).catch(() => ({ rows: [] as { id: string }[] }));
+    );
 
     let total = 0;
     for (const { id } of companies.rows) {
