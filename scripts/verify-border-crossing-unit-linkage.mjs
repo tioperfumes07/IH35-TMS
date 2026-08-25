@@ -16,6 +16,7 @@ const files = {
   detectorHistory: "apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts",
   overview: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
   history: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
+  customsPill: "apps/frontend/src/components/dispatch/CustomsTimePill.tsx",
   reverse: "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
   fleetRequired: "docs/specs/scoreboard/modules/fleet.required.json",
@@ -58,6 +59,8 @@ function audit(s) {
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id/.test(s.writer)) failures.push("writer unit persistence missing");
   if (!/unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact unit history filter missing");
   if (!/unit_id: unitId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact unit and show errors");
+  if (!/if \(!res\.ok\) throw new Error/.test(s.customsPill)) failures.push("customs wait-time HTTP failures must reject instead of becoming empty data");
+  if (!/query\.isError[\s\S]*?data-customs-time-retry[\s\S]*?event\.stopPropagation\(\)[\s\S]*?query\.refetch\(\)/.test(s.customsPill)) failures.push("customs wait-time failure must expose a row-safe retry");
   if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/UnitBorderCrossingsReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile border reverse mount missing");
   const leaf = fleetLeaf(s.fleetRequired);
@@ -91,6 +94,9 @@ if (process.argv.includes("--selftest")) {
     ["filter", "historyRoute", /filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
     ["reverse", "reverse", /unit_id: unitId/, "unit_id: operatingCompanyId"],
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
+    ["customs-http-error", "customsPill", /if \(!res\.ok\) throw new Error/, "if (!res.ok) return null //"],
+    ["customs-retry", "customsPill", /data-customs-time-retry/, "data-customs-time-hidden"],
+    ["customs-row-safety", "customsPill", /event\.stopPropagation\(\);/, "void event;"],
     ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="unit"'],
     ["mount", "profile", /UnitBorderCrossingsReverseSection/g, "MissingBorderReverse"],
     ["fleet-leaf", "fleetRequired", /"id"\s*:\s*"unit\.profile\.border_crossings_reverse"/, '"id": "unit.profile.safety_reverse_MISSING"'],
