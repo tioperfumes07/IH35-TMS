@@ -6,6 +6,7 @@ import { listVendorBills, type VendorBill } from "../../api/accounting";
 import {
   applyVendorCredit,
   createVendorCredit,
+  getNextVendorCreditDocumentNumber,
   getVendorCredit,
   listVendorCredits,
   voidVendorCredit,
@@ -79,6 +80,13 @@ export function VendorCreditsPage() {
   const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter || null);
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createNotes, setCreateNotes] = useState("");
+  const nextCreditNumberQuery = useQuery({
+    queryKey: ["accounting", "vendor-credits", "next-number", companyId],
+    queryFn: () => getNextVendorCreditDocumentNumber(companyId),
+    enabled: Boolean(companyId && createOpen),
+    staleTime: 15_000,
+  });
+  const nextCreditNumber = nextCreditNumberQuery.data?.document_number?.trim() ?? "";
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "picker", companyId],
@@ -132,6 +140,7 @@ export function VendorCreditsPage() {
       setCreateAmountCents(null);
       setCreateNotes("");
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", "next-number", companyId] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });
@@ -316,27 +325,41 @@ export function VendorCreditsPage() {
         }
       >
         <div className="space-y-3 text-sm">
-          <label className="block">
-            <span className="text-xs font-medium text-gray-600">Vendor *</span>
-            <div className="mt-1">
-              <ReferenceSelect
-                value={createVendorId}
-                onChange={setCreateVendorId}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={companyId}
-                placeholder="Select vendor"
-                disabled={!companyId}
+          <div className="flex w-full items-start gap-3" data-testid="qbo-vendor-credit-header">
+            <label className="min-w-0 flex-1 block">
+              <span className="text-xs font-medium text-gray-600">Vendor *</span>
+              <div className="mt-1">
+                <ReferenceSelect
+                  value={createVendorId}
+                  onChange={setCreateVendorId}
+                  options={vendorOptions}
+                  createKind="vendor"
+                  operatingCompanyId={companyId}
+                  placeholder="Select vendor"
+                  disabled={!companyId}
+                />
+                <CappedListNotice
+                  shown={vendorOptions.length}
+                  limit={1000}
+                  total={vendorsQuery.data?.total ?? null}
+                  hint="Type in the vendor field to search the full roster."
+                  className="mt-1 text-[11px] text-slate-600"
+                />
+              </div>
+            </label>
+            <label className="ml-auto w-44 shrink-0 text-right text-xs font-semibold text-gray-700" htmlFor="vendor-credit-ref-no">
+              Ref no.
+              <input
+                id="vendor-credit-ref-no"
+                aria-label="Ref no."
+                data-testid="vendor-credit-number"
+                readOnly
+                className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-right text-xs"
+                value={nextCreditNumber}
+                placeholder={nextCreditNumberQuery.isLoading ? "…" : "Assigned on save"}
               />
-              <CappedListNotice
-                shown={vendorOptions.length}
-                limit={1000}
-                total={vendorsQuery.data?.total ?? null}
-                hint="Type in the vendor field to search the full roster."
-                className="mt-1 text-[11px] text-slate-600"
-              />
-            </div>
-          </label>
+            </label>
+          </div>
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Amount *</span>
             <div className="mt-1">

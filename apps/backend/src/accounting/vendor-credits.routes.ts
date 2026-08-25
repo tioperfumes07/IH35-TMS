@@ -111,6 +111,18 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     return { credits: rows };
   });
 
+  // Preview only — same MAX+1 generator POST uses. Must register before /:id so "next-number" is not a UUID.
+  app.get("/api/v1/accounting/vendor-credits/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const document_number = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      nextVendorCreditDisplayId(client, query.data.operating_company_id)
+    );
+    return { document_number };
+  });
+
   // Law §9 reverse drill-through: a credit must expose every bill it reduced.
   // Read-only and company-scoped; this route does not calculate or post any GL.
   app.get("/api/v1/accounting/vendor-credits/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
