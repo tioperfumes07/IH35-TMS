@@ -5,14 +5,15 @@
 
 U14 **14/14 CERTIFIED** — never recertify.
 
-**19:39 CT:** Deploy `dep-da6e89v10e5c73bcsss0` IN FLIGHT tip `a44357d8` (#15662). Live `1bfaaf2` until healthz moves.
+**21:57 CT:** API `d60fcd9` live; follow-up `dep-da6g9cf10e5c73bkh760` IN FLIGHT tip `ab737d38`. SPA autoDeploy queued (#15687).
 
 | Seat | NOW |
 |------|-----|
-| Cursor 9222 | Lead. Catch-up deploy in flight. |
-| CC-1 9223 | `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` |
-| CC-2 9224 | Next leftover unique. Print battery done. |
-| CC-3 9225 | `parts_receive` on WO `850e2cc4-…` (unit_id proved on `2153f5dc`) |
+| Cursor 9222 | Lead. Wait healthz `ab737d3`. |
+| CC-1 9223 | Expense `57cabbab-…` JE; BOOK-LOAD-NOOP leftover |
+| CC-2 9224 | Next leftover unique |
+| CC-3 9225 | `parts_receive` on `850e2cc4-…` |
+
 
 | Codex 9226 | Leftover unique. No restamp. |
 | Cascade | Unique FINDING only. No U14 restamp. |
