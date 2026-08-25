@@ -150,7 +150,12 @@ export function ComplianceDashboardPage() {
 
   return (
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
-      <PageHeader title="Compliance Dashboard" subtitle="Expiring credentials across trucks, trailers, drivers, and carrier" />
+      <PageHeader
+        backHref="/home"
+        breadcrumb={["Home", "Compliance"]}
+        title="Compliance Dashboard"
+        subtitle="Expiring credentials across trucks, trailers, drivers, and carrier"
+      />
 
       {/* Tabs — ADDITIVE: Overview keeps every prior section; HOS Tracker/Viewer/Violations/History are new. */}
       <div className="flex gap-0 border-b border-slate-200" role="tablist">

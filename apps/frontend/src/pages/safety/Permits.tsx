@@ -108,7 +108,7 @@ export function Permits({ operatingCompanyId }: Props) {
         ) : null}
       </div>
       )}
-      <Form2290Filings />
+      <Form2290Filings showModuleHeader={false} />
       <PermitsPage operatingCompanyId={operatingCompanyId} />
     </div>
   );
