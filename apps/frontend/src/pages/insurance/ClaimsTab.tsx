@@ -24,6 +24,8 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId?: string;
@@ -466,10 +468,13 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       ) : null}
 
       {query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div>
-      ) : null}
-
-      <ParityTable
+        <ListErrorState
+          status={0}
+          message={userFacingApiError(query.error, "Failed to load claims.")}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
         rows={rows}
         columns={columns}
         rowKey={(claim) => claim.id}
@@ -542,7 +547,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           </div>
           </CollapsedListFilters>
         }
-      />
+        />
+      )}
       <ClaimCreateModal
         open={createOpen}
         operatingCompanyId={companyId}
