@@ -192,7 +192,7 @@ export function VehiclesMasterDataPage() {
       <PageHeader
         title="Maintenance Vehicles"
         subtitle="Create, edit, void, and review projected source status."
-        breadcrumb={["Maintenance", "Vehicles"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Vehicles" }]}
         backHref="/maintenance"
         actions={
           <div className="flex items-center gap-2">

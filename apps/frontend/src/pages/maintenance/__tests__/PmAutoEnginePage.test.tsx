@@ -57,7 +57,10 @@ describe("PmAutoEnginePage (B28)", () => {
   it("renders PM auto engine dashboard shell", async () => {
     renderPage();
     expect(await screen.findByTestId("maint-pm-auto-engine")).toBeInTheDocument();
-    expect(screen.getByText("PM Auto Engine")).toBeInTheDocument();
+    // MAINT-F-BREADCRUMB-STRING-TYPE-BLOCKING-CI fix restored the breadcrumb trail (was silently
+    // blank due to a type mismatch), so "PM Auto Engine" now legitimately appears twice: the
+    // breadcrumb trail AND the <h1> title. Scope to the heading, the actual page-shell assertion.
+    expect(screen.getByRole("heading", { name: "PM Auto Engine" })).toBeInTheDocument();
     expect(await screen.findByText("completed")).toBeInTheDocument();
   });
 

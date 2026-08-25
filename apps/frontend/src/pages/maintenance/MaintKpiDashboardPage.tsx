@@ -185,7 +185,7 @@ export function MaintKpiDashboardPage() {
       <PageHeader
         title="Maintenance KPI Dashboard"
         subtitle="Downtime, MTBF, CPM, cost-per-truck, and PM compliance with drill-down."
-        breadcrumb={["Maintenance", "KPI Dashboard"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "KPI Dashboard" }]}
         backHref="/maintenance"
       />
       <p className="-mt-2 text-xs text-gray-500">

@@ -73,7 +73,7 @@ export function PmAutoEnginePage() {
       <PageHeader
         title="PM Auto Engine"
         subtitle="Hourly evaluation of PM schedules — auto-creates work orders at due thresholds and near-due alerts."
-        breadcrumb={["Maintenance", "PM Auto Engine"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "PM Auto Engine" }]}
         backHref="/maintenance"
         actions={
           <div className="flex gap-2">

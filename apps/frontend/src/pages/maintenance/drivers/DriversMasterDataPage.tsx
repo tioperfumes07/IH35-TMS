@@ -189,7 +189,7 @@ export function DriversMasterDataPage() {
       <PageHeader
         title="Maintenance Drivers"
         subtitle="Manage projected drivers with manual create/edit/void controls."
-        breadcrumb={["Maintenance", "Drivers"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Drivers" }]}
         backHref="/maintenance"
         actions={
           <div className="flex items-center gap-2">
