@@ -3,9 +3,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerInsuranceClaimRoutes } from "./claim.routes.js";
 
 const requireAuthState = { allowed: true };
+const LINKED_ACCIDENT = "aaaaaaaa-1111-4111-8111-111111111111";
+const EXISTING_CLAIM = "bbbbbbbb-2222-4222-8222-222222222222";
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
+
+  if (
+    sql.includes("SELECT id::text, insurance_claim_id::text") &&
+    sql.includes("FROM safety.accident_reports") &&
+    sql.includes("FOR UPDATE")
+  ) {
+    return {
+      rows: [{ id: String(values?.[0]), insurance_claim_id: values?.[0] === LINKED_ACCIDENT ? EXISTING_CLAIM : null }],
+    };
+  }
 
   if (sql.includes("FROM insurance.claim") && sql.includes("ORDER BY c.accident_date DESC")) {
     return {
@@ -151,6 +163,37 @@ describe("insurance claim routes", () => {
 
   afterEach(async () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
+  });
+
+  it("POST rejects a second claim for an accident whose canonical back-pointer is occupied", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/claims",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        claim_number: "CLM-DUPLICATE-ACCIDENT",
+        policy_id: "22222222-2222-4222-8222-222222222222",
+        accident_date: "2026-05-01",
+        reported_date: "2026-05-02",
+        accident_report_id: LINKED_ACCIDENT,
+      },
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: "accident_report_already_linked" });
+    expect(queryMock.mock.calls.some(([sql]) => sql.includes("INSERT INTO insurance.claim"))).toBe(false);
+  });
+
+  it("PATCH rejects stealing an accident back-pointer from another claim", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/insurance/claims/11111111-1111-4111-8111-111111111111?operating_company_id=11111111-1111-4111-8111-111111111111",
+      payload: { accident_report_id: LINKED_ACCIDENT },
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: "accident_report_already_linked" });
+    expect(queryMock.mock.calls.some(([sql]) => sql.includes("UPDATE insurance.claim"))).toBe(false);
   });
 
   async function buildApp(role = "Owner") {

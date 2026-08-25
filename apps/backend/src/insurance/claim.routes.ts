@@ -179,21 +179,26 @@ async function assertOptionalHubExists(
   client: Queryable,
   operatingCompanyId: string,
   kind: "accident_report" | "load" | "driver" | "trailer",
-  id: string | null | undefined
-): Promise<"ok" | "not_found"> {
+  id: string | null | undefined,
+  allowedClaimId?: string,
+): Promise<"ok" | "not_found" | "already_linked"> {
   if (id === undefined || id === null) return "ok";
   if (kind === "accident_report") {
-    const res = await client.query(
+    const res = await client.query<{ id: string; insurance_claim_id: string | null }>(
       `
-        SELECT id::text
+        SELECT id::text, insurance_claim_id::text
         FROM safety.accident_reports
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
+        FOR UPDATE
         LIMIT 1
       `,
       [id, operatingCompanyId]
     );
-    return res.rows[0] ? "ok" : "not_found";
+    const accident = res.rows[0];
+    if (!accident) return "not_found";
+    if (accident.insurance_claim_id && accident.insurance_claim_id !== allowedClaimId) return "already_linked";
+    return "ok";
   }
   if (kind === "load") {
     const res = await client.query(
@@ -528,7 +533,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ["driver", body.driver_id],
         ["trailer", body.trailer_id],
       ] as const) {
-        if ((await assertOptionalHubExists(client, body.operating_company_id, kind, id)) === "not_found") {
+        const hub = await assertOptionalHubExists(client, body.operating_company_id, kind, id);
+        if (hub === "already_linked") return { kind: "accident_report_already_linked" as const };
+        if (hub === "not_found") {
           return { kind: `${kind}_not_found` as const };
         }
       }
@@ -635,6 +642,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (created.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
     if (created.kind === "asset_not_found") return reply.code(404).send({ error: "asset_not_found" });
     if (created.kind === "accident_report_not_found") return reply.code(404).send({ error: "accident_report_not_found" });
+    if (created.kind === "accident_report_already_linked") {
+      return reply.code(409).send({ error: "accident_report_already_linked" });
+    }
     if (created.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
     if (created.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
@@ -694,7 +704,15 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ["driver", body.driver_id],
         ["trailer", body.trailer_id],
       ] as const) {
-        if ((await assertOptionalHubExists(client, query.data.operating_company_id, kind, id)) === "not_found") {
+        const hub = await assertOptionalHubExists(
+          client,
+          query.data.operating_company_id,
+          kind,
+          id,
+          kind === "accident_report" ? params.data.id : undefined,
+        );
+        if (hub === "already_linked") return { kind: "accident_report_already_linked" as const };
+        if (hub === "not_found") {
           return { kind: `${kind}_not_found` as const };
         }
       }
@@ -824,6 +842,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (updated.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
     if (updated.kind === "asset_not_found") return reply.code(404).send({ error: "asset_not_found" });
     if (updated.kind === "accident_report_not_found") return reply.code(404).send({ error: "accident_report_not_found" });
+    if (updated.kind === "accident_report_already_linked") {
+      return reply.code(409).send({ error: "accident_report_already_linked" });
+    }
     if (updated.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (updated.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
     if (updated.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });

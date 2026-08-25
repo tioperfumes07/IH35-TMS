@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `INS-CLAIM-ACCIDENT-BACKPOINTER-STOLEN` | **B** | Accident/insurance reverse integrity | Codex | this PR | 2026-08-24 | Company-scoped row lock rejects a second claim stealing an occupied accident back-pointer. | claim tests 16/16; existing reverse-FK guard normal + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `SAF-ACCIDENT-CREATE-CROSS-COMPANY-FK-ACCEPTED` | **B** | Safety accident entity linkage | Codex | this PR | 2026-08-24 | POST/PATCH reject foreign-company driver/unit/trailer/vendor/load IDs before mutation. | route tests 4/4; existing CI guard normal + selftest; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `DRV-ONBOARD-COMPLETE-ACCEPTS-EMPTY-QUALIFICATION` | **B** | Drivers onboarding data integrity | Codex | this PR | 2026-08-24 | Completion atomically rejects missing steps 1–6; audited admin override remains the only bypass. | backend tests; existing CI guard normal + selftest | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
