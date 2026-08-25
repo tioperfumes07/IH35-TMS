@@ -437,8 +437,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
       if (query.data.driver_id) values.push(query.data.driver_id);
-      const res = await client
-        .query(
+      const res = await client.query(
           `
             SELECT tr.*,
                    NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
@@ -486,8 +485,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 500
           `,
           [query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { tests: rows };
