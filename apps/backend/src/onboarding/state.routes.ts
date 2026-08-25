@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { seedSampleData } from "./seed-sample-data.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
@@ -149,7 +149,10 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/onboarding/state", async (req, reply) => {
+  app.patch(
+    "/api/v1/onboarding/state",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedBody = patchStateBodySchema.safeParse(req.body ?? {});
@@ -201,20 +204,18 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
       if (body.send_team_invites) {
         const invites = extractTeamInvites(nextStepData);
         for (const invite of invites) {
-          try {
-            await sendEmail({
+          await enqueueOutboxEvent(
+            client,
+            "onboarding.team_invite.send",
+            { aggregate_type: "org.companies", aggregate_id: body.operating_company_id },
+            {
+              operating_company_id: body.operating_company_id,
               to: invite.email,
-              subject: "You're invited to IH35 TMS",
-              html: `<p>You were invited as <strong>${invite.role}</strong> to IH35 TMS onboarding.</p><p>Please sign in to complete setup.</p>`,
-              text: `You were invited as ${invite.role} to IH35 TMS onboarding. Please sign in to complete setup.`,
-              sender: "dispatch",
-              eventClass: "onboarding.team_invite",
-              actorUserId: authUser.uuid,
-            });
-            invites_sent += 1;
-          } catch {
-            invites_failed += 1;
-          }
+              role: invite.role,
+              actor_user_id: authUser.uuid,
+            }
+          );
+          invites_sent += 1;
         }
       }
 
@@ -227,7 +228,8 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
 
     if (!result.state) return reply.code(404).send({ error: "onboarding_state_not_found" });
     return reply.send(result);
-  });
+    }
+  );
 
   app.post("/api/v1/onboarding/seed-sample-data", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
