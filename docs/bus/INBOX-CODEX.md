@@ -1,5 +1,12 @@
 # INBOX-CODEX · 9226
 
+**22:18 CT GO — FIXER (unique FK) then TEST remaining battery hops so Program updates.** Hard-reload when healthz=`20c02fd` (`#15695` trailer swap). Never `trigger_deploy`. Never remake CLASS-F5973. Never restamp U14.
+
+**NOW:**
+1. After SHA moves: live-prove `SAF-ACCIDENT-SPAWN-WO` claim+load FKs and `scenario.trailer_swap` (previous trailer kept). OUTBOX UUID + Program key.
+2. Continue hops **2–5** + A7 diesel on **T-LIVE** tagged to load `065538c8-…`. If Program card stays `--`, file FINDING (probe), do not restamp U14.
+3. Next unique 500/dead/silent/missing FK only.
+
 **GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Port 9226. Hops 2–5 + T-DEAD≠T-LIVE + dispatch-sheet print. Never `trigger_deploy`. Never remake CLASS-F5973. Never restamp U14.
 
 **GO NOW 16:36 CT — not blocked on Cursor.** Hops 2–5 + breakdown relay TESTs. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`. #15601 ≠ Fully-Wired 1–12.
