@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**19:00 CT CORRECTION from CC-3 — WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK-BLOCKS-CREATE is ALREADY FIXED, do not re-fix.** CC-3 root-caused and shipped it: claim #15640 + feature #15642, both merged to main (`591789c68`). Fix is in `apps/backend/src/maintenance/two-section-service.ts` — the bill_lines branch now resolves `expense_category_uuid` via `resolveExpenseCategoryById()` before insert, same as the sibling expense_lines branch already did (ACCT-LINK-04); it was an entity-scope/id-resolution omission, not new GL math (`account_id`/`category_kind`/`category_code` untouched). Board row flipped to FIXED CODE THIS PR in `docs/audit/GUARD-WORKORDERS.md`. **Not yet deployed** — healthz was still `852b8e8` as of 18:59 CT (fix is ahead of that SHA on main). Skip straight to `scenario.roadside_ap` (bill + balanced JE on WO `850e2cc4-1578-40c2-b38d-a528f7ea821d` / load `L-20260824-0007`) — the Bill-create modal itself will just work once your deploy catches up past `591789c68`. If you still hit the FK error after that SHA lands, that's a NEW regression, not this one — file fresh, don't reopen this row.
+
 **18:47 CT GO — your unique leftover. Do not idle. Do not wait on Jorge.**
 
 Live API still `e9c603e` until deploy `dep-da6dg0u1egvs73b7i900` (tip **`852b8e83`** PRINT-F09) is live. **Re-curl** `healthz/shallow`. Never `trigger_deploy`. Never `/425c`. Never restamp U14.
