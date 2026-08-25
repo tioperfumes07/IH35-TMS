@@ -13,13 +13,14 @@ const CSA = "apps/backend/src/compliance/csa-basic-pull.ts";
 const SAFER = "apps/backend/src/compliance/fmcsa-safer-verifier.ts";
 const ALERT_ROUTER = "apps/backend/src/reconciliation/alert-routing.service.ts";
 const RECON_WORKER = "apps/backend/src/reconciliation/reconciliation-worker.service.ts";
+const ERROR_DIGEST = "apps/backend/src/cron/error-digest.cron.ts";
 const LABEL = "verify-background-job-source-readiness";
 
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-export function auditSources({ health, csa, safer, alertRouter, reconWorker }) {
+export function auditSources({ health, csa, safer, alertRouter, reconWorker, errorDigest }) {
   const failures = [];
   const healthCode = stripComments(health);
   const csaCode = stripComments(csa);
@@ -52,6 +53,16 @@ export function auditSources({ health, csa, safer, alertRouter, reconWorker }) {
   if (!/SAVEPOINT reconciliation_company[\s\S]{0,2400}ROLLBACK TO SAVEPOINT reconciliation_company[\s\S]{0,200}updateStateOnFailure/.test(reconWorker)) {
     failures.push("reconciliation failure state can mask the originating SQL error with transaction-aborted 25P02");
   }
+  const appendDigestBody = errorDigest.slice(
+    errorDigest.indexOf("async function appendDigestAudit"),
+    errorDigest.indexOf("export function initializeErrorDigestCron"),
+  );
+  if (/withLuciaBypass\([\s\S]*?\)\.catch\(\(\) => undefined\)/.test(appendDigestBody)) {
+    failures.push("error digest swallows its durable audit-write failure and reports a false success");
+  }
+  if (!/await appendDigestAudit\([\s\S]{0,400}app\.log\.error/.test(errorDigest)) {
+    failures.push("error digest must await its durable audit record before reporting elevated volume");
+  }
   return failures;
 }
 
@@ -62,6 +73,7 @@ function treeSources() {
     safer: readFileSync(join(ROOT, SAFER), "utf8"),
     alertRouter: readFileSync(join(ROOT, ALERT_ROUTER), "utf8"),
     reconWorker: readFileSync(join(ROOT, RECON_WORKER), "utf8"),
+    errorDigest: readFileSync(join(ROOT, ERROR_DIGEST), "utf8"),
   };
 }
 
@@ -73,6 +85,7 @@ function selftest() {
     { name: "SAFER invalid skipped status", value: { ...clean, safer: clean.safer.replace("safer_status = 'missing_lookup'", "safer_status = 'skipped'") } },
     { name: "alert partial-index predicate bypass", value: { ...clean, alertRouter: clean.alertRouter.replace("enqueueOutboxEvent(", "enqueueOutboxEventMissing(") } },
     { name: "reconciliation error savepoint removed", value: { ...clean, reconWorker: clean.reconWorker.replace("ROLLBACK TO SAVEPOINT reconciliation_company", "SELECT 1") } },
+    { name: "error digest audit failure swallowed", value: { ...clean, errorDigest: clean.errorDigest.replace("  });\n}\n\nexport function initializeErrorDigestCron", "  }).catch(() => undefined);\n}\n\nexport function initializeErrorDigestCron") } },
   ];
   const failures = [];
   for (const mutation of planted) {
@@ -84,7 +97,7 @@ function selftest() {
     for (const failure of failures) console.error(`${LABEL}: ${failure}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — 5/5 planted defects rejected`);
+  console.log(`${LABEL}: selftest PASS — 6/6 planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
