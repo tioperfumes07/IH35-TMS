@@ -75,6 +75,33 @@ function mergeStepData(existing: Record<string, unknown>, step: number, patch: R
   };
 }
 
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function present(value: unknown): boolean {
+  return typeof value === "string" ? value.trim().length > 0 : value === true;
+}
+
+export function missingRequiredOnboardingSteps(stepData: Record<string, unknown>): number[] {
+  const identity = record(stepData.identity);
+  const cdl = record(stepData.cdl_upload);
+  const medical = record(stepData.medical_card);
+  const dqf = record(stepData.dqf_docs);
+  const mvr = record(dqf.mvr);
+  const signatures = record(stepData.signatures);
+  const i9 = record(stepData.i9);
+  const missing: number[] = [];
+  if (!present(identity.first_name) || !present(identity.last_name) || !present(identity.phone)) missing.push(1);
+  if (!present(cdl.file_id)) missing.push(2);
+  if (!present(medical.file_id) || !present(medical.expires_at)) missing.push(3);
+  if (!present(mvr.file_id)) missing.push(4);
+  if (signatures.acknowledged !== true) missing.push(5);
+  if (i9.section1_completed !== true || !present(i9.file_id)) missing.push(6);
+  // Step 7 is explicitly optional; assigning a unit later from Driver Profile is valid.
+  return missing;
+}
+
 export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
   app.post("/api/v1/safety/onboarding/sessions", async (req, reply) => {
     const user = authUser(req, reply);
@@ -226,6 +253,20 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
 
     const result = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const existingRes = await client.query<{ step_data: Record<string, unknown>; status: string }>(
+        `SELECT step_data, status
+           FROM safety.onboarding_sessions
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+          FOR UPDATE`,
+        [params.data.session_id, company.data.operating_company_id]
+      );
+      const existing = existingRes.rows[0];
+      if (!existing || existing.status !== "in_progress") return { error: "not_found" as const };
+      const missingSteps = missingRequiredOnboardingSteps(existing.step_data ?? {});
+      if (missingSteps.length > 0) {
+        return { error: "onboarding_incomplete" as const, missing_steps: missingSteps };
+      }
       const res = await client.query(
         `
           UPDATE safety.onboarding_sessions
@@ -256,7 +297,12 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
       return { session: res.rows[0] };
     });
 
-    if ("error" in result) return reply.code(404).send({ error: result.error });
+    if ("error" in result) {
+      if (result.error === "onboarding_incomplete") {
+        return reply.code(409).send({ error: result.error, missing_steps: result.missing_steps });
+      }
+      return reply.code(404).send({ error: result.error });
+    }
     return reply.send(result);
   });
 

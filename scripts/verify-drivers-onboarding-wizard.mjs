@@ -61,6 +61,22 @@ function resumeFailures({ wizardPage, frontendTest }) {
   return failures;
 }
 
+function completionFailures({ onboardingRoutes, backendTest }) {
+  const failures = [];
+  const required = [
+    [onboardingRoutes, "missingRequiredOnboardingSteps(existing.step_data ?? {})", "completion must validate qualification evidence"],
+    [onboardingRoutes, "FOR UPDATE", "completion validation and status write must share one locked transaction"],
+    [onboardingRoutes, 'error: "onboarding_incomplete"', "incomplete qualification must return a named error"],
+    [onboardingRoutes, "missing_steps: result.missing_steps", "completion response must identify missing steps"],
+    [onboardingRoutes, "signatures.acknowledged !== true", "signature acknowledgement is required"],
+    [onboardingRoutes, "i9.section1_completed !== true", "I-9 completion is required"],
+    [backendTest, "rejects missing qualification evidence without updating or auditing", "backend must test false completion rejection"],
+    [backendTest, 'missing_steps: [1, 2, 3, 4, 5, 6]', "backend must prove every required step is reported"],
+  ];
+  for (const [source, needle, label] of required) if (!source.includes(needle)) failures.push(label);
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const onboardingRoutes = read(paths.onboardingRoutes);
@@ -105,6 +121,7 @@ function main() {
   if (frontendTestCount < 4) failures.push("Frontend vitest must include at least 4 cases");
   failures.push(...launcherFailures({ onboardingRoutes, backendTest, driverDetail }));
   failures.push(...resumeFailures({ wizardPage, frontendTest }));
+  failures.push(...completionFailures({ onboardingRoutes, backendTest }));
 
   if (!archDesign.includes("verify:drivers-onboarding-wizard")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-onboarding-wizard");
@@ -150,7 +167,24 @@ function main() {
       if (detected.length === 0) fail(`selftest missed ${mutation.key}`);
     }
     const total = mutations.length + resumeMutations.length;
-    console.log(`[verify-drivers-onboarding-wizard] selftest OK — ${total}/${total} launcher/resume defects rejected`);
+    const completionMutations = [
+      { key: "completion validator", onboardingRoutes: onboardingRoutes.replace("missingRequiredOnboardingSteps(existing.step_data ?? {})", "[]") },
+      { key: "transaction lock", onboardingRoutes: onboardingRoutes.replace("FOR UPDATE", "") },
+      { key: "named incomplete error", onboardingRoutes: onboardingRoutes.replaceAll('error: "onboarding_incomplete"', 'error: "not_found"') },
+      { key: "missing step response", onboardingRoutes: onboardingRoutes.replace("missing_steps: result.missing_steps", "missing_steps: []") },
+      { key: "signature requirement", onboardingRoutes: onboardingRoutes.replace("signatures.acknowledged !== true", "false") },
+      { key: "I-9 requirement", onboardingRoutes: onboardingRoutes.replace("i9.section1_completed !== true", "false") },
+      { key: "false completion test", backendTest: backendTest.replace("rejects missing qualification evidence without updating or auditing", "completes qualification") },
+    ];
+    for (const mutation of completionMutations) {
+      const detected = completionFailures({
+        onboardingRoutes: mutation.onboardingRoutes ?? onboardingRoutes,
+        backendTest: mutation.backendTest ?? backendTest,
+      });
+      if (detected.length === 0) fail(`selftest missed ${mutation.key}`);
+    }
+    const grandTotal = total + completionMutations.length;
+    console.log(`[verify-drivers-onboarding-wizard] selftest OK — ${grandTotal}/${grandTotal} launcher/resume/completion defects rejected`);
   }
 
   console.log("[verify-drivers-onboarding-wizard] OK");
