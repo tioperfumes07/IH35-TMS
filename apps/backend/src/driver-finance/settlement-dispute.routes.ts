@@ -33,6 +33,7 @@ const createDisputeBodySchema = z.object({
   dispute_category: disputeCategorySchema,
   dispute_description: z.string().trim().min(20),
   disputed_amount_cents: z.number().int().positive().optional(),
+  evidence_file_ids: z.array(z.string().uuid()).max(10).refine((ids) => new Set(ids).size === ids.length, "duplicate_evidence_file_id").optional(),
 });
 
 const listDisputeQuerySchema = z.object({

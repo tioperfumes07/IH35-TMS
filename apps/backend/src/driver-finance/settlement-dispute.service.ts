@@ -370,6 +370,7 @@ export async function openDispute(
     dispute_category: DisputeCategory;
     dispute_description: string;
     disputed_amount_cents?: number;
+    evidence_file_ids?: string[];
     opened_by_driver?: boolean;
   }
 ) {
@@ -391,12 +392,41 @@ export async function openDispute(
     );
     if (!settlement.rows[0]?.id) throw new Error("E_SETTLEMENT_NOT_FOUND_FOR_DRIVER");
 
+    const evidenceFileIds = input.evidence_file_ids ?? [];
+    let evidenceR2Paths: string[] = [];
+    if (evidenceFileIds.length > 0) {
+      const evidence = await client.query<{ id: string; r2_key: string }>(
+        `
+          SELECT f.id::text AS id, f.r2_key
+          FROM docs.files f
+          WHERE f.operating_company_id = $1::uuid
+            AND f.id = ANY($2::uuid[])
+            AND f.upload_completed_at IS NOT NULL
+            AND f.deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1
+              FROM docs.file_links fl
+              WHERE fl.file_id = f.id
+                AND fl.entity_type = 'settlement'
+                AND fl.entity_id = $3::uuid
+                AND fl.deleted_at IS NULL
+            )
+          ORDER BY array_position($2::uuid[], f.id)
+        `,
+        [input.operating_company_id, evidenceFileIds, input.settlement_id]
+      );
+      if (evidence.rows.length !== evidenceFileIds.length) {
+        throw new Error("E_EVIDENCE_FILE_NOT_READY_OR_LINKED");
+      }
+      evidenceR2Paths = evidence.rows.map((row) => row.r2_key);
+    }
+
     const inserted = await client.query(
       `
         INSERT INTO driver_finance.driver_settlement_disputes (
           operating_company_id, settlement_id, driver_id, dispute_category, dispute_description,
-          disputed_amount_cents, opened_by_driver, opened_by_user_id
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          disputed_amount_cents, evidence_r2_paths, opened_by_driver, opened_by_user_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7::text[],$8,$9)
         RETURNING id
       `,
       [
@@ -406,6 +436,7 @@ export async function openDispute(
         input.dispute_category,
         input.dispute_description.trim(),
         input.disputed_amount_cents ?? null,
+        evidenceR2Paths,
         input.opened_by_driver ?? true,
         userId,
       ]
@@ -425,6 +456,7 @@ export async function openDispute(
         driver_id: input.driver_id,
         dispute_category: input.dispute_category,
         disputed_amount_cents: input.disputed_amount_cents ?? null,
+        evidence_file_ids: evidenceFileIds,
       },
       "warning",
       "P5-E2-DISPUTES"

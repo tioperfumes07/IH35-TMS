@@ -534,6 +534,7 @@ export function openSettlementDispute(payload: {
   dispute_category: SettlementDisputeCategory;
   dispute_description: string;
   disputed_amount_cents?: number;
+  evidence_file_ids?: string[];
 }) {
   return apiRequest<{ data: { id: string } }>("/api/v1/driver-finance/settlement-disputes", { method: "POST", body: payload });
 }
