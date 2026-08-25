@@ -4224,6 +4224,11 @@
     "claimed_by": "codex",
     "purpose": "verify-codex-customer-driver-connectivity-guard-registry-batch"
   },
+  "8928": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-driver-crossmodule-connectivity-guard-registry-batch"
+  },
   "6420": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
