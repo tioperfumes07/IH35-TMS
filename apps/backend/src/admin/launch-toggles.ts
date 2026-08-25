@@ -1,6 +1,6 @@
 import type pg from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { dispatchNotification } from "../notifications/dispatcher.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 type DbClient = Pick<pg.PoolClient, "query">;
 
@@ -84,30 +84,6 @@ async function upsertToggleRow(
   );
 }
 
-async function notifyOwnerAccountingLaunch(client: DbClient, companyCode: string, action: "launch" | "rollback") {
-  const owners = await client.query<{ id: string; email: string | null }>(
-    `
-      SELECT id, email
-      FROM identity.users
-      WHERE role = 'Owner'
-        AND deactivated_at IS NULL
-    `
-  );
-  for (const owner of owners.rows) {
-    void dispatchNotification({
-      user_id: owner.id,
-      event_type: "report.scheduled.delivered" as const,
-      actor_user_id: null,
-      payload: {
-        company_code: companyCode,
-        action,
-        link: "/admin/launch-toggles",
-        subject: `Carrier ${action}: ${companyCode}`,
-      },
-    }).catch(() => undefined);
-  }
-}
-
 export async function toggleCarrierLaunch(
   client: DbClient,
   actorUserId: string,
@@ -154,7 +130,12 @@ export async function toggleCarrierLaunch(
       "info",
       "USMCA-3"
     );
-    await notifyOwnerAccountingLaunch(client, company.code, "launch");
+    await enqueueOutboxEvent(
+      client,
+      "admin.carrier.launched",
+      { aggregate_type: "org.companies", aggregate_id: carrierId },
+      { operating_company_id: carrierId, company_code: company.code, actor_user_id: actorUserId }
+    );
     return { operating_company_id: carrierId, is_active: true, hidden: false };
   }
 
@@ -184,6 +165,11 @@ export async function toggleCarrierLaunch(
     "info",
     "USMCA-3"
   );
-  await notifyOwnerAccountingLaunch(client, company.code, "rollback");
+  await enqueueOutboxEvent(
+    client,
+    "admin.carrier.rollback",
+    { aggregate_type: "org.companies", aggregate_id: carrierId },
+    { operating_company_id: carrierId, company_code: company.code, actor_user_id: actorUserId }
+  );
   return { operating_company_id: carrierId, is_active: false, hidden: true };
 }
