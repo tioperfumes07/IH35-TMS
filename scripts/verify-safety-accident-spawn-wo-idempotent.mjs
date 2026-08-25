@@ -64,6 +64,14 @@ const CHECKS = [
       /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?insurance_claim_id/.test(s) &&
       /accident\.insurance_claim_id \?\? null/.test(s),
   },
+  {
+    id: "load-forward-fk",
+    file: ROUTES,
+    describe: "spawned AC work order must persist the accident load_id for trip reverse linkage",
+    test: (s) =>
+      /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?load_id/.test(s) &&
+      /accident\.load_id \?\? null/.test(s),
+  },
 ];
 
 export function run() {
@@ -117,6 +125,20 @@ function selftest() {
       process.exit(1);
     }
     console.log("  caught: claim-forward-fk plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
+  }
+  const noLoadFk = original
+    .replace(/\n\s*load_id,/, "")
+    .replace(/\n\s*accident\.load_id \?\? null,/, "");
+  try {
+    writeFileSync(ROUTES, noLoadFk, "utf8");
+    const caught = run();
+    if (caught.ok || !/load-forward-fk/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: load-forward-fk plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: load-forward-fk plant");
   } finally {
     writeFileSync(ROUTES, original, "utf8");
   }
