@@ -42,7 +42,9 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
     ...readLocal(tableId),
   }));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPersistDraftRef = useRef<ColumnWidths | null>(null);
   const serverLoadedRef = useRef(false);
+  const [persistError, setPersistError] = useState<string | null>(null);
 
   // RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP: callers (ResizableTable) build `defaultWidths` as a
   // fresh object literal every render (`Object.fromEntries(columns.map(...))`, no memo) from a
@@ -84,18 +86,37 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
     };
   }, [tableId]);
 
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, []);
+
+  const sendPersist = useCallback(async (next: ColumnWidths) => {
+    try {
+      await apiRequest("/api/v1/users/me/table-preferences", {
+        method: "PATCH",
+        body: { table_id: tableId, column_widths: next },
+      });
+      setPersistError(null);
+    } catch {
+      setPersistError("Column widths could not be saved. This layout is temporary.");
+    }
+  }, [tableId]);
+
   const persistServer = useCallback(
     (next: ColumnWidths) => {
+      lastPersistDraftRef.current = next;
+      setPersistError(null);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        void apiRequest("/api/v1/users/me/table-preferences", {
-          method: "PATCH",
-          body: { table_id: tableId, column_widths: next },
-        }).catch(() => undefined);
+        void sendPersist(next);
       }, DEBOUNCE_MS);
     },
-    [tableId]
+    [sendPersist]
   );
+
+  const retryPersist = useCallback(() => {
+    if (lastPersistDraftRef.current) void sendPersist(lastPersistDraftRef.current);
+  }, [sendPersist]);
 
   const setWidth = useCallback(
     (columnId: string, width: number) => {
@@ -118,8 +139,10 @@ export function useColumnWidths(tableId: string, defaultWidths: ColumnWidths) {
       setWidth,
       minWidth: MIN_WIDTH,
       maxWidth: MAX_WIDTH,
+      persistError,
+      retryPersist,
       getWidth: (columnId: string, fallback = MIN_WIDTH) => widths[columnId] ?? fallback,
     }),
-    [setWidth, widths]
+    [persistError, retryPersist, setWidth, widths]
   );
 }
