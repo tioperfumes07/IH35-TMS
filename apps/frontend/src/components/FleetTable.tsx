@@ -460,7 +460,7 @@ export function FleetTable({
             >
               <option value="">All statuses</option>
               {statusOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{humanizeEnumLabel(s)}</option>
               ))}
             </select>
             <select

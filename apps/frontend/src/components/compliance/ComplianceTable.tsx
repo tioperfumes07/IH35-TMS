@@ -116,6 +116,9 @@ export function ComplianceTable({
   onExportCsv,
 }: Props) {
   const types = Array.from(new Set(rows.map((r) => r.type))).sort();
+  // Each row already carries its own human-readable type label (row.label, e.g. "us_insurance" ->
+  // "US Insurance") — reuse it instead of showing the raw snake_case credential type in the filter.
+  const typeLabelByType = new Map(rows.map((r) => [r.type, r.label]));
   const ownerTypes = Array.from(new Set(rows.map((r) => r.owner_type))).sort();
 
   return (
@@ -138,7 +141,7 @@ export function ComplianceTable({
                 <option value="">All</option>
                 {types.map((t) => (
                   <option key={t} value={t}>
-                    {t}
+                    {typeLabelByType.get(t) ?? t}
                   </option>
                 ))}
               </select>
@@ -153,7 +156,7 @@ export function ComplianceTable({
                 <option value="">All</option>
                 {ownerTypes.map((t) => (
                   <option key={t} value={t}>
-                    {t}
+                    {ownerNoun(t)}
                   </option>
                 ))}
               </select>

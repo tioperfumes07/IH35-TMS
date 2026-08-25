@@ -10,6 +10,7 @@ import {
   type WoTimeEntryRow,
 } from "../../api/woTimeEntries";
 import { listMaintenanceLaborCodes } from "../../api/maintenance";
+import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -195,7 +196,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
           >
             {ACTORS.map((a) => (
               <option key={a} value={a}>
-                {a}
+                {properEnumOrFilterLabel(a)}
               </option>
             ))}
           </SelectCombobox>
