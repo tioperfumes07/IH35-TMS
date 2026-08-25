@@ -45,7 +45,7 @@ export function audit(src, detailSrc = "") {
         `${DETAIL}: WO + Create Bill must pass linkedUnitId from wo.unit_id (WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL)`,
       );
     }
-    if (!/linkedUnitId=\{wo\.unit_id \?\? undefined\}/.test(detailSrc)) {
+    if (!/linkedUnitId=\{typeof wo\.unit_id === "string" \? wo\.unit_id : undefined\}/.test(detailSrc)) {
       failures.push(`${DETAIL}: linkedUnitId must be the WO unit UUID, not a picker-only path`);
     }
   }
@@ -69,7 +69,7 @@ if (process.argv.includes("--selftest")) {
       good,
       null,
       null,
-      goodDetail.replace(/linkedUnitId=\{wo\.unit_id \?\? undefined\}\n/, ""),
+      goodDetail.replace(/linkedUnitId=\{typeof wo\.unit_id === "string" \? wo\.unit_id : undefined\}\n/, ""),
     ],
   ];
   for (const [name, modalSrc, pattern, replacement, detailSrc] of mutations) {
