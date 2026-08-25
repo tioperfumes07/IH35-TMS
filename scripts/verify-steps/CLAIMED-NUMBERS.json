@@ -1,9 +1,4 @@
 {
-  "9772": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-create-name-address-title-cased"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4314,6 +4309,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-maintenance-leaf-back-buttons-wired"
   },
+  "9760": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-audit-log-viewer-no-double-pagination"
+  },
   "9763": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-2",
@@ -4328,6 +4328,16 @@
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
     "purpose": "verify-pageheader-breadcrumb-item-shape"
+  },
+  "9771": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-recurring-bill-list-smart-back"
+  },
+  "9772": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-create-name-address-title-cased"
   },
   "_band": {
     "cc-1": "n%4===1",
