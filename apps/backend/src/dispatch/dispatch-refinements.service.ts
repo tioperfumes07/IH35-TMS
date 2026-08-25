@@ -563,21 +563,12 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
       }
     }
 
-    const cfg = await client
-      .query(`SELECT is_enabled FROM integrations.samsara_config WHERE operating_company_id = $1::uuid LIMIT 1`, [operatingCompanyId])
-      .catch(() => ({ rows: [] as { is_enabled: boolean }[] }));
-    const samsaraOn = Boolean(cfg.rows[0]?.is_enabled);
-
-    const etaMs = Date.now() + (2 + (loadId.charCodeAt(0) % 5)) * 3600_000;
-    const eta_at = new Date(etaMs).toISOString();
-    const source = samsaraOn ? ("samsara" as const) : ("fallback" as const);
-
     return {
-      driver_lat: 30.25 + (loadId.charCodeAt(1) % 10) * 0.01,
-      driver_lng: -97.75 - (loadId.charCodeAt(2) % 10) * 0.01,
-      distance_remaining_miles: 120 + (loadId.charCodeAt(3) % 80),
-      eta_at,
-      source,
+      driver_lat: null as number | null,
+      driver_lng: null as number | null,
+      distance_remaining_miles: null as number | null,
+      eta_at: null as string | null,
+      source: "unavailable" as const,
     };
   });
 }

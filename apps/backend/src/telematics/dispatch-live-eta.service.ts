@@ -172,12 +172,6 @@ export async function enrichLoadsLiveEta(
       samsaraEtaSource = prediction.computed_by === "samsara_eta" ? "samsara" : "prediction";
       samsaraCacheTier = prediction.computed_by === "samsara_eta" ? 3 : 4;
       samsaraLastFetchedAt = toIso(prediction.computed_at) ?? samsaraLastFetchedAt;
-    } else if (samsaraVehicle?.last_seen_at) {
-      const ageMs = Date.now() - Date.parse(samsaraVehicle.last_seen_at);
-      const hoursAhead = 1 + (row.id.charCodeAt(0) % 4);
-      samsaraEtaAt = new Date(Date.now() + hoursAhead * 3_600_000).toISOString();
-      samsaraEtaSource = ageMs <= 300_000 ? "samsara" : "fallback";
-      samsaraCacheTier = 3;
     }
 
     result.set(row.id, {
