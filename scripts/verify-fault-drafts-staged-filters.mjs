@@ -34,10 +34,27 @@ function assertPage(src) {
   if (/const \[unitPickerId,\s*setUnitPickerId\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  if (!/<ListErrorState[\s\S]*?Couldn't load fault-driven drafts[\s\S]*?onRetry=\{\(\) => void draftsQuery\.refetch\(\)\}/.test(src)) {
+    errors.push("failed fault-drafts read must expose an exact-query retry");
+  }
+  if (!/!draftsQuery\.isError \? <ParityTable[\s\S]*?\/> : null/.test(src)) {
+    errors.push("failed fault-drafts read must not mount a misleading empty table");
+  }
   return errors;
 }
 
 function selftest() {
+  const production = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  const retryNeedle = "onRetry={() => void draftsQuery.refetch()}";
+  if (!production.includes(retryNeedle)) {
+    console.error(`${LABEL} SELFTEST FAIL: production retry fixture drift`);
+    process.exit(1);
+  }
+  const retryMutation = production.replace(retryNeedle, "onRetry={() => undefined}");
+  if (!assertPage(retryMutation).some((error) => error.includes("exact-query retry"))) {
+    console.error(`${LABEL} SELFTEST FAIL: retry no-op mutation survived`);
+    process.exit(1);
+  }
   const bad = `
     const deepLinkUnitId = searchParams.get("unit_id");
     const [unitPickerId, setUnitPickerId] = useState("");
@@ -54,6 +71,8 @@ function selftest() {
     <button data-testid="fault-drafts-filter-apply" onClick={staged.apply}>Apply</button>
     <button data-testid="fault-drafts-filter-cancel" onClick={staged.cancel}>Cancel</button>
     <button data-testid="fault-drafts-filter-reset">Reset</button>
+    <ListErrorState title="Couldn't load fault-driven drafts" onRetry={() => void draftsQuery.refetch()} />
+    {!draftsQuery.isError ? <ParityTable /> : null}
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });

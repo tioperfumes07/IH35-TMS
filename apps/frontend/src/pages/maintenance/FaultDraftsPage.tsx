@@ -9,6 +9,7 @@ import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
@@ -161,7 +162,14 @@ export function FaultDraftsPage() {
         </Link>
       </div>
 
-      {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
+      {draftsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load fault-driven drafts"
+          status={0}
+          message={(draftsQuery.error as Error)?.message}
+          onRetry={() => void draftsQuery.refetch()}
+        />
+      ) : null}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
         <label className="text-[11px] text-slate-600">
@@ -212,7 +220,7 @@ export function FaultDraftsPage() {
         </p>
       ) : null}
 
-      <ParityTable
+      {!draftsQuery.isError ? <ParityTable
         rows={drafts}
         columns={columns}
         rowKey={(row) => row.id}
@@ -224,7 +232,7 @@ export function FaultDraftsPage() {
             : "No fault-driven draft work orders pending review."
         }
         exportFilename="fault-drafts"
-      />
+      /> : null}
 
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
