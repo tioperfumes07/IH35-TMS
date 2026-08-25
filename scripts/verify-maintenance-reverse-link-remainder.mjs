@@ -21,6 +21,11 @@ const FEED = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF = "scripts/verify-maintenance-reverse-link-remainder.mjs";
 const HEADER = ' * @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["warranty.create_claim","maintenance.panel.road_service_active"],"task":"MAINT-F5891-REVERSE-REMAINDER-EXACT","vertical":"class-sweep"}';
 
+function roadServiceCreateWoFailureContract(src) {
+  return /createWo\.mutate\(row\.id,[\s\S]{0,260}onError:\s*\(error\)\s*=>\s*pushToast\(userFacingApiError\(error,[\s\S]{0,180}"error"\)/.test(src)
+    && /loading=\{createWo\.isPending\s*&&\s*createWo\.variables\s*===\s*row\.id\}/.test(src);
+}
+
 const CHECKS = [
   { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
   { name: "TriageModal", file: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx" },
@@ -135,6 +140,9 @@ function run(root = ROOT) {
       if (/kind="work_order"[\s\S]{0,100}name=\{row\.ticket_number\}/.test(src)) {
         fails.push(`${c.name}: road-service ticket number mislabeled as work-order identity`);
       }
+      if (!roadServiceCreateWoFailureContract(src)) {
+        fails.push(`${c.name}: Create WO must expose a detailed rejection and retain per-row pending state`);
+      }
     }
     if (c.name === "WorkOrderDetailPage") {
       for (const pattern of [
@@ -181,6 +189,14 @@ function evidence(source = {
 
 if (process.argv.includes("--selftest")) {
   const live = run();
+  const roadServiceSource = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/maintenance/RoadServiceList.tsx"), "utf8");
+  const roadServiceRetryMutant = roadServiceSource.replace(
+    "onError: (error) => pushToast",
+    "onError: () => undefined /* planted silent rejection */, unused: () => pushToast",
+  );
+  if (roadServiceCreateWoFailureContract(roadServiceRetryMutant)) {
+    throw new Error("road-service Create WO silent-rejection mutation survived");
+  }
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".maint-reverse-selftest-"));
   try {
     for (const file of [ROUTES, API, TABLE]) {

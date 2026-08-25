@@ -7,6 +7,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const STATUS_FILTERS: Array<{ id: RoadServiceStatus | "all"; label: string }> = [
   { id: "all", label: "All" },
@@ -35,6 +37,7 @@ type Props = {
 };
 
 export function RoadServiceList({ operatingCompanyId }: Props) {
+  const { pushToast } = useToast();
   const [searchParams] = useSearchParams();
   const highlightedTicketId = searchParams.get("ticket_id")?.trim() || "";
   const [statusFilter, setStatusFilter] = useState<RoadServiceStatus | "all">("all");
@@ -100,7 +103,16 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       label: "Actions",
       render: (row) =>
         row.status === "completed" && !row.wo_id ? (
-          <Button type="button" variant="secondary" onClick={() => void createWo.mutateAsync(row.id)}>
+          <Button
+            type="button"
+            variant="secondary"
+            loading={createWo.isPending && createWo.variables === row.id}
+            onClick={() =>
+              createWo.mutate(row.id, {
+                onError: (error) => pushToast(userFacingApiError(error, "Could not create a work order from this ticket"), "error"),
+              })
+            }
+          >
             Create WO
           </Button>
         ) : row.wo_id ? (
