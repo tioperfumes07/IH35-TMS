@@ -178,3 +178,34 @@ export async function nextFactoringDisplayId(client: Queryable, operatingCompany
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
 }
+
+/**
+ * QBO-style document number for expenses that are not load-attributed.
+ * Load-scoped numbers stay `L-<load>-<seq>` via generateExpenseNumber; this series is EXP-YYYY-#####
+ * so driverless / WO / Record Expense always have a visible Ref no. the operator can override.
+ */
+export async function nextExpenseDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `EXP-${year}-`;
+  await withDisplayLock(client, `accounting.expense.expense_number:${operatingCompanyId}:${year}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(
+          CASE
+            WHEN expense_number ~ ('^' || $2 || '[0-9]+$') THEN right(expense_number, 5)::int
+            ELSE 0
+          END
+        ),
+        0
+      ) + 1 AS next_number
+      FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid
+        AND transaction_date >= make_date($3, 1, 1)
+        AND transaction_date < make_date($3 + 1, 1, 1)
+    `,
+    [operatingCompanyId, prefix, year]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}

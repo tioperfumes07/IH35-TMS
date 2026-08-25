@@ -36,6 +36,8 @@ export type RecordExpenseFormValues = {
   amount: number | null; // M-1: dollar number (was a dollars-string); amount_cents = round(amount*100) byte-for-byte
   description: string;
   paymentMethod: RecordExpensePaymentMethod | "";
+  /** QBO Ref no. — auto-preview EXP-YYYY-#####, operator may override. */
+  expenseNumber: string;
 };
 
 export function dollarsToCents(value: number | null) {
@@ -128,6 +130,7 @@ export async function submitRecordExpense(
     ...(!values.loadId && exemptionReason ? { load_exemption_reason: exemptionReason } : {}),
     // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
     is_sample_data: values.isSampleData === true,
+    ...(values.expenseNumber.trim() ? { expense_number: values.expenseNumber.trim() } : {}),
   });
 }
 
@@ -163,5 +166,6 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     amount: null,
     description: "",
     paymentMethod: "",
+    expenseNumber: "",
   };
 }

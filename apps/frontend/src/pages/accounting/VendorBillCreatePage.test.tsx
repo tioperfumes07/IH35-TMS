@@ -29,6 +29,10 @@ vi.mock("../../api/maintenance", () => ({
   }),
 }));
 
+vi.mock("../../api/accounting", () => ({
+  getNextBillDocumentNumber: vi.fn().mockResolvedValue({ document_number: "BILL-2026-00001" }),
+}));
+
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -52,6 +56,11 @@ describe("VendorBillCreatePage", () => {
     );
 
     expect(screen.getByText("Bill Details")).toBeInTheDocument();
+    const billHeader = screen.getByTestId("qbo-bill-header");
+    expect(billHeader).toBeInTheDocument();
+    expect(billHeader.className).toMatch(/w-full/);
+    expect(screen.getByLabelText("Bill no.")).toBeInTheDocument();
+    expect(screen.getByTestId("vendor-bill-number").className).toMatch(/text-right/);
     expect(screen.getByText("Repair Bill")).toBeInTheDocument();
     // Copy generalized from the old fixed 2-line "A + B" formula to support any number of line
     // items (VendorBillForm.tsx's grandLabel).

@@ -895,6 +895,14 @@ export function voidVendorBill(id: string, operatingCompanyId: string, reason: s
   });
 }
 
+export function getNextBillDocumentNumber(operatingCompanyId: string) {
+  return apiRequest<{ document_number: string }>(withCompany("/api/v1/accounting/bills/next-number", operatingCompanyId));
+}
+
+export function getNextExpenseDocumentNumber(operatingCompanyId: string) {
+  return apiRequest<{ document_number: string }>(withCompany("/api/v1/expenses/next-number", operatingCompanyId));
+}
+
 export function createVendorBill(
   operatingCompanyId: string,
   body: {
@@ -1037,6 +1045,7 @@ export function createExpense(
     is_sample_data?: boolean;
     driver_id?: string;
     attachment_draft_id?: string;
+    expense_number?: string;
   }
 ) {
   return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null }>(
