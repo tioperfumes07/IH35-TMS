@@ -1,5 +1,7 @@
 # CODER INSTRUCTIONS — NOW (2026-08-24)
 
+**11:39 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md` — same 30 items. Live `1c31518`. Idle = defect. ACK `GO-1139`.
+
 **10:38 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md` — 30 numbered items. Live `69e60ff`. Idle = defect.
 
 **THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`  

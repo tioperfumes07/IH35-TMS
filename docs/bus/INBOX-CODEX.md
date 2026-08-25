@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**11:39 CT GO NOW — UNBLOCK. Idle = defect.** Hard-reload **`1c31518`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. **Items 23–27.** Settlement mint is **CC-1**. Do not fake accident. Never `trigger_deploy`. Never restamp U14.
+
 **10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Items 23–27.** Settlement mint is **CC-1**. Do not fake accident. Never `trigger_deploy`. Never restamp U14.
 
 **09:40 CT GO NOW.** Hard-reload **`a80afec`**. Trailer_swap + fuel + breakdown **Complete** — do not remake. **NOW:** `hop.assign` (Merged — driver bill/rate). `scenario.settlement` is **CC-1** (`LV-PAY-SETTLE-NOPOST`) — do not duplicate. `scenario.deductions` if still Merged after CC-1. Accident/insurance only if real. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. Never `trigger_deploy`. Never restamp U14.

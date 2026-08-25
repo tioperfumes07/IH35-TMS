@@ -1,5 +1,7 @@
 # SESSION BOOT
 
+**11:39 CT GO-1139:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md` · live `1c31518` · idle = defect.
+
 **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`  
 **LAW:** leftover OPEN = NOT CERTIFIED COMPLETE.
 
