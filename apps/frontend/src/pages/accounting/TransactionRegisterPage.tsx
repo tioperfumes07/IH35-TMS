@@ -328,8 +328,17 @@ export function TransactionRegisterPage() {
           storageKey="transaction-register"
           tableTestId="transaction-register-table"
           suppressToolbarSearch
-          initialPageSize={PAGE_SIZE}
-          pageSizeOptions={[PAGE_SIZE]}
+          // ACCT-F-PARITYTABLE-DOUBLE-PAGINATION: `rows` is already one server page (limit=
+          // PAGE_SIZE of the real `total`, offset-driven). Without pageSize+hidePager,
+          // ParityTable's own uncontrolled pager re-derives "total" from rows.length and renders
+          // a second, contradictory "1-100 of 100 / Page 1 of 1" pager (all nav disabled)
+          // directly above the real "Page {page+1} of {pageCount}" pager below -- live-confirmed
+          // 427 real transactions / 5 real pages vs the fake pager's "100". Same class as the
+          // already-fixed REPORTS-F6363 / DOCS-F-PARITYTABLE-DOUBLE-PAGINATION /
+          // ADMIN-F-PARITYTABLE-DOUBLE-PAGINATION. Per ParityTable's own documented "caller
+          // pre-pages" combo: pageSize = server page size + hidePager -- no double slicing.
+          pageSize={PAGE_SIZE}
+          hidePager
         />
       )}
 
