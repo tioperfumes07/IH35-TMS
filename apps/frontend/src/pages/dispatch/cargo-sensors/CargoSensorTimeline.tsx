@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Button } from "../../../components/Button";
 import { useQuery } from "@tanstack/react-query";
 import {
   CartesianGrid,
@@ -91,8 +92,19 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading cargo sensor timeline…</div>;
   }
 
-  if (query.isError || !query.data) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-red-700">Failed to load cargo sensor timeline.</div>;
+  if (query.isError) {
+    return (
+      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" role="alert" data-cargo-sensor-timeline-error>
+        <div>Failed to load cargo sensor timeline.</div>
+        <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
+          Retry cargo sensors
+        </Button>
+      </div>
+    );
+  }
+
+  if (!query.data) {
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">No cargo sensor response for this load.</div>;
   }
 
   if (query.data.rows.length === 0) {

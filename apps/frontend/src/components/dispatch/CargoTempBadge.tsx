@@ -52,7 +52,22 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
   if (timeline.isLoading) {
     return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">Temp …</span>;
   }
-  if (timeline.isError || !timeline.data) {
+  if (timeline.isError) {
+    return (
+      <button
+        type="button"
+        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+        data-cargo-temp-retry={loadId}
+        onClick={(event) => {
+          event.stopPropagation();
+          void timeline.refetch();
+        }}
+      >
+        Retry temp
+      </button>
+    );
+  }
+  if (!timeline.data) {
     return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">No sensor</span>;
   }
 
