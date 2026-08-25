@@ -432,7 +432,7 @@ const CHAIN_REQUIRED = [
   {
     key: "scenario.maintenance",
     needles: [
-      "w.status = 'closed'",
+      "w.status = 'complete'",
       "w.voided_at IS NULL",
       "w.unit_id IS NOT NULL",
       "w.vendor_id IS NOT NULL",
@@ -700,6 +700,7 @@ function selftest() {
     ["settlement probe accepts an unposted payrun", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pr.status = 'posted'", "") })],
     ["maintenance probe counts an unposted WO", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND pb.batch_status = 'posted'", "") })],
     ["maintenance probe drops labor proof", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND wol.line_type = 'labor'", "AND wol.line_type = 'part'") })],
+    ["maintenance probe reverts to the unreachable 'closed' status", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND w.status = 'complete'", "AND w.status = 'closed'") })],
     ["insurance probe drops recovery posting", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND rp.status = 'posted'", "") })],
     ["insurance probe accepts a voided JE", (s) => ({ ...s, [BACKEND]: s[BACKEND].split("AND je.voided_at IS NULL").join("") })],
     ["certifier loses its masking guard", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].split("assertNotMasked").join("skipCheck") })],

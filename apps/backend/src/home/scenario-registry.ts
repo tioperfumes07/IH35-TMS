@@ -753,7 +753,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     key: "scenario.maintenance",
     title: "Maintenance work order",
     lane: "money",
-    trigger: "WO opened, parts/labor posted, closed",
+    trigger: "WO opened, parts/labor posted, completed",
     je: "DR Repair & Maintenance / CR A/P",
     spec_ref: "MNT",
     sources: ["maintenance.work_orders"],
@@ -773,7 +773,13 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND v.operating_company_id = w.operating_company_id
            AND v.deactivated_at IS NULL
          WHERE ($1::uuid IS NULL OR w.operating_company_id = $1::uuid)
-           AND w.status = 'closed'
+           -- PROGRAM-MAINTENANCE-STATUS-VOCABULARY: the canonical WO status enum
+           -- (apps/backend/src/maintenance/work-orders.routes.ts workOrderStatusSchema) has no
+           -- 'closed' value -- its terminal non-cancelled state is 'complete'. 'closed' can never
+           -- be written by the canonical PATCH .../work-orders/:id/transition route, so this probe
+           -- was structurally unsatisfiable by any real WO. Same bug class as
+           -- PROGRAM-TRAILER-SWAP-STATUS-VOCABULARY (#15706, equipment Active vs InService).
+           AND w.status = 'complete'
            AND w.voided_at IS NULL
            AND w.unit_id IS NOT NULL
            AND w.vendor_id IS NOT NULL
@@ -828,7 +834,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
                 )
            )
       `,
-      describe: (n) => `${n} closed work order chain(s) with parts, labor and posted A/P`,
+      describe: (n) => `${n} completed work order chain(s) with parts, labor and posted A/P`,
     },
   },
   {
