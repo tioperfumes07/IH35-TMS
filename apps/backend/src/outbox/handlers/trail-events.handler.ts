@@ -49,7 +49,6 @@ export function buildTrailEventHandlers(): OutboxEventHandler[] {
     new TrailEventHandler("driver.scheduler.temp_cover_assigned"),
     new TrailEventHandler("work_order.created"),
     new TrailEventHandler("work_order.updated"),
-    new TrailEventHandler("work_order.approved"),
     new TrailEventHandler("work_order.started"),
     new TrailEventHandler("work_order.completed"),
     new TrailEventHandler("accounting.bill.auto_created_from_wo"),

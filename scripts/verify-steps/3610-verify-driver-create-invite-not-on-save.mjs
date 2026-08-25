@@ -4,5 +4,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-driver-create-invite-not-on-save.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-driver-create-invite-not-on-save.mjs"]);
+    ctx.run("node", ["scripts/verify-work-order-approval-email-durability.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-work-order-approval-email-durability.mjs"]);
   },
 };

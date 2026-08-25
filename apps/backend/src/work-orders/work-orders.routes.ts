@@ -4,7 +4,6 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { companyQuerySchema, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "../accounting/shared.js";
-import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
@@ -989,27 +988,15 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         unitLabel = ures.rows[0]?.unit_number != null ? String(ures.rows[0].unit_number) : null;
       }
       await appendCrudAudit(client, user.uuid, "maintenance.work_order.approved", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
-      await enqueueWorkOrderOutbox(client, "work_order.approved", { work_order_id: wo.id, approved_by: user.uuid });
-
-      const recipients = (process.env.WO_APPROVED_NOTIFY_EMAIL ?? "")
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean);
-      if (recipients.length > 0) {
-        void enqueueEmail({
-          operatingCompanyId: query.data.operating_company_id,
-          toAddresses: recipients,
-          subject: `Work order approved — ${String(wo.display_id ?? wo.id)}`,
-          templateKey: "wo-approved",
-          templateVars: {
-            workOrderLabel: String(wo.display_id ?? wo.id),
-            shopName: wo.shop_name ? String(wo.shop_name) : "",
-            unitLabel: unitLabel ?? "",
-            approvedAt: new Date().toISOString(),
-          },
-          queuedByUserId: user.uuid,
-        }).catch(() => undefined);
-      }
+      await enqueueWorkOrderOutbox(client, "work_order.approved", {
+        operating_company_id: query.data.operating_company_id,
+        work_order_id: wo.id,
+        work_order_label: String(wo.display_id ?? wo.id),
+        shop_name: wo.shop_name ? String(wo.shop_name) : "",
+        unit_label: unitLabel ?? "",
+        approved_at: new Date().toISOString(),
+        approved_by: user.uuid,
+      });
 
       return { kind: "ok" as const, wo };
     });
