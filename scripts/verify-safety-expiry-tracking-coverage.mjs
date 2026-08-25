@@ -38,11 +38,12 @@ export function collectProblems(root = ROOT) {
     ["background-expiry-column", /background_checks[\s\S]*expiry_date/],
     ["training-expiry-column", /training_records[\s\S]*expiry_date/],
   ]) if (!pattern.test(expirySource)) failures.push(`missing_pattern:${id}`);
+  if (/driver_safety_profiles[\s\S]{0,500}?\.catch\s*\(/.test(sources.profile)) failures.push("driver profile read must propagate SQL failures instead of converting them to not-found");
 
   if (!/app\.get\("\/api\/v1\/safety\/background-checks", RL_READ/.test(sources.background) ||
       !/bc\.driver_id = \$\$\{values\.length\}::uuid/.test(sources.background)) failures.push("background read must provide company-scoped exact-driver reverse filtering");
   if (!/JOIN mdata\.drivers d[\s\S]*d\.operating_company_id = bc\.operating_company_id/.test(sources.background)) failures.push("background read must resolve labels through an entity-scoped driver join");
-  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.background)) failures.push("background writer must validate the driver belongs to the selected company");
+  if (!/background_check_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}background_check_create_driver_dca\.is_authorized = true[\s\S]{0,180}background_check_create_driver_dca\.deactivated_at IS NULL/.test(sources.background)) failures.push("background writer must validate owned or actively authorized selected-company driver");
   if (!/driver_id: body\.data\.driver_id/.test(sources.background) || !/appendCrudAudit/.test(sources.background)) failures.push("background writer must persist/audit the canonical driver FK");
   if (!/listSafetyBackgroundChecks\(companyId: string, driverId\?: string\)/.test(sources.api) || !/params\.set\("driver_id", driverId\)/.test(sources.api)) failures.push("frontend client must forward the exact reverse driver filter");
   if (!/DriverPickerWithCreate[\s\S]*dataField="background-check-driver"/.test(sources.section)) failures.push("background creator must use the canonical company-scoped driver picker");
@@ -58,7 +59,7 @@ export function collectProblems(root = ROOT) {
       (sources.medical.match(/(?<!_)dca\.is_authorized = true/g) ?? []).length !== 2 ||
       (sources.medical.match(/(?<!_)dca\.deactivated_at IS NULL/g) ?? []).length !== 2) failures.push("both medical-card exact reads must validate owned or authorized driver parent");
   if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(sources.medical)) failures.push("medical-card exact list filter must distinguish invalid parent from true empty cards");
-  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.medical)) failures.push("medical-card writer must validate the driver belongs to the selected company");
+  if (!/medical_card_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}medical_card_create_driver_dca\.is_authorized = true[\s\S]{0,180}medical_card_create_driver_dca\.deactivated_at IS NULL/.test(sources.medical)) failures.push("medical-card writer must validate owned or actively authorized selected-company driver");
   if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter");
   if (!/DriverPickerWithCreate[\s\S]*dataField="medical-card-driver"/.test(sources.medicalSection)) failures.push("medical-card creator must use the canonical company-scoped driver picker");
   if (!/createSafetyMedicalCard\(operatingCompanyId[\s\S]*driver_id: selectedDriverId/.test(sources.medicalSection)) failures.push("medical-card creator must submit the selected driver FK");
@@ -66,10 +67,10 @@ export function collectProblems(root = ROOT) {
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver medical-card surface");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact medical-card reverse history");
   if (!/app\.post\("\/api\/v1\/safety\/training-records", RL_WRITE/.test(sources.training)) failures.push("training-record writer must be explicitly rate-limited");
-  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.training) ||
+  if (!/training_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}training_create_driver_dca\.is_authorized = true[\s\S]{0,180}training_create_driver_dca\.deactivated_at IS NULL/.test(sources.training) ||
       !/driver_not_in_operating_company/.test(sources.training)) failures.push("training-record writer must reject drivers outside the selected company");
   if (!/app\.post\("\/api\/v1\/safety\/driver-qualification\/items", RL_WRITE/.test(sources.dq)) failures.push("DQF writer must be explicitly rate-limited");
-  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.dq) ||
+  if (!/qualification_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}qualification_create_driver_dca\.is_authorized = true[\s\S]{0,180}qualification_create_driver_dca\.deactivated_at IS NULL/.test(sources.dq) ||
       !/driver_not_in_operating_company/.test(sources.dq)) failures.push("DQF writer must reject drivers outside the selected company");
   return failures;
 }
@@ -85,9 +86,10 @@ function selftest() {
       fs.copyFileSync(path.join(process.cwd(), rel), target);
     }
     const mutations = [
+      [REL.profile, "        );\n      const row = profileRes.rows", "        ).catch(() => ({ rows: [] }));\n      const row = profileRes.rows"],
       [REL.background, "d.operating_company_id = bc.operating_company_id", "TRUE"],
       [REL.background, "bc.driver_id = $${values.length}::uuid", "TRUE"],
-      [REL.background, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
+      [REL.background, "background_check_create_driver_dca.is_authorized = true", "background_check_create_driver_dca.is_authorized = false"],
       [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string)", "listSafetyBackgroundChecks(companyId: string)"],
       [REL.section, 'dataField="background-check-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<BackgroundChecksSection", "<MissingBackgroundChecksSection"],
@@ -95,6 +97,7 @@ function selftest() {
       [REL.medical, "d.operating_company_id = mc.operating_company_id", "TRUE"],
       [REL.medical, "label_dca.is_authorized = true", "TRUE"],
       [REL.medical, "dca.is_authorized = true", "TRUE"],
+      [REL.medical, "medical_card_create_driver_dca.is_authorized = true", "medical_card_create_driver_dca.is_authorized = false"],
       [REL.medical, 'if (!result.found) return reply.code(404)', 'if (false) return reply.code(404)'],
       [REL.medical, "mc.driver_id = $${values.length}::uuid", "TRUE"],
       [REL.medical, 'app.get("/api/v1/safety/medical-cards", RL_READ', 'app.get("/api/v1/safety/medical-cards", {}'],
@@ -103,9 +106,9 @@ function selftest() {
       [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
       [REL.training, 'app.post("/api/v1/safety/training-records", RL_WRITE', 'app.post("/api/v1/safety/training-records", {}'],
-      [REL.training, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
+      [REL.training, "training_create_driver_dca.is_authorized = true", "training_create_driver_dca.is_authorized = false"],
       [REL.dq, 'app.post("/api/v1/safety/driver-qualification/items", RL_WRITE', 'app.post("/api/v1/safety/driver-qualification/items", {}'],
-      [REL.dq, "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid", "SELECT id FROM mdata.drivers WHERE id = $1::uuid AND TRUE"],
+      [REL.dq, "qualification_create_driver_dca.is_authorized = true", "qualification_create_driver_dca.is_authorized = false"],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
@@ -127,4 +130,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 21/21 mutations killed" : ""}`);
+console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 23/23 mutations killed" : ""}`);
