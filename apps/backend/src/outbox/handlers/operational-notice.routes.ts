@@ -66,6 +66,28 @@ function label(p: NoticePayload, preferredKey: string, idKey: string): string {
 
 export const NOTICE_ROUTES: NoticeRoute[] = [
   {
+    eventType: "admin.carrier.launched",
+    severity: "high",
+    entityType: "org.companies",
+    entityIdKey: "aggregate_id",
+    audience: { kind: "roles", roles: ["Owner"] },
+    sourceBlock: "ADMIN-CARRIER-LAUNCHED",
+    title: (p) => `Carrier launched — ${label(p, "company_code", "aggregate_id")}`,
+    body: (p) => `Carrier ${label(p, "company_code", "aggregate_id")} is now active. Review its launch controls and operating access.`,
+    actionLink: () => "/admin/launch-toggles",
+  },
+  {
+    eventType: "admin.carrier.rollback",
+    severity: "critical",
+    entityType: "org.companies",
+    entityIdKey: "aggregate_id",
+    audience: { kind: "roles", roles: ["Owner"] },
+    sourceBlock: "ADMIN-CARRIER-ROLLBACK",
+    title: (p) => `Carrier rolled back — ${label(p, "company_code", "aggregate_id")}`,
+    body: (p) => `Carrier ${label(p, "company_code", "aggregate_id")} was rolled back and hidden. Review the recorded reason and operating impact.`,
+    actionLink: () => "/admin/launch-toggles",
+  },
+  {
     eventType: "compliance.drug_alcohol.random_selections_drawn",
     severity: "high",
     entityType: "compliance.drug_alcohol_random_draws",
