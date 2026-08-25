@@ -73,6 +73,8 @@ export function Modal({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const boxRef = useRef<{ w: number; h: number } | null>(null);
+  const failedSizeRef = useRef<{ w: number; h: number } | null>(null);
+  const [sizeSaveError, setSizeSaveError] = useState(false);
 
   const isDrawer = variant === "drawer";
   // The create drawer is a fixed-width right panel, so the persisted free-resize box (which sizes a
@@ -88,6 +90,27 @@ export function Modal({
     enabled: open && resizeEnabled && useCustomSize,
     staleTime: 60_000,
   });
+
+  const saveModalSize = useCallback(async (next: { w: number; h: number }) => {
+    if (!modalKind) return;
+    try {
+      await persistModalSize(modalKind, next);
+      failedSizeRef.current = null;
+      setSizeSaveError(false);
+    } catch {
+      // A failed preference write must not look persisted. Keep the exact attempted dimensions so
+      // Retry never saves a later/default box and silently changes the operator's choice.
+      failedSizeRef.current = next;
+      setSizeSaveError(true);
+    }
+  }, [modalKind]);
+
+  useEffect(() => {
+    if (open) {
+      failedSizeRef.current = null;
+      setSizeSaveError(false);
+    }
+  }, [open, modalKind]);
 
   useEffect(() => {
     if (!open || !resizeEnabled) {
@@ -255,6 +278,32 @@ export function Modal({
             </div>
             <ModalCloseButton title={title} onClose={attemptClose} />
           </div>
+          {useCustomSize && (prefsQuery.isError || sizeSaveError) ? (
+            <div
+              role="alert"
+              data-modal-size-preference-error=""
+              className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-700"
+            >
+              <span>
+                {sizeSaveError
+                  ? "Modal size was not saved. Your current size is temporary."
+                  : "Saved modal size is unavailable. Using a temporary default."}
+              </span>
+              <button
+                type="button"
+                className="shrink-0 rounded-sm border border-slate-300 bg-white px-3 py-1 font-medium hover:bg-slate-50"
+                onClick={() => {
+                  if (sizeSaveError && failedSizeRef.current) {
+                    void saveModalSize(failedSizeRef.current);
+                    return;
+                  }
+                  void prefsQuery.refetch();
+                }}
+              >
+                {sizeSaveError ? "Retry save" : "Retry load"}
+              </button>
+            </div>
+          ) : null}
           <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">{children}</div>
           {resizeEnabled ? (
             <ResizeHandle
@@ -280,7 +329,7 @@ export function Modal({
                 if (!useCustomSize || !modalKind) return;
                 const b = boxRef.current;
                 if (!b) return;
-                void persistModalSize(modalKind, b).catch(() => undefined);
+                void saveModalSize(b);
               }}
             />
           ) : null}
