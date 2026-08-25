@@ -5,7 +5,7 @@ import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { officePasswordSchema } from "../identity/office-password-policy.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
   PORTAL_SESSION_COOKIE,
   PORTAL_SESSION_TTL_MS,
@@ -119,9 +119,9 @@ export async function registerPortalAuthRoutes(app: FastifyInstance) {
     const email = normalizeEmail(parsed.data.email);
 
     const user = await withLuciaBypass(async (client) => {
-      const res = await client.query<{ id: string }>(
+      const res = await client.query<{ id: string; operating_company_id: string }>(
         `
-          SELECT id::text
+          SELECT id::text, operating_company_id::text
           FROM shipper_portal.portal_users
           WHERE lower(email) = $1
             AND active = TRUE
@@ -145,23 +145,23 @@ export async function registerPortalAuthRoutes(app: FastifyInstance) {
           `,
           [token, user.id, ip]
         );
+        const confirmUrl = `${getFrontendBaseUrl()}/portal/reset-password?token=${encodeURIComponent(token)}`;
+        await enqueueOutboxEvent(
+          client,
+          "shipper_portal.password_reset_email",
+          { aggregate_type: "shipper_portal.portal_users", aggregate_id: user.id },
+          {
+            operating_company_id: user.operating_company_id,
+            portal_user_id: user.id,
+            to: email,
+            subject: "Reset your IH 35 shipper portal password",
+            body_html: `<p><a href="${confirmUrl}">Choose a new password</a> (expires in one hour).</p>`,
+            body_text: `Reset your shipper portal password: ${confirmUrl}`,
+            event_class: "shipper_portal.password_reset",
+          },
+          `shipper-portal-password-reset:${token}`
+        );
       });
-      const confirmUrl = `${getFrontendBaseUrl()}/portal/reset-password?token=${encodeURIComponent(token)}`;
-      try {
-        await sendEmail({
-          to: email,
-          subject: "Reset your IH 35 shipper portal password",
-          html: `<p><a href="${confirmUrl}">Choose a new password</a> (expires in one hour).</p>`,
-          text: `Reset your shipper portal password: ${confirmUrl}`,
-          sender: "noreply",
-          eventClass: "shipper_portal.password_reset",
-          recipientUserUuid: null,
-          actorUserId: null,
-          tags: [{ name: "type", value: "portal_password_reset" }],
-        });
-      } catch {
-        // generic response
-      }
     }
 
     return reply.code(200).send({ ok: true, message: RESET_GENERIC_OK });
