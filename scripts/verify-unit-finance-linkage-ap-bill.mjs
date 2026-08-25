@@ -47,6 +47,9 @@ export function audit(src) {
   if (!/to=\{`\/accounting\/bills\?unit_id=\$\{encodeURIComponent\(unitId\)\}`\}[\s\S]{0,120}Open Bills/.test(src.tab)) {
     failures.push(`${FILES.tab}: Open Bills must preserve the current unit_id filter`);
   }
+  if (!/linkedMoneyQuery\.isError[\s\S]{0,300}Couldn't load linked bills and expenses for this unit\.[\s\S]{0,180}linkedMoneyQuery\.refetch\(\)/.test(src.tab)) {
+    failures.push(`${FILES.tab}: linked-financials failure must retry the exact company+unit query`);
+  }
   return failures;
 }
 
@@ -70,6 +73,7 @@ if (process.argv.includes("--selftest")) {
     ["tab-call", "tab", /listUnitLinkedFinancials\(unitId, companyId\)/, "listSomethingElse(unitId, companyId)"],
     ["tab-entitylink", "tab", /EntityLink kind="bill" id=\{b\.id\}/, 'span'],
     ["tab-open-bills-filter", "tab", /\/accounting\/bills\?unit_id=\$\{encodeURIComponent\(unitId\)\}/, "/accounting/bills"],
+    ["tab-linked-financials-retry", "tab", /linkedMoneyQuery\.refetch\(\)/, "linkedMoneyQuery.remove()"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

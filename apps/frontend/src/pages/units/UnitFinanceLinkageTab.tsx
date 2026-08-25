@@ -65,7 +65,10 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
           <p className="text-sm text-gray-500">Loading bills &amp; expenses for this unit…</p>
         ) : null}
         {linkedMoneyQuery.isError ? (
-          <p className="text-sm text-amber-800">Linked-financials lookup unavailable in this backend build.</p>
+          <ListErrorBanner
+            message="Couldn't load linked bills and expenses for this unit."
+            onRetry={() => void linkedMoneyQuery.refetch()}
+          />
         ) : null}
         {linkedMoneyQuery.data && linkedBills.length === 0 && linkedExpenses.length === 0 ? (
           <p className="text-sm text-gray-500">
