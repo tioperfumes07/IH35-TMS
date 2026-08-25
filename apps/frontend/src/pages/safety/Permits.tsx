@@ -6,6 +6,7 @@ import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -54,9 +55,9 @@ export function Permits({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-4">
       {deadlineQ.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" data-testid="permits-2290-deadline-query-error">
-          {userFacingApiError(deadlineQ.error, "Could not load Form 2290 deadline.")}
-        </p>
+        <div data-testid="permits-2290-deadline-query-error">
+          <ListErrorState status={0} message={userFacingApiError(deadlineQ.error, "Could not load Form 2290 deadline.")} onRetry={() => void deadlineQ.refetch()} />
+        </div>
       ) : (
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
         <div className="font-semibold">
