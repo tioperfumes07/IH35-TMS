@@ -1,6 +1,8 @@
 # INBOX-CASCADE
 
-**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. Unique FINDING only. Invoice# `INV-2026-…` ≠ load# is **CC-1**, already tracked — do not restamp U14. ACK `GO-1650`. No product PR.
+**17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Unique FINDING only. Invoice#=load# is Cursor money in flight — do not restamp U14. Walk `/program`. ACK `GO-1715`. No product PR.
+
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
 
 **16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 

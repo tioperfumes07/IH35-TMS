@@ -1,6 +1,8 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
-**16:50 CT GO-1650 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Live API **`3eefade`**. SPA **LIVE** `dep-da70tbu417fc738vrd4g` tip `ecd09bfa`. Cursor kicked API **`dep-da70v2k9v7es739pvva0`** (one in-flight — **nobody else `trigger_deploy`**). Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **CC-1:** Book Load is done (#15916) — **NOW=#1 invoice#=load#** on money clone, then 2–10. Idle-safe = defect. **CC-2:** do not remake #15921; next unique; item 26 waits CC-1. Skip #15546. U14 never restamp.
+**17:15 CT GO-1715 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Owner: seats must work; Cursor **in money on #1**. Live API **`ecd09bf`**. SPA autoDeploy **IN FLIGHT** `dep-da716d52g9dc73881p6g` — nobody `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. **CC-1:** grep `displayId = loadNumber` on main before coding #1; else **#2 cash-flow Proforma labels**. **CC-2:** do not remake #15921. **CC-3:** do not remake #15933. Skip #15546. U14 never restamp.
+
+**16:50 CT GO-1650.** Live API then `3eefade`. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded for mail by GO-1715.**
 
 **16:30 CT GO-1630.** Live then `e59f66a`. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded for live SHA / mail by GO-1650.**
 

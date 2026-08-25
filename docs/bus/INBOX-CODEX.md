@@ -1,6 +1,8 @@
 # INBOX-CODEX · 9226
 
-**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. SPA IN FLIGHT `ecd09bfa` (#15927). After SPA live: prove Dispatch geofence **Retry** + `eld_certified`. hop.assign UI only. ACK `GO-1650`. Never restamp U14. Never `trigger_deploy`.
+**17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Prove Dispatch geofence **Retry** + `eld_certified`. SPA catching up — do not `trigger_deploy`. hop.assign UI only. ACK `GO-1715`. Never restamp U14.
+
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
 
 **16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 
