@@ -2,6 +2,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
 import {
   assertDriverQualifiedForLoad,
@@ -305,6 +306,21 @@ export async function quickAssignLoad(
         (load as { assigned_primary_driver_id?: string | null })
           .assigned_primary_driver_id ?? null;
       if (input.driver_id !== prevDriver) {
+        // The driver-facing notice is part of the assignment write, not a best-effort callback.
+        // Persist it on the canonical drained outbox in this transaction so commit means the new
+        // driver will either receive an in-app notice or the outbox will retain a visible failure.
+        await enqueueOutboxEvent(
+          client,
+          "load.assigned_to_driver",
+          { aggregate_type: "load", aggregate_id: input.load_id },
+          {
+            operating_company_id: input.operating_company_id,
+            load_id: input.load_id,
+            load_number:
+              (load as { load_number?: string | null }).load_number ?? null,
+            driver_id: input.driver_id,
+          },
+        );
         notifyBox.v = {
           operatingCompanyId: input.operating_company_id,
           driverId: input.driver_id,
