@@ -26,6 +26,7 @@ import type { CustomerType, MilesBasis } from "../../types/api";
 import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ListErrorState } from "../ListErrorState";
+import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -216,7 +217,15 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
 }
 
 const trimOrUndef = (v: string) => (v.trim() ? v.trim() : undefined);
+const properOrUndef = (v: string) => {
+  const t = trimOrUndef(v);
+  return t ? properPersonOrPlaceName(t) : undefined;
+};
 const trimOrNull = (v: string) => (v.trim() ? v.trim() : null);
+const properOrNull = (v: string) => {
+  const t = trimOrNull(v);
+  return t ? properPersonOrPlaceName(t) : null;
+};
 const numOrUndef = (v: string) => {
   const n = Number(v);
   return v.trim() === "" || Number.isNaN(n) ? undefined : n;
@@ -245,7 +254,7 @@ export function validateCustomerProfileForCreate(
 }
 
 export function profileValuesToCreatePayload(v: CustomerProfileFormValues, operatingCompanyId: string): CreateCustomerInput {
-  const name = v.name.trim();
+  const name = properPersonOrPlaceName(v.name.trim());
   const email = trimOrUndef(v.email);
   const arEmail = trimOrUndef(v.ar_email) ?? email;
   const apEmail = trimOrUndef(v.ap_email) ?? email;
@@ -263,16 +272,16 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     mc_number: trimOrUndef(v.mc_number),
     dot_number: trimOrUndef(v.dot_number),
     tax_id: trimOrUndef(v.tax_id),
-    billing_address: trimOrUndef(v.billing_address),
-    billing_city: trimOrUndef(v.billing_city),
+    billing_address: properOrUndef(v.billing_address),
+    billing_city: properOrUndef(v.billing_city),
     billing_state: trimOrUndef(v.billing_state),
     billing_zip: trimOrUndef(v.billing_zip),
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrUndef(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
     default_income_account_id: v.default_income_account_id || null,
-    main_contact_name: trimOrUndef(v.main_contact_name),
-    main_contact_title: trimOrUndef(v.main_contact_title),
+    main_contact_name: properOrUndef(v.main_contact_name),
+    main_contact_title: properOrUndef(v.main_contact_title),
     main_contact_mobile: trimOrUndef(v.mobile),
     ar_email: arEmail,
     ar_phone: trimOrUndef(v.ar_phone),
@@ -290,13 +299,13 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     factoring_notes: trimOrUndef(v.factoring_notes),
     notes: trimOrUndef(v.notes),
     operating_company_id: operatingCompanyId,
-    print_on_invoice_name: trimOrUndef(v.print_on_invoice_name),
+    print_on_invoice_name: properOrUndef(v.print_on_invoice_name),
     cc_email: trimOrUndef(v.cc_email),
     bcc_email: trimOrUndef(v.bcc_email),
     shipping_same_as_billing: v.shipping_same_as_billing,
-    shipping_address_line1: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_address_line1),
-    shipping_address_line2: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_address_line2),
-    shipping_city: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_city),
+    shipping_address_line1: v.shipping_same_as_billing ? undefined : properOrUndef(v.shipping_address_line1),
+    shipping_address_line2: v.shipping_same_as_billing ? undefined : properOrUndef(v.shipping_address_line2),
+    shipping_city: v.shipping_same_as_billing ? undefined : properOrUndef(v.shipping_city),
     shipping_state: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_state),
     shipping_postal_code: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_postal_code),
     shipping_country: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_country),
@@ -309,7 +318,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
 }
 
 export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): UpdateCustomerInput {
-  const name = v.name.trim();
+  const name = properPersonOrPlaceName(v.name.trim());
   return {
     name,
     customer_code: trimOrNull(v.customer_code),
@@ -323,16 +332,16 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     mc_number: trimOrNull(v.mc_number),
     dot_number: trimOrNull(v.dot_number),
     tax_id: trimOrNull(v.tax_id),
-    billing_address: trimOrNull(v.billing_address),
-    billing_city: trimOrNull(v.billing_city),
+    billing_address: properOrNull(v.billing_address),
+    billing_city: properOrNull(v.billing_city),
     billing_state: trimOrNull(v.billing_state),
     billing_zip: trimOrNull(v.billing_zip),
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrNull(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
     default_income_account_id: v.default_income_account_id || null,
-    main_contact_name: trimOrNull(v.main_contact_name),
-    main_contact_title: trimOrNull(v.main_contact_title),
+    main_contact_name: properOrNull(v.main_contact_name),
+    main_contact_title: properOrNull(v.main_contact_title),
     main_contact_mobile: trimOrNull(v.mobile),
     ar_email: trimOrNull(v.ar_email),
     ar_phone: trimOrNull(v.ar_phone),
@@ -350,13 +359,13 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     factoring_notes: trimOrNull(v.factoring_notes),
     notes: trimOrNull(v.notes),
     status: v.status,
-    print_on_invoice_name: trimOrNull(v.print_on_invoice_name),
+    print_on_invoice_name: properOrNull(v.print_on_invoice_name),
     cc_email: trimOrNull(v.cc_email),
     bcc_email: trimOrNull(v.bcc_email),
     shipping_same_as_billing: v.shipping_same_as_billing,
-    shipping_address_line1: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_address_line1),
-    shipping_address_line2: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_address_line2),
-    shipping_city: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_city),
+    shipping_address_line1: v.shipping_same_as_billing ? null : properOrNull(v.shipping_address_line1),
+    shipping_address_line2: v.shipping_same_as_billing ? null : properOrNull(v.shipping_address_line2),
+    shipping_city: v.shipping_same_as_billing ? null : properOrNull(v.shipping_city),
     shipping_state: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_state),
     shipping_postal_code: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_postal_code),
     shipping_country: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_country),

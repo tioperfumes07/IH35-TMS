@@ -75,6 +75,14 @@ try {
   if (!accountingChrome.includes("<PageHeader") && !accountingChrome.includes('aria-label="Back"')) {
     throw new Error("Accounting wrapper must render a back control");
   }
+  const fuelPlanner = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
+  assertIncludes(fuelPlanner, 'backHref="/home"', "Fuel module header must have a module-parent backHref");
+  const safetyLayout = read("apps/frontend/src/pages/safety/SafetyLayout.tsx");
+  assertIncludes(safetyLayout, "hasInAppHistory", "Safety layout back must prefer in-app history");
+  const customerCreate = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");
+  assertIncludes(customerCreate, "properPersonOrPlaceName", "Customer create/update payload must title-case names/addresses");
+  const vendorCreate = read("apps/frontend/src/components/vendors/VendorCreateModal.tsx");
+  assertIncludes(vendorCreate, "properPersonOrPlaceName", "Vendor create payload must title-case names/addresses");
 
   const dispatch = read("apps/frontend/src/pages/Dispatch.tsx");
   // orphan-triage F1: AccountingSubNav.tsx (verified-dead, zero-consumer duplicate of the live

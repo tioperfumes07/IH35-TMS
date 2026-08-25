@@ -215,7 +215,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   if (!companyId) {
     return (
       <div className="space-y-3 p-4">
-        <PageHeader title="Fuel" subtitle="Overview" />
+        <PageHeader title="Fuel" subtitle="Overview" backHref="/home" />
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           Select an operating company to view fuel.
         </div>
@@ -228,6 +228,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       <PageHeader
         title="Fuel"
         subtitle={activeLabel}
+        backHref="/home"
         actions={
           <div className="flex items-center gap-2">
             {tab === "planner" ? (
