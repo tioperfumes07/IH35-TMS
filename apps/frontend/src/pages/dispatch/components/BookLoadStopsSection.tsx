@@ -51,6 +51,8 @@ export function BookLoadStopsSection({
       address_full: "",
       address_line1: "",
       postal_code: "",
+      latitude: "",
+      longitude: "",
       scheduled_arrival_at: "",
       time_window_type: "appointment",
       pickup_time_type_id: "",
@@ -153,6 +155,8 @@ export function BookLoadStopsSection({
                     }
                   />
                   <Field label="Zip Code" input={<input {...register(`stops.${index}.postal_code`)} className={CELL} placeholder="ZIP" />} />
+                  <input type="hidden" {...register(`stops.${index}.latitude`)} />
+                  <input type="hidden" {...register(`stops.${index}.longitude`)} />
                   {/* Date + Time both write the single scheduled_arrival_at (datetime). */}
                   <Controller
                     control={control}

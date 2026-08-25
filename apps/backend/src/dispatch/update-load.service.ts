@@ -54,6 +54,8 @@ export type UpdateLoadStopInput = {
   site_contact_phone?: string | null;
   gate_dock_text?: string | null;
   postal_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 // Scalar load fields editable via the wizard. Status is intentionally EXCLUDED — it flows through the
@@ -309,7 +311,7 @@ async function replaceStops(
             scheduled_arrival_at = $8, time_window_type = $9, pickup_time_type_id = $10, appointment_start_at = $11, appointment_end_at = $12,
             lumper_required = $13, lumper_provider_id = $14, lumper_paid_by = $15, lumper_amount_cents = $16, is_tarp_stop = $17,
             tarp_count = $18, stop_notes = $19, site_contact_name = $20, site_contact_phone = $21,
-            gate_dock_text = $22, postal_code = $23,
+            gate_dock_text = $22, postal_code = $23, latitude = $24, longitude = $25,
             status = CASE WHEN status = 'cancelled' THEN 'pending' ELSE status END,
             updated_at = now()
           WHERE id = $1::uuid
@@ -338,6 +340,8 @@ async function replaceStops(
           stop.site_contact_phone ?? null,
           stop.gate_dock_text ?? null,
           stop.postal_code ?? null,
+          stop.latitude ?? null,
+          stop.longitude ?? null,
         ]
       );
       updated += 1;
@@ -347,9 +351,9 @@ async function replaceStops(
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
-            site_contact_name, site_contact_phone, gate_dock_text, postal_code
+            site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude
           )
-          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
         `,
         [
           loadId,
@@ -376,6 +380,8 @@ async function replaceStops(
           stop.site_contact_phone ?? null,
           stop.gate_dock_text ?? null,
           stop.postal_code ?? null,
+          stop.latitude ?? null,
+          stop.longitude ?? null,
         ]
       );
       inserted += 1;

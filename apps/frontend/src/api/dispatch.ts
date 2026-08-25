@@ -208,6 +208,8 @@ export type DispatchBookLoadPayload = {
     site_contact_phone?: string;
     gate_dock_text?: string;
     postal_code?: string;
+    latitude?: number;
+    longitude?: number;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
