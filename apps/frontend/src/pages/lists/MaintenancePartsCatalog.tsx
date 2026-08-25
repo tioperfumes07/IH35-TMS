@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useMaintenancePartsCatalog, type MaintPartRow } from "../../hooks/useMaintenancePartsCatalog";
+import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { CreateMaintPartModal } from "./CreateMaintPartModal";
 
 const MANUFACTURERS = ["", "Detroit Diesel", "Cummins", "Freightliner", "Peterbilt", "Kenworth"];
@@ -124,7 +125,7 @@ export function MaintenancePartsCatalog() {
           {MANUFACTURERS.map((m) => <option key={m} value={m}>{m || "All manufacturers"}</option>)}
         </SelectCombobox>
         <SelectCombobox value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c || "All categories"}</option>)}
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c ? properEnumOrFilterLabel(c) : "All categories"}</option>)}
         </SelectCombobox>
       </div>
 

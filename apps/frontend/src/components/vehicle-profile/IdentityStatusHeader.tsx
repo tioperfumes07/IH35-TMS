@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { patchUnit } from "../../api/mdata";
+import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
 import { StatusChangeModal } from "./StatusChangeModal";
 import { PlatesTable } from "./PlatesTable";
@@ -75,7 +76,7 @@ export function IdentityStatusHeader({
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {properEnumOrFilterLabel(s)}
                 </option>
               ))}
             </select>
