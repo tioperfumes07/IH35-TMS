@@ -17,6 +17,7 @@ import { createDispatchLoad } from "../../../api/dispatch";
 import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
@@ -870,7 +871,7 @@ export function BookLoadModalV4({
         stops: values.stops.map((stop, index) => ({
           stop_type: stop.stop_type,
           sequence_number: index + 1,
-          city: stop.city,
+          city: stop.city?.trim() ? properPersonOrPlaceName(stop.city) : "",
           state: stop.state,
           // LV-STOP-ZIP-DROPPED: this mapping is an explicit field-by-field allow-list and postal_code was
           // never added to it. Every other layer was already correct - the Zip Code input is registered as
@@ -886,7 +887,7 @@ export function BookLoadModalV4({
           latitude: numOrUndef(stop.latitude),
           longitude: numOrUndef(stop.longitude),
           country: stop.country,
-          address_line1: stop.address_line1,
+          address_line1: stop.address_line1?.trim() ? properPersonOrPlaceName(stop.address_line1) : "",
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
           time_window_type: stop.time_window_type,
           pickup_time_type_id: stop.pickup_time_type_id || undefined,
@@ -902,7 +903,7 @@ export function BookLoadModalV4({
           is_tarp_stop: stop.is_tarp_stop === true || (stop.is_tarp_stop as unknown) === "true",
           tarp_count: Number(stop.tarp_count || 0),
           stop_notes: stop.stop_notes || undefined,
-          site_contact_name: stop.site_contact_name || undefined,
+          site_contact_name: stop.site_contact_name?.trim() ? properPersonOrPlaceName(stop.site_contact_name) : undefined,
           site_contact_phone: stop.site_contact_phone || undefined,
           gate_dock_text: stop.gate_dock_text || undefined,
         })),

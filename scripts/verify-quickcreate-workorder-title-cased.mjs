@@ -9,6 +9,8 @@
  *      submitted name/company/location raw.
  *   2. CreateWorkOrderModal.tsx — shop_name/shop_address (the vendor shop identity fields on a WO)
  *      submitted raw.
+ *   3. BookLoadModalV4.tsx — stop city / address_line1 / site_contact_name submitted raw
+ *      (BOOKLOAD-STOP-NAME-ADDRESS-NOT-TITLE-CASED). Touch only those three payload values.
  *
  * METHOD: static source-text assertions that each payload field is wrapped in
  * properPersonOrPlaceName(). --selftest mutates the REAL files and requires every assertion to fail.
@@ -19,6 +21,7 @@ const LABEL = "verify-quickcreate-workorder-title-cased";
 
 const QUICK_CREATE = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
 const CREATE_WO = "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx";
+const BOOK_LOAD = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 
 export function checkQuickCreate(text) {
   const problems = [];
@@ -54,25 +57,45 @@ export function checkCreateWo(text) {
   return problems;
 }
 
+export function checkBookLoad(text) {
+  const problems = [];
+  if (!/import\s*\{\s*properPersonOrPlaceName\s*\}\s*from\s*"\.\.\/\.\.\/\.\.\/lib\/properDisplayText"/.test(text)) {
+    problems.push("BookLoadModalV4: properPersonOrPlaceName is not imported.");
+  }
+  if (!/city:\s*stop\.city\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(stop\.city\)\s*:\s*""/.test(text)) {
+    problems.push("BookLoadModalV4: stop city is not wrapped in properPersonOrPlaceName().");
+  }
+  if (!/address_line1:\s*stop\.address_line1\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(stop\.address_line1\)\s*:\s*""/.test(text)) {
+    problems.push("BookLoadModalV4: stop address_line1 is not wrapped in properPersonOrPlaceName().");
+  }
+  if (!/site_contact_name:\s*stop\.site_contact_name\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(stop\.site_contact_name\)\s*:\s*undefined/.test(text)) {
+    problems.push("BookLoadModalV4: stop site_contact_name is not wrapped in properPersonOrPlaceName().");
+  }
+  return problems;
+}
+
 function run() {
   const quickCreateText = readFileSync(QUICK_CREATE, "utf8");
   const createWoText = readFileSync(CREATE_WO, "utf8");
-  const problems = [...checkQuickCreate(quickCreateText), ...checkCreateWo(createWoText)];
+  const bookLoadText = readFileSync(BOOK_LOAD, "utf8");
+  const problems = [...checkQuickCreate(quickCreateText), ...checkCreateWo(createWoText), ...checkBookLoad(bookLoadText)];
   if (problems.length) {
     console.error(`${LABEL} FAILED:`);
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — QuickCreateEntityModal (customer/part) and CreateWorkOrderModal (shop_name/shop_address) title-case their name/address fields.`);
+  console.log(`${LABEL} OK — QuickCreate / CreateWorkOrder / BookLoad stop city+address+contact title-case name/address fields.`);
 }
 
 function selftest() {
   const failures = [];
   const quickCreateReal = readFileSync(QUICK_CREATE, "utf8");
   const createWoReal = readFileSync(CREATE_WO, "utf8");
+  const bookLoadReal = readFileSync(BOOK_LOAD, "utf8");
 
   if (checkQuickCreate(quickCreateReal).length) failures.push("QuickCreateEntityModal baseline should pass");
   if (checkCreateWo(createWoReal).length) failures.push("CreateWorkOrderModal baseline should pass");
+  if (checkBookLoad(bookLoadReal).length) failures.push("BookLoadModalV4 baseline should pass");
 
   // Offender 1: QuickCreateEntityModal reverts main_contact_name to raw.
   const qcOffender1 = quickCreateReal.replace(
@@ -114,12 +137,39 @@ function selftest() {
     failures.push(`offender-4 (raw shop_address) NOT caught: ${p4.join(" | ") || "none"}`);
   }
 
+  const blOffender1 = bookLoadReal.replace(
+    'city: stop.city?.trim() ? properPersonOrPlaceName(stop.city) : "",',
+    "city: stop.city,"
+  );
+  const p5 = checkBookLoad(blOffender1);
+  if (!p5.some((m) => m.includes("city"))) {
+    failures.push(`offender-5 (raw Book Load city) NOT caught: ${p5.join(" | ") || "none"}`);
+  }
+
+  const blOffender2 = bookLoadReal.replace(
+    "address_line1: stop.address_line1?.trim() ? properPersonOrPlaceName(stop.address_line1) : \"\",",
+    "address_line1: stop.address_line1,"
+  );
+  const p6 = checkBookLoad(blOffender2);
+  if (!p6.some((m) => m.includes("address_line1"))) {
+    failures.push(`offender-6 (raw Book Load address_line1) NOT caught: ${p6.join(" | ") || "none"}`);
+  }
+
+  const blOffender3 = bookLoadReal.replace(
+    "site_contact_name: stop.site_contact_name?.trim() ? properPersonOrPlaceName(stop.site_contact_name) : undefined,",
+    "site_contact_name: stop.site_contact_name || undefined,"
+  );
+  const p7 = checkBookLoad(blOffender3);
+  if (!p7.some((m) => m.includes("site_contact_name"))) {
+    failures.push(`offender-7 (raw Book Load site_contact_name) NOT caught: ${p7.join(" | ") || "none"}`);
+  }
+
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 4/4 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — 7/7 offenders caught, baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {
