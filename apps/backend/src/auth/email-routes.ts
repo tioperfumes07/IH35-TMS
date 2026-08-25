@@ -7,7 +7,6 @@ import { withLuciaBypass } from "./db.js";
 import { createSessionCookie } from "./session-provider.js";
 import { createSessionWithLastLogin } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
-import { sendEmailCode } from "./email-send.js";
 
 const startBodySchema = z.object({
   email: z.string().trim().email(),
@@ -76,6 +75,8 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
           "auth.email.verification_started",
           JSON.stringify({
             email,
+            code,
+            actor_user_id: user.id,
             source: "auth.email.start",
           }),
         ]
@@ -93,7 +94,6 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
       );
     });
 
-    void sendEmailCode(email, code, user.id).catch(() => undefined);
     return reply.code(200).send({ ok: true, message: GENERIC_MESSAGE });
   });
 
