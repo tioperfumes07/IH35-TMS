@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**12:14 CT GO NOW — UNBLOCK. Idle = defect. 429 ≠ HOLD.** Hard-reload **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Items 11–16.** After retry: `git pull --ff-only origin main`. Unique leftover while waiting on CC-1. Never remake hop 9. Never `trigger_deploy`.
+
 **11:39 CT GO NOW — UNBLOCK. Idle = defect.** Hard-reload **`1c31518`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. **Items 11–16.** Unique leftover while waiting on CC-1 labels. Never remake hop 9. Never `trigger_deploy`.
 
 **10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Items 11–16.** Unique leftover while waiting on CC-1 labels. Never remake hop 9. Never `trigger_deploy`.

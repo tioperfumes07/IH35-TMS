@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**12:14 CT GO — IDLE = DEFECT · LIVE `fb925ef`.** Same 30 items. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. CC 429 ≠ HOLD. Hard-reload app. CC never `trigger_deploy`. U14 never restamp.
+
 **11:39 CT GO — UNBLOCK · IDLE = DEFECT · LIVE `1c31518`.** Same 30 items. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. Hard-reload app. Recurring CoA live (#15795). CC never `trigger_deploy`. U14 never restamp.
 
 **10:38 CT GO — LIVE `69e60ff` · 30 numbered items.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. Hard-reload app. Bill no./Ref no. top-right (#15764). Idle = defect. CC never `trigger_deploy`. U14 never restamp.

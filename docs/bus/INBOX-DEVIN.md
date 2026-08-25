@@ -1,5 +1,7 @@
 # INBOX-DEVIN
 
+**12:14 CT GO NOW.** Same as `INBOX-DEVIN-A.md` TOP. Live `fb925ef`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. Item 29. Not PARKED.
+
 **11:39 CT GO NOW.** Same as `INBOX-DEVIN-A.md` TOP. Live `1c31518`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. Item 29. Not PARKED.
 
 **10:38 CT GO NOW.** Same as `INBOX-DEVIN-A.md` TOP. Live `69e60ff`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. Item 29. Not PARKED.
