@@ -60,6 +60,9 @@ export function assertGuard(sources) {
   if (!/SELECT DISTINCT u\.id[\s\S]{0,160}uca\.user_id = u\.id/.test(dispatcher) || /\bu\.uuid\b/.test(dispatcher)) {
     errors.push(`${FILES.dispatcher}: company role recipients must resolve canonical identity.users.id`);
   }
+  if (/listCompanyUserIdsByRoles[\s\S]{0,1200}?catch\s*\([^)]*\)\s*\{[\s\S]{0,240}?return\s+\[\]/.test(dispatcher)) {
+    errors.push(`${FILES.dispatcher}: recipient census failures must propagate instead of reporting zero recipients`);
+  }
 
   if (!/from\s+"\.\/notification\.service\.js"/.test(routes)) {
     errors.push(`${FILES.routes}: must import ./notification.service.js`);
@@ -101,7 +104,13 @@ function selftest() {
         await sendEmail({});
       }
     `,
-    dispatcher: `SELECT DISTINCT u.id FROM identity.users u JOIN org.user_company_access uca ON uca.user_id = u.id`,
+    dispatcher: `
+      export async function listCompanyUserIdsByRoles() {
+        return withLuciaBypass(async () => {
+          return client.query("SELECT DISTINCT u.id FROM identity.users u JOIN org.user_company_access uca ON uca.user_id = u.id");
+        });
+      }
+    `,
     workflow: 'run: npm run verify:safety-event-severe-notifications\nverify-safety-event-severe-notifications.mjs',
     pkg: '"verify:safety-event-severe-notifications": "node scripts/verify-safety-event-severe-notifications.mjs"',
   };
@@ -117,6 +126,23 @@ function selftest() {
   };
   if (!assertGuard(bad).some((e) => e.includes("identity.users.id"))) {
     console.error(`[${LABEL}] --selftest FAIL: bad fixture not rejected`, assertGuard(bad));
+    process.exit(1);
+  }
+
+  const swallowed = {
+    ...good,
+    dispatcher: `
+      export async function listCompanyUserIdsByRoles() {
+        try {
+          return await withLuciaBypass(async () => client.query("SELECT DISTINCT u.id FROM identity.users u JOIN org.user_company_access uca ON uca.user_id = u.id"));
+        } catch (error) {
+          return [];
+        }
+      }
+    `,
+  };
+  if (!assertGuard(swallowed).some((e) => e.includes("must propagate"))) {
+    console.error(`[${LABEL}] --selftest FAIL: swallowed census not rejected`, assertGuard(swallowed));
     process.exit(1);
   }
 

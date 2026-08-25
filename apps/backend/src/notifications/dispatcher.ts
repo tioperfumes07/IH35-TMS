@@ -399,10 +399,9 @@ export async function listCompanyUserIdsByRoles(
   operatingCompanyId: string,
   roles: readonly string[]
 ): Promise<string[]> {
-  try {
-    return await withLuciaBypass(async (client) => {
-      const res = await client.query<{ id: string }>(
-        `
+  return withLuciaBypass(async (client) => {
+    const res = await client.query<{ id: string }>(
+      `
           SELECT DISTINCT u.id
           FROM identity.users u
           JOIN org.user_company_access uca
@@ -412,14 +411,10 @@ export async function listCompanyUserIdsByRoles(
           WHERE u.deactivated_at IS NULL
             AND u.role::text = ANY($2::text[])
         `,
-        [operatingCompanyId, roles]
-      );
-      return res.rows.map((row) => String(row.id));
-    });
-  } catch (error) {
-    console.warn("[notifications] list_company_users_failed", String((error as Error)?.message ?? error));
-    return [];
-  }
+      [operatingCompanyId, roles]
+    );
+    return res.rows.map((row) => String(row.id));
+  });
 }
 
 export async function notifyOwnersCashAdvanceSubmitted(input: {
