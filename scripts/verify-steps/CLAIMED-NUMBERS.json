@@ -1,4 +1,9 @@
 {
+  "9779": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-trip-profitability-single-load-no-double-count"
+  },
   "9776": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
