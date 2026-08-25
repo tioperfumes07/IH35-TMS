@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Eta } from "eta";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -170,10 +170,11 @@ export async function processPendingMilestoneEmails(client: DbClient, input: { l
       SELECT id::text, email, notify_on_dispatch, notify_on_arrival, notify_on_delivery, notify_on_pod
       FROM shipper_portal.portal_users
       WHERE customer_id = $1::uuid
+        AND operating_company_id = $2::uuid
         AND active = TRUE
         AND archived_at IS NULL
     `,
-    [input.customer_id]
+    [input.customer_id, input.operating_company_id]
   );
   if (usersRes.rows.length === 0) return;
 
@@ -215,18 +216,21 @@ export async function processPendingMilestoneEmails(client: DbClient, input: { l
       SELECT id::text, milestone_type
       FROM shipper_portal.load_milestones
       WHERE load_id = $1::uuid
+        AND operating_company_id = $2::uuid
         AND email_notified_at IS NULL
         AND milestone_type IN ('dispatched', 'arrived_at_pickup', 'delivered', 'pod_uploaded')
     `,
-    [input.load_id]
+    [input.load_id, input.operating_company_id]
   );
 
   for (const milestone of pendingRes.rows) {
     const templateKey = templateKeyForMilestone(milestone.milestone_type);
     if (!templateKey) continue;
 
+    let eligibleRecipientCount = 0;
     for (const user of usersRes.rows) {
       if (!shouldNotify(user, milestone.milestone_type)) continue;
+      eligibleRecipientCount += 1;
       const title = `Load ${load.load_number} update`;
       const html = eta.render(templateKey, {
         title,
@@ -235,31 +239,37 @@ export async function processPendingMilestoneEmails(client: DbClient, input: { l
         trackingUrl,
         etaNote: "Check the portal for live ETA.",
       });
-      try {
-        await sendEmail({
+      await enqueueOutboxEvent(
+        client,
+        "shipper_portal.milestone_email",
+        { aggregate_type: "shipper_portal.load_milestones", aggregate_id: milestone.id },
+        {
+          operating_company_id: input.operating_company_id,
+          portal_user_id: user.id,
+          load_id: input.load_id,
+          milestone_type: milestone.milestone_type,
           to: user.email,
           subject: title,
-          html,
-          sender: "noreply",
-          eventClass: `shipper_portal.milestone.${milestone.milestone_type}`,
-          recipientUserUuid: null,
-          actorUserId: null,
-          tags: [
-            { name: "type", value: "shipper_portal_milestone" },
-            { name: "load_id", value: input.load_id },
-            { name: "milestone", value: milestone.milestone_type },
-          ],
-        });
-      } catch {
-        // best-effort; leave email_notified_at null for retry
-        continue;
-      }
+          body_html: html,
+          event_class: `shipper_portal.milestone.${milestone.milestone_type}`,
+        },
+        `shipper-portal-milestone-email:${milestone.id}:${user.id}`
+      );
     }
 
-    await client.query(
-      `UPDATE shipper_portal.load_milestones SET email_notified_at = NOW() WHERE id = $1::uuid`,
-      [milestone.id]
-    );
+    // A milestone with no subscribed recipients remains pending so a later portal subscriber can
+    // receive it. For eligible recipients, this stamp means every delivery intent is durable — not
+    // that an external provider happened to accept a request while this transaction was open.
+    if (eligibleRecipientCount > 0) {
+      await client.query(
+        `UPDATE shipper_portal.load_milestones
+         SET email_notified_at = NOW()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND email_notified_at IS NULL`,
+        [milestone.id, input.operating_company_id]
+      );
+    }
   }
 }
 
