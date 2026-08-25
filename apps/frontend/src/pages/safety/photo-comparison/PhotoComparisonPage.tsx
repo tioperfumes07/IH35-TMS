@@ -6,6 +6,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type SessionRow = {
   uuid: string;
@@ -70,17 +71,24 @@ export function PhotoComparisonPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      {query.isError ? <p className="text-sm text-red-600">Failed to load sessions.</p> : null}
-
-      <ParityTable<SessionRow>
-        columns={columns}
-        rows={sessions}
-        rowKey={(session) => session.uuid}
-        loading={query.isLoading}
-        emptyText="No photo comparison sessions found."
-        storageKey="safety-photo-comparison-sessions"
-        exportFilename="photo-comparison-sessions"
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load photo comparison sessions"
+          status={0}
+          message={query.error instanceof Error ? query.error.message : undefined}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<SessionRow>
+          columns={columns}
+          rows={sessions}
+          rowKey={(session) => session.uuid}
+          loading={query.isLoading}
+          emptyText="No photo comparison sessions found."
+          storageKey="safety-photo-comparison-sessions"
+          exportFilename="photo-comparison-sessions"
+        />
+      )}
     </div>
   );
 }
