@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
+import { listCompanyNotifyUserIds } from "../../notifications/notification.service.js";
+import { enqueueOutboxEvent } from "../../outbox/enqueue-outbox-event.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -209,28 +210,25 @@ async function insertDomainRow(
   return res.rows[0]?.id ?? null;
 }
 
-async function notifyIncidentStakeholders(input: IncidentAutoWorkflowInput): Promise<number> {
-  const recipients = await listCompanyUserIdsByRoles(input.operating_company_id, ["Owner", "Safety"]);
-  if (recipients.length === 0) return 0;
-
-  let notified = 0;
-  await Promise.all(
-    recipients.map(async (userId) => {
-      const result = await dispatchNotification({
-        user_id: userId,
-        event_type: "wo.created",
-        actor_user_id: null,
-        payload: {
-          operating_company_id: input.operating_company_id,
-          headline: `Incident ${input.type} reported`,
-          bodyText: `Incident ${input.incident_id} was submitted and auto-workflow checks were executed.`,
-          whatsapp_skip: true,
-        },
-      }).catch(() => ({ ok: false } as const));
-      if (result.ok) notified += 1;
-    })
-  );
-  return notified;
+async function enqueueIncidentStakeholderNotifications(client: DbClient, input: IncidentAutoWorkflowInput): Promise<number> {
+  const recipients = await listCompanyNotifyUserIds(client, input.operating_company_id, ["Owner", "Safety"]);
+  for (const userId of recipients) {
+    await enqueueOutboxEvent(
+      client,
+      "safety.incident.stakeholder_notification",
+      { aggregate_type: "safety.incidents", aggregate_id: input.incident_id },
+      {
+        operating_company_id: input.operating_company_id,
+        recipient_user_id: userId,
+        incident_type: input.type,
+        severity: input.severity === "critical" ? "critical" : "high",
+        title: `Incident ${input.type} reported`,
+        body: `Incident ${input.incident_id} was submitted and auto-workflow checks were executed.`,
+      },
+      `safety-incident-stakeholder:${input.incident_id}:${userId}`
+    );
+  }
+  return recipients.length;
 }
 
 export async function triggerIncidentAutoWorkflow(
@@ -271,7 +269,9 @@ export async function triggerIncidentAutoWorkflow(
     }
   }
 
-  const notifiedUsers = await notifyIncidentStakeholders(input);
+  // Commit the notification intent with the incident and its reverse records. Delivery occurs only
+  // after commit, so a later audit/transaction failure cannot announce a rolled-back incident.
+  const notifiedUsers = await enqueueIncidentStakeholderNotifications(client, input);
 
   await appendCrudAudit(
     client,
