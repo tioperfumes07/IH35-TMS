@@ -18,7 +18,9 @@ describe("useViewModePref failure truth", () => {
   });
 
   it("keeps a failed server preference visible and retries the exact mode", async () => {
-    patchPreferencesMock.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({});
+    patchPreferencesMock
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({ preferences: { customers_view_mode: "list" } });
     const { result } = renderHook(() => useViewModePref("customers", "master-detail"));
 
     await act(async () => {
