@@ -1,14 +1,4 @@
 {
-  "9783": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-cashflow-seven-day-strip-sql-balanced"
-  },
-  "9780": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-wo-auto-bill-posts-gl"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4368,6 +4358,21 @@
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-2",
     "purpose": "verify-trip-profitability-single-load-no-double-count"
+  },
+  "9780": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-auto-bill-posts-gl"
+  },
+  "9782": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-bill-zero-line-je-check"
+  },
+  "9783": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-cashflow-seven-day-strip-sql-balanced"
   },
   "_band": {
     "cc-1": "n%4===1",
