@@ -20,6 +20,8 @@ const paths = {
   pwaTest: path.join(ROOT, "apps/driver-pwa/src/pages/__tests__/Messages.test.ts"),
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+  deliveryHandler: path.join(ROOT, "apps/backend/src/outbox/handlers/driver-profile-message-delivery.handler.ts"),
+  registry: path.join(ROOT, "apps/backend/src/outbox/handlers/registry.ts"),
 };
 
 function read(filePath) {
@@ -94,11 +96,25 @@ function main() {
   const pwaTest = read(paths.pwaTest);
   const manifest = read(paths.manifest);
   const archDesign = read(paths.archDesign);
+  const deliveryHandler = read(paths.deliveryHandler);
+  const registry = read(paths.registry);
   const failures = [];
 
   if (!messagesRoutes.includes("/api/v1/drivers/messages/inbox")) failures.push("Office inbox route required");
   if (!messagesRoutes.includes("/api/v1/driver/messages")) failures.push("Driver PWA messages route required");
   if (!messagesService.includes("deliverDriverProfileMessage")) failures.push("Delivery bridge service required");
+  if (!messagesService.includes('"driver.profile_message.deliver"') || (messagesService.match(/enqueueOutboxEvent\(/g) || []).length < 2) {
+    failures.push("SMS/email delivery must enqueue a canonical event inside the message transaction");
+  }
+  if (/sendEmail\(/.test(messagesService) || /bridgeDriverSms\(/.test(messagesService)) {
+    failures.push("Message service must not perform provider I/O before the message transaction commits");
+  }
+  if ((messagesService.match(/`driver-profile-message-delivery:\$\{input\.messageId\}`/g) || []).length < 2) failures.push("Both external channels need the message-id dedupe key");
+  if (!deliveryHandler.includes("requiresDelivery = true") || !deliveryHandler.includes("await sendEmail(") || !deliveryHandler.includes("await bridgeDriverSms(")) {
+    failures.push("Delivery handler must require and await both external channels");
+  }
+  if (!deliveryHandler.includes("operating_company_id = $2::uuid")) failures.push("Delivery status write must retain exact company scope");
+  if (!registry.includes("new DriverProfileMessageDeliveryHandler()")) failures.push("Driver profile message delivery handler must be registered");
   failures.push(...verifySharedDriverMessaging(messagesRoutes, messagesService, profileCommunicationsService));
   if (!smsBridge.includes("bridgeDriverSms")) failures.push("SMS bridge service required");
   if (!inboxPage.includes("MessagesInboxPage")) failures.push("Office inbox page required");
@@ -132,7 +148,22 @@ function main() {
     mutations.push({ routes: messagesRoutes.replace("listDriverPwaMessages(client as Queryable, driver.id)", "listDriverPwaMessages(client as Queryable, req.user!.uuid)"), messages: messagesService, profile: profileCommunicationsService });
     const escaped = mutations.filter(({ routes, messages, profile }) => verifySharedDriverMessaging(routes, messages, profile).length === 0);
     if (escaped.length > 0) fail(`SELFTEST: ${escaped.length}/${mutations.length} shared-driver mutations escaped`);
-    console.log(`[verify-drivers-comm-center] SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+    const durabilityMutations = [
+      messagesService.replaceAll("enqueueOutboxEvent(", "sendEmail("),
+      messagesService.replaceAll("`driver-profile-message-delivery:${input.messageId}`", "null"),
+      deliveryHandler.replace("requiresDelivery = true", "requiresDelivery = false"),
+      deliveryHandler.replace("operating_company_id = $2::uuid", "operating_company_id IS NOT NULL"),
+      registry.replace("new DriverProfileMessageDeliveryHandler(),", ""),
+    ];
+    const escapedDurability = durabilityMutations.filter((source, index) => {
+      if (index === 0) return (source.match(/enqueueOutboxEvent\(/g) || []).length >= 2 && !source.includes("sendEmail(");
+      if (index === 1) return (source.match(/`driver-profile-message-delivery:\$\{input\.messageId\}`/g) || []).length >= 2;
+      if (index === 2) return source.includes("requiresDelivery = true");
+      if (index === 3) return source.includes("operating_company_id = $2::uuid");
+      return source.includes("new DriverProfileMessageDeliveryHandler()");
+    });
+    if (escapedDurability.length > 0) fail(`SELFTEST: ${escapedDurability.length}/5 delivery durability mutations escaped`);
+    console.log(`[verify-drivers-comm-center] SELFTEST PASS — ${mutations.length + 5}/${mutations.length + 5} planted defects rejected`);
   }
 
   console.log("[verify-drivers-comm-center] OK");

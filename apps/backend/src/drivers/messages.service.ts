@@ -1,5 +1,4 @@
-import { sendEmail } from "../notifications/email.service.js";
-import { bridgeDriverSms } from "../notifications/sms-bridge.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -349,13 +348,21 @@ export async function deliverDriverProfileMessage(
       );
       return { delivery_status: "failed", delivery_ref: null };
     }
-    const sms = await bridgeDriverSms({ to: driver.phone, body: input.message });
-    const status = sms.success ? "sent" : sms.skipped ? "skipped" : "failed";
-    await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = $2, delivery_ref = $3 WHERE id = $1`,
-      [input.messageId, status, sms.sid ?? null]
+    await enqueueOutboxEvent(
+      client,
+      "driver.profile_message.deliver",
+      { aggregate_type: "mdata.driver_profile_messages", aggregate_id: input.messageId },
+      {
+        operating_company_id: input.operatingCompanyId,
+        driver_id: input.driverId,
+        channel: "sms",
+        to: driver.phone,
+        message: input.message,
+        actor_user_id: input.actorUserId,
+      },
+      `driver-profile-message-delivery:${input.messageId}`
     );
-    return { delivery_status: status, delivery_ref: sms.sid ?? null };
+    return { delivery_status: "pending", delivery_ref: null };
   }
 
   if (!driver.email) {
@@ -366,27 +373,20 @@ export async function deliverDriverProfileMessage(
     return { delivery_status: "failed", delivery_ref: null };
   }
 
-  try {
-    const emailResult = await sendEmail({
+  await enqueueOutboxEvent(
+    client,
+    "driver.profile_message.deliver",
+    { aggregate_type: "mdata.driver_profile_messages", aggregate_id: input.messageId },
+    {
+      operating_company_id: input.operatingCompanyId,
+      driver_id: input.driverId,
+      channel: "email",
       to: driver.email,
-      subject: "Message from IH35 Dispatch",
-      html: `<p>${input.message.replace(/</g, "&lt;")}</p>`,
-      text: input.message,
-      sender: "dispatch",
-      eventClass: "driver.profile.message",
-      recipientUserUuid: driver.identity_user_id,
-      actorUserId: input.actorUserId,
-    });
-    await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = 'sent', delivery_ref = $2 WHERE id = $1`,
-      [input.messageId, emailResult.id]
-    );
-    return { delivery_status: "sent", delivery_ref: emailResult.id };
-  } catch {
-    await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = 'skipped' WHERE id = $1`,
-      [input.messageId]
-    );
-    return { delivery_status: "skipped", delivery_ref: null };
-  }
+      message: input.message,
+      recipient_user_id: driver.identity_user_id,
+      actor_user_id: input.actorUserId,
+    },
+    `driver-profile-message-delivery:${input.messageId}`
+  );
+  return { delivery_status: "pending", delivery_ref: null };
 }
