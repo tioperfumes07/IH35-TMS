@@ -339,16 +339,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     <>
       <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
       <aside
-        className="fixed right-0 top-0 z-[210] h-full w-full overflow-y-auto bg-white shadow-xl md:w-[600px]"
+        className="fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         data-testid="load-detail-drawer"
         data-load-id={loadId}
         role="dialog"
         aria-modal="true"
       >
-        {/* The drawer body scrolls beneath this header. Keep the tab strip in a
-            higher stacking layer so pointer clicks reach the buttons after a
-            long Overview scroll; keyboard activation alone is not sufficient. */}
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white p-4">
+        {/* The header is outside the only vertical scroller. A sticky child of the
+            scrolling aside still left the live tab strip off-screen/intercepted;
+            a fixed flex region makes pointer reachability structural. */}
+        <header className="z-20 shrink-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
@@ -370,7 +370,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           </div>
         </header>
 
-        <div className="p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4" data-testid="load-detail-drawer-scroll-body">
           {activeTab === "Overview" ? (
             load ? (
               <div className="space-y-3 text-sm">
@@ -1056,7 +1056,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           ) : null}
         </div>
 
-        <footer className="sticky bottom-0 flex items-center justify-between border-t border-gray-200 bg-white p-4">
+        <footer className="shrink-0 flex items-center justify-between border-t border-gray-200 bg-white p-4">
           {canCancelPersistedLoad ? (
             <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
               Cancel Load

@@ -114,3 +114,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-24T23:57:29-05:00 | Codex | DISP-LOAD-DRAWER-RESEND-SILENT-FAILURE | apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx, scripts/verify-load-detail-drawer-mutation-errors-surfaced.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/queue-scan |
 | 2026-08-25T00:00:00-05:00 | Codex | DISP-LOAD-DRAWER-RESEND-SILENT-FAILURE | — | RELEASED-ON-MERGE | codex/load-drawer-resend-visible-error |
 | 2026-08-25T00:08:00-05:00 | Codex | DISPATCH-LOAD-DRAWER-STICKY-TABS-DEAD-CLICK-V2 | apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx, scripts/verify-dispatch-load-deeplink-opens-drawer.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-drawer-scroll-v2 |
+| 2026-08-25T00:10:00-05:00 | Codex | DISPATCH-LOAD-DRAWER-STICKY-TABS-DEAD-CLICK-V2 | — | RELEASED-ON-MERGE | codex/drawer-scroll-root-fix |

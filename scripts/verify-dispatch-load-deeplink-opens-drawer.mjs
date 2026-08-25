@@ -48,8 +48,14 @@ function main() {
   if (!/data-testid=["']load-detail-drawer["']/.test(drawer)) {
     fail("LoadDetailDrawer must expose data-testid=load-detail-drawer when open");
   }
-  if (!/<header className=["']sticky top-0 z-(?:10|20|30|40|50)\b/.test(drawer)) {
-    fail("LoadDetailDrawer sticky tab header must have a positive z-index so scrolled content cannot intercept pointer clicks");
+  if (!/<aside[\s\S]{0,240}className=["'][^"']*\bflex\b[^"']*\bflex-col\b[^"']*\boverflow-hidden\b/.test(drawer)) {
+    fail("LoadDetailDrawer shell must be a non-scrolling flex column so the tab header cannot scroll away");
+  }
+  if (!/<header className=["'][^"']*\bz-(?:10|20|30|40|50)\b[^"']*\bshrink-0\b/.test(drawer)) {
+    fail("LoadDetailDrawer tab header must be a fixed flex region with positive stacking order");
+  }
+  if (!/className=["'][^"']*\bmin-h-0\b[^"']*\bflex-1\b[^"']*\boverflow-y-auto\b[^"']*["'] data-testid=["']load-detail-drawer-scroll-body["']/.test(drawer)) {
+    fail("LoadDetailDrawer body must own vertical scrolling independently of the header and footer");
   }
   if (!/export const loadRefParamSchema/.test(loadRef) || !/export function loadRefMatchSql/.test(loadRef)) {
     fail("apps/backend/src/lib/load-ref.ts must export loadRefParamSchema + loadRefMatchSql");
@@ -106,11 +112,22 @@ function selftest() {
   }
   process.exit = orig;
   if (!failed) fail("selftest: missing deepLinkLoadId did not fail");
-  const goodStickyHeader = '<header className="sticky top-0 z-20 border-b">';
-  const plantedNoZIndex = goodStickyHeader.replace(" z-20", "");
-  const stickyHeaderGuard = /<header className=["']sticky top-0 z-(?:10|20|30|40|50)\b/;
-  if (!stickyHeaderGuard.test(goodStickyHeader) || stickyHeaderGuard.test(plantedNoZIndex)) {
-    fail("selftest: sticky drawer header z-index mutation was not caught");
+  const goodShell = '<aside className="fixed flex h-full flex-col overflow-hidden"><header className="z-20 shrink-0"><div className="min-h-0 flex-1 overflow-y-auto" data-testid="load-detail-drawer-scroll-body">';
+  const shellGuard = /<aside[\s\S]{0,240}className=["'][^"']*\bflex\b[^"']*\bflex-col\b[^"']*\boverflow-hidden\b/;
+  const headerGuard = /<header className=["'][^"']*\bz-(?:10|20|30|40|50)\b[^"']*\bshrink-0\b/;
+  const bodyGuard = /className=["'][^"']*\bmin-h-0\b[^"']*\bflex-1\b[^"']*\boverflow-y-auto\b[^"']*["'] data-testid=["']load-detail-drawer-scroll-body["']/;
+  const plantedScrollingShell = goodShell.replace("overflow-hidden", "overflow-y-auto");
+  const plantedScrollingHeader = goodShell.replace("z-20 shrink-0", "sticky top-0 z-20");
+  const plantedStaticBody = goodShell.replace(" overflow-y-auto", "");
+  if (
+    !shellGuard.test(goodShell) ||
+    !headerGuard.test(goodShell) ||
+    !bodyGuard.test(goodShell) ||
+    shellGuard.test(plantedScrollingShell) ||
+    headerGuard.test(plantedScrollingHeader) ||
+    bodyGuard.test(plantedStaticBody)
+  ) {
+    fail("selftest: drawer shell/header/body scroll ownership mutations were not caught");
   }
   console.log("OK verify-dispatch-load-deeplink-opens-drawer --selftest");
 }
