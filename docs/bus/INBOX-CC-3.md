@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**21:57 CT GO — hard-reload when healthz=`ab737d3` and SPA build of #15687 is live.** `parts_receive` on WO `850e2cc4-…`. Unit_id already proved on bill `2153f5dc-…`. Never remake CLASS-F5973. Never `trigger_deploy`.
+
 **19:39 CT GO — unit_id PROVED on Bill `2153f5dc-b3e9-4993-9261-5da3e727853d` (`unit_id=bb1e77ab-…` T-DEAD, `linked_work_order_uuid=12a6f233-…`). Do not remake that bill.**
 
 **NOW:** `scenario.parts_receive` on WO `850e2cc4-1578-40c2-b38d-a528f7ea821d`. Then next leftover unique. Never remake CLASS-F5973. Never `trigger_deploy`.
