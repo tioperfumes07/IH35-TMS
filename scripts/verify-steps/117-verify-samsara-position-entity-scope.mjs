@@ -5,10 +5,12 @@
 import { run } from "../verify-samsara-position-entity-scope.mjs";
 export default {
   name: "samsara-position-entity-scope",
-  run: async () => {
+  run: async (ctx) => {
     const failures = run();
     if (failures.length) {
       throw new Error("samsara-position-entity-scope FAIL:\n  " + failures.map((f) => "✗ " + f).join("\n  "));
     }
+    await ctx.run("node", ["scripts/verify-samsara-hos-pull-real-clocks.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-samsara-hos-pull-real-clocks.mjs"]);
   },
 };

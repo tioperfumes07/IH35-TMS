@@ -96,11 +96,19 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
               continue;
             }
 
-            let enabled = false;
+            let enabled: boolean;
             try {
               enabled = await runScoped(operatingCompanyId, (c) => isSamsaraEnabledForTenant(c, operatingCompanyId));
             } catch (err) {
               app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara hos-pull enabled check failed");
+              await withLuciaBypass((c) =>
+                appendCronAuditEvent(c, "cron_samsara_enabled_check_failed", "warning", {
+                  cron_name: CRON_NAME,
+                  operating_company_id: operatingCompanyId,
+                  reason: String((err as Error)?.message ?? err),
+                })
+              ).catch(() => undefined);
+              continue;
             }
             if (!enabled) {
               await runScoped(operatingCompanyId, (c) =>

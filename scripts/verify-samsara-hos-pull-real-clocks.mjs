@@ -12,7 +12,27 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 const fail = (m) => { console.error(`FAIL verify-samsara-hos-pull-real-clocks: ${m}`); process.exit(1); };
 
+function enabledCheckProblems(source, label) {
+  const failures = [];
+  const catchStart = source.indexOf("enabled check failed");
+  const heartbeatCatchStart = source.indexOf("heartbeat/enabled tx failed");
+  const start = catchStart >= 0 ? catchStart : heartbeatCatchStart;
+  const disabledStart = source.indexOf("if (!enabled)", start);
+  const failureBlock = start >= 0 && disabledStart > start ? source.slice(start, disabledStart) : "";
+  if (!failureBlock.includes('"cron_samsara_enabled_check_failed"')) {
+    failures.push(`${label} capability-read failure lacks a distinct warning audit`);
+  }
+  if (!failureBlock.includes("continue;")) {
+    failures.push(`${label} capability-read failure falls through as Samsara disabled`);
+  }
+  if (/let enabled\s*=\s*false/.test(source)) {
+    failures.push(`${label} initializes capability state to false, conflating read failure with disabled`);
+  }
+  return failures;
+}
+
 const cron = read("apps/backend/src/cron/samsara-hos-pull.cron.ts");
+for (const problem of enabledCheckProblems(cron, "HOS pull")) fail(problem);
 // Each tenant's HOS pull runs in its OWN short tenant-scoped tx (runScoped) — never one giant tx across the loop.
 if (!/runScoped[\s\S]{0,200}set_config\('app\.operating_company_id'/.test(cron))
   fail("hos-pull cron must run each tenant in its own short tenant-scoped tx (runScoped), not one giant tx");
@@ -135,6 +155,7 @@ if (!/const flattened = flattenDutySegments\(events, asOf\)/.test(clocksSvc))
 // FAST + RELIABLE: the HOS pull must also run on the proven */5 positions cron (not only the single hourly :15
 // cron whose firing GUARD couldn't confirm) so hos.duty_status_events populates within 5 min and last_hos_pull commits.
 const posCron = read("apps/backend/src/cron/samsara-positions-cron.ts");
+for (const problem of enabledCheckProblems(posCron, "positions pull")) fail(problem);
 if (!/syncSamsaraHosLogs\(c, operatingCompanyId\)/.test(posCron))
   fail("the */5 positions cron must also drive syncSamsaraHosLogs so HOS populates within 5 min (not hourly-only)");
 if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(posCron))
@@ -159,9 +180,17 @@ if (process.argv.includes("--selftest")) {
     /\b(?:dca|hos_projector_dca|stats_mapped_dca|stats_total_dca|stats_clock_dca|pairing_sync_dca|pairing_history_dca)\.operating_company_id/.test(source)
   ).length;
   const catches = scopeCatches + schemaCatches;
-  const total = scopePlanted.length + schemaPlanted.length;
-  if (catches !== total) fail(`selftest caught ${catches}/${total} planted scope/schema defects`);
-  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${catches}/${total} planted scope/schema defects`);
+  const enabledCheckPlanted = [
+    ["HOS capability failure fallthrough", cron.replace('              continue;\n            }\n            if (!enabled)', '              // planted fallthrough\n            }\n            if (!enabled)')],
+    ["positions capability failure fallthrough", posCron.replace('              continue;\n            }\n            if (!enabled)', '              // planted fallthrough\n            }\n            if (!enabled)')],
+  ];
+  const enabledCheckCatches = enabledCheckPlanted.filter(([name, source]) =>
+    enabledCheckProblems(source, name).length > 0
+  ).length;
+  const totalCaught = catches + enabledCheckCatches;
+  const total = scopePlanted.length + schemaPlanted.length + enabledCheckPlanted.length;
+  if (totalCaught !== total) fail(`selftest caught ${totalCaught}/${total} planted scope/schema/capability defects`);
+  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${totalCaught}/${total} planted scope/schema/capability defects`);
 } else {
   console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
 }
