@@ -166,6 +166,10 @@ export function verify(source) {
     const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
     if (leaf?.route_hint !== routeHint) failures.push(`${module}:${id} must bind navigable route_hint ${routeHint}`);
   }
+  const catalogUpload = source.frontend["components/catalogs/CatalogExcelUploadModal.tsx"] ?? "";
+  if (!/<ListErrorState[\s\S]*?Failed to load import job status\.[\s\S]*?onRetry=\{\(\) => void jobQuery\.refetch\(\)\}/.test(catalogUpload)) {
+    failures.push("lists:lists.modal.catalog_excel_upload job-status failure must expose exact-query retry");
+  }
   return failures;
 }
 
@@ -187,6 +191,7 @@ if (process.argv.includes("--self-test")) {
   }
   for (const [, , file, token] of ROUTE_PROOFS) mutations.push(() => ({ ...source, frontend: { ...source.frontend, [file]: source.frontend[file].replaceAll(token, "BROKEN_CONNECTIVITY") } }));
   for (const [module, , routeHint] of EXACT_ROUTE_HINTS) mutations.push(() => ({ ...source, matrices: { ...source.matrices, [module]: source.matrices[module].replace(`\"route_hint\": \"${routeHint}\"`, `\"route_hint\": \"surface://BROKEN\"`) } }));
+  mutations.push(() => ({ ...source, frontend: { ...source.frontend, "components/catalogs/CatalogExcelUploadModal.tsx": source.frontend["components/catalogs/CatalogExcelUploadModal.tsx"].replace("onRetry={() => void jobQuery.refetch()}", "onRetry={() => undefined}") } }));
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });

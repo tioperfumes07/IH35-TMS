@@ -4,6 +4,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   open: boolean;
@@ -163,7 +164,13 @@ export function CatalogExcelUploadModal({ open, catalogName, displayName, onClos
         ) : null}
 
         {uploadError ? <p className="text-red-700">{uploadError}</p> : null}
-        {jobQuery.isError ? <p className="text-red-700">Failed to load import job status.</p> : null}
+        {jobQuery.isError ? (
+          <ListErrorState
+            status={0}
+            message={userFacingApiError(jobQuery.error, "Failed to load import job status.")}
+            onRetry={() => void jobQuery.refetch()}
+          />
+        ) : null}
 
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={resetAndClose}>
