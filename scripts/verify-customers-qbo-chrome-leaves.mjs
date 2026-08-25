@@ -67,6 +67,7 @@ const EXACT_ROUTES = new Map([
 const CHECKS = [
   { name: "list.view_master_detail / list.create: Customers.tsx real Modal variant=drawer create + ActionButton", file: "apps/frontend/src/pages/Customers.tsx", pattern: /<Modal variant="drawer" open=\{createOpen\}[\s\S]*title="Create Customer"/ },
   { name: "list.create door: + Create Customer writes ?create=1 (same proven drawer as Topbar / deep-link)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /const openCreate = \(\) => \{[\s\S]*next\.set\("create", "1"\)[\s\S]*data-testid="customers-create-open"[\s\S]*onClick=\{openCreate\}/ },
+  { name: "list.create open is URL-only (CUSTOMER-CREATE-DEAD-CLICK — no dual useState first-click drop)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /const createOpen = searchParams\.get\("create"\) === "1"/ },
   { name: "scenario.customer hop lands on the create drawer, not a second dead + Create click", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.customer"[\s\S]{0,500}href: "\/customers\?create=1"/ },
   { name: "scenario.driver_onboarding hop lands on Create Driver drawer via ?create=1", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.driver_onboarding"[\s\S]{0,500}href: "\/drivers\?create=1"/ },
   { name: "Drivers roster honors ?create=1 (Program hop + page + Create same drawer)", file: "apps/frontend/src/pages/Drivers.tsx", pattern: /searchParams\.get\("create"\) === "1"[\s\S]*data-testid="drivers-create-open"[\s\S]*onClick=\{openCreate\}/ },
@@ -94,6 +95,10 @@ function runChecks(root = ROOT) {
     }
     const src = fs.readFileSync(abs, "utf8");
     if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
+  }
+  const customersSrc = fs.readFileSync(path.join(root, "apps/frontend/src/pages/Customers.tsx"), "utf8");
+  if (customersSrc.includes('useState(() => searchParams.get("create")')) {
+    fails.push("Customers.tsx must not dual-store createOpen in useState (CUSTOMER-CREATE-DEAD-CLICK)");
   }
   return fails;
 }
