@@ -15,6 +15,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 function severityClass(severity: string, days: number) {
   if (days <= 0 || severity === "critical") return "text-red-700 bg-red-50";
@@ -192,22 +193,23 @@ export function DocumentAlertsPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6" data-testid="document-alerts-page">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Document expiry alerts</h1>
-          <p className="text-sm text-slate-600">
-            Central inbox for CDL, medical, training, DQF, uploads, and permits — ARCHIVE-not-DELETE; legacy DQF chips remain on profile.
-          </p>
-        </div>
-        <Button
-          type="button"
-          data-testid="run-evaluator"
-          disabled={evaluateMutation.isPending}
-          onClick={() => evaluateMutation.mutate()}
-        >
-          Run evaluator
-        </Button>
-      </header>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="Document expiry alerts"
+        subtitle="Central inbox for CDL, medical, training, DQF, uploads, and permits — ARCHIVE-not-DELETE; legacy DQF chips remain on profile."
+        breadcrumb={["Drivers", "Document Alerts"]}
+        backHref="/drivers"
+        actions={
+          <Button
+            type="button"
+            data-testid="run-evaluator"
+            disabled={evaluateMutation.isPending}
+            onClick={() => evaluateMutation.mutate()}
+          >
+            Run evaluator
+          </Button>
+        }
+      />
 
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <button

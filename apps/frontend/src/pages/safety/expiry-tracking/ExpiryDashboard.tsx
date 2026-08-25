@@ -8,6 +8,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -121,15 +122,18 @@ export function ExpiryDashboard() {
 
   return (
     <section className="space-y-3 rounded-sm border border-slate-200 bg-white p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900">Certificate Expiry Dashboard</h3>
-          <p className="text-xs text-slate-600">Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates.</p>
-        </div>
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-          Open {alertsQuery.isError ? "—" : filteredRows.length}
-        </span>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="Certificate Expiry Dashboard"
+        subtitle="Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates."
+        breadcrumb={["Safety", "Cert Expiry"]}
+        backHref="/safety"
+        actions={
+          <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+            Open {alertsQuery.isError ? "—" : filteredRows.length}
+          </span>
+        }
+      />
 
       {alertsQuery.isError ? (
         <div data-testid="cert-expiry-query-error">

@@ -36,6 +36,7 @@ import { getCurrentCsaScore, listCsaScores } from "../../../api/safetyV64";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 /** The rollup route accepts any report_id; this one names the activity rollup it actually returns. */
 const ACTIVITY_ROLLUP_ID = "safety-activity-rollup";
@@ -173,11 +174,13 @@ export default function SafetyReportsPage() {
 
   return (
     <main className="space-y-3" data-testid="safety-reports-page">
-      <h1 className="text-xl font-semibold text-gray-900">Safety Reports</h1>
-      <p className="text-sm text-gray-500">
-        CSA inspection-point rollups, roadside pass rate, out-of-service counts, and recorded safety-event activity for the
-        selected entity.
-      </p>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="Safety Reports"
+        subtitle="CSA inspection-point rollups, roadside pass rate, out-of-service counts, and recorded safety-event activity for the selected entity."
+        breadcrumb={["Safety", "Reports"]}
+        backHref="/safety"
+      />
 
       {!enabled ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-slate-700">

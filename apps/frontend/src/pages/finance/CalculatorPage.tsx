@@ -6,6 +6,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { DatePicker } from "../../components/forms/DatePicker";
 import {
   FINANCE_HUB_CALCULATOR_FLAG,
@@ -83,12 +84,8 @@ export function CalculatorPage() {
     } finally { setBusy(false); }
   }
 
-  const header = (
-    <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Finance Calculator</h1>
-      <p className="text-sm text-slate-500">Model a financed purchase before committing. Pure calculation — nothing is saved or posted.</p>
-    </div>
-  );
+  // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
+  const header = <PageHeader backHref="/finance/overview" title="Finance Calculator" subtitle="Model a financed purchase before committing. Pure calculation — nothing is saved or posted." />;
   if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-sm text-slate-500">Loading…</p></div>;
   if (!enabled)
     return (

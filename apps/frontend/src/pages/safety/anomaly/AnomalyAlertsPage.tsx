@@ -3,6 +3,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDashboard } from "./AnomalyDashboard";
 import { RuleEditor } from "./RuleEditor";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 type TabId = "alerts" | "rules";
 
@@ -33,6 +34,8 @@ export function AnomalyAlertsPage() {
 
   return (
     <div className="space-y-3 p-4">
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader title="Anomaly Alerts" breadcrumb={["Safety", "Anomaly Alerts"]} backHref="/safety" />
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           type="button"

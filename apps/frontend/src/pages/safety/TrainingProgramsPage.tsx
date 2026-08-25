@@ -16,6 +16,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type Props = {
   operatingCompanyId: string;
@@ -170,15 +171,22 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="training-programs-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div>
-          <div className="text-sm font-semibold text-slate-800">Training Programs</div>
-          <div className="text-[11px] text-slate-500">Define required programs and assign drivers to completion tracking.</div>
-        </div>
-        <Button size="sm" data-testid="training-programs-create-btn" onClick={() => setCreateOpen(true)}>
-          + Create Training Program
-        </Button>
-      </div>
+      {/*
+        UI-BACK-BUTTON-MISSING-ENTIRELY: alias-tab leaf (part of the systemwide route-manifest audit,
+        wave 4) -- SafetyLayout wraps every /safety/* route but renders no header of its own, so each
+        leaf is responsible for its own. This one had a bespoke title bar with no back control.
+      */}
+      <PageHeader
+        title="Training Programs"
+        subtitle="Define required programs and assign drivers to completion tracking."
+        breadcrumb={["Safety", "Training Programs"]}
+        backHref="/safety"
+        actions={
+          <Button size="sm" data-testid="training-programs-create-btn" onClick={() => setCreateOpen(true)}>
+            + Create Training Program
+          </Button>
+        }
+      />
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No training programs found." — an outage
           presenting as a carrier with no driver training on record. */}

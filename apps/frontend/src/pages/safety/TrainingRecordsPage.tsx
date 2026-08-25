@@ -15,6 +15,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type TrainingRecordRow = Record<string, unknown>;
 
@@ -143,15 +144,18 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="training-records-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div>
-          <div className="text-sm font-semibold text-slate-800">Training Records</div>
-          <div className="text-[11px] text-slate-500">Per-driver completion history with expiry tracking.</div>
-        </div>
-        <Button size="sm" data-testid="training-records-create-btn" onClick={() => setCreateOpen(true)}>
-          + Create Record
-        </Button>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="Training Records"
+        subtitle="Per-driver completion history with expiry tracking."
+        breadcrumb={["Safety", "Training Records"]}
+        backHref="/safety"
+        actions={
+          <Button size="sm" data-testid="training-records-create-btn" onClick={() => setCreateOpen(true)}>
+            + Create Record
+          </Button>
+        }
+      />
 
       {recordsQuery.isError ? (
         <ListErrorBanner

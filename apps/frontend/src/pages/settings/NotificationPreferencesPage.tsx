@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   getNotificationPreferences,
   patchNotificationPreferences,
@@ -12,6 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { TimePicker } from "../../components/forms/TimePicker";
+import { hasInAppHistory } from "../../lib/smart-back";
 
 const CHANNELS: NotificationChannelKey[] = ["email", "sms", "whatsapp", "in_app"];
 
@@ -23,6 +24,17 @@ function labelForChannel(ch: NotificationChannelKey): string {
 }
 
 export function NotificationPreferencesPage() {
+  const navigate = useNavigate();
+  // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: both back links below were hardcoded to
+  // /settings regardless of where the user actually came from -- same smart-back pattern as the
+  // rest of the app.
+  const goBack = () => {
+    if (hasInAppHistory(window.history.state)) {
+      navigate(-1);
+      return;
+    }
+    navigate("/settings");
+  };
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const prefsQuery = useQuery({
@@ -166,9 +178,9 @@ export function NotificationPreferencesPage() {
             <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
             <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
           </div>
-          <Link to="/settings" className="text-sm text-slate-700 hover:underline">
+          <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-sm text-slate-700 hover:underline">
             ← Back to profile
-          </Link>
+          </button>
         </div>
         <ListErrorState
           title="Couldn't load notification preferences"
@@ -191,9 +203,9 @@ export function NotificationPreferencesPage() {
           <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
           <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
         </div>
-        <Link to="/settings" className="text-sm text-slate-700 hover:underline">
+        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-sm text-slate-700 hover:underline">
           ← Back to profile
-        </Link>
+        </button>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">

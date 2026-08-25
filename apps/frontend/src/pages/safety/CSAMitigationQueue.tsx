@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -168,13 +169,13 @@ export function CSAMitigationQueuePage() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="text-sm font-semibold text-slate-800">CSA Mitigation Queue</div>
-        <div className="mt-1 text-xs text-slate-600">
-          Open actions sorted by urgency. Generated{" "}
-          {queueQuery.data?.generated_at ? new Date(queueQuery.data.generated_at).toLocaleString() : "not available"}.
-        </div>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="CSA Mitigation Queue"
+        subtitle={`Open actions sorted by urgency. Generated ${queueQuery.data?.generated_at ? new Date(queueQuery.data.generated_at).toLocaleString() : "not available"}.`}
+        breadcrumb={["Safety", "CSA Mitigation"]}
+        backHref="/safety"
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold text-slate-700">Add mitigation action</div>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getIdentityProfile, patchIdentityOnboarding } from "../../api/identity";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 export function UserProfileSettingsPage() {
   const { pushToast } = useToast();
@@ -31,10 +32,8 @@ export function UserProfileSettingsPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-900">Your profile</h1>
-        <p className="text-sm text-slate-600">Account preferences for {u.email ?? "your account"}.</p>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader title="Your profile" subtitle={`Account preferences for ${u.email ?? "your account"}.`} backHref="/home" />
 
       <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
         <h2 className="text-sm font-semibold text-slate-800">Guided tour</h2>

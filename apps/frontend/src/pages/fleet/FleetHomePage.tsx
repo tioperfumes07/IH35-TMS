@@ -4,6 +4,7 @@ import { Button } from "../../components/Button";
 import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
 import { CreateTrailerModal } from "../../components/fleet/CreateTrailerModal";
 import { FleetTablePage } from "../maintenance/FleetTablePage";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 /**
  * Canonical FLEET home (/fleet) — the units + trailers roster. Reuses the shared
@@ -23,31 +24,33 @@ export function FleetHomePage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-800">FLEET</h1>
-          <p className="text-xs text-gray-500">Trucks, trailers, and company vehicles for the selected operating company.</p>
-        </div>
-        {companyId ? (
-          <div className="flex flex-wrap items-center gap-2" data-testid="fleet-roster-create-actions">
-            <Button
-              size="sm"
-              data-testid="fleet-create-unit"
-              onClick={() => setCreateUnitOpen(true)}
-            >
-              + Create Unit
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              data-testid="fleet-create-trailer"
-              onClick={() => setCreateTrailerOpen(true)}
-            >
-              + Create Trailer
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="FLEET"
+        subtitle="Trucks, trailers, and company vehicles for the selected operating company."
+        backHref="/home"
+        actions={
+          companyId ? (
+            <div className="flex flex-wrap items-center gap-2" data-testid="fleet-roster-create-actions">
+              <Button
+                size="sm"
+                data-testid="fleet-create-unit"
+                onClick={() => setCreateUnitOpen(true)}
+              >
+                + Create Unit
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                data-testid="fleet-create-trailer"
+                onClick={() => setCreateTrailerOpen(true)}
+              >
+                + Create Trailer
+              </Button>
+            </div>
+          ) : undefined
+        }
+      />
       {companyId ? (
         <>
           <FleetTablePage operatingCompanyId={companyId} defaultActiveOnly />

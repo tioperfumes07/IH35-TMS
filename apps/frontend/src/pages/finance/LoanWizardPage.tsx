@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -137,14 +138,11 @@ export function LoanWizardPage() {
     }
   }
 
-  const header = (
-    <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Loan Wizard</h1>
-      <p className="text-sm text-slate-500">
-        One form → preview every entry the loan would create. Nothing posts — preview only.
-      </p>
-    </div>
-  );
+  // UI-BACK-BUTTON-MISSING-ENTIRELY: FinanceModuleTabs (the shared subnav rendered above this on
+  // every Finance page) has no back control of its own -- 6 of the 10 Finance pages already carry
+  // their own PageHeader (backHref="/finance/overview", the module hub) alongside it; this page
+  // didn't. Matched to the same established convention instead of inventing a new one.
+  const header = <PageHeader backHref="/finance/overview" title="Loan Wizard" subtitle="One form → preview every entry the loan would create. Nothing posts — preview only." />;
 
   if (flagLoading) {
     return (

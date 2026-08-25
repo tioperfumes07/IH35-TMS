@@ -8,6 +8,7 @@ import { apiRequest } from "../../api/client";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type ChecklistItem = { id: string; label: string; required_for: string; completed: boolean };
 type ActivationState = "hidden" | "soft_launch" | "pilot_drivers" | "full_active" | "rollback";
@@ -90,8 +91,9 @@ export function USMCAActivationPanel() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader title="USMCA Activation" breadcrumb={["Admin", "USMCA Activation"]} backHref="/admin" />
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-bold">USMCA Activation</h2>
         <span className={`rounded-sm px-3 py-1 text-sm font-semibold ${STATE_BADGE[currentState]}`}>
           {currentState.replace(/_/g, " ").toUpperCase()}
         </span>
