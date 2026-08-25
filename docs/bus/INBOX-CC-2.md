@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. Unique leftover `/reports` `/tasks` `/finance`. **Item 26** live-walk `/cash-flow` **after** healthz includes `3f49b42`. Do **not** remake **#15921** **#15947**. ACK `GO-1758`. Never `trigger_deploy`.
+
 **17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`** (includes **#15921**). **Do not remake trip-profitability.** Prove halved dollars. Next unique leftover `/reports` `/cash-flow` `/tasks`. Item **26 waits #2**. ACK `GO-1715`. Never `trigger_deploy`.
 
 **16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
