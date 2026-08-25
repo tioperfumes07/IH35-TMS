@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getUserPreferences, patchUserPreferences } from "../api/safety";
 
 export type EntityViewMode = "list" | "master-detail";
@@ -38,6 +38,8 @@ export function useViewModePref(
   const prefKey = `${entity}_view_mode`;
 
   const [viewMode, setViewModeState] = useState<EntityViewMode>(() => readLocal(storageKey) ?? defaultMode);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const pendingModeRef = useRef<EntityViewMode | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,14 +60,26 @@ export function useViewModePref(
     };
   }, [prefKey, storageKey]);
 
-  const setViewMode = useCallback(
-    (mode: EntityViewMode) => {
-      setViewModeState(mode);
-      writeLocal(storageKey, mode);
-      void patchUserPreferences({ [prefKey]: mode }).catch(() => undefined);
-    },
-    [prefKey, storageKey]
-  );
+  const persistMode = useCallback(async (mode: EntityViewMode) => {
+    try {
+      await patchUserPreferences({ [prefKey]: mode });
+      setSaveError(null);
+    } catch {
+      setSaveError("View preference could not be saved. This selection is temporary.");
+    }
+  }, [prefKey]);
 
-  return { viewMode, setViewMode };
+  const setViewMode = useCallback((mode: EntityViewMode) => {
+    pendingModeRef.current = mode;
+    setSaveError(null);
+    setViewModeState(mode);
+    writeLocal(storageKey, mode);
+    void persistMode(mode);
+  }, [persistMode, storageKey]);
+
+  const retryViewModeSave = useCallback(() => {
+    if (pendingModeRef.current) void persistMode(pendingModeRef.current);
+  }, [persistMode]);
+
+  return { viewMode, setViewMode, viewModeSaveError: saveError, retryViewModeSave };
 }
