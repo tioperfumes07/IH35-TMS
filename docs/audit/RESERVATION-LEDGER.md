@@ -128,3 +128,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T09:41:00-05:00 | Codex | SAFETY-EVENT-DETAIL-SQL-FAILURE-MASKED-AS-404 | apps/backend/src/safety/safety.routes.ts, scripts/verify-safety-event-detail-list-fallback.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-safety-event-detail |
 | 2026-08-25T09:45:00-05:00 | Codex | SAFETY-EVENT-DETAIL-SQL-FAILURE-MASKED-AS-404 | — | RELEASED-ON-MERGE | codex/safety-event-detail-honesty |
 | 2026-08-25T09:45:30-05:00 | Codex | SAFETY-ACCIDENT-DETAIL-SQL-FAILURE-MASKED-AS-404 | apps/backend/src/safety/safety.routes.ts, scripts/verify-safety-accident-reverse-deep-link.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-accident-detail-honesty |
+| 2026-08-25T09:49:00-05:00 | Codex | SAFETY-ACCIDENT-DETAIL-SQL-FAILURE-MASKED-AS-404 | — | RELEASED-ON-MERGE | codex/accident-detail-honesty |
