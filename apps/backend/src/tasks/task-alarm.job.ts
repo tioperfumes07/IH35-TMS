@@ -37,12 +37,14 @@ export async function runTaskAlarmTick(operatingCompanyId: string): Promise<numb
           AND alarm_notified_at IS NULL
           AND status NOT IN ('completed', 'cancelled')
         ORDER BY alarm_at ASC
-        LIMIT 500`,
+        LIMIT 500
+        FOR UPDATE SKIP LOCKED`,
       [operatingCompanyId]
     );
 
     let fired = 0;
     for (const task of due.rows) {
+      await client.query("SAVEPOINT task_alarm_item");
       try {
         await createNotification(
           {
@@ -61,13 +63,22 @@ export async function runTaskAlarmTick(operatingCompanyId: string): Promise<numb
         );
         // Re-assert scope (createNotification set app.operating_company_id only) before the tasks UPDATE.
         await client.query(SET_TASK_SCOPE_SQL, [operatingCompanyId]);
-        await client.query(
-          `UPDATE tasks.task SET alarm_notified_at = now() WHERE task_id = $1::uuid`,
-          [task.task_id]
+        const stamped = await client.query<{ task_id: string }>(
+          `UPDATE tasks.task
+              SET alarm_notified_at = now()
+            WHERE task_id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND alarm_notified_at IS NULL
+          RETURNING task_id::text`,
+          [task.task_id, operatingCompanyId]
         );
+        if (!stamped.rows[0]) throw new Error("task_alarm_stamp_lost");
+        await client.query("RELEASE SAVEPOINT task_alarm_item");
         fired++;
       } catch {
-        // best-effort per task; a failure leaves alarm_notified_at NULL so the next tick retries.
+        await client.query("ROLLBACK TO SAVEPOINT task_alarm_item");
+        await client.query("RELEASE SAVEPOINT task_alarm_item");
+        // Per-task rollback removes a partially inserted notification; the next tick can retry once.
       }
     }
     return fired;

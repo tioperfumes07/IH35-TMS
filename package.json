@@ -678,6 +678,7 @@
     "verify:payment-recording-contract": "node scripts/verify-payment-recording-contract.mjs",
     "verify:form2290-units-scope": "node scripts/verify-form2290-units-scope.mjs",
     "verify:task-link-contract": "node scripts/verify-task-link-contract.mjs",
+    "verify:task-alarm-atomic-delivery": "node scripts/verify-task-alarm-atomic-delivery.mjs",
     "verify:safety-driver-cards": "node scripts/verify-safety-driver-cards.mjs",
     "verify:bank-transaction-push-gate": "node scripts/verify-bank-transaction-push-gate.mjs",
     "verify:csv-import-direction": "node scripts/verify-csv-import-direction.mjs",
