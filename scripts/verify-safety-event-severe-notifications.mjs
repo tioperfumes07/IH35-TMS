@@ -18,6 +18,8 @@ const FILES = {
   routes: "apps/backend/src/safety/events/safety-events.routes.ts",
   notification: "apps/backend/src/safety/events/notification.service.ts",
   dispatcher: "apps/backend/src/notifications/dispatcher.ts",
+  handler: "apps/backend/src/outbox/handlers/safety-event-severe-notification.handler.ts",
+  registry: "apps/backend/src/outbox/handlers/registry.ts",
   workflow: ".github/workflows/locked-guards.yml",
   pkg: "package.json",
 };
@@ -31,6 +33,8 @@ export function assertGuard(sources) {
   const routes = stripComments(sources.routes);
   const notification = stripComments(sources.notification);
   const dispatcher = stripComments(sources.dispatcher);
+  const handler = stripComments(sources.handler);
+  const registry = stripComments(sources.registry);
   const workflow = sources.workflow;
   const pkg = sources.pkg;
 
@@ -48,15 +52,22 @@ export function assertGuard(sources) {
   if (!/listCompanyNotifyUserIds/.test(notification)) {
     errors.push(`${FILES.notification}: must resolve stakeholder recipients via listCompanyNotifyUserIds`);
   }
-  if (!/createNotification/.test(notification)) {
-    errors.push(`${FILES.notification}: must create in-app notifications via createNotification`);
+  if (!/enqueueOutboxEvent\(/.test(notification) || !/"safety\.event\.severe_notification"/.test(notification)) {
+    errors.push(`${FILES.notification}: severe notification intent must use the canonical outbox inside the event transaction`);
   }
-  if (!/sendEmail/.test(notification)) {
-    errors.push(`${FILES.notification}: must attempt email dispatch via sendEmail (non-blocking)`);
+  if (/sendEmail\(/.test(notification) || /createNotification\(/.test(notification)) {
+    errors.push(`${FILES.notification}: must not perform provider or in-app delivery before event commit`);
+  }
+  if (!/safety-event-severe:\$\{input\.event_id\}/.test(notification)) {
+    errors.push(`${FILES.notification}: severe event intent requires event-id dedupe`);
   }
   if (!/0278-safety-gap3-auto-notifications/.test(notification)) {
-    errors.push(`${FILES.notification}: source_block must tag 0278-safety-gap3-auto-notifications`);
+    if (!/0278-safety-gap3-auto-notifications/.test(handler)) errors.push(`${FILES.handler}: source_block must tag 0278-safety-gap3-auto-notifications`);
   }
+  if (!/requiresDelivery\s*=\s*true/.test(handler) || !/await sendEmail\(/.test(handler) || !/await createNotification\(/.test(handler)) {
+    errors.push(`${FILES.handler}: must require and await both notification channels`);
+  }
+  if (!/new SafetyEventSevereNotificationHandler\(\)/.test(registry)) errors.push(`${FILES.registry}: handler must be registered`);
   if (!/SELECT DISTINCT u\.id[\s\S]{0,160}uca\.user_id = u\.id/.test(dispatcher) || /\bu\.uuid\b/.test(dispatcher)) {
     errors.push(`${FILES.dispatcher}: company role recipients must resolve canonical identity.users.id`);
   }
@@ -100,10 +111,11 @@ function selftest() {
       export function isSevereSafetyEventSeverity(severity) { return severity === "high" || severity === "critical"; }
       export async function notifySevereSafetyEvent(client, input) {
         await listCompanyNotifyUserIds(client, input.operating_company_id, ["Owner"]);
-        await createNotification({ source_block: "0278-safety-gap3-auto-notifications" }, client);
-        await sendEmail({});
+        await enqueueOutboxEvent(client, "safety.event.severe_notification", {}, {}, \`safety-event-severe:\${input.event_id}\`);
       }
     `,
+    handler: `class SafetyEventSevereNotificationHandler { requiresDelivery = true; async deliver() { await createNotification({ source_block: "0278-safety-gap3-auto-notifications" }); await sendEmail({}); } }`,
+    registry: `new SafetyEventSevereNotificationHandler(),`,
     dispatcher: `
       export async function listCompanyUserIdsByRoles() {
         return withLuciaBypass(async () => {
@@ -146,7 +158,23 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log(`[${LABEL}] --selftest OK`);
+  const outboxBypass = { ...good, notification: good.notification.replace("enqueueOutboxEvent(", "sendEmail(") };
+  if (!assertGuard(outboxBypass).some((e) => e.includes("canonical outbox"))) {
+    console.error(`[${LABEL}] --selftest FAIL: outbox bypass not rejected`, assertGuard(outboxBypass));
+    process.exit(1);
+  }
+  const optionalDelivery = { ...good, handler: good.handler.replace("requiresDelivery = true", "requiresDelivery = false") };
+  if (!assertGuard(optionalDelivery).some((e) => e.includes("must require"))) {
+    console.error(`[${LABEL}] --selftest FAIL: optional delivery not rejected`, assertGuard(optionalDelivery));
+    process.exit(1);
+  }
+  const unregistered = { ...good, registry: "" };
+  if (!assertGuard(unregistered).some((e) => e.includes("must be registered"))) {
+    console.error(`[${LABEL}] --selftest FAIL: unregistered handler not rejected`, assertGuard(unregistered));
+    process.exit(1);
+  }
+
+  console.log(`[${LABEL}] --selftest OK — 5/5 planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -154,7 +182,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-for (const rel of [FILES.routes, FILES.notification, FILES.dispatcher, FILES.workflow, FILES.pkg]) {
+for (const rel of [FILES.routes, FILES.notification, FILES.dispatcher, FILES.handler, FILES.registry, FILES.workflow, FILES.pkg]) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     console.error(`[${LABEL}] FAILED — missing ${rel}`);
     process.exit(1);
@@ -165,6 +193,8 @@ const errs = assertGuard({
   routes: read(FILES.routes),
   notification: read(FILES.notification),
   dispatcher: read(FILES.dispatcher),
+  handler: read(FILES.handler),
+  registry: read(FILES.registry),
   workflow: read(FILES.workflow),
   pkg: read(FILES.pkg),
 });
