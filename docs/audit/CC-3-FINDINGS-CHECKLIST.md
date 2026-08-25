@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `DRV-ONBOARD-LAUNCHER-ORPHANED` | **C** | Drivers connectivity | Codex | this PR | 2026-08-24 | Canonical profile launches/resumes one scoped onboarding session and drills into the mounted wizard. | backend 7/7; guard normal + 8/8 mutations; live pre-fix TEST driver `e901be6e-…` | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `CLASS-VIEW-PREFERENCE-TEST-MOCK-CONTRACT-DRIFT` | **C** | Codex Customer/Vendor guard | Codex | this PR | 2026-08-24 | Successful retry mock now returns the required preferences envelope. | focused retry test + frontend typecheck delta | OWNER-GATED=no |
 | ☑ | `CLASS-COLUMN-WIDTH-PREFERENCE-SAVE-SILENT-FAILURE` | **C** | Codex vertical table connectivity | Codex | this PR | 2026-08-24 | All three applicable width-persistence surfaces now expose failed saves and retry the exact draft. | `verify-resizable-table-column-widths-no-fetch-loop.mjs` normal + fetch-loop pair + 6/6 persistence mutations; test 1/1 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 

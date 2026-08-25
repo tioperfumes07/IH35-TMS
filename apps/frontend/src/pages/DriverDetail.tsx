@@ -84,6 +84,7 @@ import { CommunicationsLogView } from "./drivers/operations/CommunicationsLogVie
 import { PwaEngagementView } from "./drivers/operations/PwaEngagementView";
 import { DocumentsVaultView } from "./drivers/operations/DocumentsVaultView";
 import { useListState } from "../components/list-state";
+import { createOnboardingSession } from "../api/onboarding";
 
 const tabs = [
   "Profile",
@@ -178,6 +179,12 @@ export function DriverDetailPage() {
   const { pushToast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const onboardingLaunchMutation = useMutation({
+    mutationFn: () => createOnboardingSession({ operating_company_id: companyId, driver_id: id }),
+    onSuccess: ({ session }) => navigate(`/drivers/onboarding/${session.id}`),
+    onError: (error: Error) => pushToast(error.message || "Could not start driver onboarding.", "error"),
+  });
 
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<DriverTab>("Profile");
@@ -848,6 +855,13 @@ export function DriverDetailPage() {
             <Link to={`/drivers/${driver.id}/hos`} className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
               HOS Detail
             </Link>
+            <Button
+              variant="secondary"
+              onClick={() => onboardingLaunchMutation.mutate()}
+              loading={onboardingLaunchMutation.isPending}
+            >
+              Start / Resume Onboarding
+            </Button>
             {!editMode ? (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             ) : (

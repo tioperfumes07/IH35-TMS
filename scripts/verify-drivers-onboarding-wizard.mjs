@@ -14,6 +14,7 @@ const paths = {
   backendTest: path.join(ROOT, "apps/backend/src/safety/__tests__/onboarding.routes.test.ts"),
   wizardPage: path.join(ROOT, "apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx"),
   frontendTest: path.join(ROOT, "apps/frontend/src/pages/drivers/__tests__/OnboardingWizardPage.test.tsx"),
+  driverDetail: path.join(ROOT, "apps/frontend/src/pages/DriverDetail.tsx"),
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
   index: path.join(ROOT, "apps/backend/src/index.ts"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
@@ -29,12 +30,29 @@ function fail(msg) {
   process.exit(1);
 }
 
+function launcherFailures({ onboardingRoutes, backendTest, driverDetail }) {
+  const failures = [];
+  const required = [
+    [onboardingRoutes, "AND driver_id = $2::uuid", "launcher resume must bind the canonical driver FK"],
+    [onboardingRoutes, "AND status = 'in_progress'", "launcher resume must target only an open session"],
+    [onboardingRoutes, "return reply.code(result.resumed ? 200 : 201).send(result)", "route must distinguish resume from create"],
+    [driverDetail, 'import { createOnboardingSession } from "../api/onboarding"', "Driver Profile must import the canonical creator"],
+    [driverDetail, "createOnboardingSession({ operating_company_id: companyId, driver_id: id })", "launcher must forward company + driver"],
+    [driverDetail, "navigate(`/drivers/onboarding/${session.id}`)", "launcher must navigate to the mounted wizard"],
+    [driverDetail, "Start / Resume Onboarding", "Driver Profile must expose the launcher"],
+    [backendTest, "instead of duplicating it", "backend test must prove idempotent resume"],
+  ];
+  for (const [source, needle, label] of required) if (!source.includes(needle)) failures.push(label);
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const onboardingRoutes = read(paths.onboardingRoutes);
   const backendTest = read(paths.backendTest);
   const wizardPage = read(paths.wizardPage);
   const frontendTest = read(paths.frontendTest);
+  const driverDetail = read(paths.driverDetail);
   const manifest = read(paths.manifest);
   const index = read(paths.index);
   const archDesign = read(paths.archDesign);
@@ -70,6 +88,7 @@ function main() {
   if (!frontendTest.includes("A24-8")) failures.push("Frontend vitest must reference A24-8");
   const frontendTestCount = (frontendTest.match(/\bit\s*\(/g) ?? []).length;
   if (frontendTestCount < 4) failures.push("Frontend vitest must include at least 4 cases");
+  failures.push(...launcherFailures({ onboardingRoutes, backendTest, driverDetail }));
 
   if (!archDesign.includes("verify:drivers-onboarding-wizard")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-onboarding-wizard");
@@ -78,6 +97,28 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail("FAILED");
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      { key: "driver FK", onboardingRoutes: onboardingRoutes.replaceAll("AND driver_id = $2::uuid", "") },
+      { key: "open status", onboardingRoutes: onboardingRoutes.replaceAll("AND status = 'in_progress'", "") },
+      { key: "resume status", onboardingRoutes: onboardingRoutes.replace("result.resumed ? 200 : 201", "201") },
+      { key: "creator import", driverDetail: driverDetail.replace('import { createOnboardingSession } from "../api/onboarding";', "") },
+      { key: "company+driver payload", driverDetail: driverDetail.replace("createOnboardingSession({ operating_company_id: companyId, driver_id: id })", "createOnboardingSession({ operating_company_id: companyId })") },
+      { key: "mounted navigation", driverDetail: driverDetail.replace("navigate(`/drivers/onboarding/${session.id}`)", "navigate('/drivers')") },
+      { key: "visible launcher", driverDetail: driverDetail.replace("Start / Resume Onboarding", "") },
+      { key: "resume test", backendTest: backendTest.replace("instead of duplicating it", "duplicate behavior") },
+    ];
+    for (const mutation of mutations) {
+      const detected = launcherFailures({
+        onboardingRoutes: mutation.onboardingRoutes ?? onboardingRoutes,
+        backendTest: mutation.backendTest ?? backendTest,
+        driverDetail: mutation.driverDetail ?? driverDetail,
+      });
+      if (detected.length === 0) fail(`selftest missed ${mutation.key}`);
+    }
+    console.log(`[verify-drivers-onboarding-wizard] selftest OK — ${mutations.length}/${mutations.length} launcher defects rejected`);
   }
 
   console.log("[verify-drivers-onboarding-wizard] OK");
