@@ -1,5 +1,5 @@
-import { sendEmail } from "../../notifications/email.service.js";
-import { createNotification, listCompanyNotifyUserIds } from "../../notifications/notification.service.js";
+import { listCompanyNotifyUserIds } from "../../notifications/notification.service.js";
+import { enqueueOutboxEvent } from "../../outbox/enqueue-outbox-event.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -43,39 +43,23 @@ export async function notifySevereSafetyEvent(
       .filter(Boolean)
       .join("\n") || `New ${input.severity} severity safety event logged.`;
 
-  let inAppCount = 0;
-  for (const userId of recipientUserIds) {
-    await createNotification(
-      {
-        operating_company_id: input.operating_company_id,
-        user_id: userId,
-        type: "driver_alert",
-        severity: notifSeverity,
-        title,
-        body,
-        action_link: `/safety/safety-events?event=${input.event_id}`,
-        entity_type: "safety_event",
-        entity_id: input.event_id,
-        source_block: "0278-safety-gap3-auto-notifications",
-      },
-      client
-    );
-    inAppCount += 1;
-  }
-
-  let emailCount = 0;
-  try {
-    await sendEmail({
+  const result = await enqueueOutboxEvent(
+    client,
+    "safety.event.severe_notification",
+    { aggregate_type: "safety.safety_events", aggregate_id: input.event_id },
+    {
+      operating_company_id: input.operating_company_id,
+      recipient_user_ids: recipientUserIds,
+      severity: notifSeverity,
+      title,
+      body,
       to: process.env.SAFETY_EVENT_ALERT_EMAIL ?? "safety@ih35dispatch.com",
-      subject: title,
-      html: `<p>${body.replace(/\n/g, "<br/>")}</p><p>Event: ${input.event_id}</p>`,
-      sender: "noreply",
-      eventClass: "safety.safety_events.severe_created",
-    });
-    emailCount = 1;
-  } catch {
-    // Non-blocking when Resend is not configured.
-  }
-
-  return { in_app_notifications: inAppCount, email_notifications: emailCount };
+      body_html: `<p>${body.replace(/\n/g, "<br/>")}</p><p>Event: ${input.event_id}</p>`,
+    },
+    `safety-event-severe:${input.event_id}`
+  );
+  return {
+    in_app_notifications: result.enqueued ? recipientUserIds.length : 0,
+    email_notifications: result.enqueued ? 1 : 0,
+  };
 }

@@ -3,11 +3,10 @@ import { isSevereSafetyEventSeverity, notifySevereSafetyEvent } from "../notific
 
 vi.mock("../../../notifications/notification.service.js", () => ({
   listCompanyNotifyUserIds: vi.fn(async () => ["user-1", "user-2"]),
-  createNotification: vi.fn(async () => ({ id: "n1" })),
 }));
 
-vi.mock("../../../notifications/email.service.js", () => ({
-  sendEmail: vi.fn(async () => ({ id: "email-1" })),
+vi.mock("../../../outbox/enqueue-outbox-event.js", () => ({
+  enqueueOutboxEvent: vi.fn(async () => ({ enqueued: true })),
 }));
 
 describe("safety event severe notifications", () => {
@@ -19,9 +18,10 @@ describe("safety event severe notifications", () => {
   });
 
   it("fans out in-app notifications to safety stakeholders on severe events", async () => {
-    const { createNotification, listCompanyNotifyUserIds } = await import(
+    const { listCompanyNotifyUserIds } = await import(
       "../../../notifications/notification.service.js"
     );
+    const { enqueueOutboxEvent } = await import("../../../outbox/enqueue-outbox-event.js");
     const client = { query: vi.fn(async () => ({ rows: [] })) };
 
     const result = await notifySevereSafetyEvent(client, {
@@ -41,7 +41,13 @@ describe("safety event severe notifications", () => {
       "Manager",
       "Safety",
     ]);
-    expect(createNotification).toHaveBeenCalledTimes(2);
+    expect(enqueueOutboxEvent).toHaveBeenCalledWith(
+      client,
+      "safety.event.severe_notification",
+      { aggregate_type: "safety.safety_events", aggregate_id: "evt-1" },
+      expect.objectContaining({ operating_company_id: "co-1", recipient_user_ids: ["user-1", "user-2"] }),
+      "safety-event-severe:evt-1"
+    );
     expect(result.in_app_notifications).toBe(2);
     expect(result.email_notifications).toBe(1);
   });
