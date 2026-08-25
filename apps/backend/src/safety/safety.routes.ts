@@ -1241,6 +1241,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             unit_id,
             driver_id,
             load_id,
+            vendor_id,
             insurance_claim_id,
             opened_at,
             repair_location,
@@ -1257,11 +1258,12 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             $3,
             $4,
             $5,
+            $6,
             now(),
             'external_shop',
-            $6,
             $7,
-            $8
+            $8,
+            $9
           )
           RETURNING id, display_id
         `,
@@ -1270,6 +1272,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           accident.unit_id,
           accident.driver_id ?? null,
           accident.load_id ?? null,
+          accident.vendor_id ?? null,
           accident.insurance_claim_id ?? null,
           accidentToken,
           display?.display_id ?? null,
