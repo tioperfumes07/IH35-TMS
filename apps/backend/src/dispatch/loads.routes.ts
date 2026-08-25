@@ -35,6 +35,7 @@ import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 // COMP-01: the dispatch driver-eligibility endpoint answers the same question the qualification gate
 // enforces, so it must answer it with the same code, not its own narrower copy.
@@ -1401,9 +1402,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
       // MILES-ON-BOOK — set on delivery mint; returned so the board can toast a skip.
       let driverBillOutcome: DriverBillMintOutcome | null = null;
-      const currentRes = await client.query<{ status: string }>(
+      const currentRes = await client.query<{
+        status: string;
+        load_number: string | null;
+        assigned_primary_driver_id: string | null;
+      }>(
         `
-          SELECT status
+          SELECT status, load_number, assigned_primary_driver_id::text
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -1528,6 +1533,22 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         load_id: params.data.id,
         payload: { from_status: currentStatus, to_status: targetStatus },
       });
+      if (targetStatus === "abandoned") {
+        // The abandonment alert is part of the status transition. Persist it before this scoped
+        // transaction commits; the direct multi-channel notification below remains supplemental.
+        await enqueueOutboxEvent(
+          client,
+          "load.abandoned",
+          { aggregate_type: "load", aggregate_id: params.data.id },
+          {
+            operating_company_id: operatingCompanyId,
+            load_id: params.data.id,
+            load_number: current.load_number,
+            driver_id: current.assigned_primary_driver_id,
+            actor_user_id: authUser.uuid,
+          }
+        );
+      }
       return {
         ok: true as const,
         status: targetStatus,

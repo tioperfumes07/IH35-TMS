@@ -61,6 +61,19 @@ function label(p: NoticePayload, preferredKey: string, idKey: string): string {
 
 export const NOTICE_ROUTES: NoticeRoute[] = [
   {
+    eventType: "load.abandoned",
+    severity: "critical",
+    entityType: "mdata.loads",
+    entityIdKey: "load_id",
+    audience: { kind: "roles", roles: ["Owner", "Administrator", "Dispatcher"] },
+    sourceBlock: "LOAD-ABANDONED",
+    title: (p) => `Load abandoned — ${label(p, "load_number", "load_id")}`,
+    body: (p) =>
+      `Load ${label(p, "load_number", "load_id")} was moved to abandoned status. ` +
+      `Contact the assigned driver, secure the freight, and record the recovery plan immediately.`,
+    actionLink: (p) => `/dispatch?load_id=${text(p, "load_id") ?? ""}`,
+  },
+  {
     // The canonical PWA helper emits this only when its inbox relation is unavailable. Without a
     // consumer the fail-loud event itself retries forever and nobody learns that driver notices are
     // being lost. Route it to humans who can contact the driver while the PWA surface is repaired.

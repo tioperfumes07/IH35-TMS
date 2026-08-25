@@ -480,7 +480,7 @@ export async function notifyAbandonedLoadStakeholders(input: {
       [input.loadId, input.operatingCompanyId]
     );
     return res.rows[0] ?? null;
-  }).catch(() => null);
+  });
 
   const loadNo = String(detail?.load_number ?? input.loadId.slice(0, 8));
   const driverName = String(detail?.driver_name ?? "Unassigned");
