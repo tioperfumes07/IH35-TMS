@@ -13,6 +13,7 @@ const NEEDLES = [
   "userFacingApiError",
   "deadlineQ.isError",
   "permits-2290-deadline-query-error",
+  "onRetry={() => void deadlineQ.refetch()}",
   "throw new Error(`request_failed_${res.status}`)",
 ];
 
@@ -22,17 +23,18 @@ function assertFile(rel, needles) {
 }
 
 function selftest() {
-  const bad = `if (!res.ok) return null;`;
   const good = NEEDLES.join("\n");
   const tmp = path.join(process.cwd(), ".tmp-permits-deadline-selftest.tsx");
-  fs.writeFileSync(tmp, bad);
-  try {
-    if (assertFile(".tmp-permits-deadline-selftest.tsx", ["deadlineQ.isError"]).length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL bad`);
-      process.exit(1);
+  for (const needle of NEEDLES) {
+    fs.writeFileSync(tmp, good.replace(needle, "/* planted missing requirement */"));
+    try {
+      if (assertFile(".tmp-permits-deadline-selftest.tsx", NEEDLES).length === 0) {
+        console.error(`${LABEL} SELFTEST FAIL mutation survived: ${needle}`);
+        process.exit(1);
+      }
+    } finally {
+      fs.unlinkSync(tmp);
     }
-  } finally {
-    fs.unlinkSync(tmp);
   }
   fs.writeFileSync(tmp, good);
   try {
@@ -43,7 +45,7 @@ function selftest() {
   } finally {
     fs.unlinkSync(tmp);
   }
-  console.log(`${LABEL} selftest PASS`);
+  console.log(`${LABEL} selftest PASS — ${NEEDLES.length} planted mutations killed`);
 }
 
 if (process.argv.includes("--selftest")) {
