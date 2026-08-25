@@ -3,6 +3,8 @@ import { listDriverReports } from "../../api/maintenance";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function LoadDriverReportsReverseSection({ operatingCompanyId, loadId }: { operatingCompanyId: string; loadId: string }) {
   const query = useQuery({
@@ -19,7 +21,9 @@ export function LoadDriverReportsReverseSection({ operatingCompanyId, loadId }: 
         <EntityLink kind="driver_reports_load" id={loadId} label="Open report queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading driver reports…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load driver reports for this load.</p> : null}
+      {query.isError ? (
+        <ListErrorState status={0} message={userFacingApiError(query.error, "Could not load driver reports for this load.")} onRetry={() => void query.refetch()} />
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No driver reports linked to this load.</p> : null}
       {totalCount > rows.length ? <p className="text-xs text-slate-500">Showing {rows.length} of {totalCount}. Open report queue to view all.</p> : null}
       {rows.length > 0 ? (
