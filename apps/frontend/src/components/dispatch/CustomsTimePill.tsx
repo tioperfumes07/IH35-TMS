@@ -8,19 +8,36 @@ interface Props {
 }
 
 export function CustomsTimePill({ operatingCompanyId, crossingPoint, direction }: Props) {
-  const { data } = useQuery({
+  const query = useQuery({
     queryKey: ["customs-time-avg", operatingCompanyId, crossingPoint, direction],
     queryFn: async () => {
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/border-crossings/customs-time-avg?operating_company_id=${encodeURIComponent(operatingCompanyId)}&crossing=${encodeURIComponent(crossingPoint)}&direction=${direction}`),
         { credentials: "include" }
       );
-      if (!res.ok) return null;
+      if (!res.ok) throw new Error(`Customs wait time request failed (HTTP ${res.status})`);
       return res.json();
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const avg = data?.data?.avg_minutes;
+  if (query.isError) {
+    return (
+      <button
+        type="button"
+        data-customs-time-retry
+        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+        title="Customs wait time unavailable — retry"
+        onClick={(event) => {
+          event.stopPropagation();
+          void query.refetch();
+        }}
+      >
+        Retry wait time
+      </button>
+    );
+  }
+
+  const avg = query.data?.data?.avg_minutes;
   if (!avg) return null;
 
   const color =
