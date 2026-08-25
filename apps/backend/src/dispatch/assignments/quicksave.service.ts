@@ -182,7 +182,6 @@ export async function reassignUnit(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -218,14 +217,12 @@ export async function reassignUnit(
         new_value: input.unit_uuid,
       });
 
-      await client.query("COMMIT");
       return {
         load_id: input.load_uuid,
         assigned_unit_id: input.unit_uuid,
         load_number: load.load_number,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });
@@ -237,7 +234,6 @@ export async function reassignTrailer(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -270,14 +266,12 @@ export async function reassignTrailer(
         new_value: input.trailer_uuid,
       });
 
-      await client.query("COMMIT");
       return {
         load_id: input.load_uuid,
         trailer_uuid: input.trailer_uuid,
         load_number: load.load_number,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });
@@ -289,7 +283,6 @@ export async function reassignDriver(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -338,14 +331,12 @@ export async function reassignDriver(
         new_value: input.driver_uuid,
       });
 
-      await client.query("COMMIT");
       return {
         load_id: input.load_uuid,
         assigned_primary_driver_id: input.driver_uuid,
         load_number: load.load_number,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });

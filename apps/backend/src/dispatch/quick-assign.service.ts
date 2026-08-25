@@ -63,7 +63,6 @@ export async function quickAssignLoad(
       "SELECT set_config('app.operating_company_id', $1::text, true)",
       [input.operating_company_id],
     );
-    await client.query("BEGIN");
     try {
       const loadRes = await client.query(
         `
@@ -306,7 +305,6 @@ export async function quickAssignLoad(
         "P5-F3-QUICKSAVE",
       );
 
-      await client.query("COMMIT");
       const prevDriver =
         (load as { assigned_primary_driver_id?: string | null })
           .assigned_primary_driver_id ?? null;
@@ -325,7 +323,6 @@ export async function quickAssignLoad(
         pending_fields: pendingFields,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });
@@ -353,7 +350,6 @@ export async function completeQuicksaveDraft(
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class) — input.operating_company_id is caller-supplied and sets the RLS scope.
     await assertCompanyMembership(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       await client.query(
         "SELECT set_config('app.operating_company_id', $1::text, true)",
@@ -479,14 +475,12 @@ export async function completeQuicksaveDraft(
           ],
         );
       }
-      await client.query("COMMIT");
       return {
         load_id: input.load_id,
         pending_fields: pendingFields,
         is_quicksave_draft: pendingFields.length > 0,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });
