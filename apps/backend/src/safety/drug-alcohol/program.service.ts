@@ -100,7 +100,13 @@ export async function listEnrollments(
            SELECT 1
            FROM mdata.driver_company_authorizations da_enrollment_label_dca
            WHERE da_enrollment_label_dca.driver_id = d.id
-             AND da_enrollment_label_dca.company_id = e.operating_company_id
+             -- SAF-F6366: safety.da_program_enrollments.operating_company_id is TEXT (unlike
+             -- every other safety.* table, which is uuid -- confirmed live via
+             -- information_schema.columns). Comparing it bare against company_id (uuid) threw
+             -- Postgres 42883 "operator does not exist: uuid = text" on every single call,
+             -- 500ing the whole Drug & Alcohol enrollments list unconditionally. Cast to text
+             -- to match the sibling comparison two lines up in this same ON clause.
+             AND da_enrollment_label_dca.company_id::text = e.operating_company_id
              AND da_enrollment_label_dca.is_authorized = true
              AND da_enrollment_label_dca.deactivated_at IS NULL
          )
@@ -221,7 +227,9 @@ export async function listTestRecords(
            SELECT 1
            FROM mdata.driver_company_authorizations da_test_label_dca
            WHERE da_test_label_dca.driver_id = d.id
-             AND da_test_label_dca.company_id = t.operating_company_id
+             -- SAF-F6366: same bug and fix as listEnrollments() above -- see that comment.
+             -- safety.da_test_records.operating_company_id is also TEXT (not uuid).
+             AND da_test_label_dca.company_id::text = t.operating_company_id
              AND da_test_label_dca.is_authorized = true
              AND da_test_label_dca.deactivated_at IS NULL
          )

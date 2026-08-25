@@ -59,7 +59,10 @@ describe("listEnrollments", () => {
     ]);
     const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(callSql).toContain("driver_company_authorizations da_enrollment_label_dca");
-    expect(callSql).toContain("da_enrollment_label_dca.company_id = e.operating_company_id");
+    // SAF-F6366: safety.da_program_enrollments.operating_company_id is TEXT, not uuid --
+    // da_enrollment_label_dca.company_id (uuid) must be cast to ::text or Postgres 42883s
+    // "operator does not exist: uuid = text" on every call. Live-reproduced before fixing.
+    expect(callSql).toContain("da_enrollment_label_dca.company_id::text = e.operating_company_id");
   });
 });
 
@@ -120,7 +123,9 @@ describe("listTestRecords", () => {
     const callSql = (client.query as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(callSql).toContain("result = $2");
     expect(callSql).toContain("driver_company_authorizations da_test_label_dca");
-    expect(callSql).toContain("da_test_label_dca.company_id = t.operating_company_id");
+    // SAF-F6366: safety.da_test_records.operating_company_id is TEXT, not uuid -- same fix as
+    // listEnrollments above. Live-reproduced (42883) before fixing.
+    expect(callSql).toContain("da_test_label_dca.company_id::text = t.operating_company_id");
   });
 });
 
