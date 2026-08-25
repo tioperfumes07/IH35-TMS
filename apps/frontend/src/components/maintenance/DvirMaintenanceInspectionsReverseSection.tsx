@@ -3,6 +3,7 @@ import { listMaintenanceInspections } from "../../api/maintenance";
 import { formatDateUS } from "../../lib/formatDate";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 export function DvirMaintenanceInspectionsReverseSection({
   operatingCompanyId,
@@ -25,7 +26,13 @@ export function DvirMaintenanceInspectionsReverseSection({
         {rows.length ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
       </h2>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load linked maintenance inspections.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          status={0}
+          message="Could not load linked maintenance inspections."
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No maintenance inspection links this DVIR.</p> : null}
       {rows.map((inspection) => (
         <div key={inspection.id} className="px-2 py-1.5 text-sm">

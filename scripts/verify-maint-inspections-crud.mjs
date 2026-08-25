@@ -88,6 +88,9 @@ export function collectProblems(root = ROOT) {
   if (!/<EntityLink[\s\S]*?kind="maintenance_inspection"/.test(reverse)) {
     failures.push("DVIR reverse rows must drill to the exact inspection");
   }
+  if (!/<ListErrorState[\s\S]*?Could not load linked maintenance inspections\.[\s\S]*?onRetry=\{\(\) => void query\.refetch\(\)\}/.test(reverse)) {
+    failures.push("DVIR reverse read failure must expose an exact-query retry");
+  }
   if (!/<DvirMaintenanceInspectionsReverseSection[\s\S]*?dvirSubmissionId=\{id\}/.test(dvirDetail)) {
     failures.push("DVIR detail must mount maintenance inspection reverse history");
   }
@@ -119,6 +122,7 @@ function selftest() {
       [REL.page, 'kind="dvir"', 'kind="unit"'],
       [REL.maintenanceApi, 'q.set("dvir_submission_id", params.dvir_submission_id)', 'q.set("ignored", params.dvir_submission_id)'],
       [REL.reverse, "dvir_submission_id: dvirSubmissionId", "unit_id: dvirSubmissionId"],
+      [REL.reverse, "onRetry={() => void query.refetch()}", "onRetry={() => undefined}"],
       [REL.dvirDetail, "<DvirMaintenanceInspectionsReverseSection", "<MissingReverseSection"],
       [REL.entityLink, 'case "dvir":', 'case "disabled_dvir":'],
     ];
@@ -142,4 +146,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:maint-inspections-crud PASS${process.argv.includes("--selftest") ? " — 8/8 mutations killed" : ""}`);
+console.log(`verify:maint-inspections-crud PASS${process.argv.includes("--selftest") ? " — 9/9 mutations killed" : ""}`);
