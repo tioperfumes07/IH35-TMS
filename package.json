@@ -495,6 +495,7 @@
     "verify:code-cell-no-hyphen": "node scripts/verify-code-cell-no-hyphen.mjs",
     "verify:driver-inactivity-preview": "node scripts/verify-driver-inactivity-preview.mjs",
     "verify:shipper-portal-tenant-isolation": "node scripts/verify-shipper-portal-tenant-isolation.mjs",
+    "verify:shipper-milestone-email-durability": "node scripts/verify-shipper-milestone-email-durability.mjs",
     "verify:shipper-portal-no-internal-data-leak": "node scripts/verify-shipper-portal-no-internal-data-leak.mjs",
     "verify:shipper-portal-session-cookie-secure": "node scripts/verify-shipper-portal-session-cookie-secure.mjs",
     "verify:shipper-portal-rls-policies": "node scripts/verify-shipper-portal-rls-policies.mjs",
