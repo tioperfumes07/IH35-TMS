@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☐ | `SETL-EVIDENCE-UPLOAD-SILENT-DROP` | **B** | CC-1 settlements money surface | Codex handoff | OPEN | 2026-08-24 | Settlement Dispute swallows evidence upload failures, submits anyway, and persists no evidence document linkage. | Current-main source trace in `SettlementDisputeModal.tsx`; board carries atomic fix bar. | OWNER-GATED=no |
+
 - ☑ `DRV-F6253-PREDISPATCH-SHARED-DRIVER-CHECKS-FAIL-OPEN` — Codex vertical driver connectivity — FIXED this PR; CDL, medical-card, and active-driver checks now evaluate active selected-company authorizations instead of silently returning no blockers.
 
 - ☑ `DRV-F6252-WF038-REJECTS-AUTHORIZED-SHARED-DRIVER` — Codex driver connectivity — FIXED this PR; dispatch auth pre-handler now admits active selected-company authorizations before Book Load/assign/quick-assign; auth-gate guard is mutation-proven.
