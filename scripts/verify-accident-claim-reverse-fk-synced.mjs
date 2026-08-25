@@ -56,6 +56,13 @@ export function assertGuard({ routes }) {
   const errs = [];
   const r = stripComments(routes);
 
+  if (!/SELECT\s+id::text,\s*insurance_claim_id::text[\s\S]{0,220}?FROM\s+safety\.accident_reports[\s\S]{0,220}?FOR\s+UPDATE/.test(r)) {
+    errs.push(`${ROUTES}: claim mutation must lock the accident and read its canonical insurance_claim_id before linking`);
+  }
+  if (!r.includes('kind: "accident_report_already_linked"') || !r.includes('error: "accident_report_already_linked"')) {
+    errs.push(`${ROUTES}: occupied accident back-pointers must return an explicit conflict before claim mutation`);
+  }
+
   const postBlock = extractRouteBlock(r, 'app.post("/api/v1/insurance/claims"');
   if (!postBlock) {
     errs.push(`${ROUTES}: missing POST /api/v1/insurance/claims handler`);
@@ -89,6 +96,16 @@ export function assertGuard({ routes }) {
 
 function selftest() {
   const good = `
+    async function lockAccident() {
+      const row = await client.query(\`
+        SELECT id::text, insurance_claim_id::text
+        FROM safety.accident_reports
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        FOR UPDATE
+      \`);
+      return { kind: "accident_report_already_linked" };
+    }
+    const conflict = { error: "accident_report_already_linked" };
     app.post("/api/v1/insurance/claims", async (req, reply) => {
       const createdId = insert.rows[0]?.id;
       if (body.accident_report_id) {
