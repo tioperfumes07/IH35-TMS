@@ -14,6 +14,7 @@ import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
+import { nextExpenseDisplayId } from "./display-id.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
@@ -129,6 +130,8 @@ const createExpenseBodySchema = z.object({
   // silently summed bills only. Same optional/columnExists-guarded treatment as insurance_claim_id
   // above; no posting change (the existing expense poster is unchanged, this is a pointer).
   legal_matter_id: z.string().uuid().optional().nullable(),
+  // QBO Ref no. — optional override. Empty → server assigns EXP-YYYY-##### (or load-scoped L-seq).
+  expense_number: z.string().trim().max(80).optional().nullable(),
   // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
   load_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
@@ -439,6 +442,21 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     },
   );
 
+  app.get("/api/v1/expenses/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const document_number = await withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "accounting.expenses"))) return null;
+      if (!(await columnExists(client, "accounting", "expenses", "expense_number"))) return null;
+      return nextExpenseDisplayId(client, parsed.data.operating_company_id);
+    });
+    if (!document_number) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+    return { document_number };
+  });
+
   // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).
   // Entity-scoped via withCompanyScope + explicit operating_company_id filter. SELECT only.
   app.get("/api/v1/expenses/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -732,6 +750,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           values.push(user.uuid);
         }
 
+        const operatorExpenseNumber = body.expense_number?.trim() || null;
+        if (hasExpenseNumber && operatorExpenseNumber) {
+          columns.push(`expense_number`);
+          values.push(operatorExpenseNumber);
+        }
+
         // Explicit load_id from caller — do not silently drop (WAVE-H2 CLS-LINKAGE-ONEWAY).
         if (hasLoadId && body.load_id) {
           columns.push(`load_id`);
@@ -830,10 +854,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
               })
             : null;
 
-        let expenseNumber: string | null = null;
+        let expenseNumber: string | null = operatorExpenseNumber;
 
         if (attribution) {
           const numbered = await generateExpenseNumber(client, attribution.loadId, body.operating_company_id);
+          const headerNumber = expenseNumber ?? numbered.number;
 
           await client.query(
             `
@@ -858,7 +883,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
               attribution.loadId,
               numbered.loadNumber,
               numbered.seq,
-              numbered.number,
+              headerNumber,
               attribution.method,
               attribution.confidence,
               attribution.reason,
@@ -866,10 +891,10 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ]
           );
 
-          expenseNumber = numbered.number;
+          expenseNumber = headerNumber;
 
           if (hasExpenseNumber) {
-            await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, numbered.number]);
+            await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, headerNumber]);
           }
           if (hasLoadId) {
             await client.query(`UPDATE accounting.expenses SET load_id = $2 WHERE id = $1`, [expenseId, attribution.loadId]);
@@ -879,7 +904,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             expense_id: expenseId,
             operating_company_id: body.operating_company_id,
             load_id: attribution.loadId,
-            expense_number: numbered.number,
+            expense_number: headerNumber,
           });
 
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: true }, "info", "P6-T11176");
@@ -900,6 +925,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           // and historical rows are NOT backfilled — a number implies an attribution event that never
           // happened for them.
           const numbered = await generateExpenseNumber(client, body.load_id, body.operating_company_id);
+          const headerNumber = expenseNumber ?? numbered.number;
           // ACCT-F5044 — CHECK on expense_load_links only allows
           // attribution_method IN (auto_timestamp|auto_location|manual_override|user_assigned)
           // and attribution_confidence IN (high|medium|low). The prior literals
@@ -929,14 +955,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
               body.load_id,
               numbered.loadNumber,
               numbered.seq,
-              numbered.number,
+              headerNumber,
               "Load stamped explicitly by the operator on expense create",
               user.uuid,
             ]
           );
-          expenseNumber = numbered.number;
+          expenseNumber = headerNumber;
           if (hasExpenseNumber) {
-            await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, numbered.number]);
+            await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, headerNumber]);
           }
 
           await emitOutbox(client, "expense.created.attributed", {
@@ -944,7 +970,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             operating_company_id: body.operating_company_id,
             load_id: body.load_id,
             explicit_load: true,
-            expense_number: numbered.number,
+            expense_number: headerNumber,
             category_account_id: categoryAccountId,
           });
           await appendCrudAudit(
@@ -975,6 +1001,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             category_account_id: categoryAccountId,
           });
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, driverless: true, category_account_id: categoryAccountId }, "info", "P6-T11176");
+        }
+
+        if (hasExpenseNumber && !expenseNumber) {
+          expenseNumber = await nextExpenseDisplayId(client, body.operating_company_id, new Date(`${body.expense_date}T00:00:00.000Z`));
+          await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, expenseNumber]);
         }
 
         return {
