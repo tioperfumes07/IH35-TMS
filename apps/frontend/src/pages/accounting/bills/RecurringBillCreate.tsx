@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { createRecurringBillTemplate, type RecurringBillFrequency, type RecurringBillLineItem } from "../../../api/accounting";
-import { getCoaAccounts } from "../../../api/banking";
+import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { listVendors } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
@@ -64,17 +64,20 @@ export function RecurringBillCreate() {
 
   const coaQuery = useQuery({
     queryKey: ["recurring-bill", "coa", companyId],
-    queryFn: () => getCoaAccounts(companyId),
+    // listCatalogAccounts (not getCoaAccounts): is_postable is required so header/parent
+    // Liability rows cannot be chosen as bill-line expense accounts.
+    queryFn: () =>
+      listCatalogAccounts({ status: "active", operating_company_id: companyId, postable_only: true }),
     enabled: !!companyId,
   });
 
   const expenseCoaOptions = useMemo(() => {
     const base = (coaQuery.data?.accounts ?? [])
       .filter((acct) => {
+        if (!acct.is_postable) return false;
+        if (acct.deactivated_at) return false;
         const type = String(acct.account_type ?? "");
-        const deactivated = acct.deactivated_at;
-        if (deactivated) return false;
-        return type === "Expense" || type === "Cost of Goods Sold" || type === "Other Expense" || type === "Asset";
+        return type === "Expense" || type === "CostOfGoodsSold" || type === "OtherExpense";
       })
       .map(coaAccountReferenceOption);
     const ids = new Set(base.map((o) => o.value));
@@ -153,45 +156,47 @@ export function RecurringBillCreate() {
         <h1 className="text-lg font-semibold text-gray-900">Create Recurring Bill Template</h1>
       </div>
 
-      {/* Flat QBO-style form — no nested bordered card (box-in-box) */}
+      {/* Flat QBO-style form — no nested bordered card (box-in-box). Vendor left, template name flush right. */}
       <div className="space-y-5">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Template Name *</label>
-          <input
-            type="text"
-            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
-            placeholder="e.g. Monthly Office Rent"
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
-          {vendorsQuery.isError ? (
-            <div className="mb-2">
-              <ListErrorBanner
-                message={`Failed to load recurring-bill vendors: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
-                onRetry={() => void vendorsQuery.refetch()}
-              />
-            </div>
-          ) : null}
-          <ReferenceSelect
-            value={vendorUuid || null}
-            onChange={(next) => setVendorUuid(next ?? "")}
-            options={vendors.map(vendorReferenceOption)}
-            createKind="vendor"
-            operatingCompanyId={companyId}
-            placeholder="Select vendor..."
-            disabled={!companyId}
-          />
-          <CappedListNotice
-            shown={vendors.length}
-            limit={1000}
-            total={vendorsQuery.data?.total ?? null}
-            hint="Type in the vendor field to search the full roster."
-            className="mt-1 text-[11px] text-slate-600"
-          />
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-[16rem] flex-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
+            {vendorsQuery.isError ? (
+              <div className="mb-2">
+                <ListErrorBanner
+                  message={`Failed to load recurring-bill vendors: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
+                  onRetry={() => void vendorsQuery.refetch()}
+                />
+              </div>
+            ) : null}
+            <ReferenceSelect
+              value={vendorUuid || null}
+              onChange={(next) => setVendorUuid(next ?? "")}
+              options={vendors.map(vendorReferenceOption)}
+              createKind="vendor"
+              operatingCompanyId={companyId}
+              placeholder="Select vendor..."
+              disabled={!companyId}
+            />
+            <CappedListNotice
+              shown={vendors.length}
+              limit={1000}
+              total={vendorsQuery.data?.total ?? null}
+              hint="Type in the vendor field to search the full roster."
+              className="mt-1 text-[11px] text-slate-600"
+            />
+          </div>
+          <div className="ml-auto w-56 shrink-0 text-right">
+            <label className="mb-1 block text-sm font-medium text-gray-700">Template name *</label>
+            <input
+              type="text"
+              aria-label="Template name"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-right text-sm focus:border-slate-300 focus:outline-hidden"
+              placeholder="e.g. Monthly Office Rent"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
+          </div>
         </div>
 
         <div>

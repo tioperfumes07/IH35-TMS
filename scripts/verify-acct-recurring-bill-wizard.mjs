@@ -28,7 +28,14 @@ if (!createPage.includes('createKind="account"')) fail("RecurringBillCreate line
 if (!createPage.includes("coa_account_id")) fail("RecurringBillCreate must bind coa_account_id on lines");
 if (!createPage.includes("recurring-bill-line-items")) fail("line items testid missing");
 if (!createPage.includes("SelectCombobox")) fail("Frequency must use SelectCombobox (not bare native-only chrome)");
-if (!createPage.includes("getCoaAccounts")) fail("Must load entity-scoped CoA for line pickers");
+if (!createPage.includes("listCatalogAccounts")) fail("Must load entity-scoped CoA via listCatalogAccounts (is_postable)");
+if (!createPage.includes("if (!acct.is_postable) return false;")) {
+  fail("RecurringBillCreate expense picker must filter is_postable");
+}
+if (!createPage.includes("CostOfGoodsSold")) fail("RecurringBillCreate expense picker must include CostOfGoodsSold");
+if (!createPage.includes('aria-label="Template name"')) {
+  fail("RecurringBillCreate Template name must be a labeled right-side field (QBO chrome)");
+}
 
 if (!api.includes("coa_account_id?: string | null")) {
   fail("FE RecurringBillLineItem must use coa_account_id (matches backend)");
