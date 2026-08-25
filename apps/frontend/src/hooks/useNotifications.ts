@@ -79,16 +79,24 @@ export function useNotifications(options?: { pollIntervalMs?: number; enableStre
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
   const streamRef = useRef<EventSource | null>(null);
 
   const refresh = useCallback(async () => {
-    const [list, count] = await Promise.all([
-      fetchNotifications({ limit: 20 }),
-      fetchUnreadCount(),
-    ]);
-    setNotifications(list.notifications);
-    setUnreadCount(count.unread_count);
-    setLoading(false);
+    try {
+      const [list, count] = await Promise.all([
+        fetchNotifications({ limit: 20 }),
+        fetchUnreadCount(),
+      ]);
+      setNotifications(list.notifications);
+      setUnreadCount(count.unread_count);
+      setError(null);
+    } catch (cause) {
+      setError(cause);
+    } finally {
+      // A failed initial poll is settled failure, not an infinite loading state.
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -130,24 +138,38 @@ export function useNotifications(options?: { pollIntervalMs?: number; enableStre
   }, [enableStream, refresh]);
 
   const markRead = useCallback(async (id: string) => {
-    await markNotificationRead(id);
-    await refresh();
+    try {
+      await markNotificationRead(id);
+      await refresh();
+    } catch (cause) {
+      setError(cause);
+    }
   }, [refresh]);
 
   const dismiss = useCallback(async (id: string) => {
-    await dismissNotification(id);
-    await refresh();
+    try {
+      await dismissNotification(id);
+      await refresh();
+    } catch (cause) {
+      setError(cause);
+    }
   }, [refresh]);
 
   const markAllRead = useCallback(async () => {
-    await markAllNotificationsRead();
-    await refresh();
+    try {
+      await markAllNotificationsRead();
+      await refresh();
+    } catch (cause) {
+      setError(cause);
+    }
   }, [refresh]);
 
   return {
     notifications,
     unreadCount,
     loading,
+    error,
+    isError: error !== null,
     refresh,
     markRead,
     dismiss,

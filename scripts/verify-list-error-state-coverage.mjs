@@ -156,7 +156,30 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
   "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
   "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
+  // Notification Center owns its polling hook rather than React Query. It must still expose the
+  // same settled error + retry contract instead of an infinite initial spinner / false empty list.
+  "apps/frontend/src/pages/notifications/NotificationCenterPage.tsx",
 ];
+
+const NOTIFICATION_CENTER = "apps/frontend/src/pages/notifications/NotificationCenterPage.tsx";
+const NOTIFICATIONS_HOOK = "apps/frontend/src/hooks/useNotifications.ts";
+
+function notificationCenterProblems(pageSrc, hookSrc) {
+  const problems = [];
+  if (!/\bisError\b/.test(pageSrc) || !/\bListErrorState\b/.test(pageSrc) || !/onRetry=\{\(\) => void refresh\(\)\}/.test(pageSrc)) {
+    problems.push(`${NOTIFICATION_CENTER} must render the hook error through ListErrorState with an exact refresh retry`);
+  }
+  const refreshStart = hookSrc.indexOf("const refresh = useCallback");
+  const refreshEnd = hookSrc.indexOf("useEffect(() =>", refreshStart);
+  const refreshBlock = refreshStart >= 0 && refreshEnd > refreshStart ? hookSrc.slice(refreshStart, refreshEnd) : "";
+  if (!/catch \(cause\)/.test(refreshBlock) || !/setError\(cause\)/.test(refreshBlock) || !/finally/.test(refreshBlock) || !/setLoading\(false\)/.test(refreshBlock)) {
+    problems.push(`${NOTIFICATIONS_HOOK} refresh must settle failure into error and end initial loading`);
+  }
+  if (!/isError:\s*error !== null/.test(hookSrc)) {
+    problems.push(`${NOTIFICATIONS_HOOK} must expose an explicit isError state to its list owner`);
+  }
+  return problems;
+}
 
 function stripComments(src) {
   return src
@@ -180,6 +203,10 @@ function scan() {
       failures.push(`${rel} — lost its honest error state (isError:${hasIsError}, ListErrorState:${hasErrState})`);
     }
   }
+  failures.push(...notificationCenterProblems(
+    fs.readFileSync(path.join(repoRoot, NOTIFICATION_CENTER), "utf8"),
+    fs.readFileSync(path.join(repoRoot, NOTIFICATIONS_HOOK), "utf8"),
+  ));
   return failures;
 }
 
@@ -283,8 +310,25 @@ function selftest() {
     );
     process.exit(1);
   }
+  const page = fs.readFileSync(path.join(repoRoot, NOTIFICATION_CENTER), "utf8");
+  const hook = fs.readFileSync(path.join(repoRoot, NOTIFICATIONS_HOOK), "utf8");
+  if (notificationCenterProblems(page, hook).length) {
+    console.error("[verify-list-error-state-coverage] SELFTEST FAIL — live notification error contract is not green");
+    process.exit(1);
+  }
+  const mutations = [
+    [page.replaceAll("ListErrorState", "RemovedErrorState"), hook, "page loses retryable error surface"],
+    [page, hook.replace("setError(cause);", "void cause;"), "poll failure is swallowed"],
+    [page, hook.replace("isError: error !== null", "isError: false"), "hook reports false-green"],
+  ];
+  for (const [mutatedPage, mutatedHook, label] of mutations) {
+    if (notificationCenterProblems(mutatedPage, mutatedHook).length === 0) {
+      console.error(`[verify-list-error-state-coverage] SELFTEST FAIL — planted mutation survived: ${label}`);
+      process.exit(1);
+    }
+  }
   console.log(
-    "[verify-list-error-state-coverage] SELFTEST PASS — requires isError + ListErrorState; flags loading-only; excludes dead forms",
+    `[verify-list-error-state-coverage] SELFTEST PASS — requires isError + ListErrorState; flags loading-only; excludes dead forms; notification mutations ${mutations.length}/${mutations.length}`,
   );
 }
 

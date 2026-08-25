@@ -133,6 +133,18 @@
       ]
     },
     {
+      "id": "notifications.center",
+      "tab": "Notifications",
+      "sub": "Global Notification Center and preferences",
+      "route_hint": "/notifications",
+      "surface_kind": "leaf",
+      "surface_path": "pages/notifications/NotificationCenterPage.tsx",
+      "required": [
+        "connectivity"
+      ],
+      "note": "Global mounted operator surface inventoried under System; polling, mutations, and preferences must distinguish loading, error, and settled empty states."
+    },
+    {
       "id": "tab.overview",
       "tab": "Overview",
       "sub": "Overview tab",

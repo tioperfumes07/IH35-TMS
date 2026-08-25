@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import {
   fetchNotificationPreferences,
   patchNotificationPreferences,
   useNotifications,
   type NotificationPreferences,
 } from "../../hooks/useNotifications";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const TYPE_OPTIONS = [
   "compliance_expiring",
@@ -20,18 +22,29 @@ const TYPE_OPTIONS = [
 const SEVERITY_OPTIONS = ["info", "low", "medium", "high", "critical"];
 
 export function NotificationCenterPage() {
-  const { notifications, loading, markRead, dismiss, markAllRead, refresh } = useNotifications({ pollIntervalMs: 15_000 });
+  const { notifications, loading, error, isError, markRead, dismiss, markAllRead, refresh } = useNotifications({ pollIntervalMs: 15_000 });
   const [typeFilter, setTypeFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState<unknown>(null);
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
-  useEffect(() => {
-    void fetchNotificationPreferences().then((res) => setPrefs(res.preferences));
+  const loadPreferences = useCallback(async () => {
+    setPrefsError(null);
+    try {
+      const res = await fetchNotificationPreferences();
+      setPrefs(res.preferences);
+    } catch (cause) {
+      setPrefsError(cause);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadPreferences();
+  }, [loadPreferences]);
 
   const filtered = useMemo(() => {
     return notifications.filter((item) => {
@@ -57,6 +70,7 @@ export function NotificationCenterPage() {
   const savePrefs = async () => {
     if (!prefs) return;
     setPrefsSaving(true);
+    setPrefsError(null);
     try {
       const res = await patchNotificationPreferences({
         channels_per_type: prefs.channels_per_type,
@@ -66,6 +80,8 @@ export function NotificationCenterPage() {
         email_digest_frequency: prefs.email_digest_frequency,
       });
       setPrefs(res.preferences);
+    } catch (cause) {
+      setPrefsError(cause);
     } finally {
       setPrefsSaving(false);
     }
@@ -123,8 +139,15 @@ export function NotificationCenterPage() {
           </div>
 
           {loading ? <p className="text-sm text-gray-500">Loading notifications…</p> : null}
-          {!loading && filtered.length === 0 ? <p className="text-sm text-gray-500">No notifications match filters.</p> : null}
-          <ul className="divide-y">
+          {isError ? (
+            <ListErrorState
+              status={(error as { status?: number } | null)?.status ?? 0}
+              message={userFacingApiError(error, "Could not load notifications")}
+              onRetry={() => void refresh()}
+            />
+          ) : null}
+          {!loading && !isError && filtered.length === 0 ? <p className="text-sm text-gray-500">No notifications match filters.</p> : null}
+          <ul className="divide-y" aria-hidden={isError || undefined}>
             {paginated.map((item) => (
               <li key={item.id} className="py-3" data-testid="notification-center-item">
                 <div className="flex items-start justify-between gap-3">
@@ -182,7 +205,13 @@ export function NotificationCenterPage() {
 
         <aside className="rounded-sm border border-gray-200 bg-white p-4" data-testid="notification-preferences-panel">
           <h2 className="text-sm font-semibold text-gray-900">Preferences</h2>
-          {prefs ? (
+          {prefsError ? (
+            <ListErrorState
+              status={(prefsError as { status?: number } | null)?.status ?? 0}
+              message={userFacingApiError(prefsError, "Could not load notification preferences")}
+              onRetry={() => void loadPreferences()}
+            />
+          ) : prefs ? (
             <div className="mt-3 space-y-3 text-sm">
               <label className="flex items-center gap-2">
                 <input
