@@ -89,6 +89,15 @@ function checkMultiBillsParity(files) {
   if (!page.includes('data-testid="create-multiple-bills-page"')) {
     violations.push("CreateMultipleBillsPage missing data-testid");
   }
+  if (!page.includes("getNextBillDocumentNumber")) {
+    violations.push("CreateMultipleBillsPage must preview BILL-YYYY-##### via getNextBillDocumentNumber");
+  }
+  if (!page.includes('aria-label="Bill no."')) {
+    violations.push("CreateMultipleBillsPage Bill no. must sit as a labeled right-side field (QBO chrome)");
+  }
+  if (!page.includes("allocateBillDocumentNumbers")) {
+    violations.push("CreateMultipleBillsPage must allocate sequential Bill no. values per row");
+  }
 
   return violations;
 }
@@ -133,6 +142,9 @@ const goodFixture = [
       `listUnits`,
       `unit_id`,
       `data-testid="create-multiple-bills-page"`,
+      `getNextBillDocumentNumber`,
+      `aria-label="Bill no."`,
+      `allocateBillDocumentNumbers`,
     ].join("\n"),
   },
 ];
