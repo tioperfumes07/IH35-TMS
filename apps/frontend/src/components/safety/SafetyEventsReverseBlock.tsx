@@ -3,6 +3,8 @@ import { listSafetyEventLog } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { companyId: string; subject: "driver" | "unit"; entityId: string }) {
   const query = useQuery({
@@ -25,7 +27,13 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
         />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load safety events for this {subject}.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          status={0}
+          message={userFacingApiError(query.error, `Could not load safety events for this ${subject}.`)}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No safety events linked to this {subject}.</p> : null}
       {rows.length ? (
         <ul className="space-y-2">

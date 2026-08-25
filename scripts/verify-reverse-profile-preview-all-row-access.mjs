@@ -20,6 +20,8 @@ const FILES = {
   cargoClaims: "apps/frontend/src/components/safety/CustomerCargoClaimsReverseSection.tsx",
   customerNotify: "apps/frontend/src/components/dispatch/CustomerNotifyReverseSection.tsx",
   dispatcherSafety: "apps/frontend/src/components/safety/DispatcherSafetyEventsReverseBlock.tsx",
+  safetyEvents: "apps/frontend/src/components/safety/SafetyEventsReverseBlock.tsx",
+  civilFines: "apps/frontend/src/components/safety/CivilFinesReverseBlock.tsx",
 };
 const sources = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
@@ -44,6 +46,8 @@ const checks = [
   ["cargoClaims", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "customer cargo-claim failure retries exact query"],
   ["customerNotify", /preferences\.refetch\(\)[\s\S]{0,300}log\.refetch\(\)/, "customer notification failures retry exact independent queries"],
   ["dispatcherSafety", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "dispatcher safety failure retries exact query"],
+  ["safetyEvents", /<ListErrorState[\s\S]{0,300}userFacingApiError\(query\.error,[\s\S]{0,180}query\.refetch\(\)/, "driver and unit safety-event failures retain detail and retry exact query"],
+  ["civilFines", /<ListErrorState[\s\S]{0,300}userFacingApiError\(query\.error,[\s\S]{0,180}query\.refetch\(\)/, "load and unit civil-fine failures retain detail and retry exact query"],
 ];
 
 function failures(candidate) {
@@ -68,6 +72,8 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["cargoClaims", "query.refetch()", "retryRemoved()"],
     ["customerNotify", "preferences.refetch()", "retryRemoved()"],
     ["dispatcherSafety", "query.refetch()", "retryRemoved()"],
+    ["safetyEvents", "query.refetch()", "retryRemoved()"],
+    ["civilFines", "query.refetch()", "retryRemoved()"],
   ];
   const escaped = [];
   for (const [key, needle, replacement] of mutations) {
