@@ -172,7 +172,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
                 placeholder="Filter by program, entity, detail…"
                 value={staged.draft.filterText}
                 onChange={(e) => staged.setDraft({ ...staged.draft, filterText: e.target.value })}
-                className="rounded-sm border px-2 py-1 text-sm"
+                className="h-8 w-full max-w-md rounded-sm border px-2 text-sm"
               />
               <label className="text-sm">
                 Program{" "}

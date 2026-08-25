@@ -15,6 +15,7 @@ import {
   computeBreakEven,
   type BreakEvenClassification,
 } from "../../api/financeBreakEven";
+import { BreakEvenWorkbookCreator } from "./BreakEvenWorkbookCreator";
 
 // F1 — Break-Even Analysis.
 // READ-ONLY analytics/estimate. A single GET pulls the cost-per-mile inputs (revenue, miles, per-account
@@ -163,6 +164,7 @@ export function BreakEvenPage() {
         <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           Break-Even Analysis is not yet enabled for this company. (Feature flag <code>{FINANCE_BREAK_EVEN_UI_FLAG}</code> is off.)
         </div>
+        <BreakEvenWorkbookCreator operatingCompanyId={companyId} liveMiles={0} liveRevenueCents={0} />
       </div>
     );
   }
@@ -378,6 +380,12 @@ export function BreakEvenPage() {
           <p className="mt-4 text-xs text-slate-400">{data.disclaimer}</p>
         </>
       ) : null}
+
+      <BreakEvenWorkbookCreator
+        operatingCompanyId={companyId}
+        liveMiles={data?.miles.total_miles ?? 0}
+        liveRevenueCents={data?.revenue.gl_revenue_cents ?? 0}
+      />
     </div>
   );
 }
