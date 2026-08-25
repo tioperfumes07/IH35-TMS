@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { hasInAppHistory } from "../../../lib/smart-back";
 import "./PageHeader.css";
 
 export type BreadcrumbItem = { label: string; href?: string };
@@ -46,6 +47,15 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
             aria-label="Back"
             data-testid="page-header-back"
             onClick={() => {
+              // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: prefer true history-based back
+              // whenever the user actually navigated within the app to reach this page -- a static
+              // backHref always sends them to the same hardcoded parent even when they arrived from
+              // somewhere else entirely. Only fall back to backHref on a direct URL load/refresh,
+              // where there is no real in-app page to go back to.
+              if (hasInAppHistory(window.history.state)) {
+                navigate(-1);
+                return;
+              }
               if (backHref) {
                 navigate(backHref);
                 return;
