@@ -29,6 +29,20 @@ function fail(msg) {
   process.exit(1);
 }
 
+function reeferWriteFailureProblems(section) {
+  const failures = [];
+  if (!/manualMut\.isError[\s\S]{0,220}?userFacingApiError\(manualMut\.error,\s*["']Could not record reefer hours["']\)/.test(section)) {
+    failures.push("manual reefer-hours rejection must preserve backend detail");
+  }
+  if (!/serviceMut\.isError[\s\S]{0,220}?userFacingApiError\(serviceMut\.error,\s*["']Could not mark reefer service["']\)/.test(section)) {
+    failures.push("mark-service rejection must preserve backend detail");
+  }
+  if ((section.match(/role=["']alert["']/g) ?? []).length < 2) {
+    failures.push("both reefer writes must expose accessible failure alerts");
+  }
+  return failures;
+}
+
 function main() {
   const failures = [];
   const migration = read(paths.migration);
@@ -78,6 +92,7 @@ function main() {
   if (!section.includes("Reefer hours tracking")) failures.push("TrailerReeferSection must show live heading");
   if (!section.includes("reefer-hours-history")) failures.push("TrailerReeferSection must show history table");
   if (!section.includes("Record hours")) failures.push("TrailerReeferSection must support manual entry");
+  failures.push(...reeferWriteFailureProblems(section));
   if ((sectionTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("TrailerReeferSection.test must include at least 3 vitest cases");
   }
@@ -104,6 +119,21 @@ function main() {
   }
 
   console.log("verify:maint-reefer-hours PASS");
+}
+
+if (process.argv.includes("--selftest")) {
+  const section = read(paths.section);
+  const mutations = [
+    section.replace(/manualMut\.isError/, "manualMut.isSuccess"),
+    section.replace(/serviceMut\.isError/, "serviceMut.isSuccess"),
+    section.replace(/role="alert"/, 'role="status"'),
+    section.replace(/userFacingApiError\(manualMut\.error,\s*"Could not record reefer hours"\)/, '"Could not record reefer hours"'),
+    section.replace(/userFacingApiError\(serviceMut\.error,\s*"Could not mark reefer service"\)/, '"Could not mark reefer service"'),
+  ];
+  const escaped = mutations.filter((mutation) => reeferWriteFailureProblems(mutation).length === 0);
+  if (escaped.length) fail(`--selftest: ${escaped.length}/${mutations.length} reefer write-failure mutations escaped`);
+  console.log(`verify:maint-reefer-hours SELFTEST PASS — ${mutations.length}/${mutations.length} mutations detected`);
+  process.exit(0);
 }
 
 main();

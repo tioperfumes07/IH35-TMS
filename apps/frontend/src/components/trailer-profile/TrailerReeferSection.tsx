@@ -8,6 +8,7 @@ import {
 } from "../../api/maintenance";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type ReeferSnapshot = Awaited<ReturnType<typeof fetchMaintenanceReeferHoursSnapshot>>;
 
@@ -189,6 +190,16 @@ export function TrailerReeferSection({
             Mark service at current hours
           </button>
         </div>
+        {manualMut.isError ? (
+          <p role="alert" className="mt-2 text-xs text-red-700">
+            {userFacingApiError(manualMut.error, "Could not record reefer hours")}
+          </p>
+        ) : null}
+        {serviceMut.isError ? (
+          <p role="alert" className="mt-2 text-xs text-red-700">
+            {userFacingApiError(serviceMut.error, "Could not mark reefer service")}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-4">
