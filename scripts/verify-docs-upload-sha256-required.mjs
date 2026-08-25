@@ -24,6 +24,14 @@ const PRODUCT_CALLERS = [
   "apps/frontend/src/pages/dispatch/components/book-load-v4/useRateConExtraction.ts",
 ];
 
+// These product leaves used to call fetch(presigned_url) directly without checking
+// Response.ok, then confirm the upload anyway. They must use the canonical helper,
+// which throws before confirmation when object storage rejects the PUT.
+const FAILURE_AWARE_PUT_CALLERS = [
+  "apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx",
+  "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
+];
+
 function walkTsx(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     if (ent.name === "node_modules" || ent.name === "__tests__" || ent.name.endsWith(".test.tsx")) continue;
@@ -34,7 +42,7 @@ function walkTsx(dir, out = []) {
   return out;
 }
 
-function check({ docsApi }) {
+function check({ docsApi, callerSources = null }) {
   const errors = [];
   if (!/export async function sha256HexOfFile/.test(docsApi)) {
     errors.push("docs.ts missing sha256HexOfFile");
@@ -68,6 +76,17 @@ function check({ docsApi }) {
     }
   }
 
+  for (const rel of FAILURE_AWARE_PUT_CALLERS) {
+    const abs = path.join(ROOT, rel);
+    const src = callerSources?.[rel] ?? (fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : "");
+    if (!src.includes("uploadFileToR2")) {
+      errors.push(`${rel}: presigned PUT must use uploadFileToR2 so a rejected object-store write cannot be confirmed`);
+    }
+    if (/fetch\s*\(\s*presigned_url/.test(src)) {
+      errors.push(`${rel}: direct fetch(presigned_url) bypasses the canonical failure-aware upload helper`);
+    }
+  }
+
   // Systemic: no product file under src/ (except api/docs.ts) may call requestUploadUrl(
   // without also importing/using FromFile in the same file for the upload path.
   for (const abs of walkTsx(SRC)) {
@@ -87,16 +106,30 @@ function check({ docsApi }) {
 
 function selftest() {
   const orig = fs.readFileSync(DOCS_API, "utf8");
-  const broken = orig.replace(/crypto\.subtle\.digest\(\s*"SHA-256"/, 'crypto.subtle.digest("SHA-1"');
-  if (broken === orig) throw new Error("selftest: could not plant defect");
-  fs.writeFileSync(DOCS_API, broken);
-  try {
-    const errors = check({ docsApi: fs.readFileSync(DOCS_API, "utf8") });
-    if (errors.length === 0) throw new Error("selftest: planted defect did not fail");
-  } finally {
-    fs.writeFileSync(DOCS_API, orig);
+  const realCallerSources = Object.fromEntries(
+    FAILURE_AWARE_PUT_CALLERS.map((rel) => [rel, fs.readFileSync(path.join(ROOT, rel), "utf8")]),
+  );
+  const cases = [
+    {
+      name: "SHA-256 integrity regression",
+      docsApi: orig.replace(/crypto\.subtle\.digest\(\s*"SHA-256"/, 'crypto.subtle.digest("SHA-1"'),
+      callerSources: realCallerSources,
+    },
+    ...FAILURE_AWARE_PUT_CALLERS.map((rel) => ({
+      name: `${rel} bypasses failure-aware PUT`,
+      docsApi: orig,
+      callerSources: {
+        ...realCallerSources,
+        [rel]: realCallerSources[rel]
+          .replace(/await uploadFileToR2\(presigned_url, file, file\.type \|\| "application\/octet-stream"\);/, "await fetch(presigned_url);"),
+      },
+    })),
+  ];
+  for (const testCase of cases) {
+    const errors = check({ docsApi: testCase.docsApi, callerSources: testCase.callerSources });
+    if (errors.length === 0) throw new Error(`selftest: ${testCase.name} planted defect did not fail`);
   }
-  console.log("verify-docs-upload-sha256-required --selftest OK");
+  console.log(`verify-docs-upload-sha256-required --selftest OK (${cases.length}/${cases.length} planted defects)`);
 }
 
 function main() {

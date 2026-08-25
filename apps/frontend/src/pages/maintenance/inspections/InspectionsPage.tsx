@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
+import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../../api/docs";
 import {
   archiveMaintenanceInspection,
   attachMaintenanceInspectionPhoto,
@@ -63,11 +63,7 @@ async function uploadInspectionPhoto(file: File, unitId: string, operatingCompan
     operating_company_id: operatingCompanyId || undefined,
     entity_links: unitId ? [{ entity_type: "unit", entity_id: unitId }] : undefined,
   });
-  await fetch(presigned_url, {
-    method: "PUT",
-    headers: { "Content-Type": file.type || "application/octet-stream" },
-    body: file,
-  });
+  await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
   await confirmUpload(file_id);
   return file_id;
 }

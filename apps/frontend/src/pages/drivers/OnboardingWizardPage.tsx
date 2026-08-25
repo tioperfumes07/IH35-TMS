@@ -10,7 +10,7 @@ import {
   saveOnboardingStep,
   type OnboardingSession,
 } from "../../api/onboarding";
-import { confirmUpload, requestUploadUrlFromFile } from "../../api/docs";
+import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { OnboardingStepCdlUpload } from "./onboarding/OnboardingStepCdlUpload";
@@ -31,11 +31,7 @@ async function uploadDriverDoc(file: File, driverId: string | null | undefined, 
     operating_company_id: operatingCompanyId || undefined,
     entity_links: driverId ? [{ entity_type: "driver", entity_id: driverId }] : undefined,
   });
-  await fetch(presigned_url, {
-    method: "PUT",
-    headers: { "Content-Type": file.type || "application/octet-stream" },
-    body: file,
-  });
+  await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
   await confirmUpload(file_id);
   return { file_id, file_name: file.name };
 }
