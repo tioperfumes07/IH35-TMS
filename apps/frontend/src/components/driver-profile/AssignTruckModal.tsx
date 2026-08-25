@@ -3,6 +3,7 @@ import { setDriverDefaultTruck } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityPicker } from "../parity/EntityPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -16,6 +17,7 @@ type Props = {
 export function AssignTruckModal({ open, driverId, companyId, driverName, onClose, onAssigned }: Props) {
   const [unitId, setUnitId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   return (
     <Modal open={open} onClose={onClose} title={`Assign default truck · ${driverName}`}>
@@ -24,12 +26,15 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
         onSubmit={async (event) => {
           event.preventDefault();
           if (!unitId) return;
+          setError("");
           setLoading(true);
           try {
             await setDriverDefaultTruck(driverId, companyId, unitId);
             setUnitId("");
             onAssigned?.();
             onClose();
+          } catch (err) {
+            setError(userFacingApiError(err, "Could not assign default truck"));
           } finally {
             setLoading(false);
           }
@@ -50,6 +55,7 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
           dataField="assign-truck-unit"
           dataTestId="assign-truck-unit"
         />
+        {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={onClose}>
             Cancel
