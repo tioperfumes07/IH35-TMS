@@ -133,6 +133,9 @@ export function FuelHomePage() {
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
       ) : null}
+      {lovesSyncQuery.isError ? (
+        <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
+      ) : null}
       <div className="grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
         <FuelFraudAlertsKpiCard />
         <FuelCardOverageKpiCard />

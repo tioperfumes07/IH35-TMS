@@ -61,6 +61,9 @@ export function computeFailures(source) {
   if (!/FuelFraudAlertsKpiCard/.test(source) || !/RelayHistoryImport/.test(source)) {
     errors.push("FuelHome.tsx must keep FuelFraudAlertsKpiCard + RelayHistoryImport (additive-only)");
   }
+  if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
+    errors.push("FuelHome.tsx must disclose Love's sync-status failure and retry the exact query");
+  }
   return errors;
 }
 
@@ -119,7 +122,7 @@ function selftest() {
     export function FuelFraudAlertsKpiCard() {}
     export function FuelHomePage() {
       getFuelDashboard(id);
-      return <><FuelKpiRow /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
@@ -139,6 +142,11 @@ function selftest() {
       ok = false;
       console.error(`SELFTEST FAIL — ${c.name}: ${JSON.stringify(failures)}`);
     } else console.log(`selftest ok — ${c.name}`);
+  }
+  const retryNoOp = good.replace("lovesSyncQuery.refetch()", "undefined");
+  if (!computeFailures(retryNoOp).some((failure) => failure.includes("sync-status failure"))) {
+    console.error("SELFTEST FAIL — Love's sync-status retry no-op should fail");
+    process.exit(1);
   }
   if (!ok) process.exit(1);
   console.log(`${LABEL} --selftest OK`);
