@@ -80,15 +80,13 @@ async function spawnMaintenanceDraftWorkOrder(client: DbClient, input: IncidentA
   let generatedDisplayId: string | null = null;
   let generatedSequence: number | null = null;
   if (displayIdCol || sequenceCol) {
-    const nextDisplay = await client
-      .query<{ display_id: string | null; sequence: number | null }>(
+    const nextDisplay = await client.query<{ display_id: string | null; sequence: number | null }>(
         `
           SELECT display_id, sequence
           FROM maintenance.next_wo_display_id($1::uuid, $2, COALESCE($3::date, CURRENT_DATE), $4::uuid)
         `,
         [input.unit_id, "RS", input.occurred_at, input.operating_company_id]
-      )
-      .catch(() => ({ rows: [] as Array<{ display_id: string | null; sequence: number | null }> }));
+      );
     generatedDisplayId = nextDisplay.rows[0]?.display_id ?? null;
     generatedSequence = nextDisplay.rows[0]?.sequence ?? null;
   }
@@ -136,16 +134,14 @@ async function spawnMaintenanceDraftWorkOrder(client: DbClient, input: IncidentA
   const bucketCol = pick(columns, ["bucket"]);
   if (bucketCol) add(bucketCol, "roadside");
 
-  const res = await client
-    .query<{ id: string }>(
+  const res = await client.query<{ id: string }>(
       `
         INSERT INTO maintenance.work_orders (${cols.join(", ")})
         VALUES (${placeholders.join(", ")})
         RETURNING id
       `,
       values
-    )
-    .catch(() => ({ rows: [] as Array<{ id: string }> }));
+    );
   return res.rows[0]?.id ?? null;
 }
 
@@ -202,16 +198,14 @@ async function insertDomainRow(
   const draftCol = pick(columns, ["is_draft"]);
   if (draftCol) add(draftCol, true);
 
-  const res = await client
-    .query<{ id: string }>(
+  const res = await client.query<{ id: string }>(
       `
         INSERT INTO ${qualified} (${cols.join(", ")})
         VALUES (${placeholders.join(", ")})
         RETURNING id
       `,
       values
-    )
-    .catch(() => ({ rows: [] as Array<{ id: string }> }));
+    );
   return res.rows[0]?.id ?? null;
 }
 
@@ -255,12 +249,10 @@ export async function triggerIncidentAutoWorkflow(
     // this WO so the Maintenance Damage Register can mount a real "Linked WO" drill-through instead
     // of leaving the relationship undiscoverable outside the audit-log JSON.
     if (maintenanceWorkOrderId) {
-      await client
-        .query(`UPDATE safety.incidents SET work_order_id = $1::uuid WHERE id = $2::uuid AND work_order_id IS NULL`, [
+      await client.query(`UPDATE safety.incidents SET work_order_id = $1::uuid WHERE id = $2::uuid AND work_order_id IS NULL`, [
           maintenanceWorkOrderId,
           input.incident_id,
-        ])
-        .catch(() => null);
+        ]);
     }
   }
   if (input.type === "accident") {
