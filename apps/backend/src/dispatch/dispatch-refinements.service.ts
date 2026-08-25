@@ -242,6 +242,36 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         }
       );
 
+      const previousPrimary = load.assigned_primary_driver_id;
+      if (previousPrimary && previousPrimary !== input.new_driver_id) {
+        await enqueueOutboxEvent(
+          client,
+          "load.reassigned_away_from_driver",
+          { aggregate_type: "load", aggregate_id: input.load_id },
+          {
+            operating_company_id: input.operating_company_id,
+            load_id: input.load_id,
+            load_number: load.load_number,
+            driver_id: previousPrimary,
+            replacement_driver_id: input.new_driver_id,
+          }
+        );
+      }
+      if (input.new_driver_id !== previousPrimary) {
+        await enqueueOutboxEvent(
+          client,
+          "load.assigned_to_driver",
+          { aggregate_type: "load", aggregate_id: input.load_id },
+          {
+            operating_company_id: input.operating_company_id,
+            load_id: input.load_id,
+            load_number: load.load_number,
+            driver_id: input.new_driver_id,
+            previous_driver_id: previousPrimary,
+          }
+        );
+      }
+
       await appendCrudAudit(
         client,
         userId,
@@ -258,7 +288,6 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       );
 
       await client.query("COMMIT");
-      const previousPrimary = load.assigned_primary_driver_id;
       if (previousPrimary && previousPrimary !== input.new_driver_id) {
         loserBox.v = {
           operatingCompanyId: input.operating_company_id,

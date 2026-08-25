@@ -121,5 +121,15 @@ describe("manualReassignLoad driver-existence guard", () => {
     expect(log.some((s) => s.includes("UPDATE mdata.loads"))).toBe(true);
     expect(log.some((s) => s.includes("driver_company_authorizations reassign_driver_dca"))).toBe(true);
     expect(log.some((s) => s.startsWith("COMMIT"))).toBe(true);
+    expect(enqueueOutboxEventMock).toHaveBeenCalledWith(
+      client,
+      "load.assigned_to_driver",
+      { aggregate_type: "load", aggregate_id: LOAD },
+      expect.objectContaining({
+        operating_company_id: OPCO,
+        load_id: LOAD,
+        driver_id: REAL_DRIVER,
+      }),
+    );
   });
 });

@@ -61,6 +61,28 @@ function label(p: NoticePayload, preferredKey: string, idKey: string): string {
 
 export const NOTICE_ROUTES: NoticeRoute[] = [
   {
+    eventType: "load.assigned_to_driver",
+    severity: "info",
+    entityType: "mdata.loads",
+    entityIdKey: "load_id",
+    audience: { kind: "driver", driverIdKey: "driver_id", fallbackRoles: ["Dispatcher", "Owner"] },
+    sourceBlock: "LOAD-ASSIGNED-TO-DRIVER",
+    title: (p) => `New load assigned — ${label(p, "load_number", "load_id")}`,
+    body: (p) => `You were assigned load ${label(p, "load_number", "load_id")}. Review the dispatch details before departure.`,
+    actionLink: (p) => `/driver?load_id=${text(p, "load_id") ?? ""}`,
+  },
+  {
+    eventType: "load.reassigned_away_from_driver",
+    severity: "medium",
+    entityType: "mdata.loads",
+    entityIdKey: "load_id",
+    audience: { kind: "driver", driverIdKey: "driver_id", fallbackRoles: ["Dispatcher", "Owner"] },
+    sourceBlock: "LOAD-REASSIGNED-AWAY-FROM-DRIVER",
+    title: (p) => `Load reassigned — ${label(p, "load_number", "load_id")}`,
+    body: (p) => `Load ${label(p, "load_number", "load_id")} was reassigned to another driver. Stand down unless dispatch tells you otherwise.`,
+    actionLink: (p) => `/driver?load_id=${text(p, "load_id") ?? ""}`,
+  },
+  {
     // Money-adjacent: a packet sitting un-submitted is cash not collected.
     eventType: "dispatch.factoring_packet_assembled",
     severity: "high",
