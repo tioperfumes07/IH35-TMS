@@ -3,6 +3,7 @@ import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = { operatingCompanyId: string; loadId: string; "data-testid"?: string };
 
@@ -21,9 +22,15 @@ export function LoadInTransitIssuesReverseSection({ operatingCompanyId, loadId, 
         <EntityLink kind="intransit_issues_load" id={loadId} label="Open issue queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading in-transit issues…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load in-transit issues for this load.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          status={0}
+          message="Could not load in-transit issues for this load."
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No in-transit issues linked to this load.</p> : null}
-      {rows.length ? (
+      {!query.isError && rows.length ? (
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="text-sm text-slate-700">
