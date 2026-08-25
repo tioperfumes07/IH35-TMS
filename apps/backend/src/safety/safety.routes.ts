@@ -664,8 +664,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const accident = res.rows[0] ?? null;
       if (!accident) return null;
       // SAF-B30 / F35: previously spawned AC work orders survived only in React state. Reload them
