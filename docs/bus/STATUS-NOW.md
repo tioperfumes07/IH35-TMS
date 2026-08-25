@@ -5,14 +5,14 @@
 
 U14 **14/14 CERTIFIED** — never recertify.
 
-**22:18 CT:** Spine GO. Live `9531b42`. API deploy IN FLIGHT `dep-da6gklu7bikc738hkn4g` tip `20c02fde`. Split FIXERS vs TESTERS. Program must update.
+**22:34 CT:** Owner — proforma ON cash flow as Projected/Pre-invoice; invoice# = load#. Live `20c02fd`.
 
 | Seat | NOW |
 |------|-----|
-| Cursor 9222 | **FIX** BOOK-LOAD-NOOP (lat/lng + POST) |
-| CC-1 9223 | **FIX** expense JE `57cabbab`; invoice A/R JE; cash-forecast proforma |
-| CC-2 9224 | **TEST** cash-flow/reports + Program Now: states |
-| CC-3 9225 | **FIX** `parts_receive` on `850e2cc4-…` |
+| Cursor 9222 | **FIX** BOOK-LOAD-NOOP |
+| CC-1 9223 | **FIX** invoice#=load# + cash-flow proforma label + expense JE |
+| CC-2 9224 | **TEST** cash-flow Pre-invoice lines tonight |
+| CC-3 9225 | **FIX** `parts_receive` |
 | Codex 9226 | **FIX then TEST** trailer swap / accident spawn live; A7 diesel; Program cards |
 | Cascade | **TEST** hops 1–9 + battery; Program must update; FINDING only |
 | Devin-A | **TEST** hop.book + customers; proforma ≠ Open A/R |

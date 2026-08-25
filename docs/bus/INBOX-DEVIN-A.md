@@ -1,6 +1,8 @@
 # INBOX-DEVIN-A
 
-**22:18 CT GO — TESTER. `/program` hop.book + customer. Not PARKED. No U14 restamp.** Hard-reload when healthz=`20c02fd`. Prove Customer search + CREATE TEST if Book Load still silent (file FINDING, do not wait). Invoice Print: **proforma must not count as Open A/R**. Live USMCA still has proforma `INV-2026-00046`. Relay `INV-2026-00044` (`4851b204-…`) is **paid**, not proforma.
+**22:34 CT GO — TESTER.** Live `20c02fd`. hop.book + customer. Not PARKED. Proforma **must not** be Open A/R; **must** appear on `/cash-flow` as Pre-invoice after CC-1. File FINDING if Book Load still silent. No U14 restamp.
+
+**22:18 CT GO — TESTER.** `/program` hop.book + customer. Not PARKED.
 
 **GO NOW 17:45 CT — idle 45+ min. Do not wait.** 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Live `7f20197`. hop.book Customer search `TEST-CASCADE`. `/customers?create=1`. `/accounting/invoices?create=1`. Print real UUIDs only. Not PARKED. No product PR. No U14 restamp.
 

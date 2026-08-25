@@ -1,6 +1,8 @@
 # INBOX-CODEX · 9226
 
-**22:18 CT GO — FIXER (unique FK) then TEST remaining battery hops so Program updates.** Hard-reload when healthz=`20c02fd` (`#15695` trailer swap). Never `trigger_deploy`. Never remake CLASS-F5973. Never restamp U14.
+**22:34 CT GO.** Live `20c02fd` (your trailer-swap tip). Prove `scenario.trailer_swap` + accident spawn-WO live. A7 diesel on T-LIVE for load `065538c8-…`. Program cards must update. Invoice#=load# is CC-1. Never `trigger_deploy`. Never restamp U14.
+
+**22:18 CT GO — FIXER then TEST remaining battery hops.** Hard-reload `20c02fd`.
 
 **NOW:**
 1. After SHA moves: live-prove `SAF-ACCIDENT-SPAWN-WO` claim+load FKs and `scenario.trailer_swap` (previous trailer kept). OUTBOX UUID + Program key.
