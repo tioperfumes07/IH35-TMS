@@ -67,6 +67,10 @@ function assertWiring(readSourceFn = readSource) {
   if (/<select[^>]*>[\s\S]*?Company default cash account/.test(inbox)) {
     problems.push(`${FILES.inbox} pay-from account regressed to a native select`);
   }
+  for (const queryName of ["detailQuery", "previewQuery", "timelineQuery", "accountsQuery"]) {
+    const recovery = new RegExp(`${queryName}\\.isError[\\s\\S]{0,220}ListErrorBanner[\\s\\S]{0,220}${queryName}\\.refetch\\(\\)`);
+    if (!recovery.test(inbox)) problems.push(`${FILES.inbox} missing exact retry for ${queryName}`);
+  }
 
   return problems;
 }
@@ -93,6 +97,10 @@ function selftest() {
     [FILES.inbox, 'data-testid="driver-inbox-list-error"', "inbox ListErrorBanner testid"],
     [FILES.inbox, "Linkage — what posts on approve", "cascade linkage panel"],
     [FILES.inbox, '<SelectCombobox', "searchable pay-from account adapter"],
+    [FILES.inbox, "detailQuery.refetch()", "request-detail exact retry"],
+    [FILES.inbox, "previewQuery.refetch()", "cascade-preview exact retry"],
+    [FILES.inbox, "timelineQuery.refetch()", "request-timeline exact retry"],
+    [FILES.inbox, "accountsQuery.refetch()", "pay-from catalog exact retry"],
     [FILES.scheduler, "No drivers are available for this operating company.", "scheduler honest empty"],
     [FILES.leaveRequests, '<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "leave-request driver reverse link"],
   ];

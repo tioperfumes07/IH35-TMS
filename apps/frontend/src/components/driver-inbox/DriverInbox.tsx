@@ -177,7 +177,12 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     <div className="mb-[7px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>
-                    {previewQuery.isLoading ? (
+                    {detailQuery.isError ? <ListErrorBanner message="Could not record or load request detail." onRetry={() => void detailQuery.refetch()} /> : null}
+                    {timelineQuery.isError ? <ListErrorBanner message="Could not load the request timeline." onRetry={() => void timelineQuery.refetch()} /> : null}
+                    {accountsQuery.isError ? <ListErrorBanner message="Could not load pay-from accounts." onRetry={() => void accountsQuery.refetch()} /> : null}
+                    {previewQuery.isError ? (
+                      <ListErrorBanner message="Could not compute the cascade preview." onRetry={() => void previewQuery.refetch()} />
+                    ) : previewQuery.isLoading ? (
                       <p className="text-[11px] text-[#8A92AB]">Computing…</p>
                     ) : preview ? (
                       <div className="grid grid-cols-[auto_1fr] gap-x-[12px] gap-y-[5px] text-[12px]">
@@ -218,9 +223,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         <span className="text-[#8A92AB]">Also</span>
                         <span className="text-[#1A1F36]">Settlement deduction on next pay</span>
                       </div>
-                    ) : (
-                      <p className="text-[11px] text-red-600">Could not compute the cascade preview.</p>
-                    )}
+                    ) : null}
 
                     <div className="mt-[10px] flex justify-end gap-2">
                       <button
@@ -240,7 +243,6 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                       </button>
                     </div>
                     {approveMut.isError ? <p className="mt-1 text-[11px] text-red-600">Approve &amp; post failed — try again.</p> : null}
-                    {detailQuery.isError ? null : null}
                   </div>
                 ) : null}
               </div>
