@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { appendContractAuditLog, hashAttorneyReviewToken } from "./templates.service.js";
 
 type QueryableClient = {
-  query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+  query: <T = Record<string, unknown>>(query: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
 type RequestAudit = {
@@ -41,26 +41,29 @@ async function lookupPrimaryNotifyEmail(client: QueryableClient, template: Recor
   return email ? String(email) : null;
 }
 
-async function notifyOfficeAttorneyDecision(args: {
+async function enqueueOfficeAttorneyDecision(client: QueryableClient, args: {
   template: Record<string, unknown>;
   subject: string;
   bodyText: string;
   bodyHtml: string;
   eventClass: string;
 }) {
-  await withLuciaBypass(async (client) => {
-    const to = await lookupPrimaryNotifyEmail(client, args.template);
-    if (!to) return;
-    await sendEmail({
+  const to = await lookupPrimaryNotifyEmail(client, args.template);
+  if (!to) return;
+  const operatingCompanyId = String(args.template.operating_company_id);
+  await enqueueOutboxEvent(
+    client,
+    "legal.attorney.decision_email",
+    { aggregate_type: "legal.contract_templates", aggregate_id: String(args.template.id) },
+    {
+      operating_company_id: operatingCompanyId,
       to,
       subject: args.subject,
-      text: args.bodyText,
-      html: args.bodyHtml,
-      sender: "noreply",
-      eventClass: args.eventClass,
-      actorUserId: null,
-    });
-  });
+      body_text: args.bodyText,
+      body_html: args.bodyHtml,
+      event_class: args.eventClass,
+    }
+  );
 }
 
 async function withValidAttorneyReviewToken<T>(
@@ -210,21 +213,21 @@ export async function attorneyPortalApprove(
       userAgent: audit.userAgent,
     });
 
+    const code = String(row.template_code);
+    const ver = String(row.version);
+    const name = String(row.attorney_approved_by ?? "");
+    await enqueueOfficeAttorneyDecision(client, {
+      template: row,
+      subject: `Legal template approved: ${code} v${ver}`,
+      bodyText: `Attorney ${name} approved and activated template ${code} version ${ver} via the attorney review portal.`,
+      bodyHtml: `<p>Attorney <strong>${name}</strong> approved and activated template <strong>${code}</strong> version <strong>${ver}</strong> via the attorney review portal.</p>`,
+      eventClass: "legal.template.attorney_portal_approved",
+    });
+
     return row;
   });
 
   if (!updated) return { error: "legal_attorney_review_token_invalid_or_expired" };
-
-  const code = String(updated.template_code);
-  const ver = String(updated.version);
-  const name = String(updated.attorney_approved_by ?? "");
-  await notifyOfficeAttorneyDecision({
-    template: updated,
-    subject: `Legal template approved: ${code} v${ver}`,
-    bodyText: `Attorney ${name} approved and activated template ${code} version ${ver} via the attorney review portal.`,
-    bodyHtml: `<p>Attorney <strong>${name}</strong> approved and activated template <strong>${code}</strong> version <strong>${ver}</strong> via the attorney review portal.</p>`,
-    eventClass: "legal.template.attorney_portal_approved",
-  });
 
   return { ok: true };
 }
@@ -287,20 +290,20 @@ export async function attorneyPortalRequestChanges(
       userAgent: audit.userAgent,
     });
 
+    const code = String(row.template_code);
+    const ver = String(row.version);
+    await enqueueOfficeAttorneyDecision(client, {
+      template: row,
+      subject: `Revisions requested: ${code} v${ver}`,
+      bodyText: `Attorney feedback on ${code} v${ver}:\n\n${parsed.data.comments}`,
+      bodyHtml: `<p>Attorney feedback on <strong>${code}</strong> v<strong>${ver}</strong>:</p><pre style="white-space:pre-wrap">${parsed.data.comments}</pre>`,
+      eventClass: "legal.template.attorney_portal_changes_requested",
+    });
+
     return row;
   });
 
   if (!updatedRow) return { error: "legal_attorney_review_token_invalid_or_expired" };
-
-  const code = String(updatedRow.template_code);
-  const ver = String(updatedRow.version);
-  await notifyOfficeAttorneyDecision({
-    template: updatedRow,
-    subject: `Revisions requested: ${code} v${ver}`,
-    bodyText: `Attorney feedback on ${code} v${ver}:\n\n${parsed.data.comments}`,
-    bodyHtml: `<p>Attorney feedback on <strong>${code}</strong> v<strong>${ver}</strong>:</p><pre style="white-space:pre-wrap">${parsed.data.comments}</pre>`,
-    eventClass: "legal.template.attorney_portal_changes_requested",
-  });
 
   return { ok: true };
 }
@@ -363,20 +366,20 @@ export async function attorneyPortalReject(
       userAgent: audit.userAgent,
     });
 
+    const code = String(row.template_code);
+    const ver = String(row.version);
+    await enqueueOfficeAttorneyDecision(client, {
+      template: row,
+      subject: `Template review declined: ${code} v${ver}`,
+      bodyText: `Attorney declined ${code} v${ver} with notes:\n\n${parsed.data.comments}`,
+      bodyHtml: `<p>Attorney declined <strong>${code}</strong> v<strong>${ver}</strong> with notes:</p><pre style="white-space:pre-wrap">${parsed.data.comments}</pre>`,
+      eventClass: "legal.template.attorney_portal_rejected",
+    });
+
     return row;
   });
 
   if (!updatedRow) return { error: "legal_attorney_review_token_invalid_or_expired" };
-
-  const code = String(updatedRow.template_code);
-  const ver = String(updatedRow.version);
-  await notifyOfficeAttorneyDecision({
-    template: updatedRow,
-    subject: `Template review declined: ${code} v${ver}`,
-    bodyText: `Attorney declined ${code} v${ver} with notes:\n\n${parsed.data.comments}`,
-    bodyHtml: `<p>Attorney declined <strong>${code}</strong> v<strong>${ver}</strong> with notes:</p><pre style="white-space:pre-wrap">${parsed.data.comments}</pre>`,
-    eventClass: "legal.template.attorney_portal_rejected",
-  });
 
   return { ok: true };
 }
