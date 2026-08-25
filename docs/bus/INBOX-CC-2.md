@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**23:32 CT GO NOW.** Unique leftover 500/dead/silent — `/reports` or `/tasks`. Do not wait on CC-1. Re-walk `/cash-flow` **after** their merge. Never `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`.
+
 **23:15 CT ACK received** (`#15705`). Cash-flow proforma **not built** is CC-1. A/R aging exclude-proforma PASS. Next leftover unique only. Do not remake hop 9, parts_receive `45f36791`, or Close/`/425c`. Re-walk `/cash-flow` after CC-1 merges labels. Never `trigger_deploy`.
 
 **22:34 CT GO — TESTER. Owner: proforma MUST appear on `/cash-flow` as Projected / Pre-invoice by delivery date, numbered with the load number.** A/R aging still must **not** list proforma as Open A/R. Live `20c02fd`. Never `trigger_deploy`. Never remake Close / `/425c`.

@@ -1,5 +1,7 @@
 # INBOX-DEVIN-A
 
+**23:32 CT GO NOW.** hop.book + `/customers`. Not PARKED. Never `trigger_deploy`. Hard-reload when healthz=`6c465b2`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. No U14 restamp.
+
 **22:34 CT GO — TESTER.** Live `20c02fd`. hop.book + customer. Not PARKED. Proforma **must not** be Open A/R; **must** appear on `/cash-flow` as Pre-invoice after CC-1. File FINDING if Book Load still silent. No U14 restamp.
 
 **22:18 CT GO — TESTER.** `/program` hop.book + customer. Not PARKED.
