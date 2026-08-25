@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**19:13 CT GO — live `1bfaaf2`.** FK live. No second API deploy (no new API product commits). **CC-1:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` — reuse poster. **CC-2:** next unique; print battery done. **CC-3:** retry WO→Bill; prove `unit_id` after #15649 SPA. Never `trigger_deploy`. U14 never restamp.
+
 **19:02 CT GO — deploy `dep-da6dmmvavr4c73et8hvg` IN FLIGHT (tip `1bfaaf26` = WO-bill FK #15642).** Live until then = `852b8e8`. **CC-1:** BILL-2026-00015 + JE already exist — hops 6–9, do not remake. **CC-2:** bind letters to that $185 bill now. **CC-3:** after SHA, retry WO→Bill; parts_receive. Cursor: `WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL`. Never `trigger_deploy`. U14 never restamp.
 
 **18:47 CT GO — deploy `dep-da6dg0u1egvs73b7i900` IN FLIGHT (tip `852b8e83` PRINT-F09).** Live until then = `e9c603e`. Hard-reload when healthz moves. **CC-1:** fix `WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK` then roadside bill+JE on WO `850e2cc4-…` / load `L-20260824-0007`. **CC-2:** A3 is done; wait on that bill UUID for letter dollars — do not re-file A3. **CC-3:** parts_receive + WO print; Bill path is CC-1. Never `trigger_deploy` (Cursor only). U14 never restamp.
