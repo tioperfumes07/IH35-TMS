@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../../components/ListErrorState";
 
 // SAF-F06: these page-local helpers called bare fetch(path), so with
 // VITE_API_BASE_URL set and NO /api rewrite on the static site the request hit
@@ -66,9 +67,7 @@ export function ReturnToDuty() {
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Open return-to-duty processes</h3>
         {rtdQ.isError ? (
-          <p className="mt-2 text-xs text-red-700" data-testid="rtd-processes-query-error">
-            {userFacingApiError(rtdQ.error, "Could not load return-to-duty processes.")}
-          </p>
+          <div data-testid="rtd-processes-query-error"><ListErrorState status={0} message={userFacingApiError(rtdQ.error, "Could not load return-to-duty processes.")} onRetry={() => void rtdQ.refetch()} /></div>
         ) : (
           <ul className="mt-2 space-y-2">
             {processes.map((proc) => (
@@ -92,9 +91,7 @@ export function ReturnToDuty() {
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
         {resultsQ.isError ? (
-          <p className="mt-2 text-xs text-red-700" data-testid="rtd-results-query-error">
-            {userFacingApiError(resultsQ.error, "Could not load drug/alcohol results.")}
-          </p>
+          <div data-testid="rtd-results-query-error"><ListErrorState status={0} message={userFacingApiError(resultsQ.error, "Could not load drug/alcohol results.")} onRetry={() => void resultsQ.refetch()} /></div>
         ) : (
           <ul className="mt-2 space-y-2">
             {positivePending.map((row) => (
