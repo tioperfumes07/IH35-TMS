@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `CLASS-MODAL-SIZE-PREFERENCE-FAILURE-SILENT` | **C** | Shared modal connectivity/chrome | Codex | this PR | 2026-08-24 | Centered modal preference reads/saves expose exact retryable failures instead of reverting silently. | focused test; existing CI-wired `verify-all-modals-have-x-close.mjs` normal + selftest | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `DRV-ONBOARD-LAUNCHER-ORPHANED` | **C** | Drivers connectivity | Codex | this PR | 2026-08-24 | Canonical profile launches/resumes one scoped onboarding session and drills into the mounted wizard. | backend 7/7; guard normal + 8/8 mutations; live pre-fix TEST driver `e901be6e-…` | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `CLASS-VIEW-PREFERENCE-TEST-MOCK-CONTRACT-DRIFT` | **C** | Codex Customer/Vendor guard | Codex | this PR | 2026-08-24 | Successful retry mock now returns the required preferences envelope. | focused retry test + frontend typecheck delta | OWNER-GATED=no |
