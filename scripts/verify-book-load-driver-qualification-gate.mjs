@@ -26,6 +26,18 @@ const validatorPath = path.resolve(
   ROOT,
   "apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts"
 );
+const quickAssignPath = path.resolve(ROOT, "apps/backend/src/dispatch/quick-assign.service.ts");
+
+function quickAssignFailOpenFailures(src) {
+  const found = [];
+  if (/FROM views\.drivers_with_hos_status[\s\S]{0,400}?\.catch\(\(\) => \(\{ rows: \[\]/.test(src)) {
+    found.push("quick_assign_hos_query_fails_open");
+  }
+  if (/FROM safety\.drug_test[\s\S]{0,400}?\.catch\(\(\) => \(\{ rows: \[\]/.test(src)) {
+    found.push("quick_assign_drug_query_fails_open");
+  }
+  return found;
+}
 
 const bookLoad = readIfExists(bookLoadPath);
 if (!bookLoad) {
@@ -97,6 +109,8 @@ for (const rel of siblingQualificationPaths) {
     failures.push(`sibling_path_not_delegated_to_shared_gate:${rel}`);
   }
 }
+const quickAssign = readIfExists(quickAssignPath);
+failures.push(...quickAssignFailOpenFailures(quickAssign));
 
 const validator = readIfExists(validatorPath);
 if (!validator) {
@@ -138,5 +152,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:book-load-driver-qualification-gate SELFTEST OK (${mutations.length}/${mutations.length} planted defects rejected)`);
+  const hosMutation = `${quickAssign}\n/* FROM views.drivers_with_hos_status */\n.catch(() => ({ rows: [] }))`;
+  const drugMutation = `${quickAssign}\n/* FROM safety.drug_test */\n.catch(() => ({ rows: [] }))`;
+  if (!quickAssignFailOpenFailures(hosMutation).includes("quick_assign_hos_query_fails_open")) {
+    console.error("verify:book-load-driver-qualification-gate SELFTEST FAILED: HOS catch-as-empty escaped");
+    process.exit(1);
+  }
+  if (!quickAssignFailOpenFailures(drugMutation).includes("quick_assign_drug_query_fails_open")) {
+    console.error("verify:book-load-driver-qualification-gate SELFTEST FAILED: drug catch-as-empty escaped");
+    process.exit(1);
+  }
+  console.log(`verify:book-load-driver-qualification-gate SELFTEST OK (${mutations.length + 2}/${mutations.length + 2} planted defects rejected)`);
 }

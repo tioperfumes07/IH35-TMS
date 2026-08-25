@@ -158,8 +158,7 @@ export async function quickAssignLoad(
         if (!trailer.rows[0]?.id) throw new Error("E_TRAILER_NOT_FOUND");
       }
 
-      const driver = await client
-        .query(
+      const driver = await client.query(
           `
             SELECT id, display_id, is_in_violation
             FROM views.drivers_with_hos_status
@@ -168,8 +167,7 @@ export async function quickAssignLoad(
             LIMIT 1
           `,
           [input.driver_id, input.operating_company_id],
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       if (driver.rows[0]?.is_in_violation) {
         warnings.push({
           code: "WF038_HOS_VIOLATION",
@@ -178,8 +176,7 @@ export async function quickAssignLoad(
         });
       }
 
-      const latestDrug = await client
-        .query<{ result: string }>(
+      const latestDrug = await client.query<{ result: string }>(
           `
             SELECT result::text
             FROM safety.drug_test
@@ -190,8 +187,7 @@ export async function quickAssignLoad(
             LIMIT 1
           `,
           [input.operating_company_id, input.driver_id],
-        )
-        .catch(() => ({ rows: [] as { result: string }[] }));
+        );
       const drugResult = String(latestDrug.rows[0]?.result ?? "");
       if (
         ["positive", "refusal", "adulterated", "substituted"].includes(
