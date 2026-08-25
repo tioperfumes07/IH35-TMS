@@ -133,4 +133,29 @@ describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () =>
     expect(res.json()).toEqual({ error: "accident_link_not_found", fields: ["driver_id"] });
     expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("UPDATE safety.accident_reports"))).toBe(false);
   });
+
+  it("spawn-wo: persists the accident insurance claim FK into the AC work order", async () => {
+    const claimId = "88888888-8888-4888-8888-888888888888";
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT *") && sql.includes("FROM safety.accident_reports")) {
+        return { rows: [{ id: ACCIDENT_ID, unit_id: null, driver_id: null, insurance_claim_id: claimId }], rowCount: 1 };
+      }
+      if (sql.includes("FROM maintenance.work_orders") && sql.includes("description ILIKE")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM maintenance.next_wo_display_id")) {
+        return { rows: [{ display_id: "AC-20260824-0001", sequence: 1 }], rowCount: 1 };
+      }
+      if (sql.includes("INSERT INTO maintenance.work_orders")) {
+        return { rows: [{ id: "99999999-9999-4999-8999-999999999999", display_id: "AC-20260824-0001" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/accidents/${ACCIDENT_ID}/spawn-wo?operating_company_id=${COMPANY}`,
+    });
+    expect(res.statusCode).toBe(200);
+    const insert = mockQuery.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO maintenance.work_orders"));
+    expect(String(insert?.[0])).toContain("insurance_claim_id");
+    expect(insert?.[1]).toContain(claimId);
+  });
 });
