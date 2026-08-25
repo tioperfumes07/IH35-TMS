@@ -13,6 +13,10 @@ function audit(source) {
   if (!/type="submit"[\s\S]{0,140}disabled=\{equipmentTypesQuery\.isError\}/.test(source)) failures.push("qualification save fail closed");
   if (!/terminationReasonsQuery\.isError[\s\S]{0,240}terminationReasonsQuery\.refetch\(\)/.test(source)) failures.push("termination reasons exact retry");
   if (!/termination_reason_id[\s\S]{0,1500}disabled=\{terminationReasonsQuery\.isError\}/.test(source)) failures.push("termination selector fail closed");
+  if (!/usStatesQuery\.isError[\s\S]{0,420}title="Couldn't load US states"[\s\S]{0,420}usStatesQuery\.refetch\(\)/.test(source)) failures.push("US states exact retry");
+  if (!/disabled=\{!editMode \|\| usStatesQuery\.isError\}/.test(source)) failures.push("US state selector fail closed");
+  if (!/mexicoStatesQuery\.isError[\s\S]{0,420}title="Couldn't load Mexico states"[\s\S]{0,420}mexicoStatesQuery\.refetch\(\)/.test(source)) failures.push("Mexico states exact retry");
+  if (!/disabled=\{!editMode \|\| mexicoStatesQuery\.isError\}/.test(source)) failures.push("Mexico state selector fail closed");
   return failures;
 }
 
@@ -22,6 +26,10 @@ if (process.argv.includes("--selftest")) {
     "disabled={equipmentTypesQuery.isError}",
     "onRetry={() => void terminationReasonsQuery.refetch()}",
     "disabled={terminationReasonsQuery.isError}",
+    'title="Couldn\'t load US states"',
+    "onRetry={() => void usStatesQuery.refetch()}",
+    'title="Couldn\'t load Mexico states"',
+    "onRetry={() => void mexicoStatesQuery.refetch()}",
   ];
   for (const needle of mutations) {
     const mutated = live.replace(needle, "");
