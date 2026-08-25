@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type PoolDraw = {
   uuid: string;
@@ -193,7 +194,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
       <div className="mt-4">
         <h3 className="mb-2 text-xs font-medium text-slate-700">Draw History</h3>
         {drawsQ.isError ? (
-          <p className="text-xs text-red-600">Failed to load draw history.</p>
+          <ListErrorState status={0} message="Failed to load draw history." onRetry={() => void drawsQ.refetch()} />
         ) : (
           <ParityTable<PoolDraw>
             columns={drawColumns}

@@ -14,7 +14,7 @@ const NEEDLES = [
   "testsQ.isError",
   "poolQ.isError",
   "clearinghouseQ.isError",
-  "drug-alcohol-tab-query-error",
+  "drug-alcohol-active-driver-total-query-error",
   "drug-alcohol-tests-query-error",
   "drug-alcohol-pool-query-error",
   "drug-alcohol-clearinghouse-query-error",
@@ -23,7 +23,9 @@ const NEEDLES = [
 
 function assertFile(rel, needles) {
   const src = fs.readFileSync(path.join(process.cwd(), rel), "utf8");
-  return needles.filter((n) => !src.includes(n)).map((n) => `${rel}: missing ${n}`);
+  return needles
+    .filter((n) => !src.includes(n))
+    .map((n) => `${rel}: missing ${n}`);
 }
 
 function selftest() {
@@ -32,7 +34,10 @@ function selftest() {
   const tmp = path.join(process.cwd(), ".tmp-da-tab-query-selftest.tsx");
   fs.writeFileSync(tmp, bad);
   try {
-    if (assertFile(".tmp-da-tab-query-selftest.tsx", ["poolQ.isError"]).length === 0) {
+    if (
+      assertFile(".tmp-da-tab-query-selftest.tsx", ["poolQ.isError"]).length ===
+      0
+    ) {
       console.error(`${LABEL} SELFTEST FAIL bad`);
       process.exit(1);
     }
@@ -66,4 +71,6 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — DrugAlcoholTab surfaces list/driver query isError`);
+console.log(
+  `${LABEL} PASS — DrugAlcoholTab surfaces list/driver query isError`,
+);

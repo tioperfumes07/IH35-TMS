@@ -8,6 +8,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
+import { ListErrorState } from "../../../components/ListErrorState";
 import {
   advanceRtdCase,
   bulkEnrollRandomPool,
@@ -194,14 +195,18 @@ export function DrugAlcoholTab() {
   });
 
   const activeDriverCount = activeDriverTotalQ.isError ? null : (activeDriverTotalQ.data ?? 0);
-  const listQueryError =
-    activeDriverTotalQ.isError || testsQ.isError || poolQ.isError || clearinghouseQ.isError
-      ? activeDriverTotalQ.error ?? testsQ.error ?? poolQ.error ?? clearinghouseQ.error
-      : null;
   const driverDetailQueryError =
     effectiveDriverId && (drugStatusQ.isError || eligibilityQ.isError || rtdCaseQ.isError)
       ? drugStatusQ.error ?? eligibilityQ.error ?? rtdCaseQ.error
       : null;
+
+  async function retryFailedDriverDetailQueries() {
+    await Promise.all([
+      drugStatusQ.isError ? drugStatusQ.refetch() : Promise.resolve(),
+      eligibilityQ.isError ? eligibilityQ.refetch() : Promise.resolve(),
+      rtdCaseQ.isError ? rtdCaseQ.refetch() : Promise.resolve(),
+    ]);
+  }
 
   function handleBulkEnroll() {
     const name = consortiumName.trim();
@@ -295,9 +300,7 @@ export function DrugAlcoholTab() {
         {effectiveDriverId ? (
           <div className="mt-3 space-y-2">
             {driverDetailQueryError ? (
-              <p className="text-xs text-red-700" data-testid="drug-alcohol-driver-detail-query-error">
-                {userFacingApiError(driverDetailQueryError, "Could not load driver drug / eligibility status.")}
-              </p>
+              <div data-testid="drug-alcohol-driver-detail-query-error"><ListErrorState status={0} message={userFacingApiError(driverDetailQueryError, "Could not load driver drug / eligibility status.")} onRetry={() => void retryFailedDriverDetailQueries()} /></div>
             ) : null}
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-sm border border-gray-100 p-3 text-xs">
@@ -339,12 +342,6 @@ export function DrugAlcoholTab() {
           </div>
         ) : null}
       </div>
-
-      {listQueryError ? (
-        <p className="text-xs text-red-700" data-testid="drug-alcohol-tab-query-error">
-          {userFacingApiError(listQueryError, "Could not load drug & alcohol program lists.")}
-        </p>
-      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
@@ -493,6 +490,9 @@ export function DrugAlcoholTab() {
         {bulkEnrollMutation.isError ? (
           <div className="text-xs text-red-700">Bulk enroll failed. Check role permissions and try again.</div>
         ) : null}
+        {activeDriverTotalQ.isError ? (
+          <div data-testid="drug-alcohol-active-driver-total-query-error"><ListErrorState status={0} message={userFacingApiError(activeDriverTotalQ.error, "Could not load the active CDL driver count.")} onRetry={() => void activeDriverTotalQ.refetch()} /></div>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -573,9 +573,7 @@ export function DrugAlcoholTab() {
           </Button>
         </div>
         {testsQ.isError ? (
-          <p className="text-xs text-red-700" data-testid="drug-alcohol-tests-query-error">
-            {userFacingApiError(testsQ.error, "Could not load drug test history.")}
-          </p>
+          <div data-testid="drug-alcohol-tests-query-error"><ListErrorState status={0} message={userFacingApiError(testsQ.error, "Could not load drug test history.")} onRetry={() => void testsQ.refetch()} /></div>
         ) : (
           <DrugAlcoholTable rows={filteredTests as Array<Record<string, unknown>>} />
         )}
@@ -585,9 +583,7 @@ export function DrugAlcoholTab() {
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Random pool roster</h3>
           {poolQ.isError ? (
-            <p className="mt-2 text-xs text-red-700" data-testid="drug-alcohol-pool-query-error">
-              {userFacingApiError(poolQ.error, "Could not load the random pool roster.")}
-            </p>
+            <div data-testid="drug-alcohol-pool-query-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random pool roster.")} onRetry={() => void poolQ.refetch()} /></div>
           ) : (
             <ul className="mt-2 space-y-1">
               {(poolQ.data ?? []).slice(0, 8).map((entry) => (
@@ -611,9 +607,7 @@ export function DrugAlcoholTab() {
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Clearinghouse queries</h3>
           {clearinghouseQ.isError ? (
-            <p className="mt-2 text-xs text-red-700" data-testid="drug-alcohol-clearinghouse-query-error">
-              {userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")}
-            </p>
+            <div data-testid="drug-alcohol-clearinghouse-query-error"><ListErrorState status={0} message={userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")} onRetry={() => void clearinghouseQ.refetch()} /></div>
           ) : (
             <ul className="mt-2 space-y-1">
               {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
