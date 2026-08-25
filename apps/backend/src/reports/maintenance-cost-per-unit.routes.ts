@@ -220,7 +220,17 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             COUNT(*)::int AS wo_count,
             COALESCE(SUM(we.parts_cents), 0)::text AS parts_cents,
             COALESCE(SUM(we.labor_cents), 0)::text AS labor_cents,
-            0::text AS outsourced_cents,
+            -- MAINT-COST-OUTSOURCED-HARDCODED-ZERO: this used to be a literal 0::text -- every WO
+            -- line that isn't 'part'/'parts'/'labor' (line_totals.other_cents in the CTE above,
+            -- already computed and carried through wo_enriched.other_cents) was silently dropped
+            -- instead of ever reaching the output, so any unit with real non-part/non-labor spend
+            -- (line_type='other', e.g. roadside/outsourced work) showed Outsourced = $0.00 while its
+            -- own Total (SUM of wo.total_actual_cost) still included that spend -- Parts + Labor +
+            -- Outsourced silently didn't sum to Total on every affected row. Live-confirmed: unit
+            -- USMCA-001 had two WOs, both 100% line_type='other' ($75.00 + $125.00 = $200.00 real
+            -- cost), Outsourced showed $0.00, Total correctly showed $200.00 -- a $200 gap. Surface
+            -- the real number instead of a stub.
+            COALESCE(SUM(we.other_cents), 0)::text AS outsourced_cents,
             COALESCE(SUM(we.grand_cents), 0)::text AS total_cents,
             COALESCE(MAX(we.grand_cents), 0)::text AS max_single_wo_cents
           FROM wo_enriched we
