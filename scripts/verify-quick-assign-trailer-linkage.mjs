@@ -19,6 +19,9 @@ function audit(s) {
   if ((s.service.match(/deactivated_at IS NULL/g) ?? []).length < 2 || (s.service.match(/E_TRAILER_NOT_FOUND/g) ?? []).length < 2) failures.push("both create paths must reject inactive or missing trailers");
   if (s.service.indexOf("if (!resolvedTrailerId)") < 0 || s.service.indexOf("if (!resolvedTrailerId)") > s.service.indexOf("const update = await client.query")) failures.push("draft trailer validation must precede mutation");
   if (!/previous_trailer_id, new_trailer_id/.test(s.service) || !/input\.trailer_id \?\? null/.test(s.service) || !/resolvedTrailerId, userId/.test(s.service)) failures.push("canonical assignment-history trailer FK sink missing");
+  if (!/async function resolveCurrentTrailerId/.test(s.service) || !/operating_company_id = \$1::uuid[\s\S]{0,120}load_id = \$2::uuid[\s\S]{0,220}ORDER BY assigned_at DESC, created_at DESC, id DESC/.test(s.service)) failures.push("canonical current-trailer resolver must be explicitly company/load scoped and deterministically ordered");
+  if ((s.service.match(/const previousTrailerId = await resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/g) ?? []).length < 2) failures.push("both quick-assign create paths must preserve the prior canonical trailer");
+  if (!/previousTrailerId,\s*input\.trailer_id \?\? null/.test(s.service) || !/previousTrailerId, resolvedTrailerId, userId/.test(s.service)) failures.push("both assignment-history writes must stamp previous and new trailer FKs");
   if (!/code === "E_TRAILER_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("trailer rejection route mapping missing");
   if (!/lah\.new_trailer_id = \$1::uuid/.test(s.aggregate) || !/lah\.operating_company_id = \$2::uuid/.test(s.aggregate) || !/l\.operating_company_id = lah\.operating_company_id/.test(s.aggregate)) failures.push("exact entity-scoped trailer reverse query missing");
   if (!/FROM mdata\.units WHERE id = \$1::uuid AND \(owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid\)/.test(s.aggregate)) failures.push("attached-unit reverse label must admit the unit owner or current lessee");
@@ -35,6 +38,9 @@ if (process.argv.includes("--selftest")) {
     ["reject", "service", /E_TRAILER_NOT_FOUND/g, "E_TRAILER_UNKNOWN"],
     ["order", "service", /if \(!resolvedTrailerId\) throw new Error\("E_TRAILER_NOT_FOUND"\);/, ""],
     ["sink", "service", /input\.trailer_id \?\? null/, "null"],
+    ["prior-resolver", "service", /async function resolveCurrentTrailerId/, "async function removedCurrentTrailerId"],
+    ["prior-scope", "service", /operating_company_id = \$1::uuid/, "TRUE"],
+    ["prior-call", "service", /const previousTrailerId = await resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/, "const previousTrailerId = null"],
     ["route", "routes", /code === "E_TRAILER_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /lah\.new_trailer_id = \$1::uuid/, "TRUE"],
     ["attached-unit-scope", "aggregate", /owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/, "owner_company_id = $2::uuid"],

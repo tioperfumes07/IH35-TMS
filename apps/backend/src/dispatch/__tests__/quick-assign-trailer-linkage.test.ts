@@ -28,6 +28,11 @@ describe("quick-assign trailer linkage", () => {
     expect(service).toContain("previous_trailer_id, new_trailer_id");
     expect(service).toContain("input.trailer_id ?? null");
     expect(service).toContain("resolvedTrailerId, userId");
+    expect(service).toContain("async function resolveCurrentTrailerId");
+    expect(service).toContain("operating_company_id = $1::uuid");
+    expect(service.match(/resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/g)).toHaveLength(2);
+    expect(service).toContain("previousTrailerId,\n          input.trailer_id ?? null");
+    expect(service).toContain("previousTrailerId, resolvedTrailerId, userId");
     expect(aggregate).toContain("lah.new_trailer_id = $1::uuid");
     expect(aggregate).toContain("lah.operating_company_id = $2::uuid");
     expect(profile).toContain("aggregate.loads ?? []");

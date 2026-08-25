@@ -1,4 +1,5 @@
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
@@ -16,6 +17,20 @@ type QuickAssignInput = {
 
 function isOwner(role: string) {
   return role === "Owner";
+}
+
+async function resolveCurrentTrailerId(client: PoolClient, operatingCompanyId: string, loadId: string) {
+  const result = await client.query<{ new_trailer_id: string | null }>(
+    `SELECT new_trailer_id::text
+       FROM dispatch.load_assignment_history
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+        AND new_trailer_id IS NOT NULL
+      ORDER BY assigned_at DESC, created_at DESC, id DESC
+      LIMIT 1`,
+    [operatingCompanyId, loadId]
+  );
+  return result.rows[0]?.new_trailer_id ?? null;
 }
 
 export async function quickAssignLoad(userId: string, role: string, input: QuickAssignInput) {
@@ -203,6 +218,8 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
         ]
       );
 
+      const previousTrailerId = await resolveCurrentTrailerId(client, input.operating_company_id, input.load_id);
+
       await client.query(
         `
           INSERT INTO dispatch.load_assignment_history (
@@ -222,10 +239,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           input.driver_id,
           load.assigned_unit_id ?? null,
           input.unit_id ?? load.assigned_unit_id ?? null,
-          // previous_trailer_id: FK -> mdata.equipment. It must NOT be sourced from
-          // assigned_secondary_driver_id (a driver id) — that was a latent FK-violation. There is no
-          // trailer stored on the load row; a prior trailer would live in history, not needed here.
-          null,
+          previousTrailerId,
           input.trailer_id ?? null,
           userId,
           JSON.stringify([...acknowledged]),
@@ -357,6 +371,7 @@ export async function completeQuicksaveDraft(
     // Persist the trailer on the real link (mdata.equipment id -> new_trailer_id). Resolve entity-scoped
     // first (same as book-load W-FIX-3b) so we never attach a foreign company's trailer or FK-violate.
     if (resolvedTrailerId) {
+      const previousTrailerId = await resolveCurrentTrailerId(client, input.operating_company_id, input.load_id);
       await client.query(
         `
           INSERT INTO dispatch.load_assignment_history (
@@ -364,9 +379,9 @@ export async function completeQuicksaveDraft(
             previous_trailer_id, new_trailer_id,
             assigned_by_user_id, warnings_acknowledged
           )
-          VALUES ($1::uuid, $2::uuid, 'quicksave', NULL, $3::uuid, $4::uuid, '[]'::jsonb)
+          VALUES ($1::uuid, $2::uuid, 'quicksave', $3::uuid, $4::uuid, $5::uuid, '[]'::jsonb)
         `,
-        [input.operating_company_id, input.load_id, resolvedTrailerId, userId]
+        [input.operating_company_id, input.load_id, previousTrailerId, resolvedTrailerId, userId]
       );
     }
     return { load_id: input.load_id, pending_fields: pendingFields, is_quicksave_draft: pendingFields.length > 0 };
