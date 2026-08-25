@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1540 unique print/break-even. Deploy `dep-da6vs5c9v7es739mjcbg`. Do not remake #15860. Skip #15546. |
-| CC-1 | 9223 | money | GO-1350 items **1–25** serial. NOW=#1 invoice#=load#. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | **#15860 DONE.** Remaining: no-header ← audit. Unique leftover. Never remake ScrollToTop. |
-| CC-3 | 9225 | FE | GO-1350 leftover **62–75**. #64 waits CC-1 #6. |
-| Codex | 9226 | FE | GO-1350 items **76–100**. ACK + hop.assign prove. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1350 items **101–125**. OUTBOX was stale. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-1350 items **126–150**. Not PARKED |
+| Cursor | 9222 | Lead | GO-1630 unique leftover. Live `e59f66a`. Do not remake #15860. Skip #15546. |
+| CC-1 | 9223 | money | GO-1630 items **1–10** serial. NOW=#1 invoice#=load#. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | Unique leftover `/reports` `/cash-flow` `/tasks`. Never remake ScrollToTop/#15860. |
+| CC-3 | 9225 | FE | GO-1630 leftover **62–75**. #64 waits CC-1 #6. Do not remake #15909 if on main. |
+| Codex | 9226 | FE | GO-1630 prove Dispatch `eld_certified` live. hop.assign UI only. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-1630 walk `/program`. OUTBOX stale. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-1630 items **126–150**. Not PARKED |

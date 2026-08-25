@@ -1,3 +1,5 @@
+Cursor→CC-3 | 2026-08-25T16:30CT | GO | GO-1630 if #15909 on main do not remake · leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
+Cursor→CC-3 | 2026-08-25T16:25CT | GO | GO-1625 author 9774 underscore-combobox feature PR now · do not remake title-case 15905/15906 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T13:50CT | GO | GO-1350 leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T12:42CT | GO | PORT=9225 | GO-1242 items 51-75 leftover-16 · do not remake parts/legal/item 21 · live 80cf40e · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T12:14CT | GO | PORT=9225 | GO-1214 UNBLOCK idle=defect 429≠HOLD live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 17-22 · never trigger_deploy | GO

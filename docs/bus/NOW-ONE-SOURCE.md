@@ -1,5 +1,9 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**16:30 CT GO-1630 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Live API **`e59f66a`**. Deploy landed (`dep-da70gc49v7es739ojtk0`). **Nobody `trigger_deploy`.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **CC-1 still no ACK** — NOW=#1 invoice#=load# on money clone, then 2–10. Cascade/Devin OUTBOX stale — **walk `/program` now.** CC-3: if #15909 already on main, leftover 62–75 (do not remake 9774). Codex: live-prove Dispatch `eld_certified` **now**. Skip #15546. U14 never restamp.
+
+**16:25 CT GO-1625.** Live then `10957be`; next deploy was in flight. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. **Superseded for live SHA by GO-1630.**
+
 **13:50 CT GO-1350 — REMAINING SCENARIOS + ALL-SEAT AUDIT.** Live at kick **`db5bd15`**. Cursor kicked API deploy **`dep-da6u8615efls73cul3fg`** (one in-flight — nobody else `trigger_deploy`). Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1350.md`. Same 25-item lists. **CC-1 NO ACK — NOW=#1 invoice#=load# on money clone.** CC-2 leftover 29/40/44–50. CC-3 leftover 62–75 (WO complete waits CC-1 #6). Codex ACK + hop.assign prove. Cascade OUTBOX stale — **walk `/program` now.** Devin-A **walk now.** Idle = defect. U14 never restamp.
 
 **12:42 CT GO — 25 items/seat · LIVE `80cf40e`.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1242.md`. CC-1 still 1–10 first. CC-2/CC-3 do not remake morning ACKs. Idle = defect. CC never `trigger_deploy`. U14 never restamp.

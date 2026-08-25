@@ -1,5 +1,9 @@
 # INBOX-CODEX · 9226
 
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a` NOW — prove Dispatch HOS `eld_certified` (#15902) this turn.** hop.assign UI only. ACK `GO-1630`. Never restamp U14. Never `trigger_deploy`.
+
+**16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. After healthz=`e59f66ac`: live-prove Dispatch HOS `eld_certified` (#15902). hop.assign UI only. Never restamp U14. Never `trigger_deploy`.
+
 **16:10 CT GO-1610.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1610.md`. Prove Samsara HOS `eld_certified` on Dispatch live. Never restamp U14. Never `trigger_deploy`.
 
 **15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Prove **Samsara HOS on Dispatch** (`eld_certified`). hop.assign UI. Never restamp U14. Never remake #15860. Never `trigger_deploy`.

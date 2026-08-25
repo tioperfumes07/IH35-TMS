@@ -1,5 +1,9 @@
 # INBOX-CC-3 · 9225
 
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. If **#15909** already on main — do not remake underscore-combobox. Next leftover **62–75**. `#64` waits CC-1 #6. Do not remake title-case #15905/#15906. ACK `GO-1630`. Never `trigger_deploy`.
+
+**16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. **Author 9774 underscore-combobox feature PR now.** Do not remake title-case (#15905/#15906). Leftover 62–75. #64 waits CC-1 #6. Never `trigger_deploy`.
+
 **16:10 CT GO-1610.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1610.md`. Remaining underscore comboboxes. Cursor wires customer/vendor title-case this hour — do not remake that. Never steal CC-1. Never `trigger_deploy`.
 
 **15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Title-case create payloads + remaining underscore comboboxes. Leftover 62–75. Never steal CC-1. Never remake #15860. Never `trigger_deploy`.

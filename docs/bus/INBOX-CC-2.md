@@ -1,5 +1,9 @@
 # INBOX-CC-2 · 9224
 
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. Back-arrow class exhausted — do not remake. Unique leftover `/reports` `/cash-flow` `/tasks`. Item 26 waits CC-1. ACK `GO-1630`. Never `trigger_deploy`.
+
+**16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. Back-arrow class exhausted — do not remake. Unique leftover `/reports` `/cash-flow` `/tasks`. Item 26 waits CC-1. Never `trigger_deploy`.
+
 **16:10 CT GO-1610.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1610.md`. No-header ← remaining. Do not remake #15860. Unique leftover. Never `trigger_deploy`. Launch ~4h.
 
 **15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. **#15860/`9d24536` is law** — do not remake ScrollToTop or PageHeader smart-back. **NOW = pages with no header** (missing ←). Continue #15871/#15882 class. Never `trigger_deploy`.
