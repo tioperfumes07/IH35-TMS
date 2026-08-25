@@ -1,4 +1,9 @@
 {
+  "9772": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-create-name-address-title-cased"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
