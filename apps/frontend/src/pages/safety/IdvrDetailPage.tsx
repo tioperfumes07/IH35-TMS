@@ -1,18 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getSafetyDvirDetail } from "../../api/safety";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DvirMaintenanceInspectionsReverseSection } from "../../components/maintenance/DvirMaintenanceInspectionsReverseSection";
+import { hasInAppHistory } from "../../lib/smart-back";
 
 type DefectRow = Record<string, unknown>;
 
 export function IdvrDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: both back links below were hardcoded to
+  // /safety/idvr regardless of where the user actually came from -- same smart-back pattern as the
+  // rest of the app.
+  const goBack = () => {
+    if (hasInAppHistory(window.history.state)) {
+      navigate(-1);
+      return;
+    }
+    navigate("/safety/idvr");
+  };
 
   const detailQ = useQuery({
     queryKey: ["safety", "dvir-detail", companyId, id],
@@ -49,9 +61,9 @@ export function IdvrDetailPage() {
   if (detailQ.isError || !submission) {
     return (
       <div className="space-y-3 p-4" data-testid="idvr-detail-missing">
-        <Link to="/safety/idvr" className="text-xs font-semibold text-[#1f2a44] underline">
+        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1f2a44] underline">
           ← Back to Vehicle Inspections
-        </Link>
+        </button>
         <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           DVIR submission not found.
         </div>
@@ -62,9 +74,15 @@ export function IdvrDetailPage() {
   return (
     <div className="space-y-3 p-4" data-testid="idvr-detail-page">
       <div className="flex items-center justify-between gap-3">
-        <Link to="/safety/idvr" className="text-xs font-semibold text-[#1f2a44] underline" data-testid="idvr-detail-back">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={goBack}
+          data-testid="idvr-detail-back"
+          className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1f2a44] underline"
+        >
           ← Back to Vehicle Inspections
-        </Link>
+        </button>
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">

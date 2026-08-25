@@ -9,6 +9,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { buildExhibitsPrintBodyHtml } from "./exhibitsPrintHtml";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 type ExhibitLetter = "a" | "b" | "c" | "d" | "e" | "f";
 
@@ -77,21 +78,29 @@ export function ExhibitsViewer() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900">Form 425C Exhibits A–F</h1>
-          <p className="text-sm text-slate-600">Auto-build court-ready supporting exhibits for the selected operating company.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
-          <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
-          <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
-          <Link to="/425c?tab=history" className="hover:underline">History</Link>
-          <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
-          <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
-          <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
-          <Link to="/425c" className="hover:underline">← Form 425C</Link>
-        </div>
-      </div>
+      {/*
+        UI-BACK-BUTTON-MISSING-ENTIRELY: the "← Form 425C" entry in the related-links row below was
+        a real but hardcoded back link (same UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY defect
+        class as the rest of this audit) doing double duty as both "back" and a cross-link. Replaced
+        by the standard PageHeader (backHref="/425c", smart-back-aware); the other 5 genuinely
+        different cross-module links stay in actions.
+      */}
+      <PageHeader
+        title="Form 425C Exhibits A–F"
+        subtitle="Auto-build court-ready supporting exhibits for the selected operating company."
+        breadcrumb={["425C", "Exhibits"]}
+        backHref="/425c"
+        actions={
+          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
+            <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
+            <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
+            <Link to="/425c?tab=history" className="hover:underline">History</Link>
+            <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
+            <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
+            <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
+          </div>
+        }
+      />
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="flex flex-wrap items-end gap-3">

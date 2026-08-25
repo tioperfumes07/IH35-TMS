@@ -6,6 +6,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type MapPosition = {
   load_uuid: string;
@@ -53,7 +54,8 @@ export function MapView() {
 
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
-      <h1 className="text-lg font-semibold">Active Load Map</h1>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader title="Active Load Map" breadcrumb={["Dispatch", "Map"]} backHref="/dispatch" />
       {!companyId ? (
         <p
           className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"

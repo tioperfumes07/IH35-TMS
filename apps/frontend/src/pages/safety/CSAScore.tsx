@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -158,6 +159,8 @@ export function CSAScorePage() {
 
   return (
     <div className="space-y-3">
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader title="CSA / FMCSA Trend" breadcrumb={["Safety", "CSA / FMCSA Trend"]} backHref="/safety" />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
           <div className="text-sm font-semibold text-slate-800">FMCSA CSA source status</div>

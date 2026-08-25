@@ -1,10 +1,13 @@
 // ARCHIVE (A23-6): orphan exceptions surface — linked from HoursOfServicePage. Sunset 2026-09-01. Do not extend.
 import { Link } from "react-router-dom";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 export default function HosExceptionsPage() {
   return (
     <main className="space-y-3">
-      <h1 className="text-xl font-semibold text-gray-900">HOS Exceptions</h1>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: not an extension of A23-6's exception-logging feature --
+          just the same navigational fix every leaf page gets in this audit. */}
+      <PageHeader title="HOS Exceptions" breadcrumb={["Safety", "HOS Exceptions"]} backHref="/safety" />
       <p className="text-sm text-gray-500">
         Exception logging remains on this route. Fleet compliance clocks and near-violation monitoring live on the canonical
         dashboard.

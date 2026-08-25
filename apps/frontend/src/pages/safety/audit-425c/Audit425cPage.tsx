@@ -37,6 +37,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 
 /** ILIKE fragment matched against audit.audit_events.event_class by the reader. */
 const FORM_425C_EVENT_FILTER = "form_425c";
@@ -266,10 +267,13 @@ export default function Audit425cPage() {
 
   return (
     <main className="space-y-3" data-testid="audit-425c-page">
-      <h1 className="text-xl font-semibold text-gray-900">425C Audit Trail</h1>
-      <p className="text-sm text-gray-500">
-        Append-only Form 425C filing history for the selected entity. Filter by section, action, actor, or date, and open the source record from any row.
-      </p>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
+      <PageHeader
+        title="425C Audit Trail"
+        subtitle="Append-only Form 425C filing history for the selected entity. Filter by section, action, actor, or date, and open the source record from any row."
+        breadcrumb={["Safety", "425C Audit Trail"]}
+        backHref="/safety"
+      />
 
       {!enabled ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-slate-700">

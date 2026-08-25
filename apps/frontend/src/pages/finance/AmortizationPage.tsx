@@ -6,6 +6,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
+import { PageHeader } from "../../components/layout/PageHeader";
 import {
   FINANCE_HUB_AMORTIZATION_FLAG,
   createLoan,
@@ -129,12 +130,8 @@ export function AmortizationPage() {
     setSearchParams(next, { replace: true });
   }
 
-  const header = (
-    <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Amortization</h1>
-      <p className="text-sm text-slate-500">Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step.</p>
-    </div>
-  );
+  // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
+  const header = <PageHeader backHref="/finance/overview" title="Amortization" subtitle="Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step." />;
   if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-sm text-slate-500">Loading…</p></div>;
   if (!enabled)
     return (

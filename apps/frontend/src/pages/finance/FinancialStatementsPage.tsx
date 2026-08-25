@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { FINANCE_STATEMENTS_UI_FLAG } from "../../api/financeStatements";
 import {
   getProfitLossReport,
@@ -274,12 +275,8 @@ export function FinancialStatementsPage() {
   const bsEquity = useMemo(() => sortByCode(bsQuery.data?.equity.lines ?? []), [bsQuery.data?.equity.lines]);
   const tbRows = useMemo(() => sortByCode(tbQuery.data?.rows ?? []), [tbQuery.data?.rows]);
 
-  const header = (
-    <div className="mb-3">
-      <h1 className="text-lg font-semibold text-slate-800">Financial statements</h1>
-      <p className="text-sm text-slate-500">Profit &amp; loss, balance sheet, and trial balance for the selected entity. Read-only — nothing is posted.</p>
-    </div>
-  );
+  // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
+  const header = <PageHeader backHref="/finance/overview" title="Financial statements" subtitle="Profit & loss, balance sheet, and trial balance for the selected entity. Read-only — nothing is posted." />;
 
   if (flagLoading) {
     return (
