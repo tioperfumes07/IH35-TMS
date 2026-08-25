@@ -696,6 +696,19 @@ async function postDifferenceJournalEntry(
 
   const magnitude = Math.abs(input.variance_cents);
   const shouldDebitCash = (input.is_credit && input.variance_cents > 0) || (!input.is_credit && input.variance_cents < 0);
+  // DISP-F6XXX (hop.bank) -- accounting.journal_entries.source has a hard CHECK constraint,
+  // CHECK (source IN ('manual', 'auto')) (0092_p5_d4_manual_journal_entries.sql), the same two
+  // values every OTHER system-posted JE in this codebase uses (posting-engine.service.ts,
+  // fuel-posting/poster.service.ts, lease-posting.service.ts, amortization-posting.service.ts,
+  // recurring.worker.ts, period-close-retained-earnings.service.ts, void.service.ts -- all 'auto').
+  // The INSERT below used to write the literal "bank_reconciliation", which was never a valid
+  // value -- live-confirmed 500 "new row for relation journal_entries violates check constraint
+  // journal_entries_source_check" on every single accept-match-with-variance call, meaning this
+  // code path has been completely broken since it was built (a variance of exactly $0.00 is the
+  // only case that skips this function entirely -- see the variance_cents===0 guard above). The
+  // specific "this JE came from bank reconciliation" fact is not lost: it's carried in memo
+  // (bank-recon:<bank_transaction_id>) and the posting descriptions below, exactly like every
+  // other 'auto' JE conveys its specific origin via memo, not source.
   const journalEntry = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.journal_entries (
@@ -714,7 +727,7 @@ async function postDifferenceJournalEntry(
         $1::uuid,
         $2::date,
         $3,
-        'bank_reconciliation',
+        'auto',
         $4::uuid,
         now(),
         now(),
