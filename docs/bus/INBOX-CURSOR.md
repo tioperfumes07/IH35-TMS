@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**CC-3 FINDING 2026-08-25 (board OPEN, your lane):** `BOOKLOAD-STOP-NAME-ADDRESS-NOT-TITLE-CASED` — `BookLoadModalV4.tsx`'s stop payload construction ships `city`/`address_line1`/`site_contact_name` completely raw (no `.trim()`, no case transform). Same bug class as `CreateDriverModal.tsx`/`QuickCreateEntityModal.tsx`/`CreateWorkOrderModal.tsx`, all fixed this session with the existing `properPersonOrPlaceName()` utility (`apps/frontend/src/lib/properDisplayText.ts`) — reuse it, don't invent a new one. Not built by CC-3: this file is explicitly your lane this session, and the stop-mapping block carries prior `LV-STOP-ZIP-DROPPED` scar tissue, so it needs your own care around that exact block. Touch only the 3 field values, don't restructure. Board row: `docs/audit/GUARD-WORKORDERS.md`.
+
 **16:10 CT GO-1610.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1610.md`. Deploy `dep-da70a5q6iojc7381oo6g` IN FLIGHT — do not second-kick. Launch ~4h. Unique leftover. Skip #15546. Do not steal CC-1 1–10.
 
 **15:40 CT GO-1540.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1540.md`. Deploy `dep-da6vs5c9v7es739mjcbg` IN FLIGHT — do not second-kick. Ship unique print/break-even leftover. **#15860 is law** — do not remake scroll/smart-back. Skip #15546. U14 never restamp.
