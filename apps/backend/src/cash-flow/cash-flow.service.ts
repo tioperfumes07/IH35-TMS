@@ -35,7 +35,7 @@ export type IncomeLineItem = {
   customer_name: string;
   delivery_time: string | null;
   amount_cents: number;
-  basis: "Confirmed" | "Predicted" | "Adjustment";
+  basis: "Confirmed" | "Predicted" | "Proforma" | "Adjustment";
 };
 
 export type ExpenseLineItem = {
@@ -119,6 +119,38 @@ const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
 export function notVoidedSql(alias: string): string {
   return `${alias}.status NOT IN ('void', 'voided') AND ${alias}.revoked_at IS NULL`;
 }
+
+/** CASHFLOW-PROFORMA-PROJECTED-LABELED — a live proforma is the labeled projection for that load. */
+export function noLiveProformaInvoiceSql(loadAlias: string): string {
+  return `NOT EXISTS (
+    SELECT 1
+    FROM accounting.invoices i
+    WHERE i.source_load_id = ${loadAlias}.id
+      AND i.operating_company_id = ${loadAlias}.operating_company_id
+      AND i.status = 'proforma'
+      AND i.voided_at IS NULL
+  )`;
+}
+
+/** Last delivery stop only — multi-drop must not multiply the invoice. */
+export function lastDeliveryStopLateralSql(loadAlias: string): string {
+  return `LEFT JOIN LATERAL (
+    SELECT scheduled_arrival_at
+    FROM mdata.load_stops
+    WHERE load_id = ${loadAlias}.id AND stop_type = 'delivery'
+    ORDER BY sequence_number DESC
+    LIMIT 1
+  ) fd ON true`;
+}
+
+/** Remaining projected cash: do not re-count paid or broker-advance dollars already in the bank. */
+export function proformaRemainingCentsSql(invoiceAlias: string): string {
+  return `GREATEST(
+    COALESCE(${invoiceAlias}.total_cents, 0)
+    - COALESCE(${invoiceAlias}.amount_paid_cents, 0)
+    - COALESCE(${invoiceAlias}.broker_advance_applied_cents, 0)
+  , 0)`;
+}
 /** Delivered-or-beyond → income is Confirmed rather than Predicted. */
 const CONFIRMED_STATUSES = new Set(["delivered", "invoiced", "paid", "closed"]);
 
@@ -160,6 +192,7 @@ export async function getDailyPrediction(
         ) fd ON true
         WHERE l.operating_company_id = $1::uuid
           AND ${ACTIVE_LOAD_FILTER}
+          AND ${noLiveProformaInvoiceSql("l")}
       )
       SELECT id::text, load_number, customer_id::text AS customer_id, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
       FROM load_proj
@@ -184,6 +217,7 @@ export async function getDailyPrediction(
                                AND c.operating_company_id = l.operating_company_id
     WHERE l.operating_company_id = $1::uuid
       AND ${ACTIVE_LOAD_FILTER}
+      AND ${noLiveProformaInvoiceSql("l")}
     ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
     `;
   const incomeRows = await client.query<{
@@ -196,15 +230,70 @@ export async function getDailyPrediction(
     status: string;
   }>(incomeSql, [operatingCompanyId, date]);
 
-  const incomeItems: IncomeLineItem[] = incomeRows.rows.map((row) => ({
-    load_id: row.id,
-    load_number: row.load_number,
-    customer_id: row.customer_id,
-    customer_name: row.customer_name,
-    delivery_time: row.delivery_time,
-    amount_cents: row.rate_total_cents ?? 0,
-    basis: CONFIRMED_STATUSES.has(row.status) ? "Confirmed" : "Predicted",
-  }));
+  const proformaSql = `
+      WITH ranked AS (
+        SELECT DISTINCT ON (l.id)
+          l.id,
+          COALESCE(NULLIF(BTRIM(l.load_number), ''), i.display_id) AS load_number,
+          l.customer_id,
+          COALESCE(c.customer_name, 'Unknown') AS customer_name,
+          fd.scheduled_arrival_at AS delivery_time,
+          ${proformaRemainingCentsSql("i")}::int AS amount_cents,
+          ${
+            cashFollowsEta
+              ? projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })
+              : "fd.scheduled_arrival_at::date"
+          } AS bucket_date
+        FROM accounting.invoices i
+        JOIN mdata.loads l
+          ON l.id = i.source_load_id
+         AND l.operating_company_id = i.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                        AND pt.operating_company_id = c.operating_company_id
+        ${lastDeliveryStopLateralSql("l")}
+        WHERE i.operating_company_id = $1::uuid
+          AND i.status = 'proforma'
+          AND i.voided_at IS NULL
+          AND i.source_load_id IS NOT NULL
+          AND ${ACTIVE_LOAD_FILTER}
+        ORDER BY l.id, i.created_at DESC NULLS LAST
+      )
+      SELECT id::text, load_number, customer_id::text AS customer_id, customer_name, delivery_time::text AS delivery_time, amount_cents
+      FROM ranked
+      WHERE bucket_date = $2::date
+      ORDER BY delivery_time ASC NULLS LAST, load_number ASC
+    `;
+  const proformaRows = await client.query<{
+    id: string;
+    load_number: string;
+    customer_id: string | null;
+    customer_name: string;
+    delivery_time: string | null;
+    amount_cents: number;
+  }>(proformaSql, [operatingCompanyId, date]);
+
+  const incomeItems: IncomeLineItem[] = [
+    ...proformaRows.rows.map((row) => ({
+      load_id: row.id,
+      load_number: row.load_number,
+      customer_id: row.customer_id,
+      customer_name: row.customer_name,
+      delivery_time: row.delivery_time,
+      amount_cents: row.amount_cents ?? 0,
+      basis: "Proforma" as const,
+    })),
+    ...incomeRows.rows.map((row) => ({
+      load_id: row.id,
+      load_number: row.load_number,
+      customer_id: row.customer_id,
+      customer_name: row.customer_name,
+      delivery_time: row.delivery_time,
+      amount_cents: row.rate_total_cents ?? 0,
+      basis: CONFIRMED_STATUSES.has(row.status) ? ("Confirmed" as const) : ("Predicted" as const),
+    })),
+  ];
 
   // Driver pay cash-outflow predictions (0441-mod10-cashflow-driverpay-hardcoded-empty).
   // Emit kind:"driver_pay" for settlements queued / sent_to_bank, or scheduled via
@@ -392,7 +481,33 @@ async function buildSevenDayStrip(
           ) fd ON true
           WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
+            AND ${noLiveProformaInvoiceSql("l")}
             AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
+        )
+        +
+        COALESCE((
+          SELECT SUM(amount_cents)
+          FROM (
+            SELECT DISTINCT ON (l.id)
+              ${proformaRemainingCentsSql("i")} AS amount_cents
+            FROM accounting.invoices i
+            JOIN mdata.loads l
+              ON l.id = i.source_load_id
+             AND l.operating_company_id = i.operating_company_id
+            LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                       AND c.operating_company_id = l.operating_company_id
+            LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                          AND pt.operating_company_id = c.operating_company_id
+            ${lastDeliveryStopLateralSql("l")}
+            WHERE i.operating_company_id = $1::uuid
+              AND i.status = 'proforma'
+              AND i.voided_at IS NULL
+              AND i.source_load_id IS NOT NULL
+              AND ${ACTIVE_LOAD_FILTER}
+              AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
+            ORDER BY l.id, i.created_at DESC NULLS LAST
+          ) pf
+        ), 0)
         )`
     : `(
           SELECT SUM(COALESCE(l.rate_total_cents, 0))
@@ -402,6 +517,28 @@ async function buildSevenDayStrip(
             AND ls.scheduled_arrival_at::date = $2::date
           WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
+            AND ${noLiveProformaInvoiceSql("l")}
+        )
+        +
+        COALESCE((
+          SELECT SUM(amount_cents)
+          FROM (
+            SELECT DISTINCT ON (l.id)
+              ${proformaRemainingCentsSql("i")} AS amount_cents
+            FROM accounting.invoices i
+            JOIN mdata.loads l
+              ON l.id = i.source_load_id
+             AND l.operating_company_id = i.operating_company_id
+            ${lastDeliveryStopLateralSql("l")}
+            WHERE i.operating_company_id = $1::uuid
+              AND i.status = 'proforma'
+              AND i.voided_at IS NULL
+              AND i.source_load_id IS NOT NULL
+              AND ${ACTIVE_LOAD_FILTER}
+              AND fd.scheduled_arrival_at::date = $2::date
+            ORDER BY l.id, i.created_at DESC NULLS LAST
+          ) pf
+        ), 0)
         )`;
   for (let i = 0; i < 7; i++) {
     const d = new Date(base);
@@ -487,25 +624,78 @@ export async function getActualVsProjected(
       ) fd ON true
       WHERE l.operating_company_id = $1::uuid
         AND ${ACTIVE_LOAD_FILTER}
+        AND ${noLiveProformaInvoiceSql("l")}
+    ),
+    pf AS (
+      SELECT DISTINCT ON (l.id)
+        ${proformaRemainingCentsSql("i")} AS amount_cents,
+        ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
+      FROM accounting.invoices i
+      JOIN mdata.loads l
+        ON l.id = i.source_load_id
+       AND l.operating_company_id = i.operating_company_id
+      LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                 AND c.operating_company_id = l.operating_company_id
+      LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                    AND pt.operating_company_id = c.operating_company_id
+      ${lastDeliveryStopLateralSql("l")}
+      WHERE i.operating_company_id = $1::uuid
+        AND i.status = 'proforma'
+        AND i.voided_at IS NULL
+        AND i.source_load_id IS NOT NULL
+        AND ${ACTIVE_LOAD_FILTER}
+      ORDER BY l.id, i.created_at DESC NULLS LAST
+    ),
+    combined AS (
+      SELECT bucket_date, rate_total_cents AS amount_cents FROM lp
+      UNION ALL
+      SELECT bucket_date, amount_cents FROM pf
     )
-    SELECT bucket_date::text AS delivery_date, SUM(rate_total_cents)::int AS projected_income_cents
-    FROM lp
+    SELECT bucket_date::text AS delivery_date, SUM(amount_cents)::int AS projected_income_cents
+    FROM combined
     WHERE bucket_date BETWEEN $2::date AND $3::date
     GROUP BY bucket_date
     ORDER BY bucket_date
     `
     : `
-    SELECT
-      ls.scheduled_arrival_at::date::text AS delivery_date,
-      SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
-    FROM mdata.loads l
-    JOIN mdata.load_stops ls
-      ON ls.load_id = l.id AND ls.stop_type = 'delivery'
-    WHERE l.operating_company_id = $1::uuid
-      AND ls.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
-      AND ${ACTIVE_LOAD_FILTER}
-    GROUP BY ls.scheduled_arrival_at::date
-    ORDER BY ls.scheduled_arrival_at::date
+    SELECT delivery_date, SUM(projected_income_cents)::int AS projected_income_cents
+    FROM (
+      SELECT
+        ls.scheduled_arrival_at::date::text AS delivery_date,
+        SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
+      FROM mdata.loads l
+      JOIN mdata.load_stops ls
+        ON ls.load_id = l.id AND ls.stop_type = 'delivery'
+      WHERE l.operating_company_id = $1::uuid
+        AND ls.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+        AND ${ACTIVE_LOAD_FILTER}
+        AND ${noLiveProformaInvoiceSql("l")}
+      GROUP BY ls.scheduled_arrival_at::date
+      UNION ALL
+      SELECT
+        fd.scheduled_arrival_at::date::text AS delivery_date,
+        SUM(amount_cents)::int AS projected_income_cents
+      FROM (
+        SELECT DISTINCT ON (l.id)
+          fd.scheduled_arrival_at,
+          ${proformaRemainingCentsSql("i")} AS amount_cents
+        FROM accounting.invoices i
+        JOIN mdata.loads l
+          ON l.id = i.source_load_id
+         AND l.operating_company_id = i.operating_company_id
+        ${lastDeliveryStopLateralSql("l")}
+        WHERE i.operating_company_id = $1::uuid
+          AND i.status = 'proforma'
+          AND i.voided_at IS NULL
+          AND i.source_load_id IS NOT NULL
+          AND ${ACTIVE_LOAD_FILTER}
+          AND fd.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+        ORDER BY l.id, i.created_at DESC NULLS LAST
+      ) pf
+      GROUP BY fd.scheduled_arrival_at::date
+    ) u
+    GROUP BY delivery_date
+    ORDER BY delivery_date
     `;
   const projIncomeRows = await client.query<{ delivery_date: string; projected_income_cents: number }>(
     projIncomeSql,

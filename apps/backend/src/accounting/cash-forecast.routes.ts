@@ -4,6 +4,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { buildForecastWeeks, type ForecastSettings } from "./cash-forecast.math.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
+import { lastDeliveryStopLateralSql, proformaRemainingCentsSql } from "../cash-flow/cash-flow.service.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -177,6 +178,8 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
       );
       const openingBalance = Number(cashRes.rows[0]?.total_cents ?? 0);
 
+      // Open A/R only. Proforma is not legally owed (ACCT-F223 / aging) — it is projected income
+      // bucketed on dispatch delivery date into expected_inflows.other.
       const arRes = await client.query(
         `
           SELECT due_date::text, COALESCE(amount_open_cents, 0)::int AS amount_cents
@@ -184,7 +187,34 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
             AND COALESCE(amount_open_cents, 0) > 0
+            AND status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
             AND due_date BETWEEN $2::date AND $3::date
+        `,
+        [query.data.operating_company_id, startWeek, endWeek]
+      );
+
+      const proformaRes = await client.query(
+        `
+          SELECT
+            scheduled_arrival_at::date::text AS delivery_date,
+            amount_cents::int AS amount_cents
+          FROM (
+            SELECT DISTINCT ON (l.id)
+              fd.scheduled_arrival_at,
+              ${proformaRemainingCentsSql("i")} AS amount_cents
+            FROM accounting.invoices i
+            JOIN mdata.loads l
+              ON l.id = i.source_load_id
+             AND l.operating_company_id = i.operating_company_id
+            ${lastDeliveryStopLateralSql("l")}
+            WHERE i.operating_company_id = $1::uuid
+              AND i.status = 'proforma'
+              AND i.voided_at IS NULL
+              AND i.source_load_id IS NOT NULL
+              AND l.status <> 'cancelled'
+              AND fd.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+            ORDER BY l.id, i.created_at DESC NULLS LAST
+          ) pf
         `,
         [query.data.operating_company_id, startWeek, endWeek]
       );
@@ -225,6 +255,12 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
         inflowInvoices.set(bucket, Number(inflowInvoices.get(bucket) ?? 0) + Number(row.amount_cents ?? 0));
       }
 
+      const inflowOther = new Map<string, number>();
+      for (const row of proformaRes.rows) {
+        const bucket = bucketStart(row.delivery_date);
+        inflowOther.set(bucket, Number(inflowOther.get(bucket) ?? 0) + Number(row.amount_cents ?? 0));
+      }
+
       const outflowBills = new Map<string, number>();
       for (const row of apRes.rows) {
         const bucket = bucketStart(row.due_date);
@@ -246,6 +282,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
         settings,
         inflowInvoices,
         inflowFactoring,
+        inflowOther,
         outflowBills,
         outflowFactoringFee,
       });

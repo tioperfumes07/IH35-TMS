@@ -9,7 +9,7 @@ export type IncomeLineItem = {
   customer_name: string;
   delivery_time: string | null;
   amount_cents: number;
-  basis: "Confirmed" | "Predicted" | "Adjustment";
+  basis: "Confirmed" | "Predicted" | "Proforma" | "Adjustment";
 };
 
 export type ExpenseLineItem = {
