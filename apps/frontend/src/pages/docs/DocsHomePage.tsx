@@ -419,8 +419,15 @@ export function DocsHomePage() {
             emptyText="No documents found. Click + Upload Document to add one."
             tableTestId="docs-home-table"
             rowTestId={(row) => `docs-home-row-${row.id}`}
-            initialPageSize={limit}
-            pageSizeOptions={[limit]}
+            // DOCS-F-PARITYTABLE-DOUBLE-PAGINATION: `rows` is already one server page (limit=25 of
+            // `total` real rows). Without pageSize+hidePager, ParityTable's own uncontrolled pager
+            // re-derives "total" from rows.length and renders a second, contradictory "1-25 of 25 ·
+            // Page 1 of 1" pager (all nav disabled) directly above the real server pager below
+            // ("Page {page} of {totalPages} · {total} total") — same class as the already-fixed
+            // REPORTS-F6363 (AuditReportPage.tsx). Per ParityTable's own documented "caller
+            // pre-pages" combo: pageSize = server page size + hidePager — no double slicing.
+            pageSize={limit}
+            hidePager
             exportFilename="documents"
           />
         )}
