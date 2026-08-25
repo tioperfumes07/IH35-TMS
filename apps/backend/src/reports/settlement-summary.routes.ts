@@ -174,19 +174,34 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
         for (const [k, v] of agg.typed) globalDeductionTypes.set(k, (globalDeductionTypes.get(k) ?? 0) + v);
       }
 
-      const loadsRes = await client.query(
-        `
-          SELECT assigned_primary_driver_id::text AS driver_id, COUNT(*)::text AS load_count
-          FROM mdata.loads l
-          WHERE l.operating_company_id = $1::uuid
-            AND l.soft_deleted_at IS NULL
-            AND l.assigned_primary_driver_id IS NOT NULL
-            AND l.created_at::date BETWEEN $2::date AND $3::date
-            AND ($4::uuid IS NULL OR l.assigned_primary_driver_id = $4::uuid)
-          GROUP BY l.assigned_primary_driver_id
-        `,
-        [companyId, pStart, pEnd, driverFilter ?? null]
-      );
+      // SETTLEMENT-SUMMARY-LOAD-COUNT-WRONG-DATE-AXIS: this used to re-derive load_count from
+      // mdata.loads filtered by created_at (booking date) BETWEEN the report's UI period AND
+      // assigned_primary_driver_id (the load's CURRENT live assignment) -- two different axes than
+      // what the settlement actually reflects. A settlement's own period_start/period_end is when it
+      // was closed/run, not when its loads were booked, and a load's assigned_primary_driver_id can
+      // change after the fact (reassignment, exactly the breakdown-relay pattern this session's own
+      // TEST battery exercises). Live-confirmed: driver Juan USMCA-Battery's settlement S-20260802-0258
+      // (period 2026-08-21) has a real settlement_lines row for load L-20260802-0258 (booked
+      // 2026-08-02, gross $1,104.00, exact match) -- 19 days apart -- so the old created_at-windowed
+      // query showed 0 loads for a driver who was genuinely paid for exactly 1 real load. Count
+      // distinct loads from driver_finance.settlement_lines, scoped to the SAME settlement ids
+      // settlementsRes already selected, instead of re-querying an unrelated table on a different
+      // date axis.
+      const loadsRes =
+        settlementIds.length === 0
+          ? { rows: [] as Array<{ driver_id: string; load_count: string }> }
+          : await client.query(
+              `
+                SELECT s.driver_id::text AS driver_id, COUNT(DISTINCT sl.load_id)::text AS load_count
+                FROM driver_finance.settlement_lines sl
+                JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+                WHERE sl.settlement_id = ANY($1::uuid[])
+                  AND sl.load_id IS NOT NULL
+                  AND sl.is_active = true
+                GROUP BY s.driver_id
+              `,
+              [settlementIds]
+            );
       const loadsRows = loadsRes.rows as Array<{ driver_id: string; load_count: string }>;
       const loadCountByDriver = new Map<string, number>(loadsRows.map((r) => [String(r.driver_id), num(r.load_count)]));
 
