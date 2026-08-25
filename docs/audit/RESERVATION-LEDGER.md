@@ -131,3 +131,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T09:49:00-05:00 | Codex | SAFETY-ACCIDENT-DETAIL-SQL-FAILURE-MASKED-AS-404 | — | RELEASED-ON-MERGE | codex/accident-detail-honesty |
 | 2026-08-25T09:56:00-05:00 | Codex | SAFETY-ACCIDENT-PATCH-PRE-READ-FAILURE-MASKED-AS-404 | apps/backend/src/safety/safety.routes.ts, scripts/verify-accident-create-param-order.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-accident-patch-honesty |
 | 2026-08-25T09:59:00-05:00 | Codex | SAFETY-ACCIDENT-PATCH-PRE-READ-FAILURE-MASKED-AS-404 | — | RELEASED-ON-MERGE | codex/accident-patch-honesty |
+| 2026-08-25T10:04:00-05:00 | Codex | SAFETY-INCIDENT-AUTO-WORKFLOW-INSERT-FAILURES-SILENT | apps/backend/src/safety/incidents/auto-workflow-trigger.ts, scripts/verify-incidents-work-order-fk.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-incident-workflow-honesty |
