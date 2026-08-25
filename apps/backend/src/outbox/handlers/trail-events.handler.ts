@@ -20,7 +20,6 @@ export function buildTrailEventHandlers(): OutboxEventHandler[] {
     new TrailEventHandler("expense.reattributed"),
     new TrailEventHandler("accounting.invoice.html_requested"),
     new TrailEventHandler("accounting.journal_entry_pushed_to_qbo"),
-    new TrailEventHandler("auth.email.verification_started"),
     new TrailEventHandler("dispatch.dispatch_sheet.requested"),
     new TrailEventHandler("dispatch.equipment_transfer.requested"),
     new TrailEventHandler("dispatch.equipment_transfer.confirmed"),
