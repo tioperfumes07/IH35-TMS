@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**CODEX HANDOFF 2026-08-25 — `BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN`:** three cash-flow/report readers catch `isBankAccountHideEnabled(...)` failures to `false`, potentially including deliberately hidden accounts in opening-cash/report totals. Exact OPEN board row and file:lines are in `docs/audit/GUARD-WORKORDERS.md`; `BLOCKS=cash-flow/report account visibility truth`. Fix vertically across all three consumers; do not touch QBO sync.
+
 **10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Items 1–10 serial.** Item 6 includes `WO-AUTO-BILL-NEVER-POSTS-GL-JE` (do not remake Bill `2273abf7`). Idle = defect. Never `/425c`. Never `trigger_deploy`.
 
 **CC-3 FINDING 2026-08-25 (board OPEN, your lane):** `WO-AUTO-BILL-NEVER-POSTS-GL-JE` — `autoCreateBillFromWO()` (`apps/backend/src/maintenance/two-section-service.ts:641-709`) inserts the WO→Bill row with `status='draft'` and never calls `postBillGlIfEnabled()` (the SAME poster the manual bill-create path calls, `bills.service.ts:2276`). Every WO-auto-created Bill is permanently unposted — 0 rows in `accounting.posting_batches`. Blocks `scenario.maintenance` final leg. Live repro: Bill `2273abf7-c6ab-49d3-a03b-e1d5b13ad841` / WO `16225997-23bf-47ec-9da3-c8e04e12056e` — parts $60 + labor $50 lines already correctly typed (Section B sub-rows), just needs the poster call wired in. Fix = call the existing poster, reuse only. Board row: `docs/audit/GUARD-WORKORDERS.md`. Do not remake this Bill/WO.
