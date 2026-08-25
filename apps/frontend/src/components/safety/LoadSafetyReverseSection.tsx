@@ -12,6 +12,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 import { listHosViolations } from "../../api/safetyV64";
+import { ListErrorState } from "../ListErrorState";
 
 /**
  * SAF-C01 — REVERSE load↔safety. Accident reports and incidents already store load_id;
@@ -121,9 +122,7 @@ export function LoadSafetyReverseSection({
           <p className="text-sm text-gray-500">Loading…</p>
         ) : null}
         {accidentsQ.isError ? (
-          <p className="text-sm text-red-600">
-            Could not load accidents for this load.
-          </p>
+          <ListErrorState status={0} message="Could not load accidents for this load." onRetry={() => void accidentsQ.refetch()} />
         ) : null}
         {!accidentsQ.isLoading &&
         !accidentsQ.isError &&
@@ -132,7 +131,7 @@ export function LoadSafetyReverseSection({
             No accident reports linked to this load.
           </p>
         ) : null}
-        {accidents.length > 0 ? (
+        {!accidentsQ.isError && accidents.length > 0 ? (
           <ul className="space-y-2">
             {accidents.map((row) => {
               const id = s(row.id);
@@ -211,9 +210,7 @@ export function LoadSafetyReverseSection({
           <p className="text-sm text-gray-500">Loading…</p>
         ) : null}
         {hosViolationsQ.isError ? (
-          <p className="text-sm text-red-600">
-            Could not load HOS violations for this load.
-          </p>
+          <ListErrorState status={0} message="Could not load HOS violations for this load." onRetry={() => void hosViolationsQ.refetch()} />
         ) : null}
         {!hosViolationsQ.isLoading &&
         !hosViolationsQ.isError &&
@@ -222,7 +219,7 @@ export function LoadSafetyReverseSection({
             No HOS violations linked to this load.
           </p>
         ) : null}
-        {hosViolations.map((row) => (
+        {!hosViolationsQ.isError ? hosViolations.map((row) => (
           <div key={s(row.id)} className="text-sm text-slate-700">
             <EntityLink
               kind="hos_violation"
@@ -235,7 +232,7 @@ export function LoadSafetyReverseSection({
                 : "—"}
             </span>
           </div>
-        ))}
+        )) : null}
       </div>
       <CivilFinesReverseBlock
         companyId={operatingCompanyId}
@@ -262,9 +259,7 @@ export function LoadSafetyReverseSection({
           <p className="text-sm text-gray-500">Loading internal fines…</p>
         ) : null}
         {internalFinesQ.isError ? (
-          <p className="text-sm text-red-600">
-            Could not load internal fines for this load.
-          </p>
+          <ListErrorState status={0} message="Could not load internal fines for this load." onRetry={() => void internalFinesQ.refetch()} />
         ) : null}
         {!internalFinesQ.isLoading &&
         !internalFinesQ.isError &&
@@ -273,7 +268,7 @@ export function LoadSafetyReverseSection({
             No internal fines linked to this load.
           </p>
         ) : null}
-        {internalFines.map((row) => (
+        {!internalFinesQ.isError ? internalFines.map((row) => (
           <div key={s(row.id)} className="text-sm text-slate-700">
             <EntityLink
               kind="internal_fine"
@@ -297,7 +292,7 @@ export function LoadSafetyReverseSection({
               </span>
             ) : null}
           </div>
-        ))}
+        )) : null}
       </div>
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}
@@ -364,14 +359,12 @@ function LoadSafetyEventsBlock({
         <p className="text-sm text-gray-500">Loading…</p>
       ) : null}
       {query.isError ? (
-        <p className="text-sm text-red-600">
-          Could not load safety events for this load.
-        </p>
+        <ListErrorState status={0} message="Could not load safety events for this load." onRetry={() => void query.refetch()} />
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500">None linked to this load.</p>
       ) : null}
-      {rows.length > 0 ? (
+      {!query.isError && rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
             <li
@@ -477,14 +470,12 @@ function LoadIncidentBlock({
         <p className="text-sm text-gray-500">Loading…</p>
       ) : null}
       {query.isError ? (
-        <p className="text-sm text-red-600">
-          Could not load {kind.title.toLowerCase()}.
-        </p>
+        <ListErrorState status={0} message={`Could not load ${kind.title.toLowerCase()}.`} onRetry={() => void query.refetch()} />
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500">None linked to this load.</p>
       ) : null}
-      {rows.length > 0 ? (
+      {!query.isError && rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => {
             const id = s(row.id);
