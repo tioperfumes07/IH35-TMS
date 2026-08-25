@@ -407,12 +407,23 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // CLS-JOIN-ENTITY-UNSCOPED class, where the invoice reads fine and the load is in someone
       // else's books. Fails closed with 404 rather than writing NULL: silently dropping an FK the
       // caller supplied is how this column came to be settable by PATCH but not by create.
+      let linkedLoadNumber: string | null = null;
       if (body.data.source_load_id) {
         const loadRes = await client.query(
-          `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          `SELECT load_number FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
           [body.data.source_load_id, query.data.operating_company_id]
         );
         if (loadRes.rows.length === 0) return { code: 404 as const, error: "load_not_found_for_entity" };
+        linkedLoadNumber = String(loadRes.rows[0]?.load_number ?? "").trim();
+        if (!linkedLoadNumber) {
+          return { code: 422 as const, error: "load_number_required_for_invoice_line" };
+        }
+        const conflict = await findConflictingInvoiceForLoad(
+          client,
+          query.data.operating_company_id,
+          body.data.source_load_id
+        );
+        if (conflict) return { code: 409 as const, error: "invoice_already_exists_for_load" };
       }
 
       // CUSTVEND-PAR-1: Credit-limit enforcement. Check open exposure vs stored limit.
@@ -467,7 +478,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const issueDate = body.data.issue_date ?? companyBusinessDate();
       const termsDays = Number(customer.days_until_due ?? 30);
       const dueDate = body.data.due_date ?? new Date(new Date(`${issueDate}T00:00:00.000Z`).getTime() + termsDays * 86400000).toISOString().slice(0, 10);
-      const displayId = await nextInvoiceDisplayId(client, query.data.operating_company_id, new Date(`${issueDate}T00:00:00.000Z`));
+      const displayId =
+        linkedLoadNumber ??
+        (await nextInvoiceDisplayId(client, query.data.operating_company_id, new Date(`${issueDate}T00:00:00.000Z`)));
       const insertRes = await client.query(
         `
           INSERT INTO accounting.invoices (

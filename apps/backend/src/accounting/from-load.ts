@@ -1,6 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
-import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
 type Queryable = {
@@ -168,11 +167,21 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     });
   }
 
+  // INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER (owner 2026-08-24): going-forward from-load mint
+  // stores mdata.loads.load_number as accounting.invoices.display_id. Same number
+  // proforma → sent → paid. Send must never remint (invoice-send.service.ts). Historical
+  // INV-YYYY-NNNN rows stay. Manual/recurring/TONU still use the INV-YYYY-NNNN allocator.
+  const loadNumber = String(load.load_number ?? "").trim();
+  if (!loadNumber) {
+    throw Object.assign(new Error("load_number_required_for_invoice_line"), {
+      code: "load_number_required_for_invoice_line",
+    });
+  }
+  const displayId = loadNumber;
   const issueDate = new Date();
   const paymentTermsDays = Number(load.payment_terms_days ?? 30);
   const dueDate = new Date(issueDate);
   dueDate.setUTCDate(dueDate.getUTCDate() + paymentTermsDays);
-  const displayId = await nextInvoiceDisplayId(client, input.operatingCompanyId, issueDate);
   const initialStatus = input.asProforma ? "proforma" : "draft";
 
   const invoiceRes = await client.query(
@@ -229,12 +238,6 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     line_type: "linehaul",
   });
   // LV-INV-UUID — customer-facing line text must carry load_number (L-…), never the load UUID.
-  const loadNumber = String(load.load_number ?? "").trim();
-  if (!loadNumber) {
-    throw Object.assign(new Error("load_number_required_for_invoice_line"), {
-      code: "load_number_required_for_invoice_line",
-    });
-  }
   const linehaulDescription = `Linehaul · Load ${loadNumber}`;
   const lineRes = await client.query(
     `

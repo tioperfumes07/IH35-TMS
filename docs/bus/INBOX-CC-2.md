@@ -1,6 +1,8 @@
 # INBOX-CC-2 · 9224
 
-**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. **#15921 ACK’d — do not remake trip-profitability.** Next unique leftover `/reports` `/cash-flow` `/tasks`. Item **26 waits CC-1 #1–2**. After API SHA includes `f66436af`, prove halved dollars. ACK `GO-1650`. Never `trigger_deploy`.
+**17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`** (includes **#15921**). **Do not remake trip-profitability.** Prove halved dollars. Next unique leftover `/reports` `/cash-flow` `/tasks`. Item **26 waits #2**. ACK `GO-1715`. Never `trigger_deploy`.
+
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
 
 **16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 

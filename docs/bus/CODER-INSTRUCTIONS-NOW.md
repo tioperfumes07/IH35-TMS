@@ -1,5 +1,8 @@
 # CODER INSTRUCTIONS — NOW (2026-08-24)
 
+**17:15 CT GO-1715:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md` — idle = defect. Cursor money #1. ACK `GO-1715`.
+
+
 **13:50 CT GO-1350:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1350.md` — remaining Program scenarios. ACK `GO-1350`. Idle = defect.
 
 **12:42 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1242.md` — 25 items/seat. Live `80cf40e`. Idle = defect. ACK `GO-1242`.

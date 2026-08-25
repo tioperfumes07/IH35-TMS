@@ -1,6 +1,8 @@
 # INBOX-CC-1 · 9223 · MONEY
 
-**16:50 CT GO-1650 — CODE NOW. Idle-safe = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. **The Book Load / /program / idle-safe round is NOT yours** — that was Cursor leftover (#15916). **Do not remake Book Load.** **NOW=#1 `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER`** then 2–10 on the **money clone** (not `IH35-TMS-clean`). Never `/425c`. Never `trigger_deploy`. Blocks Program Complete. ACK `GO-1650`.
+**17:15 CT GO-1715 — CODE NOW. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Owner authorized Cursor on **#1**. **Grep `origin/main` `from-load.ts` for `const displayId = loadNumber` before you mint.** If present, **NOW=#2 `CASHFLOW-PROFORMA-PROJECTED-LABELED`** then 3–10 on the **money clone** (not `IH35-TMS-clean`). Never `/425c`. Never `trigger_deploy`. ACK `GO-1715`.
+
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
 
 **16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Same NOW=#1. **Superseded by GO-1650.**
 

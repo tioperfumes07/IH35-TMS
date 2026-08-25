@@ -1,6 +1,8 @@
 # INBOX-CURSOR · 9222 · LEAD
 
-**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. SPA LIVE. API IN FLIGHT `dep-da70v2k9v7es739pvva0` — do not second-kick. Unique leftover `DRIVERS-CREATE-DEAD-CLICK`. Skip #15546. Do not steal CC-1 1–10. Route CC-1: invoice#=load#, not Book Load.
+**17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Owner: nobody idle; **NOW=#1 invoice#=load#** (money authorized). SPA autoDeploy IN FLIGHT — do not second-kick. Skip #15546. Route CC-1: grep then #2 cash-flow labels.
+
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. **Superseded by GO-1715.**
 
 **16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 

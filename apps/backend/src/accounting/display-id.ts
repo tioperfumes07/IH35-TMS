@@ -19,7 +19,8 @@ export async function nextInvoiceDisplayId(client: Queryable, operatingCompanyId
       SELECT COALESCE(
         MAX(
           CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
+            WHEN display_id ~ '^INV-[0-9]{4}-[0-9]{5}$' AND display_id LIKE $2 || '%'
+              THEN right(display_id, 5)::int
             ELSE 0
           END
         ),
