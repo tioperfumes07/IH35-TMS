@@ -1,3 +1,4 @@
+Cursor→CC-3 | 2026-08-25T13:50CT | GO | GO-1350 leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T12:42CT | GO | PORT=9225 | GO-1242 items 51-75 leftover-16 · do not remake parts/legal/item 21 · live 80cf40e · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T12:14CT | GO | PORT=9225 | GO-1214 UNBLOCK idle=defect 429≠HOLD live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 17-22 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T11:39CT | GO | PORT=9225 | GO-1139 UNBLOCK idle=defect live 1c31518 paste PASTE-ALL-SEATS-GO-2026-08-25-1139 items 17-22 WO 850e2cc4 complete + print · never trigger_deploy | GO
