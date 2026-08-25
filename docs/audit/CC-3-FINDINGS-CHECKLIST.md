@@ -2,6 +2,8 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `DISP-QUICKSAVE-DRAFT-DROPS-UNIT-HISTORY` | **B** | Vertical unit connectivity | Codex | this PR | 2026-08-24 | Draft completion atomically persists previous/new unit and trailer assignment history. | focused tests 3/3; quick-assign guard normal + 18 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
+
 | ☑ | `DISP-QUICK-ASSIGN-TRAILER-SWAP-DROPS-PREVIOUS-FK` | **B** | Vertical trailer connectivity | Codex | this PR | 2026-08-24 | Both Quick Assign paths preserve the prior canonical trailer FK when recording a swap. | focused tests 2/2; existing quick-assign trailer guard normal + 14 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `MNT-TRIAGE-CONVERT-WO-DROPS-LOAD-FK` | **B** | Vertical load connectivity | Codex | this PR | 2026-08-24 | Primary in-transit triage conversion preserves the canonical load FK on both WO INSERT shapes. | existing MNT-LINK-03b guard normal + selftest; gate | OWNER-GATED=no · Live=post-deploy UNVERIFIED |

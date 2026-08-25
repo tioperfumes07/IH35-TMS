@@ -3,7 +3,10 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
-import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "./driver-qualification.service.js";
+import {
+  assertDriverQualifiedForLoad,
+  DriverNotQualifiedError,
+} from "./driver-qualification.service.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -19,7 +22,11 @@ function isOwner(role: string) {
   return role === "Owner";
 }
 
-async function resolveCurrentTrailerId(client: PoolClient, operatingCompanyId: string, loadId: string) {
+async function resolveCurrentTrailerId(
+  client: PoolClient,
+  operatingCompanyId: string,
+  loadId: string,
+) {
   const result = await client.query<{ new_trailer_id: string | null }>(
     `SELECT new_trailer_id::text
        FROM dispatch.load_assignment_history
@@ -28,14 +35,23 @@ async function resolveCurrentTrailerId(client: PoolClient, operatingCompanyId: s
         AND new_trailer_id IS NOT NULL
       ORDER BY assigned_at DESC, created_at DESC, id DESC
       LIMIT 1`,
-    [operatingCompanyId, loadId]
+    [operatingCompanyId, loadId],
   );
   return result.rows[0]?.new_trailer_id ?? null;
 }
 
-export async function quickAssignLoad(userId: string, role: string, input: QuickAssignInput) {
+export async function quickAssignLoad(
+  userId: string,
+  role: string,
+  input: QuickAssignInput,
+) {
   const notifyBox: {
-    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
+    v: {
+      operatingCompanyId: string;
+      driverId: string;
+      loadId: string;
+      loadLabel: string | null;
+    } | null;
   } = { v: null };
 
   const result = await withCurrentUser(userId, async (client) => {
@@ -43,7 +59,10 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
     // passes the request body straight through — and it both SETS the RLS scope and drives every
     // predicate below, so without this the caller chooses the scope RLS enforces. Assert first.
     await assertCompanyMembership(client, userId, input.operating_company_id);
-    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [input.operating_company_id]);
+    await client.query(
+      "SELECT set_config('app.operating_company_id', $1::text, true)",
+      [input.operating_company_id],
+    );
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -56,7 +75,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
             AND soft_deleted_at IS NULL
           FOR UPDATE
         `,
-        [input.load_id, input.operating_company_id]
+        [input.load_id, input.operating_company_id],
       );
       const load = loadRes.rows[0];
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -71,11 +90,14 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       });
       if (qualBlock) throw new DriverNotQualifiedError(qualBlock);
 
-      const warnings: Array<{ code: string; severity: "advisory" | "hard_block"; message: string }> = [];
+      const warnings: Array<{
+        code: string;
+        severity: "advisory" | "hard_block";
+        message: string;
+      }> = [];
       if (input.unit_id) {
-        const unit = await client
-          .query(
-            `
+        const unit = await client.query(
+          `
               -- DISP-F01 — this path already read is_oos straight from mdata.units (below), which is
               -- the only reason quick-assign still blocked out-of-service units while the other three
               -- dispatch paths did not. But WF-050 dispatch-block and WF-044 PM-due were read SOLELY
@@ -95,8 +117,8 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
                 AND u.deactivated_at IS NULL
               LIMIT 1
             `,
-            [input.unit_id, input.operating_company_id]
-          );
+          [input.unit_id, input.operating_company_id],
+        );
         const row = unit.rows[0];
         if (!row) throw new Error("E_UNIT_NOT_FOUND");
         if (row?.has_open_pm_due_wo) {
@@ -110,7 +132,9 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           warnings.push({
             code: "WF050_UNIT_BLOCK",
             severity: "hard_block",
-            message: String(row.dispatch_block_reason ?? "Unit is dispatch-blocked"),
+            message: String(
+              row.dispatch_block_reason ?? "Unit is dispatch-blocked",
+            ),
           });
         }
         if (row.is_oos) {
@@ -130,7 +154,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
              AND deactivated_at IS NULL
            LIMIT 1`,
-          [input.trailer_id, input.operating_company_id]
+          [input.trailer_id, input.operating_company_id],
         );
         if (!trailer.rows[0]?.id) throw new Error("E_TRAILER_NOT_FOUND");
       }
@@ -144,7 +168,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
               AND operating_company_id = $2::uuid
             LIMIT 1
           `,
-          [input.driver_id, input.operating_company_id]
+          [input.driver_id, input.operating_company_id],
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       if (driver.rows[0]?.is_in_violation) {
@@ -166,11 +190,15 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
             ORDER BY test_date DESC, created_at DESC
             LIMIT 1
           `,
-          [input.operating_company_id, input.driver_id]
+          [input.operating_company_id, input.driver_id],
         )
         .catch(() => ({ rows: [] as { result: string }[] }));
       const drugResult = String(latestDrug.rows[0]?.result ?? "");
-      if (["positive", "refusal", "adulterated", "substituted"].includes(drugResult)) {
+      if (
+        ["positive", "refusal", "adulterated", "substituted"].includes(
+          drugResult,
+        )
+      ) {
         warnings.push({
           code: "WF037_DRUG_PROGRAM_BLOCK",
           severity: "hard_block",
@@ -179,13 +207,25 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       }
 
       const hardBlocks = warnings.filter((w) => w.severity === "hard_block");
-      const acknowledged = new Set((input.acknowledged_warnings ?? []).map((value) => String(value)));
-      const allHardBlocksAcknowledged = hardBlocks.every((warning) => acknowledged.has(warning.code));
-      if (hardBlocks.length > 0 && (!isOwner(role) || !allHardBlocksAcknowledged)) {
-        const oosBlock = hardBlocks.find((w) => w.code === "UNIT_OOS" && !acknowledged.has(w.code));
+      const acknowledged = new Set(
+        (input.acknowledged_warnings ?? []).map((value) => String(value)),
+      );
+      const allHardBlocksAcknowledged = hardBlocks.every((warning) =>
+        acknowledged.has(warning.code),
+      );
+      if (
+        hardBlocks.length > 0 &&
+        (!isOwner(role) || !allHardBlocksAcknowledged)
+      ) {
+        const oosBlock = hardBlocks.find(
+          (w) => w.code === "UNIT_OOS" && !acknowledged.has(w.code),
+        );
         if (oosBlock) throw new Error(`E_UNIT_OOS:${oosBlock.message}`);
-        const dvirBlock = hardBlocks.find((w) => w.code === "WF050_UNIT_BLOCK" && !acknowledged.has(w.code));
-        if (dvirBlock) throw new Error(`E_UNIT_DISPATCH_BLOCKED:${dvirBlock.message}`);
+        const dvirBlock = hardBlocks.find(
+          (w) => w.code === "WF050_UNIT_BLOCK" && !acknowledged.has(w.code),
+        );
+        if (dvirBlock)
+          throw new Error(`E_UNIT_DISPATCH_BLOCKED:${dvirBlock.message}`);
         throw new Error("E_HARD_BLOCKS_PRESENT");
       }
 
@@ -215,10 +255,14 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           input.unit_id ?? null,
           pendingFields.length > 0,
           pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
-        ]
+        ],
       );
 
-      const previousTrailerId = await resolveCurrentTrailerId(client, input.operating_company_id, input.load_id);
+      const previousTrailerId = await resolveCurrentTrailerId(
+        client,
+        input.operating_company_id,
+        input.load_id,
+      );
 
       await client.query(
         `
@@ -243,7 +287,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           input.trailer_id ?? null,
           userId,
           JSON.stringify([...acknowledged]),
-        ]
+        ],
       );
 
       await appendCrudAudit(
@@ -259,20 +303,27 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           pending_fields: pendingFields,
         },
         "info",
-        "P5-F3-QUICKSAVE"
+        "P5-F3-QUICKSAVE",
       );
 
       await client.query("COMMIT");
-      const prevDriver = (load as { assigned_primary_driver_id?: string | null }).assigned_primary_driver_id ?? null;
+      const prevDriver =
+        (load as { assigned_primary_driver_id?: string | null })
+          .assigned_primary_driver_id ?? null;
       if (input.driver_id !== prevDriver) {
         notifyBox.v = {
           operatingCompanyId: input.operating_company_id,
           driverId: input.driver_id,
           loadId: input.load_id,
-          loadLabel: (load as { load_number?: string | null }).load_number ?? null,
+          loadLabel:
+            (load as { load_number?: string | null }).load_number ?? null,
         };
       }
-      return { load_id: input.load_id, warnings, pending_fields: pendingFields };
+      return {
+        load_id: input.load_id,
+        warnings,
+        pending_fields: pendingFields,
+      };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -293,18 +344,54 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
 
 export async function completeQuicksaveDraft(
   userId: string,
-  input: { operating_company_id: string; load_id: string; fields: Record<string, unknown> }
+  input: {
+    operating_company_id: string;
+    load_id: string;
+    fields: Record<string, unknown>;
+  },
 ) {
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class) — input.operating_company_id is caller-supplied and sets the RLS scope.
     await assertCompanyMembership(client, userId, input.operating_company_id);
-    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [input.operating_company_id]);
-    const patch = input.fields ?? {};
-    const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
-    const trailerId = typeof patch.assigned_secondary_driver_id === "string" ? patch.assigned_secondary_driver_id : null;
-    if (unitId) {
-      const unitRes = await client.query<{ id: string; is_oos: boolean; display_id: string }>(
-        `
+    await client.query("BEGIN");
+    try {
+      await client.query(
+        "SELECT set_config('app.operating_company_id', $1::text, true)",
+        [input.operating_company_id],
+      );
+      const beforeRes = await client.query<{ assigned_unit_id: string | null }>(
+        `SELECT assigned_unit_id::text
+           FROM mdata.loads
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND soft_deleted_at IS NULL
+          FOR UPDATE`,
+        [input.load_id, input.operating_company_id],
+      );
+      const before = beforeRes.rows[0];
+      if (!before) throw new Error("E_LOAD_NOT_FOUND");
+      const previousTrailerId = await resolveCurrentTrailerId(
+        client,
+        input.operating_company_id,
+        input.load_id,
+      );
+
+      const patch = input.fields ?? {};
+      const unitId =
+        typeof patch.assigned_unit_id === "string"
+          ? patch.assigned_unit_id
+          : null;
+      const trailerId =
+        typeof patch.assigned_secondary_driver_id === "string"
+          ? patch.assigned_secondary_driver_id
+          : null;
+      if (unitId) {
+        const unitRes = await client.query<{
+          id: string;
+          is_oos: boolean;
+          display_id: string;
+        }>(
+          `
           SELECT id::text,
                  COALESCE(is_oos, false) AS is_oos,
                  COALESCE(unit_number, id::text) AS display_id
@@ -314,19 +401,19 @@ export async function completeQuicksaveDraft(
             AND deactivated_at IS NULL
           LIMIT 1
         `,
-        [unitId, input.operating_company_id]
-      );
-      if (!unitRes.rows[0]?.id) throw new Error("E_UNIT_NOT_FOUND");
-      if (unitRes.rows[0].is_oos) {
-        throw new Error(
-          `E_UNIT_OOS:Unit ${unitRes.rows[0].display_id ?? unitId} is out of service (OOS) and cannot be assigned.`
+          [unitId, input.operating_company_id],
         );
+        if (!unitRes.rows[0]?.id) throw new Error("E_UNIT_NOT_FOUND");
+        if (unitRes.rows[0].is_oos) {
+          throw new Error(
+            `E_UNIT_OOS:Unit ${unitRes.rows[0].display_id ?? unitId} is out of service (OOS) and cannot be assigned.`,
+          );
+        }
       }
-    }
-    let resolvedTrailerId: string | null = null;
-    if (trailerId) {
-      const trailerRes = await client.query<{ id: string }>(
-        `
+      let resolvedTrailerId: string | null = null;
+      if (trailerId) {
+        const trailerRes = await client.query<{ id: string }>(
+          `
           SELECT id::text
           FROM mdata.equipment
           WHERE id = $1::uuid
@@ -334,20 +421,20 @@ export async function completeQuicksaveDraft(
             AND deactivated_at IS NULL
           LIMIT 1
         `,
-        [trailerId, input.operating_company_id]
-      );
-      resolvedTrailerId = trailerRes.rows[0]?.id ?? null;
-      if (!resolvedTrailerId) throw new Error("E_TRAILER_NOT_FOUND");
-    }
-    const pendingFields: string[] = [];
-    if (!unitId) pendingFields.push("assigned_unit_id");
-    if (!trailerId) pendingFields.push("assigned_secondary_driver_id");
-    // DISP-1 corruption fix: the "assigned_secondary_driver_id" draft field actually carries a trailer
-    // (mdata.equipment) id, so it must NOT be written into assigned_secondary_driver_id (the CO-DRIVER
-    // column, FK -> mdata.drivers). Update only the co-driver-safe columns here; the trailer is persisted
-    // below on the real link dispatch.load_assignment_history.new_trailer_id.
-    const update = await client.query(
-      `
+          [trailerId, input.operating_company_id],
+        );
+        resolvedTrailerId = trailerRes.rows[0]?.id ?? null;
+        if (!resolvedTrailerId) throw new Error("E_TRAILER_NOT_FOUND");
+      }
+      const pendingFields: string[] = [];
+      if (!unitId) pendingFields.push("assigned_unit_id");
+      if (!trailerId) pendingFields.push("assigned_secondary_driver_id");
+      // DISP-1 corruption fix: the "assigned_secondary_driver_id" draft field actually carries a trailer
+      // (mdata.equipment) id, so it must NOT be written into assigned_secondary_driver_id (the CO-DRIVER
+      // column, FK -> mdata.drivers). Update only the co-driver-safe columns here; the trailer is persisted
+      // below on the real link dispatch.load_assignment_history.new_trailer_id.
+      const update = await client.query(
+        `
         UPDATE mdata.loads
         SET assigned_unit_id = COALESCE($3, assigned_unit_id),
             is_quicksave_draft = $4,
@@ -358,41 +445,64 @@ export async function completeQuicksaveDraft(
           AND operating_company_id = $2::uuid
         RETURNING id
       `,
-      [
-        input.load_id,
-        input.operating_company_id,
-        unitId,
-        pendingFields.length > 0,
-        pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
-      ]
-    );
-    if (!update.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
-
-    // Persist the trailer on the real link (mdata.equipment id -> new_trailer_id). Resolve entity-scoped
-    // first (same as book-load W-FIX-3b) so we never attach a foreign company's trailer or FK-violate.
-    if (resolvedTrailerId) {
-      const previousTrailerId = await resolveCurrentTrailerId(client, input.operating_company_id, input.load_id);
-      await client.query(
-        `
-          INSERT INTO dispatch.load_assignment_history (
-            operating_company_id, load_id, assignment_method,
-            previous_trailer_id, new_trailer_id,
-            assigned_by_user_id, warnings_acknowledged
-          )
-          VALUES ($1::uuid, $2::uuid, 'quicksave', $3::uuid, $4::uuid, $5::uuid, '[]'::jsonb)
-        `,
-        [input.operating_company_id, input.load_id, previousTrailerId, resolvedTrailerId, userId]
+        [
+          input.load_id,
+          input.operating_company_id,
+          unitId,
+          pendingFields.length > 0,
+          pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
+        ],
       );
+      if (!update.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
+
+      // Persist unit/trailer changes in the same transaction as the load mutation. A failed history
+      // INSERT must never leave the load reassigned without its audit/reverse-link row.
+      if (unitId || resolvedTrailerId) {
+        await client.query(
+          `
+            INSERT INTO dispatch.load_assignment_history (
+              operating_company_id, load_id, assignment_method,
+              previous_unit_id, new_unit_id,
+              previous_trailer_id, new_trailer_id,
+              assigned_by_user_id, warnings_acknowledged
+            )
+            VALUES ($1::uuid, $2::uuid, 'quicksave', $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::uuid, '[]'::jsonb)
+          `,
+          [
+            input.operating_company_id,
+            input.load_id,
+            before.assigned_unit_id,
+            unitId ?? before.assigned_unit_id,
+            previousTrailerId,
+            resolvedTrailerId ?? previousTrailerId,
+            userId,
+          ],
+        );
+      }
+      await client.query("COMMIT");
+      return {
+        load_id: input.load_id,
+        pending_fields: pendingFields,
+        is_quicksave_draft: pendingFields.length > 0,
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
     }
-    return { load_id: input.load_id, pending_fields: pendingFields, is_quicksave_draft: pendingFields.length > 0 };
   });
 }
 
-export async function listQuicksaveDrafts(userId: string, operatingCompanyId: string) {
+export async function listQuicksaveDrafts(
+  userId: string,
+  operatingCompanyId: string,
+) {
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class) — operatingCompanyId is caller-supplied and sets the RLS scope.
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
+    await client.query(
+      "SELECT set_config('app.operating_company_id', $1::text, true)",
+      [operatingCompanyId],
+    );
     const rows = await client.query(
       `
         SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at
@@ -402,13 +512,17 @@ export async function listQuicksaveDrafts(userId: string, operatingCompanyId: st
           AND soft_deleted_at IS NULL
         ORDER BY updated_at DESC
       `,
-      [operatingCompanyId]
+      [operatingCompanyId],
     );
     return { drafts: rows.rows };
   });
 }
 
-export async function getAssignmentHistory(userId: string, operatingCompanyId: string, loadId: string) {
+export async function getAssignmentHistory(
+  userId: string,
+  operatingCompanyId: string,
+  loadId: string,
+) {
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE. operatingCompanyId reaches here straight from the caller's query string
     // (quicksave.routes.ts:165 passes query.data.operating_company_id), and it is used both to SET the
@@ -416,7 +530,10 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
     // enforces and RLS authorizes nothing. Same class as MDATA-F09; this one sits in a *.service.ts,
     // where the caller-scoped-GUC guard was not looking.
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
+    await client.query(
+      "SELECT set_config('app.operating_company_id', $1::text, true)",
+      [operatingCompanyId],
+    );
 
     // Resolve DISPLAY NAMES here rather than shipping raw uuids to the client. `SELECT *` returned
     // previous_driver_id / new_driver_id as bare uuids, so LoadDetailDrawer rendered
@@ -482,7 +599,7 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
           AND h.load_id = $2
         ORDER BY h.assigned_at DESC
       `,
-      [operatingCompanyId, loadId]
+      [operatingCompanyId, loadId],
     );
     return { rows: rows.rows };
   });
