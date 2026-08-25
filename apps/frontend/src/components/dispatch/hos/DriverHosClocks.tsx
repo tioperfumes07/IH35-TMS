@@ -4,6 +4,7 @@
 // events for the driver, shows "No HOS data"/"—" — never the 70h default presented as real.
 import { useQuery } from "@tanstack/react-query";
 import { getDriverHosStatus } from "../../../api/dispatch";
+import { ListErrorState } from "../../ListErrorState";
 import {
   computeCertifiedHosClocks,
   computeHosClocks,
@@ -57,6 +58,20 @@ export function DriverHosClocksBlock({
   const clocks = certified ?? computeHosClocks(q.data as HosStatusRow | undefined);
   const dot = eld ? eldStatusDot(eld) : hosStatusDot(q.data?.status ?? null);
 
+  if (q.isError) {
+    return (
+      <div className="rounded-sm border border-slate-200 bg-slate-50" data-hos-block="book-load">
+        <ListErrorState
+          title="Couldn't load driver HOS"
+          status={0}
+          message="The selected driver's HOS could not be read. Retry before relying on these clocks."
+          onRetry={() => void q.refetch()}
+          className="py-3"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
       <div className="mb-1 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
@@ -65,6 +80,10 @@ export function DriverHosClocksBlock({
         {certified ? (
           <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
             Certified ELD
+          </span>
+        ) : driverId && q.data ? (
+          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-slate-700">
+            In-app fallback
           </span>
         ) : null}
       </div>
@@ -89,7 +108,9 @@ export function DriverHosClocksBlock({
       <div className="hosnote mt-0.5 text-[9px] text-gray-400">
         {certified
           ? "Drive/Shift/Break/Cycle are Samsara's certified ELD values, verbatim. Stop by / Resume at are projected."
-          : "Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected."}
+          : driverId && q.data
+            ? "Certified ELD snapshot unavailable; showing in-app HOS fallback. Stop by / Resume at are projected."
+            : "Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected."}
       </div>
     </div>
   );
