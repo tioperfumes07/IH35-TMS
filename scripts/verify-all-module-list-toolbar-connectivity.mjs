@@ -6,7 +6,9 @@ import process from "node:process";
 const CORE = {
   columnChooser: "apps/frontend/src/components/table/ColumnChooser.tsx",
   dataTable: "apps/frontend/src/components/DataTable.tsx",
+  listView: "apps/frontend/src/components/lists/ListView/ListView.tsx",
   listViewGear: "apps/frontend/src/components/lists/ListView/components/ListViewGear.tsx",
+  listViewHook: "apps/frontend/src/components/lists/ListView/hooks/useListView.ts",
   parityTable: "apps/frontend/src/components/parity/ParityTable.tsx",
 };
 
@@ -82,6 +84,16 @@ export function verify(source) {
   for (const token of ["const [draft, setDraft]", "onGearChange(draft)", "onClick={reset}", "onClick={cancel}", "onClick={apply}"]) {
     need(CORE.listViewGear, token, `ListViewGear must retain ${token}`);
   }
+  for (const token of [
+    "setPersistError(\"Table settings could not be saved. Your current view is temporary.\")",
+    "lastPersistedDraftRef.current = data",
+    "retryPersist",
+  ]) {
+    need(CORE.listViewHook, token, `ListView preference persistence must retain ${token}`);
+  }
+  for (const token of ['role="alert"', "persistError", "onClick={retryPersist}", "Retry save"]) {
+    need(CORE.listView, token, `ListView must expose failed preference persistence via ${token}`);
+  }
   for (const token of ["draftHidden", "draftDensity", "applyGear", "cancelGear", "resetGear", "onClick={applyGear}"]) {
     need(CORE.parityTable, token, `ParityTable must retain ${token}`);
   }
@@ -131,6 +143,8 @@ if (process.argv.includes("--self-test")) {
     [CORE.columnChooser, "draftHidden"], [CORE.columnChooser, "onClick={apply}"],
     [CORE.dataTable, "<ColumnChooser"], [CORE.dataTable, "visibleColumns.map"],
     [CORE.listViewGear, "const [draft, setDraft]"], [CORE.listViewGear, "onGearChange(draft)"],
+    [CORE.listViewHook, "lastPersistedDraftRef.current = data"], [CORE.listViewHook, "retryPersist"],
+    [CORE.listView, 'role="alert"'], [CORE.listView, "onClick={retryPersist}"],
     [CORE.parityTable, "draftHidden"], [CORE.parityTable, "onClick={applyGear}"],
   ]) mutations.push(() => ({ ...source, [file]: source[file].replaceAll(token, "BROKEN_GEAR_CONTRACT") }));
   for (const module of Object.keys(EVIDENCE)) {
