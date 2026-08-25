@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**CODEX HANDOFF 2026-08-25 — `CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS`:** cash-advance submit commits, then calls an unawaited owner wrapper; `dispatchNotification()` resolves `{ok:false}` on failures and the wrapper discards those results. Exact OPEN board row and file:lines are in `docs/audit/GUARD-WORKORDERS.md`; `BLOCKS=cash-advance owner review connectivity`. Fix with a same-transaction canonical outbox event + registered selected-company owner consumer, not a post-commit throw; no QBO sync.
+
 **CODEX HANDOFF 2026-08-25 — `BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN`:** three cash-flow/report readers catch `isBankAccountHideEnabled(...)` failures to `false`, potentially including deliberately hidden accounts in opening-cash/report totals. Exact OPEN board row and file:lines are in `docs/audit/GUARD-WORKORDERS.md`; `BLOCKS=cash-flow/report account visibility truth`. Fix vertically across all three consumers; do not touch QBO sync.
 
 **10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Items 1–10 serial.** Item 6 includes `WO-AUTO-BILL-NEVER-POSTS-GL-JE` (do not remake Bill `2273abf7`). Idle = defect. Never `/425c`. Never `trigger_deploy`.
