@@ -28,6 +28,7 @@ import type { PlaidBankTransaction } from "../../api/banking";
 import { formatUsdCents } from "../../lib/money";
 import { BankingTransactionsDesignView, spentReceived } from "./components/BankingTransactionsDesignView";
 import { TransferModal } from "./TransferModal";
+import { RecordTransferModal } from "./RecordTransferModal";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 const PAGE_SIZE = 50;
@@ -77,6 +78,11 @@ export function BankAccountDetailPage() {
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  // DISP-F6XXX (hop.bank) -- same gap as BankingHome.tsx: this page's own "+ Record Transfer" only
+  // reaches TransferModal (bank_to_bank/intercompany), leaving Cash Deposit (undeposited_funds -> this
+  // bank account) unreachable from a blank starting point. Additive-only entry point into the
+  // already-built RecordTransferModal.
+  const [recordDepositOpen, setRecordDepositOpen] = useState(false);
 
   const canSync = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
@@ -263,6 +269,13 @@ export function BankAccountDetailPage() {
             >
               + Record Transfer
             </ActionButton>
+            <ActionButton
+              data-testid="bank-account-detail-record-deposit"
+              disabled={!id || !companyId}
+              onClick={() => setRecordDepositOpen(true)}
+            >
+              + Record Deposit
+            </ActionButton>
             {canSync ? (
               <ActionButton
                 disabled={syncing || !account?.is_active}
@@ -392,6 +405,18 @@ export function BankAccountDetailPage() {
         onSaved={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
           setTransferModalOpen(false);
+        }}
+      />
+      <RecordTransferModal
+        open={recordDepositOpen}
+        operatingCompanyId={companyId}
+        defaultTransferType="cash_deposit"
+        seedAccountId={id}
+        seedAccountSide="to"
+        onClose={() => setRecordDepositOpen(false)}
+        onSaved={() => {
+          setRecordDepositOpen(false);
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
       />
     </div>

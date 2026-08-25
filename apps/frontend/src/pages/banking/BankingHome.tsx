@@ -35,6 +35,7 @@ import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
+import { RecordTransferModal } from "./RecordTransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -85,6 +86,19 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [manageOpen, setManageOpen] = useState(false);
   const [manualJeOpen, setManualJeOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  // DISP-F6XXX (hop.bank) — TransferModal only ever posts transfer_type "bank_to_bank"/"intercompany"
+  // (createTransfer/createIntercompanyTransfer, no type selector). A customer payment recorded via
+  // RecordPaymentModal always lands in the entity's undeposited_funds CoA account (never a real bank
+  // account) until it is deposited, so there was NO live path from Banking Home's general-purpose
+  // "+ Record Transfer" button to move it into a real bank account -- the only place a Cash Deposit
+  // could be recorded was RecordTransferModal, and that component was only ever mounted gated behind
+  // an EXISTING flagged bank-feed row (BankingTransactionsDesignView.tsx transferModalTx), which can't
+  // exist yet for a brand-new payment. Confirmed live: a real $1,200.00 test payment (PMT-2026-00009,
+  // fully applied to INV-2026-00044) sat in Undeposited Funds with no way to reach the bank-reconciliation
+  // workspace's candidate list. RecordTransferModal itself already supports "Cash Deposit" (coa -> bank)
+  // via its own type radio group -- this just gives the general entry point a way to reach it, additive,
+  // no change to the existing Bank-to-Bank/Intercompany flow.
+  const [recordDepositOpen, setRecordDepositOpen] = useState(false);
   const [ccPaymentModalOpen, setCcPaymentModalOpen] = useState(false);
   const [startReconOpen, setStartReconOpen] = useState(false);
   const [reconAccountId, setReconAccountId] = useState("");
@@ -297,6 +311,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         onClick={() => setTransferModalOpen(true)}
       >
         + Record Transfer
+      </ActionButton>
+      <ActionButton
+        data-testid="banking-home-record-deposit"
+        onClick={() => setRecordDepositOpen(true)}
+      >
+        + Record Deposit
       </ActionButton>
       <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
     </>
@@ -1146,6 +1166,16 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         operatingCompanyId={companyId}
         onClose={() => setTransferModalOpen(false)}
         onSaved={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
+        }}
+      />
+      <RecordTransferModal
+        open={recordDepositOpen}
+        operatingCompanyId={companyId}
+        defaultTransferType="cash_deposit"
+        onClose={() => setRecordDepositOpen(false)}
+        onSaved={() => {
+          setRecordDepositOpen(false);
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
       />
