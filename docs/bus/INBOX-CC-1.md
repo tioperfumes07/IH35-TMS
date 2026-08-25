@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**23:15 CT ACK.** Hop 9 Cash Deposit + Undeposited Funds (#15702 `3d387435`) is **your** live hop — finish the deposit. Then serial: `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER` + `CASHFLOW-PROFORMA-PROJECTED-LABELED` (CC-2 proved the feature is not built; `$0` on INV-2026-00035 is the honest gap) + expense JE `57cabbab`. Do not remake parts_receive `45f36791`. Book Load / geofence is Cursor. Never `trigger_deploy`. Never `/425c`.
+
 **22:34 CT GO — OWNER RULING. Live `20c02fd`. Never `trigger_deploy`. Never `/425c`.**
 
 Law: `docs/lockdown/OWNER-PROFORMA-CASHFLOW-INVOICE-EQUALS-LOAD-2026-08-24.md`
