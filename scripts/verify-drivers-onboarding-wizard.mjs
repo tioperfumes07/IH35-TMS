@@ -46,6 +46,21 @@ function launcherFailures({ onboardingRoutes, backendTest, driverDetail }) {
   return failures;
 }
 
+function resumeFailures({ wizardPage, frontendTest }) {
+  const failures = [];
+  const required = [
+    [wizardPage, "initializedSessionRef.current === session.id", "resume must initialize once per canonical session"],
+    [wizardPage, "setStepIndex(Math.max(0, Math.min(6, (session.current_step ?? 1) - 1)))", "resume must open the persisted current step"],
+    [wizardPage, 'title="Couldn\'t load onboarding session"', "read failure must be named"],
+    [wizardPage, "onRetry={() => void sessionQ.refetch()}", "read failure must expose exact retry"],
+    [frontendTest, "resumes at the persisted current step", "frontend must test current-step resume"],
+    [frontendTest, "renders the read failure with an exact retry", "frontend must test read failure truth"],
+  ];
+  for (const [source, needle, label] of required) if (!source.includes(needle)) failures.push(label);
+  if (/sessionQ\.isError \|\| !session/.test(wizardPage)) failures.push("read failure must not masquerade as not found");
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const onboardingRoutes = read(paths.onboardingRoutes);
@@ -89,6 +104,7 @@ function main() {
   const frontendTestCount = (frontendTest.match(/\bit\s*\(/g) ?? []).length;
   if (frontendTestCount < 4) failures.push("Frontend vitest must include at least 4 cases");
   failures.push(...launcherFailures({ onboardingRoutes, backendTest, driverDetail }));
+  failures.push(...resumeFailures({ wizardPage, frontendTest }));
 
   if (!archDesign.includes("verify:drivers-onboarding-wizard")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-onboarding-wizard");
@@ -118,7 +134,23 @@ function main() {
       });
       if (detected.length === 0) fail(`selftest missed ${mutation.key}`);
     }
-    console.log(`[verify-drivers-onboarding-wizard] selftest OK — ${mutations.length}/${mutations.length} launcher defects rejected`);
+    const resumeMutations = [
+      { key: "persisted current step", wizardPage: wizardPage.replace("setStepIndex(Math.max(0, Math.min(6, (session.current_step ?? 1) - 1)))", "setStepIndex(0)") },
+      { key: "session initialization latch", wizardPage: wizardPage.replace("initializedSessionRef.current === session.id", "false") },
+      { key: "named read failure", wizardPage: wizardPage.replace('title="Couldn\'t load onboarding session"', 'title="Onboarding session not found"') },
+      { key: "read retry", wizardPage: wizardPage.replace("onRetry={() => void sessionQ.refetch()}", "onRetry={() => undefined}") },
+      { key: "not-found conflation", wizardPage: wizardPage.replace("if (sessionQ.isError) {", "if (sessionQ.isError || !session) {") },
+      { key: "resume test", frontendTest: frontendTest.replace("resumes at the persisted current step", "renders onboarding") },
+    ];
+    for (const mutation of resumeMutations) {
+      const detected = resumeFailures({
+        wizardPage: mutation.wizardPage ?? wizardPage,
+        frontendTest: mutation.frontendTest ?? frontendTest,
+      });
+      if (detected.length === 0) fail(`selftest missed ${mutation.key}`);
+    }
+    const total = mutations.length + resumeMutations.length;
+    console.log(`[verify-drivers-onboarding-wizard] selftest OK — ${total}/${total} launcher/resume defects rejected`);
   }
 
   console.log("[verify-drivers-onboarding-wizard] OK");

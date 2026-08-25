@@ -55,6 +55,7 @@ function wrap(ui: React.ReactElement) {
 
 describe("OnboardingWizardPage (A24-8)", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.spyOn(onboardingApi, "getOnboardingSession").mockResolvedValue({
       session: baseSession,
       steps: onboardingApi.ONBOARDING_STEP_LABELS.map((_, i) => `step-${i}`),
@@ -103,5 +104,27 @@ describe("OnboardingWizardPage (A24-8)", () => {
     await screen.findByTestId("onboarding-wizard-page");
     await userEvent.click(screen.getByRole("button", { name: "Admin override" }));
     expect(screen.getByText(/Override reason/)).toBeInTheDocument();
+  });
+
+  it("resumes at the persisted current step instead of reopening Identity", async () => {
+    vi.mocked(onboardingApi.getOnboardingSession).mockResolvedValueOnce({
+      session: { ...baseSession, current_step: 4, step_data: {} },
+      steps: onboardingApi.ONBOARDING_STEP_LABELS.map((_, i) => `step-${i}`),
+    });
+    render(wrap(<OnboardingWizardPage />));
+
+    expect(await screen.findByTestId("onboarding-step-dqf-docs")).toBeInTheDocument();
+    expect(screen.queryByTestId("onboarding-step-identity")).toBeNull();
+  });
+
+  it("renders the read failure with an exact retry instead of calling it not found", async () => {
+    vi.mocked(onboardingApi.getOnboardingSession).mockRejectedValueOnce(new Error("session service unavailable"));
+    render(wrap(<OnboardingWizardPage />));
+
+    expect(await screen.findByText("Couldn't load onboarding session")).toBeInTheDocument();
+    expect(screen.queryByText("Onboarding session not found.")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByTestId("onboarding-wizard-page")).toBeInTheDocument();
+    expect(onboardingApi.getOnboardingSession).toHaveBeenCalledTimes(2);
   });
 });

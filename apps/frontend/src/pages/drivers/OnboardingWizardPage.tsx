@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../../components/ListErrorState";
 import {
   adminOverrideOnboardingSession,
   completeOnboardingSession,
@@ -46,6 +47,7 @@ export function OnboardingWizardPage() {
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
+  const initializedSessionRef = useRef<string | null>(null);
 
   const sessionQ = useQuery({
     queryKey: ["onboarding-session", companyId, sessionId],
@@ -56,6 +58,12 @@ export function OnboardingWizardPage() {
 
   const session = sessionQ.data?.session;
   const driverId = session?.driver_id ?? null;
+
+  useEffect(() => {
+    if (!session || initializedSessionRef.current === session.id) return;
+    initializedSessionRef.current = session.id;
+    setStepIndex(Math.max(0, Math.min(6, (session.current_step ?? 1) - 1)));
+  }, [session]);
 
   const activeStep = session ? Math.max(0, Math.min(6, (session.current_step ?? 1) - 1, stepIndex)) : stepIndex;
 
@@ -166,7 +174,17 @@ export function OnboardingWizardPage() {
   if (sessionQ.isLoading) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Loading onboarding session…</div>;
   }
-  if (sessionQ.isError || !session) {
+  if (sessionQ.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load onboarding session"
+        status={0}
+        message={sessionQ.error instanceof Error ? sessionQ.error.message : undefined}
+        onRetry={() => void sessionQ.refetch()}
+      />
+    );
+  }
+  if (!session) {
     return <div className="rounded-sm border bg-white p-4 text-sm text-red-700">Onboarding session not found.</div>;
   }
 
