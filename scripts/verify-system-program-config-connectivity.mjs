@@ -10,12 +10,19 @@ const matrix = fs.readFileSync("apps/backend/src/program/module-matrix.service.t
 const manifest = fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
 
 function failures(pageSource = page) {
+  const programSource = pageSource.slice(pageSource.indexOf("function ProgramTab"), pageSource.indexOf("function SoftwareTab"));
+  const claudeSource = pageSource.slice(pageSource.indexOf("function ClaudeCoderTab"));
   return [
     ["program tab mounted", pageSource.includes('tab === "program" ? <ProgramTab data={data} />')],
     ["tracker client", pageSource.includes("queryFn: getProgramTracker") && api.includes('"/api/v1/program/tracker"')],
     [
       "program tracker exact retry",
-      /if \(tracker\.isError\)[\s\S]*?<ListErrorState[\s\S]*?onRetry=\{\(\) => void tracker\.refetch\(\)\}/.test(pageSource),
+      /if \(tracker\.isError\)[\s\S]*?<ListErrorState[\s\S]*?onRetry=\{\(\) => void tracker\.refetch\(\)\}/.test(programSource),
+    ],
+    [
+      "claude activity exact retry",
+      /Couldn't load build and agent activity[\s\S]*?onRetry=\{\(\) => void tracker\.refetch\(\)\}/.test(claudeSource) &&
+        !/emptyText=\{tracker\.isError/.test(claudeSource),
     ],
     ["authenticated tracker route", routes.includes('app.get("/api/v1/program/tracker"') && routes.includes("requireAuth(req, reply)")],
     ["versioned R2 source", tracker.includes("getObjectTextIfExists") && tracker.includes("loadReconFromR2")],
@@ -38,11 +45,15 @@ if (process.argv.includes("--selftest")) {
     ["claude read-only activity", page.replace("tracker.data?.recent_merged", "tracker.data?.recent_removed")],
     ["claude read-only activity", page.replace("rows={recentMerged.slice(0, 8)}", "rows={[]}")],
     ["program tracker exact retry", page.replace("onRetry={() => void tracker.refetch()}", "onRetry={() => undefined}")],
+    ["claude activity exact retry", page.replace("Couldn't load build and agent activity", "Activity unavailable")],
   ];
   for (const [expected, planted] of mutations) {
-    if (!failures(planted).includes(expected)) process.exit(1);
+    if (!failures(planted).includes(expected)) {
+      console.error(`verify-system-program-config-connectivity selftest FAIL — ${expected} mutation stayed green`);
+      process.exit(1);
+    }
   }
-  console.log("verify-system-program-config-connectivity selftest PASS — 5 route/activity/recovery mutations red");
+  console.log("verify-system-program-config-connectivity selftest PASS — 6 route/activity/recovery mutations red");
   process.exit(0);
 }
 const missing = failures();

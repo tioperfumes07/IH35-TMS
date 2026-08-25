@@ -642,11 +642,20 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
         </div>
 
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500">Build &amp; agent activity — read only</div>
+        {tracker.isError ? (
+          <ListErrorState
+            title="Couldn't load build and agent activity"
+            status={0}
+            message={(tracker.error as Error)?.message}
+            onRetry={() => void tracker.refetch()}
+            className="py-4"
+          />
+        ) : (
         <ParityTable<{ number: number; title: string; mergedAt: string | null }>
           rows={recentMerged.slice(0, 8)}
           rowKey={(p) => String(p.number)}
           loading={tracker.isLoading && recentMerged.length === 0}
-          emptyText={tracker.isError ? "Tracker unavailable." : "No recently merged PRs."}
+          emptyText="No recently merged PRs."
           storageKey="system-recent-merged-prs"
           exportFilename="system-recent-merged-prs"
           tableTestId="system-recent-merged-prs-table"
@@ -673,6 +682,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
             },
           ]}
         />
+        )}
         <p className="mt-2 text-[11px] text-slate-400">
           Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a
           live GitHub feed; it refreshes when a new reconciliation snapshot is published. The service-health mirror
