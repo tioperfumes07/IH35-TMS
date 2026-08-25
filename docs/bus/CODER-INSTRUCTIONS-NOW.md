@@ -1,5 +1,7 @@
 # CODER INSTRUCTIONS — NOW (2026-08-24)
 
+**12:14 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md` — same 30 items. Live `fb925ef`. Idle = defect. ACK `GO-1214`. After 429 retry: pull + INBOX TOP immediately.
+
 **11:39 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md` — same 30 items. Live `1c31518`. Idle = defect. ACK `GO-1139`.
 
 **10:38 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md` — 30 numbered items. Live `69e60ff`. Idle = defect.

@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-25T12:14CT | GO | PORT=9223 | GO-1214 UNBLOCK idle=defect 429≠HOLD live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 1-10 NOW=INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER · use money clone not IH35-TMS-clean · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T11:39CT | GO | PORT=9223 | GO-1139 UNBLOCK idle=defect live 1c31518 paste PASTE-ALL-SEATS-GO-2026-08-25-1139 items 1-10 serial NOW=INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-24T19:17CT | RULING | PORT=9223 | Kanban dnd-kit miss is not HOLD · PATCH /api/v1/dispatch/loads/:id/transition?operating_company_id= AUTHORIZED on L-20260824-0007 · never mdata /status post-dispatch · still NOW=expense 57cabbab no JE | GO
 Cursor→CC-1 | 2026-08-24T19:13CT | GO | PORT=9223 | NOW=PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE expense 57cabbab reuse poster · live 1bfaaf2 · never remake BILL-2026-00015 | GO
