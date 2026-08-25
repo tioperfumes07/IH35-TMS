@@ -908,18 +908,27 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const row = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      const res = await client
-        .query(
-          `
-            SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
-            FROM views.units_with_dispatch_status
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-            LIMIT 1
-          `,
-          [params.data.unit_id, operatingCompanyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      const res = await client.query(
+        `
+          SELECT
+            u.id,
+            COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id,
+            COALESCE(u.is_dispatch_blocked, false) AS is_dispatch_blocked,
+            u.dispatch_block_reason,
+            COALESCE(u.is_oos, false) AS is_oos,
+            COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
+            COALESCE(v.open_wo_count, 0) AS open_wo_count
+          FROM mdata.units u
+          LEFT JOIN views.units_with_dispatch_status v
+            ON v.id = u.id
+           AND v.operating_company_id = $2::uuid
+          WHERE u.id = $1::uuid
+            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+            AND u.deactivated_at IS NULL
+          LIMIT 1
+        `,
+        [params.data.unit_id, operatingCompanyId]
+      );
       return res.rows[0] ?? null;
     });
 
@@ -927,8 +936,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return {
       unit_id: row.id,
       unit_display_id: row.display_id,
-      is_blocked: Boolean(row.is_dispatch_blocked),
-      block_reason: row.dispatch_block_reason,
+      is_blocked: Boolean(row.is_dispatch_blocked) || Boolean(row.is_oos),
+      block_reason: row.is_oos ? row.dispatch_block_reason ?? "Unit is out of service" : row.dispatch_block_reason,
+      is_oos: Boolean(row.is_oos),
       has_pm_due: Boolean(row.has_open_pm_due_wo),
       open_wo_count: Number(row.open_wo_count ?? 0),
     };
