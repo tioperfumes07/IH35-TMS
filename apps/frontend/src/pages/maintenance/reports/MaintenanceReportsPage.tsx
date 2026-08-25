@@ -50,7 +50,7 @@ export function MaintenanceReportsPage() {
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
       <PageHeader
         title="Maintenance Reports"
-        breadcrumb={["Maintenance", "Reports"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Reports" }]}
         backHref="/maintenance"
         actions={
           <a

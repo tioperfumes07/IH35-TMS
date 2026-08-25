@@ -144,7 +144,7 @@ export function WarrantyClaimsPage() {
       <PageHeader
         title="Warranty Claims"
         subtitle="Track parts warranty coverage, file vendor claims, and detect eligible parts from completed work orders."
-        breadcrumb={["Maintenance", "Warranty Claims"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Warranty Claims" }]}
         backHref="/maintenance"
         actions={
           <Button type="button" disabled={!companyId} onClick={() => setCreateOpen(true)}>

@@ -317,7 +317,7 @@ export function TireProgramPage() {
       <PageHeader
         title="Tire Program"
         subtitle="Per-axle tire records with rotation, replacement history, brand tracking, and tread depth alerts."
-        breadcrumb={["Maintenance", "Tire Program"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Tire Program" }]}
         backHref="/maintenance"
         actions={
           <div className="flex gap-2">

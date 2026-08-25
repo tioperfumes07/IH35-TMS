@@ -251,7 +251,7 @@ export function InspectionsPage() {
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
       <PageHeader
         title="Inspections"
-        breadcrumb={["Maintenance", "Inspections"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Inspections" }]}
         backHref="/maintenance"
         actions={
           <Button type="button" onClick={() => { setCreateOpen(true); setDraft(EMPTY_DRAFT); setPhotoFile(null); }}>

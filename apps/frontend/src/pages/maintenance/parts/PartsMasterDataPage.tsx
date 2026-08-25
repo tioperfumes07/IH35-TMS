@@ -196,7 +196,7 @@ export function PartsMasterDataPage() {
       <PageHeader
         title="Maintenance Parts"
         subtitle="Primary CSV bulk-load path with manual create/edit/void support."
-        breadcrumb={["Maintenance", "Parts"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "Parts" }]}
         backHref="/maintenance"
         actions={
           <div className="flex items-center gap-2">

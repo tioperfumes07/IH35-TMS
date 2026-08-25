@@ -176,7 +176,7 @@ export function PmSchedulePage() {
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
       <PageHeader
         title="PM Schedule"
-        breadcrumb={["Maintenance", "PM Schedule"]}
+        breadcrumb={[{ label: "Maintenance" }, { label: "PM Schedule" }]}
         backHref="/maintenance"
         actions={
           <Button type="button" onClick={openCreateForm} disabled={!companyId} data-testid="pm-schedule-create-open">
