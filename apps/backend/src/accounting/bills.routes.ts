@@ -21,6 +21,7 @@ import {
   voidBill,
   voidBillPayment,
 } from "./bills.service.js";
+import { nextBillDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
@@ -140,6 +141,18 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       sort: query.data.sort,
     });
     return { rows };
+  });
+
+  app.get("/api/v1/accounting/bills/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const document_number = await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+      nextBillDisplayId(client, query.data.operating_company_id)
+    );
+    return { document_number };
   });
 
   app.get("/api/v1/accounting/bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

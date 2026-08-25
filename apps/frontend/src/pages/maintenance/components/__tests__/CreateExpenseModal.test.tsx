@@ -16,6 +16,7 @@ vi.mock("../../../../api/accounting", () => ({
   createExpense: vi.fn(() =>
     Promise.resolve({ expense_id: "exp-1", posting_status: "unposted", journal_entry_id: null })
   ),
+  getNextExpenseDocumentNumber: vi.fn(() => Promise.resolve({ document_number: "EXP-2026-00001" })),
 }));
 vi.mock("../../../../api/mdata", () => ({
   listVendors: vi.fn(() => Promise.resolve({ vendors: [{ id: VENDOR_ID, name: "Ace Parts" }] })),
@@ -130,6 +131,7 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     const { onClose, invalidateSpy } = renderModal(vi.fn(), { linkedUnitId: UNIT_ID });
 
     const form = await screen.findByTestId("record-expense-form");
+    await screen.findByDisplayValue("EXP-2026-00001");
     await screen.findByRole("option", { name: "Office Supplies" });
     // The account option renders as "Cash" (the picker no longer prefixes the account number, so the old
     // "1000 · Cash" name never matched), and plain text is ambiguous — "Cash" is also a payment METHOD.
@@ -154,6 +156,7 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     expect(body.payment_account_uuid).toBe(ACCT_ID);
     expect(body.amount_cents).toBe(10000);
     expect(body.vendor_uuid).toBe(VENDOR_ID);
+    expect(body.expense_number).toBe("EXP-2026-00001");
     expect(body.work_order_id).toBe(WO_ID);
     expect(body.unit_id).toBe(UNIT_ID);
     expect(body.memo).toContain("WO: WO-TEST");

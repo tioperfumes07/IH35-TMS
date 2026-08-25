@@ -21,6 +21,7 @@ import {
   type VendorBillFormLinePayload,
 } from "./vendorBillLines";
 import { dueDateFromBillTerms } from "./vendorBillDueDate";
+import { getNextBillDocumentNumber } from "../../api/accounting";
 
 export type { VendorBillFormLinePayload };
 export { buildVendorBillLinePayloads };
@@ -141,6 +142,17 @@ export function VendorBillForm({
   const [dueDate, setDueDate] = useState(() => dueDateFromBillTerms(companyToday(), "net_30"));
   const [dueDateTouched, setDueDateTouched] = useState(false);
   const [billNumber, setBillNumber] = useState("");
+  const nextBillNumberQuery = useQuery({
+    queryKey: ["accounting", "bills", "next-number", operatingCompanyId],
+    queryFn: () => getNextBillDocumentNumber(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 15_000,
+  });
+  useEffect(() => {
+    const preview = nextBillNumberQuery.data?.document_number?.trim();
+    if (!preview) return;
+    setBillNumber((prev) => (prev.trim() ? prev : preview));
+  }, [nextBillNumberQuery.data?.document_number]);
   /** Operator memo / Gate-B sample tag — persisted at the front of `memo` (LV-SAMPLE-BILL-UNTAGGED). */
   const [operatorMemo, setOperatorMemo] = useState("");
   const [terms, setTerms] = useState("net_30");
@@ -370,6 +382,46 @@ export function VendorBillForm({
         }}
       />
 
+      {/* QBO Bill chrome: first row after tabs — Vendor left, Bill no. flush top-right. */}
+      <div className="flex w-full items-start gap-3" data-testid="qbo-bill-header">
+        <div className="min-w-0 flex-1">
+          <Field label="Vendor *">
+            <>
+              <ReferenceSelect
+                value={vendorId || null}
+                onChange={(next) => setVendorId(next ?? "")}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select vendor..."
+                disabled={!operatingCompanyId}
+              />
+              {!operatingCompanyId ? (
+                <p className="mt-1 text-[11px] text-slate-600">Select an operating company to load vendors.</p>
+              ) : vendorsQuery.isLoading ? (
+                <p className="mt-1 text-[11px] text-gray-500">Loading vendors…</p>
+              ) : vendorsQuery.isError ? (
+                <p className="mt-1 text-[11px] text-red-600">Couldn't load vendors. Refresh to try again.</p>
+              ) : vendorOptions.length === 0 ? (
+                <p className="mt-1 text-[11px] text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
+              ) : null}
+            </>
+          </Field>
+        </div>
+        <div className="ml-auto w-44 shrink-0 text-right">
+          <Field label="Bill no.">
+            <input
+              aria-label="Bill no."
+              data-testid="vendor-bill-number"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-right text-xs"
+              value={billNumber}
+              onChange={(event) => setBillNumber(event.target.value)}
+              placeholder={nextBillNumberQuery.isLoading ? "…" : "Assigned on save"}
+            />
+          </Field>
+        </div>
+      </div>
+
       {/* CHROME-10: flat sections — no nested bordered panel inside the drawer */}
       <div className="space-y-1">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
@@ -410,14 +462,6 @@ export function VendorBillForm({
             }}
           />
         </Field>
-        <Field label="Bill Number *">
-          <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={billNumber}
-            onChange={(event) => setBillNumber(event.target.value)}
-            placeholder="Bill Number"
-          />
-        </Field>
         <Field label="Memo">
           <input
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -450,33 +494,6 @@ export function VendorBillForm({
         </Field>
 
         <div className="md:col-span-6 h-2" />
-        <Field label="Vendor *">
-          <>
-          {/* A3: shared ReferenceSelect gives the vendor picker the inline "+ Add new vendor" row
-              (writes to canonical mdata.vendors — same table vendorOptions reads from, so a newly
-              created vendor is immediately selectable, QB-STD-5). */}
-          <ReferenceSelect
-            value={vendorId || null}
-            onChange={(next) => setVendorId(next ?? "")}
-            options={vendorOptions}
-            createKind="vendor"
-            operatingCompanyId={operatingCompanyId}
-            placeholder="Select vendor..."
-            disabled={!operatingCompanyId}
-          />
-          {/* CHAIN-01: never leave the vendor picker silently blank — say WHY it's empty so an empty
-              dropdown reads as an honest data/scoping signal, not a broken control. */}
-          {!operatingCompanyId ? (
-            <p className="mt-1 text-[11px] text-slate-600">Select an operating company to load vendors.</p>
-          ) : vendorsQuery.isLoading ? (
-            <p className="mt-1 text-[11px] text-gray-500">Loading vendors…</p>
-          ) : vendorsQuery.isError ? (
-            <p className="mt-1 text-[11px] text-red-600">Couldn't load vendors. Refresh to try again.</p>
-          ) : vendorOptions.length === 0 ? (
-            <p className="mt-1 text-[11px] text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
-          ) : null}
-          </>
-        </Field>
         <Field label="Load Number">
           <input
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"

@@ -10,6 +10,7 @@ import { RecordExpenseModal } from "./RecordExpenseModal";
 
 vi.mock("../../api/accounting", () => ({
   createExpense: vi.fn().mockResolvedValue({ expense_id: "exp-1", posting_status: "unposted", journal_entry_id: null }),
+  getNextExpenseDocumentNumber: vi.fn().mockResolvedValue({ document_number: "EXP-2026-00001" }),
 }));
 
 vi.mock("../../api/catalog-accounts", () => ({
@@ -26,7 +27,7 @@ vi.mock("../../api/catalog-accounts", () => ({
 
 vi.mock("../../api/maintenance", () => ({
   getWoCostContext: vi.fn().mockResolvedValue({
-    expense_categories: [{ id: "cat-1", name: "Fuel", qbo_id: "qbo-1" }],
+    expense_categories: [{ id: "cat-1", name: "Office Supplies", qbo_id: "qbo-1" }],
     items: [],
     parts: [],
   }),
@@ -131,6 +132,7 @@ describe("RecordExpenseModal", () => {
     await waitFor(() => expect(maintenanceApi.getWoCostContext).toHaveBeenCalled());
 
     const form = screen.getByTestId("record-expense-form");
+    await screen.findByDisplayValue("EXP-2026-00001");
     // Vendor + Category + Payment account use ReferenceSelect (mocked as <select aria-label=placeholder>).
     // The Category picker is mocked here as a native <select>, so selectOptions IS the right API — the
     // failure was never a widget mismatch. Its OPTIONS arrive asynchronously: categoryOptions prefers the
@@ -139,7 +141,7 @@ describe("RecordExpenseModal", () => {
     // selectOptions throws `Value "cat-1" not found in options` — a message that names the id and reads
     // like a missing fixture row rather than "the list has not loaded yet".
     const categorySelect = within(form).getByLabelText(/select category/i);
-    await waitFor(() => expect(within(categorySelect).getByRole("option", { name: "Fuel" })).toBeInTheDocument());
+    await waitFor(() => expect(within(categorySelect).getByRole("option", { name: "Office Supplies" })).toBeInTheDocument());
     await user.selectOptions(categorySelect, "cat-1");
     await user.type(within(form).getByLabelText(/amount/i), "42.50");
     await user.selectOptions(within(form).getByLabelText(/payment method/i), "cash");
@@ -161,6 +163,7 @@ describe("RecordExpenseModal", () => {
         expense_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         memo: expect.stringContaining("Expense capture"),
         attachment_draft_id: expect.any(String),
+        expense_number: "EXP-2026-00001",
       })
     );
   });

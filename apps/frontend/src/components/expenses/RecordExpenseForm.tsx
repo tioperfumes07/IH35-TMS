@@ -5,6 +5,7 @@ import { getWoCostContext, suggestExpenseLoad } from "../../api/maintenance";
 import { ensureDriverVendors, listVendors } from "../../api/mdata";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { getNextExpenseDocumentNumber } from "../../api/accounting";
 // ACCT-F92: one definition of which accounts may appear in which picker — see account-picker-scope.ts
 // for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
 import { isExpenseAccount, isPaymentAccount } from "../../lib/account-picker-scope";
@@ -70,6 +71,17 @@ export function RecordExpenseForm({
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   /** Once auto-filled from suggest-load, do not clobber an operator override until driver/unit/date change. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const nextExpenseNumberQuery = useQuery({
+    queryKey: ["accounting", "expenses", "next-number", operatingCompanyId],
+    queryFn: () => getNextExpenseDocumentNumber(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 15_000,
+  });
+  useEffect(() => {
+    const preview = nextExpenseNumberQuery.data?.document_number?.trim();
+    if (!preview) return;
+    setValues((prev) => (prev.expenseNumber.trim() ? prev : { ...prev, expenseNumber: preview }));
+  }, [nextExpenseNumberQuery.data?.document_number]);
   // LV-G18-INERT-ON-EXPENSE-LINES: drives both the Load field's required asterisk and the no-load
   // reason field's visibility. See recordExpenseSubmit.ts's OVER_THE_ROAD_CATEGORY_RE for why this
   // exact taxonomy/regex, kept as the single source of truth so the two can never drift apart.
@@ -248,7 +260,8 @@ export function RecordExpenseForm({
           Linked — <EntityLink kind="work_order" id={workOrderId} label={entityLabel(linkedWoDisplayId, workOrderId, "Work order")} />
         </div>
       ) : null}
-      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
+      <div className="flex w-full items-start gap-3" data-testid="qbo-expense-header">
+      <label className="min-w-0 flex-1 text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
         Vendor
         <div className="mt-1">
           {/* Shared ReferenceSelect gives Vendor the inline "+ Add new vendor" first row (QuickCreate →
@@ -286,6 +299,19 @@ export function RecordExpenseForm({
           />
         </div>
       </label>
+      <label className="ml-auto w-44 shrink-0 text-right text-xs font-semibold text-gray-700" htmlFor={fieldId("expense-number")}>
+        Ref no.
+        <input
+          id={fieldId("expense-number")}
+          aria-label="Ref no."
+          data-testid="record-expense-number"
+          className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-right text-xs"
+          value={values.expenseNumber}
+          onChange={(event) => setValues((prev) => ({ ...prev, expenseNumber: event.target.value }))}
+          placeholder={nextExpenseNumberQuery.isLoading ? "…" : "Assigned on save"}
+        />
+      </label>
+      </div>
 
       {/* EXPENSE column-wave: accounting.expenses.driver_uuid was fully wired server-side
           (create/list/detail all already read/write it, driver name joined) but this form had no

@@ -2,6 +2,7 @@ import { resolveExpenseCategoryById } from "../accounting/expense-category-catal
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
@@ -877,6 +878,13 @@ export async function autoCreateExpenseFromWO(
   }
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
   if (!expenseId) return null;
+  if (await columnExists(client, "accounting.expenses", "expense_number")) {
+    const expenseNumber = await nextExpenseDisplayId(client, wo.operating_company_id);
+    await client.query(
+      `UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1 AND expense_number IS NULL`,
+      [expenseId, expenseNumber]
+    );
+  }
   if (await relationExists(client, "accounting.expense_lines")) {
     await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId);
 
