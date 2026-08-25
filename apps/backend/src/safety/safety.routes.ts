@@ -883,12 +883,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
       const missingLinks = await missingAccidentCompanyLinks(client, companyId, body.data);
       if (missingLinks.length > 0) return { kind: "link_not_found" as const, missingLinks };
-      const beforeRes = await client
-        .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+      const beforeRes = await client.query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           params.data.id,
           companyId,
-        ])
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        ]);
       const before = beforeRes.rows[0];
       if (!before) return null;
 
