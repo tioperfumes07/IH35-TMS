@@ -10,21 +10,14 @@ const UNIT_ID = "33333333-3333-4333-8333-333333333333";
 const TRAILER_ID = "44444444-4444-4444-8444-444444444444";
 const INCIDENT_ID = "55555555-5555-4555-8555-555555555555";
 
-const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit, mockDispatchNotification, mockListCompanyUserIdsByRoles } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) => fn({ query }));
   const appendCrudAudit = vi.fn(async () => undefined);
-  const dispatchNotification = vi.fn(async () => ({ ok: true }));
-  const listCompanyUserIdsByRoles = vi.fn(async () => [
-    "66666666-6666-4666-8666-666666666666",
-    "77777777-7777-4777-8777-777777777777",
-  ]);
   return {
     mockQuery: query,
     mockWithCurrentUser: withCurrentUser,
     mockAppendCrudAudit: appendCrudAudit,
-    mockDispatchNotification: dispatchNotification,
-    mockListCompanyUserIdsByRoles: listCompanyUserIdsByRoles,
   };
 });
 
@@ -46,11 +39,6 @@ vi.mock("../../../driver/auth.js", () => ({
 
 vi.mock("../../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAppendCrudAudit,
-}));
-
-vi.mock("../../../notifications/dispatcher.js", () => ({
-  dispatchNotification: mockDispatchNotification,
-  listCompanyUserIdsByRoles: mockListCompanyUserIdsByRoles,
 }));
 
 function fullReportPayload(type: "accident" | "breakdown") {
@@ -85,12 +73,19 @@ describe("safety incidents full report route (WF-048)", () => {
     mockQuery.mockReset();
     mockWithCurrentUser.mockClear();
     mockAppendCrudAudit.mockClear();
-    mockDispatchNotification.mockClear();
-    mockListCompanyUserIdsByRoles.mockClear();
 
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM mdata.drivers")) {
         return { rows: [{ id: DRIVER_ID, operating_company_id: COMPANY_ID }], rowCount: 1 };
+      }
+      if (sql.includes("FROM identity.users u")) {
+        return {
+          rows: [
+            { id: "66666666-6666-4666-8666-666666666666" },
+            { id: "77777777-7777-4777-8777-777777777777" },
+          ],
+          rowCount: 2,
+        };
       }
       if (sql.includes("FROM information_schema.columns") && sql.includes("table_name = 'loads'")) {
         return {
@@ -237,7 +232,15 @@ describe("safety incidents full report route (WF-048)", () => {
         notified_users: 2,
       },
     });
-    expect(mockDispatchNotification).toHaveBeenCalledTimes(2);
+    const notificationEvents = mockQuery.mock.calls.filter(([sql]) =>
+      String(sql).includes("INSERT INTO outbox.events")
+    );
+    expect(notificationEvents).toHaveLength(2);
+    expect(notificationEvents.every(([, values]) => values?.[0] === "safety.incident.stakeholder_notification")).toBe(true);
+    expect(notificationEvents.map(([, values]) => values?.[2])).toEqual([
+      `safety-incident-stakeholder:${INCIDENT_ID}:66666666-6666-4666-8666-666666666666`,
+      `safety-incident-stakeholder:${INCIDENT_ID}:77777777-7777-4777-8777-777777777777`,
+    ]);
   });
 
   it("creates breakdown incident and spawns maintenance work order", async () => {

@@ -28,6 +28,8 @@ const MIGRATION = "db/migrations/202612580000_incidents_work_order_fk.sql";
 const TRIGGER = "apps/backend/src/safety/incidents/auto-workflow-trigger.ts";
 const ROUTES = "apps/backend/src/safety/incidents.routes.ts";
 const TAB = "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx";
+const HANDLER = "apps/backend/src/outbox/handlers/safety-incident-stakeholder-notification.handler.ts";
+const REGISTRY = "apps/backend/src/outbox/handlers/registry.ts";
 
 function readRel(root, rel, overrides) {
   if (overrides && Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
@@ -70,6 +72,24 @@ export function collectProblems(root = ROOT, overrides = null) {
     for (const [label, pattern] of swallowedWrites) {
       if (pattern.test(trigger)) problems.push(`${TRIGGER}: ${label} failure must propagate instead of becoming a silent nullable workflow result`);
     }
+    if (!/enqueueOutboxEvent\([\s\S]{0,180}?"safety\.incident\.stakeholder_notification"/.test(trigger)) {
+      problems.push(`${TRIGGER}: stakeholder notification intent must use the canonical outbox inside the incident transaction`);
+    }
+    if (/dispatchNotification\(/.test(trigger) || /event_type:\s*"wo\.created"/.test(trigger)) {
+      problems.push(`${TRIGGER}: incident workflow must not dispatch pre-commit or masquerade as wo.created`);
+    }
+    if (!/safety-incident-stakeholder:\$\{input\.incident_id\}:\$\{userId\}/.test(trigger)) {
+      problems.push(`${TRIGGER}: stakeholder notification needs an incident+recipient dedupe key`);
+    }
+  }
+
+  const handler = readRel(root, HANDLER, overrides);
+  if (!handler || !/requiresDelivery\s*=\s*true/.test(handler) || !/createNotification\(/.test(handler)) {
+    problems.push(`${HANDLER}: must be a required-delivery canonical in-app notification handler`);
+  }
+  const registry = readRel(root, REGISTRY, overrides);
+  if (!registry || !/new SafetyIncidentStakeholderNotificationHandler\(\)/.test(registry)) {
+    problems.push(`${REGISTRY}: must register the incident stakeholder notification handler`);
   }
 
   const routes = readRel(root, ROUTES, overrides);
@@ -118,6 +138,8 @@ function selftest() {
   const triggerReal = readRel(ROOT, TRIGGER);
   const routesReal = readRel(ROOT, ROUTES);
   const tabReal = readRel(ROOT, TAB);
+  const handlerReal = readRel(ROOT, HANDLER);
+  const registryReal = readRel(ROOT, REGISTRY);
 
   const plant = (label, overrides, expectFragment) => {
     const problems = collectProblems(ROOT, overrides);
@@ -145,7 +167,7 @@ function selftest() {
   for (const [label, needle] of [
     ["display allocator swallow", "      );\n    generatedDisplayId"],
     ["work-order insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;"],
-    ["domain insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;\n}\n\nasync function notifyIncidentStakeholders"],
+    ["domain insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;\n}\n\nasync function enqueueIncidentStakeholderNotifications"],
     ["incident FK update swallow", "          input.incident_id,\n        ]);"],
   ]) {
     plant(
@@ -154,6 +176,21 @@ function selftest() {
       "failure must propagate"
     );
   }
+  plant(
+    "stakeholder notification bypasses outbox",
+    { [TRIGGER]: triggerReal.replace("enqueueOutboxEvent(", "dispatchNotification(") },
+    "canonical outbox"
+  );
+  plant(
+    "required-delivery handler removed",
+    { [HANDLER]: handlerReal.replace("requiresDelivery = true", "requiresDelivery = false") },
+    "required-delivery"
+  );
+  plant(
+    "handler registration removed",
+    { [REGISTRY]: registryReal.replace("new SafetyIncidentStakeholderNotificationHandler(),", "") },
+    "must register"
+  );
   plant(
     "routes-drops-one-join",
     { [ROUTES]: routesReal.replace(
@@ -173,7 +210,7 @@ function selftest() {
     'must render a real "Linked WO"'
   );
 
-  console.log(`${LABEL} SELFTEST PASS — 8 planted regressions all caught`);
+  console.log(`${LABEL} SELFTEST PASS — 11 planted regressions all caught`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);

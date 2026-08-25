@@ -27,6 +27,7 @@ import { IdentityPasswordResetEmailHandler } from "./identity-password-reset-ema
 import { LegalAttorneyDecisionEmailHandler } from "./legal-attorney-decision-email.handler.js";
 import { LegalContractSignEmailHandler } from "./legal-contract-sign-email.handler.js";
 import { LegalContractVerificationEmailHandler } from "./legal-contract-verification-email.handler.js";
+import { SafetyIncidentStakeholderNotificationHandler } from "./safety-incident-stakeholder-notification.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -126,6 +127,7 @@ export function buildOutboxHandlerRegistry() {
     new LegalAttorneyDecisionEmailHandler(),
     new LegalContractSignEmailHandler(),
     new LegalContractVerificationEmailHandler(),
+    new SafetyIncidentStakeholderNotificationHandler(),
     // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),
