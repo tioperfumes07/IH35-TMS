@@ -30,7 +30,10 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
 }
 
 export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) {
-  app.get("/api/v1/audit/dispatch-overrides", async (req, reply) => {
+  app.get(
+    "/api/v1/audit/dispatch-overrides",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator"].includes(authUser.role)) {
@@ -67,8 +70,7 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
         filters.push(`payload->>'override_type' = $${values.length}`);
       }
 
-      const res = await client
-        .query(
+      const res = await client.query(
           `
             SELECT
               uuid AS id,
@@ -83,11 +85,11 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
             LIMIT 500
           `,
           values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
 
     return { overrides: rows };
-  });
+    }
+  );
 }

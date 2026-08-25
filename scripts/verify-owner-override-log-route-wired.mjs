@@ -28,12 +28,13 @@ const repoRoot = process.cwd();
 const MANIFEST_FILE = "apps/frontend/src/routes/manifest.tsx";
 const PAGE_FILE = "apps/frontend/src/pages/dispatch/OwnerOverrideLogPage.tsx";
 const API_FILE = "apps/frontend/src/api/dispatch.ts";
+const BACKEND_FILE = "apps/backend/src/audit/dispatch-overrides.routes.ts";
 
 const ROUTE_RE = /path="\/dispatch\/owner-override-log"/;
 const API_CALL_RE = /listOwnerOverrideLog/;
 const ENDPOINT_RE = /\/api\/v1\/dispatch\/owner-override-log/;
 
-export function checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pageSrc }) {
+export function checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pageSrc, backendSrc }) {
   const offenders = [];
   if (!ROUTE_RE.test(manifestSrc)) {
     offenders.push(
@@ -48,6 +49,14 @@ export function checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pa
   if (!ENDPOINT_RE.test(apiSrc)) {
     offenders.push(`${API_FILE}: no client function calling GET /api/v1/dispatch/owner-override-log`);
   }
+  if (!/FROM audit\.audit_events/.test(backendSrc ?? "")) {
+    offenders.push(`${BACKEND_FILE}: canonical audit-events query is missing`);
+  } else if (/FROM audit\.audit_events[\s\S]{0,500}?\.catch\s*\(/.test(backendSrc)) {
+    offenders.push(`${BACKEND_FILE}: audit query failure is converted to a false empty override history`);
+  }
+  if (!/\/api\/v1\/audit\/dispatch-overrides[\s\S]{0,180}?rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/.test(backendSrc ?? "")) {
+    offenders.push(`${BACKEND_FILE}: authenticated override audit route lacks the canonical rate limit`);
+  }
   return offenders;
 }
 
@@ -57,27 +66,37 @@ export function run() {
   const pageAbs = path.join(repoRoot, PAGE_FILE);
   const pageExists = fs.existsSync(pageAbs);
   const pageSrc = pageExists ? fs.readFileSync(pageAbs, "utf8") : "";
-  const offenders = checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pageSrc });
+  const backendSrc = fs.readFileSync(path.join(repoRoot, BACKEND_FILE), "utf8");
+  const offenders = checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pageSrc, backendSrc });
   return { ok: offenders.length === 0, offenders };
 }
 
 if (process.argv.includes("--selftest")) {
-  const buggy = { manifestSrc: `<Route path="/dispatch/assignment-history" element={<AssignmentHistoryPage />} />`, apiSrc: `export function listDispatchAssignmentHistory() {}`, pageExists: false, pageSrc: "" };
+  const realBackend = fs.readFileSync(path.join(repoRoot, BACKEND_FILE), "utf8");
+  const buggy = { manifestSrc: `<Route path="/dispatch/assignment-history" element={<AssignmentHistoryPage />} />`, apiSrc: `export function listDispatchAssignmentHistory() {}`, pageExists: false, pageSrc: "", backendSrc: realBackend };
   const fixed = {
     manifestSrc: `<Route path="/dispatch/owner-override-log" element={<OwnerOverrideLogPage />} />`,
     apiSrc: `export function listOwnerOverrideLog(id) { return apiRequest(\`/api/v1/dispatch/owner-override-log?operating_company_id=\${id}\`); }`,
     pageExists: true,
     pageSrc: `import { listOwnerOverrideLog } from "../../api/dispatch"; export function OwnerOverrideLogPage() { listOwnerOverrideLog("x"); }`,
+    backendSrc: realBackend,
   };
 
   const buggyFails = checkOwnerOverrideLogWired(buggy).length > 0;
   const fixedPasses = checkOwnerOverrideLogWired(fixed).length === 0;
+  const swallowed = {
+    ...fixed,
+    backendSrc: realBackend.replace("          values\n        );", "          values\n        ).catch(() => ({ rows: [] }));"),
+  };
+  const swallowFails = checkOwnerOverrideLogWired(swallowed).some((item) => item.includes("false empty override history"));
+  const unbounded = { ...fixed, backendSrc: realBackend.replace('{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', "") };
+  const rateLimitFails = checkOwnerOverrideLogWired(unbounded).some((item) => item.includes("lacks the canonical rate limit"));
 
-  if (buggyFails && fixedPasses) {
-    console.log("verify:owner-override-log-route-wired selftest OK");
+  if (buggyFails && fixedPasses && swallowFails && rateLimitFails) {
+    console.log("verify:owner-override-log-route-wired selftest OK (route + query-swallow mutations caught)");
     process.exit(0);
   }
-  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses });
+  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses, swallowFails, rateLimitFails });
   process.exit(1);
 }
 
