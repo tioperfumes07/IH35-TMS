@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
+import { hasInAppHistory } from "../../lib/smart-back";
 
 // ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
 // (ACCT-F5053–5056). Bare list hrefs are silent no-ops when already on that list.
@@ -47,6 +48,7 @@ function activeHrefFor(pathname: string): string | undefined {
 
 export function AccountingSubNavWrapper({ title = "Accounting", subtitle, actions, children, kpiStrip }: Props) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -63,9 +65,36 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
   return (
     <div className="space-y-4" data-accounting-subnav-wrapper="true">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-          {subtitle ? <p className="text-sm text-gray-600">{subtitle}</p> : null}
+        <div className="flex items-start gap-2">
+          {/*
+            UI-BACK-BUTTON-MISSING-ENTIRELY: owner report (2026-08-25) -- "many leafs or tabs are
+            missing the back arrow return button." This wrapper is the module header for every one
+            of the ~49 routed /accounting/* pages (the whole Accounting module) and had NO back
+            control at all -- confirmed by a systemwide route-manifest audit that resolved every
+            routed page to its actual rendered header, not just a per-file grep. Same smart-back
+            signal as the other three back-button components in this app: prefer true history-based
+            back whenever real in-app navigation history exists, falling back to /home (the
+            established module-root convention, e.g. SystemModulePage, ComplianceDashboardPage) only
+            on a direct URL load/refresh.
+          */}
+          <button
+            type="button"
+            aria-label="Back"
+            onClick={() => {
+              if (hasInAppHistory(window.history.state)) {
+                navigate(-1);
+                return;
+              }
+              navigate("/home");
+            }}
+            className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-xs border-0 bg-transparent p-0 text-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+            {subtitle ? <p className="text-sm text-gray-600">{subtitle}</p> : null}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {actions}
