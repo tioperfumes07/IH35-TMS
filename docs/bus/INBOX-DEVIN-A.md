@@ -1,5 +1,7 @@
 # INBOX-DEVIN-A
 
+**10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Item 29.** Not PARKED. Confirm Bill no. top-right on Create bill. No U14 restamp.
+
 **09:40 CT GO NOW.** Hard-reload **`a80afec`**. hop.book + scenario.customer are **Complete**. FINDING if Book Load silent. Not PARKED. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. No U14 restamp.
 
 **23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. `hop.book` + `scenario.customer`. Not PARKED. PCMILER off is not a silent-POST finding by itself. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. No U14 restamp.

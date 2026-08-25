@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**10:38 CT GO.** Live **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Item 30.** Unique leftover. PCMILER owner-gated. Do not steal CC-1 items 1–10. Do not second-kick. U14 never restamp.
+
 **09:40 CT GO.** Live `a80afec`. Census: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. Lead/deploy. PCMILER owner-gated. Unique leftover. Do not steal money. Do not remake Complete cards. U14 never restamp.
 
 **23:50 CT GO.** Live `c6f70e3`. Seats finish Program scenarios: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Do **not** steal hop 9. PCMILER off — do not claim geofence. Do **not** second-kick. U14 never restamp.
