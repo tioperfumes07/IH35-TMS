@@ -82,7 +82,22 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     const body = createSessionSchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
-    const session = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // DRV-ONBOARD-LAUNCH — the Driver Profile is the canonical launcher. Repeated clicks must
+      // resume the same open workflow, never fork duplicate qualification chains for one driver.
+      if (body.data.driver_id) {
+        const existing = await client.query(
+          `SELECT *
+             FROM safety.onboarding_sessions
+            WHERE operating_company_id = $1::uuid
+              AND driver_id = $2::uuid
+              AND status = 'in_progress'
+            ORDER BY created_at DESC
+            LIMIT 1`,
+          [body.data.operating_company_id, body.data.driver_id]
+        );
+        if (existing.rows[0]) return { session: existing.rows[0], resumed: true as const };
+      }
       const res = await client.query(
         `
           INSERT INTO safety.onboarding_sessions (
@@ -110,10 +125,10 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
         "info",
         "A24-8-DRIVER-ONBOARDING"
       );
-      return res.rows[0];
+      return { session: res.rows[0], resumed: false as const };
     });
 
-    return reply.code(201).send({ session });
+    return reply.code(result.resumed ? 200 : 201).send(result);
   });
 
   app.get("/api/v1/safety/onboarding/sessions/:session_id", async (req, reply) => {
