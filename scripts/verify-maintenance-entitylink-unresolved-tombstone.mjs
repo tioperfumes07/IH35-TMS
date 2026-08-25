@@ -42,6 +42,10 @@ function analyzeConsumer(rel, src) {
   if (!/EntityLinkOrTombstone/.test(src)) {
     failures.push(`${rel}: must use EntityLinkOrTombstone for unresolved-safe drills`);
   }
+  if (rel.endsWith("maintenance/LoadDriverReportsReverseSection.tsx") &&
+      !/<ListErrorState[\s\S]{0,240}userFacingApiError\(query\.error[\s\S]{0,160}query\.refetch\(\)/.test(src)) {
+    failures.push(`${rel}: failed load-scoped reverse reads must preserve detail and retry the exact query`);
+  }
   if (rel.endsWith("trailer-profile/MaintenanceSnapshotSection.tsx") && !/id=\{wo\.wo_id == null \? null : String\(wo\.wo_id\)\}/.test(src)) {
     failures.push(`${rel}: missing work-order IDs must remain nullable (never String(undefined))`);
   }
@@ -68,6 +72,10 @@ function selftest() {
   const badConsumer = `<EntityLink label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />`;
   if (analyzeConsumer("x.tsx", goodConsumer).length) fail("selftest consumer GOOD");
   if (!analyzeConsumer("x.tsx", badConsumer).length) fail("selftest consumer BAD");
+  const loadReportsConsumer = `import { EntityLinkOrTombstone } from "..."; <EntityLinkOrTombstone kind="driver" />; <ListErrorState message={userFacingApiError(query.error, "failed")} onRetry={() => void query.refetch()} />`;
+  const loadReportsPath = "apps/frontend/src/components/maintenance/LoadDriverReportsReverseSection.tsx";
+  if (analyzeConsumer(loadReportsPath, loadReportsConsumer).length) fail("selftest load-report recovery GOOD");
+  if (!analyzeConsumer(loadReportsPath, loadReportsConsumer.replace("query.refetch()", "undefined")).length) fail("selftest load-report recovery BAD");
   const trailerConsumer = `import { EntityLinkOrTombstone } from "..."; <EntityLinkOrTombstone kind="work_order" id={wo.wo_id == null ? null : String(wo.wo_id)} />`;
   if (analyzeConsumer("apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx", trailerConsumer).length) fail("selftest nullable trailer work order GOOD");
   if (!analyzeConsumer("apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx", trailerConsumer.replace("wo.wo_id == null ? null : String(wo.wo_id)", "String(wo.wo_id)")).length) fail("selftest nullable trailer work order BAD");
