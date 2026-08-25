@@ -10,6 +10,9 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 // (not imported) to avoid a service->routes import — mirrors the same pattern already used by
 // fuel-posting/maybe-post-from-fuel-transaction.service.ts's FUEL_EXPENSE_GL_POSTING_FLAG_KEY.
 const WO_EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
+// Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
+// the same reason (avoid a service->service import cycle risk) — same value, same semantics.
+const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -647,13 +650,28 @@ export async function autoCreateBillFromWO(
 ) {
   if (!(await relationExists(client, "accounting.bills"))) return null;
   // Law §9: stamp unit_id from the WO header (migration 202607050810 hard FK). Vendor preserved via COALESCE.
+  // WO-AUTO-BILL-NEVER-POSTS-GL-JE: this INSERT used to write status='draft' and never set the
+  // legacy `vendor_id` (text) column at all — only `vendor_uuid`/`mdata_vendor_id`. Two independent
+  // effects: (1) LV-060's posting-eligibility guard REFUSES to post any bill with status='draft'
+  // ("a draft is not yet an approved liability") — so even wiring the poster call below would have
+  // silently no-op'd forever; (2) the scenario.maintenance probe joins on `b.vendor_id =
+  // w.vendor_id::text`, which a NULL vendor_id can never satisfy. Both are fixed the same way the
+  // canonical manual Bill-create path (bills.service.ts createBill()) already does it: insert
+  // status='unpaid' (the same finalized status createBill() always uses — there is no "draft"
+  // review step for a WO-auto-created bill, the operator already committed by clicking "Create
+  // work order & Bill"), and populate vendor_id alongside vendor_uuid/mdata_vendor_id from the
+  // SAME resolved vendor.
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
+        operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
       )
       SELECT
         w.operating_company_id,
+        (SELECT v.id::text FROM mdata.vendors v
+          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+            AND v.operating_company_id = w.operating_company_id
+          LIMIT 1),
         COALESCE(w.external_vendor_id, w.vendor_id),
         -- LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — external_vendor_id/vendor_id are already typed uuid
         -- FKs into mdata.vendors, so resolve the canonical FK directly rather than leave it NULL;
@@ -665,7 +683,7 @@ export async function autoCreateBillFromWO(
           LIMIT 1),
         w.id,
         w.unit_id,
-        'draft',
+        'unpaid',
         CURRENT_DATE,
         CURRENT_DATE + INTERVAL '30 days',
         -- CANONICAL integer-cents (G6-4). Derived from the SAME dollars expression as total_amount so
@@ -681,11 +699,12 @@ export async function autoCreateBillFromWO(
           LIMIT 1), false)
       FROM maintenance.work_orders w
       WHERE w.id = $1
-      RETURNING id
+      RETURNING id, operating_company_id
     `,
     [woUuid]
   );
   const billId = String(billRes.rows[0]?.id ?? "");
+  const billOperatingCompanyId = String((billRes.rows[0] as { operating_company_id?: string } | undefined)?.operating_company_id ?? "");
   const billNumber = String(opts?.billNumber ?? "").trim();
   const memo = String(opts?.memo ?? "").trim();
   if (!billId) return null;
@@ -698,6 +717,52 @@ export async function autoCreateBillFromWO(
   if (await relationExists(client, "accounting.bill_lines")) {
     await copyToAccountingLines(client, woUuid, "accounting.bill_lines", "bill_id", billId);
   }
+
+  // WO-AUTO-BILL-NEVER-POSTS-GL-JE — reuse the SAME canonical poster + flag the manual bill-create
+  // route already uses (bills.service.ts createBill() -> postBillGlIfEnabled -> postSourceTransaction
+  // 'bill'). Cannot call postBillGlIfEnabled directly here: it opens its own connection
+  // (postSourceTransaction / withCurrentUser), which cannot see this bill row until this caller's
+  // OWN open transaction commits — the exact cross-connection READ-COMMITTED visibility bug already
+  // fixed once this session for the revenue latch (LV-REVREC-NOT-FIRING) and again for this same
+  // file's autoCreateExpenseFromWO (MAINT-F5697-CLASS, just below). Runs IN THE CALLER'S OWN OPEN
+  // TRANSACTION via postSourceTransactionInClientTx instead — no new GL math, same poster.
+  if (billOperatingCompanyId) {
+    const flagOn = await isEnabled(client as never, WO_BILL_GL_POSTING_FLAG_KEY, {
+      operating_company_id: billOperatingCompanyId,
+      user_uuid: userId,
+    });
+    if (flagOn) {
+      try {
+        await postSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
+          { userId }
+        );
+        await appendCrudAudit(
+          client as never,
+          userId,
+          "accounting.bill.gl_posted",
+          { work_order_id: woUuid, bill_id: billId, source: "auto_created_from_wo" },
+          "info",
+          "WO-AUTO-BILL-NEVER-POSTS-GL-JE"
+        );
+      } catch (err) {
+        // Same non-fatal contract as the canonical route and the sibling expense branch above: the
+        // bill already exists and is valid even unposted (retriable later via the manual
+        // /bills/:id/post-gl endpoint, idempotent poster); a WO create must never 500 on this.
+        if (!(err instanceof PostingEngineError)) throw err;
+        await appendCrudAudit(
+          client as never,
+          userId,
+          "accounting.bill.gl_post_failed",
+          { work_order_id: woUuid, bill_id: billId, code: err.code, message: err.message, source: "auto_created_from_wo" },
+          "warning",
+          "WO-AUTO-BILL-NEVER-POSTS-GL-JE"
+        );
+      }
+    }
+  }
+
   await appendCrudAudit(
     client as never,
     userId,
