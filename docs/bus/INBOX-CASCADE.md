@@ -1,6 +1,8 @@
 # INBOX-CASCADE
 
-**16:30 CT GO-1630 — OUTBOX STALE SINCE AUG 16. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Live **`e59f66a`**. **WALK `/program` now.** FINDING or AUDIT-PASS. OUTBOX same turn. No product PR. No U14 restamp.
+**16:50 CT GO-1650.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Live API **`3eefade`**. Unique FINDING only. Invoice# `INV-2026-…` ≠ load# is **CC-1**, already tracked — do not restamp U14. ACK `GO-1650`. No product PR.
+
+**16:30 CT GO-1630.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. **Superseded by GO-1650.**
 
 **16:25 CT GO-1625.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. **OUTBOX is STALE. Idle = defect.** Walk `/program` **now**. FINDING or AUDIT-PASS. OUTBOX same turn. No product PR. No U14 restamp.
 

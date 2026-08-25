@@ -1,6 +1,8 @@
 # INBOX-DEVIN
 
-**16:30 CT GO-1630.** Same as INBOX-DEVIN-A TOP. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Walk `/program`. Not PARKED.
+**16:50 CT GO-1650.** Same as INBOX-DEVIN-A TOP. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1650.md`. Walk `/program`. Not PARKED.
+
+**16:30 CT GO-1630.** Same as INBOX-DEVIN-A TOP. **Superseded by GO-1650.**
 
 **16:25 CT GO-1625.** Same as INBOX-DEVIN-A TOP. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. Walk `/program`. Not PARKED.
 

@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1630 unique leftover. Live `e59f66a`. Do not remake #15860. Skip #15546. |
-| CC-1 | 9223 | money | GO-1630 items **1–10** serial. NOW=#1 invoice#=load#. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | Unique leftover `/reports` `/cash-flow` `/tasks`. Never remake ScrollToTop/#15860. |
-| CC-3 | 9225 | FE | GO-1630 leftover **62–75**. #64 waits CC-1 #6. Do not remake #15909 if on main. |
-| Codex | 9226 | FE | GO-1630 prove Dispatch `eld_certified` live. hop.assign UI only. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1630 walk `/program`. OUTBOX stale. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-1630 items **126–150**. Not PARKED |
+| Cursor | 9222 | Lead | GO-1650 unique leftover. Live API `3eefade`. Do not remake #15860/#15916/#15925. Skip #15546. |
+| CC-1 | 9223 | money | GO-1650 items **1–10** serial. NOW=#1 invoice#=load#. Book Load is **not** yours. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | Unique leftover. Do not remake #15921. Item 26 waits CC-1. |
+| CC-3 | 9225 | FE | GO-1650 leftover **62–75**. #64 waits CC-1 #6. Do not remake #15909/#15922. |
+| Codex | 9226 | FE | GO-1650 prove geofence Retry + `eld_certified` after SPA live. hop.assign UI only. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-1650 unique FINDING. Invoice#≠load# is CC-1. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-1650 items **126–150**. Not PARKED |
