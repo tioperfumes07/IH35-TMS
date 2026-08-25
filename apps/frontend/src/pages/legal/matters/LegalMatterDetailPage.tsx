@@ -28,6 +28,7 @@ import {
   type LegalMatterFormState,
 } from "./LegalMatterFormFields";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { LegalMatterCostsReverseSection } from "../../../components/accounting/LegalMatterCostsReverseSection";
 import { CreateBillModal } from "../../maintenance/components/CreateBillModal";
 
@@ -236,7 +237,7 @@ export function LegalMatterDetailPage() {
       <PageHeader
         breadcrumb={["Legal", "Matters"]}
         title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}
-        subtitle={matter ? String(matter.type ?? "") : ""}
+        subtitle={matter ? properEnumOrFilterLabel(matter.type) : ""}
         actions={
           <div className="flex flex-wrap gap-2">
             {companyId && id ? (
@@ -556,7 +557,7 @@ export function LegalMatterDetailPage() {
                   <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
                     {["statute_of_limitations", "response", "hearing", "filing", "other"].map((t) => (
                       <option key={t} value={t}>
-                        {t}
+                        {properEnumOrFilterLabel(t)}
                       </option>
                     ))}
                   </SelectCombobox>
@@ -588,7 +589,7 @@ export function LegalMatterDetailPage() {
                     <div>
                       <div className="font-semibold">{String(d.title ?? "")}</div>
                       <div className="text-xs text-gray-600">
-                        {String(d.deadline_type ?? "")} · {String(d.deadline_at ?? "")}
+                        {properEnumOrFilterLabel(d.deadline_type)} · {String(d.deadline_at ?? "")}
                       </div>
                     </div>
                     {admin && !d.completed_at ? (
