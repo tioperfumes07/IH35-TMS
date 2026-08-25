@@ -11,6 +11,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-dispatch-list-hos-columns: ${m}`); process.exit(1); };
 const clocks = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/hosClocks.ts"), "utf8");
 const list = readFileSync(join(root, "apps/frontend/src/components/dispatch/DispatchList.tsx"), "utf8");
+const pill = readFileSync(join(root, "apps/frontend/src/pages/dispatch/DriverHosPill.tsx"), "utf8");
 
 // 6 column keys.
 for (const k of ["drive", "shift", "break", "cycle", "stopBy", "resumeAt"]) {
@@ -49,6 +50,10 @@ function checkRecovery(source) {
 }
 const missing = checkRecovery(cells);
 if (missing.length) fail(`HOS read failures must stay visible and retryable across every shared consumer: ${missing.join(", ")}`);
+const pillRecovery = (source) => /if \(hosQuery\.isError\)[\s\S]*?data-hos-pill-retry[\s\S]*?event\.stopPropagation\(\)[\s\S]*?hosQuery\.refetch\(\)/.test(source);
+if (!pillRecovery(pill)) {
+  fail("DriverHosPill must expose a row-safe retry when its HOS read fails");
+}
 
 if (selftest) {
   const mutations = [
@@ -63,7 +68,16 @@ if (selftest) {
   for (let index = 0; index < mutations.length; index += 1) {
     if (checkRecovery(mutations[index]).length === 0) fail(`mutation ${index + 1} survived`);
   }
-  console.log(`PASS verify-dispatch-list-hos-columns selftest ${mutations.length}/${mutations.length}`);
+  const pillMutations = [
+    pill.replace("if (hosQuery.isError)", "if (false)"),
+    pill.replace("data-hos-pill-retry", "data-hos-pill-hidden"),
+    pill.replace("event.stopPropagation();", "void event;"),
+  ];
+  for (let index = 0; index < pillMutations.length; index += 1) {
+    if (pillRecovery(pillMutations[index])) fail(`pill mutation ${index + 1} survived`);
+  }
+  const total = mutations.length + pillMutations.length;
+  console.log(`PASS verify-dispatch-list-hos-columns selftest ${total}/${total}`);
 } else {
   console.log("PASS verify-dispatch-list-hos-columns");
 }
