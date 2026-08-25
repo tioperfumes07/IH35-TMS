@@ -2,6 +2,7 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☐ | `TEST-DATA-BANK-MATCH-EXPENSES-DOUBLE-SEEDED-6210` | **C** | Data quality (test-fixture seed duplication, live-visible on P&L) | unassigned — bank-match seed script owner | — | 2026-08-25 | 12 exact-duplicate TEST expense-row pairs on account 6210 inflate the live Company Overview P&L by $23,773.38; not a live app-code defect (bank-recon match.service.ts is read/link-only). | Neon-confirmed (project tiny-field-89581227): 12 duplicate pairs, both created_at ~20-30s apart in two tight bursts on 2026-08-22; scope-checked to account 6210 only | board OPEN — see GUARD-WORKORDERS.md top row |
 | ☑ | `DISP-ASSIGNMENT-WRITERS-PREMATURE-COMMIT` | **B** | Assignment connectivity/security | Codex | this PR | 2026-08-24 | All five assignment writers leave authenticated transaction ownership to withCurrentUser. | focused tests 4/4; quick-assign guard normal + 19 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `DISP-QUICKSAVE-DRAFT-DROPS-UNIT-HISTORY` | **B** | Vertical unit connectivity | Codex | this PR | 2026-08-24 | Draft completion atomically persists previous/new unit and trailer assignment history. | focused tests 3/3; quick-assign guard normal + 18 mutations; typecheck | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
