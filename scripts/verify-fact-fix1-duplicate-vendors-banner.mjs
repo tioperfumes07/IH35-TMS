@@ -63,6 +63,15 @@ export function run() {
   if (!/vendor_merges|vendor-merges/.test(bannerSrc)) {
     fail(`${BANNER}: must link to vendor merges flow`);
   }
+  if (!/if \(scanQuery\.isError\)[\s\S]{0,500}data-duplicate-vendors-read-error/.test(bannerSrc)) {
+    fail(`${BANNER}: failed company-scoped scan must remain visible`);
+  }
+  if (!/onRetry=\{\(\) => void scanQuery\.refetch\(\)\}/.test(bannerSrc)) {
+    fail(`${BANNER}: failed scan must retry the exact query`);
+  }
+  if (/!companyId \|\| scanQuery\.isError \|\| visiblePairCount === 0/.test(bannerSrc)) {
+    fail(`${BANNER}: failed scan must not disappear as an honest zero-pair state`);
+  }
 
   if (!/DuplicateVendorsBanner/.test(homeSrc)) {
     fail(`${HOME}: must mount DuplicateVendorsBanner`);
@@ -87,7 +96,9 @@ function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
     const realApi = path.join(ROOT, API);
+    const realBanner = path.join(ROOT, BANNER);
     const backup = fs.readFileSync(realApi, "utf8");
+    const bannerBackup = fs.readFileSync(realBanner, "utf8");
     try {
       fs.writeFileSync(realApi, "// selftest empty api\n", "utf8");
       const planted = run();
@@ -97,11 +108,22 @@ function main() {
         );
         process.exit(1);
       }
-      console.log(
-        `[verify-fact-fix1-duplicate-vendors-banner] SELFTEST PASS (${planted.length} planted failures detected)`
-      );
+      fs.writeFileSync(realApi, backup, "utf8");
+      const mutations = [
+        bannerBackup.replace("scanQuery.isError", "scanQuery.isSuccess"),
+        bannerBackup.replace("scanQuery.refetch()", "window.location.reload()"),
+      ];
+      for (const mutation of mutations) {
+        fs.writeFileSync(realBanner, mutation, "utf8");
+        if (run().length === 0) {
+          console.error("[verify-fact-fix1-duplicate-vendors-banner] SELFTEST FAIL: recovery mutation escaped");
+          process.exit(1);
+        }
+      }
+      console.log(`[verify-fact-fix1-duplicate-vendors-banner] SELFTEST PASS (${planted.length + mutations.length} planted failures detected)`);
     } finally {
       fs.writeFileSync(realApi, backup, "utf8");
+      fs.writeFileSync(realBanner, bannerBackup, "utf8");
     }
     process.exit(0);
   }

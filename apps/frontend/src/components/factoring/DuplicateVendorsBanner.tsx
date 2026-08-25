@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { scanDuplicateVendors } from "../../api/factoring";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 const DISMISS_STORAGE_PREFIX = "ih35.factoring.duplicate-vendors-banner.dismissed.";
 
@@ -62,11 +63,27 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
     [scanQuery.data?.pairs]
   );
 
-  if (dismissed || !companyId || scanQuery.isError || visiblePairCount === 0) {
+  if (dismissed || !companyId) {
     return null;
   }
 
   if (scanQuery.isLoading) {
+    return null;
+  }
+
+  if (scanQuery.isError) {
+    return (
+      <div className="rounded-sm border border-slate-200 bg-white p-3" data-duplicate-vendors-read-error>
+        <ListErrorState
+          status={0}
+          message="Could not check for duplicate factoring vendors."
+          onRetry={() => void scanQuery.refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (visiblePairCount === 0) {
     return null;
   }
 
