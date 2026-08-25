@@ -29,6 +29,15 @@ export function collectProblems(root = ROOT) {
     problems.push(`${FILE}: must not use SelectCombobox/select for unit`);
   }
   if (/limit:\s*500/.test(code)) problems.push(`${FILE}: must not silent-fetch limit:500`);
+  if (!/catch\s*\(\s*err\s*\)/.test(code)) {
+    problems.push(`${FILE}: rejected default-truck assignment must be caught`);
+  }
+  if (!/userFacingApiError\s*\(\s*err\s*,\s*["']Could not assign default truck["']\s*\)/.test(code)) {
+    problems.push(`${FILE}: assignment failure must preserve the backend detail`);
+  }
+  if (!/role=["']alert["']/.test(code) || !/\{error\}/.test(code)) {
+    problems.push(`${FILE}: assignment failure must render an accessible operator alert`);
+  }
   return problems;
 }
 if (process.argv.includes("--selftest")) {
@@ -47,6 +56,18 @@ if (process.argv.includes("--selftest")) {
     if (!collectProblems(stubRoot).some((p) => /allowCreate/.test(p))) {
       console.error("planted allowCreate={false} miss");
       process.exit(1);
+    }
+    const live = readRel(ROOT, FILE);
+    for (const [name, mutation] of [
+      ["catch", live.replace(/\}\s*catch\s*\(err\)\s*\{[\s\S]*?\}\s*finally/, "} finally")],
+      ["detail", live.replace(/userFacingApiError\(err,\s*"Could not assign default truck"\)/, '"Could not assign default truck"')],
+      ["alert", live.replace(/role="alert"/, 'role="status"')],
+    ]) {
+      fs.writeFileSync(path.join(dir, "AssignTruckModal.tsx"), mutation);
+      if (!collectProblems(stubRoot).length) {
+        console.error(`planted ${name} miss`);
+        process.exit(1);
+      }
     }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");
