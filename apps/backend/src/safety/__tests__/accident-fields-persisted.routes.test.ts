@@ -14,6 +14,7 @@ const ACCIDENT_ID = "22222222-2222-4222-8222-222222222222";
 // P44-ACCIDENT-TYPE-FK (PR #5947, migration 202612511400) made accident_type_id a NOT NULL
 // same-opco FK on safety.accident_reports — every POST create payload needs one.
 const ACCIDENT_TYPE = "66666666-6666-4666-8666-666666666666";
+const FOREIGN_DRIVER = "77777777-7777-4777-8777-777777777777";
 
 const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
 
@@ -101,5 +102,35 @@ describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () =>
     expect(params).toContain(FIELDS.third_party_name);
     // A field not sent must NOT appear in the SET.
     expect(sql).not.toContain("police_report_number =");
+  });
+
+  it("create: rejects a foreign-company linked entity before INSERT", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM mdata.drivers d")) return { rows: [], rowCount: 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/accidents",
+      payload: { operating_company_id: COMPANY, accident_type_id: ACCIDENT_TYPE, driver_id: FOREIGN_DRIVER },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "accident_link_not_found", fields: ["driver_id"] });
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO safety.accident_reports"))).toBe(false);
+  });
+
+  it("patch: rejects a foreign-company linked entity before UPDATE", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM mdata.drivers d")) return { rows: [], rowCount: 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/safety/accidents/${ACCIDENT_ID}?operating_company_id=${COMPANY}`,
+      payload: { driver_id: FOREIGN_DRIVER },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "accident_link_not_found", fields: ["driver_id"] });
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("UPDATE safety.accident_reports"))).toBe(false);
   });
 });

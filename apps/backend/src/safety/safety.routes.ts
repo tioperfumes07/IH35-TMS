@@ -141,6 +141,37 @@ async function withCompanyScope<T>(
   });
 }
 
+type AccidentLinkInput = {
+  driver_id?: string | null;
+  unit_id?: string | null;
+  trailer_id?: string | null;
+  vendor_id?: string | null;
+  load_id?: string | null;
+};
+
+async function missingAccidentCompanyLinks(
+  client: {
+    query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+  },
+  operatingCompanyId: string,
+  links: AccidentLinkInput,
+): Promise<string[]> {
+  const checks = [
+    ["driver_id", links.driver_id, `SELECT 1 FROM mdata.drivers d WHERE d.id = $1::uuid AND d.archived_at IS NULL AND (d.operating_company_id = $2::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid AND dca.is_authorized = true AND dca.deactivated_at IS NULL))`],
+    ["unit_id", links.unit_id, `SELECT 1 FROM mdata.units u WHERE u.id = $1::uuid AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)`],
+    ["trailer_id", links.trailer_id, `SELECT 1 FROM mdata.equipment e WHERE e.id = $1::uuid AND (e.owner_company_id = $2::uuid OR e.currently_leased_to_company_id = $2::uuid)`],
+    ["vendor_id", links.vendor_id, `SELECT 1 FROM mdata.vendors v WHERE v.id = $1::uuid AND v.operating_company_id = $2::uuid`],
+    ["load_id", links.load_id, `SELECT 1 FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid`],
+  ] as const;
+  const missing: string[] = [];
+  for (const [field, id, sql] of checks) {
+    if (!id) continue;
+    const found = await client.query(sql, [id, operatingCompanyId]);
+    if (!found.rows[0]) missing.push(field);
+  }
+  return missing;
+}
+
 function isSafetyMutationAllowed(role: string) {
   return ["Owner", "Administrator", "Manager", "Safety"].includes(role);
 }
@@ -641,6 +672,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const companyId = body.data.operating_company_id;
 
     const created = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const missingLinks = await missingAccidentCompanyLinks(client, companyId, body.data);
+      if (missingLinks.length > 0) return { kind: "link_not_found" as const, missingLinks };
       const res = await client.query(
         `
           INSERT INTO safety.accident_reports (
@@ -762,10 +795,13 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         "info",
         "SC1-ACCIDENT-OFFICE-CREATOR"
       );
-      return inserted ?? null;
+      return { kind: "ok" as const, row: inserted ?? null };
     });
-    if (!created) return reply.code(500).send({ error: "accident_create_failed" });
-    return reply.code(201).send(created);
+    if (created.kind === "link_not_found") {
+      return reply.code(404).send({ error: "accident_link_not_found", fields: created.missingLinks });
+    }
+    if (!created.row) return reply.code(500).send({ error: "accident_create_failed" });
+    return reply.code(201).send(created.row);
   });
 
   // SC1: patch an existing accident report's linked entities / core fields (company-scoped).
@@ -817,6 +853,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (setClauses.length === 0) return reply.code(400).send({ error: "no_fields_to_update" });
 
     const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const missingLinks = await missingAccidentCompanyLinks(client, companyId, body.data);
+      if (missingLinks.length > 0) return { kind: "link_not_found" as const, missingLinks };
       const beforeRes = await client
         .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           params.data.id,
@@ -855,6 +893,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       );
       return after;
     });
+    if (updated && "kind" in updated && updated.kind === "link_not_found") {
+      return reply.code(404).send({ error: "accident_link_not_found", fields: updated.missingLinks });
+    }
     if (!updated) return reply.code(404).send({ error: "accident_not_found" });
     return updated;
   });

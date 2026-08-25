@@ -67,6 +67,18 @@ export function assertAccidentCreateParamOrder(sources) {
       `${EXPENSE_FORM}: missing suggestExpenseLoad — expense create must auto-detect active trip like CreateWorkOrderModal.`,
     );
   }
+
+  for (const token of [
+    "missingAccidentCompanyLinks(client, companyId, body.data)",
+    "FROM mdata.drivers d",
+    "FROM mdata.units u",
+    "FROM mdata.equipment e",
+    "FROM mdata.vendors v",
+    "FROM mdata.loads l",
+    'error: "accident_link_not_found"',
+  ]) {
+    if (!route.includes(token)) problems.push(`${ROUTE}: missing company-scoped accident linkage guard token: ${token}`);
+  }
   if (!/queryKey:\s*\[[^\]]*suggest-load/s.test(expense) && !expense.includes('"suggest-load"')) {
     problems.push(`${EXPENSE_FORM}: suggest-load queryKey missing — auto-detect not wired.`);
   }
@@ -91,10 +103,12 @@ function main() {
       process.exit(1);
     }
     const broken = assertAccidentCreateParamOrder({
-      [ROUTE]: mutateBroken(route),
+      [ROUTE]: mutateBroken(route)
+        .replaceAll("missingAccidentCompanyLinks(client, companyId, body.data)", "Promise.resolve([])")
+        .replace('error: "accident_link_not_found"', 'error: "not_found"'),
       [EXPENSE_FORM]: expense.replace(/suggestExpenseLoad/g, "NOT_SUGGEST"),
     });
-    if (broken.length < 2) {
+    if (broken.length < 4) {
       console.error(
         `${LABEL} SELFTEST FAIL — planted defect did not fail enough (got ${broken.length}):\n- ${broken.join("\n- ")}`,
       );
