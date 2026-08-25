@@ -628,10 +628,41 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const res = await client
         .query(
           `
-            SELECT *
-            FROM safety.accident_reports
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
+            SELECT ar.*,
+                   NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                   u.unit_number,
+                   tr.equipment_number AS trailer_number,
+                   l.load_number,
+                   v.vendor_name
+            FROM safety.accident_reports ar
+            LEFT JOIN mdata.drivers d
+              ON d.id = ar.driver_id
+             AND (
+               d.operating_company_id = ar.operating_company_id
+               OR EXISTS (
+                 SELECT 1 FROM mdata.driver_company_authorizations detail_dca
+                 WHERE detail_dca.driver_id = d.id
+                   AND detail_dca.company_id = ar.operating_company_id
+                   AND detail_dca.is_authorized = true
+                   AND detail_dca.deactivated_at IS NULL
+               )
+             )
+            LEFT JOIN mdata.units u
+              ON u.id = ar.unit_id
+             AND (u.owner_company_id = ar.operating_company_id
+                  OR u.currently_leased_to_company_id = ar.operating_company_id)
+            LEFT JOIN mdata.equipment tr
+              ON tr.id = ar.trailer_id
+             AND (tr.owner_company_id = ar.operating_company_id
+                  OR tr.currently_leased_to_company_id = ar.operating_company_id)
+            LEFT JOIN mdata.loads l
+              ON l.id = ar.load_id
+             AND l.operating_company_id = ar.operating_company_id
+            LEFT JOIN mdata.vendors v
+              ON v.id = ar.vendor_id
+             AND v.operating_company_id = ar.operating_company_id
+            WHERE ar.id = $1
+              AND ar.operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
