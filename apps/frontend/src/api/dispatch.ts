@@ -743,8 +743,8 @@ export type DispatchLoadEta = {
   driver_lat: number | null;
   driver_lng: number | null;
   distance_remaining_miles: number | null;
-  eta_at: string;
-  source: "samsara" | "manual" | "fallback";
+  eta_at: string | null;
+  source: "samsara" | "manual" | "fallback" | "unavailable";
 };
 
 export function getDispatchLoadEta(loadId: string, operatingCompanyId: string) {

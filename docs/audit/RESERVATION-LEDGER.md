@@ -122,3 +122,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T00:52:00-05:00 | Codex | DISPATCH-UNIT-STATUS-VIEW-FAILURE-MASKED-AS-404 | apps/backend/src/dispatch/loads.routes.ts, scripts/verify-dispatch-oos-gate-not-view-dependent.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-unit-status-honesty |
 | 2026-08-25T00:55:00-05:00 | Codex | DISPATCH-UNIT-STATUS-VIEW-FAILURE-MASKED-AS-404 | — | RELEASED-ON-MERGE | codex/unit-status-honest |
 | 2026-08-25T01:04:00-05:00 | Codex | DISPATCH-ETA-SYNTHETIC-TELEMETRY-LABELED-LIVE | apps/backend/src/dispatch/dispatch-refinements.service.ts, apps/backend/src/telematics/dispatch-live-eta.service.ts, apps/frontend/src/api/dispatch.ts, scripts/verify-dispatch-eta-columns.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-eta-honesty |
+| 2026-08-25T01:08:00-05:00 | Codex | DISPATCH-ETA-SYNTHETIC-TELEMETRY-LABELED-LIVE | — | RELEASED-ON-MERGE | codex/eta-honesty |

@@ -109,8 +109,22 @@ contains("apps/frontend/src/components/dispatch/LiveEtaColumns.tsx", liveEtaColu
 ]);
 
 read("apps/frontend/src/components/dispatch/LiveEtaColumns.test.tsx");
-read("apps/backend/src/telematics/dispatch-live-eta.service.ts");
+const telematicsEta = read("apps/backend/src/telematics/dispatch-live-eta.service.ts");
 read("apps/backend/src/telematics/__tests__/dispatch-live-eta.test.ts");
+const refinedEta = read("apps/backend/src/dispatch/dispatch-refinements.service.ts");
+const dispatchApi = read("apps/frontend/src/api/dispatch.ts");
+
+function etaHonestyFailures(telematics, refined, api) {
+  const out = [];
+  if (/charCodeAt\s*\(/.test(telematics)) out.push("batched live ETA must not synthesize arrival time from load id");
+  if (/else if \(samsaraVehicle\?\.last_seen_at\)[\s\S]{0,420}samsaraEtaAt\s*=/.test(telematics)) out.push("Samsara last_seen_at alone must not manufacture an ETA");
+  if (/charCodeAt\s*\(/.test(refined)) out.push("mounted load ETA endpoint must not synthesize telemetry from load id");
+  if (!/eta_at:\s*null as string \| null[\s\S]{0,100}source:\s*["']unavailable["'] as const/.test(refined)) out.push("mounted load ETA endpoint must return explicit unavailable/null without a real ETA");
+  if (!/eta_at:\s*string \| null/.test(api) || !/source:\s*["']samsara["'] \| ["']manual["'] \| ["']fallback["'] \| ["']unavailable["']/.test(api)) out.push("frontend ETA contract must represent unavailable/null honestly");
+  return out;
+}
+
+for (const issue of etaHonestyFailures(telematicsEta, refinedEta, dispatchApi)) fail(issue);
 
 const loadsApi = read("apps/frontend/src/api/loads.ts");
 contains("apps/frontend/src/api/loads.ts", loadsApi, [
@@ -148,7 +162,23 @@ if (SELFTEST) {
     console.error("verify:dispatch-eta-columns SELFTEST FAIL — planted retired components were not caught");
     process.exit(1);
   }
-  console.log(`verify:dispatch-eta-columns SELFTEST PASS — ${mutations.length + retiredPerRowComponents.length} wiring mutations caught`);
+  const honestMutations = [
+    ["batched synthetic ETA", `${telematicsEta}\nconst hoursAhead = row.id.charCodeAt(0);`],
+    ["mounted synthetic telemetry", `${refinedEta}\nconst fake = loadId.charCodeAt(1);`],
+    ["nullable API removed", dispatchApi.replace("eta_at: string | null", "eta_at: string")],
+  ];
+  for (const [label, planted] of honestMutations) {
+    const found = label === "batched synthetic ETA"
+      ? etaHonestyFailures(planted, refinedEta, dispatchApi)
+      : label === "mounted synthetic telemetry"
+        ? etaHonestyFailures(telematicsEta, planted, dispatchApi)
+        : etaHonestyFailures(telematicsEta, refinedEta, planted);
+    if (!found.length) {
+      console.error(`verify:dispatch-eta-columns SELFTEST FAIL — ${label} was not caught`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:dispatch-eta-columns SELFTEST PASS — ${mutations.length + retiredPerRowComponents.length + honestMutations.length} wiring/honesty mutations caught`);
   process.exit(0);
 }
 
