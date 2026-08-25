@@ -8,6 +8,7 @@ import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Fragment } from "react";
 import { useSearchParams } from "react-router-dom";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 type Filing = Record<string, unknown>;
 
@@ -33,7 +34,12 @@ async function apiPost(path: string, body?: unknown) {
   return res.json();
 }
 
-export function Form2290Filings() {
+type Form2290FilingsProps = {
+  /** Full /compliance/form-2290 route. Safety Permits embeds this table under its own header. */
+  showModuleHeader?: boolean;
+};
+
+export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProps = {}) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -103,7 +109,23 @@ export function Form2290Filings() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    const empty = (
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">
+        Select an operating company.
+      </div>
+    );
+    if (!showModuleHeader) return empty;
+    return (
+      <div className="space-y-4 p-4">
+        <PageHeader
+          backHref="/compliance"
+          breadcrumb={["Compliance", "Form 2290"]}
+          title="Form 2290 filings"
+          subtitle="HVUT annual filing"
+        />
+        {empty}
+      </div>
+    );
   }
 
   const filings = ((filingsQ.data?.filings ?? []) as Filing[]).filter(
@@ -125,11 +147,13 @@ export function Form2290Filings() {
   const perUnit = deadline?.per_unit_deadlines ?? [];
   const missingFirstUse = deadline?.units_missing_first_use ?? [];
 
-  return (
+  const body = (
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
+          {showModuleHeader ? null : (
+            <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
+          )}
           <p className="text-xs text-slate-600">
             {/* No fabricated fallback. This previously rendered a hardcoded August-31 literal whenever
                 the endpoint had not answered — a regulatory date invented by the UI, indistinguishable
@@ -220,6 +244,20 @@ export function Form2290Filings() {
           exportFilename="form-2290-filings"
         />
       )}
+    </div>
+  );
+
+  if (!showModuleHeader) return body;
+
+  return (
+    <div className="space-y-4 p-4">
+      <PageHeader
+        backHref="/compliance"
+        breadcrumb={["Compliance", "Form 2290"]}
+        title="Form 2290 filings"
+        subtitle="HVUT annual filing"
+      />
+      {body}
     </div>
   );
 }

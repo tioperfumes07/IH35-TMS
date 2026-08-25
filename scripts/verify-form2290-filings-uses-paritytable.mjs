@@ -53,16 +53,31 @@ function assertMigrated(src) {
   if (!src.includes("Form 2290 filings")) {
     errors.push(`${PAGE}: must keep the Form 2290 filings heading`);
   }
+  if (!src.includes('from "../../components/layout/PageHeader"') && !src.includes("from '../../components/layout/PageHeader'")) {
+    errors.push(`${PAGE}: full /compliance/form-2290 route must import layout PageHeader`);
+  }
+  if (!src.includes('backHref="/compliance"')) {
+    errors.push(`${PAGE}: PageHeader must set backHref="/compliance" so ← returns to Compliance`);
+  }
+  if (!src.includes('showModuleHeader={false}')) {
+    // Permits.tsx holds the embed flag; this file must still accept the prop so Safety does not get a second ←.
+    if (!src.includes("showModuleHeader")) {
+      errors.push(`${PAGE}: must accept showModuleHeader so Safety Permits can hide the standalone ←`);
+    }
+  }
   return errors;
 }
 
 function selftest() {
   const good = `
+    import { PageHeader } from "../../components/layout/PageHeader";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    export function Form2290Filings({ showModuleHeader = true } = {}) {
     <div>
+      <PageHeader backHref="/compliance" title="Form 2290 filings" />
       <h2>Form 2290 filings</h2>
       <button>Generate draft</button>
-      <ParityTable
+      <ParityTable>
         emptyText="No filings yet."
         storageKey="compliance-form-2290-filings"
         exportFilename="form-2290-filings"
