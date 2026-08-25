@@ -3,6 +3,7 @@ import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 /**
  * LOAD-WO-REVERSE — the load↔work-order link existed in the database and appeared on no screen.
@@ -44,7 +45,7 @@ export function LoadWorkOrdersReverseSection({
       listWorkOrdersFiltered(operatingCompanyId, { load_id: loadId }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
-  const rows = query.data?.work_orders ?? [];
+  const rows = query.isError ? [] : (query.data?.work_orders ?? []);
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -76,16 +77,14 @@ export function LoadWorkOrdersReverseSection({
           <p className="text-sm text-gray-500">Loading…</p>
         ) : null}
         {query.isError ? (
-          <p className="text-sm text-red-600">
-            Could not load work orders for this load.
-          </p>
+          <ListErrorState status={0} message="Could not load work orders for this load." onRetry={() => void query.refetch()} />
         ) : null}
         {!query.isLoading && !query.isError && rows.length === 0 ? (
           <p className="text-sm text-gray-500">
             No work orders linked to this load.
           </p>
         ) : null}
-        {rows.length > 0 ? (
+        {!query.isError && rows.length > 0 ? (
           <ul className="space-y-2">
             {rows.map((row) => (
               <li
