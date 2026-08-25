@@ -1,8 +1,8 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
-import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { listSettlements, openSettlementDispute } from "../../api/driverFinance";
+import { confirmUpload, requestUploadUrlFromFile } from "../../api/docs";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -63,19 +63,23 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       return;
     }
 
-    // Best-effort upload — canonical POST does not yet accept evidence_doc_ids (SETL-PICK-03 wire = category).
-    for (const file of evidenceFiles) {
-      const form = new FormData();
-      form.append("file", file);
-      await fetch(resolveApiUrl("/api/v1/docs/files/upload"), {
-        method: "POST",
-        body: form,
-        credentials: "include",
-      }).catch(() => undefined);
-    }
-
     setSubmitting(true);
     try {
+      const evidenceFileIds: string[] = [];
+      for (const file of evidenceFiles) {
+        const upload = await requestUploadUrlFromFile(file, {
+          operating_company_id: companyId,
+          entity_links: [{ entity_type: "settlement", entity_id: settlement_id }],
+        });
+        const put = await fetch(upload.presigned_url, {
+          method: "PUT",
+          body: file,
+          headers: { "content-type": file.type || "application/octet-stream" },
+        });
+        if (!put.ok) throw new Error(`evidence_upload_failed_${put.status}`);
+        await confirmUpload(upload.file_id);
+        evidenceFileIds.push(upload.file_id);
+      }
       // SETL-PICK-03: same writer as SettlementDetailPage (dispute_category CHECK), not legacy dispute_type.
       await openSettlementDispute({
         operating_company_id: companyId,
@@ -84,6 +88,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         dispute_category: dispute_category,
         dispute_description: dispute_description.trim(),
         disputed_amount_cents: claimedCents,
+        evidence_file_ids: evidenceFileIds,
       });
       pushToast("Dispute submitted", "success");
       setDriverId("");
