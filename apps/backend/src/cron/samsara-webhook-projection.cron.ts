@@ -25,6 +25,17 @@ async function listActiveTenantIds(client: DbClient): Promise<string[]> {
   return res.rows.map((row) => row.operating_company_id);
 }
 
+export async function runSamsaraWebhookProjectionTick(): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    const tenants = await listActiveTenantIds(client);
+    for (const operatingCompanyId of tenants) {
+      assertTenantContext(operatingCompanyId, CRON_NAME);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      await projectSamsaraWebhookEventsForTenant(client, operatingCompanyId);
+    }
+  });
+}
+
 export function initializeSamsaraWebhookProjectionCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -36,20 +47,9 @@ export function initializeSamsaraWebhookProjectionCron(app: FastifyInstance) {
   cron.schedule(
     "*/1 * * * *",
     async () => {
-      await wrapBackgroundJobTick(
-        CRON_NAME,
-        async () => {
-          await withLuciaBypass(async (client) => {
-            const tenants = await listActiveTenantIds(client);
-            for (const operatingCompanyId of tenants) {
-              assertTenantContext(operatingCompanyId, CRON_NAME);
-              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-              await projectSamsaraWebhookEventsForTenant(client, operatingCompanyId);
-            }
-          });
-        },
-        app.log
-      );
+      await wrapBackgroundJobTick(CRON_NAME, async () => {
+        await runSamsaraWebhookProjectionTick();
+      }, app.log);
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }

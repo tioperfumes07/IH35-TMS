@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**19:39 CT GO — deploy `dep-da6e89v10e5c73bcsss0` IN FLIGHT (tip `a44357d8` #15662 in-process job catch-up).** Live until healthz moves = `1bfaaf2`. **CC-1:** still `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` (status=posted, posting_status=unposted). **CC-2:** next unique; Q8 worker is multi-day, not idle-wait. **CC-3:** Bill `2153f5dc-…` already has `unit_id` (T-DEAD from that WO) + WO FK. Next `parts_receive` on `850e2cc4-…`. Transition still authorized. Never `trigger_deploy`. U14 never restamp.
+
 **19:17 CT RULING — Kanban `@dnd-kit` drag failure in a seat tool is not a HOLD.** Advance TEST load `L-20260824-0007` via `PATCH /api/v1/dispatch/loads/:id/transition?operating_company_id=` (same LV-TXN-004 path as the board). Forbidden: mdata `/status` post-dispatch, SQL status writes. **CC-1:** still `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…`. Live `1bfaaf2`. Never `trigger_deploy`. U14 never restamp.
 
 **19:13 CT GO — live `1bfaaf2`.** FK live. No second API deploy (no new API product commits). **CC-1:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` — reuse poster. **CC-2:** next unique; print battery done. **CC-3:** retry WO→Bill; prove `unit_id` after #15649 SPA. Never `trigger_deploy`. U14 never restamp.
