@@ -12,6 +12,7 @@ import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../..
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
+import { ListErrorState } from "../../components/ListErrorState";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -439,6 +440,16 @@ function ProgramTab({ data }: { data: SystemData }) {
     if (phaseFilter === "complete") return phases.filter((p) => p.total > 0 && p.completed >= p.total);
     return phases.filter((p) => p.total === 0 || p.completed < p.total);
   }, [t?.phases, phaseFilter]);
+  if (tracker.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load the program tracker"
+        status={0}
+        message={(tracker.error as Error)?.message}
+        onRetry={() => void tracker.refetch()}
+      />
+    );
+  }
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
@@ -458,10 +469,7 @@ function ProgramTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Phases" sub="Rollup by phase (from last reconcile sync).">
-        {tracker.isError ? (
-          <p className="text-[12px] text-slate-500">Tracker unavailable.</p>
-        ) : (
-          <div className="space-y-2">
+        <div className="space-y-2">
             <CollapsedListFilters
               activeFilterCount={phaseFilter === "all" ? 0 : 1}
               onApply={staged.apply}
@@ -513,8 +521,7 @@ function ProgramTab({ data }: { data: SystemData }) {
                 },
               ]}
             />
-          </div>
-        )}
+        </div>
       </Card>
     </div>
   );
