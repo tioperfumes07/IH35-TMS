@@ -149,3 +149,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T11:24:00-05:00 | Codex | USERS-NOTIFICATION-PREFERENCES-READ-FAILURE-MASKED-AS-DEFAULTS | — | RELEASED-ON-MERGE | codex/notification-prefs-honesty |
 | 2026-08-25T11:52:00-05:00 | Codex | NOTIFICATION-RECIPIENT-CENSUS-FAILURE-FALSE-ZERO | apps/backend/src/notifications/dispatcher.ts, scripts/verify-safety-event-severe-notifications.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-notification-recipient-census |
 | 2026-08-25T11:58:00-05:00 | Codex | NOTIFICATION-RECIPIENT-CENSUS-FAILURE-FALSE-ZERO | — | RELEASED-ON-MERGE | codex/notification-recipient-census-honesty |
+| 2026-08-25T12:03:00-05:00 | Codex | FUEL-PLANNER-DETAIL-READ-FAILURES-FALSE-EMPTY | apps/backend/src/fuel/planner.routes.ts, scripts/verify-fuel-home-dashboard-wired.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-fuel-planner-detail-honesty |
