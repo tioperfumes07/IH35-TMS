@@ -12,6 +12,8 @@ import { runSamsaraWebhookProjectionTick } from "./samsara-webhook-projection.cr
 import { runLegalMattersReminderTick } from "../legal/matters-reminder.cron.js";
 import { runInsurancePaymentReminderTick } from "../insurance/payment-reminder.service.js";
 import { runCashAdvanceExpiryTick } from "./cash-advance-request-expiry-cron.js";
+import { processEmailQueueTick } from "../email/cron.js";
+import { runChatConfirmationEscalationTick } from "./chat-confirmation-escalation.cron.js";
 
 /**
  * SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS
@@ -40,6 +42,8 @@ export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
   { jobName: "safety.cert_expiry_monitor", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_CERT_EXPIRY_MONITOR === "false" },
   { jobName: "search.indexer_incremental", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_SEARCH_INDEXER_INCREMENTAL === "false" },
   { jobName: "idempotency.cleanup_cron", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_IDEMPOTENCY_CLEANUP_CRON === "false" },
+  { jobName: "email.queue_processor", maxStaleMinutes: 5, disabled: () => process.env.EMAIL_CRON_ENABLED !== "true" },
+  { jobName: "chat.confirmation_escalation", maxStaleMinutes: 5, disabled: () => process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON === "false" },
 ];
 
 function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) | null {
@@ -65,6 +69,14 @@ function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) |
     case "idempotency.cleanup_cron":
       return async () => {
         await purgeExpiredIdempotencyKeys();
+      };
+    case "email.queue_processor":
+      return async () => {
+        await processEmailQueueTick(app.log);
+      };
+    case "chat.confirmation_escalation":
+      return async () => {
+        await runChatConfirmationEscalationTick();
       };
     default:
       return null;

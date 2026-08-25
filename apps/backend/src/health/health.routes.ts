@@ -462,6 +462,16 @@ export function backgroundJobRule(
       return { enabled: true, maxStaleMinutes: 30 };
     case "email.queue_processor":
       return { enabled: envEnabled("EMAIL_CRON_ENABLED"), maxStaleMinutes: 5 };
+    case "chat.confirmation_escalation":
+      // "* * * * *" = every 1m → two missed periods. Cron default-ON unless
+      // ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON=false (chat-confirmation-escalation.cron.ts).
+      // SYSTEM-BACKGROUND-JOB-LEDGER-STALE: this job was recording wrapBackgroundJobTick rows
+      // with no health rule, so LATE after deploy churn was invisible; with a rule it must
+      // also catch-up on boot (in-process-startup-catchup.ts).
+      return {
+        enabled: process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON !== "false",
+        maxStaleMinutes: 5,
+      };
     case "qbo.sync_queue_runner":
       return { enabled: true, maxStaleMinutes: 10 };
     case "qbo.sync_alerts_cron":

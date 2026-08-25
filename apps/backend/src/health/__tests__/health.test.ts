@@ -263,4 +263,12 @@ describe("A1-1 backgroundJobRule — QBO mirror-staleness arms on connected real
     expect(backgroundJobRule("qbo.sync_alerts_cron", true)?.enabled).toBe(false);
     expect(backgroundJobRule("email.queue_processor", true)?.enabled).toBe(false);
   });
+
+  it("chat confirmation escalation is armed unless explicitly disabled", () => {
+    delete process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON;
+    expect(backgroundJobRule("chat.confirmation_escalation", false)?.enabled).toBe(true);
+    expect(backgroundJobRule("chat.confirmation_escalation", false)?.maxStaleMinutes).toBe(5);
+    process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON = "false";
+    expect(backgroundJobRule("chat.confirmation_escalation", false)?.enabled).toBe(false);
+  });
 });
