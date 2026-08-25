@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**18:29 CT GO-1829 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. **CC-1 NOW=#3 expense 57cabbab** (not leftover). **CC-2 item 26 `/cash-flow` NOW.** **CC-3 NOW=73–75.** **Codex NOW=hop.assign 76 then 81+.** Cascade: reset to origin/main, walk `/program`+`/cash-flow`. Skip #15546. Nobody `trigger_deploy`. U14 never restamp.
+
 **17:58 CT GO-1758 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. #1 `#15941` #2 `#15947` on main. Live API until land still **`ecd09bf`**. API deploy **IN FLIGHT** `dep-da71ug0u01pc73dm7om0` tip `3f49b42589` — nobody `trigger_deploy`. **CC-1 NOW=#3 expense 57cabbab.** Skip #15546. U14 never restamp.
 
 **17:15 CT GO-1715 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Owner: seats must work; Cursor **in money on #1**. Live API **`ecd09bf`**. SPA autoDeploy **IN FLIGHT** `dep-da716d52g9dc73881p6g` — nobody `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. **CC-1:** grep `displayId = loadNumber` on main before coding #1; else **#2 cash-flow Proforma labels**. **CC-2:** do not remake #15921. **CC-3:** do not remake #15933. Skip #15546. U14 never restamp.

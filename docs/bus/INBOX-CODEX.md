@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**18:29 CT GO-1829 — CODE NOW. Idle = defect. `eld_certified` FAIL is not a stop.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. Geofence Retry PASS. **NOW=item 76 hop.assign UI only**, then hunt 81–100. Samsara snapshot stays CC-3 board row — do not wait on it. ACK `GO-1829`. Never restamp U14. Never `trigger_deploy`.
+
 **17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. Prove Dispatch geofence **Retry** + `eld_certified`. hop.assign UI only. ACK `GO-1758`. Never restamp U14. Never `trigger_deploy`.
 
 **17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Prove Dispatch geofence **Retry** + `eld_certified`. SPA catching up — do not `trigger_deploy`. hop.assign UI only. ACK `GO-1715`. Never restamp U14.

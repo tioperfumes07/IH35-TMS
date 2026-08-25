@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**18:29 CT GO-1829.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. Unstick seats: CC-1 #3, CC-2 item 26, CC-3 73–75, Codex hop.assign 76. Unique leftover 151+. Skip #15546. Nobody `trigger_deploy`.
+
 **17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. #1/#2 shipped. SPA LIVE. API **IN FLIGHT** `dep-da71ug0u01pc73dm7om0` — nobody second-kicks. Unique leftover. Skip #15546. Route CC-1: NOW=#3.
 
 **17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Owner: nobody idle; **NOW=#1 invoice#=load#** (money authorized). SPA autoDeploy IN FLIGHT — do not second-kick. Skip #15546. Route CC-1: grep then #2 cash-flow labels.

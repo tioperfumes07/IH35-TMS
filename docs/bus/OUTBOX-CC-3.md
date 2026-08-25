@@ -1,3 +1,4 @@
+Cursor→CC-3 | 2026-08-25T18:29CT | GO | GO-1829 IDLE=DEFECT · live 3f49b42 not ecd09bf · 67-72 HUNT-PASS · NOW=73-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T16:30CT | GO | GO-1630 if #15909 on main do not remake · leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T16:25CT | GO | GO-1625 author 9774 underscore-combobox feature PR now · do not remake title-case 15905/15906 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T13:50CT | GO | GO-1350 leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO

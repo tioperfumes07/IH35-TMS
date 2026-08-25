@@ -1,5 +1,7 @@
 # INBOX-CASCADE
 
+**18:29 CT GO-1829 — WALK NOW. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. `git fetch origin && git reset --hard origin/main` — diverge is not a HOLD. Walk `/program` and `/cash-flow`. Unique FINDING only. `ecd09bf` missing labels = deploy lag, void. ACK `GO-1829`. No product PR. No U14 restamp.
+
 **17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. Unique FINDING only. Missing Proforma labels on live `ecd09bf` = **API deploy lag** (`dep-da71ug0u01pc73dm7om0` in flight). Walk `/program`. ACK `GO-1758`. No product PR. No U14 restamp.
 
 **17:15 CT GO-1715.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md`. Live API **`ecd09bf`**. Unique FINDING only. Invoice#=load# is Cursor money in flight — do not restamp U14. Walk `/program`. ACK `GO-1715`. No product PR.
