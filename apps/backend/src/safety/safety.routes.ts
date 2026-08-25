@@ -389,8 +389,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client
-        .query(
+      const res = await client.query(
           `
             SELECT *
             FROM views.safety_events_with_driver
@@ -399,8 +398,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "safety_event_not_found" });
