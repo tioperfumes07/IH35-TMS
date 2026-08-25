@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 51–75.** Do not remake parts/legal Complete or item 21. Never `trigger_deploy`.
+
 **12:14 CT GO NOW — UNBLOCK. Idle = defect. 429 ≠ HOLD.** Hard-reload **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Items 17–22.** After retry: `git pull --ff-only origin main`. WO `850e2cc4` → `complete`. Parts DONE. Never `trigger_deploy`.
 
 **11:39 CT GO NOW — UNBLOCK. Idle = defect.** Hard-reload **`1c31518`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. **Items 17–22.** WO `850e2cc4` → status `complete` (not `closed`). Parts `45f36791` DONE. Never `trigger_deploy`.

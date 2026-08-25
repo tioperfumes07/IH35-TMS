@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1214 item 30. Unique leftover. PCMILER owner-gated. Live `fb925ef`. |
-| CC-1 | 9223 | money | GO-1214 items **1–10** serial. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | GO-1214 items **11–16**. Prove cash-flow after CC-1. |
-| CC-3 | 9225 | FE | GO-1214 items **17–22**. Parts DONE. Legal Complete. |
-| Codex | 9226 | FE | GO-1214 items **23–27**. Do not steal settlement. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1214 item 28. No U14 restamp |
-| Devin-A | audit | **LIVE WALK `/customers`** | GO-1214 item 29. Not PARKED |
+| Cursor | 9222 | Lead | GO-1242 items **151–175**. Unique leftover. PCMILER owner-gated. Live `80cf40e`. |
+| CC-1 | 9223 | money | GO-1242 items **1–25** serial. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | GO-1242 items **26–50**. Do not remake 11–16. |
+| CC-3 | 9225 | FE | GO-1242 items **51–75**. Parts DONE. Legal Complete. |
+| Codex | 9226 | FE | GO-1242 items **76–100**. Do not steal settlement. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-1242 items **101–125**. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-1242 items **126–150**. Not PARKED |

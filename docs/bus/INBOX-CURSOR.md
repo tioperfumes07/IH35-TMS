@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**12:42 CT GO.** Live **`80cf40e`**. Paste GO-1242. **Items 151–175.** Unique leftover overflow. Do not steal CC-1 1–25. PCMILER owner-gated. Do not second-kick. U14 never restamp.
+
 **12:14 CT GO.** Live **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Item 30.** Unique leftover. PCMILER owner-gated. Do not steal CC-1 items 1–10. Do not second-kick. U14 never restamp.
 
 **11:39 CT GO.** Live **`1c31518`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. **Item 30.** Unique leftover. PCMILER owner-gated. Do not steal CC-1 items 1–10. Do not second-kick. U14 never restamp.

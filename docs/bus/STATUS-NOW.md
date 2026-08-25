@@ -5,16 +5,16 @@
 
 U14 **14/14 CERTIFIED** — never recertify.
 
-**12:14 CT:** Unblock GO-1214. Live **`fb925ef`**. CC 429 ≠ HOLD. Paste `PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. Idle = defect.
+**12:42 CT:** GO-1242 · 25 items/seat · live **`80cf40e`**. Paste `PASTE-ALL-SEATS-GO-2026-08-25-1242.md`. Idle = defect.
 
 | Seat | NOW |
 |------|-----|
-| Cursor 9222 | **Lead** item 30 unique leftover · PCMILER owner-gated |
-| CC-1 9223 | **FIX** items 1–10 serial (invoice#=load# first) · money clone, not `IH35-TMS-clean` |
-| CC-2 9224 | **TEST/FIX** items 11–16 · unique leftover meanwhile |
-| CC-3 9225 | **FIX** items 17–22 · WO complete + print |
-| Codex 9226 | **TEST/FIX** items 23–27 · attach session · do not steal settlement mint |
-| Cascade | **TEST** item 28 `/program` walk FINDING only |
-| Devin-A | **TEST** item 29 hop.book + Create bill Bill no. |
+| Cursor 9222 | items **151–175** lead + overflow unique |
+| CC-1 9223 | items **1–25** serial · #1 invoice#=load# |
+| CC-2 9224 | items **26–50** unique leftover (11–16 ACK’d) |
+| CC-3 9225 | items **51–75** leftover-16 + lists/legal |
+| Codex 9226 | items **76–100** attach · no settlement mint |
+| Cascade | items **101–125** FINDING / AUDIT-PASS |
+| Devin-A | items **126–150** not PARKED |
 
-ACK: `SEAT | ACK | GO-1214 | PORT=n | SHA=fb925ef | ITEM=<1-30> | FINDING=<id-or-none> | GO`
+ACK: `SEAT | ACK | GO-1242 | PORT=n | SHA=80cf40e | ITEM=<1-175> | FINDING=<id-or-none> | GO`

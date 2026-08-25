@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 1–25 serial.** NOW=#1 invoice#=load#. Money clone, not `IH35-TMS-clean`. Never `/425c`. Never `trigger_deploy`.
+
 **12:14 CT GO NOW — UNBLOCK. Idle = defect. 429 ≠ HOLD.** Hard-reload **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Items 1–10 serial.** After retry: `git pull --ff-only origin main` on your **money clone** (not Cursor lead `IH35-TMS-clean` / not `cursor/bus-go-1139`). NOW=#1 `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER`. Never `/425c`. Never `trigger_deploy`.
 
 **11:39 CT GO NOW — UNBLOCK. Idle = defect.** Hard-reload **`1c31518`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md`. **Items 1–10 serial.** Codex handoffs below are extra after #1–3. Never `/425c`. Never `trigger_deploy`.
