@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**13:50 CT GO-1350 NOW.** Paste GO-1350. Leftover **29, 40, 44–45, 48–50**. Do not remake 11–16. **#26 blocked on CC-1 #1–2.** Never `trigger_deploy`. ACK `GO-1350`.
+
 **12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 26–50.** Do not remake ACK’d 11–16. Unique leftover only. Never `trigger_deploy`.
 
 **12:14 CT GO NOW — UNBLOCK. Idle = defect. 429 ≠ HOLD.** Hard-reload **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Items 11–16.** After retry: `git pull --ff-only origin main`. Unique leftover while waiting on CC-1. Never remake hop 9. Never `trigger_deploy`.

@@ -1,5 +1,7 @@
 # STATUS-NOW
 
+**13:50 CT:** GO-1350 remaining-scenario wake · paste `PASTE-ALL-SEATS-GO-2026-08-25-1350.md` · deploy in-flight `dep-da6u8615efls73cul3fg` · CC-1 still #1.
+
 **Canonical NOW:** `docs/bus/NOW-ONE-SOURCE.md`  
 **After U14 sequence:** `docs/lockdown/POST-URGENT-14-MODULE-SEQUENCE-2026-08-23.md`
 
@@ -17,4 +19,4 @@ U14 **14/14 CERTIFIED** — never recertify.
 | Cascade | items **101–125** FINDING / AUDIT-PASS |
 | Devin-A | items **126–150** not PARKED |
 
-ACK: `SEAT | ACK | GO-1242 | PORT=n | SHA=80cf40e | ITEM=<1-175> | FINDING=<id-or-none> | GO`
+ACK: `SEAT | ACK | GO-1350 | PORT=n | SHA=<healthz> | ITEM=<1-175> | FINDING=<id-or-none> | GO`

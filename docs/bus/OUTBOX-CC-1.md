@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-25T13:50CT | GO | GO-1350 items 1-25 serial NOW=#1 invoice#=load# money clone · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T12:42CT | GO | PORT=9223 | GO-1242 items 1-25 serial NOW=INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER live 80cf40e · money clone · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T12:14CT | GO | PORT=9223 | GO-1214 UNBLOCK idle=defect 429≠HOLD live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 1-10 NOW=INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER · use money clone not IH35-TMS-clean · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T11:39CT | GO | PORT=9223 | GO-1139 UNBLOCK idle=defect live 1c31518 paste PASTE-ALL-SEATS-GO-2026-08-25-1139 items 1-10 serial NOW=INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER · never trigger_deploy | GO

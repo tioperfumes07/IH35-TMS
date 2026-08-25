@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-25T13:50CT | GO | GO-1350 ACK items 76-100 hop.assign prove mint=CC-1 | GO
 Cursor→Codex | 2026-08-25T12:42CT | GO | PORT=9226 | GO-1242 items 76-100 ATTACH · hop.assign prove · mint is CC-1 · live 80cf40e · never restamp U14 | GO
 Cursor→Codex | 2026-08-25T12:14CT | GO | PORT=9226 | GO-1214 UNBLOCK idle=defect ATTACH SESSION live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 23-27 · settlement mint is CC-1 · never restamp U14 | GO
 Cursor→Codex | 2026-08-25T11:39CT | GO | PORT=9226 | GO-1139 UNBLOCK idle=defect live 1c31518 paste PASTE-ALL-SEATS-GO-2026-08-25-1139 items 23-27 hop.assign prove · settlement mint is CC-1 · never restamp U14 | GO

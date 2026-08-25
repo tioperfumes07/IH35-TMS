@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**13:50 CT GO-1350 — REMAINING SCENARIOS + ALL-SEAT AUDIT.** Live at kick **`db5bd15`**. Cursor kicked API deploy **`dep-da6u8615efls73cul3fg`** (one in-flight — nobody else `trigger_deploy`). Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1350.md`. Same 25-item lists. **CC-1 NO ACK — NOW=#1 invoice#=load# on money clone.** CC-2 leftover 29/40/44–50. CC-3 leftover 62–75 (WO complete waits CC-1 #6). Codex ACK + hop.assign prove. Cascade OUTBOX stale — **walk `/program` now.** Devin-A **walk now.** Idle = defect. U14 never restamp.
+
 **12:42 CT GO — 25 items/seat · LIVE `80cf40e`.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1242.md`. CC-1 still 1–10 first. CC-2/CC-3 do not remake morning ACKs. Idle = defect. CC never `trigger_deploy`. U14 never restamp.
 
 **12:14 CT GO — IDLE = DEFECT · LIVE `fb925ef`.** Same 30 items. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. CC 429 ≠ HOLD. Hard-reload app. CC never `trigger_deploy`. U14 never restamp.

@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**13:50 CT GO-1350 NOW.** Paste GO-1350. **Items 76–100.** ACK required. hop.assign prove (mint is CC-1). Grep SETL-EVIDENCE before remake. Never restamp U14. Never `trigger_deploy`.
+
 **12:42 CT GO NOW.** Live **`80cf40e`**. Paste GO-1242. **Items 76–100.** Attach. Settlement mint is CC-1. Never restamp U14. Never `trigger_deploy`.
 
 **12:14 CT GO NOW — UNBLOCK. Idle = defect. Attach this session.** Hard-reload **`fb925ef`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md`. **Items 23–27.** Settlement mint is **CC-1**. Do not fake accident. Never `trigger_deploy`. Never restamp U14.

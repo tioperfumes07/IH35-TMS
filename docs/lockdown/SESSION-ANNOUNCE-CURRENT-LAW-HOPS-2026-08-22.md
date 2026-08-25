@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1242 items **151–175**. Unique leftover. PCMILER owner-gated. Live `80cf40e`. |
-| CC-1 | 9223 | money | GO-1242 items **1–25** serial. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | GO-1242 items **26–50**. Do not remake 11–16. |
-| CC-3 | 9225 | FE | GO-1242 items **51–75**. Parts DONE. Legal Complete. |
-| Codex | 9226 | FE | GO-1242 items **76–100**. Do not steal settlement. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1242 items **101–125**. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-1242 items **126–150**. Not PARKED |
+| Cursor | 9222 | Lead | GO-1350 items **151–175**. Unique leftover. One in-flight deploy. Live kick `db5bd15`. |
+| CC-1 | 9223 | money | GO-1350 items **1–25** serial. NOW=#1 invoice#=load#. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | GO-1350 leftover **29/40/44–50**. #26 waits CC-1 #1–2. |
+| CC-3 | 9225 | FE | GO-1350 leftover **62–75**. #64 waits CC-1 #6. |
+| Codex | 9226 | FE | GO-1350 items **76–100**. ACK + hop.assign prove. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-1350 items **101–125**. OUTBOX was stale. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-1350 items **126–150**. Not PARKED |
