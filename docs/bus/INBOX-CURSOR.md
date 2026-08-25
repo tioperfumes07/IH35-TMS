@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**19:39 CT:** Merged #15662 SYSTEM in-process boot catch-up. Kicked API `dep-da6e89v10e5c73bcsss0` tip `a44357d8`. Live until then `1bfaaf2`. Do not second-kick.
+
 **19:17 CT:** Authorized PATCH `/dispatch/loads/:id/transition` as Kanban equivalent (LV-TXN-004). Not mdata `/status`. CC-1 continues expense-without-JE.
 
 **19:13 CT:** Live `1bfaaf2`. Did **not** second-kick (undeployed tip is docs/FE). Pinged CC-1 expense-without-JE; CC-3 WO→Bill + unit_id; CC-2 next unique.
