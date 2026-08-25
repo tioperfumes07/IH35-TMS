@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getFactoringRecoursePipeline, getFactoringChargebacksFees } from "../../api/factoring";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 // LINK-F5171/LINK-F5180 — factoring:home.recourse_pipeline + factoring:home.chargebacks_fees
 // reverse gaps. Both endpoints now accept an optional customer_id filter (LINK-F5180), resolved
@@ -31,7 +32,16 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
         <h2 className="text-sm font-semibold text-slate-900">Recourse & chargebacks</h2>
-        {isError ? <p className="mt-2 text-xs text-red-700">Recourse/chargebacks data unavailable.</p> : null}
+        {isError ? (
+          <ListErrorState
+            status={0}
+            message="Recourse/chargebacks data unavailable."
+            onRetry={() => {
+              void recourseQuery.refetch();
+              void feesQuery.refetch();
+            }}
+          />
+        ) : null}
         {isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
         {!isLoading && !isError ? <p className="mt-2 text-xs text-gray-500">No recourse-at-risk invoices or chargebacks for this customer.</p> : null}
       </section>

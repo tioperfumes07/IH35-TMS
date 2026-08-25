@@ -109,6 +109,9 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
   if (!/factoring_recourse_customer/.test(section) || !/factoring_chargebacks_customer/.test(section)) {
     problems.push(`${SECTION}: must use EntityLink kinds factoring_recourse_customer + factoring_chargebacks_customer`);
   }
+  if (!/<ListErrorState[\s\S]*?Recourse\/chargebacks data unavailable\.[\s\S]*?recourseQuery\.refetch\(\)[\s\S]*?feesQuery\.refetch\(\)/.test(section)) {
+    problems.push(`${SECTION}: combined reverse-read failure must retry both exact scoped queries`);
+  }
   if (/from "react-router-dom"/.test(section)) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
@@ -147,7 +150,10 @@ function selftest() {
     [SECTION]: `
       getFactoringRecoursePipeline(operatingCompanyId, 200, { customer_id: customerId });
       getFactoringChargebacksFees(operatingCompanyId, customerId);
-    
+      <ListErrorState message="Recourse/chargebacks data unavailable." onRetry={() => {
+        void recourseQuery.refetch();
+        void feesQuery.refetch();
+      }} />
       factoring_recourse_customer factoring_chargebacks_customer`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringRecourseReverseSection } from "../components/customers/CustomerFactoringRecourseReverseSection";
@@ -174,6 +180,8 @@ function selftest() {
     { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace('case "factoring_recourse_load":', "// removed") },
     { ...good, [SECTION]: good[SECTION].replace("getFactoringRecoursePipeline(operatingCompanyId, 200, { customer_id: customerId });", "") },
     { ...good, [SECTION]: good[SECTION].replace("getFactoringChargebacksFees(operatingCompanyId, customerId);", "") },
+    { ...good, [SECTION]: good[SECTION].replace("void recourseQuery.refetch();", "") },
+    { ...good, [SECTION]: good[SECTION].replace("void feesQuery.refetch();", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringRecourseReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
     { ...good, [SELF]: good[SELF].replace('"leaves":["home.recourse_pipeline","home.chargebacks_fees"]', '"leafRe":"^home.*$"') },
