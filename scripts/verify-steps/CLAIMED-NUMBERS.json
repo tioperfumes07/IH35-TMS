@@ -4309,6 +4309,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-maintenance-leaf-back-buttons-wired"
   },
+  "9760": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-audit-log-viewer-no-double-pagination"
+  },
   "9763": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-2",
