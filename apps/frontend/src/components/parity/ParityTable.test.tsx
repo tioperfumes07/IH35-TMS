@@ -60,6 +60,23 @@ describe("ParityTable (A1 grammar)", () => {
     ).not.toContain("Amount");
   });
 
+  it("gear drafts QBO rows-per-page 25/50/100/300 and applies after Apply", () => {
+    const many: Row[] = Array.from({ length: 30 }, (_, i) => ({
+      id: String(i + 1),
+      name: `Row ${i + 1}`,
+      amount: "$1",
+    }));
+    render(<ParityTable<Row> columns={columns} rows={many} rowKey={(r) => r.id} />);
+    expect(screen.getByText("1–25 of 30")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Table settings"));
+    const select = screen.getByLabelText("Rows per page") as HTMLSelectElement;
+    expect([...select.querySelectorAll("option")].map((opt) => opt.value)).toEqual(["25", "50", "100", "300"]);
+    fireEvent.change(select, { target: { value: "50" } });
+    expect(screen.getByText("1–25 of 30")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+    expect(screen.getByText("1–30 of 30")).toBeInTheDocument();
+  });
+
   it("gear Cancel discards drafted column changes", () => {
     render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     fireEvent.click(screen.getByLabelText("Table settings"));

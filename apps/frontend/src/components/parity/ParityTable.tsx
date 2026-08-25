@@ -282,7 +282,7 @@ export function ParityTable<T>({
   rowClassName,
   emptyText = "No records found.",
   density: densityProp = "regular",
-  pageSizeOptions = [15, 50, 100, 300],
+  pageSizeOptions = [25, 50, 100, 300],
   initialPageSize,
   storageKey,
   toolbar,
@@ -337,7 +337,7 @@ export function ParityTable<T>({
   // pre-paged caller can pin the size with no callback. Internal state is unchanged otherwise.
   const isPageSizeControlled = controlledPageSize != null;
   const [internalPageSize, setInternalPageSize] = useState<number>(
-    persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 15,
+    persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 25,
   );
   const pageSize = isPageSizeControlled ? controlledPageSize : internalPageSize;
   const [hidden, setHidden] = useState<Set<string>>(
@@ -350,6 +350,7 @@ export function ParityTable<T>({
   const [gearOpen, setGearOpen] = useState(false);
   const [draftHidden, setDraftHidden] = useState<Set<string>>(() => new Set(hidden));
   const [draftDensity, setDraftDensity] = useState<ParityDensity>(density);
+  const [draftPageSize, setDraftPageSize] = useState<number>(pageSize);
   const [toolbarSearch, setToolbarSearch] = useState("");
   const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
   // Controlled selection (Phase A5) mirrors A1 expansion: presence of onSelectionChange
@@ -384,25 +385,29 @@ export function ParityTable<T>({
   const cancelGear = () => {
     setDraftHidden(new Set(hidden));
     setDraftDensity(density);
+    setDraftPageSize(pageSize);
     setGearOpen(false);
   };
 
   const openGear = () => {
     setDraftHidden(new Set(hidden));
     setDraftDensity(density);
+    setDraftPageSize(pageSize);
     setGearOpen(true);
   };
 
   const applyGear = () => {
     setHidden(new Set(draftHidden));
     setDensity(draftDensity);
-    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize, colWidths });
+    changePageSize(draftPageSize);
+    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: draftPageSize, colWidths });
     setGearOpen(false);
   };
 
   const resetGear = () => {
     setDraftHidden(new Set(columns.filter((column) => column.defaultHidden).map((column) => String(column.key))));
     setDraftDensity(densityProp);
+    setDraftPageSize(pageSizeOptions[0] ?? 25);
   };
 
   // Outside click / Escape cancels uncommitted gear edits.
@@ -808,6 +813,7 @@ export function ParityTable<T>({
           resultCount={rows.length}
           totalCount={sourceRows.length}
           hideSearch={suppressToolbarSearch}
+          className="min-w-0 flex-1"
         />
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (
@@ -849,6 +855,24 @@ export function ParityTable<T>({
             </button>
             {gearOpen ? (
               <div className="absolute right-0 z-20 mt-1 w-60 rounded-md border border-gray-200 bg-white p-2 shadow-lg">
+                <div className="mb-2">
+                  <label htmlFor="parity-gear-page-size" className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    Rows per page
+                  </label>
+                  <select
+                    id="parity-gear-page-size"
+                    aria-label="Rows per page"
+                    className="h-8 w-full rounded-sm border border-gray-300 px-1 text-[12px]"
+                    value={draftPageSize}
+                    onChange={(e) => setDraftPageSize(Number(e.target.value))}
+                  >
+                    {pageSizeOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   Density
                 </div>

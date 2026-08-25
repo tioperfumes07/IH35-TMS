@@ -73,6 +73,12 @@ function assertComponent(src) {
   if (!src.includes("hidePager = false")) {
     errors.push(`${COMPONENT}: hidePager must default to false (current behavior)`);
   }
+  if (!src.includes("pageSizeOptions = [25, 50, 100, 300]")) {
+    errors.push(`${COMPONENT}: default pageSizeOptions must be QBO 25/50/100/300`);
+  }
+  if (!src.includes('htmlFor="parity-gear-page-size"') || !src.includes("Rows per page")) {
+    errors.push(`${COMPONENT}: gear must include QBO rows-per-page (25/50/100/300)`);
+  }
   // The controlled-sort precedent this API mirrors must still exist.
   if (!/isSortControlled\s*=\s*onSortChange\s*!=\s*null/.test(src)) {
     errors.push(`${COMPONENT}: controlled-sort precedent (isSortControlled) must be preserved`);
@@ -89,6 +95,7 @@ function assertTests(src) {
     "hidePager: no pager chrome in the DOM",
     "controlled pageSize: the prop drives slicing; the selector fires onPageSizeChange without internal mutation",
     "pre-paged combination: pageSize = rows.length + hidePager renders every provided row with no pager",
+    "gear drafts QBO rows-per-page 25/50/100/300 and applies after Apply",
   ];
   for (const name of required) {
     if (!src.includes(name)) {
@@ -109,7 +116,7 @@ function selftest() {
       onPageSizeChange?: (size: number) => void;
       hidePager?: boolean;
     };
-    export function ParityTable({ onSortChange, page: controlledPage, onPageChange, pageSize: controlledPageSize, onPageSizeChange, hidePager = false }) {
+    export function ParityTable({ onSortChange, page: controlledPage, onPageChange, pageSize: controlledPageSize, onPageSizeChange, hidePager = false, pageSizeOptions = [25, 50, 100, 300] }) {
       const isSortControlled = onSortChange != null;
       const isPageControlled = onPageChange != null;
       const [internalPage, setInternalPage] = useState(1);
@@ -124,7 +131,9 @@ function selftest() {
         if (!isPageSizeControlled) setInternalPageSize(next);
         changePage(1);
       }
-      return hidePager ? null : pager;
+      return hidePager ? null : (
+        <label htmlFor="parity-gear-page-size">Rows per page</label>
+      );
     }
   `;
   // Pre-A3 shape: internal-only pagination, always-rendered pager (the exact shape
@@ -150,6 +159,7 @@ function selftest() {
     it("hidePager: no pager chrome in the DOM (rows still slice internally)", () => {});
     it("controlled pageSize: the prop drives slicing; the selector fires onPageSizeChange without internal mutation", () => {});
     it("pre-paged combination: pageSize = rows.length + hidePager renders every provided row with no pager", () => {});
+    it("gear drafts QBO rows-per-page 25/50/100/300 and applies after Apply", () => {});
   `;
   const badTests = `it("renders rows", () => {});`;
 
@@ -165,8 +175,8 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL good tests fixture:`, assertTests(goodTests));
     process.exit(1);
   }
-  if (assertTests(badTests).length !== 6) {
-    console.error(`${LABEL} --selftest FAIL bad tests fixture should miss all 6`);
+  if (assertTests(badTests).length !== 7) {
+    console.error(`${LABEL} --selftest FAIL bad tests fixture should miss all 7`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

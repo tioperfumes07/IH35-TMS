@@ -14,12 +14,14 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
+import { getBankingTiles } from "../../../api/banking";
+import { listBills, listBillPayments, listExpenses, listInvoices } from "../../../api/accounting";
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -341,8 +343,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const hasReverseFilter = Object.values(reverseFilter).some(Boolean);
   // MDP-SINGLE-ROW: ONE projection date (daily projections — one day per entry), not a From/To
   // range. It is the default entry_date for new rows on both panels.
-  const [projectionDate, setProjectionDate] = useState("");
+  const [projectionDate, setProjectionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
+  const [pullError, setPullError] = useState<string | null>(null);
 
   const entriesQuery = useQuery({
     queryKey: ["forecast", "entries", operatingCompanyId, reverseFilter],
@@ -354,10 +357,16 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     queryFn: () => getForecastOpeningBalance(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+  const banksQuery = useQuery({
+    queryKey: ["banking", "tiles", operatingCompanyId],
+    queryFn: () => getBankingTiles(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
 
   const [openingError, setOpeningError] = useState<string | null>(null);
   const openingMutation = useMutation({
-    mutationFn: () => putForecastOpeningBalance({ operating_company_id: operatingCompanyId, amount_cents: openingDraft ?? 0 }),
+    mutationFn: (amountCents?: number) =>
+      putForecastOpeningBalance({ operating_company_id: operatingCompanyId, amount_cents: amountCents ?? openingDraft ?? 0 }),
     onSuccess: () => {
       setOpeningError(null);
       setOpeningDraft(null);
@@ -366,9 +375,135 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     onError: (e) => setOpeningError(e instanceof Error ? e.message : "Failed to save opening cash"),
   });
 
+  const pullMutation = useMutation({
+    mutationFn: async () => {
+      if (!projectionDate) throw new Error("Pick a Projection date first");
+      const existingKeys = new Set(
+        allEntries
+          .filter((e) => String(e.entry_date).slice(0, 10) === projectionDate)
+          .map((e) => `${e.direction}:${e.invoice_no ?? ""}:${e.party_ref_id ?? ""}`),
+      );
+      const [bills, expenses, payments, invoices] = await Promise.all([
+        listBills(operatingCompanyId, { status: "unpaid", include_balance: true, date_to: projectionDate, limit: 100 }),
+        listExpenses(operatingCompanyId, { date_from: projectionDate, date_to: projectionDate, limit: 100 }),
+        listBillPayments(operatingCompanyId, { date_from: projectionDate, date_to: projectionDate, limit: 100 }),
+        listInvoices(operatingCompanyId, { to_date: projectionDate, has_balance: true, limit: 100 }),
+      ]);
+      const created: string[] = [];
+      for (const bill of bills.rows ?? []) {
+        const invoiceNo = bill.bill_number || bill.id;
+        const key = `expense:${invoiceNo}:${bill.vendor_uuid ?? ""}`;
+        if (existingKeys.has(key)) continue;
+        const cents = toCents(bill.balance_cents ?? bill.amount_cents);
+        if (cents <= 0) continue;
+        await createForecastEntry({
+          operating_company_id: operatingCompanyId,
+          entry_date: projectionDate,
+          direction: "expense",
+          amount_cents: cents,
+          invoice_no: invoiceNo,
+          party_name: bill.vendor_name ?? null,
+          party_ref_kind: bill.vendor_uuid ? "vendor" : null,
+          party_ref_id: bill.vendor_uuid ?? null,
+          category: "Bill (software)",
+          memo: "Pulled from unpaid bills",
+        });
+        existingKeys.add(key);
+        created.push(invoiceNo);
+      }
+      for (const row of expenses.rows ?? []) {
+        const invoiceNo = row.expense_number || row.id;
+        const key = `expense:${invoiceNo}:${row.vendor_uuid ?? row.driver_uuid ?? ""}`;
+        if (existingKeys.has(key)) continue;
+        const cents = toCents(row.total_amount_cents);
+        if (cents <= 0) continue;
+        await createForecastEntry({
+          operating_company_id: operatingCompanyId,
+          entry_date: projectionDate,
+          direction: "expense",
+          amount_cents: cents,
+          invoice_no: invoiceNo,
+          party_name: row.vendor_name ?? ([row.driver_first_name, row.driver_last_name].filter(Boolean).join(" ") || null),
+          party_ref_kind: row.vendor_uuid ? "vendor" : row.driver_uuid ? "driver" : null,
+          party_ref_id: row.vendor_uuid ?? row.driver_uuid ?? null,
+          category: "Expense (software)",
+          memo: row.memo ?? "Pulled from expenses",
+        });
+        existingKeys.add(key);
+        created.push(invoiceNo);
+      }
+      for (const pay of payments.rows ?? []) {
+        const invoiceNo = pay.reference_number || pay.check_number || pay.id;
+        const key = `expense:${invoiceNo}:${pay.mdata_vendor_id ?? ""}`;
+        if (existingKeys.has(key)) continue;
+        const cents = toCents(pay.amount_cents);
+        if (cents <= 0) continue;
+        await createForecastEntry({
+          operating_company_id: operatingCompanyId,
+          entry_date: projectionDate,
+          direction: "expense",
+          amount_cents: cents,
+          invoice_no: invoiceNo,
+          party_name: pay.vendor_name ?? null,
+          party_ref_kind: pay.mdata_vendor_id ? "vendor" : null,
+          party_ref_id: pay.mdata_vendor_id ?? null,
+          category: `Payment (${pay.payment_method})`,
+          memo: "Pulled from bill payments / card",
+        });
+        existingKeys.add(key);
+        created.push(invoiceNo);
+      }
+      const invoiceRows = invoices.invoices ?? [];
+      for (const inv of invoiceRows) {
+        const invoiceNo = inv.display_id || inv.id;
+        const key = `income:${invoiceNo}:${inv.customer_id ?? ""}`;
+        if (existingKeys.has(key)) continue;
+        const cents = toCents(inv.amount_open_cents ?? inv.total_cents);
+        if (cents <= 0) continue;
+        await createForecastEntry({
+          operating_company_id: operatingCompanyId,
+          entry_date: projectionDate,
+          direction: "income",
+          amount_cents: cents,
+          invoice_no: invoiceNo,
+          party_name: inv.customer_name ?? null,
+          party_ref_kind: inv.customer_id ? "customer" : null,
+          party_ref_id: inv.customer_id ?? null,
+          category: "Invoice (software)",
+          memo: "Pulled from invoices",
+        });
+        existingKeys.add(key);
+        created.push(invoiceNo);
+      }
+      return created.length;
+    },
+    onSuccess: (count) => {
+      setPullError(null);
+      void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
+      if (count === 0) setPullError("No new software bills, expenses, payments, or invoices for this date (already pulled or empty).");
+    },
+    onError: (e) => setPullError(e instanceof Error ? e.message : "Pull from software failed"),
+  });
+
   const onChanged = () => void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
 
-  const entries = useMemo(() => entriesQuery.data?.entries ?? [], [entriesQuery.data?.entries]);
+  const allEntries = useMemo(() => entriesQuery.data?.entries ?? [], [entriesQuery.data?.entries]);
+  const historyDates = useMemo(() => {
+    const dates = new Set(allEntries.map((e) => String(e.entry_date).slice(0, 10)).filter(Boolean));
+    return [...dates].sort().reverse();
+  }, [allEntries]);
+  const entries = useMemo(
+    () => (projectionDate ? allEntries.filter((e) => String(e.entry_date).slice(0, 10) === projectionDate) : allEntries),
+    [allEntries, projectionDate],
+  );
+  const realBanks = useMemo(
+    () => (banksQuery.data?.tiles ?? []).filter((t) => String(t.tile_kind) === "real"),
+    [banksQuery.data?.tiles],
+  );
+  const bankTotalDollars = useMemo(
+    () => realBanks.reduce((sum, t) => sum + Number(t.current_balance ?? 0), 0),
+    [realBanks],
+  );
   const income = useMemo(() => entries.filter((e) => e.direction === "income"), [entries]);
   const expense = useMemo(() => entries.filter((e) => e.direction === "expense"), [entries]);
   // Totals math is UNCHANGED (#1084 summing fix preserved).
@@ -424,12 +559,70 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </span>
       </div>
 
+      <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs" data-testid="mdp-bank-balances">
+        <p className="mb-2 font-semibold text-gray-600">Bank balances (live TMS)</p>
+        {banksQuery.isError ? (
+          <p className="text-red-600">Could not load banks.</p>
+        ) : realBanks.length === 0 ? (
+          <p className="text-gray-500">No real bank tiles for this company yet.</p>
+        ) : (
+          <ul className="space-y-1">
+            {realBanks.map((bank) => (
+              <li key={bank.id} className="flex justify-between gap-4">
+                <span>{bank.display_name}</span>
+                <span className="tabular-nums font-semibold">{formatUsd(Number(bank.current_balance ?? 0))}</span>
+              </li>
+            ))}
+            {realBanks.length > 1 ? (
+              <li className="flex justify-between gap-4 border-t border-gray-100 pt-1 font-semibold">
+                <span>Total cash</span>
+                <span className="tabular-nums">{formatUsd(bankTotalDollars)}</span>
+              </li>
+            ) : null}
+          </ul>
+        )}
+        <button
+          type="button"
+          className="mt-2 h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50"
+          disabled={realBanks.length === 0 || openingMutation.isPending}
+          onClick={() => {
+            const cents = Math.round(bankTotalDollars * 100);
+            setOpeningDraft(cents);
+            setOpeningError(null);
+            openingMutation.mutate(cents);
+          }}
+        >
+          Use bank total as opening cash
+        </button>
+      </div>
+
       {/* SINGLE projection date (replaces the From/To range). */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs" data-mdp-single-date="true">
         <label className="font-semibold text-gray-600">Projection date</label>
         <DatePicker value={projectionDate} onChange={setProjectionDate} className="w-40" placeholder="Pick a day" />
-        <span className="text-gray-400">— one day per entry; applies to rows you add below.</span>
+        <label className="font-semibold text-gray-600">History</label>
+        <select
+          className="h-8 rounded-sm border border-gray-300 px-2"
+          value={historyDates.includes(projectionDate) ? projectionDate : ""}
+          onChange={(e) => { if (e.target.value) setProjectionDate(e.target.value); }}
+          aria-label="Saved projection dates"
+        >
+          <option value="">Saved days…</option>
+          {historyDates.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+        <span className="text-gray-400">— one day per entry; lines save to that date.</span>
+        <button
+          type="button"
+          className="ml-auto h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+          disabled={pullMutation.isPending || !projectionDate}
+          onClick={() => pullMutation.mutate()}
+        >
+          Pull bills / expenses / payments
+        </button>
       </div>
+      {pullError ? <p className="text-xs text-red-600" role="alert">{pullError}</p> : null}
 
       {/* Income (left) / Expenses (right). */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

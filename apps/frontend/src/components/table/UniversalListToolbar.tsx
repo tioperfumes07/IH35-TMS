@@ -125,6 +125,7 @@ type Props = {
   searchPlaceholder?: string;
   /** When true, hide TableSearch (page owns server-side search elsewhere). */
   hideSearch?: boolean;
+  className?: string;
 };
 
 export function UniversalListToolbar({
@@ -137,6 +138,7 @@ export function UniversalListToolbar({
   totalCount,
   searchPlaceholder = "Search rows…",
   hideSearch = false,
+  className = "",
 }: Props) {
   const rangeColumns = useMemo(() => inferUniversalRangeColumns(columns), [columns]);
   const [open, setOpen] = useState(false);
@@ -165,16 +167,16 @@ export function UniversalListToolbar({
 
   const selected = rangeColumns.find((column) => column.key === draft?.key);
   return (
-    <div className="flex flex-wrap items-center gap-2" data-list-toolbar="search-range-gear">
+    <div className={`flex min-w-0 flex-1 flex-wrap items-center gap-2 ${className}`.trim()} data-list-toolbar="search-range-gear">
       {hideSearch ? null : (
-        <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-56" />
+        <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="min-w-[12rem] max-w-xl flex-1" />
       )}
       <div className="relative" ref={ref}>
         <button
           type="button"
           aria-expanded={open}
           aria-label="Date or amount range"
-          className="flex h-12 min-h-12 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+          className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
           onClick={() => setOpen((current) => !current)}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
@@ -187,7 +189,7 @@ export function UniversalListToolbar({
               Date or amount field
               <select
                 aria-label="Range field"
-                className="mt-1 h-12 min-h-12 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
                 value={draft?.key ?? ""}
                 onChange={(event) => {
                   const next = rangeColumns.find((column) => column.key === event.target.value);
@@ -205,7 +207,7 @@ export function UniversalListToolbar({
                     Date range (QBO)
                     <select
                       aria-label="QBO date range preset"
-                      className="mt-1 h-12 min-h-12 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                      className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
                       defaultValue="custom"
                       onChange={(event) => {
                         const preset = event.target.value;
@@ -228,7 +230,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
                     ) : (
-                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-12 min-h-12 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
                     )}
                   </label>
                   <label className="text-[11px] font-semibold text-gray-600">To
@@ -237,7 +239,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
                     ) : (
-                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-12 min-h-12 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
                     )}
                   </label>
                 </div>

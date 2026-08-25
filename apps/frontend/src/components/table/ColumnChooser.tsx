@@ -28,7 +28,7 @@ export function ColumnChooser({
   onToggleColumn,
   pageSize,
   onPageSizeChange,
-  pageSizeOptions = [25, 50, 100, 200],
+  pageSizeOptions = [25, 50, 100, 300],
 }: Props) {
   const [open, setOpen] = useState(false);
   const [draftHidden, setDraftHidden] = useState<Set<string>>(() => new Set(hidden));
