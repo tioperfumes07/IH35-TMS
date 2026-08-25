@@ -30,8 +30,16 @@ jobs:
           fi
           SID="${SERVICE_ID:-srv-d7rpem7avr4c73fhp4n0}"
           echo "POST /v1/services/${SID}/deploys (triggering manual deploy)"
-          curl -fsS -X POST "https://api.render.com/v1/services/${SID}/deploys" \
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "https://api.render.com/v1/services/${SID}/deploys" \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            -d '{"clearCache": false}' | jq .
+            -d '{}')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP ${HTTP_CODE}"
+          echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "Render API returned ${HTTP_CODE}"
+            exit 1
+          fi
