@@ -1000,6 +1000,7 @@ export function WorkOrderDetailPage() {
         operatingCompanyId={companyId}
         linkedWoDisplayId={woNumber}
         linkedWoId={id}
+        linkedUnitId={wo.unit_id ?? undefined}
         onClose={() => setCreateBillOpen(false)}
         onCreated={() => invalidateWo()}
       />

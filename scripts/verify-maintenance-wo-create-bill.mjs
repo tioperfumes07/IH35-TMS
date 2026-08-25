@@ -18,9 +18,10 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx";
+const DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const LABEL = "verify-maintenance-wo-create-bill";
 
-export function audit(src) {
+export function audit(src, detailSrc = "") {
   const failures = [];
   // LINK-F5188 added an idempotency-key 3rd argument to the createVendorBill call
   // (createVendorBill(operatingCompanyId, payload, { idempotencyKey: ... })) — the anchored
@@ -38,28 +39,51 @@ export function audit(src) {
   if (!/<VendorBillForm/.test(src)) {
     failures.push(`${FILE}: must reuse the canonical VendorBillForm AP-bill create surface`);
   }
+  if (detailSrc) {
+    if (!/<CreateBillModal[\s\S]*linkedWoId=\{id\}[\s\S]*linkedUnitId=\{/.test(detailSrc)) {
+      failures.push(
+        `${DETAIL}: WO + Create Bill must pass linkedUnitId from wo.unit_id (WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL)`,
+      );
+    }
+    if (!/linkedUnitId=\{wo\.unit_id \?\? undefined\}/.test(detailSrc)) {
+      failures.push(`${DETAIL}: linkedUnitId must be the WO unit UUID, not a picker-only path`);
+    }
+  }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const good = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-  if (audit(good).length) {
-    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good).join("\n- ")}`);
+  const goodDetail = fs.readFileSync(path.join(ROOT, DETAIL), "utf8");
+  if (audit(good, goodDetail).length) {
+    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, goodDetail).join("\n- ")}`);
     process.exit(1);
   }
   const mutations = [
-    ["submit-call", /createVendorBill\(operatingCompanyId, payload/, "createVendorExpense(operatingCompanyId, payload"],
-    ["wo-fk", /work_order_id: payload\.work_order_id \?\? pickedWoId \?\? linkedWoId/, "work_order_id: undefined"],
-    ["require-wo-link", /requireWoLink && !\(linkedWoId \?\? pickedWoId\)/, "false"],
-    ["vendor-bill-form", /<VendorBillForm/g, "<SomeOtherForm"],
+    ["submit-call", good, /createVendorBill\(operatingCompanyId, payload/, "createVendorExpense(operatingCompanyId, payload", goodDetail],
+    ["wo-fk", good, /work_order_id: payload\.work_order_id \?\? pickedWoId \?\? linkedWoId/, "work_order_id: undefined", goodDetail],
+    ["require-wo-link", good, /requireWoLink && !\(linkedWoId \?\? pickedWoId\)/, "false", goodDetail],
+    ["vendor-bill-form", good, /<VendorBillForm/g, "<SomeOtherForm", goodDetail],
+    [
+      "wo-detail-unit-prefill",
+      good,
+      null,
+      null,
+      goodDetail.replace(/linkedUnitId=\{wo\.unit_id \?\? undefined\}\n/, ""),
+    ],
   ];
-  for (const [name, pattern, replacement] of mutations) {
-    const mutated = good.replace(pattern, replacement);
-    if (mutated === good) {
+  for (const [name, modalSrc, pattern, replacement, detailSrc] of mutations) {
+    const mutatedModal = pattern ? modalSrc.replace(pattern, replacement) : modalSrc;
+    const mutatedDetail = detailSrc;
+    if (pattern && mutatedModal === modalSrc) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: pattern did not match source, re-anchor`);
       process.exit(1);
     }
-    if (audit(mutated).length === 0) {
+    if (!pattern && mutatedDetail === goodDetail) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name}: detail mutation did not apply`);
+      process.exit(1);
+    }
+    if (audit(mutatedModal, mutatedDetail).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: mutation escaped`);
       process.exit(1);
     }
@@ -68,7 +92,10 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const failures = audit(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const failures = audit(
+  fs.readFileSync(path.join(ROOT, FILE), "utf8"),
+  fs.readFileSync(path.join(ROOT, DETAIL), "utf8"),
+);
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
