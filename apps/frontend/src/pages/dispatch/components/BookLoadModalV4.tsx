@@ -164,6 +164,8 @@ type FormValues = BookLoadFormValues & {
     // RHF state while being invisible to every typed consumer — which is how the submit mapping came to omit
     // it without TypeScript ever complaining. Declaring it is what makes the drop a compile error.
     postal_code?: string;
+    latitude?: string;
+    longitude?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
     pickup_time_type_id?: string;
@@ -364,8 +366,8 @@ export function BookLoadModalV4({
       factoring_company_vendor_id: "",
       accessorial_rows: [],
       stops: [
-        { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
-        { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
+        { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
+        { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
       ],
     },
   });
@@ -881,6 +883,8 @@ export function BookLoadModalV4({
           // Postal code is the PC*MILER routing key, so driver pay-per-mile, fuel/ETA and IFTA jurisdiction
           // miles were all structurally unreachable.
           postal_code: stop.postal_code || undefined,
+          latitude: numOrUndef(stop.latitude),
+          longitude: numOrUndef(stop.longitude),
           country: stop.country,
           address_line1: stop.address_line1,
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,

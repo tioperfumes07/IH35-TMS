@@ -22,6 +22,8 @@ describe("stopGeocodePatches — W8 zip autofill", () => {
     expect(byField["stops.2.state"]).toBe("TX");
     expect(byField["stops.2.address_line1"]).toBe("8900 San Dario Ave");
     expect(byField["stops.2.country"]).toBe("US");
+    expect(byField["stops.2.latitude"]).toBe("27.5");
+    expect(byField["stops.2.longitude"]).toBe("-99.5");
   });
 
   it("indexes the patches to the given stop", () => {
@@ -35,5 +37,7 @@ describe("stopGeocodePatches — W8 zip autofill", () => {
     expect(fields).toContain("stops.1.state");
     expect(fields).not.toContain("stops.1.postal_code"); // empty zip not emitted
     expect(fields).not.toContain("stops.1.address_line1");
+    expect(fields).not.toContain("stops.1.latitude");
+    expect(fields).not.toContain("stops.1.longitude");
   });
 });

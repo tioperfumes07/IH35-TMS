@@ -44,6 +44,8 @@ type BookLoadStop = {
   site_contact_phone?: string;
   gate_dock_text?: string;
   postal_code?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type BookLoadCharge = {
@@ -1883,9 +1885,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
-            site_contact_name, site_contact_phone, gate_dock_text, postal_code
+            site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
         `,
         [
           load.id,
@@ -1912,6 +1914,8 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           stop.site_contact_phone ?? null,
           stop.gate_dock_text ?? null,
           stop.postal_code ?? null,
+          stop.latitude ?? null,
+          stop.longitude ?? null,
         ]
       );
     }
