@@ -160,7 +160,7 @@ export function CSAScorePage() {
   return (
     <div className="space-y-3">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="CSA / FMCSA Trend" breadcrumb={["Safety", "CSA / FMCSA Trend"]} backHref="/safety" />
+      <PageHeader title="CSA / FMCSA Trend" breadcrumb={[{ label: "Safety" }, { label: "CSA / FMCSA Trend" }]} backHref="/safety" />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
           <div className="text-sm font-semibold text-slate-800">FMCSA CSA source status</div>

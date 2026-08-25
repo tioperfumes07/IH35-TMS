@@ -1,134 +1,4 @@
 {
-  "9767": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-drug-alcohol-company-id-cast"
-  },
-  "9763": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-safety-dispatch-finance-other-back-buttons-wired"
-  },
-  "9759": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-maintenance-leaf-back-buttons-wired"
-  },
-  "9755": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-backarrowheader-and-accounting-back-wired"
-  },
-  "9747": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-scroll-to-top-wired"
-  },
-  "9751": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-pageheader-smart-back-wired"
-  },
-  "9750": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cursor",
-    "purpose": "verify-docs-home-no-double-pagination"
-  },
-  "9746": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-legal-reports-closed-matters-count-honest"
-  },
-  "9744": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-wo-detail-modal-complete-button-wired"
-  },
-  "9742": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-root-claude-md-untracked (supersedes odd 9741 -- fix/ branches are lane-banded EVEN)"
-  },
-  "9741": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-root-claude-md-untracked -- UNUSED, superseded by 9742 (odd number, but this PR's branch matches the cursor-lane EVEN-only prefix pattern in verify-verify-step-lane-band.mjs)"
-  },
-  "8939": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-settlement-summary-load-count-from-settlement-lines"
-  },
-  "8935": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-maintenance-cost-outsourced-not-hardcoded"
-  },
-  "8931": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-fuel-reconciliation-match-rate-consistent"
-  },
-  "8923": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-subscription-manager-delivery-banner"
-  },
-  "4711": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-scenario-advance-probe-uuid-cast"
-  },
-  "5924": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-maintenance-failure-truth-guard-batch"
-  },
-  "5922": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "codex",
-    "purpose": "verify-stale-lazy-chunk-recovery"
-  },
-  "4707": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-cash-flow-report-route-fix-no-fake-zero"
-  },
-  "4703": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-daily-tasks-cancel-wired"
-  },
-  "4699": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-2",
-    "purpose": "verify-audit-report-page-no-double-pagination"
-  },
-  "5920": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-lists-deactivate-mutation-errors-surfaced"
-  },
-  "5620": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-pm-auto-engine-mutation-errors-surfaced"
-  },
-  "5120": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-usmca-activation-checklist-mutation-error-surfaced"
-  },
-  "5010": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-legal-matter-detail-mutation-errors-surfaced"
-  },
-  "4710": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-layover-billable-mutation-error-surfaced"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4144,15 +4014,50 @@
     "claimed_by": "cc-2",
     "purpose": "verify-geofence-dwell-cte-operating-company-id"
   },
+  "4699": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-audit-report-page-no-double-pagination"
+  },
+  "4703": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-daily-tasks-cancel-wired"
+  },
+  "4707": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-cash-flow-report-route-fix-no-fake-zero"
+  },
+  "4710": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-layover-billable-mutation-error-surfaced"
+  },
+  "4711": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-scenario-advance-probe-uuid-cast"
+  },
   "4998": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-equipment-log-create-entity-scope-wired"
   },
+  "5010": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-legal-matter-detail-mutation-errors-surfaced"
+  },
   "5098": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-comparable-units-detail"
+  },
+  "5120": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-usmca-activation-checklist-mutation-error-surfaced"
   },
   "5198": {
     "claimed_at": "2026-08-24",
@@ -4179,6 +4084,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-table-rows-clickable"
   },
+  "5620": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-pm-auto-engine-mutation-errors-surfaced"
+  },
   "5698": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -4188,6 +4098,21 @@
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-include-inactive-scope"
+  },
+  "5920": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-deactivate-mutation-errors-surfaced"
+  },
+  "5922": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-stale-lazy-chunk-recovery"
+  },
+  "5924": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-maintenance-failure-truth-guard-batch"
   },
   "6098": {
     "claimed_at": "2026-08-24",
@@ -4209,6 +4134,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-deactivate-consistency"
   },
+  "6420": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-legal-matter-event-body-readable"
+  },
   "6498": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -4218,6 +4148,11 @@
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-insurance-summary-rendered"
+  },
+  "6620": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-module-mutation-errors-surfaced"
   },
   "6698": {
     "claimed_at": "2026-08-24",
@@ -4229,6 +4164,11 @@
     "claimed_by": "codex",
     "purpose": "verify-fleet-type-filter-dropdown"
   },
+  "6820": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-sync-panel-pull-reconcile-errors-surfaced"
+  },
   "6898": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -4238,6 +4178,11 @@
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
     "purpose": "verify-fleet-roster-create-actions-depth"
+  },
+  "7020": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-portal-users-archive-error-surfaced"
   },
   "7098": {
     "claimed_at": "2026-08-24",
@@ -4289,6 +4234,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-wo-bill-lines-expense-category-resolved"
   },
+  "8923": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-subscription-manager-delivery-banner"
+  },
   "8924": {
     "claimed_at": "2026-08-24",
     "claimed_by": "codex",
@@ -4299,25 +4249,80 @@
     "claimed_by": "codex",
     "purpose": "verify-codex-driver-crossmodule-connectivity-guard-registry-batch"
   },
-  "6420": {
+  "8931": {
     "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-legal-matter-event-body-readable"
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-reconciliation-match-rate-consistent"
   },
-  "6620": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-maintenance-module-mutation-errors-surfaced"
+  "8935": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-cost-outsourced-not-hardcoded"
   },
-  "6820": {
-    "claimed_at": "2026-08-24",
-    "claimed_by": "cc-3",
-    "purpose": "verify-sync-panel-pull-reconcile-errors-surfaced"
+  "8939": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-settlement-summary-load-count-from-settlement-lines"
   },
-  "7020": {
-    "claimed_at": "2026-08-24",
+  "9741": {
+    "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
-    "purpose": "verify-portal-users-archive-error-surfaced"
+    "purpose": "verify-root-claude-md-untracked -- UNUSED, superseded by 9742 (odd number, but this PR's branch matches the cursor-lane EVEN-only prefix pattern in verify-verify-step-lane-band.mjs)"
+  },
+  "9742": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-root-claude-md-untracked (supersedes odd 9741 -- fix/ branches are lane-banded EVEN)"
+  },
+  "9744": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-detail-modal-complete-button-wired"
+  },
+  "9746": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-legal-reports-closed-matters-count-honest"
+  },
+  "9747": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-scroll-to-top-wired"
+  },
+  "9750": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-docs-home-no-double-pagination"
+  },
+  "9751": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-pageheader-smart-back-wired"
+  },
+  "9755": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-backarrowheader-and-accounting-back-wired"
+  },
+  "9759": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-leaf-back-buttons-wired"
+  },
+  "9763": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-safety-dispatch-finance-other-back-buttons-wired"
+  },
+  "9767": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-drug-alcohol-company-id-cast"
+  },
+  "9770": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-pageheader-breadcrumb-item-shape"
   },
   "_band": {
     "cc-1": "n%4===1",

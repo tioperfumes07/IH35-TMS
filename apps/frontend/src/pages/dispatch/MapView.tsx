@@ -55,7 +55,7 @@ export function MapView() {
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="Active Load Map" breadcrumb={["Dispatch", "Map"]} backHref="/dispatch" />
+      <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
         <p
           className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"

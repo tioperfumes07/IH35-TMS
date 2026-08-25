@@ -92,7 +92,7 @@ export function USMCAActivationPanel() {
   return (
     <div className="flex flex-col gap-4 p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="USMCA Activation" breadcrumb={["Admin", "USMCA Activation"]} backHref="/admin" />
+      <PageHeader title="USMCA Activation" breadcrumb={[{ label: "Admin" }, { label: "USMCA Activation" }]} backHref="/admin" />
       <div className="flex items-center gap-3">
         <span className={`rounded-sm px-3 py-1 text-sm font-semibold ${STATE_BADGE[currentState]}`}>
           {currentState.replace(/_/g, " ").toUpperCase()}

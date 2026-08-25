@@ -88,7 +88,7 @@ export function ExhibitsViewer() {
       <PageHeader
         title="Form 425C Exhibits A–F"
         subtitle="Auto-build court-ready supporting exhibits for the selected operating company."
-        breadcrumb={["425C", "Exhibits"]}
+        breadcrumb={[{ label: "425C" }, { label: "Exhibits" }]}
         backHref="/425c"
         actions={
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">

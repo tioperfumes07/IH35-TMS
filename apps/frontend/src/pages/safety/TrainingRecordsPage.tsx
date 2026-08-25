@@ -148,7 +148,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
       <PageHeader
         title="Training Records"
         subtitle="Per-driver completion history with expiry tracking."
-        breadcrumb={["Safety", "Training Records"]}
+        breadcrumb={[{ label: "Safety" }, { label: "Training Records" }]}
         backHref="/safety"
         actions={
           <Button size="sm" data-testid="training-records-create-btn" onClick={() => setCreateOpen(true)}>

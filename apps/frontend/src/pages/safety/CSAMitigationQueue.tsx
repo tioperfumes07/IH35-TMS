@@ -173,7 +173,7 @@ export function CSAMitigationQueuePage() {
       <PageHeader
         title="CSA Mitigation Queue"
         subtitle={`Open actions sorted by urgency. Generated ${queueQuery.data?.generated_at ? new Date(queueQuery.data.generated_at).toLocaleString() : "not available"}.`}
-        breadcrumb={["Safety", "CSA Mitigation"]}
+        breadcrumb={[{ label: "Safety" }, { label: "CSA Mitigation" }]}
         backHref="/safety"
       />
 
