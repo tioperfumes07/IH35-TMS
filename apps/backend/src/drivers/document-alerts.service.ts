@@ -1,3 +1,5 @@
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+
 export const DOCUMENT_ALERT_ENGINE_VERSION = "a24-9-v1";
 
 export type DocumentAlertRule = {
@@ -478,7 +480,6 @@ export async function dispatchDocumentAlertNotifications(
   candidate: DocumentExpiryCandidate
 ) {
   const { createNotification, listCompanyNotifyUserIds } = await import("../notifications/notification.service.js");
-  const { sendEmail } = await import("../notifications/email.service.js");
 
   const severity =
     candidate.days_until_expiry <= 0
@@ -517,17 +518,19 @@ export async function dispatchDocumentAlertNotifications(
   }
 
   if (rule.notify_email) {
-    try {
-      await sendEmail({
+    await enqueueOutboxEvent(
+      client,
+      "driver.document_expiry_email",
+      { aggregate_type: "safety.document_alert_events", aggregate_id: eventId },
+      {
+        operating_company_id: operatingCompanyId,
         to: process.env.DOCUMENT_ALERT_OPS_EMAIL ?? "ops@ih35dispatch.com",
         subject: title,
-        html: `<p>${body}</p><p><a href="${actionLink}">Open driver profile</a></p>`,
-        sender: "noreply",
-        eventClass: "driver.document_expiry",
-      });
-    } catch {
-      /* email best-effort */
-    }
+        body_html: `<p>${body}</p><p><a href="${actionLink}">Open driver profile</a></p>`,
+        event_class: "driver.document_expiry",
+      },
+      `driver-document-expiry-email:${eventId}`
+    );
   }
 
   await client.query(
