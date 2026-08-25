@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
+import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -531,8 +532,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         Boolean(selectedPriorDriverId);
       await createMutation.mutateAsync({
         operating_company_id: parsed.operating_company_id,
-        first_name: parsed.first_name,
-        last_name: parsed.last_name,
+        first_name: properPersonOrPlaceName(parsed.first_name),
+        last_name: properPersonOrPlaceName(parsed.last_name),
         phone: normalizedPhone,
         email: parsed.email || undefined,
         cdl_number: parsed.cdl_number || undefined,
@@ -555,16 +556,20 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         mexican_license_expiration: parsed.mexican_license_expiration || undefined,
         ine_number: parsed.ine_number || undefined,
         curp: parsed.curp || undefined,
-        mx_address_line1: parsed.mx_address_line1 || undefined,
-        mx_address_line2: parsed.mx_address_line2 || undefined,
-        mx_city: parsed.mx_city || undefined,
+        mx_address_line1: parsed.mx_address_line1 ? properPersonOrPlaceName(parsed.mx_address_line1) : undefined,
+        mx_address_line2: parsed.mx_address_line2 ? properPersonOrPlaceName(parsed.mx_address_line2) : undefined,
+        mx_city: parsed.mx_city ? properPersonOrPlaceName(parsed.mx_city) : undefined,
         mx_state: parsed.mx_state || undefined,
         mx_postal_code: parsed.mx_postal_code || undefined,
-        emergency_contact_name: parsed.emergency_contact_name || undefined,
+        emergency_contact_name: parsed.emergency_contact_name
+          ? properPersonOrPlaceName(parsed.emergency_contact_name)
+          : undefined,
         emergency_contact_relationship: parsed.emergency_contact_relationship || undefined,
         emergency_contact_phone_primary: parsed.emergency_contact_phone_primary || undefined,
         emergency_contact_phone_alternate: parsed.emergency_contact_phone_alternate || undefined,
-        emergency_contact_address: parsed.emergency_contact_address || undefined,
+        emergency_contact_address: parsed.emergency_contact_address
+          ? properPersonOrPlaceName(parsed.emergency_contact_address)
+          : undefined,
         emergency_contact_notes: parsed.emergency_contact_notes || undefined,
         status: parsed.status,
         override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
