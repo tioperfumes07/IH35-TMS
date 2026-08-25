@@ -1,5 +1,7 @@
 # INBOX-CASCADE
 
+**09:40 CT GO NOW.** Hard-reload **`a80afec`**. Walk `/program` USMCA. 20 Complete / 8 Merged. FINDING if a Complete card is false-green. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. No product PR. No U14 restamp.
+
 **23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Walk `/program` hops 1–9 + remaining `--` cards on load `L-20260824-0007`. FINDING only. No product PR. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. No U14 restamp.
 
 **23:32 CT GO NOW.** Walk hops 1–9. FINDING only. Deploy in flight — no `trigger_deploy`. Hard-reload when healthz=`6c465b2`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. No product PR. No U14 restamp.

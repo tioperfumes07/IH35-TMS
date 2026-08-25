@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**09:40 CT GO — PROGRAM CENSUS LIVE `a80afec`.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. 28 cards: **20 Complete / 8 Merged**. Remaining: hop.assign · hop.bank probe · settlement · deductions · maintenance · accident · insurance · roadside_ap JE. CC-1 money serial still OPEN (invoice#=load# · cash-flow labels · JE `57cabbab`). Do not remake Complete. **Nobody `trigger_deploy`.** U14 never restamp.
+
 **23:50 CT GO — FINISH PROGRAM SCENARIOS.** Live **`c6f70e3`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Reuse load `065538c8-…` (`L-20260824-0007`). Do **not** remake breakdown_relay / parts `45f36791` / BILL-2026-00015. **CC-1:** hop.bank then invoice#=load# + cash-flow labels + JE `57cabbab` then roadside_ap/ap/banking/factoring. **Codex:** trailer_swap + A7 diesel T-LIVE + settlement/advance/fuel. **CC-2:** same-TEST reports/cash-flow. **CC-3:** scenario.legal + WO print. Cascade/Devin-A walk FINDING only. **Nobody `trigger_deploy`.** U14 never restamp.
 
 **23:32 CT GO — ALL SEATS WORK.** Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. API deploy **IN FLIGHT** `dep-da6hl9p42hec73d5ai0g` tip `6c465b23`. Live still `41dfe49`. **CC never `trigger_deploy`.** Hard-reload when healthz moves. CC-1 hop 9 then invoice#=load# + proforma cash-flow + JE `57cabbab`. CC-2 unique leftover. CC-3 unique leftover (parts DONE). Codex trailer_swap/A7 after SHA. Cascade/Devin-A walk FINDING only. U14 never restamp.

@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**09:40 CT GO NOW.** Hard-reload **`a80afec`**. `scenario.legal` is **Complete** — do not remake. **NOW:** `scenario.maintenance` (Merged) unique leftover + WO letter print. Parts `45f36791` DONE. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. Never `trigger_deploy`.
+
 **23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. `scenario.legal` CREATE TEST if `--`. Matrix lists/legal. WO print letter on `850e2cc4-…`. Parts `45f36791` DONE — do not remake. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Never `trigger_deploy`.
 
 **23:32 CT GO NOW.** Next unique leftover. `DOCS-F6072` if still true. Parts `45f36791` DONE — do not remake. Never `trigger_deploy`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`.
