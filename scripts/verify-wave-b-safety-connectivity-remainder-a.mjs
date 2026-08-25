@@ -30,6 +30,11 @@ const CHECKS = [
     pattern: /kind="driver"/,
   },
   {
+    name: "Photo comparison list failure retry",
+    file: "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx",
+    pattern: /query\.isError[\s\S]{0,300}Couldn't load photo comparison sessions[\s\S]{0,220}query\.refetch\(\)[\s\S]{0,120}: \([\s\S]{0,120}<ParityTable/,
+  },
+  {
     name: "Position history unit drill",
     file: "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
     pattern: /kind="unit"/,
@@ -65,12 +70,26 @@ function checkAll(readFile) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const fail = checkAll(() => "POISON");
-  if (!fail.length) {
-    console.error(`${LABEL} --selftest FAIL`);
+  const live = Object.fromEntries(
+    [...new Set(CHECKS.map((check) => check.file))].map((rel) => [rel, fs.readFileSync(path.join(ROOT, rel), "utf8")]),
+  );
+  const baseline = checkAll((rel) => live[rel]);
+  if (baseline.length) {
+    console.error(`${LABEL} --selftest FAIL baseline:\n${baseline.join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (poison trips ${fail.length})`);
+  const photo = "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx";
+  const mutated = { ...live, [photo]: live[photo].replace("query.refetch()", "query.remove()") };
+  if (mutated[photo] === live[photo] || !checkAll((rel) => mutated[rel]).some((failure) => failure.includes("Photo comparison list failure retry"))) {
+    console.error(`${LABEL} --selftest FAIL — planted photo-list retry defect escaped`);
+    process.exit(1);
+  }
+  const poisoned = checkAll(() => "POISON");
+  if (poisoned.length !== CHECKS.length) {
+    console.error(`${LABEL} --selftest FAIL — structural poison tripped ${poisoned.length}/${CHECKS.length}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS (photo retry mutation + ${CHECKS.length}/${CHECKS.length} structural checks)`);
   process.exit(0);
 }
 
