@@ -1,4 +1,9 @@
 {
+  "9780": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-auto-bill-posts-gl"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
