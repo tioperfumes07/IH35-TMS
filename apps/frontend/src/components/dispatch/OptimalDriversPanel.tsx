@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { getDispatchOptimalDrivers, type OptimalDriverRow } from "../../api/dispatch";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 export type OptimalDriversPanelProps = {
   loadId: string;
@@ -90,9 +91,11 @@ export function OptimalDriversPanel({
       </div>
 
       {q.isLoading && !driversOverride ? <p className="text-xs text-slate-500">Loading ranked drivers…</p> : null}
-      {q.isError && !driversOverride ? <p className="text-xs text-red-600">Could not load optimizer rankings.</p> : null}
+      {q.isError && !driversOverride ? (
+        <ListErrorState status={0} message="Could not load optimizer rankings." onRetry={() => void q.refetch()} />
+      ) : null}
 
-      <ul className="max-h-48 space-y-1 overflow-y-auto">
+      {!q.isError || driversOverride ? <ul className="max-h-48 space-y-1 overflow-y-auto">
         {drivers.map((d) => {
           const selected = selectedDriverId === d.driver_id;
           const blocked = !manualOverride && !d.eligible;
@@ -144,7 +147,7 @@ export function OptimalDriversPanel({
             </li>
           );
         })}
-      </ul>
+      </ul> : null}
 
       {showOverrideWarning ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-[11px] text-slate-700">

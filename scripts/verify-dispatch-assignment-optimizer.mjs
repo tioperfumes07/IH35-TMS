@@ -58,6 +58,13 @@ export function auditAvailableDriverScope(service) {
   return failures;
 }
 
+export function auditPanelRecovery(source) {
+  const failures = [];
+  if (!/<ListErrorState[\s\S]*?Could not load optimizer rankings\.[\s\S]*?onRetry=\{\(\) => void q\.refetch\(\)\}/.test(source)) failures.push("optimizer GET failure must expose exact-query retry");
+  if (!/!q\.isError \|\| driversOverride \? <ul/.test(source)) failures.push("failed optimizer GET must not leave cached rankings selectable");
+  return failures;
+}
+
 function main() {
   const service = read(paths.service);
   const routeTest = read(paths.routeTest);
@@ -83,6 +90,7 @@ function main() {
   if (!panel.includes("data-testid=\"optimal-drivers-panel\"")) failures.push("OptimalDriversPanel must expose test id");
   if (!panel.includes("Manual override")) failures.push("OptimalDriversPanel must expose manual override flag");
   if (!panel.includes("breakdown")) failures.push("OptimalDriversPanel must show score breakdown");
+  failures.push(...auditPanelRecovery(panel));
   if ((panelTest.match(/\bit\(/g) ?? []).length < 3) failures.push("OptimalDriversPanel tests must cover at least 3 cases");
 
   if (!reassignModal.includes("OptimalDriversPanel")) failures.push("LoadReassignModal must embed OptimalDriversPanel");
@@ -104,6 +112,7 @@ function main() {
 function selftest() {
   const service = read(paths.service);
   const refinements = read(paths.refinements);
+  const panel = read(paths.panel);
   const mutations = [
     ["home-or-authorization", "OR EXISTS", "AND EXISTS"],
     ["authorization table", "mdata.driver_company_authorizations optimizer_driver_dca", "mdata.drivers optimizer_driver_dca"],
@@ -118,7 +127,7 @@ function selftest() {
     if (planted === service || auditSharedDriverScope(planted).length === 0) failures.push(`${name} mutation escaped`);
   }
   const availableMutations = [
-    ["available home-or-authorization", "OR EXISTS", "AND EXISTS"],
+    ["available home-or-authorization", "d.operating_company_id = $1::uuid\n                OR EXISTS", "d.operating_company_id = $1::uuid\n                AND EXISTS"],
     ["available table", "mdata.driver_company_authorizations available_driver_dca", "mdata.drivers available_driver_dca"],
     ["available driver", "available_driver_dca.driver_id = d.id", "available_driver_dca.driver_id = d.other_id"],
     ["available company", "available_driver_dca.company_id = $1::uuid", "available_driver_dca.company_id = $2::uuid"],
@@ -129,8 +138,16 @@ function selftest() {
     const planted = refinements.replace(before, after);
     if (planted === refinements || auditAvailableDriverScope(planted).length === 0) failures.push(`${name} mutation escaped`);
   }
+  const panelMutations = [
+    ["optimizer retry", "onRetry={() => void q.refetch()}", "onRetry={() => undefined}"],
+    ["optimizer stale rows", "!q.isError || driversOverride ? <ul", "true ? <ul"],
+  ];
+  for (const [name, before, after] of panelMutations) {
+    const planted = panel.replace(before, after);
+    if (planted === panel || auditPanelRecovery(planted).length === 0) failures.push(`${name} mutation escaped`);
+  }
   if (failures.length) fail(failures.join("; "));
-  const total = mutations.length + availableMutations.length;
+  const total = mutations.length + availableMutations.length + panelMutations.length;
   console.log(`verify:dispatch-assignment-optimizer selftest PASS — ${total}/${total} shared-driver scope mutations caught`);
 }
 
