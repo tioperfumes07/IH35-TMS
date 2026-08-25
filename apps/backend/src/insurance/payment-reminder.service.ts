@@ -104,6 +104,25 @@ export async function sendReminders(tenantId: string, today: string) {
   return result;
 }
 
+export async function runInsurancePaymentReminderTick(): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    const companies = await client.query<{ id: string }>(
+      `
+        SELECT id::text AS id
+        FROM org.companies
+        WHERE is_active = true
+          AND deactivated_at IS NULL
+        ORDER BY id
+      `
+    );
+    const today = toDateOnlyString(new Date());
+    for (const company of companies.rows) {
+      assertTenantContext(company.id, "insurance.payment_reminder_cron");
+      await sendReminders(company.id, today);
+    }
+  });
+}
+
 export function initializeInsurancePaymentReminderCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -111,28 +130,9 @@ export function initializeInsurancePaymentReminderCron(app: FastifyInstance) {
   cron.schedule(
     "0 8 * * *",
     async () => {
-      await wrapBackgroundJobTick(
-        "insurance.payment_reminder_cron",
-        async () => {
-          await withLuciaBypass(async (client) => {
-            const companies = await client.query<{ id: string }>(
-              `
-                SELECT id::text AS id
-                FROM org.companies
-                WHERE is_active = true
-                  AND deactivated_at IS NULL
-                ORDER BY id
-              `
-            );
-            const today = toDateOnlyString(new Date());
-            for (const company of companies.rows) {
-              assertTenantContext(company.id, "insurance.payment_reminder_cron");
-              await sendReminders(company.id, today);
-            }
-          });
-        },
-        app.log
-      );
+      await wrapBackgroundJobTick("insurance.payment_reminder_cron", async () => {
+        await runInsurancePaymentReminderTick();
+      }, app.log);
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }

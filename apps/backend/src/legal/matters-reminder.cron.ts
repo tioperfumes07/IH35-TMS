@@ -37,6 +37,62 @@ function appBaseUrl() {
   ).replace(/\/+$/, "");
 }
 
+export async function runLegalMattersReminderTick(app: FastifyInstance): Promise<void> {
+  const rows = await withLuciaBypass(async (client) => listDeadlinesNeedingReminder(client));
+  for (const row of rows) {
+    const companyId = String(row.operating_company_id ?? "");
+    assertTenantContext(companyId, "legal.matters_reminder_cron");
+    const matterNumber = String(row.matter_number ?? "");
+    const title = String(row.title ?? "Deadline");
+    const due = String(row.deadline_at ?? "");
+    const dtype = String(row.deadline_type ?? "");
+    const id = String(row.id ?? "");
+    const recipients = (row.reminder_recipients as string[] | null) ?? [];
+    const to = [...new Set([...recipients.map((e) => e.toLowerCase())])].filter(Boolean);
+    const owners = dtype === "statute_of_limitations" ? await ownerEmailsForCompany(companyId) : [];
+    const allTo = [...new Set([...to, ...owners])];
+    if (allTo.length === 0) {
+      await withLuciaBypass(async (client) => appendDeadlineReminderSent(client, id));
+      continue;
+    }
+    const detailUrl = `${appBaseUrl()}/legal/matters/${String(row.matter_id ?? "")}`;
+    await sendEmail({
+      to: allTo,
+      subject: `[Legal] Matter ${matterNumber}: ${title} due ${due}`,
+      sender: "noreply",
+      html: `<p>Legal matter deadline reminder.</p>
+<p><strong>Matter:</strong> ${matterNumber}<br/>
+<strong>Deadline:</strong> ${title} — ${due}<br/>
+<strong>Type:</strong> ${dtype}</p>
+<p><a href="${detailUrl}">Open matter</a></p>`,
+      text: `Matter ${matterNumber}. ${title} due ${due} (${dtype}). ${detailUrl}`,
+      eventClass: "legal.matter_deadline_reminder",
+      actorUserId: process.env.SYSTEM_ACTOR_USER_ID ?? undefined,
+    });
+
+    try {
+      await withLuciaBypass(async (client) => {
+        const driverId = row.related_driver_id;
+        if (!driverId) return;
+        // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
+        await insertDriverPwaNotification(client, {
+          operatingCompanyId: companyId,
+          driverId: String(driverId),
+          title: `Legal deadline: ${matterNumber}`,
+          message: `${title} — due ${due}`,
+          payload: { matter_id: row.matter_id, deadline_id: id, type: "legal_matter_deadline" },
+        });
+      });
+    } catch (err) {
+      // Email already sent; PWA failure must not roll back reminder, but never silent.
+      console.error("legal.matter_deadline_reminder pwa notify failed", err);
+    }
+
+    await withLuciaBypass(async (client) => appendDeadlineReminderSent(client, id));
+  }
+  if (rows.length > 0) app.log.info({ count: rows.length }, "legal matter deadline reminders sent");
+}
+
 export function initializeLegalMattersReminderCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -48,65 +104,9 @@ export function initializeLegalMattersReminderCron(app: FastifyInstance) {
   cron.schedule(
     "0 8 * * *",
     async () => {
-      await wrapBackgroundJobTick(
-        "legal.matters_reminder_cron",
-        async () => {
-          const rows = await withLuciaBypass(async (client) => listDeadlinesNeedingReminder(client));
-          for (const row of rows) {
-            const companyId = String(row.operating_company_id ?? "");
-            assertTenantContext(companyId, "legal.matters_reminder_cron");
-            const matterNumber = String(row.matter_number ?? "");
-            const title = String(row.title ?? "Deadline");
-            const due = String(row.deadline_at ?? "");
-            const dtype = String(row.deadline_type ?? "");
-            const id = String(row.id ?? "");
-            const recipients = (row.reminder_recipients as string[] | null) ?? [];
-            const to = [...new Set([...recipients.map((e) => e.toLowerCase())])].filter(Boolean);
-            const owners = dtype === "statute_of_limitations" ? await ownerEmailsForCompany(companyId) : [];
-            const allTo = [...new Set([...to, ...owners])];
-            if (allTo.length === 0) {
-              await withLuciaBypass(async (client) => appendDeadlineReminderSent(client, id));
-              continue;
-            }
-            const detailUrl = `${appBaseUrl()}/legal/matters/${String(row.matter_id ?? "")}`;
-            await sendEmail({
-              to: allTo,
-              subject: `[Legal] Matter ${matterNumber}: ${title} due ${due}`,
-              sender: "noreply",
-              html: `<p>Legal matter deadline reminder.</p>
-<p><strong>Matter:</strong> ${matterNumber}<br/>
-<strong>Deadline:</strong> ${title} — ${due}<br/>
-<strong>Type:</strong> ${dtype}</p>
-<p><a href="${detailUrl}">Open matter</a></p>`,
-              text: `Matter ${matterNumber}. ${title} due ${due} (${dtype}). ${detailUrl}`,
-              eventClass: "legal.matter_deadline_reminder",
-              actorUserId: process.env.SYSTEM_ACTOR_USER_ID ?? undefined,
-            });
-
-            try {
-              await withLuciaBypass(async (client) => {
-                const driverId = row.related_driver_id;
-                if (!driverId) return;
-                // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
-                await insertDriverPwaNotification(client, {
-                  operatingCompanyId: companyId,
-                  driverId: String(driverId),
-                  title: `Legal deadline: ${matterNumber}`,
-                  message: `${title} — due ${due}`,
-                  payload: { matter_id: row.matter_id, deadline_id: id, type: "legal_matter_deadline" },
-                });
-              });
-            } catch (err) {
-              // Email already sent; PWA failure must not roll back reminder, but never silent.
-              console.error("legal.matter_deadline_reminder pwa notify failed", err);
-            }
-
-            await withLuciaBypass(async (client) => appendDeadlineReminderSent(client, id));
-          }
-          if (rows.length > 0) app.log.info({ count: rows.length }, "legal matter deadline reminders sent");
-        },
-        app.log
-      );
+      await wrapBackgroundJobTick("legal.matters_reminder_cron", async () => {
+        await runLegalMattersReminderTick(app);
+      }, app.log);
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
