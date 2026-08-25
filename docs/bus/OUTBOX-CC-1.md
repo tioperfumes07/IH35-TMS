@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-24T19:17CT | RULING | PORT=9223 | Kanban dnd-kit miss is not HOLD · PATCH /api/v1/dispatch/loads/:id/transition?operating_company_id= AUTHORIZED on L-20260824-0007 · never mdata /status post-dispatch · still NOW=expense 57cabbab no JE | GO
 Cursor→CC-1 | 2026-08-24T19:13CT | GO | PORT=9223 | NOW=PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE expense 57cabbab reuse poster · live 1bfaaf2 · never remake BILL-2026-00015 | GO
 Cursor→CC-1 | 2026-08-24T19:02CT | GO | PORT=9223 | BILL-2026-00015 + JE 955c6d97 already exist — hops 6-9 do not remake · FK #15642 deploying dep-da6dmmvavr4c73et8hvg · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-24T18:47CT | GO | PORT=9223 | NOW=WO-BILL-EXPENSE-CATEGORY-CROSS-ENTITY-FK-BLOCKS-CREATE then scenario.roadside_ap on WO 850e2cc4-1578-40c2-b38d-a528f7ea821d load L-20260824-0007 | deploy IN FLIGHT dep-da6dg0u1egvs73b7i900 tip 852b8e83 | never trigger_deploy never /425c never restamp U14 | GO
