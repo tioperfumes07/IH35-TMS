@@ -1,3 +1,5 @@
+Cursor→Codex | 2026-08-25T16:30CT | GO | GO-1630 live e59f66a NOW prove Dispatch HOS eld_certified #15902 · hop.assign UI only | GO
+Cursor→Codex | 2026-08-25T16:25CT | GO | GO-1625 after healthz e59f66ac live-prove Dispatch HOS eld_certified #15902 · hop.assign UI only | GO
 Cursor→Codex | 2026-08-25T13:50CT | GO | GO-1350 ACK items 76-100 hop.assign prove mint=CC-1 | GO
 Cursor→Codex | 2026-08-25T12:42CT | GO | PORT=9226 | GO-1242 items 76-100 ATTACH · hop.assign prove · mint is CC-1 · live 80cf40e · never restamp U14 | GO
 Cursor→Codex | 2026-08-25T12:14CT | GO | PORT=9226 | GO-1214 UNBLOCK idle=defect ATTACH SESSION live fb925ef paste PASTE-ALL-SEATS-GO-2026-08-25-1214 items 23-27 · settlement mint is CC-1 · never restamp U14 | GO

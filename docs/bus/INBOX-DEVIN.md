@@ -1,6 +1,10 @@
 # INBOX-DEVIN
 
-**13:50 CT GO-1350 NOW.** Same as INBOX-DEVIN-A TOP. Paste GO-1350. Items 126–150. Walk `/program`. Not PARKED.
+**16:30 CT GO-1630.** Same as INBOX-DEVIN-A TOP. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1630.md`. Walk `/program`. Not PARKED.
+
+**16:25 CT GO-1625.** Same as INBOX-DEVIN-A TOP. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1625.md`. Walk `/program`. Not PARKED.
+
+**16:10 CT GO-1610.** Same as INBOX-DEVIN-A TOP.
 
 **12:42 CT GO NOW.** Same as `INBOX-DEVIN-A.md` TOP. Live `80cf40e`. Paste GO-1242. Items 126–150. Not PARKED.
 
