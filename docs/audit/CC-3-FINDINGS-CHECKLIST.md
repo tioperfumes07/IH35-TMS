@@ -2,6 +2,7 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
+| ☑ | `CLASS-VIEW-PREFERENCE-TEST-MOCK-CONTRACT-DRIFT` | **C** | Codex Customer/Vendor guard | Codex | this PR | 2026-08-24 | Successful retry mock now returns the required preferences envelope. | focused retry test + frontend typecheck delta | OWNER-GATED=no |
 | ☑ | `CLASS-CUSTOMER-VENDOR-VIEW-PREFERENCE-SILENT-FAILURE` | **C** | Codex Customer/Vendor connectivity | Codex | this PR | 2026-08-24 | Both view-mode toggles now expose failed persistence and retry the exact selected mode. | `verify-customers-vendors-default-is-prior-design.mjs` normal + 6/6 planted defects; focused test 1/1 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
 
 | ☑ | `CLASS-LISTVIEW-PREFERENCE-SAVE-SILENT-FAILURE` | **C** | Codex vertical shared list connectivity | Codex | this PR | 2026-08-24 | Failed ListView preference saves now remain visibly temporary and retry the exact draft instead of disappearing. | `verify-all-module-list-toolbar-connectivity.mjs` normal + 86 planted defects; focused tests 2/2 | OWNER-GATED=no · Live=post-deploy UNVERIFIED |
