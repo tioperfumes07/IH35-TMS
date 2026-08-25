@@ -193,6 +193,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     mutationFn: ({ loadId, operatingCompanyId }: { loadId: string; operatingCompanyId: string }) =>
       distributeLoadInstructions(loadId, operatingCompanyId),
     onSuccess: () => pushToast("Driver instructions distributed", "success"),
+    // DISP-LOAD-DRAWER-RESEND-SILENT-FAILURE: Resend is an operator action, so a rejected
+    // distribution must be visible instead of ending as an unexplained no-op.
+    onError: (err) => pushToast(userFacingApiError(err, "Driver instruction distribution failed"), "error"),
   });
 
   const flagColorsQuery = useQuery({
