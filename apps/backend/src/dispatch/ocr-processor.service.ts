@@ -135,7 +135,13 @@ export function scheduleOcrIntakeProcessing(itemId: string, operatingCompanyId: 
   inFlight.add(itemId);
   setImmediate(() => {
     void processOcrIntakeQueueItem(itemId, operatingCompanyId)
-      .catch(() => undefined)
+      .catch((error: unknown) => {
+        console.error("[dispatch-ocr] scheduled_processing_failed", {
+          item_id: itemId,
+          operating_company_id: operatingCompanyId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      })
       .finally(() => inFlight.delete(itemId));
   });
 }

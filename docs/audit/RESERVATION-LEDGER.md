@@ -154,3 +154,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T12:17:00-05:00 | Codex | QUICK-ASSIGN-QUALIFICATION-QUERY-FAILURES-FAIL-OPEN | apps/backend/src/dispatch/quick-assign.service.ts, scripts/verify-book-load-driver-qualification-gate.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-quick-assign-qualification-fail-open |
 | 2026-08-25T12:23:00-05:00 | Codex | QUICK-ASSIGN-QUALIFICATION-QUERY-FAILURES-FAIL-OPEN | — | RELEASED-ON-MERGE | codex/quick-assign-qualification-fail-open |
 | 2026-08-25T12:31:00-05:00 | Codex | DISPATCH-OCR-SCHEDULER-FAILURE-SILENT | apps/backend/src/dispatch/ocr-processor.service.ts, scripts/verify-dispatch-ocr-queue.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-ocr-scheduler-honesty |
+| 2026-08-25T12:37:00-05:00 | Codex | DISPATCH-OCR-SCHEDULER-FAILURE-SILENT | — | RELEASED-ON-MERGE | codex/ocr-scheduler-honesty |
