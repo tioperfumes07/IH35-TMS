@@ -9,6 +9,13 @@ let initialized = false;
 /**
  * Marks driver-submitted cash advance requests as expired when past expires_at (pending / under_review only).
  */
+export async function runCashAdvanceExpiryTick(app: FastifyInstance): Promise<void> {
+  const expired = await withLuciaBypass(async (client) => expireStaleCashAdvanceRequests(client));
+  if (expired.length > 0) {
+    app.log.info({ count: expired.length }, "cash_advance_requests expired by cron");
+  }
+}
+
 export function initializeCashAdvanceRequestExpiryCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -20,16 +27,9 @@ export function initializeCashAdvanceRequestExpiryCron(app: FastifyInstance) {
   cron.schedule(
     "15 6 * * *",
     async () => {
-      await wrapBackgroundJobTick(
-        "cash_advance.expiry_cron",
-        async () => {
-          const expired = await withLuciaBypass(async (client) => expireStaleCashAdvanceRequests(client));
-          if (expired.length > 0) {
-            app.log.info({ count: expired.length }, "cash_advance_requests expired by cron");
-          }
-        },
-        app.log
-      );
+      await wrapBackgroundJobTick("cash_advance.expiry_cron", async () => {
+        await runCashAdvanceExpiryTick(app);
+      }, app.log);
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
