@@ -1365,8 +1365,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const latest = res.rows[0] ?? null;
       return latest ? { ...latest, basic_hazmat: null } : null;
     });
