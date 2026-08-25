@@ -16,6 +16,8 @@ export default {
     ctx.run("node", ["scripts/verify-identity-password-reset-delivery-durable.mjs"]);
     ctx.run("node", ["scripts/verify-legal-attorney-decision-delivery-durable.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-legal-attorney-decision-delivery-durable.mjs"]);
+    ctx.run("node", ["scripts/verify-legal-contract-sign-delivery-atomic.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-legal-contract-sign-delivery-atomic.mjs"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs"]);
   },

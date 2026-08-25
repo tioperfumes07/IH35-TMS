@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { z } from "zod";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import { getR2BucketName } from "../storage/r2-client.js";
@@ -10,7 +10,7 @@ import { applySignedOperationalLinks } from "./signed-links.service.js";
 import { applySignedFinanceHandoff } from "./signed-finance-handoff.service.js";
 
 type QueryableClient = {
-  query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+  query: <T = Record<string, unknown>>(query: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
 const contractCreateSchema = z.object({
@@ -139,16 +139,6 @@ async function setOperatingCompany(client: QueryableClient, operatingCompanyId: 
 function resolveSignerUrl(rawToken: string) {
   const base = (process.env.SIGNER_APP_BASE_URL || process.env.FRONTEND_BASE_URL || "https://ih35-tms-web.onrender.com").replace(/\/$/, "");
   return `${base}/sign/${rawToken}`;
-}
-
-async function enqueueOutboxEvent(client: QueryableClient, eventType: string, payload: Record<string, unknown>) {
-  await client.query(
-    `
-      INSERT INTO outbox.events (event_type, payload, next_retry_at)
-      VALUES ($1, $2::jsonb, now())
-    `,
-    [eventType, JSON.stringify(payload)]
-  );
 }
 
 export async function listContractInstances(
@@ -416,23 +406,32 @@ export async function sendContractSigningLink(
 
   if (input.delivery_channel === "email") {
     if (!instance.signer_email) throw new Error("legal_signer_email_required");
-    await sendEmail({
-      to: String(instance.signer_email),
-      subject: "IH 35 contract signature requested",
-      html: `<p>Hello ${String(instance.signer_name)},</p><p>Please review and sign your document here:</p><p><a href="${signerUrl}">${signerUrl}</a></p>`,
-      text: `Hello ${String(instance.signer_name)}, sign your document: ${signerUrl}`,
-      sender: "noreply",
-      eventClass: "legal.contract.sign_link_sent",
-      actorUserId: args.actorUserId,
-    });
+    await enqueueOutboxEvent(
+      client,
+      "legal.contract.sign_email",
+      { aggregate_type: "legal.contract_instances", aggregate_id: args.contractInstanceId },
+      {
+        operating_company_id: args.operatingCompanyId,
+        to: String(instance.signer_email),
+        signer_name: String(instance.signer_name),
+        signer_url: signerUrl,
+        actor_user_id: args.actorUserId,
+      }
+    );
   } else {
     if (!instance.signer_phone) throw new Error("legal_signer_phone_required");
     const eventType = input.delivery_channel === "whatsapp" ? "twilio.whatsapp.send" : "twilio.sms.send";
-    await enqueueOutboxEvent(client, eventType, {
-      to: String(instance.signer_phone),
-      body: message,
-      source: "legal.contract.send_link",
-    });
+    await enqueueOutboxEvent(
+      client,
+      eventType,
+      { aggregate_type: "legal.contract_instances", aggregate_id: args.contractInstanceId },
+      {
+        operating_company_id: args.operatingCompanyId,
+        to: String(instance.signer_phone),
+        body: message,
+        source: "legal.contract.send_link",
+      }
+    );
   }
 
   const status = String(instance.status) === "draft" ? "sent" : String(instance.status);
@@ -591,24 +590,32 @@ export async function startPublicSigningVerification(
     if (verificationChannel === "email") {
       const email = String(token.verification_target ?? token.signer_email ?? "");
       if (!email) throw new Error("legal_signer_email_required");
-      await sendEmail({
-        to: email,
-        subject: "IH 35 contract verification code",
-        html: `<p>Your verification code is <strong>${code}</strong>. It expires in 10 minutes.</p>`,
-        text: `Verification code: ${code} (expires in 10 minutes)`,
-        sender: "noreply",
-        eventClass: "legal.contract.verify_code_sent",
-      });
+      await enqueueOutboxEvent(
+        client,
+        "legal.contract.verification_email",
+        { aggregate_type: "legal.contract_instances", aggregate_id: String(token.contract_instance_id) },
+        {
+          operating_company_id: String(token.operating_company_id),
+          to: email,
+          code,
+        }
+      );
     } else {
       const phone = String(token.verification_target ?? token.signer_phone ?? "");
       if (!phone) throw new Error("legal_signer_phone_required");
       const requested = input.channel ?? "sms";
       const eventType = requested === "sms" ? "twilio.sms.send" : "twilio.sms.send";
-      await enqueueOutboxEvent(client, eventType, {
-        to: phone,
-        body: `IH 35 verification code: ${code}. Expires in 10 minutes.`,
-        source: "legal.contract.verify_code",
-      });
+      await enqueueOutboxEvent(
+        client,
+        eventType,
+        { aggregate_type: "legal.contract_instances", aggregate_id: String(token.contract_instance_id) },
+        {
+          operating_company_id: String(token.operating_company_id),
+          to: phone,
+          body: `IH 35 verification code: ${code}. Expires in 10 minutes.`,
+          source: "legal.contract.verify_code",
+        }
+      );
     }
 
     await appendContractAuditLog(client, {
