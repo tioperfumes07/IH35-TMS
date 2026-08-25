@@ -248,7 +248,7 @@ const CHAIN_REQUIRED = [
       "new_trailer.id = h.new_trailer_id",
       "new_trailer.owner_company_id = h.operating_company_id",
       "new_trailer.deactivated_at IS NULL",
-      "new_trailer.status::text = 'Active'",
+      "new_trailer.status::text = 'InService'",
       "h.previous_trailer_id <> h.new_trailer_id",
       "dispatch.load_assignment_history later",
       "later.new_trailer_id <> h.new_trailer_id",
