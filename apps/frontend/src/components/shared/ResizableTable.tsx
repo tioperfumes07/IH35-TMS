@@ -22,7 +22,7 @@ export function ResizableTable({ tableId, columns, children, className, tableCla
   const defaultWidths = Object.fromEntries(
     columns.map((col) => [col.id, col.defaultWidth ?? 120])
   );
-  const { widths, setWidth, minWidth, maxWidth } = useColumnWidths(tableId, defaultWidths);
+  const { widths, setWidth, minWidth, maxWidth, persistError, retryPersist } = useColumnWidths(tableId, defaultWidths);
 
   return (
     <div className={className} data-resizable-table={tableId}>
@@ -47,6 +47,12 @@ export function ResizableTable({ tableId, columns, children, className, tableCla
         </thead>
         {children(widths)}
       </table>
+      {persistError && (
+        <div role="alert" data-column-width-save-error={tableId} className="flex items-center justify-between gap-3 border-t border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>Column widths could not be saved. This layout is temporary.</span>
+          <button type="button" className="font-semibold underline" onClick={retryPersist}>Retry save</button>
+        </div>
+      )}
     </div>
   );
 }

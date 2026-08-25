@@ -116,7 +116,12 @@ export function ListView<T>({
     () => Object.fromEntries(columns.map((c) => [c.id, c.width ?? 120])),
     [columns]
   );
-  const { widths: columnWidths, setWidth } = useColumnWidths(tableId, defaultWidths);
+  const {
+    widths: columnWidths,
+    setWidth,
+    persistError: widthPersistError,
+    retryPersist: retryWidthPersist,
+  } = useColumnWidths(tableId, defaultWidths);
 
   const processedRows = useMemo(() => {
     let result = filterRows(rows);
@@ -172,6 +177,12 @@ export function ListView<T>({
           <button type="button" className="font-semibold underline" onClick={retryPersist}>
             Retry save
           </button>
+        </div>
+      )}
+      {widthPersistError && (
+        <div role="alert" data-column-width-save-error={tableId} className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>Column widths could not be saved. This layout is temporary.</span>
+          <button type="button" className="font-semibold underline" onClick={retryWidthPersist}>Retry save</button>
         </div>
       )}
       {/* Toolbar */}
