@@ -151,3 +151,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T11:58:00-05:00 | Codex | NOTIFICATION-RECIPIENT-CENSUS-FAILURE-FALSE-ZERO | — | RELEASED-ON-MERGE | codex/notification-recipient-census-honesty |
 | 2026-08-25T12:03:00-05:00 | Codex | FUEL-PLANNER-DETAIL-READ-FAILURES-FALSE-EMPTY | apps/backend/src/fuel/planner.routes.ts, scripts/verify-fuel-home-dashboard-wired.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-fuel-planner-detail-honesty |
 | 2026-08-25T12:09:00-05:00 | Codex | FUEL-PLANNER-DETAIL-READ-FAILURES-FALSE-EMPTY | — | RELEASED-ON-MERGE | codex/fuel-planner-detail-honesty |
+| 2026-08-25T12:17:00-05:00 | Codex | QUICK-ASSIGN-QUALIFICATION-QUERY-FAILURES-FAIL-OPEN | apps/backend/src/dispatch/quick-assign.service.ts, scripts/verify-book-load-driver-qualification-gate.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-quick-assign-qualification-fail-open |
