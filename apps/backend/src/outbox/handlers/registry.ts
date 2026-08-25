@@ -28,6 +28,7 @@ import { LegalAttorneyDecisionEmailHandler } from "./legal-attorney-decision-ema
 import { LegalContractSignEmailHandler } from "./legal-contract-sign-email.handler.js";
 import { LegalContractVerificationEmailHandler } from "./legal-contract-verification-email.handler.js";
 import { SafetyIncidentStakeholderNotificationHandler } from "./safety-incident-stakeholder-notification.handler.js";
+import { DriverDocumentExpiryEmailHandler } from "./driver-document-expiry-email.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -128,6 +129,7 @@ export function buildOutboxHandlerRegistry() {
     new LegalContractSignEmailHandler(),
     new LegalContractVerificationEmailHandler(),
     new SafetyIncidentStakeholderNotificationHandler(),
+    new DriverDocumentExpiryEmailHandler(),
     // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),

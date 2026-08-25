@@ -19,6 +19,8 @@ const paths = {
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
   index: path.join(ROOT, "apps/backend/src/index.ts"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+  handler: path.join(ROOT, "apps/backend/src/outbox/handlers/driver-document-expiry-email.handler.ts"),
+  registry: path.join(ROOT, "apps/backend/src/outbox/handlers/registry.ts"),
 };
 
 function read(filePath) {
@@ -60,6 +62,8 @@ function main() {
   const manifest = read(paths.manifest);
   const index = read(paths.index);
   const archDesign = read(paths.archDesign);
+  const handler = read(paths.handler);
+  const registry = read(paths.registry);
   const failures = [];
 
   if (!migration.includes("document_alert_rules")) {
@@ -77,6 +81,17 @@ function main() {
 
   if (!service.includes("evaluateDocumentAlertsForTenant")) failures.push("Evaluator service required");
   if (!service.includes("dispatchDocumentAlertNotifications")) failures.push("Notification dispatch required");
+  if (!service.includes('"driver.document_expiry_email"') || !service.includes("enqueueOutboxEvent(")) {
+    failures.push("Email alert intent must use the canonical outbox in the alert transaction");
+  }
+  if (/sendEmail\(/.test(service) || /email best-effort/.test(service)) {
+    failures.push("Document alert service must not swallow direct provider delivery before stamping notified_at");
+  }
+  if (!service.includes("`driver-document-expiry-email:${eventId}`")) failures.push("Email alert intent needs an event-id dedupe key");
+  if (!handler.includes("requiresDelivery = true") || !handler.includes("await sendEmail(")) {
+    failures.push("Document expiry email handler must require and await provider delivery");
+  }
+  if (!registry.includes("new DriverDocumentExpiryEmailHandler()")) failures.push("Document expiry email handler must be registered");
   failures.push(...verifySharedDriverVisibility(service));
   if (!routes.includes("/api/v1/drivers/document-alerts/inbox")) failures.push("Inbox route required");
   if (!routes.includes("/api/v1/drivers/document-alert-rules")) failures.push("Rules route required");
@@ -103,7 +118,20 @@ function main() {
     const mutations = aliases.map((alias) => service.replace(`${alias}.is_authorized = true`, `${alias}.is_authorized = false`));
     const escaped = mutations.filter((source) => verifySharedDriverVisibility(source).length === 0);
     if (escaped.length > 0) fail(`SELFTEST: ${escaped.length}/${mutations.length} shared-driver mutations escaped`);
-    console.log(`[verify-drivers-document-expiry-alerts] SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+    const durabilityMutations = [
+      service.replace("enqueueOutboxEvent(", "sendEmail("),
+      service.replace("`driver-document-expiry-email:${eventId}`", "null"),
+      handler.replace("requiresDelivery = true", "requiresDelivery = false"),
+      registry.replace("new DriverDocumentExpiryEmailHandler(),", ""),
+    ];
+    const durabilityEscapes = durabilityMutations.filter((source, index) => {
+      if (index === 0) return source.includes('"driver.document_expiry_email"') && source.includes("enqueueOutboxEvent(");
+      if (index === 1) return source.includes("`driver-document-expiry-email:${eventId}`");
+      if (index === 2) return source.includes("requiresDelivery = true") && source.includes("await sendEmail(");
+      return source.includes("new DriverDocumentExpiryEmailHandler()");
+    });
+    if (durabilityEscapes.length > 0) fail(`SELFTEST: ${durabilityEscapes.length}/4 durability mutations escaped`);
+    console.log(`[verify-drivers-document-expiry-alerts] SELFTEST PASS — ${mutations.length + 4}/${mutations.length + 4} planted defects rejected`);
   }
 
   console.log("[verify-drivers-document-expiry-alerts] OK");
