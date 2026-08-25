@@ -25,7 +25,26 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
       </section>
     );
   }
-  if (query.isError || !data) return null;
+  if (query.isError) {
+    return (
+      <section
+        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
+        data-testid="home-fleet-restore-card"
+        data-fleet-restore-read-error
+        role="alert"
+      >
+        <p>Could not load fleet restore cost.</p>
+        <button
+          type="button"
+          className="mt-2 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700"
+          onClick={() => void query.refetch()}
+        >
+          Retry restore cost
+        </button>
+      </section>
+    );
+  }
+  if (!data) return null;
   if (data.unit_count === 0 && data.total_estimated_cents === 0) return null;
 
   return (
