@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { PoolClient } from "pg";
-import { dispatchNotification, listCompanyUserIdsByRoles } from "../notifications/dispatcher.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 export type PoolMember = {
   driver_id: string;
@@ -162,37 +162,31 @@ export async function runQuarterlyRandomDraw(
     await client.query(
       `
         INSERT INTO compliance.drug_alcohol_random_selections (
-          operating_company_id, draw_id, driver_id, test_type, notified_at
+          operating_company_id, draw_id, driver_id, test_type
         )
-        VALUES ($1::uuid, $2::uuid, $3::uuid, $4, now())
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
       `,
       [operatingCompanyId, drawId, sel.driver_id, sel.test_type]
     );
   }
 
-  return { draw_id: drawId, quarter, year, drug_count: drugCount, alcohol_count: alcoholCount, selections };
-}
-
-export async function notifyRandomSelections(
-  operatingCompanyId: string,
-  selections: RandomDrawResult["selections"]
-): Promise<void> {
-  const recipients = await listCompanyUserIdsByRoles(operatingCompanyId, ["Owner", "Administrator", "Safety", "Manager"]);
-  const headline = `Random drug/alcohol selections (${selections.length} drivers)`;
-  await Promise.all(
-    recipients.map((userId) =>
-      dispatchNotification({
-        user_id: userId,
-        event_type: "wo.created",
-        actor_user_id: null,
-        payload: {
-          operating_company_id: operatingCompanyId,
-          headline,
-          bodyText: `${selections.length} drivers selected for random testing. Review Safety > Drug/Alcohol.`,
-          selection_count: selections.length,
-          whatsapp_skip: true,
-        },
-      }).catch(() => undefined)
-    )
+  // The draw and its operational alert are one durable fact. Enqueue on this transaction client so
+  // a commit cannot leave regulated selections behind with no alert, and leave selection.notified_at
+  // NULL: this notice goes to the compliance team, not to the selected drivers themselves.
+  await enqueueOutboxEvent(
+    client,
+    "compliance.drug_alcohol.random_selections_drawn",
+    { aggregate_type: "compliance.drug_alcohol_random_draws", aggregate_id: drawId },
+    {
+      operating_company_id: operatingCompanyId,
+      draw_id: drawId,
+      year,
+      quarter,
+      selection_count: selections.length,
+      drug_count: drugCount,
+      alcohol_count: alcoholCount,
+    }
   );
+
+  return { draw_id: drawId, quarter, year, drug_count: drugCount, alcohol_count: alcoholCount, selections };
 }

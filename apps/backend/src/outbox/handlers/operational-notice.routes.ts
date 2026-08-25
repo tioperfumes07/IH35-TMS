@@ -54,12 +54,32 @@ function text(p: NoticePayload, key: string): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
+function value(p: NoticePayload, key: string): string | null {
+  const v = p[key];
+  return typeof v === "number" && Number.isFinite(v) ? String(v) : text(p, key);
+}
+
 /** A short human label for the subject of the notice — never a bare UUID if something better exists. */
 function label(p: NoticePayload, preferredKey: string, idKey: string): string {
   return text(p, preferredKey) ?? text(p, idKey) ?? "(unidentified)";
 }
 
 export const NOTICE_ROUTES: NoticeRoute[] = [
+  {
+    eventType: "compliance.drug_alcohol.random_selections_drawn",
+    severity: "high",
+    entityType: "compliance.drug_alcohol_random_draws",
+    entityIdKey: "draw_id",
+    audience: { kind: "roles", roles: ["Owner", "Administrator", "Safety", "Manager"] },
+    sourceBlock: "COMPLIANCE-DRUG-ALCOHOL-RANDOM-DRAW",
+    title: (p) =>
+      `Random drug/alcohol draw completed — ${value(p, "year") ?? "?"} Q${value(p, "quarter") ?? "?"}`,
+    body: (p) =>
+      `${value(p, "selection_count") ?? "0"} drivers were selected for random testing ` +
+      `(${value(p, "drug_count") ?? "0"} drug, ${value(p, "alcohol_count") ?? "0"} alcohol). ` +
+      `Review the confidential selection roster and arrange testing promptly.`,
+    actionLink: () => "/safety/drug-alcohol",
+  },
   {
     eventType: "load.abandoned",
     severity: "critical",
