@@ -377,25 +377,21 @@ export function CustomersPage() {
   });
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
-  const [createOpen, setCreateOpen] = useState(() => searchParams.get("create") === "1");
-  useEffect(() => {
-    if (searchParams.get("create") !== "1") return;
-    setCreateOpen(true);
-  }, [searchParams]);
+  // CUSTOMER-CREATE-DEAD-CLICK: drawer open must be URL-only. Dual useState + setSearchParams lost
+  // the first click when the page remounted (15 parallel list queries) before ?create=1 flushed —
+  // setCreateOpen(true) landed on an unmounted instance and the new instance still read create !== 1.
+  const createOpen = searchParams.get("create") === "1";
   const openCreate = () => {
-    setCreateOpen(true);
     if (searchParams.get("create") === "1") return;
     const next = new URLSearchParams(searchParams);
     next.set("create", "1");
     setSearchParams(next, { replace: true });
   };
   const closeCreate = () => {
-    setCreateOpen(false);
-    if (searchParams.get("create") === "1") {
-      const next = new URLSearchParams(searchParams);
-      next.delete("create");
-      setSearchParams(next, { replace: true });
-    }
+    if (searchParams.get("create") !== "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
   };
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
@@ -421,7 +417,7 @@ export function CustomersPage() {
     },
     onSuccess: async (customer) => {
       await queryClient.invalidateQueries({ queryKey: ["customers", "page", companyId] });
-      setCreateOpen(false);
+      closeCreate();
       setCreateValues(emptyCustomerProfileValues());
       setCreateFormError("");
       setCreateFieldErrors({});
@@ -1295,7 +1291,7 @@ export function CustomersPage() {
             </span>
           ) : null}
           <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
-            <ActionButton type="button" onClick={() => setCreateOpen(false)}>
+            <ActionButton type="button" onClick={closeCreate}>
               Cancel
             </ActionButton>
             <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !companyId}>
