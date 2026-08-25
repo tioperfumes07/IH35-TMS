@@ -27,16 +27,30 @@ describe("quick-assign trailer linkage", () => {
   it("writes the canonical FK and exposes its exact entity-scoped reverse drill", () => {
     expect(service).toContain("previous_trailer_id, new_trailer_id");
     expect(service).toContain("input.trailer_id ?? null");
-    expect(service).toContain("resolvedTrailerId, userId");
+    expect(service).toMatch(/resolvedTrailerId \?\? previousTrailerId,\s*userId/);
     expect(service).toContain("async function resolveCurrentTrailerId");
     expect(service).toContain("operating_company_id = $1::uuid");
-    expect(service.match(/resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/g)).toHaveLength(2);
+    expect(
+      service.match(/resolveCurrentTrailerId\(\s*client,\s*input\.operating_company_id,\s*input\.load_id,?\s*\)/g)
+    ).toHaveLength(2);
     expect(service).toContain("previousTrailerId,\n          input.trailer_id ?? null");
-    expect(service).toContain("previousTrailerId, resolvedTrailerId, userId");
     expect(aggregate).toContain("lah.new_trailer_id = $1::uuid");
     expect(aggregate).toContain("lah.operating_company_id = $2::uuid");
     expect(profile).toContain("aggregate.loads ?? []");
     expect(profile).toContain('kind="load"');
     expect(profile).toContain("No linked loads.");
+  });
+
+  it("atomically records previous and new unit/trailer FKs when completing a draft", () => {
+    const draftPath = service.match(
+      /export async function completeQuicksaveDraft[\s\S]*?export async function listQuicksaveDrafts/
+    )?.[0];
+    expect(draftPath).toBeTruthy();
+    expect(draftPath).toContain('await client.query("BEGIN")');
+    expect(draftPath).toContain('await client.query("COMMIT")');
+    expect(draftPath).toContain('await client.query("ROLLBACK")');
+    expect(draftPath).toMatch(/SELECT assigned_unit_id::text[\s\S]{0,220}FOR UPDATE/);
+    expect(draftPath).toContain("previous_unit_id, new_unit_id");
+    expect(draftPath).toMatch(/before\.assigned_unit_id,\s*unitId \?\? before\.assigned_unit_id/);
   });
 });

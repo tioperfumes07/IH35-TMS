@@ -14,14 +14,18 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
+  const draftPath = s.service.match(/export async function completeQuicksaveDraft[\s\S]*?export async function listQuicksaveDrafts/)?.[0] ?? "";
   if (!/<EntityPicker[\s\S]{0,160}kind="trailer"/.test(s.creator) || !/trailer_id: trailerId \|\| undefined/.test(s.creator)) failures.push("canonical trailer picker-to-payload path missing");
   if ((s.service.match(/FROM mdata\.equipment/g) ?? []).length < 2 || (s.service.match(/COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/g) ?? []).length < 2) failures.push("both create paths must validate trailer company scope");
   if ((s.service.match(/deactivated_at IS NULL/g) ?? []).length < 2 || (s.service.match(/E_TRAILER_NOT_FOUND/g) ?? []).length < 2) failures.push("both create paths must reject inactive or missing trailers");
   if (s.service.indexOf("if (!resolvedTrailerId)") < 0 || s.service.indexOf("if (!resolvedTrailerId)") > s.service.indexOf("const update = await client.query")) failures.push("draft trailer validation must precede mutation");
-  if (!/previous_trailer_id, new_trailer_id/.test(s.service) || !/input\.trailer_id \?\? null/.test(s.service) || !/resolvedTrailerId, userId/.test(s.service)) failures.push("canonical assignment-history trailer FK sink missing");
+  if (!/previous_trailer_id, new_trailer_id/.test(s.service) || !/input\.trailer_id \?\? null/.test(s.service) || !/resolvedTrailerId \?\? previousTrailerId,\s*userId/.test(s.service)) failures.push("canonical assignment-history trailer FK sink missing");
   if (!/async function resolveCurrentTrailerId/.test(s.service) || !/operating_company_id = \$1::uuid[\s\S]{0,120}load_id = \$2::uuid[\s\S]{0,220}ORDER BY assigned_at DESC, created_at DESC, id DESC/.test(s.service)) failures.push("canonical current-trailer resolver must be explicitly company/load scoped and deterministically ordered");
-  if ((s.service.match(/const previousTrailerId = await resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/g) ?? []).length < 2) failures.push("both quick-assign create paths must preserve the prior canonical trailer");
-  if (!/previousTrailerId,\s*input\.trailer_id \?\? null/.test(s.service) || !/previousTrailerId, resolvedTrailerId, userId/.test(s.service)) failures.push("both assignment-history writes must stamp previous and new trailer FKs");
+  if ((s.service.match(/const previousTrailerId = await resolveCurrentTrailerId\(\s*client,\s*input\.operating_company_id,\s*input\.load_id,?\s*\)/g) ?? []).length < 2) failures.push("both quick-assign create paths must preserve the prior canonical trailer");
+  if (!/previousTrailerId,\s*input\.trailer_id \?\? null/.test(s.service) || !/previousTrailerId,\s*resolvedTrailerId \?\? previousTrailerId,\s*userId/.test(s.service)) failures.push("both assignment-history writes must stamp previous and new trailer FKs");
+  if (!/await client\.query\("BEGIN"\)/.test(draftPath) || !/await client\.query\("COMMIT"\)/.test(draftPath) || !/await client\.query\("ROLLBACK"\)/.test(draftPath)) failures.push("draft completion must atomically couple load mutation and assignment history");
+  if (!/SELECT assigned_unit_id::text[\s\S]{0,220}FOR UPDATE/.test(draftPath)) failures.push("draft completion must lock and capture the prior unit before mutation");
+  if (!/previous_unit_id, new_unit_id/.test(draftPath) || !/before\.assigned_unit_id,\s*unitId \?\? before\.assigned_unit_id/.test(draftPath)) failures.push("draft completion must preserve previous/new unit assignment history");
   if (!/code === "E_TRAILER_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("trailer rejection route mapping missing");
   if (!/lah\.new_trailer_id = \$1::uuid/.test(s.aggregate) || !/lah\.operating_company_id = \$2::uuid/.test(s.aggregate) || !/l\.operating_company_id = lah\.operating_company_id/.test(s.aggregate)) failures.push("exact entity-scoped trailer reverse query missing");
   if (!/FROM mdata\.units WHERE id = \$1::uuid AND \(owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid\)/.test(s.aggregate)) failures.push("attached-unit reverse label must admit the unit owner or current lessee");
@@ -40,7 +44,11 @@ if (process.argv.includes("--selftest")) {
     ["sink", "service", /input\.trailer_id \?\? null/, "null"],
     ["prior-resolver", "service", /async function resolveCurrentTrailerId/, "async function removedCurrentTrailerId"],
     ["prior-scope", "service", /operating_company_id = \$1::uuid/, "TRUE"],
-    ["prior-call", "service", /const previousTrailerId = await resolveCurrentTrailerId\(client, input\.operating_company_id, input\.load_id\)/, "const previousTrailerId = null"],
+    ["prior-call", "service", /const previousTrailerId = await resolveCurrentTrailerId\(\s*client,\s*input\.operating_company_id,\s*input\.load_id,?\s*\)/, "const previousTrailerId = null"],
+    ["draft-unit-lock", "service", /SELECT assigned_unit_id::text/, "SELECT NULL::uuid AS assigned_unit_id"],
+    ["draft-unit-history", "service", /(export async function completeQuicksaveDraft[\s\S]*?)previous_unit_id, new_unit_id/, "$1new_unit_id"],
+    ["draft-unit-values", "service", /before\.assigned_unit_id,\s*unitId \?\? before\.assigned_unit_id/, "null, unitId"],
+    ["draft-rollback", "service", /(export async function completeQuicksaveDraft[\s\S]*?)await client\.query\("ROLLBACK"\);/, '$1await client.query("COMMIT");'],
     ["route", "routes", /code === "E_TRAILER_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /lah\.new_trailer_id = \$1::uuid/, "TRUE"],
     ["attached-unit-scope", "aggregate", /owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid/, "owner_company_id = $2::uuid"],
