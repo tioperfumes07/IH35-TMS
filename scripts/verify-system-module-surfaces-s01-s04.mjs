@@ -55,6 +55,9 @@ export function run() {
   if (!/DEGRADED/.test(src)) {
     failures.push(`${FILE}: must be able to show DEGRADED when health checks fail`);
   }
+  if (!/if \(health\.isError\)[\s\S]*?<ListErrorState[\s\S]*?onRetry=\{\(\) => void health\.refetch\(\)\}/.test(src)) {
+    failures.push(`${FILE}: Software/Build must recover the exact failed health query`);
+  }
 
   // S03 — program tracker mirror counts + link to /program
   if (!/(getProgramTracker\s*\(|queryFn:\s*getProgramTracker)/.test(src)) {
@@ -90,13 +93,23 @@ function main() {
     const realPath = path.join(ROOT, FILE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
-      fs.writeFileSync(realPath, backup.replace(/getProgramTracker/g, "fetchTracker"), "utf8");
+      fs.writeFileSync(
+        realPath,
+        backup
+          .replace(/getProgramTracker/g, "fetchTracker")
+          .replace("onRetry={() => void health.refetch()}", "onRetry={() => undefined}"),
+        "utf8",
+      );
       const planted = run();
       if (planted.length === 0) {
         console.error("[verify-system-module-surfaces-s01-s04] SELFTEST FAIL: planted rename did not fail");
         process.exit(1);
       }
-      console.log(`[verify-system-module-surfaces-s01-s04] SELFTEST PASS (${planted.length} planted failures detected)`);
+      if (!planted.some((failure) => failure.includes("exact failed health query"))) {
+        console.error("[verify-system-module-surfaces-s01-s04] SELFTEST FAIL: health retry no-op stayed green");
+        process.exit(1);
+      }
+      console.log(`[verify-system-module-surfaces-s01-s04] SELFTEST PASS (${planted.length} planted failures detected, including health retry)`);
     } finally {
       fs.writeFileSync(realPath, backup, "utf8");
     }
