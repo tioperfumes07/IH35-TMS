@@ -33,6 +33,14 @@ function fail(msg) {
   process.exit(1);
 }
 
+function auditPanelRecovery(panel) {
+  const failures = [];
+  if (!/<ListErrorState[\s\S]*?Could not load deadhead suggestions\.[\s\S]*?onRetry=\{\(\) => void q\.refetch\(\)\}/.test(panel)) failures.push("deadhead suggestions failure must expose exact-query retry");
+  if (!/!q\.isLoading && !q\.isError && suggestions\.length === 0/.test(panel)) failures.push("failed suggestions read must not paint an honest empty result");
+  if (!/!q\.isError \|\| suggestionsOverride \? <ul/.test(panel)) failures.push("failed suggestions read must not leave cached rows mounted");
+  return failures;
+}
+
 function main() {
   const service = read(paths.service);
   const routes = read(paths.routes);
@@ -55,6 +63,7 @@ function main() {
   if ((tests.match(/\bit\(/g) ?? []).length < 5) failures.push("optimizer tests must cover at least 5 cases");
   if (!index.includes("registerDeadheadOptimizerRoutes")) failures.push("backend index must register deadhead routes");
   if (!panel.includes('data-testid="deadhead-optimizer-panel"')) failures.push("DeadheadOptimizerPanel must expose test id");
+  failures.push(...auditPanelRecovery(panel));
   // A1a: the deadhead panel is embedded in the §B section (BookLoadEquipmentSection), and the wizard
   // (BookLoadModalV4) must mount that section — together this keeps the seam reachable from Book Load.
   if (!equipmentSection.includes("DeadheadOptimizerPanel")) failures.push("BookLoadEquipmentSection (§B owner) must embed DeadheadOptimizerPanel");
@@ -72,4 +81,19 @@ function main() {
   console.log("verify:deadhead-optimizer PASS");
 }
 
-main();
+function selftest() {
+  const panel = read(paths.panel);
+  const mutations = [
+    ["retry", "onRetry={() => void q.refetch()}", "onRetry={() => undefined}"],
+    ["empty honesty", "!q.isLoading && !q.isError && suggestions.length === 0", "!q.isLoading && suggestions.length === 0"],
+    ["stale rows", "!q.isError || suggestionsOverride ? <ul", "true ? <ul"],
+  ];
+  for (const [name, before, after] of mutations) {
+    const planted = panel.replace(before, after);
+    if (planted === panel || auditPanelRecovery(planted).length === 0) fail(`${name} mutation escaped`);
+  }
+  console.log(`verify:deadhead-optimizer selftest PASS — ${mutations.length}/${mutations.length} recovery mutations caught`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else main();

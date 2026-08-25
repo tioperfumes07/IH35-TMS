@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 export type DeadheadOptimizerPanelProps = {
   operatingCompanyId: string;
@@ -70,12 +71,14 @@ export function DeadheadOptimizerPanel({
       </div>
 
       {q.isLoading && !suggestionsOverride ? <p className="text-xs text-slate-700/70">Loading suggestions…</p> : null}
-      {q.isError && !suggestionsOverride ? <p className="text-xs text-red-700">Could not load deadhead suggestions.</p> : null}
-      {!q.isLoading && suggestions.length === 0 ? (
+      {q.isError && !suggestionsOverride ? (
+        <ListErrorState status={0} message="Could not load deadhead suggestions." onRetry={() => void q.refetch()} />
+      ) : null}
+      {!q.isLoading && !q.isError && suggestions.length === 0 ? (
         <p className="text-xs text-slate-700/70">No nearby pending loads within the deadhead limit.</p>
       ) : null}
 
-      <ul className="max-h-44 space-y-1 overflow-y-auto">
+      {!q.isError || suggestionsOverride ? <ul className="max-h-44 space-y-1 overflow-y-auto">
         {suggestions.map((row, index) => (
           <li
             key={row.load_uuid}
@@ -97,7 +100,7 @@ export function DeadheadOptimizerPanel({
             </div>
           </li>
         ))}
-      </ul>
+      </ul> : null}
 
       {disabled ? <p className="text-[10px] text-slate-500">Suggestions are read-only while the form is disabled.</p> : null}
     </div>
