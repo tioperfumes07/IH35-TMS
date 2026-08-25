@@ -38,8 +38,7 @@ export async function listSafetyEvents(
     const limitIdx = values.length - 1;
     const offsetIdx = values.length;
 
-    const rows = await client
-      .query(
+    const rows = await client.query(
         `
           SELECT *
           FROM safety.v_safety_events_with_active
@@ -49,13 +48,11 @@ export async function listSafetyEvents(
           OFFSET $${offsetIdx}
         `,
         values
-      )
-      .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      );
 
     const countFilters = ["operating_company_id = $1::uuid"];
     if (windowSql) countFilters.push(windowSql);
-    const counts = await client
-      .query<{ active_count: number; resolved_count: number; total_count: number }>(
+    const counts = await client.query<{ active_count: number; resolved_count: number; total_count: number }>(
         `
           SELECT
             count(*) FILTER (WHERE is_active = true)::int AS active_count,
@@ -65,8 +62,7 @@ export async function listSafetyEvents(
           WHERE ${countFilters.join(" AND ")}
         `,
         [input.operating_company_id]
-      )
-      .catch(() => ({ rows: [{ active_count: 0, resolved_count: 0, total_count: 0 }] }));
+      );
 
     return {
       events: rows.rows,
