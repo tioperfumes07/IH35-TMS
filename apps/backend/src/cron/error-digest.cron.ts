@@ -16,7 +16,7 @@ async function appendDigestAudit(summary: Record<string, unknown>) {
       JSON.stringify(summary),
       "BLOCK-L-ERROR-DIGEST",
     ]);
-  }).catch(() => undefined);
+  });
 }
 
 export function initializeErrorDigestCron(app: FastifyInstance) {
