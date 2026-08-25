@@ -263,7 +263,14 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
       if ("year" in body.data) add("year", body.data.year ?? null);
       if ("vin" in body.data) add("vin", body.data.vin ?? null);
       if ("plate" in body.data) add("license_plate", body.data.plate ?? null);
-      if ("status" in body.data) add("status", body.data.status);
+      if ("status" in body.data) {
+        add("status", body.data.status);
+        // `status` and `is_oos` are two persisted views of the same dispatch
+        // availability fact. Keep this maintenance writer aligned with the
+        // canonical unit profile and bulk writers so scenario probes and
+        // dispatch eligibility cannot observe split-brain state.
+        add("is_oos", body.data.status === "OutOfService");
+      }
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
       add("updated_by_user_id", user.uuid);
       values.push(params.data.id);
