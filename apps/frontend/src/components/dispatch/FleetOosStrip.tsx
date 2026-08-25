@@ -5,6 +5,7 @@ import { listSevereRepairEstimates } from "../../api/maintenance";
 import { capNotice, listCapInfo } from "../../lib/list-cap";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -128,6 +129,10 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
   }, [severeQuery.data?.data, unitsQuery.data?.units]);
 
   if (!enabled) return null;
+  const fleetReadFailed = unitsQuery.isError || severeQuery.isError;
+  const failedFeeds = [unitsQuery.isError ? "unit roster" : null, severeQuery.isError ? "repair estimates" : null]
+    .filter(Boolean)
+    .join(" and ");
 
   return (
     <div
@@ -136,7 +141,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-1.5">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-          Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : rows.length})
+          Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : fleetReadFailed ? "—" : rows.length})
         </span>
         {/*
           CLS-SILENT-CAP: this strip fetches `limit: UNITS_FETCH_CAP` and used to claim "full fleet
@@ -150,7 +155,18 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
           {unitsCap.truncated ? capNotice(unitsCap, "units") : "Pinned — full fleet visibility"}
         </span>
       </div>
-      {unitsQuery.isLoading || severeQuery.isLoading ? (
+      {fleetReadFailed ? (
+        <div className="p-3" data-fleet-oos-read-error>
+          <ListErrorState
+            status={0}
+            message={`Could not load ${failedFeeds}. Fleet availability was not treated as all units in service.`}
+            onRetry={() => {
+              if (unitsQuery.isError) void unitsQuery.refetch();
+              if (severeQuery.isError) void severeQuery.refetch();
+            }}
+          />
+        </div>
+      ) : unitsQuery.isLoading || severeQuery.isLoading ? (
         <div className="px-3 py-2 text-xs text-slate-700">Loading out-of-service units…</div>
       ) : rows.length === 0 ? (
         <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
