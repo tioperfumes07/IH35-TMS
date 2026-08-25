@@ -6,7 +6,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { findReturningDispatcherMatches } from "../mdata/dispatcher-safety-events.routes.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { FIXTURE_USER_EMAIL_RE } from "./fixture-email-pattern.js";
 import { officePasswordSchema } from "./office-password-policy.js";
 import { EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL } from "../mdata/test-seed-archive.js";
@@ -739,6 +739,19 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
             `,
             [setupToken, row.id, req.ip ?? null]
           );
+          await enqueueOutboxEvent(
+            client,
+            "identity.user.password_setup_invite",
+            { aggregate_type: "identity.users", aggregate_id: row.id },
+            {
+              operating_company_id: inheritedCompanyId,
+              to: parsedBody.data.email,
+              user_name: parsedBody.data.name,
+              confirm_url: frontendResetConfirmUrl(setupToken),
+              recipient_user_id: row.id,
+              actor_user_id: authUser.uuid,
+            }
+          );
         }
         await appendCrudAudit(client, authUser.uuid, "identity.users.created", {
           resource_id: row.id,
@@ -784,31 +797,6 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       }
 
       const createdResult = created as { row: IdentityUserRow; setupToken: string | null };
-      if (createdResult.setupToken) {
-        const confirmUrl = frontendResetConfirmUrl(createdResult.setupToken);
-        try {
-          await sendEmail({
-            to: parsedBody.data.email,
-            subject: "Set your IH 35 Dispatch password",
-            html: `
-              <p>${parsedBody.data.name}, your account is ready.</p>
-              <p><a href="${confirmUrl}">Set your office login password</a> (link expires in 24 hours).</p>
-              <p>If you did not expect this invite, you can ignore this email.</p>
-            `,
-            text: `Set your IH 35 Dispatch password (expires in 24 hours): ${confirmUrl}`,
-            sender: "noreply",
-            eventClass: "identity.user_invite.password_setup",
-            recipientUserUuid: createdResult.row.id,
-            actorUserId: authUser.uuid,
-            tags: [
-              { name: "type", value: "office_user_setup" },
-              { name: "user_id", value: createdResult.row.id },
-            ],
-          });
-        } catch {
-          // Keep user creation successful even if mail provider is transiently unavailable.
-        }
-      }
 
       return reply.code(201).send(mapIdentityUser(createdResult.row));
     } catch (err) {
