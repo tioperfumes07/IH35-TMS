@@ -466,8 +466,15 @@ async function buildSevenDayStrip(
   const base = new Date(startDate + "T00:00:00Z");
   // BLOCK 2 (flag ON): bucket the strip's income by projected_cash_date instead of the delivery
   // appointment. OFF (default) keeps the current correlated subquery byte-identical.
+  // FIX (this PR): both the syntax error (an extra unmatched ")" at the end of this string that
+  // broke the query with Postgres 42601 "syntax error at or near ')'", live-reproduced and
+  // Neon-confirmed before fixing) AND a NULL-swallow bug -- SQL's `NULL + x = NULL`, so on any day
+  // with a proforma-only income (no genuine non-proforma load delivering) the first term below
+  // returned NULL and the whole addition vanished to NULL, then the outer COALESCE(...,0) silently
+  // reported $0 even though the second term (the real proforma sum) was correct. Both terms are now
+  // individually wrapped in COALESCE(...,0) before being added.
   const incomeSubquery = cashFollowsEta
-    ? `(
+    ? `COALESCE((
           SELECT SUM(COALESCE(l.rate_total_cents, 0))
           FROM mdata.loads l
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
@@ -483,7 +490,7 @@ async function buildSevenDayStrip(
             AND ${ACTIVE_LOAD_FILTER}
             AND ${noLiveProformaInvoiceSql("l")}
             AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
-        )
+        ), 0)
         +
         COALESCE((
           SELECT SUM(amount_cents)
@@ -507,9 +514,8 @@ async function buildSevenDayStrip(
               AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
-        ), 0)
-        )`
-    : `(
+        ), 0)`
+    : `COALESCE((
           SELECT SUM(COALESCE(l.rate_total_cents, 0))
           FROM mdata.loads l
           JOIN mdata.load_stops ls
@@ -518,7 +524,7 @@ async function buildSevenDayStrip(
           WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
             AND ${noLiveProformaInvoiceSql("l")}
-        )
+        ), 0)
         +
         COALESCE((
           SELECT SUM(amount_cents)
@@ -538,8 +544,7 @@ async function buildSevenDayStrip(
               AND fd.scheduled_arrival_at::date = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
-        ), 0)
-        )`;
+        ), 0)`;
   for (let i = 0; i < 7; i++) {
     const d = new Date(base);
     d.setUTCDate(d.getUTCDate() + i);
