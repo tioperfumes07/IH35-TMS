@@ -126,7 +126,7 @@ export function ExpiryDashboard() {
       <PageHeader
         title="Certificate Expiry Dashboard"
         subtitle="Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates."
-        breadcrumb={["Safety", "Cert Expiry"]}
+        breadcrumb={[{ label: "Safety" }, { label: "Cert Expiry" }]}
         backHref="/safety"
         actions={
           <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">

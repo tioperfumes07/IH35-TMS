@@ -271,7 +271,7 @@ export default function Audit425cPage() {
       <PageHeader
         title="425C Audit Trail"
         subtitle="Append-only Form 425C filing history for the selected entity. Filter by section, action, actor, or date, and open the source record from any row."
-        breadcrumb={["Safety", "425C Audit Trail"]}
+        breadcrumb={[{ label: "Safety" }, { label: "425C Audit Trail" }]}
         backHref="/safety"
       />
 

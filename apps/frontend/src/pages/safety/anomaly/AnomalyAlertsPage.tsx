@@ -35,7 +35,7 @@ export function AnomalyAlertsPage() {
   return (
     <div className="space-y-3 p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="Anomaly Alerts" breadcrumb={["Safety", "Anomaly Alerts"]} backHref="/safety" />
+      <PageHeader title="Anomaly Alerts" breadcrumb={[{ label: "Safety" }, { label: "Anomaly Alerts" }]} backHref="/safety" />
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           type="button"

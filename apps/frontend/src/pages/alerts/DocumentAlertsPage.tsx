@@ -197,7 +197,7 @@ export function DocumentAlertsPage() {
       <PageHeader
         title="Document expiry alerts"
         subtitle="Central inbox for CDL, medical, training, DQF, uploads, and permits — ARCHIVE-not-DELETE; legacy DQF chips remain on profile."
-        breadcrumb={["Drivers", "Document Alerts"]}
+        breadcrumb={[{ label: "Drivers" }, { label: "Document Alerts" }]}
         backHref="/drivers"
         actions={
           <Button

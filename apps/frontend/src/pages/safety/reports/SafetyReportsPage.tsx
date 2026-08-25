@@ -178,7 +178,7 @@ export default function SafetyReportsPage() {
       <PageHeader
         title="Safety Reports"
         subtitle="CSA inspection-point rollups, roadside pass rate, out-of-service counts, and recorded safety-event activity for the selected entity."
-        breadcrumb={["Safety", "Reports"]}
+        breadcrumb={[{ label: "Safety" }, { label: "Reports" }]}
         backHref="/safety"
       />
 

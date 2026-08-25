@@ -7,7 +7,7 @@ export default function HosExceptionsPage() {
     <main className="space-y-3">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: not an extension of A23-6's exception-logging feature --
           just the same navigational fix every leaf page gets in this audit. */}
-      <PageHeader title="HOS Exceptions" breadcrumb={["Safety", "HOS Exceptions"]} backHref="/safety" />
+      <PageHeader title="HOS Exceptions" breadcrumb={[{ label: "Safety" }, { label: "HOS Exceptions" }]} backHref="/safety" />
       <p className="text-sm text-gray-500">
         Exception logging remains on this route. Fleet compliance clocks and near-violation monitoring live on the canonical
         dashboard.

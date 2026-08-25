@@ -179,7 +179,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
       <PageHeader
         title="Training Programs"
         subtitle="Define required programs and assign drivers to completion tracking."
-        breadcrumb={["Safety", "Training Programs"]}
+        breadcrumb={[{ label: "Safety" }, { label: "Training Programs" }]}
         backHref="/safety"
         actions={
           <Button size="sm" data-testid="training-programs-create-btn" onClick={() => setCreateOpen(true)}>
