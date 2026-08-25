@@ -265,7 +265,15 @@ export function AuditTrailPage() {
             <Link className="text-xs font-semibold text-slate-700 underline" to="/audit/trail">Clear event target</Link>
           </div>
           {exactAuditQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading selected audit event…</p> : null}
-          {exactAuditQuery.isError ? <p className="mt-2 text-xs text-red-700">Selected audit event unavailable.</p> : null}
+          {exactAuditQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load the selected audit event"
+              status={0}
+              message={(exactAuditQuery.error as Error)?.message}
+              onRetry={() => void exactAuditQuery.refetch()}
+              className="py-4"
+            />
+          ) : null}
           {!exactAuditQuery.isLoading && !exactAuditQuery.isError && !exactAuditEvent ? <p className="mt-2 text-xs text-gray-500">Audit event not found for this operating company.</p> : null}
           {exactAuditEvent ? (
             <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">

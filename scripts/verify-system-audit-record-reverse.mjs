@@ -32,7 +32,7 @@ function failures(s = files) { const found = [
   ["company-scoped exact audit filter", s.routes.includes("audit_event_id: z.string().uuid().optional()") && s.routes.includes("e.uuid = $${values.length}::uuid") && s.api.includes('search.set("audit_event_id", params.auditEventId)')],
   ["profile row exact drill", s.history.includes('kind="audit_event"') && s.history.includes("id={row.id}")],
   ["system page honors exact record", s.page.includes('searchParams.get("audit_event_id")') && s.page.includes("listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })") && s.page.includes('data-testid="audit-trail-exact-event"')],
-  ["honest selected-record states", s.page.includes("Selected audit event unavailable.") && s.page.includes("Audit event not found for this operating company.")],
+  ["honest selected-record states", s.page.includes("Couldn't load the selected audit event") && s.page.includes("Audit event not found for this operating company.") && s.page.includes("onRetry={() => void exactAuditQuery.refetch()}")],
   // ACCT-F5560: real code migrated the raw <EntityLink>/entityLabel(...) calls this guard originally
   // pinned to the shared EntityLinkOrTombstone component (same honest tombstone-then-link guarantee,
   // different literal call shape — same class fixed repeatedly this session, e.g. ACCT-F5552). Accept
@@ -85,6 +85,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, history: files.history.replace('kind="audit_event"', 'kind="user"') }).includes("profile row exact drill"),
     failures({ ...files, page: files.page.replace("auditEventId, limit: 1", "limit: 1") }).includes("system page honors exact record"),
     failures({ ...files, page: files.page.replace("Audit event not found for this operating company.", "No events") }).includes("honest selected-record states"),
+    failures({ ...files, page: files.page.replace("onRetry={() => void exactAuditQuery.refetch()}", "onRetry={() => undefined}") }).includes("honest selected-record states"),
     failures({ ...files, page: files.page.replace('kind="user" id={exactAuditEvent.actor_user_id}', 'kind="unit" id={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),
     failures({ ...files, page: files.page.replace('name={row.subject_label} noun="Subject"', 'name={null} noun="Subject"') }).includes("spine subject human labels"),
     failures({ ...files, spine: files.spine.replace("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'", "FALSE THEN 'work_order'") }).includes("historical task subjects derive canonical kind"),
@@ -128,7 +129,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, feed: JSON.stringify({ entries: [{ guard: "scripts/verify-system-audit-record-reverse.mjs" }] }) }).includes("manual feed duplicates exact System ownership"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 45/45 runtime/evidence mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 46/46 runtime/evidence mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
