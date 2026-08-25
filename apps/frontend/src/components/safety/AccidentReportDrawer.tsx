@@ -66,8 +66,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const initialDriverId = accident ? String(accident.driver_id ?? "") : "";
   const initialDriverName = accident ? String(accident.driver_name ?? "").trim() : "";
   const initialUnitId = accident ? String(accident.unit_id ?? "") : "";
+  const initialUnitName = accident ? String(accident.unit_number ?? "").trim() : "";
   const initialTrailerId = accident ? String(accident.trailer_id ?? "") : "";
+  const initialTrailerName = accident ? String(accident.trailer_number ?? accident.equipment_number ?? "").trim() : "";
   const initialVendorId = accident ? String(accident.vendor_id ?? "") : "";
+  const initialVendorName = accident ? String(accident.vendor_name ?? "").trim() : "";
   const initialLoadId = accident ? String(accident.load_id ?? "") : "";
   const initialLoadName = accident ? String(accident.load_number ?? "").trim() : "";
   const initialIncidentDate = accident ? String(accident.accident_at ?? "").slice(0, 10) : "";
@@ -339,6 +342,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   kind="unit"
                   operatingCompanyId={operatingCompanyId}
                   value={unitId || null}
+                  selectedOption={
+                    initialUnitId && initialUnitName
+                      ? { value: initialUnitId, label: initialUnitName }
+                      : null
+                  }
                   onChange={(next) => setUnitId(next ?? "")}
                   allowCreate
                   nestedInDrawer
@@ -357,6 +365,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   kind="trailer"
                   operatingCompanyId={operatingCompanyId}
                   value={trailerId || null}
+                  selectedOption={
+                    initialTrailerId && initialTrailerName
+                      ? { value: initialTrailerId, label: initialTrailerName }
+                      : null
+                  }
                   onChange={(next) => setTrailerId(next ?? "")}
                   allowCreate
                   nestedInDrawer
@@ -377,6 +390,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   allowCreate
                   operatingCompanyId={operatingCompanyId}
                   value={vendorId || null}
+                  selectedOption={
+                    initialVendorId && initialVendorName
+                      ? { value: initialVendorId, label: initialVendorName }
+                      : null
+                  }
                   onChange={(next) => setVendorId(next ?? "")}
                   nestedInDrawer
                   enabled={open && scopeReady}

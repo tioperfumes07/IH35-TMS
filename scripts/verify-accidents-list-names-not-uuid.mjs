@@ -21,6 +21,7 @@ import { labelResolves } from "./lib/entity-label-detect.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTE = "apps/backend/src/safety/safety.routes.ts";
 const PAGE = "apps/frontend/src/pages/safety/AccidentsPage.tsx";
+const DRAWER = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
 const LABEL = "verify-accidents-list-names-not-uuid";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -37,9 +38,18 @@ function accidentsListHandler(routeSrc) {
   return end === -1 ? rest.slice(0, 2500) : rest.slice(0, end + 40);
 }
 
+function accidentDetailHandler(routeSrc) {
+  const match = routeSrc.match(/app\.get\s*\(\s*["']\/api\/v1\/safety\/accidents\/:id["']/);
+  if (!match) return "";
+  const rest = routeSrc.slice(match.index);
+  const end = rest.indexOf("app.post(\"/api/v1/safety/accidents\"");
+  return end === -1 ? rest.slice(0, 7000) : rest.slice(0, end);
+}
+
 export function assertAccidentsNames(sources) {
   const route = stripComments(sources?.[ROUTE] ?? read(ROUTE));
   const page = stripComments(sources?.[PAGE] ?? read(PAGE));
+  const drawer = stripComments(sources?.[DRAWER] ?? read(DRAWER));
   const problems = [];
 
   const handler = accidentsListHandler(route);
@@ -88,11 +98,36 @@ export function assertAccidentsNames(sources) {
     problems.push(`${PAGE}: filters/columns never reference driver_name/unit_number — they still key on the raw uuid.`);
   }
 
+  const detail = accidentDetailHandler(route);
+  for (const [join, label] of [
+    ["mdata.drivers", "driver_name"],
+    ["mdata.units", "unit_number"],
+    ["mdata.equipment", "trailer_number"],
+    ["mdata.loads", "load_number"],
+    ["mdata.vendors", "vendor_name"],
+  ]) {
+    if (!detail.includes(`LEFT JOIN ${join}`) || !detail.includes(label)) {
+      problems.push(`${ROUTE}: exact accident detail does not resolve ${label} from ${join}.`);
+    }
+  }
+  for (const [idName, labelName] of [
+    ["initialDriverId", "initialDriverName"],
+    ["initialUnitId", "initialUnitName"],
+    ["initialTrailerId", "initialTrailerName"],
+    ["initialVendorId", "initialVendorName"],
+    ["initialLoadId", "initialLoadName"],
+  ]) {
+    const selected = new RegExp(`selectedOption=\\{[\\s\\S]{0,220}${idName}[\\s\\S]{0,220}label:\\s*${labelName}`);
+    if (!selected.test(drawer)) {
+      problems.push(`${DRAWER}: persisted ${idName} is not seeded with its human ${labelName}.`);
+    }
+  }
+
   return problems;
 }
 
 if (SELFTEST) {
-  const live = { [ROUTE]: read(ROUTE), [PAGE]: read(PAGE) };
+  const live = { [ROUTE]: read(ROUTE), [PAGE]: read(PAGE), [DRAWER]: read(DRAWER) };
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
@@ -117,6 +152,18 @@ if (SELFTEST) {
       ),
     },
     "SELECT * and/or a catch-swallow"
+  );
+  // 4. exact-read loses trailer label resolution, recreating raw UUID text in deep-link drawers.
+  expectCaught(
+    "detail-no-trailer-label",
+    { ...live, [ROUTE]: live[ROUTE].replaceAll("tr.equipment_number AS trailer_number", "NULL AS trailer_label") },
+    "does not resolve trailer_number",
+  );
+  // 5. drawer stops seeding a persisted trailer with the detail API's human option.
+  expectCaught(
+    "drawer-no-trailer-selected-option",
+    { ...live, [DRAWER]: live[DRAWER].replace("label: initialTrailerName", "label: initialTrailerId") },
+    "initialTrailerId is not seeded",
   );
   // 2. unit join loses its owner/lessee scope.
   expectCaught(
@@ -170,7 +217,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — list labels + exact-detail joins + persisted picker labels mutation-tested`);
   process.exit(0);
 }
 
@@ -180,4 +227,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — accidents list renders driver/unit names (owner-lessee scoped), no swallow`);
+console.log(`${LABEL} OK — accident list/detail + persisted pickers resolve human labels, no swallow`);
