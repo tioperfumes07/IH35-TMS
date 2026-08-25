@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const units = fs.readFileSync(path.join(ROOT, "apps/backend/src/mdata/units.routes.ts"), "utf8");
 const bulkUnits = fs.readFileSync(path.join(ROOT, "apps/backend/src/mdata/unit-bulk-update.routes.ts"), "utf8");
+const maintenanceVehicles = fs.readFileSync(path.join(ROOT, "apps/backend/src/maintenance/vehicles.routes.ts"), "utf8");
 const keys = [
   "status_change_reason",
   "sold_date",
@@ -34,17 +35,22 @@ if (!/applyUnitPatchFields\(normalizedPatch, add\)/.test(units)) {
 if (!/add\("is_oos", dbStatus === "OutOfService"\)/.test(bulkUnits)) {
   failures.push("bulk status writer must set and clear is_oos from canonical status");
 }
+if (!/if \("status" in body\.data\) \{[\s\S]{0,420}add\("status", body\.data\.status\);[\s\S]{0,420}add\("is_oos", body\.data\.status === "OutOfService"\);[\s\S]{0,80}\}/.test(maintenanceVehicles)) {
+  failures.push("maintenance vehicle status writer must set and clear is_oos from canonical status");
+}
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    [units.replace('is_oos: b.status === "OutOfService"', "is_oos: false"), bulkUnits, "single writer hard-codes false"],
-    [units.replace("applyUnitPatchFields(normalizedPatch, add)", "applyUnitPatchFields(b, add)"), bulkUnits, "single writer drops normalization"],
-    [units, bulkUnits.replace('add("is_oos", dbStatus === "OutOfService")', 'add("is_oos", true)'), "bulk writer never clears OOS"],
+    [units.replace('is_oos: b.status === "OutOfService"', "is_oos: false"), bulkUnits, maintenanceVehicles, "single writer hard-codes false"],
+    [units.replace("applyUnitPatchFields(normalizedPatch, add)", "applyUnitPatchFields(b, add)"), bulkUnits, maintenanceVehicles, "single writer drops normalization"],
+    [units, bulkUnits.replace('add("is_oos", dbStatus === "OutOfService")', 'add("is_oos", true)'), maintenanceVehicles, "bulk writer never clears OOS"],
+    [units, bulkUnits, maintenanceVehicles.replace('add("is_oos", body.data.status === "OutOfService")', 'add("is_oos", true)'), "maintenance writer never clears OOS"],
   ];
-  const catches = mutations.filter(([single, bulk]) =>
+  const catches = mutations.filter(([single, bulk, maintenance]) =>
     !/const normalizedPatch\s*=\s*[\s\S]{0,180}is_oos:\s*b\.status === "OutOfService"/.test(single) ||
     !/applyUnitPatchFields\(normalizedPatch, add\)/.test(single) ||
-    !/add\("is_oos", dbStatus === "OutOfService"\)/.test(bulk)
+    !/add\("is_oos", dbStatus === "OutOfService"\)/.test(bulk) ||
+    !/if \("status" in body\.data\) \{[\s\S]{0,420}add\("status", body\.data\.status\);[\s\S]{0,420}add\("is_oos", body\.data\.status === "OutOfService"\);[\s\S]{0,80}\}/.test(maintenance)
   ).length;
   if (catches !== mutations.length) failures.push(`selftest caught ${catches}/${mutations.length} planted defects`);
   else console.log(`verify:vehicle-profile-audit-coverage selftest PASS (${catches}/${mutations.length} mutations)`);
