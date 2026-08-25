@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**10:38 CT GO NOW.** Hard-reload **`69e60ff`**. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md`. **Items 11–16.** Unique leftover while waiting on CC-1 labels. Never remake hop 9. Never `trigger_deploy`.
+
 **09:40 CT GO NOW.** Hard-reload **`a80afec`**. After CC-1 merges labels: prove `/cash-flow` Projected/Pre-invoice. Unique leftover 500/dead. Do not remake Complete hops. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-0940.md`. Never `trigger_deploy`.
 
 **23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Prove `/reports` `/cash-flow` `/finance` `/tasks` read TESTs on load `L-20260824-0007`. Print letters. Unique leftover meanwhile. Re-walk cash-flow **after** CC-1 labels. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Never `trigger_deploy`.

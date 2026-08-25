@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | FAST-MERGE + deploy. PCMILER/geofence owner-gated. |
-| CC-1 | 9223 | money | invoice#=load# · cash-flow labels · JE `57cabbab` · hop.bank probe · roadside_ap JE · settlement pay-run. STOP `/425c` |
-| CC-2 | 9224 | leftover POST | Prove cash-flow labels after CC-1. Unique leftover. |
-| CC-3 | 9225 | FE | `scenario.maintenance` Merged. Legal Complete. Parts DONE |
-| Codex | 9226 | FE | `hop.assign` Merged. Do not steal settlement. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | Unique FINDING if still true. No U14 restamp |
-| Devin-A | audit | **LIVE WALK `/customers`** | hop.book Complete. Not PARKED |
+| Cursor | 9222 | Lead | GO-1038 item 30. Unique leftover. PCMILER owner-gated. Live `69e60ff`. |
+| CC-1 | 9223 | money | GO-1038 items **1–10** serial. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | GO-1038 items **11–16**. Prove cash-flow after CC-1. |
+| CC-3 | 9225 | FE | GO-1038 items **17–22**. Parts DONE. Legal Complete. |
+| Codex | 9226 | FE | GO-1038 items **23–27**. Do not steal settlement. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-1038 item 28. No U14 restamp |
+| Devin-A | audit | **LIVE WALK `/customers`** | GO-1038 item 29. Not PARKED |
