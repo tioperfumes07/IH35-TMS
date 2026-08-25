@@ -235,7 +235,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   }, [load]);
   const canInvoiceFromLoad = useMemo(() => {
     if (!load) return false;
-    return ["delivered", "invoiced", "paid", "closed"].includes(load.status);
+    // DISP-F6XXX (breakdown-relay hop.invoice) — the real, authorized write path for a delivered load
+    // is PATCH /api/v1/dispatch/loads/:id/transition (LV-TXN-004 / WIRE-07), whose DispatchStatus enum
+    // has NO plain "delivered" value — it only ever lands a load on "delivered_pending_docs" or
+    // "completed_docs_received" (apps/frontend/src/api/dispatch.ts). The bare "delivered" LoadStatus
+    // value is reachable only through the forbidden mdata /status shortcut, so this gate was checking a
+    // status the correct flow can never produce — every load delivered the right way hit a permanently
+    // disabled "Create / View Invoice" button with zero network requests on click. The backend
+    // /accounting/invoices/from-load route itself has no status gate at all (only load_not_found /
+    // load_has_no_rate), so this FE check was strictly narrower than the real business rule.
+    return ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"].includes(load.status);
   }, [load]);
   const packageState = useMemo(() => parseFactoringPackageNotes(load?.notes), [load?.notes]);
   const loadDocsQuery = useQuery({
@@ -891,6 +900,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 const nextId = r.new_driver_id != null ? String(r.new_driver_id) : null;
                 const prevUnitId = r.previous_unit_id != null ? String(r.previous_unit_id) : null;
                 const nextUnitId = r.new_unit_id != null ? String(r.new_unit_id) : null;
+                const prevTrailerId = r.previous_trailer_id != null ? String(r.previous_trailer_id) : null;
+                const nextTrailerId = r.new_trailer_id != null ? String(r.new_trailer_id) : null;
                 return (
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
                     <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
@@ -944,6 +955,34 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                             name={r.new_unit_number}
                             noun="Unit"
                             data-testid="load-drawer-assignment-new-unit-link"
+                          />
+                        ) : (
+                          <span className="text-slate-400">Unassigned</span>
+                        )}
+                      </div>
+                    ) : null}
+                    {prevTrailerId || nextTrailerId ? (
+                      <div className="text-xs text-gray-600" data-testid="load-drawer-assignment-history-trailer-links">
+                        Trailer{" "}
+                        {prevTrailerId ? (
+                          <EntityLinkOrTombstone
+                            kind="trailer"
+                            id={prevTrailerId}
+                            name={r.previous_trailer_number}
+                            noun="Trailer"
+                            data-testid="load-drawer-assignment-prev-trailer-link"
+                          />
+                        ) : (
+                          <span className="text-slate-400">Unassigned</span>
+                        )}{" "}
+                        →{" "}
+                        {nextTrailerId ? (
+                          <EntityLinkOrTombstone
+                            kind="trailer"
+                            id={nextTrailerId}
+                            name={r.new_trailer_number}
+                            noun="Trailer"
+                            data-testid="load-drawer-assignment-new-trailer-link"
                           />
                         ) : (
                           <span className="text-slate-400">Unassigned</span>

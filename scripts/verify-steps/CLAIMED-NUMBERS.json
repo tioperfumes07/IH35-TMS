@@ -1,4 +1,9 @@
 {
+  "8923": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-subscription-manager-delivery-banner"
+  },
   "4711": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
@@ -4208,6 +4213,21 @@
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-3",
     "purpose": "verify-property-tax-rendition-print"
+  },
+  "8920": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-bill-lines-expense-category-resolved"
+  },
+  "8924": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-customer-driver-connectivity-guard-registry-batch"
+  },
+  "8928": {
+    "claimed_at": "2026-08-24",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-driver-crossmodule-connectivity-guard-registry-batch"
   },
   "6420": {
     "claimed_at": "2026-08-24",

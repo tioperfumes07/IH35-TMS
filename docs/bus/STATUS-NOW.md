@@ -5,14 +5,17 @@
 
 U14 **14/14 CERTIFIED** — never recertify.
 
+**19:39 CT:** Deploy `dep-da6e89v10e5c73bcsss0` IN FLIGHT tip `a44357d8` (#15662). Live `1bfaaf2` until healthz moves.
+
 | Seat | NOW |
 |------|-----|
-| Cursor 9222 | leftover `/425c` unique (POST row 4) |
-| CC-1 9223 | leftover `/cash-flow` then `/finance` (POST 1–2) |
-| CC-2 9224 | `CLASS-F5973-TRUE-REMAINDER-FUEL` (POST 12) |
-| CC-3 9225 | `CLASS-F5973-TRUE-REMAINDER-MAINTENANCE` |
-| Codex 9226 | Chrome leftover unique `/customers` → `/drivers` → `/fleet` (no restamp) |
-| Cascade | audit `/accounting` EXTENT |
-| Devin-A | audit `/vendors` EXTENT |
+| Cursor 9222 | Lead. Catch-up deploy in flight. |
+| CC-1 9223 | `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` |
+| CC-2 9224 | Next leftover unique. Print battery done. |
+| CC-3 9225 | `parts_receive` on WO `850e2cc4-…` (unit_id proved on `2153f5dc`) |
 
-ACK: `SEAT | ACK | POST-U14-SEQUENCE | PORT=n | NOW=<url-or-id> | GO`
+| Codex 9226 | Leftover unique. No restamp. |
+| Cascade | Unique FINDING only. No U14 restamp. |
+| Devin-A | Leftover unique. |
+
+ACK: `SEAT | ACK | LIVE-1bfaaf2 | PORT=n | SHA=<healthz> | FINDING=<id-or-none> | GO`

@@ -43,7 +43,13 @@ export function ListView<T>({
   const [toolbarSearch, setToolbarSearch] = useState("");
   const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
 
-  const { savedView, persistView, loading: _svLoading } = useListView(savedViewsKey, columns as ListViewColumn<unknown>[]);
+  const {
+    savedView,
+    persistView,
+    persistError,
+    retryPersist,
+    loading: _svLoading,
+  } = useListView(savedViewsKey, columns as ListViewColumn<unknown>[]);
 
   // Apply saved view settings once loaded
   useEffect(() => {
@@ -110,7 +116,12 @@ export function ListView<T>({
     () => Object.fromEntries(columns.map((c) => [c.id, c.width ?? 120])),
     [columns]
   );
-  const { widths: columnWidths, setWidth } = useColumnWidths(tableId, defaultWidths);
+  const {
+    widths: columnWidths,
+    setWidth,
+    persistError: widthPersistError,
+    retryPersist: retryWidthPersist,
+  } = useColumnWidths(tableId, defaultWidths);
 
   const processedRows = useMemo(() => {
     let result = filterRows(rows);
@@ -160,6 +171,20 @@ export function ListView<T>({
 
   return (
     <div className="flex flex-col h-full">
+      {persistError && (
+        <div role="alert" className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>{persistError}</span>
+          <button type="button" className="font-semibold underline" onClick={retryPersist}>
+            Retry save
+          </button>
+        </div>
+      )}
+      {widthPersistError && (
+        <div role="alert" data-column-width-save-error={tableId} className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>Column widths could not be saved. This layout is temporary.</span>
+          <button type="button" className="font-semibold underline" onClick={retryWidthPersist}>Retry save</button>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-wrap">
         <UniversalListToolbar

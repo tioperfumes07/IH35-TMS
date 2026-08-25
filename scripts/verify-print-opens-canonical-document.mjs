@@ -21,6 +21,9 @@ const TARGETS = {
   wrap: path.join(ROOT, "apps/backend/src/render/pdf-template.ts"),
   spaPrint: path.join(ROOT, "apps/frontend/src/index.css"),
   invoiceHtml: path.join(ROOT, "apps/backend/src/accounting/invoice-render.routes.ts"),
+  shared: path.join(ROOT, "apps/backend/src/accounting/shared.ts"),
+  billHtml: path.join(ROOT, "apps/backend/src/accounting/bill-render.routes.ts"),
+  woPdf: path.join(ROOT, "apps/backend/src/work-orders/work-orders.routes.ts"),
 };
 
 function fail(msg) {
@@ -60,8 +63,29 @@ function assertSource() {
   }
 
   const invoiceHtml = fs.readFileSync(TARGETS.invoiceHtml, "utf8");
-  if (!invoiceHtml.includes("withCurrentUser") || !invoiceHtml.includes("FROM accounting.invoices")) {
+  if (!invoiceHtml.includes("resolvePrintOperatingCompanyId") || !invoiceHtml.includes("FROM accounting.invoices")) {
     fail("invoice .html must look up operating_company_id from accounting.invoices when query company is missing");
+  }
+
+  const shared = fs.readFileSync(TARGETS.shared, "utf8");
+  if (!shared.includes("export async function resolvePrintOperatingCompanyId")) {
+    fail("shared.ts must export resolvePrintOperatingCompanyId");
+  }
+  if (!shared.includes("org.user_accessible_company_ids()")) {
+    fail("print company lookup must walk org.user_accessible_company_ids() then set app.operating_company_id (RLS GUC)");
+  }
+  if (!shared.includes("set_config('app.operating_company_id'")) {
+    fail("print company lookup must set app.operating_company_id before SELECT by UUID");
+  }
+
+  const billHtml = fs.readFileSync(TARGETS.billHtml, "utf8");
+  if (!billHtml.includes("resolvePrintOperatingCompanyId") || !billHtml.includes("FROM accounting.bills")) {
+    fail("bill .html must resolve company via resolvePrintOperatingCompanyId + accounting.bills");
+  }
+
+  const woPdf = fs.readFileSync(TARGETS.woPdf, "utf8");
+  if (!woPdf.includes("resolvePrintOperatingCompanyId") || !woPdf.includes("FROM maintenance.work_orders")) {
+    fail("WO /pdf must resolve company via resolvePrintOperatingCompanyId + maintenance.work_orders");
   }
 
   const settlement = fs.readFileSync(TARGETS.settlement, "utf8");
@@ -109,6 +133,18 @@ function selftest() {
     if (r.status === 0) fail("mutated InvoiceDetailPage still passed — selftest must FAIL on SPA print");
   } finally {
     fs.writeFileSync(invoicePath, backup);
+  }
+
+  const sharedPath = TARGETS.shared;
+  const sharedBackup = fs.readFileSync(sharedPath, "utf8");
+  const sharedPlanted = sharedBackup.replace("org.user_accessible_company_ids()", "org.companies_that_do_not_exist()");
+  if (sharedPlanted === sharedBackup) fail("selftest could not plant missing user_accessible_company_ids");
+  fs.writeFileSync(sharedPath, sharedPlanted);
+  try {
+    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
+    if (r.status === 0) fail("mutated shared.ts still passed — selftest must FAIL when print lookup skips membership GUC");
+  } finally {
+    fs.writeFileSync(sharedPath, sharedBackup);
   }
   console.log("PASS: verify-print-opens-canonical-document --selftest");
 }

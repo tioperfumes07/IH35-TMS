@@ -26,6 +26,34 @@ export async function withCompanyScope<T>(userId: string, operatingCompanyId: st
   });
 }
 
+/**
+ * COMPLICATED-PRINT-F09 — invoice/bill/WO print without ?operating_company_id.
+ * accounting.* / maintenance.work_orders RLS is AND-gated on app.operating_company_id with
+ * no lucia branch. A bare SELECT by UUID under withCurrentUser therefore returns 0 and the
+ * handler lies "needs a real UUID". Walk membership companies and set the GUC per hop.
+ */
+export async function resolvePrintOperatingCompanyId(
+  userId: string,
+  lookupSql: string,
+  rowId: string
+): Promise<string | null> {
+  if (!lookupSql.includes("WHERE id = $1::uuid")) {
+    throw new Error("resolvePrintOperatingCompanyId lookupSql must bind row id as $1::uuid");
+  }
+  return withCurrentUser(userId, async (client) => {
+    const companies = await client.query<{ cid: string }>(`SELECT org.user_accessible_company_ids() AS cid`);
+    for (const row of companies.rows) {
+      const cid = row.cid;
+      if (!cid) continue;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [cid]);
+      const found = await client.query(lookupSql, [rowId]);
+      const op = found.rows[0]?.operating_company_id as string | undefined;
+      if (op) return String(op);
+    }
+    return null;
+  });
+}
+
 export async function recomputeInvoiceTotals(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string) {
   const totalsRes = await client.query(
     `

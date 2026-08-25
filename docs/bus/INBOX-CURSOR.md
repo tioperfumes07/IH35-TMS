@@ -1,5 +1,15 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**19:39 CT:** Merged #15662 SYSTEM in-process boot catch-up. Kicked API `dep-da6e89v10e5c73bcsss0` tip `a44357d8`. Live until then `1bfaaf2`. Do not second-kick.
+
+**19:17 CT:** Authorized PATCH `/dispatch/loads/:id/transition` as Kanban equivalent (LV-TXN-004). Not mdata `/status`. CC-1 continues expense-without-JE.
+
+**19:13 CT:** Live `1bfaaf2`. Did **not** second-kick (undeployed tip is docs/FE). Pinged CC-1 expense-without-JE; CC-3 WO→Bill + unit_id; CC-2 next unique.
+
+**19:02 CT:** Kicked `dep-da6dmmvavr4c73et8hvg` tip `1bfaaf26` (WO-bill FK live after healthz). Shipping `WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL`. Pinged CC-1/2/3: BILL-2026-00015 dollars exist; do not remake FK. One in-flight. Do not second-kick.
+
+**18:47 CT:** Deploy kicked `dep-da6dg0u1egvs73b7i900` tip `852b8e83`. Pinged CC-1 (WO bill FK + roadside JE), CC-2 (A3 done; bind dollars when bill exists), CC-3 (parts_receive; Bill path not theirs). One in-flight. Do not second-kick.
+
 **17:45 CT:** Seats were idle 45+ min. Paste 20 hops: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1740.md`. Ship BOOK-LOAD-CUSTOMER-AUTOCOMPLETE-EMPTY + invoice create 400 + PRINT-F09 company lookup. Do not make seats wait.
 
 **16:36 CT:** Seats unblocked. #15601 merged, **not** Fully-Wired 1–12. Live still `427f8ca`. Next unique = spine await. Do not make seats wait. `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-1636.md`.

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * LV-SYSTEM-BACKGROUND-JOBS-STALE-DOWN-REGRESSION — reconciliation worker must catch up overdue
- * ticks on startup (node-cron does not backfill after deploy), using the same maxStaleMinutes as
- * health.routes backgroundJobRule. Do not hide DOWN; do not remove the catch-up call.
+ * LV-SYSTEM-BACKGROUND-JOBS-STALE-DOWN-REGRESSION + SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS
+ * Reconciliation worker and in-process sibling crons must catch up overdue ticks on startup
+ * (node-cron does not backfill after deploy), using the same maxStaleMinutes as health.routes
+ * backgroundJobRule. Do not hide DOWN; do not catch-up QBO push / money posters.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,8 @@ import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CRON = "apps/backend/src/cron/reconciliation-worker.cron.ts";
+const IN_PROCESS = "apps/backend/src/cron/in-process-startup-catchup.ts";
+const INDEX = "apps/backend/src/index.ts";
 const HEALTH = "apps/backend/src/health/health.routes.ts";
 const LABEL = "verify-reconciliation-startup-catchup";
 
@@ -17,10 +20,12 @@ function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-export function auditSources({ cron, health }) {
+export function auditSources({ cron, health, inProcess, index }) {
   const failures = [];
   const cronCode = stripComments(cron);
   const healthCode = stripComments(health);
+  const inProcessCode = stripComments(inProcess);
+  const indexCode = stripComments(index);
 
   if (!/catchUpOverdueReconciliationTicks/.test(cronCode)) {
     failures.push("reconciliation cron missing catchUpOverdueReconciliationTicks");
@@ -37,6 +42,31 @@ export function auditSources({ cron, health }) {
   if (!/case\s+["']reconciliation\.qbo_transactional["'][\s\S]{0,200}maxStaleMinutes:\s*120/.test(healthCode)) {
     failures.push("health.routes qbo_transactional window drifted from 120m");
   }
+
+  if (!/catchUpOverdueInProcessJobTicks/.test(inProcessCode)) {
+    failures.push("in-process catch-up missing catchUpOverdueInProcessJobTicks");
+  }
+  if (!/startInProcessJobCatchup/.test(inProcessCode)) {
+    failures.push("in-process catch-up missing startInProcessJobCatchup");
+  }
+  if (!/void\s+catchUpOverdueInProcessJobTicks\s*\(/.test(inProcessCode)) {
+    failures.push("startInProcessJobCatchup does not fire-and-forget catch-up");
+  }
+  if (!/samsara\.webhook_projection_cron[\s\S]{0,80}maxStaleMinutes:\s*15/.test(inProcessCode)) {
+    failures.push("webhook projection catch-up window is not 15m (health two-period window)");
+  }
+  if (!/idempotency\.cleanup_cron[\s\S]{0,80}maxStaleMinutes:\s*2880/.test(inProcessCode)) {
+    failures.push("idempotency cleanup catch-up window is not 2880m");
+  }
+  if (/sync\.qbo_/.test(inProcessCode) || /qbo_vendors_push/.test(inProcessCode)) {
+    failures.push("in-process catch-up must not run TMS→QBO push jobs");
+  }
+  if (/collections_sync_cron/.test(inProcessCode) || /factoring_default_interest/.test(inProcessCode)) {
+    failures.push("in-process catch-up must not run money poster crons");
+  }
+  if (!/startInProcessJobCatchup\s*\(\s*app\s*\)/.test(indexCode)) {
+    failures.push("index.ts does not arm startInProcessJobCatchup(app) on boot");
+  }
   return failures;
 }
 
@@ -44,6 +74,8 @@ function treeSources() {
   return {
     cron: readFileSync(join(ROOT, CRON), "utf8"),
     health: readFileSync(join(ROOT, HEALTH), "utf8"),
+    inProcess: readFileSync(join(ROOT, IN_PROCESS), "utf8"),
+    index: readFileSync(join(ROOT, INDEX), "utf8"),
   };
 }
 
@@ -71,6 +103,30 @@ function selftest() {
         cron: clean.cron.replace(
           'jobName: "reconciliation.qbo_transactional", maxStaleMinutes: 120',
           'jobName: "reconciliation.qbo_transactional", maxStaleMinutes: 9999'
+        ),
+      },
+    },
+    {
+      name: "in-process catch-up function removed",
+      value: {
+        ...clean,
+        inProcess: clean.inProcess.replaceAll("catchUpOverdueInProcessJobTicks", "catchUpMissingInProcess"),
+      },
+    },
+    {
+      name: "in-process boot arm removed",
+      value: {
+        ...clean,
+        index: clean.index.replace(/startInProcessJobCatchup\s*\(\s*app\s*\)/, "void 0"),
+      },
+    },
+    {
+      name: "webhook window widened to hide DOWN",
+      value: {
+        ...clean,
+        inProcess: clean.inProcess.replace(
+          'jobName: "samsara.webhook_projection_cron", maxStaleMinutes: 15',
+          'jobName: "samsara.webhook_projection_cron", maxStaleMinutes: 9999'
         ),
       },
     },

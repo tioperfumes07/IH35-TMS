@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers","vendors"],"cols":["connectivity","qbo_chrome"],"leaves":["list.view_list","list.view_master_detail"],"task":"CLASS-VIEW-MODE-PREFERENCE-SAVE-SILENT-FAILURE","vertical":"class-sweep"} */
 /**
  * CLOSURE-31 recurrence guard.
  *
@@ -20,6 +21,23 @@ const PRIOR_DESIGN = "master-detail";
 const NEW_VIEW = "list";
 
 const failures = [];
+
+function preferenceFailureTruthFailures(hookSource, pageSources) {
+  const out = [];
+  for (const token of [
+    "pendingModeRef.current = mode",
+    "View preference could not be saved. This selection is temporary.",
+    "retryViewModeSave",
+  ]) {
+    if (!hookSource.includes(token)) out.push(`shared hook must retain ${token}`);
+  }
+  for (const [entity, source] of Object.entries(pageSources)) {
+    for (const token of ["viewModeSaveError", "retryViewModeSave", 'role="alert"', `data-view-mode-save-error="${entity}"`, "onClick={retryViewModeSave}"]) {
+      if (!source.includes(token)) out.push(`${entity} page must retain ${token}`);
+    }
+  }
+  return out;
+}
 
 function read(rel) {
   const full = path.join(repoRoot, rel);
@@ -50,9 +68,11 @@ const pages = [
   { rel: "apps/frontend/src/pages/Customers.tsx", entity: "customers" },
   { rel: "apps/frontend/src/pages/Vendors.tsx", entity: "vendors" },
 ];
+const pageSources = {};
 for (const { rel, entity } of pages) {
   const src = read(rel);
   if (!src) continue;
+  pageSources[entity] = src;
   const callRe = new RegExp(`useViewModePref\\(\\s*["']${entity}["']\\s*,\\s*["']([^"']+)["']\\s*\\)`);
   const m = src.match(callRe);
   if (!m) {
@@ -66,6 +86,8 @@ for (const { rel, entity } of pages) {
   }
 }
 
+if (hook) failures.push(...preferenceFailureTruthFailures(hook, pageSources));
+
 if (failures.length > 0) {
   console.error("[verify-customers-vendors-default-is-prior-design] FAIL:");
   for (const message of failures) console.error(`  - ${message}`);
@@ -73,6 +95,29 @@ if (failures.length > 0) {
     `\nThe DEFAULT /customers and /vendors view must remain the prior "${PRIOR_DESIGN}" design (CLOSURE-31).`
   );
   process.exit(1);
+}
+
+if (process.argv.includes("--self-test")) {
+  const mutations = [
+    ["hook pending draft", hook.replace("pendingModeRef.current = mode", "BROKEN_PENDING_MODE")],
+    ["hook failure message", hook.replace("View preference could not be saved. This selection is temporary.", "BROKEN_FAILURE_MESSAGE")],
+    ["hook retry", hook.replaceAll("retryViewModeSave", "BROKEN_RETRY")],
+    ["customer alert", pageSources.customers.replace('data-view-mode-save-error="customers"', 'data-view-mode-save-error="BROKEN"')],
+    ["vendor alert", pageSources.vendors.replace('data-view-mode-save-error="vendors"', 'data-view-mode-save-error="BROKEN"')],
+    ["vendor retry", pageSources.vendors.replaceAll("retryViewModeSave", "BROKEN_RETRY")],
+  ];
+  for (const [name, mutated] of mutations) {
+    const hookSource = name.startsWith("hook") ? mutated : hook;
+    const pagesSource = {
+      ...pageSources,
+      ...(name.startsWith("customer") ? { customers: mutated } : {}),
+      ...(name.startsWith("vendor") ? { vendors: mutated } : {}),
+    };
+    if (!preferenceFailureTruthFailures(hookSource, pagesSource).length) {
+      throw new Error(`planted defect survived: ${name}`);
+    }
+  }
+  console.log(`[verify-customers-vendors-default-is-prior-design] SELFTEST PASS — ${mutations.length}/6 planted preference failures rejected`);
 }
 
 console.log(

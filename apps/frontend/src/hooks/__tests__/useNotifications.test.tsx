@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useNotifications } from "../useNotifications";
+import { apiRequest } from "../../api/client";
 
 // CC3-NOTIFICATIONS-EVENTSOURCE-WRONG-ORIGIN-20260822 regression:
 // the live-push EventSource must resolve through resolveApiUrl() (the same split-host
@@ -34,6 +35,20 @@ describe("useNotifications", () => {
     FakeEventSource.instances = [];
     // @ts-expect-error -- test stub, not a full EventSource implementation
     global.EventSource = FakeEventSource;
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path.includes("unread-count")) return { unread_count: 0 };
+      return { notifications: [] };
+    });
+  });
+
+  it("settles a failed initial poll into a retryable error instead of loading forever", async () => {
+    vi.mocked(apiRequest).mockRejectedValueOnce(new Error("notifications unavailable"));
+    const { result } = renderHook(() => useNotifications({ enableStream: false, pollIntervalMs: 60_000 }));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.notifications).toEqual([]);
   });
 
   afterEach(() => {

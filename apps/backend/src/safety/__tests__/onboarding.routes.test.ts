@@ -77,6 +77,7 @@ describe("safety onboarding routes (A24-8)", () => {
   it("POST /api/v1/safety/onboarding/sessions creates session", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("status = 'in_progress'")) return { rows: [], rowCount: 0 };
       if (sql.includes("INSERT INTO safety.onboarding_sessions")) {
         return { rows: [baseSession()], rowCount: 1 };
       }
@@ -91,6 +92,26 @@ describe("safety onboarding routes (A24-8)", () => {
     expect(res.statusCode).toBe(201);
     expect(res.json().session).toMatchObject({ id: SESSION_ID, current_step: 1 });
     expect(mockAppendCrudAudit).toHaveBeenCalled();
+  });
+
+  it("POST resumes the existing company-scoped driver session instead of duplicating it", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("status = 'in_progress'")) {
+        return { rows: [baseSession({ current_step: 4 })], rowCount: 1 };
+      }
+      if (sql.includes("INSERT INTO safety.onboarding_sessions")) throw new Error("duplicate insert");
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/onboarding/sessions",
+      payload: { operating_company_id: COMPANY, driver_id: DRIVER_ID },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ resumed: true, session: { id: SESSION_ID, current_step: 4 } });
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 
   it("GET /api/v1/safety/onboarding/sessions/:session_id returns session + step keys", async () => {
