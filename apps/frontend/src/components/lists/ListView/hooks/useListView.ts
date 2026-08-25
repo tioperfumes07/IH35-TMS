@@ -23,6 +23,8 @@ const DEBOUNCE_MS = 600;
 export interface ListViewHookResult {
   savedView: SavedViewData | null;
   persistView: (data: SavedViewData) => void;
+  persistError: string | null;
+  retryPersist: () => void;
   loading: boolean;
 }
 
@@ -34,8 +36,10 @@ export function useListView(
   _columns: ListViewColumn<unknown>[]
 ): ListViewHookResult {
   const [savedView, setSavedView] = useState<SavedViewData | null>(null);
+  const [persistError, setPersistError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPersistedDraftRef = useRef<SavedViewData | null>(null);
   const tableId = savedViewsKey ? `listview:${savedViewsKey}` : null;
 
   useEffect(() => {
@@ -70,21 +74,41 @@ export function useListView(
     // `tableId` should ever trigger a fresh server fetch.
   }, [tableId]);
 
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, []);
+
+  const sendPersist = useCallback(async (data: SavedViewData) => {
+    if (!tableId) return;
+    try {
+      await apiRequest("/api/v1/users/me/table-preferences", {
+        method: "PATCH",
+        body: { table_id: tableId, saved_view: data },
+      });
+      setPersistError(null);
+    } catch {
+      setPersistError("Table settings could not be saved. Your current view is temporary.");
+    }
+  }, [tableId]);
+
   const persistView = useCallback(
     (data: SavedViewData) => {
       if (!tableId) return;
+      lastPersistedDraftRef.current = data;
+      setPersistError(null);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        void apiRequest("/api/v1/users/me/table-preferences", {
-          method: "PATCH",
-          body: { table_id: tableId, saved_view: data },
-        }).catch(() => undefined);
+        void sendPersist(data);
       }, DEBOUNCE_MS);
     },
-    [tableId]
+    [sendPersist, tableId]
   );
 
-  return { savedView, persistView, loading };
+  const retryPersist = useCallback(() => {
+    if (lastPersistedDraftRef.current) void sendPersist(lastPersistedDraftRef.current);
+  }, [sendPersist]);
+
+  return { savedView, persistView, persistError, retryPersist, loading };
 }
 
 export function buildDefaultGearState<T>(

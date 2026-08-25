@@ -43,7 +43,13 @@ export function ListView<T>({
   const [toolbarSearch, setToolbarSearch] = useState("");
   const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
 
-  const { savedView, persistView, loading: _svLoading } = useListView(savedViewsKey, columns as ListViewColumn<unknown>[]);
+  const {
+    savedView,
+    persistView,
+    persistError,
+    retryPersist,
+    loading: _svLoading,
+  } = useListView(savedViewsKey, columns as ListViewColumn<unknown>[]);
 
   // Apply saved view settings once loaded
   useEffect(() => {
@@ -160,6 +166,14 @@ export function ListView<T>({
 
   return (
     <div className="flex flex-col h-full">
+      {persistError && (
+        <div role="alert" className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <span>{persistError}</span>
+          <button type="button" className="font-semibold underline" onClick={retryPersist}>
+            Retry save
+          </button>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-wrap">
         <UniversalListToolbar
