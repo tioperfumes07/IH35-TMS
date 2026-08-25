@@ -1011,6 +1011,22 @@ export async function createDriverCanonical(
           ]
         );
 
+        if (normalizedEmail) {
+          await enqueueOutboxEvent(
+            client,
+            "email.driver_invite.send",
+            { aggregate_type: "identity.driver_invites", aggregate_id: String(row.id) },
+            {
+              operating_company_id: resolvedOperatingCompanyId,
+              driver_id: String(row.id),
+              to: normalizedEmail,
+              driver_name: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "Driver",
+              login_url: inviteUrl,
+              actor_user_id: authUser.uuid,
+            }
+          );
+        }
+
         await appendCrudAudit(
           client,
           authUser.uuid,
@@ -1143,17 +1159,6 @@ export async function createDriverCanonical(
         return { status: 409, body: { error: "prior_driver_not_most_recent_in_chain" } };
       if (created.error === "override_required_for_rehire") return { status: 400, body: { error: "override_required_for_rehire" } };
       return { status: 400, body: { error: String((created as { error: string }).error) } };
-    }
-
-    if (created?.invite_url && created?.email && created.invite_operating_company_id) {
-      void sendDriverInvite({
-        to: created.email as string,
-        driverName: `${created.first_name ?? ""} ${created.last_name ?? ""}`.trim() || "Driver",
-        loginUrl: created.invite_url as string,
-        actorUserId: authUser.uuid,
-        recipientUserUuid: (created.identity_user_id as string | null) ?? null,
-        operatingCompanyId: created.invite_operating_company_id as string,
-      }).catch(() => undefined);
     }
 
     return { status: 201, body: created as Record<string, unknown> };
