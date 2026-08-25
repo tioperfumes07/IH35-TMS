@@ -97,16 +97,16 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         hasReverseCol
           ? `
           INSERT INTO maintenance.work_orders (
-            operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at, repair_location, description, display_id, unit_sequence, source_intransit_issue_id
+            operating_company_id, wo_type, source_type, status, unit_id, driver_id, load_id, opened_at, repair_location, description, display_id, unit_sequence, source_intransit_issue_id
           )
-          VALUES ($1,$2,'IT','open',$3,$4,now(),'mobile_roadside',$5,$6,$7,$8)
+          VALUES ($1,$2,'IT','open',$3,$4,$5,now(),'mobile_roadside',$6,$7,$8,$9)
           RETURNING id
         `
           : `
           INSERT INTO maintenance.work_orders (
-            operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at, repair_location, description, display_id, unit_sequence
+            operating_company_id, wo_type, source_type, status, unit_id, driver_id, load_id, opened_at, repair_location, description, display_id, unit_sequence
           )
-          VALUES ($1,$2,'IT','open',$3,$4,now(),'mobile_roadside',$5,$6,$7)
+          VALUES ($1,$2,'IT','open',$3,$4,$5,now(),'mobile_roadside',$6,$7,$8)
           RETURNING id
         `,
         hasReverseCol
@@ -115,6 +115,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
               body.data.wo_type,
               issue.unit_id,
               issue.driver_id,
+              issue.load_id,
               `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
               display?.display_id ?? null,
               Number(display?.sequence ?? 0) || null,
@@ -125,6 +126,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
               body.data.wo_type,
               issue.unit_id,
               issue.driver_id,
+              issue.load_id,
               `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
               display?.display_id ?? null,
               Number(display?.sequence ?? 0) || null,
