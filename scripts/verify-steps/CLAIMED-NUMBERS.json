@@ -1,8 +1,13 @@
 {
+  "9742": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-root-claude-md-untracked (supersedes odd 9741 -- fix/ branches are lane-banded EVEN)"
+  },
   "9741": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
-    "purpose": "verify-root-claude-md-untracked"
+    "purpose": "verify-root-claude-md-untracked -- UNUSED, superseded by 9742 (odd number, but this PR's branch matches the cursor-lane EVEN-only prefix pattern in verify-verify-step-lane-band.mjs)"
   },
   "8939": {
     "claimed_at": "2026-08-25",
