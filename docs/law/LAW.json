@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-08-06-GOV-F01-ROOT-CLAUDE-MD-UNTRACKED",
+    "title": "Root CLAUDE.md must never be tracked in this PUBLIC repo (GOV-F01) — it was tracked once (01648d102 / PR #4551) and disclosed prod Neon project/branch/operating_company_id identifiers; untracked again in f5cdf067a (PR #5528). Shrink-only ratchet against re-tracking; does NOT remove the old disclosure from public git history — that needs an owner-approved history rewrite, out of autonomous scope.",
+    "source_file": "docs/audit/GUARD-WORKORDERS.md",
+    "guard": "scripts/verify-root-claude-md-untracked.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW \u2014 every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
