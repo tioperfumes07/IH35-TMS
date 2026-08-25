@@ -8,6 +8,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { NewAccountDrawerForm } from "../../../components/parity/drawers/NewAccountDrawerForm";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { VendorCreateModal } from "../../vendors/VendorCreateModal";
 import { ItemEditorModal } from "../../../pages/lists/accounting/ItemEditorModal";
 import { AccountingCatalogModal } from "../../../pages/lists/accounting/AccountingCatalogModal";
@@ -85,24 +86,26 @@ export function QuickCreateEntityModal({
         // D1-1: writes to mdata.customers (canonical) — already fixed in the prior customer path.
         // Same deliverability stamp as NewCustomerDrawerForm: email → billing_email (API) + ar/ap.
         const invoiceEmail = parsed.data.email?.trim() || undefined;
+        const titleCasedName = properPersonOrPlaceName(parsed.data.name);
         const res = await createCustomer({
-          name: parsed.data.name,
+          name: titleCasedName,
           operating_company_id: operatingCompanyId,
           email: invoiceEmail,
           ar_email: invoiceEmail,
           ap_email: invoiceEmail,
           phone: parsed.data.phone || undefined,
-          main_contact_name: parsed.data.company?.trim() || undefined,
+          main_contact_name: parsed.data.company?.trim() ? properPersonOrPlaceName(parsed.data.company) : undefined,
           main_contact_email: invoiceEmail,
         });
-        onCreated({ id: String(res.id), label: parsed.data.name });
+        onCreated({ id: String(res.id), label: titleCasedName });
       } else if (kind === "part") {
+        const titleCasedName = properPersonOrPlaceName(parsed.data.name);
         const res = await createPartsInventoryPurchase(operatingCompanyId, {
-          part_description: parsed.data.name,
+          part_description: titleCasedName,
           qty_received: parsed.data.qtyReceived ?? 1,
-          location: parsed.data.location || undefined,
+          location: parsed.data.location?.trim() ? properPersonOrPlaceName(parsed.data.location) : undefined,
         });
-        onCreated({ id: String(res.id ?? ""), label: parsed.data.name });
+        onCreated({ id: String(res.id ?? ""), label: titleCasedName });
       } else {
         // vendor / item / class / category early-return below — residual submit must not handle them.
         pushToast("Use the Lists create chrome for this entity.", "error");
