@@ -4,14 +4,15 @@
  *
  * Root cause: `apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx`'s `updateMutation`
  * (shared by the Dispatch Flag select AND the factoring-package Generate/Email/Mark-uploaded
- * buttons) and `createInvoiceMutation` (backing "Create / View Invoice") both had NO `onError`
+ * buttons), `createInvoiceMutation` (backing "Create / View Invoice"), and
+ * `distributeMutation` (backing driver-instructions "Resend") had NO `onError`
  * handler, and every call site did `void mutation.mutateAsync(...).then(...)` or
  * `await mutation.mutateAsync(...)` with no `.catch()` anywhere in the chain. On a rejected
  * PATCH/POST (validation error, 500, network failure) this was a silent no-op on real, live,
  * mounted dispatch surfaces: no toast, no revert explanation, and the chained `.then()`
  * (refetch/success-toast) never ran since the promise rejected.
  *
- * Fix: added `onError: (err) => pushToast(userFacingApiError(err, "..."), "error")` to both
+ * Fix: added `onError: (err) => pushToast(userFacingApiError(err, "..."), "error")` to all three
  * mutations, matching the established convention used elsewhere in the dispatch module
  * (CancelLoadModal.tsx, InlineUnitPicker.tsx, AssignDriverDropdown.tsx).
  *
@@ -51,6 +52,10 @@ export function checkLoadDetailDrawerMutationErrors(src) {
   if (!invoiceBlock || !/onError:/.test(invoiceBlock)) {
     offenders.push(`${FILE}: createInvoiceMutation has no onError — "Create / View Invoice" will silently do nothing on failure again.`);
   }
+  const distributeBlock = extractMutationBlock(src, "distributeMutation");
+  if (!distributeBlock || !/onError:/.test(distributeBlock)) {
+    offenders.push(`${FILE}: distributeMutation has no onError — driver-instructions "Resend" will silently do nothing on failure again.`);
+  }
   return offenders;
 }
 
@@ -69,13 +74,18 @@ if (process.argv.includes("--selftest")) {
       mutationFn: ({ operatingCompanyId, loadId }) =>
         createInvoiceFromLoad(operatingCompanyId, { load_id: loadId }),
     });
+    const distributeMutation = useMutation({
+      mutationFn: ({ loadId, operatingCompanyId }) =>
+        distributeLoadInstructions(loadId, operatingCompanyId),
+      onSuccess: () => pushToast("Driver instructions distributed", "success"),
+    });
   `;
   const fixed = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
 
   const buggyOffenders = checkLoadDetailDrawerMutationErrors(buggy);
   const fixedOffenders = checkLoadDetailDrawerMutationErrors(fixed);
 
-  if (buggyOffenders.length >= 3 && fixedOffenders.length === 0) {
+  if (buggyOffenders.length >= 4 && fixedOffenders.length === 0) {
     console.log("verify-load-detail-drawer-mutation-errors-surfaced selftest OK");
     process.exit(0);
   }
@@ -95,6 +105,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   console.log(
-    "verify-load-detail-drawer-mutation-errors-surfaced OK — updateMutation and createInvoiceMutation both surface failures via toast, never a silent no-op",
+    "verify-load-detail-drawer-mutation-errors-surfaced OK — update, invoice, and driver-instruction distribution mutations surface failures via toast, never a silent no-op",
   );
 }

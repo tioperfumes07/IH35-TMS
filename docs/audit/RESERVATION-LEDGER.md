@@ -112,3 +112,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-EXISTING-FK-DRILLS | inventory WO + task activity exact drills | InventoryAssignmentsPage; TaskPlannerGrid; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-MAINTENANCE-SOURCE-WO | DVIR defect/pre-flight/PM alert persisted WO drills | maintenance routes and surfaces; focused guard | ACTIVE |
 | 2026-08-24T23:57:29-05:00 | Codex | DISP-LOAD-DRAWER-RESEND-SILENT-FAILURE | apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx, scripts/verify-load-detail-drawer-mutation-errors-surfaced.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/queue-scan |
+| 2026-08-25T00:00:00-05:00 | Codex | DISP-LOAD-DRAWER-RESEND-SILENT-FAILURE | — | RELEASED-ON-MERGE | codex/load-drawer-resend-visible-error |
