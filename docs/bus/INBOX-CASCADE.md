@@ -1,5 +1,7 @@
 # INBOX-CASCADE
 
+**23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Walk `/program` hops 1–9 + remaining `--` cards on load `L-20260824-0007`. FINDING only. No product PR. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. No U14 restamp.
+
 **23:32 CT GO NOW.** Walk hops 1–9. FINDING only. Deploy in flight — no `trigger_deploy`. Hard-reload when healthz=`6c465b2`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. No product PR. No U14 restamp.
 
 **22:34 CT GO — TESTER.** Live `20c02fd`. Owner: cash flow **should** show proforma as Projected/Pre-invoice (not a FINDING). FINDING if it is missing **or** if A/R aging lists proforma as Open A/R. Invoice number on that line must equal **load_number** after CC-1. Walk hops 1–9. Book-load no-op is Cursor. AUDIT only. No U14 restamp.

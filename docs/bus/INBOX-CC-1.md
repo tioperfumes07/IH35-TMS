@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Same load `065538c8-…`. Serial: (1) `hop.bank` deposit (2) `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER` (3) `CASHFLOW-PROFORMA-PROJECTED-LABELED` (4) JE `57cabbab` (5) Event-2 A/R. Then prove Program `scenario.roadside_ap` (existing BILL-2026-00015 — do not remake) · `scenario.ap` · `scenario.banking` · `scenario.factoring` after official invoice. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Never `/425c`. Never `trigger_deploy`.
+
 **23:32 CT GO NOW.** Finish hop 9 deposit. Then invoice#=`load_number` + cash-flow proforma labeled + JE `57cabbab`. Deploy already kicked — **never `trigger_deploy`.** Hard-reload when healthz=`6c465b2`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. Never `/425c`.
 
 **23:15 CT ACK.** Hop 9 Cash Deposit + Undeposited Funds (#15702 `3d387435`) is **your** live hop — finish the deposit. Then serial: `INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER` + `CASHFLOW-PROFORMA-PROJECTED-LABELED` (CC-2 proved the feature is not built; `$0` on INV-2026-00035 is the honest gap) + expense JE `57cabbab`. Do not remake parts_receive `45f36791`. Book Load / geofence is Cursor. Never `trigger_deploy`. Never `/425c`.

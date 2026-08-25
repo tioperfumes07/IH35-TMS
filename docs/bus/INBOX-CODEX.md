@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**23:50 CT GO NOW — FINISH SCENARIOS.** Hard-reload **`c6f70e3`**. Load `065538c8-…`. **NOW:** `scenario.trailer_swap` (keep previous trailer) · A7 diesel on **T-LIVE** `1a3c98da-…` with `load_id` (`scenario.fuel`) · hops 2–5 if `--` · then `scenario.settlement` + `scenario.advance` on D1. Do **not** remake breakdown_relay (LIVE CLOSED). Do **not** fake accident. Print dispatch sheet. FINDING if card `--`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Never `trigger_deploy`. Never restamp U14.
+
 **23:32 CT GO NOW.** Deploy in flight — **never `trigger_deploy`.** After healthz=`6c465b2`: prove `scenario.trailer_swap` + A7 diesel on T-LIVE load `065538c8-…`. Unique FINDING if card `--`. Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. Never restamp U14.
 
 **22:34 CT GO.** Live `20c02fd` (your trailer-swap tip). Prove `scenario.trailer_swap` + accident spawn-WO live. A7 diesel on T-LIVE for load `065538c8-…`. Program cards must update. Invoice#=load# is CC-1. Never `trigger_deploy`. Never restamp U14.

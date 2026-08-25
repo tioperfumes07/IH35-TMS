@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**23:50 CT GO.** Live `c6f70e3`. Seats finish Program scenarios: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2350.md`. Do **not** steal hop 9. PCMILER off — do not claim geofence. Do **not** second-kick. U14 never restamp.
+
 **23:32 CT GO.** Deploy IN FLIGHT `dep-da6hl9p42hec73d5ai0g` tip `6c465b23`. Do **not** second-kick. After healthz moves: geocoded TEST Book Load → Neon `geo.geofences` + outbox `samsara.create_geofence`. Seats GO: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-24-2332.md`. Hop 9 is CC-1. U14 never restamp.
 
 **22:41 CT:** KICKOFF executing `BOOK-LOAD-NOOP` — geocode lat/lon → hidden stop fields → POST payload → `mdata.load_stops.latitude/longitude`. Testers: fill cities, practical miles, trip type, then Book load. U14 never restamp.
