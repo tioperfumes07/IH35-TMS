@@ -15,6 +15,7 @@ import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { StateSelect } from "../../../components/forms/StateSelect";
@@ -184,17 +185,20 @@ export function DriversMasterDataPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
-        <div>
-          <h1 className="text-base font-semibold text-gray-900">Maintenance Drivers</h1>
-          <p className="text-xs text-gray-600">Manage projected drivers with manual create/edit/void controls.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* MAINT-F3522: server-bound drivers search — keep; ParityTable toolbar Search suppressed */}
-          <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
-          <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
-        </div>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="Maintenance Drivers"
+        subtitle="Manage projected drivers with manual create/edit/void controls."
+        breadcrumb={["Maintenance", "Drivers"]}
+        backHref="/maintenance"
+        actions={
+          <div className="flex items-center gap-2">
+            {/* MAINT-F3522: server-bound drivers search — keep; ParityTable toolbar Search suppressed */}
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
+            <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
+          </div>
+        }
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMaintenanceDvirDefect, triageMaintenanceDvirDefect } from "../../api/maintenance";
@@ -7,9 +7,11 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { hasInAppHistory } from "../../lib/smart-back";
 
 export function DefectDetailPage() {
   const { defectId = "" } = useParams();
+  const navigate = useNavigate();
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
@@ -57,10 +59,28 @@ export function DefectDetailPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-dvir-defect-detail">
+      {/*
+        UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: this was a plain <Link to="/maintenance/defects">
+        -- always the same hardcoded target regardless of where the user actually came from (e.g. a
+        unit profile's defect list, not just the defects inbox). Upgraded to the same smart-back
+        pattern as the rest of the app: prefer real in-app history, fall back to the defects inbox
+        only on a direct load/refresh.
+      */}
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/maintenance/defects" className="text-slate-700 hover:underline">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => {
+            if (hasInAppHistory(window.history.state)) {
+              navigate(-1);
+              return;
+            }
+            navigate("/maintenance/defects");
+          }}
+          className="border-0 bg-transparent p-0 text-slate-700 hover:underline"
+        >
           ← Defects inbox
-        </Link>
+        </button>
       </div>
 
       {q.isLoading ? <p className="text-sm text-gray-500">Loading defect…</p> : null}

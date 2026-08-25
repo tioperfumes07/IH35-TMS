@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
 
 type ClaimDraft = {
@@ -139,17 +140,18 @@ export function WarrantyClaimsPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-warranty-claims-page">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">Warranty Claims</h2>
-          <p className="text-xs text-gray-500">
-            Track parts warranty coverage, file vendor claims, and detect eligible parts from completed work orders.
-          </p>
-        </div>
-        <Button type="button" disabled={!companyId} onClick={() => setCreateOpen(true)}>
-          + Create Claim
-        </Button>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="Warranty Claims"
+        subtitle="Track parts warranty coverage, file vendor claims, and detect eligible parts from completed work orders."
+        breadcrumb={["Maintenance", "Warranty Claims"]}
+        backHref="/maintenance"
+        actions={
+          <Button type="button" disabled={!companyId} onClick={() => setCreateOpen(true)}>
+            + Create Claim
+          </Button>
+        }
+      />
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
         <label className="text-xs text-gray-700">

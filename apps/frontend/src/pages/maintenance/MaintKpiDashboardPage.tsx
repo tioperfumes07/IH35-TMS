@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -180,16 +181,20 @@ export function MaintKpiDashboardPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-kpi-dashboard">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">Maintenance KPI Dashboard</h2>
-          <p className="text-xs text-gray-500">
-            Downtime, MTBF, CPM, cost-per-truck, and PM compliance with drill-down. Cross-link:{" "}
-            <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-slate-700 underline">
-              maintenance cost per unit report
-            </Link>
-          </p>
-        </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="Maintenance KPI Dashboard"
+        subtitle="Downtime, MTBF, CPM, cost-per-truck, and PM compliance with drill-down."
+        breadcrumb={["Maintenance", "KPI Dashboard"]}
+        backHref="/maintenance"
+      />
+      <p className="-mt-2 text-xs text-gray-500">
+        Cross-link:{" "}
+        <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-slate-700 underline">
+          maintenance cost per unit report
+        </Link>
+      </p>
+      <div className="flex flex-wrap items-end justify-end gap-3">
         <div data-maint-kpi-filter-toolbar="collapsed">
           <CollapsedListFilters
             activeFilterCount={

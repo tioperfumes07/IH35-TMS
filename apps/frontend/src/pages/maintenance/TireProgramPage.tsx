@@ -22,6 +22,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
 
 type MountDraft = {
@@ -312,29 +313,30 @@ export function TireProgramPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-tire-program-page">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">Tire Program</h2>
-          <p className="text-xs text-gray-500">
-            Per-axle tire records with rotation, replacement history, brand tracking, and tread depth alerts.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary" disabled={!companyId} onClick={() => setBrandOpen(true)}>
-            + Create Brand
-          </Button>
-          <Button
-            type="button"
-            disabled={!companyId || !assetId}
-            onClick={() => {
-              setMountDraft(EMPTY_MOUNT);
-              setMountOpen(true);
-            }}
-          >
-            + Create Tire Record
-          </Button>
-        </div>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="Tire Program"
+        subtitle="Per-axle tire records with rotation, replacement history, brand tracking, and tread depth alerts."
+        breadcrumb={["Maintenance", "Tire Program"]}
+        backHref="/maintenance"
+        actions={
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" disabled={!companyId} onClick={() => setBrandOpen(true)}>
+              + Create Brand
+            </Button>
+            <Button
+              type="button"
+              disabled={!companyId || !assetId}
+              onClick={() => {
+                setMountDraft(EMPTY_MOUNT);
+                setMountOpen(true);
+              }}
+            >
+              + Create Tire Record
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[auto_1fr_auto]">
         <div className="flex self-end p-1" aria-label="Tire asset type">

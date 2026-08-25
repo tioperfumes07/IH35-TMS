@@ -14,6 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useSearchParams } from "react-router-dom";
 
@@ -172,12 +173,17 @@ export function PmSchedulePage() {
 
   return (
     <div className="space-y-3" data-testid="pm-schedule-page">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900">PM Schedule</h2>
-        <Button type="button" onClick={openCreateForm} disabled={!companyId} data-testid="pm-schedule-create-open">
-          + Create
-        </Button>
-      </div>
+      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
+      <PageHeader
+        title="PM Schedule"
+        breadcrumb={["Maintenance", "PM Schedule"]}
+        backHref="/maintenance"
+        actions={
+          <Button type="button" onClick={openCreateForm} disabled={!companyId} data-testid="pm-schedule-create-open">
+            + Create
+          </Button>
+        }
+      />
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-500">Due-soon threshold is company-configurable (days/miles/hours).</div>
         {listQ.isError ? (
