@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTE = path.join(ROOT, "apps/backend/src/safety/safety.routes.ts");
 const COMPONENT = path.join(ROOT, "apps/frontend/src/pages/safety/components/SafetyKpiRow.tsx");
+const FOUNDATION = path.join(ROOT, "apps/backend/src/safety/foundation-kpis.routes.ts");
 const LABEL = "verify-safety-dashboard-kpis-wired";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -70,6 +71,7 @@ function returnedKeys(code) {
 export function assertKpisWired(sources) {
   const routeSrc = sources?.route ?? read(ROUTE);
   const componentSrc = sources?.component ?? read(COMPONENT);
+  const foundationSrc = sources?.foundation ?? read(FOUNDATION);
   const problems = [];
 
   const handler = kpiHandler(routeSrc);
@@ -125,23 +127,26 @@ export function assertKpisWired(sources) {
   }
 
   // 4. No silent zero-fallback on the KPI aggregate.
-  if (/\.catch\(\(\)\s*=>\s*\(\{\s*rows:\s*\[\]/.test(code)) {
+  if (/\.catch\(\(\)\s*=>\s*\(\{\s*rows:/.test(code)) {
     problems.push(
       "KPI aggregate uses `.catch(() => ({ rows: [] }))` — a failed query then renders identically " +
         "to a real all-clear on a safety screen. Let it fail loudly instead"
     );
+  }
+  if (/SELECT COUNT\(\*\)::int AS count FROM (?:safety\.accident_reports|compliance\.dot_inspection_events|safety\.hos_violations)[\s\S]{0,400}?\.catch\s*\(/.test(foundationSrc)) {
+    problems.push("Foundation Safety KPI query failure is converted to a false zero card");
   }
 
   return problems;
 }
 
 if (SELFTEST) {
-  const live = { route: read(ROUTE), component: read(COMPONENT) };
+  const live = { route: read(ROUTE), component: read(COMPONENT), foundation: read(FOUNDATION) };
   const failures = [];
 
   const expectCaught = (name, mutated, expect) => {
     const changed =
-      mutated.route !== live.route || mutated.component !== live.component;
+      mutated.route !== live.route || mutated.component !== live.component || mutated.foundation !== live.foundation;
     if (!changed) {
       failures.push(`${name}: mutation did not change the source — the case is inert`);
       return;
@@ -164,6 +169,33 @@ if (SELFTEST) {
     "unbound-tile",
     { ...live, route: live.route.replace(/^\s*active_drivers: Number\(.*$/m, "") },
     "active_drivers"
+  );
+  expectCaught(
+    "dashboard-drug-test-false-zero",
+    {
+      ...live,
+      route: live.route.replace("          [companyId]\n        );\n      const csaRes", "          [companyId]\n        ).catch(() => ({ rows: [{ count: 0 }] }));\n      const csaRes"),
+    },
+    "renders identically"
+  );
+  expectCaught(
+    "dashboard-csa-false-null",
+    {
+      ...live,
+      route: live.route.replace("          [companyId]\n        );\n      const k =", "          [companyId]\n        ).catch(() => ({ rows: [{ score: null }] }));\n      const k ="),
+    },
+    "renders identically"
+  );
+  expectCaught(
+    "foundation-kpi-false-zero",
+    {
+      ...live,
+      foundation: live.foundation.replace(
+        ").rows[0]?.count ?? 0;",
+        ").catch(() => ({ rows: [{ count: 0 }] })).rows[0]?.count ?? 0;"
+      ),
+    },
+    "false zero card"
   );
 
   // Case 2: the handler goes back to the stub view.
@@ -216,7 +248,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

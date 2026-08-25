@@ -61,6 +61,15 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (!/spawnMaintenanceDraftWorkOrder\(client, input\);\s*\n[\s\S]{0,400}?UPDATE safety\.incidents SET work_order_id = \$1::uuid WHERE id = \$2::uuid/.test(trigger)) {
       problems.push(`${TRIGGER}: must stamp work_order_id back onto the incident right after spawning the draft WO`);
     }
+    const swallowedWrites = [
+      ["work-order display allocator", /next_wo_display_id[\s\S]{0,500}?\.catch\s*\(/],
+      ["work-order insert", /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?\.catch\s*\(/],
+      ["domain-row insert", /INSERT INTO \$\{qualified\}[\s\S]{0,500}?\.catch\s*\(/],
+      ["incident work-order FK update", /UPDATE safety\.incidents SET work_order_id[\s\S]{0,300}?\.catch\s*\(/],
+    ];
+    for (const [label, pattern] of swallowedWrites) {
+      if (pattern.test(trigger)) problems.push(`${TRIGGER}: ${label} failure must propagate instead of becoming a silent nullable workflow result`);
+    }
   }
 
   const routes = readRel(root, ROUTES, overrides);
@@ -133,6 +142,18 @@ function selftest() {
     },
     "must stamp work_order_id"
   );
+  for (const [label, needle] of [
+    ["display allocator swallow", "      );\n    generatedDisplayId"],
+    ["work-order insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;"],
+    ["domain insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;\n}\n\nasync function notifyIncidentStakeholders"],
+    ["incident FK update swallow", "          input.incident_id,\n        ]);"],
+  ]) {
+    plant(
+      label,
+      { [TRIGGER]: triggerReal.replace(needle, needle.replace(");", ").catch(() => ({ rows: [] }));")) },
+      "failure must propagate"
+    );
+  }
   plant(
     "routes-drops-one-join",
     { [ROUTES]: routesReal.replace(
@@ -152,7 +173,7 @@ function selftest() {
     'must render a real "Linked WO"'
   );
 
-  console.log(`${LABEL} SELFTEST PASS — 4 planted regressions all caught`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted regressions all caught`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);

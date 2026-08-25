@@ -64,24 +64,15 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 const canonicalSet = new Set(CANONICAL_SAFETY_TABS.map(([group, tab]) => `${group}/${tab}`));
 
 async function buildKpis(client: any, companyId: string) {
-  const openAccidents =
-    (
-      await client
-        .query(`SELECT COUNT(*)::int AS count FROM safety.accident_reports WHERE operating_company_id = $1::uuid AND status NOT ILIKE 'closed%'`, [companyId])
-        .catch(() => ({ rows: [{ count: 0 }] }))
-    ).rows[0]?.count ?? 0;
-  const dotInspections =
-    (
-      await client
-        .query(`SELECT COUNT(*)::int AS count FROM compliance.dot_inspection_events WHERE operating_company_id = $1::uuid`, [companyId])
-        .catch(() => ({ rows: [{ count: 0 }] }))
-    ).rows[0]?.count ?? 0;
-  const hosViolations =
-    (
-      await client
-        .query(`SELECT COUNT(*)::int AS count FROM safety.hos_violations WHERE operating_company_id = $1::uuid`, [companyId])
-        .catch(() => ({ rows: [{ count: 0 }] }))
-    ).rows[0]?.count ?? 0;
+  const openAccidents = (
+    await client.query(`SELECT COUNT(*)::int AS count FROM safety.accident_reports WHERE operating_company_id = $1::uuid AND status NOT ILIKE 'closed%'`, [companyId])
+  ).rows[0]?.count ?? 0;
+  const dotInspections = (
+    await client.query(`SELECT COUNT(*)::int AS count FROM compliance.dot_inspection_events WHERE operating_company_id = $1::uuid`, [companyId])
+  ).rows[0]?.count ?? 0;
+  const hosViolations = (
+    await client.query(`SELECT COUNT(*)::int AS count FROM safety.hos_violations WHERE operating_company_id = $1::uuid`, [companyId])
+  ).rows[0]?.count ?? 0;
 
   return [
     { label: "Open Items", value: Number(openAccidents) },

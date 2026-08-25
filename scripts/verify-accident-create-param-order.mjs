@@ -79,6 +79,9 @@ export function assertAccidentCreateParamOrder(sources) {
   ]) {
     if (!route.includes(token)) problems.push(`${ROUTE}: missing company-scoped accident linkage guard token: ${token}`);
   }
+  if (/const beforeRes = await client[\s\S]{0,400}?FROM safety\.accident_reports[\s\S]{0,400}?\.catch\s*\(/.test(route)) {
+    problems.push(`${ROUTE}: accident PATCH before-read must propagate SQL failures instead of returning false not-found`);
+  }
   if (!/queryKey:\s*\[[^\]]*suggest-load/s.test(expense) && !expense.includes('"suggest-load"')) {
     problems.push(`${EXPENSE_FORM}: suggest-load queryKey missing — auto-detect not wired.`);
   }
@@ -105,10 +108,14 @@ function main() {
     const broken = assertAccidentCreateParamOrder({
       [ROUTE]: mutateBroken(route)
         .replaceAll("missingAccidentCompanyLinks(client, companyId, body.data)", "Promise.resolve([])")
-        .replace('error: "accident_link_not_found"', 'error: "not_found"'),
+        .replace('error: "accident_link_not_found"', 'error: "not_found"')
+        .replace(
+          "]);\n      const before = beforeRes.rows[0];",
+          "]).catch(() => ({ rows: [] }));\n      const before = beforeRes.rows[0];",
+        ),
       [EXPENSE_FORM]: expense.replace(/suggestExpenseLoad/g, "NOT_SUGGEST"),
     });
-    if (broken.length < 4) {
+    if (broken.length < 5) {
       console.error(
         `${LABEL} SELFTEST FAIL — planted defect did not fail enough (got ${broken.length}):\n- ${broken.join("\n- ")}`,
       );

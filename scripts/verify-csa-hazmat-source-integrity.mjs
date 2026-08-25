@@ -65,6 +65,13 @@ function collectFailures(source) {
   requireText("safetyLegacyRoutes", "basic_hazmat: null", "legacy_safety_hazmat_not_forced_null");
   requireText("safetyLegacyRoutes", "csaRes.rows[0]?.score == null ? null", "legacy_kpi_null_coerced_to_zero");
   requireText("safetyLegacyRoutes", "source: INTERNAL_CSA_SOURCE_METADATA", "legacy_source_metadata_missing");
+  const latestRouteStart = source.safetyLegacyRoutes.indexOf('app.get("/api/v1/safety/csa/latest"');
+  const latestRoute = latestRouteStart >= 0 ? source.safetyLegacyRoutes.slice(latestRouteStart) : "";
+  if (!latestRoute) {
+    failures.push("legacy_latest_route_missing");
+  } else if (/FROM safety\.csa_scores[\s\S]{0,500}?\.catch\s*\(/.test(latestRoute)) {
+    failures.push("legacy_latest_query_failure_masked_as_no_data");
+  }
   requireText("reportRoutes", "basic_hazmat: null", "report_hazmat_not_forced_null");
   requireText("reportRoutes", 'threshold_status: "not_applicable"', "internal_threshold_deception_present");
   requireText("reportCatalog", "not an FMCSA percentile", "report_catalog_source_label_missing");
@@ -129,6 +136,10 @@ function runSelfTest(source) {
     safetyRoutes: source.safetyRoutes.replaceAll("basic_hazmat: null", "basic_hazmat: Number(row.basic_hazmat ?? 0)"),
     reportRoutes: source.reportRoutes.replaceAll("basic_hazmat: null", "basic_hazmat: Number(score.basic_hazmat ?? 0)"),
   };
+  planted.safetyLegacyRoutes = source.safetyLegacyRoutes.replace(
+    "          [query.data.operating_company_id]\n        );\n      const latest",
+    "          [query.data.operating_company_id]\n        ).catch(() => ({ rows: [] }));\n      const latest"
+  );
   planted.safetyRoutes += "\nSELECT SUM(csa_points) FILTER (WHERE 'unsafe_driving' = ANY(csa_basic_categories));";
   const failures = collectFailures(planted);
   if (
@@ -136,6 +147,7 @@ function runSelfTest(source) {
     || !failures.includes("hazmat_null_coerced_to_number")
     || !failures.includes("safer_basic_derivation_logic_present")
     || !failures.includes("multi_category_points_double_counted")
+    || !failures.includes("legacy_latest_query_failure_masked_as_no_data")
   ) {
     console.error("verify:csa-hazmat-source-integrity SELFTEST FAIL: planted source/counting regression escaped");
     process.exit(1);

@@ -300,8 +300,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      const testsRes = await client
-        .query<{ count: number }>(
+      const testsRes = await client.query<{ count: number }>(
           `
             SELECT COUNT(*)::int AS count
             FROM safety.drug_test
@@ -310,10 +309,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               AND voided_at IS NULL
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const csaRes = await client
-        .query<{ score: number | null }>(
+        );
+      const csaRes = await client.query<{ score: number | null }>(
           `
             SELECT CASE
               WHEN num_nonnulls(
@@ -339,8 +336,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [{ score: null }] }));
+        );
       const k = kpiRes.rows[0];
       const pendingAcknowledgments = Number(k?.pending_acknowledgments ?? 0);
       return {
@@ -437,8 +433,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
       if (query.data.driver_id) values.push(query.data.driver_id);
-      const res = await client
-        .query(
+      const res = await client.query(
           `
             SELECT tr.*,
                    NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
@@ -486,8 +481,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 500
           `,
           [query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { tests: rows };
@@ -664,8 +658,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const accident = res.rows[0] ?? null;
       if (!accident) return null;
       // SAF-B30 / F35: previously spawned AC work orders survived only in React state. Reload them
@@ -884,12 +877,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
       const missingLinks = await missingAccidentCompanyLinks(client, companyId, body.data);
       if (missingLinks.length > 0) return { kind: "link_not_found" as const, missingLinks };
-      const beforeRes = await client
-        .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+      const beforeRes = await client.query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           params.data.id,
           companyId,
-        ])
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        ]);
       const before = beforeRes.rows[0];
       if (!before) return null;
 
@@ -1370,8 +1361,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const latest = res.rows[0] ?? null;
       return latest ? { ...latest, basic_hazmat: null } : null;
     });

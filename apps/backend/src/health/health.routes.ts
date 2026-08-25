@@ -440,7 +440,20 @@ export function backgroundJobRule(
       return { enabled: true, maxStaleMinutes: 120 };
     case "samsara.webhook_projection_cron":
       // "*/1 * * * *" = every 1m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 15 };
+      // SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS — this rule stayed unconditionally
+      // enabled while the cron's own registration (samsara-webhook-projection.cron.ts) and its
+      // in-process catch-up (in-process-startup-catchup.ts) both correctly gate on
+      // ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON (default enabled unless explicitly "false"). With the
+      // flag off, the cron never ticks by design and the catch-up correctly skips it too — but this
+      // rule kept demanding a tick every 15 minutes forever, with no way to ever satisfy it. Live-
+      // confirmed: 2026-08-25, this job's last_successful_run_at was 5,305 minutes (3.7 days) stale,
+      // the single largest contributor to `background_jobs.stale` staying DOWN. Mirrors the same
+      // env-gate pattern already used for compliance.csa_basic_pull_cron, fuel.fraud_detector_worker,
+      // email.queue_processor, and others in this same switch.
+      return {
+        enabled: (process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON ?? "true").trim() !== "false",
+        maxStaleMinutes: 15,
+      };
     case "search.indexer_incremental":
       // "0 3 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };

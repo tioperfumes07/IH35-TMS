@@ -1,4 +1,14 @@
 {
+  "8939": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-settlement-summary-load-count-from-settlement-lines"
+  },
+  "8935": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-maintenance-cost-outsourced-not-hardcoded"
+  },
   "8931": {
     "claimed_at": "2026-08-24",
     "claimed_by": "cc-2",
