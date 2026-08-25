@@ -16,6 +16,8 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId?: string;
@@ -164,10 +166,13 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
       ) : null}
 
       {query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load lawsuits.</div>
-      ) : null}
-
-      <ParityTable
+        <ListErrorState
+          status={0}
+          message={userFacingApiError(query.error, "Failed to load lawsuits.")}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
         rows={rows}
         columns={columns}
         rowKey={(lawsuit) => lawsuit.id}
@@ -204,7 +209,8 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
             </label>
           </CollapsedListFilters>
         }
-      />
+        />
+      )}
       <LawsuitCreateModal
         open={createOpen}
         operatingCompanyId={companyId}
