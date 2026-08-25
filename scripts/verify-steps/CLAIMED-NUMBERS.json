@@ -1,19 +1,4 @@
 {
-  "9779": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-2",
-    "purpose": "verify-trip-profitability-single-load-no-double-count"
-  },
-  "9776": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-quickcreate-workorder-title-cased"
-  },
-  "9774": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-underscore-comboboxes-humanized"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4353,6 +4338,26 @@
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
     "purpose": "verify-driver-create-name-address-title-cased"
+  },
+  "9774": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-underscore-comboboxes-humanized"
+  },
+  "9776": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-quickcreate-workorder-title-cased"
+  },
+  "9778": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-legal-matter-enum-comboboxes-humanized"
+  },
+  "9779": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-trip-profitability-single-load-no-double-count"
   },
   "_band": {
     "cc-1": "n%4===1",
