@@ -14,6 +14,10 @@ export type EnqueueEmailInput = {
   queuedByUserId?: string | null;
 };
 
+type EmailQueueClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
 /** Backoff after a failed attempt: 1 minute × 2^(n-1) where n is the new retry_count (capped). */
 export function computeNextRetryAt(from: Date, retryCountAfterIncrement: number): Date {
   const exp = Math.max(0, retryCountAfterIncrement - 1);
@@ -22,20 +26,22 @@ export function computeNextRetryAt(from: Date, retryCountAfterIncrement: number)
   return new Date(from.getTime() + factor * 60_000);
 }
 
-export async function enqueueEmail(input: EnqueueEmailInput): Promise<{ queueId: string }> {
+export async function enqueueEmailWithClient(
+  client: EmailQueueClient,
+  input: EnqueueEmailInput
+): Promise<{ queueId: string }> {
   assertAllowedTemplateKey(input.templateKey);
   const to = input.toAddresses.map((v) => String(v).trim()).filter(Boolean);
   if (to.length === 0) {
     throw new Error("enqueue_email_missing_recipients");
   }
 
-  return withLuciaBypass(async (client) => {
-    const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('email.email_queue') IS NOT NULL AS ok`);
-    if (!reg.rows[0]?.ok) {
-      throw new Error("email_queue_schema_unavailable");
-    }
+  const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('email.email_queue') IS NOT NULL AS ok`);
+  if (!reg.rows[0]?.ok) {
+    throw new Error("email_queue_schema_unavailable");
+  }
 
-    const insertRes = await client.query<{ id: string }>(
+  const insertRes = await client.query<{ id: string }>(
       `
         INSERT INTO email.email_queue (
           operating_company_id,
@@ -64,9 +70,12 @@ export async function enqueueEmail(input: EnqueueEmailInput): Promise<{ queueId:
         input.queuedByUserId ?? null,
       ]
     );
-    const queueId = String(insertRes.rows[0]?.id ?? "");
-    if (!queueId) throw new Error("enqueue_email_insert_failed");
+  const queueId = String(insertRes.rows[0]?.id ?? "");
+  if (!queueId) throw new Error("enqueue_email_insert_failed");
 
-    return { queueId };
-  });
+  return { queueId };
+}
+
+export async function enqueueEmail(input: EnqueueEmailInput): Promise<{ queueId: string }> {
+  return withLuciaBypass((client) => enqueueEmailWithClient(client, input));
 }

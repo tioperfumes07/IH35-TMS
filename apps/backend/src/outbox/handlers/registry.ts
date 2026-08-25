@@ -18,6 +18,7 @@ import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
 import { DispatchOverrideNoticeHandler } from "./dispatch-override-notice.handler.js";
 import { DispatchDistributionFailureHandler } from "./dispatch-distribution-failure.handler.js";
 import { operationalNoticeHandlers } from "./operational-notice.handler.js";
+import { DriverInviteEmailHandler } from "./driver-invite-email.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -108,6 +109,7 @@ export function buildOutboxHandlerRegistry() {
     new GeofenceBreachDetectedHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
+    new DriverInviteEmailHandler(),
     // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),
