@@ -56,6 +56,14 @@ const CHECKS = [
       /setSpawnedWorkOrders/.test(s) &&
       /kind="work_order"/.test(s),
   },
+  {
+    id: "claim-forward-fk",
+    file: ROUTES,
+    describe: "spawned AC work order must persist the accident insurance_claim_id for scenario.accident",
+    test: (s) =>
+      /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?insurance_claim_id/.test(s) &&
+      /accident\.insurance_claim_id \?\? null/.test(s),
+  },
 ];
 
 export function run() {
@@ -97,6 +105,20 @@ function selftest() {
   if (!after.ok) {
     console.error(`SELFTEST FAIL: restore left repository red.\n${after.message}`);
     process.exit(1);
+  }
+  const noClaimFk = original
+    .replace(/\n\s*insurance_claim_id,/, "")
+    .replace(/\n\s*accident\.insurance_claim_id \?\? null,/, "");
+  try {
+    writeFileSync(ROUTES, noClaimFk, "utf8");
+    const caught = run();
+    if (caught.ok || !/claim-forward-fk/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: claim-forward-fk plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: claim-forward-fk plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
   }
   console.log("SELFTEST PASS: planted defect caught and repository restored green.");
 }
