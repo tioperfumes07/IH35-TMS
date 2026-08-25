@@ -337,11 +337,31 @@ export async function computeTripProfitabilityReport(
       t.sb_load_id,
       t.sb_load_number,
       t.trip_closed_at::text,
-      COALESCE(r_nb.rev, 0) + COALESCE(r_sb.rev, 0) AS revenue_cents,
-      COALESCE(p_nb.pay, 0) + COALESCE(p_sb.pay, 0) AS driver_pay_cents,
-      COALESCE(f_nb.fuel, 0) + COALESCE(f_sb.fuel, 0) AS fuel_cents,
-      COALESCE(m_nb.maint, 0) + COALESCE(m_sb.maint, 0) AS maintenance_cents,
-      COALESCE(fa_nb.fee, 0) + COALESCE(fa_sb.fee, 0) AS factoring_fee_cents
+      -- DISPATCH-F-TRIP-PROFITABILITY-SINGLE-LOAD-DOUBLE-COUNT: a "trip" that bookends only ONE
+      -- real load (no true NB+SB round trip -- s.first_load_id and s.last_load_id both point at
+      -- the same load) still joined revenue/pay/fuel/maint/factoring TWICE, once via the _nb alias
+      -- and once via the _sb alias, and summed both -- silently doubling every dollar figure for
+      -- every single-load trip. Live-reproduced and Neon-confirmed on 3 real trips before fixing:
+      -- L-20260802-0258 (rate $1.00, shown as Revenue $2.00), L-20260806-0008 (rate $1,875.50,
+      -- shown as $3,751.00), L-20260824-0007 (rate $1,200.00, shown as $2,400.00) -- all exactly
+      -- 2x. Driver pay was doubled the identical way (Neon: driver_bills summed to $1,105.00 for
+      -- L-20260802-0258, report showed $2,210.00). Only add the _sb side when it is a genuinely
+      -- DIFFERENT load from _nb.
+      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
+           THEN COALESCE(r_nb.rev, 0) + COALESCE(r_sb.rev, 0)
+           ELSE COALESCE(r_nb.rev, 0) END AS revenue_cents,
+      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
+           THEN COALESCE(p_nb.pay, 0) + COALESCE(p_sb.pay, 0)
+           ELSE COALESCE(p_nb.pay, 0) END AS driver_pay_cents,
+      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
+           THEN COALESCE(f_nb.fuel, 0) + COALESCE(f_sb.fuel, 0)
+           ELSE COALESCE(f_nb.fuel, 0) END AS fuel_cents,
+      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
+           THEN COALESCE(m_nb.maint, 0) + COALESCE(m_sb.maint, 0)
+           ELSE COALESCE(m_nb.maint, 0) END AS maintenance_cents,
+      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
+           THEN COALESCE(fa_nb.fee, 0) + COALESCE(fa_sb.fee, 0)
+           ELSE COALESCE(fa_nb.fee, 0) END AS factoring_fee_cents
     FROM trips t
     LEFT JOIN revenue r_nb ON r_nb.load_id = t.nb_load_id
     LEFT JOIN revenue r_sb ON r_sb.load_id = t.sb_load_id
