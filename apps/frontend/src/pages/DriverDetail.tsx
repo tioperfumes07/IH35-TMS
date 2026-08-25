@@ -1005,6 +1005,15 @@ export function DriverDetailPage() {
               disabled={!editMode || usStatesQuery.isError}
               placeholder="Select US state"
             />
+            {usStatesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load US states"
+                status={usStatesQuery.error instanceof ApiError ? usStatesQuery.error.status : 0}
+                message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined}
+                onRetry={() => void usStatesQuery.refetch()}
+                className="py-3"
+              />
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-1">
@@ -1347,6 +1356,15 @@ export function DriverDetailPage() {
                 disabled={!editMode || mexicoStatesQuery.isError}
                 placeholder="Select Mexico state"
               />
+              {mexicoStatesQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load Mexico states"
+                  status={mexicoStatesQuery.error instanceof ApiError ? mexicoStatesQuery.error.status : 0}
+                  message={mexicoStatesQuery.error instanceof Error ? mexicoStatesQuery.error.message : undefined}
+                  onRetry={() => void mexicoStatesQuery.refetch()}
+                  className="py-3"
+                />
+              ) : null}
             </div>
           </div>
         </div>
