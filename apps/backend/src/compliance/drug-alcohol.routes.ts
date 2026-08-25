@@ -5,7 +5,6 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   listActivePoolMembers,
-  notifyRandomSelections,
   runQuarterlyRandomDraw,
   syncPoolFromCdlDrivers,
 } from "./drug-alcohol-pool.js";
@@ -166,7 +165,6 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
       return draw;
     });
 
-    await notifyRandomSelections(parsed.data.operating_company_id, result.selections);
     return reply.send(result);
   });
 

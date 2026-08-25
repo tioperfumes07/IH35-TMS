@@ -21,6 +21,59 @@ import process from "node:process";
 const repoRoot = process.cwd();
 const failures = [];
 
+const drawRel = "apps/backend/src/compliance/drug-alcohol-pool.ts";
+const routeRel = "apps/backend/src/compliance/drug-alcohol.routes.ts";
+const noticesRel = "apps/backend/src/outbox/handlers/operational-notice.routes.ts";
+
+export function notificationProblems({ draw = "", route = "", notices = "" }) {
+  const issues = [];
+  const eventType = "compliance.drug_alcohol.random_selections_drawn";
+  if (!draw.includes('enqueueOutboxEvent(\n    client,\n    "compliance.drug_alcohol.random_selections_drawn"')) {
+    issues.push("random draw must enqueue its alert on the scoped transaction client");
+  }
+  if (draw.includes("notifyRandomSelections") || route.includes("notifyRandomSelections")) {
+    issues.push("post-transaction best-effort random-selection notification must not exist");
+  }
+  if (/drug_alcohol_random_selections[\s\S]{0,180}?notified_at[\s\S]{0,120}?now\(\)/.test(draw)) {
+    issues.push("selection.notified_at must not be stamped before a selected driver is actually notified");
+  }
+  if (!notices.includes(`eventType: "${eventType}"`)) {
+    issues.push("random-draw event needs a registered operational-notice consumer");
+  }
+  if (!notices.includes('audience: { kind: "roles", roles: ["Owner", "Administrator", "Safety", "Manager"] }')) {
+    issues.push("random-draw notice must reach the compliance operations audience");
+  }
+  if (!notices.includes('actionLink: () => "/safety/drug-alcohol"')) {
+    issues.push("random-draw notice must drill into the mounted Drug & Alcohol surface");
+  }
+  return issues;
+}
+
+const notificationSources = {
+  draw: fs.readFileSync(path.join(repoRoot, drawRel), "utf8"),
+  route: fs.readFileSync(path.join(repoRoot, routeRel), "utf8"),
+  notices: fs.readFileSync(path.join(repoRoot, noticesRel), "utf8"),
+};
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["transactional enqueue", { ...notificationSources, draw: notificationSources.draw.replace('"compliance.drug_alcohol.random_selections_drawn"', '"compliance.drug_alcohol.random_draw_REMOVED"') }],
+    ["post-transaction notifier", { ...notificationSources, route: `${notificationSources.route}\nnotifyRandomSelections(company, selections);` }],
+    ["premature notified timestamp", { ...notificationSources, draw: `${notificationSources.draw}\n/* drug_alcohol_random_selections notified_at now() */` }],
+    ["registered consumer", { ...notificationSources, notices: notificationSources.notices.replace('eventType: "compliance.drug_alcohol.random_selections_drawn"', 'eventType: "compliance.drug_alcohol.random_draw_REMOVED"') }],
+    ["mounted drill", { ...notificationSources, notices: notificationSources.notices.replace('actionLink: () => "/safety/drug-alcohol"', 'actionLink: () => "/missing"') }],
+  ];
+  const missed = mutations.filter(([, fixture]) => notificationProblems(fixture).length === 0);
+  if (missed.length) {
+    console.error(`[verify-da-pool-compliance] SELFTEST FAIL: ${missed.map(([name]) => name).join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`[verify-da-pool-compliance] selftest PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  process.exit(0);
+}
+
+failures.push(...notificationProblems(notificationSources));
+
 // ── 1. Draw-rate defaults ──────────────────────────────────────────────────────
 const serviceRel = "apps/backend/src/safety/drug-alcohol/random-pool.service.ts";
 const servicePath = path.join(repoRoot, serviceRel);
@@ -76,4 +129,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("[verify-da-pool-compliance] OK (draw rates >= 12.5/2.5, bulk enrollment present)");
+console.log("[verify-da-pool-compliance] OK (draw rates, enrollment, and durable handled draw alerts)");
