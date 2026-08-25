@@ -16,6 +16,7 @@ import {
 } from "../../../api/accounting";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
+import { hasInAppHistory } from "../../../lib/smart-back";
 
 function money(amount: string | number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(amount));
@@ -176,8 +177,20 @@ export function RecurringBillList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-gray-500">
+        {/*
+          UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: this was hardcoded to /accounting/bills
+          regardless of where the user actually came from -- missed by the earlier waves of this
+          audit because its aria-label was "Back to Bills", not the exact "Back" string those
+          waves' detection matched on. Same smart-back fix as the rest of the app.
+        */}
         <button
-          onClick={() => navigate("/accounting/bills")}
+          onClick={() => {
+            if (hasInAppHistory(window.history.state)) {
+              navigate(-1);
+              return;
+            }
+            navigate("/accounting/bills");
+          }}
           className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           aria-label="Back to Bills"
         >
