@@ -147,7 +147,19 @@ export function VendorsPage() {
   });
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
-  const [createOpen, setCreateOpen] = useState(false);
+  const createOpen = searchParams.get("create") === "1";
+  const openCreate = () => {
+    if (searchParams.get("create") === "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.set("create", "1");
+    setSearchParams(next, { replace: true });
+  };
+  const closeCreate = () => {
+    if (searchParams.get("create") !== "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  };
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode, viewModeSaveError, retryViewModeSave } = useViewModePref("vendors", "master-detail");
 
@@ -477,7 +489,7 @@ export function VendorsPage() {
                 </div>
               ) : null}
             </CollapsedListFilters>
-            <ActionButton onClick={() => setCreateOpen(true)}>
+            <ActionButton data-testid="vendors-create-open" onClick={openCreate}>
               + Create Vendor
             </ActionButton>
           </div>
@@ -715,7 +727,7 @@ export function VendorsPage() {
         </main>
       </div>
       )}
-      <VendorCreateModal open={createOpen} onClose={() => setCreateOpen(false)} operatingCompanyId={companyId} />
+      <VendorCreateModal open={createOpen} onClose={closeCreate} operatingCompanyId={companyId} />
     </div>
   );
 }
