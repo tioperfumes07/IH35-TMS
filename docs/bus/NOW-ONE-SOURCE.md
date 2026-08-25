@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**19:17 CT RULING — Kanban `@dnd-kit` drag failure in a seat tool is not a HOLD.** Advance TEST load `L-20260824-0007` via `PATCH /api/v1/dispatch/loads/:id/transition?operating_company_id=` (same LV-TXN-004 path as the board). Forbidden: mdata `/status` post-dispatch, SQL status writes. **CC-1:** still `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…`. Live `1bfaaf2`. Never `trigger_deploy`. U14 never restamp.
+
 **19:13 CT GO — live `1bfaaf2`.** FK live. No second API deploy (no new API product commits). **CC-1:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` on `57cabbab-…` — reuse poster. **CC-2:** next unique; print battery done. **CC-3:** retry WO→Bill; prove `unit_id` after #15649 SPA. Never `trigger_deploy`. U14 never restamp.
 
 **19:02 CT GO — deploy `dep-da6dmmvavr4c73et8hvg` IN FLIGHT (tip `1bfaaf26` = WO-bill FK #15642).** Live until then = `852b8e8`. **CC-1:** BILL-2026-00015 + JE already exist — hops 6–9, do not remake. **CC-2:** bind letters to that $185 bill now. **CC-3:** after SHA, retry WO→Bill; parts_receive. Cursor: `WO-CREATE-BILL-MODAL-DROPS-UNIT-PREFILL`. Never `trigger_deploy`. U14 never restamp.
