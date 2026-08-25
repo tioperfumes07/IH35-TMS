@@ -554,7 +554,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </span>
         <span className="ml-auto inline-flex items-center gap-1">
           <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
-          <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => { setOpeningError(null); openingMutation.mutate(); }}>Save</button>
+          <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => { setOpeningError(null); openingMutation.mutate(openingDraft ?? 0); }}>Save</button>
           {openingError ? <span className="text-xs text-red-600" data-testid="cash-flow-opening-error" role="alert">{openingError}</span> : null}
         </span>
       </div>
