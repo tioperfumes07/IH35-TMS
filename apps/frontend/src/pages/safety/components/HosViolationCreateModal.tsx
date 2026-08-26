@@ -56,6 +56,13 @@ function emptyHosViolationForm() {
   };
 }
 
+type HosViolationSubmission = {
+  companyId: string;
+  generation: number;
+  draft: ReturnType<typeof emptyHosViolationForm>;
+  violationType: { id: string; severityWeight: number | null };
+};
+
 export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyHosViolationForm);
@@ -123,24 +130,24 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   }, [form.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: (_submissionGeneration: number) =>
-      createHosViolation(operatingCompanyId, {
-        driver_id: form.driver_id.trim(),
-        violation_type: form.violation_type.trim(),
-        occurred_at: form.occurred_at.includes("T")
-          ? new Date(form.occurred_at).toISOString()
-          : form.occurred_at,
-        duration_minutes: form.duration_minutes.trim()
-          ? Number(form.duration_minutes)
+    mutationFn: (input: HosViolationSubmission) =>
+      createHosViolation(input.companyId, {
+        driver_id: input.draft.driver_id.trim(),
+        violation_type: input.draft.violation_type.trim(),
+        occurred_at: input.draft.occurred_at.includes("T")
+          ? new Date(input.draft.occurred_at).toISOString()
+          : input.draft.occurred_at,
+        duration_minutes: input.draft.duration_minutes.trim()
+          ? Number(input.draft.duration_minutes)
           : null,
-        source: form.source,
-        notes: form.notes.trim() || null,
-        csa_points: selectedViolationType?.severity_weight ?? null,
-        dot_violation_type_id: selectedViolationType?.id ?? null,
-        related_load_id: form.related_load_id.trim() || null,
+        source: input.draft.source,
+        notes: input.draft.notes.trim() || null,
+        csa_points: input.violationType.severityWeight,
+        dot_violation_type_id: input.violationType.id,
+        related_load_id: input.draft.related_load_id.trim() || null,
       }),
-    onSuccess: (_created, submissionGeneration) => {
-      if (lifecycleGenerationRef.current !== submissionGeneration) return;
+    onSuccess: (_created, input) => {
+      if (lifecycleGenerationRef.current !== input.generation) return;
       onCreated();
       handleClose();
     },
@@ -171,8 +178,16 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          if (!canSubmit) return;
-          mutation.mutate(lifecycleGenerationRef.current);
+          if (!canSubmit || !selectedViolationType?.id) return;
+          mutation.mutate({
+            companyId: operatingCompanyId,
+            generation: lifecycleGenerationRef.current,
+            draft: { ...form },
+            violationType: {
+              id: selectedViolationType.id,
+              severityWeight: selectedViolationType.severity_weight ?? null,
+            },
+          });
         }}
       >
         <div className="grid gap-3 md:grid-cols-2">
@@ -292,7 +307,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             />
           </div>
         </div>
-        {mutation.isError ? (
+        {mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current ? (
           <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
             {mutation.error instanceof Error ? mutation.error.message : "Create failed. Please try again."}
           </div>
