@@ -46,6 +46,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   function patchSearchParam(next: { driverId: string }) {
@@ -95,9 +96,11 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
       createSafetyTrainingRecord(input.companyId, input.payload),
     onSuccess: (_result, input) => {
       if (input.generation !== lifecycleGenerationRef.current) return;
+      lifecycleGenerationRef.current += 1;
       setCreateOpen(false);
       setDriverId("");
       setTrainingName("");
+      setCompletedAt(companyToday());
       setExpiryDate("");
       setNotes("");
       void queryClient.invalidateQueries({ queryKey: ["safety", "training-records", input.companyId] });
@@ -106,6 +109,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   });
 
   const closeCreate = () => {
+    if (createMutation.isPending) return;
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
     setCreateOpen(false);
@@ -115,6 +119,11 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
     setExpiryDate("");
     setNotes("");
   };
+  const isCreateDirty = Boolean(driverId)
+    || Boolean(trainingName.trim())
+    || completedAt !== companyToday()
+    || Boolean(expiryDate)
+    || Boolean(notes.trim());
 
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
@@ -238,7 +247,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
         <form
           className="space-y-3"
           data-testid="training-record-create-modal"
@@ -316,7 +325,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
+            <Button type="button" variant="secondary" size="sm" onClick={attemptClose} disabled={createMutation.isPending}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="training-record-submit">

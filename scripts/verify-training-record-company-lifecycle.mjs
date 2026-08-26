@@ -8,10 +8,15 @@ const FILE = "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx";
 function inspect(source) {
   const errors = [];
   const closeCreateBody = source.match(/const closeCreate = \(\) => \{([\s\S]*?)\n  \};/)?.[1] ?? "";
+  const successBody = source.match(/onSuccess: \(_result, input\) => \{([\s\S]*?)\n    \},/)?.[1] ?? "";
   if (!/useEffect\(\(\) => \{[\s\S]*createMutation\.reset\(\)[\s\S]*setCreateOpen\(false\)[\s\S]*setDriverId\(""\)[\s\S]*setTrainingName\(""\)[\s\S]*setCompletedAt\(companyToday\(\)\)[\s\S]*setExpiryDate\(""\)[\s\S]*setNotes\(""\)[\s\S]*\}, \[operatingCompanyId\]\)/.test(source)) errors.push("company transition does not reset complete training creator lifecycle");
   if (!/createSafetyTrainingRecord\(input\.companyId, input\.payload\)/.test(source)) errors.push("create does not snapshot company and payload");
   if (!source.includes("input.generation !== lifecycleGenerationRef.current")) errors.push("stale success can mutate new company UI");
+  if (!successBody.includes("lifecycleGenerationRef.current += 1") || !successBody.includes("setCompletedAt(companyToday())")) errors.push("current success does not retire generation and reset completion date");
   if (!["lifecycleGenerationRef.current += 1", "createMutation.reset()", 'setCreateOpen(false)', 'setDriverId("")', 'setTrainingName("")', "setCompletedAt(companyToday())", 'setExpiryDate("")', 'setNotes("")'].every((token) => closeCreateBody.includes(token)) || !source.includes('<Modal variant="drawer" open={createOpen} onClose={closeCreate}')) errors.push("drawer dismiss does not retire the generation and reset the complete draft");
+  if (!closeCreateBody.includes("if (createMutation.isPending) return")) errors.push("pending create can be dismissed");
+  if (!/const isCreateDirty =[\s\S]*Boolean\(driverId\)[\s\S]*trainingName\.trim\(\)[\s\S]*completedAt !== companyToday\(\)[\s\S]*Boolean\(expiryDate\)[\s\S]*notes\.trim\(\)/.test(source)) errors.push("dirty predicate does not cover every training field");
+  if (!/<Modal variant="drawer" open=\{createOpen\} onClose=\{closeCreate\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isCreateDirty\}[^>]*onRegisterAttemptClose=\{setAttemptClose\}/.test(source) || !/onClick=\{attemptClose\} disabled=\{createMutation\.isPending\}/.test(source)) errors.push("drawer dismiss paths do not share dirty confirmation and pending lock");
   if (!source.includes("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current")) errors.push("stale rejection can paint a reopened training drawer");
   if (!source.includes('["safety", "training-records", input.companyId]') || !source.includes('["safety", "training-completions", input.companyId]')) errors.push("success refreshes are not pinned to submitting company");
   if (!/payload: \{[\s\S]*driver_id: driverId[\s\S]*training_name: trainingName\.trim\(\)[\s\S]*completed_at:[\s\S]*expiry_date: expiryDate \|\| undefined[\s\S]*notes: notes\.trim\(\) \|\| undefined/.test(source)) errors.push("submit does not carry every visible training field");
@@ -28,13 +33,18 @@ if (process.argv.includes("--selftest")) {
     source.replace("notes: notes.trim() || undefined", "notes: undefined"),
     source.replace("onClose={closeCreate}", "onClose={() => setCreateOpen(false)}"),
     source.replace("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current", "createMutation.isError"),
+    source.replace("if (createMutation.isPending) return;", "void createMutation.isPending;"),
+    source.replace("confirmDiscardOnClose", ""),
+    source.replace("onClick={attemptClose} disabled={createMutation.isPending}", "onClick={closeCreate}"),
+    source.replace("|| Boolean(expiryDate)", ""),
+    source.replace("setCompletedAt(companyToday());\n      setExpiryDate", "setExpiryDate"),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/7 mutation(s) survived`);
+    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/12 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-training-record-company-lifecycle selftest PASS — 7/7 planted defects rejected");
+  console.log("verify-training-record-company-lifecycle selftest PASS — 12/12 planted defects rejected");
   process.exit(0);
 }
 const errors = inspect(fs.readFileSync(FILE, "utf8"));
