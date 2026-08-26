@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCompanyViolation } from "../../../api/safety";
@@ -38,6 +38,18 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   const [typeSearch, setTypeSearch] = useState("");
   const queryClient = useQueryClient();
 
+  const resetDraft = useCallback(() => {
+    setViolationType("DOT_inspection");
+    setSeverity("minor");
+    setReportedDate(companyToday());
+    setDescription("");
+    setCorrectivePlan("");
+    setViolationTypeUuid(null);
+    setRelatedDriverId(null);
+    setRelatedUnitId(null);
+    setTypeSearch("");
+  }, []);
+
   const typesQuery = useQuery({
     queryKey: ["catalogs", "company-violation-types", operatingCompanyId, typeSearch],
     queryFn: () =>
@@ -74,14 +86,28 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
     },
     onSuccess: () => {
       onCreated();
+      resetDraft();
       onClose();
     },
   });
 
+  const resetMutation = mutation.reset;
+  useEffect(() => {
+    if (!open) return;
+    resetDraft();
+    resetMutation();
+  }, [open, operatingCompanyId, resetDraft, resetMutation]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    resetMutation();
+    onClose();
+  }, [onClose, resetDraft, resetMutation]);
+
   const canSubmit = Boolean(violationTypeUuid) && description.trim().length > 0;
 
   return (
-    <Modal variant="drawer" open={open} onClose={onClose} title="Create Company Violation">
+    <Modal variant="drawer" open={open} onClose={handleClose} title="Create Company Violation">
       <form
         className="space-y-3"
         data-testid="company-violation-create-modal"
@@ -218,7 +244,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
           </p>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" loading={mutation.isPending} disabled={!canSubmit}>
