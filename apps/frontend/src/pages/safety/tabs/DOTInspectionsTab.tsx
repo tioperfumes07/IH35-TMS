@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -23,10 +23,25 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 
 const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "" };
 
+const emptyInspectionForm = (trailerId = "") => ({
+  inspection_date: companyToday(),
+  driver_id: "",
+  unit_id: "",
+  trailer_id: trailerId,
+  inspector_name: "",
+  inspection_level: 1,
+  outcome: "PASS" as "PASS" | "WARNING" | "OOS",
+  location: "",
+  notes: "",
+  csa_points: 0,
+});
+
+/** @matrix-built modules=safety cols=driver,unit,trailer,connectivity,reverse_link */
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5189 — list EntityPicker filters must write URL params on Apply (not silent draft).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
@@ -64,18 +79,7 @@ export function DOTInspectionsTab() {
   });
   const draft = staged.draft;
 
-  const [form, setForm] = useState({
-    inspection_date: companyToday(),
-    driver_id: "",
-    unit_id: "",
-    trailer_id: "",
-    inspector_name: "",
-    inspection_level: 1,
-    outcome: "PASS" as "PASS" | "WARNING" | "OOS",
-    location: "",
-    notes: "",
-    csa_points: 0,
-  });
+  const [form, setForm] = useState(() => emptyInspectionForm());
 
   useEffect(() => {
     setApplied((prev) => ({
@@ -105,27 +109,21 @@ export function DOTInspectionsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      if (form.outcome === "OOS") {
+    mutationFn: async (input: {
+      companyId: string;
+      generation: number;
+      payload: Parameters<typeof createDotInspection>[1];
+    }) => {
+      if (input.payload.outcome === "OOS") {
         const confirmed = window.confirm("An OOS inspection will auto-spawn a maintenance WO. Confirm?");
         if (!confirmed) return null;
       }
-      return createDotInspection(companyId, {
-        inspection_date: form.inspection_date,
-        driver_id: form.driver_id || undefined,
-        unit_id: form.unit_id || undefined,
-        trailer_id: form.trailer_id || undefined,
-        inspector_name: form.inspector_name,
-        inspection_level: form.inspection_level,
-        outcome: form.outcome,
-        location: form.location || undefined,
-        notes: form.notes || undefined,
-        csa_points_vehicle_maintenance: form.csa_points,
-      });
+      return createDotInspection(input.companyId, input.payload);
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0, trailer_id: trailerIdFromUrl || "" }));
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", input.companyId] });
     },
   });
 
@@ -133,16 +131,18 @@ export function DOTInspectionsTab() {
   // backend stamp a placeholder into the audit trail.
   const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
   const voidMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => voidDotInspection(companyId, id, reason),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
+    mutationFn: (input: { id: string; reason: string; companyId: string; generation: number }) => voidDotInspection(input.companyId, input.id, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", input.companyId] });
     },
   });
 
   const uploadMutation = useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => uploadDotInspectionPdf(companyId, id, file),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
+    mutationFn: (input: { id: string; file: File; companyId: string; generation: number }) => uploadDotInspectionPdf(input.companyId, input.id, input.file),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", input.companyId] });
     },
   });
 
@@ -219,7 +219,7 @@ export function DOTInspectionsTab() {
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                uploadMutation.mutate({ id: String(row.id), file });
+                uploadMutation.mutate({ id: String(row.id), file, companyId, generation: companyGenerationRef.current });
               }}
             />
           </label>
@@ -244,12 +244,23 @@ export function DOTInspectionsTab() {
   });
 
   const followUpMutation = useMutation({
-    mutationFn: (payload: { id: string; state: "reviewed" | "citation" | "clean" }) =>
-      followUpDotInspectionEvent(payload.id, companyId, payload.state),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspection-events", companyId] });
+    mutationFn: (input: { id: string; state: "reviewed" | "citation" | "clean"; companyId: string; generation: number }) =>
+      followUpDotInspectionEvent(input.id, input.companyId, input.state),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspection-events", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    voidMutation.reset();
+    uploadMutation.reset();
+    followUpMutation.reset();
+    setVoidTargetId(null);
+    setForm(emptyInspectionForm(trailerIdFromUrl));
+  }, [companyId]);
 
   // SAF-F14 / S-A10: driver uses DriverPickerWithCreate; unit uses EntityPicker kind="unit" with
   // inline "+ Create unit" via EntityPicker allowCreate (server search — no silent roster page cap).
@@ -303,16 +314,31 @@ export function DOTInspectionsTab() {
         </SelectCombobox>
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
-        <button type="button" className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.inspector_name || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.inspector_name || createMutation.isPending} onClick={() => createMutation.mutate({
+          companyId,
+          generation: companyGenerationRef.current,
+          payload: {
+            inspection_date: form.inspection_date,
+            driver_id: form.driver_id || undefined,
+            unit_id: form.unit_id || undefined,
+            trailer_id: form.trailer_id || undefined,
+            inspector_name: form.inspector_name,
+            inspection_level: form.inspection_level,
+            outcome: form.outcome,
+            location: form.location || undefined,
+            notes: form.notes || undefined,
+            csa_points_vehicle_maintenance: form.csa_points,
+          },
+        })}>
           + Create
         </button>
       </div>
-      {createMutation.isError ? (
+      {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? (
         <ListErrorState
           title="Couldn't create DOT inspection"
           status={0}
           message={(createMutation.error as Error)?.message}
-          onRetry={() => createMutation.mutate()}
+          onRetry={() => createMutation.variables && createMutation.mutate(createMutation.variables)}
         />
       ) : null}
 
@@ -427,28 +453,28 @@ export function DOTInspectionsTab() {
                   <button
                     type="button"
                     className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white"
-                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed", companyId, generation: companyGenerationRef.current })}
                   >
                     Mark Reviewed
                   </button>
                   <button
                     type="button"
                     className="rounded-sm bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
-                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation" })}
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation", companyId, generation: companyGenerationRef.current })}
                   >
                     Mark Citation
                   </button>
                   <button
                     type="button"
                     className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
-                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean", companyId, generation: companyGenerationRef.current })}
                   >
                     Mark Clean
                   </button>
                 </div>
               </div>
             ))}
-            {followUpMutation.isError ? (
+            {followUpMutation.isError && followUpMutation.variables?.generation === companyGenerationRef.current ? (
               <p className="text-xs text-red-700" data-testid="dot-inspection-followup-error">
                 {userFacingApiError(followUpMutation.error, "Could not update the DOT follow-up.")}
               </p>
@@ -456,7 +482,7 @@ export function DOTInspectionsTab() {
           </div>
         )}
       </div>
-      {uploadMutation.isError ? (
+      {uploadMutation.isError && uploadMutation.variables?.generation === companyGenerationRef.current ? (
         <p className="text-xs text-red-700" data-testid="dot-inspection-upload-error">
           {userFacingApiError(uploadMutation.error, "Could not upload the DOT inspection PDF.")}
         </p>
@@ -469,7 +495,7 @@ export function DOTInspectionsTab() {
         onClose={() => setVoidTargetId(null)}
         onSubmit={async (reason) => {
           if (!voidTargetId) return;
-          await voidMutation.mutateAsync({ id: voidTargetId, reason });
+          await voidMutation.mutateAsync({ id: voidTargetId, reason, companyId, generation: companyGenerationRef.current });
           setVoidTargetId(null);
         }}
       />
