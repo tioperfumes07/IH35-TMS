@@ -66,6 +66,16 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  const closeCreate = () => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setCreateOpen(false);
+    setTopic("");
+    setMeetingDate(companyToday());
+    setRequiredAttendees([]);
+    setAttendeePick(null);
+  };
+
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
@@ -200,7 +210,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                     <div className="text-xs text-slate-500">No required attendees on this meeting.</div>
                   ) : null}
                 </div>
-                {attendanceMutation.isError ? (
+                {attendanceMutation.isError && attendanceMutation.variables?.generation === lifecycleGenerationRef.current ? (
                   <p className="text-xs text-red-700" data-testid="safety-meeting-attendance-error">
                     {userFacingApiError(attendanceMutation.error, "Could not update meeting attendance.")}
                   </p>
@@ -211,7 +221,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         </div>
       ) : null}
 
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Meeting">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Meeting">
         <form
           className="space-y-3"
           data-testid="safety-meeting-create-modal"
@@ -291,13 +301,13 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
               </ul>
             ) : null}
           </div>
-          {createMutation.isError ? (
+          {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
             <p className="text-xs text-red-700" data-testid="safety-meeting-create-error">
               {userFacingApiError(createMutation.error, "Could not create the safety meeting.")}
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
+            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="safety-meeting-submit">
