@@ -54,11 +54,13 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const actionGenerationRef = useRef(0);
+  const attemptCloseRef = useRef<() => void>(() => undefined);
   const initialDraft = useMemo(
     () => ({ ...EMPTY, currently_leased_to_company_id: operatingCompanyId }),
     [operatingCompanyId]
   );
   const [draft, setDraft] = useState(initialDraft);
+  const isDirty = (Object.keys(initialDraft) as Array<keyof UnitDraft>).some((key) => draft[key] !== initialDraft[key]);
 
   useEffect(() => {
     actionGenerationRef.current += 1;
@@ -130,10 +132,15 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
       open={open}
       title="Create Unit"
       onClose={resetAndClose}
+      confirmDiscardOnClose
+      isDirty={isDirty}
+      onRegisterAttemptClose={(attemptClose) => {
+        attemptCloseRef.current = attemptClose;
+      }}
       stackAboveModal
       footer={
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={resetAndClose}>
+          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()}>
             Cancel
           </Button>
           <Button form="fleet-create-unit-form" type="submit" data-testid="fleet-create-unit-submit" loading={createMutation.isPending} disabled={!canSubmit}>
