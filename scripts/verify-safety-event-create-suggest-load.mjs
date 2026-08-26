@@ -14,7 +14,7 @@ function audit(body) {
   if (!/transaction_date:\s*draft\.occurred_at\.slice\(0, 10\)/.test(request)) failures.push("resolver must receive event date");
   if (!/if \(draft\.related_load_id \|\| suggestionPinned\) return/.test(body)) failures.push("operator-selected load must win");
   if (!/related_load_id:\s*suggested\.load_id/.test(body)) failures.push("suggested load must reach draft state");
-  if (!/related_load_id:\s*draft\.related_load_id\.trim\(\) \|\| undefined/.test(body)) failures.push("create payload must forward load FK");
+  if (!/related_load_id:\s*input\.draft\.related_load_id\.trim\(\) \|\| undefined/.test(body)) failures.push("create payload must forward snapshotted load FK");
   return failures;
 }
 
@@ -24,6 +24,7 @@ if (process.argv.includes("--selftest")) {
     ["unit_id: draft.subject_unit_id", "unit_id: undefined"],
     ["if (draft.related_load_id || suggestionPinned) return", "if (suggestionPinned) return"],
     ["related_load_id: suggested.load_id", "description: suggested.load_id"],
+    ["related_load_id: input.draft.related_load_id.trim() || undefined", "related_load_id: undefined"],
   ];
   for (const [from, to] of mutations) {
     const start = source.indexOf("suggestExpenseLoad({");
