@@ -2231,3 +2231,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50099 | customers · row_click | B | USMCA | FAIL | Clicking a customer row in the list does not open the customer detail master-detail on 86b25af; URL stays `/customers`. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50100 | dispatch · planning | B | USMCA | FAIL | `/dispatch/planning` silently redirects to `/home` on 86b25af; the planning board is not reachable. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50101 | dispatch · documents | B | USMCA | FAIL | `/dispatch/documents` silently redirects to `/home` on 86b25af; the documents surface is not reachable. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50102 | vendors · create | B | USMCA | FAIL | `/vendors?create=1` on 86b25af still renders the vendor list (51 rows) and does not open a vendor create drawer. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50103 | drivers · create | B | USMCA | FAIL | `/drivers?create=1` on 86b25af still renders the driver roster (25 rows) and does not open a driver create drawer. | OPEN | — | NO | 2026-08-26 | CASCADE |

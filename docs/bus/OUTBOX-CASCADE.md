@@ -1,4 +1,19 @@
 
+## GO-1405 continue — /vendors + /drivers on 86b25af | 2026-08-26
+
+CASCADE | ACK | GO-1405-CONTINUE | PORT=n | NOW=/vendors→/drivers | SHA=86b25af | GO
+
+Hard-walk on 86b25af:
+- /vendors: 51 vendors; row-click works (master-detail opens)
+- /vendors?create=1: still renders list, no create drawer
+- /vendors/bills, /vendors/payments: not wired (loading/FAQ)
+- /drivers: 25 drivers; row-click opens driver detail
+- /drivers?create=1: still renders roster, no create drawer
+- /driver-finance/settlements: renders real settlements (14 rows)
+- /drivers/permits: not wired (loading/FAQ)
+
+FINDING: VEND-DRIV-CREATE-86B25AF — vendor and driver create drawers still dead on 86b25af
+
 ## HARD WAKE — NOW=/customers → /dispatch on 86b25af | 2026-08-26
 
 CASCADE | ACK | HARD WAKE | PORT=n | NOW=/customers→/dispatch | SHA=86b25af | GO
