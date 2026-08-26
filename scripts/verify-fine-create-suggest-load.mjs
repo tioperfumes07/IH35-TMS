@@ -15,7 +15,7 @@ function audit(body) {
   }
   if (!/if \(relatedLoadId \|\| suggestionPinned\) return/.test(body)) failures.push("resolver must not overwrite an operator-selected load");
   if (!/setRelatedLoadId\(suggested\.load_id\)/.test(body)) failures.push("suggested load id must reach the controlled create payload state");
-  if (!/related_load_id:\s*relatedLoadId \|\| null/.test(body)) failures.push("createSafetyFine payload must still forward related_load_id");
+  if (!/related_load_id:\s*input\.relatedLoadId \|\| null/.test(body)) failures.push("createSafetyFine payload must forward the immutable submitted related_load_id");
   return failures;
 }
 
@@ -25,6 +25,7 @@ if (process.argv.includes("--selftest")) {
     ["unit_id: relatedUnitId", "unit_id: undefined"],
     ["if (relatedLoadId || suggestionPinned) return", "if (suggestionPinned) return"],
     ["setRelatedLoadId(suggested.load_id)", "void suggested.load_id"],
+    ["related_load_id: input.relatedLoadId || null", "related_load_id: null"],
   ];
   for (const [from, to] of mutations) {
     const requestStart = source.indexOf("suggestExpenseLoad({");
