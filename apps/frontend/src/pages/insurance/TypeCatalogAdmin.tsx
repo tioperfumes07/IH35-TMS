@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createInsuranceTypeCatalog,
@@ -37,6 +37,7 @@ export function TypeCatalogAdmin() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const actionGenerationRef = useRef(0);
 
   const [newCode, setNewCode] = useState<InsuranceCoverageType>("auto_liability");
   const [newName, setNewName] = useState("");
@@ -54,55 +55,68 @@ export function TypeCatalogAdmin() {
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: companyId, include_inactive: true }).then((result) => result.types),
   });
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", "admin", companyId] });
-    await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", "admin", submittedCompanyId] });
+    await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", submittedCompanyId] });
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createInsuranceTypeCatalog({
-        operating_company_id: companyId,
-        code: newCode,
-        name: newName.trim(),
-        description: newDescription.trim() || null,
-        sort_order: Number(newSortOrder || 0),
-        active: true,
-      }),
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createInsuranceTypeCatalog>[0] }) =>
+      createInsuranceTypeCatalog(input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Insurance type added", "success");
       setNewName("");
       setNewDescription("");
       setNewSortOrder("0");
-      await refresh();
+      await refresh(input.companyId);
     },
-    onError: () => pushToast("Failed to add insurance type", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to add insurance type", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { id: string; name: string; description: string; sort_order: number; active: boolean }) =>
-      updateInsuranceTypeCatalog(payload.id, companyId, {
-        name: payload.name,
-        description: payload.description || null,
-        sort_order: payload.sort_order,
-        active: payload.active,
+    mutationFn: (input: { companyId: string; generation: number; payload: { id: string; name: string; description: string; sort_order: number; active: boolean } }) =>
+      updateInsuranceTypeCatalog(input.payload.id, input.companyId, {
+        name: input.payload.name,
+        description: input.payload.description || null,
+        sort_order: input.payload.sort_order,
+        active: input.payload.active,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Insurance type updated", "success");
       setEditingId(null);
-      await refresh();
+      await refresh(input.companyId);
     },
-    onError: () => pushToast("Failed to update insurance type", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update insurance type", "error");
+    },
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: (id: string) => deactivateInsuranceTypeCatalog(id, companyId),
-    onSuccess: async () => {
+    mutationFn: (input: { id: string; companyId: string; generation: number }) => deactivateInsuranceTypeCatalog(input.id, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Insurance type deactivated", "success");
-      await refresh();
+      await refresh(input.companyId);
     },
-    onError: () => pushToast("Failed to deactivate insurance type", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to deactivate insurance type", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setEditingId(null);
+    setNewName("");
+    setNewDescription("");
+    setNewSortOrder("0");
+    createMutation.reset();
+    updateMutation.reset();
+    deactivateMutation.reset();
+  }, [companyId]);
 
   const orderedRows = useMemo(() => query.data ?? [], [query.data]);
 
@@ -198,11 +212,15 @@ export function TypeCatalogAdmin() {
                 onClick={(event) => {
                   event.stopPropagation();
                   updateMutation.mutate({
-                    id: row.id,
-                    name: editingName.trim(),
-                    description: editingDescription.trim(),
-                    sort_order: Number(editingSortOrder || 0),
-                    active: editingActive,
+                    companyId,
+                    generation: actionGenerationRef.current,
+                    payload: {
+                      id: row.id,
+                      name: editingName.trim(),
+                      description: editingDescription.trim(),
+                      sort_order: Number(editingSortOrder || 0),
+                      active: editingActive,
+                    },
                   });
                 }}
                 disabled={!editingName.trim()}
@@ -236,10 +254,10 @@ export function TypeCatalogAdmin() {
                 <Button
                   size="sm"
                   variant="danger"
-                  loading={deactivateMutation.isPending && deactivateMutation.variables === row.id}
+                  loading={deactivateMutation.isPending && deactivateMutation.variables?.id === row.id}
                   onClick={(event) => {
                     event.stopPropagation();
-                    deactivateMutation.mutate(row.id);
+                    deactivateMutation.mutate({ id: row.id, companyId, generation: actionGenerationRef.current });
                   }}
                 >
                   Deactivate
@@ -307,7 +325,25 @@ export function TypeCatalogAdmin() {
             />
           </label>
           <div className="flex items-end">
-            <Button size="sm" onClick={() => createMutation.mutate()} loading={createMutation.isPending} disabled={!newName.trim()}>
+            <Button
+              size="sm"
+              onClick={() =>
+                createMutation.mutate({
+                  companyId,
+                  generation: actionGenerationRef.current,
+                  payload: {
+                    operating_company_id: companyId,
+                    code: newCode,
+                    name: newName.trim(),
+                    description: newDescription.trim() || null,
+                    sort_order: Number(newSortOrder || 0),
+                    active: true,
+                  },
+                })
+              }
+              loading={createMutation.isPending}
+              disabled={!newName.trim()}
+            >
               + Create type
             </Button>
           </div>
