@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   auditMaintenanceTireTread,
@@ -34,6 +34,13 @@ type MountDraft = {
   tread_depth_32nds: string;
 };
 
+type TireActionScope = {
+  companyId: string;
+  assetKind: "unit" | "trailer";
+  assetId: string;
+  generation: number;
+};
+
 const EMPTY_MOUNT: MountDraft = {
   position_code: "",
   brand_id: "",
@@ -59,6 +66,7 @@ export function TireProgramPage() {
   const [brandName, setBrandName] = useState("");
   const [toPosition, setToPosition] = useState("");
   const [treadDepth, setTreadDepth] = useState("");
+  const actionGenerationRef = useRef(0);
 
   useEffect(() => {
     const trailerId = searchParams.get("equipment_id")?.trim();
@@ -124,105 +132,127 @@ export function TireProgramPage() {
     enabled: Boolean(companyId),
   });
 
-  const refresh = async () => {
+  const refresh = async (scope: Pick<TireActionScope, "companyId" | "assetKind" | "assetId">) => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-layout", companyId, assetKind, assetId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-events", companyId, assetKind, assetId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-alerts", companyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-layout", scope.companyId, scope.assetKind, scope.assetId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-events", scope.companyId, scope.assetKind, scope.assetId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-alerts", scope.companyId] }),
     ]);
   };
 
   const mountMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: TireActionScope & { draft: MountDraft }) =>
       createMaintenanceTireRecord({
-        operating_company_id: companyId,
-        ...assetParams,
-        position_code: mountDraft.position_code,
-        brand_id: mountDraft.brand_id || undefined,
-        brand_name: mountDraft.brand_name,
-        serial_number: mountDraft.serial_number,
-        size: mountDraft.size,
-        tread_depth_32nds: Number(mountDraft.tread_depth_32nds),
+        operating_company_id: input.companyId,
+        ...(input.assetKind === "trailer" ? { equipment_id: input.assetId } : { unit_id: input.assetId }),
+        position_code: input.draft.position_code,
+        brand_id: input.draft.brand_id || undefined,
+        brand_name: input.draft.brand_name,
+        serial_number: input.draft.serial_number,
+        size: input.draft.size,
+        tread_depth_32nds: Number(input.draft.tread_depth_32nds),
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setMountOpen(false);
       setMountDraft(EMPTY_MOUNT);
-      await refresh();
+      await refresh(input);
       pushToast("Tire mounted", "success");
     },
     onError: () => pushToast("Failed to mount tire", "error"),
   });
 
   const brandMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; generation: number; name: string }) =>
       createMaintenanceTireBrand({
-        operating_company_id: companyId,
-        name: brandName,
+        operating_company_id: input.companyId,
+        name: input.name,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setBrandOpen(false);
       setBrandName("");
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-brands", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-brands", input.companyId] });
       pushToast("Tire brand created", "success");
     },
     onError: () => pushToast("Failed to create brand", "error"),
   });
 
   const rotateMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: TireActionScope & { tireRecordId: string; toPosition: string }) =>
       rotateMaintenanceTire({
-        operating_company_id: companyId,
-        tire_record_id: String(selectedRecord?.id),
-        to_position_code: toPosition,
+        operating_company_id: input.companyId,
+        tire_record_id: input.tireRecordId,
+        to_position_code: input.toPosition,
         notes: "Rotation from tire program",
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setAction(null);
       setSelectedRecord(null);
       setToPosition("");
-      await refresh();
+      await refresh(input);
       pushToast("Tire rotated", "success");
     },
     onError: () => pushToast("Failed to rotate tire", "error"),
   });
 
   const replaceMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: TireActionScope & { tireRecordId: string; draft: MountDraft }) =>
       replaceMaintenanceTire({
-        operating_company_id: companyId,
-        tire_record_id: String(selectedRecord?.id),
-        brand_name: mountDraft.brand_name,
-        serial_number: mountDraft.serial_number,
-        tread_depth_32nds: Number(mountDraft.tread_depth_32nds),
+        operating_company_id: input.companyId,
+        tire_record_id: input.tireRecordId,
+        brand_name: input.draft.brand_name,
+        serial_number: input.draft.serial_number,
+        tread_depth_32nds: Number(input.draft.tread_depth_32nds),
         notes: "Replacement from tire program",
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setAction(null);
       setSelectedRecord(null);
       setMountDraft(EMPTY_MOUNT);
-      await refresh();
+      await refresh(input);
       pushToast("Tire replaced", "success");
     },
     onError: () => pushToast("Failed to replace tire", "error"),
   });
 
   const treadMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: TireActionScope & { tireRecordId: string; treadDepth: string }) =>
       auditMaintenanceTireTread({
-        operating_company_id: companyId,
-        tire_record_id: String(selectedRecord?.id),
-        tread_depth_32nds: Number(treadDepth),
+        operating_company_id: input.companyId,
+        tire_record_id: input.tireRecordId,
+        tread_depth_32nds: Number(input.treadDepth),
         notes: "Manual tread audit",
       }),
-    onSuccess: async (result) => {
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setAction(null);
       setSelectedRecord(null);
       setTreadDepth("");
-      await refresh();
+      await refresh(input);
       pushToast(result.is_low_tread_alert ? "Low tread alert recorded" : "Tread depth recorded", "success");
     },
     onError: () => pushToast("Failed to record tread depth", "error"),
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    mountMutation.reset();
+    brandMutation.reset();
+    rotateMutation.reset();
+    replaceMutation.reset();
+    treadMutation.reset();
+    setMountOpen(false);
+    setBrandOpen(false);
+    setAction(null);
+    setSelectedRecord(null);
+    setMountDraft(EMPTY_MOUNT);
+    setBrandName("");
+    setToPosition("");
+    setTreadDepth("");
+  }, [companyId, assetKind, assetId]);
 
   const groupedPositions = useMemo(() => {
     const positions = layoutQ.data?.positions ?? [];
@@ -246,6 +276,13 @@ export function TireProgramPage() {
       });
     }
   };
+
+  const snapshotScope = (): TireActionScope => ({
+    companyId,
+    assetKind,
+    assetId,
+    generation: actionGenerationRef.current,
+  });
 
   const renderPositionGrid = (title: string, positions: typeof groupedPositions.steer) => (
     <section className="space-y-2" data-testid={`tire-layout-${title.toLowerCase()}`}>
@@ -462,7 +499,7 @@ export function TireProgramPage() {
           <Button
             type="button"
             disabled={!mountDraft.position_code || mountMutation.isPending}
-            onClick={() => mountMutation.mutate()}
+            onClick={() => mountMutation.mutate({ ...snapshotScope(), draft: { ...mountDraft } })}
           >
             Mount tire
           </Button>
@@ -479,7 +516,15 @@ export function TireProgramPage() {
               onChange={(e) => setBrandName(e.target.value)}
             />
           </label>
-          <Button type="button" disabled={!brandName.trim() || brandMutation.isPending} onClick={() => brandMutation.mutate()}>
+          <Button
+            type="button"
+            disabled={!brandName.trim() || brandMutation.isPending}
+            onClick={() => brandMutation.mutate({
+              companyId,
+              generation: actionGenerationRef.current,
+              name: brandName,
+            })}
+          >
             Save brand
           </Button>
         </div>
@@ -512,7 +557,15 @@ export function TireProgramPage() {
                   ))}
               </select>
             </label>
-            <Button type="button" disabled={!toPosition || rotateMutation.isPending} onClick={() => rotateMutation.mutate()}>
+            <Button
+              type="button"
+              disabled={!toPosition || rotateMutation.isPending}
+              onClick={() => rotateMutation.mutate({
+                ...snapshotScope(),
+                tireRecordId: String(selectedRecord?.id),
+                toPosition,
+              })}
+            >
               Confirm rotation
             </Button>
           </div>
@@ -535,7 +588,15 @@ export function TireProgramPage() {
                 onChange={(e) => setMountDraft((d) => ({ ...d, tread_depth_32nds: e.target.value }))}
               />
             </label>
-            <Button type="button" disabled={replaceMutation.isPending} onClick={() => replaceMutation.mutate()}>
+            <Button
+              type="button"
+              disabled={replaceMutation.isPending}
+              onClick={() => replaceMutation.mutate({
+                ...snapshotScope(),
+                tireRecordId: String(selectedRecord?.id),
+                draft: { ...mountDraft },
+              })}
+            >
               Confirm replacement
             </Button>
           </div>
@@ -550,7 +611,15 @@ export function TireProgramPage() {
                 onChange={(e) => setTreadDepth(e.target.value)}
               />
             </label>
-            <Button type="button" disabled={!treadDepth || treadMutation.isPending} onClick={() => treadMutation.mutate()}>
+            <Button
+              type="button"
+              disabled={!treadDepth || treadMutation.isPending}
+              onClick={() => treadMutation.mutate({
+                ...snapshotScope(),
+                tireRecordId: String(selectedRecord?.id),
+                treadDepth,
+              })}
+            >
               Save tread audit
             </Button>
           </div>
