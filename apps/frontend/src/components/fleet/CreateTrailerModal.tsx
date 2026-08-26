@@ -67,8 +67,12 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const initialDraft = useMemo(
-    () => ({ ...EMPTY, currently_leased_to_company_id: operatingCompanyId }),
-    [operatingCompanyId]
+    () => ({
+      ...EMPTY,
+      equipment_type: equipmentKind === "chassis" ? "Chassis" as const : "DryVan" as const,
+      currently_leased_to_company_id: operatingCompanyId,
+    }),
+    [equipmentKind, operatingCompanyId]
   );
   const [draft, setDraft] = useState(initialDraft);
   const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
@@ -76,14 +80,6 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   useEffect(() => {
     if (open) setDraft(initialDraft);
   }, [initialDraft, open]);
-
-  useEffect(() => {
-    if (!open || !equipmentKind) return;
-    setDraft((current) => ({
-      ...current,
-      equipment_type: equipmentKind === "chassis" ? "Chassis" : current.equipment_type === "Chassis" ? "DryVan" : current.equipment_type,
-    }));
-  }, [equipmentKind, open]);
 
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -140,7 +136,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   return (
     <ParityDrawer
       open={open}
-      title="Create Trailer"
+      title={equipmentKind === "chassis" ? "Create Chassis" : "Create Trailer"}
       onClose={resetAndClose}
       stackAboveModal
       footer={
