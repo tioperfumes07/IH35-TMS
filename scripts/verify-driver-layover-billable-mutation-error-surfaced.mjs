@@ -24,15 +24,23 @@ const FILE = "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx";
 
 const IMPORTS_TOAST_RE = /import\s*\{\s*useToast\s*\}\s*from\s*["']\.\.\/\.\.\/components\/Toast["']/;
 const ON_ERROR_RE = /onError:\s*\(err\)\s*=>\s*pushToast\(userFacingApiError\(err,/;
+const COMPANY_QUERY_KEY_RE = /queryKey:\s*\["driver-layovers",\s*operatingCompanyId,\s*driverUuid,\s*from,\s*to\]/;
+const SNAPSHOT_BODY_RE = /operating_company_id:\s*companyId/;
+const GENERATION_RE = /input\.generation\s*!==\s*scopeGenerationRef\.current/g;
+const EXACT_INVALIDATE_RE = /queryKey:\s*\["driver-layovers",\s*input\.companyId,\s*input\.driverId,\s*input\.from,\s*input\.to\]/;
 
 export function checkDriverLayoverBillableMutationError(src) {
   const offenders = [];
   if (!IMPORTS_TOAST_RE.test(src)) {
     offenders.push(`${FILE}: does not import useToast — DRV-F6330 regression.`);
   }
-  if (!ON_ERROR_RE.test(src)) {
+  if (!ON_ERROR_RE.test(src) && !/onError:\s*\(err,\s*input\)[\s\S]*?pushToast\(userFacingApiError\(err,/.test(src)) {
     offenders.push(`${FILE}: billableMutation has no onError — a rejected billable-toggle will silently do nothing again.`);
   }
+  if (!COMPANY_QUERY_KEY_RE.test(src)) offenders.push(`${FILE}: layover query cache key omits operating company scope.`);
+  if (!SNAPSHOT_BODY_RE.test(src)) offenders.push(`${FILE}: billable PATCH does not use its submitted company snapshot.`);
+  if ((src.match(GENERATION_RE) ?? []).length < 2) offenders.push(`${FILE}: stale success/error callbacks are not rejected after scope changes.`);
+  if (!EXACT_INVALIDATE_RE.test(src)) offenders.push(`${FILE}: success does not refresh the exact submitted company/driver/date query.`);
   return offenders;
 }
 
@@ -58,7 +66,7 @@ if (process.argv.includes("--selftest")) {
   const buggyOffenders = checkDriverLayoverBillableMutationError(buggy);
   const fixedOffenders = checkDriverLayoverBillableMutationError(fixed);
 
-  if (buggyOffenders.length >= 2 && fixedOffenders.length === 0) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0) {
     console.log("verify-driver-layover-billable-mutation-error-surfaced selftest OK");
     process.exit(0);
   }
