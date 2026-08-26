@@ -15,7 +15,7 @@ function failures(source) {
   for (const token of ["<Combobox", 'id="equipment_type"', 'dataTestId="fleet-create-trailer-type"', 'dataField="equipment_type"', "options={allowedTypes.map", "set(\"equipment_type\""]) {
     if (!control.includes(token)) errors.push(`Type Combobox missing ${token}`);
   }
-  if (!source.includes('equipment_type: draft.equipment_type')) errors.push("canonical create payload lost equipment_type");
+  if (!source.includes('equipment_type: input.draft.equipment_type')) errors.push("canonical submitted create payload lost equipment_type");
   return errors;
 }
 

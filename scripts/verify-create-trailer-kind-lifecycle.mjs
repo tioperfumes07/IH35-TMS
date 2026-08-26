@@ -11,7 +11,7 @@ function failures(input = source) {
     ["kind participates in complete draft reset", /\[equipmentKind, operatingCompanyId\]\s*\);/.test(input) && /if \(open\) setDraft\(initialDraft\);/.test(input)],
     ["no partial type-only kind mutation", !/setDraft\(\(current\) => \(\{\s*\.\.\.current,\s*equipment_type: equipmentKind/.test(input)],
     ["drawer title matches creator kind", input.includes('title={equipmentKind === "chassis" ? "Create Chassis" : "Create Trailer"}')],
-    ["canonical equipment writer remains", input.includes("return createEquipment({") && input.includes("equipment_type: draft.equipment_type")],
+    ["canonical equipment writer remains", input.includes("return createEquipment({") && input.includes("equipment_type: input.draft.equipment_type")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 

@@ -39,7 +39,7 @@ function assertAll(srcs) {
   const creatorContracts = [
     ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", /onCreated\?: \(driverId: string, displayName: string\)/, /onCreated\(created\.id, displayName\)/, "driver"],
     ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", /onCreated\?: \(unitId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), submission\.draft\.unit_number\.trim\(\)\)/, "unit"],
-    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", /onCreated\?: \(equipmentId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), draft\.equipment_number\.trim\(\)\)/, "trailer"],
+    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", /onCreated\?: \(equipmentId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), input\.draft\.equipment_number\.trim\(\)\)/, "trailer"],
   ];
   for (const [file, signature, callback, noun] of creatorContracts) {
     if (!signature.test(srcs[file]) || !callback.test(srcs[file])) {
@@ -125,7 +125,7 @@ if (SELFTEST) {
     ["apps/frontend/src/components/parity/EntityPicker.tsx", "onChange(next, next ? options.find((option) => option.value === next) ?? null : null)", "onChange(next)", "picker option return"],
     ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", "onCreated(created.id, displayName)", "onCreated(created.id)", "created driver label"],
     ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "onCreated?.(String(created.id), submission.draft.unit_number.trim())", "onCreated?.(String(created.id))", "created unit label"],
-    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "onCreated?.(String(created.id), draft.equipment_number.trim())", "onCreated?.(String(created.id))", "created trailer label"],
+    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "onCreated?.(String(created.id), input.draft.equipment_number.trim())", "onCreated?.(String(created.id))", "created trailer label"],
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "const label = option?.label", "const label = next.slice(0, 8) || option?.label", "unit roster label"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'userFacingApiError(activeQuery.error, "Could not load available drivers")', 'String(activeQuery.error)', "safe driver error"],

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createEquipment, type CreateEquipmentInput } from "../../api/mdata";
 import { listMyCompanies, type MyCompany } from "../../api/org";
@@ -75,16 +75,15 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
     [equipmentKind, operatingCompanyId]
   );
   const [draft, setDraft] = useState(initialDraft);
+  const actionGenerationRef = useRef(0);
   const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
-
-  useEffect(() => {
-    if (open) setDraft(initialDraft);
-  }, [initialDraft, open]);
 
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
 
   const resetAndClose = () => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
     setDraft(initialDraft);
     onClose();
   };
@@ -107,29 +106,39 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
     [companiesQuery.data]
   );
 
+  /** @matrix-built modules=fleet cols=trailer,connectivity,reverse_link */
   const createMutation = useMutation({
-    mutationFn: () => {
-      const yearRaw = draft.year.trim();
+    mutationFn: (input: { companyId: string; generation: number; draft: typeof draft }) => {
+      const yearRaw = input.draft.year.trim();
       const year = yearRaw ? Number(yearRaw) : undefined;
       return createEquipment({
-        equipment_number: draft.equipment_number.trim(),
-        vin: draft.vin.trim() || undefined,
-        equipment_type: draft.equipment_type,
-        make: draft.make.trim() || undefined,
-        model: draft.model.trim() || undefined,
+        equipment_number: input.draft.equipment_number.trim(),
+        vin: input.draft.vin.trim() || undefined,
+        equipment_type: input.draft.equipment_type,
+        make: input.draft.make.trim() || undefined,
+        model: input.draft.model.trim() || undefined,
         year: year != null && Number.isFinite(year) ? year : undefined,
-        notes: draft.notes.trim() || undefined,
-        currently_leased_to_company_id: draft.currently_leased_to_company_id || operatingCompanyId,
+        notes: input.draft.notes.trim() || undefined,
+        currently_leased_to_company_id: input.draft.currently_leased_to_company_id || input.companyId,
       });
     },
-    onSuccess: async (created) => {
+    onSuccess: async (created, input) => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Trailer created", "success");
-      onCreated?.(String(created.id), draft.equipment_number.trim());
+      onCreated?.(String(created.id), input.draft.equipment_number.trim());
       resetAndClose();
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to create trailer"), "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Failed to create trailer"), "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    if (open) setDraft(initialDraft);
+  }, [initialDraft, open]);
 
   const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending && !companiesQuery.isError;
 
@@ -157,7 +166,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (canSubmit) createMutation.mutate();
+          if (canSubmit) createMutation.mutate({ companyId: operatingCompanyId, generation: actionGenerationRef.current, draft: { ...draft } });
         }}
       >
         {companiesQuery.isError ? (
