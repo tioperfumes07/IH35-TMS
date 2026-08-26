@@ -46,7 +46,9 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
       setSelectedWorkOrderId(null);
       pushToast("PM alert linked to work order", "success");
     },
-    onError: () => pushToast("Could not link work order to PM alert", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not link work order to PM alert", "error");
+    },
   });
 
   const scheduleMutation = useMutation({
@@ -58,7 +60,9 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
       setSchedulingAlertId(null);
       setSelectedWorkOrderId(null);
     },
-    onError: () => pushToast("Could not schedule PM alert", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not schedule PM alert", "error");
+    },
   });
 
   useEffect(() => {
