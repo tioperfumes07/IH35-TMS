@@ -636,6 +636,7 @@ export function VehicleProfilePage() {
           pushToast("Unit status updated", "success");
         }}
       />
+      <EditVehicleModal
         open={editModalOpen}
         unitId={id}
         operatingCompanyId={companyId}
