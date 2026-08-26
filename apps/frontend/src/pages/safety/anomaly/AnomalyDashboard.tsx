@@ -4,6 +4,7 @@ import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { Combobox } from "../../../components/Combobox";
 
 type Props = { operatingCompanyId: string };
 
@@ -51,12 +52,21 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-semibold">Anomaly Alerts</h1>
-        <select className="rounded-sm border px-2 py-1 text-sm" value={severity} onChange={(e) => setSeverity(e.target.value)}>
-          <option value="">All severities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="warn">Warn</option>
-        </select>
+        <label htmlFor="anomaly-severity-filter" className="sr-only">Severity</label>
+        <Combobox
+          id="anomaly-severity-filter"
+          dataTestId="anomaly-severity-filter"
+          value={severity}
+          options={[
+            { value: "", label: "All severities" },
+            { value: "critical", label: "Critical" },
+            { value: "high", label: "High" },
+            { value: "warn", label: "Warn" },
+          ]}
+          onChange={setSeverity}
+          ariaLabel="Severity"
+          className="min-w-40"
+        />
       </div>
       {q.isError ? (
         <p className="text-xs text-red-700" data-testid="anomaly-dashboard-query-error">
