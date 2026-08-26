@@ -63,8 +63,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
             { value: "high", label: "High" },
             { value: "warn", label: "Warn" },
           ]}
-          onChange={setSeverity}
-          ariaLabel="Severity"
+          onChange={(next) => setSeverity(next ?? "")}
           className="min-w-40"
         />
       </div>

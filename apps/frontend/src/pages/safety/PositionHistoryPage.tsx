@@ -249,7 +249,6 @@ export default function PositionHistoryPage() {
                 action: next as ActionFilter,
               }))
             }
-            ariaLabel="Position action"
             className="min-w-36"
           />
         </div>

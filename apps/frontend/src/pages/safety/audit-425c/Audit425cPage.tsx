@@ -293,7 +293,6 @@ export default function Audit425cPage() {
             value={draft.section}
             options={SECTIONS.map((option) => ({ value: option.id, label: option.label }))}
             onChange={(next) => staged.setDraft((d) => ({ ...d, section: next as Form425cSectionId }))}
-            ariaLabel="425C section"
           />
         </div>
         <div className="text-xs text-slate-600">
@@ -307,8 +306,7 @@ export default function Audit425cPage() {
               { value: "", label: "All actions" },
               ...actionOptions.map((value) => ({ value, label: humanizeEnumLabel(value) })),
             ]}
-            onChange={(next) => staged.setDraft((d) => ({ ...d, action: next }))}
-            ariaLabel="Action"
+            onChange={(next) => staged.setDraft((d) => ({ ...d, action: next ?? "" }))}
           />
         </div>
         <label className="text-xs text-slate-600">

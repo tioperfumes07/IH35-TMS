@@ -279,7 +279,6 @@ export function SafetyHomeTab() {
           <Combobox
             id="safety-home-active-drivers-window"
             dataTestId="safety-home-active-drivers-window"
-            ariaLabel="Active driver window (days)"
             value={String(activeDriverWindow)}
             options={ACTIVITY_WINDOW_OPTIONS.map((days) => ({ value: String(days), label: `${days} days` }))}
             onChange={(next) => setActiveDriverWindow(Number(next) as ActiveDriverSetThresholdDays)}

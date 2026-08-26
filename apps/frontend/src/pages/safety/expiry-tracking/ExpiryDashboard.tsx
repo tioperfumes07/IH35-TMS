@@ -165,7 +165,6 @@ export function ExpiryDashboard() {
                   value={certType}
                   options={CERT_OPTIONS}
                   onChange={(next) => setCertType(next as "all" | CertType)}
-                  ariaLabel="Certificate type"
                   className="min-w-36"
                 />
               </div>
@@ -178,7 +177,6 @@ export function ExpiryDashboard() {
                   value={severity}
                   options={SEVERITY_OPTIONS}
                   onChange={(next) => setSeverity(next as "all" | CertSeverity)}
-                  ariaLabel="Severity"
                   className="min-w-32"
                 />
               </div>

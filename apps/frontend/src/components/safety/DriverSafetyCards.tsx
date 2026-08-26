@@ -325,7 +325,6 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               value={sort}
               options={sortOptions.map((option) => ({ value: option.id, label: option.label }))}
               onChange={(next) => setSort(next as CardSort)}
-              ariaLabel="Sort driver safety cards"
               className="min-w-40"
             />
           </div>
