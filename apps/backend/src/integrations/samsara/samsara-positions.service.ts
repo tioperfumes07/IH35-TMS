@@ -325,7 +325,12 @@ export async function syncSamsaraVehicleStats(
         heading_deg: stat.heading_deg,
         engine_state: stat.engine_state !== "unknown" ? stat.engine_state : deriveEngineState(null, stat.speed_mph),
         raw_samsara_event_id: `cron:stats:${stat.id}:${stat.captured_at}`,
-        payload: stat.raw,
+        payload: {
+          ...stat.raw,
+          odometer_mi: stat.odometer_mi,
+          engine_hours: stat.engine_hours,
+          fuel_level_pct: stat.fuel_level_pct,
+        },
         city: stat.city,
         state: stat.state,
         formatted_location: stat.formatted_location,

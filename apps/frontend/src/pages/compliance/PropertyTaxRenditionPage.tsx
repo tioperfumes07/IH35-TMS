@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -70,6 +70,7 @@ function RenditionListView({
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const navigate = useNavigate();
   const now = new Date();
   const [taxYear, setTaxYear] = useState<number>(now.getUTCMonth() < 3 ? now.getUTCFullYear() : now.getUTCFullYear());
   const [districtId, setDistrictId] = useState("");
@@ -93,10 +94,14 @@ function RenditionListView({
   // was a silent no-op: `.mutate()` fire-and-forget, no toast, no explanation, nothing visibly
   // happens. Surface every one explicitly.
   const createM = useMutation({
-    mutationFn: () => createRendition(companyId, { tax_year: taxYear, appraisal_district_id: districtId }),
-    onSuccess: () => {
+    mutationFn: (appraisalDistrictId: string) =>
+      createRendition(companyId, { tax_year: taxYear, appraisal_district_id: appraisalDistrictId }),
+    onSuccess: (res) => {
+      const createdId = res.rendition?.id;
       setDistrictId("");
       void queryClient.invalidateQueries({ queryKey: ["property-tax-renditions", companyId] });
+      pushToast("Rendition created", "success");
+      if (createdId) navigate(`/compliance/property-tax/${createdId}`);
     },
     onError: (err) => pushToast(userFacingApiError(err, "Could not create the rendition"), "error"),
   });
@@ -115,6 +120,10 @@ function RenditionListView({
 
   const renditions = renditionsQ.data?.renditions ?? [];
   const districts = districtsQ.data?.districts ?? [];
+  useEffect(() => {
+    if (districtId || districts.length === 0) return;
+    setDistrictId(districts[0].id);
+  }, [districts, districtId]);
   const districtOptions = districts.map((district) => ({
     value: district.id,
     label: `${district.county} — ${district.cad_name}`,
@@ -229,9 +238,19 @@ function RenditionListView({
           </div>
           <button
             type="button"
-            disabled={!districtId || createM.isPending}
-            onClick={() => createM.mutate()}
+            disabled={createM.isPending}
+            onClick={() => {
+              const chosen = districtId || districts[0]?.id || "";
+              if (!chosen) {
+                setShowAddDistrict(true);
+                pushToast("Add an appraisal district first, then click + Create.", "error");
+                return;
+              }
+              if (!districtId) setDistrictId(chosen);
+              createM.mutate(chosen);
+            }}
             className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+            data-testid="property-tax-create"
           >
             + Create
           </button>

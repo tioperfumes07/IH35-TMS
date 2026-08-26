@@ -13,16 +13,50 @@ function asObject(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+function numericFromUnknown(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim()) return Number(value);
+  const obj = asObject(value);
+  if (!obj) return NaN;
+  if (obj.value != null) return Number(obj.value);
+  if (obj.meters != null) return Number(obj.meters);
+  return NaN;
+}
+
+function milesFromPossibleMeters(raw: unknown, treatAsMeters: boolean): number {
+  const n = numericFromUnknown(raw);
+  if (!Number.isFinite(n) || n < 0) return NaN;
+  if (treatAsMeters) return n * 0.000621371;
+  return n;
+}
+
 export function parseSamsaraVehiclePayload(raw: unknown) {
   const payload = asObject(raw) ?? {};
-  const record = asObject(payload.data) ?? asObject(payload.vehicle) ?? payload;
+  const record = asObject(payload.data) ?? asObject(payload.vehicle) ?? asObject(payload.stats) ?? payload;
+  const odometerMeters =
+    record.obdOdometerMeters ?? record.gatewayOdometerMeters ?? payload.obdOdometerMeters ?? payload.gatewayOdometerMeters;
   const odometerRaw =
-    record.odometer_mi ?? record.odometerMiles ?? record.odometer_miles ?? record.odometer ?? payload.odometer;
-  const odometer = Number(odometerRaw);
-  const engineHoursRaw = record.engine_hours ?? record.engineHours ?? payload.engine_hours;
-  const engineHours = Number(engineHoursRaw);
-  const fuelRaw = record.fuel_level_pct ?? record.fuelPercent ?? record.fuel_level ?? payload.fuel_level_pct;
-  const fuel = Number(fuelRaw);
+    odometerMeters ??
+    record.odometer_mi ??
+    record.odometerMiles ??
+    record.odometer_miles ??
+    record.odometer ??
+    payload.odometer;
+  const odometer = milesFromPossibleMeters(odometerRaw, Boolean(odometerMeters));
+  const engineSeconds = record.obdEngineSeconds ?? payload.obdEngineSeconds;
+  const engineHoursRaw =
+    record.engine_hours ?? record.engineHours ?? payload.engine_hours ?? engineSeconds ?? record.engineHours;
+  const engineHours = engineSeconds
+    ? numericFromUnknown(engineSeconds) / 3600
+    : numericFromUnknown(engineHoursRaw);
+  const fuelRaw =
+    record.fuelPercents ??
+    record.fuelPercent ??
+    record.fuel_level_pct ??
+    record.fuel_level ??
+    payload.fuel_level_pct ??
+    payload.fuelPercents;
+  const fuel = numericFromUnknown(fuelRaw);
   const faults: Array<{ code: string; severity: string; description: string | null }> = [];
   for (const key of ["dtc_codes", "diagnostics", "faults", "faultCodes"]) {
     const arr = record[key] ?? payload[key];
@@ -214,39 +248,148 @@ export async function buildUnitAggregate(
     `
       SELECT sv.samsara_vehicle_id, sv.last_seen_at::text, sv.raw_payload
       FROM integrations.samsara_vehicles sv
-      WHERE sv.local_unit_id = $1::uuid
-        AND sv.operating_company_id = $2::uuid
+      WHERE (
+          sv.local_unit_id = $1::uuid
+          OR (
+            NULLIF(BTRIM(COALESCE($3::text, '')), '') IS NOT NULL
+            AND sv.samsara_vehicle_id = BTRIM($3::text)
+          )
+        )
+        AND sv.operating_company_id IN (
+          $2::uuid,
+          (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
+          (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
+        )
       ORDER BY sv.last_seen_at DESC NULLS LAST
       LIMIT 1
     `,
-    [unitId, operatingCompanyId]
+    [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null]
   );
   const samsaraRow = samsaraRes.rows[0];
-  const samsara = samsaraRow
-    ? {
-        samsara_vehicle_id: samsaraRow.samsara_vehicle_id,
-        last_seen_at: samsaraRow.last_seen_at,
-        raw_payload_parsed: parseSamsaraVehiclePayload(samsaraRow.raw_payload),
-      }
-    : unit.samsara_vehicle_id
-      ? {
-          samsara_vehicle_id: unit.samsara_vehicle_id,
-          last_seen_at: null,
-          raw_payload_parsed: parseSamsaraVehiclePayload(null),
-        }
-      : null;
 
-  const posRes = await client.query(
+  const locPayloadRes = await client.query(
     `
-      SELECT lat, lng, speed_mph, heading_deg, engine_state, captured_at::text, NULL::text AS geofence_label
-      FROM telematics.vehicle_latest_position
+      SELECT payload
+      FROM telematics.vehicle_locations
       WHERE unit_id = $1::uuid
-        AND operating_company_id = $2::uuid
+        AND operating_company_id IN (
+          $2::uuid,
+          (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
+          (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
+        )
+      ORDER BY captured_at DESC NULLS LAST
       LIMIT 1
     `,
     [unitId, operatingCompanyId]
   );
-  const latest_position = posRes.rows[0] ?? null;
+  const locParsed = parseSamsaraVehiclePayload(locPayloadRes.rows[0]?.payload ?? null);
+  const inventoryParsed = parseSamsaraVehiclePayload(samsaraRow?.raw_payload ?? null);
+  const mergedParsed = {
+    odometer_miles: locParsed.odometer_miles ?? inventoryParsed.odometer_miles,
+    engine_hours: locParsed.engine_hours ?? inventoryParsed.engine_hours,
+    fuel_level_pct: locParsed.fuel_level_pct ?? inventoryParsed.fuel_level_pct,
+    fault_codes: inventoryParsed.fault_codes.length ? inventoryParsed.fault_codes : locParsed.fault_codes,
+  };
+
+  const posRes = await client.query(
+    `
+      SELECT * FROM (
+        SELECT
+          lat,
+          lng,
+          speed_mph,
+          heading_deg,
+          engine_state,
+          captured_at,
+          odometer_mi,
+          city,
+          formatted_location,
+          'telematics_latest'::text AS source
+        FROM telematics.vehicle_latest_position
+        WHERE unit_id = $1::uuid
+          AND operating_company_id IN (
+            $2::uuid,
+            (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
+            (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
+          )
+        UNION ALL
+        SELECT
+          lat,
+          lng,
+          speed_mph,
+          NULL::numeric AS heading_deg,
+          NULL::text AS engine_state,
+          recorded_at AS captured_at,
+          NULL::double precision AS odometer_mi,
+          NULL::text AS city,
+          NULL::text AS formatted_location,
+          'samsara_positions'::text AS source
+        FROM integrations.samsara_vehicle_positions
+        WHERE unit_uuid = $1::uuid
+          AND operating_company_id IN (
+            $2::uuid,
+            (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
+            (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
+          )
+      ) positions
+      WHERE lat IS NOT NULL AND lng IS NOT NULL
+      ORDER BY captured_at DESC NULLS LAST
+      LIMIT 1
+    `,
+    [unitId, operatingCompanyId]
+  );
+  const posRow = posRes.rows[0] ?? null;
+  const latest_position = posRow
+    ? {
+        ...posRow,
+        captured_at: posRow.captured_at != null ? String(posRow.captured_at) : null,
+        geofence_label: null,
+        book_odometer_mi: unit.odometer_mi ?? null,
+      }
+    : unit.odometer_mi != null
+      ? {
+          lat: null,
+          lng: null,
+          speed_mph: null,
+          heading_deg: null,
+          engine_state: null,
+          captured_at: null,
+          odometer_mi: unit.odometer_mi,
+          city: null,
+          formatted_location: null,
+          source: "unit_book",
+          geofence_label: null,
+          book_odometer_mi: unit.odometer_mi,
+        }
+      : null;
+  const gpsCaptured =
+    posRow?.captured_at != null
+      ? String(posRow.captured_at)
+      : latest_position && typeof latest_position === "object" && "captured_at" in latest_position
+        ? (latest_position.captured_at as string | null)
+        : null;
+  const telemetryParsed = {
+    odometer_miles:
+      mergedParsed.odometer_miles ??
+      (posRow?.odometer_mi != null ? Math.round(Number(posRow.odometer_mi)) : null) ??
+      (unit.odometer_mi != null ? Math.round(Number(unit.odometer_mi)) : null),
+    engine_hours: mergedParsed.engine_hours,
+    fuel_level_pct: mergedParsed.fuel_level_pct,
+    fault_codes: mergedParsed.fault_codes,
+  };
+  const samsara = samsaraRow
+    ? {
+        samsara_vehicle_id: samsaraRow.samsara_vehicle_id,
+        last_seen_at: samsaraRow.last_seen_at ?? gpsCaptured,
+        raw_payload_parsed: telemetryParsed,
+      }
+    : unit.samsara_vehicle_id || telemetryParsed.odometer_miles != null || telemetryParsed.engine_hours != null || telemetryParsed.fuel_level_pct != null
+      ? {
+          samsara_vehicle_id: unit.samsara_vehicle_id ?? null,
+          last_seen_at: gpsCaptured,
+          raw_payload_parsed: telemetryParsed,
+        }
+      : null;
 
   const defaultDriverRes = await client.query(
     `

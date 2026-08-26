@@ -13,6 +13,17 @@ describe("unit aggregate helpers", () => {
     assert.equal(parsed.fault_codes[0]?.code, "P0420");
   });
 
+  it("parses nested Samsara stats meters and fuel percent", () => {
+    const parsed = parseSamsaraVehiclePayload({
+      obdOdometerMeters: { value: 160934, time: "2026-08-26T00:00:00Z" },
+      obdEngineSeconds: { value: 36000 },
+      fuelPercents: { value: 41 },
+    });
+    assert.equal(parsed.odometer_miles, 100);
+    assert.equal(parsed.engine_hours, 10);
+    assert.equal(parsed.fuel_level_pct, 41);
+  });
+
   it("unit status schema includes Damaged and Transferred", () => {
     assert.ok(unitStatusSchema.options.includes("Damaged"));
     assert.ok(unitStatusSchema.options.includes("Transferred"));

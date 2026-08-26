@@ -115,7 +115,14 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
         <Calendar className="h-3.5 w-3.5 text-gray-400" />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg">
+        <div
+          className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="mb-1 flex items-center justify-between">
             <button type="button" className="rounded-sm px-2 hover:bg-gray-100" onClick={prevMonth} aria-label="Previous month">‹</button>
             <span className="text-xs font-semibold">{monthLabel}</span>
@@ -145,7 +152,9 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
                           ? "cursor-not-allowed text-gray-300"
                           : `hover:bg-slate-100 ${selected ? "bg-slate-700 text-white hover:bg-slate-700" : ""}`
                       }`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         if (outOfRange) return;
                         onChange(iso);
                         setOpen(false);

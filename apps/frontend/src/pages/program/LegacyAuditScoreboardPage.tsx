@@ -17,6 +17,7 @@ import {
   type GateState,
 } from "./programScoreboard.data";
 import { ProgramModuleNav } from "./ProgramModuleNav";
+import { ProgramBoardsExplainer } from "./ProgramBoardsExplainer";
 import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
 
 type ClassModuleMatrix = {
@@ -260,16 +261,18 @@ export function LegacyAuditScoreboardPage() {
 
       {/* Shared Program top-bar — Module matrix is a first-class tab, not URL-only */}
       <ProgramModuleNav active="legacy" />
+      <ProgramBoardsExplainer active="legacy" />
 
       <div
         className="px-4 py-3 text-[13px] leading-snug"
         style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#334155" }}
         data-testid="legacy-board-honest-purpose"
       >
-        <b>Not the launch board.</b> This is the archived 13-gate (A–E + V1–V8) certification strip from
-        the 2026-08-03 full-system audit. It still lists TRANSP × USMCA because that audit was
-        two-entity. Launch truth is <code>/program/matrix</code> on USMCA (Box 1–4 + Miss C + money).
-        Do not wait for this board to move. Scenario tracker is next after matrix 100%.
+        <b>This is the 13-gate scoreboard</b> (DoD A–E + V1–V8 per module × entity). It auto-refreshes
+        every 3 seconds from <code>GET /api/v1/program/audit-scoreboard</code> — same live SHA as
+        <code>healthz/shallow</code> when the API is up. It is <b>not</b> the 4-box module matrix.
+        Matrix = Required / Audited / Built / Live leaves. This board = audit gates. Both stay; they
+        measure different things. Neither duplicates the other.
       </div>
       <div className="px-4 py-2">
         <U14ExclusiveStatusBanner testId="legacy-scoreboard-u14-banner" />

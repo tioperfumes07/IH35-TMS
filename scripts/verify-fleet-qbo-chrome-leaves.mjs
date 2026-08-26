@@ -167,7 +167,17 @@ const CHECKS = [
     pattern: /label="Leased To Company"[\s\S]{0,300}<Combobox/,
   },
   {
-    name: "fleet.modal.status_change: StatusChangeModal is a real Modal with a real status select",
+    name: "unit.profile.action_bar: Change Status opens StatusChangeModal (not scrollIntoView)",
+    file: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+    pattern: /onChangeStatus=\{\(\) => \{\s*setStatusModalTarget\(null\);\s*setStatusModalOpen\(true\);/,
+  },
+  {
+    name: "fleet.modal.status_change: unit StatusChangeModal is a real Modal with a filled status SelectCombobox",
+    file: "apps/frontend/src/components/vehicle-profile/StatusChangeModal.tsx",
+    pattern: /<Modal open=\{open\} title="Change unit status"[\s\S]{0,900}<SelectCombobox/,
+  },
+  {
+    name: "fleet.modal.status_change: trailer StatusChangeModal is a real Modal with a real status select",
     file: "apps/frontend/src/components/trailer-profile/StatusChangeModal.tsx",
     pattern: /<Modal open=\{open\} title="Change trailer status"[\s\S]{0,500}<select/,
   },

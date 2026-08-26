@@ -1,28 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
+import { SelectCombobox } from "../shared/SelectCombobox";
 import { patchUnit } from "../../api/mdata";
 import { ApiError } from "../../api/client";
 
-type Status = "InService" | "OutOfService" | "InMaintenance" | "Sold" | "Damaged" | "Transferred";
+export type UnitLifecycleStatus =
+  | "InService"
+  | "OutOfService"
+  | "InMaintenance"
+  | "Sold"
+  | "Damaged"
+  | "Transferred";
+
+const STATUS_OPTIONS: Array<{ value: UnitLifecycleStatus; label: string }> = [
+  { value: "InService", label: "Active (In Service)" },
+  { value: "OutOfService", label: "Out of Service" },
+  { value: "InMaintenance", label: "In Maintenance" },
+  { value: "Damaged", label: "Damaged" },
+  { value: "Sold", label: "Sold" },
+  { value: "Transferred", label: "Transferred" },
+];
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function StatusChangeModal({
   open,
-  targetStatus,
   unitId,
   companyId,
+  currentStatus,
+  initialTarget,
   onClose,
   onSaved,
 }: {
   open: boolean;
-  targetStatus: Status;
   unitId: string;
   companyId: string;
+  currentStatus: string;
+  initialTarget?: UnitLifecycleStatus | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [targetStatus, setTargetStatus] = useState<UnitLifecycleStatus>("OutOfService");
   const [notes, setNotes] = useState("");
   const [soldDate, setSoldDate] = useState("");
   const [soldTo, setSoldTo] = useState("");
@@ -35,6 +58,21 @@ export function StatusChangeModal({
   const [oosReason, setOosReason] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const fallback =
+      initialTarget && STATUS_OPTIONS.some((o) => o.value === initialTarget)
+        ? initialTarget
+        : STATUS_OPTIONS.find((o) => o.value !== currentStatus)?.value ?? "OutOfService";
+    setTargetStatus(fallback);
+    setError("");
+    setNotes("");
+    setSoldDate("");
+    setTransferredDate(todayIso());
+    setDamageDate(todayIso());
+    setOosDate(todayIso());
+  }, [open, initialTarget, currentStatus]);
 
   const submit = async () => {
     setError("");
@@ -95,31 +133,46 @@ export function StatusChangeModal({
   };
 
   return (
-    <Modal open={open} title={`Change status to ${targetStatus}`} onClose={onClose}>
+    <Modal open={open} title="Change unit status" onClose={onClose}>
       <div className="space-y-2 text-sm" data-testid="vp-status-change-modal">
+        <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
+        <div>
+          <span className="block text-sm">New status *</span>
+          <SelectCombobox
+            id="vp-status-target"
+            className="mt-1 w-full"
+            value={targetStatus}
+            onChange={(e) => setTargetStatus(e.target.value as UnitLifecycleStatus)}
+          >
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </div>
         {targetStatus === "Sold" ? (
           <>
-            <label className="block">
-              Sold date *
+            <div>
+              <span className="block">Sold date *</span>
               <DatePicker className="mt-1 w-full" value={soldDate} onChange={(next) => setSoldDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Sold to
               <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
             </label>
             <label className="block">
               Sold price
-              {/* M-1: dollars-mode; sold_price = numeric(12,2) DOLLARS, submit Number(soldPrice) byte-for-byte. */}
               <MoneyInput valueDollars={soldPrice ? Number(soldPrice) : null} onChangeDollars={(d) => setSoldPrice(d == null ? "" : String(d))} ariaLabel="Sold price (USD)" className="mt-1 w-full" />
             </label>
           </>
         ) : null}
         {targetStatus === "Transferred" ? (
           <>
-            <label className="block">
-              Transferred date *
+            <div>
+              <span className="block">Transferred date *</span>
               <DatePicker className="mt-1 w-full" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Entity *
               <select className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
@@ -132,10 +185,10 @@ export function StatusChangeModal({
         ) : null}
         {targetStatus === "Damaged" ? (
           <>
-            <label className="block">
-              Damage date *
+            <div>
+              <span className="block">Damage date *</span>
               <DatePicker className="mt-1 w-full" value={damageDate} onChange={(next) => setDamageDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Description *
               <textarea className="mt-1 w-full border px-2 py-1" value={damageDescription} onChange={(e) => setDamageDescription(e.target.value)} />
@@ -144,10 +197,10 @@ export function StatusChangeModal({
         ) : null}
         {targetStatus === "OutOfService" ? (
           <>
-            <label className="block">
-              OOS date *
+            <div>
+              <span className="block">OOS date *</span>
               <DatePicker className="mt-1 w-full" value={oosDate} onChange={(next) => setOosDate(next)} />
-            </label>
+            </div>
             <label className="block">
               OOS reason *
               <input className="mt-1 w-full border px-2 py-1" value={oosReason} onChange={(e) => setOosReason(e.target.value)} />

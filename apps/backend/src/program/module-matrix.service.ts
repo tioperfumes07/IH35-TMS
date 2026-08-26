@@ -1962,7 +1962,13 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     kickMatrixComputeOffThread();
     return lastGood;
   }
-  return computeSystemModuleMatrix(userUuid, true);
+  try {
+    return await computeSystemModuleMatrix(userUuid, true);
+  } catch (err) {
+    const fallback = await readSystemLastGood();
+    if (fallback) return fallback;
+    throw err;
+  }
 }
 
 export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = false): Promise<SystemModuleMatrixPayload> {

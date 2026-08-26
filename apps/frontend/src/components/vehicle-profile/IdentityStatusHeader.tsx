@@ -1,13 +1,20 @@
-import { useState } from "react";
 import { patchUnit } from "../../api/mdata";
 import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
-import { StatusChangeModal } from "./StatusChangeModal";
 import { PlatesTable } from "./PlatesTable";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { SelectCombobox } from "../shared/SelectCombobox";
 import { useToast } from "../Toast";
+import type { UnitLifecycleStatus } from "./StatusChangeModal";
 
-const STATUSES = ["InService", "OutOfService", "InMaintenance", "Sold", "Damaged", "Transferred"] as const;
+const STATUS_OPTIONS: Array<{ value: UnitLifecycleStatus; label: string }> = [
+  { value: "InService", label: "Active (In Service)" },
+  { value: "OutOfService", label: "Out of Service" },
+  { value: "InMaintenance", label: "In Maintenance" },
+  { value: "Damaged", label: "Damaged" },
+  { value: "Sold", label: "Sold" },
+  { value: "Transferred", label: "Transferred" },
+];
 
 export function IdentityStatusHeader({
   unitId,
@@ -18,6 +25,7 @@ export function IdentityStatusHeader({
   onQuickAvailability,
   quickAvailabilityPending = false,
   onStatusSaved,
+  onRequestStatusChange,
 }: {
   unitId: string;
   companyId: string;
@@ -27,11 +35,12 @@ export function IdentityStatusHeader({
   onQuickAvailability: (value: "available" | "booked" | "holding" | null) => void;
   quickAvailabilityPending?: boolean;
   onStatusSaved: () => void;
+  onRequestStatusChange: (next?: UnitLifecycleStatus) => void;
 }) {
   const { pushToast } = useToast();
-  const [modalStatus, setModalStatus] = useState<(typeof STATUSES)[number] | null>(null);
   const currentStatus = String(unit.status ?? "InService");
   const quick = (unit.quick_availability as "available" | "booked" | "holding" | null) ?? null;
+  const known = STATUS_OPTIONS.some((o) => o.value === currentStatus);
 
   const locationLabel =
     latestPosition?.lat != null
@@ -52,13 +61,14 @@ export function IdentityStatusHeader({
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <label className="text-xs text-gray-600">
-            Status
-            <select
-              className="ml-2 rounded-sm border px-2 py-1 text-sm"
+          <div className="text-xs text-gray-600">
+            <span className="block">Status</span>
+            <SelectCombobox
+              id="vp-identity-status"
+              className="mt-1 w-56"
               value={currentStatus}
               onChange={(e) => {
-                const next = e.target.value as (typeof STATUSES)[number];
+                const next = e.target.value as UnitLifecycleStatus;
                 if (next === currentStatus) return;
                 if (next === "InService") {
                   void patchUnit(unitId, companyId, { status: "InService" })
@@ -71,16 +81,17 @@ export function IdentityStatusHeader({
                     });
                   return;
                 }
-                setModalStatus(next);
+                onRequestStatusChange(next);
               }}
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {properEnumOrFilterLabel(s)}
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
                 </option>
               ))}
-            </select>
-          </label>
+              {!known ? <option value={currentStatus}>{properEnumOrFilterLabel(currentStatus)}</option> : null}
+            </SelectCombobox>
+          </div>
           <QuickAvailabilityToggle value={quick} disabled={quickAvailabilityPending} onChange={onQuickAvailability} />
         </div>
       </div>
@@ -101,14 +112,6 @@ export function IdentityStatusHeader({
           expiration: (p.expiration as string) ?? null,
           status: String(p.status),
         }))}
-      />
-      <StatusChangeModal
-        open={modalStatus !== null}
-        targetStatus={modalStatus ?? "InService"}
-        unitId={unitId}
-        companyId={companyId}
-        onClose={() => setModalStatus(null)}
-        onSaved={onStatusSaved}
       />
     </section>
   );
