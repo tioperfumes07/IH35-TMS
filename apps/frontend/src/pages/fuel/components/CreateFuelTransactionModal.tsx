@@ -136,12 +136,12 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   return (
     <Modal open={open} onClose={onClose} title="Create Fuel Purchase" variant="drawer">
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
-        <label className="block font-semibold text-gray-700">
-          Purchase date *
+        <div className="block font-semibold text-gray-700">
+          <span>Purchase date *</span>
           <div className="mt-1">
             <DatePicker className="w-full" value={transactionDate} onChange={setTransactionDate} />
           </div>
-        </label>
+        </div>
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block font-semibold text-gray-700">
