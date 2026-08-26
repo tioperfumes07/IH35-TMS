@@ -22,6 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ENTITYLINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const ACCIDENTS = "apps/frontend/src/pages/safety/AccidentsPage.tsx";
 const FINES = "apps/frontend/src/pages/safety/FinesPage.tsx";
+const DRIVER_INCIDENTS = "apps/frontend/src/components/safety/DriverIncidentsReverseSection.tsx";
 const LABEL = "verify-safety-entitylink-reverse";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -69,6 +70,11 @@ export function assertSafetyEntityLink(sources) {
   const accidents = stripComments(sources?.[ACCIDENTS] ?? read(ACCIDENTS));
   const fines = stripComments(sources?.[FINES] ?? read(FINES));
   const problems = [];
+
+  const driverIncidents = stripComments(sources?.[DRIVER_INCIDENTS] ?? read(DRIVER_INCIDENTS));
+  if (!/const incidents = query\.isError \? \[\] : \(query\.data\?\.incidents \?\? \[\]\)/.test(driverIncidents) || !/\{incidents\.map\(/.test(driverIncidents)) {
+    problems.push(`${DRIVER_INCIDENTS}: failed reverse reads must suppress cached incident rows.`);
+  }
 
   for (const { kind, route } of SAFETY_KINDS) {
     // Declared as an EntityKind.
@@ -158,6 +164,7 @@ if (SELFTEST) {
     [ENTITYLINK]: read(ENTITYLINK),
     [ACCIDENTS]: read(ACCIDENTS),
     [FINES]: read(FINES),
+    [DRIVER_INCIDENTS]: read(DRIVER_INCIDENTS),
     [CLAIMS_TAB]: read(CLAIMS_TAB),
   };
   const failures = [];
@@ -220,6 +227,13 @@ if (SELFTEST) {
     );
   }
 
+  // 6. A rejected reverse read must not leave cached incident rows mounted beneath the error.
+  expectCaught(
+    "driver-incidents-stale-rows",
+    { ...live, [DRIVER_INCIDENTS]: live[DRIVER_INCIDENTS].replace("query.isError ? [] : (query.data?.incidents ?? [])", "query.data?.incidents ?? []") },
+    "suppress cached incident rows",
+  );
+
   const liveProblems = assertSafetyEntityLink(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
 
@@ -228,7 +242,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
