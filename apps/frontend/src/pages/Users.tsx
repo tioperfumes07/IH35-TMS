@@ -40,6 +40,7 @@ import { entityLabel } from "../lib/entity-label";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
+import { isInvitePending, userStatus } from "../lib/user-status";
 import { getAdminJob, triggerDeactivateProbeAccounts } from "../api/admin-jobs";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
 
@@ -94,22 +95,10 @@ function daysSince(iso: string): number {
   return (Date.now() - t) / (1000 * 60 * 60 * 24);
 }
 
-// USERS: an invited user has no credentials yet — auth_method 'Invite pending'. "Active" must mean the
-// account can actually sign in, so an invited-never-accepted user is "Invited", not "Active".
-function isInvitePending(user: IdentityUser): boolean {
-  return user.auth_method === "Invite pending";
-}
-
 function userRowCategory(user: IdentityUser): "active" | "pending" | "deactivated" {
   if (user.deactivated_at) return "deactivated";
   if (isInvitePending(user) || daysSince(user.created_at) < PENDING_INVITE_DAYS) return "pending";
   return "active";
-}
-
-function userStatus(user: IdentityUser): "Active" | "Invited" | "Inactive" {
-  if (user.deactivated_at) return "Inactive";
-  if (isInvitePending(user)) return "Invited"; // invited, no credentials → cannot sign in yet
-  return "Active";
 }
 
 const PASSWORD_CHECKLIST = [
