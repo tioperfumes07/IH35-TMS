@@ -15913,3 +15913,4 @@ Devin-A | LIVE-VERIFY | GO-1405 | /dispatch List view | SHA=c46d592 | Assign but
 Devin-A | LIVE-VERIFY | GO-1405 | /program/matrix?module=customers | SHA=c46d592 | loads ✓ | REQUEST-TIME FEED displayed
 Devin-A | LIVE-VERIFY | GO-1405 | /reports/management?type=company-overview | SHA=c46d592 | no "not visible" labels ✓
 Devin-A | CONTINUOUS | GO-1405 | SHA=c46d592 | batch 2 complete | 0 HTTP 500 | 0 dead clicks | 0 silent no-ops | FINDING=none-new | continuing
+Devin-A | HARD-RELOAD | GO-1405 | SHA changed c46d592→273e6d1 (uptime 351s) | re-walked 19 key routes + nested creates | 0 HTTP 500 | 0 dead clicks | 0 silent no-ops | FINDING=none-new | customer nested modal ✓ | driver nested modal ✓ | /cash-flow Proforma=false (CC-1 #2 pending) | /reports sales-performance "not visible" still true (known OPEN) | GO
