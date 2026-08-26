@@ -156,6 +156,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   const [activeTab, setActiveTab] = useState<TabId>("Identity");
   const [draft, setDraft] = useState<Record<string, string | boolean>>({});
   const [baseline, setBaseline] = useState<Record<string, string | boolean>>({});
+  const actionGenerationRef = useRef(0);
 
   const profileQuery = useQuery({
     queryKey: ["edit-vehicle-modal", unitId, operatingCompanyId],
@@ -189,6 +190,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   // refetch cannot wipe edits and a record switch cannot retain another unit's draft.
   const initializedRef = useRef(false);
   useEffect(() => {
+    actionGenerationRef.current += 1;
     initializedRef.current = false;
     setActiveTab("Identity");
     setDraft({});
@@ -229,6 +231,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
 
   const { pushToast } = useToast();
   const resetAndClose = useCallback(() => {
+    actionGenerationRef.current += 1;
     initializedRef.current = false;
     setActiveTab("Identity");
     setDraft({});
@@ -236,15 +239,19 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
     onClose();
   }, [onClose]);
 
+  /** @matrix-built modules=fleet cols=unit,driver,connectivity,reverse_link */
   const saveMutation = useMutation({
-    mutationFn: () => patchUnit(unitId!, operatingCompanyId, patchPayload),
-    onSuccess: () => {
+    mutationFn: (input: { unitId: string; companyId: string; generation: number; patch: Record<string, unknown> }) => patchUnit(input.unitId, input.companyId, input.patch),
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
-      void queryClient.invalidateQueries({ queryKey: ["edit-vehicle-modal", unitId, operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["edit-vehicle-modal", input.unitId, input.companyId] });
       onSaved?.();
       resetAndClose();
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save unit", "error"),
+    onError: (e, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(e instanceof Error ? e.message : "Failed to save unit", "error");
+    },
   });
 
   const setField = useCallback((key: string, value: string | boolean) => {
@@ -441,7 +448,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
                 resetAndClose();
                 return;
               }
-              saveMutation.mutate();
+              saveMutation.mutate({ unitId: unitId!, companyId: operatingCompanyId, generation: actionGenerationRef.current, patch: { ...patchPayload } });
             }}
           >
             Save Changes ({dirtyCount} fields modified)

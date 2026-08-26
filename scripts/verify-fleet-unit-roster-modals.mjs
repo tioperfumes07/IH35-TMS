@@ -115,7 +115,7 @@ export function audit(src) {
   if (!/return createEquipment\(\{/.test(src.createTrailer)) {
     failures.push(`${FILES.createTrailer}: home.create_trailer must call canonical createEquipment`);
   }
-  if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editVehicle)) {
+  if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(src.editVehicle)) {
     failures.push(`${FILES.editVehicle}: fleet.modal.edit_vehicle must patch the real edited unit in the selected company`);
   }
   if (!/open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/.test(src.table)) {
@@ -233,7 +233,7 @@ if (process.argv.includes("--selftest")) {
     ["edit-trailer-company-fail-closed", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={profileQuery.isError}"],
     ["edit-vehicle-company-error", "editVehicle", /companiesQuery\.isError/, "false"],
     ["create-trailer-call", "createTrailer", /return createEquipment\(\{/, "return createSomethingElse({"],
-    ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
+    ["edit-vehicle-patch", "editVehicle", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(input.unitId, '', input.patch)"],
     ["edit-trailer-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, "open={false}"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
     ["quick-assign-source", "quickAssignRoute", /'manual_override'/, "'quicksave'"],

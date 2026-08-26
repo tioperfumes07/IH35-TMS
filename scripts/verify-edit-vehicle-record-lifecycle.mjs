@@ -9,9 +9,9 @@ function failures(input = source) {
   return [
     ["initialization lock resets per unit/company/open", /initializedRef\.current = false;\s*setActiveTab\("Identity"\);\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*\}, \[open, unitId, operatingCompanyId\]\);/.test(input)],
     ["record query is unit and company scoped", /queryKey: \["edit-vehicle-modal", unitId, operatingCompanyId\]/.test(input) && input.includes("units/${unitId}?operating_company_id=")],
-    ["dismiss resets unit draft and tab", /const resetAndClose = useCallback\(\(\) => \{\s*initializedRef\.current = false;\s*setActiveTab\("Identity"\);\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*onClose\(\);/.test(input)],
+    ["dismiss resets unit draft and tab", /const resetAndClose = useCallback\(\(\) => \{[\s\S]{0,140}?initializedRef\.current = false;\s*setActiveTab\("Identity"\);\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*onClose\(\);/.test(input)],
     ["modal cancel no-change and success use reset close", input.includes('onClose={resetAndClose}') && /variant="secondary" onClick=\{resetAndClose\}/.test(input) && /Object\.keys\(patchPayload\)\.length === 0\) \{\s*resetAndClose\(\);/.test(input) && /onSaved\?\.\(\);\s*resetAndClose\(\);/.test(input)],
-    ["canonical scoped patch remains", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(input)],
+    ["canonical submitted scoped patch remains", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
