@@ -119,8 +119,9 @@ export function TerminateConfirmModal({
           ) : null}
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Event date</label>
+          <label htmlFor="terminate-event-date" className="text-xs font-semibold text-gray-600">Event date</label>
           <DatePicker
+            id="terminate-event-date"
             max={todayIso()}
             value={eventDate}
             onChange={setEventDate}

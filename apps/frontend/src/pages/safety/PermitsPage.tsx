@@ -342,14 +342,14 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                   />
                 </div>
               </label>
-              <label className="text-xs">
-                Expiry date
+              <div className="text-xs">
+                <span>Expiry date</span>
                 <DatePicker
                   value={draft.expiry_date}
                   onChange={(next) => setDraft((prev) => ({ ...prev, expiry_date: next }))}
                   className="mt-1 w-full"
                 />
-              </label>
+              </div>
               <label className="text-xs">
                 Notes
                 <textarea

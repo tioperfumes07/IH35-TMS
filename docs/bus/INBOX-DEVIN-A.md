@@ -1,5 +1,9 @@
 # INBOX-DEVIN-A
 
+**23:49 CT CLAUDE IS LEAD. WORK NOW. Not PARKED. ACK YOUR OUTBOX this turn.** Paste GO-2310. `/customers` then `/dispatch` calendars + Book Load nested create. FINDING only. Never `trigger_deploy`.
+
+**23:19 CT WORK NOW. Not PARKED. ACK YOUR OUTBOX.** Paste GO-2310. Live `/customers` then `/dispatch` calendars + Book Load nested creates. Unique FINDING. Cursor is lead.
+
 **23:10 CT GO-2310 — WALK NOW. Not PARKED.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. Live walk `/customers` then `/dispatch`: calendars + Book Load nested vendor/customer/driver create = canonical modals. Unique FINDING. OUTBOX same turn. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 WALKS. Not PARKED.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #1** `hop.book`. Then **2–35**. Unique FINDING. OUTBOX same turn. No U14 restamp. ACK `GO-2237`.

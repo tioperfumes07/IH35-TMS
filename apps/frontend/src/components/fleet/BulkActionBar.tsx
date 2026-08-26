@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Combobox } from "../Combobox";
 
 export const FLEET_BULK_STATUS_OPTIONS = ["Active", "Sold", "Transferred", "Damaged", "OOS"] as const;
 
@@ -49,55 +50,46 @@ export function FleetBulkControls({
 
   return (
     <>
-      <label className="flex items-center gap-1">
-        <span className="text-slate-700">Change Status</span>
-        <select
-          className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
-          aria-label="Change Status"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as FleetBulkStatus | "")}
-        >
-          <option value="">—</option>
-          {FLEET_BULK_STATUS_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="flex items-center gap-1">
-        <span className="text-slate-700">Change Type</span>
-        <select
-          className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
-          aria-label="Change Type"
-          value={vehicleType}
-          onChange={(e) => setVehicleType(e.target.value)}
-        >
-          <option value="">—</option>
-          {typeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="flex items-center gap-1">
+        <label htmlFor="fleet-bulk-status" className="text-slate-700">Change Status</label>
+        <Combobox
+          id="fleet-bulk-status"
+          className="w-36"
+          options={FLEET_BULK_STATUS_OPTIONS.map((option) => ({ value: option, label: option }))}
+          value={status || null}
+          onChange={(next) => setStatus((next ?? "") as FleetBulkStatus | "")}
+          placeholder="Select status"
+          allowClear
+        />
+      </div>
+      <div className="flex items-center gap-1">
+        <label htmlFor="fleet-bulk-vehicle-type" className="text-slate-700">Change Type</label>
+        <Combobox
+          id="fleet-bulk-vehicle-type"
+          className="w-36"
+          options={typeOptions.map((option) => ({ value: option, label: option }))}
+          value={vehicleType || null}
+          onChange={(next) => setVehicleType(next ?? "")}
+          placeholder="Select type"
+          allowClear
+        />
+      </div>
       {showTrailerTypeCatalog ? (
-        <label className="flex items-center gap-1">
-          <span className="text-slate-700">Trailer TYPE</span>
-          <select
-            className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
-            aria-label="Trailer TYPE"
-            value={trailerType}
-            onChange={(e) => setTrailerType(e.target.value as (typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number] | "")}
-          >
-            <option value="">—</option>
-            {TRAILER_EQUIPMENT_TYPE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor="fleet-bulk-trailer-type" className="text-slate-700">Trailer Type</label>
+          <Combobox
+            id="fleet-bulk-trailer-type"
+            className="w-36"
+            options={TRAILER_EQUIPMENT_TYPE_OPTIONS.map((option) => ({
+              value: option,
+              label: option === "DryVan" ? "Dry Van" : option === "StepDeck" ? "Step Deck" : option,
+            }))}
+            value={trailerType || null}
+            onChange={(next) => setTrailerType((next ?? "") as (typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number] | "")}
+            placeholder="Select trailer type"
+            allowClear
+          />
+        </div>
       ) : null}
       <button
         type="button"

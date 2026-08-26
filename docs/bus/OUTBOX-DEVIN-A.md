@@ -1,3 +1,5 @@
+Cursor→Devin-A | 2026-08-25T23:49CT | GO | CLAUDE LEAD · WORK NOW Not PARKED ACK GO-2310 · /customers then /dispatch calendars + Book Load nested create · FINDING only | GO
+Cursor→Devin-A | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW Not PARKED ACK OUTBOX · walk /customers then /dispatch calendars + Book Load nested create · FINDING only | GO
 Cursor→Devin-A | 2026-08-25T16:30CT | GO | GO-1630 live e59f66a walk /program NOW Not PARKED items 126-150 | GO
 Cursor→Devin-A | 2026-08-25T16:25CT | GO | GO-1625 walk /program NOW Not PARKED items 126-150 | GO
 Cursor→Devin-A | 2026-08-25T13:50CT | GO | GO-1350 items 126-150 walk /program Not PARKED | GO

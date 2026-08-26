@@ -201,24 +201,24 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             rowTestId={(row) => `driver-load-history-row-${row.id}`}
             filterBar={
               <div className="flex flex-wrap items-end gap-2">
-                <label className="text-xs text-gray-600">
-                  From
+                <div className="text-xs text-gray-600">
+                  <span>From</span>
                   <DatePicker
                     className="mt-1 block"
                     value={fromDate}
                     onChange={(next) => setFromDate(next)}
                     data-testid="driver-load-history-filter-from"
                   />
-                </label>
-                <label className="text-xs text-gray-600">
-                  To
+                </div>
+                <div className="text-xs text-gray-600">
+                  <span>To</span>
                   <DatePicker
                     className="mt-1 block"
                     value={toDate}
                     onChange={(next) => setToDate(next)}
                     data-testid="driver-load-history-filter-to"
                   />
-                </label>
+                </div>
                 <Button
                   size="sm"
                   variant="secondary"

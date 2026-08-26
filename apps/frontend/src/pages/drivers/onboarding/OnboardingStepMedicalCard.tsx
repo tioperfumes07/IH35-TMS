@@ -22,7 +22,7 @@ export function OnboardingStepMedicalCard({
 }: MedicalCardStepProps) {
   return (
     <div data-testid="onboarding-step-medical-card" className="space-y-4">
-      <label className="block text-sm">
+      <div className="block text-sm">
         <span className="mb-1 block font-medium text-slate-700">Medical card expiry</span>
         <DatePicker
           className="w-full"
@@ -30,7 +30,7 @@ export function OnboardingStepMedicalCard({
           disabled={disabled}
           onChange={(next) => onChangeExpiry(next)}
         />
-      </label>
+      </div>
       <OnboardingDocUploadField
         label="DOT medical card document"
         testId="onboarding-step-medical-card-upload"

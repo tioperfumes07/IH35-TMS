@@ -180,13 +180,17 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             <input id="model" className={inputClass} value={draft.model ?? ""} onChange={(e) => set("model", e.target.value)} />
           </FormField>
           <FormField label="Equipment type" name="equipment_type">
-            <select id="equipment_type" className={inputClass} value={draft.equipment_type ?? "DryVan"} onChange={(e) => set("equipment_type", e.target.value)}>
-              {EQUIPMENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              id="equipment_type"
+              dataField="equipment_type"
+              options={EQUIPMENT_TYPES.map((type) => ({
+                value: type,
+                label: type === "DryVan" ? "Dry Van" : type === "StepDeck" ? "Step Deck" : type,
+              }))}
+              value={draft.equipment_type || "DryVan"}
+              onChange={(next) => next && set("equipment_type", next)}
+              placeholder="Select equipment type"
+            />
           </FormField>
           <FormField label="Leased To Company" name="currently_leased_to_company_id">
             <div data-testid="edit-trailer-currently_leased_to_company_id">

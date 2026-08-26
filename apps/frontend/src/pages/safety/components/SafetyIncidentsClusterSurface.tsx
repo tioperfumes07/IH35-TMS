@@ -618,8 +618,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-trailer`}
           />
         </label>
-        <label className="text-[11px] text-slate-600">
-          From
+        <div className="text-[11px] text-slate-600">
+          <span>From</span>
           <DatePicker
             value={draft.from}
             onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
@@ -627,9 +627,9 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             max={draft.to || undefined}
             data-testid="safety-incidents-from-date"
           />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          To
+        </div>
+        <div className="text-[11px] text-slate-600">
+          <span>To</span>
           <DatePicker
             value={draft.to}
             onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
@@ -637,7 +637,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             min={draft.from || undefined}
             data-testid="safety-incidents-to-date"
           />
-        </label>
+        </div>
         <Button type="button" size="sm" data-testid={`${config.pageTestId}-filter-apply`} onClick={staged.apply} disabled={!staged.dirty}>
           Apply
         </Button>
@@ -744,7 +744,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
           <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
             {has("incident_date") ? (
-              <label className="block">
+              <div className="block">
                 <span className="text-slate-600">Incident date</span>
                 {formEditable ? (
                   <DatePicker
@@ -756,7 +756,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 ) : (
                   <div className="mt-1 text-slate-800">{formatDateUS(detail?.incident_at)}</div>
                 )}
-              </label>
+              </div>
             ) : null}
 
             {has("driver_id") ? (
