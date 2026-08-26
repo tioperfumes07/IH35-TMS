@@ -3,7 +3,7 @@
  * Allows Safety Officers to schedule FMCSA Part 382 tests for enrolled drivers.
  * Consumes POST /api/safety/drug-alcohol/tests.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,23 +58,42 @@ export function TestSchedulingPanel({ companyId }: Props) {
   const [testKind, setTestKind] = useState<TestKind>("drug");
   const [scheduledAt, setScheduledAt] = useState("");
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const lifecycleGenerationRef = useRef(0);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      postScheduleTest(companyId, {
-        driver_uuid: driverUuid,
-        test_type: testType,
-        test_kind: testKind,
-        scheduled_at: scheduledAt ? `${scheduledAt}T00:00:00Z` : undefined,
-      }),
-    onSuccess: async () => {
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: Parameters<typeof postScheduleTest>[1];
+    }) => postScheduleTest(input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       setDriverUuid("");
       setScheduledAt("");
       setSuccessMsg("Test scheduled successfully.");
-      setTimeout(() => setSuccessMsg(null), 4000);
-      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "tests", companyId] });
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(() => {
+        if (input.generation === lifecycleGenerationRef.current) setSuccessMsg(null);
+      }, 4000);
+      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "tests", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    mutation.reset();
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = null;
+    setDriverUuid("");
+    setTestType("random");
+    setTestKind("drug");
+    setScheduledAt("");
+    setSuccessMsg(null);
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, [companyId]); // Mutation reset is stable; company transitions own a fresh compliance draft.
 
   const canSubmit = driverUuid.trim().length > 0 && !mutation.isPending;
 
@@ -141,7 +160,16 @@ export function TestSchedulingPanel({ companyId }: Props) {
           type="button"
           disabled={!canSubmit}
           className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-          onClick={() => mutation.mutate()}
+          onClick={() => mutation.mutate({
+            companyId,
+            generation: lifecycleGenerationRef.current,
+            payload: {
+              driver_uuid: driverUuid,
+              test_type: testType,
+              test_kind: testKind,
+              scheduled_at: scheduledAt ? `${scheduledAt}T00:00:00Z` : undefined,
+            },
+          })}
         >
           {mutation.isPending ? "Scheduling…" : "Schedule Test"}
         </button>
