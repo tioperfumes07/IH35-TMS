@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenancePart,
@@ -54,6 +54,7 @@ export function PartsMasterDataPage() {
   const [editing, setEditing] = useState<MaintenancePartRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [voiding, setVoiding] = useState<MaintenancePartRow | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const partsQuery = useQuery({
     queryKey: ["maintenance", "master-data", "parts", companyId, search],
@@ -86,68 +87,100 @@ export function PartsMasterDataPage() {
     return options;
   }, [vendorsQuery.data]);
 
-  const refresh = async () => {
+  const refresh = async (submittedCompanyId: string) => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "parts", companyId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "parts-kpis", companyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "parts", submittedCompanyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "parts-kpis", submittedCompanyId] }),
     ]);
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createMaintenancePart(companyId, {
-        part_number: draft.part_number,
-        name: draft.name,
-        vendor_default: draft.vendor_default || undefined,
-        unit_cost: draft.unit_cost ?? undefined, // dollars (byte-for-byte: was Number(string))
-        qty_on_hand: Number(draft.qty_on_hand || "0"),
-        reorder_threshold: Number(draft.reorder_threshold || "0"),
-        location: draft.location || undefined,
+    mutationFn: (input: { companyId: string; generation: number; draft: PartDraft }) =>
+      createMaintenancePart(input.companyId, {
+        part_number: input.draft.part_number,
+        name: input.draft.name,
+        vendor_default: input.draft.vendor_default || undefined,
+        unit_cost: input.draft.unit_cost ?? undefined,
+        qty_on_hand: Number(input.draft.qty_on_hand || "0"),
+        reorder_threshold: Number(input.draft.reorder_threshold || "0"),
+        location: input.draft.location || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(EMPTY_DRAFT);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Part created", "success");
     },
-    onError: () => pushToast("Failed to create part", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create part", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!editing) throw new Error("No part selected");
-      return updateMaintenancePart(editing.id, companyId, {
-        part_number: editing.part_number,
-        name: editing.name,
-        vendor_default: editing.vendor_default,
-        unit_cost: editing.unit_cost,
-        qty_on_hand: editing.qty_on_hand,
-        reorder_threshold: editing.reorder_threshold,
-        location: editing.location,
-      });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; row: MaintenancePartRow }) =>
+      updateMaintenancePart(input.row.id, input.companyId, {
+        part_number: input.row.part_number,
+        name: input.row.name,
+        vendor_default: input.row.vendor_default,
+        unit_cost: input.row.unit_cost,
+        qty_on_hand: input.row.qty_on_hand,
+        reorder_threshold: input.row.reorder_threshold,
+        location: input.row.location,
+      }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setEditing(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Part updated", "success");
     },
-    onError: () => pushToast("Failed to update part", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update part", "error");
+    },
   });
 
   const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!csvFile) throw new Error("File required");
-      return importMaintenanceParts(companyId, csvFile);
-    },
-    onSuccess: async (result) => {
-      await refresh();
+    mutationFn: (input: { companyId: string; generation: number; file: File }) =>
+      importMaintenanceParts(input.companyId, input.file),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       setCsvFile(null);
       const inserted = String(result.inserted_rows ?? 0);
       const rolledBack = Boolean(result.rolled_back);
       pushToast(rolledBack ? `Import rolled back (${inserted} inserted)` : `Import completed (${inserted} inserted)`, rolledBack ? "error" : "success");
     },
-    onError: () => pushToast("Parts CSV import failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Parts CSV import failed", "error");
+    },
   });
+
+  const voidMutation = useMutation({
+    mutationFn: (input: { id: string; companyId: string; generation: number; reason: string }) =>
+      voidMaintenancePart(input.id, input.companyId, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      setVoiding(null);
+      await refresh(input.companyId);
+      pushToast("Part voided", "success");
+    },
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to void part", "error");
+    },
+  });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [companyId]);
 
   const rows = useMemo(() => partsQuery.data?.rows ?? [], [partsQuery.data?.rows]);
 
@@ -228,7 +261,10 @@ export function PartsMasterDataPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
           <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvFile} onClick={() => importMutation.mutate()}>
+          <Button size="sm" variant="secondary" disabled={!csvFile} onClick={() => {
+            if (!csvFile) return;
+            importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
+          }}>
             CSV Import
           </Button>
           <a className="text-xs text-slate-600 underline" href={getMaintenancePartsTemplateUrl(companyId)} target="_blank" rel="noreferrer">
@@ -281,7 +317,7 @@ export function PartsMasterDataPage() {
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Reorder threshold" type="number" value={draft.reorder_threshold} onChange={(e) => setDraft((p) => ({ ...p, reorder_threshold: e.target.value }))} />
           </div>
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Location" value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} />
-          <Button disabled={!draft.part_number || !draft.name || createMutation.isPending} onClick={() => createMutation.mutate()}>
+          <Button disabled={!draft.part_number || !draft.name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -298,7 +334,7 @@ export function PartsMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.qty_on_hand} onChange={(e) => setEditing((p) => (p ? { ...p, qty_on_hand: Number(e.target.value || 0) } : p))} />
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.reorder_threshold} onChange={(e) => setEditing((p) => (p ? { ...p, reorder_threshold: Number(e.target.value || 0) } : p))} />
             </div>
-            <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -313,8 +349,7 @@ export function PartsMasterDataPage() {
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
           if (!voiding) return;
-          await voidMaintenancePart(voiding.id, companyId, reason);
-          await refresh();
+          await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
     </div>
