@@ -33,6 +33,12 @@ export function collectProblems(src) {
   if (!/<section[^>]*className="[^"]*\bgrid\b[^"]*min-w-0/.test(src)) {
     problems.push(`${TARGET}: KPI section grid must itself carry min-w-0`);
   }
+  if (!/summaryQuery\.isError\s*\?\s*\(\s*<ListErrorState[\s\S]*?onRetry=\{\(\)\s*=>\s*void\s+summaryQuery\.refetch\(\)\}/.test(src)) {
+    problems.push(`${TARGET}: summary GET failure must expose ListErrorState retrying the exact query`);
+  }
+  if (!/!summaryQuery\.isError\s*\?\s*<section/.test(src)) {
+    problems.push(`${TARGET}: KPI grid must not render beneath the summary error state`);
+  }
   return problems;
 }
 
@@ -41,9 +47,10 @@ function selftest() {
 export function InsuranceLanding() {
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden">
-      <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
+      {summaryQuery.isError ? (<ListErrorState status={0} message="Failed" onRetry={() => void summaryQuery.refetch()} />) : null}
+      {!summaryQuery.isError ? <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
         <Card />
-      </section>
+      </section> : null}
     </div>
   );
 }`;
@@ -61,7 +68,9 @@ export function InsuranceLanding() {
 
   const cases = [
     { name: "guarded root + minmax grid → 0 errors", src: good, want: 0 },
-    { name: "bare grid-cols-3 root → fail", src: bad, wantMin: 3 },
+    { name: "bare grid-cols-3 root → fail", src: bad, wantMin: 5 },
+    { name: "retry removed → fail", src: good.replace("onRetry={() => void summaryQuery.refetch()}", ""), want: 1 },
+    { name: "error/table exclusion removed → fail", src: good.replace("!summaryQuery.isError ? <section", "<section"), want: 1 },
   ];
   let failed = 0;
   for (const c of cases) {
