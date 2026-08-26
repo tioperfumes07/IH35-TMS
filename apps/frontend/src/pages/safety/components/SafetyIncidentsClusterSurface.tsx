@@ -747,9 +747,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
             {has("incident_date") ? (
               <div className="block">
-                <span className="text-slate-600">Incident date</span>
+                <label className="text-slate-600" htmlFor={`${config.pageTestId}-field-incident-date`}>Incident date</label>
                 {formEditable ? (
                   <DatePicker
+                    id={`${config.pageTestId}-field-incident-date`}
                     value={str(selected?.incident_date)}
                     onChange={(v) => setField("incident_date", v)}
                     data-testid={`${config.pageTestId}-field-incident_date`}

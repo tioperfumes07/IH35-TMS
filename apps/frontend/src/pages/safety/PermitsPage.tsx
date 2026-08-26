@@ -343,8 +343,9 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 </div>
               </label>
               <div className="text-xs">
-                <span>Expiry date</span>
+                <label htmlFor="safety-permit-expiry-date">Expiry date</label>
                 <DatePicker
+                  id="safety-permit-expiry-date"
                   value={draft.expiry_date}
                   onChange={(next) => setDraft((prev) => ({ ...prev, expiry_date: next }))}
                   className="mt-1 w-full"

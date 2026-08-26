@@ -312,7 +312,10 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
               dollars; display is $row.amount.toFixed(2)). dollars-mode MoneyInput; amount stays a DOLLAR
               number, byte-for-byte (the backend does Math.round(amount*100) for the liability). */}
           <MoneyInput valueDollars={form.amount || null} onChangeDollars={(d) => setForm((v) => ({ ...v, amount: d ?? 0 }))} ariaLabel="Fine amount (USD)" placeholder="Amount (USD)" />
-          <DatePicker value={form.imposed_date} onChange={(next) => setForm((v) => ({ ...v, imposed_date: next }))} className="" />
+          <div>
+            <label className="sr-only" htmlFor="internal-fine-imposed-date">Imposed date</label>
+            <DatePicker id="internal-fine-imposed-date" value={form.imposed_date} onChange={(next) => setForm((v) => ({ ...v, imposed_date: next }))} className="" />
+          </div>
           <SelectCombobox value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>

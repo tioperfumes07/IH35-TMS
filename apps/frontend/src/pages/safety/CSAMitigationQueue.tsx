@@ -193,8 +193,9 @@ export function CSAMitigationQueuePage() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <span>Due date</span>
+            <label htmlFor="csa-mitigation-due-date">Due date</label>
             <DatePicker
+              id="csa-mitigation-due-date"
               value={dueDate}
               className=""
               onChange={(next) => setDueDate(next)}

@@ -126,8 +126,9 @@ export function TestSchedulingPanel({ companyId }: Props) {
         </div>
 
         <div className="block text-xs text-slate-600">
-          <span>Scheduled Date (optional)</span>
+          <label htmlFor="drug-alcohol-scheduled-date">Scheduled Date (optional)</label>
           <DatePicker
+            id="drug-alcohol-scheduled-date"
             className="mt-1 block w-full"
             value={scheduledAt}
             onChange={(next) => setScheduledAt(next)}

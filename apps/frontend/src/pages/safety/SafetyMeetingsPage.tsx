@@ -207,8 +207,9 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
           }}
         >
           <div className="block text-xs text-slate-600">
-            <span>Date</span>
+            <label htmlFor="safety-meeting-date">Date</label>
             <DatePicker
+              id="safety-meeting-date"
               value={meetingDate}
               onChange={setMeetingDate}
               max={new Date().toISOString().slice(0, 10)}
