@@ -7,9 +7,12 @@ import process from "node:process";
 const FILE = "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx";
 function inspect(source) {
   const errors = [];
+  const closeCreateBody = source.match(/const closeCreate = \(\) => \{([\s\S]*?)\n  \};/)?.[1] ?? "";
   if (!/useEffect\(\(\) => \{[\s\S]*createMutation\.reset\(\)[\s\S]*setCreateOpen\(false\)[\s\S]*setDriverId\(""\)[\s\S]*setTrainingName\(""\)[\s\S]*setCompletedAt\(companyToday\(\)\)[\s\S]*setExpiryDate\(""\)[\s\S]*setNotes\(""\)[\s\S]*\}, \[operatingCompanyId\]\)/.test(source)) errors.push("company transition does not reset complete training creator lifecycle");
   if (!/createSafetyTrainingRecord\(input\.companyId, input\.payload\)/.test(source)) errors.push("create does not snapshot company and payload");
   if (!source.includes("input.generation !== lifecycleGenerationRef.current")) errors.push("stale success can mutate new company UI");
+  if (!["lifecycleGenerationRef.current += 1", "createMutation.reset()", 'setCreateOpen(false)', 'setDriverId("")', 'setTrainingName("")', "setCompletedAt(companyToday())", 'setExpiryDate("")', 'setNotes("")'].every((token) => closeCreateBody.includes(token)) || !source.includes('<Modal variant="drawer" open={createOpen} onClose={closeCreate}')) errors.push("drawer dismiss does not retire the generation and reset the complete draft");
+  if (!source.includes("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current")) errors.push("stale rejection can paint a reopened training drawer");
   if (!source.includes('["safety", "training-records", input.companyId]') || !source.includes('["safety", "training-completions", input.companyId]')) errors.push("success refreshes are not pinned to submitting company");
   if (!/payload: \{[\s\S]*driver_id: driverId[\s\S]*training_name: trainingName\.trim\(\)[\s\S]*completed_at:[\s\S]*expiry_date: expiryDate \|\| undefined[\s\S]*notes: notes\.trim\(\) \|\| undefined/.test(source)) errors.push("submit does not carry every visible training field");
   if (!source.includes("<DriverPickerWithCreate") || !source.includes("operatingCompanyId={operatingCompanyId}")) errors.push("canonical scoped driver picker/create removed");
@@ -23,13 +26,15 @@ if (process.argv.includes("--selftest")) {
     source.replace("input.generation !== lifecycleGenerationRef.current", "false"),
     source.replace("setDriverId(\"\");\n    setTrainingName(\"\");\n    setCompletedAt(companyToday());", "// planted: company transition retains driver/name/date"),
     source.replace("notes: notes.trim() || undefined", "notes: undefined"),
+    source.replace("onClose={closeCreate}", "onClose={() => setCreateOpen(false)}"),
+    source.replace("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current", "createMutation.isError"),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/5 mutation(s) survived`);
+    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/7 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-training-record-company-lifecycle selftest PASS — 5/5 planted defects rejected");
+  console.log("verify-training-record-company-lifecycle selftest PASS — 7/7 planted defects rejected");
   process.exit(0);
 }
 const errors = inspect(fs.readFileSync(FILE, "utf8"));
