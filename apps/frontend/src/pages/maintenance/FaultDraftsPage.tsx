@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -42,6 +42,7 @@ export function FaultDraftsPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const confirmGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
   // Vehicle profile "View fault history" → ?unit_id= (MaintenanceSnapshotSection).
   // LST-F5169 — visible EntityPicker (URL-only banner is not reverse chrome).
@@ -87,21 +88,34 @@ export function FaultDraftsPage() {
   });
 
   const confirmMutation = useMutation({
-    mutationFn: (workOrderId: string) =>
-      apiRequest(`/api/v1/maintenance/work-orders/${workOrderId}/transition`, {
+    mutationFn: (input: { workOrderId: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/maintenance/work-orders/${input.workOrderId}/transition`, {
         method: "POST",
         body: {
-          operating_company_id: companyId,
+          operating_company_id: input.companyId,
           to_status: "open",
         },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== confirmGenerationRef.current) return;
       pushToast("Draft work order confirmed and opened.", "success");
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-drafts", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-drafts", input.companyId] });
       setSelectedId(null);
     },
-    onError: () => pushToast("Could not confirm draft work order.", "error"),
+    onError: (_error, input) => {
+      if (input.generation === confirmGenerationRef.current) pushToast("Could not confirm draft work order.", "error");
+    },
   });
+
+  useEffect(() => {
+    confirmGenerationRef.current += 1;
+    confirmMutation.reset();
+    setSelectedId(null);
+  }, [companyId]);
+
+  const confirmDraft = (workOrderId: string) => {
+    confirmMutation.mutate({ workOrderId, companyId, generation: confirmGenerationRef.current });
+  };
 
   const drafts = useMemo(() => {
     const all = draftsQuery.data?.drafts ?? [];
@@ -261,7 +275,7 @@ export function FaultDraftsPage() {
                 size="sm"
                 variant="secondary"
                 disabled={confirmMutation.isPending}
-                onClick={() => confirmMutation.mutate(selected.id)}
+                onClick={() => confirmDraft(selected.id)}
               >
                 Confirm &amp; open WO
               </Button>
