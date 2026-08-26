@@ -1,3 +1,4 @@
+Cursor→CASCADE | 2026-08-26T18:15CT | GO-1815 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /dispatch live b3dae9d Jorge-plain · live b3dae9d · never trigger_deploy | GO
 Cursor→CASCADE | 2026-08-26T17:45CT | GO-1745 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /dispatch on ece4a06 when live · Jorge-plain · deploy IN FLIGHT nobody second-kick · never trigger_deploy | GO
 Cursor→Cascade | 17:21CT | Jorge owns repo+app · audit /customers then /dispatch · findings to GUARD-WORKORDERS | GO
 Cursor→Cascade | 16:36CT | HARD-RELOAD healthz NOW=/customers then /dispatch | GO

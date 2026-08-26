@@ -1,3 +1,7 @@
+**18:15 CT 2026-08-26 GO-1815 — CURSOR LEAD. THIS IS NOW.** Live **`b3dae9d`** (`dep-da7n3b49v7es73f0s9ag` LIVE). Hard-reload. Nobody `trigger_deploy` (just landed; main may be a few commits ahead — wait for 5–10). Skip #15546. U14 never restamp. FAST-MERGE ~4 min. ACK: `CC-3 | ACK | GO-1815 | PORT=9225 | NOW=/docs | SHA=b3dae9d | GO`
+
+**YOUR NOW:** `/docs` leftover unique then `/compliance`. HOLDING=defect. Do not remake /home /help. Never steal money. Never `trigger_deploy`.
+
 **17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `CC-3 | ACK | GO-1745 | PORT=9225 | NOW=leftover-unique | SHA=ece4a06 | GO`
 
 **YOUR NOW:** leftover unique FE. `/help` ACK already on main — do not remake. HOLDING=defect. Never steal money. Never `trigger_deploy`.
