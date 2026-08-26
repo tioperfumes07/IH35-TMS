@@ -1,3 +1,30 @@
+
+## GO-1405 — customers → drivers → vendors → dispatch on c46d592 | 2026-08-26
+
+CASCADE | ACK | GO-1405 | PORT=n | NOW=/dispatch/book-load | SHA=c46d592 | HOP=customers-drivers-vendors-dispatch | TABLE= - | UUID= - | JE= - | FINDING=LISTS-CREATORS-DEAD-CLICK-c46d592 | GO
+
+Live walk on c46d592:
+- /customers?create=1: does not open customer create drawer; renders customer list
+- /drivers?create=1: does not open driver create drawer; renders driver roster
+- /vendors?create=1: does not open vendor create drawer; renders vendor list
+- /dispatch/book-load: "+ Book Load" button is a silent no-op (no URL change, no modal)
+- /cash-flow, /finance/hub, /lists render real content
+- /dispatch/in-transit-issues renders with "+ Create Issue"
+
+Conclusion: List/creator query-param and CTA routing is broken for customer, driver, vendor, and dispatch book-load on c46d592.
+
+## GO-1405 — /accounting live walk on c46d592 | 2026-08-26
+
+CASCADE | ACK | GO-1405 | PORT=n | NOW=/accounting | SHA=c46d592 | HOP=accounting | TABLE=accounting.invoices | UUID=065538c8-0b21-4a1a-9f0a-51db3ad3e0a0 | JE= - | FINDING=ACCT-INVOICE-DETAIL-FAIL-c46d592 | GO
+
+Live walk on c46d592:
+- /accounting/invoices/INV-2026-00044: "Couldn\'t load invoice Error: Validation failed" (same as prior SHA)
+- /accounting/bills?create=1: Save button is a silent no-op (no URL change, no toast, no network write)
+- /accounting/journal-entries?create=1: no create drawer opens; only list renders
+- /accounting/invoices?create=1: same, no create drawer
+- /accounting/vendors → /vendors (acceptable)
+CASCADE | ACK | GO-1405 | PORT=n | NOW=/accounting | SHA=c46d592 | GO
+
 Cursor→Cascade | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX · NOW=/accounting unique FINDING on c46d592 · never recertify U14 · never product PR · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md | GO
 
 ## GO-2237 — ITEMS 23-28 — POST leaves batch | 2026-08-26T04:53Z
