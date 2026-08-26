@@ -4,11 +4,16 @@
  * Consumes /api/safety/drug-alcohol/random-pool/* endpoints.
  * FMCSA Part 382 §382.305 — 10% drug / 10% alcohol quarterly minimums.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
+import { useDriverLabels } from "../../../hooks/useDriverLabels";
+
+/** @matrix-built modules=safety,drivers cols=driver,connectivity,reverse_link */
 
 type PoolDraw = {
   uuid: string;
@@ -72,6 +77,7 @@ function meetsMinimums(draw: PoolDraw): boolean {
 
 export function RandomPoolDashboard({ companyId }: Props) {
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
 
   const drawsQ = useQuery({
     queryKey: ["safety", "da-program", "draws", companyId],
@@ -80,14 +86,25 @@ export function RandomPoolDashboard({ companyId }: Props) {
   });
 
   const drawMutation = useMutation({
-    mutationFn: () => triggerDraw(companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "draws", companyId] });
-      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "tests", companyId] });
+    mutationFn: (input: { companyId: string; generation: number }) => triggerDraw(input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "draws", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "da-program", "tests", input.companyId] });
     },
   });
 
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    drawMutation.reset();
+  }, [companyId]);
+
   const mostRecent = drawsQ.data?.[0] ?? null;
+  const drawnDriverIds = useMemo(
+    () => [...new Set((drawsQ.data ?? []).flatMap((draw) => draw.drawn_driver_uuids))],
+    [drawsQ.data]
+  );
+  const { byId: driverNameById } = useDriverLabels(companyId, drawnDriverIds);
 
   const drawColumns = useMemo<ParityColumn<PoolDraw>[]>(
     () => [
@@ -123,8 +140,25 @@ export function RandomPoolDashboard({ companyId }: Props) {
             <span className="text-red-700">✗</span>
           ),
       },
+      {
+        key: "drawn_driver_uuids",
+        label: "Selected Drivers",
+        render: (draw) => (
+          <div className="flex flex-wrap gap-x-2 gap-y-1">
+            {draw.drawn_driver_uuids.map((driverId) => (
+              <EntityLink
+                key={driverId}
+                kind="driver"
+                id={driverId}
+                label={entityLabel(driverNameById.get(driverId), driverId, "Driver")}
+              />
+            ))}
+            {draw.drawn_driver_uuids.length === 0 ? <span>—</span> : null}
+          </div>
+        ),
+      },
     ],
-    [],
+    [driverNameById],
   );
 
   return (
@@ -140,19 +174,23 @@ export function RandomPoolDashboard({ companyId }: Props) {
           type="button"
           disabled={drawMutation.isPending}
           className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
-          onClick={() => drawMutation.mutate()}
+          onClick={() =>
+            drawMutation.mutate({ companyId, generation: companyGenerationRef.current })
+          }
         >
           {drawMutation.isPending ? "Running draw…" : "Run Manual Draw"}
         </button>
       </div>
 
-      {drawMutation.isError ? (
+      {drawMutation.isError &&
+      drawMutation.variables?.generation === companyGenerationRef.current ? (
         <p className="mt-2 text-xs text-red-700">
           Draw failed: {(drawMutation.error as Error).message}
         </p>
       ) : null}
 
-      {drawMutation.isSuccess ? (
+      {drawMutation.isSuccess &&
+      drawMutation.variables?.generation === companyGenerationRef.current ? (
         <p className="mt-2 text-xs text-slate-700">Draw complete — test records created.</p>
       ) : null}
 
