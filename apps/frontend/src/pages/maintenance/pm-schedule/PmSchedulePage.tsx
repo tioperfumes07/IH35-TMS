@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenancePmSchedule,
@@ -62,6 +62,7 @@ export function PmSchedulePage() {
   const [formOpen, setFormOpen] = useState(false);
   const [draft, setDraft] = useState<CreateDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const listQ = useQuery({
     queryKey: ["maintenance", "pm-schedule", companyId],
@@ -70,32 +71,49 @@ export function PmSchedulePage() {
   });
 
   const createM = useMutation({
-    mutationFn: (body: {
+    mutationFn: ({ generation: _generation, ...body }: {
       operating_company_id: string;
       unit_id: string;
       pm_type: string;
       interval_kind: IntervalKind;
       interval_value: number;
+      generation: number;
     }) => createMaintenancePmSchedule(body),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setFormOpen(false);
       setDraft(EMPTY_DRAFT);
       setFormError(null);
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", companyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", input.operating_company_id] });
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setFormError(userFacingApiError(err, "Failed to create PM schedule"));
     },
   });
 
   const generateM = useMutation({
-    mutationFn: (id: string) => generateMaintenancePmWorkOrder(id, companyId),
-    onSuccess: async () => {
+    mutationFn: (input: { id: string; companyId: string; generation: number }) =>
+      generateMaintenancePmWorkOrder(input.id, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Work order generated.", "success");
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", companyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", input.companyId] });
     },
-    onError: (err: unknown) => pushToast(userFacingApiError(err, "Could not generate work order"), "error"),
+    onError: (err: unknown, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Could not generate work order"), "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createM.reset();
+    generateM.reset();
+    setFormOpen(false);
+    setDraft(EMPTY_DRAFT);
+    setFormError(null);
+  }, [companyId]);
 
   const rows = listQ.data?.rows ?? [];
 
@@ -115,7 +133,11 @@ export function PmSchedulePage() {
           <button
             type="button"
             className="rounded-sm border border-gray-300 px-2 py-0.5 text-[11px]"
-            onClick={() => generateM.mutate(row.id)}
+            onClick={() => generateM.mutate({
+              id: row.id,
+              companyId,
+              generation: actionGenerationRef.current,
+            })}
             disabled={generateM.isPending}
           >
             Generate WO
@@ -161,6 +183,7 @@ export function PmSchedulePage() {
       pm_type: pmType,
       interval_kind: draft.interval_kind,
       interval_value: intervalValue,
+      generation: actionGenerationRef.current,
     });
   }
 
