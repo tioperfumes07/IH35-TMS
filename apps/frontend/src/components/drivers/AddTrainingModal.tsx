@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getTrainingCompletions } from "../../api/safety";
@@ -72,14 +72,23 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
 
   const resolvedTrainingName = trainingName === "__custom__" ? customName.trim() : trainingName.trim();
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setTrainingName("");
     setCustomName("");
     setCompletedAt(companyToday());
     setExpiryDate("");
     setNotes("");
     setError("");
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) resetForm();
+  }, [open, companyId, driverId, resetForm]);
+
+  const handleClose = useCallback(() => {
+    resetForm();
+    onClose();
+  }, [onClose, resetForm]);
 
   const submit = async () => {
     setError("");
@@ -99,9 +108,8 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         expiry_date: expiryDate || undefined,
         notes: notes.trim() || undefined,
       });
-      resetForm();
       onCreated?.();
-      onClose();
+      handleClose();
     } catch (err) {
       setError(userFacingApiError(err, "Failed to create training record."));
     } finally {
@@ -110,7 +118,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   };
 
   return (
-    <Modal variant="drawer" open={open} onClose={onClose} title={`Create Training — ${driverName}`}>
+    <Modal variant="drawer" open={open} onClose={handleClose} title={`Create Training — ${driverName}`}>
       <form
         className="space-y-3"
         data-testid="add-training-modal"
@@ -196,7 +204,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" loading={pending} data-testid="add-training-submit">

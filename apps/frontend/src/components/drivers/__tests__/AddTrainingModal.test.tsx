@@ -55,11 +55,9 @@ describe("AddTrainingModal (A24-7)", () => {
         onCreated={onCreated}
       />
     );
-    await screen.findByTestId("add-training-program");
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: "Defensive Driving" })).toBeInTheDocument();
-    });
-    await user.selectOptions(screen.getByTestId("add-training-program"), "Defensive Driving");
+    const programPicker = within(await screen.findByTestId("add-training-program")).getByRole("combobox");
+    await user.click(programPicker);
+    await user.click(await screen.findByRole("option", { name: "Defensive Driving" }));
     // Completion date is the shared DatePicker (SYS-DATE) — open it and pick a day in the
     // currently-displayed month rather than fireEvent.change (it's a button, not a native input).
     // The POST body assertion below doesn't depend on the exact date picked.
@@ -101,12 +99,10 @@ describe("AddTrainingModal (A24-7)", () => {
         onClose={() => undefined}
       />
     );
-    await screen.findByTestId("add-training-program");
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: "Defensive Driving" })).toBeInTheDocument();
-    });
-    await user.selectOptions(screen.getByTestId("add-training-program"), "Defensive Driving");
+    const programPicker = within(await screen.findByTestId("add-training-program")).getByRole("combobox");
+    await user.click(programPicker);
+    await user.click(await screen.findByRole("option", { name: "Defensive Driving" }));
     await user.click(screen.getByTestId("add-training-submit"));
-    expect(await screen.findByText("Failed to create training record.")).toBeInTheDocument();
+    expect(await screen.findByText("network")).toBeInTheDocument();
   });
 });
