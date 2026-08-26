@@ -188,8 +188,9 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
       {/* ARCHIVE (A24-6): prior placeholder lived inline on DriverDetail — now live drill-down with QBO-style filters */}
       <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
         <div className="text-xs text-gray-600">
-          <span>From</span>
+          <label htmlFor="driver-audit-filter-from">From</label>
           <DatePicker
+            id="driver-audit-filter-from"
             className="mt-1 block"
             value={fromDate}
             onChange={(next) => setFromDate(next)}
@@ -197,8 +198,9 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
           />
         </div>
         <div className="text-xs text-gray-600">
-          <span>To</span>
+          <label htmlFor="driver-audit-filter-to">To</label>
           <DatePicker
+            id="driver-audit-filter-to"
             className="mt-1 block"
             value={toDate}
             onChange={(next) => setToDate(next)}
