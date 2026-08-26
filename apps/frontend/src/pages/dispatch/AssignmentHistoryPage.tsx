@@ -160,9 +160,12 @@ render: (row) => {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">From</label>
+          <label htmlFor="assignment-history-from" className="text-xs font-semibold text-gray-600">
+            From
+          </label>
           {/* Layout-only className — DatePicker owns the single border (no box-in-box). */}
           <DatePicker
+            id="assignment-history-from"
             value={draft.from}
             onChange={(next) => setDraft((d) => ({ ...d, from: next }))}
             className="w-full"
@@ -170,8 +173,11 @@ render: (row) => {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">To</label>
+          <label htmlFor="assignment-history-to" className="text-xs font-semibold text-gray-600">
+            To
+          </label>
           <DatePicker
+            id="assignment-history-to"
             value={draft.to}
             onChange={(next) => setDraft((d) => ({ ...d, to: next }))}
             className="w-full"

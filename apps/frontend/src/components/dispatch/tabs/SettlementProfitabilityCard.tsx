@@ -12,7 +12,7 @@
  *   />
  */
 import { useQuery } from "@tanstack/react-query";
-import { getLoadProfitability, classifyProfit, formatProfitCents } from "../../../lib/loadProfit";
+import { getLoadProfitability, classifyProfit } from "../../../lib/loadProfit";
 
 type Props = {
   loadId: string;
@@ -23,7 +23,12 @@ type Props = {
 function money(cents: number | null | undefined, currency?: string | null) {
   // Never construct NumberFormat with a null amount or a blank currency (both throw).
   if (cents == null || Number.isNaN(Number(cents))) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD", maximumFractionDigits: 0 }).format(Number(cents) / 100);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(cents) / 100);
 }
 
 function Row({ label, cents, currency, negative = false }: { label: string; cents: number; currency: string; negative?: boolean }) {
@@ -66,7 +71,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
   if (!d) return null;
 
   const variant = classifyProfit(d.net_profit_cents, d.margin_pct);
-  const netLabel = formatProfitCents(d.net_profit_cents);
+  const netLabel = money(d.net_profit_cents, currencyCode);
 
   const variantBg: Record<typeof variant, string> = {
     positive: "bg-slate-50 border-slate-200",

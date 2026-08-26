@@ -9,6 +9,7 @@ import process from "node:process";
 
 const LABEL = "verify-reports-trip-profitability-two-decimal-money";
 const PAGE = "apps/frontend/src/pages/dispatch/TripProfitability.tsx";
+const CARD = "apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -28,6 +29,17 @@ function analyze() {
   }
   if (!/function money\(cents/.test(page) || !/return formatUsdCents\(cents\)/.test(page)) {
     failures.push("local money() helper must delegate to formatUsdCents");
+  }
+
+  const card = read(CARD);
+  if (/maximumFractionDigits:\s*0/.test(card)) {
+    failures.push("SettlementProfitabilityCard must not configure zero-decimal currency formatting");
+  }
+  if (!/minimumFractionDigits:\s*2/.test(card) || !/maximumFractionDigits:\s*2/.test(card)) {
+    failures.push("SettlementProfitabilityCard money() must use two decimal places (QBO cents)");
+  }
+  if (/formatProfitCents/.test(card)) {
+    failures.push("SettlementProfitabilityCard must not use compact formatProfitCents for drawer money");
   }
   return failures;
 }
@@ -54,6 +66,22 @@ function selftest() {
   } finally {
     fs.writeFileSync(pagePath, original);
   }
+  const cardPath = path.join(process.cwd(), CARD);
+  const cardOriginal = fs.readFileSync(cardPath, "utf8");
+  try {
+    const badCard = cardOriginal.replace(
+      /maximumFractionDigits:\s*2/,
+      "maximumFractionDigits: 0",
+    );
+    if (badCard === cardOriginal) fail("selftest could not plant zero-decimal on SettlementProfitabilityCard");
+    fs.writeFileSync(cardPath, badCard);
+    const planted = analyze();
+    if (!planted.some((m) => /SettlementProfitabilityCard/.test(m))) {
+      fail(`selftest expected card fail; got: ${planted.join("; ")}`);
+    }
+  } finally {
+    fs.writeFileSync(cardPath, cardOriginal);
+  }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);
   console.log(`${LABEL} selftest PASS`);
@@ -66,4 +94,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = analyze();
 if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — Trip Profitability uses formatUsdCents (two decimals)`);
+console.log(`${LABEL} PASS — Trip Profitability uses formatUsdCents; load Settlement card shows two decimals`);

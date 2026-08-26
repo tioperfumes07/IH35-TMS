@@ -26,6 +26,7 @@ const ROOT = path.resolve(__dirname, "..");
 const DATEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DatePicker.tsx");
 const HISTORY = path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx");
 const TRIP = path.join(ROOT, "apps/frontend/src/pages/dispatch/TripProfitability.tsx");
+const BORDER = path.join(ROOT, "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx");
 const FE = path.join(ROOT, "apps/frontend/src");
 
 const CHROME_TOKEN = /(?:^|\s)(?:rounded(?:-\S+)?|border(?:-\S+)?|p[xytblr]?-\S+|text-\S+|focus:\S+|hover:border\S*)(?:\s|$)/;
@@ -145,6 +146,20 @@ function run() {
   if (!hist.includes('data-testid="assignment-history-from-date"') || !hist.includes('data-testid="assignment-history-to-date"')) {
     errors.push("AssignmentHistoryPage must keep from/to DatePicker test ids");
   }
+  if (!hist.includes('htmlFor="assignment-history-from"') || !hist.includes('id="assignment-history-from"')) {
+    errors.push("AssignmentHistory From must htmlFor/id assignment-history-from (GO-2310)");
+  }
+  if (!hist.includes('htmlFor="assignment-history-to"') || !hist.includes('id="assignment-history-to"')) {
+    errors.push("AssignmentHistory To must htmlFor/id assignment-history-to (GO-2310)");
+  }
+
+  const border = fs.readFileSync(BORDER, "utf8");
+  if (!border.includes('htmlFor="border-crossing-from"') || !border.includes('id="border-crossing-from"')) {
+    errors.push("BorderCrossingHistory From must htmlFor/id border-crossing-from (GO-2310)");
+  }
+  if (!border.includes('htmlFor="border-crossing-to"') || !border.includes('id="border-crossing-to"')) {
+    errors.push("BorderCrossingHistory To must htmlFor/id border-crossing-to (GO-2310)");
+  }
 
   const trip = fs.readFileSync(TRIP, "utf8");
   if (/<label[^>]*>(?:(?!<\/label>)[\s\S])*<DatePicker/.test(trip)) {
@@ -206,6 +221,24 @@ function selftest() {
     });
     if (red.status === 0) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: bordered call site did not redden");
+      process.exit(1);
+    }
+  } finally {
+    fs.writeFileSync(HISTORY, histBak);
+  }
+  try {
+    const orphaned = histBak.replace(`htmlFor="assignment-history-from"`, `data-orphaned="assignment-history-from"`);
+    if (orphaned === histBak) {
+      console.error("selftest FAIL: could not orphan assignment-history-from htmlFor");
+      process.exit(1);
+    }
+    fs.writeFileSync(HISTORY, orphaned);
+    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (red.status === 0) {
+      console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned assignment From label did not redden");
       process.exit(1);
     }
   } finally {
