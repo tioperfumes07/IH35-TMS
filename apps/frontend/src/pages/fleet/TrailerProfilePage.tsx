@@ -345,7 +345,10 @@ export function TrailerProfilePage() {
         danger
         onClose={() => setArchiveConfirmOpen(false)}
         onConfirm={async () => {
-          await archiveMutation.mutateAsync({ trailerId: id, companyId, generation: actionGenerationRef.current }).catch(() => undefined); // onError above already toasts
+          // Let the rejection reach ConfirmModal. It keeps the confirmation open on failure while
+          // archiveMutation.onError renders the operator-facing toast; converting the rejection to
+          // a resolved promise here previously made a failed archive look confirmed and closed it.
+          await archiveMutation.mutateAsync({ trailerId: id, companyId, generation: actionGenerationRef.current });
         }}
       />
     </div>
