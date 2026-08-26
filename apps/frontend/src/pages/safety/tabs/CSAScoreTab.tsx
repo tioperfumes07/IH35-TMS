@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,8 +28,11 @@ export function CSAScoreTab() {
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const isOwner = auth.user?.role === "Owner";
   const [period, setPeriod] = useState("rolling-24");
+  const [recomputeError, setRecomputeError] = useState<unknown>(null);
+  const [saferError, setSaferError] = useState<unknown>(null);
 
   const currentQuery = useQuery({
     queryKey: ["safety-v64", "csa-current", companyId],
@@ -43,17 +46,38 @@ export function CSAScoreTab() {
     enabled: Boolean(companyId),
   });
 
+  /** @matrix-built modules=safety cols=connectivity,reverse_link */
   const recomputeMutation = useMutation({
-    mutationFn: () => recomputeCsa(companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "csa-current", companyId] });
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "csa-history", companyId] });
+    mutationFn: (input: { companyId: string; generation: number }) => recomputeCsa(input.companyId),
+    onMutate: () => setRecomputeError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "csa-current", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "csa-history", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setRecomputeError(error);
     },
   });
 
   const saferMutation = useMutation({
-    mutationFn: () => pullCsaFromSafer(companyId),
+    mutationFn: (input: { companyId: string; generation: number }) => pullCsaFromSafer(input.companyId),
+    onMutate: () => setSaferError(null),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setSaferError(error);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setRecomputeError(null);
+    setSaferError(null);
+    recomputeMutation.reset();
+    saferMutation.reset();
+  }, [companyId]); // Mutation resets are stable; company transitions own a fresh CSA action lifecycle.
 
   const current = currentQuery.data?.current ?? null;
   const basics = useMemo<BasicRow[]>(
@@ -92,18 +116,18 @@ export function CSAScoreTab() {
           <option value="rolling-24">Rolling 24-month</option>
           <option value="custom">Custom range</option>
         </SelectCombobox>
-        <button type="button" className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
           Manual recompute
         </button>
-        <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
+        <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
           Check public SAFER availability
         </button>
-        {recomputeMutation.isError ? (
+        {recomputeError ? (
           <span className="text-xs text-red-700" data-testid="csa-recompute-error">
-            {userFacingApiError(recomputeMutation.error, "Could not recompute CSA scores.")}
+            {userFacingApiError(recomputeError, "Could not recompute CSA scores.")}
           </span>
         ) : null}
-        {saferMutation.isError ? (
+        {saferError ? (
           <span className="text-xs text-slate-700">
             Public SAFER is not authoritative for Hazmat BASIC. Authenticated carrier SMS access is required.
           </span>
