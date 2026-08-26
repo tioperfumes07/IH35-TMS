@@ -1,7 +1,8 @@
 # LEAD SEAT (one line of truth)
 
-**SEAT=CURSOR**  
-**SINCE=2026-08-25T23:32CT**  
+**SEAT=CC-1**  
+**SINCE=2026-08-26T04:50:18.700Z**  
+**REASON=T1-FAST-MERGE-VERIFY-STATIC**  
 **PACKET=`docs/bus/CLAUDE-LEAD-NOW.md`**
 
-If `SEAT=CC-1`, Claude is lead. Cursor is worker + deploy lieutenant. Read `docs/bus/LEAD-CONTRACT.md`.
+Cursor is worker + deploy lieutenant. Claude owns census + INBOX rewrites + money NOW.

@@ -9,9 +9,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const reason = process.argv.includes("--reason")
-  ? process.argv[process.argv.indexOf("--reason") + 1]
-  : "UNSPECIFIED";
+function parseReason(argv) {
+  const eq = argv.find((a) => a.startsWith("--reason="));
+  if (eq) return eq.slice("--reason=".length) || "UNSPECIFIED";
+  const i = argv.indexOf("--reason");
+  if (i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("-")) return argv[i + 1];
+  return "UNSPECIFIED";
+}
+const reason = parseReason(process.argv);
 const when = new Date().toISOString();
 
 const packet = fs.readFileSync(path.join(ROOT, "docs/bus/CLAUDE-LEAD-NOW.md"), "utf8");
