@@ -1345,6 +1345,10 @@ export function DispatchBoard({
             } catch (error) {
               // CU-09 / FAIL-U1: prefer message/blocker; never toast a bare E_* machine code.
               pushToast(userFacingApiError(error, "Quick assign failed"), "error");
+              // HOP-ASSIGN-F6495 — QuickAssignModal closes only when this promise resolves.
+              // Preserve the rejection after disclosing it so a failed write keeps the modal and
+              // the operator's driver/unit/trailer selections open for correction or Retry.
+              throw error;
             }
           }}
         />
