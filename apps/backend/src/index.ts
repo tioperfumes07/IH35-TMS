@@ -203,6 +203,7 @@ import { registerSafetyDriverDocumentsRoutes } from "./safety/driver-documents.r
 // The 425-C exhibits generator is NO LONGER held — it is mounted below next to registerForm425CRoutes,
 // read-only and role-gated, so the exhibits can be rendered and reviewed. Rendering is not filing.)
 import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
+import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
 import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
 import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
 import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
@@ -1493,6 +1494,13 @@ async function main() {
       app.log.info("[STARTUP] cap-14-cargo-sensor-worker initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] cap-14-cargo-sensor-worker failed");
+    }
+
+    try {
+      initializeCap12TireTreadWorker(app);
+      app.log.info("[STARTUP] cap-12-tire-tread-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cap-12-tire-tread-worker failed");
     }
 
     try {

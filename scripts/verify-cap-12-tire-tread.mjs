@@ -9,6 +9,24 @@ import path from "node:path";
 const ROOT = process.cwd();
 const failures = [];
 
+function cap12WiringFailures({ index, maintenanceHome, manifest }) {
+  const missing = [];
+  if (!/import \{ initializeCap12TireTreadWorker \} from ["']\.\/jobs\/cap-12-tire-tread-worker\.js["']/.test(index)) {
+    missing.push("worker import");
+  }
+  if (!/initializeCap12TireTreadWorker\(app\)/.test(index)) missing.push("worker initialization");
+  if (!/import \{ TireWearDashboard \} from ["']\.\/tires\/TireWearDashboard["']/.test(maintenanceHome)) {
+    missing.push("integrated dashboard import");
+  }
+  if (!/tab === ["']tire_wear["'][\s\S]{0,220}<TireWearDashboard\s*\/>/.test(maintenanceHome)) {
+    missing.push("integrated dashboard mount");
+  }
+  if (!/path=["']\/maintenance\/tire-wear["'][\s\S]{0,220}<MaintenanceTabRoute tabId=["']tire_wear["']/.test(manifest)) {
+    missing.push("canonical tire-wear route");
+  }
+  return missing;
+}
+
 function fail(msg) {
   failures.push(msg);
 }
@@ -88,7 +106,6 @@ checkContains("apps/backend/src/jobs/cap-12-tire-tread-worker.ts", worker, [
 const indexTs = checkExists("apps/backend/src/index.ts");
 checkContains("apps/backend/src/index.ts", indexTs, [
   { pattern: /registerCap12TireTreadRoutes/, label: "routes registered in index" },
-  { pattern: /initializeCap12TireTreadWorker/, label: "worker registered in index" },
 ]);
 
 const dashboard = checkExists("apps/frontend/src/pages/maintenance/tires/TireWearDashboard.tsx");
@@ -116,11 +133,11 @@ checkContains("apps/frontend/src/pages/units/UnitDetail.tsx", unitDetail, [
   { pattern: /UnitTiresTab/, label: "tires tab wired in UnitDetail" },
 ]);
 
+const maintenanceHome = checkExists("apps/frontend/src/pages/maintenance/MaintenanceHome.tsx");
 const manifest = checkExists("apps/frontend/src/routes/manifest.tsx");
-checkContains("apps/frontend/src/routes/manifest.tsx", manifest, [
-  { pattern: /TireWearDashboard/, label: "dashboard route import" },
-  { pattern: /\/maintenance\/tires\/wear/, label: "wear dashboard route" },
-]);
+for (const missing of cap12WiringFailures({ index: indexTs ?? "", maintenanceHome: maintenanceHome ?? "", manifest: manifest ?? "" })) {
+  fail(`CAP-12 wiring: missing ${missing}`);
+}
 
 const docs = checkExists("docs/specs/gap-62-cap-12-tire-tread.md");
 checkContains("docs/specs/gap-62-cap-12-tire-tread.md", docs, [
@@ -140,6 +157,24 @@ if (failures.length > 0) {
     console.error(`  ✗ ${f}`);
   }
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const fixtures = { index: indexTs, maintenanceHome, manifest };
+  const mutations = [
+    { ...fixtures, index: indexTs.replace("initializeCap12TireTreadWorker(app)", "void app") },
+    { ...fixtures, index: indexTs.replace('import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";', "") },
+    { ...fixtures, maintenanceHome: maintenanceHome.replace("<TireWearDashboard />", "<div />") },
+    { ...fixtures, maintenanceHome: maintenanceHome.replace('import { TireWearDashboard } from "./tires/TireWearDashboard";', "") },
+    { ...fixtures, manifest: manifest.replace('path="/maintenance/tire-wear"', 'path="/maintenance/tire-wear-removed"') },
+  ];
+  const escaped = mutations.filter((fixture) => cap12WiringFailures(fixture).length === 0);
+  if (escaped.length > 0) {
+    console.error(`verify:cap-12-tire-tread --selftest FAILED — ${escaped.length}/5 mutations escaped`);
+    process.exit(1);
+  }
+  console.log("verify:cap-12-tire-tread --selftest PASS — 5/5 mutations detected");
+  process.exit(0);
 }
 
 console.log("verify:cap-12-tire-tread — OK");
