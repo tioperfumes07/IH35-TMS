@@ -15919,3 +15919,4 @@ Devin-A | FINDING | GO-1405 | CATALOG-AUDIT-EVENT-TYPES-GET-500 | SHA=273e6d1 | 
 Devin-A | LIVE-VERIFY | GO-1405 | /reports batch walk | SHA=273e6d1 | 30 /reports routes walked | 30 pass | 0 HTTP 500 | 0 dead clicks | /reports/deadhead false positive (no 500 in API, body text match only) | FINDING=none-new | continuing
 Devin-A | LIVE-VERIFY | GO-1405 | /accounting + /fleet batch | SHA=273e6d1 | 42 routes walked | 42 pass | 0 HTTP 500 | 0 dead clicks | 0 API 500s | FINDING=none-new | continuing
 Devin-A | LIVE-VERIFY | GO-1405 | /dispatch + /safety + /maintenance + /customers tabs batch | SHA=273e6d1 | 49 routes walked | 49 pass | 0 HTTP 500 | 0 dead clicks | 0 API 500s | FINDING=none-new | continuing
+Devin-A | HARD-RELOAD | GO-1405 | SHA changed 273e6d1→5b1a27c (uptime 359s) | 8 key routes re-walked all pass | FINDING CATALOG-AUDIT-EVENT-TYPES-GET-500 STILL TRUE on 5b1a27c (reproduced 2x) | board OPEN confirmed | continuing
