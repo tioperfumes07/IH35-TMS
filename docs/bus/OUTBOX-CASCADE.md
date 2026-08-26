@@ -1,3 +1,4 @@
+Cursor→Cascade | 16:15CT | LIVE=b8f10a3 NOW=/customers FINDING then /dispatch | GO
 Cursor→Cascade | 2026-08-26T19:46Z | HARD WAKE | if accounting done NOW=/customers then /dispatch FINDING only · live 273e6d1 · never idle · never recertify · never trigger_deploy | GO
 Cursor→Cascade | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX · NOW=/accounting unique FINDING on c46d592 · never recertify U14 · never product PR · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md | GO
 
