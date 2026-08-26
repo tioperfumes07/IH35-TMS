@@ -75,9 +75,9 @@ export function PermitsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const renewalAlerts = permitsQuery.data?.renewal_alerts ?? [];
-  const permits = permitsQuery.data?.permits ?? [];
-  const reminder = permitsQuery.data?.renewal_reminder;
+  const renewalAlerts = permitsQuery.isError ? [] : permitsQuery.data?.renewal_alerts ?? [];
+  const permits = permitsQuery.isError ? [] : permitsQuery.data?.permits ?? [];
+  const reminder = permitsQuery.isError ? undefined : permitsQuery.data?.renewal_reminder;
 
   const activePermits = useMemo(
     () => permits.filter((row) => !row.archived_at),
@@ -194,7 +194,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
             <button
               type="button"
               className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white"
-              disabled={reminderMutation.isPending}
+              disabled={permitsQuery.isError || reminderMutation.isPending}
               onClick={() => reminderMutation.mutate()}
             >
               Save alert window
@@ -206,7 +206,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
             {userFacingApiError(reminderMutation.error, "Could not save the permit renewal alert window.")}
           </p>
         ) : null}
-        {renewalAlerts.length === 0 ? (
+        {!permitsQuery.isError && (renewalAlerts.length === 0 ? (
           <p className="text-xs text-slate-700">No permits due for renewal within the alert window.</p>
         ) : (
           <ul className="space-y-1">
@@ -221,7 +221,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               </li>
             ))}
           </ul>
-        )}
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

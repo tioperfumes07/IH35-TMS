@@ -124,10 +124,10 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const rows = fleetQuery.data?.rows ?? [];
-  const fleetTotal = fleetQuery.data?.total;
+  const rows = fleetQuery.isError ? [] : fleetQuery.data?.rows ?? [];
+  const fleetTotal = fleetQuery.isError ? 0 : fleetQuery.data?.total;
   const metrics = useMemo(() => computeHosDashboardMetrics(rows), [rows]);
-  const violations = (violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
+  const violations = (violationsQuery.isError ? [] : violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
 
   const fleetColumns = useMemo<Array<ParityColumn<FleetHosDriverRow>>>(
     () => [
@@ -191,25 +191,25 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Drivers on duty</div>
           <div className="text-xl font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
-            {metrics.onDuty}
+            {fleetQuery.isError ? "—" : metrics.onDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Drivers off duty</div>
           <div className="text-xl font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
-            {metrics.offDuty}
+            {fleetQuery.isError ? "—" : metrics.offDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Approaching 11h drive cap</div>
           <div className="text-xl font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
-            {metrics.approachingCap}
+            {fleetQuery.isError ? "—" : metrics.approachingCap}
           </div>
           <div className="text-[10px] text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
         </div>
       </div>
 
-      {metrics.nearViolations.length > 0 ? (
+      {!fleetQuery.isError && metrics.nearViolations.length > 0 ? (
         <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="safety-hos-near-violations">
           <h2 className="text-xs font-semibold uppercase text-slate-700">Near-violation alerts</h2>
           <ul className="mt-2 space-y-1 text-xs text-slate-700">
