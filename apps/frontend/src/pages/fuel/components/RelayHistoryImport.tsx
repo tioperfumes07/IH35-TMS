@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../auth/useAuth";
 import { runRelayFuelBackfill } from "../../../api/relayDeposits";
 
@@ -11,19 +11,34 @@ export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId:
   const [months, setMonths] = useState(24);
   const [state, setState] = useState<"idle" | "starting" | "started" | "error">("idle");
   const [msg, setMsg] = useState("");
+  const lifecycleGenerationRef = useRef(0);
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    setMonths(24);
+    setState("idle");
+    setMsg("");
+  }, [operatingCompanyId]);
 
   if (user?.role !== "Owner") return null;
 
   const onImport = async () => {
+    const request = {
+      companyId: operatingCompanyId,
+      months,
+      generation: lifecycleGenerationRef.current,
+    };
     setState("starting");
     setMsg("");
     try {
-      const res = await runRelayFuelBackfill(operatingCompanyId, months);
+      const res = await runRelayFuelBackfill(request.companyId, request.months);
+      if (request.generation !== lifecycleGenerationRef.current) return;
       setState("started");
       setMsg(
         `Backfill started for the last ${res.months} month(s), pulled in 3-day windows. Rows appear in Fuel transactions as each window completes — refresh to watch progress.`
       );
     } catch (e) {
+      if (request.generation !== lifecycleGenerationRef.current) return;
       setState("error");
       setMsg(String((e as Error)?.message ?? e));
     }
