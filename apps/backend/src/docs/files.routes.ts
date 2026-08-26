@@ -180,11 +180,17 @@ async function ensureLinkEntityExists(
     return res.rows.length > 0;
   }
   if (entityType === "unit") {
-    const res = await client.query("SELECT id FROM mdata.units WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query(
+      "SELECT id FROM mdata.units WHERE id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid) LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
     return res.rows.length > 0;
   }
   if (entityType === "equipment") {
-    const res = await client.query("SELECT id FROM mdata.equipment WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query(
+      "SELECT id FROM mdata.equipment WHERE id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid) LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
     return res.rows.length > 0;
   }
   if (entityType === "load") {

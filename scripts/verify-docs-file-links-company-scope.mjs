@@ -25,16 +25,18 @@ import process from "node:process";
 const repoRoot = process.cwd();
 const ROUTES_FILE = "apps/backend/src/docs/files.routes.ts";
 
-const ENTITY_TABLES = [
+const ENTITY_TABLES_OPCO = [
   "mdata.drivers",
   "mdata.customers",
   "mdata.vendors",
-  "mdata.units",
-  "mdata.equipment",
   "mdata.loads",
   "accounting.invoices",
   "driver_finance.driver_settlements",
 ];
+
+const ENTITY_TABLES_OWNER_OR_LEASE = ["mdata.units", "mdata.equipment"];
+const OWNER_OR_LEASE =
+  "id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)";
 
 const ACCESSIBLE_COMPANIES = "operating_company_id IN (SELECT org.user_accessible_company_ids())";
 
@@ -47,10 +49,23 @@ const ROUTE_CHECKS = [
         offenders.push(`${ROUTES_FILE}: ensureLinkEntityExists() no longer takes an operatingCompanyId parameter`);
         return;
       }
-      for (const table of ENTITY_TABLES) {
+      for (const table of ENTITY_TABLES_OPCO) {
         const re = new RegExp(`FROM ${table.replace(".", "\\.")}[^\`"]*\\bid = \\$1\\b[^\`"]*\\boperating_company_id = \\$2\\b`);
         if (!re.test(slice)) {
           offenders.push(`${ROUTES_FILE}: ensureLinkEntityExists() lookup against ${table} has no operating_company_id = $2 predicate`);
+        }
+      }
+      for (const table of ENTITY_TABLES_OWNER_OR_LEASE) {
+        const escaped = table.replace(".", "\\.");
+        const fromRe = new RegExp(`FROM ${escaped}[^\\\`"]*${OWNER_OR_LEASE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+        if (!fromRe.test(slice)) {
+          offenders.push(
+            `${ROUTES_FILE}: ensureLinkEntityExists() lookup against ${table} must use owner_company_id OR currently_leased_to_company_id (not operating_company_id — column does not exist)`
+          );
+        }
+        const opcoOnFleet = new RegExp(`FROM ${escaped}[^\\\`"]*operating_company_id`);
+        if (opcoOnFleet.test(slice)) {
+          offenders.push(`${ROUTES_FILE}: ensureLinkEntityExists() lookup against ${table} still filters operating_company_id (42703 500)`);
         }
       }
     },
@@ -191,14 +206,25 @@ if (process.argv.includes("--selftest")) {
 
   const buggyFails = checkDocsFileCompanyScope(buggy).length > 0;
   const fixedPasses = checkDocsFileCompanyScope(fixed).length === 0;
+  const plantedUnitOpco = fixed.replace(
+    "FROM mdata.units WHERE id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)",
+    "FROM mdata.units WHERE id = $1 AND operating_company_id = $2"
+  );
+  const plantedEquipmentOpco = plantedUnitOpco.replace(
+    "FROM mdata.equipment WHERE id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)",
+    "FROM mdata.equipment WHERE id = $1 AND operating_company_id = $2"
+  );
+  const plantedFails = checkDocsFileCompanyScope(plantedEquipmentOpco).length > 0;
 
-  if (buggyFails && fixedPasses) {
+  if (buggyFails && fixedPasses && plantedFails) {
     console.log("verify:docs-file-links-company-scope selftest OK");
     process.exit(0);
   }
   console.error("verify:docs-file-links-company-scope selftest FAILED", {
     buggyFails,
     fixedPasses,
+    plantedFails,
+    plantedOffenders: checkDocsFileCompanyScope(plantedEquipmentOpco),
     fixedOffenders: checkDocsFileCompanyScope(fixed),
   });
   process.exit(1);
