@@ -349,6 +349,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     queryKey: ["org", "my-companies"],
     queryFn: () => listMyCompanies().then((result) => result.companies),
   });
+  const activeCompanies = useMemo(
+    () => (companiesQuery.data ?? []).filter((company) => company.is_active),
+    [companiesQuery.data]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -356,17 +360,17 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     // Seed the operating company from the caller's selected entity (SM1), else the user's default company.
     const seed =
       companyId ||
-      ((companiesQuery.data ?? []).find((company) => company.is_default) ?? companiesQuery.data?.[0])?.id;
+      (activeCompanies.find((company) => company.is_default) ?? activeCompanies[0])?.id;
     if (!seed) return;
     setForm((current) => ({ ...current, operating_company_id: seed }));
-  }, [open, companyId, companiesQuery.data, form.operating_company_id]);
+  }, [open, companyId, activeCompanies, form.operating_company_id]);
 
   useEffect(() => {
     if (!open || driverCreateBaseline !== null) return;
-    const hasCompanies = (companiesQuery.data?.length ?? 0) > 0;
+    const hasCompanies = activeCompanies.length > 0;
     if (hasCompanies && !form.operating_company_id) return;
     setDriverCreateBaseline(driverCreateSnapshot);
-  }, [open, driverCreateBaseline, form.operating_company_id, companiesQuery.data, driverCreateSnapshot]);
+  }, [open, driverCreateBaseline, form.operating_company_id, activeCompanies, driverCreateSnapshot]);
 
   const terminatedMatches = useMemo(() => {
     const deduped = new Map<
@@ -654,7 +658,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               id="operating_company_id"
               dataTestId="driver-create-operating-company"
               dataField="operating_company_id"
-              options={(companiesQuery.data ?? []).map((company) => ({
+              options={activeCompanies.map((company) => ({
                 value: company.id,
                 label: `${company.code} - ${company.short_name || company.legal_name}`,
                 sublabel: company.legal_name,
