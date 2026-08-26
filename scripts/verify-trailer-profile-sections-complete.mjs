@@ -117,7 +117,7 @@ export function problems(
   if (!/onQuickAssign=\{\(\) => setQuickAssignOpen\(true\)\}/.test(page) || !/equipmentKind: "trailer"/.test(page)) {
     failures.push("trailer profile must expose the canonical trailer driver quick-assign creator");
   }
-  if (!/quicksaveEquipmentAssignment\(\{[\s\S]{0,180}?operating_company_id: companyId[\s\S]{0,180}?driver_id: driverId/.test(page)) {
+  if (!/quicksaveEquipmentAssignment\(\{[\s\S]{0,180}?operating_company_id: input\.companyId[\s\S]{0,180}?equipment_id: input\.trailerId[\s\S]{0,180}?driver_id: input\.driverId/.test(page)) {
     failures.push("trailer quick assign must persist the selected driver through the canonical scoped endpoint");
   }
 
@@ -136,7 +136,7 @@ export function problems(
   // FLEET-TRAILER-WO-REVERSE-SCOPE: the mounted trailer maintenance panel must be produced from
   // maintenance.work_orders.equipment_id. current_unit_id is contextual power-unit data, not the
   // trailer FK, and would both leak unit WOs and false-empty unattached trailers.
-  const equipmentScopedWoReads = service.match(/FROM maintenance\.work_orders w[\s\S]{0,220}?w\.equipment_id = \$1::uuid[\s\S]{0,140}?w\.operating_company_id = \$2::uuid[\s\S]{0,100}?w\.voided_at IS NULL/g) ?? [];
+  const equipmentScopedWoReads = service.match(/FROM maintenance\.work_orders w[\s\S]{0,360}?w\.equipment_id = \$1::uuid[\s\S]{0,200}?w\.operating_company_id = \$2::uuid[\s\S]{0,160}?w\.voided_at IS NULL/g) ?? [];
   if (equipmentScopedWoReads.length < 3) {
     failures.push("trailer work-order count, last service, and reverse list must use the scoped equipment_id FK");
   }

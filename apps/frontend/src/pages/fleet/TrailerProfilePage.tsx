@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -89,6 +89,7 @@ export function TrailerProfilePage() {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [quickAssignOpen, setQuickAssignOpen] = useState(false);
+  const actionGenerationRef = useRef(0);
 
   const profileQ = useQuery({
     queryKey: ["trailer-profile", id, companyId],
@@ -96,8 +97,8 @@ export function TrailerProfilePage() {
     enabled: Boolean(id && companyId),
   });
 
-  const invalidateProfile = () => {
-    void queryClient.invalidateQueries({ queryKey: ["trailer-profile", id, companyId] });
+  const invalidateProfile = (profileId = id, operatingCompanyId = companyId) => {
+    void queryClient.invalidateQueries({ queryKey: ["trailer-profile", profileId, operatingCompanyId] });
   };
 
   // Dead-click fix (0441-mod9-trailerprofile-archive-dead): this used to be a "not yet
@@ -105,24 +106,37 @@ export function TrailerProfilePage() {
   // selected" for trailers) already exists — POST /api/v1/mdata/equipment/:id/deactivate.
   // Soft-delete only (deactivated_at), never a hard delete; reversible via "Reactivate" on the
   // Fleet roster.
+  /** @matrix-built modules=fleet cols=driver,trailer,connectivity,reverse_link */
   const archiveMutation = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/v1/mdata/equipment/${id}/deactivate?operating_company_id=${encodeURIComponent(companyId)}`, {
+    mutationFn: (input: { trailerId: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/mdata/equipment/${input.trailerId}/deactivate?operating_company_id=${encodeURIComponent(input.companyId)}`, {
         method: "POST",
         body: {},
       }),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Trailer archived (soft-deleted) — reversible from the Fleet roster.", "success");
-      invalidateProfile();
+      invalidateProfile(input.trailerId, input.companyId);
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive trailer", "error"),
+    onError: (e, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(e instanceof Error ? e.message : "Failed to archive trailer", "error");
+    },
   });
 
   // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
   // (in-app yes/no shell) replaces it, same soft-delete/reversible contract.
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const handleArchive = () => setArchiveConfirmOpen(true);
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    archiveMutation.reset();
+    setArchiveConfirmOpen(false);
+    setStatusModalOpen(false);
+    setEditModalOpen(false);
+    setQuickAssignOpen(false);
+  }, [companyId, id]);
 
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
@@ -311,13 +325,15 @@ export function TrailerProfilePage() {
         target={{ equipmentKind: "trailer", equipmentId: id, equipmentLabel: trailerLabel }}
         onClose={() => setQuickAssignOpen(false)}
         onConfirm={async (driverId) => {
+          const input = { companyId, trailerId: id, driverId, generation: actionGenerationRef.current };
           await quicksaveEquipmentAssignment({
-            operating_company_id: companyId,
+            operating_company_id: input.companyId,
             equipment_kind: "trailer",
-            equipment_id: id,
-            driver_id: driverId,
+            equipment_id: input.trailerId,
+            driver_id: input.driverId,
           });
-          invalidateProfile();
+          if (input.generation !== actionGenerationRef.current) return;
+          invalidateProfile(input.trailerId, input.companyId);
           pushToast("Driver assigned", "success");
         }}
       />
@@ -329,7 +345,7 @@ export function TrailerProfilePage() {
         danger
         onClose={() => setArchiveConfirmOpen(false)}
         onConfirm={async () => {
-          await archiveMutation.mutateAsync().catch(() => undefined); // onError above already toasts
+          await archiveMutation.mutateAsync({ trailerId: id, companyId, generation: actionGenerationRef.current }).catch(() => undefined); // onError above already toasts
         }}
       />
     </div>
