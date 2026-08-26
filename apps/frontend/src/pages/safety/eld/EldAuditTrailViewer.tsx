@@ -152,22 +152,22 @@ export function EldAuditTrailViewer() {
               />
             </div>
           </label>
-          <label className="text-sm text-gray-700">
-            From
+          <div className="text-sm text-gray-700">
+            <span>From</span>
             <DatePicker
               className="mt-1 w-full"
               value={from}
               onChange={(next) => setFrom(next)}
             />
-          </label>
-          <label className="text-sm text-gray-700">
-            To
+          </div>
+          <div className="text-sm text-gray-700">
+            <span>To</span>
             <DatePicker
               className="mt-1 w-full"
               value={to}
               onChange={(next) => setTo(next)}
             />
-          </label>
+          </div>
         </div>
       </section>
 

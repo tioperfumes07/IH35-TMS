@@ -171,24 +171,24 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         }}
         filterBar={
           <div className="flex flex-wrap items-end gap-3" data-testid="idvr-filters">
-            <label className="text-[11px] text-slate-600">
-              From
+            <div className="text-[11px] text-slate-600">
+              <span>From</span>
               <DatePicker
                 value={draft.from}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
                 className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-from"
               />
-            </label>
-            <label className="text-[11px] text-slate-600">
-              To
+            </div>
+            <div className="text-[11px] text-slate-600">
+              <span>To</span>
               <DatePicker
                 value={draft.to}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
                 className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-to"
               />
-            </label>
+            </div>
             {/* C1 PICKER LAW: both were raw-UUID boxes. These are FILTERS, so allowCreate={false} —
                 a filter narrows existing DVIR rows and must not create a driver or a unit. */}
             <label className="text-[11px] text-slate-600">

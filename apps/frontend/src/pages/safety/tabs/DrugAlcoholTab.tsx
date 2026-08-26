@@ -367,12 +367,12 @@ export function DrugAlcoholTab() {
                 ))}
               </select>
             </label>
-            <label className="text-xs text-slate-600">
-              Test date
+            <div className="text-xs text-slate-600">
+              <span>Test date</span>
               {/* DatePicker renders its own bordered control — passing border/padding here
                   produced a box-within-a-box. Layout-only className now. */}
               <DatePicker className="mt-1 w-full" value={testDate} onChange={(next) => setTestDate(next)} max={companyToday()} />
-            </label>
+            </div>
           </div>
           <button
             type="button"
@@ -528,24 +528,24 @@ export function DrugAlcoholTab() {
               ))}
             </select>
           </label>
-          <label className="text-xs text-slate-600">
-            From
+          <div className="text-xs text-slate-600">
+            <span>From</span>
             <DatePicker
               className="mt-1 w-40"
               value={historyDraft.from}
               onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, from: next }))}
               placeholder="Any"
             />
-          </label>
-          <label className="text-xs text-slate-600">
-            To
+          </div>
+          <div className="text-xs text-slate-600">
+            <span>To</span>
             <DatePicker
               className="mt-1 w-40"
               value={historyDraft.to}
               onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, to: next }))}
               placeholder="Any"
             />
-          </label>
+          </div>
           <Button type="button" size="sm" data-testid="drug-alcohol-history-filter-apply" onClick={stagedHistory.apply} disabled={!stagedHistory.dirty}>
             Apply
           </Button>
