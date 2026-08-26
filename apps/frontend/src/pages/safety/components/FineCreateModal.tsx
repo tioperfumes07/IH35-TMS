@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listCivilFineTypes } from "../../../api/catalogs-safety";
@@ -47,6 +47,24 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
   /** Once the active-trip resolver fills the load, preserve an operator override. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const lifecycleGenerationRef = useRef(0);
+
+  const resetDraft = useCallback(() => {
+    setSubjectType("driver");
+    setSubjectDriverId(null);
+    setIssuedByAuthority("DOT");
+    setJurisdiction("");
+    setCivilFineTypeId(null);
+    setViolationDescription("");
+    setIssuedDate(companyToday());
+    setAmountUsd("");
+    setNotes("");
+    setSourceDocFile(null);
+    setCivilFineTypeSearch("");
+    setRelatedLoadId(null);
+    setRelatedUnitId(null);
+    setSuggestionPinned(false);
+  }, []);
 
   const suggestionQuery = useQuery({
     queryKey: ["safety", "fine-create", "suggest-load", operatingCompanyId, subjectDriverId, relatedUnitId, issuedDate],
@@ -144,7 +162,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     (subjectType === "company" || Boolean(subjectDriverId));
 
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (_submissionGeneration: number) => {
       // SAF-FINE-CATALOG: catalogs.civil_fine_types must be selected — free-text-only creates left
       // civil_fine_type_id / violation_code null so Lists could not group or rename types safely.
       if (!civilFineTypeId) {
@@ -172,22 +190,36 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         notes: notes || null,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_created, submissionGeneration) => {
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       onCreated();
-      onClose();
+      handleClose();
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    resetDraft();
+    createMutation.reset();
+  }, [open, operatingCompanyId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    resetDraft();
+    createMutation.reset();
+    onClose();
+  }, [createMutation, onClose, resetDraft]);
 
   return (
     <>
       <ParityDrawer
         open={open}
-        onClose={onClose}
+        onClose={handleClose}
         title="Create Fine"
         size="wide"
         footer={
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button type="button" variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
             <Button
@@ -208,7 +240,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            createMutation.mutate();
+            createMutation.mutate(lifecycleGenerationRef.current);
           }}
         >
           <div className="grid gap-3 md:grid-cols-2">
