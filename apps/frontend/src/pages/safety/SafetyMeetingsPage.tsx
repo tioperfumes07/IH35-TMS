@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +31,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   const [requiredAttendees, setRequiredAttendees] = useState<string[]>([]);
   const [attendeePick, setAttendeePick] = useState<string | null>(null);
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
+  const lifecycleGenerationRef = useRef(0);
 
   const meetingsQuery = useQuery({
     queryKey: ["safety", "meetings", operatingCompanyId],
@@ -39,33 +40,43 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createSafetyMeeting(operatingCompanyId, {
-        topic: topic.trim(),
-        meeting_date: meetingDate,
-        required_attendees: requiredAttendees,
-      }),
-    onSuccess: () => {
+    mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createSafetyMeeting>[1] }) =>
+      createSafetyMeeting(input.companyId, input.payload),
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       setCreateOpen(false);
       setTopic("");
       setRequiredAttendees([]);
       setAttendeePick(null);
-      void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", input.companyId] });
     },
   });
 
   const attendanceMutation = useMutation({
-    mutationFn: (payload: { meeting: SafetyMeetingRow; driverId: string; attended: boolean }) =>
-      syncSafetyMeetingAttendance(operatingCompanyId, {
-        meeting_id: payload.meeting.id,
-        meeting_title: payload.meeting.title,
-        driver_id: payload.driverId,
-        attended: payload.attended,
+    mutationFn: (input: { companyId: string; generation: number; meetingId: string; meetingTitle: string; driverId: string; attended: boolean }) =>
+      syncSafetyMeetingAttendance(input.companyId, {
+        meeting_id: input.meetingId,
+        meeting_title: input.meetingTitle,
+        driver_id: input.driverId,
+        attended: input.attended,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", operatingCompanyId] });
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    attendanceMutation.reset();
+    setCreateOpen(false);
+    setTopic("");
+    setMeetingDate(companyToday());
+    setRequiredAttendees([]);
+    setAttendeePick(null);
+    setExpandedMeetingId(null);
+  }, [operatingCompanyId]); // Mutation reset functions are stable; each company owns fresh meeting state.
 
   const meetings = meetingsQuery.data?.meetings ?? [];
   const linkedDriverIds = useMemo(
@@ -169,7 +180,10 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                         data-testid={`safety-meeting-attendance-${meeting.id}-${driverId}`}
                         onChange={(event) => {
                           attendanceMutation.mutate({
-                            meeting,
+                            companyId: operatingCompanyId,
+                            generation: lifecycleGenerationRef.current,
+                            meetingId: meeting.id,
+                            meetingTitle: meeting.title,
                             driverId,
                             attended: event.target.checked,
                           });
@@ -203,7 +217,15 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
           data-testid="safety-meeting-create-modal"
           onSubmit={(event) => {
             event.preventDefault();
-            createMutation.mutate();
+            createMutation.mutate({
+              companyId: operatingCompanyId,
+              generation: lifecycleGenerationRef.current,
+              payload: {
+                topic: topic.trim(),
+                meeting_date: meetingDate,
+                required_attendees: [...requiredAttendees],
+              },
+            });
           }}
         >
           <div className="block text-xs text-slate-600">
