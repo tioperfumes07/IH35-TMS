@@ -143,12 +143,16 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   }, [initialDraft, open]);
 
   const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending && !companiesQuery.isError;
+  const handleClose = () => {
+    if (createMutation.isPending) return;
+    resetAndClose();
+  };
 
   return (
     <ParityDrawer
       open={open}
       title={equipmentKind === "chassis" ? "Create Chassis" : "Create Trailer"}
-      onClose={resetAndClose}
+      onClose={handleClose}
       confirmDiscardOnClose
       isDirty={isDirty}
       onRegisterAttemptClose={(attemptClose) => {
@@ -157,7 +161,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
       stackAboveModal
       footer={
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()}>
+          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()} disabled={createMutation.isPending}>
             Cancel
           </Button>
           <Button form="fleet-create-trailer-form" type="submit" data-testid="fleet-create-trailer-submit" loading={createMutation.isPending} disabled={!canSubmit}>
