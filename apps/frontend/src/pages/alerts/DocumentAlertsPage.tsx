@@ -178,9 +178,9 @@ export function DocumentAlertsPage() {
     onError: (err) => pushToast(userFacingApiError(err, "Could not run the alert evaluator"), "error"),
   });
 
-  const events = inboxQuery.data?.events ?? [];
-  const pendingCount = inboxQuery.data?.pending_count ?? 0;
-  const rules = rulesQuery.data?.document_alert_rules ?? [];
+  const events = inboxQuery.isError ? [] : inboxQuery.data?.events ?? [];
+  const pendingCount = inboxQuery.isError ? 0 : inboxQuery.data?.pending_count ?? 0;
+  const rules = rulesQuery.isError ? [] : rulesQuery.data?.document_alert_rules ?? [];
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => a.days_until_expiry - b.days_until_expiry),
