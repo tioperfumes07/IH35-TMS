@@ -28,11 +28,8 @@ export function checkQuickCreate(text) {
   if (!/import\s*\{\s*properPersonOrPlaceName\s*\}\s*from\s*"\.\.\/\.\.\/\.\.\/lib\/properDisplayText"/.test(text)) {
     problems.push("QuickCreateEntityModal: properPersonOrPlaceName is not imported.");
   }
-  if (!/name:\s*titleCasedName,\s*\n\s*operating_company_id/.test(text)) {
-    problems.push("QuickCreateEntityModal: createCustomer's name field is not the title-cased value.");
-  }
-  if (!/main_contact_name:\s*parsed\.data\.company\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(parsed\.data\.company\)\s*:\s*undefined/.test(text)) {
-    problems.push("QuickCreateEntityModal: main_contact_name is not wrapped in properPersonOrPlaceName().");
+  if (!/import\s*\{\s*NewCustomerDrawerForm\s*\}/.test(text) || !/kind === "customer"/.test(text) || !/<NewCustomerDrawerForm/.test(text)) {
+    problems.push("QuickCreateEntityModal: kind=customer must embed NewCustomerDrawerForm (Lists/Customers +Create chrome).");
   }
   if (!/part_description:\s*titleCasedName,/.test(text)) {
     problems.push("QuickCreateEntityModal: createPartsInventoryPurchase's part_description is not the title-cased value.");
@@ -97,14 +94,11 @@ function selftest() {
   if (checkCreateWo(createWoReal).length) failures.push("CreateWorkOrderModal baseline should pass");
   if (checkBookLoad(bookLoadReal).length) failures.push("BookLoadModalV4 baseline should pass");
 
-  // Offender 1: QuickCreateEntityModal reverts main_contact_name to raw.
-  const qcOffender1 = quickCreateReal.replace(
-    'main_contact_name: parsed.data.company?.trim() ? properPersonOrPlaceName(parsed.data.company) : undefined,',
-    "main_contact_name: parsed.data.company?.trim() || undefined,"
-  );
+  // Offender 1: QuickCreateEntityModal drops Lists customer chrome.
+  const qcOffender1 = quickCreateReal.replace("<NewCustomerDrawerForm", "<NotNewCustomerDrawerForm");
   const p1 = checkQuickCreate(qcOffender1);
-  if (!p1.some((m) => m.includes("main_contact_name"))) {
-    failures.push(`offender-1 (raw main_contact_name) NOT caught: ${p1.join(" | ") || "none"}`);
+  if (!p1.some((m) => m.includes("NewCustomerDrawerForm"))) {
+    failures.push(`offender-1 (customer not Lists chrome) NOT caught: ${p1.join(" | ") || "none"}`);
   }
 
   // Offender 2: QuickCreateEntityModal reverts part location to raw.

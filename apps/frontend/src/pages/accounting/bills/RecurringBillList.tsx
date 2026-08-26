@@ -191,10 +191,11 @@ export function RecurringBillList() {
             }
             navigate("/accounting/bills");
           }}
-          className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Back to Bills"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <span>Back</span>
         </button>
         <Link to="/accounting" className="hover:underline">Accounting</Link>
         <span>/</span>

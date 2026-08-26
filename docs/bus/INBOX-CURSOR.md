@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**23:10 CT GO-2310 — LIVE WALK CALENDARS + SAME CREATE CHROME. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. Ship DatePicker click-through + QuickCreate customer = Lists chrome. Seats walk their modules; do not idle on leftover lists only. FAST-MERGE. Skip #15546. Nobody `trigger_deploy`.
+
 **22:37 CT GO-2237 — 35 INSTRUCTIONS PER SEAT.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. Lead: seats ACK + work their #1. Skip #15546. Nobody `trigger_deploy` unless 5–10 min/PR gate. Unique leftover 1–35 of Cursor list.
 
 **VOID as NOW:** GO-1829 and older. Work YOUR GO-2237 numbered list.

@@ -148,10 +148,11 @@ export function RecurringBillCreate() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Back"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <span>Back</span>
         </button>
         <h1 className="text-lg font-semibold text-gray-900">Create Recurring Bill Template</h1>
       </div>

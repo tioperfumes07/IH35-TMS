@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
-import { createCustomer } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { NewAccountDrawerForm } from "../../../components/parity/drawers/NewAccountDrawerForm";
+import { NewCustomerDrawerForm } from "../../../components/parity/drawers/NewCustomerDrawerForm";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -39,8 +39,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-function titleFor(kind: Exclude<QuickCreateKind, "vendor" | "item" | "class" | "category">): string {
-  if (kind === "customer") return "Quick Create Customer";
+function titleFor(_kind: "part"): string {
   return "Quick Create Part";
 }
 
@@ -74,31 +73,9 @@ export function QuickCreateEntityModal({
       pushToast("Select an operating company first.", "error");
       return;
     }
-    // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
-    if (kind === "customer" && !parsed.data.email?.trim()) {
-      pushToast("Email is required for a customer.", "error");
-      return;
-    }
-
     setSaving(true);
     try {
-      if (kind === "customer") {
-        // D1-1: writes to mdata.customers (canonical) — already fixed in the prior customer path.
-        // Same deliverability stamp as NewCustomerDrawerForm: email → billing_email (API) + ar/ap.
-        const invoiceEmail = parsed.data.email?.trim() || undefined;
-        const titleCasedName = properPersonOrPlaceName(parsed.data.name);
-        const res = await createCustomer({
-          name: titleCasedName,
-          operating_company_id: operatingCompanyId,
-          email: invoiceEmail,
-          ar_email: invoiceEmail,
-          ap_email: invoiceEmail,
-          phone: parsed.data.phone || undefined,
-          main_contact_name: parsed.data.company?.trim() ? properPersonOrPlaceName(parsed.data.company) : undefined,
-          main_contact_email: invoiceEmail,
-        });
-        onCreated({ id: String(res.id), label: titleCasedName });
-      } else if (kind === "part") {
+      if (kind === "part") {
         const titleCasedName = properPersonOrPlaceName(parsed.data.name);
         const res = await createPartsInventoryPurchase(operatingCompanyId, {
           part_description: titleCasedName,
@@ -124,6 +101,20 @@ export function QuickCreateEntityModal({
   // CHROME-11: nest create in a right ParityDrawer — never a centered Modal stacked on money drawers.
   // LST-F3368 / LST-F3370 — vendor / item / class / category share ONE chrome with Lists
   // (VendorCreateModal / ItemEditorModal / AccountingCatalogModal / AccountDrawer via NewAccountDrawerForm).
+  // Same CustomerProfileForm as Lists / Customers +Create — not a skinny quick-create subset.
+  if (kind === "customer") {
+    return (
+      <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Customer" stackAboveModal>
+        <NewCustomerDrawerForm
+          operatingCompanyId={operatingCompanyId}
+          onClose={onClose}
+          onCreated={(created) => {
+            onCreated({ id: created.id, label: created.label });
+          }}
+        />
+      </ParityDrawer>
+    );
+  }
   if (kind === "vendor") {
     return (
       <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Vendor" stackAboveModal>
@@ -205,34 +196,13 @@ export function QuickCreateEntityModal({
       >
         {/*
           PICKER-QUICK-CREATE / LST-F3368 / LST-F3370:
-          vendor / item / class / category early-return above to Lists creators.
-          Residual form is customer | part only — do not reintroduce kind === "vendor" | "item" |
-          "category" branches here (TS2367 after narrowing).
+          vendor / item / class / category / customer early-return above to Lists creators.
+          Residual form is part only.
         */}
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">{kind === "customer" ? "Display name *" : "Name *"}</span>
+          <span className="text-xs font-medium text-gray-600">Name *</span>
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
         </label>
-
-        {kind === "customer" ? (
-          <label className="block">
-            <span className="text-xs font-medium text-gray-600">Company / Customer name</span>
-            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("company")} aria-label="Quick create company name" placeholder="Defaults to display name" />
-          </label>
-        ) : null}
-
-        {kind === "customer" ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label>
-              <span className="text-xs font-medium text-gray-600">Email</span>
-              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("email")} aria-label="Quick create email" />
-            </label>
-            <label>
-              <span className="text-xs font-medium text-gray-600">Phone</span>
-              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("phone")} aria-label="Quick create phone" />
-            </label>
-          </div>
-        ) : null}
 
         {kind === "part" ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">

@@ -48,6 +48,9 @@ function auditBackArrowHeader(source) {
       `${BACK_ARROW_HEADER}: the hasInAppHistory check must run BEFORE the navigate(backTo) fallback, or backTo always wins`
     );
   }
+  if (!/<span>Back<\/span>/.test(stripped)) {
+    failures.push(`${BACK_ARROW_HEADER}: must show a visible Back label (not icon-only)`);
+  }
   return failures;
 }
 
@@ -55,6 +58,9 @@ function auditAccountingWrapper(source) {
   const { failures, stripped } = auditImportsHelper(ACCOUNTING_WRAPPER, source);
   if (!/aria-label=["']Back["']/.test(stripped)) {
     failures.push(`${ACCOUNTING_WRAPPER}: must render a back control (aria-label="Back") -- it was missing entirely`);
+  }
+  if (!/<span>Back<\/span>/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: must show a visible Back label (not icon-only)`);
   }
   const historyIdx = stripped.indexOf("hasInAppHistory(window.history.state)");
   const fallbackIdx = stripped.indexOf('navigate("/home")');
@@ -110,6 +116,16 @@ if (process.argv.includes("--selftest")) {
         ),
     },
     {
+      name: "strip visible Back label from BackArrowHeader (icon-only regression)",
+      target: "backArrow",
+      mutate: (t) => t.replace("<span>Back</span>", ""),
+    },
+    {
+      name: "strip visible Back label from AccountingSubNavWrapper (icon-only regression)",
+      target: "accounting",
+      mutate: (t) => t.replace("<span>Back</span>", ""),
+    },
+    {
       name: "reorder AccountingSubNavWrapper so the /home fallback runs first",
       target: "accounting",
       mutate: (t) =>
@@ -145,5 +161,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader prefers real navigation history, AccountingSubNavWrapper now has a back control"
+  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader + AccountingSubNavWrapper smart-back and visible Back label"
 );

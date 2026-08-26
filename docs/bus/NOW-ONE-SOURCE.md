@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**23:10 CT GO-2310 — LIVE MODULE WALK (calendars + same create chrome). Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **CC-1 still #3** `57cabbab`. Other seats walk their modules for DatePicker seize/click-through and nested create = Lists chrome. Skip #15546. Nobody `trigger_deploy`.
+
 **22:37 CT GO-2237 — 35 INSTRUCTIONS PER SEAT. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. Live API **`b711699`**. **CC-1 NOW=#3** JE `57cabbab`. **CC-2 NOW=#1** `/cash-flow` walk. **CC-3 NOW=#1** matrix lists/legal. **Codex NOW=#1** hop.assign UI. Cascade/Devin-A 35 walks. Skip #15546. Nobody `trigger_deploy`. U14 never restamp.
 
 **18:29 CT GO-1829 — INSTRUCTIONS ARE IN INBOX TOP. ACK OR WORK. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. **CC-1 NOW=#3 expense 57cabbab** (not leftover). **CC-2 item 26 `/cash-flow` NOW.** **CC-3 NOW=73–75.** **Codex NOW=hop.assign 76 then 81+.** Cascade: reset to origin/main, walk `/program`+`/cash-flow`. Skip #15546. Nobody `trigger_deploy`. U14 never restamp.

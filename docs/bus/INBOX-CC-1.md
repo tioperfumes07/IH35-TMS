@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**23:10 CT GO-2310.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **STILL NOW=#3** expense `57cabbab` JE first. Then walk `/accounting` DatePickers + nested vendor/customer/expense/bill create (same chrome as Lists). Never `/425c`. Never `trigger_deploy`. ACK `GO-2310`.
+
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #3** expense `57cabbab` JE (skip #1–2 if grep-closed). Then **4–35 serial** on the **money clone**. Never `/425c`. Never `trigger_deploy`. ACK `GO-2237`.
 
 **VOID as NOW:** GO-1829 and older. Work YOUR GO-2237 numbered list.

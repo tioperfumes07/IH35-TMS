@@ -61,6 +61,9 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
   const { shell, buttonHeight } = partitionDatePickerClassName(className);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // DATEPICKER-CLICKTHROUGH-REOPEN: picking a day unmounts the popover; the leftover click
+  // lands on the trigger and toggles the calendar open again (looks like a seize / auto-close).
+  const suppressToggleRef = useRef(false);
   const parsed = parseISO(value);
   const today = new Date();
   const [viewY, setViewY] = useState(parsed?.y ?? today.getFullYear());
@@ -108,7 +111,13 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
         id={id}
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (suppressToggleRef.current) {
+            suppressToggleRef.current = false;
+            return;
+          }
+          setOpen((o) => !o);
+        }}
         className={`flex ${buttonHeight || "h-9"} w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 text-left text-[13px]`}
       >
         <span className={value ? "" : "text-gray-400"}>{value ? formatDateUS(value) : placeholder || DATE_PLACEHOLDER_US}</span>
@@ -152,11 +161,12 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
                           ? "cursor-not-allowed text-gray-300"
                           : `hover:bg-slate-100 ${selected ? "bg-slate-700 text-white hover:bg-slate-700" : ""}`
                       }`}
-                      onClick={(e) => {
+                      onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (outOfRange) return;
                         onChange(iso);
+                        suppressToggleRef.current = true;
                         setOpen(false);
                       }}
                     >

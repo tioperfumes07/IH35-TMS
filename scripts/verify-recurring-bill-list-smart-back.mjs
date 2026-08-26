@@ -26,6 +26,15 @@ function audit(source) {
   if (historyIdx < 0 || fallbackIdx < 0 || historyIdx > fallbackIdx) {
     failures.push(`${FILE}: the hasInAppHistory check must run BEFORE the /accounting/bills fallback`);
   }
+  if (!/<span>Back<\/span>/.test(stripped)) {
+    failures.push(`${FILE}: must show a visible Back label next to the arrow (not icon-only)`);
+  }
+  const createFile = "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx";
+  const createSrc = fs.readFileSync(createFile, "utf8");
+  const createStripped = stripComments(createSrc);
+  if (!/<span>Back<\/span>/.test(createStripped)) {
+    failures.push(`${createFile}: must show a visible Back label next to the arrow (not icon-only)`);
+  }
   return failures;
 }
 
@@ -42,6 +51,10 @@ if (process.argv.includes("--selftest")) {
     {
       name: "remove hasInAppHistory import",
       mutate: (t) => t.replace('import { hasInAppHistory } from "../../../lib/smart-back";\n', ""),
+    },
+    {
+      name: "strip visible Back label from RecurringBillList (icon-only regression)",
+      mutate: (t) => t.replace("<span>Back</span>", ""),
     },
     {
       name: "reorder so the /accounting/bills fallback runs first (dead-codes the fix)",

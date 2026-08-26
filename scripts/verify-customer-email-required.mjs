@@ -31,8 +31,8 @@ const TARGETS = [
       /profileValuesToCreatePayload\(values, operatingCompanyId\)/,
     ] },
   { rel: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx", checks: [
-      /Email is required for a customer/,
-      /kind === "customer" && !parsed\.data\.email\?\.trim\(\)/,
+      /kind === "customer"/,
+      /<NewCustomerDrawerForm/,
     ] },
   { rel: "apps/backend/src/mdata/customers.routes.ts", checks: [
       /email:\s*z\.string\(\)\.email\(\)\.min\(1\)/,
