@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["driver","unit","trailer","load","connectivity","qbo_chrome"],"leaves":["damage_reports.create","trailer_interchanges.create"],"task":"SAFETY-F6620-INCIDENT-CONFIRM-LIFECYCLE","vertical":"column-wave"} */
 /**
  * GUARD: damage reports, trailer interchanges and cargo claims can be edited and closed (SAF-F20).
  *
@@ -86,6 +87,13 @@ export function assertIncidentLifecycle(sources) {
   if (!/actionError\s*\?[\s\S]{0,140}?role=["']alert["']/.test(src[SURFACE])) {
     problems.push(`${SURFACE}: incident create/edit/photo failures need one accessible operator alert.`);
   }
+  if (/window\.confirm\(/.test(src[SURFACE])) problems.push(`${SURFACE}: native confirmation still blocks trailer-interchange create.`);
+  if (!/pendingPhotoLessCreate, setPendingPhotoLessCreate/.test(src[SURFACE])) problems.push(`${SURFACE}: photo-less create does not retain an immutable submitted snapshot.`);
+  if (!/operating_company_id: operatingCompanyId[\s\S]*driver_id: str\(selected\.driver_id\) \|\| null[\s\S]*unit_id: str\(selected\.unit_id\) \|\| null[\s\S]*trailer_id: str\(selected\.trailer_id\) \|\| null[\s\S]*load_id: str\(selected\.load_id\) \|\| null/.test(src[SURFACE])) problems.push(`${SURFACE}: create snapshot is missing company or canonical FKs.`);
+  if (!/companyId: operatingCompanyId[\s\S]*generation: createGenerationRef\.current[\s\S]*payload,/.test(src[SURFACE])) problems.push(`${SURFACE}: submitted payload is not bound to company and generation.`);
+  if (!/input\.generation !== createGenerationRef\.current[\s\S]*refresh\(input\.companyId\)/.test(src[SURFACE])) problems.push(`${SURFACE}: create completion is not generation-safe or submitted-company scoped.`);
+  if (!/createGenerationRef\.current \+= 1;[\s\S]*setPendingPhotoLessCreate\(null\);[\s\S]*setDrawerOpen\(false\);/.test(src[SURFACE])) problems.push(`${SURFACE}: company switch does not invalidate pending create and drawer state.`);
+  if (!/<ConfirmModal[\s\S]*title="Create interchange without condition photos\?"[\s\S]*const input = pendingPhotoLessCreate;[\s\S]*setPendingPhotoLessCreate\(null\);[\s\S]*persistCreate\(input\)/.test(src[SURFACE])) problems.push(`${SURFACE}: trailer-interchange exception lacks canonical confirmation chrome or cleanup.`);
 
   return problems;
 }
@@ -142,6 +150,16 @@ if (SELFTEST) {
   ]) {
     expectCaught(name, { ...live, [SURFACE]: live[SURFACE].replace(needle, replacement) }, name.includes("alert") ? "accessible operator alert" : "preserve backend detail");
   }
+  for (const [name, needle, replacement, expected] of [
+    ["snapshot-dropped", "companyId: operatingCompanyId,", "companyId: '',", "submitted payload is not bound"],
+    ["stale-create-gate-dropped", "input.generation !== createGenerationRef.current", "false", "create completion is not generation-safe"],
+    ["scope-invalidation-dropped", "createGenerationRef.current += 1;", "createGenerationRef.current += 0;", "company switch does not invalidate"],
+    ["confirm-modal-dropped", "<ConfirmModal", "<div", "lacks canonical confirmation chrome"],
+    ["pending-snapshot-dropped", "pendingPhotoLessCreate, setPendingPhotoLessCreate", "missingPending, setMissingPending", "does not retain an immutable"],
+    ["confirm-cleanup-dropped", "setPendingPhotoLessCreate(null);\n          await persistCreate(input);", "await persistCreate(input);", "confirmation chrome or cleanup"],
+  ]) {
+    expectCaught(name, { ...live, [SURFACE]: live[SURFACE].replace(needle, replacement) }, expected);
+  }
 
   const liveProblems = assertIncidentLifecycle(live);
   if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);
@@ -151,7 +169,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 17 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
