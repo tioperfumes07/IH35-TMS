@@ -22,7 +22,7 @@ function inspect(value) {
     [/<EntityLink[\s\S]*kind="driver"[\s\S]*id=\{effectiveDriverId\}/, "selected-driver reverse drill is missing"],
     [/pendingBulkEnroll, setPendingBulkEnroll/, "bulk enrollment does not retain a submitted snapshot"],
     [/setPendingBulkEnroll\(\{[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current,[\s\S]*consortiumName: name,[\s\S]*activeDriverCount,/, "bulk confirmation snapshot is incomplete"],
-    [/setPendingBulkEnroll\(null\)[\s\S]*bulkEnrollMutation\.mutate\(\{[\s\S]*companyId: input\.companyId,[\s\S]*generation: input\.generation,[\s\S]*consortiumName: input\.consortiumName/, "bulk confirmation does not submit and clear its immutable snapshot"],
+    [/onConfirm=\{async \(\) => \{[\s\S]*await bulkEnrollMutation\.mutateAsync\(\{[\s\S]*companyId: input\.companyId,[\s\S]*generation: input\.generation,[\s\S]*consortiumName: input\.consortiumName/, "bulk confirmation does not await its immutable snapshot"],
     [/<ConfirmModal[\s\S]*title="Enroll active drivers in this random pool\?"/, "bulk enrollment lacks canonical confirmation chrome"],
   ];
   if (/window\.confirm\(/.test(value)) failures.push("native confirmation still blocks bulk enrollment");
@@ -42,6 +42,7 @@ if (process.argv.includes("--selftest")) {
     "advanceRtdCase(input.caseId, input.companyId",
     "pendingBulkEnroll, setPendingBulkEnroll",
     "<ConfirmModal",
+    "await bulkEnrollMutation.mutateAsync",
   ];
   for (const token of mutations) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
