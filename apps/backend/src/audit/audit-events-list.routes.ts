@@ -126,8 +126,18 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     filters.push(`e.payload->>'entity_id' = $${values.length}`);
   }
   if (input.actor) {
-    values.push(`%${input.actor}%`);
-    filters.push(`(u.email ILIKE $${values.length} OR e.actor_user_uuid::text = $${values.length})`);
+    // USER-ACTIVITY-AUDIT-REVERSE-FALSE-EMPTY — this used ONE wildcard-wrapped parameter
+    // (`%${input.actor}%`) for BOTH branches: `u.email ILIKE $n` (correct — a partial email
+    // search needs the wildcards) and `e.actor_user_uuid::text = $n` (wrong — `=` is exact
+    // equality, so a value literally containing `%` characters can never equal a bare UUID
+    // string). Every caller that passes a user's own uuid as `actor` (e.g. the User detail
+    // page's own Activity tab, which is the ONLY caller that ever does) always missed 100% of
+    // that user's real audit_events rows, rendering an indistinguishable-from-honest "No audit
+    // activity found for this user" — live-reproduced: a real Owner account with `mcastillo@`
+    // logged in and 2 real audit.audit_events rows for their exact actor_user_uuid showed zero
+    // rows in the UI. Two separate parameters now serve each branch's own comparison operator.
+    values.push(`%${input.actor}%`, input.actor);
+    filters.push(`(u.email ILIKE $${values.length - 1} OR e.actor_user_uuid::text = $${values.length})`);
   }
   if (input.status && input.status.length > 0) {
     values.push(input.status);
