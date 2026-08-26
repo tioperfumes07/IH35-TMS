@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -59,11 +59,15 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const companyId = selectedCompanyId ?? "";
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+  }, [companyId]);
   // ACCT-F5048 — reverse "Open Fuel History" carries ?trailer_id=|unit_id=|load_id=|driver_id=
   // LST-F5172 — visible EntityPicker filters (URL-only is not reverse chrome).
   // LST-F5214 / CLS-ADJACENT — History EntityPickers stage; URL + query only on Apply.
@@ -194,6 +198,28 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     enabled: Boolean(companyId && activeRoute?.id),
   });
 
+  const sendRecommendationMutation = useMutation({
+    mutationFn: (input: { routeId: string; companyId: string; generation: number }) =>
+      sendFuelRecommendationToDriver(input.routeId, input.companyId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      pushToast("Recommendation sent to driver app", "success");
+      void queryClient.invalidateQueries({
+        queryKey: ["fuel", "planner", "active-routes", input.companyId],
+        exact: true,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["fuel", "planner", "recommendation-detail", input.companyId, input.routeId],
+        exact: true,
+      });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) {
+        pushToast(userFacingApiError(error, "Send failed"), "error");
+      }
+    },
+  });
+
   const detail = detailQuery.data ?? null;
   const stops = detail?.stops ?? [];
   const hosAware = detail?.hos_aware_recommendations ?? [];
@@ -251,15 +277,14 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   }
                 >
                   <ActionButton
-                    disabled={!activeRoute || !companyId}
+                    disabled={!activeRoute || !companyId || sendRecommendationMutation.isPending}
                     onClick={() => {
                       if (!activeRoute || !companyId) return;
-                      void sendFuelRecommendationToDriver(activeRoute.id, companyId)
-                        .then(() => {
-                          pushToast("Recommendation sent to driver app", "success");
-                          void queryClient.invalidateQueries({ queryKey: ["fuel", "planner"] });
-                        })
-                        .catch((error) => pushToast(userFacingApiError(error, "Send failed"), "error"));
+                      sendRecommendationMutation.mutate({
+                        routeId: activeRoute.id,
+                        companyId,
+                        generation: actionGenerationRef.current,
+                      });
                     }}
                   >
                     Send to driver app
