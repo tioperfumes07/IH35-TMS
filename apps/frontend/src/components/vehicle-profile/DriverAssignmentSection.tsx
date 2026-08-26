@@ -2,6 +2,7 @@ import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 const DRIVER_LINK = "text-slate-700 hover:underline";
 
@@ -19,18 +20,31 @@ export function DriverAssignmentSection({
   onQuickAssign?: () => void;
 }) {
   const qc = useQueryClient();
+  const actionGenerationRef = useRef(0);
+  const [clearError, setClearError] = useState<unknown>(null);
   const mismatch =
     defaultDriver?.id &&
     currentDriver?.id &&
     String(defaultDriver.id) !== String(currentDriver.id);
 
   const clearDefault = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/v1/mdata/units/${unitId}/drivers/clear-default?operating_company_id=${encodeURIComponent(companyId)}`, {
+    mutationFn: (input: { unitId: string; companyId: string; driverId: string; generation: number }) =>
+      apiRequest(`/api/v1/mdata/units/${input.unitId}/drivers/clear-default?operating_company_id=${encodeURIComponent(input.companyId)}`, {
         method: "POST",
+        body: { expected_driver_id: input.driverId },
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["unit-profile", unitId, companyId] }),
+    onMutate: () => setClearError(null),
+    onSuccess: (_result, input) => void qc.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] }),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setClearError(error);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setClearError(null);
+    clearDefault.reset();
+  }, [companyId, unitId, defaultDriver?.id]);
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
@@ -61,13 +75,20 @@ export function DriverAssignmentSection({
             className="mt-2"
             disabled={!defaultDriver?.id || clearDefault.isPending}
             loading={clearDefault.isPending}
-            onClick={() => clearDefault.mutate()}
+            onClick={() =>
+              clearDefault.mutate({
+                unitId,
+                companyId,
+                driverId: String(defaultDriver?.id ?? ""),
+                generation: actionGenerationRef.current,
+              })
+            }
           >
             Clear default
           </Button>
-          {clearDefault.isError ? (
+          {clearError ? (
             <p className="mt-2 text-xs text-red-700" role="alert">
-              Couldn&apos;t clear default driver. {(clearDefault.error as Error)?.message ?? "Try again."}
+              Couldn&apos;t clear default driver. {(clearError as Error)?.message ?? "Try again."}
             </p>
           ) : null}
         </div>
