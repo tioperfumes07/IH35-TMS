@@ -50,7 +50,7 @@ export function CreateExpenseModal({
     setPickedWoId(linkedWoId ?? null);
     setPickedUnitId(linkedUnitId ?? null);
     setCreatedExpenseId(null);
-  }, [open, linkedWoId, linkedUnitId]);
+  }, [open, linkedWoId, linkedUnitId, operatingCompanyId]);
 
   const showLinkPickers = requireWoLink && !linkedWoId;
   const linkReady = !requireWoLink || Boolean(linkedWoId ?? pickedWoId);
@@ -121,6 +121,7 @@ export function CreateExpenseModal({
         </div>
       ) : linkReady ? (
         <RecordExpenseForm
+          key={`maintenance-expense-${operatingCompanyId}`}
           operatingCompanyId={operatingCompanyId}
           idPrefix="maintenance-create-expense"
           submitLabel="Create Expense"
