@@ -87,9 +87,10 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
               }
               navigate("/home");
             }}
-            className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-xs border-0 bg-transparent p-0 text-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            className="mt-0.5 inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           >
-            ←
+            <span aria-hidden>←</span>
+            <span>Back</span>
           </button>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">{title}</h1>

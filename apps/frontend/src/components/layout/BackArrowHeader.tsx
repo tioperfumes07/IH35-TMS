@@ -45,9 +45,10 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
             }
             navigate(backTo);
           }}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-xs border-0 bg-transparent p-0 text-lg text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
+          className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-[11px] font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
         >
-          ←
+          <span aria-hidden>←</span>
+          <span>Back</span>
         </button>
         <h1 className="m-0 text-base font-semibold">{title}</h1>
         {countBadge !== undefined ? <span className="ml-1 text-[11px] text-(--text-secondary)">{countBadge}</span> : null}

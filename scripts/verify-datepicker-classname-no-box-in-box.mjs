@@ -118,6 +118,12 @@ function run() {
   if (!dp.includes("preventDefault")) {
     errors.push("DatePicker calendar must preventDefault so a wrapping label cannot re-open after a day click");
   }
+  if (!dp.includes("suppressToggleRef")) {
+    errors.push("DatePicker must suppress the leftover click on the trigger after a day pick (DATEPICKER-CLICKTHROUGH-REOPEN)");
+  }
+  if (!/onMouseDown=\{\(e\) => \{[\s\S]*setOpen\(false\)/.test(dp)) {
+    errors.push("DatePicker day cells must commit on mousedown (not click) so the popover unmount cannot retoggle");
+  }
   if (!/border-gray-300/.test(dp) || !/<button[\s\S]*border border-gray-300/.test(dp)) {
     errors.push("DatePicker button must keep the single QBO border chrome");
   }
