@@ -9,6 +9,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { Combobox } from "../../components/Combobox";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -180,20 +181,18 @@ export function CSAMitigationQueuePage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold text-slate-700">Add mitigation action</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
-          <label className="flex flex-col gap-1">
-            <span>Category</span>
-            <select
-              className="rounded-sm border border-gray-300 px-2 py-1"
+          <div className="flex flex-col gap-1">
+            <label htmlFor="csa-mitigation-category">Category</label>
+            <Combobox
+              id="csa-mitigation-category"
+              dataTestId="csa-mitigation-category"
+              className="min-w-56"
               value={basicCategory}
-              onChange={(event) => setBasicCategory(event.target.value as BasicCategory)}
-            >
-              {Object.entries(BASIC_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={Object.entries(BASIC_LABELS).map(([value, label]) => ({ value, label }))}
+              onChange={(next) => next && setBasicCategory(next as BasicCategory)}
+              ariaLabel="CSA BASIC category"
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <span>Due date</span>
             <DatePicker
