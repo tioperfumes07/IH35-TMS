@@ -15932,3 +15932,4 @@ Devin-A | CC-3-VERIFY | GO-1405 | SHA=08f8bb5 | CLASS-F5973 fuel connectivity: a
 Devin-A | CC-3-VERIFY | GO-1405 | SHA=08f8bb5 | CUST-MONEY-F6312: statements/recurring_transactions/late_fees tabs all load fine | 0 API 500s
 Devin-A | CC-3-VERIFY | GO-1405 | SHA=08f8bb5 | CF-F6361: cash-flow loads, Proforma=false, Projected=false (CC-1 #2 still pending) | 0 API 500s
 Devin-A | CONTINUOUS | GO-1405 | SHA=08f8bb5 | CC-3 verify complete | 0 new findings | continuing
+Devin-A | HARD-RELOAD | GO-1405 | SHA=86b25af (uptime 305s) | FINDING CATALOG-AUDIT-EVENT-TYPES-GET-500 STILL TRUE on 5th SHA | root cause: column t.id does not exist (42703) | 6 key routes pass | CONTINUOUS
