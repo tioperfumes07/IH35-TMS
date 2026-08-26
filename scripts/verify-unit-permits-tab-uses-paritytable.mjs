@@ -5,7 +5,8 @@
  * Unit detail Permits tab must use shared ParityTable grammar (sort/resize/gear),
  * not a hand-rolled <table>. Columns Type / State / Number / Expires / Cost preserved
  * 1:1; CertExpiryBadge + Archive action + ListErrorState retained; unit-permits-tab
- * testid preserved.
+ * testid preserved. Archive mutations must snapshot unit/company scope and ignore
+ * callbacks after the profile scope changes.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -63,6 +64,23 @@ function assertMigrated(src) {
   if (!src.includes("/api/units/")) {
     errors.push(`${PAGE}: must keep permits API call`);
   }
+  for (const field of ["permitUuid", "unitId", "companyId", "generation"]) {
+    if (!src.includes(`${field}:`)) {
+      errors.push(`${PAGE}: archive mutation must snapshot ${field}`);
+    }
+  }
+  if (!src.includes("`/api/units/${input.unitId}/permits/${input.permitUuid}?operating_company_id=${encodeURIComponent(input.companyId)}`")) {
+    errors.push(`${PAGE}: archive API must use the initiating unit/company snapshot`);
+  }
+  if ((src.match(/input\.generation !== scopeGenerationRef\.current/g) ?? []).length < 2) {
+    errors.push(`${PAGE}: archive success and error callbacks must reject stale scope generations`);
+  }
+  if (!src.includes('queryKey: ["unit-permits", input.unitId, input.companyId]')) {
+    errors.push(`${PAGE}: archive success must invalidate the initiating unit/company cache`);
+  }
+  if (!src.includes("exact: true")) {
+    errors.push(`${PAGE}: archive success invalidation must be exact`);
+  }
   return errors;
 }
 
@@ -71,6 +89,13 @@ function selftest() {
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { CertExpiryBadge } from "../../components/safety/CertExpiryBadge";
+    const scopeGenerationRef = { current: 1 };
+    const input = { permitUuid: "permit", unitId: "unit", companyId: "company", generation: 1 };
+    apiRequest(\`/api/units/\${input.unitId}/permits/\${input.permitUuid}?operating_company_id=\${encodeURIComponent(input.companyId)}\`);
+    if (input.generation !== scopeGenerationRef.current) return;
+    if (input.generation !== scopeGenerationRef.current) return;
+    queryClient.invalidateQueries({ queryKey: ["unit-permits", input.unitId, input.companyId], exact: true });
+    deleteMutation.mutate({ permitUuid: "permit", unitId: "unit", companyId: "company", generation: 1 });
     const COLUMNS = [
       { key: "permit_type", label: "Type" },
       { key: "issuing_state", label: "State" },
@@ -112,6 +137,19 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const staleScope = good.replace(
+    /input\.generation !== scopeGenerationRef\.current/g,
+    "input.generation !== input.generation"
+  );
+  if (!assertMigrated(staleScope).some((error) => error.includes("stale scope generations"))) {
+    console.error(`${LABEL} --selftest FAIL stale-scope mutation survived`);
+    process.exit(1);
+  }
+  const mutableApiScope = good.replace("${input.unitId}", "${unitId}");
+  if (!assertMigrated(mutableApiScope).some((error) => error.includes("initiating unit/company snapshot"))) {
+    console.error(`${LABEL} --selftest FAIL mutable API scope mutation survived`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
