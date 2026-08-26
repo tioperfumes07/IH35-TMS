@@ -12,7 +12,7 @@ export function VendorInsurancePoliciesReverseSection({ operatingCompanyId, vend
     queryFn: () => listInsurancePolicies({ operating_company_id: operatingCompanyId, vendor_id: vendorId }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
-  const rows = query.data?.policies ?? [];
+  const rows = query.isError ? [] : (query.data?.policies ?? []);
   return <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-insurance-policies-reverse">
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-sm font-semibold text-slate-900">Insurance Policies{rows.length ? ` (${rows.length})` : ""}</h3>

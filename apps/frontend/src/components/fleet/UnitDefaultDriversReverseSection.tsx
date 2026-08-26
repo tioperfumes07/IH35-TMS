@@ -10,7 +10,7 @@ export function UnitDefaultDriversReverseSection({ operatingCompanyId, unitId }:
     queryFn: () => listUnitDefaultDrivers(unitId, operatingCompanyId),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.drivers ?? [];
+  const rows = query.isError ? [] : (query.data?.drivers ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-default-drivers-reverse">
       <h3 className="text-sm font-semibold text-slate-900">Default Drivers{rows.length ? ` (${rows.length})` : ""}</h3>

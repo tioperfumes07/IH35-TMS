@@ -152,7 +152,7 @@ export function InsuranceClaimsReverseSection({
 
   if (!canView) return null;
 
-  const claims: InsuranceClaim[] = query.data?.claims ?? [];
+  const claims: InsuranceClaim[] = query.isError ? [] : (query.data?.claims ?? []);
   const openKind =
     "driver_id" in filter
       ? ("insurance_claims_driver" as const)
