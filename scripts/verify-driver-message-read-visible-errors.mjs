@@ -10,7 +10,7 @@ function audit(text) {
   const need = (condition, message) => { if (!condition) failures.push(message); };
   need(/const \[markReadError, setMarkReadError\]/.test(text), "mark-read error state required");
   need(/const markReadMutation[\s\S]*?onMutate: \(\) => setMarkReadError\(null\)/.test(text), "new attempts must clear stale error");
-  need(/const markReadMutation[\s\S]*?onError: \(error\)[\s\S]*?Failed to mark message as read/.test(text), "mark-read failure must be visible");
+  need(/const markReadMutation[\s\S]*?onError: \(error, input\)[\s\S]*?input\.generation === actionGenerationRef\.current[\s\S]*?Failed to mark message as read/.test(text), "current-lifecycle mark-read failure must be visible");
   need(/role="alert"[\s\S]*?\{markReadError\}/.test(text), "mark-read error must render accessibly");
   need(/error instanceof Error \? error\.message/.test(text), "backend detail must be preserved");
   return failures;
@@ -24,7 +24,7 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace(/\n    onError: \(error\) => setMarkReadError\(error instanceof Error \? error\.message : "Failed to mark message as read"\),/, ""),
+    source.replace(/\n    onError: \(error, input\) => \{[\s\S]*?\n    \},/, ""),
     source.replace(/\n    onMutate: \(\) => setMarkReadError\(null\),/, ""),
     source.replace(/\n      \{markReadError \? \([\s\S]*?\n      \) : null\}/, ""),
     source.replace("error instanceof Error ? error.message", '"Request failed"'),
