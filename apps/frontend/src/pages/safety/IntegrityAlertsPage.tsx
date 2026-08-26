@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,16 @@ const EMPTY_FILTERS = {
   driverId: "",
   unitId: "",
   vendorId: "",
+};
+
+const EMPTY_RULE_DRAFT = {
+  rule_code: "",
+  rule_name: "",
+  source_view: "safety.v_fuel_mpg_anomalies",
+  alert_category: "driver_mpg_anomaly",
+  subject_type: "driver",
+  severity: "warning",
+  enabled: true,
 };
 
 function parseIntegrityAlertsTab(raw: string | null): PageTab {
@@ -108,15 +118,8 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const [editingRule, setEditingRule] = useState<Record<string, unknown> | null>(null);
   const [createRuleOpen, setCreateRuleOpen] = useState(false);
-  const [draftRule, setDraftRule] = useState({
-    rule_code: "",
-    rule_name: "",
-    source_view: "safety.v_fuel_mpg_anomalies",
-    alert_category: "driver_mpg_anomaly",
-    subject_type: "driver",
-    severity: "warning",
-    enabled: true,
-  });
+  const [draftRule, setDraftRule] = useState(EMPTY_RULE_DRAFT);
+  const lifecycleGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
     queryKey: [
@@ -149,32 +152,38 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
   });
 
   const evaluateMutation = useMutation({
-    mutationFn: () => evaluateIntegrityAlerts(operatingCompanyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "integrity-alerts", operatingCompanyId] });
+    mutationFn: (input: { companyId: string; generation: number }) => evaluateIntegrityAlerts(input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "integrity-alerts", input.companyId] });
     },
   });
 
   const saveRuleMutation = useMutation({
-    mutationFn: async () => {
-      if (editingRule?.id) {
-        return updateIntegrityAlertRule(String(editingRule.id), operatingCompanyId, {
-          rule_name: draftRule.rule_name,
-          source_view: draftRule.source_view,
-          alert_category: draftRule.alert_category,
-          subject_type: draftRule.subject_type,
-          severity: draftRule.severity,
-          enabled: draftRule.enabled,
-        });
+    mutationFn: async (input: { companyId: string; generation: number; ruleId: string | null; payload: Record<string, unknown> }) => {
+      if (input.ruleId) {
+        return updateIntegrityAlertRule(input.ruleId, input.companyId, input.payload);
       }
-      return createIntegrityAlertRule(operatingCompanyId, draftRule);
+      return createIntegrityAlertRule(input.companyId, input.payload);
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       setCreateRuleOpen(false);
       setEditingRule(null);
-      await queryClient.invalidateQueries({ queryKey: ["safety", "integrity-alert-rules", operatingCompanyId] });
+      setDraftRule(EMPTY_RULE_DRAFT);
+      await queryClient.invalidateQueries({ queryKey: ["safety", "integrity-alert-rules", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    evaluateMutation.reset();
+    saveRuleMutation.reset();
+    setSelected(null);
+    setEditingRule(null);
+    setCreateRuleOpen(false);
+    setDraftRule(EMPTY_RULE_DRAFT);
+  }, [operatingCompanyId]); // Mutation reset functions are stable; company transitions own fresh alert action state.
 
   const rows = alertsQuery.data?.integrity_alerts ?? [];
   const rules = rulesQuery.data?.integrity_alert_rules ?? [];
@@ -296,7 +305,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             type="button"
             className="ml-auto rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             disabled={evaluateMutation.isPending}
-            onClick={() => evaluateMutation.mutate()}
+            onClick={() => evaluateMutation.mutate({ companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}
           >
             Run evaluator
           </button>
@@ -497,7 +506,19 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               type="button"
               className="rounded-sm bg-slate-700 px-3 py-1 font-semibold text-white"
               disabled={saveRuleMutation.isPending}
-              onClick={() => saveRuleMutation.mutate()}
+              onClick={() => saveRuleMutation.mutate({
+                companyId: operatingCompanyId,
+                generation: lifecycleGenerationRef.current,
+                ruleId: editingRule?.id ? String(editingRule.id) : null,
+                payload: editingRule?.id ? {
+                  rule_name: draftRule.rule_name,
+                  source_view: draftRule.source_view,
+                  alert_category: draftRule.alert_category,
+                  subject_type: draftRule.subject_type,
+                  severity: draftRule.severity,
+                  enabled: draftRule.enabled,
+                } : { ...draftRule },
+              })}
             >
               Save
             </button>
