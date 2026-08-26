@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listMaintenanceDvirDefects,
@@ -24,6 +24,7 @@ export function DefectsInboxPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<"pending" | DvirDefectTriageStatus | "all">("pending");
+  const actionGenerationRef = useRef(0);
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "pending" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
 
   const q = useQuery({
@@ -38,21 +39,33 @@ export function DefectsInboxPage() {
   const rows = useMemo(() => q.data?.defects ?? [], [q.data?.defects]);
 
   const triageMut = useMutation({
-    mutationFn: (args: { id: string; action: "assign" | "escalate" | "close_no_action" | "convert_to_wo" }) =>
-      triageMaintenanceDvirDefect(args.id, {
-        operating_company_id: operatingCompanyId,
-        action: args.action,
+    mutationFn: (input: { id: string; companyId: string; generation: number; action: "assign" | "escalate" | "close_no_action" | "convert_to_wo" }) =>
+      triageMaintenanceDvirDefect(input.id, {
+        operating_company_id: input.companyId,
+        action: input.action,
       }),
-    onSuccess: async (result) => {
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       if (result.work_order_id) {
         pushToast(`Work order ${entityLabel(result.display_id, result.work_order_id, "Work order")} created`, "success");
       } else {
         pushToast("Defect triage updated", "success");
       }
-      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defects", operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defects", input.companyId] });
     },
-    onError: () => pushToast("Triage action failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Triage action failed", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    triageMut.reset();
+  }, [operatingCompanyId]);
+
+  const runTriage = (id: string, action: "assign" | "escalate" | "close_no_action" | "convert_to_wo") => {
+    triageMut.mutate({ id, companyId: operatingCompanyId, generation: actionGenerationRef.current, action });
+  };
 
   const columns = useMemo<ParityColumn<DvirDefectInboxRow>[]>(
     () => [
@@ -100,14 +113,14 @@ export function DefectsInboxPage() {
               className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] hover:bg-gray-50"
               data-testid={`defect-detail-link-${row.id}`}
             />
-            <Button size="sm" variant="secondary" onClick={() => triageMut.mutate({ id: row.id, action: "assign" })}>
+            <Button size="sm" variant="secondary" onClick={() => runTriage(row.id, "assign")}>
               Assign
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => triageMut.mutate({ id: row.id, action: "escalate" })}>
+            <Button size="sm" variant="secondary" onClick={() => runTriage(row.id, "escalate")}>
               Escalate
             </Button>
             {!row.follow_up_wo_id ? (
-              <Button size="sm" onClick={() => triageMut.mutate({ id: row.id, action: "convert_to_wo" })}>
+              <Button size="sm" onClick={() => runTriage(row.id, "convert_to_wo")}>
                 Convert to WO
               </Button>
             ) : null}
