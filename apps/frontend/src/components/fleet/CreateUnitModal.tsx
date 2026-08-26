@@ -126,12 +126,16 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   });
 
   const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending && !companiesQuery.isError;
+  const handleClose = () => {
+    if (createMutation.isPending) return;
+    resetAndClose();
+  };
 
   return (
     <ParityDrawer
       open={open}
       title="Create Unit"
-      onClose={resetAndClose}
+      onClose={handleClose}
       confirmDiscardOnClose
       isDirty={isDirty}
       onRegisterAttemptClose={(attemptClose) => {
@@ -140,7 +144,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
       stackAboveModal
       footer={
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()}>
+          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()} disabled={createMutation.isPending}>
             Cancel
           </Button>
           <Button form="fleet-create-unit-form" type="submit" data-testid="fleet-create-unit-submit" loading={createMutation.isPending} disabled={!canSubmit}>
