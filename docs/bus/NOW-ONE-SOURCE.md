@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**23:49 CT CLAUDE IS LEAD.** `LEAD-SEAT=CC-1`. Tripwire T1-FAST-MERGE-VERIFY-STATIC. Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Cursor = worker + deploy lieutenant. **All seats WORK NOW** GO-2310. Idle = defect. Skip #15546. Nobody `trigger_deploy`.
+
 **23:32 CT LEAD CONTRACT.** `docs/bus/LEAD-CONTRACT.md` · `LEAD-SEAT.md` · census `LEAD-CENSUS.md`. Next Cursor T1–T6 → `node scripts/ops/activate-claude-lead.mjs` (Claude lead packet `CLAUDE-LEAD-NOW.md`). Product NOW unchanged: GO-2310.
 
 **23:19 CT WORK NOW — all seats ACK GO-2310 in OUTBOX this turn. Idle = defect.** Cursor = lead (bus/FAST-MERGE) until tripwire. CC-1 money. CC-2/CC-3/Codex/Cascade/Devin-A walk their URLs. Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`.
