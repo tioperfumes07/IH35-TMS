@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMaintenanceDvirDefect, triageMaintenanceDvirDefect } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -18,6 +18,7 @@ export function DefectDetailPage() {
   const qc = useQueryClient();
   const [woModalOpen, setWoModalOpen] = useState(false);
   const [mechanicNotes, setMechanicNotes] = useState("");
+  const actionGenerationRef = useRef(0);
 
   const q = useQuery({
     queryKey: ["maintenance", "dvir-defect", operatingCompanyId, defectId],
@@ -29,19 +30,45 @@ export function DefectDetailPage() {
   const history = useMemo(() => q.data?.triage_history ?? [], [q.data?.triage_history]);
 
   const triageMut = useMutation({
-    mutationFn: (action: "assign" | "escalate" | "close_no_action" | "convert_to_wo") =>
-      triageMaintenanceDvirDefect(defectId, {
-        operating_company_id: operatingCompanyId,
-        action,
-        mechanic_notes: mechanicNotes || undefined,
+    mutationFn: (input: {
+      defectId: string;
+      companyId: string;
+      generation: number;
+      action: "assign" | "escalate" | "close_no_action" | "convert_to_wo";
+      mechanicNotes?: string;
+    }) =>
+      triageMaintenanceDvirDefect(input.defectId, {
+        operating_company_id: input.companyId,
+        action: input.action,
+        mechanic_notes: input.mechanicNotes,
       }),
-    onSuccess: async (result) => {
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast(result.work_order_id ? "Work order created from defect" : "Triage saved", "success");
-      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defect", operatingCompanyId, defectId] });
-      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defects", operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defect", input.companyId, input.defectId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "dvir-defects", input.companyId] });
     },
-    onError: () => pushToast("Triage failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Triage failed", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    triageMut.reset();
+    setMechanicNotes("");
+    setWoModalOpen(false);
+  }, [operatingCompanyId, defectId]);
+
+  const runTriage = (action: "assign" | "escalate" | "close_no_action" | "convert_to_wo") => {
+    triageMut.mutate({
+      defectId,
+      companyId: operatingCompanyId,
+      generation: actionGenerationRef.current,
+      action,
+      mechanicNotes: mechanicNotes.trim() || undefined,
+    });
+  };
 
   const woPrefill = defect
     ? {
@@ -120,16 +147,16 @@ export function DefectDetailPage() {
               placeholder="Shop triage notes…"
             />
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" onClick={() => triageMut.mutate("assign")}>
+              <Button size="sm" variant="secondary" onClick={() => runTriage("assign")}>
                 Assign
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => triageMut.mutate("escalate")}>
+              <Button size="sm" variant="secondary" onClick={() => runTriage("escalate")}>
                 Escalate
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => triageMut.mutate("close_no_action")}>
+              <Button size="sm" variant="secondary" onClick={() => runTriage("close_no_action")}>
                 Close (no action)
               </Button>
-              <Button size="sm" onClick={() => triageMut.mutate("convert_to_wo")}>
+              <Button size="sm" onClick={() => runTriage("convert_to_wo")}>
                 Convert to WO (API)
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setWoModalOpen(true)}>
