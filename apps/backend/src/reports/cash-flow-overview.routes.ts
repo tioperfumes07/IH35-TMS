@@ -66,8 +66,12 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       // BANK-ACCOUNT-HIDE: every cash aggregate below must exclude accounts hidden for THIS entity
       // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-      // Feature flag miss → hide OFF (default). Not a money aggregate; do not invent balances.
-      const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
+      //
+      // BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN — `.catch(() => false)` treated a FAILED
+      // flag read identically to a successful "hide is off" read, so a schema/RLS/connection
+      // failure silently let accounts that may be intentionally hidden back into these totals.
+      // `false` is only correct after a real read; a failure must fail the request loud instead.
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       const bankRes = await client
         .query(
           `

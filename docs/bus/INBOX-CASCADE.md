@@ -1,3 +1,5 @@
+**16:15 CT WAKE.** Live `b8f10a3`. NOW=/customers unique FINDING then /dispatch. ACK OUTBOX. Never recertify. Never idle.
+
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. If /accounting walk done, NOW=/customers unique FINDING then /dispatch. Never recertify. Never product PR. Never trigger_deploy. ACK OUTBOX.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` / SHA `b711699` silent-header rows below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `CASCADE | ACK | GO-1405 | PORT=n | NOW=/accounting | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never recertify U14. Never product PR. Start: `~/Desktop/IH35-START-1-CASCADE.command`. Board: `docs/audit/GUARD-WORKORDERS.md` + append `AUDIT-COVERAGE-LIVE.md`. Excel. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** live walk `/accounting` unique FINDING only on `c46d592`; then customers→dispatch. Confirm CURRENT-LAW in packet.

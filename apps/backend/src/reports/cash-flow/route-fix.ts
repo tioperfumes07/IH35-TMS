@@ -38,7 +38,12 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
 
       // BANK-ACCOUNT-HIDE: exclude accounts hidden for THIS entity (flag OFF by default — see
       // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-      const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
+      //
+      // BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN — same class as REPORTS-F6364 right below:
+      // `.catch(() => false)` painted a failed flag read as a successful "hide is off" read,
+      // silently letting accounts that may be intentionally hidden back into this balance. Fail
+      // loud instead, same standard REPORTS-F6364 already applies to the query underneath it.
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       // REPORTS-F6364: this used to .catch(() => ({ rows: [{ total_cents: "0" }] })), painting a
       // fake $0.00 "Operating balance" over any real query failure (RLS, connection, schema drift)
       // with zero indication anything was wrong — exactly the deep-dive hunt's named class. A broken
