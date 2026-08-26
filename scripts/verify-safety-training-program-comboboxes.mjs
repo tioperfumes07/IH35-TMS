@@ -18,7 +18,8 @@ function assertContract(source) {
   }
   for (const token of [
     "category,",
-    'frequency: frequency === "n_month" ? "n_month" : frequency',
+    '                frequency,',
+    'recertify_months: frequency === "n_month" ? Number(recertifyMonths) : undefined',
     'frequency === "n_month" ? (',
     'setCategory(next as TrainingProgramCategory)',
     'setFrequency(next as TrainingProgramFrequency)',
@@ -26,7 +27,7 @@ function assertContract(source) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = diskSource.replace('frequency: frequency === "n_month" ? "n_month" : frequency', 'frequency: "annual"');
+  const planted = diskSource.replace('                frequency,', '                frequency: "annual",');
   const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
     cwd: ROOT,
     env: { ...process.env, SAFETY_F6484_PLANTED_SOURCE: planted },
