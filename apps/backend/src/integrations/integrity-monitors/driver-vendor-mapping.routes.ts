@@ -5,7 +5,8 @@ import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { checkAllMappings, persistFindings } from "./driver-vendor-mapping.js";
 
-let latestSnapshot: { scanned_at: string; findings: Awaited<ReturnType<typeof checkAllMappings>> } | null = null;
+type MappingSnapshot = { scanned_at: string; findings: Awaited<ReturnType<typeof checkAllMappings>> };
+const latestSnapshotsByCompany = new Map<string, MappingSnapshot>();
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -16,7 +17,12 @@ export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyIns
   app.get("/api/integrations/integrity/driver-vendor-mapping", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    return { snapshot: latestSnapshot };
+    const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error" });
+    await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+    });
+    return { snapshot: latestSnapshotsByCompany.get(query.data.operating_company_id) ?? null };
   });
 
   app.post("/api/integrations/integrity/driver-vendor-mapping/scan", async (req, reply) => {
@@ -31,7 +37,7 @@ export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyIns
       await persistFindings(client, body.data.operating_company_id, result);
       return result;
     });
-    latestSnapshot = { scanned_at: new Date().toISOString(), findings };
+    latestSnapshotsByCompany.set(body.data.operating_company_id, { scanned_at: new Date().toISOString(), findings });
     return { findings };
   });
 }
