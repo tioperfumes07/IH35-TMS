@@ -92,8 +92,8 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           <label className="block text-xs text-slate-600">Result
             <Combobox className="mt-1" options={[{ value: "pass", label: "Pass" }, { value: "fail", label: "Fail" }]} value={result} onChange={(next) => next && setResult(next as SafetyBackgroundCheckRow["result"])} />
           </label>
-          <div className="block text-xs text-slate-600"><span>Checked date</span><DatePicker className="mt-1 w-full" value={checkedAt} onChange={setCheckedAt} /></div>
-          <div className="block text-xs text-slate-600"><span>Expiry date (optional)</span><DatePicker className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
+          <div className="block text-xs text-slate-600"><label htmlFor="background-check-checked-date">Checked date</label><DatePicker id="background-check-checked-date" className="mt-1 w-full" value={checkedAt} onChange={setCheckedAt} /></div>
+          <div className="block text-xs text-slate-600"><label htmlFor="background-check-expiry-date">Expiry date (optional)</label><DatePicker id="background-check-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
           <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
           {createMutation.isError ? <p className="text-xs text-red-700">The check could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
           <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
