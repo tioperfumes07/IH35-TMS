@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitDriverReport } from "../../api/driver";
 import { Modal } from "../../components/Modal";
@@ -37,6 +37,23 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
   const [voice, setVoice] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetDraft = useCallback(() => {
+    setReportType("damage");
+    setDescription("");
+    setPhotos([]);
+    setVoice(null);
+    setError(null);
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, loadId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
 
   const modalTitle = t("driver.report_modal_title");
 
@@ -77,10 +94,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
         voice_memo: voiceMemo,
       });
       onSubmitted?.();
-      onClose();
-      setDescription("");
-      setPhotos([]);
-      setVoice(null);
+      handleClose();
     } catch (err) {
       setError((err as Error).message ?? "submit_failed");
     } finally {
@@ -89,7 +103,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={modalTitle}>
+    <Modal open={open} onClose={handleClose} title={modalTitle}>
       <div className="space-y-3 text-sm" data-testid="driver-report-issue-modal">
         {loadId ? (
           <p className="text-xs text-slate-600" data-testid="driver-report-issue-load-link">
@@ -145,7 +159,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
           <button
             type="button"
             className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={busy}
           >
             Cancel
