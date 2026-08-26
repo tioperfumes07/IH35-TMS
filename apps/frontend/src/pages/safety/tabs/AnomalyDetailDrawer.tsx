@@ -24,9 +24,11 @@ export function AnomalyDetailDrawer({
   onUpdated,
   initialAnomaly = null,
 }: Props) {
+  /** @matrix-built modules=safety cols=driver,unit,customer,connectivity,reverse_link */
   // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
   // element type follows. Focus behaviour is unchanged.
   const panelRef = useRef<HTMLDivElement>(null);
+  const actionGenerationRef = useRef(0);
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
 
@@ -39,30 +41,33 @@ export function AnomalyDetailDrawer({
   const anomaly = detailQuery.data?.anomaly ?? initialAnomaly ?? null;
 
   const ackMutation = useMutation({
-    mutationFn: async () => ackAnomaly(String(anomalyId), operatingCompanyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", operatingCompanyId] });
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", operatingCompanyId, anomalyId] });
+    mutationFn: async (input: { anomalyId: string; companyId: string; generation: number }) => ackAnomaly(input.anomalyId, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", input.companyId, input.anomalyId] });
       onUpdated();
     },
   });
 
   const resolveMutation = useMutation({
-    mutationFn: async () => resolveAnomaly(String(anomalyId), operatingCompanyId, note),
-    onSuccess: async () => {
+    mutationFn: async (input: { anomalyId: string; companyId: string; generation: number; note: string }) => resolveAnomaly(input.anomalyId, input.companyId, input.note),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setNote("");
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", operatingCompanyId] });
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", operatingCompanyId, anomalyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", input.companyId, input.anomalyId] });
       onUpdated();
     },
   });
 
   const dismissMutation = useMutation({
-    mutationFn: async () => dismissAnomaly(String(anomalyId), operatingCompanyId, note),
-    onSuccess: async () => {
+    mutationFn: async (input: { anomalyId: string; companyId: string; generation: number; note: string }) => dismissAnomaly(input.anomalyId, input.companyId, input.note),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setNote("");
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", operatingCompanyId] });
-      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", operatingCompanyId, anomalyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomalies", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "anomaly", input.companyId, input.anomalyId] });
       onUpdated();
     },
   });
@@ -71,6 +76,7 @@ export function AnomalyDetailDrawer({
   const resetDismissMutation = dismissMutation.reset;
 
   const resetActionState = useCallback(() => {
+    actionGenerationRef.current += 1;
     setNote("");
     resetAckMutation();
     resetResolveMutation();
@@ -215,7 +221,7 @@ export function AnomalyDetailDrawer({
                 <button
                   type="button"
                   className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                  onClick={() => ackMutation.mutate()}
+                  onClick={() => ackMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
                   disabled={ackMutation.isPending || anomaly.status !== "new"}
                 >
                   Acknowledge
@@ -223,7 +229,7 @@ export function AnomalyDetailDrawer({
                 <button
                   type="button"
                   className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
-                  onClick={() => resolveMutation.mutate()}
+                  onClick={() => resolveMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
                   disabled={resolveMutation.isPending || note.trim().length === 0}
                 >
                   Resolve
@@ -231,13 +237,15 @@ export function AnomalyDetailDrawer({
                 <button
                   type="button"
                   className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                  onClick={() => dismissMutation.mutate()}
+                  onClick={() => dismissMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
                   disabled={dismissMutation.isPending || note.trim().length === 0}
                 >
                   Dismiss
                 </button>
               </div>
-              {(ackMutation.isError || resolveMutation.isError || dismissMutation.isError) ? (
+              {(ackMutation.isError && ackMutation.variables?.generation === actionGenerationRef.current) ||
+              (resolveMutation.isError && resolveMutation.variables?.generation === actionGenerationRef.current) ||
+              (dismissMutation.isError && dismissMutation.variables?.generation === actionGenerationRef.current) ? (
                 <p className="text-xs text-red-700" data-testid="anomaly-action-error">
                   {userFacingApiError(
                     ackMutation.error ?? resolveMutation.error ?? dismissMutation.error,
