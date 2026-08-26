@@ -1,3 +1,5 @@
+**16:22 CT.** Live `b8f10a3`. NOW=hop.assign. ACK OUTBOX.
+
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=hop.assign UI then /drivers /fleet /safety /fuel. Never steal 57cabbab. Never trigger_deploy. ACK OUTBOX.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `Codex | ACK | GO-1405 | PORT=9226 | NOW=hop.assign | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never steal `57cabbab`. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. Assigned browser for live unique. **YOUR NOW:** hop.assign UI (keep modal on failed write) then `/drivers` `/fleet` `/safety` `/fuel` calendars + canonical Create. Confirm CURRENT-LAW in packet.
