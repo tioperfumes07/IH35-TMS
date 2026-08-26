@@ -97,8 +97,8 @@ contains("apps/frontend/src/components/maintenance/DvirSeverityBadge.tsx", badge
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
-  { pattern: /\/maintenance\/pre-flight\/dvir/, label: "queue route registered" },
-  { pattern: /PreFlightDvirQueue/, label: "queue page imported" },
+  { pattern: /path="\/maintenance\/pre-flight-dvir"/, label: "canonical queue route registered" },
+  { pattern: /<MaintenanceTabRoute tabId="pre_flight_dvir"/, label: "queue route mounts canonical Maintenance tab" },
 ]);
 
 const woDetail = read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx");
@@ -108,8 +108,15 @@ contains("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx", woDetail
 
 const pwa = read("apps/driver-pwa/src/pages/DVIR.tsx");
 contains("apps/driver-pwa/src/pages/DVIR.tsx", pwa, [
-  { pattern: /dvir\.severity_picker/, label: "PWA severity picker" },
-  { pattern: /dvir-major-ack/, label: "PWA major confirmation" },
+  { pattern: /hasMajor = items\.some\(\(item\) => item\.status === "major"\)/, label: "PWA major severity detection" },
+  { pattern: /majorItemsValid[\s\S]*item\.note\.trim\(\)\.length > 0 && item\.photo_keys\.length > 0/, label: "PWA major note/photo confirmation" },
+  { pattern: /canSubmit = Boolean\(signature\) && \(!hasMajor \|\| majorItemsValid\)/, label: "PWA blocks incomplete major submission" },
+]);
+
+const pwaItem = read("apps/driver-pwa/src/components/DvirItemRow.tsx");
+contains("apps/driver-pwa/src/components/DvirItemRow.tsx", pwaItem, [
+  { pattern: /key: "minor"[\s\S]*key: "major"/, label: "PWA minor/major severity picker" },
+  { pattern: /onStatusChange\(status\.key\)/, label: "PWA severity selection callback" },
 ]);
 
 const docs = read("docs/specs/gap-49-dvir-severity-tagging.md");

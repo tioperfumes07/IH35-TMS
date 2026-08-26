@@ -36,6 +36,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { WarrantyClaimsReverseSection } from "../../components/maintenance/WarrantyClaimsReverseSection";
+import { DvirSeverityBadge } from "../../components/maintenance/DvirSeverityBadge";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -814,6 +815,10 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</div>
                 <p>{String(wo.status ?? "—")}</p>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Severity</div>
+                <div className="mt-1"><DvirSeverityBadge severity={wo.severity} /></div>
               </div>
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source Type</div>
