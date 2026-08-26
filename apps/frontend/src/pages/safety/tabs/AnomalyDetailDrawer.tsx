@@ -5,7 +5,6 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
 type Props = {
   open: boolean;
@@ -31,6 +30,7 @@ export function AnomalyDetailDrawer({
   const actionGenerationRef = useRef(0);
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
 
   const detailQuery = useQuery({
     queryKey: ["safety", "anomaly", operatingCompanyId, anomalyId],
@@ -87,14 +87,14 @@ export function AnomalyDetailDrawer({
     resetActionState();
   }, [open, operatingCompanyId, anomalyId, resetActionState]);
 
+  const actionPending = ackMutation.isPending || resolveMutation.isPending || dismissMutation.isPending;
   const handleClose = useCallback(() => {
+    if (actionPending) return;
     resetActionState();
     onClose();
-  }, [onClose, resetActionState]);
+  }, [actionPending, onClose, resetActionState]);
 
   const DRAWER_TITLE = "Anomaly Detail";
-
-  useEscapeKey(handleClose, open && Boolean(anomalyId));
 
   useEffect(() => {
     if (!open || !anomalyId) return;
@@ -134,7 +134,16 @@ export function AnomalyDetailDrawer({
           close button — a second drawer implementation beside the shared one, so every drawer-chrome
           fix had to be made twice and this copy drifted. ParityDrawer is the single surface. This one
           was the widest bespoke copy (620px) — size="wide" is the shared equivalent. */}
-      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
+      <ParityDrawer
+        open
+        onClose={handleClose}
+        title={DRAWER_TITLE}
+        size="wide"
+        confirmDiscardOnClose
+        isDirty={Boolean(note.trim())}
+        onRegisterAttemptClose={setAttemptClose}
+        footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
+      >
         <div ref={panelRef} data-testid="anomaly-detail-drawer">
 
         {!anomaly ? (
@@ -222,7 +231,7 @@ export function AnomalyDetailDrawer({
                   type="button"
                   className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => ackMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
-                  disabled={ackMutation.isPending || anomaly.status !== "new"}
+                  disabled={actionPending || anomaly.status !== "new"}
                 >
                   Acknowledge
                 </button>
@@ -230,7 +239,7 @@ export function AnomalyDetailDrawer({
                   type="button"
                   className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
                   onClick={() => resolveMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
-                  disabled={resolveMutation.isPending || note.trim().length === 0}
+                  disabled={actionPending || note.trim().length === 0}
                 >
                   Resolve
                 </button>
@@ -238,7 +247,7 @@ export function AnomalyDetailDrawer({
                   type="button"
                   className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => dismissMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
-                  disabled={dismissMutation.isPending || note.trim().length === 0}
+                  disabled={actionPending || note.trim().length === 0}
                 >
                   Dismiss
                 </button>

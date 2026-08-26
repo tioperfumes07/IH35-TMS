@@ -9,7 +9,6 @@ import {
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -38,6 +37,8 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
   const [outcome, setOutcome] = useState<"warning" | "written_reprimand" | "monetary_fine" | "termination" | "dismissed">("warning");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [fineOverrideCents, setFineOverrideCents] = useState("");
+  const [correctiveActionDirty, setCorrectiveActionDirty] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const actionGenerationRef = useRef(0);
   const patchMutation = useMutation({
     mutationFn: (input: ViolationActionScope & { payload: Record<string, unknown> }) =>
@@ -91,6 +92,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
     setOutcome("warning");
     setResolutionNotes("");
     setFineOverrideCents("");
+    setCorrectiveActionDirty(false);
     resetPatchMutation();
     resetCompleteMutation();
     resetEscalateMutation();
@@ -101,12 +103,12 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
     resetActionState();
   }, [open, operatingCompanyId, violation?.id, resetActionState]);
 
+  const actionPending = patchMutation.isPending || completeMutation.isPending || escalateMutation.isPending || resolveMutation.isPending;
   const handleClose = useCallback(() => {
+    if (actionPending) return;
     resetActionState();
     onClose();
-  }, [onClose, resetActionState]);
-
-  useEscapeKey(handleClose, open && Boolean(violation));
+  }, [actionPending, onClose, resetActionState]);
 
   useEffect(() => {
     if (!open || !violation) return;
@@ -168,7 +170,16 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           fix to drawer chrome had to be made twice and this copy silently drifted. ParityDrawer is
           the single surface. The panel ref is retained for the existing focus behaviour, and the
           data-testid moves onto the inner content so existing selectors keep resolving. */}
-      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
+      <ParityDrawer
+        open
+        onClose={handleClose}
+        title={DRAWER_TITLE}
+        size="wide"
+        confirmDiscardOnClose
+        isDirty={outcome !== "warning" || Boolean(resolutionNotes.trim() || fineOverrideCents.trim()) || correctiveActionDirty}
+        onRegisterAttemptClose={setAttemptClose}
+        footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
+      >
         <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-sm">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>
           <div><strong>Type:</strong> {String(violation.violation_type ?? "—")}</div>
@@ -210,6 +221,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            disabled={actionPending}
             onClick={() => patchMutation.mutate({
               violationId: String(violation.id ?? ""),
               companyId: operatingCompanyId,
@@ -222,6 +234,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            disabled={actionPending}
             onClick={() => escalateMutation.mutate({
               violationId: String(violation.id ?? ""),
               companyId: operatingCompanyId,
@@ -283,7 +296,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             <button
               type="button"
               className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={resolveMutation.isPending || resolutionNotes.trim().length < 20}
+              disabled={actionPending || resolutionNotes.trim().length < 20}
               onClick={() => resolveMutation.mutate({
                 violationId: String(violation.id ?? ""),
                 companyId: operatingCompanyId,
@@ -307,6 +320,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <CompanyViolationCorrectiveActionForm
             key={`${operatingCompanyId}:${String(violation.id ?? "")}`}
             loading={completeMutation.isPending}
+            onDirtyChange={setCorrectiveActionDirty}
             onComplete={(completedDate, notes) => completeMutation.mutate({
               violationId: String(violation.id ?? ""),
               companyId: operatingCompanyId,
