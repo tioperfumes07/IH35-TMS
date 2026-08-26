@@ -110,14 +110,25 @@ describe("SafetyMeetingsPage", () => {
 
 describe("TrainingProgramsPage", () => {
   beforeEach(() => {
-    vi.spyOn(safetyApi, "getTrainingCompletions").mockResolvedValue({
-      training_completions: [{ id: "prog-1", training_name: "Defensive Driving", category: "refresher", frequency: "annual" }],
+    vi.spyOn(safetyApi, "listTrainingPrograms").mockResolvedValue({
+      training_programs: [{
+        id: "prog-1",
+        operating_company_id: companyId,
+        name: "Defensive Driving",
+        category: "refresher",
+        frequency: "annual",
+        recertify_months: null,
+        passing_grade: null,
+      }],
     });
     vi.spyOn(safetyApi, "createTrainingProgram").mockResolvedValue({
       id: "prog-2",
       name: "Hazmat refresh",
       category: "hazmat",
       frequency: "annual",
+      operating_company_id: companyId,
+      recertify_months: null,
+      passing_grade: null,
     });
     vi.spyOn(safetyApi, "createSafetyTrainingRecord").mockResolvedValue({ id: "rec-1" });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({

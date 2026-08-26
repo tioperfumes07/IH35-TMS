@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyTrainingRecord,
   createTrainingProgram,
-  getTrainingCompletions,
+  listTrainingPrograms,
+  type TrainingProgram,
   type TrainingProgramCategory,
   type TrainingProgramFrequency,
 } from "../../api/safety";
@@ -23,28 +24,14 @@ type Props = {
   operatingCompanyId: string;
 };
 
-type ProgramRow = {
-  id: string;
-  name: string;
-  category: string;
-  frequency: string;
-  passing_grade?: string | null;
-};
+type ProgramRow = TrainingProgram;
 
-function deriveProgramsFromCompletions(rows: Array<Record<string, unknown>>): ProgramRow[] {
-  const byName = new Map<string, ProgramRow>();
-  for (const row of rows) {
-    const name = String(row.training_type ?? row.training_name ?? row.name ?? "").trim();
-    if (!name || byName.has(name)) continue;
-    byName.set(name, {
-      id: String(row.id ?? name),
-      name,
-      category: String(row.category ?? "other"),
-      frequency: String(row.frequency ?? "annual"),
-      passing_grade: (row.passing_grade as string | null | undefined) ?? null,
-    });
-  }
-  return Array.from(byName.values());
+/** @matrix-built modules=safety cols=driver,connectivity,reverse_link,qbo_chrome */
+
+function addUtcMonths(date: Date, months: number) {
+  const next = new Date(date);
+  next.setUTCMonth(next.getUTCMonth() + months);
+  return next.toISOString().slice(0, 10);
 }
 
 export function TrainingProgramsPage({ operatingCompanyId }: Props) {
@@ -59,11 +46,11 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   const [passingGrade, setPassingGrade] = useState("");
   const [assignDriverIds, setAssignDriverIds] = useState<string[]>([]);
   const [assignPick, setAssignPick] = useState<string | null>(null);
-  const [sessionPrograms, setSessionPrograms] = useState<ProgramRow[]>([]);
+  const companyGenerationRef = useRef(0);
 
-  const completionsQuery = useQuery({
-    queryKey: ["safety", "training-completions", operatingCompanyId],
-    queryFn: () => getTrainingCompletions(operatingCompanyId),
+  const programsQuery = useQuery({
+    queryKey: ["safety", "training-programs", operatingCompanyId],
+    queryFn: () => listTrainingPrograms(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -78,78 +65,90 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     setAssignPick(null);
   };
 
-  const programs = useMemo(() => {
-    const derived = deriveProgramsFromCompletions(completionsQuery.data?.training_completions ?? []);
-    const merged = new Map<string, ProgramRow>();
-    for (const row of [...derived, ...sessionPrograms]) merged.set(row.name, row);
-    return Array.from(merged.values());
-  }, [completionsQuery.data?.training_completions, sessionPrograms]);
+  const programs = programsQuery.data?.training_programs ?? [];
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createTrainingProgram(operatingCompanyId, {
-        name: name.trim(),
-        category,
-        frequency: frequency === "n_month" ? "n_month" : frequency,
-        passing_grade: passingGrade.trim() || undefined,
-      }),
-    onSuccess: (created) => {
-      setSessionPrograms((current) => [
-        ...current,
-        {
-          id: String(created.id ?? name),
-          name: String(created.name ?? name),
-          category: String(created.category ?? category),
-          frequency: String(created.frequency ?? frequency),
-          passing_grade: (created.passing_grade as string | null | undefined) ?? null,
-        },
-      ]);
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: Parameters<typeof createTrainingProgram>[1];
+    }) => createTrainingProgram(input.companyId, input.payload),
+    onSuccess: (_created, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setCreateOpen(false);
       setName("");
       setPassingGrade("");
-      void queryClient.invalidateQueries({ queryKey: ["safety"] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "training-programs", input.companyId] });
     },
   });
 
   const assignMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedProgram) return;
-      const completedAt = new Date().toISOString();
+    mutationFn: async (input: {
+      companyId: string;
+      generation: number;
+      program: ProgramRow;
+      driverIds: string[];
+      completedAt: string;
+    }) => {
+      const { program } = input;
       const expiryDate =
-        frequency === "annual"
-          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-          : frequency === "n_month"
-            ? new Date(Date.now() + Number(recertifyMonths || 12) * 30 * 24 * 60 * 60 * 1000)
-                .toISOString()
-                .slice(0, 10)
+        program.frequency === "annual"
+          ? addUtcMonths(new Date(input.completedAt), 12)
+          : program.frequency === "n_month" && program.recertify_months
+            ? addUtcMonths(new Date(input.completedAt), program.recertify_months)
             : undefined;
       await Promise.all(
-        assignDriverIds.map((driverId) =>
-          createSafetyTrainingRecord(operatingCompanyId, {
+        input.driverIds.map((driverId) =>
+          createSafetyTrainingRecord(input.companyId, {
             driver_id: driverId,
-            training_name: selectedProgram.name,
-            completed_at: completedAt,
+            training_name: program.name,
+            completed_at: input.completedAt,
             expiry_date: expiryDate,
             notes: "Assigned from training programs page",
           })
         )
       );
     },
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setAssignOpen(false);
       setAssignDriverIds([]);
       setAssignPick(null);
       setSelectedProgram(null);
-      void queryClient.invalidateQueries({ queryKey: ["safety"] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "training-completions", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    assignMutation.reset();
+    setCreateOpen(false);
+    setAssignOpen(false);
+    setSelectedProgram(null);
+    setName("");
+    setCategory("entry_level");
+    setFrequency("annual");
+    setRecertifyMonths("12");
+    setPassingGrade("");
+    setAssignDriverIds([]);
+    setAssignPick(null);
+  }, [operatingCompanyId]);
 
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Assign drivers"
   // action are preserved verbatim (§7 additive-only).
   const programColumns: Array<ParityColumn<ProgramRow>> = [
     { key: "name", label: "Program", sortable: true },
     { key: "category", label: "Category", sortable: true, render: (p) => p.category.replace("_", " ") },
-    { key: "frequency", label: "Recertify", sortable: true, render: (p) => p.frequency.replace("_", " ") },
+    {
+      key: "frequency",
+      label: "Recertify",
+      sortable: true,
+      render: (p) =>
+        p.frequency === "n_month" && p.recertify_months
+          ? `Every ${p.recertify_months} months`
+          : p.frequency.replace("_", " "),
+    },
     { key: "passing_grade", label: "Passing grade", render: (p) => p.passing_grade ?? "—" },
     {
       key: "action",
@@ -191,19 +190,19 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No training programs found." — an outage
           presenting as a carrier with no driver training on record. */}
-      {completionsQuery.isError ? (
+      {programsQuery.isError ? (
         <ListErrorState
           title="Couldn't load training programs"
           status={0}
-          message={(completionsQuery.error as Error)?.message}
-          onRetry={() => void completionsQuery.refetch()}
+          message={(programsQuery.error as Error)?.message}
+          onRetry={() => void programsQuery.refetch()}
         />
       ) : (
       <ParityTable<ProgramRow>
         columns={programColumns}
         rows={programs}
         rowKey={(p) => p.id}
-        loading={completionsQuery.isLoading}
+        loading={programsQuery.isLoading}
         emptyText="No training programs found."
         storageKey="safety-training-programs"
         exportFilename="training-programs"
@@ -218,7 +217,18 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           data-testid="training-program-create-modal"
           onSubmit={(event) => {
             event.preventDefault();
-            createMutation.mutate();
+            const companyId = operatingCompanyId;
+            createMutation.mutate({
+              companyId,
+              generation: companyGenerationRef.current,
+              payload: {
+                name: name.trim(),
+                category,
+                frequency,
+                recertify_months: frequency === "n_month" ? Number(recertifyMonths) : undefined,
+                passing_grade: passingGrade.trim() || undefined,
+              },
+            });
           }}
         >
           <label className="block text-xs text-slate-600">
@@ -310,7 +320,14 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           data-testid="training-program-assign-modal"
           onSubmit={(event) => {
             event.preventDefault();
-            assignMutation.mutate();
+            if (!selectedProgram) return;
+            assignMutation.mutate({
+              companyId: operatingCompanyId,
+              generation: companyGenerationRef.current,
+              program: selectedProgram,
+              driverIds: [...assignDriverIds],
+              completedAt: new Date().toISOString(),
+            });
           }}
         >
           <div className="text-xs text-slate-600">

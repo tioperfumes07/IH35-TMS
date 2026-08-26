@@ -6,12 +6,30 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
-const createProgramSchema = z.object({
-  name: z.string().trim().min(1),
-  category: z.enum(["entry_level", "refresher", "remedial", "hazmat", "other"]),
-  frequency: z.enum(["one_time", "annual", "n_month"]),
-  passing_grade: z.string().trim().optional(),
-});
+const createProgramSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    category: z.enum(["entry_level", "refresher", "remedial", "hazmat", "other"]),
+    frequency: z.enum(["one_time", "annual", "n_month"]),
+    recertify_months: z.number().int().min(1).max(60).nullable().optional(),
+    passing_grade: z.string().trim().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.frequency === "n_month" && value.recertify_months == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recertify_months"],
+        message: "recertify_months is required for n_month programs",
+      });
+    }
+    if (value.frequency !== "n_month" && value.recertify_months != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recertify_months"],
+        message: "recertify_months is only valid for n_month programs",
+      });
+    }
+  });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -31,6 +49,29 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
 }
 
 export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance) {
+  app.get("/api/v1/safety/training-programs", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const trainingPrograms = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          SELECT id, operating_company_id, name, category, frequency,
+                 recertify_months, passing_grade, created_at, updated_at
+          FROM safety.training_programs
+          WHERE operating_company_id = $1
+            AND voided_at IS NULL
+          ORDER BY lower(name), created_at, id
+        `,
+        [query.data.operating_company_id]
+      );
+      return res.rows;
+    });
+    return reply.send({ training_programs: trainingPrograms });
+  });
+
   app.post("/api/v1/safety/training-programs", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
@@ -47,9 +88,10 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
             name,
             category,
             frequency,
+            recertify_months,
             passing_grade
           )
-          VALUES ($1, $2, $3, $4, $5)
+          VALUES ($1, $2, $3, $4, $5, $6)
           RETURNING *
         `,
         [
@@ -57,6 +99,7 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
           body.data.name,
           body.data.category,
           body.data.frequency,
+          body.data.frequency === "n_month" ? body.data.recertify_months : null,
           body.data.passing_grade ?? null,
         ]
       );
