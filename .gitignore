@@ -57,7 +57,11 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/27-one-open-pr-per-area.mdc
 !.cursor/rules/29-cursor-claude-parity-ship.mdc
 !.cursor/rules/30-claude-green-evidence-format.mdc
-!.cursor/rules/31-cursor-never-idle-wave-drain.mdc
+# 31-cursor-never-idle-wave-drain.mdc untracked 2026-08-26 — the rule's own body says
+# "SUPERSEDED 2026-08-08 (owner-directed): the never-idle loop is removed", it was the only rule
+# in this file with alwaysApply:false, and it has zero inbound references anywhere in the repo.
+# Full content recoverable from git history (any commit before this one). The still-active
+# general never-idle law is 32-continuous-mode-no-idle.mdc, a different/broader rule below.
 !.cursor/rules/31-full-system-audit-mandatory.mdc
 !.cursor/rules/32-continuous-mode-no-idle.mdc
 !.cursor/rules/32-load-linkage-pre-operational.mdc
