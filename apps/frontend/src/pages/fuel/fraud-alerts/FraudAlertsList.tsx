@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { Modal } from "../../../components/Modal";
+import { Button } from "../../../components/Button";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
@@ -43,6 +45,9 @@ export function FraudAlertsListPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("open");
+  const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
+  const [dismissReason, setDismissReason] = useState("");
+  const lifecycleGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
     queryKey: ["fuel", "fraud-alerts", companyId, statusFilter],
@@ -50,48 +55,74 @@ export function FraudAlertsListPage() {
     enabled: Boolean(companyId),
   });
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["fuel", "fraud-alerts"] });
+  const invalidate = (targetCompanyId: string) => {
+    void queryClient.invalidateQueries({ queryKey: ["fuel", "fraud-alerts", targetCompanyId] });
   };
 
+  type AlertAction = { uuid: string; companyId: string; generation: number };
+
   const investigateMut = useMutation({
-    mutationFn: (uuid: string) =>
-      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/investigate`, {
+    mutationFn: (input: AlertAction) =>
+      apiRequest(`/api/v1/fuel/fraud-alerts/${input.uuid}/investigate`, {
         method: "PATCH",
-        body: { operating_company_id: companyId },
+        body: { operating_company_id: input.companyId },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Alert marked investigating.", "success");
-      invalidate();
+      invalidate(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Could not mark the alert as investigating"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(error, "Could not mark the alert as investigating"), "error");
+    },
   });
 
   const confirmMut = useMutation({
-    mutationFn: (uuid: string) =>
-      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/confirm-fraud`, {
+    mutationFn: (input: AlertAction) =>
+      apiRequest(`/api/v1/fuel/fraud-alerts/${input.uuid}/confirm-fraud`, {
         method: "PATCH",
-        body: { operating_company_id: companyId },
+        body: { operating_company_id: input.companyId },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Alert confirmed as fraud.", "error");
-      invalidate();
+      invalidate(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Could not confirm the alert as fraud"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(error, "Could not confirm the alert as fraud"), "error");
+    },
   });
 
   const dismissMut = useMutation({
-    mutationFn: ({ uuid, reason }: { uuid: string; reason: string }) =>
-      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/dismiss`, {
+    mutationFn: (input: AlertAction & { reason: string }) =>
+      apiRequest(`/api/v1/fuel/fraud-alerts/${input.uuid}/dismiss`, {
         method: "PATCH",
-        body: { operating_company_id: companyId, reason },
+        body: { operating_company_id: input.companyId, reason: input.reason },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Alert dismissed.", "success");
-      invalidate();
+      setDismissTarget(null);
+      setDismissReason("");
+      invalidate(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Could not dismiss the alert"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(error, "Could not dismiss the alert"), "error");
+    },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    investigateMut.reset();
+    confirmMut.reset();
+    dismissMut.reset();
+    setDismissTarget(null);
+    setDismissReason("");
+    setStatusFilter("open");
+  }, [companyId]); // Mutation reset functions are stable; company transitions own fresh action state.
 
   const rows = alertsQuery.data?.alerts ?? [];
 
@@ -121,17 +152,25 @@ export function FraudAlertsListPage() {
         alwaysVisible: true,
         render: (row) => (
           <div className="flex flex-wrap gap-1">
-            <ActionButton disabled={investigateMut.isPending} onClick={() => investigateMut.mutate(row.uuid)}>
+            <ActionButton disabled={investigateMut.isPending} onClick={() => investigateMut.mutate({
+              uuid: row.uuid,
+              companyId,
+              generation: lifecycleGenerationRef.current,
+            })}>
               Investigate
             </ActionButton>
-            <ActionButton disabled={confirmMut.isPending} onClick={() => confirmMut.mutate(row.uuid)}>
+            <ActionButton disabled={confirmMut.isPending} onClick={() => confirmMut.mutate({
+              uuid: row.uuid,
+              companyId,
+              generation: lifecycleGenerationRef.current,
+            })}>
               Confirm fraud
             </ActionButton>
             <ActionButton
               disabled={dismissMut.isPending}
               onClick={() => {
-                const reason = window.prompt("Dismiss reason");
-                if (reason?.trim()) dismissMut.mutate({ uuid: row.uuid, reason: reason.trim() });
+                setDismissTarget(row);
+                setDismissReason("");
               }}
             >
               Dismiss
@@ -192,6 +231,57 @@ export function FraudAlertsListPage() {
           exportFilename="fuel-fraud-alerts"
         />
       )}
+      <Modal
+        open={Boolean(dismissTarget)}
+        onClose={() => {
+          if (dismissMut.isPending) return;
+          setDismissTarget(null);
+          setDismissReason("");
+        }}
+        title="Dismiss fuel fraud alert"
+      >
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!dismissTarget || !dismissReason.trim()) return;
+            dismissMut.mutate({
+              uuid: dismissTarget.uuid,
+              reason: dismissReason.trim(),
+              companyId,
+              generation: lifecycleGenerationRef.current,
+            });
+          }}
+        >
+          <label className="block space-y-1 text-xs font-semibold text-gray-700">
+            Dismiss reason
+            <textarea
+              value={dismissReason}
+              onChange={(event) => setDismissReason(event.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm font-normal"
+              placeholder="Explain why this alert is not fraud"
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={dismissMut.isPending}
+              onClick={() => {
+                setDismissTarget(null);
+                setDismissReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={dismissMut.isPending} disabled={!dismissReason.trim()}>
+              Dismiss alert
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
