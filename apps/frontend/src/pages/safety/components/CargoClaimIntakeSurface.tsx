@@ -587,8 +587,9 @@ export function CargoClaimIntakeSurface({
           </div>
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <div className="block">
-              <span className={labelSpan}>Date of loss *</span>
+              <label className={labelSpan} htmlFor={`${pageTestId}-create-loss-date`}>Date of loss *</label>
               <DatePicker
+                id={`${pageTestId}-create-loss-date`}
                 className={inputClass}
                 data-testid={`${pageTestId}-incident-at`}
                 value={form.incidentDate}
@@ -684,8 +685,9 @@ export function CargoClaimIntakeSurface({
               </label>
             </label>
             <div className="block">
-              <span className={labelSpan}>Claim filed date</span>
+              <label className={labelSpan} htmlFor={`${pageTestId}-create-filed-date`}>Claim filed date</label>
               <DatePicker
+                id={`${pageTestId}-create-filed-date`}
                 className={inputClass}
                 data-testid={`${pageTestId}-filed-at`}
                 value={form.claimFiledAt}
@@ -919,8 +921,8 @@ export function CargoClaimIntakeSurface({
           {editMode ? (
             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
               <div className="block">
-                <span className={labelSpan}>Date of loss *</span>
-                <DatePicker className={inputClass} value={editForm.incidentDate} onChange={(next) => setEdit({ incidentDate: next })} />
+                <label className={labelSpan} htmlFor={`${pageTestId}-edit-loss-date`}>Date of loss *</label>
+                <DatePicker id={`${pageTestId}-edit-loss-date`} className={inputClass} value={editForm.incidentDate} onChange={(next) => setEdit({ incidentDate: next })} />
               </div>
               <label className="block">
                 <span className={labelSpan}>Load (shipment)</span>
@@ -979,8 +981,8 @@ export function CargoClaimIntakeSurface({
                 </div>
               </label>
               <div className="block">
-                <span className={labelSpan}>Claim filed date</span>
-                <DatePicker className={inputClass} value={editForm.claimFiledAt} onChange={(next) => setEdit({ claimFiledAt: next })} />
+                <label className={labelSpan} htmlFor={`${pageTestId}-edit-filed-date`}>Claim filed date</label>
+                <DatePicker id={`${pageTestId}-edit-filed-date`} className={inputClass} value={editForm.claimFiledAt} onChange={(next) => setEdit({ claimFiledAt: next })} />
               </div>
               <label className="block md:col-span-2">
                 <span className={labelSpan}>Description *</span>

@@ -116,7 +116,10 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-7">
-        <DatePicker value={form.complaint_date} onChange={(next) => setForm((v) => ({ ...v, complaint_date: next }))} className="" />
+        <div>
+          <label className="sr-only" htmlFor="safety-complaint-date">Complaint date</label>
+          <DatePicker id="safety-complaint-date" value={form.complaint_date} onChange={(next) => setForm((v) => ({ ...v, complaint_date: next }))} className="" />
+        </div>
         <SelectCombobox value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="driver">driver</option>
           <option value="customer">customer</option>

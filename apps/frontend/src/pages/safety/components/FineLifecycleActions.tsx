@@ -307,8 +307,9 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
             />
           </label>
           <div className="text-xs font-medium text-slate-700">
-            <span>Paid Date</span>
+            <label htmlFor="fine-payment-paid-date">Paid Date</label>
             <DatePicker
+              id="fine-payment-paid-date"
               value={paidDate}
               onChange={setPaidDate}
               className="mt-1 w-full"

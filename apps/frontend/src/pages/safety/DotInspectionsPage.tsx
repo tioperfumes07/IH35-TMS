@@ -78,7 +78,10 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
-        <DatePicker value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} className="" />
+        <div>
+          <label className="sr-only" htmlFor="dot-inspection-page-date">Inspection date</label>
+          <DatePicker id="dot-inspection-page-date" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} className="" />
+        </div>
         <input value={form.inspector_name} placeholder="Inspector name" onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.inspection_level} type="number" min={1} max={6} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         <SelectCombobox value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">

@@ -22,11 +22,15 @@ export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Pr
     >
       <div className="text-xs font-semibold text-gray-700">Complete corrective action</div>
       <div className="grid gap-2 md:grid-cols-2">
-        <DatePicker
-          value={completedDate}
-          onChange={(next) => setCompletedDate(next)}
-          className=""
-        />
+        <div>
+          <label className="sr-only" htmlFor="corrective-action-completed-date">Completed date</label>
+          <DatePicker
+            id="corrective-action-completed-date"
+            value={completedDate}
+            onChange={(next) => setCompletedDate(next)}
+            className=""
+          />
+        </div>
         <input
           value={notes}
           onChange={(event) => setNotes(event.target.value)}

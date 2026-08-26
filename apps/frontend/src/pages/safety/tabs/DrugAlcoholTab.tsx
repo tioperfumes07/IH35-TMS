@@ -371,10 +371,10 @@ export function DrugAlcoholTab() {
               />
             </div>
             <div className="text-xs text-slate-600">
-              <span>Test date</span>
+              <label htmlFor="drug-alcohol-test-date">Test date</label>
               {/* DatePicker renders its own bordered control — passing border/padding here
                   produced a box-within-a-box. Layout-only className now. */}
-              <DatePicker className="mt-1 w-full" value={testDate} onChange={(next) => setTestDate(next)} max={companyToday()} />
+              <DatePicker id="drug-alcohol-test-date" className="mt-1 w-full" value={testDate} onChange={(next) => setTestDate(next)} max={companyToday()} />
             </div>
           </div>
           <button
