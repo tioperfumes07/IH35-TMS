@@ -281,12 +281,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     setShowMexicanIdentity(true);
     setShowVisaEmergency(true);
     setReturningDetection(null);
+    setReturningCheckLoading(false);
     setReturningCheckError(null);
+    setReturningCheckRetry(0);
     setOverrideReturningWarning(false);
     setRehireAction("rehire");
     setSelectedPriorDriverId(null);
+    setInvitePending(false);
+    setInviteSent(false);
+    setInviteConfirmOpen(false);
+    saveModeRef.current = "default";
     setDriverCreateBaseline(null);
-  }, [open]);
+  }, [open, companyId]);
 
   useEffect(() => {
     if (open) return;
@@ -602,7 +608,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   useEffect(() => {
     if (!open) return;
     resetDriverCreateErrors();
-  }, [open, resetDriverCreateErrors]);
+  }, [open, companyId, resetDriverCreateErrors]);
 
   const driverCreateForm = (
     <form
