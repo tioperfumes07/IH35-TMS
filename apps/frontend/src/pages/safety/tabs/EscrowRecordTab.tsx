@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { forfeitEscrow, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
@@ -23,6 +23,19 @@ export function EscrowRecordTab() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const isOwner = auth.user?.role === "Owner";
   const [selected, setSelected] = useState<EscrowRecordRow | null>(null);
+
+  // SAFETY-MONEY-F6635-ESCROW-FORFEIT-MUTABLE-COMPANY-RECORD-SCOPE — forfeitMutation passed the
+  // cloned row/amount/reason/liability as its variables but closed over the LIVE (mutable)
+  // operatingCompanyId inside mutationFn/onSuccess, and onSuccess unconditionally cleared the
+  // current modal selection. A selected-company transition during this liability-bearing
+  // request could submit the old escrow row under the NEW company, or disclose/clear completion
+  // in whatever company happens to be visible when the response lands. Same scope-generation-
+  // snapshot idiom already shipped for UnitPermitsTab.tsx / PaymentScheduleTab.tsx /
+  // WOTimeTrackingPanel.tsx.
+  const scopeGenerationRef = useRef(0);
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+  }, [operatingCompanyId]);
   const [searchParams, setSearchParams] = useSearchParams();
   const escrowDriverIdParam = searchParams.get("driver_id")?.trim() ?? "";
   // LST-F5163K: visible reverse filter (allowCreate=false); URL seeds picker + opens matching row.
@@ -61,30 +74,40 @@ export function EscrowRecordTab() {
   const forfeitMutation = useMutation({
     mutationFn: (payload: {
       row: EscrowRecordRow;
+      operatingCompanyId: string;
+      generation: number;
       amount: number;
       reason_code: string;
       reason_note?: string;
       linked_liability_id?: string;
     }) =>
       forfeitEscrow(payload.row.id, {
-        operating_company_id: operatingCompanyId,
+        operating_company_id: payload.operatingCompanyId,
         amount: payload.amount,
         reason_code: payload.reason_code,
         reason_note: payload.reason_note,
         linked_liability_id: payload.linked_liability_id,
       }),
-    onSuccess: (result) => {
+    onSuccess: (result, payload) => {
+      if (payload.generation !== scopeGenerationRef.current) return;
       pushToast(
         result.status === "blocked" ? "Forfeiture blocked by agreement gate." : "Escrow forfeiture submitted.",
         result.status === "blocked" ? "error" : "success"
       );
-      void queryClient.invalidateQueries({ queryKey: ["safety", "escrow-records", operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "escrow-records", payload.operatingCompanyId] });
       setSelected(null);
     },
-    onError: () => {
+    onError: (_error, payload) => {
+      if (payload.generation !== scopeGenerationRef.current) return;
       pushToast("Forfeiture request failed.", "error");
     },
   });
+  const resetForfeitMutation = forfeitMutation.reset;
+
+  useEffect(() => {
+    resetForfeitMutation();
+    setSelected(null);
+  }, [operatingCompanyId, resetForfeitMutation]);
 
   const rowsAll = escrowQuery.data?.records ?? [];
   const effectiveDriverId = applied.driverId.trim() || escrowDriverIdParam || "";
@@ -306,7 +329,7 @@ export function EscrowRecordTab() {
         onClose={() => setSelected(null)}
         onConfirm={(payload) => {
           if (!selected) return;
-          forfeitMutation.mutate({ row: selected, ...payload });
+          forfeitMutation.mutate({ row: selected, operatingCompanyId, generation: scopeGenerationRef.current, ...payload });
         }}
       />
     </div>
