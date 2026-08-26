@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -46,6 +46,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const lifecycleGenerationRef = useRef(0);
 
   function patchSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -90,24 +91,30 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createSafetyTrainingRecord(operatingCompanyId, {
-        driver_id: driverId,
-        training_name: trainingName.trim(),
-        completed_at: new Date(`${completedAt}T12:00:00`).toISOString(),
-        expiry_date: expiryDate || undefined,
-        notes: notes.trim() || undefined,
-      }),
-    onSuccess: () => {
+    mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createSafetyTrainingRecord>[1] }) =>
+      createSafetyTrainingRecord(input.companyId, input.payload),
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       setCreateOpen(false);
       setDriverId("");
       setTrainingName("");
       setExpiryDate("");
       setNotes("");
-      void queryClient.invalidateQueries({ queryKey: ["safety", "training-records", operatingCompanyId] });
-      void queryClient.invalidateQueries({ queryKey: ["safety", "training-completions", operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "training-records", input.companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "training-completions", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setCreateOpen(false);
+    setDriverId("");
+    setTrainingName("");
+    setCompletedAt(companyToday());
+    setExpiryDate("");
+    setNotes("");
+  }, [operatingCompanyId]); // Mutation reset is stable; each company owns a fresh training draft.
 
   const rows = recordsQuery.data?.training_completions ?? [];
 
@@ -226,7 +233,17 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           data-testid="training-record-create-modal"
           onSubmit={(event) => {
             event.preventDefault();
-            createMutation.mutate();
+            createMutation.mutate({
+              companyId: operatingCompanyId,
+              generation: lifecycleGenerationRef.current,
+              payload: {
+                driver_id: driverId,
+                training_name: trainingName.trim(),
+                completed_at: new Date(`${completedAt}T12:00:00`).toISOString(),
+                expiry_date: expiryDate || undefined,
+                notes: notes.trim() || undefined,
+              },
+            });
           }}
         >
           <label className="block text-xs text-slate-600">
