@@ -217,6 +217,20 @@ export function SafetyHomeTab() {
 
   const drillLoading = accidentsQuery.isPending || openEventsQuery.isPending;
   const drillError = accidentsQuery.isError && openEventsQuery.isError;
+  const dashboardQueries = [
+    activeDriversQuery,
+    kpisQuery,
+    eventKpisQuery,
+    csaQuery,
+    accidentsQuery,
+    openEventsQuery,
+  ];
+  const dashboardHasError = dashboardQueries.some((query) => query.isError);
+  const retryFailedDashboardQueries = () => {
+    for (const query of dashboardQueries) {
+      if (query.isError) void query.refetch();
+    }
+  };
 
   if (!companyId) {
     return (
@@ -234,6 +248,18 @@ export function SafetyHomeTab() {
           Company-wide aggregate across events, accidents, CSA, fines, and open liabilities. Tap a tile
           to open its list, or drill straight to a driver/unit below.
         </p>
+        {dashboardHasError ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="safety-home-retry">
+            <span className="text-sm font-semibold text-red-600">Some Safety home numbers are unavailable.</span>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={retryFailedDashboardQueries}
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div
@@ -361,8 +387,15 @@ export function SafetyHomeTab() {
           Open safety events plus driver-/unit-linked accidents from the last 30 days (by accident date).
         </p>
         {drillError ? (
-          <div className="text-sm font-semibold text-red-600" data-testid="safety-home-drill-error">
-            Unavailable
+          <div className="flex flex-wrap items-center gap-2" data-testid="safety-home-drill-error">
+            <span className="text-sm font-semibold text-red-600">Unavailable</span>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={retryFailedDashboardQueries}
+            >
+              Retry
+            </button>
           </div>
         ) : drillLoading ? (
           <div className="text-sm text-slate-400">Loading…</div>
