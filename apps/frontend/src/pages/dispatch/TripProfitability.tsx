@@ -156,22 +156,28 @@ export function TripProfitability() {
       dataAttributes={{ "data-trip-profit-filter-toolbar": "collapsed" }}
     >
       <div className="flex flex-wrap items-end gap-3">
-        <label className="text-sm">
-          From
+        <div className="flex flex-col gap-1">
+          <label htmlFor="trip-profit-from" className="text-sm">
+            From
+          </label>
           <DatePicker
+            id="trip-profit-from"
             className="ml-2"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
-        </label>
-        <label className="text-sm">
-          To
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="trip-profit-to" className="text-sm">
+            To
+          </label>
           <DatePicker
+            id="trip-profit-to"
             className="ml-2"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
-        </label>
+        </div>
       </div>
     </CollapsedListFilters>
   );

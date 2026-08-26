@@ -25,6 +25,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const DATEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DatePicker.tsx");
 const HISTORY = path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx");
+const TRIP = path.join(ROOT, "apps/frontend/src/pages/dispatch/TripProfitability.tsx");
 const FE = path.join(ROOT, "apps/frontend/src");
 
 const CHROME_TOKEN = /(?:^|\s)(?:rounded(?:-\S+)?|border(?:-\S+)?|p[xytblr]?-\S+|text-\S+|focus:\S+|hover:border\S*)(?:\s|$)/;
@@ -145,6 +146,17 @@ function run() {
     errors.push("AssignmentHistoryPage must keep from/to DatePicker test ids");
   }
 
+  const trip = fs.readFileSync(TRIP, "utf8");
+  if (/<label[^>]*>(?:(?!<\/label>)[\s\S])*<DatePicker/.test(trip)) {
+    errors.push("TripProfitability must not wrap DatePicker inside <label> (GO-2310 click-theft); use htmlFor + DatePicker id");
+  }
+  if (!trip.includes('htmlFor="trip-profit-from"') || !trip.includes('id="trip-profit-from"')) {
+    errors.push("TripProfitability From must htmlFor/id trip-profit-from");
+  }
+  if (!trip.includes('htmlFor="trip-profit-to"') || !trip.includes('id="trip-profit-to"')) {
+    errors.push("TripProfitability To must htmlFor/id trip-profit-to");
+  }
+
   errors.push(...scanCallSites());
 
   if (errors.length) {
@@ -198,6 +210,28 @@ function selftest() {
     }
   } finally {
     fs.writeFileSync(HISTORY, histBak);
+  }
+  const tripBak = fs.readFileSync(TRIP, "utf8");
+  try {
+    const wrapped = tripBak.replace(
+      `htmlFor="trip-profit-from"`,
+      `data-orphaned="trip-profit-from"`,
+    );
+    if (wrapped === tripBak) {
+      console.error("selftest FAIL: could not orphan trip-profit-from htmlFor");
+      process.exit(1);
+    }
+    fs.writeFileSync(TRIP, wrapped);
+    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (red.status === 0) {
+      console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned trip From label did not redden");
+      process.exit(1);
+    }
+  } finally {
+    fs.writeFileSync(TRIP, tripBak);
   }
   console.log("verify-datepicker-classname-no-box-in-box --selftest PASS");
 }
