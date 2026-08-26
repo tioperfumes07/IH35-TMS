@@ -19,8 +19,8 @@ function audit(body) {
   if (!/related_load_id:\s*suggested\.load_id/.test(body)) {
     failures.push("suggested load id must reach the controlled create payload state");
   }
-  if (!/related_load_id:\s*form\.related_load_id\.trim\(\) \|\| null/.test(body)) {
-    failures.push("createHosViolation payload must forward related_load_id");
+  if (!/related_load_id:\s*input\.draft\.related_load_id\.trim\(\) \|\| null/.test(body)) {
+    failures.push("createHosViolation payload must forward the immutable submitted related_load_id");
   }
   if (!/kind=\"load\"/.test(body)) failures.push("related load EntityPicker must be present");
   // P14 Box4 — HOS create owes picker_law on related load (never filter-mode allowCreate={false}).
@@ -39,7 +39,7 @@ if (process.argv.includes("--selftest")) {
     ["driver_id: form.driver_id", "driver_id: undefined"],
     ["if (form.related_load_id || suggestionPinned) return", "if (suggestionPinned) return"],
     ["related_load_id: suggested.load_id", "related_load_id: \"\""],
-    ["related_load_id: form.related_load_id.trim() || null", "related_load_id: null"],
+    ["related_load_id: input.draft.related_load_id.trim() || null", "related_load_id: null"],
     ["allowCreate\n", "allowCreate={false}\n"],
   ];
   for (const [from, to] of mutations) {
