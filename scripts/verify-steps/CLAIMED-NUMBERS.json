@@ -4374,6 +4374,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-cashflow-seven-day-strip-sql-balanced"
   },
+  "9790": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-transaction-register-no-double-pagination"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
