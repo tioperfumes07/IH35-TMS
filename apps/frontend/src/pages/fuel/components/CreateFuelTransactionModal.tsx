@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFuelTransaction, type FuelType } from "../../../api/fuelPlanner";
 import { suggestExpenseLoad } from "../../../api/maintenance";
@@ -51,10 +51,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const lifecycleGenerationRef = useRef(0);
 
-  useEffect(() => {
-    lifecycleGenerationRef.current += 1;
-    setSaving(false);
-    if (!open) return;
+  const resetDraft = useCallback(() => {
     setTransactionDate(companyToday());
     setDriverId("");
     setUnitId("");
@@ -70,7 +67,21 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setLocationState("");
     setNotes("");
     setSuggestionPinned(false);
-  }, [open, operatingCompanyId]);
+  }, []);
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    setSaving(false);
+    if (!open) return;
+    resetDraft();
+  }, [open, operatingCompanyId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    setSaving(false);
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
 
   const suggestionQuery = useQuery({
     queryKey: ["fuel-office-create", "suggest-load", operatingCompanyId, driverId, unitId, trailerId, transactionDate],
@@ -130,7 +141,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast("Fuel purchase recorded", "success");
       onCreated();
-      onClose();
+      handleClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Failed to record fuel purchase"), "error");
@@ -140,7 +151,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Fuel Purchase" variant="drawer">
+    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer">
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
         <div className="block font-semibold text-gray-700">
           <label htmlFor="fuel-purchase-date">Purchase date *</label>
@@ -327,7 +338,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         </label>
 
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
+          <Button size="sm" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button size="sm" loading={saving} onClick={() => void submit()} data-testid="fuel-create-submit">
