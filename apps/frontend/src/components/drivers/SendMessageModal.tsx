@@ -2,6 +2,7 @@ import { useState } from "react";
 import { sendDriverProfileMessage } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { Combobox } from "../Combobox";
 
 type Props = {
   open: boolean;
@@ -47,16 +48,18 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
     <Modal open={open} onClose={onClose} title={`Send Message — ${driverName}`}>
       <div className="space-y-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Channel</label>
-          <select
+          <label htmlFor="send-message-channel" className="text-xs font-semibold text-gray-600">Channel</label>
+          <Combobox
+            id="send-message-channel"
+            options={[
+              { value: "in_app", label: "In-app" },
+              { value: "sms", label: "SMS" },
+              { value: "email", label: "Email" },
+            ]}
             value={channel}
-            onChange={(event) => setChannel(event.target.value as typeof channel)}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-          >
-            <option value="in_app">In-app</option>
-            <option value="sms">SMS</option>
-            <option value="email">Email</option>
-          </select>
+            onChange={(next) => next && setChannel(next as typeof channel)}
+            placeholder="Select channel"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Urgency (optional)</label>

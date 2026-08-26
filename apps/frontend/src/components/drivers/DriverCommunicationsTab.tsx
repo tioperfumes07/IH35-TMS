@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Mail, MessageSquare, Phone, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { type DriverCommEntry, getDriverCommunications } from "../../api/driver-messages";
+import { Combobox } from "../Combobox";
 
 const CHANNEL_OPTIONS = [
   { value: "", label: "All channels" },
@@ -110,17 +111,19 @@ export function DriverCommunicationsTab({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-900">Communications Timeline</h2>
         <div className="flex items-center gap-2">
-          <select
-            className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs text-gray-700"
-            value={channel}
-            onChange={(e) => handleChannelChange(e.target.value)}
-          >
-            {CHANNEL_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <label htmlFor="driver-communications-channel" className="sr-only">Channel</label>
+          <Combobox
+            id="driver-communications-channel"
+            className="w-40"
+            options={CHANNEL_OPTIONS.filter((option) => option.value).map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            value={channel || null}
+            onChange={(next) => handleChannelChange(next ?? "")}
+            placeholder="All channels"
+            allowClear
+          />
           <button
             type="button"
             className="rounded-sm border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50"
