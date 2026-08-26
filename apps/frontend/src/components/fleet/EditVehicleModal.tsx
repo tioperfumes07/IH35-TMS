@@ -339,7 +339,9 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
     return FIELD_DEFS.filter((def) => def.tab === tab);
   };
 
-  const unitLabel = String(unit?.unit_number ?? rowPreview?.unit_number ?? unitId ?? "Unit");
+  const unitLabel = profileQuery.isError
+    ? "Unit"
+    : String(unit?.unit_number ?? rowPreview?.unit_number ?? "Unit");
 
   return (
     <Modal
