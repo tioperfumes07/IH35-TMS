@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ackAnomaly, dismissAnomaly, getAnomaly, resolveAnomaly, type SafetyAnomaly } from "../../../api/safety";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -66,10 +66,29 @@ export function AnomalyDetailDrawer({
       onUpdated();
     },
   });
+  const resetAckMutation = ackMutation.reset;
+  const resetResolveMutation = resolveMutation.reset;
+  const resetDismissMutation = dismissMutation.reset;
+
+  const resetActionState = useCallback(() => {
+    setNote("");
+    resetAckMutation();
+    resetResolveMutation();
+    resetDismissMutation();
+  }, [resetAckMutation, resetDismissMutation, resetResolveMutation]);
+
+  useEffect(() => {
+    resetActionState();
+  }, [open, operatingCompanyId, anomalyId, resetActionState]);
+
+  const handleClose = useCallback(() => {
+    resetActionState();
+    onClose();
+  }, [onClose, resetActionState]);
 
   const DRAWER_TITLE = "Anomaly Detail";
 
-  useEscapeKey(onClose, open && Boolean(anomalyId));
+  useEscapeKey(handleClose, open && Boolean(anomalyId));
 
   useEffect(() => {
     if (!open || !anomalyId) return;
@@ -109,7 +128,7 @@ export function AnomalyDetailDrawer({
           close button — a second drawer implementation beside the shared one, so every drawer-chrome
           fix had to be made twice and this copy drifted. ParityDrawer is the single surface. This one
           was the widest bespoke copy (620px) — size="wide" is the shared equivalent. */}
-      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
         <div ref={panelRef} data-testid="anomaly-detail-drawer">
 
         {!anomaly ? (

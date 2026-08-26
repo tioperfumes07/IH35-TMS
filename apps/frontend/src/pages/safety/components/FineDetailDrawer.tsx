@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -32,7 +32,16 @@ export function FineDetailDrawer({
   const panelRef = useRef<HTMLElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  useEscapeKey(onClose, open && Boolean(fine));
+  useEffect(() => {
+    setConfirmOpen(false);
+  }, [open, operatingCompanyId, fine?.id]);
+
+  const handleClose = useCallback(() => {
+    setConfirmOpen(false);
+    onClose();
+  }, [onClose]);
+
+  useEscapeKey(handleClose, open && Boolean(fine));
 
   useEffect(() => {
     if (!open || !fine) return;
@@ -78,7 +87,7 @@ export function FineDetailDrawer({
           focus behaviour — a second drawer implementation living beside the shared one, so every
           fix to drawer chrome had to be made twice and this copy silently drifted. ParityDrawer is
           the single surface (Law §3). The panel ref stays for the existing focus behaviour. */}
-      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE}>
+      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE}>
         <div ref={panelRef as React.RefObject<HTMLDivElement>} data-testid="fine-detail-drawer">
         <div className="mt-3 space-y-2 text-sm">
           <div><strong>Status:</strong> {String(fine.status ?? "open")}</div>

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   completeCompanyViolationCorrectiveAction,
   escalateCompanyViolation,
@@ -62,8 +62,31 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
       setFineOverrideCents("");
     },
   });
+  const resetPatchMutation = patchMutation.reset;
+  const resetCompleteMutation = completeMutation.reset;
+  const resetEscalateMutation = escalateMutation.reset;
+  const resetResolveMutation = resolveMutation.reset;
 
-  useEscapeKey(onClose, open && Boolean(violation));
+  const resetActionState = useCallback(() => {
+    setOutcome("warning");
+    setResolutionNotes("");
+    setFineOverrideCents("");
+    resetPatchMutation();
+    resetCompleteMutation();
+    resetEscalateMutation();
+    resetResolveMutation();
+  }, [resetCompleteMutation, resetEscalateMutation, resetPatchMutation, resetResolveMutation]);
+
+  useEffect(() => {
+    resetActionState();
+  }, [open, operatingCompanyId, violation?.id, resetActionState]);
+
+  const handleClose = useCallback(() => {
+    resetActionState();
+    onClose();
+  }, [onClose, resetActionState]);
+
+  useEscapeKey(handleClose, open && Boolean(violation));
 
   useEffect(() => {
     if (!open || !violation) return;
@@ -110,7 +133,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           fix to drawer chrome had to be made twice and this copy silently drifted. ParityDrawer is
           the single surface. The panel ref is retained for the existing focus behaviour, and the
           data-testid moves onto the inner content so existing selectors keep resolving. */}
-      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
         <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-sm">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>
           <div><strong>Type:</strong> {String(violation.violation_type ?? "—")}</div>
@@ -231,6 +254,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
 
         <div className="mt-4">
           <CompanyViolationCorrectiveActionForm
+            key={`${operatingCompanyId}:${String(violation.id ?? "")}`}
             loading={completeMutation.isPending}
             onComplete={(completedDate, notes) => completeMutation.mutate({ completedDate, notes })}
           />
