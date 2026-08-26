@@ -185,12 +185,15 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   const showReeferTab = hasReeferLinkage(unit, reefer);
   const currentStatus = String(draft.status ?? unit?.status ?? rowPreview?.status ?? "InService");
 
-  // Initialize draft/baseline exactly once per open so a background refetch can never
-  // reset the form and wipe the user's edits (which silently emptied dirtyCount).
+  // Initialize draft/baseline exactly once per record/open cycle so a background
+  // refetch cannot wipe edits and a record switch cannot retain another unit's draft.
   const initializedRef = useRef(false);
   useEffect(() => {
-    if (!open) initializedRef.current = false;
-  }, [open]);
+    initializedRef.current = false;
+    setActiveTab("Identity");
+    setDraft({});
+    setBaseline({});
+  }, [open, unitId, operatingCompanyId]);
   useEffect(() => {
     if (!unit || initializedRef.current) return;
     const next: Record<string, string | boolean> = {};
@@ -225,13 +228,21 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   }, [draft, baseline]);
 
   const { pushToast } = useToast();
+  const resetAndClose = useCallback(() => {
+    initializedRef.current = false;
+    setActiveTab("Identity");
+    setDraft({});
+    setBaseline({});
+    onClose();
+  }, [onClose]);
+
   const saveMutation = useMutation({
     mutationFn: () => patchUnit(unitId!, operatingCompanyId, patchPayload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       void queryClient.invalidateQueries({ queryKey: ["edit-vehicle-modal", unitId, operatingCompanyId] });
       onSaved?.();
-      onClose();
+      resetAndClose();
     },
     onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save unit", "error"),
   });
@@ -349,7 +360,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={resetAndClose}
       title={`Edit Vehicle · ${unitLabel}`}
       confirmDiscardOnClose
       isDirty={dirtyCount > 0}
@@ -420,14 +431,14 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
         ) : null}
 
         <div className="mt-auto flex justify-end gap-2 border-t border-gray-200 pt-3">
-          <Button variant="secondary" onClick={onClose} type="button">Cancel</Button>
+          <Button variant="secondary" onClick={resetAndClose} type="button">Cancel</Button>
           <Button
             variant="primary"
             type="button"
             disabled={saveMutation.isPending || profileQuery.isError || companiesQuery.isError || !unitId}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
-                onClose();
+                resetAndClose();
                 return;
               }
               saveMutation.mutate();
