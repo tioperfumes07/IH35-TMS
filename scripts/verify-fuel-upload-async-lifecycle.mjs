@@ -15,10 +15,12 @@ function failures(input = source) {
     if (!/const res = await [^;]+;\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/.test(text)) out.push(`${key} stale success is inert`);
     if (!/catch \(error\) \{\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/.test(text)) out.push(`${key} stale failure is inert`);
     if (!/finally \{\s*if \(lifecycleGenerationRef\.current === submissionGeneration\) setLoading\(false\);/.test(text)) out.push(`${key} stale request cannot clear loading`);
-    if (!/const handleClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);/.test(text)) out.push(`${key} dismiss invalidates request`);
+    if (!/const completeClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);/.test(text)) out.push(`${key} completed lifecycle invalidates request`);
+    if (!/const handleClose = useCallback\(\(\) => \{\s*if \(loading\) return;\s*completeClose\(\);\s*\}, \[completeClose, loading\]\);/.test(text)) out.push(`${key} pending upload can be dismissed`);
+    if (!/<Modal open=\{open\} onClose=\{handleClose\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{Boolean\(file\)\}[^>]*onRegisterAttemptClose=\{setAttemptClose\}/.test(text) || !/variant="secondary" onClick=\{attemptClose\} disabled=\{loading\}/.test(text)) out.push(`${key} selected file is not confirm-protected across dismiss paths`);
   }
-  if (!/onImported\(\);\s*handleClose\(\);/.test(input.transactions)) out.push("transactions current success refreshes and closes");
-  if (!/setEtag\(res\.etag\);[\s\S]*?onUploaded\(\);\s*handleClose\(\);/.test(input.prices)) out.push("prices current success refreshes and closes");
+  if (!/onImported\(\);\s*completeClose\(\);/.test(input.transactions)) out.push("transactions current success refreshes and closes");
+  if (!/setEtag\(res\.etag\);[\s\S]*?onUploaded\(\);\s*completeClose\(\);/.test(input.prices)) out.push("prices current success refreshes and closes");
   return out;
 }
 
@@ -26,13 +28,19 @@ if (process.argv.includes("--selftest")) {
   const staleImport = { ...source, transactions: source.transactions.replace("if (lifecycleGenerationRef.current !== submissionGeneration) return;", "void submissionGeneration;") };
   const staleFailure = { ...source, prices: source.prices.replace("catch (error) {\n      if (lifecycleGenerationRef.current !== submissionGeneration) return;", "catch (error) {\n      void submissionGeneration;") };
   const staleFinally = { ...source, prices: source.prices.replace("if (lifecycleGenerationRef.current === submissionGeneration) setLoading(false);", "setLoading(false);") };
+  const pendingDismiss = { ...source, transactions: source.transactions.replace("if (loading) return;", "void loading;") };
+  const rawDismiss = { ...source, prices: source.prices.replace("confirmDiscardOnClose", "") };
+  const rawCancel = { ...source, transactions: source.transactions.replace("onClick={attemptClose} disabled={loading}", "onClick={handleClose}") };
   const checks = [
     failures(staleImport).includes("transactions stale success is inert"),
     failures(staleFailure).includes("prices stale failure is inert"),
     failures(staleFinally).includes("prices stale request cannot clear loading"),
+    failures(pendingDismiss).includes("transactions pending upload can be dismissed"),
+    failures(rawDismiss).includes("prices selected file is not confirm-protected across dismiss paths"),
+    failures(rawCancel).includes("transactions selected file is not confirm-protected across dismiss paths"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-fuel-upload-async-lifecycle selftest PASS — 3/3 stale success/failure/loading mutations red");
+  console.log("verify-fuel-upload-async-lifecycle selftest PASS — 6/6 upload lifecycle mutations red");
   process.exit(0);
 }
 

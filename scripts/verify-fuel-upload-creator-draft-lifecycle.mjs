@@ -13,10 +13,10 @@ function failures(input = source) {
   for (const [key, text] of Object.entries(input)) {
     if (!/const resetDraft = useCallback\([\s\S]*?setFile\(null\)/.test(text)) out.push(`${key} clears selected file`);
     if (!/lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*\}, \[open, operatingCompanyId, resetDraft\]\);/.test(text)) out.push(`${key} resets on open/company change`);
-    if (!/const handleClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(text)) out.push(`${key} resets before close`);
+    if (!/const completeClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(text)) out.push(`${key} resets after current success or accepted close`);
     if (!text.includes('<Modal open={open} onClose={handleClose}')) out.push(`${key} modal dismiss resets`);
-    if (!/variant="secondary" onClick=\{handleClose\}/.test(text)) out.push(`${key} cancel resets`);
-    if (!/on(?:Imported|Uploaded)\(\);\s*handleClose\(\);/.test(text)) out.push(`${key} success resets`);
+    if (!/variant="secondary" onClick=\{attemptClose\} disabled=\{loading\}/.test(text)) out.push(`${key} cancel uses guarded close`);
+    if (!/on(?:Imported|Uploaded)\(\);\s*completeClose\(\);/.test(text)) out.push(`${key} success resets`);
   }
   if (!/const resetDraft = useCallback\(\(\) => \{\s*setFile\(null\);\s*setEtag\(null\);/.test(input.prices)) {
     out.push("prices clears company-bound ETag");

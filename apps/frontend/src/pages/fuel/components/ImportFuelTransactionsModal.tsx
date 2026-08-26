@@ -19,6 +19,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   const { pushToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => setFile(null), []);
@@ -29,12 +30,16 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
     resetDraft();
   }, [open, operatingCompanyId, resetDraft]);
 
-  const handleClose = useCallback(() => {
+  const completeClose = useCallback(() => {
     lifecycleGenerationRef.current += 1;
     setLoading(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
+  const handleClose = useCallback(() => {
+    if (loading) return;
+    completeClose();
+  }, [completeClose, loading]);
 
   const submit = async () => {
     if (!file) {
@@ -51,7 +56,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         res.dead_letters > 0 ? "error" : "success"
       );
       onImported();
-      handleClose();
+      completeClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Import failed"), "error");
@@ -61,7 +66,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions">
+    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={setAttemptClose}>
       <div className="space-y-3 text-xs">
         <label
           className="block rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"
@@ -87,7 +92,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button size="sm" variant="secondary" onClick={attemptClose} disabled={loading}>Cancel</Button>
           <Button size="sm" loading={loading} onClick={() => void submit()}>
             + Import Fuel Transactions
           </Button>
