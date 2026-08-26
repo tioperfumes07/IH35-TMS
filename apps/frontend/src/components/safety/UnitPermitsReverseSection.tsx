@@ -20,7 +20,7 @@ export function UnitPermitsReverseSection({
     queryFn: () => getSafetyPermits(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const permits = query.data?.permits ?? [];
+  const permits = query.isError ? [] : query.data?.permits ?? [];
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>

@@ -12,7 +12,7 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
     enabled: Boolean(companyId) && Boolean(entityId),
     queryFn: () => listSafetyEventLog(companyId, subject === "driver" ? { subject_driver_id: entityId } : { subject_unit_id: entityId }),
   });
-  const rows = query.data?.events ?? [];
+  const rows = query.isError ? [] : query.data?.events ?? [];
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={`${subject}-safety-events-reverse`}>
       <div className="flex items-center justify-between gap-2">

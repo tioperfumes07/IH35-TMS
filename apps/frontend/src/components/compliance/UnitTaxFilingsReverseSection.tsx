@@ -27,8 +27,8 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
     enabled: Boolean(operatingCompanyId && unitId),
   });
 
-  const renditions = propertyTaxQ.data?.renditions ?? [];
-  const filings = form2290Q.data?.filings ?? [];
+  const renditions = propertyTaxQ.isError ? [] : propertyTaxQ.data?.renditions ?? [];
+  const filings = form2290Q.isError ? [] : form2290Q.data?.filings ?? [];
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tax-filings-reverse">

@@ -161,8 +161,8 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
   });
 
   const events = useMemo(
-    () => (auditQuery.data?.events ?? []) as EventWithPayload[],
-    [auditQuery.data]
+    () => (auditQuery.isError ? [] : auditQuery.data?.events ?? []) as EventWithPayload[],
+    [auditQuery.data, auditQuery.isError]
   );
 
   const exportCSV = () => {

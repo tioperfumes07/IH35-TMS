@@ -100,7 +100,10 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
     enabled: Boolean(userId) && Boolean(operatingCompanyId),
   });
 
-  const events = useMemo(() => auditQuery.data?.events ?? [], [auditQuery.data]);
+  const events = useMemo(
+    () => (auditQuery.isError ? [] : auditQuery.data?.events ?? []),
+    [auditQuery.data, auditQuery.isError],
+  );
 
   const exportCSV = () => {
     if (!events.length) return;

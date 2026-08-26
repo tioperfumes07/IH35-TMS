@@ -43,8 +43,8 @@ export function BackhaulSuggestionsWidget({
     retry: false,
   });
 
-  const location = query.data?.current_location ?? "current location";
-  const suggestions = query.data?.suggestions ?? [];
+  const location = query.isError ? "current location" : query.data?.current_location ?? "current location";
+  const suggestions = query.isError ? [] : query.data?.suggestions ?? [];
 
   return (
     <section className="rounded-sm border border-slate-300 bg-slate-100/40 p-4" data-testid="backhaul-suggestions-widget">
