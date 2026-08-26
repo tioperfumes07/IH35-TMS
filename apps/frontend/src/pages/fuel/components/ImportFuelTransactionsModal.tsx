@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { importFuelTransactions } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -20,6 +20,17 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const resetDraft = useCallback(() => setFile(null), []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, operatingCompanyId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const submit = async () => {
     if (!file) {
       pushToast("Select a .xlsx or .csv file first", "error");
@@ -33,8 +44,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         res.dead_letters > 0 ? "error" : "success"
       );
       onImported();
-      onClose();
-      setFile(null);
+      handleClose();
     } catch (error) {
       pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
@@ -43,7 +53,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Import Fuel Transactions">
+    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions">
       <div className="space-y-3 text-xs">
         <label
           className="block rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"
@@ -69,7 +79,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button size="sm" variant="secondary" onClick={handleClose}>Cancel</Button>
           <Button size="sm" loading={loading} onClick={() => void submit()}>
             + Import Fuel Transactions
           </Button>
