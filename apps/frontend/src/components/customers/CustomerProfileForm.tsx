@@ -537,9 +537,9 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     staleTime: 5 * 60 * 1000,
   });
   const customerTypeOptions = useMemo(() => {
-    const rows = customerTypeCatalogQuery.data?.rows ?? [];
+    const rows = customerTypeCatalogQuery.isError ? [] : customerTypeCatalogQuery.data?.rows ?? [];
     return rows.map((row) => ({ value: row.id, label: row.display_name }));
-  }, [customerTypeCatalogQuery.data?.rows]);
+  }, [customerTypeCatalogQuery.data?.rows, customerTypeCatalogQuery.isError]);
 
   // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
   const parentOptions = useMemo(() => {
@@ -564,12 +564,12 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     staleTime: 5 * 60 * 1000,
   });
   const incomeAccountOptions = useMemo(() => {
-    const raw = incomeAccountsQuery.data?.accounts;
+    const raw = incomeAccountsQuery.isError ? [] : incomeAccountsQuery.data?.accounts;
     const accounts = Array.isArray(raw) ? raw : [];
     return accounts
       .filter((a) => a.account_type === "Income")
       .map((a) => ({ value: a.id, label: a.account_name }));
-  }, [incomeAccountsQuery.data]);
+  }, [incomeAccountsQuery.data, incomeAccountsQuery.isError]);
 
   return (
     <div className="space-y-3">
@@ -601,7 +601,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
                 onRetry={() => void customerTypeCatalogQuery.refetch()}
               />
             ) : null}
-            <ReferenceSelect
+            {!customerTypeCatalogQuery.isError ? <ReferenceSelect
               value={values.customer_type_id || null}
               onChange={(next) => onPatch({ customer_type_id: next ?? "" })}
               options={customerTypeOptions}
@@ -610,7 +610,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               placeholder="Select category"
               disabled={customerTypeCatalogQuery.isError}
               onOptionCreated={() => void customerTypeCatalogQuery.refetch()}
-            />
+            /> : null}
           </div>
           <TextField label="Email" type="email" value={values.email} onChange={(email) => onPatch({ email })} required />
           <TextField label="Phone" value={values.phone} onChange={(phone) => onPatch({ phone })} />
@@ -627,7 +627,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <div className="block text-sm md:col-span-2" data-testid="customer-parent-select">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Parent customer</span>
-            <ReferenceSelect
+            {!incomeAccountsQuery.isError ? <ReferenceSelect
               value={values.parent_customer_id || null}
               onChange={(next) => onPatch({ parent_customer_id: next ?? "" })}
               options={parentOptions}
@@ -636,7 +636,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               placeholder={parentOptions.length === 0 ? "Select or + Add new parent customer" : "Select a parent (leave blank for a top-level customer)"}
               addNewLabel="+ Add new parent customer"
               onOptionCreated={() => onParentCustomerCreated?.()}
-            />
+            /> : null}
             <p className="mt-1 text-xs text-gray-500">
               Link this customer as a sub-customer of an existing top-level customer. Leave blank for a top-level
               customer. A parent must itself be top-level (no nesting beyond two levels). Adding a parent here
