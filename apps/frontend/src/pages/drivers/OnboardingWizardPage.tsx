@@ -48,6 +48,7 @@ export function OnboardingWizardPage() {
   const [overrideReason, setOverrideReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
   const initializedSessionRef = useRef<string | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const sessionQ = useQuery({
     queryKey: ["onboarding-session", companyId, sessionId],
@@ -67,56 +68,83 @@ export function OnboardingWizardPage() {
 
   const activeStep = session ? Math.max(0, Math.min(6, (session.current_step ?? 1) - 1, stepIndex)) : stepIndex;
 
+  /** @matrix-built modules=drivers cols=driver,unit,connectivity,reverse_link */
   const saveMut = useMutation({
-    mutationFn: (payload: { step: number; step_data: Record<string, unknown>; advance?: boolean }) =>
-      saveOnboardingStep(sessionId!, companyId, payload),
-    onSuccess: (data) => {
-      qc.setQueryData(["onboarding-session", companyId, sessionId], (prev: typeof sessionQ.data) =>
+    mutationFn: (input: { companyId: string; sessionId: string; generation: number; payload: { step: number; step_data: Record<string, unknown>; advance?: boolean } }) =>
+      saveOnboardingStep(input.sessionId, input.companyId, input.payload),
+    onSuccess: (data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      qc.setQueryData(["onboarding-session", input.companyId, input.sessionId], (prev: typeof sessionQ.data) =>
         prev ? { ...prev, session: data.session } : prev
       );
       if (data.session.current_step > activeStep + 1) {
         setStepIndex(data.session.current_step - 1);
       }
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: Error, input) => {
+      if (input.generation === actionGenerationRef.current) setError(err.message);
+    },
   });
 
   const completeMut = useMutation({
-    mutationFn: () => completeOnboardingSession(sessionId!, companyId),
-    onSuccess: () => sessionQ.refetch(),
-    onError: (err: Error) => setError(err.message),
+    mutationFn: (input: { companyId: string; sessionId: string; generation: number }) => completeOnboardingSession(input.sessionId, input.companyId),
+    onSuccess: (_data, input) => {
+      if (input.generation === actionGenerationRef.current) void qc.invalidateQueries({ queryKey: ["onboarding-session", input.companyId, input.sessionId] });
+    },
+    onError: (err: Error, input) => {
+      if (input.generation === actionGenerationRef.current) setError(err.message);
+    },
   });
 
   const overrideMut = useMutation({
-    mutationFn: () =>
-      adminOverrideOnboardingSession(sessionId!, companyId, {
-        reason: overrideReason.trim(),
+    mutationFn: (input: { companyId: string; sessionId: string; generation: number; reason: string }) =>
+      adminOverrideOnboardingSession(input.sessionId, input.companyId, {
+        reason: input.reason,
       }),
-    onSuccess: () => sessionQ.refetch(),
-    onError: (err: Error) => setError(err.message),
+    onSuccess: (_data, input) => {
+      if (input.generation === actionGenerationRef.current) void qc.invalidateQueries({ queryKey: ["onboarding-session", input.companyId, input.sessionId] });
+    },
+    onError: (err: Error, input) => {
+      if (input.generation === actionGenerationRef.current) setError(err.message);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    initializedSessionRef.current = null;
+    saveMut.reset();
+    completeMut.reset();
+    overrideMut.reset();
+    setError(null);
+    setUploadingKey(null);
+    setOverrideReason("");
+    setShowOverride(false);
+  }, [companyId, sessionId]);
 
   const uploadForStep = useCallback(
     async (step: number, patch: Record<string, unknown>) => {
       setError(null);
-      await saveMut.mutateAsync({ step, step_data: patch });
+      if (!sessionId) return;
+      await saveMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current, payload: { step, step_data: patch } });
     },
-    [saveMut]
+    [companyId, saveMut, sessionId]
   );
 
   const handleDocUpload = useCallback(
     async (step: number, extra: Record<string, unknown>, file: File) => {
       setUploadingKey(String(step));
       try {
-        const uploaded = await uploadDriverDoc(file, driverId, companyId);
-        await uploadForStep(step, { ...extra, ...uploaded });
+        const input = { companyId, sessionId: sessionId!, driverId, generation: actionGenerationRef.current };
+        const uploaded = await uploadDriverDoc(file, input.driverId, input.companyId);
+        if (input.generation !== actionGenerationRef.current) return;
+        await saveMut.mutateAsync({ companyId: input.companyId, sessionId: input.sessionId, generation: input.generation, payload: { step, step_data: { ...extra, ...uploaded } } });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
       } finally {
         setUploadingKey(null);
       }
     },
-    [driverId, uploadForStep]
+    [companyId, driverId, saveMut, sessionId]
   );
 
 
@@ -161,7 +189,7 @@ export function OnboardingWizardPage() {
     if (step === 5) payload = signatures;
     if (step === 6) payload = i9;
     if (step === 7) payload = vehicle;
-    await saveMut.mutateAsync({ step, step_data: payload, advance: true });
+    await saveMut.mutateAsync({ companyId, sessionId: sessionId!, generation: actionGenerationRef.current, payload: { step, step_data: payload, advance: true } });
     setStepIndex(Math.min(6, step));
   };
 
@@ -328,7 +356,7 @@ export function OnboardingWizardPage() {
                 type="button"
                 className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
                 disabled={completeMut.isPending}
-                onClick={() => void completeMut.mutateAsync()}
+                onClick={() => void completeMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current })}
               >
                 Complete onboarding
               </button>
@@ -358,7 +386,7 @@ export function OnboardingWizardPage() {
               type="button"
               className="rounded-sm bg-slate-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
               disabled={overrideReason.trim().length < 10 || overrideMut.isPending}
-              onClick={() => void overrideMut.mutateAsync()}
+              onClick={() => void overrideMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current, reason: overrideReason.trim() })}
             >
               Apply admin override
             </button>
