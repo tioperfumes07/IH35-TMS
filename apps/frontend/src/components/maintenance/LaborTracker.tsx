@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createWoTimeEntryManual,
@@ -18,6 +18,8 @@ import { useToast } from "../Toast";
 import { useAuth } from "../../auth/useAuth";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 
 type Props = {
   workOrderId: string;
@@ -53,6 +55,9 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
   const [tick, setTick] = useState(0);
+  const [rateTarget, setRateTarget] = useState<{ entryId: string; currentRateCents: number | null } | null>(null);
+  const [rateValueCents, setRateValueCents] = useState<number | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const laborCodesQuery = useQuery({
     queryKey: ["maintenance", "labor-codes", operatingCompanyId],
@@ -67,7 +72,8 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
     enabled: Boolean(workOrderId && operatingCompanyId),
   });
 
-  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["wo-time-entries", workOrderId, operatingCompanyId] });
+  const invalidate = (submittedWorkOrderId: string, submittedCompanyId: string) =>
+    void queryClient.invalidateQueries({ queryKey: ["wo-time-entries", submittedWorkOrderId, submittedCompanyId] });
 
   useEffect(() => {
     if (!laborCodeId) return;
@@ -78,70 +84,104 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   }, [laborCodeId, laborCodes]);
 
   const startMut = useMutation({
-    mutationFn: () =>
-      startWoTimeEntry(workOrderId, {
-        operating_company_id: operatingCompanyId,
-        actor_kind: actorKind,
-        labor_code_id: laborCodeId || null,
-        labor_rate_cents_per_hour: laborRate.trim() ? Number(laborRate) : null,
-        notes: notes.trim() || null,
+    mutationFn: (input: { workOrderId: string; companyId: string; generation: number; actorKind: (typeof ACTORS)[number]; laborCodeId: string | null; laborRateCents: number | null; notes: string | null }) =>
+      startWoTimeEntry(input.workOrderId, {
+        operating_company_id: input.companyId,
+        actor_kind: input.actorKind,
+        labor_code_id: input.laborCodeId,
+        labor_rate_cents_per_hour: input.laborRateCents,
+        notes: input.notes,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Timer started", "success");
-      invalidate();
+      invalidate(input.workOrderId, input.companyId);
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Start failed"), "error"),
+    onError: (e: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(String((e as Error)?.message ?? "Start failed"), "error");
+    },
   });
 
   const stopMut = useMutation({
-    mutationFn: (entryId: string) => stopWoTimeEntry(entryId, operatingCompanyId),
-    onSuccess: () => {
+    mutationFn: (input: { entryId: string; workOrderId: string; companyId: string; generation: number }) => stopWoTimeEntry(input.entryId, input.companyId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Timer stopped", "success");
-      invalidate();
+      invalidate(input.workOrderId, input.companyId);
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Stop failed"), "error"),
+    onError: (e: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(String((e as Error)?.message ?? "Stop failed"), "error");
+    },
   });
 
   const manualMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { workOrderId: string; companyId: string; generation: number; actorKind: (typeof ACTORS)[number]; laborCodeId: string | null; laborRateCents: number | null; notes: string | null; startedAt: string; endedAt: string }) =>
       createWoTimeEntryManual({
-        operating_company_id: operatingCompanyId,
-        work_order_id: workOrderId,
-        actor_kind: actorKind,
-        labor_code_id: laborCodeId || null,
-        labor_rate_cents_per_hour: laborRate.trim() ? Number(laborRate) : null,
-        notes: notes.trim() || null,
-        started_at: manualStart.trim(),
-        ended_at: manualEnd.trim(),
+        operating_company_id: input.companyId,
+        work_order_id: input.workOrderId,
+        actor_kind: input.actorKind,
+        labor_code_id: input.laborCodeId,
+        labor_rate_cents_per_hour: input.laborRateCents,
+        notes: input.notes,
+        started_at: input.startedAt,
+        ended_at: input.endedAt,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Manual time entry saved", "success");
-      invalidate();
+      invalidate(input.workOrderId, input.companyId);
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Book manual labor range failed"), "error"),
+    onError: (e: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(String((e as Error)?.message ?? "Book manual labor range failed"), "error");
+    },
   });
 
   const patchMut = useMutation({
-    mutationFn: (args: { entryId: string; labor_rate_cents_per_hour: number | null }) =>
-      patchWoTimeEntry(args.entryId, {
-        operating_company_id: operatingCompanyId,
-        labor_rate_cents_per_hour: args.labor_rate_cents_per_hour,
+    mutationFn: (input: { entryId: string; workOrderId: string; companyId: string; generation: number; laborRateCents: number | null }) =>
+      patchWoTimeEntry(input.entryId, {
+        operating_company_id: input.companyId,
+        labor_rate_cents_per_hour: input.laborRateCents,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      setRateTarget(null);
+      setRateValueCents(null);
       pushToast("Labor rate updated", "success");
-      invalidate();
+      invalidate(input.workOrderId, input.companyId);
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Update failed"), "error"),
+    onError: (e: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(String((e as Error)?.message ?? "Update failed"), "error");
+    },
   });
 
   const deleteMut = useMutation({
-    mutationFn: (entryId: string) => deleteWoTimeEntry(entryId, operatingCompanyId),
-    onSuccess: () => {
+    mutationFn: (input: { entryId: string; workOrderId: string; companyId: string; generation: number }) => deleteWoTimeEntry(input.entryId, input.companyId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Entry removed", "success");
-      invalidate();
+      invalidate(input.workOrderId, input.companyId);
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Delete failed"), "error"),
+    onError: (e: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(String((e as Error)?.message ?? "Remove failed"), "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    startMut.reset();
+    stopMut.reset();
+    manualMut.reset();
+    patchMut.reset();
+    deleteMut.reset();
+    setActorKind("internal_mechanic");
+    setLaborCodeId("");
+    setLaborRate("");
+    setNotes("");
+    setManualStart("");
+    setManualEnd("");
+    setRateTarget(null);
+    setRateValueCents(null);
+  }, [workOrderId, operatingCompanyId]);
 
   const entries = entriesQuery.isError ? [] : entriesQuery.data?.time_entries ?? [];
   const openEntry = useMemo(() => entries.find((row) => !row.ended_at) ?? null, [entries]);
@@ -281,7 +321,20 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={startMut.isPending || Boolean(openEntry)}>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => startMut.mutate({
+            workOrderId,
+            companyId: operatingCompanyId,
+            generation: actionGenerationRef.current,
+            actorKind,
+            laborCodeId: laborCodeId || null,
+            laborRateCents: laborRate.trim() ? Number(laborRate) : null,
+            notes: notes.trim() || null,
+          })}
+          disabled={startMut.isPending || Boolean(openEntry)}
+        >
           Clock in
         </Button>
         {Boolean(openEntry) ? <span className="text-xs text-amber-700">An open timer exists — stop it before starting another.</span> : null}
@@ -300,7 +353,23 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
           </label>
         </div>
         <div className="mt-2">
-          <Button type="button" size="sm" variant="secondary" onClick={() => void manualMut.mutateAsync()} disabled={manualMut.isPending}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => manualMut.mutate({
+              workOrderId,
+              companyId: operatingCompanyId,
+              generation: actionGenerationRef.current,
+              actorKind,
+              laborCodeId: laborCodeId || null,
+              laborRateCents: laborRate.trim() ? Number(laborRate) : null,
+              notes: notes.trim() || null,
+              startedAt: manualStart.trim(),
+              endedAt: manualEnd.trim(),
+            })}
+            disabled={manualMut.isPending}
+          >
             Book labor entry
           </Button>
         </div>
@@ -340,7 +409,13 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
                 return (
                   <span className="inline-flex flex-wrap justify-end gap-2">
                     {!row.ended_at ? (
-                      <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => stopMut.mutate({ entryId: id, workOrderId, companyId: operatingCompanyId, generation: actionGenerationRef.current })}
+                        disabled={stopMut.isPending}
+                      >
                         Stop
                       </Button>
                     ) : null}
@@ -351,15 +426,21 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
                           size="sm"
                           variant="secondary"
                           onClick={() => {
-                            const next = window.prompt("Labor rate (cents/hour)", rate || "0");
-                            if (next === null) return;
-                            void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
+                            const currentRateCents = rate ? Number(rate) : null;
+                            setRateTarget({ entryId: id, currentRateCents });
+                            setRateValueCents(currentRateCents);
                           }}
                           disabled={patchMut.isPending}
                         >
                           Rate
                         </Button>
-                        <Button type="button" size="sm" variant="danger" onClick={() => void deleteMut.mutateAsync(id)} disabled={deleteMut.isPending}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="danger"
+                          onClick={() => deleteMut.mutate({ entryId: id, workOrderId, companyId: operatingCompanyId, generation: actionGenerationRef.current })}
+                          disabled={deleteMut.isPending}
+                        >
                           Remove
                         </Button>
                       </>
@@ -371,6 +452,48 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
           </div>
         )}
       </div>
+      <Modal
+        open={Boolean(rateTarget)}
+        onClose={() => {
+          setRateTarget(null);
+          setRateValueCents(null);
+          patchMut.reset();
+        }}
+        title="Update labor rate"
+      >
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-slate-700">
+            Labor rate per hour
+            <MoneyInput
+              valueCents={rateValueCents}
+              onChangeCents={setRateValueCents}
+              ariaLabel="Labor rate per hour"
+              className="mt-1 w-full"
+            />
+          </label>
+          {patchMut.isError ? <p className="text-xs text-red-700">{String((patchMut.error as Error)?.message ?? "Update failed")}</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setRateTarget(null)}>Cancel</Button>
+            <Button
+              type="button"
+              disabled={!rateTarget || patchMut.isPending}
+              loading={patchMut.isPending}
+              onClick={() => {
+                if (!rateTarget) return;
+                patchMut.mutate({
+                  entryId: rateTarget.entryId,
+                  workOrderId,
+                  companyId: operatingCompanyId,
+                  generation: actionGenerationRef.current,
+                  laborRateCents: rateValueCents,
+                });
+              }}
+            >
+              Save rate
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </section>
   );
 }
