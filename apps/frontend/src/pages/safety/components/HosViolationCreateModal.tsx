@@ -66,6 +66,8 @@ type HosViolationSubmission = {
 export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyHosViolationForm);
+  const pristineOccurredAtRef = useRef(form.occurred_at);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   /** Once the active-trip resolver fills the load, preserve an operator override. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
 
@@ -75,7 +77,9 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   const [violationTypeSearch, setViolationTypeSearch] = useState("");
   const lifecycleGenerationRef = useRef(0);
   const resetDraft = useCallback(() => {
-    setForm(emptyHosViolationForm());
+    const next = emptyHosViolationForm();
+    pristineOccurredAtRef.current = next.occurred_at;
+    setForm(next);
     setSuggestionPinned(false);
     setViolationTypeSearch("");
   }, []);
@@ -149,7 +153,9 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     onSuccess: (_created, input) => {
       if (lifecycleGenerationRef.current !== input.generation) return;
       onCreated();
-      handleClose();
+      lifecycleGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     },
   });
 
@@ -161,17 +167,22 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   }, [open, operatingCompanyId, resetDraft, resetMutation]);
 
   const handleClose = useCallback(() => {
+    if (mutation.isPending) return;
     lifecycleGenerationRef.current += 1;
     resetDraft();
     resetMutation();
     onClose();
-  }, [onClose, resetDraft, resetMutation]);
+  }, [mutation.isPending, onClose, resetDraft, resetMutation]);
 
   const canSubmit =
     Boolean(form.driver_id.trim() && selectedViolationType?.id && form.occurred_at) && !mutation.isPending;
+  const isDirty =
+    form.driver_id !== "" || form.violation_type !== "" || form.occurred_at !== pristineOccurredAtRef.current ||
+    form.duration_minutes !== "" || form.source !== "manual_office" || form.notes !== "" ||
+    form.related_load_id !== "";
 
   return (
-    <Modal variant="drawer" open={open} onClose={handleClose} title="Create HOS Violation">
+    <Modal variant="drawer" open={open} onClose={handleClose} title="Create HOS Violation" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <form
         className="space-y-3"
         data-testid="hos-violation-create-modal"
@@ -313,7 +324,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
           </div>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={mutation.isPending}>
             Cancel
           </Button>
           <Button type="submit" loading={mutation.isPending} disabled={!canSubmit}>
