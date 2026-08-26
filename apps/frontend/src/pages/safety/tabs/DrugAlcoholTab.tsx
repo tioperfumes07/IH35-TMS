@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -85,10 +85,12 @@ function eligibilityBadgeClass(eligible: boolean) {
   return eligible ? "bg-slate-50 text-slate-700" : "bg-red-50 text-red-800";
 }
 
+/** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function DrugAlcoholTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5183 — visible EntityPicker + URL write (URL-only / create-picker without URL sync is not reverse chrome).
   const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -172,26 +174,23 @@ export function DrugAlcoholTab() {
   });
 
   const createTestMutation = useMutation({
-    mutationFn: () =>
-      createDrugProgramTest(companyId, {
-        driver_id: effectiveDriverId,
-        test_type: testType,
-        result: testResult,
-        test_date: testDate,
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "tests", companyId] });
-      if (effectiveDriverId) {
-        await queryClient.invalidateQueries({ queryKey: ["safety", "drug-status", companyId, effectiveDriverId] });
-        await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
+    mutationFn: (input: { companyId: string; driverId: string; generation: number; payload: Parameters<typeof createDrugProgramTest>[1] }) =>
+      createDrugProgramTest(input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "tests", input.companyId] });
+      if (input.driverId) {
+        await queryClient.invalidateQueries({ queryKey: ["safety", "drug-status", input.companyId, input.driverId] });
+        await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", input.companyId, input.driverId] });
       }
     },
   });
 
   const bulkEnrollMutation = useMutation({
-    mutationFn: () => bulkEnrollRandomPool(companyId, consortiumName.trim()),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "pool", companyId] });
+    mutationFn: (input: { companyId: string; generation: number; consortiumName: string }) => bulkEnrollRandomPool(input.companyId, input.consortiumName),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "pool", input.companyId] });
     },
   });
 
@@ -217,31 +216,43 @@ export function DrugAlcoholTab() {
       `Enroll all ${activeDriverCount} active CDL drivers into the "${name}" FMCSA random pool? ` +
         `Already-enrolled drivers are skipped (idempotent).`
     );
-    if (ok) bulkEnrollMutation.mutate();
+    if (ok) bulkEnrollMutation.mutate({ companyId, generation: actionGenerationRef.current, consortiumName: name });
   }
 
   const openRtdMutation = useMutation({
-    mutationFn: () => createRtdCase(companyId, { driver_id: effectiveDriverId }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, effectiveDriverId] });
-      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
+    mutationFn: (input: { companyId: string; driverId: string; generation: number }) => createRtdCase(input.companyId, { driver_id: input.driverId }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", input.companyId, input.driverId] });
+      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", input.companyId, input.driverId] });
     },
   });
 
   const advanceRtdMutation = useMutation({
-    mutationFn: (targetStage: (typeof RTD_STAGES)[number]) => {
-      const rtdCase = rtdCaseQ.data as RtdCase | null;
-      if (!rtdCase?.id) throw new Error("missing_rtd_case");
-      return advanceRtdCase(rtdCase.id, companyId, {
-        target_stage: targetStage,
-        clearinghouse_updated: targetStage === "complete" ? true : undefined,
+    mutationFn: (input: { caseId: string; companyId: string; driverId: string; generation: number; targetStage: (typeof RTD_STAGES)[number] }) => {
+      return advanceRtdCase(input.caseId, input.companyId, {
+        target_stage: input.targetStage,
+        clearinghouse_updated: input.targetStage === "complete" ? true : undefined,
       });
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, effectiveDriverId] });
-      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", input.companyId, input.driverId] });
+      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", input.companyId, input.driverId] });
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createTestMutation.reset();
+    bulkEnrollMutation.reset();
+    openRtdMutation.reset();
+    advanceRtdMutation.reset();
+    setTestType("random");
+    setTestResult("negative");
+    setTestDate(companyToday());
+    setConsortiumName("");
+  }, [companyId, effectiveDriverId]);
 
   const filteredTests = useMemo(() => {
     const rows = testsQ.data ?? [];
@@ -381,11 +392,16 @@ export function DrugAlcoholTab() {
             type="button"
             disabled={!effectiveDriverId || createTestMutation.isPending}
             className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-            onClick={() => createTestMutation.mutate()}
+            onClick={() => createTestMutation.mutate({
+              companyId,
+              driverId: effectiveDriverId,
+              generation: actionGenerationRef.current,
+              payload: { driver_id: effectiveDriverId, test_type: testType, result: testResult, test_date: testDate },
+            })}
           >
             Save test
           </button>
-          {createTestMutation.isError ? (
+          {createTestMutation.isError && createTestMutation.variables?.generation === actionGenerationRef.current ? (
             <p className="text-xs text-red-700" data-testid="drug-alcohol-create-test-error">
               {userFacingApiError(createTestMutation.error, "Could not save the drug/alcohol test.")}
             </p>
@@ -400,11 +416,11 @@ export function DrugAlcoholTab() {
                 type="button"
                 disabled={!effectiveDriverId || openRtdMutation.isPending}
                 className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
-                onClick={() => openRtdMutation.mutate()}
+                onClick={() => openRtdMutation.mutate({ companyId, driverId: effectiveDriverId, generation: actionGenerationRef.current })}
               >
                 Open RTD case
               </button>
-              {openRtdMutation.isError ? (
+              {openRtdMutation.isError && openRtdMutation.variables?.generation === actionGenerationRef.current ? (
                 <p className="text-xs text-red-700" data-testid="drug-alcohol-open-rtd-error">
                   {userFacingApiError(openRtdMutation.error, "Could not open the return-to-duty case.")}
                 </p>
@@ -433,14 +449,20 @@ export function DrugAlcoholTab() {
                   type="button"
                   disabled={advanceRtdMutation.isPending}
                   className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                  onClick={() => advanceRtdMutation.mutate(nextStage as (typeof RTD_STAGES)[number])}
+                  onClick={() => advanceRtdMutation.mutate({
+                    caseId: String(rtdCase.id),
+                    companyId,
+                    driverId: effectiveDriverId,
+                    generation: actionGenerationRef.current,
+                    targetStage: nextStage as (typeof RTD_STAGES)[number],
+                  })}
                 >
                   Advance to {stageLabel(nextStage)}
                 </button>
               ) : (
                 <div className="text-xs text-slate-700">RTD case complete.</div>
               )}
-              {advanceRtdMutation.isError ? (
+              {advanceRtdMutation.isError && advanceRtdMutation.variables?.generation === actionGenerationRef.current ? (
                 <p className="text-xs text-red-700" data-testid="drug-alcohol-advance-rtd-error">
                   {userFacingApiError(advanceRtdMutation.error, "Could not advance the return-to-duty case.")}
                 </p>
@@ -485,12 +507,12 @@ export function DrugAlcoholTab() {
             Enroll all {activeDriverCount == null ? "—" : activeDriverCount} active CDL drivers
           </button>
         </div>
-        {bulkEnrollMutation.isSuccess ? (
+        {bulkEnrollMutation.isSuccess && bulkEnrollMutation.variables?.generation === actionGenerationRef.current ? (
           <div className="text-xs text-slate-700">
             Enrolled {bulkEnrollMutation.data?.enrolled_count ?? 0} newly-added driver(s) into the pool.
           </div>
         ) : null}
-        {bulkEnrollMutation.isError ? (
+        {bulkEnrollMutation.isError && bulkEnrollMutation.variables?.generation === actionGenerationRef.current ? (
           <div className="text-xs text-red-700">Bulk enroll failed. Check role permissions and try again.</div>
         ) : null}
         {activeDriverTotalQ.isError ? (
