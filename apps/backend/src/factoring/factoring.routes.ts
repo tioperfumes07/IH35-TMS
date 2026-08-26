@@ -115,6 +115,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
       reserve_balance: 0,
       chargeback_balance: 0,
+      // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest replacement name
+      // for chargeback_balance above (both are outstanding_liability_signed_cents — see
+      // db/migrations/202613170000). chargeback_balance stays for any reader not yet migrated.
+      outstanding_liability_balance: 0,
       last_advance_at: null,
       // ACCT-F5399 — was hardcoded 0/true regardless of whether a real active factor was already
       // resolved above, so this fallback showed "Active factors: 0" on the same page that

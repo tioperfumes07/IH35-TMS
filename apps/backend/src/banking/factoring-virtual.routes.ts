@@ -58,6 +58,12 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
             COALESCE(v.vendor_name, 'Factoring') AS display_name,
             (SUM(f.reserve_receivable_signed_cents)::numeric / 100)::numeric AS reserve_balance,
             (SUM(f.outstanding_liability_signed_cents)::numeric / 100)::numeric AS chargeback_balance,
+            -- FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest replacement
+            -- name for chargeback_balance above (both compute outstanding_liability_signed_cents,
+            -- Advance + Reserve still owed to the factor — not a real chargeback/recourse figure;
+            -- see views.factoring_chargebacks_fees's own header comment for why that data model
+            -- doesn't exist yet). chargeback_balance stays for any reader not yet migrated.
+            (SUM(f.outstanding_liability_signed_cents)::numeric / 100)::numeric AS outstanding_liability_balance,
             NULL::timestamptz AS last_advance_at
           FROM views.factoring_balance_invoice_linkage f
           LEFT JOIN mdata.vendors v

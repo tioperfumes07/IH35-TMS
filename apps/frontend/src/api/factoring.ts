@@ -23,6 +23,10 @@ export type FactoringSummary = {
   recourse_days: number;
   reserve_balance: number;
   chargeback_balance: number;
+  // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest name for
+  // chargeback_balance above (both are outstanding_liability_signed_cents, Advance + Reserve
+  // still owed to the factor — not a real chargeback/recourse figure) — prefer this field.
+  outstanding_liability_balance: number;
   last_advance_at: string | null;
   active_factor_count: number;
   single_factor_invariant_ok: boolean;

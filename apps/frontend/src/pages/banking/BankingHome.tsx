@@ -199,14 +199,17 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     return companies.reduce(
       (acc, row) => ({
         reserve: acc.reserve + Number(row.reserve_balance ?? 0),
-        chargeback: acc.chargeback + Number(row.chargeback_balance ?? 0),
+        // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: row.chargeback_balance
+        // is actually Advance + Reserve still owed to the factor (outstanding_liability_signed_cents),
+        // not a real chargeback/recourse figure — prefer outstanding_liability_balance.
+        outstandingLiability: acc.outstandingLiability + Number(row.outstanding_liability_balance ?? 0),
         lastAdvanceAt: row.last_advance_at && (!acc.lastAdvanceAt || row.last_advance_at > acc.lastAdvanceAt) ? row.last_advance_at : acc.lastAdvanceAt,
       }),
-      { reserve: 0, chargeback: 0, lastAdvanceAt: null as string | null },
+      { reserve: 0, outstandingLiability: 0, lastAdvanceAt: null as string | null },
     );
   }, [factoringVirtualQuery.data?.companies]);
   const factoringReserve = factoringVirtualSummary.reserve;
-  const factoringChargebacks = factoringVirtualSummary.chargeback;
+  const factoringOutstandingLiability = factoringVirtualSummary.outstandingLiability;
   const escrowFeed = Number(kpiQuery.data?.driver_escrow ?? 0);
   const sortedBankTiles = useMemo(
     () =>
@@ -650,7 +653,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   </span>
                 </div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                  <span>Chargebacks open</span><span className="text-red-700">{money.format(factoringChargebacks)}</span>
+                  {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest label
+                      for what this figure actually is (Advance + Reserve owed to the factor). */}
+                  <span>Outstanding liability</span><span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
                 </Link>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>+30 aging fees</span>
@@ -819,7 +824,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           {factoringVirtualQuery.isSuccess &&
           !factoringVirtualSummary.lastAdvanceAt &&
           factoringReserve === 0 &&
-          factoringChargebacks === 0 ? (
+          factoringOutstandingLiability === 0 ? (
             <div
               className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-factoring-entry-unproven-banner"
@@ -855,8 +860,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </span>
               </div>
               <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                <span>Chargebacks open</span>
-                <span className="text-red-700">{money.format(factoringChargebacks)}</span>
+                {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest label
+                    for what this figure actually is (Advance + Reserve owed to the factor). */}
+                <span>Outstanding liability</span>
+                <span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
               </Link>
               <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                 <span>+30 aging fees</span>

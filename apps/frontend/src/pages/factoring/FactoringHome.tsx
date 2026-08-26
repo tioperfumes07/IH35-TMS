@@ -521,9 +521,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Chargeback Balance</div>
+          {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this card read
+              summary.chargeback_balance, which is actually Advance + Reserve still owed to the
+              factor (outstanding_liability_signed_cents), not a real chargeback/recourse figure
+              — the honestly-computed chargeback total lives on the Chargebacks & Fees tab. */}
+          <div className="text-xs uppercase tracking-wide text-gray-500">Outstanding Liability Balance</div>
           <div className="mt-1 font-semibold text-gray-900">
-            {summaryQuery.isError ? "—" : fmtCurrency(summary?.chargeback_balance)}
+            {summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">

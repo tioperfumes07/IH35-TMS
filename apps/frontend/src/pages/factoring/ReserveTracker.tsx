@@ -311,7 +311,11 @@ export function ReserveTracker() {
     [chargebacksQ.data],
   );
 
-  const chargebacksPending = Number(summaryQ.data?.chargeback_balance ?? 0);
+  // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this KPI read
+  // summaryQ.data.chargeback_balance, which is actually Advance + Reserve still owed to the
+  // factor (outstanding_liability_signed_cents), not a real chargeback/recourse figure — the
+  // honestly-computed chargeback total lives in chargebacksQ (Chargebacks & Fees tab) above.
+  const outstandingLiabilityBalance = Number(summaryQ.data?.outstanding_liability_balance ?? 0);
 
   const totalHistPages = Math.max(1, Math.ceil((historyQ.data?.total ?? 0) / PAGE_SIZE));
 
@@ -357,9 +361,9 @@ export function ReserveTracker() {
         />
         <KpiCard label="Fees Paid YTD" value={fmtM(totalFeesYtd)} to="/factoring/chargebacks-fees" />
         <KpiCard
-          label="Chargebacks Pending"
-          value={fmtM(chargebacksPending)}
-          sub={chargebacksPending > 0 ? "review needed" : "none"}
+          label="Outstanding Liability"
+          value={fmtM(outstandingLiabilityBalance)}
+          sub={outstandingLiabilityBalance > 0 ? "advance + reserve owed" : "none"}
           to="/factoring/chargebacks-fees"
         />
         <KpiCard
