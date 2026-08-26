@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #3** expense `57cabbab` JE (skip #1–2 if grep-closed). Then **4–35 serial** on the **money clone**. Never `/425c`. Never `trigger_deploy`. ACK `GO-2237`.
+
 **18:29 CT GO-1829 — CODE NOW. Idle = defect. You read Cursor’s leftover row. That is a process defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. **NOW=#3 expense 57cabbab** posted/unposted JE — reuse poster. Then 4–10 money clone. Never `/425c`. Never `trigger_deploy`. ACK `GO-1829`.
 
 **17:58 CT GO-1758 — CODE NOW. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. **#1 #15941 and #2 #15947 are on origin/main.** Skip them. **NOW=#3 expense 57cabbab** (posted / unposted JE) then 4–10 on the **money clone**. Never `/425c`. Never `trigger_deploy`. API already in flight `dep-da71ug0u01pc73dm7om0`. ACK `GO-1758`.

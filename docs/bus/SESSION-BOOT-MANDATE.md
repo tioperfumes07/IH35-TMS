@@ -1,5 +1,7 @@
 # SESSION BOOT
 
+**22:37 CT GO-2237:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md` · **35 instructions per seat** · idle = defect.
+
 **13:50 CT GO-1350:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1350.md` · remaining scenarios · idle = defect.
 
 **12:42 CT GO-1242:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1242.md` · live `80cf40e` · 25 items/seat · idle = defect.

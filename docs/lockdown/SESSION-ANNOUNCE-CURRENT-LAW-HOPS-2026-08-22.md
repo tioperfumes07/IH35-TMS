@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-1829 live `3f49b42`. Unique leftover 151+. Skip #15546. Nobody kick. |
-| CC-1 | 9223 | money | GO-1829 **NOW=#3 expense 57cabbab**. Then 4–10. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | GO-1829 **item 26 `/cash-flow` NOW** then 27–50. Do not remake #15947. |
-| CC-3 | 9225 | FE | GO-1829 **NOW=73–75**. 67–72 HUNT-PASS. #64 waits money #6. |
-| Codex | 9226 | FE | GO-1829 hop.assign UI (76) then hunt 81+. `eld_certified` stays CC-3 board. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-1829 `/program`+`/cash-flow` on `3f49b42`. Unique FINDING. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-1829 items **126–150**. Not PARKED |
+| Cursor | 9222 | Lead | GO-2237 35-item lists. Unique leftover Cursor #1–35. Skip #15546. Nobody kick unless gate. |
+| CC-1 | 9223 | money | GO-2237 **NOW=#3 expense 57cabbab**. Then 4–35. STOP `/425c`. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | GO-2237 **NOW=#1 `/cash-flow` walk** then 2–35. Do not remake #15947 #16002. |
+| CC-3 | 9225 | FE | GO-2237 **NOW=#1 matrix lists/legal** then 2–35. #22 waits money #6. |
+| Codex | 9226 | FE | GO-2237 **NOW=#1 hop.assign UI** then 2–35. Never restamp U14 |
+| Cascade | audit | **LIVE WALK now** | GO-2237 35 walks. Unique FINDING. No U14 restamp |
+| Devin-A | audit | **LIVE WALK** | GO-2237 35 walks. Not PARKED |
