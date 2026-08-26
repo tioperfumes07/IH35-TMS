@@ -2236,3 +2236,6 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50104 | lists · lists_home | B | USMCA | FAIL | `/lists` on 2f0cd8d renders only `Loading... FAQ` with no catalog content. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50105 | factoring · factoring_hub | B | USMCA | FAIL | `/factoring` on 2f0cd8d renders only `Checking session...`; no factor workspace content. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50106 | inventory · inventory_hub | B | USMCA | FAIL | `/inventory` on 2f0cd8d renders only `Loading... FAQ`; no parts/stock content. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50107 | users · users_home | B | USMCA | FAIL | `/users` on b8f10a3 renders only `Checking session...` and no user list. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50108 | reports · reports_hub | B | USMCA | FAIL | `/reports` on b8f10a3 renders only `Checking session...` and no report gallery. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50109 | fleet · fleet_home | B | USMCA | FAIL | `/fleet` on b8f10a3 renders only `Checking session...` and no fleet roster. | OPEN | — | NO | 2026-08-26 | CASCADE |

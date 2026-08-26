@@ -1,4 +1,17 @@
 
+## GO-1405 continue — /users /reports /fleet on b8f10a3 | 2026-08-26
+
+CASCADE | ACK | GO-1405-CONTINUE | PORT=n | NOW=/users→/reports→/fleet | SHA=b8f10a3 | GO
+
+Hard-walk on b8f10a3:
+- /users: only `Checking session...`; no user list
+- /reports: only `Checking session...`; no report gallery
+- /fleet: only `Checking session...`; no fleet roster
+- /safety/home: renders safety compliance chrome
+- /maintenance: renders maintenance work orders chrome
+
+FINDING: USERS-REPORTS-FLEET-b8f10a3 — users, reports, and fleet hubs dead on b8f10a3
+
 ## GO-1405 continue — /lists /factoring /inventory on 2f0cd8d | 2026-08-26
 
 CASCADE | ACK | GO-1405-CONTINUE | PORT=n | NOW=/lists→/factoring→/inventory | SHA=2f0cd8d | GO
