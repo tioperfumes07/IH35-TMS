@@ -59,6 +59,8 @@ export function DriverSchedulerGridPage() {
   const [tempCoverForm, setTempCoverForm] = useState<TempCoverForm>(() => emptyTempCoverForm());
   const [cancelTarget, setCancelTarget] = useState<TempAssignment | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [assignAttemptClose, setAssignAttemptClose] = useState<() => void>(() => () => {});
+  const [cancelAttemptClose, setCancelAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
   const range = useMemo(() => {
     // Company-local "today" (Central), not UTC — otherwise the grid starts on tomorrow's column
@@ -121,6 +123,7 @@ export function DriverSchedulerGridPage() {
     },
     onSuccess: (_result, input) => {
       if (input.generation !== lifecycleGenerationRef.current) return;
+      lifecycleGenerationRef.current += 1;
       pushToast("Temp cover assigned", "success");
       setTempCoverModalOpen(false);
       setTempCoverForm(emptyTempCoverForm());
@@ -137,6 +140,7 @@ export function DriverSchedulerGridPage() {
       driverSchedulerOfficeApi.cancelTempCover(input.operatingCompanyId, input.assignmentId, input.reason),
     onSuccess: (_result, input) => {
       if (input.generation !== lifecycleGenerationRef.current) return;
+      lifecycleGenerationRef.current += 1;
       pushToast("Temp cover assignment cancelled", "success");
       setCancelTarget(null);
       setCancelReason("");
@@ -157,6 +161,21 @@ export function DriverSchedulerGridPage() {
     setCancelTarget(null);
     setCancelReason("");
   }, [operatingCompanyId]); // Mutation reset functions are stable; company transitions own fresh modal state.
+
+  const closeAssign = () => {
+    if (assignMutation.isPending) return;
+    setTempCoverModalOpen(false);
+    setTempCoverForm(emptyTempCoverForm());
+  };
+  const closeCancel = () => {
+    if (cancelMutation.isPending) return;
+    setCancelTarget(null);
+    setCancelReason("");
+  };
+  const isAssignDirty = Boolean(tempCoverForm.unitId || tempCoverForm.primaryDriverId || tempCoverForm.coverDriverId)
+    || tempCoverForm.startDate !== companyToday()
+    || tempCoverForm.endDate !== companyToday()
+    || Boolean(tempCoverForm.notes.trim());
 
   return (
     <div className="space-y-3">
@@ -341,8 +360,11 @@ export function DriverSchedulerGridPage() {
 
       <Modal
         open={tempCoverModalOpen}
-        onClose={() => setTempCoverModalOpen(false)}
+        onClose={closeAssign}
         title="Assign temp cover"
+        confirmDiscardOnClose
+        isDirty={isAssignDirty}
+        onRegisterAttemptClose={setAssignAttemptClose}
       >
         <div className="space-y-3 text-sm">
           <label className="block text-xs font-semibold uppercase text-gray-600">
@@ -411,7 +433,7 @@ export function DriverSchedulerGridPage() {
             />
           </label>
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setTempCoverModalOpen(false)}>
+            <Button variant="secondary" onClick={assignAttemptClose} disabled={assignMutation.isPending}>
               Cancel
             </Button>
             <Button
@@ -431,8 +453,11 @@ export function DriverSchedulerGridPage() {
 
       <Modal
         open={Boolean(cancelTarget)}
-        onClose={() => setCancelTarget(null)}
+        onClose={closeCancel}
         title="Cancel temp cover assignment"
+        confirmDiscardOnClose
+        isDirty={Boolean(cancelReason.trim())}
+        onRegisterAttemptClose={setCancelAttemptClose}
       >
         {cancelTarget ? (
           <div className="space-y-3 text-sm">
@@ -451,7 +476,7 @@ export function DriverSchedulerGridPage() {
               />
             </label>
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setCancelTarget(null)}>
+              <Button variant="secondary" onClick={cancelAttemptClose} disabled={cancelMutation.isPending}>
                 Keep assignment
               </Button>
               <Button
