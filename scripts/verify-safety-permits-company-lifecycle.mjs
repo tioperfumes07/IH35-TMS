@@ -17,6 +17,8 @@ function inspect(source) {
   const generationGuards = source.match(/input\.generation !== lifecycleGenerationRef\.current/g)?.length ?? 0;
   if (generationGuards !== 4) errors.push("all four success paths must reject stale company responses");
   if (!["lifecycleGenerationRef.current += 1", "createMutation.reset()", "setCreateOpen(false)", "setDraft(emptyDraft)"].every((token) => closeCreateBody.includes(token)) || !source.includes("onClick={closeCreate}")) errors.push("permit create dismiss does not retire generation and reset draft/mutation");
+  if (!closeCreateBody.includes("if (createMutation.isPending) return")) errors.push("permit create can be dismissed after its POST starts, hiding a possible committed write");
+  if (!/onClick=\{closeCreate\}\s+disabled=\{createMutation\.isPending\}/.test(source)) errors.push("permit Cancel remains enabled during its POST");
   if (!source.includes("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current")) errors.push("stale create rejection can paint a reopened permit modal");
   if (!source.includes("reminderMutation.isError && reminderMutation.variables?.generation === lifecycleGenerationRef.current")) errors.push("stale reminder rejection can paint the next company");
   if (!/const archiveErrorCurrent =\s*archiveMutation\.isError && archiveMutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(source) || !/const restoreErrorCurrent =\s*restoreMutation\.isError && restoreMutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(source) || !source.includes("archiveErrorCurrent || restoreErrorCurrent")) errors.push("stale archive/restore rejection can paint the next company");
@@ -38,13 +40,15 @@ if (process.argv.includes("--selftest")) {
     source.replace("createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current", "createMutation.isError"),
     source.replace("reminderMutation.isError && reminderMutation.variables?.generation === lifecycleGenerationRef.current", "reminderMutation.isError"),
     source.replace("archiveMutation.isError && archiveMutation.variables?.generation === lifecycleGenerationRef.current", "archiveMutation.isError"),
+    source.replace("if (createMutation.isPending) return;", "// planted: pending create may be hidden"),
+    source.replace('onClick={closeCreate} disabled={createMutation.isPending}', 'onClick={closeCreate}'),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-safety-permits-company-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
+    console.error(`verify-safety-permits-company-lifecycle SELFTEST FAIL — ${missed.length}/11 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-safety-permits-company-lifecycle selftest PASS — 9/9 planted defects rejected");
+  console.log("verify-safety-permits-company-lifecycle selftest PASS — 11/11 planted defects rejected");
   process.exit(0);
 }
 
