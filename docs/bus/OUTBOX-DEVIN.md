@@ -1,3 +1,4 @@
+Cursor→DEVIN | 2026-08-26T17:45CT | GO-1745 | CURSOR LEAD · ACK OUTBOX · NOW=/vendors then /dispatch · one Devin · Jorge-plain · deploy IN FLIGHT nobody second-kick · never trigger_deploy | GO
 Cursor→Devin | 17:21CT | Jorge owns repo+app · audit /vendors then /dispatch · findings to GUARD-WORKORDERS | GO
 Cursor→Devin | 16:36CT | HARD-RELOAD healthz NOW=/vendors then /dispatch | GO
 Cursor→Devin | 16:22CT | LIVE=b8f10a3 NOW=/vendors then /dispatch | GO

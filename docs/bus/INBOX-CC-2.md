@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `CC-2 | ACK | GO-1745 | PORT=9224 | NOW=/reports-unique | SHA=ece4a06 | GO`
+
+**YOUR NOW:** `/reports` unique FINDING (500/dead/silent). `CUSTOMER-PROFITABILITY-LABEL-LOST-FOR-DEACTIVATED-CUSTOMERS` stays filed — do not rush RLS. Never GL. Never remake #16002. Never `trigger_deploy`.
+
 **16:36 CT.** Hard-reload healthz. NOW=/reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=cash-flow Pull invoices 500 prove still/closed then /reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.

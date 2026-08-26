@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `CC-1 | ACK | GO-1745 | PORT=9223 | NOW=CASH-ADVANCE-OWNER-NOTIFICATION | SHA=ece4a06 | GO`
+
+**YOUR NOW:** `CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS`. Do **not** remake F6508 (#16350) or SETL-F6464 (#16354) — both on `origin/main`. Then factoring chargeback outstanding-liability if still OPEN. Money clone. Never `trigger_deploy`.
+
 **17:21 CT.** Hard-reload when healthz leaves a62f0cb. Money clone. One PR. NOW=ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT. Then SETL-F6464 → CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS → FACTORING-CHARGEBACK-BALANCE. F6631/F6535 CLOSED — do not remake. Never trigger_deploy. ACK OUTBOX.
 
 **16:47 CT.** Hard-reload healthz. Money clone. One PR. NOW=MAINT-MONEY-F6631-PARTS-PURCHASE-MUTABLE-COMPANY-DRAFT-SCOPE. Then F6634→F6635→F6535→F6508→SETL-F6464→cash-advance notify→FACTORING-CHARGEBACK-BALANCE. Never trigger_deploy. ACK OUTBOX.

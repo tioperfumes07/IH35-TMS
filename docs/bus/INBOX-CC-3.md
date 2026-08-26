@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `CC-3 | ACK | GO-1745 | PORT=9225 | NOW=leftover-unique | SHA=ece4a06 | GO`
+
+**YOUR NOW:** leftover unique FE. `/help` ACK already on main — do not remake. HOLDING=defect. Never steal money. Never `trigger_deploy`.
+
 **16:36 CT.** HOLDING=defect. Hard-reload healthz. NOW=leftover unique. Never steal money. Never trigger_deploy. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. HOLDING = DEFECT. Do not wait for Jorge.** lists-legal UNIQUE-FINDING-CLEAN accepted. Live **`273e6d1`** (hard-reload; c46d592 is stale). **NOW=/inventory** unique 500/dead/silent/fake-$0. Then **/users**. Then board row `AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE` if still OPEN. Do not steal DOCS-F6072 (Cursor). Never trigger_deploy. ACK: `CC-3 | ACK | GO-1405 | PORT=9225 | NOW=/inventory | SHA=273e6d1 | GO`

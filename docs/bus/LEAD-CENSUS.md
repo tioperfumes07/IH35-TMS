@@ -1,17 +1,19 @@
-# LEAD CENSUS — 2026-08-26 17:21 CT · Cursor lead GO-1405
+# LEAD CENSUS — replace this table every lead turn
 
-Owner: **one Cascade + one Devin.** `INBOX-DEVIN-A` VOID. Ping ≠ ACK.
+**GO current:** GO-1745 (law still GO-1405 packet)
+**Turn:** 2026-08-26 17:45 CT · **LEAD-SEAT=CURSOR** (OWNER-DIRECT-INSTRUCTION)
+**Live SHA:** `29ad498` until deploy `dep-da7mp2navr4c73b5h7hg` lands tip `ece4a06`
+**Self-ACK** = seat-authored line matching **GO-1745**. `Cursor→Seat` ping ≠ ACK.
 
-Live: `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → **`a62f0cb`**. `origin/main` **15 commits ahead**. Deploy **IN FLIGHT** `dep-da7meuv10e5c73ft5icg` (no second kick). Skip #15546.
+| Seat | Last self-line | ACK GO-1745? | Idle? |
+|------|----------------|--------------|-------|
+| CC-1 | no GO-1745 self-ACK; F6508/F6464 already on main | **NO — must ACK** | unknown until ACK |
+| CC-2 | working reports hunt + CUSTOMER-PROFITABILITY filed; #16353 merged `f6c1e59` | **NO — must ACK** | **NO — was active** |
+| CC-3 | ACK GO-1405 lists-legal | **NO — must ACK GO-1745** | **NO — was active** |
+| Codex | shipping Driver/Fleet/Safety/Fuel lifecycle; #16356 is deploy tip | **NO — must ACK** | **NO — was shipping** |
+| Cascade | ACK GO-1405 on stale `a62f0cb` (lists/inventory Loading FAQ) | **NO — re-walk new SHA** | **stale walk** |
+| Devin | Cursor pings / Jorge-plain; crash-protocol refused | **NO — Jorge-plain `/vendors` then `/dispatch`** | unknown |
+| Devin-A | VOID | N/A | close it |
+| Cursor | kicked deploy + census this turn | **self** | **NO** |
 
-| Seat | ACK (self, GO-1405) | Idle? | NOW |
-|------|---------------------|-------|-----|
-| Cascade | **no** (pings only) | **WAKE — crashed** | `/customers` then `/dispatch` |
-| Devin | **no** (pings only) | **WAKE — crashed** | `/vendors` then `/dispatch` |
-| CC-1 | yes (DONE F6535) | no | **ACCT-MONEY-F6508** then SETL-F6464 → cash-advance notify → FACTORING-CHARGEBACK |
-| CC-2 | STATUS | no | `/reports` unique · never GL |
-| CC-3 | yes | no | leftover unique (`/help`) · HOLDING=defect |
-| Codex | yes (SHIPPED #16344) | no | remaining Driver/Fleet/Safety/Fuel unique |
-| Cursor | lead | no | census + deploy gate |
-
-**Lead:** Do not steal CC-1 money. Hard-reload when healthz leaves `a62f0cb`.
+**Counts this turn:** U14 14/14 CERTIFIED. Live API 11 commits behind then kicked. Open feature PRs: skip #15546 only ( #16353 merged). Disk ~76GB free / 96%. Board still has many historical OPEN prefix rows; CC-1 serial NOW is cash-advance notify (not remake F6508/F6464).

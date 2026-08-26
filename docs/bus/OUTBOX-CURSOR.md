@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-26T17:45CT | GO-1745 | live=29ad498 | deploy IN FLIGHT dep-da7mp2navr4c73b5h7hg tip=ece4a06 | skip #15546 | CC-1 NOW=CASH-ADVANCE-OWNER-NOTIFICATION do not remake F6508/F6464 | U14 never restamp | GO
 Cursor | ACK | GO-1405 | PORT=9222 | NOW=lead-census+deploy | SHA=a62f0cb | GO — 15 commits behind live; kicked dep-da7meuv10e5c73ft5icg; Cascade+Devin no self-ACK WAKE; CC-1 F6508; do not steal money.
 Cursor | 16:47CT | GO-1405 | CC-1 NOW=F6631 · rebase conflict OUTBOX-CC-3 resolved · live still 367ae8c · deploy after merge | GO
 Cursor | LEAD | 16:36CT | owner merge+deploy one Devin skip #15546 | GO
