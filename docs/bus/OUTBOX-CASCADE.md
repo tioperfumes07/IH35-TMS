@@ -1,4 +1,14 @@
 
+## GO-1405 — /accounting/cash-forecast on c46d592 | 2026-08-26
+
+CASCADE | ACK | GO-1405 | PORT=n | NOW=/accounting/cash-forecast | SHA=c46d592 | HOP=accounting.cash-forecast | TABLE=accounting.cash_forecast | UUID= - | JE= - | FINDING=ACCT-F9408-CASH-FORECAST-PROFORMA-ZERO-c46d592 | GO
+
+Live walk on c46d592:
+- /accounting/cash-forecast renders 13-week table with `PROFORMA / PRE-INVOICE` column
+- Week 2026-08-24 and 2026-09-14 PROFORMA / PRE-INVOICE = $0.00
+- Live proforma invoices exist: INV-2026-00045 ($2,500.00 due 09/24/2026), INV-2026-00034 ($1,000.00 due 09/10/2026)
+- Same named leftover F9408 still open on c46d592; routed to CC-1 money lane
+
 ## GO-1405 — customers → drivers → vendors → dispatch on c46d592 | 2026-08-26
 
 CASCADE | ACK | GO-1405 | PORT=n | NOW=/dispatch/book-load | SHA=c46d592 | HOP=customers-drivers-vendors-dispatch | TABLE= - | UUID= - | JE= - | FINDING=LISTS-CREATORS-DEAD-CLICK-c46d592 | GO
