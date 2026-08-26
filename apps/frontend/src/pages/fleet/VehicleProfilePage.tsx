@@ -523,7 +523,7 @@ export function VehicleProfilePage() {
               <p className="mb-3 text-[11px] leading-snug text-slate-600">
                 Mounted tires, severe repairs, and temporary driver coverage are each clickable into their live lists.
               </p>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:items-stretch [&_h3]:text-[13px] [&_li]:text-[11px] [&_p]:text-[11px] [&_section]:h-full [&_section]:min-h-[9.5rem] [&_section]:p-2">
+              <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-3 md:items-stretch">
                 <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} />
                 <span data-testid="vp-section-10n-severe-repairs" className="contents">
                   <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} />
