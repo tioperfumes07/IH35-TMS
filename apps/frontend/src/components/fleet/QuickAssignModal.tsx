@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
@@ -22,10 +22,24 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const resetDraft = useCallback(() => {
+    setDriverId("");
+    setError(null);
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, companyId, target?.equipmentId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   if (!target) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title={`Quick assign ${target.equipmentLabel}`}>
+    <Modal open={open} onClose={handleClose} title={`Quick assign ${target.equipmentLabel}`}>
       <form
         className="space-y-3"
         onSubmit={async (event) => {
@@ -35,8 +49,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
           setError(null);
           try {
             await onConfirm(driverId);
-            setDriverId("");
-            onClose();
+            handleClose();
           } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Couldn't assign this driver. Try again.");
           } finally {
@@ -59,7 +72,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
         />
         {error ? <p role="alert" className="text-xs text-red-700">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!driverId}>

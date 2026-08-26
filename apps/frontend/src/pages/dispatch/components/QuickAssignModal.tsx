@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -33,10 +33,29 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const resetDraft = useCallback(() => {
+    setDriverId("");
+    setDriverOption(null);
+    setUnitId("");
+    setUnitOption(null);
+    setTrailerId("");
+    setTrailerOption(null);
+    setAckAll(false);
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, operatingCompanyId, loadId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const hasSelected = Boolean(driverId || unitId || trailerId);
 
   return (
-    <Modal open={open} onClose={onClose} title={`Quick Assign · ${loadNumber}`}>
+    <Modal open={open} onClose={handleClose} title={`Quick Assign · ${loadNumber}`}>
       <form
         className="space-y-2"
         onSubmit={async (event) => {
@@ -50,7 +69,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               trailer_id: trailerId || undefined,
               acknowledged_warnings: ackAll ? hardWarnings : [],
             });
-            onClose();
+            handleClose();
           } finally {
             setLoading(false);
           }
@@ -146,7 +165,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
           </label>
         ) : null}
         <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
             Close
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!driverId}>
