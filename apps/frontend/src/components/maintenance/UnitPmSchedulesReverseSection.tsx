@@ -15,7 +15,7 @@ export function UnitPmSchedulesReverseSection({
     queryFn: () => listMaintenancePmSchedules(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.rows ?? [];
+  const rows = query.isError ? [] : (query.data?.rows ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vehicle-profile-pm-schedules">
       <h2 className="text-sm font-semibold text-slate-900">PM schedules{rows.length ? ` (${rows.length})` : ""}</h2>

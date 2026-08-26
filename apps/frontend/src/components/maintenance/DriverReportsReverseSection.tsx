@@ -10,8 +10,8 @@ export function DriverReportsReverseSection({ operatingCompanyId, driverId }: { 
     queryFn: () => listDriverReports({ operating_company_id: operatingCompanyId, driver_id: driverId, limit: 5 }),
     enabled: Boolean(operatingCompanyId && driverId),
   });
-  const rows = query.data?.rows ?? [];
-  const totalCount = query.data?.total_count ?? rows.length;
+  const rows = query.isError ? [] : (query.data?.rows ?? []);
+  const totalCount = query.isError ? 0 : (query.data?.total_count ?? rows.length);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-reports-reverse">
       <div className="flex items-center justify-between gap-2">

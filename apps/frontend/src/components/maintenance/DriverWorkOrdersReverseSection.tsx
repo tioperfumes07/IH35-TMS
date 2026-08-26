@@ -26,7 +26,7 @@ export function DriverWorkOrdersReverseSection({
     enabled,
   });
 
-  const rows = q.data?.work_orders ?? [];
+  const rows = q.isError ? [] : (q.data?.work_orders ?? []);
 
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
