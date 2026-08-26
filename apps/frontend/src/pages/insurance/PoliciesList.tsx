@@ -9,7 +9,9 @@ import {
 } from "../../api/insurance";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
 import { DataTable } from "../../components/DataTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useListState } from "../../components/list-state";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
@@ -163,36 +165,47 @@ export function PoliciesList() {
         className="rounded-sm border border-gray-200 bg-white p-2"
       >
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="text-xs font-semibold text-slate-600">
-            Type
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              value={staged.draft.typeFilter}
-              onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
-            >
-              <option value="">All types</option>
-              {(typesQuery.data ?? []).map((type) => (
-                <option key={type.id} value={type.code}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="text-xs font-semibold text-slate-600">
+            <label htmlFor="insurance-policies-type-filter">Type</label>
+            {typesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load coverage types"
+                status={0}
+                message="The policy type filter is unavailable."
+                onRetry={() => void typesQuery.refetch()}
+              />
+            ) : (
+              <Combobox
+                id="insurance-policies-type-filter"
+                className="mt-1 w-full"
+                value={staged.draft.typeFilter}
+                onChange={(next) => staged.setDraft({ ...staged.draft, typeFilter: next ?? "" })}
+                options={[
+                  { value: "", label: "All types" },
+                  ...(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name })),
+                ]}
+                allowClear={false}
+              />
+            )}
+          </div>
 
-          <label className="text-xs font-semibold text-slate-600">
-            Status
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          <div className="text-xs font-semibold text-slate-600">
+            <label htmlFor="insurance-policies-status-filter">Status</label>
+            <Combobox
+              id="insurance-policies-status-filter"
+              className="mt-1 w-full"
               value={staged.draft.statusFilter}
-              onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: (event.target.value || "") as "" | InsurancePolicyStatus })}
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="expired">Expired</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </label>
+              onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: (next ?? "") as "" | InsurancePolicyStatus })}
+              options={[
+                { value: "", label: "All statuses" },
+                { value: "active", label: "Active" },
+                { value: "pending", label: "Pending" },
+                { value: "expired", label: "Expired" },
+                { value: "cancelled", label: "Cancelled" },
+              ]}
+              allowClear={false}
+            />
+          </div>
 
           <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-slate-700">
             <input
