@@ -121,7 +121,7 @@ export function DispatchPage({
   }, [routeLoadId]);
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
-  const [newLoadOpen, setNewLoadOpen] = useState(false);
+  const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));

@@ -126,6 +126,9 @@ export function checkDispatchConsumer(src) {
   if (!/book_load/.test(src) || !/useEffect/.test(src)) {
     failures.push(`${DISPATCH}: book_load deep-link must be handled in a useEffect`);
   }
+  if (!/useState\(\s*initialSubTab === ["']book_load["']\s*\)/.test(src)) {
+    failures.push(`${DISPATCH}: /dispatch/book-load must open the wizard on first paint (useState(initialSubTab === "book_load"))`);
+  }
   return failures;
 }
 
@@ -169,6 +172,7 @@ if (process.argv.includes("--selftest")) {
     'to={`/dispatch?view=loads&load_id=${row.load_id}`}';
   const goodDispatch = `
     const loadId = searchParams.get("load_id") ?? searchParams.get("load");
+    const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
     useEffect(() => {
       if (searchParams.get("book_load") !== "1") return;
       setNewLoadOpen(true);
