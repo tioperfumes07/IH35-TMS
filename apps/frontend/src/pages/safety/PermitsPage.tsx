@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
@@ -68,6 +68,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
   const [draft, setDraft] = useState(emptyDraft);
   const [reminderDays, setReminderDays] = useState("30");
   const [showArchived, setShowArchived] = useState(false);
+  const lifecycleGenerationRef = useRef(0);
 
   const permitsQuery = useQuery({
     queryKey: ["safety", "permits", operatingCompanyId, showArchived],
@@ -85,48 +86,56 @@ export function PermitsPage({ operatingCompanyId }: Props) {
   );
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createSafetyPermit(operatingCompanyId, {
-        operating_company_id: operatingCompanyId,
-        permit_type: draft.permit_type,
-        permit_number: draft.permit_number,
-        issuing_state: draft.permit_type === "state_operating_authority" ? draft.issuing_state : null,
-        holder_name: draft.holder_name,
-        issued_date: draft.issued_date || null,
-        expiry_date: draft.expiry_date,
-        unit_id: draft.unit_id || null,
-        notes: draft.notes || null,
-      }),
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createSafetyPermit>[1] }) =>
+      createSafetyPermit(input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(emptyDraft);
-      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", operatingCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", input.companyId] });
     },
   });
 
   const reminderMutation = useMutation({
-    mutationFn: () =>
-      updatePermitRenewalReminder(operatingCompanyId, {
-        days_before_expiry: Number(reminderDays),
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", operatingCompanyId] });
+    mutationFn: (input: { companyId: string; generation: number; daysBeforeExpiry: number }) =>
+      updatePermitRenewalReminder(input.companyId, { days_before_expiry: input.daysBeforeExpiry }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", input.companyId] });
     },
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => archiveSafetyPermit(id, operatingCompanyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", operatingCompanyId] });
+    mutationFn: (input: { id: string; companyId: string; generation: number }) => archiveSafetyPermit(input.id, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", input.companyId] });
     },
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (id: string) => restoreSafetyPermit(id, operatingCompanyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", operatingCompanyId] });
+    mutationFn: (input: { id: string; companyId: string; generation: number }) => restoreSafetyPermit(input.id, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "permits", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    reminderMutation.reset();
+    archiveMutation.reset();
+    restoreMutation.reset();
+    setCreateOpen(false);
+    setDraft(emptyDraft);
+    setReminderDays("30");
+  }, [operatingCompanyId]); // Mutation reset functions are stable; each company owns fresh permit action state.
+
+  useEffect(() => {
+    const canonicalDays = (reminder as { days_before_expiry?: number } | undefined)?.days_before_expiry;
+    if (typeof canonicalDays === "number") setReminderDays(String(canonicalDays));
+  }, [operatingCompanyId, reminder]);
 
   // Migrated to the shared QBO-parity grid — columns, order, severity badge, and the per-row
   // Archive/Restore action are preserved verbatim (§7 additive-only).
@@ -155,11 +164,11 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       label: "Action",
       render: (row) =>
         row.archived_at ? (
-          <button type="button" className="text-slate-700 underline" onClick={() => restoreMutation.mutate(String(row.id))}>
+          <button type="button" className="text-slate-700 underline" onClick={() => restoreMutation.mutate({ id: String(row.id), companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}>
             Restore
           </button>
         ) : (
-          <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(String(row.id))}>
+          <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate({ id: String(row.id), companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}>
             Archive
           </button>
         ),
@@ -195,7 +204,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               type="button"
               className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white"
               disabled={permitsQuery.isError || reminderMutation.isPending}
-              onClick={() => reminderMutation.mutate()}
+              onClick={() => reminderMutation.mutate({ companyId: operatingCompanyId, generation: lifecycleGenerationRef.current, daysBeforeExpiry: Number(reminderDays) })}
             >
               Save alert window
             </button>
@@ -375,7 +384,21 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 type="button"
                 className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
                 disabled={!draft.expiry_date || createMutation.isPending}
-                onClick={() => createMutation.mutate()}
+                onClick={() => createMutation.mutate({
+                  companyId: operatingCompanyId,
+                  generation: lifecycleGenerationRef.current,
+                  payload: {
+                    operating_company_id: operatingCompanyId,
+                    permit_type: draft.permit_type,
+                    permit_number: draft.permit_number,
+                    issuing_state: draft.permit_type === "state_operating_authority" ? draft.issuing_state : null,
+                    holder_name: draft.holder_name,
+                    issued_date: draft.issued_date || null,
+                    expiry_date: draft.expiry_date,
+                    unit_id: draft.unit_id || null,
+                    notes: draft.notes || null,
+                  },
+                })}
               >
                 Create
               </button>
