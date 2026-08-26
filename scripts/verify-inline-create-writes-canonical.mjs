@@ -34,6 +34,7 @@ const QUICK_CREATE = "apps/frontend/src/components/forms/shared/QuickCreateEntit
 const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
 const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
 const VENDOR_CREATE_MODAL = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
+const NEW_CUSTOMER_FORM = "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx";
 const ACCOUNT_DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
 const NEW_ACCOUNT_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
 
@@ -53,6 +54,9 @@ function quickCreateEmbedsVendorModal(src) {
 function quickCreateEmbedsItemEditor(src) {
   return /kind\s*===\s*["']item["']/.test(src) && /<ItemEditorModal[\s>]/.test(src) && /\bembedded\b/.test(src);
 }
+function quickCreateEmbedsCustomerForm(src) {
+  return /kind\s*===\s*["']customer["']/.test(src) && /<NewCustomerDrawerForm[\s>]/.test(src);
+}
 // LST-F3370 — category embeds NewAccountDrawerForm → AccountDrawer (createCatalogAccount).
 function quickCreateEmbedsAccountCreate(src) {
   return (
@@ -65,9 +69,8 @@ function quickCreateEmbedsAccountCreate(src) {
 const CANONICAL_SURFACES = [
   {
     file: QUICK_CREATE,
-    // createVendor / itemsCatalogClient.create are embed-aware (see QUICK_CREATE_EMBED_ANCHORS below);
-    // createCustomer stays a direct, always-required literal — customer create never delegated out.
-    anchors: [/\bcreateCustomer\s*\(/],
+    // Vendor/customer/item/category are embed-aware (see QUICK_CREATE_EMBED_ANCHORS below).
+    anchors: [],
   },
   {
     file: NEW_SERVICE,
@@ -81,6 +84,13 @@ const CANONICAL_SURFACES = [
 // surface delegates that kind to its canonical embedded Lists creator — falls back to asserting the
 // anchor lives there instead (same file the picker registry / vendor-type guards already point at).
 const QUICK_CREATE_EMBED_ANCHORS = [
+  {
+    label: "createCustomer",
+    directAnchor: /\bcreateCustomer\s*\(/,
+    embedsCheck: quickCreateEmbedsCustomerForm,
+    embedFile: NEW_CUSTOMER_FORM,
+    embedAnchor: /\bcreateCustomer\s*\(/,
+  },
   {
     label: "createVendor",
     directAnchor: /\bcreateVendor\s*\(/,
@@ -270,8 +280,8 @@ function selftest() {
       }
     };
 
-    // PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT: vendor/item create live on the EMBEDDED canonical Lists
-    // creator now (VendorCreateModal / ItemEditorModal), not inline in QuickCreateEntityModal.tsx — so the
+    // PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT: customer/vendor/item create live on EMBEDDED canonical Lists
+    // creators, not inline in QuickCreateEntityModal.tsx — so the
     // regression this guard exists for is planted on the embed target, exercised via the sources override.
     const plantEmbed = (label, embedFile, embedRealSrc, mutated, expectFragment) => {
       if (embedRealSrc == null) {
@@ -295,6 +305,16 @@ function selftest() {
       VENDOR_CREATE_MODAL,
       vendorModalRealSrc,
       vendorModalRealSrc?.replace(/\bcreateVendor\s*\(/, "createQboVendor("),
+      "lost canonical create anchor"
+    );
+    const customerFormRealSrc = fs.existsSync(path.join(repoRoot, NEW_CUSTOMER_FORM))
+      ? fs.readFileSync(path.join(repoRoot, NEW_CUSTOMER_FORM), "utf8")
+      : null;
+    plantEmbed(
+      "customer-embed-create-anchor-removed",
+      NEW_CUSTOMER_FORM,
+      customerFormRealSrc,
+      customerFormRealSrc?.replace(/\bcreateCustomer\s*\(/, "legacyCreateCustomer("),
       "lost canonical create anchor"
     );
     const itemEditorRealSrc = fs.existsSync(path.join(repoRoot, ITEM_EDITOR))
@@ -323,10 +343,10 @@ function selftest() {
       realSrc.replace(/<VendorCreateModal[\s>]/, "<VendorCreateModalRenamed "),
       "lost canonical create anchor"
     );
-    // The customer canonical anchor disappears (e.g. renamed/refactored away) with nothing replacing it.
+    // The customer delegation disappears with no direct canonical create replacing it.
     plant(
-      "customer-anchor-removed",
-      realSrc.replace(/\bcreateCustomer\s*\(/g, "legacyCreateHandler("),
+      "customer-anchor-and-embed-both-lost",
+      realSrc.replace(/<NewCustomerDrawerForm[\s>]/, "<NewCustomerDrawerFormRenamed "),
       "lost canonical create anchor"
     );
     // A direct mirror-table INSERT is added alongside the canonical calls (not a comment — stripComments()
@@ -350,7 +370,7 @@ function selftest() {
     process.exit(1);
   }
   console.log(
-    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 7 planted regressions all caught"
+    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 8 planted regressions all caught"
   );
 }
 
