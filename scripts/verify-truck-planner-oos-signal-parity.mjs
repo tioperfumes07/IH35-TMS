@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * DISP-F6435 — Dispatch Truck Planner (apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx)
+ * DISP-F6436 — Dispatch Truck Planner (apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx)
  * decided a unit was "in-shop" (renders red "shop") using only 2 of the 4 OOS signals the sibling
  * FleetOosStrip.tsx (Dispatch Overview/Kanban "FLEET OOS / IN SHOP" strip) already checks against
  * the exact same mdata.units row shape returned by listUnits() -- `unit.is_oos` and the raw
@@ -67,10 +67,10 @@ function audit(truckPlannerText, fleetOosStripText) {
 
   need(predicate.includes("unit.has_open_pm_due_wo"), "inShop predicate dropped the has_open_pm_due_wo check");
   need(predicate.includes("unit.is_dispatch_blocked"), "inShop predicate dropped the is_dispatch_blocked check");
-  need(predicate.includes("unit.is_oos"), "inShop predicate dropped the is_oos check (the DISP-F6435 fix)");
+  need(predicate.includes("unit.is_oos"), "inShop predicate dropped the is_oos check (the DISP-F6436 fix)");
   need(
     predicate.includes("IN_SHOP_UNIT_STATUSES.has"),
-    "inShop predicate dropped the IN_SHOP_UNIT_STATUSES membership check (the DISP-F6435 fix)",
+    "inShop predicate dropped the IN_SHOP_UNIT_STATUSES membership check (the DISP-F6436 fix)",
   );
 
   return failures;

@@ -11,7 +11,7 @@ import { usePlannerRange } from "./PlannerRangeContext";
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
-// DISP-F6435: same enum set as FleetOosStrip.tsx's IN_SHOP_STATUSES -- kept as a literal duplicate
+// DISP-F6436: same enum set as FleetOosStrip.tsx's IN_SHOP_STATUSES -- kept as a literal duplicate
 // (not imported) because FleetOosStrip.tsx is a dispatch-overview-only component; both must agree
 // on which mdata.units.status values mean "in the shop", so any future addition there needs the
 // identical addition here (enforced by verify-truck-planner-oos-signal-parity.mjs).
@@ -98,7 +98,7 @@ export function TruckPlanner() {
       const unitId = String(unit.id ?? "");
       const unitNumber = String(unit.unit_number ?? unitId);
       if (!unitId) continue;
-      // DISP-F6435: this used to check only 2 of the 4 OOS signals the sibling FleetOosStrip.tsx
+      // DISP-F6436: this used to check only 2 of the 4 OOS signals the sibling FleetOosStrip.tsx
       // (Dispatch Overview/Kanban "FLEET OOS / IN SHOP" strip) already checks against the same
       // listUnits() row shape -- is_oos and the raw status enum were missing. Live-confirmed: all
       // 14 units in FleetOosStrip's OOS list (unit.is_oos=true, no open PM/dispatch-block flag)
