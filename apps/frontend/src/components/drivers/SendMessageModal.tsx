@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { sendDriverProfileMessage } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -20,6 +20,22 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  const resetDraft = useCallback(() => {
+    setMessage("");
+    setChannel("in_app");
+    setUrgency("");
+    setError("");
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, companyId, driverId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const submit = async () => {
     setError("");
     if (!message.trim()) {
@@ -33,10 +49,8 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
         channel,
         urgency: urgency.trim() || undefined,
       });
-      setMessage("");
-      setUrgency("");
       onSent?.();
-      onClose();
+      handleClose();
     } catch {
       setError("Failed to send message.");
     } finally {
@@ -45,7 +59,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Send Message — ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Send Message — ${driverName}`}>
       <div className="space-y-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="send-message-channel" className="text-xs font-semibold text-gray-600">Channel</label>
@@ -83,7 +97,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} data-testid="send-message-submit">
