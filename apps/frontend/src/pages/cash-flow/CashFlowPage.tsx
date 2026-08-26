@@ -42,7 +42,7 @@ export function CashFlowPage() {
   if (!selectedCompanyId) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
+        <PageHeader backHref="/home" title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
         <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
           <TrendingUp className="mx-auto mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm text-gray-500">Select a company to view cash flow.</p>
@@ -54,6 +54,7 @@ export function CashFlowPage() {
   return (
     <div className="space-y-4" data-testid="cash-flow-page">
       <PageHeader
+        backHref="/home"
         title="Cash Flow"
         subtitle="Forward-looking daily cash position — predicted income and expenses"
       />

@@ -52,7 +52,22 @@ describe("UniversalListToolbar", () => {
     expect(screen.getByRole("option", { name: "SOL / hearing" })).toBeInTheDocument();
   });
 
-  it("claims no range columns only when inference finds zero fields", async () => {
+  it("keeps search at a fixed QBO width instead of stretching", () => {
+    const { container } = render(
+      <UniversalListToolbar
+        search=""
+        onSearchChange={vi.fn()}
+        columns={[{ key: "status", label: "Status" }]}
+        range={null}
+        onRangeApply={vi.fn()}
+        resultCount={2}
+        totalCount={2}
+      />,
+    );
+    expect(container.querySelector('[class*="w-[14rem]"]')).toBeTruthy();
+  });
+
+    it("claims no range columns only when inference finds zero fields", async () => {
     const user = userEvent.setup();
     render(
       <UniversalListToolbar

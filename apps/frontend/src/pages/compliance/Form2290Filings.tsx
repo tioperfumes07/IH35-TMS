@@ -47,18 +47,15 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
   const filingId = searchParams.get("filing_id");
   const [generateError, setGenerateError] = useState<string | null>(null);
 
-  // FORM2290-EMBEDDED-NO-BACK-ARROW — when embedded (e.g. Safety → Permits) showModuleHeader=false
-  // correctly suppresses the full PageHeader (title/subtitle/breadcrumb) to avoid a second nested
-  // header on top of the host page's own, but that also silently dropped PageHeader's back arrow
-  // entirely, leaving no wayfinding back to the standalone Compliance module view from inside the
-  // embedded section. This lightweight link restores that path without reintroducing a duplicate
-  // header block.
+  // FORM2290-EMBEDDED-NO-BACK-ARROW — embed (Safety → Permits) still needs a hop to the
+  // canonical /compliance/form-2290 filings list (unit + filing FKs live there). PageHeader
+  // Back returns to /safety; this Link is the forward drill to the Compliance record.
   const embeddedBackLink = !showModuleHeader ? (
     <Link
       to="/compliance/form-2290"
       className="mb-1 inline-block text-xs font-semibold text-[#1f2a44] underline"
     >
-      ← Form 2290 filings
+      Form 2290 filings
     </Link>
   ) : null;
 
@@ -129,22 +126,15 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         Select an operating company.
       </div>
     );
-    if (!showModuleHeader) {
-      return (
-        <div>
-          {embeddedBackLink}
-          {empty}
-        </div>
-      );
-    }
     return (
-      <div className="space-y-4 p-4">
+      <div className={showModuleHeader ? "space-y-4 p-4" : "space-y-4"}>
         <PageHeader
-          backHref="/compliance"
-          breadcrumb={["Compliance", "Form 2290"]}
+          backHref={showModuleHeader ? "/compliance" : "/safety"}
+          breadcrumb={showModuleHeader ? ["Compliance", "Form 2290"] : ["Safety", "Form 2290"]}
           title="Form 2290 filings"
           subtitle="HVUT annual filing"
         />
+        {embeddedBackLink}
         {empty}
       </div>
     );
@@ -278,9 +268,19 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
     </div>
   );
 
+  const header = (
+    <PageHeader
+      backHref={showModuleHeader ? "/compliance" : "/safety"}
+      breadcrumb={showModuleHeader ? ["Compliance", "Form 2290"] : ["Safety", "Form 2290"]}
+      title="Form 2290 filings"
+      subtitle="HVUT annual filing"
+    />
+  );
+
   if (!showModuleHeader) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-4">
+        {header}
         {embeddedBackLink}
         {body}
       </div>
@@ -289,12 +289,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader
-        backHref="/compliance"
-        breadcrumb={["Compliance", "Form 2290"]}
-        title="Form 2290 filings"
-        subtitle="HVUT annual filing"
-      />
+      {header}
       {body}
     </div>
   );

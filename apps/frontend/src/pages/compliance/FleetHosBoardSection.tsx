@@ -349,6 +349,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           storageKey="compliance-fleet-hos"
           emptyText="No reporting vehicles."
           initialPageSize={50}
+          suppressToolbarRange
           tableTestId="compliance-fleet-hos-table"
           filterBar={
             <div className="flex flex-wrap items-center gap-2" data-testid="fleet-hos-filters">

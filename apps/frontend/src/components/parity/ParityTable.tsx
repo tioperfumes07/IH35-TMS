@@ -96,6 +96,8 @@ export type ParityTableProps<T> = {
    * Prevents competing client search over a single page of server results (LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH).
    */
   suppressToolbarSearch?: boolean;
+  /** Hide the Range popover when the page already owns date/unit filters. */
+  suppressToolbarRange?: boolean;
   /** When set, a ⤓ Export button appears that downloads the (sorted, visible-column) rows as CSV. */
   exportFilename?: string;
   /** Sticky header row on vertical scroll (universal-list standard). Default true. */
@@ -295,6 +297,7 @@ export function ParityTable<T>({
   onSelectionChange,
   filterBar,
   suppressToolbarSearch = false,
+  suppressToolbarRange = false,
   exportFilename,
   stickyHeader = true,
   enableColumnResize = true,
@@ -813,6 +816,7 @@ export function ParityTable<T>({
           resultCount={rows.length}
           totalCount={sourceRows.length}
           hideSearch={suppressToolbarSearch}
+          hideRange={suppressToolbarRange}
           className="min-w-0 flex-1"
         />
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
@@ -864,7 +868,12 @@ export function ParityTable<T>({
                     aria-label="Rows per page"
                     className="h-8 w-full rounded-sm border border-gray-300 px-1 text-[12px]"
                     value={draftPageSize}
-                    onChange={(e) => setDraftPageSize(Number(e.target.value))}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      setDraftPageSize(next);
+                      changePageSize(next);
+                      savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths });
+                    }}
                   >
                     {pageSizeOptions.map((opt) => (
                       <option key={opt} value={opt}>

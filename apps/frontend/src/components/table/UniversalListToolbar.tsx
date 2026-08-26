@@ -125,6 +125,8 @@ type Props = {
   searchPlaceholder?: string;
   /** When true, hide TableSearch (page owns server-side search elsewhere). */
   hideSearch?: boolean;
+  /** When true, hide the Range popover (page owns date/unit filters in filterBar). */
+  hideRange?: boolean;
   className?: string;
 };
 
@@ -138,6 +140,7 @@ export function UniversalListToolbar({
   totalCount,
   searchPlaceholder = "Search rows…",
   hideSearch = false,
+  hideRange = false,
   className = "",
 }: Props) {
   const rangeColumns = useMemo(() => inferUniversalRangeColumns(columns), [columns]);
@@ -169,14 +172,15 @@ export function UniversalListToolbar({
   return (
     <div className={`flex min-w-0 flex-1 flex-wrap items-center gap-2 ${className}`.trim()} data-list-toolbar="search-range-gear">
       {hideSearch ? null : (
-        <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="min-w-[12rem] max-w-xl flex-1" />
+        <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-[14rem] shrink-0" />
       )}
+      {hideRange ? null : (
       <div className="relative" ref={ref}>
         <button
           type="button"
           aria-expanded={open}
           aria-label="Date or amount range"
-          className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+          className="flex h-8 items-center gap-1 bg-white px-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
           onClick={() => setOpen((current) => !current)}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
@@ -226,7 +230,7 @@ export function UniversalListToolbar({
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <label className="text-[11px] font-semibold text-gray-600">From
                     {selected.kind === "date" ? (
-                      <DatePicker value={draft?.from ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, from: value } : current)} className="mt-1 w-full" />
+                      <DatePicker value={draft?.from ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, from: value } : current)} className="mt-1" />
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
                     ) : (
@@ -235,7 +239,7 @@ export function UniversalListToolbar({
                   </label>
                   <label className="text-[11px] font-semibold text-gray-600">To
                     {selected.kind === "date" ? (
-                      <DatePicker value={draft?.to ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, to: value } : current)} className="mt-1 w-full" />
+                      <DatePicker value={draft?.to ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, to: value } : current)} className="mt-1" />
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
                     ) : (
@@ -261,6 +265,7 @@ export function UniversalListToolbar({
           </div>
         ) : null}
       </div>
+      )}
       <span className="text-[11px] text-gray-500">{resultCount === totalCount ? `${totalCount}` : `${resultCount} of ${totalCount}`} rows</span>
     </div>
   );
