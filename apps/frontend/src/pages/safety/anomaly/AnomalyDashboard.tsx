@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -18,9 +19,11 @@ function parseSeverity(raw: string | null): string {
 
 export function AnomalyDashboard({ operatingCompanyId }: Props) {
   const qc = useQueryClient();
+  const actionGenerationRef = useRef(0);
+  const [actionError, setActionError] = useState<unknown>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const severity = parseSeverity(searchParams.get("severity"));
-  const setSeverity = (next: string) => {
+  const setSeverity = (next: string | null) => {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
@@ -39,14 +42,35 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
     ),
   });
   const ack = useMutation({
-    mutationFn: (uuid: string) => apiRequest(`/api/safety/anomaly/alerts/${uuid}/acknowledge`, { method: "PATCH" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["anomaly-alerts"] }),
+    mutationFn: (input: { uuid: string; companyId: string; severity: string; generation: number }) =>
+      apiRequest(`/api/safety/anomaly/alerts/${input.uuid}/acknowledge`, { method: "PATCH", body: { operating_company_id: input.companyId } }),
+    onMutate: () => setActionError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["anomaly-alerts", input.companyId, input.severity] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setActionError(error);
+    },
   });
   const resolve = useMutation({
-    mutationFn: ({ uuid, notes }: { uuid: string; notes: string }) =>
-      apiRequest(`/api/safety/anomaly/alerts/${uuid}/resolve`, { method: "PATCH", body: { status: "resolved", notes } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["anomaly-alerts"] }),
+    mutationFn: (input: { uuid: string; companyId: string; severity: string; generation: number; notes: string }) =>
+      apiRequest(`/api/safety/anomaly/alerts/${input.uuid}/resolve`, { method: "PATCH", body: { operating_company_id: input.companyId, status: "resolved", notes: input.notes } }),
+    onMutate: () => setActionError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["anomaly-alerts", input.companyId, input.severity] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setActionError(error);
+    },
   });
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setActionError(null);
+    ack.reset();
+    resolve.reset();
+  }, [operatingCompanyId]); // Company transitions own a fresh anomaly-action lifecycle.
   const rows = q.data?.alerts ?? [];
   return (
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
@@ -63,7 +87,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
             { value: "high", label: "High" },
             { value: "warn", label: "Warn" },
           ]}
-          onChange={(next) => setSeverity(next ?? "")}
+          onChange={setSeverity}
           className="min-w-40"
         />
       </div>
@@ -85,17 +109,17 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
               header: "Actions",
               render: (row) => (
                 <div className="flex flex-wrap gap-1">
-                  <Button type="button" variant="secondary" onClick={() => ack.mutate(String(row.uuid))}>Ack</Button>
-                  <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), notes: "Resolved from dashboard" })}>Resolve</Button>
+                  <Button type="button" variant="secondary" onClick={() => ack.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current })}>Ack</Button>
+                  <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current, notes: "Resolved from dashboard" })}>Resolve</Button>
                 </div>
               ),
             },
           ]}
         />
       )}
-      {(ack.isError || resolve.isError) ? (
+      {actionError ? (
         <p className="text-xs text-red-700" data-testid="anomaly-dashboard-action-error">
-          {userFacingApiError(ack.error ?? resolve.error, "Could not update the anomaly alert.")}
+          {userFacingApiError(actionError, "Could not update the anomaly alert.")}
         </p>
       ) : null}
     </div>
