@@ -43,7 +43,13 @@ export function ExpenseCreatePage() {
       >
         {companyId ? (
           <div className="space-y-4">
+            {/* ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT — RecordExpenseForm
+                initializes substantial vendor/account/driver/unit/load/line state once and never
+                resets it on an operatingCompanyId change; a keyed remount (same fix already
+                shipped for the Maintenance wrapper, MAINT-F6508) forces React to discard all
+                internal state instead of carrying a stale draft into the new company. */}
             <RecordExpenseForm
+              key={`accounting-record-expense-${companyId}`}
               operatingCompanyId={companyId}
               idPrefix="record-expense-page"
               onSubmitted={(created) => {

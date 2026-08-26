@@ -47,7 +47,7 @@ export function collectProblems(root = ROOT) {
   if (!/driver_id: body\.data\.driver_id/.test(sources.background) || !/appendCrudAudit/.test(sources.background)) failures.push("background writer must persist/audit the canonical driver FK");
   if (!/listSafetyBackgroundChecks\(companyId: string, driverId\?: string\)/.test(sources.api) || !/params\.set\("driver_id", driverId\)/.test(sources.api)) failures.push("frontend client must forward the exact reverse driver filter");
   if (!/DriverPickerWithCreate[\s\S]*dataField="background-check-driver"/.test(sources.section)) failures.push("background creator must use the canonical company-scoped driver picker");
-  if (!/createSafetyBackgroundCheck\(operatingCompanyId/.test(sources.section) || !/driver_id: selectedDriverId/.test(sources.section)) failures.push("background creator must submit the selected driver FK");
+  if (!/createSafetyBackgroundCheck\(input\.companyId/.test(sources.section) || !/driver_id: input\.driverId/.test(sources.section)) failures.push("background creator must submit the snapshotted selected-company driver FK");
   if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(sources.section) || !/<EntityLink kind="driver"/.test(sources.section)) failures.push("background list must use exact reverse filtering and canonical driver drill-through");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver background-check surface");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact background-check reverse history");
@@ -62,7 +62,7 @@ export function collectProblems(root = ROOT) {
   if (!/medical_card_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}medical_card_create_driver_dca\.is_authorized = true[\s\S]{0,180}medical_card_create_driver_dca\.deactivated_at IS NULL/.test(sources.medical)) failures.push("medical-card writer must validate owned or actively authorized selected-company driver");
   if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter");
   if (!/DriverPickerWithCreate[\s\S]*dataField="medical-card-driver"/.test(sources.medicalSection)) failures.push("medical-card creator must use the canonical company-scoped driver picker");
-  if (!/createSafetyMedicalCard\(operatingCompanyId[\s\S]*driver_id: selectedDriverId/.test(sources.medicalSection)) failures.push("medical-card creator must submit the selected driver FK");
+  if (!/createSafetyMedicalCard\(input\.companyId[\s\S]*driver_id: input\.driverId/.test(sources.medicalSection)) failures.push("medical-card creator must submit the snapshotted selected-company driver FK");
   if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(sources.medicalSection) || !/<EntityLink kind="driver"/.test(sources.medicalSection)) failures.push("medical-card list must use exact reverse filtering and canonical driver drill-through");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver medical-card surface");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact medical-card reverse history");

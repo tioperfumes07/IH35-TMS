@@ -1,3 +1,5 @@
+**17:21 CT.** Hard-reload when healthz leaves a62f0cb. Money clone. One PR. NOW=ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT. Then SETL-F6464 → CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS → FACTORING-CHARGEBACK-BALANCE. F6631/F6535 CLOSED — do not remake. Never trigger_deploy. ACK OUTBOX.
+
 **16:47 CT.** Hard-reload healthz. Money clone. One PR. NOW=MAINT-MONEY-F6631-PARTS-PURCHASE-MUTABLE-COMPANY-DRAFT-SCOPE. Then F6634→F6635→F6535→F6508→SETL-F6464→cash-advance notify→FACTORING-CHARGEBACK-BALANCE. Never trigger_deploy. ACK OUTBOX.
 
 **19:46 CT HARD WAKE.** Still (b). Live **`273e6d1`**. Money clone NOW=57cabbab. Do not hold in bus-cleanup. Never idle. Never trigger_deploy.
