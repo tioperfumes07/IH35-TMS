@@ -257,6 +257,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const driverCreateAttemptCloseRef = useRef<(() => void) | null>(null);
   const saveModeRef = useRef<"default" | "add_another">("default");
   const companyGenerationRef = useRef(0);
+  const inviteGenerationRef = useRef(0);
   const [driverCreateBaseline, setDriverCreateBaseline] = useState<DriverCreateModalSnapshot | null>(null);
 
   const driverCreateSnapshot = useMemo(
@@ -292,6 +293,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     setInvitePending(false);
     setInviteSent(false);
     setInviteConfirmOpen(false);
+    inviteGenerationRef.current += 1;
     saveModeRef.current = "default";
     setDriverCreateBaseline(null);
   }, [open, companyId]);
@@ -490,6 +492,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         return;
       }
       onClose();
+      inviteGenerationRef.current += 1;
+      setInvitePending(false);
+      setInviteSent(false);
+      setInviteConfirmOpen(false);
       setCreateSummary({
         driver_id: created.id,
         display_name: displayName,
@@ -628,6 +634,14 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     },
     [form, pendingDocCategoriesUnavailable, pushToast, returningCheckError, submitDriverCreate]
   );
+
+  const closeCreateSummary = useCallback(() => {
+    inviteGenerationRef.current += 1;
+    setInvitePending(false);
+    setInviteSent(false);
+    setInviteConfirmOpen(false);
+    setCreateSummary(null);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -1347,7 +1361,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         >
           Copy
         </Button>
-        <Button variant="secondary" type="button" onClick={() => setCreateSummary(null)}>
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={closeCreateSummary}
+        >
           Done
         </Button>
         <Button
@@ -1355,7 +1373,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           onClick={() => {
             if (!createSummary?.driver_id) return;
             const nextDriverId = createSummary.driver_id;
-            setCreateSummary(null);
+            closeCreateSummary();
             if (onCreated) onCreated(nextDriverId, createSummary.display_name);
             else navigate(`/drivers/${nextDriverId}`);
           }}
@@ -1371,15 +1389,20 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         onClose={() => setInviteConfirmOpen(false)}
         onConfirm={async () => {
           if (!createSummary?.driver_id) return;
+          const generation = inviteGenerationRef.current;
+          const driverId = createSummary.driver_id;
+          const phone = createSummary.phone;
           setInvitePending(true);
           try {
-            await resendDriverInvite(createSummary.driver_id);
+            await resendDriverInvite(driverId);
+            if (generation !== inviteGenerationRef.current) return;
             setInviteSent(true);
-            pushToast(`Invite sent to ${createSummary.phone}`, "success");
+            pushToast(`Invite sent to ${phone}`, "success");
           } catch (error) {
+            if (generation !== inviteGenerationRef.current) return;
             pushToast(userFacingApiError(error, "Could not send invite"), "error");
           } finally {
-            setInvitePending(false);
+            if (generation === inviteGenerationRef.current) setInvitePending(false);
           }
         }}
       />
@@ -1405,7 +1428,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         >
           {driverCreateForm}
         </ParityDrawer>
-        <ParityDrawer open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
+        <ParityDrawer
+          open={Boolean(createSummary)}
+          onClose={closeCreateSummary}
+          title="Driver created successfully"
+        >
           {driverCreateSummary}
         </ParityDrawer>
       </>
@@ -1427,7 +1454,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       >
         {driverCreateForm}
       </Modal>
-      <Modal open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
+      <Modal
+        open={Boolean(createSummary)}
+        onClose={closeCreateSummary}
+        title="Driver created successfully"
+      >
         {driverCreateSummary}
       </Modal>
     </>
