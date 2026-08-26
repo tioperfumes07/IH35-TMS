@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { setDriverDefaultTruck } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -19,8 +19,22 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const resetDraft = useCallback(() => {
+    setUnitId("");
+    setError("");
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, companyId, driverId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   return (
-    <Modal open={open} onClose={onClose} title={`Assign default truck · ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Assign default truck · ${driverName}`}>
       <form
         className="space-y-3"
         onSubmit={async (event) => {
@@ -30,9 +44,8 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
           setLoading(true);
           try {
             await setDriverDefaultTruck(driverId, companyId, unitId);
-            setUnitId("");
             onAssigned?.();
-            onClose();
+            handleClose();
           } catch (err) {
             setError(userFacingApiError(err, "Could not assign default truck"));
           } finally {
@@ -57,7 +70,7 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
         />
         {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!unitId} data-testid="assign-truck-confirm">
