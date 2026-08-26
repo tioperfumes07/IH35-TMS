@@ -1240,7 +1240,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <Button
               variant="secondary"
               type="button"
-              onClick={() => (shell === "drawer" ? onClose() : driverCreateAttemptCloseRef.current?.())}
+              onClick={() => driverCreateAttemptCloseRef.current?.()}
             >
               Cancel
             </Button>
@@ -1391,7 +1391,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   if (shell === "drawer") {
     return (
       <>
-        <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Driver" size="wide">
+        <ParityDrawer
+          open={open}
+          onClose={onClose}
+          onBack={onClose}
+          title="Create Driver"
+          size="wide"
+          confirmDiscardOnClose
+          isDirty={isDriverCreateDirty}
+          onRegisterAttemptClose={(fn) => {
+            driverCreateAttemptCloseRef.current = fn;
+          }}
+        >
           {driverCreateForm}
         </ParityDrawer>
         <ParityDrawer open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
