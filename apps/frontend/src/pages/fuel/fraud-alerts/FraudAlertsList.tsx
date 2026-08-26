@@ -115,6 +115,10 @@ export function FraudAlertsListPage() {
     },
   });
 
+  // All three operations transition the same canonical alert state. Lock the complete action set
+  // while any transition is pending so Investigate/Confirm/Dismiss cannot race each other.
+  const actionPending = investigateMut.isPending || confirmMut.isPending || dismissMut.isPending;
+
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
     investigateMut.reset();
@@ -159,23 +163,22 @@ export function FraudAlertsListPage() {
         alwaysVisible: true,
         render: (row) => (
           <div className="flex flex-wrap gap-1">
-            <ActionButton disabled={investigateMut.isPending} onClick={() => investigateMut.mutate({
-              uuid: row.uuid,
-              companyId,
-              generation: lifecycleGenerationRef.current,
-            })}>
+            <ActionButton disabled={actionPending} onClick={() => {
+              if (actionPending) return;
+              investigateMut.mutate({ uuid: row.uuid, companyId, generation: lifecycleGenerationRef.current });
+            }}>
               Investigate
             </ActionButton>
-            <ActionButton disabled={confirmMut.isPending} onClick={() => confirmMut.mutate({
-              uuid: row.uuid,
-              companyId,
-              generation: lifecycleGenerationRef.current,
-            })}>
+            <ActionButton disabled={actionPending} onClick={() => {
+              if (actionPending) return;
+              confirmMut.mutate({ uuid: row.uuid, companyId, generation: lifecycleGenerationRef.current });
+            }}>
               Confirm fraud
             </ActionButton>
             <ActionButton
-              disabled={dismissMut.isPending}
+              disabled={actionPending}
               onClick={() => {
+                if (actionPending) return;
                 setDismissTarget(row);
                 setDismissReason("");
               }}
@@ -186,7 +189,7 @@ export function FraudAlertsListPage() {
         ),
       },
     ],
-    [investigateMut, confirmMut, dismissMut],
+    [actionPending, companyId, investigateMut, confirmMut],
   );
 
   if (!companyId) {
