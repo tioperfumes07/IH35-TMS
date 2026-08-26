@@ -43,5 +43,7 @@ export default {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
     await ctx.run("node", ["scripts/verify-unit-profile-action-company-lifecycle.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-unit-profile-action-company-lifecycle.mjs"]);
+    await ctx.run("node", ["scripts/verify-maint-work-order-detail-action-lifecycle.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-maint-work-order-detail-action-lifecycle.mjs"]);
   },
 };
