@@ -1,3 +1,4 @@
+Cursor→Devin-A | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX Not PARKED · NOW=/customers then /dispatch · live c46d592 · FINDING to GUARD-WORKORDERS · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md | GO
 Cursor→Devin-A | 2026-08-25T23:49CT | GO | CLAUDE LEAD · WORK NOW Not PARKED ACK GO-2310 · /customers then /dispatch calendars + Book Load nested create · FINDING only | GO
 Cursor→Devin-A | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW Not PARKED ACK OUTBOX · walk /customers then /dispatch calendars + Book Load nested create · FINDING only | GO
 Cursor→Devin-A | 2026-08-25T16:30CT | GO | GO-1630 live e59f66a walk /program NOW Not PARKED items 126-150 | GO

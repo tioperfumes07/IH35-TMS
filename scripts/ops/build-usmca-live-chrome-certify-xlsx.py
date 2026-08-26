@@ -184,6 +184,12 @@ PENDING: list[dict] = [
     {"id": "DOCS-F6072-REGRESSION-UNIT-EQUIPMENT-500", "module": "docs", "kw": ["unit", "equipment", "upload"], "seat": "Cursor", "note": "ensureLinkEntityExists uses operating_company_id on units/equipment — 42703 500. PR #16261 filed, FIX still owed."},
     {"id": "HOP-ASSIGN-ZERO-RATECARD-DRIVER-BILLS", "module": "program", "kw": ["assign", "hop"], "seat": "CC-1", "note": "Program hop.assign red until rate-card bills exist."},
     {"id": "TMS-SETTLEMENT-AUTO-PAY-CRON (not QBO sync)", "module": "system", "kw": ["job", "cron", "background"], "seat": "CC-1", "note": "Rank BEHIND 57cabbab. QBO jobs out of scope."},
+    {"id": "VENDORS-UNIQUE-HUNT-CURRENT-SHA", "module": "vendors", "kw": ["vendor", "bill", "payment", "hub"], "seat": "Devin", "note": "Unique 500/dead/silent + Live Chrome on current healthz. Cascade earlier silent-header on stale SHA — re-walk."},
+    {"id": "FACTORING-UNIQUE-HUNT-CURRENT-SHA", "module": "factoring", "kw": ["factor", "advance", "batch"], "seat": "CC-1", "note": "Unique leftover + Live Chrome. After 57cabbab serial money."},
+    {"id": "LISTS-UNIQUE-HUNT-CURRENT-SHA", "module": "lists", "kw": ["catalog", "list", "create"], "seat": "CC-3", "note": "Unique leftover + nested + Add new = Lists creator. Live Chrome current SHA."},
+    {"id": "INVENTORY-UNIQUE-HUNT-CURRENT-SHA", "module": "inventory", "kw": ["part", "stock", "receive"], "seat": "CC-3", "note": "Unique leftover + Live Chrome. Do not confuse with money parts-purchase class (CC-1)."},
+    {"id": "USERS-UNIQUE-HUNT-CURRENT-SHA", "module": "users", "kw": ["user", "role", "invite"], "seat": "CC-3", "note": "Unique leftover + Live Chrome current SHA."},
+    {"id": "HOME-HELP-TASKS-UNIQUE-HUNT", "module": "home", "kw": ["home", "dashboard", "kpi"], "seat": "CC-2", "note": "Unique leftover / fake $0 KPIs on current SHA."},
 ]
 
 FILL_HDR = PatternFill("solid", fgColor="1E3A5F")
