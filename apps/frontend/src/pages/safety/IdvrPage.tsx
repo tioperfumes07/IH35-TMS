@@ -172,8 +172,9 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         filterBar={
           <div className="flex flex-wrap items-end gap-3" data-testid="idvr-filters">
             <div className="text-[11px] text-slate-600">
-              <span>From</span>
+              <label htmlFor="idvr-filter-from">From</label>
               <DatePicker
+                id="idvr-filter-from"
                 value={draft.from}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
                 className="mt-1 block h-8 w-full"
@@ -181,8 +182,9 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               />
             </div>
             <div className="text-[11px] text-slate-600">
-              <span>To</span>
+              <label htmlFor="idvr-filter-to">To</label>
               <DatePicker
+                id="idvr-filter-to"
                 value={draft.to}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
                 className="mt-1 block h-8 w-full"

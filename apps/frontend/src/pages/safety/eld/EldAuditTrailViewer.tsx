@@ -153,16 +153,18 @@ export function EldAuditTrailViewer() {
             </div>
           </label>
           <div className="text-sm text-gray-700">
-            <span>From</span>
+            <label htmlFor="eld-audit-from">From</label>
             <DatePicker
+              id="eld-audit-from"
               className="mt-1 w-full"
               value={from}
               onChange={(next) => setFrom(next)}
             />
           </div>
           <div className="text-sm text-gray-700">
-            <span>To</span>
+            <label htmlFor="eld-audit-to">To</label>
             <DatePicker
+              id="eld-audit-to"
               className="mt-1 w-full"
               value={to}
               onChange={(next) => setTo(next)}

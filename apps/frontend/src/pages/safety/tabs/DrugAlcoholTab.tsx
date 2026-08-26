@@ -526,8 +526,9 @@ export function DrugAlcoholTab() {
             />
           </div>
           <div className="text-xs text-slate-600">
-            <span>From</span>
+            <label htmlFor="drug-alcohol-history-from">From</label>
             <DatePicker
+              id="drug-alcohol-history-from"
               className="mt-1 w-40"
               value={historyDraft.from}
               onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, from: next }))}
@@ -535,8 +536,9 @@ export function DrugAlcoholTab() {
             />
           </div>
           <div className="text-xs text-slate-600">
-            <span>To</span>
+            <label htmlFor="drug-alcohol-history-to">To</label>
             <DatePicker
+              id="drug-alcohol-history-to"
               className="mt-1 w-40"
               value={historyDraft.to}
               onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, to: next }))}
