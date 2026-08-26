@@ -1,5 +1,5 @@
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -43,8 +43,10 @@ export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
   const [subTab, setSubTab] = useState<SubTab>("wo-cost");
+  const [reviewError, setReviewError] = useState<unknown>(null);
   useEffect(() => {
     if (searchParams.get("anomaly_id")) setSubTab("anomalies");
     else if (searchParams.get("alert_id")) setSubTab("active-alerts");
@@ -76,12 +78,25 @@ export function IntegrityReportsTab() {
     enabled: Boolean(companyId),
   });
 
+  /** @matrix-built modules=safety cols=driver,unit,vendor,connectivity,reverse_link */
   const reviewMutation = useMutation({
-    mutationFn: (id: string) => reviewIntegrityObservation(companyId, id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "integrity", "observations", companyId] });
+    mutationFn: (input: { observationId: string; companyId: string; generation: number }) =>
+      reviewIntegrityObservation(input.companyId, input.observationId),
+    onMutate: () => setReviewError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "integrity", "observations", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setReviewError(error);
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setReviewError(null);
+    reviewMutation.reset();
+  }, [companyId]); // Mutation reset is stable; company transitions own a fresh integrity review lifecycle.
 
   const rows = useMemo(() => {
     if (subTab === "wo-cost") return woQuery.data?.outliers ?? [];
@@ -160,7 +175,7 @@ export function IntegrityReportsTab() {
               type="button"
               className="text-[#1f2a44] underline disabled:opacity-40"
               disabled={!rowId || reviewMutation.isPending}
-              onClick={() => reviewMutation.mutate(rowId)}
+              onClick={() => reviewMutation.mutate({ observationId: rowId, companyId, generation: actionGenerationRef.current })}
             >
               Review
             </button>
@@ -290,9 +305,9 @@ export function IntegrityReportsTab() {
           {userFacingApiError(observationsQuery.error, "Could not load integrity observation review state.")}
         </p>
       ) : null}
-      {reviewMutation.isError ? (
+      {reviewError ? (
         <p className="text-xs text-red-700" data-testid="integrity-review-error">
-          {userFacingApiError(reviewMutation.error, "Could not mark the integrity observation as reviewed.")}
+          {userFacingApiError(reviewError, "Could not mark the integrity observation as reviewed.")}
         </p>
       ) : null}
     </div>

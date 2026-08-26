@@ -16,7 +16,7 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx",
-    needles: ["userFacingApiError", "reviewMutation.isError", "integrity-review-error"],
+    needles: ["userFacingApiError", "reviewError", "integrity-review-error"],
   },
   {
     file: "apps/frontend/src/pages/safety/tabs/GeofenceBreachesTab.tsx",
