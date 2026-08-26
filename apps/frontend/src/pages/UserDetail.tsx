@@ -30,6 +30,7 @@ import { DataPanel } from "../components/layout/DataPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
+import { userStatus } from "../lib/user-status";
 import { useToast } from "../components/Toast";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -279,7 +280,7 @@ export function UserDetailPage() {
         breadcrumb={["Users"]}
         title={targetUser.email ?? "User detail"}
         subtitle={targetUser.role}
-        actions={<StatusBadge status={targetUser.deactivated_at ? "Inactive" : "Active"} />}
+        actions={<StatusBadge status={userStatus(targetUser)} />}
       />
 
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
@@ -313,7 +314,7 @@ export function UserDetailPage() {
           <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
             <div><span className="text-xs text-gray-500">Email</span><div>{targetUser.email ?? "—"}</div></div>
             <div><span className="text-xs text-gray-500">Role</span><div>{targetUser.role}</div></div>
-            <div><span className="text-xs text-gray-500">Status</span><div>{targetUser.deactivated_at ? "Inactive" : "Active"}</div></div>
+            <div><span className="text-xs text-gray-500">Status</span><div>{userStatus(targetUser)}</div></div>
             <div><span className="text-xs text-gray-500">Created at</span><div>{formatDateTimeUS(targetUser.created_at)}</div></div>
             <div><span className="text-xs text-gray-500">Default company</span><div>{defaultCompany?.short_name ?? defaultCompany?.code ?? entityLabel(null, targetUser.default_company_id, "Company")}</div></div>
             <div><span className="text-xs text-gray-500">Has driver record</span><div>{userDetailQuery.data?.has_driver_record ? "Yes" : "No"}</div></div>
