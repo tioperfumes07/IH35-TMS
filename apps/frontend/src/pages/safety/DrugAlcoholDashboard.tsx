@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
@@ -48,6 +49,7 @@ export function DrugAlcoholDashboard() {
   const companyId = selectedCompanyId ?? "";
   const year = new Date().getUTCFullYear();
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
 
   const rateQ = useQuery({
     queryKey: ["compliance", "drug-alcohol", "annual-rate", companyId, year],
@@ -71,16 +73,28 @@ export function DrugAlcoholDashboard() {
   });
 
   const drawMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; generation: number; year: number; quarter: number }) =>
       apiPost("/api/v1/compliance/drug-alcohol/draws/run", {
-        operating_company_id: companyId,
-        year,
-        quarter: currentQuarter(),
+        operating_company_id: input.companyId,
+        year: input.year,
+        quarter: input.quarter,
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["compliance", "drug-alcohol"] });
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["compliance", "drug-alcohol", "annual-rate", input.companyId, input.year],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["compliance", "drug-alcohol", "pool", input.companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["compliance", "drug-alcohol", "rtd", input.companyId] }),
+      ]);
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    drawMutation.reset();
+  }, [companyId]);
 
   const rate = rateQ.data;
   const poolSize = rate?.pool_size ?? (poolQ.data as { members?: unknown[] })?.members?.length ?? 0;
@@ -105,12 +119,19 @@ export function DrugAlcoholDashboard() {
           type="button"
           disabled={drawMutation.isPending}
           className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
-          onClick={() => drawMutation.mutate()}
+          onClick={() =>
+            drawMutation.mutate({
+              companyId,
+              generation: companyGenerationRef.current,
+              year,
+              quarter: currentQuarter(),
+            })
+          }
         >
           Run Q{currentQuarter()} random draw
         </button>
       </div>
-      {drawMutation.isError ? (
+      {drawMutation.isError && drawMutation.variables?.generation === companyGenerationRef.current ? (
         <p className="text-xs text-red-700" data-testid="drug-alcohol-dashboard-draw-error">
           {userFacingApiError(drawMutation.error, "Could not run the random drug/alcohol draw.")}
         </p>
