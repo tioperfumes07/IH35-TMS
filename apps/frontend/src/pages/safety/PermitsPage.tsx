@@ -122,6 +122,10 @@ export function PermitsPage({ operatingCompanyId }: Props) {
   });
 
   const closeCreate = () => {
+    // The request may already have committed server-side. Hiding/resetting the modal while it is
+    // pending would deliberately retire the generation, suppress the success refresh, and invite
+    // an operator to create the same permit again.
+    if (createMutation.isPending) return;
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
     setCreateOpen(false);
@@ -389,7 +393,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 </p>
               ) : null}
               <div className="flex justify-end gap-2">
-              <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={closeCreate}>
+              <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={closeCreate} disabled={createMutation.isPending}>
                 Cancel
               </button>
               <button
