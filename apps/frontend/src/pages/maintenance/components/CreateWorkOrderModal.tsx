@@ -370,7 +370,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     if (!open) return;
     const nextSource = initialValues?.source_type ?? DEFAULT_SOURCE_BY_TYPE[initialType];
     form.reset({
-      ...form.getValues(),
+      ...form.formState.defaultValues,
       wo_type: initialType,
       source_type: nextSource,
       ...initialValues,
@@ -383,7 +383,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     setBackendLoadError(null);
     setCreatedWO(null);
     setCreatedExpense(null);
-  }, [form, initialType, initialValues, open]);
+  }, [form, initialType, initialValues, open, operatingCompanyId]);
 
   // Edit prefill — hydrate the edit header + cost lines from the existing WO each time it opens.
   useEffect(() => {
