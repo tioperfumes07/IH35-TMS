@@ -72,7 +72,7 @@ function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicyS
   );
 }
 
-export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranceSummary: UnitInsuranceSummary | undefined; unitId?: string }) {
+export function InsuranceSummarySection({ insuranceSummary, unitId, onRetry }: { insuranceSummary: UnitInsuranceSummary | undefined; unitId?: string; onRetry?: () => void }) {
   const us = insuranceSummary?.us_policy ?? null;
   const mx = insuranceSummary?.mx_policy ?? null;
   const linked = insuranceSummary?.linked_policies ?? [];
@@ -90,7 +90,10 @@ export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranc
         />
       ) : null}
       {linkedUnavailable ? (
-        <p className="mt-2 text-xs font-medium text-red-700">Linked insurance policies could not be loaded.</p>
+        <div className="mt-2 text-xs font-medium text-red-700" role="alert">
+          Linked insurance policies could not be loaded.
+          {onRetry ? <button type="button" className="ml-2 underline" onClick={onRetry}>Retry</button> : null}
+        </div>
       ) : !us && !mx && linked.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No US or MX policy on file for this unit.</p>
       ) : (

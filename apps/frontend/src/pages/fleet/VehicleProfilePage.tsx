@@ -354,7 +354,7 @@ export function VehicleProfilePage() {
             <ComplianceSection compliance={profile.compliance} />
           </div>
           <div data-testid="vp-section-6b-insurance-summary">
-            <InsuranceSummarySection insuranceSummary={profile.insurance_summary} unitId={id} />
+            <InsuranceSummarySection insuranceSummary={profile.insurance_summary} unitId={id} onRetry={() => void profileQuery.refetch()} />
           </div>
           <div data-testid="vp-section-7-reefer">
             {profile.reefer ? (

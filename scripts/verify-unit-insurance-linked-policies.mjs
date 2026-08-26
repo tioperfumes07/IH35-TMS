@@ -24,6 +24,7 @@ import fs from "node:fs";
 
 const BACKEND_FILE = "apps/backend/src/mdata/unit-aggregate.service.ts";
 const FRONTEND_FILE = "apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx";
+const PROFILE_FILE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const REQUIRED_FILE = "docs/specs/scoreboard/modules/fleet.required.json";
 const FEED_FILE = "docs/specs/scoreboard/wire-sprint-built.json";
 const SELF_FILE = "scripts/verify-unit-insurance-linked-policies.mjs";
@@ -73,11 +74,20 @@ function checkFrontend(src) {
   if (!src.includes("linked_policies_unavailable?: boolean") || !src.includes("Linked insurance policies could not be loaded.") || !/linkedUnavailable \? \(/.test(src)) {
     fail(`${FRONTEND_FILE}: linked-policy read failure must render visibly before the legitimate empty state.`);
   }
+  if (!/onRetry\?: \(\) => void/.test(src) || !/onClick=\{onRetry\}/.test(src)) {
+    fail(`${FRONTEND_FILE}: linked-policy read failure must expose the parent profile retry.`);
+  }
   if (!/policy_id:\s*string/.test(src) || !/<EntityLinkOrTombstone kind="insurance_policy" id=\{policy\.policy_id\}/.test(src)) {
     fail(`${FRONTEND_FILE}: linked policies must drill by canonical policy_id.`);
   }
   if (!/<EntityLink[\s\S]{0,100}kind="insurance_coverage_gaps"[\s\S]{0,100}id=\{unitId\}/.test(src)) {
     fail(`${FRONTEND_FILE}: insurance summary must drill to unit-scoped coverage gaps.`);
+  }
+}
+
+function checkProfile(src) {
+  if (!/<InsuranceSummarySection[\s\S]{0,180}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src)) {
+    fail(`${PROFILE_FILE}: Insurance summary failure must retry the exact parent profile query.`);
   }
 }
 
@@ -107,6 +117,7 @@ function evidenceFailures({ required, feed, self }) {
 function runChecks() {
   checkBackend(fs.readFileSync(BACKEND_FILE, "utf8"));
   checkFrontend(fs.readFileSync(FRONTEND_FILE, "utf8"));
+  checkProfile(fs.readFileSync(PROFILE_FILE, "utf8"));
   for (const failure of evidenceFailures({
     required: fs.readFileSync(REQUIRED_FILE, "utf8"),
     feed: fs.readFileSync(FEED_FILE, "utf8"),
@@ -117,6 +128,7 @@ function runChecks() {
 function selftest() {
   const originalBackend = fs.readFileSync(BACKEND_FILE, "utf8");
   const originalFrontend = fs.readFileSync(FRONTEND_FILE, "utf8");
+  const originalProfile = fs.readFileSync(PROFILE_FILE, "utf8");
   const originalRequired = fs.readFileSync(REQUIRED_FILE, "utf8");
   const originalFeed = fs.readFileSync(FEED_FILE, "utf8");
   const originalSelf = fs.readFileSync(SELF_FILE, "utf8");
@@ -152,6 +164,7 @@ function selftest() {
     ["coverage-gap-drill", originalFrontend.replace('id={unitId}', 'id={policy.policy_id}')],
     ["failure-copy", originalFrontend.replace("Linked insurance policies could not be loaded.", "No policy." )],
     ["failure-branch", originalFrontend.replace("linkedUnavailable ? (", "false ? (")],
+    ["failure-retry", originalFrontend.replace("onClick={onRetry}", "onClick={() => undefined}")],
   ]) {
     let caught = false;
     try {
@@ -162,6 +175,26 @@ function selftest() {
     }
     if (mutated === originalFrontend || !caught) {
       console.error(`SELFTEST INERT: ${name} mutation was not caught.`);
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  {
+    const mutated = originalProfile.replace(
+      /(<InsuranceSummarySection[^>]*?)\s+onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/,
+      "$1",
+    );
+    let caught = false;
+    try {
+      checkProfile(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (mutated === originalProfile || !caught) {
+      console.error("SELFTEST INERT: parent profile retry removal was not caught.");
       process.exitCode = 1;
       return;
     }
