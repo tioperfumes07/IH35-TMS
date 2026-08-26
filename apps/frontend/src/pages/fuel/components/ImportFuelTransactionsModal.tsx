@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { importFuelTransactions } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -19,14 +19,19 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   const { pushToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => setFile(null), []);
 
   useEffect(() => {
-    if (open) resetDraft();
+    lifecycleGenerationRef.current += 1;
+    setLoading(false);
+    resetDraft();
   }, [open, operatingCompanyId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    setLoading(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
@@ -36,9 +41,11 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
       pushToast("Select a .xlsx or .csv file first", "error");
       return;
     }
+    const submissionGeneration = lifecycleGenerationRef.current;
     setLoading(true);
     try {
       const res = await importFuelTransactions(operatingCompanyId, file);
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(
         `Fuel import complete: +${res.rows_inserted} inserted, ${res.rows_duplicate} duplicate, ${res.rows_skipped} skipped, ${res.dead_letters} rejected`,
         res.dead_letters > 0 ? "error" : "success"
@@ -46,9 +53,10 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
       onImported();
       handleClose();
     } catch (error) {
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
-      setLoading(false);
+      if (lifecycleGenerationRef.current === submissionGeneration) setLoading(false);
     }
   };
 

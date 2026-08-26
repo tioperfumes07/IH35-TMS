@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { uploadLovesPrices } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -17,6 +17,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [etag, setEtag] = useState<string | null>(null);
+  const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setFile(null);
@@ -24,10 +25,14 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
   }, []);
 
   useEffect(() => {
-    if (open) resetDraft();
+    lifecycleGenerationRef.current += 1;
+    setLoading(false);
+    resetDraft();
   }, [open, operatingCompanyId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    setLoading(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
@@ -37,17 +42,20 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
       pushToast("Select a .xlsx file first", "error");
       return;
     }
+    const submissionGeneration = lifecycleGenerationRef.current;
     setLoading(true);
     try {
       const res = await uploadLovesPrices(operatingCompanyId, file, etag);
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       setEtag(res.etag);
       pushToast(`Loves upload complete: +${res.rows_added} / upd ${res.rows_updated} / skip ${res.rows_skipped}`, "success");
       onUploaded();
       handleClose();
     } catch (error) {
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Upload failed"), "error");
     } finally {
-      setLoading(false);
+      if (lifecycleGenerationRef.current === submissionGeneration) setLoading(false);
     }
   };
 
