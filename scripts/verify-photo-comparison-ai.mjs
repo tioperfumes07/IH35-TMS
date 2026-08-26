@@ -38,14 +38,28 @@ contains(migrationPath, migration, [
 ]);
 
 read("apps/backend/src/safety/photo-comparison/session.service.ts");
-read("apps/backend/src/safety/photo-comparison/diff-engine.service.ts");
+const diffEngine = read("apps/backend/src/safety/photo-comparison/diff-engine.service.ts");
+
+function failClosedProblems(source) {
+  const problems = [];
+  if (!/if \(pairs\.length === 0\) \{\s*throw new Error\("photo_evidence_pairs_missing"\)/.test(source)) problems.push("zero matched evidence pairs can be certified clean");
+  if (!/pairs\.length !== prePhotos\.length \|\| pairs\.length !== postPhotos\.length[\s\S]{0,100}photo_evidence_pairs_incomplete/.test(source)) problems.push("unmatched pre/post evidence can be silently omitted");
+  if (!/if \(!pair\.pre\.download_url \|\| !pair\.post\.download_url\) \{\s*throw new Error\(`photo_evidence_download_unavailable:\$\{pair\.angle\}`\)/.test(source)) problems.push("unavailable signed evidence can be converted to no-damage");
+  return problems;
+}
+
+for (const problem of failClosedProblems(diffEngine)) fail(`apps/backend/src/safety/photo-comparison/diff-engine.service.ts: ${problem}`);
 
 const anthropic = read("apps/backend/src/safety/photo-comparison/anthropic-client.ts");
 contains("apps/backend/src/safety/photo-comparison/anthropic-client.ts", anthropic, [
-  { pattern: /ANTHROPIC_API_KEY/, label: "ANTHROPIC_API_KEY env" },
+  { pattern: /callAnthropicMessages/, label: "shared Anthropic credential/HTTP path" },
+  { pattern: /apiKey: options\?\.apiKey/, label: "optional injected API key forwarding" },
   { pattern: /compareImages/, label: "compareImages export" },
   { pattern: /insurance damage assessor/, label: "assessor prompt" },
 ]);
+if (/CircuitBreakerOpenError[\s\S]*has_new_damage:\s*false/.test(anthropic)) {
+  fail("apps/backend/src/safety/photo-comparison/anthropic-client.ts: circuit-open state is fabricated as no damage");
+}
 
 const routes = read("apps/backend/src/safety/photo-comparison/routes.ts");
 contains("apps/backend/src/safety/photo-comparison/routes.ts", routes, [
@@ -119,6 +133,27 @@ if (!wiredStep__photo_comparison_ai) {
     "verify-photo-comparison-ai: NOTE — no scripts/verify-steps/NNNN-verify-photo-comparison-ai.mjs, so this guard does not execute " +
       "in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it.",
   );
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    diffEngine.replace('throw new Error("photo_evidence_pairs_missing");', "return { diff_status: 'clean' } as never;"),
+    diffEngine.replace('throw new Error("photo_evidence_pairs_incomplete");', "// planted: unmatched evidence ignored"),
+    diffEngine.replace('throw new Error(`photo_evidence_download_unavailable:${pair.angle}`);', "continue;"),
+  ];
+  for (const [index, candidate] of mutations.entries()) {
+    if (candidate === diffEngine || failClosedProblems(candidate).length === 0) {
+      console.error(`verify-photo-comparison-ai SELFTEST FAILED — mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+  const clientMutation = `${anthropic}\n// CircuitBreakerOpenError planted fallback\nconst plantedFallback = { has_new_damage: false, findings: [] };`;
+  if (!/CircuitBreakerOpenError[\s\S]*has_new_damage:\s*false/.test(clientMutation)) {
+    console.error("verify-photo-comparison-ai SELFTEST FAILED — circuit-open fallback mutation escaped");
+    process.exit(1);
+  }
+  console.log("verify-photo-comparison-ai SELFTEST PASS — 4/4 false-clean mutations rejected");
+  process.exit(0);
 }
 
 if (failures.length > 0) {
