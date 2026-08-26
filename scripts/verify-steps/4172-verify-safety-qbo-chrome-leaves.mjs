@@ -6,5 +6,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-safety-qbo-chrome-leaves.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-safety-qbo-chrome-leaves.mjs"]);
+    ctx.run("node", ["scripts/verify-dot-inspection-action-company-lifecycle.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-dot-inspection-action-company-lifecycle.mjs"]);
   },
 };

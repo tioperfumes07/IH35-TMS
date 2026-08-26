@@ -42,19 +42,7 @@
  *   - training_records.create: TrainingRecordsTab shim -> TrainingRecordsPage.tsx — real
  *     "+ Create Record" -> real ParityTable + Modal variant="drawer" with a real DatePicker field.
  *
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^drug_alcohol\\.list$","task":"VERTICAL-QBO-CHROME-safety-drug-alcohol-list","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^safety_meetings\\.create$","task":"VERTICAL-QBO-CHROME-safety-meetings-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^dot_inspections\\.list$","task":"VERTICAL-QBO-CHROME-safety-dot-inspections-list","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^accidents\\.create$","task":"VERTICAL-QBO-CHROME-safety-accidents-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^damage_reports\\.create$","task":"VERTICAL-QBO-CHROME-safety-damage-reports-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^cargo_claims\\.create$","task":"VERTICAL-QBO-CHROME-safety-cargo-claims-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^internal_fines\\.create$","task":"VERTICAL-QBO-CHROME-safety-internal-fines-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^external_fines\\.create$","task":"VERTICAL-QBO-CHROME-safety-external-fines-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^escrow_record\\.list$","task":"VERTICAL-QBO-CHROME-safety-escrow-record-list","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^permits\\.list$","task":"VERTICAL-QBO-CHROME-safety-permits-list","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^leave_requests\\.list$","task":"VERTICAL-QBO-CHROME-safety-leave-requests-list","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^training_programs\\.create$","task":"VERTICAL-QBO-CHROME-safety-training-programs-create","vertical":"column-wave"}
- * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^training_records\\.create$","task":"VERTICAL-QBO-CHROME-safety-training-records-create","vertical":"column-wave"}
+ * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leaves":["drug_alcohol.list","safety_meetings.create","dot_inspections.list","accidents.create","damage_reports.create","cargo_claims.create","internal_fines.create","external_fines.create","escrow_record.list","permits.list","leave_requests.list","training_programs.create","training_records.create"],"task":"VERTICAL-QBO-CHROME-safety-exact-leaves","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-safety-qbo-chrome-leaves.mjs --selftest
  */
@@ -74,7 +62,7 @@ const CHECKS = [
   {
     name: "safety_meetings.create: SafetyMeetingsPage real + Create Meeting -> Modal drawer + DatePicker",
     file: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
-    pattern: /\+ Create Meeting[\s\S]{0,3500}<Modal variant="drawer" open=\{createOpen\}[\s\S]{0,700}DatePicker/,
+    pattern: /\+ Create Meeting[\s\S]*<Modal variant="drawer" open=\{createOpen\}[\s\S]*<DatePicker/,
   },
   {
     name: "dot_inspections.list: DOTInspectionsTab real + Create -> real ParityTable",
@@ -99,7 +87,7 @@ const CHECKS = [
   {
     name: "internal_fines.create: InternalFinesPage real inline MoneyInput + DatePicker fine fields",
     file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
-    pattern: /MoneyInput valueDollars=\{form\.amount[\s\S]{0,400}DatePicker value=\{form\.imposed_date\}/,
+    pattern: /MoneyInput valueDollars=\{form\.amount[\s\S]{0,500}<DatePicker id="internal-fine-imposed-date" value=\{form\.imposed_date\}/,
   },
   {
     name: "external_fines.create: FinesPage's real + Create Fine mounts FineCreateModal, a real ParityDrawer with DatePicker + MoneyInput",

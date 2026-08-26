@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["unit","connectivity","qbo_chrome"],"leaves":["dot_inspections.list"],"task":"SAFETY-F6618-DOT-OOS-CONFIRM-LIFECYCLE","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const source = fs.readFileSync("apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx", "utf8");
@@ -20,6 +21,10 @@ function inspect(value) {
     [/<EntityPicker[\s\S]*kind="unit"[\s\S]*operatingCompanyId=\{companyId\}/, "unit picker is not canonical/scoped"],
     [/<EntityPicker[\s\S]*kind="trailer"[\s\S]*operatingCompanyId=\{companyId\}/, "trailer picker is not canonical/scoped"],
     [/kind="work_order"[\s\S]*auto_spawned_wo_id/, "spawned work-order reverse drill is missing"],
+    [/const \[pendingOosCreate, setPendingOosCreate\] = useState<CreateInput \| null>\(null\)/, "OOS confirmation does not retain immutable create input"],
+    [/if \(input\.payload\.outcome === "OOS"\) setPendingOosCreate\(input\);[\s\S]*else createMutation\.mutate\(input\)/, "OOS submit does not route the immutable input through confirmation"],
+    [/<ConfirmModal[\s\S]*title="Create out-of-service inspection\?"[\s\S]*createMutation\.mutateAsync\(pendingOosCreate\)/, "OOS create does not use canonical confirmation chrome"],
+    [/setPendingOosCreate\(null\)[\s\S]*setForm\(emptyInspectionForm\(trailerIdFromUrl\)\)[\s\S]*\[companyId\]/, "company switch leaves pending OOS confirmation"],
   ];
   for (const [pattern, message] of checks) {
     const matches = value.match(pattern);
@@ -40,7 +45,12 @@ if (process.argv.includes("--selftest")) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
     if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
   }
-  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
+  for (const token of ["setPendingOosCreate(input)", 'title="Create out-of-service inspection?"', "createMutation.mutateAsync(pendingOosCreate)"]) {
+    if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
+    if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
+  }
+  if (source.includes("window.confirm")) throw new Error("native confirm remains");
+  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 3}/${mutations.length + 3})`);
 } else {
   const failures = inspect(source);
   if (failures.length) {
