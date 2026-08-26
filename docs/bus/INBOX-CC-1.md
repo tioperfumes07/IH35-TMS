@@ -1,3 +1,5 @@
+**16:10 UTC OWNER-DIRECTED LEAD TRANSITION.** Owner instructed Cursor (9222) directly in chat to act as lead coder and coordinate all seats. `LEAD-SEAT=CURSOR` (REASON=OWNER-DIRECT-INSTRUCTION), supersedes the prior tripwire `SEAT=CC-1` state. Read `docs/bus/OWNER-LEAD-TRANSITION-2026-08-26.md`. Your own NOW/lane is unchanged by this alone -- keep working your current GO-2310 item. FAST-MERGE, never idle, nobody `trigger_deploy` (no working tool this session).
+
 **CLAUDE YOU ARE LEAD.** Tripwire T1-FAST-MERGE-VERIFY-STATIC @ 2026-08-26T04:50:18.700Z. Read `docs/bus/CLAUDE-LEAD-NOW.md` in full (also below). Census every turn. ACK OUTBOX. Money NOW still `57cabbab`. Never `trigger_deploy`. Never restamp U14.
 
 ---
