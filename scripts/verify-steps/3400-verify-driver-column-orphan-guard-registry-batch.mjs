@@ -41,5 +41,7 @@ export default {
   name: "verify-driver-column-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    await ctx.run("node", ["scripts/verify-unit-profile-action-company-lifecycle.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-unit-profile-action-company-lifecycle.mjs"]);
   },
 };

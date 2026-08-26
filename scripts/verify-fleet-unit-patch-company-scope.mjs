@@ -25,7 +25,7 @@ function audit(s) {
   if (!/patchUnit\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/.test(s.table)) failures.push("roster reactivation must carry selected company");
   if (!/patchUnit\(unitId, companyId, \{ status: "InService" \}\)/.test(s.header) || !/companyId=\{companyId\}/.test(s.header)) failures.push("identity status actions must carry selected company");
   if (!/patchUnit\(unitId, companyId, body\)/.test(s.status)) failures.push("status modal save must carry selected company");
-  if (!/patchUnit\(id, companyId, \{/.test(s.profile)) failures.push("profile save must carry selected company");
+  if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(s.profile) || !/saveMutation\.mutate\(\{[\s\S]*?unitId: id,[\s\S]*?companyId,[\s\S]*?generation: actionGenerationRef\.current/.test(s.profile)) failures.push("profile save must snapshot selected unit/company/generation");
   if (!/resolveOperatingCompanyId\([\s\S]{0,180}req\.query/.test(s.backend) || !/owner_company_id = \$\$\{scopeIdx\} OR currently_leased_to_company_id = \$\$\{scopeIdx\}/.test(s.backend)) failures.push("backend PATCH must resolve and enforce requested company");
   const leaf = JSON.parse(s.matrix).leaves.find((entry) => entry.id === "unit.edit.quick_availability");
   const expected = ["driver", "unit", "picker_law", "connectivity"];
@@ -41,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["roster scope", "table", /patchUnit\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/, "patchUnit(row.id, { deactivated_at: null })"],
     ["header scope", "header", /patchUnit\(unitId, companyId, \{ status: "InService" \}\)/, 'patchUnit(unitId, { status: "InService" })'],
     ["status scope", "status", /patchUnit\(unitId, companyId, body\)/, "patchUnit(unitId, body)"],
-    ["profile scope", "profile", /patchUnit\(id, companyId, \{/, "patchUnit(id, {"],
+    ["profile scope", "profile", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(input.unitId, companyId, input.patch)"],
     ["backend scope", "backend", /owner_company_id = \$\$\{scopeIdx\}/, "owner_company_id = owner_company_id"],
     ["false load", "matrix", /"picker_law",\n        "connectivity"/, '"load",\n        "picker_law",\n        "connectivity"'],
     ["driver picker", "edit", /kind="driver"/, 'kind="unit"'],
