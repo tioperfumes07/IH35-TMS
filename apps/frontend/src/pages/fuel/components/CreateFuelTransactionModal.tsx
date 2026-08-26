@@ -67,7 +67,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setLocationState("");
     setNotes("");
     setSuggestionPinned(false);
-  }, [open]);
+  }, [open, operatingCompanyId]);
 
   const suggestionQuery = useQuery({
     queryKey: ["fuel-office-create", "suggest-load", operatingCompanyId, driverId, unitId, trailerId, transactionDate],
