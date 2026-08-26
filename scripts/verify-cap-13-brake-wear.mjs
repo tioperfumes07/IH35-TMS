@@ -15,6 +15,24 @@ import path from "node:path";
 const ROOT = process.cwd();
 const failures = [];
 
+function cap13WiringFailures({ index, maintenanceHome, manifest }) {
+  const missing = [];
+  if (!/import \{ initializeCap13BrakeWearWorker \} from ["']\.\/jobs\/cap-13-brake-wear-worker\.js["']/.test(index)) {
+    missing.push("worker import");
+  }
+  if (!/initializeCap13BrakeWearWorker\(app\)/.test(index)) missing.push("worker initialization");
+  if (!/import \{ BrakeWearDashboard \} from ["']\.\/brakes\/BrakeWearDashboard["']/.test(maintenanceHome)) {
+    missing.push("integrated dashboard import");
+  }
+  if (!/tab === ["']brake_wear["'][\s\S]{0,220}<BrakeWearDashboard\s*\/>/.test(maintenanceHome)) {
+    missing.push("integrated dashboard mount");
+  }
+  if (!/path=["']\/maintenance\/brake-wear["'][\s\S]{0,220}<MaintenanceTabRoute tabId=["']brake_wear["']/.test(manifest)) {
+    missing.push("canonical brake-wear route");
+  }
+  return missing;
+}
+
 function read(relativePath) {
   const absolutePath = path.join(ROOT, relativePath);
   if (!fs.existsSync(absolutePath)) {
@@ -72,7 +90,6 @@ contains("apps/backend/src/jobs/cap-13-brake-wear-worker.ts", worker, [
 const indexTs = read("apps/backend/src/index.ts");
 contains("apps/backend/src/index.ts", indexTs, [
   { pattern: /registerCap13BrakeWearRoutes/, label: "routes wired in index" },
-  { pattern: /initializeCap13BrakeWearWorker/, label: "worker wired in index" },
 ]);
 
 const dashboard = read("apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx");
@@ -103,11 +120,11 @@ contains("apps/frontend/src/pages/units/UnitDetail.tsx", unitDetail, [
   { pattern: /"brakes"/, label: "brakes tab key" },
 ]);
 
+const maintenanceHome = read("apps/frontend/src/pages/maintenance/MaintenanceHome.tsx");
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
-contains("apps/frontend/src/routes/manifest.tsx", manifest, [
-  { pattern: /\/maintenance\/brakes/, label: "brakes dashboard route" },
-  { pattern: /BrakeWearDashboard/, label: "dashboard imported" },
-]);
+for (const missing of cap13WiringFailures({ index: indexTs, maintenanceHome, manifest })) {
+  failures.push(`CAP-13 wiring: missing ${missing}`);
+}
 
 const docs = read("docs/specs/gap-63-cap-13-brake-wear.md");
 contains("docs/specs/gap-63-cap-13-brake-wear.md", docs, [
@@ -129,6 +146,24 @@ if (failures.length > 0) {
     console.error(`  ✗ ${entry}`);
   }
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const fixtures = { index: indexTs, maintenanceHome, manifest };
+  const mutations = [
+    { ...fixtures, index: indexTs.replace("initializeCap13BrakeWearWorker(app)", "void app") },
+    { ...fixtures, index: indexTs.replace('import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";', "") },
+    { ...fixtures, maintenanceHome: maintenanceHome.replace("<BrakeWearDashboard />", "<div />") },
+    { ...fixtures, maintenanceHome: maintenanceHome.replace('import { BrakeWearDashboard } from "./brakes/BrakeWearDashboard";', "") },
+    { ...fixtures, manifest: manifest.replace('path="/maintenance/brake-wear"', 'path="/maintenance/brake-wear-removed"') },
+  ];
+  const escaped = mutations.filter((fixture) => cap13WiringFailures(fixture).length === 0);
+  if (escaped.length > 0) {
+    console.error(`verify:cap-13-brake-wear --selftest FAILED — ${escaped.length}/5 mutations escaped`);
+    process.exit(1);
+  }
+  console.log("verify:cap-13-brake-wear --selftest PASS — 5/5 mutations detected");
+  process.exit(0);
 }
 
 console.log("verify:cap-13-brake-wear — OK");

@@ -205,6 +205,7 @@ import { registerSafetyDriverDocumentsRoutes } from "./safety/driver-documents.r
 import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
 import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
 import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
+import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
 import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
 import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
 import { registerSafetyDriverProfileRoutes } from "./safety/driver-profile.routes.js";
@@ -1501,6 +1502,13 @@ async function main() {
       app.log.info("[STARTUP] cap-12-tire-tread-worker initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] cap-12-tire-tread-worker failed");
+    }
+
+    try {
+      initializeCap13BrakeWearWorker(app);
+      app.log.info("[STARTUP] cap-13-brake-wear-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cap-13-brake-wear-worker failed");
     }
 
     try {
