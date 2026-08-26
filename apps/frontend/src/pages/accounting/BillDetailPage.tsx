@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -117,7 +117,7 @@ export function BillDetailPage() {
 
   if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
 
-  const displayId = entityLabel(bill.bill_number, bill.id, "Bill");
+  const displayId = visibleDocumentLabel(bill.bill_number, bill.id, "Bill");
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
   const isVoided = bill.status === "voided";
   // Mirrors backend bill_has_payments_cannot_void: a bill with any active payment must have the

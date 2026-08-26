@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getUnitFinanceLinkage } from "../../api/unit-finance-linkage";
@@ -79,7 +79,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
           <ul className="mb-2 divide-y divide-gray-100">
             {linkedBills.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
-                <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} />
+                <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} />
                 <span className="flex items-center gap-2 text-xs tabular-nums text-gray-600">
                   {b.journal_entry_id ? <EntityLink kind="journal_entry" id={b.journal_entry_id} label={entityLabel(b.journal_entry_memo, b.journal_entry_id, "Journal entry")} /> : null}
                   {fmtCents(b.amount_cents)}

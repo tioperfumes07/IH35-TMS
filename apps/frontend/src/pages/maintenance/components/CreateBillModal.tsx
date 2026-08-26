@@ -12,7 +12,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import type { BillTypeId } from "../../../components/forms/shared/TypeTabBar";
-import { entityLabel } from "../../../lib/entity-label";
+import { visibleDocumentLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
@@ -157,7 +157,7 @@ export function CreateBillModal({
             <EntityLink
               kind="bill"
               id={createdBill.id}
-              label={entityLabel(createdBill.bill_number, createdBill.id, "Bill")}
+              label={visibleDocumentLabel(createdBill.bill_number, createdBill.id, "Bill")}
               data-testid="create-bill-modal-view-bill"
             />
           </p>

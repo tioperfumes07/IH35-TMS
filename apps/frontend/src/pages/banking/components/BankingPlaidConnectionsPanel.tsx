@@ -58,7 +58,7 @@ function matchedLabel(t: PlaidBankTransaction) {
     t.matched_expense_id ? <EntityLink key="expense" kind="expense" id={t.matched_expense_id} label={visibleDocumentLabel(t.matched_expense_number, t.matched_expense_id, "Expense")} /> : null,
     t.matched_load_id ? <EntityLink key="load" kind="load" id={t.matched_load_id} label={entityLabel(t.matched_load_number, t.matched_load_id, "Load")} /> : null,
     t.matched_settlement_id ? <EntityLink key="settlement" kind="settlement" id={t.matched_settlement_id} label={entityLabel(t.matched_settlement_display_id, t.matched_settlement_id, "Settlement")} /> : null,
-    t.matched_bill_id ? <EntityLink key="bill" kind="bill" id={t.matched_bill_id} label={entityLabel(t.matched_bill_number, t.matched_bill_id, "Bill")} /> : null,
+    t.matched_bill_id ? <EntityLink key="bill" kind="bill" id={t.matched_bill_id} label={visibleDocumentLabel(t.matched_bill_number, t.matched_bill_id, "Bill")} /> : null,
   ].filter(Boolean);
   if (links.length) return <div className="flex flex-wrap gap-1">{links}</div>;
   return "Unmatched";

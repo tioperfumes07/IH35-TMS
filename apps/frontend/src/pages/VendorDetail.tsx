@@ -1,4 +1,4 @@
-import { entityLabel } from "../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
@@ -1038,13 +1038,13 @@ export function VendorDetailPage() {
                             onChange={(e) => setBillPayInclude((p) => ({ ...p, [b.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} className="font-medium text-gray-800" data-testid="vendor-payment-bill-link" />
+                        <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} className="font-medium text-gray-800" data-testid="vendor-payment-bill-link" />
                         <span className="text-gray-600">Open {money.format(billOpenBalanceCents(b) / 100)}</span>
                         {!billPayAuto ? (
                           <MoneyInput
                             valueDollars={billPayAmt[b.id] ? Number(billPayAmt[b.id]) : null}
                             onChangeDollars={(d) => setBillPayAmt((p) => ({ ...p, [b.id]: d == null ? "" : String(d) }))}
-                            ariaLabel={`Apply to ${entityLabel(b.bill_number, b.id, "Record")}`}
+                            ariaLabel={`Apply to ${visibleDocumentLabel(b.bill_number, b.id, "Record")}`}
                             className="w-24"
                           />
                         ) : (
@@ -1131,7 +1131,7 @@ export function VendorDetailPage() {
                   label: "Bill #",
                   sortable: true,
                   sortValue: (b) => b.bill_number ?? b.id,
-                  render: (b) => <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} />,
+                  render: (b) => <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} />,
                 },
                 { key: "bill_date", label: "Date", sortable: true, render: (b) => formatDateUS(b.bill_date) },
                 { key: "due_date", label: "Due", sortable: true, render: (b) => formatDateUS(b.due_date) || "—" },

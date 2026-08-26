@@ -18,7 +18,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -159,7 +159,7 @@ export function SalesTaxPage() {
         sortable: true,
         render: (row) =>
           row.paid_bill_id ? (
-            <EntityLink kind="bill" id={row.paid_bill_id} label={entityLabel(row.paid_bill_number, row.paid_bill_id, "Bill")} />
+            <EntityLink kind="bill" id={row.paid_bill_id} label={visibleDocumentLabel(row.paid_bill_number, row.paid_bill_id, "Bill")} />
           ) : (
             "—"
           ),

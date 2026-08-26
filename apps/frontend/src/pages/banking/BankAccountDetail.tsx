@@ -37,7 +37,7 @@ function matchedTransactionLinks(row: PlaidBankTransaction) {
   const links = [
     row.matched_transfer_id ? <EntityLink key="transfer" kind="transfer" id={row.matched_transfer_id} label={entityLabel(row.matched_transfer_label ?? null, row.matched_transfer_id, "Transfer")} /> : null,
     row.matched_load_id ? <EntityLink key="load" kind="load" id={row.matched_load_id} label={entityLabel(row.matched_load_number ?? null, row.matched_load_id, "Load")} /> : null,
-    row.matched_bill_id ? <EntityLink key="bill" kind="bill" id={row.matched_bill_id} label={entityLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")} /> : null,
+    row.matched_bill_id ? <EntityLink key="bill" kind="bill" id={row.matched_bill_id} label={visibleDocumentLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")} /> : null,
     row.matched_settlement_id ? <EntityLink key="settlement" kind="settlement" id={row.matched_settlement_id} label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")} /> : null,
     row.matched_expense_id ? <EntityLink key="expense" kind="expense" id={row.matched_expense_id} label={visibleDocumentLabel(row.matched_expense_number ?? null, row.matched_expense_id, "Expense")} /> : null,
     row.matched_journal_entry_id ? <EntityLink key="je" kind="journal_entry" id={row.matched_journal_entry_id} label={entityLabel(row.matched_journal_entry_memo ?? null, row.matched_journal_entry_id, "Journal entry")} /> : null,

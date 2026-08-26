@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useParams } from "react-router-dom";
@@ -96,7 +96,7 @@ export function BillPaymentDetailPage() {
         {payment.bill_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Bill</span>
-            <EntityLink kind="bill" id={payment.bill_id} label={entityLabel(payment.bill_number, payment.bill_id, "Bill")} />
+            <EntityLink kind="bill" id={payment.bill_id} label={visibleDocumentLabel(payment.bill_number, payment.bill_id, "Bill")} />
           </DataPanelRow>
         ) : null}
         {payment.vendor_id ? (

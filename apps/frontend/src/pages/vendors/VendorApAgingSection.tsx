@@ -5,7 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 
@@ -49,7 +49,7 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
           {bills.map((bill) => (
             <div key={bill.bill_id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <span className="flex items-center gap-2">
-                <EntityLink kind="bill" id={bill.bill_id} label={entityLabel(bill.bill_number, bill.bill_id, "Bill")} className="font-semibold text-slate-700 hover:underline" />
+                <EntityLink kind="bill" id={bill.bill_id} label={visibleDocumentLabel(bill.bill_number, bill.bill_id, "Bill")} className="font-semibold text-slate-700 hover:underline" />
                 {/* VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — drill to the bill's posted JE when one
                     exists (nullable: an open/unpaid bill may not be posted yet). */}
                 {bill.journal_entry_id ? (

@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
@@ -47,7 +47,7 @@ function money(cents: number) {
 
 function displayBillLabel(bill: VendorBill) {
   const remaining = Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
-  const billRef = entityLabel(bill.bill_number, bill.id, "Bill");
+  const billRef = visibleDocumentLabel(bill.bill_number, bill.id, "Bill");
   const vendor = entityLabel(bill.vendor_name, bill.vendor_id, "Vendor");
   return `${vendor} · ${billRef} · Due ${bill.due_date || "-"} · ${money(remaining)}`;
 }
@@ -170,7 +170,7 @@ export function BillPaymentsListPage() {
         label: "Bill ID",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="bill" id={row.bill_id} label={entityLabel(row.bill_number, row.bill_id, "Bill")} />
+          <EntityLink kind="bill" id={row.bill_id} label={visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")} />
         ),
       },
       { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
