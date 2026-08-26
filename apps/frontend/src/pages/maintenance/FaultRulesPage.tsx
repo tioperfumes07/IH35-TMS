@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -23,6 +23,7 @@ export function FaultRulesPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRule, setEditRule] = useState<FaultRule | null>(null);
 
@@ -33,39 +34,61 @@ export function FaultRulesPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (values: FaultRuleFormValues & { id?: string }) => {
-      if (values.id) {
-        return apiRequest(`/api/v1/maintenance/fault-rules/${values.id}`, {
+    mutationFn: (input: { values: FaultRuleFormValues & { id?: string }; companyId: string; generation: number }) => {
+      if (input.values.id) {
+        return apiRequest(`/api/v1/maintenance/fault-rules/${input.values.id}`, {
           method: "PATCH",
-          body: { ...values, operating_company_id: companyId },
+          body: { ...input.values, operating_company_id: input.companyId },
         });
       }
       return apiRequest("/api/v1/maintenance/fault-rules", {
         method: "POST",
-        body: { ...values, operating_company_id: companyId },
+        body: { ...input.values, operating_company_id: input.companyId },
       });
     },
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Fault rule saved.", "success");
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-rules", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-rules", input.companyId] });
       setModalOpen(false);
       setEditRule(null);
     },
-    onError: () => pushToast("Could not save fault rule.", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not save fault rule.", "error");
+    },
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest(`/api/v1/maintenance/fault-rules/${id}/archive`, {
+    mutationFn: (input: { id: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/maintenance/fault-rules/${input.id}/archive`, {
         method: "POST",
-        body: { operating_company_id: companyId },
+        body: { operating_company_id: input.companyId },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Fault rule archived.", "success");
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-rules", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "fault-rules", input.companyId] });
     },
-    onError: () => pushToast("Could not archive fault rule.", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not archive fault rule.", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    saveMutation.reset();
+    archiveMutation.reset();
+    setModalOpen(false);
+    setEditRule(null);
+  }, [companyId]);
+
+  const saveRule = (values: FaultRuleFormValues & { id?: string }) => {
+    saveMutation.mutate({ values: { ...values }, companyId, generation: actionGenerationRef.current });
+  };
+
+  const archiveRule = (id: string) => {
+    archiveMutation.mutate({ id, companyId, generation: actionGenerationRef.current });
+  };
 
   const rules = rulesQuery.data?.rules ?? [];
 
@@ -93,7 +116,7 @@ export function FaultRulesPage() {
             >
               Edit
             </Button>
-            <Button size="sm" variant="tertiary" onClick={() => archiveMutation.mutate(row.id)}>
+            <Button size="sm" variant="tertiary" onClick={() => archiveRule(row.id)}>
               Archive
             </Button>
           </div>
@@ -157,7 +180,7 @@ export function FaultRulesPage() {
             setModalOpen(false);
             setEditRule(null);
           }}
-          onSave={(values) => saveMutation.mutate(values)}
+          onSave={saveRule}
           saving={saveMutation.isPending}
         />
       ) : null}
