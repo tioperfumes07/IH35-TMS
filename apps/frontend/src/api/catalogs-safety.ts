@@ -344,3 +344,93 @@ export function deactivateCargoClaimReason(companyId: string, id: string) {
     method: "DELETE",
   });
 }
+
+// -----------------------------------------------------------------------------------------------
+// LST-SAF-F-NO-CREATE-SURFACE: accident_types / workplace_incident_types were registered on the
+// backend via the generic-catalog factory (apps/backend/src/catalogs/generic-catalog.routes.ts,
+// urlSegment "accident-types" / "workplace-incident-types") with real working CRUD endpoints, but
+// had ZERO frontend page or mounted route — a real dead click from the Lists hub (AllCatalogsMap.tsx
+// lists both with `live: true`, which renders them as a clickable link to a route that never
+// existed). This client mirrors the driver module's generic factory
+// (apps/frontend/src/api/catalogs-driver.ts: createDriverCatalogClient) — same flat
+// code/display_name/description/is_active/sort_order shape, no module-specific extra fields.
+// -----------------------------------------------------------------------------------------------
+export type SafetyGenericCatalogRow = {
+  id: string;
+  operating_company_id: string;
+  code: string;
+  display_name: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SafetyGenericCatalogListResponse = {
+  rows: SafetyGenericCatalogRow[];
+  total: number;
+};
+
+export type SafetyGenericCatalogCreateBody = {
+  code: string;
+  display_name: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  sort_order?: number;
+  is_active?: boolean;
+};
+
+export type SafetyGenericCatalogUpdateBody = Partial<SafetyGenericCatalogCreateBody>;
+
+type SafetyGenericListFilters = {
+  operating_company_id: string;
+  search?: string;
+  is_active?: "true" | "false" | "all";
+  limit?: number;
+  offset?: number;
+};
+
+export function createSafetyGenericCatalogClient(urlSegment: string) {
+  const basePath = `/api/v1/catalogs/safety/${urlSegment}`;
+
+  return {
+    list(filters: SafetyGenericListFilters) {
+      const params = new URLSearchParams();
+      params.set("operating_company_id", filters.operating_company_id);
+      if (filters.search) params.set("search", filters.search);
+      if (filters.is_active) params.set("is_active", filters.is_active);
+      if (filters.limit !== undefined) params.set("limit", String(filters.limit));
+      if (filters.offset !== undefined) params.set("offset", String(filters.offset));
+      return apiRequest<SafetyGenericCatalogListResponse>(`${basePath}?${params.toString()}`);
+    },
+
+    get(id: string, operating_company_id: string) {
+      return apiRequest<SafetyGenericCatalogRow>(`${basePath}/${id}?operating_company_id=${encodeURIComponent(operating_company_id)}`);
+    },
+
+    create(operating_company_id: string, body: SafetyGenericCatalogCreateBody) {
+      return apiRequest<SafetyGenericCatalogRow>(`${basePath}?operating_company_id=${encodeURIComponent(operating_company_id)}`, {
+        method: "POST",
+        body,
+      });
+    },
+
+    update(id: string, operating_company_id: string, body: SafetyGenericCatalogUpdateBody) {
+      return apiRequest<SafetyGenericCatalogRow>(`${basePath}/${id}?operating_company_id=${encodeURIComponent(operating_company_id)}`, {
+        method: "PATCH",
+        body,
+      });
+    },
+
+    deactivate(id: string, operating_company_id: string) {
+      return apiRequest<{ ok: true }>(`${basePath}/${id}?operating_company_id=${encodeURIComponent(operating_company_id)}`, {
+        method: "DELETE",
+      });
+    },
+  };
+}
+
+export const accidentTypesGenericCatalogClient = createSafetyGenericCatalogClient("accident-types");
+export const workplaceIncidentTypesCatalogClient = createSafetyGenericCatalogClient("workplace-incident-types");
