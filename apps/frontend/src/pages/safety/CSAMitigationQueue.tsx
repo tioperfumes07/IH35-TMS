@@ -194,14 +194,14 @@ export function CSAMitigationQueuePage() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span>Due date</span>
             <DatePicker
               value={dueDate}
               className=""
               onChange={(next) => setDueDate(next)}
             />
-          </label>
+          </div>
           <button
             type="button"
             className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
