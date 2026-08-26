@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getInsuranceSummary, type InsuranceDashboardSummary } from "../../api/insurance";
 import { DrillKpiCard, formatKpiValue } from "../../components/layout/DrillKpiCard";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 /**
@@ -77,10 +78,14 @@ export function InsuranceLanding() {
       {summaryQuery.isLoading ? <div className="text-sm text-slate-500">Loading insurance dashboard...</div> : null}
 
       {summaryQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load insurance dashboard widgets.</div>
+        <ListErrorState
+          status={0}
+          message="Failed to load insurance dashboard widgets."
+          onRetry={() => void summaryQuery.refetch()}
+        />
       ) : null}
 
-      <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
+      {!summaryQuery.isError ? <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
         <Card label="Total active policies" value={n("total_active_policies")} to="/safety/insurance/policies" />
         <Card label="Policies expiring in 30 days" value={n("policies_expiring_30d")} to="/safety/insurance/policies" />
         <Card
@@ -99,7 +104,7 @@ export function InsuranceLanding() {
         />
         <Card label="Open claims count" value={n("open_claims")} to="/safety/insurance/claims" />
         <Card label="Open lawsuits count" value={n("open_lawsuits")} to="/safety/insurance/lawsuits" />
-      </section>
+      </section> : null}
     </div>
   );
 }
