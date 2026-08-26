@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `Devin | ACK | GO-1745 | PORT=n | NOW=/vendors-then-/dispatch | SHA=ece4a06 | GO`
+
+**YOUR NOW (Jorge-plain):** one Devin. Close Devin-A. Walk `/vendors` then `/dispatch` on USMCA after hard-reload. Labeled TEST OK. Findings to `docs/audit/GUARD-WORKORDERS.md`. Do not recertify U14. Do not deploy. `INBOX-DEVIN-A` is VOID.
+
 **17:21 CT (Jorge).** This is Jorge's IH35-TMS. Audit live /vendors then /dispatch for 500s and dead clicks. Clone/pull origin/main. Labeled TEST is OK. Write findings to docs/audit/GUARD-WORKORDERS.md. One Devin only — close any Devin-A chat. Do not deploy.
 
 **16:36 CT.** You are the only Devin. Ignore INBOX-DEVIN-A. Hard-reload healthz. NOW=/vendors then /dispatch. Unique FINDING. ACK OUTBOX. Never trigger_deploy.
