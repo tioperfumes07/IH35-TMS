@@ -178,7 +178,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
           <span className="text-xs font-medium text-slate-700">{successMsg}</span>
         ) : null}
 
-        {mutation.isError ? (
+        {mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current ? (
           <span className="text-xs text-red-700">
             Error: {(mutation.error as Error).message}
           </span>

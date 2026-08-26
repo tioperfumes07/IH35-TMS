@@ -23,6 +23,9 @@ function assertContract(source) {
   for (const token of ["test_type: testType", "test_kind: testKind", "driver_uuid: driverUuid"]) {
     if (!source.schedule.includes(token)) throw new Error(`missing schedule payload contract: ${token}`);
   }
+  if (!source.schedule.includes("mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current")) {
+    throw new Error("stale D&A schedule rejection can paint the next company context");
+  }
   for (const token of [
     "createDrugProgramTest",
     "test_type: testType",
@@ -34,14 +37,21 @@ function assertContract(source) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = { ...disk, schedule: disk.schedule.replace("test_kind: testKind", "test_kind: 'drug'") };
-  const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    env: { ...process.env, SAFETY_F6482_SCHEDULE: planted.schedule, SAFETY_F6482_TAB: planted.tab },
-    encoding: "utf8",
-  });
-  if (child.status === 0) throw new Error("selftest failed: planted schedule kind miswire stayed green");
-  console.log("verify-safety-drug-alcohol-comboboxes --selftest PASS");
+  const mutations = [
+    ["test_kind: testKind", "test_kind: 'drug'"],
+    ["mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current", "mutation.isError"],
+  ];
+  for (const [from, to] of mutations) {
+    const planted = { ...disk, schedule: disk.schedule.replace(from, to) };
+    if (planted.schedule === disk.schedule) throw new Error(`selftest fixture missing: ${from}`);
+    const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      env: { ...process.env, SAFETY_F6482_SCHEDULE: planted.schedule, SAFETY_F6482_TAB: planted.tab },
+      encoding: "utf8",
+    });
+    if (child.status === 0) throw new Error(`selftest failed: mutation stayed green: ${from}`);
+  }
+  console.log(`verify-safety-drug-alcohol-comboboxes --selftest PASS (${mutations.length}/${mutations.length})`);
   process.exit(0);
 }
 
