@@ -114,6 +114,49 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
   });
 }
 
+// DISP-F6470 — LINK-F5171 group (b): `dispatch.detention_events` has always had `load_id`, but
+// nothing let a load's own detail view ask "what detention happened on me." The board's own
+// `listDetentionBoard` below can't be reused as-is for that: it's the OPERATIONAL queue, scoped to
+// `status IN ('accruing', 'closed')` -- a load whose detention was successfully bridged to billing
+// (status='billed', the actual completed outcome) would be silently invisible on its own reverse
+// section. Same principle as LOAD-WO-REVERSE (LoadWorkOrdersReverseSection.tsx's own comment): "a
+// load-scoped read deliberately includes CLOSED work orders -- a completed repair is part of that
+// trip's history." A dedicated, minimal, additive query -- no status filter, one load, any outcome.
+export async function listDetentionEventsForLoad(userId: string, operatingCompanyId: string, loadId: string) {
+  return withCompany(userId, operatingCompanyId, async (client) => {
+    const res = await client.query(
+      `
+        SELECT
+          de.*,
+          l.load_number,
+          l.status AS load_status,
+          ls.stop_type::text AS stop_type,
+          ls.city AS stop_city,
+          ls.state AS stop_state
+        FROM dispatch.detention_events de
+        JOIN mdata.loads l ON l.id = de.load_id
+                          AND l.operating_company_id = de.operating_company_id
+        JOIN mdata.load_stops ls ON ls.id = de.stop_id
+        WHERE de.operating_company_id = $1::uuid
+          AND de.load_id = $2::uuid
+        ORDER BY de.started_at ASC
+      `,
+      [operatingCompanyId, loadId]
+    );
+    const nowMs = Date.now();
+    return {
+      events: res.rows.map((row) => {
+        const accrual = rowAccrual(row, nowMs);
+        return {
+          ...row,
+          billable_minutes: accrual.billable_minutes,
+          live_accrued_amount_cents: accrual.accrued_amount_cents,
+        };
+      }),
+    };
+  });
+}
+
 export async function listDetentionBoard(userId: string, operatingCompanyId: string) {
   await syncDetentionEventsFromStopArrivals(userId, operatingCompanyId);
   return withCompany(userId, operatingCompanyId, async (client) => {
