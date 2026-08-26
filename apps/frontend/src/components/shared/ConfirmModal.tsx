@@ -15,12 +15,15 @@ type Props = {
 /** In-app yes/no confirmation — replaces native window.confirm() on destructive/config actions. */
 export function ConfirmModal({ open, title, message, confirmLabel = "Confirm", danger = false, onClose, onConfirm }: Props) {
   const [busy, setBusy] = useState(false);
+  const closeUnlessBusy = () => {
+    if (!busy) onClose();
+  };
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal open={open} onClose={closeUnlessBusy} title={title}>
       <div className="space-y-4">
         <p className="text-sm text-gray-700">{message}</p>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={closeUnlessBusy} disabled={busy}>
             Cancel
           </Button>
           <Button

@@ -93,7 +93,7 @@ export function assertIncidentLifecycle(sources) {
   if (!/companyId: operatingCompanyId[\s\S]*generation: createGenerationRef\.current[\s\S]*payload,/.test(src[SURFACE])) problems.push(`${SURFACE}: submitted payload is not bound to company and generation.`);
   if (!/input\.generation !== createGenerationRef\.current[\s\S]*refresh\(input\.companyId\)/.test(src[SURFACE])) problems.push(`${SURFACE}: create completion is not generation-safe or submitted-company scoped.`);
   if (!/createGenerationRef\.current \+= 1;[\s\S]*setPendingPhotoLessCreate\(null\);[\s\S]*setDrawerOpen\(false\);/.test(src[SURFACE])) problems.push(`${SURFACE}: company switch does not invalidate pending create and drawer state.`);
-  if (!/<ConfirmModal[\s\S]*title="Create interchange without condition photos\?"[\s\S]*const input = pendingPhotoLessCreate;[\s\S]*setPendingPhotoLessCreate\(null\);[\s\S]*persistCreate\(input\)/.test(src[SURFACE])) problems.push(`${SURFACE}: trailer-interchange exception lacks canonical confirmation chrome or cleanup.`);
+  if (!/<ConfirmModal[\s\S]*title="Create interchange without condition photos\?"[\s\S]*const input = pendingPhotoLessCreate;[\s\S]*await persistCreate\(input\)/.test(src[SURFACE]) || /const input = pendingPhotoLessCreate;[\s\S]{0,120}setPendingPhotoLessCreate\(null\)/.test(src[SURFACE])) problems.push(`${SURFACE}: trailer-interchange exception must await success without discarding its retry snapshot.`);
 
   return problems;
 }
@@ -154,9 +154,9 @@ if (SELFTEST) {
     ["snapshot-dropped", "companyId: operatingCompanyId,", "companyId: '',", "submitted payload is not bound"],
     ["stale-create-gate-dropped", "input.generation !== createGenerationRef.current", "false", "create completion is not generation-safe"],
     ["scope-invalidation-dropped", "createGenerationRef.current += 1;", "createGenerationRef.current += 0;", "company switch does not invalidate"],
-    ["confirm-modal-dropped", "<ConfirmModal", "<div", "lacks canonical confirmation chrome"],
+    ["confirm-modal-dropped", "<ConfirmModal", "<div", "must await success"],
     ["pending-snapshot-dropped", "pendingPhotoLessCreate, setPendingPhotoLessCreate", "missingPending, setMissingPending", "does not retain an immutable"],
-    ["confirm-cleanup-dropped", "setPendingPhotoLessCreate(null);\n          await persistCreate(input);", "await persistCreate(input);", "confirmation chrome or cleanup"],
+    ["confirm-retry-dropped", "const input = pendingPhotoLessCreate;\n          await persistCreate(input);", "const input = pendingPhotoLessCreate;\n          setPendingPhotoLessCreate(null);\n          await persistCreate(input);", "must await success"],
   ]) {
     expectCaught(name, { ...live, [SURFACE]: live[SURFACE].replace(needle, replacement) }, expected);
   }

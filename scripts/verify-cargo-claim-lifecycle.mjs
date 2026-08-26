@@ -76,7 +76,7 @@ export function assertCargoClaimLifecycle(sources) {
   if (!/pendingUnlinkedCreate, setPendingUnlinkedCreate/.test(src[SURFACE])) problems.push(`${SURFACE}: unlinked confirmation does not retain a submitted snapshot.`);
   if (!/companyId: operatingCompanyId[\s\S]*generation: createGenerationRef\.current[\s\S]*operating_company_id: operatingCompanyId[\s\S]*load_id: form\.loadId \|\| null[\s\S]*claimant_customer_id: form\.claimantCustomerId \|\| null[\s\S]*driver_id: form\.driverId \|\| null[\s\S]*unit_id: form\.unitId \|\| null[\s\S]*trailer_id: form\.trailerId \|\| null/.test(src[SURFACE])) problems.push(`${SURFACE}: create snapshot is missing company or canonical FKs.`);
   if (!/input\.generation !== createGenerationRef\.current[\s\S]*refresh\(input\.companyId\)/.test(src[SURFACE])) problems.push(`${SURFACE}: create completion is not generation-safe or submitted-company scoped.`);
-  if (!/<ConfirmModal[\s\S]*title="Create claim without a shipment\?"[\s\S]*const input = pendingUnlinkedCreate;[\s\S]*setPendingUnlinkedCreate\(null\);[\s\S]*persistCreate\(input\)/.test(src[SURFACE])) problems.push(`${SURFACE}: exceptional unlinked create lacks canonical confirmation chrome or snapshot cleanup.`);
+  if (!/<ConfirmModal[\s\S]*title="Create claim without a shipment\?"[\s\S]*const input = pendingUnlinkedCreate;[\s\S]*await persistCreate\(input\)/.test(src[SURFACE]) || /const input = pendingUnlinkedCreate;[\s\S]{0,120}setPendingUnlinkedCreate\(null\)/.test(src[SURFACE])) problems.push(`${SURFACE}: exceptional unlinked create must await success without discarding its retry snapshot.`);
 
   return problems;
 }
@@ -113,12 +113,12 @@ if (SELFTEST) {
   expectCaught(
     "confirm-modal-dropped",
     { ...live, [SURFACE]: live[SURFACE].replace("<ConfirmModal", "<div") },
-    "lacks canonical confirmation chrome"
+    "must await success"
   );
   expectCaught(
     "confirm-snapshot-cleanup-dropped",
-    { ...live, [SURFACE]: live[SURFACE].replace("setPendingUnlinkedCreate(null);\n          await persistCreate(input);", "await persistCreate(input);") },
-    "snapshot cleanup"
+    { ...live, [SURFACE]: live[SURFACE].replace("const input = pendingUnlinkedCreate;\n          await persistCreate(input);", "const input = pendingUnlinkedCreate;\n          setPendingUnlinkedCreate(null);\n          await persistCreate(input);") },
+    "must await success"
   );
   expectCaught(
     "pending-snapshot-dropped",

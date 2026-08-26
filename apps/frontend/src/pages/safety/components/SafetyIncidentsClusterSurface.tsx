@@ -1153,7 +1153,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         onConfirm={async () => {
           if (!pendingPhotoLessCreate) return;
           const input = pendingPhotoLessCreate;
-          setPendingPhotoLessCreate(null);
           await persistCreate(input);
         }}
       />
