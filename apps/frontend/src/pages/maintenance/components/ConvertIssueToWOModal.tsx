@@ -1,5 +1,5 @@
 import { entityLabel } from "../../../lib/entity-label";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -23,23 +23,41 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
   const suggested = card?.suggested_wo_source_type ?? "IS";
   const [sourceType, setSourceType] = useState<"IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS">("IS");
   const [notes, setNotes] = useState("");
+  const submitGenerationRef = useRef(0);
 
   const selectedIssueId = useMemo(() => String(card?.issues?.[0]?.issue_id ?? ""), [card]);
 
   useEffect(() => {
     if (!open) return;
+    submitGenerationRef.current += 1;
+    mutation.reset();
     setSourceType(suggested);
     setNotes("");
   }, [open, operatingCompanyId, selectedIssueId, suggested]);
 
   const mutation = useMutation({
-    mutationFn: () => convertIssueToWo(String(card!.load_id), operatingCompanyId, { issue_id: selectedIssueId, wo_source_type: sourceType, additional_notes: notes || undefined }),
-    onSuccess: (payload) => {
+    mutationFn: (input: {
+      loadId: string;
+      companyId: string;
+      issueId: string;
+      sourceType: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
+      notes: string;
+      generation: number;
+    }) => convertIssueToWo(input.loadId, input.companyId, {
+      issue_id: input.issueId,
+      wo_source_type: input.sourceType,
+      additional_notes: input.notes || undefined,
+    }),
+    onSuccess: (payload, input) => {
+      if (input.generation !== submitGenerationRef.current) return;
       pushToast(`WO created: ${entityLabel(payload.wo.display_id, payload.wo.id, "Work order")}`, "success");
       if (payload.unit_blocked) pushToast("Unit auto-blocked for dispatch (severe issue)", "info");
       onDone();
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to convert issue"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== submitGenerationRef.current) return;
+      pushToast(userFacingApiError(error, "Failed to convert issue"), "error");
+    },
   });
 
   useEscapeKey(onClose, open);
@@ -94,7 +112,14 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
                 pushToast("No open issue selected", "error");
                 return;
               }
-              mutation.mutate();
+              mutation.mutate({
+                loadId: String(card.load_id),
+                companyId: operatingCompanyId,
+                issueId: selectedIssueId,
+                sourceType,
+                notes,
+                generation: submitGenerationRef.current,
+              });
             }}
           >
             + Create Work Order

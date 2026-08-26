@@ -24,7 +24,7 @@ const sources = {
 };
 
 const checks = [
-  ["convert", /convertIssueToWo\(String\(card!\.load_id\), operatingCompanyId/, "WO conversion write is company-scoped"],
+  ["convert", /convertIssueToWo\(input\.loadId, input\.companyId/, "WO conversion write is submitted-company scoped"],
   ["convert", /kind="unit" id=\{card\.unit_id\}/, "WO conversion unit drills"],
   ["convert", /kind="driver" id=\{card\.driver_id\}/, "WO conversion driver drills"],
   ["convert", /kind="load" id=\{card\.load_id\}/, "WO conversion load drills"],
