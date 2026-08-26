@@ -105,6 +105,17 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  const closeCreate = () => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setCreateOpen(false);
+    setDriverId("");
+    setTrainingName("");
+    setCompletedAt(companyToday());
+    setExpiryDate("");
+    setNotes("");
+  };
+
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
@@ -227,7 +238,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Record">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record">
         <form
           className="space-y-3"
           data-testid="training-record-create-modal"
@@ -299,13 +310,13 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               data-testid="training-record-notes"
             />
           </label>
-          {createMutation.isError ? (
+          {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
             <p className="text-xs text-red-700" data-testid="training-record-create-error">
               {userFacingApiError(createMutation.error, "Could not create the training record.")}
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
+            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="training-record-submit">
