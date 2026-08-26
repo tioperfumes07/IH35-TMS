@@ -54,20 +54,20 @@ export function useTeamSplits(operatingCompanyId: string | null) {
   });
 
   const create = useMutation({
-    mutationFn: (input: CreateTeamSplitConfigInput) =>
-      apiRequest<{ config: TeamSplitConfig }>(withCompanyQuery("/api/v1/team-splits/configs", operatingCompanyId!), {
+    mutationFn: (input: { companyId: string; payload: CreateTeamSplitConfigInput }) =>
+      apiRequest<{ config: TeamSplitConfig }>(withCompanyQuery("/api/v1/team-splits/configs", input.companyId), {
         method: "POST",
-        body: input,
+        body: input.payload,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (_result, input) => queryClient.invalidateQueries({ queryKey: ["team-split-configs", input.companyId] }),
   });
 
   const endConfig = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest<{ ok: true }>(withCompanyQuery(`/api/v1/team-splits/configs/${id}`, operatingCompanyId!), {
+    mutationFn: (input: { companyId: string; id: string }) =>
+      apiRequest<{ ok: true }>(withCompanyQuery(`/api/v1/team-splits/configs/${input.id}`, input.companyId), {
         method: "DELETE",
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (_result, input) => queryClient.invalidateQueries({ queryKey: ["team-split-configs", input.companyId] }),
   });
 
   return { ...query, create, endConfig };

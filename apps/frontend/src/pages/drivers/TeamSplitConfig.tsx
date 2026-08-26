@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
@@ -80,6 +80,33 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const [secondaryRatio, setSecondaryRatio] = useState(0.4);
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [endError, setEndError] = useState<string | null>(null);
+  const createGenerationRef = useRef(0);
+
+  const resetCreateDraft = () => {
+    setPrimaryDriverId("");
+    setSecondaryDriverId("");
+    setPrimaryRatio(0.6);
+    setSecondaryRatio(0.4);
+    setMemo("");
+    setError(null);
+  };
+
+  const closeCreate = () => {
+    createGenerationRef.current += 1;
+    create.reset();
+    setCreateOpen(false);
+    resetCreateDraft();
+  };
+
+  useEffect(() => {
+    createGenerationRef.current += 1;
+    create.reset();
+    endConfig.reset();
+    setCreateOpen(false);
+    resetCreateDraft();
+    setEndError(null);
+  }, [operatingCompanyId]);
 
   const configs = data?.configs ?? [];
   const active = useMemo(
@@ -95,18 +122,35 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
       setError("Select both drivers.");
       return;
     }
+    const input = { companyId: operatingCompanyId, generation: createGenerationRef.current };
     try {
       await create.mutateAsync({
-        primary_driver_id: primaryDriverId,
-        secondary_driver_id: secondaryDriverId,
-        primary_ratio: primaryRatio,
-        secondary_ratio: secondaryRatio,
-        memo: memo || undefined,
+        companyId: input.companyId,
+        payload: {
+          primary_driver_id: primaryDriverId,
+          secondary_driver_id: secondaryDriverId,
+          primary_ratio: primaryRatio,
+          secondary_ratio: secondaryRatio,
+          memo: memo || undefined,
+        },
       });
+      if (input.generation !== createGenerationRef.current || input.companyId !== operatingCompanyId) return;
       setCreateOpen(false);
-      setMemo("");
+      resetCreateDraft();
     } catch (err) {
+      if (input.generation !== createGenerationRef.current || input.companyId !== operatingCompanyId) return;
       setError(err instanceof Error ? err.message : "Failed to create team split config");
+    }
+  }
+
+  async function handleEnd(id: string) {
+    const companyId = operatingCompanyId;
+    setEndError(null);
+    try {
+      await endConfig.mutateAsync({ companyId, id });
+    } catch (err) {
+      if (companyId !== operatingCompanyId) return;
+      setEndError(err instanceof Error ? err.message : "Failed to end team split config");
     }
   }
 
@@ -176,6 +220,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
         </p>
       ) : null}
+      {endError ? <p className="text-xs text-red-700" data-testid="team-split-end-error">{endError}</p> : null}
       {active.length === 0 && !isLoading && !isError ? <p className="text-xs text-gray-500">No active team split configs.</p> : null}
 
       <div className="space-y-2">
@@ -193,7 +238,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 <StatusBadge status={row.status} />
-                <Button type="button" variant="secondary" onClick={() => endConfig.mutate(row.id)}>
+                <Button type="button" variant="secondary" onClick={() => void handleEnd(row.id)} loading={endConfig.isPending}>
                   End config
                 </Button>
               </div>
@@ -202,7 +247,14 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         ))}
       </div>
 
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create team split config">
+      <Modal
+        variant="drawer"
+        open={createOpen}
+        onClose={closeCreate}
+        title="Create team split config"
+        confirmDiscardOnClose
+        isDirty={Boolean(primaryDriverId || secondaryDriverId || memo || primaryRatio !== 0.6 || secondaryRatio !== 0.4)}
+      >
         <div className="space-y-3">
           <label className="block text-xs font-medium text-gray-700">
             Primary driver
@@ -251,7 +303,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           </label>
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+            <Button type="button" variant="secondary" onClick={closeCreate}>
               Cancel
             </Button>
             <Button type="button" onClick={handleCreate}>
