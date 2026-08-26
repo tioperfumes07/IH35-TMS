@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +30,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { suggestExpenseLoad } from "../../../api/maintenance";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -75,6 +76,11 @@ const emptyForm = {
 };
 
 type EditForm = typeof emptyForm;
+type CargoClaimCreateInput = {
+  companyId: string;
+  generation: number;
+  payload: Parameters<typeof createSafetyIncident>[0];
+};
 
 function detailToEditForm(detail: Record<string, unknown>): EditForm {
   const incidentAt = String(detail.incident_at ?? "").slice(0, 10);
@@ -110,6 +116,8 @@ export function CargoClaimIntakeSurface({
   const [form, setForm] = useState({ ...emptyForm });
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [saving, setSaving] = useState(false);
+  const createGenerationRef = useRef(0);
+  const [pendingUnlinkedCreate, setPendingUnlinkedCreate] = useState<CargoClaimCreateInput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -480,8 +488,33 @@ export function CargoClaimIntakeSurface({
     setCreating(false);
   };
 
-  const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ["safety", "incidents", "cargo_claim", operatingCompanyId] });
+  const refresh = (submittedCompanyId = operatingCompanyId) => {
+    void queryClient.invalidateQueries({ queryKey: ["safety", "incidents", "cargo_claim", submittedCompanyId] });
+  };
+
+  useEffect(() => {
+    createGenerationRef.current += 1;
+    setPendingUnlinkedCreate(null);
+    setSaving(false);
+    setError(null);
+    setCreating(false);
+    setForm({ ...emptyForm, incidentDate: todayISODate() });
+  }, [operatingCompanyId]);
+
+  const persistCreate = async (input: CargoClaimCreateInput) => {
+    setSaving(true);
+    try {
+      const created = await createSafetyIncident(input.payload);
+      if (input.generation !== createGenerationRef.current) return;
+      const newId = created?.incident?.id ? String(created.incident.id) : null;
+      resetCreate();
+      refresh(input.companyId);
+      if (newId) setSelectedId(newId);
+    } catch (err) {
+      if (input.generation === createGenerationRef.current) setError(userFacingApiError(err, "Could not create the cargo claim."));
+    } finally {
+      if (input.generation === createGenerationRef.current) setSaving(false);
+    }
   };
 
   const saveCreate = async () => {
@@ -503,21 +536,13 @@ export function CargoClaimIntakeSurface({
       setError('Enter a claimed amount, or check "Amount undetermined" (49 CFR 1005.2 allows a determinable amount).');
       return;
     }
-    // 49 CFR 1005.2 requires the claim to identify the shipment. Strongly prompt when no load is linked.
-    if (!form.loadId) {
-      const proceed = window.confirm(
-        "A cargo claim without a shipment cannot satisfy 49 CFR 1005.2 — continue?"
-      );
-      if (!proceed) return;
-    }
-
-    setSaving(true);
-    try {
-      const incidentAtIso = new Date(`${form.incidentDate}T12:00:00`).toISOString();
-      const created = await createSafetyIncident({
+    const input: CargoClaimCreateInput = {
+      companyId: operatingCompanyId,
+      generation: createGenerationRef.current,
+      payload: {
         operating_company_id: operatingCompanyId,
         incident_type: "cargo_claim",
-        incident_at: incidentAtIso,
+        incident_at: new Date(`${form.incidentDate}T12:00:00`).toISOString(),
         location: form.location,
         description: form.description,
         load_id: form.loadId || null,
@@ -528,16 +553,12 @@ export function CargoClaimIntakeSurface({
         driver_id: form.driverId || null,
         unit_id: form.unitId || null,
         trailer_id: form.trailerId || null,
-      });
-      const newId = created?.incident?.id ? String(created.incident.id) : null;
-      resetCreate();
-      refresh();
-      if (newId) setSelectedId(newId); // open detail so the office can attach photos immediately
-    } catch (err) {
-      setError(userFacingApiError(err, "Could not create the cargo claim."));
-    } finally {
-      setSaving(false);
-    }
+      },
+    };
+    // 49 CFR 1005.2 requires the claim to identify the shipment. Preserve the exact submitted
+    // snapshot while the operator confirms the exceptional unlinked path.
+    if (!input.payload.load_id) setPendingUnlinkedCreate(input);
+    else await persistCreate(input);
   };
 
   const onPhotoSelected = async (file: File | null) => {
@@ -1183,6 +1204,21 @@ export function CargoClaimIntakeSurface({
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={Boolean(pendingUnlinkedCreate)}
+        title="Create claim without a shipment?"
+        message="A cargo claim without a linked shipment cannot satisfy 49 CFR 1005.2. Continue only if the shipment is genuinely unavailable."
+        confirmLabel="Create unlinked claim"
+        danger
+        onClose={() => setPendingUnlinkedCreate(null)}
+        onConfirm={async () => {
+          if (!pendingUnlinkedCreate) return;
+          const input = pendingUnlinkedCreate;
+          setPendingUnlinkedCreate(null);
+          await persistCreate(input);
+        }}
+      />
 
     </div>
   );
