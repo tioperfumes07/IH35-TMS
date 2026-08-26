@@ -185,7 +185,7 @@ const CHECKS = [
   {
     name: "pm.auto_engine.run: PmAutoEnginePage real Run now mutation driving a real recent-runs list",
     file: "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
-    pattern: /(?=[\s\S]*runMaintenancePmAutoEngineNow)(?=[\s\S]*runNowM\.mutate\(\))(?=[\s\S]*Recent runs)/,
+    pattern: /(?=[\s\S]*runMaintenancePmAutoEngineNow)(?=[\s\S]*runNowM\.mutate\(\{\s*companyId,\s*generation: actionGenerationRef\.current\s*\}\))(?=[\s\S]*Recent runs)/,
   },
   {
     name: "inspections.create: InspectionsPage real + Create Inspection -> real ParityTable",
