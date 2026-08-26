@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -57,6 +57,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const [oosLocation, setOosLocation] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnEstimate, setReturnEstimate] = useState<SevereRepairEstimate | null>(null);
+  const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
   const unitId = searchParams.get("unit_id") ?? undefined;
   // Search is ONLY ParityTable UniversalListToolbar (LV-SEVERE-REPAIR-OOS-DUPLICATE-SEARCH).
@@ -71,70 +72,94 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     queryFn: () => getSevereRepairRollup(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-  const refreshAll = async () => {
+  const refreshAll = async (submittedCompanyId: string) => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "severe-estimates", operatingCompanyId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "severe-rollup", operatingCompanyId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "kpis", operatingCompanyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "severe-estimates", submittedCompanyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "severe-rollup", submittedCompanyId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "kpis", submittedCompanyId] }),
     ]);
   };
 
   const refreshMutation = useMutation({
-    mutationFn: async (estimateId: string) => refreshSevereRepairEstimate(estimateId, operatingCompanyId),
-    onSuccess: async () => {
+    mutationFn: (input: { estimateId: string; companyId: string; generation: number }) =>
+      refreshSevereRepairEstimate(input.estimateId, input.companyId),
+    onSuccess: async (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Estimate refreshed", "success");
-      await refreshAll();
+      await refreshAll(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to refresh estimate"), "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Failed to refresh estimate"), "error");
+    },
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (estimate: SevereRepairEstimate) => {
-      if (!estimate.trigger_wo_id) throw new Error("No linked work order.");
-      return completeWorkOrder(estimate.trigger_wo_id, operatingCompanyId);
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { workOrderId: string; companyId: string; generation: number }) =>
+      completeWorkOrder(input.workOrderId, input.companyId),
+    onSuccess: async (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Linked work order marked complete", "success");
-      await refreshAll();
+      await refreshAll(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to complete work order"), "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Failed to complete work order"), "error");
+    },
   });
 
   const markOosMutation = useMutation({
-    mutationFn: async () =>
-      markUnitOos(selectedUnitId, {
-        operating_company_id: operatingCompanyId,
-        reason: oosReason.trim(),
-        oos_location: oosLocation.trim() || undefined,
+    mutationFn: (input: { unitId: string; companyId: string; reason: string; location: string; generation: number }) =>
+      markUnitOos(input.unitId, {
+        operating_company_id: input.companyId,
+        reason: input.reason,
+        oos_location: input.location || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Unit marked OOS", "success");
       setMarkOosOpen(false);
       setSelectedUnitId("");
       setOosReason("");
       setOosLocation("");
-      await refreshAll();
+      await refreshAll(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to mark unit OOS"), "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Failed to mark unit OOS"), "error");
+    },
   });
 
   const returnMutation = useMutation({
-    mutationFn: async () => {
-      if (!returnEstimate) throw new Error("No unit selected.");
-      return markUnitBackInService(returnEstimate.unit_id, {
-        operating_company_id: operatingCompanyId,
-        review_notes: returnNotes.trim(),
-      });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { unitId: string; companyId: string; notes: string; generation: number }) =>
+      markUnitBackInService(input.unitId, {
+        operating_company_id: input.companyId,
+        review_notes: input.notes,
+      }),
+    onSuccess: async (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Unit returned to service", "success");
       setReturnOpen(false);
       setReturnNotes("");
       setReturnEstimate(null);
-      await refreshAll();
+      await refreshAll(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to return unit to service"), "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Failed to return unit to service"), "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    refreshMutation.reset();
+    completeMutation.reset();
+    markOosMutation.reset();
+    returnMutation.reset();
+    setMarkOosOpen(false);
+    setReturnOpen(false);
+    setSelectedUnitId("");
+    setOosReason("");
+    setOosLocation("");
+    setReturnNotes("");
+    setReturnEstimate(null);
+  }, [operatingCompanyId]);
 
   const estimates = estimatesQuery.data?.data ?? [];
   // CLS-MONEY-KPI-FAKE-ZERO: zero rollup fallback is only valid on a successful empty response —
@@ -211,7 +236,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
 
   const rowActions = (row: SevereRepairEstimate) => (
     <div className="flex flex-wrap gap-1">
-      <Button size="sm" variant="secondary" loading={refreshMutation.isPending} onClick={() => void refreshMutation.mutateAsync(row.id)}>
+      <Button size="sm" variant="secondary" loading={refreshMutation.isPending} onClick={() => void refreshMutation.mutateAsync({ estimateId: row.id, companyId: operatingCompanyId, generation: actionGenerationRef.current })}>
         Refresh
       </Button>
       <Button
@@ -235,7 +260,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         variant="secondary"
         disabled={!row.trigger_wo_id}
         loading={completeMutation.isPending}
-        onClick={() => void completeMutation.mutateAsync(row)}
+        onClick={() => row.trigger_wo_id && void completeMutation.mutateAsync({ workOrderId: row.trigger_wo_id, companyId: operatingCompanyId, generation: actionGenerationRef.current })}
       >
         Mark complete
       </Button>
@@ -333,7 +358,13 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
               size="sm"
               loading={markOosMutation.isPending}
               disabled={!selectedUnitId || oosReason.trim().length < 5}
-              onClick={() => void markOosMutation.mutateAsync()}
+              onClick={() => void markOosMutation.mutateAsync({
+                unitId: selectedUnitId,
+                companyId: operatingCompanyId,
+                reason: oosReason.trim(),
+                location: oosLocation.trim(),
+                generation: actionGenerationRef.current,
+              })}
             >
               Submit
             </Button>
@@ -363,7 +394,12 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
               size="sm"
               loading={returnMutation.isPending}
               disabled={!returnEstimate || (openByUnit.get(returnEstimate.unit_id) ?? 0) > 0 || returnNotes.trim().length < 10}
-              onClick={() => void returnMutation.mutateAsync()}
+              onClick={() => returnEstimate && void returnMutation.mutateAsync({
+                unitId: returnEstimate.unit_id,
+                companyId: operatingCompanyId,
+                notes: returnNotes.trim(),
+                generation: actionGenerationRef.current,
+              })}
             >
               Submit
             </Button>

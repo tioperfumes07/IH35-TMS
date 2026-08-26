@@ -3,6 +3,7 @@ const guards = [
   "verify-inventory-purchase-hold-connectivity.mjs",
   "verify-maintenance-damage-intake-connectivity.mjs",
   "verify-maintenance-severe-repair-connectivity.mjs",
+  "verify-maint-severe-repair-action-company-lifecycle.mjs",
   "verify-maintenance-tire-creators-connectivity.mjs",
   "verify-maintenance-work-order-create-modal-connectivity.mjs",
   "verify-reports-detention-claims-connectivity.mjs",
