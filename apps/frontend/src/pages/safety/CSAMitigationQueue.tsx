@@ -121,6 +121,15 @@ export function CSAMitigationQueuePage() {
     },
   });
 
+  const createErrorCurrent =
+    createMutation.isError &&
+    createMutation.variables?.companyId === companyId &&
+    createMutation.variables?.generation === companyGenerationRef.current;
+  const completeErrorCurrent =
+    completeMutation.isError &&
+    completeMutation.variables?.companyId === companyId &&
+    completeMutation.variables?.generation === companyGenerationRef.current;
+
   useEffect(() => {
     companyGenerationRef.current += 1;
     createMutation.reset();
@@ -235,7 +244,7 @@ export function CSAMitigationQueuePage() {
           >
             Create suggested action
           </button>
-          {createMutation.isError ? (
+          {createErrorCurrent ? (
             <p className="text-xs text-red-700 md:col-span-full" data-testid="csa-mitigation-create-error">
               {userFacingApiError(createMutation.error, "Could not create the mitigation action.")}
             </p>
@@ -243,7 +252,7 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
-      {completeMutation.isError ? (
+      {completeErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="csa-mitigation-complete-error">
           {userFacingApiError(completeMutation.error, "Could not mark the mitigation action complete.")}
         </p>

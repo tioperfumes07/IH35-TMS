@@ -14,6 +14,10 @@ function inspect(value) {
     [/input\.generation !== companyGenerationRef\.current/, "stale success is not rejected"],
     [/queryKey: \["compliance-csa", "mitigation-queue", input\.companyId\]/, "wrong company cache can refresh"],
     [/companyGenerationRef\.current \+= 1[\s\S]*createMutation\.reset\(\)[\s\S]*completeMutation\.reset\(\)/, "company transition does not reset workflows"],
+    [/const createErrorCurrent =[\s\S]*createMutation\.isError[\s\S]*createMutation\.variables\?\.companyId === companyId[\s\S]*createMutation\.variables\?\.generation === companyGenerationRef\.current/, "create rejection is not scoped to the active company generation"],
+    [/const completeErrorCurrent =[\s\S]*completeMutation\.isError[\s\S]*completeMutation\.variables\?\.companyId === companyId[\s\S]*completeMutation\.variables\?\.generation === companyGenerationRef\.current/, "complete rejection is not scoped to the active company generation"],
+    [/\{createErrorCurrent \? \([\s\S]*data-testid="csa-mitigation-create-error"/, "create banner does not use the current-generation predicate"],
+    [/\{completeErrorCurrent \? \([\s\S]*data-testid="csa-mitigation-complete-error"/, "complete banner does not use the current-generation predicate"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   return failures;
@@ -26,6 +30,10 @@ if (process.argv.includes("--selftest")) {
     "markCompleted(input.companyId, input.actionId)",
     "input.generation !== companyGenerationRef.current",
     'queryKey: ["compliance-csa", "mitigation-queue", input.companyId]',
+    "createMutation.variables?.companyId === companyId",
+    "completeMutation.variables?.generation === companyGenerationRef.current",
+    "{createErrorCurrent ? (",
+    "{completeErrorCurrent ? (",
   ];
   for (const token of mutations) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
