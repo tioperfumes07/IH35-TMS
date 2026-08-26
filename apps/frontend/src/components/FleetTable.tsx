@@ -299,19 +299,31 @@ export function FleetTable({
       const ok = results.filter((r) => r.status === "fulfilled").length;
       const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
       const firstError = failures[0]?.reason;
-      return { ok, failed: failures.length, firstError };
+      const failedTargets = input.targets.filter((_row, index) => results[index]?.status === "rejected");
+      if (failures.length > 0) {
+        throw Object.assign(new Error(userFacingApiError(firstError, "Inactivate failed")), {
+          ok,
+          failed: failures.length,
+          failedTargets,
+        });
+      }
+      return { ok };
     },
-    onSuccess: ({ ok, failed, firstError }, input) => {
+    onSuccess: ({ ok }, input) => {
       if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
-      if (ok > 0) pushToast(`${ok} unit(s) inactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
-      else pushToast(userFacingApiError(firstError, "Inactivate failed"), "error");
+      pushToast(`${ok} fleet asset(s) inactivated`, "success");
       selection.clear();
       void invalidateFleetCompany(input.companyId);
     },
-    // allSettled never rejects, but keep onError as a backstop so a thrown error can't hang the UI.
     onError: (error, input) => {
       if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
-      pushToast(userFacingApiError(error, "Bulk inactivate failed"), "error");
+      const partial = error as Error & { ok?: number; failed?: number; failedTargets?: FleetRow[] };
+      if (partial.failedTargets?.length) {
+        selection.setSelectedIds(new Set(partial.failedTargets.map((row) => row.id)));
+      }
+      const prefix = partial.ok ? `${partial.ok} inactivated · ${partial.failed ?? 0} failed. ` : "";
+      pushToast(`${prefix}${userFacingApiError(error, "Bulk inactivate failed")}`, "error");
+      if (partial.ok) void invalidateFleetCompany(input.companyId);
     },
   });
 
@@ -718,8 +730,8 @@ export function FleetTable({
         confirmLabel="Inactivate"
         danger
         onClose={() => setInactivateConfirmOpen(false)}
-        onConfirm={() => {
-          inactivateMutation.mutate({
+        onConfirm={async () => {
+          await inactivateMutation.mutateAsync({
             companyId: operatingCompanyId,
             generation: actionGenerationRef.current,
             targets: selectedRows.map((row) => ({ ...row })),

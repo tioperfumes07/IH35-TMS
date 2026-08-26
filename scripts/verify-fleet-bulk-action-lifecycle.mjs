@@ -27,6 +27,9 @@ function audit(text) {
   const staleErrorCallbacks = text.match(/onError: \(error, input\) => \{[\s\S]{0,180}?input\.generation !== actionGenerationRef\.current/g) ?? [];
   if (staleErrorCallbacks.length < 2) failures.push("both rejected inactivate/reactivate actions must suppress stale scope feedback");
   requirePattern(/targets: selectedRows\.map\(\(row\) => \(\{ \.\.\.row \}\)\)/, "destructive actions must snapshot selected rows");
+  requirePattern(/failedTargets = input\.targets\.filter[\s\S]{0,260}throw Object\.assign\(new Error/, "partial bulk inactivate must reject with the exact failed targets");
+  requirePattern(/selection\.setSelectedIds\(new Set\(partial\.failedTargets\.map\(\(row\) => row\.id\)\)\)/, "failed bulk targets must remain selected for exact retry");
+  requirePattern(/onConfirm=\{async \(\) => \{[\s\S]{0,260}await inactivateMutation\.mutateAsync/, "confirmation must await bulk inactivation so failure cannot close as success");
   return failures;
 }
 
@@ -46,6 +49,9 @@ if (process.argv.includes("--selftest")) {
     ["cache submitted company", /void invalidateFleetCompany\(input\.companyId\)/g, "void invalidateFleetCompany(operatingCompanyId)"],
     ["stale errors", /onError: \(error, input\) => \{/g, "onError: (error) => {"],
     ["target snapshot", /targets: selectedRows\.map\(\(row\) => \(\{ \.\.\.row \}\)\)/g, "targets: selectedRows"],
+    ["failed target rejection", /throw Object\.assign\(new Error/, "return Object.assign(new Error"],
+    ["failed selection", /selection\.setSelectedIds\(new Set\(partial\.failedTargets\.map\(\(row\) => row\.id\)\)\)/, "selection.clear()"],
+    ["await confirmation", /await inactivateMutation\.mutateAsync/, "inactivateMutation.mutate"],
   ];
   for (const [name, pattern, replacement] of mutations) {
     const mutated = source.replace(pattern, replacement);
