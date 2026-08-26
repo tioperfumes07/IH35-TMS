@@ -64,25 +64,37 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
   const adjustmentGenerationRef = useRef(0);
 
+  // MAINT-MONEY-F6631-PARTS-PURCHASE-MUTABLE-COMPANY-DRAFT-SCOPE — this was a zero-argument
+  // mutation whose writer closed over the LIVE (mutable) companyId AND every live `form` field,
+  // and whose onSuccess closed over the current companyId for stock/purchase-history
+  // invalidation and published the returned GL result unconditionally. A company switch or a
+  // draft edit while the request was pending could submit/refresh a different scope than the
+  // operator confirmed, or surface stale GL feedback on the next entity. Reuses the SAME
+  // company-scoped generation ref adjustMutation below already established (bumped on companyId
+  // change) — one scope boundary, two mutations.
   const purchaseMutation = useMutation({
-    mutationFn: () =>
-      recordPartsPurchase(companyId, {
-        part_description: form.part_description,
-        qty_received: form.qty_received,
-        vendor_id: form.vendor_id || undefined,
-        vendor_invoice_number: form.vendor_invoice_number || undefined,
-        purchase_amount: form.purchase_amount,
-        location: form.location || undefined,
+    mutationFn: (input: { companyId: string; generation: number; draft: PurchaseForm }) =>
+      recordPartsPurchase(input.companyId, {
+        part_description: input.draft.part_description,
+        qty_received: input.draft.qty_received,
+        vendor_id: input.draft.vendor_id || undefined,
+        vendor_invoice_number: input.draft.vendor_invoice_number || undefined,
+        purchase_amount: input.draft.purchase_amount,
+        location: input.draft.location || undefined,
       }),
-    onSuccess: async (created) => {
+    onSuccess: async (created, input) => {
+      if (input.generation !== adjustmentGenerationRef.current) return;
       setOpenPurchase(false);
       setForm(EMPTY_PURCHASE);
       setLastGlPosting(created.gl_posting ?? null);
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", input.companyId] });
       // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: keep Purchase History fresh for the same session.
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", input.companyId] });
     },
-    onError: (err) => pushToast(userFacingApiError(err, "Could not record parts purchase"), "error"),
+    onError: (err, input) => {
+      if (input.generation !== adjustmentGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Could not record parts purchase"), "error");
+    },
   });
   const adjustMutation = useMutation({
     mutationFn: (input: {
@@ -111,6 +123,12 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
     setAdjustRow(null);
     setDeltaQty(0);
     setReason("recount");
+    // MAINT-MONEY-F6631 — retire any in-flight/pending purchase action and its GL feedback on a
+    // company transition too; both mutations share this same generation boundary.
+    purchaseMutation.reset();
+    setOpenPurchase(false);
+    setForm(EMPTY_PURCHASE);
+    setLastGlPosting(null);
   }, [companyId]);
 
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
@@ -250,7 +268,10 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
               onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))}
             />
           </div>
-          <Button onClick={() => purchaseMutation.mutate()} disabled={!form.part_description.trim() || purchaseMutation.isPending}>
+          <Button
+            onClick={() => purchaseMutation.mutate({ companyId, generation: adjustmentGenerationRef.current, draft: { ...form } })}
+            disabled={!form.part_description.trim() || purchaseMutation.isPending}
+          >
             Save Purchase
           </Button>
         </div>
