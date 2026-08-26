@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createHosViolation } from "../../../api/safetyV64";
 import { listDotViolationTypes } from "../../../api/catalogs-safety";
@@ -44,17 +44,21 @@ function occurredDateYmd(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({
+function emptyHosViolationForm() {
+  return {
     driver_id: "",
     violation_type: "",
     occurred_at: defaultOccurredAtIso(),
     duration_minutes: "",
     source: "manual_office" as Source,
     notes: "",
-    related_load_id: "" as string,
-  });
+    related_load_id: "",
+  };
+}
+
+export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState(emptyHosViolationForm);
   /** Once the active-trip resolver fills the load, preserve an operator override. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
 
@@ -62,6 +66,12 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   // HOSViolationsTab already catalogs via ReferenceSelect. Same catalog + FK + CSA weight.
   // SAF-B29 wave-4: server search — 213 DOT types exceed a silent 200-cap page.
   const [violationTypeSearch, setViolationTypeSearch] = useState("");
+  const lifecycleGenerationRef = useRef(0);
+  const resetDraft = useCallback(() => {
+    setForm(emptyHosViolationForm());
+    setSuggestionPinned(false);
+    setViolationTypeSearch("");
+  }, []);
   const violationTypesQuery = useQuery({
     queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId, violationTypeSearch],
     queryFn: () =>
@@ -113,7 +123,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   }, [form.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (_submissionGeneration: number) =>
       createHosViolation(operatingCompanyId, {
         driver_id: form.driver_id.trim(),
         violation_type: form.violation_type.trim(),
@@ -129,27 +139,32 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         dot_violation_type_id: selectedViolationType?.id ?? null,
         related_load_id: form.related_load_id.trim() || null,
       }),
-    onSuccess: () => {
-      setForm({
-        driver_id: "",
-        violation_type: "",
-        occurred_at: defaultOccurredAtIso(),
-        duration_minutes: "",
-        source: "manual_office",
-        notes: "",
-        related_load_id: "",
-      });
-      setSuggestionPinned(false);
+    onSuccess: (_created, submissionGeneration) => {
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       onCreated();
-      onClose();
+      handleClose();
     },
   });
+
+  const resetMutation = mutation.reset;
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    resetDraft();
+    resetMutation();
+  }, [open, operatingCompanyId, resetDraft, resetMutation]);
+
+  const handleClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    resetDraft();
+    resetMutation();
+    onClose();
+  }, [onClose, resetDraft, resetMutation]);
 
   const canSubmit =
     Boolean(form.driver_id.trim() && selectedViolationType?.id && form.occurred_at) && !mutation.isPending;
 
   return (
-    <Modal variant="drawer" open={open} onClose={onClose} title="Create HOS Violation">
+    <Modal variant="drawer" open={open} onClose={handleClose} title="Create HOS Violation">
       <form
         className="space-y-3"
         data-testid="hos-violation-create-modal"
@@ -157,7 +172,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
           event.preventDefault();
           event.stopPropagation();
           if (!canSubmit) return;
-          mutation.mutate();
+          mutation.mutate(lifecycleGenerationRef.current);
         }}
       >
         <div className="grid gap-3 md:grid-cols-2">
@@ -283,7 +298,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
           </div>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" loading={mutation.isPending} disabled={!canSubmit}>
