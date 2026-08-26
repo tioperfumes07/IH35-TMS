@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUnit } from "../../api/mdata";
 import { listMyCompanies, type MyCompany } from "../../api/org";
@@ -51,6 +51,10 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
     [operatingCompanyId]
   );
   const [draft, setDraft] = useState(initialDraft);
+
+  useEffect(() => {
+    if (open) setDraft(initialDraft);
+  }, [initialDraft, open]);
 
   const set = (key: keyof typeof EMPTY, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 

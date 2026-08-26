@@ -74,6 +74,10 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
 
   useEffect(() => {
+    if (open) setDraft(initialDraft);
+  }, [initialDraft, open]);
+
+  useEffect(() => {
     if (!open || !equipmentKind) return;
     setDraft((current) => ({
       ...current,
