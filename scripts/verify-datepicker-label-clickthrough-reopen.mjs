@@ -32,7 +32,7 @@ const FILE = "apps/frontend/src/components/forms/DatePicker.tsx";
 
 export function check(text) {
   const failures = [];
-  const idx = text.indexOf("function onDoc(e: MouseEvent)");
+  const idx = text.indexOf("function onDoc(e: PointerEvent)");
   if (idx === -1) {
     failures.push("onDoc outside-click handler not found");
     return failures;
@@ -50,6 +50,12 @@ export function check(text) {
   }
   if (!/setOpen\(false\)/.test(block)) {
     failures.push("onDoc no longer closes the popover on an outside click");
+  }
+  if (!/document\.addEventListener\("pointerdown", onDoc\)/.test(block)) {
+    failures.push("outside close is not registered on pointerdown (mouse/touch/pen)");
+  }
+  if (!/document\.removeEventListener\("pointerdown", onDoc\)/.test(block)) {
+    failures.push("pointerdown outside listener is not removed");
   }
 
   return failures;
@@ -80,8 +86,8 @@ async function selftest() {
   // Offender 1: revert to the pre-fix onDoc (the exact historical shape on origin/main before
   // this fix) — plain `if (...) setOpen(false);`, no suppression at all.
   const preFixOffender = real.replace(
-    /function onDoc\(e: MouseEvent\) \{[\s\S]*?\n    \}\n(?=    if \(open\) document\.addEventListener)/,
-    `function onDoc(e: MouseEvent) {\n      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);\n    }\n`
+    /function onDoc\(e: PointerEvent\) \{[\s\S]*?\n    \}\n(?=    if \(open\) document\.addEventListener)/,
+    `function onDoc(e: PointerEvent) {\n      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);\n    }\n`
   );
   if (preFixOffender === real) {
     console.error("FAIL(selftest): pre-fix-offender mutation did not change the source — regex out of sync with the real block");
