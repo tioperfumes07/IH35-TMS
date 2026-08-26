@@ -38,6 +38,8 @@ import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { Combobox } from "../../../components/Combobox";
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
 /** ILIKE fragment matched against audit.audit_events.event_class by the reader. */
 const FORM_425C_EVENT_FILTER = "form_425c";
@@ -282,37 +284,33 @@ export default function Audit425cPage() {
       ) : null}
 
       <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="audit-425c-filters">
-        <label className="text-xs text-slate-600">
-          425C section
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        <div className="text-xs text-slate-600">
+          <label htmlFor="audit-425c-section-filter">425C section</label>
+          <Combobox
+            id="audit-425c-section-filter"
+            dataTestId="audit-425c-section-filter"
+            className="mt-1 min-w-64"
             value={draft.section}
-            onChange={(event) => staged.setDraft((d) => ({ ...d, section: event.target.value as Form425cSectionId }))}
-            data-testid="audit-425c-section-filter"
-          >
-            {SECTIONS.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-xs text-slate-600">
-          Action
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            options={SECTIONS.map((option) => ({ value: option.id, label: option.label }))}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, section: next as Form425cSectionId }))}
+            ariaLabel="425C section"
+          />
+        </div>
+        <div className="text-xs text-slate-600">
+          <label htmlFor="audit-425c-action-filter">Action</label>
+          <Combobox
+            id="audit-425c-action-filter"
+            dataTestId="audit-425c-action-filter"
+            className="mt-1 min-w-48"
             value={draft.action}
-            onChange={(event) => staged.setDraft((d) => ({ ...d, action: event.target.value }))}
-            data-testid="audit-425c-action-filter"
-          >
-            <option value="">All actions</option>
-            {actionOptions.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={[
+              { value: "", label: "All actions" },
+              ...actionOptions.map((value) => ({ value, label: humanizeEnumLabel(value) })),
+            ]}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, action: next }))}
+            ariaLabel="Action"
+          />
+        </div>
         <label className="text-xs text-slate-600">
           Actor
           <input
