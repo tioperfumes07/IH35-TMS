@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -33,6 +33,7 @@ const EMPTY_FILTERS = { driverId: "", loadId: "" };
 
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedFineId = searchParams.get("fine_id");
@@ -42,6 +43,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   // LV-SAFETY-INTERNAL-FINES-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
+  const [createError, setCreateError] = useState<unknown>(null);
   const [form, setForm] = useState({
     driver_uuid: "",
     reason_uuid: "",
@@ -156,28 +158,27 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     [reasons]
   );
 
+  /** @matrix-built modules=safety cols=driver,load,gl_je,connectivity,reverse_link */
   const createMutation = useMutation({
-    mutationFn: () => {
-      // Build a clean payload: omit optional UUIDs when empty (backend zod rejects "" for uuid fields).
-      // Amount stays a DOLLAR number — the backend does Math.round(amount*100) for the liability itself.
-      const approverUuid = form.status === "approved" ? user?.uuid ?? undefined : undefined;
-      const body: Record<string, unknown> = {
-        driver_uuid: form.driver_uuid,
-        reason_uuid: form.reason_uuid,
-        amount: form.amount,
-        imposed_date: form.imposed_date,
-        status: form.status,
-      };
-      if (form.related_load_uuid) body.related_load_uuid = form.related_load_uuid;
-      if (approverUuid) body.approved_by_user_uuid = approverUuid;
-      if (form.notes.trim()) body.notes = form.notes.trim();
-      return createInternalFine(operatingCompanyId, body);
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; body: Record<string, unknown> }) =>
+      createInternalFine(input.companyId, input.body),
+    onMutate: () => setCreateError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setForm((prev) => ({ ...prev, notes: "", related_load_uuid: "" }));
-      await queryClient.invalidateQueries({ queryKey: ["safety", "internal-fines", operatingCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "internal-fines", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setCreateError(error);
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setLifecycleTarget(null);
+    setCreateError(null);
+    createMutation.reset();
+  }, [operatingCompanyId]); // Mutation reset is stable; each company owns a fresh fine lifecycle.
 
   const missing = useMemo(() => {
     const parts: string[] = [];
@@ -339,7 +340,21 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canCreate}
             title={missing.length > 0 ? "Select a driver and a reason" : undefined}
-            onClick={() => canCreate && createMutation.mutate()}
+            onClick={() => {
+              if (!canCreate) return;
+              const body: Record<string, unknown> = {
+                driver_uuid: form.driver_uuid,
+                reason_uuid: form.reason_uuid,
+                amount: form.amount,
+                imposed_date: form.imposed_date,
+                status: form.status,
+              };
+              if (form.related_load_uuid) body.related_load_uuid = form.related_load_uuid;
+              const approverUuid = form.status === "approved" ? user?.uuid ?? undefined : undefined;
+              if (approverUuid) body.approved_by_user_uuid = approverUuid;
+              if (form.notes.trim()) body.notes = form.notes.trim();
+              createMutation.mutate({ companyId: operatingCompanyId, generation: actionGenerationRef.current, body: { ...body } });
+            }}
           >
             + Create Internal Fine
           </button>
@@ -347,9 +362,9 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           {missing.length > 0 ? (
             <span className="text-[11px] text-gray-500">Select a driver and a reason to create the fine.</span>
           ) : null}
-          {createMutation.isError ? (
+          {createError ? (
             <p className="w-full text-xs text-red-700" data-testid="internal-fine-create-error">
-              {userFacingApiError(createMutation.error, "Could not create the internal fine.")}
+              {userFacingApiError(createError, "Could not create the internal fine.")}
             </p>
           ) : null}
           {/* FIX 3 (frontend) — approver transparency: approving instantly creates a driver liability. */}
@@ -452,13 +467,21 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         onClose={() => setLifecycleTarget(null)}
         onSubmit={async (reason) => {
           if (!lifecycleTarget) return;
-          const id = String(lifecycleTarget.row.id ?? "");
-          if (lifecycleTarget.action === "void") {
-            await voidInternalFine(id, operatingCompanyId, reason);
-          } else {
-            await disputeInternalFine(id, operatingCompanyId, reason);
+          const input = {
+            id: String(lifecycleTarget.row.id ?? ""),
+            action: lifecycleTarget.action,
+            companyId: operatingCompanyId,
+            generation: actionGenerationRef.current,
+          };
+          try {
+            if (input.action === "void") await voidInternalFine(input.id, input.companyId, reason);
+            else await disputeInternalFine(input.id, input.companyId, reason);
+          } catch (error) {
+            if (input.generation === actionGenerationRef.current) throw error;
+            return;
           }
-          await queryClient.invalidateQueries({ queryKey: ["safety", "internal-fines", operatingCompanyId] });
+          if (input.generation !== actionGenerationRef.current) return;
+          await queryClient.invalidateQueries({ queryKey: ["safety", "internal-fines", input.companyId] });
           setLifecycleTarget(null);
         }}
       />
