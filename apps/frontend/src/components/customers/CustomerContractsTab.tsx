@@ -271,22 +271,28 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
               </select>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm">
-                <span className="mb-1 block text-xs font-semibold text-gray-600">Effective date</span>
+              <div>
+                <label htmlFor="customer-contract-effective" className="mb-1 block text-xs font-semibold text-gray-600">
+                  Effective date
+                </label>
                 <DatePicker
+                  id="customer-contract-effective"
                   value={meta.effective_date}
                   onChange={(next) => setMeta((m) => ({ ...m, effective_date: next }))}
                   className="h-9 w-full"
                 />
-              </label>
-              <label className="block text-sm">
-                <span className="mb-1 block text-xs font-semibold text-gray-600">Expiration date</span>
+              </div>
+              <div>
+                <label htmlFor="customer-contract-expiration" className="mb-1 block text-xs font-semibold text-gray-600">
+                  Expiration date
+                </label>
                 <DatePicker
+                  id="customer-contract-expiration"
                   value={meta.expiration_date}
                   onChange={(next) => setMeta((m) => ({ ...m, expiration_date: next }))}
                   className="h-9 w-full"
                 />
-              </label>
+              </div>
             </div>
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Notes</span>
