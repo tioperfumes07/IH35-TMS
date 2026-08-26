@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
@@ -21,6 +21,8 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
   const [driverId, setDriverId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const actionGenerationRef = useRef(0);
+  const attemptCloseRef = useRef<() => void>(() => undefined);
 
   const resetDraft = useCallback(() => {
     setDriverId("");
@@ -28,10 +30,14 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
   }, []);
 
   useEffect(() => {
+    actionGenerationRef.current += 1;
+    setLoading(false);
     if (open) resetDraft();
   }, [open, companyId, target?.equipmentId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    actionGenerationRef.current += 1;
+    setLoading(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
@@ -39,21 +45,33 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
   if (!target) return null;
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Quick assign ${target.equipmentLabel}`}>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={`Quick assign ${target.equipmentLabel}`}
+      confirmDiscardOnClose
+      isDirty={Boolean(driverId)}
+      onRegisterAttemptClose={(attemptClose) => {
+        attemptCloseRef.current = attemptClose;
+      }}
+    >
       <form
         className="space-y-3"
         onSubmit={async (event) => {
           event.preventDefault();
           if (!driverId) return;
+          const input = { driverId, generation: actionGenerationRef.current };
           setLoading(true);
           setError(null);
           try {
-            await onConfirm(driverId);
+            await onConfirm(input.driverId);
+            if (input.generation !== actionGenerationRef.current) return;
             handleClose();
           } catch (cause) {
+            if (input.generation !== actionGenerationRef.current) return;
             setError(cause instanceof Error ? cause.message : "Couldn't assign this driver. Try again.");
           } finally {
-            setLoading(false);
+            if (input.generation === actionGenerationRef.current) setLoading(false);
           }
         }}
       >
@@ -72,7 +90,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
         />
         {error ? <p role="alert" className="text-xs text-red-700">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => attemptCloseRef.current()}>
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!driverId}>
