@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { getPlaidCompanyTransactions } from "../../../api/banking";
@@ -55,6 +55,15 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
   const [paidDate, setPaidDate] = useState(companyToday());
   const [paidAmountCents, setPaidAmountCents] = useState<number | null>(Number(fine.amount_cents ?? 0));
 
+  // SAFETY-MONEY-F6634-FINE-LIFECYCLE-MUTABLE-RECORD-COMPANY-DRAFT-SCOPE — contest, dismiss,
+  // reduce, and link-payment were all zero-argument mutations that closed over the LIVE
+  // (mutable) fineId/operatingCompanyId/draft fields. Switching fine or company — or editing a
+  // draft — while any of these liability/GL-bearing requests is in flight could submit or
+  // disclose completion against a different record than the operator intended. Same scope-
+  // generation-snapshot idiom already shipped 5 times this session (UnitPermitsTab,
+  // PaymentScheduleTab, WOTimeTrackingPanel, EscrowRecordTab, PartsInventoryTable).
+  const scopeGenerationRef = useRef(0);
+
   // ── server-mirrored state gates ────────────────────────────────────────────────────────────────
   // contest  (fines.routes.ts:463): UPDATE ... WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
   // dismiss  (fines.routes.ts:494): identical predicate.
@@ -107,29 +116,34 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
     [bankTxQuery.data]
   );
 
+  type LifecycleScope = { fineId: string; operatingCompanyId: string; generation: number };
+
   const contestMutation = useMutation({
-    mutationFn: () => contestSafetyFine(fineId, operatingCompanyId, notes),
-    onSuccess: () => {
+    mutationFn: (input: LifecycleScope & { notes: string }) => contestSafetyFine(input.fineId, input.operatingCompanyId, input.notes),
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       setNotes("");
       onUpdated();
     },
   });
 
   const dismissMutation = useMutation({
-    mutationFn: () => dismissSafetyFine(fineId, operatingCompanyId, notes),
-    onSuccess: () => {
+    mutationFn: (input: LifecycleScope & { notes: string }) => dismissSafetyFine(input.fineId, input.operatingCompanyId, input.notes),
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       setNotes("");
       onUpdated();
     },
   });
 
   const reduceMutation = useMutation({
-    mutationFn: () =>
-      reduceSafetyFine(fineId, operatingCompanyId, {
-        amount_cents: reduceAmountCents ?? 0,
-        reason: reduceReason.trim(),
+    mutationFn: (input: LifecycleScope & { amountCents: number; reason: string }) =>
+      reduceSafetyFine(input.fineId, input.operatingCompanyId, {
+        amount_cents: input.amountCents,
+        reason: input.reason,
       }),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       setReduceAmountCents(null);
       setReduceReason("");
       onUpdated();
@@ -137,17 +151,39 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
   });
 
   const linkPaymentMutation = useMutation({
-    mutationFn: () =>
-      linkSafetyFinePayment(fineId, operatingCompanyId, {
-        bank_transaction_id: String(bankTransactionId ?? ""),
-        paid_date: paidDate,
-        paid_amount_cents: paidAmountCents ?? 0,
+    mutationFn: (input: LifecycleScope & { bankTransactionId: string; paidDate: string; paidAmountCents: number }) =>
+      linkSafetyFinePayment(input.fineId, input.operatingCompanyId, {
+        bank_transaction_id: input.bankTransactionId,
+        paid_date: input.paidDate,
+        paid_amount_cents: input.paidAmountCents,
       }),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       setBankTransactionId(null);
       onUpdated();
     },
   });
+
+  const resetContestMutation = contestMutation.reset;
+  const resetDismissMutation = dismissMutation.reset;
+  const resetReduceMutation = reduceMutation.reset;
+  const resetLinkPaymentMutation = linkPaymentMutation.reset;
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+    resetContestMutation();
+    resetDismissMutation();
+    resetReduceMutation();
+    resetLinkPaymentMutation();
+    setNotes("");
+    setReduceAmountCents(null);
+    setReduceReason("");
+    setBankTransactionId(null);
+    setBankSearch("");
+    setPaidDate(companyToday());
+    setPaidAmountCents(Number(fine.amount_cents ?? 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset effect keys ONLY on record/company identity, not on fine's own mutable fields (amount_cents is read once as the reset default, not a reactive dependency).
+  }, [fineId, operatingCompanyId, resetContestMutation, resetDismissMutation, resetReduceMutation, resetLinkPaymentMutation]);
 
   if (!canMutate) {
     return (
@@ -186,7 +222,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
             className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || contestMutation.isPending}
             title={statusBlockedReason ?? undefined}
-            onClick={() => contestMutation.mutate()}
+            onClick={() => contestMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
             data-testid="fine-contest-btn"
           >
             {contestMutation.isPending ? "Contesting…" : "Contest Fine"}
@@ -196,7 +232,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-[#334155] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || dismissMutation.isPending}
             title={statusBlockedReason ?? undefined}
-            onClick={() => dismissMutation.mutate()}
+            onClick={() => dismissMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
             data-testid="fine-dismiss-btn"
           >
             {dismissMutation.isPending ? "Dismissing…" : "Dismiss Fine"}
@@ -267,7 +303,15 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
               reduceReason.trim().length < 1
             }
             title={reduceBlockedReason ?? undefined}
-            onClick={() => reduceMutation.mutate()}
+            onClick={() =>
+              reduceMutation.mutate({
+                fineId,
+                operatingCompanyId,
+                generation: scopeGenerationRef.current,
+                amountCents: reduceAmountCents ?? 0,
+                reason: reduceReason.trim(),
+              })
+            }
             data-testid="fine-reduce-btn"
           >
             {reduceMutation.isPending ? "Reducing…" : "Reduce Fine"}
@@ -337,7 +381,16 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
               paidAmountCents == null ||
               paidAmountCents < 0
             }
-            onClick={() => linkPaymentMutation.mutate()}
+            onClick={() =>
+              linkPaymentMutation.mutate({
+                fineId,
+                operatingCompanyId,
+                generation: scopeGenerationRef.current,
+                bankTransactionId: String(bankTransactionId ?? ""),
+                paidDate,
+                paidAmountCents: paidAmountCents ?? 0,
+              })
+            }
             data-testid="fine-link-payment-btn"
           >
             {linkPaymentMutation.isPending ? "Linking…" : "Link Payment & Mark Paid"}
