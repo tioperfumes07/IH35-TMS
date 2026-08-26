@@ -121,6 +121,13 @@ export function PermitsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  const closeCreate = () => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setCreateOpen(false);
+    setDraft(emptyDraft);
+  };
+
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
@@ -136,6 +143,11 @@ export function PermitsPage({ operatingCompanyId }: Props) {
     const canonicalDays = (reminder as { days_before_expiry?: number } | undefined)?.days_before_expiry;
     if (typeof canonicalDays === "number") setReminderDays(String(canonicalDays));
   }, [operatingCompanyId, reminder]);
+
+  const archiveErrorCurrent =
+    archiveMutation.isError && archiveMutation.variables?.generation === lifecycleGenerationRef.current;
+  const restoreErrorCurrent =
+    restoreMutation.isError && restoreMutation.variables?.generation === lifecycleGenerationRef.current;
 
   // Migrated to the shared QBO-parity grid — columns, order, severity badge, and the per-row
   // Archive/Restore action are preserved verbatim (§7 additive-only).
@@ -210,7 +222,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
             </button>
           </div>
         </div>
-        {reminderMutation.isError ? (
+        {reminderMutation.isError && reminderMutation.variables?.generation === lifecycleGenerationRef.current ? (
           <p className="mb-2 text-xs text-red-700" data-testid="permits-reminder-error">
             {userFacingApiError(reminderMutation.error, "Could not save the permit renewal alert window.")}
           </p>
@@ -275,10 +287,10 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         />
       )}
 
-      {(archiveMutation.isError || restoreMutation.isError) ? (
+      {archiveErrorCurrent || restoreErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="permits-archive-restore-error">
           {userFacingApiError(
-            archiveMutation.error ?? restoreMutation.error,
+            archiveErrorCurrent ? archiveMutation.error : restoreMutation.error,
             "Could not archive or restore the permit.",
           )}
         </p>
@@ -371,13 +383,13 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               </label>
             </div>
             <div className="mt-4 flex flex-col items-end gap-2">
-              {createMutation.isError ? (
+              {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
                 <p className="w-full text-xs text-red-700" data-testid="permit-create-error">
                   {userFacingApiError(createMutation.error, "Could not create the permit.")}
                 </p>
               ) : null}
               <div className="flex justify-end gap-2">
-              <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={() => setCreateOpen(false)}>
+              <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={closeCreate}>
                 Cancel
               </button>
               <button
