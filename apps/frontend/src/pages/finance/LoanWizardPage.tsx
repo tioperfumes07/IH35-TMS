@@ -211,28 +211,29 @@ export function LoanWizardPage() {
             </div>
             <div className="px-4 py-3">
               <div className="grid grid-cols-2 gap-3">
-                {field("Asset name", "assetName", "text", "Peterbilt 579")}
+                {field("Asset name *", "assetName", "text", "Peterbilt 579")}
                 {field("VIN / serial", "vin")}
-                {moneyField("Purchase price ($)", "purchasePrice")}
+                {moneyField("Purchase price ($) *", "purchasePrice")}
                 {moneyField("Down payment ($)", "downPayment")}
                 {moneyField("Loan amount ($)", "loanAmount")}
-                {field("Annual rate (%)", "annualRatePct", "number")}
-                {field("Term (months)", "termMonths", "number")}
+                {field("Annual rate (%) *", "annualRatePct", "number")}
+                {field("Term (months) *", "termMonths", "number")}
                 <label className="block">
-                  <span className="text-xs font-medium text-slate-600">First payment date</span>
+                  <span className="text-xs font-medium text-slate-600">First payment date *</span>
                   <DatePicker
                     className="mt-1 w-full"
                     value={form.firstPaymentDate}
                     onChange={(next) => setForm((f) => ({ ...f, firstPaymentDate: next }))}
                   />
                 </label>
-                {field("Lender", "lender", "text", "Commercial Credit Group")}
+                {field("Lender *", "lender", "text", "Commercial Credit Group")}
                 {field("Useful life (months)", "usefulLifeMonths", "number")}
                 {moneyField("Salvage value ($)", "salvageValue")}
               </div>
               <button
                 onClick={onPreview}
                 disabled={busy || !previewReady}
+                title={!previewReady ? "Enter asset name, purchase price, rate, term, first payment date, and lender before preview." : undefined}
                 className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {busy ? "Computing…" : "Preview"}

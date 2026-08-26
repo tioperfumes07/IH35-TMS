@@ -53,6 +53,12 @@ function analyze() {
   if (!/MoneyInput|DatePicker|previewLoanWizard|Lender|VIN/.test(wiz)) {
     failures.push("LoanWizardPage must still expose money/date/preview/lender-or-VIN fields");
   }
+  if (!/Lender \*/.test(wiz)) {
+    failures.push("LoanWizardPage Lender * required mark (FINANCE-HUB-SILENT-DISABLED-BUTTON)");
+  }
+  if (!/title=\{!previewReady/.test(wiz)) {
+    failures.push("LoanWizardPage Preview must title-explain why it is disabled");
+  }
   return failures;
 }
 
