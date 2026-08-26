@@ -818,7 +818,7 @@ export function WorkOrderDetailPage() {
               </div>
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Severity</div>
-                <div className="mt-1"><DvirSeverityBadge severity={wo.severity} /></div>
+                <div className="mt-1"><DvirSeverityBadge severity={String(wo.severity ?? "")} /></div>
               </div>
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source Type</div>

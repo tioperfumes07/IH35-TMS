@@ -12,7 +12,7 @@ function inspect(input) {
   const failures = [];
   const checks = [
     [input.manifest, /path="\/maintenance\/pre-flight-dvir"[\s\S]*<MaintenanceTabRoute tabId="pre_flight_dvir"/, "canonical Maintenance route/tab missing"],
-    [input.workOrder, /import \{ DvirSeverityBadge \}[\s\S]*<DvirSeverityBadge severity=\{wo\.severity\}/, "work-order severity badge missing"],
+    [input.workOrder, /import \{ DvirSeverityBadge \}[\s\S]*<DvirSeverityBadge severity=\{String\(wo\.severity \?\? ""\)\}/, "work-order severity badge missing or unsafe for unknown API data"],
     [input.pwa, /hasMajor = items\.some\(\(item\) => item\.status === "major"\)/, "major detection missing"],
     [input.pwa, /majorItemsValid[\s\S]*item\.note\.trim\(\)\.length > 0 && item\.photo_keys\.length > 0/, "major note/photo proof missing"],
     [input.pwa, /canSubmit = Boolean\(signature\) && \(!hasMajor \|\| majorItemsValid\)/, "major submission gate missing"],
@@ -27,7 +27,7 @@ function inspect(input) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["manifest", 'path="/maintenance/pre-flight-dvir"', 'path="/maintenance/retired-dvir"'],
-    ["workOrder", "<DvirSeverityBadge severity={wo.severity}", "<span data-stale-severity={wo.severity}"],
+    ["workOrder", '<DvirSeverityBadge severity={String(wo.severity ?? "")}', '<span data-stale-severity={String(wo.severity ?? "")}'],
     ["pwa", 'item.status === "major"', 'item.status === "pass"'],
     ["pwa", "item.note.trim().length > 0", "true"],
     ["pwa", "!hasMajor || majorItemsValid", "true"],
