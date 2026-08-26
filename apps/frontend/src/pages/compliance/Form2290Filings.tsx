@@ -7,7 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Fragment } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 
 type Filing = Record<string, unknown>;
@@ -46,6 +46,21 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
   const [searchParams] = useSearchParams();
   const filingId = searchParams.get("filing_id");
   const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // FORM2290-EMBEDDED-NO-BACK-ARROW — when embedded (e.g. Safety → Permits) showModuleHeader=false
+  // correctly suppresses the full PageHeader (title/subtitle/breadcrumb) to avoid a second nested
+  // header on top of the host page's own, but that also silently dropped PageHeader's back arrow
+  // entirely, leaving no wayfinding back to the standalone Compliance module view from inside the
+  // embedded section. This lightweight link restores that path without reintroducing a duplicate
+  // header block.
+  const embeddedBackLink = !showModuleHeader ? (
+    <Link
+      to="/compliance/form-2290"
+      className="mb-1 inline-block text-xs font-semibold text-[#1f2a44] underline"
+    >
+      ← Form 2290 filings
+    </Link>
+  ) : null;
 
   const filingsQ = useQuery({
     queryKey: ["compliance", "form-2290", companyId],
@@ -114,7 +129,14 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         Select an operating company.
       </div>
     );
-    if (!showModuleHeader) return empty;
+    if (!showModuleHeader) {
+      return (
+        <div>
+          {embeddedBackLink}
+          {empty}
+        </div>
+      );
+    }
     return (
       <div className="space-y-4 p-4">
         <PageHeader
@@ -256,7 +278,14 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
     </div>
   );
 
-  if (!showModuleHeader) return body;
+  if (!showModuleHeader) {
+    return (
+      <div className="space-y-2">
+        {embeddedBackLink}
+        {body}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4">
