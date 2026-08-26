@@ -19,6 +19,10 @@ const createTrainingRecordSchema = z.object({
   notes: z.string().optional(),
 });
 
+const createTrainingRecordBatchSchema = createTrainingRecordSchema
+  .omit({ driver_id: true })
+  .extend({ driver_ids: z.array(z.string().uuid()).min(1).max(100).refine((ids) => new Set(ids).size === ids.length, "driver_ids must be unique") });
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -105,5 +109,68 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
     if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
 
     return reply.code(201).send(created);
+  });
+
+  app.post("/api/v1/safety/training-records/batch", RL_WRITE, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const company = companyQuerySchema.safeParse(req.query ?? {});
+    if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
+    const body = createTrainingRecordBatchSchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+
+    const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const eligible = await client.query<{ driver_id: string }>(
+        `SELECT requested.driver_id
+           FROM unnest($1::uuid[]) requested(driver_id)
+           JOIN mdata.drivers d ON d.id = requested.driver_id
+          WHERE d.operating_company_id = $2::uuid
+             OR EXISTS (
+               SELECT 1 FROM mdata.driver_company_authorizations training_batch_dca
+                WHERE training_batch_dca.driver_id = d.id
+                  AND training_batch_dca.company_id = $2::uuid
+                  AND training_batch_dca.is_authorized = true
+                  AND training_batch_dca.deactivated_at IS NULL
+             )`,
+        [body.data.driver_ids, company.data.operating_company_id]
+      );
+      if (eligible.rows.length !== body.data.driver_ids.length) return null;
+
+      const inserted = await client.query<Record<string, unknown>>(
+        `INSERT INTO safety.training_records (
+           operating_company_id, driver_id, training_name, completed_at, expiry_date, notes
+         )
+         SELECT $1::uuid, driver_id, $2, $3::timestamptz, $4::date, $5
+           FROM unnest($6::uuid[]) requested(driver_id)
+         RETURNING *`,
+        [
+          company.data.operating_company_id,
+          body.data.training_name,
+          body.data.completed_at,
+          body.data.expiry_date ?? null,
+          body.data.notes ?? null,
+          body.data.driver_ids,
+        ]
+      );
+      for (const row of inserted.rows) {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "safety.training_record.logged",
+          {
+            resource_type: "safety.training_records",
+            resource_id: (row as { id?: string }).id ?? null,
+            operating_company_id: company.data.operating_company_id,
+            driver_id: (row as { driver_id?: string }).driver_id ?? null,
+          },
+          "info",
+          "P7-SAFETY-DRIVER-PROFILES"
+        );
+      }
+      return inserted.rows;
+    });
+
+    if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
+    return reply.code(201).send({ training_records: created });
   });
 }
