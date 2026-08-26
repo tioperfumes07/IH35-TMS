@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeBreach, listGeofenceBreaches, type GeofenceBreachFilter } from "../../../api/safetyGeofence";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -9,11 +9,14 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 
 const FILTERS: GeofenceBreachFilter[] = ["active", "acknowledged", "all"];
 
+/** @matrix-built modules=safety,dispatch cols=unit,customer,connectivity,reverse_link */
+
 export function GeofenceBreachesTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<GeofenceBreachFilter>("active");
+  const companyGenerationRef = useRef(0);
 
   const eventsQuery = useQuery({
     queryKey: ["safety", "geofence-breaches", companyId, filter],
@@ -23,11 +26,19 @@ export function GeofenceBreachesTab() {
   });
 
   const acknowledgeMutation = useMutation({
-    mutationFn: (id: string) => acknowledgeBreach(id, companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "geofence-breaches", companyId] });
+    mutationFn: (input: { companyId: string; generation: number; breachId: string }) =>
+      acknowledgeBreach(input.breachId, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "geofence-breaches", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    acknowledgeMutation.reset();
+    setFilter("active");
+  }, [companyId]);
 
   const activeCount = useMemo(
     () => (eventsQuery.data?.events ?? []).filter((event) => !event.acknowledged_at).length,
@@ -101,7 +112,13 @@ export function GeofenceBreachesTab() {
                   type="button"
                   className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
                   disabled={acknowledgeMutation.isPending}
-                  onClick={() => acknowledgeMutation.mutate(event.id)}
+                  onClick={() =>
+                    acknowledgeMutation.mutate({
+                      companyId,
+                      generation: companyGenerationRef.current,
+                      breachId: event.id,
+                    })
+                  }
                 >
                   Acknowledge
                 </button>
@@ -115,7 +132,8 @@ export function GeofenceBreachesTab() {
             ) : null}
           </>
         )}
-        {acknowledgeMutation.isError ? (
+        {acknowledgeMutation.isError &&
+        acknowledgeMutation.variables?.generation === companyGenerationRef.current ? (
           <p className="text-xs text-red-700" data-testid="geofence-acknowledge-error">
             {userFacingApiError(acknowledgeMutation.error, "Could not acknowledge the geofence breach.")}
           </p>
