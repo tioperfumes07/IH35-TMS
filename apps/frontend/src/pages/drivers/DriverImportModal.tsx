@@ -66,6 +66,8 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<DriverImportResponse | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
   const columns = useMemo(() => PREVIEW_COLUMNS, []);
 
   const resetDraft = useCallback(() => {
@@ -76,42 +78,54 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   }, []);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setBusy(false);
     resetDraft();
   }, [companyId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (busy) return;
+    requestGenerationRef.current += 1;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [busy, onClose, resetDraft]);
 
   async function runPreview() {
     if (!file || !companyId) return;
+    const input = { file, companyId, generation: requestGenerationRef.current };
     setBusy(true);
     setPreviewError(null);
     try {
-      const res = await importDriversCsv(file, companyId, "preview");
+      const res = await importDriversCsv(input.file, input.companyId, "preview");
+      if (input.generation !== requestGenerationRef.current) return;
       setPreview(res);
     } catch (error) {
+      if (input.generation !== requestGenerationRef.current) return;
       const message = userFacingApiError(error, "Preview failed");
       setPreview(null);
       setPreviewError(message);
     } finally {
-      setBusy(false);
+      if (input.generation === requestGenerationRef.current) setBusy(false);
     }
   }
 
   async function runCommit() {
     if (!file || !companyId || !preview) return;
+    const input = { file, companyId, generation: requestGenerationRef.current };
     setBusy(true);
     try {
-      const res = await importDriversCsv(file, companyId, "commit");
+      const res = await importDriversCsv(input.file, input.companyId, "commit");
+      if (input.generation !== requestGenerationRef.current) return;
       pushToast(`Imported ${res.created ?? 0} driver profiles`, "success");
       onImported();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     } catch (error) {
+      if (input.generation !== requestGenerationRef.current) return;
       pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
-      setBusy(false);
+      if (input.generation === requestGenerationRef.current) setBusy(false);
     }
   }
 
@@ -119,7 +133,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const sampleRows = preview?.sample ?? [];
 
   return (
-    <Modal open onClose={handleClose} title="Import drivers from Master Contacts List (CSV)" sizePreset="lg">
+    <Modal open onClose={handleClose} title="Import drivers from Master Contacts List (CSV)" sizePreset="lg" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
         <p className="mb-3 text-xs text-slate-600">
           Upload the master contacts CSV. Drivers with a termination date import as <span className="font-medium">Terminated</span> (kept off active rosters,
@@ -189,7 +203,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             />
 
             <div className="flex items-center justify-end gap-2">
-              <button type="button" onClick={handleClose} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
+              <button type="button" onClick={attemptClose} disabled={busy} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40">
                 Cancel
               </button>
               <button
