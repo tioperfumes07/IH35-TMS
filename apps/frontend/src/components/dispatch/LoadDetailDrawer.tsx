@@ -34,6 +34,7 @@ import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsRever
 import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
 import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { LoadQualityEventsReverseSection } from "./LoadQualityEventsReverseSection";
+import { LoadDetentionReverseSection } from "./LoadDetentionReverseSection";
 import { LoadInTransitIssuesReverseSection } from "./LoadInTransitIssuesReverseSection";
 import { LoadDriverReportsReverseSection } from "../maintenance/LoadDriverReportsReverseSection";
 import { FuelTransactionsReverseSection } from "../fuel/FuelTransactionsReverseSection";
@@ -689,6 +690,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     customerId={load.customer_id}
                     loadId={load.id}
                     data-testid="load-detail-quality-events"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  <LoadDetentionReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    loadId={load.id}
+                    data-testid="load-detail-detention"
                   />
                 ) : null}
                 {load.operating_company_id ? (

@@ -5,12 +5,18 @@ import {
   bridgeDetentionToBilling,
   closeDetentionEvent,
   listDetentionBoard,
+  listDetentionEventsForLoad,
   notifyCustomerDetentionThreshold,
   syncDetentionEventsFromStopArrivals,
 } from "./detention.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+});
+
+const loadEventsQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  load_id: z.string().uuid(),
 });
 
 const eventParamsSchema = z.object({ id: z.string().uuid() });
@@ -37,6 +43,20 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     return listDetentionBoard(user.uuid, query.data.operating_company_id);
   });
+
+  // DISP-F6470 — LINK-F5171 reverse-link: a load's own detail view can ask "what detention
+  // happened on me" without inheriting the operational board's accruing/closed-only scope.
+  app.get(
+    "/api/v1/dispatch/detention/events",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const query = loadEventsQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+      return listDetentionEventsForLoad(user.uuid, query.data.operating_company_id, query.data.load_id);
+    }
+  );
 
   app.post("/api/v1/dispatch/detention/sync", async (req, reply) => {
     const user = authed(req, reply);

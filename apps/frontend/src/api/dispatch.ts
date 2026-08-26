@@ -1033,6 +1033,14 @@ export function getDetentionBoard(operatingCompanyId: string) {
   }>(`/api/v1/dispatch/detention/board?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
 }
 
+// DISP-F6470 — LINK-F5171 reverse-link: load-scoped detention history, any status (unlike the
+// board's accruing/closed-only operational queue).
+export function getDetentionEventsForLoad(operatingCompanyId: string, loadId: string) {
+  return apiRequest<{ events: DetentionBoardEvent[] }>(
+    `/api/v1/dispatch/detention/events?${new URLSearchParams({ operating_company_id: operatingCompanyId, load_id: loadId })}`
+  );
+}
+
 export function syncDetentionFromArrivals(operatingCompanyId: string) {
   return apiRequest<{ started: number; stopped: number }>(`/api/v1/dispatch/detention/sync`, {
     method: "POST",
