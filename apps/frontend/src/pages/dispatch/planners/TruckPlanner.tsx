@@ -11,6 +11,12 @@ import { usePlannerRange } from "./PlannerRangeContext";
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
+// DISP-F6435: same enum set as FleetOosStrip.tsx's IN_SHOP_STATUSES -- kept as a literal duplicate
+// (not imported) because FleetOosStrip.tsx is a dispatch-overview-only component; both must agree
+// on which mdata.units.status values mean "in the shop", so any future addition there needs the
+// identical addition here (enforced by verify-truck-planner-oos-signal-parity.mjs).
+const IN_SHOP_UNIT_STATUSES = new Set(["InMaintenance", "OutOfService", "Damaged"]);
+
 function truckStatusClass(status: TruckStatus): string {
   if (status === "assigned") return "bg-slate-100 text-slate-700";
   if (status === "available") return "bg-slate-100 text-slate-700";
@@ -92,7 +98,18 @@ export function TruckPlanner() {
       const unitId = String(unit.id ?? "");
       const unitNumber = String(unit.unit_number ?? unitId);
       if (!unitId) continue;
-      const inShop = Boolean(unit.has_open_pm_due_wo) || Boolean(unit.is_dispatch_blocked);
+      // DISP-F6435: this used to check only 2 of the 4 OOS signals the sibling FleetOosStrip.tsx
+      // (Dispatch Overview/Kanban "FLEET OOS / IN SHOP" strip) already checks against the same
+      // listUnits() row shape -- is_oos and the raw status enum were missing. Live-confirmed: all
+      // 14 units in FleetOosStrip's OOS list (unit.is_oos=true, no open PM/dispatch-block flag)
+      // rendered "avl" every day in this grid -- a dispatcher could book a load onto a truck
+      // that's parked in the shop. Mirror FleetOosStrip's exact predicate so the two surfaces never
+      // disagree about which units are out of service.
+      const inShop =
+        Boolean(unit.has_open_pm_due_wo) ||
+        Boolean(unit.is_dispatch_blocked) ||
+        Boolean(unit.is_oos) ||
+        (unit.status != null && IN_SHOP_UNIT_STATUSES.has(String(unit.status)));
       if (inShop) {
         const existing = rows.get(unitId);
         rows.set(unitId, {

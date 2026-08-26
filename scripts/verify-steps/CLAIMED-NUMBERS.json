@@ -1,4 +1,9 @@
 {
+  "9801": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-truck-planner-oos-signal-parity"
+  },
   "9800": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
