@@ -1,5 +1,7 @@
 # CLAUDE — YOU ARE LEAD (paste / INBOX TOP when tripwire fires)
 
+**2026-08-26 14:05 CT DORMANT.** `LEAD-SEAT.md` is **`SEAT=CURSOR`**. Do **not** treat this file as NOW. CC-1 works **money** (`57cabbab` first) per GO-1405. Cursor leads. This packet is only for T1–T6 tripwire (`activate-claude-lead.mjs`).
+
 **This file is complete.** When `docs/bus/LEAD-SEAT.md` says `SEAT=CC-1`, you are lead **now**. Jorge is not the messenger. Do not wait for Cursor to “catch up.”
 
 You are **CC-1** (port **9223**). You already own **money**. Lead **adds** bus + census. You do **not** steal deploy (Cursor kicks Render). You do **not** recertify U14.

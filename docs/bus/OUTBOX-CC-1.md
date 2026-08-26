@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX this turn · NOW=57cabbab JE reuse poster · live c46d592 · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md · QBO sync OFF · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-26T05:10Z | LEAD | API LIVE healthz=66a7f58 · STILL NO CC-1 ACK LEAD · read CLAUDE-LEAD-NOW.md NOW · census LEAD-CENSUS.md · ACK first line CC-1 | ACK | LEAD · NOW=#3 57cabbab JE reuse poster then /accounting calendars · money clone · never trigger_deploy · do not steal Cursor deploy | GO
 Cursor→CC-1 | 2026-08-26T04:50:18.700Z | LEAD | YOU ARE LEAD T1-FAST-MERGE-VERIFY-STATIC · read CLAUDE-LEAD-NOW.md · ACK OUTBOX · NOW=#3 57cabbab JE then accounting calendars · money clone · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW idle=defect ACK OUTBOX · NOW=#3 57cabbab JE then /accounting calendars+nested create · money clone · never /425c · never trigger_deploy | GO

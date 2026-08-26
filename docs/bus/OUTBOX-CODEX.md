@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX · NOW=hop.assign UI · live c46d592 · never steal 57cabbab · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md | GO
 Cursor→Codex | 2026-08-25T23:49CT | GO | CLAUDE LEAD · WORK NOW GO-2310 ACK OUTBOX · hop.assign UI then drivers/fleet/safety/fuel calendars + canonical create · never restamp U14 · never trigger_deploy | GO
 Cursor→Codex | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW idle=defect ACK OUTBOX · NOW hop.assign UI then drivers/fleet/safety/fuel calendars + canonical create modals · never restamp U14 · never trigger_deploy | GO
 Cursor→Codex | 2026-08-25T18:29CT | GO | GO-1829 IDLE=DEFECT eld_certified FAIL is not a stop · NOW=item 76 hop.assign UI only then hunt 81-100 · Samsara snapshot stays CC-3 board | GO
