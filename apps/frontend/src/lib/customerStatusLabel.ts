@@ -17,3 +17,14 @@ export function customerStatusLabel(status: CustomerStatusCode | null | undefine
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
 }
+
+export function customerTypeLabel(type: string | null | undefined): string {
+  if (type == null || type === "") return "—";
+  if (type === "broker") return "Broker";
+  if (type === "direct_shipper") return "Direct shipper";
+  return String(type)
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
