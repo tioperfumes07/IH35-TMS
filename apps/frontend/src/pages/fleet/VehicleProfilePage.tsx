@@ -204,16 +204,16 @@ export function VehicleProfilePage() {
   }, [unit?.id, unit?.qbo_vendor_id, unit?.qbo_class_id]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      patchUnit(id, companyId, {
-        ...(qboAvailable ? { qbo_vendor_id: qboVendorId || null } : {}),
-        qbo_class_id: qboClassTmsId || null,
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+    mutationFn: (input: { unitId: string; companyId: string; generation: number; patch: Record<string, unknown> }) =>
+      patchUnit(input.unitId, input.companyId, input.patch),
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
       pushToast("Unit QBO fields saved", "success");
     },
-    onError: () => pushToast("Failed to save", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to save", "error");
+    },
   });
 
   /** @matrix-built modules=fleet cols=driver,unit,connectivity,reverse_link */
@@ -261,6 +261,7 @@ export function VehicleProfilePage() {
 
   useEffect(() => {
     actionGenerationRef.current += 1;
+    saveMutation.reset();
     quickAvailMutation.reset();
     archiveMutation.reset();
     setArchiveConfirmOpen(false);
@@ -620,7 +621,22 @@ export function VehicleProfilePage() {
             ))}
           </SelectCombobox>
         </label>
-        <Button size="sm" disabled={!id || !companyId || classesQuery.isError} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+        <Button
+          size="sm"
+          disabled={!id || !companyId || classesQuery.isError}
+          loading={saveMutation.isPending}
+          onClick={() =>
+            saveMutation.mutate({
+              unitId: id,
+              companyId,
+              generation: actionGenerationRef.current,
+              patch: {
+                ...(qboAvailable ? { qbo_vendor_id: qboVendorId || null } : {}),
+                qbo_class_id: qboClassTmsId || null,
+              },
+            })
+          }
+        >
           Save
         </Button>
       </div> : null}
