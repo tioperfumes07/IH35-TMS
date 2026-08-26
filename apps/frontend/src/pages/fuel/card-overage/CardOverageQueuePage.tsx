@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -70,11 +70,16 @@ export function CardOverageQueuePage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [statusFilter, setStatusFilter] = useState("pending_review");
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+  }, [companyId]);
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
   // LV-FUEL-TOOLBAR-LEAVES-POINT-HOME — do not keep dead set*Filter helpers that write URL immediately.
   const staged = useStagedListFilters({
@@ -113,22 +118,22 @@ export function CardOverageQueuePage() {
     enabled: Boolean(companyId),
   });
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["fuel", "card-overage-events"] });
-  };
-
+  /** @matrix-built modules=fuel cols=driver,unit,gl_je,connectivity,reverse_link */
   const approveMut = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest(`/api/v1/fuel/card-overage-events/${id}/approve`, {
+    mutationFn: (input: { eventId: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/fuel/card-overage-events/${input.eventId}/approve`, {
         method: "POST",
-        body: { operating_company_id: companyId },
+        body: { operating_company_id: input.companyId },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Overage recovery approved (posts only when GL flag is ON).", "success");
-      invalidate();
+      void queryClient.invalidateQueries({ queryKey: ["fuel", "card-overage-events", input.companyId] });
     },
-    onError: (err: unknown) => {
-      pushToast(userFacingApiError(err, "Approve failed"), "error");
+    onError: (err: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) {
+        pushToast(userFacingApiError(err, "Approve failed"), "error");
+      }
     },
   });
 
@@ -197,7 +202,7 @@ export function CardOverageQueuePage() {
                       `Approve recovery of ${money(row.overage_cents)} for ${entityLabel(row.driver_name, row.driver_id, "Driver")}? Posts JE only when FUEL_CARD_OVERAGE_GL_POSTING is ON.`
                     )
                   ) {
-                    approveMut.mutate(row.id);
+                    approveMut.mutate({ eventId: row.id, companyId, generation: actionGenerationRef.current });
                   }
                 }}
               >
