@@ -9,6 +9,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { Combobox } from "../../../components/Combobox";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -155,30 +156,32 @@ export function ExpiryDashboard() {
           exportFilename="cert-expiry"
           filterBar={
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <label className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
                 <span className="text-slate-500">Cert:</span>
-                <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
-                  {CERT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-1">
+                <label htmlFor="cert-expiry-cert-type" className="sr-only">Certificate type</label>
+                <Combobox
+                  id="cert-expiry-cert-type"
+                  dataTestId="cert-expiry-cert-type"
+                  value={certType}
+                  options={CERT_OPTIONS}
+                  onChange={(next) => setCertType(next as "all" | CertType)}
+                  ariaLabel="Certificate type"
+                  className="min-w-36"
+                />
+              </div>
+              <div className="flex items-center gap-1">
                 <span className="text-slate-500">Severity:</span>
-                <select
-                  className="rounded-sm border border-slate-300 px-2 py-1"
+                <label htmlFor="cert-expiry-severity" className="sr-only">Severity</label>
+                <Combobox
+                  id="cert-expiry-severity"
+                  dataTestId="cert-expiry-severity"
                   value={severity}
-                  onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
-                >
-                  {SEVERITY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  options={SEVERITY_OPTIONS}
+                  onChange={(next) => setSeverity(next as "all" | CertSeverity)}
+                  ariaLabel="Severity"
+                  className="min-w-32"
+                />
+              </div>
             </div>
           }
         />
