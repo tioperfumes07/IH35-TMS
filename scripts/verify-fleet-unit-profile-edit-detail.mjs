@@ -120,7 +120,7 @@ export function audit(src) {
   if ((src.profile.match(/unitId=\{id\}/g) || []).length < 10) {
     failures.push(`${FILES.profile}: unit.profile.* reverse-drill sections must be self-referentially scoped via unitId={id}`);
   }
-  if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editModal)) {
+  if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(src.editModal)) {
     failures.push(`${FILES.editModal}: unit.edit.* tabs must all patch the real edited unit's own id`);
   }
   if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editModal)) {
@@ -205,7 +205,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-telemetry-error", "profile", /onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
-    ["edit-modal-patch", "editModal", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(undefined, operatingCompanyId, patchPayload)"],
+    ["edit-modal-patch", "editModal", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(undefined, input.companyId, input.patch)"],
     ["edit-modal-read-retry", "editModal", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["edit-modal-save-gate", "editModal", /saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId/, "saveMutation.isPending || !unitId"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
