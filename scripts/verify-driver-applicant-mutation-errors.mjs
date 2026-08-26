@@ -9,8 +9,8 @@ function audit(text) {
   const failures = [];
   const need = (condition, message) => { if (!condition) failures.push(message); };
   need(/const \[mutationError, setMutationError\]/.test(text), "mutation error state required");
-  need(/const statusM[\s\S]*?onError: \(error\)[\s\S]*?Failed to update applicant status[\s\S]*?onSettled:/.test(text), "status failure must be visible before settlement");
-  need(/const convertM[\s\S]*?onError: \(error\)[\s\S]*?Failed to convert applicant to driver[\s\S]*?onSettled:/.test(text), "conversion failure must be visible before settlement");
+  need(/const statusM[\s\S]*?onError: \(error(?:, input)?\)[\s\S]*?Failed to update applicant status[\s\S]*?onSettled:/.test(text), "status failure must be visible before settlement");
+  need(/const convertM[\s\S]*?onError: \(error(?:, input)?\)[\s\S]*?Failed to convert applicant to driver[\s\S]*?onSettled:/.test(text), "conversion failure must be visible before settlement");
   need((text.match(/onMutate: \(\) => setMutationError\(null\)/g) ?? []).length === 2, "both writes must clear stale errors");
   need(/role="alert"[\s\S]*?\{mutationError\}/.test(text), "mutation error must render accessibly");
   need((text.match(/error instanceof Error \? error\.message/g) ?? []).length >= 2, "backend details must be preserved");
@@ -25,8 +25,8 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace(/\n    onError: \(error\) => setMutationError\(error instanceof Error \? error\.message : "Failed to update applicant status"\),/, ""),
-    source.replace(/\n    onError: \(error\) => setMutationError\(error instanceof Error \? error\.message : "Failed to convert applicant to driver"\),/, ""),
+    source.replace(/\n    onError: \(error(?:, input)?\) => \{[\s\S]*?Failed to update applicant status[\s\S]*?\n    \},/, ""),
+    source.replace(/\n    onError: \(error(?:, input)?\) => \{[\s\S]*?Failed to convert applicant to driver[\s\S]*?\n    \},/, ""),
     source.replace(/\n      \{mutationError \? \([\s\S]*?\n      \) : null\}/, ""),
     source.replaceAll("onMutate: () => setMutationError(null)", ""),
     source.replaceAll("error instanceof Error ? error.message", '"Request failed"'),

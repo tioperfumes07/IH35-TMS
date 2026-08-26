@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   APPLICANT_PIPELINE_COLUMNS,
   convertApplicantToDriver,
@@ -80,6 +80,7 @@ export function ApplicantsPipelinePage() {
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const portalQ = useQuery({
     queryKey: ["applicant-portal", selectedCompanyId],
@@ -93,26 +94,39 @@ export function ApplicantsPipelinePage() {
     enabled: Boolean(selectedCompanyId),
   });
 
+  /** @matrix-built modules=drivers cols=driver,connectivity,reverse_link */
   const statusM = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ApplicantStatus }) =>
-      updateApplicantStatus(id, selectedCompanyId ?? "", { status }),
+    mutationFn: (input: { id: string; status: ApplicantStatus; companyId: string; generation: number }) =>
+      updateApplicantStatus(input.id, input.companyId, { status: input.status }),
     onMutate: () => setMutationError(null),
-    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to update applicant status"),
-    onSettled: async () => {
-      await qc.invalidateQueries({ queryKey: ["driver-applicants", selectedCompanyId] });
-      setBusyId(null);
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setMutationError(error instanceof Error ? error.message : "Failed to update applicant status");
+    },
+    onSettled: async (_data, _error, input) => {
+      await qc.invalidateQueries({ queryKey: ["driver-applicants", input.companyId] });
+      if (input.generation === actionGenerationRef.current) setBusyId(null);
     },
   });
 
   const convertM = useMutation({
-    mutationFn: (id: string) => convertApplicantToDriver(id, selectedCompanyId ?? ""),
+    mutationFn: (input: { id: string; companyId: string; generation: number }) => convertApplicantToDriver(input.id, input.companyId),
     onMutate: () => setMutationError(null),
-    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to convert applicant to driver"),
-    onSettled: async () => {
-      await qc.invalidateQueries({ queryKey: ["driver-applicants", selectedCompanyId] });
-      setBusyId(null);
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setMutationError(error instanceof Error ? error.message : "Failed to convert applicant to driver");
+    },
+    onSettled: async (_data, _error, input) => {
+      await qc.invalidateQueries({ queryKey: ["driver-applicants", input.companyId] });
+      if (input.generation === actionGenerationRef.current) setBusyId(null);
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    statusM.reset();
+    convertM.reset();
+    setBusyId(null);
+    setMutationError(null);
+  }, [selectedCompanyId]);
 
   const grouped = useMemo(() => {
     const map = Object.fromEntries(APPLICANT_PIPELINE_COLUMNS.map((c) => [c.key, [] as DriverApplicant[]])) as Record<
@@ -179,11 +193,11 @@ export function ApplicantsPipelinePage() {
                   busy={busyId === row.id}
                   onMove={(status) => {
                     setBusyId(row.id);
-                    statusM.mutate({ id: row.id, status });
+                    statusM.mutate({ id: row.id, status, companyId: selectedCompanyId, generation: actionGenerationRef.current });
                   }}
                   onConvert={() => {
                     setBusyId(row.id);
-                    convertM.mutate(row.id);
+                    convertM.mutate({ id: row.id, companyId: selectedCompanyId, generation: actionGenerationRef.current });
                   }}
                 />
               ))}
