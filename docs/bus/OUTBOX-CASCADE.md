@@ -1,3 +1,4 @@
+Cursor→Cascade | 17:21CT | Jorge owns repo+app · audit /customers then /dispatch · findings to GUARD-WORKORDERS | GO
 Cursor→Cascade | 16:36CT | HARD-RELOAD healthz NOW=/customers then /dispatch | GO
 Cursor→Cascade | 16:22CT | LIVE=b8f10a3 NOW=/customers then /dispatch | GO
 Cursor→Cascade | 16:15CT | LIVE=b8f10a3 NOW=/customers FINDING then /dispatch | GO

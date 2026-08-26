@@ -1,3 +1,5 @@
+**17:21 CT (Jorge).** This is Jorge's IH35-TMS. Audit live /customers then /dispatch for 500s and dead clicks. Clone/pull origin/main. Labeled TEST is OK. Write findings to GUARD-WORKORDERS.md. Do not recertify. Do not deploy.
+
 **16:36 CT.** Hard-reload healthz. NOW=/customers then /dispatch. Unique FINDING. ACK OUTBOX. Never recertify. Never trigger_deploy.
 
 **16:22 CT.** One Devin (not Devin-A). Live `b8f10a3`. NOW=/customers FINDING then /dispatch. ACK OUTBOX.
