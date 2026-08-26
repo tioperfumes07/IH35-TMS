@@ -619,8 +619,9 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           />
         </label>
         <div className="text-[11px] text-slate-600">
-          <span>From</span>
+          <label htmlFor="safety-incidents-from-date">From</label>
           <DatePicker
+            id="safety-incidents-from-date"
             value={draft.from}
             onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
             className="mt-1 block min-h-12 w-full"
@@ -629,8 +630,9 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           />
         </div>
         <div className="text-[11px] text-slate-600">
-          <span>To</span>
+          <label htmlFor="safety-incidents-to-date">To</label>
           <DatePicker
+            id="safety-incidents-to-date"
             value={draft.to}
             onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
             className="mt-1 block min-h-12 w-full"
