@@ -73,7 +73,7 @@ export function CreateBillModal({
     setCreatedBill(null);
     submitInFlight.current = false;
     idempotencyKeyRef.current = generateIdempotencyKey();
-  }, [open, linkedWoId, linkedUnitId]);
+  }, [open, linkedWoId, linkedUnitId, operatingCompanyId]);
 
   const showLinkPickers = requireWoLink && !linkedWoId;
   const linkReady = !requireWoLink || Boolean(linkedWoId ?? pickedWoId);
@@ -173,6 +173,7 @@ export function CreateBillModal({
         </div>
       ) : linkReady ? (
         <VendorBillForm
+          key={`maintenance-bill-${operatingCompanyId}`}
           operatingCompanyId={operatingCompanyId}
           submitting={createMutation.isPending}
           linkedWoId={linkedWoId ?? pickedWoId ?? undefined}
