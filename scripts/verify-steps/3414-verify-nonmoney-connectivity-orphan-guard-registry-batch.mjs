@@ -4,6 +4,7 @@ const guards = [
   "verify-maintenance-damage-intake-connectivity.mjs",
   "verify-maintenance-severe-repair-connectivity.mjs",
   "verify-maint-severe-repair-action-company-lifecycle.mjs",
+  "verify-maintenance-pm-alert-company-lifecycle.mjs",
   "verify-maintenance-tire-creators-connectivity.mjs",
   "verify-maintenance-work-order-create-modal-connectivity.mjs",
   "verify-reports-detention-claims-connectivity.mjs",

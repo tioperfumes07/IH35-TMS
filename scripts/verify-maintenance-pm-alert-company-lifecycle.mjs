@@ -11,6 +11,7 @@ const checks = [
   [/mutationFn: \(input: \{ alertId: string; companyId: string; generation: number \}\) =>\s*acknowledgeMaintenancePmAlert\(input\.alertId, input\.companyId\)/, "ack snapshots alert and company"],
   [/mutationFn: \(input: \{ alertId: string; workOrderId: string; companyId: string; generation: number \}\) =>\s*scheduleMaintenancePmAlert\(input\.alertId, input\.companyId, input\.workOrderId\)/, "schedule snapshots alert, WO, and company"],
   [/(?:onSuccess: \(_result, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;[\s\S]*?){2}/, "both success callbacks reject stale generations"],
+  [/(?:onError: \(_error, input\) => \{\s*if \(input\.generation === actionGenerationRef\.current\) pushToast\([\s\S]*?){2}/, "both error callbacks reject stale generations"],
   [/(?:invalidateQueries\(\{ queryKey: \["maintenance", "pm-alerts", input\.companyId\] \}\)[\s\S]*?){2}/, "both success callbacks refresh the submitted company"],
   [/useEffect\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*ackMutation\.reset\(\);\s*scheduleMutation\.reset\(\);\s*setSchedulingAlertId\(null\);\s*setSelectedWorkOrderId\(null\);\s*\}, \[operatingCompanyId\]\)/, "company switch retires requests and clears action state"],
   [/ackMutation\.mutateAsync\(\{\s*alertId: alert\.id,\s*companyId: operatingCompanyId,\s*generation: actionGenerationRef\.current,\s*\}\)/, "ack helper submits immutable scope"],
