@@ -7,6 +7,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
+import { Combobox } from "../../components/Combobox";
 
 const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "All statuses" },
@@ -102,21 +103,19 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
           testIdPrefix="drivers-table"
           dataAttributes={{ "data-drivers-table-filter-toolbar": "collapsed" }}
         >
-          <label className="text-xs font-semibold text-slate-600">
-            Status
-            <select
-              className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              value={staged.draft.status}
-              onChange={(event) => staged.setDraft({ status: event.target.value })}
-              data-testid="drivers-table-status-filter"
-            >
-              {DRIVER_STATUS_FILTERS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="w-full max-w-xs text-xs font-semibold text-slate-600">
+            <label htmlFor="drivers-table-status-filter">Status</label>
+            <Combobox
+              id="drivers-table-status-filter"
+              dataTestId="drivers-table-status-filter"
+              className="mt-1"
+              options={DRIVER_STATUS_FILTERS.filter((option) => option.value)}
+              value={staged.draft.status || null}
+              onChange={(next) => staged.setDraft({ status: next ?? "" })}
+              placeholder="All statuses"
+              allowClear
+            />
+          </div>
         </CollapsedListFilters>
       }
       batchActions={(selected) => {
