@@ -17,6 +17,10 @@ function inspect(source) {
   if (!/buildComplaintPayload\(\)[\s\S]*complainant_type:[\s\S]*respondent_type:[\s\S]*complaint_type_id:[\s\S]*summary:[\s\S]*severity:/.test(source)) errors.push("creator does not snapshot complete base payload");
   for (const kind of ["driver", "customer", "user"]) if (!source.includes(`kind="${kind}"`)) errors.push(`${kind} forward/reverse link removed`);
   if (!source.includes("<DriverPickerWithCreate") || !source.includes("allowCreate")) errors.push("canonical nested creators removed");
+  if (!/const createErrorCurrent =[\s\S]*createMutation\.isError[\s\S]*createMutation\.variables\?\.companyId === companyId[\s\S]*createMutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(source)) errors.push("create rejection is not company-generation scoped");
+  if (!/const patchErrorCurrent =[\s\S]*patchMutation\.isError[\s\S]*patchMutation\.variables\?\.companyId === companyId[\s\S]*patchMutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(source)) errors.push("resolve rejection is not company-generation scoped");
+  if (!/\{createErrorCurrent \? \([\s\S]*Could not file complaint/.test(source)) errors.push("create banner does not use current-generation predicate");
+  if (!/\{patchErrorCurrent \? \([\s\S]*complaint-resolve-error/.test(source)) errors.push("resolve banner does not use current-generation predicate");
   return errors;
 }
 if (process.argv.includes("--selftest")) {
@@ -27,13 +31,17 @@ if (process.argv.includes("--selftest")) {
     source.replace("patchComplaintV64(input.companyId, input.id, { status: input.status })", "patchComplaintV64(companyId, input.id, { status: input.status })"),
     source.replace("input.generation !== lifecycleGenerationRef.current", "false"),
     source.replace("setVoidTargetId(null);", "// planted: void target survives"),
+    source.replace("createMutation.variables?.companyId === companyId", "true"),
+    source.replace("patchMutation.variables?.generation === lifecycleGenerationRef.current", "true"),
+    source.replace("{createErrorCurrent ? (", "{createMutation.isError ? ("),
+    source.replace("{patchErrorCurrent ? (", "{patchMutation.isError ? ("),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-complaints-actions-company-lifecycle SELFTEST FAIL — ${missed.length}/5 mutation(s) survived`);
+    console.error(`verify-complaints-actions-company-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-complaints-actions-company-lifecycle selftest PASS — 5/5 planted defects rejected");
+  console.log("verify-complaints-actions-company-lifecycle selftest PASS — 9/9 planted defects rejected");
   process.exit(0);
 }
 const errors = inspect(fs.readFileSync(FILE, "utf8"));
