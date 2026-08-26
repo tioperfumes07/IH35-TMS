@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi, type TempAssignment } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -29,14 +29,23 @@ function addDaysIso(iso: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
-const EMPTY_TEMP_COVER_FORM = {
+type TempCoverForm = {
+  unitId: string | null;
+  primaryDriverId: string | null;
+  coverDriverId: string | null;
+  startDate: string;
+  endDate: string;
+  notes: string;
+};
+
+const emptyTempCoverForm = (): TempCoverForm => ({
   unitId: "" as string | null,
   primaryDriverId: "" as string | null,
   coverDriverId: "" as string | null,
   startDate: companyToday(),
   endDate: companyToday(),
   notes: "",
-};
+});
 
 export function DriverSchedulerGridPage() {
   const driverId = useSearchParams()[0].get("driver_id") ?? undefined;
@@ -47,9 +56,10 @@ export function DriverSchedulerGridPage() {
   const queryClient = useQueryClient();
   const [windowDays, setWindowDays] = useState(30);
   const [tempCoverModalOpen, setTempCoverModalOpen] = useState(false);
-  const [tempCoverForm, setTempCoverForm] = useState(EMPTY_TEMP_COVER_FORM);
+  const [tempCoverForm, setTempCoverForm] = useState<TempCoverForm>(() => emptyTempCoverForm());
   const [cancelTarget, setCancelTarget] = useState<TempAssignment | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const lifecycleGenerationRef = useRef(0);
   const range = useMemo(() => {
     // Company-local "today" (Central), not UTC — otherwise the grid starts on tomorrow's column
     // in the evening. See lib/businessDate.
@@ -96,41 +106,57 @@ export function DriverSchedulerGridPage() {
   const tempAssignments = tempAssignmentsQuery.data?.assignments ?? [];
 
   const assignMutation = useMutation({
-    mutationFn: () => {
-      if (!tempCoverForm.unitId || !tempCoverForm.primaryDriverId || !tempCoverForm.coverDriverId) {
+    mutationFn: (input: { operatingCompanyId: string; form: TempCoverForm; generation: number }) => {
+      if (!input.form.unitId || !input.form.primaryDriverId || !input.form.coverDriverId) {
         throw new Error("Unit, primary driver, and cover driver are all required.");
       }
-      return driverSchedulerOfficeApi.assignTempCover(operatingCompanyId, {
-        unit_id: tempCoverForm.unitId,
-        primary_driver_id: tempCoverForm.primaryDriverId,
-        cover_driver_id: tempCoverForm.coverDriverId,
-        start_date: tempCoverForm.startDate,
-        end_date: tempCoverForm.endDate,
-        notes: tempCoverForm.notes.trim() || undefined,
+      return driverSchedulerOfficeApi.assignTempCover(input.operatingCompanyId, {
+        unit_id: input.form.unitId,
+        primary_driver_id: input.form.primaryDriverId,
+        cover_driver_id: input.form.coverDriverId,
+        start_date: input.form.startDate,
+        end_date: input.form.endDate,
+        notes: input.form.notes.trim() || undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Temp cover assigned", "success");
       setTempCoverModalOpen(false);
-      setTempCoverForm(EMPTY_TEMP_COVER_FORM);
-      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId] });
+      setTempCoverForm(emptyTempCoverForm());
+      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", input.operatingCompanyId] });
     },
-    onError: (err) => pushToast(userFacingApiError(err, "Failed to assign temp cover"), "error"),
+    onError: (err, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Failed to assign temp cover"), "error");
+    },
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => {
-      if (!cancelTarget) throw new Error("no target");
-      return driverSchedulerOfficeApi.cancelTempCover(operatingCompanyId, cancelTarget.id, cancelReason.trim());
-    },
-    onSuccess: () => {
+    mutationFn: (input: { operatingCompanyId: string; assignmentId: string; reason: string; generation: number }) =>
+      driverSchedulerOfficeApi.cancelTempCover(input.operatingCompanyId, input.assignmentId, input.reason),
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Temp cover assignment cancelled", "success");
       setCancelTarget(null);
       setCancelReason("");
-      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", input.operatingCompanyId] });
     },
-    onError: (err) => pushToast(userFacingApiError(err, "Failed to cancel"), "error"),
+    onError: (err, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Failed to cancel"), "error");
+    },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    assignMutation.reset();
+    cancelMutation.reset();
+    setTempCoverModalOpen(false);
+    setTempCoverForm(emptyTempCoverForm());
+    setCancelTarget(null);
+    setCancelReason("");
+  }, [operatingCompanyId]); // Mutation reset functions are stable; company transitions own fresh modal state.
 
   return (
     <div className="space-y-3">
@@ -142,7 +168,7 @@ export function DriverSchedulerGridPage() {
             data-testid="driver-scheduler-assign-temp-cover"
             disabled={!operatingCompanyId}
             onClick={() => {
-              setTempCoverForm(EMPTY_TEMP_COVER_FORM);
+              setTempCoverForm(emptyTempCoverForm());
               setTempCoverModalOpen(true);
             }}
           >
@@ -391,7 +417,11 @@ export function DriverSchedulerGridPage() {
             <Button
               loading={assignMutation.isPending}
               disabled={!tempCoverForm.unitId || !tempCoverForm.primaryDriverId || !tempCoverForm.coverDriverId}
-              onClick={() => assignMutation.mutate()}
+              onClick={() => assignMutation.mutate({
+                operatingCompanyId,
+                form: { ...tempCoverForm },
+                generation: lifecycleGenerationRef.current,
+              })}
             >
               Assign
             </Button>
@@ -424,7 +454,17 @@ export function DriverSchedulerGridPage() {
               <Button variant="secondary" onClick={() => setCancelTarget(null)}>
                 Keep assignment
               </Button>
-              <Button variant="danger" loading={cancelMutation.isPending} onClick={() => cancelMutation.mutate()}>
+              <Button
+                variant="danger"
+                loading={cancelMutation.isPending}
+                disabled={!cancelReason.trim()}
+                onClick={() => cancelMutation.mutate({
+                  operatingCompanyId,
+                  assignmentId: cancelTarget.id,
+                  reason: cancelReason.trim(),
+                  generation: lifecycleGenerationRef.current,
+                })}
+              >
                 Cancel assignment
               </Button>
             </div>

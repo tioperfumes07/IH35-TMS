@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["safety","drivers"],"cols":["driver","connectivity","reverse_link","picker_law"],"leafRe":"^driver_scheduler\\.list$|^profiles\\.detail$","task":"THEATER-TEMP-COVER-DRIVER-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["safety","drivers"],"cols":["driver","connectivity","reverse_link","picker_law"],"leaves":["driver_scheduler.list","profiles.detail"],"task":"TEMP-COVER-DRIVER-EXACT-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-temp-cover-driver-linkage";
 const files = {
@@ -17,7 +17,7 @@ function audit(s) {
   const routeStart = s.routes.indexOf('"/api/v1/safety/scheduler/temp-assignments"');
   const routeEnd = s.routes.indexOf('app.post("/api/v1/safety/scheduler/temp-assignments"', routeStart);
   const listRoute = s.routes.slice(routeStart, routeEnd);
-  if ((s.creator.match(/<DriverPickerWithCreate/g) ?? []).length < 2 || !/primary_driver_id: tempCoverForm\.primaryDriverId/.test(s.creator) || !/cover_driver_id: tempCoverForm\.coverDriverId/.test(s.creator)) failures.push("primary/cover picker payload missing");
+  if ((s.creator.match(/<DriverPickerWithCreate/g) ?? []).length < 2 || !/primary_driver_id: input\.form\.primaryDriverId/.test(s.creator) || !/cover_driver_id: input\.form\.coverDriverId/.test(s.creator)) failures.push("primary/cover picker payload missing");
   if (!/input\.primary_driver_id === input\.cover_driver_id/.test(s.service) || !/const drivers = await client\.query[\s\S]{0,260}FROM mdata\.drivers[\s\S]{0,160}operating_company_id = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service) || !/temp_cover_driver_not_found/.test(s.service)) failures.push("active tenant driver validation missing");
   if (!/\(\$2::uuid IS NULL OR t\.primary_driver_id = \$2::uuid OR t\.cover_driver_id = \$2::uuid\)/.test(s.service)) failures.push("exact either-role driver reverse filter missing");
   if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/driverId: parsed\.data\.driver_id/.test(s.routes)) failures.push("route driver filter contract missing");
@@ -36,7 +36,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "creator", /<DriverPickerWithCreate/, "<MissingDriverPicker"],
-    ["primary", "creator", /primary_driver_id: tempCoverForm\.primaryDriverId/, "primary_driver_id: undefined"],
+    ["primary", "creator", /primary_driver_id: input\.form\.primaryDriverId/, "primary_driver_id: undefined"],
     ["distinct", "service", /input\.primary_driver_id === input\.cover_driver_id/, "false"],
     ["scope", "service", /(const drivers = await client\.query[\s\S]{0,260})operating_company_id = \$1::uuid/, "$1TRUE"],
     ["active", "service", /(const drivers = await client\.query[\s\S]{0,320})deactivated_at IS NULL/, "$1TRUE"],

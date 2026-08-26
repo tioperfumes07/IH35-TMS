@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["safety","fleet"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^driver_scheduler\\.list$|^unit\\.profile\\.safety_reverse$","task":"THEATER-TEMP-COVER-UNIT-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["safety","fleet"],"cols":["unit","connectivity","reverse_link","picker_law"],"leaves":["driver_scheduler.list","unit.profile.safety_reverse"],"task":"TEMP-COVER-UNIT-EXACT-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-temp-cover-unit-linkage";
 const files = {
@@ -14,7 +14,7 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
-  if (!/<EntityPicker[\s\S]{0,120}kind="unit"/.test(s.creator) || !/unit_id: tempCoverForm\.unitId/.test(s.creator)) failures.push("unit picker-to-assignment payload missing");
+  if (!/<EntityPicker[\s\S]{0,120}kind="unit"/.test(s.creator) || !/unit_id: input\.form\.unitId/.test(s.creator)) failures.push("unit picker-to-assignment payload missing");
   if (!/const unit = await client\.query[\s\S]{0,260}FROM mdata\.units[\s\S]{0,160}COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service) || !/temp_cover_unit_not_found/.test(s.service)) failures.push("active tenant unit validation missing");
   if (!/\(\$3::uuid IS NULL OR t\.unit_id = \$3::uuid\)/.test(s.service)) failures.push("exact unit reverse filter missing");
   if (!/unit_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/unitId: parsed\.data\.unit_id/.test(s.routes)) failures.push("route unit filter contract missing");
@@ -29,7 +29,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "creator", /(<EntityPicker[\s\S]{0,120})kind="unit"/, '$1kind="driver"'],
-    ["payload", "creator", /unit_id: tempCoverForm\.unitId/, "unit_id: undefined"],
+    ["payload", "creator", /unit_id: input\.form\.unitId/, "unit_id: undefined"],
     ["scope", "service", /(const unit = await client\.query[\s\S]{0,260})COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$1::uuid/, "$1TRUE"],
     ["active", "service", /(const unit = await client\.query[\s\S]{0,320})deactivated_at IS NULL/, "$1TRUE"],
     ["filter", "service", /\(\$3::uuid IS NULL OR t\.unit_id = \$3::uuid\)/, "TRUE"],
