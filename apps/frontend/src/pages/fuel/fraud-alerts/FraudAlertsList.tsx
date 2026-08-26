@@ -47,6 +47,7 @@ export function FraudAlertsListPage() {
   const [statusFilter, setStatusFilter] = useState("open");
   const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
   const [dismissReason, setDismissReason] = useState("");
+  const [attemptDismissClose, setAttemptDismissClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
@@ -125,6 +126,12 @@ export function FraudAlertsListPage() {
   }, [companyId]); // Mutation reset functions are stable; company transitions own fresh action state.
 
   const rows = alertsQuery.data?.alerts ?? [];
+
+  const closeDismiss = () => {
+    if (dismissMut.isPending) return;
+    setDismissTarget(null);
+    setDismissReason("");
+  };
 
   const columns = useMemo<ParityColumn<FraudAlertRow>[]>(
     () => [
@@ -233,12 +240,11 @@ export function FraudAlertsListPage() {
       )}
       <Modal
         open={Boolean(dismissTarget)}
-        onClose={() => {
-          if (dismissMut.isPending) return;
-          setDismissTarget(null);
-          setDismissReason("");
-        }}
+        onClose={closeDismiss}
         title="Dismiss fuel fraud alert"
+        confirmDiscardOnClose
+        isDirty={Boolean(dismissReason.trim())}
+        onRegisterAttemptClose={(attemptClose) => setAttemptDismissClose(() => attemptClose)}
       >
         <form
           className="space-y-3"
@@ -269,10 +275,7 @@ export function FraudAlertsListPage() {
               type="button"
               variant="secondary"
               disabled={dismissMut.isPending}
-              onClick={() => {
-                setDismissTarget(null);
-                setDismissReason("");
-              }}
+              onClick={attemptDismissClose}
             >
               Cancel
             </Button>

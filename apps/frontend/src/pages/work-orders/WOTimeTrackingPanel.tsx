@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createWoTimeEntryManual,
@@ -13,6 +13,8 @@ import { listMaintenanceLaborCodes } from "../../api/maintenance";
 import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { Modal } from "../../components/Modal";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -50,6 +52,26 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   const [notes, setNotes] = useState("");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
+
+  // MAINT-MONEY-F6626-WO-TIME-RATE-NATIVE-PROMPT-AND-MUTABLE-SCOPE — the "Rate" action used
+  // window.prompt() (unvalidated raw number, bypassing canonical QBO money chrome) and its
+  // patchMut closed over the LIVE workOrderId/operatingCompanyId props. A work-order/company
+  // transition while the request was in flight could update the wrong entry's rate under the
+  // wrong company, or invalidate/toast for a no-longer-visible panel. Same scope-generation-
+  // snapshot idiom as units/UnitPermitsTab.tsx's deleteMutation and
+  // insurance/PaymentScheduleTab.tsx's markPaidMutation.
+  const scopeGenerationRef = useRef(0);
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+  }, [workOrderId, operatingCompanyId]);
+
+  const [rateEdit, setRateEdit] = useState<{
+    entryId: string;
+    workOrderId: string;
+    operatingCompanyId: string;
+    generation: number;
+  } | null>(null);
+  const [rateEditCents, setRateEditCents] = useState<number | null>(null);
 
   const laborCodesQuery = useQuery({
     queryKey: ["maintenance", "labor-codes", operatingCompanyId],
@@ -109,17 +131,33 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   });
 
   const patchMut = useMutation({
-    mutationFn: (args: { entryId: string; labor_rate_cents_per_hour: number | null }) =>
+    mutationFn: (args: {
+      entryId: string;
+      workOrderId: string;
+      operatingCompanyId: string;
+      generation: number;
+      labor_rate_cents_per_hour: number | null;
+    }) =>
       patchWoTimeEntry(args.entryId, {
-        operating_company_id: operatingCompanyId,
+        operating_company_id: args.operatingCompanyId,
         labor_rate_cents_per_hour: args.labor_rate_cents_per_hour,
       }),
-    onSuccess: () => {
+    onSuccess: (_data, args) => {
+      if (args.generation !== scopeGenerationRef.current) return;
       pushToast("Labor rate updated", "success");
-      invalidate();
+      void queryClient.invalidateQueries({ queryKey: ["wo-time-entries", args.workOrderId, args.operatingCompanyId] });
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Update failed"), "error"),
+    onError: (e: unknown, args) => {
+      if (args.generation !== scopeGenerationRef.current) return;
+      pushToast(String((e as Error)?.message ?? "Update failed"), "error");
+    },
   });
+  const resetPatchMut = patchMut.reset;
+
+  useEffect(() => {
+    resetPatchMut();
+    setRateEdit(null);
+  }, [workOrderId, operatingCompanyId, resetPatchMut]);
 
   const deleteMut = useMutation({
     mutationFn: (entryId: string) => deleteWoTimeEntry(entryId, operatingCompanyId),
@@ -263,7 +301,6 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
             pageSizeOptions={[10, 25, 50]}
             rowActions={(row) => {
               const id = String(row.id ?? "");
-              const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
               return (
                 <span className="inline-flex flex-wrap justify-end gap-2">
                   {!row.ended_at ? (
@@ -278,9 +315,8 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
                         size="sm"
                         variant="secondary"
                         onClick={() => {
-                          const next = window.prompt("Labor rate (cents/hour)", rate || "0");
-                          if (next === null) return;
-                          void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
+                          setRateEditCents((row.labor_rate_cents_per_hour as number | null | undefined) ?? null);
+                          setRateEdit({ entryId: id, workOrderId, operatingCompanyId, generation: scopeGenerationRef.current });
                         }}
                         disabled={patchMut.isPending}
                       >
@@ -297,6 +333,38 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
           />
         )}
       </div>
+
+      {/* MAINT-MONEY-F6626 — canonical QBO money chrome, replaces the native window.prompt(). */}
+      <Modal open={rateEdit != null} onClose={() => setRateEdit(null)} title="Edit labor rate">
+        <div className="space-y-3 text-sm">
+          <label className="block">
+            Labor rate ($/hr)
+            {/* cents-mode: user types dollars, labor_rate_cents_per_hour stored unchanged. */}
+            <MoneyInput valueCents={rateEditCents} onChangeCents={setRateEditCents} className="mt-1 w-full" ariaLabel="Labor rate ($/hr)" />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setRateEdit(null)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              loading={patchMut.isPending}
+              disabled={rateEditCents == null || rateEditCents < 0 || !Number.isFinite(rateEditCents)}
+              onClick={async () => {
+                if (!rateEdit || rateEditCents == null) return;
+                try {
+                  await patchMut.mutateAsync({ ...rateEdit, labor_rate_cents_per_hour: rateEditCents });
+                  setRateEdit(null);
+                } catch {
+                  // patchMut.onError already surfaced the toast (guarded by the same generation check).
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

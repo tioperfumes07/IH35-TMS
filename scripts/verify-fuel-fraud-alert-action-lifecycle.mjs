@@ -14,6 +14,8 @@ function inspect(source) {
   if (source.includes("window.prompt")) errors.push("native dismiss prompt remains");
   if (!source.includes("<Modal") || !source.includes('title="Dismiss fuel fraud alert"')) errors.push("canonical dismiss modal missing");
   if (!source.includes("dismissReason.trim()") || !source.includes("disabled={!dismissReason.trim()}")) errors.push("dismiss reason is not required");
+  if (!source.includes("confirmDiscardOnClose") || !source.includes("isDirty={Boolean(dismissReason.trim())}")) errors.push("typed dismiss reason is not discard-protected");
+  if (!source.includes("onRegisterAttemptClose") || !source.includes("onClick={attemptDismissClose}")) errors.push("footer Cancel bypasses confirm-aware close");
   if (!/useEffect\(\(\) => \{[\s\S]*investigateMut\.reset\(\)[\s\S]*confirmMut\.reset\(\)[\s\S]*dismissMut\.reset\(\)[\s\S]*\}, \[companyId\]\)/.test(source)) {
     errors.push("company transition does not reset all action state");
   }
@@ -34,13 +36,15 @@ if (process.argv.includes("--selftest")) {
     source.replace("confirmMut.reset();", "// planted: confirm reset removed"),
     source.replace("operating_company_id: input.companyId", "operating_company_id: companyId"),
     source.replaceAll("input.generation !== lifecycleGenerationRef.current", "false"),
+    source.replace("confirmDiscardOnClose", ""),
+    source.replace("onClick={attemptDismissClose}", "onClick={closeDismiss}"),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
     console.error(`verify-fuel-fraud-alert-action-lifecycle SELFTEST FAIL — ${missed.length}/4 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-fuel-fraud-alert-action-lifecycle selftest PASS — 4/4 planted defects rejected");
+  console.log("verify-fuel-fraud-alert-action-lifecycle selftest PASS — 6/6 planted defects rejected");
   process.exit(0);
 }
 
