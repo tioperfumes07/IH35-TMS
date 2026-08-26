@@ -17,7 +17,7 @@ function assertContract(source) {
     'dataTestId="csa-mitigation-category"',
     "Object.entries(BASIC_LABELS).map",
     "setBasicCategory(next as BasicCategory)",
-    "createAction(companyId, basicCategory, dueDate)",
+    "createAction(input.companyId, input.category, input.dueDate)",
     "basic_category: basicCategory",
   ]) if (!source.includes(token)) throw new Error(`missing CSA mitigation creator contract: ${token}`);
 }

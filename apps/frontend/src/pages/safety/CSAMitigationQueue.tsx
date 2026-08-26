@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -95,6 +95,7 @@ export function CSAMitigationQueuePage() {
 
   const [basicCategory, setBasicCategory] = useState<BasicCategory>("hos_compliance");
   const [dueDate, setDueDate] = useState<string>(plusDaysIso(14));
+  const companyGenerationRef = useRef(0);
 
   const queueQuery = useQuery({
     queryKey: ["compliance-csa", "mitigation-queue", companyId],
@@ -103,18 +104,30 @@ export function CSAMitigationQueuePage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createAction(companyId, basicCategory, dueDate),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "mitigation-queue", companyId] });
+    mutationFn: (input: { companyId: string; generation: number; category: BasicCategory; dueDate: string }) =>
+      createAction(input.companyId, input.category, input.dueDate),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "mitigation-queue", input.companyId] });
     },
   });
 
   const completeMutation = useMutation({
-    mutationFn: (actionId: string) => markCompleted(companyId, actionId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "mitigation-queue", companyId] });
+    mutationFn: (input: { companyId: string; generation: number; actionId: string }) =>
+      markCompleted(input.companyId, input.actionId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "mitigation-queue", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    completeMutation.reset();
+    setBasicCategory("hos_compliance");
+    setDueDate(plusDaysIso(14));
+  }, [companyId]);
 
   const queue = useMemo(() => queueQuery.data?.queue ?? [], [queueQuery.data?.queue]);
 
@@ -160,7 +173,13 @@ export function CSAMitigationQueuePage() {
           type="button"
           className="rounded-sm border border-gray-300 px-2 py-0.5 disabled:opacity-50"
           disabled={!canMutate || completeMutation.isPending}
-          onClick={() => completeMutation.mutate(row.id)}
+          onClick={() =>
+            completeMutation.mutate({
+              companyId,
+              generation: companyGenerationRef.current,
+              actionId: row.id,
+            })
+          }
         >
           Mark complete
         </button>
@@ -205,7 +224,14 @@ export function CSAMitigationQueuePage() {
             type="button"
             className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
             disabled={!companyId || !canMutate || createMutation.isPending}
-            onClick={() => createMutation.mutate()}
+            onClick={() =>
+              createMutation.mutate({
+                companyId,
+                generation: companyGenerationRef.current,
+                category: basicCategory,
+                dueDate,
+              })
+            }
           >
             Create suggested action
           </button>
