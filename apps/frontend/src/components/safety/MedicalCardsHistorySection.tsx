@@ -22,6 +22,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
   const [issuedDate, setIssuedDate] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const query = useQuery({
     queryKey: ["safety", "medical-cards", operatingCompanyId, driverId ?? "all"],
     enabled: Boolean(operatingCompanyId),
@@ -45,8 +46,11 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
     }),
     onSuccess: async (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
+      companyGenerationRef.current += 1;
       setOpen(false);
+      setSelectedDriverId(driverId ?? "");
       setCardNumber("");
+      setIssuedDate(companyToday());
       setExpiryDate("");
       setNotes("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "medical-cards", input.companyId] });
@@ -62,6 +66,15 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
     setExpiryDate("");
     setNotes("");
   }, [operatingCompanyId, driverId]);
+  const closeCreate = () => {
+    if (createMutation.isPending) return;
+    setOpen(false);
+  };
+  const isCreateDirty = selectedDriverId !== (driverId ?? "")
+    || Boolean(cardNumber.trim())
+    || issuedDate !== companyToday()
+    || Boolean(expiryDate)
+    || Boolean(notes.trim());
   const columns: Array<ParityColumn<SafetyMedicalCardRow>> = [
     ...(driverId ? [] : [{ key: "driver_name", label: "Driver", render: (row: SafetyMedicalCardRow) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> }]),
     { key: "card_number", label: "Card number", sortable: true },
@@ -78,7 +91,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
       <div className="mt-3">
         {query.isError ? <ListErrorBanner message="Medical card history could not be loaded." onRetry={() => void query.refetch()} /> : <ParityTable<SafetyMedicalCardRow> rows={query.data?.cards ?? []} columns={columns} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No medical cards found." storageKey={driverId ? "driver-medical-cards" : "safety-medical-cards"} />}
       </div>
-      <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Add DOT medical card">
+      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add DOT medical card" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           createMutation.mutate({
@@ -97,7 +110,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
           <div className="block text-xs text-slate-600"><label htmlFor="medical-card-expiry-date">Expiry date</label><DatePicker id="medical-card-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
           <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
           {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? <p className="text-xs text-red-700">The card could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
-          <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId || !cardNumber.trim() || !issuedDate || !expiryDate}>Save card</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId || !cardNumber.trim() || !issuedDate || !expiryDate}>Save card</Button></div>
         </form>
       </Modal>
     </section>
