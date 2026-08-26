@@ -58,7 +58,19 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
               <ul className="mt-2 space-y-1 border-t border-slate-100 pt-2 text-xs">
                 {nextItems.map((item) => (
                   <li key={item.id} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{item.program}</span>
+                    {/* DISP-F6480 (GO-2237 item 6): showed only item.program, which is identical
+                        across every row of the same filing type (e.g. two real, distinct property-tax
+                        renditions -- one per Texas appraisal district -- both read "Texas Business
+                        Personal Property Tax Rendition · 04/15/2026" with zero way to tell them apart).
+                        The full /compliance dashboard already shows Program + Detail as separate
+                        columns; this compact widget silently dropped Detail. item.detail is always a
+                        real, distinct, non-empty string for every filing type (verified live: property
+                        tax names the appraisal district, Form 2290 names the filing, IFTA names the
+                        quarter) -- render it as a muted secondary line, not just the program name. */}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{item.program}</span>
+                      {item.detail ? <span className="block truncate text-slate-400">{item.detail}</span> : null}
+                    </span>
                     <span className="shrink-0 text-slate-500">{item.due_date ? formatDateUS(item.due_date) : "—"}</span>
                   </li>
                 ))}
