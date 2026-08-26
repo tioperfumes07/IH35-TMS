@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
@@ -120,6 +120,7 @@ export function CSAScorePage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const lifecycleGenerationRef = useRef(0);
   const canPull = ["Owner", "Administrator", "Manager", "Safety"].includes(String(auth.user?.role ?? ""));
 
   const currentQuery = useQuery({
@@ -143,12 +144,22 @@ export function CSAScorePage() {
   });
 
   const pullMutation = useMutation({
-    mutationFn: () => pullNow(companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "current", companyId] });
-      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "trends", companyId] });
+    mutationFn: (input: { companyId: string; generation: number }) => pullNow(input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "current", input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["compliance-csa", "trends", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    pullMutation.reset();
+  }, [companyId]); // Mutation reset is stable; each selected company owns its FMCSA pull state.
+
+  const pullFailedForCurrentCompany = pullMutation.isError
+    && pullMutation.variables?.companyId === companyId
+    && pullMutation.variables.generation === lifecycleGenerationRef.current;
 
   const tiles = useMemo(() => {
     const source = currentQuery.data?.basics ?? [];
@@ -179,12 +190,12 @@ export function CSAScorePage() {
         <button
           type="button"
           className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
-          onClick={() => pullMutation.mutate()}
+          onClick={() => pullMutation.mutate({ companyId, generation: lifecycleGenerationRef.current })}
           disabled={!companyId || pullMutation.isPending || !canPull}
         >
           Check public FMCSA source
         </button>
-        {pullMutation.isError ? (
+        {pullFailedForCurrentCompany ? (
           <div className="w-full text-right text-slate-700">
             No authoritative BASIC metrics were returned; freshness was not advanced.
           </div>
