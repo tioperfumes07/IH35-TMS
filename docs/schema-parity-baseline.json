@@ -9941,6 +9941,7 @@
       "name",
       "operating_company_id",
       "passing_grade",
+      "recertify_months",
       "updated_at",
       "voided_at",
       "voided_reason"
