@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   getMaintenancePmAutoEngineDashboard,
   runMaintenancePmAutoEngineNow,
@@ -21,6 +21,7 @@ export function PmAutoEnginePage() {
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const { pushToast } = useToast();
+  const actionGenerationRef = useRef(0);
 
   const dashboardQ = useQuery({
     queryKey: ["maintenance", "pm-auto-engine", companyId],
@@ -32,26 +33,38 @@ export function PmAutoEnginePage() {
   // imported and used right here, just never wired to onError. A rejected pause/resume or manual
   // run silently did nothing, on a control that automatically creates real work orders.
   const settingsM = useMutation({
-    mutationFn: (isPaused: boolean) =>
-      updateMaintenancePmAutoEngineSettings({ operating_company_id: companyId, is_paused: isPaused }),
-    onSuccess: async (_data, isPaused) => {
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-auto-engine", companyId] });
-      pushToast(isPaused ? "PM auto-engine paused" : "PM auto-engine resumed", "success");
+    mutationFn: (input: { companyId: string; generation: number; isPaused: boolean }) =>
+      updateMaintenancePmAutoEngineSettings({ operating_company_id: input.companyId, is_paused: input.isPaused }),
+    onSuccess: async (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-auto-engine", input.companyId] });
+      pushToast(input.isPaused ? "PM auto-engine paused" : "PM auto-engine resumed", "success");
     },
-    onError: (err) => pushToast(userFacingApiError(err, "Could not update the PM auto-engine setting"), "error"),
+    onError: (err, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(err, "Could not update the PM auto-engine setting"), "error");
+    },
   });
 
   const runNowM = useMutation({
-    mutationFn: () => runMaintenancePmAutoEngineNow(companyId),
-    onSuccess: async (result) => {
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-auto-engine", companyId] });
+    mutationFn: (input: { companyId: string; generation: number }) => runMaintenancePmAutoEngineNow(input.companyId),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pm-auto-engine", input.companyId] });
       pushToast(
         `Run complete — ${result.work_orders_created} WO(s), ${result.alerts_created} alert(s)`,
         "success"
       );
     },
-    onError: (err) => pushToast(userFacingApiError(err, "PM auto-engine run failed"), "error"),
+    onError: (err, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(err, "PM auto-engine run failed"), "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    settingsM.reset();
+    runNowM.reset();
+  }, [companyId]);
 
   const isPaused = Boolean(dashboardQ.data?.settings?.is_paused);
   const runs = dashboardQ.data?.runs ?? [];
@@ -81,11 +94,11 @@ export function PmAutoEnginePage() {
               type="button"
               variant="secondary"
               disabled={!companyId || settingsM.isPending}
-              onClick={() => settingsM.mutate(!isPaused)}
+              onClick={() => settingsM.mutate({ companyId, generation: actionGenerationRef.current, isPaused: !isPaused })}
             >
               {isPaused ? "Resume engine" : "Pause engine"}
             </Button>
-            <Button type="button" disabled={!companyId || runNowM.isPending || isPaused} onClick={() => runNowM.mutate()}>
+            <Button type="button" disabled={!companyId || runNowM.isPending || isPaused} onClick={() => runNowM.mutate({ companyId, generation: actionGenerationRef.current })}>
               Run now
             </Button>
           </div>
