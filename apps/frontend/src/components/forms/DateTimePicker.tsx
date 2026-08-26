@@ -92,7 +92,7 @@ export function DateTimePicker({
   }, [value]);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    function onDoc(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     // Escape closes and returns focus to the trigger (a11y — L4).
@@ -103,11 +103,11 @@ export function DateTimePicker({
       }
     }
     if (open) {
-      document.addEventListener("mousedown", onDoc);
+      document.addEventListener("pointerdown", onDoc);
       document.addEventListener("keydown", onKey);
     }
     return () => {
-      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("pointerdown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
