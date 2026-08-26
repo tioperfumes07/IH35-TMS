@@ -2161,7 +2161,10 @@ export function DriverDetailPage() {
         danger
         onClose={() => setDeactivateConfirmOpen(false)}
         onConfirm={async () => {
-          await deactivateMutation.mutateAsync().catch(() => undefined);
+          // Preserve rejection through ConfirmModal: its success path closes this surface, while
+          // deactivateMutation.onError already presents the backend failure. Swallowing here made
+          // an unchanged active driver look confirmed and removed the operator's retry surface.
+          await deactivateMutation.mutateAsync();
         }}
       />
 
