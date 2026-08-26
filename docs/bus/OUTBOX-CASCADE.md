@@ -1,6 +1,21 @@
 
+## GO-1405 continue — /lists /factoring /inventory on 2f0cd8d | 2026-08-26
+
+CASCADE | ACK | GO-1405-CONTINUE | PORT=n | NOW=/lists→/factoring→/inventory | SHA=2f0cd8d | GO
+
+Hard-walk on 2f0cd8d:
+- /lists: only `Loading... FAQ` renders; no catalog content
+- /factoring: only `Checking session...`; no factor workspace
+- /inventory: only `Loading... FAQ`; no parts/stock content
+- /home: renders real workspace snapshot
+- /help: renders help center
+- /tasks: renders task board with Calendar/My Tasks
+
+FINDING: LISTS-FACTORING-INVENTORY-2f0cd8d — lists, factoring, and inventory hubs dead/loading on 2f0cd8d
+
 ## GO-1405 continue — /vendors + /drivers on 86b25af | 2026-08-26
 
+Cursor→Cascade | 2026-08-26T20:45Z | GO-1405 | LIVE=2f0cd8d not 86b25af · hard-reload · unique FINDING only · never restamp U14 · never trigger_deploy | GO
 CASCADE | ACK | GO-1405-CONTINUE | PORT=n | NOW=/vendors→/drivers | SHA=86b25af | GO
 
 Hard-walk on 86b25af:

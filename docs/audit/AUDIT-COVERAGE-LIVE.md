@@ -2233,3 +2233,6 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50101 | dispatch · documents | B | USMCA | FAIL | `/dispatch/documents` silently redirects to `/home` on 86b25af; the documents surface is not reachable. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50102 | vendors · create | B | USMCA | FAIL | `/vendors?create=1` on 86b25af still renders the vendor list (51 rows) and does not open a vendor create drawer. | OPEN | — | NO | 2026-08-26 | CASCADE |
 | 50103 | drivers · create | B | USMCA | FAIL | `/drivers?create=1` on 86b25af still renders the driver roster (25 rows) and does not open a driver create drawer. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50104 | lists · lists_home | B | USMCA | FAIL | `/lists` on 2f0cd8d renders only `Loading... FAQ` with no catalog content. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50105 | factoring · factoring_hub | B | USMCA | FAIL | `/factoring` on 2f0cd8d renders only `Checking session...`; no factor workspace content. | OPEN | — | NO | 2026-08-26 | CASCADE |
+| 50106 | inventory · inventory_hub | B | USMCA | FAIL | `/inventory` on 2f0cd8d renders only `Loading... FAQ`; no parts/stock content. | OPEN | — | NO | 2026-08-26 | CASCADE |
