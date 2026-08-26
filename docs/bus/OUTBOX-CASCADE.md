@@ -1,4 +1,20 @@
 
+## HARD WAKE — NOW=/customers → /dispatch on 86b25af | 2026-08-26
+
+CASCADE | ACK | HARD WAKE | PORT=n | NOW=/customers→/dispatch | SHA=86b25af | GO
+
+Live healthz/shallow reports 86b25af. Hard-walk on 86b25af:
+- /customers list renders 15 of 28 customers
+- /customers?tab=statements, /customers?tab=recurring_transactions, /customers?tab=late_fees all show the same list (tab query ignored)
+- Clicking a customer row does not open detail master-detail
+- /customers?create=1 still does not open customer create drawer
+- /dispatch/planning redirects to /home
+- /dispatch/documents redirects to /home
+- /dispatch/book-load "+ Book Load" still no-op
+- /dispatch/loads renders real load list; /dispatch/in-transit-issues renders real issues
+
+FINDING: CUST-DISPATCH-86B25AF — customer tab/row-detail dead, dispatch planning/documents route to home
+
 ## GO-1405 — /accounting/cash-forecast on c46d592 | 2026-08-26
 
 CASCADE | ACK | GO-1405 | PORT=n | NOW=/accounting/cash-forecast | SHA=c46d592 | HOP=accounting.cash-forecast | TABLE=accounting.cash_forecast | UUID= - | JE= - | FINDING=ACCT-F9408-CASH-FORECAST-PROFORMA-ZERO-c46d592 | GO
