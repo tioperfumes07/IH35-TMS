@@ -15,7 +15,7 @@ export function InsuranceLawsuitsReverseSection({ operatingCompanyId, filter, co
     queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter }),
     enabled: Boolean(operatingCompanyId && (filter.driver_id || filter.unit_id)),
   });
-  const rows = query.data?.lawsuits ?? [];
+  const rows = query.isError ? [] : (query.data?.lawsuits ?? []);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="insurance-lawsuits-reverse">
       <h3 className="text-sm font-semibold text-slate-900">Insurance lawsuits</h3>
