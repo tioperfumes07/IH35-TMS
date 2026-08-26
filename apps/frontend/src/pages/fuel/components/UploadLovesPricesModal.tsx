@@ -17,6 +17,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [etag, setEtag] = useState<string | null>(null);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
@@ -30,12 +31,16 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
     resetDraft();
   }, [open, operatingCompanyId, resetDraft]);
 
-  const handleClose = useCallback(() => {
+  const completeClose = useCallback(() => {
     lifecycleGenerationRef.current += 1;
     setLoading(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
+  const handleClose = useCallback(() => {
+    if (loading) return;
+    completeClose();
+  }, [completeClose, loading]);
 
   const submit = async () => {
     if (!file) {
@@ -50,7 +55,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
       setEtag(res.etag);
       pushToast(`Loves upload complete: +${res.rows_added} / upd ${res.rows_updated} / skip ${res.rows_skipped}`, "success");
       onUploaded();
-      handleClose();
+      completeClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Upload failed"), "error");
@@ -60,7 +65,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Upload Loves Prices">
+    <Modal open={open} onClose={handleClose} title="Upload Loves Prices" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={setAttemptClose}>
       <div className="space-y-3 text-xs">
         <label
           className="block rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"
@@ -86,7 +91,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
           Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button size="sm" variant="secondary" onClick={attemptClose} disabled={loading}>Cancel</Button>
           <Button size="sm" loading={loading} onClick={() => void submit()}>
             + Upload Loves Prices
           </Button>
