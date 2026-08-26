@@ -1,8 +1,8 @@
 # INBOX-CC-3 · 9225
 
-**22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #1** `/program` matrix lists+legal. Then **2–35**. WO complete (#22) waits CC-1 #6. Do not remake #15933 #16002. ACK `GO-2237`. Never `trigger_deploy`.
+**22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #2** `/lists` unique 500/dead/silent. Then **3–35**. #1 matrix lists+legal accepted. WO complete wait is **void**. Do not remake #15933 #16002. ACK `GO-2237`. Never `trigger_deploy`.
 
-**VOID as NOW:** GO-1829 and older. Work YOUR GO-2237 numbered list.
+**VOID as NOW:** GO-1829 and older. Work YOUR GO-2237 numbered list. WO complete wait is void — continue **#2 `/lists` hunt**. Do not idle for a new assignment.
 
 **18:29 CT GO-1829 — CODE NOW. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. 67–72 HUNT-PASS accepted. **NOW=73–75**. `#64` waits CC-1 #6. Re-verify maintenance on `3f49b42`, not `ecd09bf`. Do not remake #15933. ACK `GO-1829`. Never `trigger_deploy`.
 
