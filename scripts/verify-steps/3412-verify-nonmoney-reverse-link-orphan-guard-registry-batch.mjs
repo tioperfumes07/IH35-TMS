@@ -1,5 +1,6 @@
 const guards = [
   "verify-nonmoney-reverse-link-guard-registry-batch.mjs",
+  "verify-add-parts-link-company-lifecycle.mjs",
   "verify-arriving-soon-work-order-reverse.mjs", "verify-border-crossing-broker-linkage.mjs",
   "verify-complaint-linkage.mjs", "verify-docs-module-reverse-link-wired.mjs",
   "verify-entity-tasks-reverse-leaves.mjs", "verify-equipment-transfer-human-label.mjs",

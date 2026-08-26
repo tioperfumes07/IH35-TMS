@@ -18,7 +18,7 @@ function audit(s) {
   if (!/listPartsAssignments\(operatingCompanyId, \{ work_order_id: workOrderId \}\)/.test(s.modal)) failures.push("WO modal must request exact reverse set");
   if (/\.filter\(\(row\) => row\.work_order_id === workOrderId\)/.test(s.modal)) failures.push("WO modal must not browser-filter capped company response");
   if (!/partsLinksQuery\.isError/.test(s.modal) || !/Couldn't load parts linked to this work order/.test(s.modal) || !/partsLinksQuery\.refetch/.test(s.modal)) failures.push("WO modal must expose retryable errors");
-  if (!/createPartsAssignment\(workOrderId, operatingCompanyId/.test(s.creator)) failures.push("creator must target active work order");
+  if (!/createPartsAssignment\(input\.workOrderId, input\.companyId/.test(s.creator)) failures.push("creator must target the submitted work order and company");
   if (!/kind="vendor"[\s\S]{0,100}link\.vendor_id/.test(s.modal)) failures.push("reverse rows must drill to canonical vendor");
   if (!/case "vendor":[\s\S]{0,50}`\/vendors\/\$\{id\}`/.test(s.link)) failures.push("vendor route must be canonical");
   return failures;
@@ -33,7 +33,7 @@ if (process.argv.includes("--selftest")) {
     ["exact read", "modal", /listPartsAssignments\(operatingCompanyId, \{ work_order_id: workOrderId \}\)/, "listPartsAssignments(operatingCompanyId)"],
     ["error", "modal", /partsLinksQuery\.isError/, "false"],
     ["retry", "modal", /partsLinksQuery\.refetch/g, "Promise.resolve"],
-    ["creator", "creator", /createPartsAssignment\(workOrderId, operatingCompanyId/, "createPartsAssignment('', operatingCompanyId"],
+    ["creator", "creator", /createPartsAssignment\(input\.workOrderId, input\.companyId/, "createPartsAssignment('', input.companyId"],
     ["vendor drill", "modal", /kind="vendor"/g, 'kind="customer"'],
     ["vendor route", "link", /case "vendor":/, 'case "vendor_missing":'],
   ];
