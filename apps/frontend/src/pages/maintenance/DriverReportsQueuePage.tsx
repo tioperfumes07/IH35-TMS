@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listDriverReports, updateDriverReportStatus, type DriverReportRow } from "../../api/maintenance";
@@ -27,6 +27,7 @@ export function DriverReportsQueuePage({
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [, setSearchParams] = useSearchParams();
   // BANK-F5168 — visible EntityPicker (URL/prop-only filter is not reverse chrome).
   const [driverPickerId, setDriverPickerId] = useState(filterDriverId);
@@ -88,18 +89,42 @@ export function DriverReportsQueuePage({
   const rows = useMemo(() => q.data?.rows ?? [], [q.data?.rows]);
 
   const mut = useMutation({
-    mutationFn: (args: { id: string; status: "under_review" | "resolved" | "dismissed"; resolution_notes?: string }) =>
-      updateDriverReportStatus(args.id, {
-        operating_company_id: operatingCompanyId,
-        status: args.status,
-        resolution_notes: args.resolution_notes,
+    mutationFn: (input: { id: string; companyId: string; generation: number; status: "under_review" | "resolved" | "dismissed"; resolutionNotes?: string }) =>
+      updateDriverReportStatus(input.id, {
+        operating_company_id: input.companyId,
+        status: input.status,
+        resolution_notes: input.resolutionNotes,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Driver report updated", "success");
-      await qc.invalidateQueries({ queryKey: ["maintenance", "driver-reports", operatingCompanyId] });
+      setResolutionDraft((current) => {
+        const next = { ...current };
+        delete next[input.id];
+        return next;
+      });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "driver-reports", input.companyId] });
     },
-    onError: () => pushToast("Could not update driver report", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not update driver report", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    mut.reset();
+    setResolutionDraft({});
+  }, [operatingCompanyId]);
+
+  const updateReport = (id: string, status: "under_review" | "resolved" | "dismissed") => {
+    mut.mutate({
+      id,
+      companyId: operatingCompanyId,
+      generation: actionGenerationRef.current,
+      status,
+      resolutionNotes: resolutionDraft[id]?.trim() || undefined,
+    });
+  };
 
   function reportedAt(iso: string) {
     const d = new Date(iso);
@@ -154,13 +179,13 @@ export function DriverReportsQueuePage({
         onChange={(event) => setResolutionDraft((current) => ({ ...current, [row.id]: event.target.value }))}
       />
       <div className="flex gap-1">
-        <Button size="sm" variant="secondary" onClick={() => mut.mutate({ id: row.id, status: "under_review" })}>
+        <Button size="sm" variant="secondary" onClick={() => updateReport(row.id, "under_review")}>
           Review
         </Button>
-        <Button size="sm" onClick={() => mut.mutate({ id: row.id, status: "resolved", resolution_notes: resolutionDraft[row.id] ?? undefined })}>
+        <Button size="sm" onClick={() => updateReport(row.id, "resolved")}>
           Resolve
         </Button>
-        <Button size="sm" variant="danger" onClick={() => mut.mutate({ id: row.id, status: "dismissed", resolution_notes: resolutionDraft[row.id] ?? undefined })}>
+        <Button size="sm" variant="danger" onClick={() => updateReport(row.id, "dismissed")}>
           Dismiss
         </Button>
       </div>
