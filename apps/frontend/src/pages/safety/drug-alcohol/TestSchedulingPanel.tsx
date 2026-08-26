@@ -8,6 +8,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { Combobox } from "../../../components/Combobox";
 
 type TestType = "pre_employment" | "random" | "post_accident" | "reasonable_suspicion" | "return_to_duty" | "follow_up";
 type TestKind = "drug" | "alcohol" | "both";
@@ -100,35 +101,29 @@ export function TestSchedulingPanel({ companyId }: Props) {
           />
         </label>
 
-        <label className="block text-xs text-slate-600">
-          Test Type
-          <select
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        <div className="block text-xs text-slate-600">
+          <label htmlFor="schedule-test-type">Test Type</label>
+          <Combobox
+            id="schedule-test-type"
+            className="mt-1"
+            options={TEST_TYPES}
             value={testType}
-            onChange={(e) => setTestType(e.target.value as TestType)}
-          >
-            {TEST_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(next) => next && setTestType(next as TestType)}
+            placeholder="Select test type"
+          />
+        </div>
 
-        <label className="block text-xs text-slate-600">
-          Test Kind
-          <select
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        <div className="block text-xs text-slate-600">
+          <label htmlFor="schedule-test-kind">Test Kind</label>
+          <Combobox
+            id="schedule-test-kind"
+            className="mt-1"
+            options={TEST_KINDS}
             value={testKind}
-            onChange={(e) => setTestKind(e.target.value as TestKind)}
-          >
-            {TEST_KINDS.map((k) => (
-              <option key={k.value} value={k.value}>
-                {k.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(next) => next && setTestKind(next as TestKind)}
+            placeholder="Select test kind"
+          />
+        </div>
 
         <div className="block text-xs text-slate-600">
           <span>Scheduled Date (optional)</span>

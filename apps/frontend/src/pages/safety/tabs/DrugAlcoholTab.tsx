@@ -31,6 +31,7 @@ import { DrugAlcoholProgramTab } from "../drug-alcohol/DrugAlcoholProgramTab";
 import { Button } from "../../../components/Button";
 import { useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { Combobox } from "../../../components/Combobox";
 
 const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
 
@@ -347,26 +348,28 @@ export function DrugAlcoholTab() {
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">Record drug / alcohol test</h2>
           <div className="grid gap-2 md:grid-cols-2">
-            <label className="text-xs text-slate-600">
-              Type
-              <select className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={testType} onChange={(e) => setTestType(e.target.value as (typeof TEST_TYPES)[number])}>
-                {TEST_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {stageLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-xs text-slate-600">
-              Result
-              <select className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={testResult} onChange={(e) => setTestResult(e.target.value as (typeof TEST_RESULTS)[number])}>
-                {TEST_RESULTS.map((result) => (
-                  <option key={result} value={result}>
-                    {result}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="text-xs text-slate-600">
+              <label htmlFor="record-test-type">Type</label>
+              <Combobox
+                id="record-test-type"
+                className="mt-1"
+                options={TEST_TYPES.map((type) => ({ value: type, label: stageLabel(type) }))}
+                value={testType}
+                onChange={(next) => next && setTestType(next as (typeof TEST_TYPES)[number])}
+                placeholder="Select test type"
+              />
+            </div>
+            <div className="text-xs text-slate-600">
+              <label htmlFor="record-test-result">Result</label>
+              <Combobox
+                id="record-test-result"
+                className="mt-1"
+                options={TEST_RESULTS.map((result) => ({ value: result, label: stageLabel(result) }))}
+                value={testResult}
+                onChange={(next) => next && setTestResult(next as (typeof TEST_RESULTS)[number])}
+                placeholder="Select result"
+              />
+            </div>
             <div className="text-xs text-slate-600">
               <span>Test date</span>
               {/* DatePicker renders its own bordered control — passing border/padding here
@@ -498,36 +501,30 @@ export function DrugAlcoholTab() {
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">Drug test history</h2>
         <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="drug-alcohol-history-filters">
-          <label className="text-xs text-slate-600">
-            Type
-            <select
-              className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          <div className="w-40 text-xs text-slate-600">
+            <label htmlFor="drug-history-type">Type</label>
+            <Combobox
+              id="drug-history-type"
+              className="mt-1"
+              options={TEST_TYPES.map((type) => ({ value: type, label: stageLabel(type) }))}
               value={historyDraft.type}
-              onChange={(e) => stagedHistory.setDraft((d) => ({ ...d, type: e.target.value }))}
-            >
-              <option value="">All types</option>
-              {TEST_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {stageLabel(type)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-slate-600">
-            Result
-            <select
-              className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, type: next ?? "" }))}
+              placeholder="All types"
+              allowClear
+            />
+          </div>
+          <div className="w-40 text-xs text-slate-600">
+            <label htmlFor="drug-history-result">Result</label>
+            <Combobox
+              id="drug-history-result"
+              className="mt-1"
+              options={TEST_RESULTS.map((result) => ({ value: result, label: stageLabel(result) }))}
               value={historyDraft.result}
-              onChange={(e) => stagedHistory.setDraft((d) => ({ ...d, result: e.target.value }))}
-            >
-              <option value="">All results</option>
-              {TEST_RESULTS.map((result) => (
-                <option key={result} value={result}>
-                  {result}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, result: next ?? "" }))}
+              placeholder="All results"
+              allowClear
+            />
+          </div>
           <div className="text-xs text-slate-600">
             <span>From</span>
             <DatePicker
