@@ -18,9 +18,9 @@ function audit(text) {
   const checks = [
     ["canonical deactivate mutation", /const inactivateMutation = useMutation\([\s\S]*\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate[\s\S]*method: "POST"/],
     ["no hard DELETE", (value) => !/method:\s*["']DELETE["']/.test(value)],
-    ["truck reactivation", /patchUnit\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/],
-    ["trailer reactivation", /patchTrailer\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/],
-    ["confirmation invokes mutation", /onConfirm=\{\(\) => inactivateMutation\.mutate\(selectedRows\)\}/],
+    ["truck reactivation", /patchUnit\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/],
+    ["trailer reactivation", /patchTrailer\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/],
+    ["confirmation invokes mutation", /onConfirm=\{\(\) => \{[\s\S]*?inactivateMutation\.mutate\(\{[\s\S]*?targets: selectedRows\.map/],
   ];
   return checks.filter(([, check]) => typeof check === "function" ? !check(text) : !check.test(text)).map(([label]) => label);
 }
@@ -29,9 +29,9 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     src.replace("/${row.id}/deactivate", "/${row.id}/archive"),
     src.replace('method: "POST", body: {}', 'method: "DELETE", body: {}'),
-    src.replace("patchUnit(row.id, operatingCompanyId, { deactivated_at: null })", "patchUnit(row.id, operatingCompanyId, {})"),
-    src.replace("patchTrailer(row.id, operatingCompanyId, { deactivated_at: null })", "patchTrailer(row.id, operatingCompanyId, {})"),
-    src.replace("onConfirm={() => inactivateMutation.mutate(selectedRows)}", "onConfirm={() => {}}"),
+    src.replace("patchUnit(row.id, input.companyId, { deactivated_at: null })", "patchUnit(row.id, input.companyId, {})"),
+    src.replace("patchTrailer(row.id, input.companyId, { deactivated_at: null })", "patchTrailer(row.id, input.companyId, {})"),
+    src.replace("inactivateMutation.mutate({", "void ({"),
   ];
   const escaped = mutations.filter((fixture) => audit(fixture).length === 0);
   if (audit(src).length || escaped.length) {

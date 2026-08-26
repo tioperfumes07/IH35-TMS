@@ -1,7 +1,7 @@
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
 import { entityLabel } from "../lib/entity-label";
 import { userFacingApiError } from "../lib/api-error-message";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
@@ -161,6 +161,13 @@ export function FleetTable({
   }, [showMaintenanceColumns]);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const invalidateFleetCompany = (companyId: string) =>
+    queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] === "maintenance" &&
+        query.queryKey[1] === "fleet-table" &&
+        query.queryKey.includes(companyId),
+    });
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<FleetRow | null>(null);
   const [inactivateConfirmOpen, setInactivateConfirmOpen] = useState(false);
@@ -221,6 +228,19 @@ export function FleetTable({
     cap: FLEET_SELECTION_CAP,
     onCapExceeded: (error) => pushToast(error.message, "error"),
   });
+  const actionGenerationRef = useRef(0);
+
+  // A company switch is a new action generation. Never let a completion submitted for the
+  // previous entity clear the new entity's selection, show a success toast, or refresh the wrong
+  // cache key. The selected company is also copied into every mutation input below; Owner RLS is
+  // deliberately broad, so closing over the latest render is not an entity-scope guarantee.
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    selection.clear();
+    setInactivateConfirmOpen(false);
+    setEditingUnitId(null);
+    setEditingRow(null);
+  }, [operatingCompanyId]);
 
   const selectedRows = useMemo(
     () => rows.filter((row) => selection.selectedIds.has(row.id)),
@@ -233,9 +253,9 @@ export function FleetTable({
   );
 
   const truckBulkMutation = useMutation({
-    mutationFn: (args: { unitIds: string[]; patch: BulkApplyPayload }) =>
+    mutationFn: (args: { companyId: string; generation: number; unitIds: string[]; patch: BulkApplyPayload }) =>
       apiRequest<{ affected_count: number }>(
-        `/api/v1/mdata/units/bulk-update?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+        `/api/v1/mdata/units/bulk-update?operating_company_id=${encodeURIComponent(args.companyId)}`,
         {
           method: "POST",
           body: {
@@ -247,9 +267,9 @@ export function FleetTable({
   });
 
   const trailerBulkMutation = useMutation({
-    mutationFn: (args: { equipmentIds: string[]; patch: { status?: BulkApplyPayload["status"]; equipment_type?: string } }) =>
+    mutationFn: (args: { companyId: string; generation: number; equipmentIds: string[]; patch: { status?: BulkApplyPayload["status"]; equipment_type?: string } }) =>
       apiRequest<{ affected_count: number }>(
-        `/api/v1/mdata/equipment/bulk-update?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+        `/api/v1/mdata/equipment/bulk-update?operating_company_id=${encodeURIComponent(args.companyId)}`,
         {
           method: "POST",
           body: {
@@ -266,11 +286,14 @@ export function FleetTable({
   const inactivateMutation = useMutation({
     // Isolate per-unit failures (Promise.allSettled) so ONE failing /deactivate can't reject the
     // whole batch and freeze the page — a partial result is reported and the error surfaced.
-    mutationFn: async (targets: FleetRow[]) => {
+    mutationFn: async (input: { companyId: string; generation: number; targets: FleetRow[] }) => {
       const results = await Promise.allSettled(
-        targets.map((row) => {
+        input.targets.map((row) => {
           const resource = row.kind === "trailer" ? "equipment" : "units";
-          return apiRequest(`/api/v1/mdata/${resource}/${row.id}/deactivate`, { method: "POST", body: {} });
+          return apiRequest(
+            `/api/v1/mdata/${resource}/${row.id}/deactivate?operating_company_id=${encodeURIComponent(input.companyId)}`,
+            { method: "POST", body: {} }
+          );
         })
       );
       const ok = results.filter((r) => r.status === "fulfilled").length;
@@ -278,38 +301,46 @@ export function FleetTable({
       const firstError = failures[0]?.reason;
       return { ok, failed: failures.length, firstError };
     },
-    onSuccess: ({ ok, failed, firstError }) => {
+    onSuccess: ({ ok, failed, firstError }, input) => {
+      if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
       if (ok > 0) pushToast(`${ok} unit(s) inactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
       else pushToast(userFacingApiError(firstError, "Inactivate failed"), "error");
       selection.clear();
-      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+      void invalidateFleetCompany(input.companyId);
     },
     // allSettled never rejects, but keep onError as a backstop so a thrown error can't hang the UI.
-    onError: (error) => pushToast(userFacingApiError(error, "Bulk inactivate failed"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
+      pushToast(userFacingApiError(error, "Bulk inactivate failed"), "error");
+    },
   });
 
   // BULK REACTIVATE = clear deactivated_at via the existing PATCH endpoints (units +
   // equipment both accept deactivated_at:null). Soft-delete is reversible — never a hard op.
   const reactivateMutation = useMutation({
-    mutationFn: async (targets: FleetRow[]) => {
+    mutationFn: async (input: { companyId: string; generation: number; targets: FleetRow[] }) => {
       const results = await Promise.allSettled(
-        targets.map((row) =>
+        input.targets.map((row) =>
           row.kind === "trailer"
-            ? patchTrailer(row.id, operatingCompanyId, { deactivated_at: null })
-            : patchUnit(row.id, operatingCompanyId, { deactivated_at: null })
+            ? patchTrailer(row.id, input.companyId, { deactivated_at: null })
+            : patchUnit(row.id, input.companyId, { deactivated_at: null })
         )
       );
       const ok = results.filter((r) => r.status === "fulfilled").length;
       const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
       return { ok, failed: failures.length, firstError: failures[0]?.reason };
     },
-    onSuccess: ({ ok, failed, firstError }) => {
+    onSuccess: ({ ok, failed, firstError }, input) => {
+      if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
       if (ok > 0) pushToast(`${ok} unit(s) reactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
       else pushToast(userFacingApiError(firstError, "Reactivate failed"), "error");
       selection.clear();
-      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+      void invalidateFleetCompany(input.companyId);
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Bulk reactivate failed"), "error"),
+    onError: (error, input) => {
+      if (input.generation !== actionGenerationRef.current || input.companyId !== operatingCompanyId) return;
+      pushToast(userFacingApiError(error, "Bulk reactivate failed"), "error");
+    },
   });
 
   const bulkApplying =
@@ -319,17 +350,22 @@ export function FleetTable({
     reactivateMutation.isPending;
 
   const applyBulk = async (patch: BulkApplyPayload) => {
-    const trucks = selectedRows.filter((row) => row.kind !== "trailer");
-    const trailers = selectedRows.filter((row) => row.kind === "trailer");
+    const companyId = operatingCompanyId;
+    const generation = actionGenerationRef.current;
+    const trucks = selectedRows.filter((row) => row.kind !== "trailer").map((row) => ({ ...row }));
+    const trailers = selectedRows.filter((row) => row.kind === "trailer").map((row) => ({ ...row }));
     let affected = 0;
 
     try {
       if (trucks.length > 0) {
         const res = await truckBulkMutation.mutateAsync({
+          companyId,
+          generation,
           unitIds: trucks.map((row) => row.id),
           patch,
         });
         affected += res.affected_count;
+        if (generation !== actionGenerationRef.current || companyId !== operatingCompanyId) return;
       }
       if (trailers.length > 0) {
         const trailerPatch: { status?: BulkApplyPayload["status"]; equipment_type?: string } = {};
@@ -356,16 +392,20 @@ export function FleetTable({
         }
         if (Object.keys(trailerPatch).length > 0) {
           const res = await trailerBulkMutation.mutateAsync({
+            companyId,
+            generation,
             equipmentIds: trailers.map((row) => row.id),
             patch: trailerPatch,
           });
           affected += res.affected_count;
         }
       }
+      if (generation !== actionGenerationRef.current || companyId !== operatingCompanyId) return;
       pushToast(`${affected} fleet assets updated`, "success");
       selection.clear();
-      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+      void invalidateFleetCompany(companyId);
     } catch (error) {
+      if (generation !== actionGenerationRef.current || companyId !== operatingCompanyId) return;
       pushToast(userFacingApiError(error, "Bulk update failed"), "error");
     }
   };
@@ -377,8 +417,12 @@ export function FleetTable({
 
   const onReactivateSelected = useCallback(() => {
     if (selectedRows.length === 0) return;
-    reactivateMutation.mutate(selectedRows);
-  }, [selectedRows, reactivateMutation]);
+    reactivateMutation.mutate({
+      companyId: operatingCompanyId,
+      generation: actionGenerationRef.current,
+      targets: selectedRows.map((row) => ({ ...row })),
+    });
+  }, [selectedRows, reactivateMutation, operatingCompanyId]);
 
   const isVisible = (key: string) => table.isColumnVisible(key);
 
@@ -674,7 +718,13 @@ export function FleetTable({
         confirmLabel="Inactivate"
         danger
         onClose={() => setInactivateConfirmOpen(false)}
-        onConfirm={() => inactivateMutation.mutate(selectedRows)}
+        onConfirm={() => {
+          inactivateMutation.mutate({
+            companyId: operatingCompanyId,
+            generation: actionGenerationRef.current,
+            targets: selectedRows.map((row) => ({ ...row })),
+          });
+        }}
       />
     </div>
   );
