@@ -5,7 +5,7 @@ import process from "node:process";
 const LABEL = "verify-saf-action-mutation-error-wave6";
 const CHECKS = [
   { file: "apps/frontend/src/pages/safety/DrugAlcoholDashboard.tsx", needles: ["userFacingApiError", "drawMutation.isError", "drug-alcohol-dashboard-draw-error"] },
-  { file: "apps/frontend/src/pages/safety/anomaly/RuleEditor.tsx", needles: ["userFacingApiError", "seed.isError", "anomaly-seed-defaults-error"] },
+  { file: "apps/frontend/src/pages/safety/anomaly/RuleEditor.tsx", needles: ["userFacingApiError", "seedError", "anomaly-seed-defaults-error"] },
   { file: "apps/frontend/src/pages/safety/anomaly/AnomalyDashboard.tsx", needles: ["userFacingApiError", "actionError", "anomaly-dashboard-action-error"] },
 ];
 function assertFile(rel, needles) {
