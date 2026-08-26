@@ -119,6 +119,26 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  const closeCreate = () => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    setCreateOpen(false);
+    setName("");
+    setCategory("entry_level");
+    setFrequency("annual");
+    setRecertifyMonths("12");
+    setPassingGrade("");
+  };
+
+  const closeAssign = () => {
+    companyGenerationRef.current += 1;
+    assignMutation.reset();
+    setAssignOpen(false);
+    setAssignDriverIds([]);
+    setAssignPick(null);
+    setSelectedProgram(null);
+  };
+
   useEffect(() => {
     companyGenerationRef.current += 1;
     createMutation.reset();
@@ -211,7 +231,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
       />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Program">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Program">
         <form
           className="space-y-3"
           data-testid="training-program-create-modal"
@@ -298,13 +318,13 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               data-testid="training-program-passing-grade"
             />
           </label>
-          {createMutation.isError ? (
+          {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? (
             <p className="text-xs text-red-700" data-testid="training-program-create-error">
               {userFacingApiError(createMutation.error, "Could not create the training program.")}
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
+            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="training-program-submit">
@@ -314,7 +334,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         </form>
       </Modal>
 
-      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Assign Drivers">
+      <Modal open={assignOpen} onClose={closeAssign} title="Assign Drivers">
         <form
           className="space-y-3"
           data-testid="training-program-assign-modal"
@@ -373,13 +393,13 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               ))}
             </ul>
           ) : null}
-          {assignMutation.isError ? (
+          {assignMutation.isError && assignMutation.variables?.generation === companyGenerationRef.current ? (
             <p className="text-xs text-red-700" data-testid="training-program-assign-error">
               {userFacingApiError(assignMutation.error, "Could not assign drivers to the program.")}
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => setAssignOpen(false)}>
+            <Button type="button" variant="secondary" size="sm" onClick={closeAssign}>
               Cancel
             </Button>
             <Button

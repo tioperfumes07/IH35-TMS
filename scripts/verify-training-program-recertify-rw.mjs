@@ -33,6 +33,10 @@ function inspect(source) {
   requireMatch(page, /recertify_months: frequency === "n_month" \? Number\(recertifyMonths\) : undefined/, "creator must submit visible month value");
   requireMatch(page, /program\.frequency === "annual"[\s\S]*program\.frequency === "n_month" && program\.recertify_months/, "assignment expiry must use selected program");
   requireMatch(page, /companyGenerationRef\.current \+= 1[\s\S]*createMutation\.reset\(\)[\s\S]*assignMutation\.reset\(\)/, "company switch must reset mutations and stale UI");
+  requireMatch(page, /const closeCreate = \(\) => \{\s*companyGenerationRef\.current \+= 1;\s*createMutation\.reset\(\);[\s\S]*?<Modal variant="drawer" open=\{createOpen\} onClose=\{closeCreate\}/, "create dismiss must retire its generation and reset mutation state");
+  requireMatch(page, /const closeAssign = \(\) => \{\s*companyGenerationRef\.current \+= 1;\s*assignMutation\.reset\(\);[\s\S]*?<Modal open=\{assignOpen\} onClose=\{closeAssign\}/, "assignment dismiss must retire its generation and reset mutation state");
+  requireMatch(page, /createMutation\.isError && createMutation\.variables\?\.generation === companyGenerationRef\.current/, "stale create rejection must not paint a reopened modal");
+  requireMatch(page, /assignMutation\.isError && assignMutation\.variables\?\.generation === companyGenerationRef\.current/, "stale assignment rejection must not paint a reopened modal");
   requireMatch(page, /companyId: operatingCompanyId[\s\S]*driverIds: \[\.\.\.assignDriverIds\]/, "assignment must snapshot company and driver ids");
   requireMatch(page, /<EntityPicker[\s\S]*kind="driver"[\s\S]*operatingCompanyId=\{operatingCompanyId\}/, "assignment must use canonical company-scoped driver picker");
   requireMatch(page, /<EntityLink[\s\S]*kind="driver"[\s\S]*id=\{driverId\}/, "assigned drivers must retain reverse drill-through");
@@ -52,6 +56,10 @@ function selftest(source) {
     ["page", 'recertify_months: frequency === "n_month" ? Number(recertifyMonths) : undefined', "recertify_months: undefined"],
     ["page", 'program.frequency === "annual"', 'frequency === "annual"'],
     ["page", "companyGenerationRef.current += 1", "companyGenerationRef.current += 0"],
+    ["page", "onClose={closeCreate}", "onClose={() => setCreateOpen(false)}"],
+    ["page", "onClose={closeAssign}", "onClose={() => setAssignOpen(false)}"],
+    ["page", "createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current", "createMutation.isError"],
+    ["page", "assignMutation.isError && assignMutation.variables?.generation === companyGenerationRef.current", "assignMutation.isError"],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`selftest fixture missing: ${before}`);
