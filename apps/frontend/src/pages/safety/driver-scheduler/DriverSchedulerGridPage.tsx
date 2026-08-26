@@ -17,6 +17,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useSearchParams } from "react-router-dom";
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -221,7 +222,7 @@ export function DriverSchedulerGridPage() {
                                 : "bg-white";
                       const label = lt ? String(lt).slice(0, 3) : "";
                       return (
-                        <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${bg}`} title={lt ?? ""}>
+                        <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${bg}`} title={lt ? humanizeEnumLabel(lt) : ""}>
                           <span className="text-[9px] text-gray-700">{label}</span>
                         </td>
                       );
@@ -244,7 +245,7 @@ export function DriverSchedulerGridPage() {
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (
               <li key={String(p.id)}>
-                {String(p.request_number)} · {String(p.leave_type)} · {String(p.start_date)}–{String(p.end_date)}
+                {String(p.request_number)} · {humanizeEnumLabel(p.leave_type)} · {String(p.start_date)}–{String(p.end_date)}
               </li>
             ))}
           </ul>
