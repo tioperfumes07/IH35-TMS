@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { acknowledgeIntegrityAlert, resolveIntegrityAlert, snoozeIntegrityAlert } from "../../../api/safety";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
@@ -32,27 +32,57 @@ function metricEntries(value: unknown): Array<[string, string]> {
 }
 
 export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, onClose, onUpdated }: Props) {
+  /** @matrix-built modules=safety cols=driver,unit,vendor,load,connectivity,reverse_link */
   // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
   // element type follows. Focus behaviour is unchanged.
   const panelRef = useRef<HTMLDivElement>(null);
+  const actionGenerationRef = useRef(0);
   const ackMutation = useMutation({
-    mutationFn: () => acknowledgeIntegrityAlert(String(alert?.id ?? ""), operatingCompanyId, "Acknowledged in Safety UI"),
-    onSuccess: onUpdated,
+    mutationFn: (input: { alertId: string; companyId: string; generation: number }) => acknowledgeIntegrityAlert(input.alertId, input.companyId, "Acknowledged in Safety UI"),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      onUpdated();
+    },
   });
   const resolveMutation = useMutation({
-    mutationFn: () =>
-      resolveIntegrityAlert(String(alert?.id ?? ""), operatingCompanyId, {
+    mutationFn: (input: { alertId: string; companyId: string; generation: number }) =>
+      resolveIntegrityAlert(input.alertId, input.companyId, {
         resolution_status: "confirmed_action_taken",
         resolution_action: "Resolved in Safety UI",
       }),
-    onSuccess: onUpdated,
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      onUpdated();
+    },
   });
   const snoozeMutation = useMutation({
-    mutationFn: () => snoozeIntegrityAlert(String(alert?.id ?? ""), operatingCompanyId, 24),
-    onSuccess: onUpdated,
+    mutationFn: (input: { alertId: string; companyId: string; generation: number }) => snoozeIntegrityAlert(input.alertId, input.companyId, 24),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      onUpdated();
+    },
   });
+  const resetAckMutation = ackMutation.reset;
+  const resetResolveMutation = resolveMutation.reset;
+  const resetSnoozeMutation = snoozeMutation.reset;
 
-  useEscapeKey(onClose, open && Boolean(alert));
+  const resetActionState = useCallback(() => {
+    actionGenerationRef.current += 1;
+    resetAckMutation();
+    resetResolveMutation();
+    resetSnoozeMutation();
+  }, [resetAckMutation, resetResolveMutation, resetSnoozeMutation]);
+
+  useEffect(() => {
+    resetActionState();
+  }, [open, operatingCompanyId, alert?.id, resetActionState]);
+
+  const handleClose = useCallback(() => {
+    resetActionState();
+    onClose();
+  }, [onClose, resetActionState]);
+
+  useEscapeKey(handleClose, open && Boolean(alert));
 
   useEffect(() => {
     if (!open || !alert) return;
@@ -96,7 +126,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           close button — a second drawer implementation beside the shared one, so every drawer-chrome
           fix had to be made twice and this copy drifted. ParityDrawer is the single surface. The
           panel ref and data-testid are retained so existing focus behaviour and selectors hold. */}
-      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+      <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
         <div ref={panelRef} data-testid="integrity-alert-detail-drawer" className="space-y-2 text-sm">
           <div><strong>Category:</strong> {String(alert.alert_category ?? "—")}</div>
           <div><strong>Severity:</strong> {String(alert.severity ?? "—")}</div>
@@ -162,7 +192,9 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             </div>
           ) : null}
         </div>
-        {(ackMutation.isError || resolveMutation.isError || snoozeMutation.isError) ? (
+        {(ackMutation.isError && ackMutation.variables?.generation === actionGenerationRef.current) ||
+        (resolveMutation.isError && resolveMutation.variables?.generation === actionGenerationRef.current) ||
+        (snoozeMutation.isError && snoozeMutation.variables?.generation === actionGenerationRef.current) ? (
           <p className="mt-3 text-xs text-red-700" data-testid="integrity-alert-action-error">
             {userFacingApiError(
               ackMutation.error ?? resolveMutation.error ?? snoozeMutation.error,
@@ -174,14 +206,14 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
-            onClick={() => ackMutation.mutate()}
+            onClick={() => ackMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Acknowledge
           </button>
           <button
             type="button"
             className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
-            onClick={() => resolveMutation.mutate()}
+            onClick={() => resolveMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Resolve
           </button>
@@ -189,7 +221,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             type="button"
             className="rounded-sm border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
             data-testid="integrity-alert-snooze-btn"
-            onClick={() => snoozeMutation.mutate()}
+            onClick={() => snoozeMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Snooze 24h
           </button>
