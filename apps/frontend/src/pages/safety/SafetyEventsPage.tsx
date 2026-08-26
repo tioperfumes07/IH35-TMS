@@ -22,6 +22,7 @@ import { suggestExpenseLoad } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { Combobox } from "../../components/Combobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -423,39 +424,43 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <div className="relative flex flex-wrap items-end gap-2" data-testid="safety-events-filters">
-          <select
-            aria-label="Filter by status"
+          <Combobox
+            id="safety-events-status-filter"
+            className="w-36"
+            options={[
+              { value: "open", label: "Open" },
+              { value: "acknowledged", label: "Acknowledged" },
+              { value: "closed", label: "Closed" },
+            ]}
             value={filterDraft.status}
-            onChange={(event) =>
+            onChange={(next) =>
               staged.setDraft((d) => ({
                 ...d,
-                status: event.target.value as "" | "open" | "acknowledged" | "closed",
+                status: (next ?? "") as "" | "open" | "acknowledged" | "closed",
               }))
             }
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="acknowledged">Acknowledged</option>
-            <option value="closed">Closed</option>
-          </select>
-          <select
-            aria-label="Filter by severity"
+            placeholder="All statuses"
+            allowClear
+          />
+          <Combobox
+            id="safety-events-severity-filter"
+            className="w-36"
+            options={[
+              { value: "low", label: "Low" },
+              { value: "medium", label: "Medium" },
+              { value: "high", label: "High" },
+              { value: "critical", label: "Critical" },
+            ]}
             value={filterDraft.severity}
-            onChange={(event) =>
+            onChange={(next) =>
               staged.setDraft((d) => ({
                 ...d,
-                severity: event.target.value as "" | "low" | "medium" | "high" | "critical",
+                severity: (next ?? "") as "" | "low" | "medium" | "high" | "critical",
               }))
             }
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="">All severity</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
+            placeholder="All severity"
+            allowClear
+          />
           <input
             aria-label="Search safety events by title or description"
             value={filterDraft.search}
@@ -464,20 +469,16 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             className="w-56 rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
           {/* S-10: Type filter — despite TYPE being a visible column, no filter previously existed. */}
-          <select
-            aria-label="Filter by event type"
+          <Combobox
+            id="safety-events-type-filter"
+            dataTestId="safety-events-type-filter"
+            className="w-40"
+            options={availableTypes.map((type) => ({ value: type, label: type }))}
             value={filterDraft.type}
-            onChange={(event) => staged.setDraft((d) => ({ ...d, type: event.target.value }))}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            data-testid="safety-events-type-filter"
-          >
-            <option value="">All types</option>
-            {availableTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => staged.setDraft((d) => ({ ...d, type: next ?? "" }))}
+            placeholder="All types"
+            allowClear
+          />
           {/* SAF-F28: filters, not creators — allowCreate={false} (Idvr / Accidents law). */}
           <label className="text-[11px] text-slate-600" aria-label="Filter by driver">
             Driver
@@ -647,44 +648,64 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Event type"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
-          <select
+          <div className="text-xs text-slate-600">
+            <label htmlFor="safety-event-kpi-bucket">KPI bucket</label>
+            <Combobox
+            id="safety-event-kpi-bucket"
+            options={[
+              { value: "incidents", label: "Incidents" },
+              { value: "violations", label: "Violations" },
+              { value: "claims", label: "Claims" },
+              { value: "commendations", label: "Commendations" },
+            ]}
             value={draft.kpi_bucket}
-            onChange={(event) => setDraft((prev) => ({ ...prev, kpi_bucket: event.target.value as EventDraft["kpi_bucket"] }))}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="incidents">Incidents</option>
-            <option value="violations">Violations</option>
-            <option value="claims">Claims</option>
-            <option value="commendations">Commendations</option>
-          </select>
-          <select
+            onChange={(next) => next && setDraft((prev) => ({ ...prev, kpi_bucket: next as EventDraft["kpi_bucket"] }))}
+            placeholder="Select KPI bucket"
+            />
+          </div>
+          <div className="text-xs text-slate-600">
+            <label htmlFor="safety-event-severity">Severity</label>
+            <Combobox
+            id="safety-event-severity"
+            options={[
+              { value: "low", label: "Low" },
+              { value: "medium", label: "Medium" },
+              { value: "high", label: "High" },
+              { value: "critical", label: "Critical" },
+            ]}
             value={draft.severity}
-            onChange={(event) => setDraft((prev) => ({ ...prev, severity: event.target.value as EventDraft["severity"] }))}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
-          <select
+            onChange={(next) => next && setDraft((prev) => ({ ...prev, severity: next as EventDraft["severity"] }))}
+            placeholder="Select severity"
+            />
+          </div>
+          <div className="text-xs text-slate-600">
+            <label htmlFor="safety-event-status">Status</label>
+            <Combobox
+            id="safety-event-status"
+            options={[
+              { value: "open", label: "Open" },
+              { value: "acknowledged", label: "Acknowledged" },
+              { value: "closed", label: "Closed" },
+            ]}
             value={draft.status}
-            onChange={(event) => setDraft((prev) => ({ ...prev, status: event.target.value as EventDraft["status"] }))}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="open">Open</option>
-            <option value="acknowledged">Acknowledged</option>
-            <option value="closed">Closed</option>
-          </select>
-          <select
+            onChange={(next) => next && setDraft((prev) => ({ ...prev, status: next as EventDraft["status"] }))}
+            placeholder="Select status"
+            />
+          </div>
+          <div className="text-xs text-slate-600">
+            <label htmlFor="safety-event-subject-type">Subject type</label>
+            <Combobox
+            id="safety-event-subject-type"
+            options={[
+              { value: "company", label: "Company" },
+              { value: "driver", label: "Driver" },
+              { value: "unit", label: "Unit" },
+            ]}
             value={draft.subject_type}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subject_type: event.target.value as EventDraft["subject_type"] }))}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="company">Company</option>
-            <option value="driver">Driver</option>
-            <option value="unit">Unit</option>
-          </select>
+            onChange={(next) => next && setDraft((prev) => ({ ...prev, subject_type: next as EventDraft["subject_type"] }))}
+            placeholder="Select subject type"
+            />
+          </div>
           {/* C1 PICKER LAW: both were raw-UUID boxes. A safety event whose subject FK is blank is a
               DOT-reportable record attached to no driver and no unit — the exact linkage failure the
               picker law exists to stop. */}
