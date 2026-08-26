@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `Cursor | ACK | GO-1745 | PORT=9222 | NOW=lead+leftover-FE | SHA=ece4a06 | GO`
+
+**YOUR NOW:** lead census; leftover FE unique only. Do not steal money. Deploy already in flight — no second kick.
+
 **17:21 CT.** LEAD. Census this turn. Deploy IN FLIGHT dep-da7meuv10e5c73ft5icg — no second kick. Skip #15546. Do not steal CC-1 F6508. INBOX-DEVIN-A VOID.
 
 **16:36 CT.** Owner merge+deploy. One Devin. Skip #15546. Census LEAD-CENSUS.md.

@@ -1,3 +1,7 @@
+**17:45 CT 2026-08-26 GO-1745 — CURSOR LEAD. THIS IS NOW.** Older GO-1405 SHA `c46d592` / `29ad498` INBOX TOPs below stay as history. Live until this deploy lands = **`29ad498`**. API deploy **IN FLIGHT** `dep-da7mp2navr4c73b5h7hg` tip **`ece4a06`** (#16356). Hard-reload when healthz moves. Nobody second-kick. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Packet still GO-1405 law. ACK: `CASCADE | ACK | GO-1745 | PORT=n | NOW=/customers-then-/dispatch | SHA=ece4a06 | GO`
+
+**YOUR NOW (Jorge-plain):** walk `/customers` then `/dispatch` on USMCA after hard-reload. Labeled TEST OK. Unique FINDING to `docs/audit/GUARD-WORKORDERS.md`. Do not recertify U14. Do not deploy. Re-walk LISTS-INVENTORY on the **new** SHA — `a62f0cb` walk is stale.
+
 **17:21 CT (Jorge).** This is Jorge's IH35-TMS. Audit live /customers then /dispatch for 500s and dead clicks. Clone/pull origin/main. Labeled TEST is OK. Write findings to GUARD-WORKORDERS.md. Do not recertify. Do not deploy.
 
 **16:36 CT.** Hard-reload healthz. NOW=/customers then /dispatch. Unique FINDING. ACK OUTBOX. Never recertify. Never trigger_deploy.
