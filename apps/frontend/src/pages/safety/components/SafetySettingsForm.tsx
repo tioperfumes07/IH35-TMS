@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateSafetySettings } from "../../../api/safety";
 import { Button } from "../../../components/Button";
@@ -15,24 +15,41 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
   const [inactiveThreshold, setInactiveThreshold] = useState(String(settings.dashboard_inactive_threshold_days ?? 15));
   const [fineWindow, setFineWindow] = useState(String(settings.default_fine_dispute_window_days ?? 30));
   const [slaDays, setSlaDays] = useState(String(settings.violation_response_sla_days ?? 14));
+  const lifecycleGenerationRef = useRef(0);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      updateSafetySettings(operatingCompanyId, {
-        dashboard_active_window_days: Number(activeWindow),
-        dashboard_inactive_threshold_days: Number(inactiveThreshold),
-        default_fine_dispute_window_days: Number(fineWindow),
-        violation_response_sla_days: Number(slaDays),
-      }),
-    onSuccess: onSaved,
+    mutationFn: ({ companyId, body }: { companyId: string; body: Record<string, number>; generation: number }) =>
+      updateSafetySettings(companyId, body),
+    onSuccess: (_result, variables) => {
+      if (variables.generation !== lifecycleGenerationRef.current) return;
+      onSaved();
+    },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    mutation.reset();
+    setActiveWindow(String(settings.dashboard_active_window_days ?? 10));
+    setInactiveThreshold(String(settings.dashboard_inactive_threshold_days ?? 15));
+    setFineWindow(String(settings.default_fine_dispute_window_days ?? 30));
+    setSlaDays(String(settings.violation_response_sla_days ?? 14));
+  }, [operatingCompanyId, settings]); // mutation.reset is stable; reset the draft when the canonical settings context changes.
 
   return (
     <form
       className="space-y-3 rounded-sm border border-gray-200 bg-white p-3"
       onSubmit={(event) => {
         event.preventDefault();
-        mutation.mutate();
+        mutation.mutate({
+          companyId: operatingCompanyId,
+          generation: lifecycleGenerationRef.current,
+          body: {
+            dashboard_active_window_days: Number(activeWindow),
+            dashboard_inactive_threshold_days: Number(inactiveThreshold),
+            default_fine_dispute_window_days: Number(fineWindow),
+            violation_response_sla_days: Number(slaDays),
+          },
+        });
       }}
     >
       <div className="grid gap-3 md:grid-cols-2">
