@@ -1,3 +1,5 @@
+**16:36 CT.** Hard-reload healthz. NOW=/reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.
+
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=cash-flow Pull invoices 500 prove still/closed then /reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `CC-2 | ACK | GO-1405 | PORT=9224 | NOW=cash-flow-pull | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never GL. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel Live Chrome leaves. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** live-verify `/cash-flow` Pull invoices 500 still/closed on `c46d592`; then `/reports` `/finance` `/tasks` unique + calendars. Q8 worker if still true. Confirm CURRENT-LAW in packet.

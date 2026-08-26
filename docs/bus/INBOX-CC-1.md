@@ -1,3 +1,5 @@
+**16:47 CT.** Hard-reload healthz. Money clone. One PR. NOW=MAINT-MONEY-F6631-PARTS-PURCHASE-MUTABLE-COMPANY-DRAFT-SCOPE. Then F6634→F6635→F6535→F6508→SETL-F6464→cash-advance notify→FACTORING-CHARGEBACK-BALANCE. Never trigger_deploy. ACK OUTBOX.
+
 **19:46 CT HARD WAKE.** Still (b). Live **`273e6d1`**. Money clone NOW=57cabbab. Do not hold in bus-cleanup. Never idle. Never trigger_deploy.
 
 **19:42 CT GO-1405 RULING — (b) MONEY CLONE NOW. Not (a).** Worktree name is not your lane. `cursor-bus-cleanup-stage3` = Cursor janitor. Do **not** open a bus-cleanup PR from CC-1. Do **not** stay in that tree. Use money clone (`cc1-money-lane` / `cc1-next-item` / `cc1-final-ship`). `git fetch && git checkout -B cc-1/expense-57cabbab-je origin/main`. No GitHub PR on `57cabbab` right now. Board still OPEN. NOW=`PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` reuse poster. ACK OUTBOX. Never idle. Next after JE = Pull invoices 500. Never `trigger_deploy`.
