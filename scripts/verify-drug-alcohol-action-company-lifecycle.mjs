@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["driver","connectivity","qbo_chrome"],"leaves":["drug_alcohol.list"],"task":"SAFETY-F6621-DRUG-POOL-CONFIRM-LIFECYCLE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const source = fs.readFileSync("apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx", "utf8");
@@ -19,7 +20,12 @@ function inspect(value) {
     [/advanceRtdMutation\.variables\?\.generation === actionGenerationRef\.current/, "stale RTD-advance error can leak"],
     [/<EntityPicker[\s\S]*kind="driver"[\s\S]*operatingCompanyId=\{companyId\}/, "driver picker is not canonical/scoped"],
     [/<EntityLink[\s\S]*kind="driver"[\s\S]*id=\{effectiveDriverId\}/, "selected-driver reverse drill is missing"],
+    [/pendingBulkEnroll, setPendingBulkEnroll/, "bulk enrollment does not retain a submitted snapshot"],
+    [/setPendingBulkEnroll\(\{[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current,[\s\S]*consortiumName: name,[\s\S]*activeDriverCount,/, "bulk confirmation snapshot is incomplete"],
+    [/setPendingBulkEnroll\(null\)[\s\S]*bulkEnrollMutation\.mutate\(\{[\s\S]*companyId: input\.companyId,[\s\S]*generation: input\.generation,[\s\S]*consortiumName: input\.consortiumName/, "bulk confirmation does not submit and clear its immutable snapshot"],
+    [/<ConfirmModal[\s\S]*title="Enroll active drivers in this random pool\?"/, "bulk enrollment lacks canonical confirmation chrome"],
   ];
+  if (/window\.confirm\(/.test(value)) failures.push("native confirmation still blocks bulk enrollment");
   for (const [pattern, message] of checks) {
     const matches = value.match(pattern);
     if (!matches || (message === "stale successes are not rejected" && matches.length < 4)) failures.push(message);
@@ -34,6 +40,8 @@ if (process.argv.includes("--selftest")) {
     "bulkEnrollRandomPool(input.companyId, input.consortiumName)",
     "createRtdCase(input.companyId, { driver_id: input.driverId })",
     "advanceRtdCase(input.caseId, input.companyId",
+    "pendingBulkEnroll, setPendingBulkEnroll",
+    "<ConfirmModal",
   ];
   for (const token of mutations) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);

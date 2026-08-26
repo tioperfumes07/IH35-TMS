@@ -32,6 +32,7 @@ import { Button } from "../../../components/Button";
 import { useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 
 const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
 
@@ -91,6 +92,12 @@ export function DrugAlcoholTab() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const actionGenerationRef = useRef(0);
+  const [pendingBulkEnroll, setPendingBulkEnroll] = useState<{
+    companyId: string;
+    generation: number;
+    consortiumName: string;
+    activeDriverCount: number;
+  } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5183 — visible EntityPicker + URL write (URL-only / create-picker without URL sync is not reverse chrome).
   const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -212,11 +219,12 @@ export function DrugAlcoholTab() {
     const name = consortiumName.trim();
     if (!name) return;
     if (activeDriverCount == null) return;
-    const ok = window.confirm(
-      `Enroll all ${activeDriverCount} active CDL drivers into the "${name}" FMCSA random pool? ` +
-        `Already-enrolled drivers are skipped (idempotent).`
-    );
-    if (ok) bulkEnrollMutation.mutate({ companyId, generation: actionGenerationRef.current, consortiumName: name });
+    setPendingBulkEnroll({
+      companyId,
+      generation: actionGenerationRef.current,
+      consortiumName: name,
+      activeDriverCount,
+    });
   }
 
   const openRtdMutation = useMutation({
@@ -248,6 +256,7 @@ export function DrugAlcoholTab() {
     bulkEnrollMutation.reset();
     openRtdMutation.reset();
     advanceRtdMutation.reset();
+    setPendingBulkEnroll(null);
     setTestType("random");
     setTestResult("negative");
     setTestDate(companyToday());
@@ -656,6 +665,28 @@ export function DrugAlcoholTab() {
           separate consortium-program engine (/api/safety/drug-alcohol/*) alongside the driver-level
           workflow above. */}
       <DrugAlcoholProgramTab />
+
+      <ConfirmModal
+        open={Boolean(pendingBulkEnroll)}
+        title="Enroll active drivers in this random pool?"
+        message={
+          pendingBulkEnroll
+            ? `Enroll all ${pendingBulkEnroll.activeDriverCount} active CDL drivers into the "${pendingBulkEnroll.consortiumName}" FMCSA random pool? Already-enrolled drivers are skipped.`
+            : ""
+        }
+        confirmLabel="Enroll drivers"
+        onClose={() => setPendingBulkEnroll(null)}
+        onConfirm={() => {
+          if (!pendingBulkEnroll) return;
+          const input = pendingBulkEnroll;
+          setPendingBulkEnroll(null);
+          bulkEnrollMutation.mutate({
+            companyId: input.companyId,
+            generation: input.generation,
+            consortiumName: input.consortiumName,
+          });
+        }}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
