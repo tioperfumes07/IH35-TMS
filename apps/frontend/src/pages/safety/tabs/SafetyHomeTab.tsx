@@ -17,6 +17,7 @@ import { SAFETY_ALIAS_TABS, SAFETY_GROUPS } from "../../../components/safety/SAF
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
+import { Combobox } from "../../../components/Combobox";
 
 // S-11: Safety previously had no dedicated landing dashboard — `/safety` redirected straight into the
 // "Incidents & Claims" tab, with no company-wide aggregate view. This is the missing home page.
@@ -273,24 +274,18 @@ export function SafetyHomeTab() {
             </div>
           )}
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-slate-600">
-          Window
-          <select
-            aria-label="Active driver window (days)"
-            value={activeDriverWindow}
-            onChange={(event) =>
-              setActiveDriverWindow(Number(event.target.value) as ActiveDriverSetThresholdDays)
-            }
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            data-testid="safety-home-active-drivers-window"
-          >
-            {ACTIVITY_WINDOW_OPTIONS.map((days) => (
-              <option key={days} value={days}>
-                {days} days
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+          <label htmlFor="safety-home-active-drivers-window">Window</label>
+          <Combobox
+            id="safety-home-active-drivers-window"
+            dataTestId="safety-home-active-drivers-window"
+            ariaLabel="Active driver window (days)"
+            value={String(activeDriverWindow)}
+            options={ACTIVITY_WINDOW_OPTIONS.map((days) => ({ value: String(days), label: `${days} days` }))}
+            onChange={(next) => setActiveDriverWindow(Number(next) as ActiveDriverSetThresholdDays)}
+            className="min-w-28"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
