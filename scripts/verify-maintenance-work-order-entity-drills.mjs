@@ -57,6 +57,8 @@ const checks = [
   ["workOrders", /LEFT JOIN dispatch\.intransit_issues si ON si\.id = w\.source_intransit_issue_id AND si\.operating_company_id = w\.operating_company_id/, "WO detail resolves source issue company-scoped"],
   ["detail", /Source In-Transit Issue[\s\S]*\/dispatch\/in-transit-issues\?issue_id=/, "WO modal renders exact source issue reverse route"],
   ["detailPage", /data-testid="wo-source-intransit-issue"[\s\S]*\/dispatch\/in-transit-issues\?issue_id=/, "WO page renders exact source issue reverse route"],
+  ["detailPage", /if \(woQ\.isError\)[\s\S]{0,500}<ListErrorState[\s\S]{0,300}onRetry=\{\(\) => void woQ\.refetch\(\)\}/, "WO detail transport failure retries the exact read"],
+  ["detailPage", /if \(!wo\)[\s\S]{0,200}Work order not found or unavailable for this operating company\./, "WO detail separates honest missing record from transport failure"],
   ["dispatchRoutes", /issue_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)[\s\S]*issue_id:\s*query\.data\.issue_id/, "dispatch route accepts exact source issue filter"],
   ["dispatchService", /if \(filters\.issue_id\)[\s\S]*clauses\.push\(`i\.id = \$\$\{values\.length\}::uuid`\)/, "dispatch source issue filter is exact and company-scoped"],
   ["dispatchPage", /reverseIssueId[\s\S]*issue_id:\s*reverseIssueId \|\| undefined/, "dispatch page consumes exact source issue route"],
