@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
@@ -110,6 +110,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+  const statusGenerationRef = useRef(0);
   // Service/Location drill-through: ?location=&bucket= narrow the Active-WOs list to that location.
   const [searchParams] = useSearchParams();
   const locationFilter = searchParams.get("location") ?? "";
@@ -200,21 +201,28 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     retry: false,
   });
   const statusMutation = useMutation({
-    mutationFn: (args: { id: string; status: "in_progress" | "waiting_parts" | "complete" }) =>
-      transitionWorkOrder(args.id, companyId, { new_status: args.status }),
-    onSuccess: async () => {
+    mutationFn: (args: { id: string; status: "in_progress" | "waiting_parts" | "complete"; companyId: string; generation: number }) =>
+      transitionWorkOrder(args.id, args.companyId, { new_status: args.status }),
+    onSuccess: async (_result, args) => {
+      if (args.generation !== statusGenerationRef.current) return;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "rm-status", companyId] }),
-        queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "recent", companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "rm-status", args.companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "recent", args.companyId] }),
         // WO-DETAIL-MODAL-COMPLETE-DEAD-BUTTON: without this, WorkOrderDetailModal's Status/V5
         // fields stay stale after a transition fired from inside the open modal (e.g. Mark
         // Completed), even though the write succeeded — only a full page reload showed it.
-        queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", args.companyId] }),
       ]);
       pushToast("R&M status updated", "success");
     },
     onError: () => pushToast("Failed to update R&M status", "error"),
   });
+
+  useEffect(() => {
+    statusGenerationRef.current += 1;
+    statusMutation.reset();
+    setSelectedWorkOrderId(null);
+  }, [companyId]);
 
   // CLS-MONEY-KPI-FAKE-ZERO remainder (maintenance): never substitute a zero object when the
   // dashboard KPI fetch fails or has not arrived — MaintKpiRows/RMStatStrip render "—" for absent
@@ -366,7 +374,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                   setCreateWoOpen(true);
                 }}
                 onOpen={(id) => setSelectedWorkOrderId(id)}
-                onAdvanceStatus={(id, status) => statusMutation.mutate({ id, status })}
+                onAdvanceStatus={(id, status) => statusMutation.mutate({
+                  id,
+                  status,
+                  companyId,
+                  generation: statusGenerationRef.current,
+                })}
               />
             )}
           </div>
@@ -614,7 +627,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         workOrder={(workOrderDetailQuery.data ?? null) as Record<string, unknown> | null}
         onComplete={
           selectedWorkOrderId
-            ? () => statusMutation.mutate({ id: selectedWorkOrderId, status: "complete" })
+            ? () => statusMutation.mutate({
+                id: selectedWorkOrderId,
+                status: "complete",
+                companyId,
+                generation: statusGenerationRef.current,
+              })
             : undefined
         }
         onClose={() => setSelectedWorkOrderId(null)}
