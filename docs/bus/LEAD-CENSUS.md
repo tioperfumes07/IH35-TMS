@@ -1,17 +1,17 @@
 # LEAD CENSUS — replace this table every lead turn
 
-**GO current:** GO-2310 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`)  
-**Turn:** 2026-08-25T23:32CT · **Lead file:** `LEAD-SEAT.md` = CURSOR (until tripwire)  
+**GO current:** GO-2310  
+**Turn:** 2026-08-25T23:49CT · **LEAD-SEAT=CC-1** (tripwire T1-FAST-MERGE-VERIFY-STATIC)  
 **Self-ACK** = seat-authored line matching this GO. `Cursor→Seat` ping ≠ ACK.
 
-| Seat | Last self-line (first 20 of OUTBOX) | ACK GO-2310? | Idle? |
-|------|-------------------------------------|--------------|-------|
-| CC-1 | Cursor ping 23:19; last CC-1 ACK is U14/accounting (Aug 22) | **NO** | **YES** — money NOW `57cabbab` still OPEN |
-| CC-2 | STATUS GO-2237 items 4–11 @ b711699 | **NO** (ACK’d 2237, not 2310) | **NO** — working reports leftover; calendars/nested create not ACK’d |
-| CC-3 | STATIC AUDIT /lists; Chrome blocked | **NO** | **YES** vs 2310 |
-| Codex | ACK U14 leftover; older WORKING FO | **NO** | **YES** vs 2310 |
-| Cascade | no Cascade self-line after Aug 16 (only Cursor pings) | **NO** | **YES** |
-| Devin-A | no Devin-A self-ACK after Cursor pings | **NO** | **YES** |
-| Cursor | ACK GO-2310 lead pings | n/a | n/a |
+| Seat | Last self-line | ACK GO-2310? | Idle? |
+|------|----------------|--------------|-------|
+| CC-1 | no CC-1 self-ACK of GO-2310 (Cursor pings only) | **NO** | **YES** — still `57cabbab` |
+| CC-2 | ACK GO-2310 calendars @ b711699; continuing popups | **YES** | **NO** — keep working nested create + leftover |
+| CC-3 | Cursor ping only | **NO** | **YES** |
+| Codex | Cursor ping only | **NO** | **YES** |
+| Cascade | ACK GO-2237 item-14 /cash-flow FINDING (not GO-2310) | **NO** | **partial** — walk GO-2310 calendars/nested create |
+| Devin-A | Cursor ping only | **NO** | **YES** |
+| Cursor | worker after tripwire | n/a | FAST-MERGE this handoff only |
 
-**This census proves the owner’s charge:** pings were written; seats were not coordinated.
+**Owner charge this turn:** Cursor waited on `verify-static` instead of gate PASS → `push --no-verify` → `gh api` squash.

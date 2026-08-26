@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-26T04:50:18.700Z | LEAD | YOU ARE LEAD T1-FAST-MERGE-VERIFY-STATIC · read CLAUDE-LEAD-NOW.md · ACK OUTBOX · NOW=#3 57cabbab JE then accounting calendars · money clone · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW idle=defect ACK OUTBOX · NOW=#3 57cabbab JE then /accounting calendars+nested create · money clone · never /425c · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T18:29CT | GO | GO-1829 IDLE=DEFECT you are MONEY not leftover · live 3f49b42 · NOW=#3 expense 57cabbab reuse poster then 4-10 money clone · never /425c · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-25T16:30CT | GO | GO-1630 STILL NO ACK · NOW=#1 invoice#=load# then 2-10 · live e59f66a · money clone · ACK this turn · never trigger_deploy | GO

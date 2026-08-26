@@ -1,3 +1,5 @@
+**23:32+ CT CLAUDE LEAD ACTIVE.** `LEAD-SEAT=CC-1`. You are NOT lead. Worker + deploy lieutenant. Paste: `docs/bus/CLAUDE-LEAD-NOW.md` §3. FAST-MERGE Cursor-lane only. Only you `trigger_deploy` when Claude’s census says the 5–10 gate. Do not steal `57cabbab`. Do not recertify U14. Tripwire reason: T1-FAST-MERGE-VERIFY-STATIC. FAST-MERGE = gate PASS then `git push --no-verify` (ENV verify-static is not a wait). Never `gh pr checks --watch`. Merge via `gh api PUT .../merge`.
+
 # INBOX-CURSOR · 9222 · LEAD
 
 **23:32 CT LEAD CONTRACT.** Every lead turn: rewrite `docs/bus/LEAD-CENSUS.md` from seven OUTBOXes. Ping ≠ ACK. T1–T6 → `node scripts/ops/activate-claude-lead.mjs --reason=T#` then stop leading. Packet already written: `docs/bus/CLAUDE-LEAD-NOW.md`. Do not add another law.

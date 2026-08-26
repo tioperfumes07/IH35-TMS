@@ -1,3 +1,4 @@
+Cursor→CC-3 | 2026-08-25T23:49CT | GO | CLAUDE LEAD · WORK NOW GO-2310 ACK OUTBOX · /lists then /legal calendars + +Add new = Lists creator · never steal money · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW idle=defect ACK OUTBOX · NOW /lists then /legal calendars + +Add new = Lists creator · never steal CC-1 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T18:29CT | GO | GO-1829 IDLE=DEFECT · live 3f49b42 not ecd09bf · 67-72 HUNT-PASS · NOW=73-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-25T16:30CT | GO | GO-1630 if #15909 on main do not remake · leftover 62-75 · #64 waits CC-1 #6 · never trigger_deploy | GO
