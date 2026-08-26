@@ -6,7 +6,7 @@ const source = fs.readFileSync(target, "utf8");
 
 function failures(candidate) {
   const errors = [];
-  if (!/useEffect\(\(\) => \{\s*if \(!open\) return;[\s\S]*?setSuggestionPinned\(false\);\s*\}, \[open, operatingCompanyId\]\);/.test(candidate)) {
+  if (!/useEffect\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*if \(!open\) return;[\s\S]*?setSuggestionPinned\(false\);\s*\}, \[open, operatingCompanyId\]\);/.test(candidate)) {
     errors.push("full Fuel draft reset must depend on open and operatingCompanyId");
   }
   for (const setter of ["setDriverId", "setUnitId", "setTrailerId", "setVendorId", "setLoadId"]) {
