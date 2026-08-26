@@ -7,5 +7,8 @@ export default {
     if (ctx.run("node", ["scripts/verify-maint-master-data-company-lifecycle.mjs"]) !== 0) {
       process.exit(1);
     }
+    if (ctx.run("node", ["scripts/verify-maint-parts-company-lifecycle.mjs"]) !== 0) {
+      process.exit(1);
+    }
   },
 };
