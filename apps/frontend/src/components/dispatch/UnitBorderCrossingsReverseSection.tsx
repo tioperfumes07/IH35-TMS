@@ -15,7 +15,7 @@ export function UnitBorderCrossingsReverseSection({ operatingCompanyId, unitId }
     },
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.crossings ?? [];
+  const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vehicle-profile-border-crossings">
       <h2 className="text-sm font-semibold text-slate-900">Border crossings{rows.length ? ` (${rows.length})` : ""}</h2>

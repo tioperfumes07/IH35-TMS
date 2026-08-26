@@ -11,7 +11,7 @@ export function DriverInTransitIssuesReverseSection({ operatingCompanyId, driver
     queryFn: () => listDispatchIntransitIssues(operatingCompanyId, { driver_id: driverId }),
     enabled: Boolean(operatingCompanyId && driverId),
   });
-  const rows = query.data?.issues ?? [];
+  const rows = query.isError ? [] : (query.data?.issues ?? []);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-intransit-issues-reverse">
