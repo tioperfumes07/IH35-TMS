@@ -16,6 +16,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { Combobox } from "../../components/Combobox";
 
 type ActionFilter = "" | "installed" | "removed" | "replaced";
 
@@ -231,23 +232,26 @@ export default function PositionHistoryPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Action:</label>
-          <select
+          <label className="text-sm font-medium text-gray-700" htmlFor="position-history-action-filter">Action:</label>
+          <Combobox
+            id="position-history-action-filter"
+            dataTestId="position-history-action-filter"
             value={draft.action}
-            onChange={(e) =>
+            options={[
+              { value: "", label: "All" },
+              { value: "installed", label: "Installed" },
+              { value: "removed", label: "Removed" },
+              { value: "replaced", label: "Replaced" },
+            ]}
+            onChange={(next) =>
               staged.setDraft((d) => ({
                 ...d,
-                action: e.target.value as ActionFilter,
+                action: next as ActionFilter,
               }))
             }
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-            data-testid="position-history-action-filter"
-          >
-            <option value="">All</option>
-            <option value="installed">Installed</option>
-            <option value="removed">Removed</option>
-            <option value="replaced">Replaced</option>
-          </select>
+            ariaLabel="Position action"
+            className="min-w-36"
+          />
         </div>
 
         <Button type="button" size="sm" data-testid="position-history-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
