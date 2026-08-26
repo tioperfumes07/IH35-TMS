@@ -73,6 +73,11 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
       pushToast("Failed to archive permit", "error");
     },
   });
+  const resetDeleteMutation = deleteMutation.reset;
+
+  useEffect(() => {
+    resetDeleteMutation();
+  }, [unitId, companyId, resetDeleteMutation]);
 
   const alertByPermit = useMemo(
     () =>
