@@ -109,6 +109,9 @@ export function run(overrides = {}) {
   if (!/FINANCE_HUB_CALCULATOR_FLAG/.test(calculator)) failures.push("CalculatorPage: must reference FINANCE_HUB_CALCULATOR_FLAG");
   if (!/FINANCE_HUB_AMORTIZATION_FLAG/.test(amort)) failures.push("AmortizationPage: must reference FINANCE_HUB_AMORTIZATION_FLAG");
   if (!/computeCalculator\s*\(/.test(calculator)) failures.push("CalculatorPage: must call computeCalculator");
+  if (!/Price \(\$\) \*/.test(calculator) || !/title=\{!calcReady/.test(calculator)) {
+    failures.push("CalculatorPage: required * + disabled-button title (FINANCE-HUB-SILENT-DISABLED-BUTTON)");
+  }
   if (!/createLoan\s*\(/.test(amort)) failures.push("AmortizationPage: must call createLoan");
   if (!/path="\/finance\/calculator"/.test(routes)) failures.push("routes: missing /finance/calculator route");
   if (!/path="\/finance\/amortization"/.test(routes)) failures.push("routes: missing /finance/amortization route");

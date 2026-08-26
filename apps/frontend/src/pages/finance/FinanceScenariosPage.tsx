@@ -133,6 +133,18 @@ export function FinanceScenariosPage() {
     [companyId, name, periodStart, periodCount, lines]
   );
 
+  const submitHint = useMemo(() => {
+    if (!companyId) return "Select an operating company.";
+    if (!name.trim()) return "Name is required.";
+    if (!periodStart) return "First period start is required.";
+    if (!(Number(periodCount) > 0)) return "Number of periods is required.";
+    if (lines.length === 0) return "Add at least one line.";
+    const incomplete = lines.find((l) => !l.category_label.trim() || !l.assumption_note.trim());
+    if (incomplete && !incomplete.category_label.trim()) return "Each line needs a Category.";
+    if (incomplete) return "Each line needs an Assumption.";
+    return "";
+  }, [companyId, name, periodStart, periodCount, lines]);
+
   const columns = useMemo<ParityColumn<Scenario>[]>(
     () => [
       {
@@ -273,7 +285,7 @@ export function FinanceScenariosPage() {
           <div className="space-y-4 px-4 py-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">Name</span>
+                <span className="text-xs font-medium text-slate-600">Name *</span>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -293,13 +305,13 @@ export function FinanceScenariosPage() {
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">First period starts</span>
+                <span className="text-xs font-medium text-slate-600">First period starts *</span>
                 <div className="mt-1">
                   <DatePicker value={periodStart} onChange={setPeriodStart} />
                 </div>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">Number of periods</span>
+                <span className="text-xs font-medium text-slate-600">Number of periods *</span>
                 <input
                   type="number"
                   min={1}
@@ -351,7 +363,7 @@ export function FinanceScenariosPage() {
                       </select>
                     </label>
                     <label className="block md:col-span-1">
-                      <span className="text-xs font-medium text-slate-600">Category</span>
+                      <span className="text-xs font-medium text-slate-600">Category *</span>
                       <input
                         value={line.category_label}
                         onChange={(e) =>
@@ -362,7 +374,7 @@ export function FinanceScenariosPage() {
                       />
                     </label>
                     <label className="block md:col-span-2">
-                      <span className="text-xs font-medium text-slate-600">Assumption</span>
+                      <span className="text-xs font-medium text-slate-600">Assumption *</span>
                       <input
                         value={line.assumption_note}
                         onChange={(e) =>
@@ -402,10 +414,17 @@ export function FinanceScenariosPage() {
             <button
               onClick={() => createMutation.mutate()}
               disabled={!canSubmit || createMutation.isPending}
+              title={!canSubmit ? submitHint : undefined}
+              aria-describedby={!canSubmit ? "finance-scenario-submit-hint" : undefined}
               className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {createMutation.isPending ? "Creating…" : "Create scenario"}
             </button>
+            {!canSubmit ? (
+              <p id="finance-scenario-submit-hint" className="text-sm text-slate-600">
+                {submitHint}
+              </p>
+            ) : null}
           </div>
         </section>
       )}
