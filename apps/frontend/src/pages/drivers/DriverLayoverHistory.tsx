@@ -132,12 +132,16 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
 
   return (
     <div>
-      <div className="flex gap-3 mb-4">
-        <DatePicker value={from} onChange={(next) => setFrom(next)}
-          className="" />
+      <div className="mb-4 flex gap-3">
+        <div>
+          <label htmlFor="driver-layover-from" className="mb-1 block text-xs font-semibold text-gray-600">From</label>
+          <DatePicker id="driver-layover-from" value={from} onChange={(next) => setFrom(next)} className="" />
+        </div>
         <span className="self-center text-gray-400">—</span>
-        <DatePicker value={to} onChange={(next) => setTo(next)}
-          className="" />
+        <div>
+          <label htmlFor="driver-layover-to" className="mb-1 block text-xs font-semibold text-gray-600">To</label>
+          <DatePicker id="driver-layover-to" value={to} onChange={(next) => setTo(next)} className="" />
+        </div>
       </div>
       {isError && (
         <ListErrorState
