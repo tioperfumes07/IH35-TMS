@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFuelTransaction, type FuelType } from "../../../api/fuelPlanner";
 import { suggestExpenseLoad } from "../../../api/maintenance";
@@ -49,8 +49,11 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [locationState, setLocationState] = useState("");
   const [notes, setNotes] = useState("");
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const lifecycleGenerationRef = useRef(0);
 
   useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    setSaving(false);
     if (!open) return;
     setTransactionDate(companyToday());
     setDriverId("");
@@ -103,6 +106,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
       pushToast("Pick a trip/load, or enter a load exemption reason (G18)", "error");
       return;
     }
+    const submissionGeneration = lifecycleGenerationRef.current;
     setSaving(true);
     try {
       const gallonsNum = gallons.trim() ? Number(gallons) : undefined;
@@ -124,12 +128,13 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         load_exemption_reason: loadId ? undefined : loadExemptionReason.trim(),
       });
       pushToast("Fuel purchase recorded", "success");
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       onCreated();
       onClose();
     } catch (error) {
       pushToast(userFacingApiError(error, "Failed to record fuel purchase"), "error");
     } finally {
-      setSaving(false);
+      if (lifecycleGenerationRef.current === submissionGeneration) setSaving(false);
     }
   };
 
