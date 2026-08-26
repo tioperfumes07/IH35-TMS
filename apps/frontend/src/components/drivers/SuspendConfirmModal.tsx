@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { suspendDriver } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -16,6 +16,20 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  const resetDraft = useCallback(() => {
+    setReason("");
+    setError("");
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, driverId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const submit = async () => {
     setError("");
     if (!reason.trim()) {
@@ -25,9 +39,8 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
     setPending(true);
     try {
       await suspendDriver(driverId, reason.trim());
-      setReason("");
       onSuspended?.();
-      onClose();
+      handleClose();
     } catch {
       setError("Failed to suspend driver.");
     } finally {
@@ -36,7 +49,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Suspend — ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Suspend — ${driverName}`}>
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
           Sets driver status to Inactive and records a safety incident for audit.
@@ -53,7 +66,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} data-testid="suspend-confirm">
