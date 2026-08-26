@@ -1,8 +1,10 @@
 # LEAD SEAT (one line of truth)
 
-**SEAT=CC-1**  
-**SINCE=2026-08-26T04:50:18.700Z**  
-**REASON=T1-FAST-MERGE-VERIFY-STATIC**  
-**PACKET=`docs/bus/CLAUDE-LEAD-NOW.md`**
+**SEAT=CURSOR**
+**SINCE=2026-08-26T16:10:51.000Z**
+**REASON=OWNER-DIRECT-INSTRUCTION**
+**PACKET=`docs/bus/OWNER-LEAD-TRANSITION-2026-08-26.md`**
 
-Cursor is worker + deploy lieutenant. Claude owns census + INBOX rewrites + money NOW.
+Owner instructed Cursor (9222) directly in chat to act as lead coder and coordinate all seats.
+Supersedes the prior tripwire state (`SEAT=CC-1`, `REASON=T1-FAST-MERGE-VERIFY-STATIC`). Read
+`docs/bus/OWNER-LEAD-TRANSITION-2026-08-26.md` for what changed and what didn't.

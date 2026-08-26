@@ -1,3 +1,5 @@
+**16:10 UTC OWNER-DIRECTED LEAD TRANSITION.** Owner instructed Cursor (9222) directly in chat to act as lead coder and coordinate all seats. `LEAD-SEAT=CURSOR` (REASON=OWNER-DIRECT-INSTRUCTION), supersedes the prior tripwire `SEAT=CC-1` state. Read `docs/bus/OWNER-LEAD-TRANSITION-2026-08-26.md`. Your own NOW/lane is unchanged by this alone -- keep working your current GO-2310 item. FAST-MERGE, never idle, nobody `trigger_deploy` (no working tool this session).
+
 # INBOX-CC-2 · 9224
 
 **23:49 CT CLAUDE IS LEAD.** Keep working. Nested create = Lists chrome on `/cash-flow` `/reports` `/finance` `/tasks`. Then leftover. Never `trigger_deploy`. ACK if you have more.
