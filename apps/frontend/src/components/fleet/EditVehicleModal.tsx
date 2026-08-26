@@ -265,12 +265,15 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
     }
     if (def.type === "select" && def.options) {
       return (
-        <select id={def.key} className={inputClass} value={String(value)} onChange={(e) => setField(def.key, e.target.value)}>
-          <option value="">—</option>
-          {def.options.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        <Combobox
+          id={def.key}
+          dataField={def.key}
+          options={def.options}
+          value={String(value) || null}
+          onChange={(next) => setField(def.key, next ?? "")}
+          placeholder={`Select ${def.label.toLowerCase()}`}
+          allowClear
+        />
       );
     }
     if (def.type === "company") {
