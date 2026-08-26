@@ -26,6 +26,9 @@ function inspect(source) {
   const actionSnapshots = source.match(/companyId,[\s\S]{0,120}generation: lifecycleGenerationRef\.current/g)?.length ?? 0;
   if (actionSnapshots < 3) errors.push("investigate/confirm/dismiss do not carry company generation");
   if (!source.includes('queryKey: ["fuel", "fraud-alerts", targetCompanyId]')) errors.push("refresh is not scoped to submitting company");
+  if (!/const actionPending = investigateMut\.isPending \|\| confirmMut\.isPending \|\| dismissMut\.isPending/.test(source)) errors.push("fraud state transitions have no shared pending boundary");
+  if ((source.match(/disabled=\{actionPending\}/g)?.length ?? 0) !== 3) errors.push("all three row actions must share the pending lock");
+  if ((source.match(/if \(actionPending\) return;/g)?.length ?? 0) !== 3) errors.push("all three row handlers must reject concurrent transitions");
   return errors;
 }
 
@@ -38,13 +41,16 @@ if (process.argv.includes("--selftest")) {
     source.replaceAll("input.generation !== lifecycleGenerationRef.current", "false"),
     source.replace("confirmDiscardOnClose", ""),
     source.replace("onClick={attemptDismissClose}", "onClick={closeDismiss}"),
+    source.replace("const actionPending = investigateMut.isPending || confirmMut.isPending || dismissMut.isPending", "const actionPending = false"),
+    source.replace("disabled={actionPending}", "disabled={investigateMut.isPending}"),
+    source.replace("if (actionPending) return;", "// planted: concurrent transition allowed"),
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-fuel-fraud-alert-action-lifecycle SELFTEST FAIL — ${missed.length}/4 mutation(s) survived`);
+    console.error(`verify-fuel-fraud-alert-action-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-fuel-fraud-alert-action-lifecycle selftest PASS — 6/6 planted defects rejected");
+  console.log("verify-fuel-fraud-alert-action-lifecycle selftest PASS — 9/9 planted defects rejected");
   process.exit(0);
 }
 
