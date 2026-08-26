@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCompanyViolation } from "../../../api/safety";
@@ -37,6 +37,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   // SAF-B29 wave-4: catalog capped at 200 — typed term must reach listCompanyViolationTypes.
   const [typeSearch, setTypeSearch] = useState("");
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setViolationType("DOT_inspection");
@@ -67,24 +68,13 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   );
 
   const mutation = useMutation({
-    mutationFn: () => {
-      // SAF-F15: catalogs.company_violation_types must be selected — free-text / enum-only creates
-      // left violation_type_uuid NULL so Lists catalog rows never joined.
-      if (!violationTypeUuid) {
-        throw new Error("Violation type (catalog) is required");
-      }
-      return createCompanyViolation(operatingCompanyId, {
-        violation_type: violationType,
-        violation_type_uuid: violationTypeUuid,
-        violation_severity: severity,
-        reported_date: reportedDate,
-        description,
-        corrective_action_plan: correctivePlan || null,
-        related_drivers: relatedDriverId ? [relatedDriverId] : [],
-        related_units: relatedUnitId ? [relatedUnitId] : [],
-      });
-    },
-    onSuccess: () => {
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: Parameters<typeof createCompanyViolation>[1];
+    }) => createCompanyViolation(input.companyId, input.payload),
+    onSuccess: (_created, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       onCreated();
       resetDraft();
       onClose();
@@ -93,6 +83,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
 
   const resetMutation = mutation.reset;
   useEffect(() => {
+    companyGenerationRef.current += 1;
     if (!open) return;
     resetDraft();
     resetMutation();
@@ -114,7 +105,23 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          mutation.mutate();
+          // SAF-F15: catalogs.company_violation_types must be selected — free-text / enum-only creates
+          // left violation_type_uuid NULL so Lists catalog rows never joined.
+          if (!violationTypeUuid) throw new Error("Violation type (catalog) is required");
+          mutation.mutate({
+            companyId: operatingCompanyId,
+            generation: companyGenerationRef.current,
+            payload: {
+              violation_type: violationType,
+              violation_type_uuid: violationTypeUuid,
+              violation_severity: severity,
+              reported_date: reportedDate,
+              description,
+              corrective_action_plan: correctivePlan || null,
+              related_drivers: relatedDriverId ? [relatedDriverId] : [],
+              related_units: relatedUnitId ? [relatedUnitId] : [],
+            },
+          });
         }}
       >
         <div className="grid gap-3 md:grid-cols-2">
@@ -238,7 +245,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             />
           </div>
         </div>
-        {mutation.isError ? (
+        {mutation.isError && mutation.variables?.generation === companyGenerationRef.current ? (
           <p className="text-xs text-red-700" data-testid="company-violation-create-error">
             {userFacingApiError(mutation.error, "Could not create the company violation.")}
           </p>

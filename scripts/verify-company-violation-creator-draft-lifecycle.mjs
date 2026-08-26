@@ -24,7 +24,12 @@ function failures(input = source) {
     ["all dismiss paths reset", /const handleClose = useCallback\(\(\) => \{\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input)],
     ["drawer dismiss uses reset close", input.includes('open={open} onClose={handleClose} title="Create Company Violation"')],
     ["cancel uses reset close", /variant="secondary" onClick=\{handleClose\}/.test(input)],
-    ["success clears draft", /onSuccess: \(\) => \{\s*onCreated\(\);\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
+    ["create snapshots company and payload", /createCompanyViolation\(input\.companyId, input\.payload\)/.test(input)],
+    ["company transition advances generation", /companyGenerationRef\.current \+= 1;\s*if \(!open\) return;/.test(input)],
+    ["stale success is rejected", /input\.generation !== companyGenerationRef\.current/.test(input)],
+    ["stale error is hidden", /mutation\.variables\?\.generation === companyGenerationRef\.current/.test(input)],
+    ["submit snapshots every entity field", /companyId: operatingCompanyId,[\s\S]*generation: companyGenerationRef\.current,[\s\S]*violation_type_uuid: violationTypeUuid,[\s\S]*related_drivers: relatedDriverId \? \[relatedDriverId\] : \[\],[\s\S]*related_units: relatedUnitId \? \[relatedUnitId\] : \[\]/.test(input)],
+    ["success clears draft", /onSuccess: \(_created, input\) => \{[\s\S]*onCreated\(\);\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -32,13 +37,17 @@ if (process.argv.includes("--selftest")) {
   const staleDriver = source.replace("setRelatedDriverId(null);", "void relatedDriverId;");
   const staleCompany = source.replace("[open, operatingCompanyId, resetDraft, resetMutation]", "[open, resetDraft, resetMutation]");
   const staleError = source.replace("resetMutation();\n    onClose();", "onClose();");
+  const staleCallback = source.replace("input.generation !== companyGenerationRef.current", "false");
+  const mutableCompany = source.replace("createCompanyViolation(input.companyId, input.payload)", "createCompanyViolation(operatingCompanyId, input.payload)");
   const checks = [
     failures(staleDriver).includes("complete violation draft reset"),
     failures(staleCompany).includes("reset draft and mutation on open/company change"),
     failures(staleError).includes("all dismiss paths reset"),
+    failures(staleCallback).includes("stale success is rejected"),
+    failures(mutableCompany).includes("create snapshots company and payload"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-company-violation-creator-draft-lifecycle selftest PASS — 3/3 stale entity-draft mutations red");
+  console.log("verify-company-violation-creator-draft-lifecycle selftest PASS — 5/5 stale entity-draft mutations red");
   process.exit(0);
 }
 
