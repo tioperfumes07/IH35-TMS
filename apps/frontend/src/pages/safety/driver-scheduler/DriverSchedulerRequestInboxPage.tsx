@@ -11,6 +11,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
 type PendingRequestRow = Record<string, unknown>;
 
@@ -30,7 +31,7 @@ export function DriverSchedulerRequestInboxPage() {
     () => [
       { key: "request_number", label: "Request", sortable: true, className: "font-mono", cellClass: "font-mono", render: (r) => String(r.request_number) },
       { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver" /> },
-      { key: "leave_type", label: "Type", sortable: true, render: (r) => String(r.leave_type) },
+      { key: "leave_type", label: "Type", sortable: true, render: (r) => humanizeEnumLabel(r.leave_type) },
       {
         key: "dates",
         label: "Dates",
