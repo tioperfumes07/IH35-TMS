@@ -6,5 +6,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-insurance-qbo-chrome-create-leaves.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-insurance-qbo-chrome-create-leaves.mjs"]);
+    ctx.run("node", ["scripts/verify-insurance-type-catalog-action-scope.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-insurance-type-catalog-action-scope.mjs"]);
   },
 };
