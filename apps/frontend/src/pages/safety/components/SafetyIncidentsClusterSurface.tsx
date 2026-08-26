@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { suggestExpenseLoad } from "../../../api/maintenance";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -77,6 +78,11 @@ type Props = {
 };
 
 type DraftState = Record<string, unknown>;
+type IncidentCreateInput = {
+  companyId: string;
+  generation: number;
+  payload: Parameters<typeof createSafetyIncident>[0];
+};
 
 function createDraftIncident(config: IncidentsClusterConfig): DraftState {
   return {
@@ -128,6 +134,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const createGenerationRef = useRef(0);
+  const [pendingPhotoLessCreate, setPendingPhotoLessCreate] = useState<IncidentCreateInput | null>(null);
   // S-08 + s-04 + LV-SAFETY-INCIDENTS-CLUSTER-FILTER-SILENT-APPLY — stage until Apply;
   // date range is sent as date_from/date_to query params (backend list route).
   const [searchParams, setSearchParams] = useSearchParams();
@@ -327,8 +335,20 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     setActionError(null);
   };
 
-  const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
+  useEffect(() => {
+    createGenerationRef.current += 1;
+    setPendingPhotoLessCreate(null);
+    setDrawerOpen(false);
+    setSelected(null);
+    setSaving(false);
+    setSavedHint(false);
+    setActionError(null);
+  }, [operatingCompanyId]);
+
+  const refresh = (submittedCompanyId = operatingCompanyId) => {
+    void queryClient.invalidateQueries({
+      queryKey: ["safety", "incidents", config.incidentType, submittedCompanyId],
+    });
   };
 
   const setField = (key: string, value: unknown) =>
@@ -345,18 +365,33 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     return missing;
   }, [createMode, selected, config.requiredExtraFields]);
 
+  const persistCreate = async (input: IncidentCreateInput) => {
+    setSaving(true);
+    setActionError(null);
+    try {
+      const res = await createSafetyIncident(input.payload);
+      if (input.generation !== createGenerationRef.current) return;
+      const created = res.incident;
+      refresh(input.companyId);
+      if (created?.id) {
+        // Post-save photo step: keep the drawer open on the new record in detail mode so the
+        // user can add condition/damage photos immediately (the surface supports detail-mode upload).
+        setSelected(created as DraftState);
+        setSavedHint(true);
+      } else {
+        closeDrawer();
+      }
+    } catch (err) {
+      if (input.generation === createGenerationRef.current) {
+        setActionError(userFacingApiError(err, "Could not create the safety incident"));
+      }
+    } finally {
+      if (input.generation === createGenerationRef.current) setSaving(false);
+    }
+  };
+
   const saveCreate = async () => {
     if (!createMode || !selected || missingFields.length > 0 || saving) return;
-
-    // Trailer interchange (TIR): condition photos protect the company on damage disputes.
-    // Photos attach post-save, so at create there are never photos yet — confirm intent.
-    if (config.confirmWithoutPhotos) {
-      const ok = window.confirm(
-        "Interchange condition photos protect the company on damage disputes — continue without?"
-      );
-      if (!ok) return;
-    }
-
     const payload: Parameters<typeof createSafetyIncident>[0] = {
       operating_company_id: operatingCompanyId,
       incident_type: config.incidentType,
@@ -373,26 +408,16 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       const cents = selected.damage_amount_cents;
       payload.damage_amount_cents = typeof cents === "number" && Number.isFinite(cents) && cents > 0 ? cents : 0;
     }
+    const input = {
+      companyId: operatingCompanyId,
+      generation: createGenerationRef.current,
+      payload,
+    } satisfies IncidentCreateInput;
 
-    setSaving(true);
-    setActionError(null);
-    try {
-      const res = await createSafetyIncident(payload);
-      const created = res.incident;
-      refresh();
-      if (created?.id) {
-        // Post-save photo step: keep the drawer open on the new record in detail mode so the
-        // user can add condition/damage photos immediately (the surface supports detail-mode upload).
-        setSelected(created as DraftState);
-        setSavedHint(true);
-      } else {
-        closeDrawer();
-      }
-    } catch (err) {
-      setActionError(userFacingApiError(err, "Could not create the safety incident"));
-    } finally {
-      setSaving(false);
-    }
+    // Trailer interchange (TIR): photos attach post-save. Preserve the exact submitted payload
+    // while the operator confirms the exceptional no-photo path.
+    if (config.confirmWithoutPhotos) setPendingPhotoLessCreate(input);
+    else await persistCreate(input);
   };
 
   const beginEdit = () => {
@@ -1118,6 +1143,20 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={Boolean(pendingPhotoLessCreate)}
+        title="Create interchange without condition photos?"
+        message="Condition photos protect the company during trailer damage disputes. Continue only when photos are genuinely unavailable; they can be attached immediately after save."
+        confirmLabel="Create without photos"
+        onClose={() => setPendingPhotoLessCreate(null)}
+        onConfirm={async () => {
+          if (!pendingPhotoLessCreate) return;
+          const input = pendingPhotoLessCreate;
+          setPendingPhotoLessCreate(null);
+          await persistCreate(input);
+        }}
+      />
     </div>
   );
 }
