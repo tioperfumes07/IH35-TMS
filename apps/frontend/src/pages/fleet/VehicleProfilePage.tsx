@@ -1,5 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -147,6 +147,7 @@ export function VehicleProfilePage() {
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
+  const actionGenerationRef = useRef(0);
   const canFetchProfile = Boolean(id && companyId);
 
   const profileQuery = useQuery({
@@ -215,17 +216,21 @@ export function VehicleProfilePage() {
     onError: () => pushToast("Failed to save", "error"),
   });
 
+  /** @matrix-built modules=fleet cols=driver,unit,connectivity,reverse_link */
   const quickAvailMutation = useMutation({
-    mutationFn: (value: "available" | "booked" | "holding" | null) => postQuickAvailability(id, companyId, value),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+    mutationFn: (input: { unitId: string; companyId: string; generation: number; value: "available" | "booked" | "holding" | null }) => postQuickAvailability(input.unitId, input.companyId, input.value),
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
       pushToast("Unit availability updated", "success");
     },
-    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to update unit availability", "error"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(error instanceof Error ? error.message : "Failed to update unit availability", "error");
+    },
   });
 
-  const invalidateProfile = () => {
-    void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+  const invalidateProfile = (unitId = id, operatingCompanyId = companyId) => {
+    void queryClient.invalidateQueries({ queryKey: ["unit-profile", unitId, operatingCompanyId] });
   };
 
   // Dead-click fix: this used to be a "not yet implemented" no-op even though the real endpoint
@@ -233,23 +238,37 @@ export function VehicleProfilePage() {
   // /api/v1/mdata/units/:id/deactivate. Soft-delete only (deactivated_at), never a hard delete;
   // reversible via "Reactivate" on the Fleet roster.
   const archiveMutation = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/v1/mdata/units/${id}/deactivate?operating_company_id=${encodeURIComponent(companyId)}`, {
+    mutationFn: (input: { unitId: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/mdata/units/${input.unitId}/deactivate?operating_company_id=${encodeURIComponent(input.companyId)}`, {
         method: "POST",
         body: {},
       }),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Unit archived (soft-deleted) — reversible from the Fleet roster.", "success");
-      invalidateProfile();
+      invalidateProfile(input.unitId, input.companyId);
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive unit", "error"),
+    onError: (e, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(e instanceof Error ? e.message : "Failed to archive unit", "error");
+    },
   });
 
   // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
   // (in-app yes/no shell) replaces it, same soft-delete/reversible contract.
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const handleArchive = () => setArchiveConfirmOpen(true);
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    quickAvailMutation.reset();
+    archiveMutation.reset();
+    setArchiveConfirmOpen(false);
+    setQuickAssignOpen(false);
+    setEditModalOpen(false);
+    setStatusModalOpen(false);
+    setStatusModalTarget(null);
+  }, [companyId, id]);
 
   const telemetry = telemetryQuery.data ?? profile;
   const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
@@ -293,7 +312,7 @@ export function VehicleProfilePage() {
               unit={unit ?? {}}
               plates={profile.plates ?? []}
               latestPosition={profile.latest_position}
-              onQuickAvailability={(value) => quickAvailMutation.mutate(value)}
+              onQuickAvailability={(value) => quickAvailMutation.mutate({ unitId: id, companyId, generation: actionGenerationRef.current, value })}
               quickAvailabilityPending={quickAvailMutation.isPending}
               onStatusSaved={() => void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] })}
               onRequestStatusChange={(next) => {
@@ -611,13 +630,15 @@ export function VehicleProfilePage() {
         target={{ equipmentKind: "truck", equipmentId: id, equipmentLabel: unitNumber }}
         onClose={() => setQuickAssignOpen(false)}
         onConfirm={async (driverId) => {
+          const input = { unitId: id, companyId, driverId, generation: actionGenerationRef.current };
           await quicksaveEquipmentAssignment({
-            operating_company_id: companyId,
+            operating_company_id: input.companyId,
             equipment_kind: "truck",
-            equipment_id: id,
-            driver_id: driverId,
+            equipment_id: input.unitId,
+            driver_id: input.driverId,
           });
-          void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+          if (input.generation !== actionGenerationRef.current) return;
+          void queryClient.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
           pushToast("Driver assigned", "success");
         }}
       />
@@ -651,7 +672,7 @@ export function VehicleProfilePage() {
         danger
         onClose={() => setArchiveConfirmOpen(false)}
         onConfirm={async () => {
-          await archiveMutation.mutateAsync().catch(() => undefined); // onError above already toasts
+          await archiveMutation.mutateAsync({ unitId: id, companyId, generation: actionGenerationRef.current }).catch(() => undefined); // onError above already toasts
         }}
       />
     </div>

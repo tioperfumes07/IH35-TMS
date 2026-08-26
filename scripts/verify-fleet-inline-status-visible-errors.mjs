@@ -10,7 +10,7 @@ const files = {
 function audit(source) {
   const failures = [];
   const need = (condition, message) => { if (!condition) failures.push(message); };
-  need(/onError: \(error\) => pushToast\(error instanceof Error \? error\.message : "Failed to update unit availability", "error"\)/.test(source.page), "quick availability failure must toast");
+  need(/onError: \(error(?:, input)?\) => \{[\s\S]{0,220}?pushToast\(error instanceof Error \? error\.message : "Failed to update unit availability", "error"\)[\s\S]{0,80}?\}/.test(source.page), "quick availability failure must toast");
   need(/pushToast\("Unit availability updated", "success"\)/.test(source.page), "quick availability success must be explicit");
   need(/quickAvailabilityPending=\{quickAvailMutation\.isPending\}/.test(source.page), "pending state must reach the toggle");
   need(/disabled=\{quickAvailabilityPending\}/.test(source.identity), "toggle must block duplicate writes");
@@ -27,7 +27,7 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    { ...files, page: files.page.replace("onError: (error) => pushToast", "onSettled: (error) => pushToast") },
+    { ...files, page: files.page.replace("onError: (error, input) => {", "onSettled: (error, input) => {") },
     { ...files, page: files.page.replace('pushToast("Unit availability updated", "success");', "") },
     { ...files, page: files.page.replace("quickAvailabilityPending={quickAvailMutation.isPending}", "") },
     { ...files, identity: files.identity.replace("disabled={quickAvailabilityPending}", "") },
