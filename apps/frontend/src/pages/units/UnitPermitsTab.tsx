@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { CertExpiryBadge } from "../../components/safety/CertExpiryBadge";
@@ -37,6 +37,11 @@ function fetchPermits(unitId: string, companyId: string) {
 export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const scopeGenerationRef = useRef(0);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+  }, [unitId, companyId]);
 
   const permitsQuery = useQuery({
     queryKey: ["unit-permits", unitId, companyId],
@@ -45,15 +50,28 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (permitUuid: string) =>
-      apiRequest(`/api/units/${unitId}/permits/${permitUuid}?operating_company_id=${encodeURIComponent(companyId)}`, {
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["unit-permits", unitId, companyId] });
+    mutationFn: (input: {
+      permitUuid: string;
+      unitId: string;
+      companyId: string;
+      generation: number;
+    }) =>
+      apiRequest(
+        `/api/units/${input.unitId}/permits/${input.permitUuid}?operating_company_id=${encodeURIComponent(input.companyId)}`,
+        { method: "DELETE" }
+      ),
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      void queryClient.invalidateQueries({
+        queryKey: ["unit-permits", input.unitId, input.companyId],
+        exact: true,
+      });
       pushToast("Permit archived", "success");
     },
-    onError: () => pushToast("Failed to archive permit", "error"),
+    onError: (_error, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      pushToast("Failed to archive permit", "error");
+    },
   });
 
   const alertByPermit = useMemo(
@@ -105,7 +123,14 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
               size="sm"
               variant="secondary"
               loading={deleteMutation.isPending}
-              onClick={() => deleteMutation.mutate(permit.uuid)}
+              onClick={() =>
+                deleteMutation.mutate({
+                  permitUuid: permit.uuid,
+                  unitId,
+                  companyId,
+                  generation: scopeGenerationRef.current,
+                })
+              }
             >
               Archive
             </Button>
