@@ -95,8 +95,8 @@ export default function PositionHistoryPage() {
     enabled: Boolean(companyId),
   });
 
-  const records = historyQuery.data?.rows ?? [];
-  const total = historyQuery.data?.total ?? 0;
+  const records = historyQuery.isError ? [] : historyQuery.data?.rows ?? [];
+  const total = historyQuery.isError ? 0 : historyQuery.data?.total ?? 0;
 
   const columns = useMemo<Array<ParityColumn<PositionHistoryRecord>>>(
     () => [
