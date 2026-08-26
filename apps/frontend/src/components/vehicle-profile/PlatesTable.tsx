@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -59,28 +59,52 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
   const [jurisdiction, setJurisdiction] = useState("TX");
   const [plateNumber, setPlateNumber] = useState("");
   const [expiration, setExpiration] = useState("");
-
-  const refresh = () => void qc.invalidateQueries({ queryKey: ["unit-profile", unitId, companyId] });
+  const actionGenerationRef = useRef(0);
+  const [createError, setCreateError] = useState<unknown>(null);
+  const [archiveError, setArchiveError] = useState<unknown>(null);
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      apiRequest(platesUrl(unitId, companyId), {
+    mutationFn: (input: { unitId: string; companyId: string; generation: number; country: "US" | "MX"; jurisdiction: string; plateNumber: string; expiration: string }) =>
+      apiRequest(platesUrl(input.unitId, input.companyId), {
         method: "POST",
-        body: { country, jurisdiction, plate_number: plateNumber, expiration: expiration || undefined },
+        body: { country: input.country, jurisdiction: input.jurisdiction, plate_number: input.plateNumber, expiration: input.expiration || undefined },
       }),
-    onSuccess: () => {
-      setOpen(false);
-      refresh();
+    onMutate: () => setCreateError(null),
+    onSuccess: (_result, input) => {
+      if (input.generation === actionGenerationRef.current) setOpen(false);
+      void qc.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setCreateError(error);
     },
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (plateId: string) =>
-      apiRequest(`/api/v1/mdata/units/${unitId}/plates/${plateId}/archive?operating_company_id=${encodeURIComponent(companyId)}`, {
+    mutationFn: (input: { plateId: string; unitId: string; companyId: string; generation: number }) =>
+      apiRequest(`/api/v1/mdata/units/${input.unitId}/plates/${input.plateId}/archive?operating_company_id=${encodeURIComponent(input.companyId)}`, {
         method: "POST",
       }),
-    onSuccess: refresh,
+    onMutate: () => setArchiveError(null),
+    onSuccess: (_result, input) => {
+      void qc.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setArchiveError(error);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setOpen(false);
+    setCountry("US");
+    setJurisdiction("TX");
+    setPlateNumber("");
+    setExpiration("");
+    setCreateError(null);
+    setArchiveError(null);
+    createMutation.reset();
+    archiveMutation.reset();
+  }, [companyId, unitId]);
   const createValid = jurisdiction.trim().length > 0 && plateNumber.trim().length > 0;
 
   return (
@@ -105,16 +129,16 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           <button
             type="button"
             className="text-slate-700 underline"
-            onClick={() => archiveMutation.mutate(row.id)}
+            onClick={() => archiveMutation.mutate({ plateId: row.id, unitId, companyId, generation: actionGenerationRef.current })}
             disabled={archiveMutation.isPending}
           >
             Archive
           </button>
         )}
       />
-      {archiveMutation.isError ? (
+      {archiveError ? (
         <p className="mt-2 text-xs text-red-700" role="alert">
-          Couldn&apos;t archive plate. {(archiveMutation.error as Error)?.message ?? "Try again."}
+          Couldn&apos;t archive plate. {(archiveError as Error)?.message ?? "Try again."}
         </p>
       ) : null}
       <Modal variant="drawer" open={open} title="Add plate" onClose={() => setOpen(false)}>
@@ -145,12 +169,27 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           />
           <DatePicker className="w-full" value={expiration} onChange={(next) => setExpiration(next)} />
           {!createValid ? <p className="text-xs text-gray-600">Jurisdiction and plate number are required.</p> : null}
-          {createMutation.isError ? (
+          {createError ? (
             <p className="text-xs text-red-700" role="alert">
-              Couldn&apos;t save plate. {(createMutation.error as Error)?.message ?? "Check the jurisdiction and try again."}
+              Couldn&apos;t save plate. {(createError as Error)?.message ?? "Check the jurisdiction and try again."}
             </p>
           ) : null}
-          <Button size="sm" loading={createMutation.isPending} disabled={!createValid} onClick={() => createMutation.mutate()}>
+          <Button
+            size="sm"
+            loading={createMutation.isPending}
+            disabled={!createValid}
+            onClick={() =>
+              createMutation.mutate({
+                unitId,
+                companyId,
+                generation: actionGenerationRef.current,
+                country,
+                jurisdiction,
+                plateNumber,
+                expiration,
+              })
+            }
+          >
             Save plate
           </Button>
         </div>
