@@ -27,7 +27,9 @@ export function RetentionDashboard() {
     enabled: Boolean(companyId),
   });
 
-  const rows = scoresQ.data?.rows ?? [];
+  // DRIVER-F6460: React Query retains prior data after a failed refetch. Do not
+  // leave stale risk cards actionable underneath the explicit error state.
+  const rows = scoresQ.isError ? [] : scoresQ.data?.rows ?? [];
 
   return (
     <div className="space-y-4 p-4" data-testid="driver-retention-dashboard">
