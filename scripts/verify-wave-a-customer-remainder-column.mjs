@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","safety"],"cols":["customer"],"leafRe":"^(hub\\.names_search|cargo_claims\\.(list|create)|complaints\\.list)$","task":"WAVE-A-customer-remainder-exact-surfaces","vertical":"column-wave"} */
+/** @matrix-built {"modules":["lists","safety"],"cols":["customer"],"leaves":["hub.names_search","cargo_claims.list","cargo_claims.create","complaints.list"],"task":"WAVE-A-customer-remainder-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-wave-a-customer-remainder-column";
@@ -10,7 +10,7 @@ const checks = [
   { file: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", pattern: /<EntityLink[\s\S]{0,200}kind=\{kind\}[\s\S]{0,80}id=\{row\.entity_id\}/, label: "names canonical drill" },
   { file: "apps/frontend/src/pages/lists/names/BrokersListPage.tsx", pattern: /<EntityLink kind="customer" id=\{row\.id\}/, label: "broker customer drill" },
   { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", pattern: /<EntityLink[\s\S]*kind="customer"[\s\S]*id=\{String\(row\.complainant_customer_id\)\}/, label: "complaint customer drill" },
-  { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", pattern: /body\[complainantIdentityKey\]\s*=\s*complainantIdentityValue/, label: "complaint customer payload" },
+  { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", pattern: /payload\[complainantIdentityKey\]\s*=\s*complainantIdentityValue/, label: "complaint customer payload" },
   { file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", pattern: /claimant_customer_id:\s*form\.claimantCustomerId\s*\|\|\s*null/, label: "cargo customer payload" },
   { file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", pattern: /<EntityLink[\s\S]*kind="customer"[\s\S]*id=\{String\(detail\.claimant_customer_id\)\}/, label: "cargo customer drill" },
   { file: "apps/frontend/src/pages/safety/tabs/GeofenceBreachesTab.tsx", pattern: /<EntityLink kind="customer" id=\{event\.customer_id\}/, label: "geofence customer drill" },
