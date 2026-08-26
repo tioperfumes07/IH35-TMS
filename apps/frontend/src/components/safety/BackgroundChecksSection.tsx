@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyBackgroundCheck, listSafetyBackgroundChecks, type SafetyBackgroundCheckRow } from "../../api/safety";
 import { Button } from "../Button";
@@ -20,8 +20,10 @@ const CHECK_TYPES = [
   { value: "employment_verify", label: "Employment verification" },
 ] as const;
 
+/** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function BackgroundChecksSection({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId?: string }) {
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
   const [open, setOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState(driverId ?? "");
   const [checkType, setCheckType] = useState<SafetyBackgroundCheckRow["check_type"]>("mvr");
@@ -36,21 +38,42 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     queryFn: () => listSafetyBackgroundChecks(operatingCompanyId, driverId),
   });
   const createMutation = useMutation({
-    mutationFn: () => createSafetyBackgroundCheck(operatingCompanyId, {
-      driver_id: selectedDriverId,
-      check_type: checkType,
-      result,
-      checked_at: new Date(`${checkedAt}T12:00:00`).toISOString(),
-      expiry_date: expiryDate || undefined,
-      notes: notes.trim() || undefined,
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      driverId: string;
+      checkType: SafetyBackgroundCheckRow["check_type"];
+      result: SafetyBackgroundCheckRow["result"];
+      checkedAt: string;
+      expiryDate: string;
+      notes: string;
+    }) => createSafetyBackgroundCheck(input.companyId, {
+      driver_id: input.driverId,
+      check_type: input.checkType,
+      result: input.result,
+      checked_at: new Date(`${input.checkedAt}T12:00:00`).toISOString(),
+      expiry_date: input.expiryDate || undefined,
+      notes: input.notes.trim() || undefined,
     }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setOpen(false);
       setExpiryDate("");
       setNotes("");
-      await queryClient.invalidateQueries({ queryKey: ["safety", "background-checks", operatingCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "background-checks", input.companyId] });
     },
   });
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    setOpen(false);
+    setSelectedDriverId(driverId ?? "");
+    setCheckType("mvr");
+    setResult("pass");
+    setCheckedAt(companyToday());
+    setExpiryDate("");
+    setNotes("");
+  }, [operatingCompanyId, driverId]);
 
   const columns: Array<ParityColumn<SafetyBackgroundCheckRow>> = [
     { key: "checked_at", label: "Checked", sortable: true, render: (row) => formatDateUS(row.checked_at) },
@@ -82,7 +105,19 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
         )}
       </div>
       <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Add background check">
-        <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); createMutation.mutate(); }}>
+        <form className="space-y-3" onSubmit={(event) => {
+          event.preventDefault();
+          createMutation.mutate({
+            companyId: operatingCompanyId,
+            generation: companyGenerationRef.current,
+            driverId: selectedDriverId,
+            checkType,
+            result,
+            checkedAt,
+            expiryDate,
+            notes,
+          });
+        }}>
           <label className="block text-xs text-slate-600">Driver
             <div className="mt-1"><DriverPickerWithCreate operatingCompanyId={operatingCompanyId} value={selectedDriverId || null} onChange={(next) => setSelectedDriverId(next ?? "")} open={open} placeholder="Select driver" dataField="background-check-driver" /></div>
           </label>
@@ -95,7 +130,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           <div className="block text-xs text-slate-600"><label htmlFor="background-check-checked-date">Checked date</label><DatePicker id="background-check-checked-date" className="mt-1 w-full" value={checkedAt} onChange={setCheckedAt} /></div>
           <div className="block text-xs text-slate-600"><label htmlFor="background-check-expiry-date">Expiry date (optional)</label><DatePicker id="background-check-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
           <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
-          {createMutation.isError ? <p className="text-xs text-red-700">The check could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
+          {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? <p className="text-xs text-red-700">The check could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
           <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
         </form>
       </Modal>
