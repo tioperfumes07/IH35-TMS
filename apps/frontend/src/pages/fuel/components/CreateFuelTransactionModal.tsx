@@ -127,11 +127,12 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         load_id: loadId || null,
         load_exemption_reason: loadId ? undefined : loadExemptionReason.trim(),
       });
-      pushToast("Fuel purchase recorded", "success");
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
+      pushToast("Fuel purchase recorded", "success");
       onCreated();
       onClose();
     } catch (error) {
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Failed to record fuel purchase"), "error");
     } finally {
       if (lifecycleGenerationRef.current === submissionGeneration) setSaving(false);
