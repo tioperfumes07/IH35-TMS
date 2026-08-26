@@ -1,6 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   addAccidentPhoto,
@@ -60,6 +60,9 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [atFault, setAtFault] = useState<string>("");
   const [preventable, setPreventable] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const lifecycleGenerationRef = useRef(0);
 
   const accidentId = accident ? String(accident.id ?? "") : "";
 
@@ -81,6 +84,19 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     accident && accident.preventable !== null && accident.preventable !== undefined
       ? String(Boolean(accident.preventable))
       : "";
+  const initialPoliceReportNumber = accident && typeof accident.police_report_number === "string" ? accident.police_report_number : "";
+  const initialInsuranceClaimNumber = accident && typeof accident.insurance_claim_number === "string" ? accident.insurance_claim_number : "";
+  const initialLocation = accident && typeof accident.location === "string" ? accident.location : "";
+  const initialThirdPartyName = accident && typeof accident.third_party_name === "string" ? accident.third_party_name : "";
+  const initialThirdPartyPlate = accident && typeof accident.third_party_plate === "string" ? accident.third_party_plate : "";
+  const initialVendorInvoiceNumber = accident && typeof accident.vendor_invoice_number === "string" ? accident.vendor_invoice_number : "";
+  const initialBillOrExpenseRef = accident && typeof accident.bill_or_expense_ref === "string" ? accident.bill_or_expense_ref : "";
+  const initialReportDate = companyToday();
+  const rawInitialRecordType = accident && typeof accident.record_type === "string" ? accident.record_type : "";
+  const initialRecordType: "accident" | "damage" | "vandalism" = rawInitialRecordType === "damage" || rawInitialRecordType === "vandalism" ? rawInitialRecordType : "accident";
+  const initialAccidentTypeId = accident && typeof accident.accident_type_id === "string" ? accident.accident_type_id : "";
+  const rawInitialServiceType = accident && typeof accident.service_type === "string" ? accident.service_type : "";
+  const initialServiceType: "repair" | "replacement" | "tow" = rawInitialServiceType === "replacement" || rawInitialServiceType === "tow" ? rawInitialServiceType : "repair";
 
   const [driverId, setDriverId] = useState(initialDriverId);
   const [unitId, setUnitId] = useState(initialUnitId);
@@ -93,27 +109,20 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [memo, setMemo] = useState(initialMemo);
   // SAF-F05: these fields rendered as uncontrolled <input>s and were discarded on save. Controlled +
   // seeded from the existing record (patch mode) so they persist. accident.* reads are cast to string.
-  const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const [policeReportNumber, setPoliceReportNumber] = useState(() => str(accident?.police_report_number));
-  const [insuranceClaimNumber, setInsuranceClaimNumber] = useState(() => str(accident?.insurance_claim_number));
-  const [location, setLocation] = useState(() => str(accident?.location));
-  const [thirdPartyName, setThirdPartyName] = useState(() => str(accident?.third_party_name));
-  const [thirdPartyPlate, setThirdPartyPlate] = useState(() => str(accident?.third_party_plate));
-  const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState(() => str(accident?.vendor_invoice_number));
-  const [billOrExpenseRef, setBillOrExpenseRef] = useState(() => str(accident?.bill_or_expense_ref));
+  const [policeReportNumber, setPoliceReportNumber] = useState(initialPoliceReportNumber);
+  const [insuranceClaimNumber, setInsuranceClaimNumber] = useState(initialInsuranceClaimNumber);
+  const [location, setLocation] = useState(initialLocation);
+  const [thirdPartyName, setThirdPartyName] = useState(initialThirdPartyName);
+  const [thirdPartyPlate, setThirdPartyPlate] = useState(initialThirdPartyPlate);
+  const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState(initialVendorInvoiceNumber);
+  const [billOrExpenseRef, setBillOrExpenseRef] = useState(initialBillOrExpenseRef);
   // B9: Report Date is display-only (not part of the accidents create/update payload — the API has
   // no report_date column; see CreateAccidentInput/PatchAccidentInput in ../../api/safety.ts) but must
   // still use the shared calendar DatePicker like every other date field, not a raw text input.
-  const [reportDate, setReportDate] = useState(() => companyToday());
-  const [recordType, setRecordType] = useState<"accident" | "damage" | "vandalism">(() => {
-    const v = str(accident?.record_type);
-    return v === "damage" || v === "vandalism" ? v : "accident";
-  });
-  const [accidentTypeId, setAccidentTypeId] = useState(() => str(accident?.accident_type_id));
-  const [serviceType, setServiceType] = useState<"repair" | "replacement" | "tow">(() => {
-    const v = str(accident?.service_type);
-    return v === "replacement" || v === "tow" ? v : "repair";
-  });
+  const [reportDate, setReportDate] = useState(initialReportDate);
+  const [recordType, setRecordType] = useState<"accident" | "damage" | "vandalism">(initialRecordType);
+  const [accidentTypeId, setAccidentTypeId] = useState(initialAccidentTypeId);
+  const [serviceType, setServiceType] = useState<"repair" | "replacement" | "tow">(initialServiceType);
 
   useEffect(() => {
     setDriverId(initialDriverId);
@@ -125,8 +134,25 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     setMemo(initialMemo);
     setAtFault(initialAtFault);
     setPreventable(initialPreventable);
+    setPoliceReportNumber(initialPoliceReportNumber);
+    setInsuranceClaimNumber(initialInsuranceClaimNumber);
+    setLocation(initialLocation);
+    setThirdPartyName(initialThirdPartyName);
+    setThirdPartyPlate(initialThirdPartyPlate);
+    setVendorInvoiceNumber(initialVendorInvoiceNumber);
+    setBillOrExpenseRef(initialBillOrExpenseRef);
+    setReportDate(initialReportDate);
+    setRecordType(initialRecordType);
+    setAccidentTypeId(initialAccidentTypeId);
+    setServiceType(initialServiceType);
+    setCostLines([]);
+    setTaxRate(8.25);
+    setSaving(false);
+    setUploading(false);
+    setActionPending(false);
     setSuggestionPinned(false);
-  }, [accidentId, initialDriverId, initialUnitId, initialTrailerId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
+    lifecycleGenerationRef.current += 1;
+  }, [open, operatingCompanyId, createMode, accidentId, initialDriverId, initialUnitId, initialTrailerId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable, initialPoliceReportNumber, initialInsuranceClaimNumber, initialLocation, initialThirdPartyName, initialThirdPartyPlate, initialVendorInvoiceNumber, initialBillOrExpenseRef, initialReportDate, initialRecordType, initialAccidentTypeId, initialServiceType]);
 
   const scopeReady = open && Boolean(operatingCompanyId);
   const detailReady = scopeReady && !createMode && Boolean(accidentId) && accidentId !== "__create__";
@@ -192,7 +218,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     enabled: scopeReady,
   });
 
-  if (!open || !accident) return null;
   const id = accidentId;
   const canMutate = Boolean(id) && !createMode;
   const subtotal = costLines.reduce((sum, line) => {
@@ -234,21 +259,161 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     })),
   };
 
+  const completeClose = useCallback(() => {
+    lifecycleGenerationRef.current += 1;
+    setSaving(false);
+    onClose();
+  }, [onClose]);
+  const isBusy = saving || uploading || actionPending;
+  const handleClose = useCallback(() => {
+    if (isBusy) return;
+    completeClose();
+  }, [completeClose, isBusy]);
+
+  const isDirty = driverId !== initialDriverId
+    || unitId !== initialUnitId
+    || trailerId !== initialTrailerId
+    || vendorId !== initialVendorId
+    || loadId !== initialLoadId
+    || incidentDate !== initialIncidentDate
+    || memo !== initialMemo
+    || atFault !== initialAtFault
+    || preventable !== initialPreventable
+    || policeReportNumber !== initialPoliceReportNumber
+    || insuranceClaimNumber !== initialInsuranceClaimNumber
+    || location !== initialLocation
+    || thirdPartyName !== initialThirdPartyName
+    || thirdPartyPlate !== initialThirdPartyPlate
+    || vendorInvoiceNumber !== initialVendorInvoiceNumber
+    || billOrExpenseRef !== initialBillOrExpenseRef
+    || reportDate !== initialReportDate
+    || recordType !== initialRecordType
+    || accidentTypeId !== initialAccidentTypeId
+    || serviceType !== initialServiceType
+    || costLines.length > 0
+    || taxRate !== 8.25;
+
   const saveAccident = () => {
+    if (isBusy) return;
+    const generation = lifecycleGenerationRef.current;
+    const companyId = operatingCompanyId;
+    const targetId = id;
+    const creating = createMode;
+    const payload = {
+      ...linkPayload,
+      cost_lines: linkPayload.cost_lines.map((line) => ({ ...line })),
+    };
     setSaving(true);
-    const request = createMode
-      ? createSafetyAccident({ operating_company_id: operatingCompanyId, ...linkPayload })
-      : patchSafetyAccident(id, operatingCompanyId, linkPayload);
+    const request = creating
+      ? createSafetyAccident({ operating_company_id: companyId, ...payload })
+      : patchSafetyAccident(targetId, companyId, payload);
     void request
       .then(() => {
-        pushToast(createMode ? "Accident report created" : "Accident report saved", "success");
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(creating ? "Accident report created" : "Accident report saved", "success");
         onUpdated();
-        onClose();
+        completeClose();
       })
-      .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-      .finally(() => setSaving(false));
+      .catch((error) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(userFacingApiError(error, "Request failed"), "error");
+      })
+      .finally(() => {
+        if (lifecycleGenerationRef.current === generation) setSaving(false);
+      });
   };
 
+  const spawnLiability = () => {
+    if (!canMutate || isBusy) return;
+    const generation = lifecycleGenerationRef.current;
+    const targetId = id;
+    const companyId = operatingCompanyId;
+    setActionPending(true);
+    void spawnSafetyLiability(targetId, companyId)
+      .then((payload) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        const liabilityId = payload?.spawned_liability_id;
+        if (liabilityId == null || liabilityId === "") {
+          pushToast("Spawn Liability failed — no liability id returned. Check cost lines and driver.", "error");
+          return;
+        }
+        const reused = Boolean((payload as { reused?: boolean }).reused);
+        pushToast(reused ? "Existing accident liability reused" : "Spawn liability created", "success");
+        onUpdated();
+      })
+      .catch((error) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(String((error as Error).message || "Spawn Liability failed — add positive cost lines and an active driver, then retry."), "error");
+      })
+      .finally(() => {
+        if (lifecycleGenerationRef.current === generation) setActionPending(false);
+      });
+  };
+
+  const spawnWorkOrder = () => {
+    if (!canMutate || isBusy) return;
+    const generation = lifecycleGenerationRef.current;
+    const targetId = id;
+    const companyId = operatingCompanyId;
+    setActionPending(true);
+    void spawnSafetyWo(targetId, companyId)
+      .then((payload) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        const displayId = String(payload.spawned_wo_display_id ?? "");
+        const woId = String(payload.spawned_wo_id ?? "");
+        const reused = Boolean(payload.reused);
+        const list = Array.isArray(payload.spawned_work_orders)
+          ? (payload.spawned_work_orders as Array<{ id?: unknown; display_id?: unknown }>)
+              .map((row) => {
+                const rid = typeof row.id === "string" ? row.id : "";
+                const display_id = entityLabel(typeof row.display_id === "string" ? row.display_id : null, rid, "Work order");
+                return rid ? { id: rid, display_id } : null;
+              })
+              .filter((row): row is { id: string; display_id: string } => row != null)
+          : woId
+            ? [{ id: woId, display_id: entityLabel(displayId, woId, "Work order") }]
+            : [];
+        if (list.length) setSpawnedWorkOrders(list);
+        pushToast(
+          reused
+            ? displayId ? `Existing AC work order reused (${displayId})` : "Existing AC work order reused"
+            : displayId ? `Spawn WO created (${displayId})` : "Spawn WO requested",
+          "success",
+        );
+        void detailQuery.refetch();
+        onUpdated();
+      })
+      .catch((error) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(userFacingApiError(error, "Request failed"), "error");
+      })
+      .finally(() => {
+        if (lifecycleGenerationRef.current === generation) setActionPending(false);
+      });
+  };
+
+  const uploadPhoto = (file: File) => {
+    if (!canMutate || isBusy) return;
+    const generation = lifecycleGenerationRef.current;
+    const targetId = id;
+    const companyId = operatingCompanyId;
+    setUploading(true);
+    void addAccidentPhoto(targetId, companyId, file)
+      .then(() => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast("Photo added", "success");
+        onUpdated();
+      })
+      .catch((error) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(userFacingApiError(error, "Request failed"), "error");
+      })
+      .finally(() => {
+        if (lifecycleGenerationRef.current === generation) setUploading(false);
+      });
+  };
+
+  if (!open || !accident) return null;
   const photoGateTooltip = canMutate ? undefined : "Save the report first to attach photos";
 
   return (
@@ -259,8 +424,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           surface (Law §3). The evidence/photo body is unchanged. */}
       <ParityDrawer
         open
-        onClose={onClose}
+        onClose={handleClose}
         title={createMode ? "Create Accident Report" : "Accident Damage Details"}
+        confirmDiscardOnClose
+        isDirty={isDirty}
+        onRegisterAttemptClose={setAttemptClose}
       >
         <div className="text-xs" data-testid="accident-report-drawer">
         {createMode ? (
@@ -591,7 +759,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </div>
         </div>
         <div className="mt-3 flex justify-end">
-          <Button size="sm" disabled={saving} data-testid="accident-save-btn" onClick={saveAccident}>
+          <Button type="button" size="sm" variant="secondary" disabled={isBusy} onClick={attemptClose}>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={isBusy} data-testid="accident-save-btn" onClick={saveAccident}>
             {saving ? "Saving…" : createMode ? "+ Create Accident Report" : "Save Changes"}
           </Button>
         </div>
@@ -599,76 +770,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           <Button
             size="sm"
             variant="secondary"
-            disabled={!canMutate}
-            onClick={() =>
-              void spawnSafetyLiability(id, operatingCompanyId)
-                .then((payload) => {
-                  // SAF-F35: never toast success when no liability id was created.
-                  const liabilityId = payload?.spawned_liability_id;
-                  if (liabilityId == null || liabilityId === "") {
-                    pushToast(
-                      "Spawn Liability failed — no liability id returned. Check cost lines and driver.",
-                      "error",
-                    );
-                    return;
-                  }
-                  const reused = Boolean((payload as { reused?: boolean }).reused);
-                  pushToast(
-                    reused ? "Existing accident liability reused" : "Spawn liability created",
-                    "success",
-                  );
-                  onUpdated();
-                })
-                .catch((error) =>
-                  pushToast(
-                    String(
-                      (error as Error).message ||
-                        "Spawn Liability failed — add positive cost lines and an active driver, then retry.",
-                    ),
-                    "error",
-                  ),
-                )
-            }
+            disabled={!canMutate || isBusy}
+            onClick={spawnLiability}
           >
             Spawn Liability
           </Button>
           <Button
             size="sm"
             variant="secondary"
-            disabled={!canMutate}
-            onClick={() =>
-              void spawnSafetyWo(id, operatingCompanyId)
-                .then((payload) => {
-                  const displayId = String(payload.spawned_wo_display_id ?? "");
-                  const woId = String(payload.spawned_wo_id ?? "");
-                  const reused = Boolean(payload.reused);
-                  const list = Array.isArray(payload.spawned_work_orders)
-                    ? (payload.spawned_work_orders as Array<{ id?: unknown; display_id?: unknown }>)
-                        .map((row) => {
-                          const rid = typeof row.id === "string" ? row.id : "";
-                          const d = entityLabel(typeof row.display_id === "string" ? row.display_id : null, rid, "Work order");
-                          return rid ? { id: rid, display_id: d } : null;
-                        })
-                        .filter((r): r is { id: string; display_id: string } => r != null)
-                    : woId
-                      ? [{ id: woId, display_id: entityLabel(displayId, woId, "Work order") }]
-                      : [];
-                  if (list.length) setSpawnedWorkOrders(list);
-                  pushToast(
-                    reused
-                      ? displayId
-                        ? `Existing AC work order reused (${displayId})`
-                        : "Existing AC work order reused"
-                      : displayId
-                        ? `Spawn WO created (${displayId})`
-                        : "Spawn WO requested",
-                    "success"
-                  );
-                  void detailQuery.refetch();
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-            }
+            disabled={!canMutate || isBusy}
+            onClick={spawnWorkOrder}
           >
             Spawn WO
           </Button>
@@ -680,19 +791,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             <input
               type="file"
               className="hidden"
-              disabled={!canMutate}
+              disabled={!canMutate || isBusy}
               data-testid="accident-photo-input"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (!file || !canMutate) return;
-                setUploading(true);
-                void addAccidentPhoto(id, operatingCompanyId, file)
-                  .then(() => {
-                    pushToast("Photo added", "success");
-                    onUpdated();
-                  })
-                  .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-                  .finally(() => setUploading(false));
+                uploadPhoto(file);
               }}
             />
             {uploading ? "Uploading..." : "Add Photo"}
