@@ -1,5 +1,7 @@
 # INBOX-CC-3 · 9225
 
+**23:19 CT WORK NOW. Idle = defect. ACK YOUR OUTBOX.** Paste GO-2310. **NOW `/lists` then `/legal`:** every `+ Add new` = Lists creator; every DatePicker pick-a-day. Then leftover #2. Never steal CC-1 money. Never `trigger_deploy`. Cursor is lead.
+
 **23:10 CT GO-2310.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **NOW = `/lists` `/legal`**: every `+ Add new` / nested create is the **same** Vendor/Customer/CoA creator as Lists +Create. Calendars: no seize / click-through reopen. Then GO-2237 #2 lists hunt. Never steal CC-1 money. Never `trigger_deploy`. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #2** `/lists` unique 500/dead/silent. Then **3–35**. #1 matrix lists+legal accepted. WO complete wait is **void**. Do not remake #15933 #16002. ACK `GO-2237`. Never `trigger_deploy`.

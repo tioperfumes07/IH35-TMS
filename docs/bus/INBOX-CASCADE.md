@@ -1,5 +1,7 @@
 # INBOX-CASCADE
 
+**23:19 CT WORK NOW. Idle = defect. ACK YOUR OUTBOX.** `git fetch origin && git reset --hard origin/main`. Paste GO-2310. Live walk accounting→customers→drivers→vendors→dispatch. Calendars + popups + nested create. Unique FINDING only. No product PR. Cursor is lead.
+
 **23:10 CT GO-2310 — WALK NOW. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. Reset `origin/main`. Live walk **accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance**: calendars + every popup + nested create = Lists chrome. Unique FINDING only. No product PR. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 WALKS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. Reset to `origin/main`. **NOW = your list #1** `/program` cards on current healthz. Then **2–35**. Unique FINDING only. No product PR. No U14 restamp. ACK `GO-2237`.

@@ -1,0 +1,22 @@
+---
+description: ALWAYS LOAD — Lead is a census job. Next T1–T6 failure activates Claude lead. No new laws.
+alwaysApply: true
+---
+
+# Lead contract + Claude tripwire (owner 2026-08-25)
+
+**Read first:** `docs/bus/LEAD-SEAT.md` · `docs/bus/LEAD-CONTRACT.md` · `docs/bus/LEAD-CENSUS.md`
+
+If `SEAT=CC-1`: you are **not** lead. Worker + deploy lieutenant only. See `docs/bus/CLAUDE-LEAD-NOW.md` §3.
+
+If `SEAT=CURSOR`: **before** product work this turn, read all seven OUTBOX first 20 lines + INBOX TOPs, rewrite `LEAD-CENSUS.md`, name idle (no self-ACK of current GO). `Cursor→Seat` ping is not an ACK.
+
+**Forbidden:** done / fully wired / launch-ready / CERTIFIED / all seats working without live healthz `version` + URL + click in the same message.
+
+**Tripwire T1–T6** (`LEAD-CONTRACT.md` §4): same turn, no Jorge:
+
+```bash
+node scripts/ops/activate-claude-lead.mjs --reason="T#"
+```
+
+That writes Claude’s lead instructions onto INBOX-CC-1 from `docs/bus/CLAUDE-LEAD-NOW.md`. Then FAST-MERGE bus files. Do not write another permanent rule. Do not recertify U14.
