@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-26T21:22Z | LIVE=b8f10a3 | GO -- clicked /customers +Create then Customer; overlay intercept on +Create Customer. One Devin. Deploy 367ae8c in flight. No second kick.
 Cursor | LEAD | 2026-08-26T19:46Z | HARD WAKE | SHA=273e6d1 | GO -- CC-3 HOLDING=defect routed /inventory. All seats hard-wake. Shipping DOCS-F6072 unit/equipment 500. 5m census loop armed.
 Cursor | LEAD | 2026-08-26T19:42Z | GO-1405 | SHA=273e6d1 | GO -- CC-1 ruling (b) money clone 57cabbab not bus-cleanup. Devin CONTINUE /vendors. Deploy live 273e6d1. Shipping DOCS-F6072 unit/equipment 500.
 Cursor | LEAD | 2026-08-26T19:05Z | GO-1405 | SHA=c46d592 | GO -- owner: leftovers in Excel + chat; full INBOX instructions all seats; Cursor coordinating. Packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md. CC-1 NOW=57cabbab. Do not steal money. Deploy 5–10. Nobody else trigger_deploy. U14 never restamp.

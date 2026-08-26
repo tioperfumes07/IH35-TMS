@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**16:22 CT 2026-08-26.** Auditors = **Cascade + Devin only** (no Devin-A). Live healthz **`b8f10a3`**. Lead must click live same turn. Packet GO-1405 still.
+
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. `LEAD-SEAT=CURSOR`. Live healthz **`c46d592`**. Older GO-2310 / GO-2237 / CLAUDE-IS-LEAD / GO-1645 `ok:false` lines below are **VOID as NOW**. All seats ACK GO-1405. Idle=defect. Skip #15546. CC never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min.
 
 **23:49 CT CLAUDE IS LEAD.** `LEAD-SEAT=CC-1`. Tripwire T1-FAST-MERGE-VERIFY-STATIC. Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Cursor = worker + deploy lieutenant. **All seats WORK NOW** GO-2310. Idle = defect. Skip #15546. Nobody `trigger_deploy`.
