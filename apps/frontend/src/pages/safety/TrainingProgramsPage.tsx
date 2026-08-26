@@ -46,6 +46,8 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   const [passingGrade, setPassingGrade] = useState("");
   const [assignDriverIds, setAssignDriverIds] = useState<string[]>([]);
   const [assignPick, setAssignPick] = useState<string | null>(null);
+  const [createAttemptClose, setCreateAttemptClose] = useState<() => void>(() => () => {});
+  const [assignAttemptClose, setAssignAttemptClose] = useState<() => void>(() => () => {});
   const companyGenerationRef = useRef(0);
 
   const programsQuery = useQuery({
@@ -75,8 +77,12 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     }) => createTrainingProgram(input.companyId, input.payload),
     onSuccess: (_created, input) => {
       if (input.generation !== companyGenerationRef.current) return;
+      companyGenerationRef.current += 1;
       setCreateOpen(false);
       setName("");
+      setCategory("entry_level");
+      setFrequency("annual");
+      setRecertifyMonths("12");
       setPassingGrade("");
       void queryClient.invalidateQueries({ queryKey: ["safety", "training-programs", input.companyId] });
     },
@@ -107,6 +113,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     },
     onSuccess: (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
+      companyGenerationRef.current += 1;
       setAssignOpen(false);
       setAssignDriverIds([]);
       setAssignPick(null);
@@ -116,6 +123,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   });
 
   const closeCreate = () => {
+    if (createMutation.isPending) return;
     companyGenerationRef.current += 1;
     createMutation.reset();
     setCreateOpen(false);
@@ -127,6 +135,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   };
 
   const closeAssign = () => {
+    if (assignMutation.isPending) return;
     companyGenerationRef.current += 1;
     assignMutation.reset();
     setAssignOpen(false);
@@ -134,6 +143,11 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     setAssignPick(null);
     setSelectedProgram(null);
   };
+
+  const isCreateDirty =
+    name !== "" || category !== "entry_level" || frequency !== "annual" ||
+    recertifyMonths !== "12" || passingGrade !== "";
+  const isAssignDirty = assignDriverIds.length > 0;
 
   useEffect(() => {
     companyGenerationRef.current += 1;
@@ -227,7 +241,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
       />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Program">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Program" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setCreateAttemptClose(() => next)}>
         <form
           className="space-y-3"
           data-testid="training-program-create-modal"
@@ -320,7 +334,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
+            <Button type="button" variant="secondary" size="sm" onClick={createAttemptClose} disabled={createMutation.isPending}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="training-program-submit">
@@ -330,7 +344,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         </form>
       </Modal>
 
-      <Modal open={assignOpen} onClose={closeAssign} title="Assign Drivers">
+      <Modal open={assignOpen} onClose={closeAssign} title="Assign Drivers" confirmDiscardOnClose isDirty={isAssignDirty} onRegisterAttemptClose={(next) => setAssignAttemptClose(() => next)}>
         <form
           className="space-y-3"
           data-testid="training-program-assign-modal"
@@ -395,7 +409,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={closeAssign}>
+            <Button type="button" variant="secondary" size="sm" onClick={assignAttemptClose} disabled={assignMutation.isPending}>
               Cancel
             </Button>
             <Button

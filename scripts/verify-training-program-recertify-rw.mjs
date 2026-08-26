@@ -17,6 +17,7 @@ function read(relative) {
 function inspect(source) {
   const failures = [];
   const { migration, route, api, page } = source;
+  const createSuccessBody = page.match(/const createMutation = useMutation\(\{[\s\S]*?onSuccess: \(_created, input\) => \{([\s\S]*?)\n    \},\n  \}\);/)?.[1] ?? "";
   const requireMatch = (value, pattern, message) => {
     if (!pattern.test(value)) failures.push(message);
   };
@@ -33,8 +34,13 @@ function inspect(source) {
   requireMatch(page, /recertify_months: frequency === "n_month" \? Number\(recertifyMonths\) : undefined/, "creator must submit visible month value");
   requireMatch(page, /program\.frequency === "annual"[\s\S]*program\.frequency === "n_month" && program\.recertify_months/, "assignment expiry must use selected program");
   requireMatch(page, /companyGenerationRef\.current \+= 1[\s\S]*createMutation\.reset\(\)[\s\S]*assignMutation\.reset\(\)/, "company switch must reset mutations and stale UI");
-  requireMatch(page, /const closeCreate = \(\) => \{\s*companyGenerationRef\.current \+= 1;\s*createMutation\.reset\(\);[\s\S]*?<Modal variant="drawer" open=\{createOpen\} onClose=\{closeCreate\}/, "create dismiss must retire its generation and reset mutation state");
-  requireMatch(page, /const closeAssign = \(\) => \{\s*companyGenerationRef\.current \+= 1;\s*assignMutation\.reset\(\);[\s\S]*?<Modal open=\{assignOpen\} onClose=\{closeAssign\}/, "assignment dismiss must retire its generation and reset mutation state");
+  requireMatch(page, /const closeCreate = \(\) => \{\s*if \(createMutation\.isPending\) return;\s*companyGenerationRef\.current \+= 1;\s*createMutation\.reset\(\);/, "create dismiss must lock pending writes, retire generation and reset mutation state");
+  requireMatch(page, /const closeAssign = \(\) => \{\s*if \(assignMutation\.isPending\) return;\s*companyGenerationRef\.current \+= 1;\s*assignMutation\.reset\(\);/, "assignment dismiss must lock pending writes, retire generation and reset mutation state");
+  requireMatch(page, /<Modal variant="drawer" open=\{createOpen\} onClose=\{closeCreate\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isCreateDirty\}[^>]*onRegisterAttemptClose/, "create drawer must use shared dirty-discard confirmation");
+  requireMatch(page, /<Modal open=\{assignOpen\} onClose=\{closeAssign\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isAssignDirty\}[^>]*onRegisterAttemptClose/, "assignment modal must use shared dirty-discard confirmation");
+  requireMatch(page, /onClick=\{createAttemptClose\} disabled=\{createMutation\.isPending\}/, "create Cancel must use pending-safe confirm-aware close");
+  requireMatch(page, /onClick=\{assignAttemptClose\} disabled=\{assignMutation\.isPending\}/, "assignment Cancel must use pending-safe confirm-aware close");
+  if (!["companyGenerationRef.current += 1", 'setName("")', 'setCategory("entry_level")', 'setFrequency("annual")', 'setRecertifyMonths("12")', 'setPassingGrade("")'].every((token) => createSuccessBody.includes(token))) failures.push("create success must retire generation and reset every program field");
   requireMatch(page, /createMutation\.isError && createMutation\.variables\?\.generation === companyGenerationRef\.current/, "stale create rejection must not paint a reopened modal");
   requireMatch(page, /assignMutation\.isError && assignMutation\.variables\?\.generation === companyGenerationRef\.current/, "stale assignment rejection must not paint a reopened modal");
   requireMatch(page, /companyId: operatingCompanyId[\s\S]*driverIds: \[\.\.\.assignDriverIds\]/, "assignment must snapshot company and driver ids");
@@ -60,6 +66,10 @@ function selftest(source) {
     ["page", "onClose={closeAssign}", "onClose={() => setAssignOpen(false)}"],
     ["page", "createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current", "createMutation.isError"],
     ["page", "assignMutation.isError && assignMutation.variables?.generation === companyGenerationRef.current", "assignMutation.isError"],
+    ["page", "confirmDiscardOnClose", ""],
+    ["page", "onClick={createAttemptClose}", "onClick={closeCreate}"],
+    ["page", "onClick={assignAttemptClose}", "onClick={closeAssign}"],
+    ["page", 'setCategory("entry_level");', "// planted: stale category"],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`selftest fixture missing: ${before}`);
