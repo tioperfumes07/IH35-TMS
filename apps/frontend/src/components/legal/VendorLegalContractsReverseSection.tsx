@@ -9,7 +9,7 @@ export function VendorLegalContractsReverseSection({ operatingCompanyId, vendorI
     enabled: Boolean(operatingCompanyId && vendorId),
     queryFn: () => legalContractsApi.list({ operating_company_id: operatingCompanyId, signer_type: "vendor", signer_entity_id: vendorId }),
   });
-  const rows = query.data?.contracts ?? [];
+  const rows = query.isError ? [] : (query.data?.contracts ?? []);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-legal-contracts-reverse">

@@ -147,6 +147,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
   }
 
   const contracts = contractsQuery.data ?? [];
+  const legalContracts = legalContractsQuery.isError ? [] : (legalContractsQuery.data?.contracts ?? []);
   const isSaving = createMutation.isPending || supersedeMutation.isPending;
 
   return (
@@ -223,8 +224,8 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
         </div>
         {legalContractsQuery.isError ? <ListErrorState title="Couldn't load this customer's legal contracts" status={0} message={(legalContractsQuery.error as Error)?.message} onRetry={() => void legalContractsQuery.refetch()} /> : null}
         {legalContractsQuery.isLoading ? <p className="text-xs text-gray-500">Loading e-signature contracts…</p> : null}
-        {!legalContractsQuery.isLoading && !legalContractsQuery.isError && (legalContractsQuery.data?.contracts?.length ?? 0) === 0 ? <p className="text-xs text-gray-500">No e-signature contracts linked to this customer.</p> : null}
-        {(legalContractsQuery.data?.contracts ?? []).map((contract) => (
+        {!legalContractsQuery.isLoading && !legalContractsQuery.isError && legalContracts.length === 0 ? <p className="text-xs text-gray-500">No e-signature contracts linked to this customer.</p> : null}
+        {legalContracts.map((contract) => (
           <div key={contract.id} className="rounded-sm border border-gray-200 p-2 text-xs">
             <EntityLink kind="legal_contract" id={contract.id} label={contract.display_name_en ?? contract.template_code} className="font-semibold text-slate-700 underline" />
             <div className="text-gray-500">{contract.status} · {contract.signer_name}</div>
