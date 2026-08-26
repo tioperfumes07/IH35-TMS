@@ -33,6 +33,7 @@ import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard"
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
 import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
+import { LoadQualityEventsReverseSection } from "./LoadQualityEventsReverseSection";
 import { LoadInTransitIssuesReverseSection } from "./LoadInTransitIssuesReverseSection";
 import { LoadDriverReportsReverseSection } from "../maintenance/LoadDriverReportsReverseSection";
 import { FuelTransactionsReverseSection } from "../fuel/FuelTransactionsReverseSection";
@@ -680,6 +681,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     operatingCompanyId={load.operating_company_id}
                     loadId={load.id}
                     data-testid="load-detail-work-orders"
+                  />
+                ) : null}
+                {load.operating_company_id && load.customer_id ? (
+                  <LoadQualityEventsReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    customerId={load.customer_id}
+                    loadId={load.id}
+                    data-testid="load-detail-quality-events"
                   />
                 ) : null}
                 {load.operating_company_id ? (

@@ -469,6 +469,11 @@ export function CustomerDetailPage() {
     details: "",
     dollar_impact_amount: "",
     days_late: "",
+    // DISP-F6445: the backend and CustomerQualityEvent type have always accepted/rendered
+    // related_load_id (LoadDetailDrawer now shows a reverse "Quality Events" section for it), but
+    // this create form never sent it -- the field existed everywhere except where a user could
+    // actually set it. Empty string = "no related load" (optional).
+    related_load_id: "",
   });
   const [voidReason, setVoidReason] = useState("");
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
@@ -583,7 +588,9 @@ export function CustomerDetailPage() {
     enabled: fmcsaHistoryOpen && Boolean(operatingCompanyId),
   });
   // TMS Loads tab — reuse the shared loads list endpoint (mdata.loads), scoped to this customer +
-  // operating company. Lazy: only fetches once the Loads tab is opened. No new backend.
+  // operating company. Lazy: fetches when the Loads tab is opened OR the Create Quality Event
+  // modal is open (DISP-F6445: the modal's "Related Load" picker below reuses this same query —
+  // same queryKey, so opening the modal after visiting Loads is a cache hit, not a second fetch).
   const customerLoadsQuery = useQuery({
     queryKey: ["customer-loads", id, operatingCompanyId],
     queryFn: () =>
@@ -593,7 +600,7 @@ export function CustomerDetailPage() {
         limit: 200,
         sort: "created_at:desc",
       }).then((res) => res.loads),
-    enabled: Boolean(id && operatingCompanyId && activeTab === "Loads"),
+    enabled: Boolean(id && operatingCompanyId && (activeTab === "Loads" || qualityModalOpen)),
   });
   // Per-Customer P&L tab — reuse the EXISTING Customer Profitability report endpoint
   // (getCustomerProfitability). The report PAGE takes no customer prop (it reads companyId from
@@ -877,6 +884,7 @@ export function CustomerDetailPage() {
           details: qualityForm.details || undefined,
           dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
           days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
+          related_load_id: qualityForm.related_load_id || undefined,
         },
         operatingCompanyId
       ),
@@ -894,6 +902,7 @@ export function CustomerDetailPage() {
         details: "",
         dollar_impact_amount: "",
         days_late: "",
+        related_load_id: "",
       });
       pushToast("Quality event created", "success");
     },
@@ -2931,6 +2940,24 @@ export function CustomerDetailPage() {
             {qualityForm.event_type === "late_payment" ? (
               <Field label="Days Late" value={qualityForm.days_late} onChange={(value) => setQualityForm((current) => ({ ...current, days_late: value }))} type="number" />
             ) : null}
+            <div className="md:col-span-2">
+              {/*
+                DISP-F6445: related_load_id has always been in the API contract and rendered forward
+                (Quality & History → EntityLinkOrTombstone to the load) and now backward
+                (LoadDetailDrawer's Quality Events reverse section) -- but this create form never had
+                a field to actually set it. Optional: most quality events (e.g. non_payment,
+                commendation) aren't tied to one specific load.
+              */}
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Related Load (optional)</label>
+              <Combobox
+                options={customerLoads.map((load) => ({ value: load.id, label: load.load_number ?? load.id }))}
+                value={qualityForm.related_load_id || null}
+                onChange={(nextValue) => setQualityForm((current) => ({ ...current, related_load_id: nextValue ?? "" }))}
+                loading={customerLoadsQuery.isLoading}
+                placeholder="No related load"
+                dataTestId="quality-event-related-load"
+              />
+            </div>
             <div className="md:col-span-2">
               <Field label="Summary" value={qualityForm.summary} onChange={(value) => setQualityForm((current) => ({ ...current, summary: value }))} />
             </div>

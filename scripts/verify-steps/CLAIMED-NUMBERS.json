@@ -1,4 +1,9 @@
 {
+  "9803": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-quality-events-reverse-link"
+  },
   "9802": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
