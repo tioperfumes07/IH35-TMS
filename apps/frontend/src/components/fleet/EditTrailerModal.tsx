@@ -41,6 +41,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [baseline, setBaseline] = useState<Record<string, string>>({});
+  const actionGenerationRef = useRef(0);
 
   const profileQuery = useQuery({
     queryKey: ["edit-trailer-modal", trailerId, operatingCompanyId],
@@ -75,6 +76,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   // Initialize once per open so a refetch can't reset the form + wipe edits.
   const initializedRef = useRef(false);
   useEffect(() => {
+    actionGenerationRef.current += 1;
     initializedRef.current = false;
     setDraft({});
     setBaseline({});
@@ -136,20 +138,26 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
 
   const { pushToast } = useToast();
   const resetAndClose = () => {
+    actionGenerationRef.current += 1;
+    saveMutation.reset();
     initializedRef.current = false;
     setDraft({});
     setBaseline({});
     onClose();
   };
+  /** @matrix-built modules=fleet cols=trailer,connectivity,reverse_link */
   const saveMutation = useMutation({
-    mutationFn: () => patchTrailer(trailerId, operatingCompanyId, patchPayload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["trailer-profile", trailerId, operatingCompanyId] });
-      void queryClient.invalidateQueries({ queryKey: ["edit-trailer-modal", trailerId, operatingCompanyId] });
+    mutationFn: (input: { trailerId: string; companyId: string; generation: number; patch: Record<string, unknown> }) => patchTrailer(input.trailerId, input.companyId, input.patch),
+    onSuccess: (_data, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["trailer-profile", input.trailerId, input.companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["edit-trailer-modal", input.trailerId, input.companyId] });
       onSaved?.();
       resetAndClose();
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save trailer", "error"),
+    onError: (e, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(e instanceof Error ? e.message : "Failed to save trailer", "error");
+    },
   });
 
   const set = (key: string, value: string) => setDraft((d) => ({ ...d, [key]: value }));
@@ -272,7 +280,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
                 resetAndClose();
                 return;
               }
-              saveMutation.mutate();
+              saveMutation.mutate({ trailerId, companyId: operatingCompanyId, generation: actionGenerationRef.current, patch: { ...patchPayload } });
             }}
           >
             Save

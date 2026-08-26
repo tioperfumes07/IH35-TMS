@@ -19,9 +19,9 @@ const files = [
 function audit(entries) {
   const errors = [];
   for (const { f, api, src } of entries) {
-  if (!new RegExp(`mutationFn:\\s*\\(\\)\\s*=>\\s*${api}`).test(src))
+  if (!new RegExp(`mutationFn:[\\s\\S]{0,300}?=>\\s*${api}\\(`).test(src))
     errors.push(`${f}: saveMutation.mutationFn must call ${api}.`);
-  if (!src.includes("saveMutation.mutate()"))
+  if (!src.includes("saveMutation.mutate("))
     errors.push(`${f}: Save button must call saveMutation.mutate().`);
   if (!/onError:/.test(src))
     errors.push(`${f}: saveMutation must have an onError handler (surface failures).`);
@@ -39,8 +39,8 @@ if (process.argv.includes("--selftest")) {
   for (const [index, entry] of sources.entries()) {
     const other = sources[1 - index];
     const mutationSources = [
-      entry.src.replace(`mutationFn: () => ${entry.api}`, "mutationFn: () => Promise.resolve"),
-      entry.src.replace("saveMutation.mutate()", "onClose()"),
+      entry.src.replace(new RegExp(`(mutationFn:[\\s\\S]{0,300}?=>\\s*)${entry.api}`), "$1Promise.resolve"),
+      entry.src.replace("saveMutation.mutate(", "saveMutation.notMutate("),
       entry.src.replace("onError:", "onSettled:"),
       index === 0
         ? entry.src.replace("disabled={saveMutation.isPending", "disabled={dirtyCount === 0 || saveMutation.isPending")

@@ -9,9 +9,9 @@ function failures(input = source) {
   return [
     ["initialization lock resets per record/company/open", /initializedRef\.current = false;\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*\}, \[open, trailerId, operatingCompanyId\]\);/.test(input)],
     ["record query is trailer and company scoped", /queryKey: \["edit-trailer-modal", trailerId, operatingCompanyId\]/.test(input) && input.includes("equipment/${trailerId}?operating_company_id=" )],
-    ["dismiss resets record draft", /const resetAndClose = \(\) => \{\s*initializedRef\.current = false;\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*onClose\(\);/.test(input)],
+    ["dismiss resets record draft", /const resetAndClose = \(\) => \{[\s\S]{0,180}?initializedRef\.current = false;\s*setDraft\(\{\}\);\s*setBaseline\(\{\}\);\s*onClose\(\);/.test(input)],
     ["modal cancel no-change and success use reset close", input.includes('onClose={resetAndClose}') && /variant="secondary" onClick=\{resetAndClose\}/.test(input) && /Object\.keys\(patchPayload\)\.length === 0\) \{\s*resetAndClose\(\);/.test(input) && /onSaved\?\.\(\);\s*resetAndClose\(\);/.test(input)],
-    ["canonical scoped patch remains", /patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/.test(input)],
+    ["canonical submitted scoped patch remains", /patchTrailer\(input\.trailerId, input\.companyId, input\.patch\)/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 

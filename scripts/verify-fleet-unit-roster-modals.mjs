@@ -199,7 +199,7 @@ export function audit(src) {
     failures.push(`${FILES.statusModal}: trailer.status_change/fleet.modal.status_change must mount from the trailer route and save the scoped trailer`);
   }
   if (!/<EditTrailerModal[\s\S]{0,220}open=\{editModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,120}operatingCompanyId=\{companyId\}/.test(src.trailerPage) ||
-      !/patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/.test(src.editTrailer)) {
+      !/patchTrailer\(input\.trailerId, input\.companyId, input\.patch\)/.test(src.editTrailer)) {
     failures.push(`${FILES.editTrailer}: trailer.edit must mount from the trailer route and patch the scoped trailer`);
   }
   return failures;
@@ -242,7 +242,7 @@ if (process.argv.includes("--selftest")) {
     ["status-modal-mount", "trailerPage", /<StatusChangeModal[\s\S]{0,220}open=\{statusModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,100}companyId=\{companyId\}/, "<StatusChangeModal open={false}"],
     ["status-modal-save", "statusModal", /putTrailerStatus\(trailerId, companyId, body\)/, "putTrailerStatus(trailerId, '', body)"],
     ["edit-trailer-mount", "trailerPage", /<EditTrailerModal[\s\S]{0,220}open=\{editModalOpen\}[\s\S]{0,180}trailerId=\{id\}[\s\S]{0,120}operatingCompanyId=\{companyId\}/, "<EditTrailerModal open={false}"],
-    ["edit-trailer-save", "editTrailer", /patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/, "patchTrailer(trailerId, '', patchPayload)"],
+    ["edit-trailer-save", "editTrailer", /patchTrailer\(input\.trailerId, input\.companyId, input\.patch\)/, "patchTrailer(input.trailerId, '', input.patch)"],
     ["filter-reverse-applicability", "required", /"id": "roster\.filter\.type",\n\s+"removed": \[\n\s+"reverse_link"\n\s+\]/, '"id": "roster.filter.type",\n          "removed": []'],
     ["filter-reverse-count", "required", /"leaves_touched": 33/, '"leaves_touched": 25'],
     ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
