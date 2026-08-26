@@ -45,5 +45,7 @@ export default {
     await ctx.run("node", ["scripts/verify-unit-profile-action-company-lifecycle.mjs"]);
     await ctx.run("node", ["scripts/verify-maint-work-order-detail-action-lifecycle.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-maint-work-order-detail-action-lifecycle.mjs"]);
+    await ctx.run("node", ["scripts/verify-maint-parts-adjustment-company-lifecycle.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-maint-parts-adjustment-company-lifecycle.mjs"]);
   },
 };

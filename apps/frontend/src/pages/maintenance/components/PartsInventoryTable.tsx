@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow, type PartsPurchaseGlPosting } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
@@ -62,6 +62,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
   const [lastGlPosting, setLastGlPosting] = useState<PartsPurchaseGlPosting | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
+  const adjustmentGenerationRef = useRef(0);
 
   const purchaseMutation = useMutation({
     mutationFn: () =>
@@ -84,19 +85,33 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
     onError: (err) => pushToast(userFacingApiError(err, "Could not record parts purchase"), "error"),
   });
   const adjustMutation = useMutation({
-    mutationFn: () => {
-      if (!adjustRow) {
-        throw new Error("No parts inventory row selected");
-      }
-      return adjustPartsInventory(adjustRow.id, companyId, { delta_qty: deltaQty, reason });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: {
+      rowId: string;
+      companyId: string;
+      generation: number;
+      deltaQty: number;
+      reason: "used" | "discarded" | "shrinkage" | "recount";
+    }) => adjustPartsInventory(input.rowId, input.companyId, { delta_qty: input.deltaQty, reason: input.reason }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== adjustmentGenerationRef.current) return;
       setAdjustRow(null);
       setDeltaQty(0);
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", input.companyId] });
     },
-    onError: (err) => pushToast(userFacingApiError(err, "Could not apply inventory adjustment"), "error"),
+    onError: (err, input) => {
+      if (input.generation === adjustmentGenerationRef.current) {
+        pushToast(userFacingApiError(err, "Could not apply inventory adjustment"), "error");
+      }
+    },
   });
+
+  useEffect(() => {
+    adjustmentGenerationRef.current += 1;
+    adjustMutation.reset();
+    setAdjustRow(null);
+    setDeltaQty(0);
+    setReason("recount");
+  }, [companyId]);
 
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
     // Part # is its OWN column, matching how McLeod and NetSuite parts grids are laid out: a scannable
@@ -250,7 +265,21 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
             <option value="shrinkage">shrinkage</option>
             <option value="recount">recount</option>
           </SelectCombobox>
-          <Button onClick={() => adjustMutation.mutate()} disabled={adjustMutation.isPending}>Apply Adjustment</Button>
+          <Button
+            onClick={() => {
+              if (!adjustRow) return;
+              adjustMutation.mutate({
+                rowId: adjustRow.id,
+                companyId,
+                generation: adjustmentGenerationRef.current,
+                deltaQty,
+                reason,
+              });
+            }}
+            disabled={adjustMutation.isPending}
+          >
+            Apply Adjustment
+          </Button>
         </div>
       </Modal>
     </div>
