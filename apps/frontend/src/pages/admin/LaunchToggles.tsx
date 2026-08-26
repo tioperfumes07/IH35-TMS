@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 
 type LaunchToggle = {
   operating_company_id: string;
@@ -51,6 +52,12 @@ export function LaunchTogglesPage() {
   const [notes, setNotes] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    carrierId: string;
+    companyCode: string;
+    action: "launch" | "rollback";
+    notes: string;
+  } | null>(null);
 
   const togglesQuery = useQuery({
     queryKey: ["admin-launch-toggles"],
@@ -59,8 +66,8 @@ export function LaunchTogglesPage() {
   });
 
   const actionMutation = useMutation({
-    mutationFn: ({ carrierId, action }: { carrierId: string; action: "launch" | "rollback" }) =>
-      postToggleAction(carrierId, action, notes),
+    mutationFn: (input: { carrierId: string; companyCode: string; action: "launch" | "rollback"; notes: string }) =>
+      postToggleAction(input.carrierId, input.action, input.notes),
     onSuccess: async () => {
       setError(null);
       setNotes("");
@@ -131,11 +138,11 @@ export function LaunchTogglesPage() {
               className="h-8 px-3 text-xs"
               disabled={actionMutation.isPending}
               onClick={() => {
-                if (!window.confirm(`Launch ${row.company_code} for office users with access?`)) return;
-                setPendingId(row.operating_company_id);
-                void actionMutation.mutateAsync({
+                setPendingAction({
                   carrierId: row.operating_company_id,
+                  companyCode: row.company_code,
                   action: "launch",
+                  notes: notes.trim(),
                 });
               }}
             >
@@ -148,15 +155,11 @@ export function LaunchTogglesPage() {
               className="h-8 px-3 text-xs"
               disabled={actionMutation.isPending}
               onClick={() => {
-                if (
-                  !window.confirm(`Rollback ${row.company_code}? This hides the carrier from the switcher again.`)
-                ) {
-                  return;
-                }
-                setPendingId(row.operating_company_id);
-                void actionMutation.mutateAsync({
+                setPendingAction({
                   carrierId: row.operating_company_id,
+                  companyCode: row.company_code,
                   action: "rollback",
+                  notes: notes.trim(),
                 });
               }}
             >
@@ -165,7 +168,7 @@ export function LaunchTogglesPage() {
           ),
       },
     ];
-  }, [actionMutation, pendingId]);
+  }, [actionMutation, notes, pendingId]);
 
   if (!allowed) {
     return (
@@ -216,6 +219,28 @@ export function LaunchTogglesPage() {
           />
         </div>
       )}
+
+      <ConfirmModal
+        open={Boolean(pendingAction)}
+        title={pendingAction?.action === "rollback" ? "Rollback this carrier?" : "Launch this carrier?"}
+        message={
+          pendingAction
+            ? pendingAction.action === "rollback"
+              ? `Rollback ${pendingAction.companyCode}? This hides the carrier from the switcher again.`
+              : `Launch ${pendingAction.companyCode} for office users with access?`
+            : ""
+        }
+        confirmLabel={pendingAction?.action === "rollback" ? "Rollback carrier" : "Launch carrier"}
+        danger={pendingAction?.action === "rollback"}
+        onClose={() => setPendingAction(null)}
+        onConfirm={() => {
+          if (!pendingAction) return;
+          const input = pendingAction;
+          setPendingAction(null);
+          setPendingId(input.carrierId);
+          actionMutation.mutate(input);
+        }}
+      />
     </div>
   );
 }
