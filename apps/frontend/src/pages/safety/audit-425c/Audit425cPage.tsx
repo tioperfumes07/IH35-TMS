@@ -323,24 +323,24 @@ export default function Audit425cPage() {
             data-testid="audit-425c-actor-filter"
           />
         </label>
-        <label className="text-xs text-slate-600">
-          From
+        <div className="text-xs text-slate-600">
+          <span>From</span>
           <DatePicker
             className="mt-1 block"
             value={draft.from}
             onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
             data-testid="audit-425c-from-date"
           />
-        </label>
-        <label className="text-xs text-slate-600">
-          To
+        </div>
+        <div className="text-xs text-slate-600">
+          <span>To</span>
           <DatePicker
             className="mt-1 block"
             value={draft.to}
             onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
             data-testid="audit-425c-to-date"
           />
-        </label>
+        </div>
         <Button type="button" size="sm" data-testid="audit-425c-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
           Apply
         </Button>
