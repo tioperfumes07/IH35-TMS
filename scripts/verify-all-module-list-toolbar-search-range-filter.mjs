@@ -82,7 +82,7 @@ export function verify(source) {
   const failures = [];
   const need = (file, token, message) => { if (!source[file]?.includes(token)) failures.push(message); };
 
-  for (const token of ["<TableSearch", "<DatePicker", "<MoneyInput", "NUMBER_FIELD", 'aria-label="Range from number"', "applyUniversalListFilters", "onClick={reset}", "onClick={cancel}", "onClick={apply}", 'event.key === "Escape"', 'document.addEventListener("mousedown"']) {
+  for (const token of ["<TableSearch", "<DatePicker", "<MoneyInput", "NUMBER_FIELD", 'aria-label="Range from number"', "applyUniversalListFilters", "onClick={reset}", "onClick={cancel}", "onClick={apply}", 'event.key === "Escape"', 'document.addEventListener("mousedown"', "w-[14rem]"]) {
     need(CORE.toolbar, token, `UniversalListToolbar must retain ${token}`);
   }
   // LV-LEGAL-MATTERS-RANGE-OMITS-SOL-DATE — DATE_FIELD must recognize SOL / hearing / *_at.

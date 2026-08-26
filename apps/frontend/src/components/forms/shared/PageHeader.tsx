@@ -80,6 +80,7 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
             }}
           >
               <ArrowLeft size={18} aria-hidden />
+              <span className="page-header-back-label">Back</span>
           </button>
           <h1 className="page-header-title">{title}</h1>
           {subtitle ? <span className="page-header-subtitle">{subtitle}</span> : null}

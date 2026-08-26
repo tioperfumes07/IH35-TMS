@@ -76,8 +76,8 @@ function assertComponent(src) {
   if (!src.includes("pageSizeOptions = [25, 50, 100, 300]")) {
     errors.push(`${COMPONENT}: default pageSizeOptions must be QBO 25/50/100/300`);
   }
-  if (!src.includes('htmlFor="parity-gear-page-size"') || !src.includes("Rows per page")) {
-    errors.push(`${COMPONENT}: gear must include QBO rows-per-page (25/50/100/300)`);
+  if (!src.includes("changePageSize(next)") || !src.includes('htmlFor="parity-gear-page-size"')) {
+    errors.push(`${COMPONENT}: gear rows-per-page select must apply immediately via changePageSize(next)`);
   }
   // The controlled-sort precedent this API mirrors must still exist.
   if (!/isSortControlled\s*=\s*onSortChange\s*!=\s*null/.test(src)) {
@@ -95,7 +95,7 @@ function assertTests(src) {
     "hidePager: no pager chrome in the DOM",
     "controlled pageSize: the prop drives slicing; the selector fires onPageSizeChange without internal mutation",
     "pre-paged combination: pageSize = rows.length + hidePager renders every provided row with no pager",
-    "gear drafts QBO rows-per-page 25/50/100/300 and applies after Apply",
+    "gear drafts QBO rows-per-page 25/50/100/300 and applies when the gear rows-per-page select changes",
   ];
   for (const name of required) {
     if (!src.includes(name)) {
@@ -159,7 +159,7 @@ function selftest() {
     it("hidePager: no pager chrome in the DOM (rows still slice internally)", () => {});
     it("controlled pageSize: the prop drives slicing; the selector fires onPageSizeChange without internal mutation", () => {});
     it("pre-paged combination: pageSize = rows.length + hidePager renders every provided row with no pager", () => {});
-    it("gear drafts QBO rows-per-page 25/50/100/300 and applies after Apply", () => {});
+    it("gear drafts QBO rows-per-page 25/50/100/300 and applies when the gear rows-per-page select changes", () => {});
   `;
   const badTests = `it("renders rows", () => {});`;
 

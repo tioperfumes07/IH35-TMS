@@ -56,7 +56,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
           <button
             type="button"
             aria-label="Back"
-            className="mb-1 inline-flex items-center text-gray-600 hover:text-gray-900"
+            className="mb-1 inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
             onClick={() => {
               if (onBack) {
                 onBack();
@@ -84,6 +84,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
             }}
           >
               <ArrowLeft className="h-4 w-4" />
+              <span className="text-[11px] font-semibold">Back</span>
           </button>
           {/*
             The title must NOT be squeezed by the subtitle. Observed live on /dispatch: the subtitle

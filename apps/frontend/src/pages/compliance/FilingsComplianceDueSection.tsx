@@ -156,6 +156,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
         storageKey="compliance-filings-due"
         exportFilename="filings-compliance-due"
         tableTestId="compliance-filings-due-table"
+        suppressToolbarSearch
         filterBar={
           <CollapsedListFilters
             activeFilterCount={(categoryFilter ? 1 : 0) + (filterText.trim() ? 1 : 0)}

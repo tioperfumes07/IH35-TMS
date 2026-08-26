@@ -71,14 +71,10 @@ function selftest() {
 
   // Offender 2: remove embeddedBackLink from the no-company branch.
   const noCompanyNeedle = [
-    "      return (",
-    "        <div>",
-    "          {embeddedBackLink}",
-    "          {empty}",
-    "        </div>",
-    "      );",
+    "        {embeddedBackLink}",
+    "        {empty}",
   ].join("\n");
-  const o2 = real.replace(noCompanyNeedle, "      return empty;");
+  const o2 = real.replace(noCompanyNeedle, "        {empty}");
   if (o2 === real) failures.push("offender-2 mutation did not change the file — guard's own slice/regex may be stale.");
   const p2 = check(o2);
   if (!p2.some((m) => m.includes("no-company-selected embedded branch"))) {
@@ -89,7 +85,8 @@ function selftest() {
   const bodyBranchNeedle = [
     "  if (!showModuleHeader) {",
     "    return (",
-    '      <div className="space-y-2">',
+    '      <div className="space-y-4">',
+    "        {header}",
     "        {embeddedBackLink}",
     "        {body}",
     "      </div>",
