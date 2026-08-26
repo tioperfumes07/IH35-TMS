@@ -20,6 +20,7 @@ export function CustomerCargoClaimsReverseSection({
         claimant_customer_id: customerId,
       }),
   });
+  const incidents = query.isError ? [] : (query.data?.incidents ?? []);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="text-sm font-semibold text-gray-800">Cargo claims</h3>
@@ -31,13 +32,13 @@ export function CustomerCargoClaimsReverseSection({
       ) : null}
       {!query.isLoading &&
       !query.isError &&
-      (query.data?.incidents ?? []).length === 0 ? (
+      incidents.length === 0 ? (
         <p className="mt-2 text-sm text-gray-500">
           No cargo claims are linked to this customer.
         </p>
       ) : null}
       <div className="mt-2 space-y-2">
-        {(query.data?.incidents ?? []).map((row) => (
+        {incidents.map((row) => (
           <div key={String(row.id)} className="text-sm">
             <EntityLinkOrTombstone
               kind="cargo_claim"
