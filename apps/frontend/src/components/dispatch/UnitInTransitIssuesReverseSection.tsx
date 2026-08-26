@@ -11,7 +11,7 @@ export function UnitInTransitIssuesReverseSection({ operatingCompanyId, unitId }
     queryFn: () => listDispatchIntransitIssues(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.issues ?? [];
+  const rows = query.isError ? [] : (query.data?.issues ?? []);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-intransit-issues-reverse">

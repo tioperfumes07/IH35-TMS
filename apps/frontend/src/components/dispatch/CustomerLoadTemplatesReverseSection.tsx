@@ -10,8 +10,8 @@ export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, custom
     queryFn: () => listLoadTemplates(operatingCompanyId, { customer_id: customerId }),
     enabled: Boolean(operatingCompanyId && customerId),
   });
-  const templates = query.data?.templates ?? [];
-  const total = query.data?.total ?? templates.length;
+  const templates = query.isError ? [] : (query.data?.templates ?? []);
+  const total = query.isError ? 0 : (query.data?.total ?? templates.length);
   const preview = templates.slice(0, 5);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-load-templates-reverse">
