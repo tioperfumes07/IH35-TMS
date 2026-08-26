@@ -50,14 +50,17 @@ function assertMigrated(src) {
   if (!src.includes("Generate draft")) {
     errors.push(`${PAGE}: must keep the Generate draft action`);
   }
-  if (!src.includes("Form 2290 filings")) {
-    errors.push(`${PAGE}: must keep the Form 2290 filings heading`);
+  if (!src.includes('title="Form 2290 filings"')) {
+    errors.push(`${PAGE}: must keep PageHeader title="Form 2290 filings"`);
+  }
+  if (/<h2[^>]*>Form 2290 filings<\/h2>/.test(src)) {
+    errors.push(`${PAGE}: must not duplicate PageHeader with an inner h2 (Safety Permits embed)`);
   }
   if (!src.includes('from "../../components/layout/PageHeader"') && !src.includes("from '../../components/layout/PageHeader'")) {
     errors.push(`${PAGE}: full /compliance/form-2290 route must import layout PageHeader`);
   }
-  if (!src.includes('backHref="/compliance"')) {
-    errors.push(`${PAGE}: PageHeader must set backHref="/compliance" so ← returns to Compliance`);
+  if (!src.includes('backHref={showModuleHeader ? "/compliance" : "/safety"}')) {
+    errors.push(`${PAGE}: PageHeader must set backHref /compliance (standalone) vs /safety (Permits embed)`);
   }
   if (!src.includes('showModuleHeader={false}')) {
     // Permits.tsx holds the embed flag; this file must still accept the prop so Safety does not get a second ←.
@@ -74,8 +77,7 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     export function Form2290Filings({ showModuleHeader = true } = {}) {
     <div>
-      <PageHeader backHref="/compliance" title="Form 2290 filings" />
-      <h2>Form 2290 filings</h2>
+      <PageHeader backHref={showModuleHeader ? "/compliance" : "/safety"} title="Form 2290 filings" />
       <button>Generate draft</button>
       <ParityTable>
         emptyText="No filings yet."
@@ -96,12 +98,21 @@ function selftest() {
   `;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const dupH2 = good.replace(
+    '<PageHeader backHref={showModuleHeader ? "/compliance" : "/safety"} title="Form 2290 filings" />',
+    '<PageHeader backHref={showModuleHeader ? "/compliance" : "/safety"} title="Form 2290 filings" />\n      <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>'
+  );
+  const dupErrors = assertMigrated(dupH2);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  if (!dupErrors.some((e) => e.includes("must not duplicate PageHeader"))) {
+    console.error(`${LABEL} --selftest FAIL duplicate inner h2 should fail:`, dupErrors);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

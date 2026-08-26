@@ -163,9 +163,6 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          {showModuleHeader ? null : (
-            <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
-          )}
           <p className="text-xs text-slate-600">
             {/* No fabricated fallback. This previously rendered a hardcoded August-31 literal whenever
                 the endpoint had not answered — a regulatory date invented by the UI, indistinguishable
