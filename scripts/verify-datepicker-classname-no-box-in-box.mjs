@@ -115,6 +115,9 @@ function run() {
   if (!dp.includes("partitionDatePickerClassName")) {
     errors.push("DatePicker.tsx must define partitionDatePickerClassName (strip border/rounded/px/py from className)");
   }
+  if (!dp.includes("preventDefault")) {
+    errors.push("DatePicker calendar must preventDefault so a wrapping label cannot re-open after a day click");
+  }
   if (!/border-gray-300/.test(dp) || !/<button[\s\S]*border border-gray-300/.test(dp)) {
     errors.push("DatePicker button must keep the single QBO border chrome");
   }

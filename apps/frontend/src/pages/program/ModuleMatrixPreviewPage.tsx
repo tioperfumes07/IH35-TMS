@@ -19,6 +19,7 @@ import {
   type TierMetrics,
 } from "./moduleMatrixBoxes";
 import { ProgramModuleNav } from "./ProgramModuleNav";
+import { ProgramBoardsExplainer } from "./ProgramBoardsExplainer";
 import {
   U14_EXCLUSIVE_CERTIFIED_COUNT,
   U14_EXCLUSIVE_TOTAL,
@@ -549,6 +550,7 @@ export function ModuleMatrixPreviewPage() {
       )}
 
       <ProgramModuleNav active="matrix" />
+      <ProgramBoardsExplainer active="matrix" />
 
       <header className="hd">
         <h1 className="t">Program — Module matrix scoreboards</h1>

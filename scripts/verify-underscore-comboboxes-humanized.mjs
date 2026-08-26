@@ -31,7 +31,7 @@ const CHECKS = [
   {
     name: "IdentityStatusHeader unit status select",
     file: "apps/frontend/src/components/vehicle-profile/IdentityStatusHeader.tsx",
-    pattern: /\{STATUSES\.map\(\(s\) => \(\s*<option key=\{s\} value=\{s\}>\s*\{properEnumOrFilterLabel\(s\)\}/,
+    pattern: /STATUS_OPTIONS\.map\(\(s\) => \(\s*<option key=\{s\.value\} value=\{s\.value\}>\s*\{s\.label\}/,
   },
   {
     name: "FleetTable status filter select",
@@ -98,7 +98,7 @@ function selftest() {
     // Poison: replace the first humanizer call this pattern anchors on with the raw bare variable,
     // proving the guard actually distinguishes humanized from raw.
     const poisoned = real.replace(c.pattern, (m) =>
-      m.replace(/properEnumOrFilterLabel\([a-z]\)/, "$&_POISON").replace(/humanizeEnumLabel\(s\)/, "s").replace(/typeLabelByType\.get\(t\) \?\? t/, "t").replace(/ownerNoun\(t\)/, "t")
+      m.replace(/properEnumOrFilterLabel\([a-z]\)/, "$&_POISON").replace(/humanizeEnumLabel\(s\)/, "s").replace(/typeLabelByType\.get\(t\) \?\? t/, "t").replace(/ownerNoun\(t\)/, "t").replace(/\{s\.label\}/, "{s.value}")
     );
     if (c.pattern.test(poisoned)) {
       failures.push(`${c.name}: poison mutation NOT caught (pattern still matches after reverting to raw)`);

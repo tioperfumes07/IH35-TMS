@@ -56,6 +56,8 @@ export type SamsaraVehicleStat = {
   state: string | null;
   engine_state: "on" | "off" | "idle" | "unknown";
   odometer_mi: number | null;
+  fuel_level_pct: number | null;
+  engine_hours: number | null;
   current_driver: { samsara_driver_id: string; started_at: string; ended_at: string | null } | null;
   raw: Record<string, unknown>;
 };
@@ -322,6 +324,22 @@ export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicl
     odometer_mi = Number((odoMeters * 0.000621371).toFixed(1));
   }
 
+  let fuel_level_pct: number | null = null;
+  const fuelStat = asObject(row.fuelPercents) ?? asObject(row.fuelPercent);
+  const fuelVal = fuelStat != null && fuelStat.value != null ? Number(fuelStat.value) : NaN;
+  if (Number.isFinite(fuelVal) && fuelVal >= 0 && fuelVal <= 100) {
+    fuel_level_pct = fuelVal;
+  }
+
+  let engine_hours: number | null = null;
+  const hoursStat = asObject(row.obdEngineSeconds) ?? asObject(row.engineHours);
+  const hoursRaw = hoursStat != null && hoursStat.value != null ? Number(hoursStat.value) : NaN;
+  if (Number.isFinite(hoursRaw) && hoursRaw >= 0) {
+    engine_hours = asObject(row.obdEngineSeconds)
+      ? Number((hoursRaw / 3600).toFixed(1))
+      : hoursRaw;
+  }
+
   // Current driver assignment: take the open assignment (no endTime) with the latest startTime.
   let current_driver: SamsaraVehicleStat["current_driver"] = null;
   const assignments = Array.isArray(row.driverAssignments) ? row.driverAssignments : [];
@@ -346,7 +364,7 @@ export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicl
     }
   }
 
-  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, odometer_mi, current_driver, raw: row };
+  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, odometer_mi, fuel_level_pct, engine_hours, current_driver, raw: row };
 }
 
 async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
@@ -360,7 +378,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   // /fleet/vehicles/driver-assignments feed (the pairing worker), not here.
   // VALID stats types only (driverAssignments 400s — see above). obdOdometerMeters carries the live
   // odometer (meters) for the PM countdown; it is a documented valid stats type and degrades to null if absent.
-  url.searchParams.set("types", "gps,engineStates,obdOdometerMeters");
+  url.searchParams.set("types", "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds");
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {

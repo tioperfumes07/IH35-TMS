@@ -54,6 +54,7 @@ import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDef
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
+import { StatusChangeModal, type UnitLifecycleStatus } from "../../components/vehicle-profile/StatusChangeModal";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { UnitTaxFilingsReverseSection } from "../../components/compliance/UnitTaxFilingsReverseSection";
 import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
@@ -141,6 +142,8 @@ export function VehicleProfilePage() {
   const queryClient = useQueryClient();
   const [quickAssignOpen, setQuickAssignOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusModalTarget, setStatusModalTarget] = useState<UnitLifecycleStatus | null>(null);
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
@@ -293,6 +296,10 @@ export function VehicleProfilePage() {
               onQuickAvailability={(value) => quickAvailMutation.mutate(value)}
               quickAvailabilityPending={quickAvailMutation.isPending}
               onStatusSaved={() => void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] })}
+              onRequestStatusChange={(next) => {
+                setStatusModalTarget(next ?? null);
+                setStatusModalOpen(true);
+              }}
             />
           </div>
           <div data-testid="vp-section-2-telemetry">
@@ -506,20 +513,36 @@ export function VehicleProfilePage() {
             <UnitDefaultDriversReverseSection operatingCompanyId={companyId} unitId={id} />
           </div>
           <div data-testid="vp-section-10m-tire-program">
-            <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} />
-          </div>
-          <div data-testid="vp-section-10n-severe-repairs">
-            <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} />
-          </div>
-          <div data-testid="vp-section-10o-temp-cover">
-            <UnitTempCoverReverseSection operatingCompanyId={companyId} unitId={id} />
+            <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-ops-report">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">Unit operations report</h3>
+                <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => window.print()}>
+                  Print this report
+                </button>
+              </div>
+              <p className="mb-3 text-[11px] leading-snug text-slate-600">
+                Mounted tires, severe repairs, and temporary driver coverage are each clickable into their live lists.
+              </p>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:items-stretch [&_h3]:text-[13px] [&_li]:text-[11px] [&_p]:text-[11px] [&_section]:h-full [&_section]:min-h-[9.5rem] [&_section]:p-2">
+                <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} />
+                <span data-testid="vp-section-10n-severe-repairs" className="contents">
+                  <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} />
+                </span>
+                <span data-testid="vp-section-10o-temp-cover" className="contents">
+                  <UnitTempCoverReverseSection operatingCompanyId={companyId} unitId={id} />
+                </span>
+              </div>
+            </section>
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar
               unitId={id}
               companyId={companyId}
               unitNumber={unitNumber}
-              onChangeStatus={() => document.getElementById("vp-section-1-identity")?.scrollIntoView({ behavior: "smooth" })}
+              onChangeStatus={() => {
+                setStatusModalTarget(null);
+                setStatusModalOpen(true);
+              }}
               onEdit={() => setEditModalOpen(true)}
               onArchive={handleArchive}
             />
@@ -598,7 +621,21 @@ export function VehicleProfilePage() {
           pushToast("Driver assigned", "success");
         }}
       />
-      <EditVehicleModal
+      <StatusChangeModal
+        open={statusModalOpen}
+        unitId={id}
+        companyId={companyId}
+        currentStatus={String(unit?.status ?? "InService")}
+        initialTarget={statusModalTarget}
+        onClose={() => {
+          setStatusModalOpen(false);
+          setStatusModalTarget(null);
+        }}
+        onSaved={() => {
+          invalidateProfile();
+          pushToast("Unit status updated", "success");
+        }}
+      />
         open={editModalOpen}
         unitId={id}
         operatingCompanyId={companyId}

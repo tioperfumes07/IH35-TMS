@@ -133,20 +133,20 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           Note
           <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
-        <label className="block">
-          Effective date
+        <div>
+          <span className="block">Effective date</span>
           <DatePicker
             className="mt-1 w-full"
             value={effectiveDate}
             onChange={(next) => setEffectiveDate(next)}
           />
-        </label>
+        </div>
         {targetStatus === "Sold" ? (
           <>
-            <label className="block">
-              Sold date *
+            <div>
+              <span className="block">Sold date *</span>
               <DatePicker className="mt-1 w-full" value={soldDate} onChange={(next) => setSoldDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Sold to
               <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
@@ -160,10 +160,10 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         ) : null}
         {targetStatus === "Transferred" ? (
           <>
-            <label className="block">
-              Transferred date *
+            <div>
+              <span className="block">Transferred date *</span>
               <DatePicker className="mt-1 w-full" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Entity *
               <select className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
@@ -176,10 +176,10 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         ) : null}
         {targetStatus === "Damaged" ? (
           <>
-            <label className="block">
-              Damage date *
+            <div>
+              <span className="block">Damage date *</span>
               <DatePicker className="mt-1 w-full" value={damageDate} onChange={(next) => setDamageDate(next)} />
-            </label>
+            </div>
             <label className="block">
               Description *
               <textarea className="mt-1 w-full border px-2 py-1" value={damageDescription} onChange={(e) => setDamageDescription(e.target.value)} />
@@ -188,10 +188,10 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         ) : null}
         {targetStatus === "OutOfService" ? (
           <>
-            <label className="block">
-              OOS date *
+            <div>
+              <span className="block">OOS date *</span>
               <DatePicker className="mt-1 w-full" value={oosDate} onChange={(next) => setOosDate(next)} />
-            </label>
+            </div>
             <label className="block">
               OOS reason *
               <input className="mt-1 w-full border px-2 py-1" value={oosReason} onChange={(e) => setOosReason(e.target.value)} />
