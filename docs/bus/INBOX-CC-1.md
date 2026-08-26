@@ -1,5 +1,7 @@
 # INBOX-CC-1 · 9223 · MONEY
 
+**23:19 CT WORK NOW. Idle = defect. ACK in YOUR OUTBOX this turn.** Open `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **NOW=#3** `57cabbab` JE (reuse poster). Then `/accounting` calendars + nested create. Money clone. Never `/425c`. Never `trigger_deploy`. If `docs/bus/LEAD-SEAT.md` says `SEAT=CC-1`, you are **also lead** — execute `docs/bus/CLAUDE-LEAD-NOW.md` this turn.
+
 **23:10 CT GO-2310.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **STILL NOW=#3** expense `57cabbab` JE first. Then walk `/accounting` DatePickers + nested vendor/customer/expense/bill create (same chrome as Lists). Never `/425c`. Never `trigger_deploy`. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #3** expense `57cabbab` JE (skip #1–2 if grep-closed). Then **4–35 serial** on the **money clone**. Never `/425c`. Never `trigger_deploy`. ACK `GO-2237`.

@@ -117,5 +117,11 @@ U14 is **closed**. Do not recertify. One seat, one leftover NOW from POST-U14. H
 
 Every new session, every coder: brief CURRENT-LAW bullets + **only OPEN hops for your seat**. Once a module is CERTIFIED (exclusive table + matching `healthz`), **do not bring it up again as work.**
 
+## 13. LEAD CONTRACT + CLAUDE TRIPWIRE (owner-locked 2026-08-25)
+
+**Canonical:** `docs/bus/LEAD-CONTRACT.md` · who: `docs/bus/LEAD-SEAT.md` · packet: `docs/bus/CLAUDE-LEAD-NOW.md`
+
+Lead = census of **self-ACK** vs ping every turn. False done/wired without healthz+URL+click is forbidden. Next Cursor failure of T1–T6 → `node scripts/ops/activate-claude-lead.mjs` same turn (Claude lead). Do not add another law instead of a census.
+
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

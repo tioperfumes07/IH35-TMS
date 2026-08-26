@@ -1,5 +1,7 @@
 # INBOX-CC-2 · 9224
 
+**23:19 CT WORK NOW. Idle = defect. ACK YOUR OUTBOX.** Paste GO-2310. You were on reports leftover — **also** click every DatePicker and nested create on `/cash-flow` `/reports` `/finance` `/tasks` this turn. Unique FINDING to board. Never `trigger_deploy`. Cursor is lead.
+
 **23:10 CT GO-2310.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **NOW = live walk** `/cash-flow` `/reports` `/finance` `/tasks`: calendars must pick a day without seize/auto-reopen; popups complete; nested create = Lists chrome. Then GO-2237 leftover. Never `trigger_deploy`. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #1** live-walk `/cash-flow`. Then **2–35**. Do not remake #15947 #16002. ACK `GO-2237`. Never `trigger_deploy`.

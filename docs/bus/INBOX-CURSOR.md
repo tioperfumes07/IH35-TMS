@@ -1,5 +1,9 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**23:32 CT LEAD CONTRACT.** Every lead turn: rewrite `docs/bus/LEAD-CENSUS.md` from seven OUTBOXes. Ping ≠ ACK. T1–T6 → `node scripts/ops/activate-claude-lead.mjs --reason=T#` then stop leading. Packet already written: `docs/bus/CLAUDE-LEAD-NOW.md`. Do not add another law.
+
+**23:19 CT** Lead = this seat until tripwire. Do not steal other seats’ NOW. FAST-MERGE overflow only. Seats must ACK GO-2310 in their OUTBOX. Nobody `trigger_deploy`.
+
 **23:10 CT GO-2310 — LIVE WALK CALENDARS + SAME CREATE CHROME. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. Ship DatePicker click-through + QuickCreate customer = Lists chrome. Seats walk their modules; do not idle on leftover lists only. FAST-MERGE. Skip #15546. Nobody `trigger_deploy`.
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS PER SEAT.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. Lead: seats ACK + work their #1. Skip #15546. Nobody `trigger_deploy` unless 5–10 min/PR gate. Unique leftover 1–35 of Cursor list.
