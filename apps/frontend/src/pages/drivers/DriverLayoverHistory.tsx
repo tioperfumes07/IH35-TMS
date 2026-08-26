@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,9 +33,14 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const qc = useQueryClient();
   const { pushToast } = useToast();
+  const scopeGenerationRef = useRef(0);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+  }, [operatingCompanyId, driverUuid]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: LayoverRow[] }>({
-    queryKey: ["driver-layovers", driverUuid, from, to],
+    queryKey: ["driver-layovers", operatingCompanyId, driverUuid, from, to],
     queryFn: async () => {
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(operatingCompanyId)}&driver=${encodeURIComponent(driverUuid)}&from=${from}&to=${to}`),
         { credentials: "include" }
@@ -47,20 +52,37 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   });
 
   const billableMutation = useMutation({
-    mutationFn: async ({ uuid, billable }: { uuid: string; billable: boolean }) => {
+    mutationFn: async (input: {
+      uuid: string;
+      billable: boolean;
+      companyId: string;
+      driverId: string;
+      from: string;
+      to: string;
+      generation: number;
+    }) => {
+      const { uuid, billable, companyId } = input;
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers/${uuid}/mark-billable`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ billable, operating_company_id: operatingCompanyId }),
+        body: JSON.stringify({ billable, operating_company_id: companyId }),
       });
       if (!res.ok) throw new Error("Failed");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["driver-layovers"] }),
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      return qc.invalidateQueries({
+        queryKey: ["driver-layovers", input.companyId, input.driverId, input.from, input.to],
+      });
+    },
     // DRV-F6330: no onError, no toast import anywhere in the file (userFacingApiError was only
     // wired to the read query's error state, never to this write). A rejected billable-toggle
     // silently did nothing — the button just stayed on whatever it showed before the click.
-    onError: (err) => pushToast(userFacingApiError(err, "Could not update billable status"), "error"),
+    onError: (err, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Could not update billable status"), "error");
+    },
   });
 
   const rows = data?.data ?? [];
@@ -109,7 +131,17 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         render: (row) => (
           <button
             type="button"
-            onClick={() => billableMutation.mutate({ uuid: row.uuid, billable: !row.billable_to_customer })}
+            onClick={() =>
+              billableMutation.mutate({
+                uuid: row.uuid,
+                billable: !row.billable_to_customer,
+                companyId: operatingCompanyId,
+                driverId: driverUuid,
+                from,
+                to,
+                generation: scopeGenerationRef.current,
+              })
+            }
             className={`text-xs px-2 py-0.5 rounded-sm ${row.billable_to_customer ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
           >
             {row.billable_to_customer ? "Billable" : "Not billable"}
@@ -127,7 +159,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         ),
       },
     ],
-    [billableMutation],
+    [billableMutation, driverUuid, from, operatingCompanyId, to],
   );
 
   return (
