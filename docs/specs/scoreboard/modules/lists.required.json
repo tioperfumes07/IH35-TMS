@@ -649,7 +649,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -660,7 +659,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -671,7 +669,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -682,7 +679,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -693,7 +689,6 @@
       "sub": "Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -704,7 +699,6 @@
       "sub": "+ Create — Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -737,7 +731,6 @@
       "sub": "CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -748,7 +741,6 @@
       "sub": "+ Create — CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -759,7 +751,6 @@
       "sub": "Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -770,7 +761,6 @@
       "sub": "+ Create — Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -803,7 +793,6 @@
       "sub": "Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -814,7 +803,6 @@
       "sub": "+ Create — Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -825,7 +813,6 @@
       "sub": "Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -836,7 +823,6 @@
       "sub": "+ Create — Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -847,7 +833,6 @@
       "sub": "Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -858,7 +843,6 @@
       "sub": "+ Create — Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -936,7 +920,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -947,7 +930,6 @@
       "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1118,7 +1100,6 @@
       "sub": "Trailer Parts",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1129,7 +1110,6 @@
       "sub": "+ Create — Trailer Parts",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1140,7 +1120,6 @@
       "sub": "Truck Parts",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1151,7 +1130,6 @@
       "sub": "+ Create — Truck Parts",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1162,7 +1140,6 @@
       "sub": "Work Order Templates",
       "route_hint": "/lists/maintenance/parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1173,7 +1150,6 @@
       "sub": "+ Create — Work Order Templates",
       "route_hint": "/lists/maintenance/parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1230,7 +1206,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1241,7 +1216,6 @@
       "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1252,7 +1226,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1263,7 +1236,6 @@
       "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1298,7 +1270,6 @@
       "sub": "Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1309,7 +1280,6 @@
       "sub": "+ Create — Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1880,7 +1850,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1923,7 +1892,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1965,7 +1933,6 @@
       "sub": "Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2007,7 +1974,6 @@
       "sub": "Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2018,7 +1984,6 @@
       "sub": "+ Create — Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2029,7 +1994,6 @@
       "sub": "Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2118,7 +2082,6 @@
       "sub": "Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2161,7 +2124,6 @@
       "sub": "QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2203,7 +2165,6 @@
       "sub": "Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2249,7 +2210,6 @@
       "sub": "Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2270,7 +2230,6 @@
       "sub": "Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2291,7 +2250,6 @@
       "sub": "Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2312,7 +2270,6 @@
       "sub": "Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7980,6 +7937,67 @@
         { "id": "catalog.fuel.stop_reason_codes.create", "removed": ["picker_law"] },
         { "id": "catalog.fuel.tax_jurisdictions.list", "removed": ["picker_law"] },
         { "id": "catalog.fuel.tax_jurisdictions.create", "removed": ["picker_law"] }
+      ]
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_23_batch3": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "Continues picker_law_flat_catalog_overreach_drops_2026_08_23_batch1/batch2 (batch1: 6 safety/fleet catalogs; batch2: 10 fuel catalogs). This batch covers 7 maintenance catalogs (14 leaves: .list + .create) — failure_codes, labor_codes, part_locations, parts, priority_levels, service_tasks, shop_locations. Verified independently via a dedicated Explore subagent reading every layer directly, not inferred from the CC-2 board list alone: frontend Create surfaces are plain code/display_name/description/sort_order/is_active generic-catalog forms with zero FK/reference/Combobox fields; backend create-body schemas match the same field set; DB migrations show no FK column on any of the 7 tables beyond operating_company_id tenant scope. Distinct from catalog.maintenance.parts_catalog and catalog.maintenance.services_catalog (both out of scope here — those two already carry dedicated modal surfaces wired in the surface_kind/surface_path fix, PR #15214, and were never part of this picker_law honesty pass).",
+      "drops_applied": [
+        { "id": "catalog.maintenance.part_locations.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.part_locations.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.failure_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.failure_codes.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.labor_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.labor_codes.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.parts.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.parts.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.priority_levels.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.priority_levels.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.service_tasks.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.service_tasks.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.shop_locations.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.shop_locations.create", "removed": ["picker_law"] }
+      ]
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_26_batch4": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "Continues batch1 (6 safety/fleet), batch2 (10 fuel), batch3 (7 maintenance). This batch covers the 8 of 10 originally-listed driver catalogs that have a genuinely mounted Create surface with zero FK/reference/Combobox fields (verified 2026-08-26 against current apps/frontend/src/routes/manifest.tsx and each catalog's own page component): employment_status, endorsements, escrow_types, license_classes, medical_card_status, pay_rate_templates, pay_types, restrictions (16 leaves: .list + .create). Two of the original 10 -- cash_advance_types, leave_types -- have NO mounted /lists route at all (checked routes/manifest.tsx exhaustively for both plural and singular driver paths) and are explicitly OUT of scope here, same exception class the board's own finding already carved out for maintenance.parts_catalog/services_catalog: a missing Create surface is a more fundamental gap than a wrong picker_law claim, and dropping picker_law on a leaf with no UI at all would not be an honest fix -- left OPEN for a separate no-create-surface decision, not built blind and not silently dropped either.",
+      "drops_applied": [
+        { "id": "catalog.drivers.employment_status.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.employment_status.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.endorsements.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.endorsements.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.escrow_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.escrow_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.license_classes.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.license_classes.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.medical_card_status.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.medical_card_status.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.pay_rate_templates.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.pay_rate_templates.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.pay_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.pay_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.restrictions.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.restrictions.create", "removed": ["picker_law"] }
+      ]
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_26_batch5": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "Continues batch1-4 (safety/fleet, fuel, maintenance, drivers). This batch covers 12 accounting catalogs, 13 leaves total. 11 are .list-only drops (abandonment_defaults, account_role_bindings, account_types, account_types_lookup, audit_event_types, currency_codes, expense_categories, payment_terms, qbo_categories, tax_codes, void_cancel_reasons): each already had its sibling .create leaf honesty-dropped under the separate, already-closed CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM sweep (picker_law_column_2026_08_18_accounting_remainder/_batch2/_batch3, schema- and DOM-verified -- no FK/REFERENCES columns, or no create form exists at all), which never touched the matching .list leaf; the same established fact applies to both. classes gets both .list AND .create dropped (2 leaves): never covered by the prior sweep, independently verified 2026-08-26 -- ClassesListPage.tsx create flow (AccountingCatalogListPage, no metadataFields) offers no parent_class_id field; the self-referential parent-class relationship is only settable via a separate post-creation bulk Re-parent action (ClassesBulkBar), never inline at create time, so the create surface itself carries zero picker/reference fields. Explicitly excludes catalog.accounting.detail_types_lookup (both leaves): confirmed elsewhere in this same honesty_audit (picker_law_column_2026_08_18_accounting_final_confirmation) to correctly stay Required -- DetailTypeModal in DetailTypesListPage.tsx uses a real SelectCombobox for its Account Type field, so picker_law genuinely applies there and must not be dropped. Also excludes journal_entry_types and payment_methods per the same prior sweep -- both have real, dedicated Picker components.",
+      "drops_applied": [
+        { "id": "catalog.accounting.abandonment_defaults.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.account_role_bindings.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.account_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.account_types_lookup.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.audit_event_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.currency_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.expense_categories.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.payment_terms.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.qbo_categories.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.tax_codes.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.void_cancel_reasons.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.classes.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.classes.create", "removed": ["picker_law"] }
       ]
     }
   }
