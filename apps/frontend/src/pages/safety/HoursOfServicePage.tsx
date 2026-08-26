@@ -22,6 +22,7 @@ export type FleetHosDriverRow = {
   currentDutyStatus: string | null;
   driveRemainingMin: number | null;
   clockStatus: "ok" | "warning_1hr" | "warning_15min" | "violation" | null;
+  telemetryUnavailable: boolean;
 };
 
 function driverDisplayName(driver: { id: string; first_name?: string | null; last_name?: string | null }) {
@@ -69,7 +70,7 @@ export function computeHosDashboardMetrics(rows: FleetHosDriverRow[]) {
 async function loadFleetHosRows(
   operatingCompanyId: string,
   fleetSearch: string
-): Promise<{ rows: FleetHosDriverRow[]; total?: number }> {
+): Promise<{ rows: FleetHosDriverRow[]; total?: number; failedDriverCount: number }> {
   const { drivers, total } = await listDrivers({
     operating_company_id: operatingCompanyId,
     status: "Active",
@@ -84,6 +85,7 @@ async function loadFleetHosRows(
         currentDutyStatus: null,
         driveRemainingMin: null,
         clockStatus: null,
+        telemetryUnavailable: false,
       };
       try {
         const detail = await getDriverHosDetail(driver.id, operatingCompanyId);
@@ -95,11 +97,14 @@ async function loadFleetHosRows(
           clockStatus: detail.clocks.status,
         };
       } catch {
-        return base;
+        // SAFETY-F6458: a per-driver HOS outage is not the same thing as a driver
+        // with no recorded duty status. Preserve the roster row, but mark the
+        // telemetry unavailable so compliance KPIs cannot silently undercount.
+        return { ...base, telemetryUnavailable: true };
       }
     })
   );
-  return { rows, total };
+  return { rows, total, failedDriverCount: rows.filter((row) => row.telemetryUnavailable).length };
 }
 
 type Props = {
@@ -126,6 +131,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
   const rows = fleetQuery.isError ? [] : fleetQuery.data?.rows ?? [];
   const fleetTotal = fleetQuery.isError ? 0 : fleetQuery.data?.total;
+  const failedDriverCount = fleetQuery.isError ? 0 : fleetQuery.data?.failedDriverCount ?? 0;
+  const fleetIncomplete = failedDriverCount > 0;
   const metrics = useMemo(() => computeHosDashboardMetrics(rows), [rows]);
   const violations = (violationsQuery.isError ? [] : violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
 
@@ -144,10 +151,10 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         label: "Duty",
         sortable: true,
         cellClass: "capitalize",
-        render: (row) => formatDutyStatus(row.currentDutyStatus),
+        render: (row) => row.telemetryUnavailable ? "Unavailable" : formatDutyStatus(row.currentDutyStatus),
       },
-      { key: "driveRemainingMin", label: "Drive left", sortable: true, render: (row) => formatDriveRemaining(row.driveRemainingMin) },
-      { key: "clockStatus", label: "Clock", sortable: true, render: (row) => row.clockStatus ?? "—" },
+      { key: "driveRemainingMin", label: "Drive left", sortable: true, render: (row) => row.telemetryUnavailable ? "Unavailable" : formatDriveRemaining(row.driveRemainingMin) },
+      { key: "clockStatus", label: "Clock", sortable: true, render: (row) => row.telemetryUnavailable ? "Unavailable" : row.clockStatus ?? "—" },
       {
         key: "action",
         label: "Action",
@@ -191,25 +198,25 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Drivers on duty</div>
           <div className="text-xl font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
-            {fleetQuery.isError ? "—" : metrics.onDuty}
+            {fleetQuery.isError || fleetIncomplete ? "—" : metrics.onDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Drivers off duty</div>
           <div className="text-xl font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
-            {fleetQuery.isError ? "—" : metrics.offDuty}
+            {fleetQuery.isError || fleetIncomplete ? "—" : metrics.offDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Approaching 11h drive cap</div>
           <div className="text-xl font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
-            {fleetQuery.isError ? "—" : metrics.approachingCap}
+            {fleetQuery.isError || fleetIncomplete ? "—" : metrics.approachingCap}
           </div>
           <div className="text-[10px] text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
         </div>
       </div>
 
-      {!fleetQuery.isError && metrics.nearViolations.length > 0 ? (
+      {!fleetQuery.isError && !fleetIncomplete && metrics.nearViolations.length > 0 ? (
         <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="safety-hos-near-violations">
           <h2 className="text-xs font-semibold uppercase text-slate-700">Near-violation alerts</h2>
           <ul className="mt-2 space-y-1 text-xs text-slate-700">
@@ -245,6 +252,14 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               data-testid="safety-hos-fleet-search"
             />
           </div>
+          {!fleetQuery.isError && fleetIncomplete ? (
+            <ListErrorState
+              title="Some driver HOS clocks are unavailable"
+              status={0}
+              message={`${failedDriverCount} driver HOS ${failedDriverCount === 1 ? "record could" : "records could"} not be loaded. Dashboard totals are hidden until the complete fleet can be verified.`}
+              onRetry={() => void fleetQuery.refetch()}
+            />
+          ) : null}
           {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed fleet-HOS query fell through to
               emptyText "No active drivers for this company." On an hours-of-service surface that
               reads as a clean fleet with nobody near a limit — an outage presenting as compliance. */}
