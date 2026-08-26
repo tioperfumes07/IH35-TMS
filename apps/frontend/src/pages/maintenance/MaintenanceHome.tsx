@@ -299,7 +299,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {/* On the R&M Status Board these three cards move into the right sidebar (compact) below; every
           other tab keeps its existing full-width layout. */}
       {companyId && tab !== "rm_status_board" ? (
-        <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
+        pmDueQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load PM countdown"
+            status={0}
+            message={(pmDueQuery.error as Error)?.message}
+            onRetry={() => void pmDueQuery.refetch()}
+          />
+        ) : (
+          <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
+        )
       ) : null}
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
       {companyId && tab !== "rm_status_board" ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
@@ -354,7 +363,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (
-              <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
+              pmDueQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load PM countdown"
+                  status={0}
+                  message={(pmDueQuery.error as Error)?.message}
+                  onRetry={() => void pmDueQuery.refetch()}
+                />
+              ) : (
+                <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
+              )
             ) : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
             {companyId ? (
