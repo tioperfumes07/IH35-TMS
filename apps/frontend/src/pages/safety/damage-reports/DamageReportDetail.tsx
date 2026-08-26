@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EvidenceChainAudit } from "../../../components/safety/EvidenceChainAudit";
 import { PhotoEvidenceViewer } from "../../../components/safety/PhotoEvidenceViewer";
@@ -38,6 +38,11 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
     queryFn: () => fetchDamagePhotos(damageUuid, operatingCompanyId),
     enabled: Boolean(damageUuid && operatingCompanyId),
   });
+
+  useEffect(() => {
+    setViewerOpen(false);
+    setSelected(null);
+  }, [damageUuid, operatingCompanyId]);
 
   const photos = photosQuery.isError ? [] : (photosQuery.data?.photos ?? []);
   const selectedExif = useMemo(() => selected?.exif_metadata ?? {}, [selected]);
