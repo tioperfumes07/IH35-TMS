@@ -96,15 +96,17 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
   app.patch("/api/safety/anomaly/alerts/:uuid/acknowledge", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const p = uuidParams.safeParse(req.params ?? {});
-    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    const body = companyQuery.safeParse(req.body ?? {});
+    if (!p.success || !body.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `UPDATE safety.anomaly_alerts SET acknowledged_at = now(), acknowledged_by_user_uuid = $2::uuid,
           resolution_status = CASE WHEN resolution_status = 'open' THEN 'investigating' ELSE resolution_status END
-         WHERE uuid = $1::uuid RETURNING *`,
-        [p.data.uuid, user.uuid]
+         WHERE uuid = $1::uuid AND operating_company_id = $3::uuid RETURNING *`,
+        [p.data.uuid, user.uuid, body.data.operating_company_id]
       );
-      await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.acknowledge", { entity_id: p.data.uuid });
+      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.acknowledge", { entity_id: p.data.uuid });
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "not_found" });
@@ -114,15 +116,16 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
   app.patch("/api/safety/anomaly/alerts/:uuid/resolve", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const p = uuidParams.safeParse(req.params ?? {});
-    const body = z.object({ status: z.enum(["resolved","false_positive","investigating","open"]), notes: z.string().optional() }).safeParse(req.body ?? {});
+    const body = companyQuery.extend({ status: z.enum(["resolved","false_positive","investigating","open"]), notes: z.string().optional() }).safeParse(req.body ?? {});
     if (!p.success || !body.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `UPDATE safety.anomaly_alerts SET resolution_status = $2, resolution_notes = COALESCE($3, resolution_notes)
-         WHERE uuid = $1::uuid RETURNING *`,
-        [p.data.uuid, body.data.status, body.data.notes ?? null]
+         WHERE uuid = $1::uuid AND operating_company_id = $4::uuid RETURNING *`,
+        [p.data.uuid, body.data.status, body.data.notes ?? null, body.data.operating_company_id]
       );
-      await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.resolve", { entity_id: p.data.uuid, status: body.data.status });
+      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.resolve", { entity_id: p.data.uuid, status: body.data.status });
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "not_found" });
