@@ -20,6 +20,13 @@ function failures(input = source) {
   if (!/resolveCompanyViolation\(input\.violationId, input\.companyId, \{\s*outcome: input\.outcome,\s*resolutionNotes: input\.resolutionNotes,\s*fineAmountCentsOverride: input\.fineAmountCentsOverride,/.test(input.company)) out.push("resolution snapshots record company outcome notes and amount");
   const currentGenerationCallbacks = input.company.match(/input\.generation (?:===|!==) actionGenerationRef\.current/g)?.length ?? 0;
   if (currentGenerationCallbacks !== 4) out.push("all four company action completions reject stale records");
+  if (!/const isCurrentAction = \(variables: ViolationActionScope \| undefined\) =>\s*variables\?\.violationId === currentViolationId &&\s*variables\?\.companyId === operatingCompanyId &&\s*variables\?\.generation === actionGenerationRef\.current/.test(input.company)) out.push("company action rejection scope is not bound to record company and generation");
+  for (const mutation of ["patch", "escalate", "resolve", "complete"]) {
+    if (!input.company.includes(`const ${mutation}ErrorCurrent = ${mutation}Mutation.isError && isCurrentAction(${mutation}Mutation.variables);`)) out.push(`${mutation} rejection can leak across records`);
+  }
+  if (!/\{\(patchErrorCurrent \|\| escalateErrorCurrent\) \? \([\s\S]*currentActionError/.test(input.company)) out.push("combined company action banner is not current-record scoped");
+  if (!/\{resolveErrorCurrent \? \([\s\S]*company-violation-resolve-error/.test(input.company)) out.push("resolve banner is not current-record scoped");
+  if (!/\{completeErrorCurrent \? \([\s\S]*company-violation-complete-error/.test(input.company)) out.push("corrective-action banner is not current-record scoped");
   for (const token of [
     "violationId: String(violation.id ?? \"\")",
     "companyId: operatingCompanyId",
@@ -40,6 +47,9 @@ if (process.argv.includes("--selftest")) {
   const mutablePatchCompany = { ...source, company: source.company.replace("updateCompanyViolation(input.violationId, input.companyId, input.payload)", "updateCompanyViolation(String(violation?.id ?? ''), operatingCompanyId, input.payload)") };
   const mutableResolveCompany = { ...source, company: source.company.replace("resolveCompanyViolation(input.violationId, input.companyId, {", "resolveCompanyViolation(String(violation?.id ?? ''), operatingCompanyId, {") };
   const staleCompanyCallback = { ...source, company: source.company.replace("input.generation === actionGenerationRef.current", "true") };
+  const staleCompanyError = { ...source, company: source.company.replace("variables?.companyId === operatingCompanyId", "true") };
+  const staleResolveBanner = { ...source, company: source.company.replace("{resolveErrorCurrent ? (", "{resolveMutation.isError ? (") };
+  const staleCompleteBanner = { ...source, company: source.company.replace("{completeErrorCurrent ? (", "{completeMutation.isError ? (") };
   const staleFine = { ...source, fine: source.fine.replace("useEffect(() => {\n    setConfirmOpen(false);", "useEffect(() => {\n    void confirmOpen;") };
   const staleAnomaly = { ...source, anomaly: source.anomaly.replace("actionGenerationRef.current += 1;\n    setNote(\"\");", "void note;") };
   const checks = [
@@ -47,6 +57,9 @@ if (process.argv.includes("--selftest")) {
     failures(mutablePatchCompany).includes("company patch snapshots record company and payload"),
     failures(mutableResolveCompany).includes("resolution snapshots record company outcome notes and amount"),
     failures(staleCompanyCallback).includes("all four company action completions reject stale records"),
+    failures(staleCompanyError).includes("company action rejection scope is not bound to record company and generation"),
+    failures(staleResolveBanner).includes("resolve banner is not current-record scoped"),
+    failures(staleCompleteBanner).includes("corrective-action banner is not current-record scoped"),
     failures(staleFine).includes("fine confirmation reset keyed by record/company/open"),
     failures(staleAnomaly).includes("anomaly retires and resets note and actions"),
   ];
