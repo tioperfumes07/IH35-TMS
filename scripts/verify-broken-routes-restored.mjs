@@ -34,6 +34,10 @@ const RESTORED_ROUTES = [
   "/safety/fines-and-discipline",
   "/safety/driver-financial-safety",
   "/safety/workforce-planning",
+  "/finance/cash-flow",
+  "/dispatch/assign-equipment",
+  "/dispatch/deliveries",
+  "/dispatch/build-trip",
 ];
 
 const failures = [];

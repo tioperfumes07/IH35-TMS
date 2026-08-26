@@ -4512,6 +4512,11 @@ export const ROUTES = React.Children.toArray(
             PreserveSearchNavigate keeps driver_id / settlement_id (LAW — never drop deep-link params). */}
         <Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />
         <Route path="/finance-hub" element={<ProtectedRoute><Navigate to="/finance/hub" replace /></ProtectedRoute>} />
+        {/* PROGRAM-CARD-FALSE-GREEN-b711699 — guessed Complete-card URLs were catch-all → Home (or last Program). Canonical redirects only. */}
+        <Route path="/finance/cash-flow" element={<ProtectedRoute><Navigate to="/cash-flow" replace /></ProtectedRoute>} />
+        <Route path="/dispatch/assign-equipment" element={<ProtectedRoute><Navigate to="/dispatch/assignments" replace /></ProtectedRoute>} />
+        <Route path="/dispatch/deliveries" element={<ProtectedRoute><Navigate to="/dispatch/loads?view=kanban" replace /></ProtectedRoute>} />
+        <Route path="/dispatch/build-trip" element={<ProtectedRoute><Navigate to="/dispatch/trip-pairing" replace /></ProtectedRoute>} />
         <Route path="/api/*" element={<ApiDocumentPassthrough />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
