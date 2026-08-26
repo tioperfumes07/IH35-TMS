@@ -6,7 +6,8 @@ const source = fs.readFileSync(target, "utf8");
 
 function failures(candidate) {
   const errors = [];
-  if (!/useEffect\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*if \(!open\) return;[\s\S]*?setSuggestionPinned\(false\);\s*\}, \[open, operatingCompanyId\]\);/.test(candidate)) {
+  if (!/const resetDraft = useCallback\(\(\) => \{[\s\S]*?setSuggestionPinned\(false\);\s*\}, \[\]\);/.test(candidate) ||
+      !/useEffect\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*if \(!open\) return;\s*resetDraft\(\);\s*\}, \[open, operatingCompanyId, resetDraft\]\);/.test(candidate)) {
     errors.push("full Fuel draft reset must depend on open and operatingCompanyId");
   }
   for (const setter of ["setDriverId", "setUnitId", "setTrailerId", "setVendorId", "setLoadId"]) {
@@ -25,7 +26,7 @@ function failures(candidate) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace("}, [open, operatingCompanyId]);", "}, [open]);"),
+    source.replace("}, [open, operatingCompanyId, resetDraft]);", "}, [open, resetDraft]);"),
     source.replace('setTrailerId("");', "// planted stale trailer"),
   ];
   const caught = mutations.filter((candidate) => failures(candidate).length).length;
