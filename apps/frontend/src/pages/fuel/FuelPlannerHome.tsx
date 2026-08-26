@@ -624,22 +624,31 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
   const [expensiveStates, setExpensiveStates] = useState<string[]>(
     (settings.expensive_states ?? []).map((code) => code.trim().toUpperCase()).filter(Boolean),
   );
+  const lifecycleGenerationRef = useRef(0);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      updateFuelPlannerSettings(companyId, {
-        max_miles_per_shift: Number(maxMilesPerShift),
-        max_off_highway_miles: Number(maxOffHighway),
-        max_backwards_miles: Number(maxBackwards),
-        overfill_threshold_pct: Number(overfillPct),
-        ...(expensiveStates.length > 0 ? { expensive_states: expensiveStates } : {}),
-      }),
-    onSuccess: () => {
+    mutationFn: (input: { companyId: string; generation: number; body: Parameters<typeof updateFuelPlannerSettings>[1] }) =>
+      updateFuelPlannerSettings(input.companyId, input.body),
+    onSuccess: (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Planner settings saved", "success");
-      void queryClient.invalidateQueries({ queryKey: ["fuel", "planner", "settings", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["fuel", "planner", "settings", input.companyId] });
     },
-    onError: (err: unknown) => pushToast(userFacingApiError(err, "Failed to save settings"), "error"),
+    onError: (err: unknown, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(userFacingApiError(err, "Failed to save settings"), "error");
+    },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    mutation.reset();
+    setMaxMilesPerShift(String(settings.max_miles_per_shift ?? 720));
+    setMaxOffHighway(String(settings.max_off_highway_miles ?? 5));
+    setMaxBackwards(String(settings.max_backwards_miles ?? 5));
+    setOverfillPct(String(settings.overfill_threshold_pct ?? 95));
+    setExpensiveStates((settings.expensive_states ?? []).map((code) => code.trim().toUpperCase()).filter(Boolean));
+  }, [companyId, settings]); // Mutation reset is stable; canonical company/settings own this draft.
 
   const numbers: Array<[string, string, (v: string) => void]> = [
     ["Max miles per shift", maxMilesPerShift, setMaxMilesPerShift],
@@ -676,7 +685,17 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
         <button
           type="button"
           disabled={invalid || mutation.isPending}
-          onClick={() => mutation.mutate()}
+          onClick={() => mutation.mutate({
+            companyId,
+            generation: lifecycleGenerationRef.current,
+            body: {
+              max_miles_per_shift: Number(maxMilesPerShift),
+              max_off_highway_miles: Number(maxOffHighway),
+              max_backwards_miles: Number(maxBackwards),
+              overfill_threshold_pct: Number(overfillPct),
+              ...(expensiveStates.length > 0 ? { expensive_states: [...expensiveStates] } : {}),
+            },
+          })}
           className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
         >
           {mutation.isPending ? "Saving…" : "Save settings"}
