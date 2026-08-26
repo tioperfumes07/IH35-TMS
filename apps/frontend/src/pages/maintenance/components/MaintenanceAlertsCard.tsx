@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acknowledgeMaintenancePmAlert,
@@ -23,6 +23,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   const { pushToast } = useToast();
   const [schedulingAlertId, setSchedulingAlertId] = useState<string | null>(null);
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
     queryKey: ["maintenance", "pm-alerts", operatingCompanyId],
@@ -36,9 +37,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   });
 
   const ackMutation = useMutation({
-    mutationFn: (alertId: string) => acknowledgeMaintenancePmAlert(alertId, operatingCompanyId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["maintenance", "pm-alerts", operatingCompanyId] });
+    mutationFn: (input: { alertId: string; companyId: string; generation: number }) =>
+      acknowledgeMaintenancePmAlert(input.alertId, input.companyId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "pm-alerts", input.companyId] });
       setSchedulingAlertId(null);
       setSelectedWorkOrderId(null);
       pushToast("PM alert linked to work order", "success");
@@ -47,13 +50,24 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: ({ alertId, workOrderId }: { alertId: string; workOrderId: string }) =>
-      scheduleMaintenancePmAlert(alertId, operatingCompanyId, workOrderId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["maintenance", "pm-alerts", operatingCompanyId] });
+    mutationFn: (input: { alertId: string; workOrderId: string; companyId: string; generation: number }) =>
+      scheduleMaintenancePmAlert(input.alertId, input.companyId, input.workOrderId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "pm-alerts", input.companyId] });
+      setSchedulingAlertId(null);
+      setSelectedWorkOrderId(null);
     },
     onError: () => pushToast("Could not schedule PM alert", "error"),
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    ackMutation.reset();
+    scheduleMutation.reset();
+    setSchedulingAlertId(null);
+    setSelectedWorkOrderId(null);
+  }, [operatingCompanyId]);
 
   const alerts = alertsQuery.data?.alerts ?? [];
   const scheduledAlerts = scheduledAlertsQuery.data?.alerts ?? [];
@@ -134,7 +148,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                   type="button"
                   className="rounded-sm border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                   disabled={ackMutation.isPending}
-                  onClick={() => void ackMutation.mutateAsync(alert.id)}
+                  onClick={() => void ackMutation.mutateAsync({
+                    alertId: alert.id,
+                    companyId: operatingCompanyId,
+                    generation: actionGenerationRef.current,
+                  })}
                 >
                   Acknowledge
                 </button>
@@ -179,7 +197,12 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                       disabled={!selectedWorkOrderId || scheduleMutation.isPending}
                       onClick={() => {
                         if (!selectedWorkOrderId) return;
-                        scheduleMutation.mutate({ alertId: alert.id, workOrderId: selectedWorkOrderId });
+                        scheduleMutation.mutate({
+                          alertId: alert.id,
+                          workOrderId: selectedWorkOrderId,
+                          companyId: operatingCompanyId,
+                          generation: actionGenerationRef.current,
+                        });
                       }}
                     >
                       Apply
