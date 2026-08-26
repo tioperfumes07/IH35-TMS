@@ -78,7 +78,6 @@ function ApplicantCard({
 export function ApplicantsPipelinePage() {
   const { selectedCompanyId } = useCompanyContext();
   const qc = useQueryClient();
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const actionGenerationRef = useRef(0);
 
@@ -104,7 +103,6 @@ export function ApplicantsPipelinePage() {
     },
     onSettled: async (_data, _error, input) => {
       await qc.invalidateQueries({ queryKey: ["driver-applicants", input.companyId] });
-      if (input.generation === actionGenerationRef.current) setBusyId(null);
     },
   });
 
@@ -116,15 +114,17 @@ export function ApplicantsPipelinePage() {
     },
     onSettled: async (_data, _error, input) => {
       await qc.invalidateQueries({ queryKey: ["driver-applicants", input.companyId] });
-      if (input.generation === actionGenerationRef.current) setBusyId(null);
     },
   });
+
+  // Both mutations change the same canonical applicant pipeline. A row-local busyId is not a
+  // sufficient lock: clicking a second row replaces busyId and would re-enable the first request.
+  const actionPending = statusM.isPending || convertM.isPending;
 
   useEffect(() => {
     actionGenerationRef.current += 1;
     statusM.reset();
     convertM.reset();
-    setBusyId(null);
     setMutationError(null);
   }, [selectedCompanyId]);
 
@@ -190,13 +190,13 @@ export function ApplicantsPipelinePage() {
                 <ApplicantCard
                   key={row.id}
                   row={row}
-                  busy={busyId === row.id}
+                  busy={actionPending}
                   onMove={(status) => {
-                    setBusyId(row.id);
+                    if (actionPending) return;
                     statusM.mutate({ id: row.id, status, companyId: selectedCompanyId, generation: actionGenerationRef.current });
                   }}
                   onConvert={() => {
-                    setBusyId(row.id);
+                    if (actionPending) return;
                     convertM.mutate({ id: row.id, companyId: selectedCompanyId, generation: actionGenerationRef.current });
                   }}
                 />

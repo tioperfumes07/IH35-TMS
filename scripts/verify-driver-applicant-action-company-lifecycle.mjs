@@ -15,6 +15,10 @@ const checks = [
   ["company transition resets both actions", /statusM\.reset\(\);[\s\S]*?convertM\.reset\(\)/],
   ["status caller snapshots context", /statusM\.mutate\(\{ id: row\.id, status, companyId: selectedCompanyId, generation: actionGenerationRef\.current \}\)/],
   ["convert caller snapshots context", /convertM\.mutate\(\{ id: row\.id, companyId: selectedCompanyId, generation: actionGenerationRef\.current \}\)/],
+  ["shared action pending boundary", /const actionPending = statusM\.isPending \|\| convertM\.isPending/],
+  ["every applicant card uses shared pending boundary", /busy=\{actionPending\}/],
+  ["status handler rejects concurrent action", /onMove=\{\(status\) => \{\s*if \(actionPending\) return;/],
+  ["convert handler rejects concurrent action", /onConvert=\{\(\) => \{\s*if \(actionPending\) return;/],
   ["converted driver reverse drill", /kind="driver" id=\{row\.converted_driver_id\}/],
   ["onboarding reverse drill", /kind="onboarding_session"[\s\S]*?id=\{row\.onboarding_session_id\}/],
 ];
@@ -36,13 +40,17 @@ if (process.argv.includes("--selftest")) {
     source.replace("convertApplicantToDriver(input.id, input.companyId)", "convertApplicantToDriver(input.id, selectedCompanyId ?? '')"),
     source.replaceAll('["driver-applicants", input.companyId]', '["driver-applicants", selectedCompanyId]'),
     source.replaceAll("input.generation === actionGenerationRef.current", "true"),
+    source.replace("const actionPending = statusM.isPending || convertM.isPending", "const actionPending = false"),
+    source.replace("busy={actionPending}", "busy={busyId === row.id}"),
+    source.replace("onMove={(status) => {\n                    if (actionPending) return;", "onMove={(status) => {"),
+    source.replace("onConvert={() => {\n                    if (actionPending) return;", "onConvert={() => {"),
   ];
   const escaped = mutations.filter((text) => failures(text).length === 0).length;
   if (escaped) {
-    console.error(`verify-driver-applicant-action-company-lifecycle selftest FAIL: ${escaped}/5 mutations escaped`);
+    console.error(`verify-driver-applicant-action-company-lifecycle selftest FAIL: ${escaped}/9 mutations escaped`);
     process.exit(1);
   }
-  console.log("verify-driver-applicant-action-company-lifecycle selftest PASS — 5/5 planted defects detected");
+  console.log("verify-driver-applicant-action-company-lifecycle selftest PASS — 9/9 planted defects detected");
   process.exit(0);
 }
 
