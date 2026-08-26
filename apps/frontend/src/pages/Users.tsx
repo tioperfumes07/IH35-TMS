@@ -41,6 +41,7 @@ import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
 import { getAdminJob, triggerDeactivateProbeAccounts } from "../api/admin-jobs";
+import { ConfirmModal } from "../components/shared/ConfirmModal";
 
 const ROLE_OPTIONS: Array<UserRole | "Viewer"> = [
   "Owner",
@@ -171,6 +172,13 @@ export function UsersPage() {
   const isOwnerOrAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const isOwner = auth.user?.role === "Owner";
   const [probeJobId, setProbeJobId] = useState<string | null>(null);
+  const deactivateGenerationRef = useRef(0);
+  const [pendingDeactivate, setPendingDeactivate] = useState<{
+    userId: string;
+    userName: string;
+    companyId: string | null;
+    generation: number;
+  } | null>(null);
 
   const probeJobQuery = useQuery({
     queryKey: ["admin-job", probeJobId],
@@ -254,12 +262,15 @@ export function UsersPage() {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: (id: string) => deactivateUser(id, selectedCompanyId),
-    onSuccess: () => {
+    mutationFn: (input: { userId: string; userName: string; companyId: string | null; generation: number }) =>
+      deactivateUser(input.userId, input.companyId),
+    onSuccess: (_result, input) => {
+      if (input.generation !== deactivateGenerationRef.current) return;
       queryClient.invalidateQueries({ queryKey: ["users"] });
       pushToast("User deactivated", "info");
     },
-    onError: (error) => {
+    onError: (error, input) => {
+      if (input.generation !== deactivateGenerationRef.current) return;
       // Never fail silently — surface the server's reason (no-silent-dead-control rule).
       let message = "Failed to deactivate user";
       if (error instanceof ApiError) {
@@ -271,6 +282,12 @@ export function UsersPage() {
       pushToast(message, "error");
     },
   });
+
+  useEffect(() => {
+    deactivateGenerationRef.current += 1;
+    setPendingDeactivate(null);
+    deactivateMutation.reset();
+  }, [selectedCompanyId]);
 
   const allUsers = usersQuery.data ?? [];
   const roleApproverOptions = useMemo(
@@ -383,9 +400,12 @@ export function UsersPage() {
                 className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
-                  const ok = window.confirm(`Deactivate ${row.name || "this user"}?`);
-                  if (!ok) return;
-                  deactivateMutation.mutate(row.id);
+                  setPendingDeactivate({
+                    userId: row.id,
+                    userName: row.name || "this user",
+                    companyId: selectedCompanyId,
+                    generation: deactivateGenerationRef.current,
+                  });
                 }}
               >
                 {isDeactivated ? "Deactivated" : "Deactivate"}
@@ -956,6 +976,21 @@ export function UsersPage() {
           </div>
         </section>
       ) : null}
+
+      <ConfirmModal
+        open={Boolean(pendingDeactivate)}
+        title="Deactivate this user?"
+        message={pendingDeactivate ? `${pendingDeactivate.userName} will no longer be able to sign in.` : ""}
+        confirmLabel="Deactivate user"
+        danger
+        onClose={() => setPendingDeactivate(null)}
+        onConfirm={() => {
+          if (!pendingDeactivate) return;
+          const input = pendingDeactivate;
+          setPendingDeactivate(null);
+          deactivateMutation.mutate(input);
+        }}
+      />
     </div>
   );
 }
