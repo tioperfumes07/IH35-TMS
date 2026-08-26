@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 9222 · LEAD
 
+**22:37 CT GO-2237 — 35 INSTRUCTIONS PER SEAT.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. Lead: seats ACK + work their #1. Skip #15546. Nobody `trigger_deploy` unless 5–10 min/PR gate. Unique leftover 1–35 of Cursor list.
+
 **18:29 CT GO-1829.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. Unstick seats: CC-1 #3, CC-2 item 26, CC-3 73–75, Codex hop.assign 76. Unique leftover 151+. Skip #15546. Nobody `trigger_deploy`.
 
 **17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. #1/#2 shipped. SPA LIVE. API **IN FLIGHT** `dep-da71ug0u01pc73dm7om0` — nobody second-kicks. Unique leftover. Skip #15546. Route CC-1: NOW=#3.
