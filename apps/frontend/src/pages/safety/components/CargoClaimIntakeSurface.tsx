@@ -586,7 +586,7 @@ export function CargoClaimIntakeSurface({
             </button>
           </div>
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
-            <label className="block">
+            <div className="block">
               <span className={labelSpan}>Date of loss *</span>
               <DatePicker
                 className={inputClass}
@@ -594,7 +594,7 @@ export function CargoClaimIntakeSurface({
                 value={form.incidentDate}
                 onChange={(next) => set({ incidentDate: next })}
               />
-            </label>
+            </div>
             <label className="block">
               <span className={labelSpan}>Load (shipment)</span>
               <div className="mt-1" data-testid={`${pageTestId}-load-picker`}>
@@ -683,7 +683,7 @@ export function CargoClaimIntakeSurface({
                 Amount undetermined (determinable)
               </label>
             </label>
-            <label className="block">
+            <div className="block">
               <span className={labelSpan}>Claim filed date</span>
               <DatePicker
                 className={inputClass}
@@ -691,7 +691,7 @@ export function CargoClaimIntakeSurface({
                 value={form.claimFiledAt}
                 onChange={(next) => set({ claimFiledAt: next })}
               />
-            </label>
+            </div>
             <label className="block">
               <span className={labelSpan}>Driver</span>
               <div className="mt-1" data-testid={`${pageTestId}-driver-picker`}>
@@ -918,10 +918,10 @@ export function CargoClaimIntakeSurface({
 
           {editMode ? (
             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
-              <label className="block">
+              <div className="block">
                 <span className={labelSpan}>Date of loss *</span>
                 <DatePicker className={inputClass} value={editForm.incidentDate} onChange={(next) => setEdit({ incidentDate: next })} />
-              </label>
+              </div>
               <label className="block">
                 <span className={labelSpan}>Load (shipment)</span>
                 <div className="mt-1" data-testid={`${pageTestId}-edit-load-picker`}>
@@ -978,10 +978,10 @@ export function CargoClaimIntakeSurface({
                   />
                 </div>
               </label>
-              <label className="block">
+              <div className="block">
                 <span className={labelSpan}>Claim filed date</span>
                 <DatePicker className={inputClass} value={editForm.claimFiledAt} onChange={(next) => setEdit({ claimFiledAt: next })} />
-              </label>
+              </div>
               <label className="block md:col-span-2">
                 <span className={labelSpan}>Description *</span>
                 <textarea

@@ -130,14 +130,14 @@ export function TestSchedulingPanel({ companyId }: Props) {
           </select>
         </label>
 
-        <label className="block text-xs text-slate-600">
-          Scheduled Date (optional)
+        <div className="block text-xs text-slate-600">
+          <span>Scheduled Date (optional)</span>
           <DatePicker
             className="mt-1 block w-full"
             value={scheduledAt}
             onChange={(next) => setScheduledAt(next)}
           />
-        </label>
+        </div>
       </div>
 
       <div className="mt-3 flex items-center gap-3">
