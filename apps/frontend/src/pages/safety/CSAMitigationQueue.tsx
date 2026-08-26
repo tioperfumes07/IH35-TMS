@@ -190,7 +190,6 @@ export function CSAMitigationQueuePage() {
               value={basicCategory}
               options={Object.entries(BASIC_LABELS).map(([value, label]) => ({ value, label }))}
               onChange={(next) => next && setBasicCategory(next as BasicCategory)}
-              ariaLabel="CSA BASIC category"
             />
           </div>
           <div className="flex flex-col gap-1">
