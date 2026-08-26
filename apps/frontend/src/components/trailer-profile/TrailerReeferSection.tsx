@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createMaintenanceReeferHoursLogEntry,
   fetchMaintenanceReeferHoursSnapshot,
@@ -49,6 +49,9 @@ export function TrailerReeferSection({
   const queryClient = useQueryClient();
   const [hoursInput, setHoursInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+  const actionGenerationRef = useRef(0);
+  const [manualError, setManualError] = useState<unknown>(null);
+  const [serviceError, setServiceError] = useState<unknown>(null);
 
   const snapshotQ = useQuery({
     queryKey: ["reefer-hours-snapshot", trailerId, companyId],
@@ -57,32 +60,52 @@ export function TrailerReeferSection({
   });
 
   const manualMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; trailerId: string; generation: number; hoursReading: number; notes: string }) =>
       createMaintenanceReeferHoursLogEntry({
-        operating_company_id: companyId,
-        equipment_id: trailerId,
-        hours_reading: Number(hoursInput),
-        notes: notesInput,
+        operating_company_id: input.companyId,
+        equipment_id: input.trailerId,
+        hours_reading: input.hoursReading,
+        notes: input.notes,
       }),
-    onSuccess: () => {
-      setHoursInput("");
-      setNotesInput("");
-      void queryClient.invalidateQueries({ queryKey: ["reefer-hours-snapshot", trailerId, companyId] });
+    onMutate: () => setManualError(null),
+    onSuccess: (_result, input) => {
+      if (input.generation === actionGenerationRef.current) {
+        setHoursInput("");
+        setNotesInput("");
+      }
+      void queryClient.invalidateQueries({ queryKey: ["reefer-hours-snapshot", input.trailerId, input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setManualError(error);
     },
   });
 
   const serviceMut = useMutation({
-    mutationFn: (payload: { last_service_hours: number; last_service_date: string }) =>
+    mutationFn: (input: { companyId: string; trailerId: string; generation: number; lastServiceHours: number; lastServiceDate: string }) =>
       updateMaintenanceReeferSpecs({
-        operating_company_id: companyId,
-        equipment_id: trailerId,
-        last_service_hours: payload.last_service_hours,
-        last_service_date: payload.last_service_date,
+        operating_company_id: input.companyId,
+        equipment_id: input.trailerId,
+        last_service_hours: input.lastServiceHours,
+        last_service_date: input.lastServiceDate,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reefer-hours-snapshot", trailerId, companyId] });
+    onMutate: () => setServiceError(null),
+    onSuccess: (_result, input) => {
+      void queryClient.invalidateQueries({ queryKey: ["reefer-hours-snapshot", input.trailerId, input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setServiceError(error);
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setHoursInput("");
+    setNotesInput("");
+    setManualError(null);
+    setServiceError(null);
+    manualMut.reset();
+    serviceMut.reset();
+  }, [companyId, trailerId]);
 
   const historyColumns = useMemo(() => HISTORY_COLUMNS, []);
 
@@ -116,8 +139,11 @@ export function TrailerReeferSection({
   const markService = () => {
     if (specs?.current_hours == null) return;
     serviceMut.mutate({
-      last_service_hours: specs.current_hours,
-      last_service_date: new Date().toISOString().slice(0, 10),
+      companyId,
+      trailerId,
+      generation: actionGenerationRef.current,
+      lastServiceHours: specs.current_hours,
+      lastServiceDate: new Date().toISOString().slice(0, 10),
     });
   };
 
@@ -175,7 +201,15 @@ export function TrailerReeferSection({
             type="button"
             className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             disabled={!hoursInput || manualMut.isPending}
-            onClick={() => manualMut.mutate()}
+            onClick={() =>
+              manualMut.mutate({
+                companyId,
+                trailerId,
+                generation: actionGenerationRef.current,
+                hoursReading: Number(hoursInput),
+                notes: notesInput,
+              })
+            }
             data-testid="reefer-hours-record-btn"
           >
             Record hours
@@ -190,14 +224,14 @@ export function TrailerReeferSection({
             Mark service at current hours
           </button>
         </div>
-        {manualMut.isError ? (
+        {manualError ? (
           <p role="alert" className="mt-2 text-xs text-red-700">
-            {userFacingApiError(manualMut.error, "Could not record reefer hours")}
+            {userFacingApiError(manualError, "Could not record reefer hours")}
           </p>
         ) : null}
-        {serviceMut.isError ? (
+        {serviceError ? (
           <p role="alert" className="mt-2 text-xs text-red-700">
-            {userFacingApiError(serviceMut.error, "Could not mark reefer service")}
+            {userFacingApiError(serviceError, "Could not mark reefer service")}
           </p>
         ) : null}
       </div>

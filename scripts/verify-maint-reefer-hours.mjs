@@ -31,15 +31,27 @@ function fail(msg) {
 
 function reeferWriteFailureProblems(section) {
   const failures = [];
-  if (!/manualMut\.isError[\s\S]{0,220}?userFacingApiError\(manualMut\.error,\s*["']Could not record reefer hours["']\)/.test(section)) {
+  if (!/manualError[\s\S]{0,220}?userFacingApiError\(manualError,\s*["']Could not record reefer hours["']\)/.test(section)) {
     failures.push("manual reefer-hours rejection must preserve backend detail");
   }
-  if (!/serviceMut\.isError[\s\S]{0,220}?userFacingApiError\(serviceMut\.error,\s*["']Could not mark reefer service["']\)/.test(section)) {
+  if (!/serviceError[\s\S]{0,220}?userFacingApiError\(serviceError,\s*["']Could not mark reefer service["']\)/.test(section)) {
     failures.push("mark-service rejection must preserve backend detail");
   }
   if ((section.match(/role=["']alert["']/g) ?? []).length < 2) {
     failures.push("both reefer writes must expose accessible failure alerts");
   }
+  return failures;
+}
+
+function reeferWriteLifecycleProblems(section) {
+  const failures = [];
+  if (!/mutationFn:\s*\(input:\s*\{ companyId: string; trailerId: string; generation: number; hoursReading: number; notes: string \}\)[\s\S]{0,260}operating_company_id: input\.companyId,[\s\S]{0,100}equipment_id: input\.trailerId,[\s\S]{0,100}hours_reading: input\.hoursReading,[\s\S]{0,80}notes: input\.notes/.test(section)) failures.push("manual entry snapshots company trailer generation hours and notes");
+  if (!/mutationFn:\s*\(input:\s*\{ companyId: string; trailerId: string; generation: number; lastServiceHours: number; lastServiceDate: string \}\)[\s\S]{0,260}operating_company_id: input\.companyId,[\s\S]{0,100}equipment_id: input\.trailerId,[\s\S]{0,100}last_service_hours: input\.lastServiceHours,[\s\S]{0,80}last_service_date: input\.lastServiceDate/.test(section)) failures.push("mark service snapshots company trailer generation hours and date");
+  if ((section.match(/queryKey:\s*\["reefer-hours-snapshot", input\.trailerId, input\.companyId\]/g) ?? []).length !== 2) failures.push("both writes invalidate submitted trailer company cache");
+  if (!/actionGenerationRef\.current \+= 1;[\s\S]{0,180}setHoursInput\(""\);[\s\S]{0,100}setNotesInput\(""\);[\s\S]{0,160}manualMut\.reset\(\);[\s\S]{0,80}serviceMut\.reset\(\);[\s\S]{0,80}\[companyId, trailerId\]/.test(section)) failures.push("scope change retires actions and resets complete draft state");
+  if ((section.match(/input\.generation === actionGenerationRef\.current/g) ?? []).length !== 3) failures.push("manual success and both errors reject stale completion state");
+  if (!/manualMut\.mutate\(\{\s*companyId,\s*trailerId,\s*generation: actionGenerationRef\.current,\s*hoursReading: Number\(hoursInput\),\s*notes: notesInput/.test(section)) failures.push("manual click snapshots visible intent");
+  if (!/serviceMut\.mutate\(\{\s*companyId,\s*trailerId,\s*generation: actionGenerationRef\.current,\s*lastServiceHours: specs\.current_hours,\s*lastServiceDate:/.test(section)) failures.push("mark-service click snapshots visible intent");
   return failures;
 }
 
@@ -93,6 +105,7 @@ function main() {
   if (!section.includes("reefer-hours-history")) failures.push("TrailerReeferSection must show history table");
   if (!section.includes("Record hours")) failures.push("TrailerReeferSection must support manual entry");
   failures.push(...reeferWriteFailureProblems(section));
+  failures.push(...reeferWriteLifecycleProblems(section));
   if ((sectionTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("TrailerReeferSection.test must include at least 3 vitest cases");
   }
@@ -124,13 +137,19 @@ function main() {
 if (process.argv.includes("--selftest")) {
   const section = read(paths.section);
   const mutations = [
-    section.replace(/manualMut\.isError/, "manualMut.isSuccess"),
-    section.replace(/serviceMut\.isError/, "serviceMut.isSuccess"),
+    section.replace(/\{manualError \?/, "{false ?"),
+    section.replace(/\{serviceError \?/, "{false ?"),
     section.replace(/role="alert"/, 'role="status"'),
-    section.replace(/userFacingApiError\(manualMut\.error,\s*"Could not record reefer hours"\)/, '"Could not record reefer hours"'),
-    section.replace(/userFacingApiError\(serviceMut\.error,\s*"Could not mark reefer service"\)/, '"Could not mark reefer service"'),
+    section.replace(/userFacingApiError\(manualError,\s*"Could not record reefer hours"\)/, '"Could not record reefer hours"'),
+    section.replace(/userFacingApiError\(serviceError,\s*"Could not mark reefer service"\)/, '"Could not mark reefer service"'),
+    section.replace("operating_company_id: input.companyId", "operating_company_id: companyId"),
+    section.replace("last_service_hours: input.lastServiceHours", "last_service_hours: specs.current_hours"),
+    section.replace('["reefer-hours-snapshot", input.trailerId, input.companyId]', '["reefer-hours-snapshot", trailerId, companyId]'),
+    section.replace("actionGenerationRef.current += 1;", "void actionGenerationRef.current;"),
+    section.replace("input.generation === actionGenerationRef.current", "true"),
+    section.replace("hoursReading: Number(hoursInput),", "hoursReading: 0,"),
   ];
-  const escaped = mutations.filter((mutation) => reeferWriteFailureProblems(mutation).length === 0);
+  const escaped = mutations.filter((mutation) => [...reeferWriteFailureProblems(mutation), ...reeferWriteLifecycleProblems(mutation)].length === 0);
   if (escaped.length) fail(`--selftest: ${escaped.length}/${mutations.length} reefer write-failure mutations escaped`);
   console.log(`verify:maint-reefer-hours SELFTEST PASS — ${mutations.length}/${mutations.length} mutations detected`);
   process.exit(0);
