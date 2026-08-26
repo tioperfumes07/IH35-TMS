@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listPreFlightDvirQueue,
@@ -35,6 +35,7 @@ export function PreFlightDvirQueue() {
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = parsePreFlightDvirTab(searchParams.get("tab"));
   const setTab = (next: DvirSeverityLevel) => {
@@ -57,8 +58,9 @@ export function PreFlightDvirQueue() {
   const rows = useMemo(() => q.data?.defects ?? [], [q.data?.defects]);
 
   const routeMut = useMutation({
-    mutationFn: (defectId: string) => routePreFlightDvirDefect(defectId, operatingCompanyId),
-    onSuccess: async (result) => {
+    mutationFn: (input: { defectId: string; companyId: string; generation: number }) => routePreFlightDvirDefect(input.defectId, input.companyId),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       if (result.action === "work_order_created") {
         pushToast(`Work order ${entityLabel(result.display_id, result.work_order_id, "Work order")} created`, "success");
       } else if (result.action === "queued_next_pm") {
@@ -68,20 +70,33 @@ export function PreFlightDvirQueue() {
       } else {
         pushToast("Defect already routed", "info");
       }
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pre-flight-dvir", input.companyId] });
     },
-    onError: () => pushToast("Routing failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Routing failed", "error");
+    },
   });
 
   const downgradeMut = useMutation({
-    mutationFn: (defectId: string) =>
-      setPreFlightDvirSeverity(defectId, { operating_company_id: operatingCompanyId, severity: "minor" }),
-    onSuccess: async () => {
+    mutationFn: (input: { defectId: string; companyId: string; generation: number }) =>
+      setPreFlightDvirSeverity(input.defectId, { operating_company_id: input.companyId, severity: "minor" }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Severity set to minor", "success");
-      await qc.invalidateQueries({ queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "pre-flight-dvir", input.companyId] });
     },
-    onError: () => pushToast("Severity change blocked — Manager+ role required for major changes", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Severity change blocked — Manager+ role required for major changes", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    routeMut.reset();
+    downgradeMut.reset();
+  }, [operatingCompanyId]);
+
+  const actionInput = (defectId: string) => ({ defectId, companyId: operatingCompanyId, generation: actionGenerationRef.current });
 
   const columns = useMemo<ParityColumn<PreFlightDvirQueueRow>[]>(
     () => [
@@ -113,12 +128,12 @@ export function PreFlightDvirQueue() {
         render: (row) => (
           <div className="flex flex-wrap gap-1">
             {!row.routed ? (
-              <Button size="sm" onClick={() => routeMut.mutate(row.id)} disabled={routeMut.isPending}>
+              <Button size="sm" onClick={() => routeMut.mutate(actionInput(row.id))} disabled={routeMut.isPending}>
                 {row.severity === "major" ? "Create WO" : "Route"}
               </Button>
             ) : null}
             {row.severity === "major" ? (
-              <Button size="sm" variant="secondary" onClick={() => downgradeMut.mutate(row.id)} disabled={downgradeMut.isPending}>
+              <Button size="sm" variant="secondary" onClick={() => downgradeMut.mutate(actionInput(row.id))} disabled={downgradeMut.isPending}>
                 Downgrade to minor
               </Button>
             ) : null}
