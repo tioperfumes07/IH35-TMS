@@ -196,7 +196,9 @@ export function AuditTrailPage() {
     queryFn: () => listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 }),
     enabled: Boolean(companyId && auditEventId),
   });
-  const exactAuditEvent = exactAuditQuery.data?.events[0] as AuditEventListItem | undefined;
+  const exactAuditEvent = exactAuditQuery.isError
+    ? undefined
+    : exactAuditQuery.data?.events[0] as AuditEventListItem | undefined;
 
   const [appliedFilters, setAppliedFilters] = useState({
     module: "",
@@ -248,9 +250,12 @@ export function AuditTrailPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = useMemo(() => query.data?.events ?? [], [query.data?.events]);
+  const rows = useMemo(
+    () => (query.isError ? [] : query.data?.events ?? []),
+    [query.data?.events, query.isError]
+  );
 
-  const totalCount = query.data?.total_count ?? 0;
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
