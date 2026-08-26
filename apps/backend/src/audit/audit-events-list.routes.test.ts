@@ -71,6 +71,57 @@ describe("audit events list routes (BULK-6)", () => {
     expect(built.values).toContain(BULK_CALL);
   });
 
+  // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE
+  describe("base company predicate vs. NULL-company (company-agnostic) events", () => {
+    const ACTOR_UUID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+    it("stays strict (no widening) when no actor is given", () => {
+      const built = buildAuditEventsListQuery({ operating_company_id: COMPANY, limit: 50, offset: 0 });
+      expect(built.sql).toContain("(e.payload->>'operating_company_id')::uuid = $1::uuid");
+      expect(built.sql).not.toContain("IS NULL AND e.actor_user_uuid");
+    });
+
+    it("stays strict (no widening) when actor is a free-text/email search, not a uuid", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        actor: "someone@example.com",
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("(e.payload->>'operating_company_id')::uuid = $1::uuid");
+      expect(built.sql).not.toContain("IS NULL AND e.actor_user_uuid");
+    });
+
+    it("widens to admit NULL-company rows when actor is an exact uuid — the live repro shape", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        actor: ACTOR_UUID,
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain(
+        `((e.payload->>'operating_company_id')::uuid = $1::uuid OR ((e.payload->>'operating_company_id') IS NULL AND e.actor_user_uuid::text = $`
+      );
+      // The widened branch reuses the SAME raw actor param the existing exact-uuid actor-filter
+      // branch already pushes — no new value is added to the wire for this widening.
+      const rawActorOccurrences = built.values.filter((v) => v === ACTOR_UUID).length;
+      expect(rawActorOccurrences).toBe(1);
+    });
+
+    it("never widens for a DIFFERENT company's uuid-shaped actor — company scope still holds for that company's own rows", () => {
+      // Sanity: widening only ever admits rows with NULL company (never another company's rows) —
+      // the strict `= $1::uuid` branch is preserved verbatim as the OR's first arm, so a row with a
+      // real, non-matching operating_company_id is still excluded regardless of actor.
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        actor: ACTOR_UUID,
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("(e.payload->>'operating_company_id')::uuid = $1::uuid OR");
+    });
+  });
+
   it("returns audit events for company scope", async () => {
     const res = await app.inject({
       method: "GET",

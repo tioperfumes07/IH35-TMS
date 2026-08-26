@@ -100,9 +100,15 @@ function summarizePayload(eventClass: string, payload: unknown): string {
   return eventClass;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: string; values: unknown[] } {
   const values: unknown[] = [input.operating_company_id];
-  const filters = [`(e.payload->>'operating_company_id')::uuid = $1::uuid`];
+  // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE — base company filter is built below, once the
+  // actor block (if any) has had a chance to record its exact-uuid parameter position. See the
+  // comment attached to that assembly for why.
+  const filters: string[] = [];
+  let actorExactUuidParamIndex: number | undefined;
 
   if (input.audit_event_id) {
     values.push(input.audit_event_id);
@@ -138,6 +144,12 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     // rows in the UI. Two separate parameters now serve each branch's own comparison operator.
     values.push(`%${input.actor}%`, input.actor);
     filters.push(`(u.email ILIKE $${values.length - 1} OR e.actor_user_uuid::text = $${values.length})`);
+    // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE — only remember this as the exact-uuid param
+    // when input.actor is genuinely a uuid (never for a partial email-search string); the base
+    // company predicate below uses this to admit company-agnostic rows, but ONLY for this one
+    // already-identified actor — never for an absent or free-text actor filter, so no other caller
+    // of this shared endpoint gains cross-company visibility.
+    if (UUID_RE.test(input.actor)) actorExactUuidParamIndex = values.length;
   }
   if (input.status && input.status.length > 0) {
     values.push(input.status);
@@ -158,6 +170,22 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     values.push(input.to);
     filters.push(`e.created_at <= $${values.length}::timestamptz`);
   }
+
+  // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE — some events are genuinely company-agnostic
+  // (login, password reset — written before/outside company selection, so
+  // payload->>'operating_company_id' IS NULL). Unconditional `= $1::uuid` never matches NULL, so a
+  // user whose ENTIRE audit trail is company-agnostic events showed a permanent,
+  // indistinguishable-from-honest "no events" on their own Activity tab — live-reproduced on
+  // mcastillo@tioperfumes.com (2 real audit_events rows, both NULL-company; endpoint returned
+  // total_count: 0 even with the correct exact-uuid actor already wired). Widen ONLY when
+  // actorExactUuidParamIndex is set — i.e. the caller already narrowed the query to one specific,
+  // known-by-uuid actor (today: only UserActivityTab.tsx, via /users/:id) — so an absent or
+  // free-text/ILIKE actor search never gains visibility into another company's NULL-company rows.
+  filters.unshift(
+    actorExactUuidParamIndex
+      ? `((e.payload->>'operating_company_id')::uuid = $1::uuid OR ((e.payload->>'operating_company_id') IS NULL AND e.actor_user_uuid::text = $${actorExactUuidParamIndex}))`
+      : `(e.payload->>'operating_company_id')::uuid = $1::uuid`
+  );
 
   values.push(normalizeLimit(input.limit));
   const limitPos = values.length;
