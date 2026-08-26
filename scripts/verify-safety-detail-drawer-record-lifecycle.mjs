@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["safety"],"cols":["driver","unit","load","connectivity","qbo_chrome","reverse_link"],"leaves":["company_violations.detail","fines.detail","anomalies.detail"],"task":"CLASS-F6529-SAFETY-DETAIL-DRAWER-RECORD-LIFECYCLE","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["safety"],"cols":["driver","connectivity","reverse_link"],"leaves":["safety.drawer.company_violation_detail","safety.parity.company_violation_detail"],"task":"SAFETY-F6633-COMPANY-VIOLATION-ACTION-LIFECYCLE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const files = {
@@ -11,12 +11,23 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function failures(input = source) {
   const out = [];
-  if (!/const resetActionState = useCallback\(\(\) => \{\s*setOutcome\("warning"\);\s*setResolutionNotes\(""\);\s*setFineOverrideCents\(""\);\s*resetPatchMutation\(\);\s*resetCompleteMutation\(\);\s*resetEscalateMutation\(\);\s*resetResolveMutation\(\);/.test(input.company)) out.push("company resets complete action state");
+  if (!/const resetActionState = useCallback\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*setOutcome\("warning"\);\s*setResolutionNotes\(""\);\s*setFineOverrideCents\(""\);\s*resetPatchMutation\(\);\s*resetCompleteMutation\(\);\s*resetEscalateMutation\(\);\s*resetResolveMutation\(\);/.test(input.company)) out.push("company retires and resets complete action state");
   if (!/\}, \[open, operatingCompanyId, violation\?\.id, resetActionState\]\);/.test(input.company)) out.push("company reset keyed by record/company/open");
   if (!/key=\{`\$\{operatingCompanyId\}:\$\{String\(violation\.id \?\? ""\)\}`\}/.test(input.company)) out.push("corrective action child keyed by record/company");
+  if (!/updateCompanyViolation\(input\.violationId, input\.companyId, input\.payload\)/.test(input.company)) out.push("company patch snapshots record company and payload");
+  if (!/completeCompanyViolationCorrectiveAction\(input\.violationId, input\.companyId, \{\s*completed_date: input\.completedDate,\s*notes: input\.notes,/.test(input.company)) out.push("corrective action snapshots record company date and notes");
+  if (!/escalateCompanyViolation\(input\.violationId, input\.companyId, "Escalated from Safety UI"\)/.test(input.company)) out.push("escalation snapshots record and company");
+  if (!/resolveCompanyViolation\(input\.violationId, input\.companyId, \{\s*outcome: input\.outcome,\s*resolutionNotes: input\.resolutionNotes,\s*fineAmountCentsOverride: input\.fineAmountCentsOverride,/.test(input.company)) out.push("resolution snapshots record company outcome notes and amount");
+  const currentGenerationCallbacks = input.company.match(/input\.generation (?:===|!==) actionGenerationRef\.current/g)?.length ?? 0;
+  if (currentGenerationCallbacks !== 4) out.push("all four company action completions reject stale records");
+  for (const token of [
+    "violationId: String(violation.id ?? \"\")",
+    "companyId: operatingCompanyId",
+    "generation: actionGenerationRef.current",
+  ]) if (!input.company.includes(token)) out.push(`company action intent missing ${token}`);
   if (!/useEffect\(\(\) => \{\s*setConfirmOpen\(false\);\s*\}, \[open, operatingCompanyId, fine\?\.id\]\);/.test(input.fine)) out.push("fine confirmation reset keyed by record/company/open");
   if (!/const handleClose = useCallback\(\(\) => \{\s*setConfirmOpen\(false\);\s*onClose\(\);/.test(input.fine) || !input.fine.includes("onClose={handleClose}")) out.push("fine dismiss resets confirmation");
-  if (!/const resetActionState = useCallback\(\(\) => \{\s*setNote\(""\);\s*resetAckMutation\(\);\s*resetResolveMutation\(\);\s*resetDismissMutation\(\);/.test(input.anomaly)) out.push("anomaly resets note and actions");
+  if (!/const resetActionState = useCallback\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*setNote\(""\);\s*resetAckMutation\(\);\s*resetResolveMutation\(\);\s*resetDismissMutation\(\);/.test(input.anomaly)) out.push("anomaly retires and resets note and actions");
   if (!/\}, \[open, operatingCompanyId, anomalyId, resetActionState\]\);/.test(input.anomaly)) out.push("anomaly reset keyed by record/company/open");
   for (const [key, text] of Object.entries(input)) {
     if (!/useEscapeKey\(handleClose,/.test(text) || !text.includes("onClose={handleClose}")) out.push(`${key} escape and drawer dismiss share reset`);
@@ -26,15 +37,21 @@ function failures(input = source) {
 
 if (process.argv.includes("--selftest")) {
   const staleCompany = { ...source, company: source.company.replace("violation?.id, resetActionState", "resetActionState") };
+  const mutablePatchCompany = { ...source, company: source.company.replace("updateCompanyViolation(input.violationId, input.companyId, input.payload)", "updateCompanyViolation(String(violation?.id ?? ''), operatingCompanyId, input.payload)") };
+  const mutableResolveCompany = { ...source, company: source.company.replace("resolveCompanyViolation(input.violationId, input.companyId, {", "resolveCompanyViolation(String(violation?.id ?? ''), operatingCompanyId, {") };
+  const staleCompanyCallback = { ...source, company: source.company.replace("input.generation === actionGenerationRef.current", "true") };
   const staleFine = { ...source, fine: source.fine.replace("useEffect(() => {\n    setConfirmOpen(false);", "useEffect(() => {\n    void confirmOpen;") };
-  const staleAnomaly = { ...source, anomaly: source.anomaly.replace("const resetActionState = useCallback(() => {\n    setNote(\"\");", "const resetActionState = useCallback(() => {\n    void note;") };
+  const staleAnomaly = { ...source, anomaly: source.anomaly.replace("actionGenerationRef.current += 1;\n    setNote(\"\");", "void note;") };
   const checks = [
     failures(staleCompany).includes("company reset keyed by record/company/open"),
+    failures(mutablePatchCompany).includes("company patch snapshots record company and payload"),
+    failures(mutableResolveCompany).includes("resolution snapshots record company outcome notes and amount"),
+    failures(staleCompanyCallback).includes("all four company action completions reject stale records"),
     failures(staleFine).includes("fine confirmation reset keyed by record/company/open"),
-    failures(staleAnomaly).includes("anomaly resets note and actions"),
+    failures(staleAnomaly).includes("anomaly retires and resets note and actions"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-safety-detail-drawer-record-lifecycle selftest PASS — 3/3 stale record-action mutations red");
+  console.log(`verify-safety-detail-drawer-record-lifecycle selftest PASS — ${checks.length}/${checks.length} stale record-action mutations red`);
   process.exit(0);
 }
 
