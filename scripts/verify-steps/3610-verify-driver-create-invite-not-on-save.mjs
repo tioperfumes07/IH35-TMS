@@ -20,5 +20,7 @@ export default {
     ctx.run("node", ["scripts/verify-legal-contract-sign-delivery-atomic.mjs"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs"]);
+    ctx.run("node", ["scripts/verify-launch-toggle-action-snapshot.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-launch-toggle-action-snapshot.mjs"]);
   },
 };
