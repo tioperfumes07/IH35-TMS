@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { sendDriverProfileMessage } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -19,6 +19,8 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
   const [urgency, setUrgency] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setMessage("");
@@ -28,13 +30,17 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
   }, []);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPending(false);
     if (open) resetDraft();
   }, [open, companyId, driverId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (pending) return;
+    requestGenerationRef.current += 1;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [onClose, pending, resetDraft]);
 
   const submit = async () => {
     setError("");
@@ -42,24 +48,43 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
       setError("Message is required.");
       return;
     }
-    setPending(true);
-    try {
-      await sendDriverProfileMessage(driverId, companyId, {
+    const input = {
+      driverId,
+      companyId,
+      generation: requestGenerationRef.current,
+      body: {
         message: message.trim(),
         channel,
         urgency: urgency.trim() || undefined,
-      });
+      },
+    };
+    setPending(true);
+    try {
+      await sendDriverProfileMessage(input.driverId, input.companyId, input.body);
+      if (input.generation !== requestGenerationRef.current) return;
       onSent?.();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     } catch {
+      if (input.generation !== requestGenerationRef.current) return;
       setError("Failed to send message.");
     } finally {
-      setPending(false);
+      if (input.generation === requestGenerationRef.current) setPending(false);
     }
   };
 
+  const isDirty = Boolean(message || urgency || channel !== "in_app");
+
   return (
-    <Modal open={open} onClose={handleClose} title={`Send Message — ${driverName}`}>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={`Send Message — ${driverName}`}
+      confirmDiscardOnClose
+      isDirty={isDirty}
+      onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
+    >
       <div className="space-y-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="send-message-channel" className="text-xs font-semibold text-gray-600">Channel</label>
@@ -97,7 +122,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} data-testid="send-message-submit">
