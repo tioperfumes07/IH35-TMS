@@ -7,6 +7,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -77,7 +78,13 @@ export function PendingSettlementDeductionsPanel() {
     enabled: Boolean(selectedCompanyId),
   });
 
-  const rows = query.data?.deductions ?? [];
+  // SETL-F6464-PENDING-DEDUCTIONS-ERROR-LEAVES-CACHED-ACTIONS-ACTIVE — a rejected refetch used to
+  // still map query.data's LAST successful rows (React Query keeps stale data around across a
+  // failed refetch by default) and render their reverse-drill actions underneath the error
+  // banner, so a query failure could leave an operator acting on stale/wrong-scope deduction
+  // rows. `rows` is now empty whenever the query is in an error state — the cached data is never
+  // shown, only the error + Retry.
+  const rows = query.isError ? [] : (query.data?.deductions ?? []);
 
   if (!selectedCompanyId) {
     return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to view pending deductions.</p>;
@@ -129,7 +136,13 @@ export function PendingSettlementDeductionsPanel() {
         </div>
         {query.isLoading ? <p className="px-2 py-2 text-xs text-gray-500">Loading…</p> : null}
         {query.isError ? (
-          <p className="px-2 py-2 text-xs text-red-700">Could not load pending deductions.</p>
+          <ListErrorState
+            title="Couldn't load pending deductions"
+            status={(query.error as { status?: number })?.status ?? 0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+            className="px-2 py-2"
+          />
         ) : null}
         {!query.isLoading && !query.isError && rows.length === 0 ? (
           <p className="px-2 py-2 text-xs text-gray-500">No pending settlement deductions.</p>
