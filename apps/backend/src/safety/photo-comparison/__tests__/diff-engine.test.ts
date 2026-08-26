@@ -10,6 +10,7 @@ vi.mock("../../../storage/r2-client.js", () => ({
 
 import {
   aggregateStatus,
+  assertComparableEvidence,
   HIGH_CONFIDENCE_THRESHOLD,
   pairByAngle,
   runDiff,
@@ -45,6 +46,22 @@ function mockClient(handlers: Array<[string | RegExp, Record<string, unknown>[]]
 }
 
 describe("diff-engine (GAP-50)", () => {
+  it("refuses to certify evidence that was not completely accessible and paired", () => {
+    expect(() => assertComparableEvidence([], [], [])).toThrow("photo_evidence_pairs_missing");
+
+    const unmatchedPre = [photo("p1", "front", "https://example.test/pre")];
+    const unmatchedPost = [photo("q1", "rear", "https://example.test/post")];
+    expect(() => assertComparableEvidence(unmatchedPre, unmatchedPost, pairByAngle(unmatchedPre, unmatchedPost))).toThrow(
+      "photo_evidence_pairs_missing",
+    );
+
+    const pre = [photo("p1", "front")];
+    const post = [photo("q1", "front", "https://example.test/post")];
+    expect(() => assertComparableEvidence(pre, post, pairByAngle(pre, post))).toThrow(
+      "photo_evidence_download_unavailable:front",
+    );
+  });
+
   it("pairs pre/post photos by angle_label", () => {
     const pairs = pairByAngle(
       [photo("p1", "front"), photo("p2", "rear")],

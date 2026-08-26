@@ -1,4 +1,4 @@
-import { CircuitBreakerOpenError, withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 import {
   AnthropicRateLimitError,
   AnthropicTimeoutError,
@@ -70,20 +70,13 @@ export function createAnthropicClient(options?: {
 
   return {
     async compareImages(preImageUrl, postImageUrl, angleLabel) {
-      try {
-        return await withCircuitBreaker("openai", async () => {
-          return compareImagesInner(preImageUrl, postImageUrl, angleLabel, {
-            apiKey: options?.apiKey,
-            fetchImpl,
-            timeoutMs,
-          });
+      return withCircuitBreaker("openai", async () => {
+        return compareImagesInner(preImageUrl, postImageUrl, angleLabel, {
+          apiKey: options?.apiKey,
+          fetchImpl,
+          timeoutMs,
         });
-      } catch (error) {
-        if (error instanceof CircuitBreakerOpenError) {
-          return { has_new_damage: false, findings: [] };
-        }
-        throw error;
-      }
+      });
     },
   };
 }

@@ -51,6 +51,24 @@ function pairByAngle(
   return pairs;
 }
 
+function assertComparableEvidence(
+  prePhotos: PhotoEvidenceDetail[],
+  postPhotos: PhotoEvidenceDetail[],
+  pairs: Array<{ angle: string; pre: PhotoEvidenceDetail; post: PhotoEvidenceDetail }>
+): void {
+  if (pairs.length === 0) {
+    throw new Error("photo_evidence_pairs_missing");
+  }
+  if (pairs.length !== prePhotos.length || pairs.length !== postPhotos.length) {
+    throw new Error("photo_evidence_pairs_incomplete");
+  }
+  for (const pair of pairs) {
+    if (!pair.pre.download_url || !pair.post.download_url) {
+      throw new Error(`photo_evidence_download_unavailable:${pair.angle}`);
+    }
+  }
+}
+
 function aggregateStatus(allFindings: AnglePairFinding[]): DiffStatus {
   const damageFindings = allFindings.flatMap((p) =>
     p.findings.map((f) => ({ ...f, angle: p.angle_label }))
@@ -118,21 +136,13 @@ export async function runDiff(
   const prePhotos = session.pre_trip_photos ?? [];
   const postPhotos = session.post_trip_photos ?? [];
   const pairs = pairByAngle(prePhotos, postPhotos);
+  assertComparableEvidence(prePhotos, postPhotos, pairs);
 
   const angleFindings: AnglePairFinding[] = [];
   for (const pair of pairs) {
-    const preUrl = pair.pre.download_url;
-    const postUrl = pair.post.download_url;
-    if (!preUrl || !postUrl) {
-      angleFindings.push({
-        angle_label: pair.angle,
-        pre_evidence_uuid: pair.pre.id,
-        post_evidence_uuid: pair.post.id,
-        has_new_damage: false,
-        findings: [],
-      });
-      continue;
-    }
+    const preUrl = pair.pre.download_url!;
+    const postUrl = pair.post.download_url!;
+    // assertComparableEvidence established both URLs before any AI verdict is requested.
 
     const result = await anthropicClient.compareImages(preUrl, postUrl, pair.angle);
     angleFindings.push({
@@ -180,4 +190,4 @@ export async function runDiff(
   };
 }
 
-export { pairByAngle, aggregateStatus };
+export { pairByAngle, aggregateStatus, assertComparableEvidence };
