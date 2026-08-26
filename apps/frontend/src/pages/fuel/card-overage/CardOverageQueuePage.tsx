@@ -8,6 +8,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
@@ -76,9 +77,17 @@ export function CardOverageQueuePage() {
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
+  // FUEL-MONEY-F6535-CARD-OVERAGE-APPROVAL-NATIVE-CONFIRM-AND-MUTABLE-COMPANY — the mutable-
+  // company/generation half of this fix was already in place (approveMut already snapshots
+  // {eventId, companyId, generation}); the remaining defect is window.confirm() bypassing
+  // canonical modal chrome. Replaced with ConfirmModal (same component already used for
+  // destructive/config confirmations elsewhere), holding the pending row until the operator
+  // confirms or cancels.
+  const [confirmApproveRow, setConfirmApproveRow] = useState<OverageEventRow | null>(null);
 
   useEffect(() => {
     actionGenerationRef.current += 1;
+    setConfirmApproveRow(null);
   }, [companyId]);
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
   // LV-FUEL-TOOLBAR-LEAVES-POINT-HOME — do not keep dead set*Filter helpers that write URL immediately.
@@ -194,18 +203,7 @@ export function CardOverageQueuePage() {
         render: (row) => (
           <div className="flex flex-wrap gap-1">
             {row.status === "pending_review" ? (
-              <ActionButton
-                disabled={approveMut.isPending}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Approve recovery of ${money(row.overage_cents)} for ${entityLabel(row.driver_name, row.driver_id, "Driver")}? Posts JE only when FUEL_CARD_OVERAGE_GL_POSTING is ON.`
-                    )
-                  ) {
-                    approveMut.mutate({ eventId: row.id, companyId, generation: actionGenerationRef.current });
-                  }
-                }}
-              >
+              <ActionButton disabled={approveMut.isPending} onClick={() => setConfirmApproveRow(row)}>
                 Approve recovery
               </ActionButton>
             ) : row.journal_entry_id ? (
@@ -335,6 +333,26 @@ export function CardOverageQueuePage() {
           exportFilename="fuel-card-overage-events"
         />
       )}
+
+      <ConfirmModal
+        open={confirmApproveRow != null}
+        title="Approve recovery"
+        message={
+          confirmApproveRow
+            ? `Approve recovery of ${money(confirmApproveRow.overage_cents)} for ${entityLabel(
+                confirmApproveRow.driver_name,
+                confirmApproveRow.driver_id,
+                "Driver"
+              )}? Posts JE only when FUEL_CARD_OVERAGE_GL_POSTING is ON.`
+            : ""
+        }
+        confirmLabel="Approve recovery"
+        onClose={() => setConfirmApproveRow(null)}
+        onConfirm={() => {
+          if (!confirmApproveRow) return;
+          approveMut.mutate({ eventId: confirmApproveRow.id, companyId, generation: actionGenerationRef.current });
+        }}
+      />
     </div>
   );
 }
