@@ -1,5 +1,5 @@
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +35,13 @@ type InspectionDraft = {
   notes: string;
   dvir_submission_id: string;
   is_ad_hoc: boolean;
+};
+
+type InspectionActionScope = {
+  companyId: string;
+  generation: number;
+  draft: InspectionDraft;
+  photoFile: File | null;
 };
 
 const EMPTY_DRAFT: InspectionDraft = {
@@ -78,6 +85,7 @@ export function InspectionsPage() {
   const [editing, setEditing] = useState<MaintenanceInspectionRow | null>(null);
   const [draft, setDraft] = useState<InspectionDraft>(EMPTY_DRAFT);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
   const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() ?? "";
 
@@ -108,79 +116,98 @@ export function InspectionsPage() {
     [dvirQ.data?.submissions],
   );
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "inspections", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["maintenance", "inspections", submittedCompanyId] });
   };
 
-  const buildPayload = () => ({
-    operating_company_id: companyId,
-    unit_id: draft.unit_id,
-    inspection_type: draft.inspection_type,
-    status: draft.status,
-    scheduled_date: draft.scheduled_date || undefined,
-    inspection_date: draft.inspection_date || undefined,
-    inspector_name: draft.inspector_name || undefined,
-    mileage: draft.mileage ? Number(draft.mileage) : undefined,
-    outcome: draft.outcome || undefined,
-    notes: draft.notes,
-    dvir_submission_id: draft.dvir_submission_id || undefined,
-    is_ad_hoc: draft.is_ad_hoc,
+  const buildPayload = (submittedDraft: InspectionDraft, submittedCompanyId: string) => ({
+    operating_company_id: submittedCompanyId,
+    unit_id: submittedDraft.unit_id,
+    inspection_type: submittedDraft.inspection_type,
+    status: submittedDraft.status,
+    scheduled_date: submittedDraft.scheduled_date || undefined,
+    inspection_date: submittedDraft.inspection_date || undefined,
+    inspector_name: submittedDraft.inspector_name || undefined,
+    mileage: submittedDraft.mileage ? Number(submittedDraft.mileage) : undefined,
+    outcome: submittedDraft.outcome || undefined,
+    notes: submittedDraft.notes,
+    dvir_submission_id: submittedDraft.dvir_submission_id || undefined,
+    is_ad_hoc: submittedDraft.is_ad_hoc,
   });
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      const created = await createMaintenanceInspection(buildPayload());
-      if (photoFile && created.id) {
-        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id, companyId);
+    mutationFn: async (input: InspectionActionScope) => {
+      const created = await createMaintenanceInspection(buildPayload(input.draft, input.companyId));
+      if (input.photoFile && created.id) {
+        const docsFileId = await uploadInspectionPhoto(input.photoFile, input.draft.unit_id, input.companyId);
         await attachMaintenanceInspectionPhoto(String(created.id), {
-          operating_company_id: companyId,
+          operating_company_id: input.companyId,
           docs_file_id: docsFileId,
         });
       }
       return created;
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(EMPTY_DRAFT);
       setPhotoFile(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Inspection created", "success");
     },
-    onError: () => pushToast("Failed to create inspection", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create inspection", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async () => {
-      if (!editing) throw new Error("No inspection selected");
-      const updated = await updateMaintenanceInspection(String(editing.id), buildPayload());
-      if (photoFile && editing.id) {
-        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id || String(editing.unit_id), companyId);
-        await attachMaintenanceInspectionPhoto(String(editing.id), {
-          operating_company_id: companyId,
+    mutationFn: async (input: InspectionActionScope & { inspectionId: string; existingUnitId: string }) => {
+      const updated = await updateMaintenanceInspection(input.inspectionId, buildPayload(input.draft, input.companyId));
+      if (input.photoFile) {
+        const docsFileId = await uploadInspectionPhoto(input.photoFile, input.draft.unit_id || input.existingUnitId, input.companyId);
+        await attachMaintenanceInspectionPhoto(input.inspectionId, {
+          operating_company_id: input.companyId,
           docs_file_id: docsFileId,
         });
       }
       return updated;
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setEditing(null);
       setDraft(EMPTY_DRAFT);
       setPhotoFile(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Inspection updated", "success");
     },
-    onError: () => pushToast("Failed to update inspection", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update inspection", "error");
+    },
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (row: MaintenanceInspectionRow) =>
-      archiveMaintenanceInspection(String(row.id), companyId, "Archived from inspections list"),
-    onSuccess: async () => {
-      await refresh();
+    mutationFn: (input: { inspectionId: string; companyId: string; generation: number }) =>
+      archiveMaintenanceInspection(input.inspectionId, input.companyId, "Archived from inspections list"),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       pushToast("Inspection archived", "success");
     },
-    onError: () => pushToast("Failed to archive inspection", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to archive inspection", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    archiveMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setDraft(EMPTY_DRAFT);
+    setPhotoFile(null);
+  }, [companyId]);
 
   const openEdit = (row: MaintenanceInspectionRow) => {
     setEditing(row);
@@ -236,7 +263,15 @@ export function InspectionsPage() {
             <button type="button" className="text-slate-700 underline" onClick={() => openEdit(row)}>
               Edit
             </button>
-            <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(row)}>
+            <button
+              type="button"
+              className="text-red-700 underline"
+              onClick={() => archiveMutation.mutate({
+                inspectionId: String(row.id),
+                companyId,
+                generation: actionGenerationRef.current,
+              })}
+            >
               Archive
             </button>
           </div>
@@ -420,7 +455,23 @@ export function InspectionsPage() {
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
-              onClick={() => (editing ? updateMutation.mutate() : createMutation.mutate())}
+              onClick={() => {
+                const input: InspectionActionScope = {
+                  companyId,
+                  generation: actionGenerationRef.current,
+                  draft: { ...draft },
+                  photoFile,
+                };
+                if (editing) {
+                  updateMutation.mutate({
+                    ...input,
+                    inspectionId: String(editing.id),
+                    existingUnitId: String(editing.unit_id ?? ""),
+                  });
+                  return;
+                }
+                createMutation.mutate(input);
+              }}
               disabled={!draft.unit_id || createMutation.isPending || updateMutation.isPending}
             >
               {editing ? "Save Inspection" : "Create Inspection"}
