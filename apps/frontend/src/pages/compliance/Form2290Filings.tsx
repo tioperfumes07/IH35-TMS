@@ -163,9 +163,12 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          {showModuleHeader ? null : (
-            <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
-          )}
+          {/* DISP-F6471 (GO-2237 item 4): this h2 used to duplicate the "Form 2290 filings" title
+              PageHeader ALREADY renders in the embedded case (showModuleHeader=false, e.g. mounted
+              inside Safety > Permits via <Form2290Filings showModuleHeader={false} />) -- the exact
+              same text appeared twice, stacked directly on top of each other. PageHeader's own
+              title covers this branch too (the `header` const below is used unconditionally), so
+              the h2 was pure duplication, never unique content. Removed. */}
           <p className="text-xs text-slate-600">
             {/* No fabricated fallback. This previously rendered a hardcoded August-31 literal whenever
                 the endpoint had not answered — a regulatory date invented by the UI, indistinguishable
