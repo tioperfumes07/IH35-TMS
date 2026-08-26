@@ -35,6 +35,11 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
     setSlaDays(String(settings.violation_response_sla_days ?? 14));
   }, [operatingCompanyId, settings]); // mutation.reset is stable; reset the draft when the canonical settings context changes.
 
+  const saveErrorCurrent =
+    mutation.isError &&
+    mutation.variables?.companyId === operatingCompanyId &&
+    mutation.variables?.generation === lifecycleGenerationRef.current;
+
   return (
     <form
       className="space-y-3 rounded-sm border border-gray-200 bg-white p-3"
@@ -96,7 +101,7 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
           />
         </div>
       </div>
-      {mutation.isError ? (
+      {saveErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="safety-settings-save-error">
           {userFacingApiError(mutation.error, "Could not save safety settings.")}
         </p>
