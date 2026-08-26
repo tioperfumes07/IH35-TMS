@@ -253,8 +253,9 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             />
           </label>
           <div className="block text-xs text-slate-600">
-            <span>Completed date</span>
+            <label htmlFor="training-record-completed-date">Completed date</label>
             <DatePicker
+              id="training-record-completed-date"
               value={completedAt}
               onChange={setCompletedAt}
               max={new Date().toISOString().slice(0, 10)}
@@ -263,8 +264,9 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             />
           </div>
           <div className="block text-xs text-slate-600">
-            <span>Expiry date (optional)</span>
+            <label htmlFor="training-record-expiry-date">Expiry date (optional)</label>
             <DatePicker
+              id="training-record-expiry-date"
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
               className="mt-1 block h-8 w-full"
