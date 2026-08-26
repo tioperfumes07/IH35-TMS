@@ -267,6 +267,10 @@ export async function createCashAdvanceRequest(
     request_id: requestId,
     driver_id: args.driverId,
     display_id: displayId,
+    // CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS: CashAdvanceOwnerNotificationHandler
+    // needs the amount + actor to build the owner alert without a second DB round-trip.
+    requested_amount_cents: input.requested_amount_cents,
+    actor_user_id: args.actorUserId,
   });
 
   await notifyDriverPwaIfAvailable(client, {
@@ -362,6 +366,9 @@ export async function createOfficeCashAdvanceRequest(
   }, "info");
   await enqueueDriverFinanceOutbox(client, "driver_finance.cash_advance_request.submitted", {
     operating_company_id: args.operatingCompanyId, request_id: requestId, driver_id: driverId, display_id: displayId,
+    // CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS: CashAdvanceOwnerNotificationHandler
+    // needs the amount + actor to build the owner alert without a second DB round-trip.
+    requested_amount_cents: input.requested_amount_cents, actor_user_id: args.actorUserId,
   });
 
   // AUTHORITY maker + within policy → auto-approve now (reviewer stays NULL; maker≠checker satisfied).
