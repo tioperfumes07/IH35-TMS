@@ -203,6 +203,15 @@ export function ComplaintsTab() {
     setVoidTargetId(null);
   }, [companyId]); // Mutation reset functions are stable; company transitions own fresh complaint state.
 
+  const createErrorCurrent =
+    createMutation.isError &&
+    createMutation.variables?.companyId === companyId &&
+    createMutation.variables?.generation === lifecycleGenerationRef.current;
+  const patchErrorCurrent =
+    patchMutation.isError &&
+    patchMutation.variables?.companyId === companyId &&
+    patchMutation.variables?.generation === lifecycleGenerationRef.current;
+
   function buildComplaintPayload() {
     const payload: Record<string, unknown> = {
       complainant_type: form.complainant_type,
@@ -506,7 +515,7 @@ export function ComplaintsTab() {
               Manage types
             </Link>
           </div>
-          {createMutation.isError ? (
+          {createErrorCurrent ? (
             <p className="mt-1 text-[11px] text-red-700">
               {createMutation.error instanceof ApiError
                 ? String((createMutation.error.data as { error?: string })?.error ?? "Could not file complaint.")
@@ -586,7 +595,7 @@ export function ComplaintsTab() {
         }
       />
       )}
-      {patchMutation.isError ? (
+      {patchErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="complaint-resolve-error">
           {userFacingApiError(patchMutation.error, "Could not resolve the complaint.")}
         </p>
