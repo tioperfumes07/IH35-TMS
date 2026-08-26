@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../../lib/formatDate";
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -18,6 +18,7 @@ export function DriverSchedulerRequestDetailPage() {
   const qc = useQueryClient();
   const [deniedReason, setDeniedReason] = useState("");
   const [error, setError] = useState("");
+  const lifecycleGenerationRef = useRef(0);
 
   const query = useQuery({
     queryKey: ["driver-scheduler", "request", id, operatingCompanyId],
@@ -26,29 +27,45 @@ export function DriverSchedulerRequestDetailPage() {
   });
 
   const approveMut = useMutation({
-    mutationFn: () => driverSchedulerOfficeApi.reviewRequest(operatingCompanyId, id, { action: "approve" }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["driver-scheduler"] });
+    mutationFn: (input: { operatingCompanyId: string; requestId: string; generation: number }) =>
+      driverSchedulerOfficeApi.reviewRequest(input.operatingCompanyId, input.requestId, { action: "approve" }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["driver-scheduler", "request", input.requestId, input.operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["driver-scheduler", "requests", input.operatingCompanyId] });
       setError("");
     },
-    onError: (e: unknown) => {
+    onError: (e: unknown, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       if (e instanceof ApiError) setError(String((e.data as { error?: string })?.error ?? "failed"));
       else setError("failed");
     },
   });
 
   const denyMut = useMutation({
-    mutationFn: () =>
-      driverSchedulerOfficeApi.reviewRequest(operatingCompanyId, id, { action: "deny", denied_reason: deniedReason }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["driver-scheduler"] });
+    mutationFn: (input: { operatingCompanyId: string; requestId: string; reason: string; generation: number }) =>
+      driverSchedulerOfficeApi.reviewRequest(input.operatingCompanyId, input.requestId, { action: "deny", denied_reason: input.reason }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      await qc.invalidateQueries({ queryKey: ["driver-scheduler", "request", input.requestId, input.operatingCompanyId] });
+      await qc.invalidateQueries({ queryKey: ["driver-scheduler", "requests", input.operatingCompanyId] });
+      setDeniedReason("");
       setError("");
     },
-    onError: (e: unknown) => {
+    onError: (e: unknown, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       if (e instanceof ApiError) setError(String((e.data as { error?: string })?.error ?? "failed"));
       else setError("failed");
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    approveMut.reset();
+    denyMut.reset();
+    setDeniedReason("");
+    setError("");
+  }, [id, operatingCompanyId]); // Mutation reset functions are stable; route/company transitions own fresh review state.
 
   const req = query.data?.request;
 
@@ -92,7 +109,15 @@ export function DriverSchedulerRequestDetailPage() {
             <div className="font-semibold text-gray-900">Review actions</div>
             {String(req.status) === "pending_review" ? (
               <div className="mt-2 space-y-2">
-                <Button size="sm" onClick={() => void approveMut.mutate()} disabled={approveMut.isPending}>
+                <Button
+                  size="sm"
+                  onClick={() => approveMut.mutate({
+                    operatingCompanyId,
+                    requestId: id,
+                    generation: lifecycleGenerationRef.current,
+                  })}
+                  disabled={approveMut.isPending}
+                >
                   Approve
                 </Button>
                 <div>
@@ -107,7 +132,12 @@ export function DriverSchedulerRequestDetailPage() {
                     className="mt-1"
                     size="sm"
                     variant="secondary"
-                    onClick={() => void denyMut.mutate()}
+                    onClick={() => denyMut.mutate({
+                      operatingCompanyId,
+                      requestId: id,
+                      reason: deniedReason.trim(),
+                      generation: lifecycleGenerationRef.current,
+                    })}
                     disabled={denyMut.isPending || !deniedReason.trim()}
                   >
                     Deny
