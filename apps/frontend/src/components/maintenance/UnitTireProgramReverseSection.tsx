@@ -9,7 +9,7 @@ export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { 
     queryFn: () => getMaintenanceTireLayout(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const mounted = (query.data?.positions ?? []).filter((position) => position.record);
+  const mounted = (query.isError ? [] : query.data?.positions ?? []).filter((position) => position.record);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tire-program-reverse">
       <div className="flex items-center justify-between gap-2">

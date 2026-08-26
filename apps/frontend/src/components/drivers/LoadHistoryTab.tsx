@@ -144,8 +144,8 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
 
-  const assignedRows = assignedQ.data?.loads ?? [];
-  const historyRows = historyQ.data?.rows ?? [];
+  const assignedRows = assignedQ.isError ? [] : assignedQ.data?.loads ?? [];
+  const historyRows = historyQ.isError ? [] : historyQ.data?.rows ?? [];
 
   return (
     <div className="space-y-6" data-testid="driver-load-history-tab">
