@@ -23,9 +23,15 @@ function failures(input = source) {
   const fleetReset = input.fleet.match(/const resetDraft = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/)?.[1] ?? "";
   if (!fleetReset.includes('setDriverId("")') || !fleetReset.includes("setError(null)")) out.push("fleet resets driver and error");
   if (!/\[open, companyId, target\?\.equipmentId, resetDraft\]/.test(input.fleet)) out.push("fleet reset keyed by company/equipment/open");
-  if (!/const handleClose = useCallback\(\(\) => \{\s*resetDraft\(\);\s*onClose\(\);/.test(input.fleet)) out.push("fleet dismiss resets");
-  if (!input.fleet.includes('<Modal open={open} onClose={handleClose}')) out.push("fleet modal uses reset close");
-  if (!/await onConfirm\(driverId\);\s*handleClose\(\);/.test(input.fleet)) out.push("fleet success resets");
+  if (!/const handleClose = useCallback\(\(\) => \{[\s\S]{0,160}actionGenerationRef\.current \+= 1;[\s\S]{0,120}resetDraft\(\);\s*onClose\(\);/.test(input.fleet)) out.push("fleet dismiss retires request and resets");
+  if (!/<Modal[\s\S]{0,100}open=\{open\}[\s\S]{0,100}onClose=\{handleClose\}/.test(input.fleet)) out.push("fleet modal uses reset close");
+  if (!/confirmDiscardOnClose[\s\S]{0,120}isDirty=\{Boolean\(driverId\)\}/.test(input.fleet)) out.push("fleet selected driver is discard-protected");
+  if (!/onRegisterAttemptClose=\{\(attemptClose\) => \{[\s\S]{0,100}attemptCloseRef\.current = attemptClose/.test(input.fleet)) out.push("fleet Cancel registers guarded close");
+  if (!/variant="secondary" onClick=\{\(\) => attemptCloseRef\.current\(\)\}/.test(input.fleet)) out.push("fleet Cancel uses guarded close");
+  if (!/const input = \{ driverId, generation: actionGenerationRef\.current \}/.test(input.fleet)) out.push("fleet submit snapshots driver and generation");
+  if (!/await onConfirm\(input\.driverId\);[\s\S]{0,100}input\.generation !== actionGenerationRef\.current[\s\S]{0,80}handleClose\(\);/.test(input.fleet)) out.push("fleet success rejects stale target before close");
+  if (!/catch \(cause\) \{[\s\S]{0,100}input\.generation !== actionGenerationRef\.current[\s\S]{0,140}setError/.test(input.fleet)) out.push("fleet error rejects stale target");
+  if (!/input\.generation === actionGenerationRef\.current\) setLoading\(false\)/.test(input.fleet)) out.push("fleet finally rejects stale target");
   return out;
 }
 
@@ -33,13 +39,19 @@ if (process.argv.includes("--selftest")) {
   const staleTrailer = { ...source, dispatch: source.dispatch.replace("setTrailerId(\"\");", "void trailerId;") };
   const staleLoad = { ...source, dispatch: source.dispatch.replace("[open, operatingCompanyId, loadId, resetDraft]", "[open, operatingCompanyId, resetDraft]") };
   const staleEquipment = { ...source, fleet: source.fleet.replace("[open, companyId, target?.equipmentId, resetDraft]", "[open, companyId, resetDraft]") };
+  const staleSuccess = { ...source, fleet: source.fleet.replace("if (input.generation !== actionGenerationRef.current) return;\n            handleClose();", "handleClose();") };
+  const staleError = { ...source, fleet: source.fleet.replace("if (input.generation !== actionGenerationRef.current) return;\n            setError", "setError") };
+  const bypassCancel = { ...source, fleet: source.fleet.replace("onClick={() => attemptCloseRef.current()}", "onClick={handleClose}") };
   const checks = [
     failures(staleTrailer).includes('dispatch reset setTrailerId("")'),
     failures(staleLoad).includes("dispatch reset keyed by company/load/open"),
     failures(staleEquipment).includes("fleet reset keyed by company/equipment/open"),
+    failures(staleSuccess).includes("fleet success rejects stale target before close"),
+    failures(staleError).includes("fleet error rejects stale target"),
+    failures(bypassCancel).includes("fleet Cancel uses guarded close"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-quick-assign-draft-lifecycle selftest PASS — 3/3 stale assignment mutations red");
+  console.log("verify-quick-assign-draft-lifecycle selftest PASS — 6/6 stale assignment mutations red");
   process.exit(0);
 }
 
