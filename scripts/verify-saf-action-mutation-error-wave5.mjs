@@ -20,7 +20,7 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/integrity-reports/DriverVendorMappingTab.tsx",
-    needles: ["userFacingApiError", "scanMutation.isError", "driver-vendor-scan-error"],
+    needles: ["userFacingApiError", "scanError", "driver-vendor-scan-error"],
   },
   {
     file: "apps/frontend/src/pages/safety/FinesPage.tsx",

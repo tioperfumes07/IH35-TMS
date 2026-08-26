@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -9,8 +9,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 
 type FindingRow = { driver_uuid: string; severity: string; drift_reason: string; _rowId: string };
 
-async function fetchSnapshot() {
-  const res = await fetch(resolveApiUrl("/api/integrations/integrity/driver-vendor-mapping"), { credentials: "include" });
+async function fetchSnapshot(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  const res = await fetch(resolveApiUrl(`/api/integrations/integrity/driver-vendor-mapping?${query.toString()}`), { credentials: "include" });
   if (!res.ok) throw new Error("fetch_failed");
   return res.json();
 }
@@ -31,17 +32,33 @@ export function DriverVendorMappingTab() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const actionGenerationRef = useRef(0);
+  const [scanError, setScanError] = useState<unknown>(null);
 
   const query = useQuery({
-    queryKey: ["integrity", "driver-vendor-mapping"],
-    queryFn: fetchSnapshot,
+    queryKey: ["integrity", "driver-vendor-mapping", companyId],
+    queryFn: () => fetchSnapshot(companyId),
     enabled: Boolean(companyId),
   });
 
+  /** @matrix-built modules=safety cols=driver,vendor,connectivity,reverse_link */
   const scanMutation = useMutation({
-    mutationFn: () => triggerScan(companyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrity", "driver-vendor-mapping"] }),
+    mutationFn: (input: { companyId: string; generation: number }) => triggerScan(input.companyId),
+    onMutate: () => setScanError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["integrity", "driver-vendor-mapping", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setScanError(error);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setScanError(null);
+    scanMutation.reset();
+  }, [companyId]); // Mutation reset is stable; company transitions own a fresh integrity scan lifecycle.
 
   const findings: Array<{ driver_uuid: string; severity: string; drift_reason: string }> =
     query.data?.snapshot?.findings ?? [];
@@ -94,13 +111,13 @@ export function DriverVendorMappingTab() {
         type="button"
         className="rounded-sm border px-3 py-1 text-xs font-semibold"
         disabled={!companyId || scanMutation.isPending}
-        onClick={() => scanMutation.mutate()}
+        onClick={() => scanMutation.mutate({ companyId, generation: actionGenerationRef.current })}
       >
         Run scan
       </button>
-      {scanMutation.isError ? (
+      {scanError ? (
         <p className="text-xs text-red-700" data-testid="driver-vendor-scan-error">
-          {userFacingApiError(scanMutation.error, "Could not run the driver-vendor mapping scan.")}
+          {userFacingApiError(scanError, "Could not run the driver-vendor mapping scan.")}
         </p>
       ) : null}
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No drift findings." — an outage presenting as a
