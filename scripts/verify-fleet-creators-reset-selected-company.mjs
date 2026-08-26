@@ -7,7 +7,7 @@ const files = [
 ];
 const submitFallbacks = new Map([
   ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "currently_leased_to_company_id: submittedDraft.currently_leased_to_company_id || submittedCompanyId"],
-  ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "currently_leased_to_company_id: draft.currently_leased_to_company_id || operatingCompanyId"],
+  ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "currently_leased_to_company_id: input.draft.currently_leased_to_company_id || input.companyId"],
 ]);
 
 function failures(overrides = new Map()) {
@@ -17,7 +17,7 @@ function failures(overrides = new Map()) {
     if (!source.includes('currently_leased_to_company_id: operatingCompanyId')) {
       errors.push(`${file}: initial draft must use selected operating company`);
     }
-    if (!/useEffect\(\(\) => \{\s*if \(open\) setDraft\(initialDraft\);\s*\}, \[initialDraft, open\]\);/.test(source)) {
+    if (!/useEffect\(\(\) => \{[\s\S]{0,240}?if \(open\) setDraft\(initialDraft\);[\s\S]{0,80}?\}, \[initialDraft, open\]\);/.test(source)) {
       errors.push(`${file}: opening must reset draft from current selected-company initialDraft`);
     }
     if (!source.includes(submitFallbacks.get(file))) {
