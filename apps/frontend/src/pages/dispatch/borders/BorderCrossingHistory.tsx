@@ -102,16 +102,22 @@ export function BorderCrossingHistory() {
     >
       <div className="relative flex flex-wrap items-center gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+          <label htmlFor="border-crossing-from" className="block text-sm font-medium text-gray-700 mb-1">
+            From
+          </label>
           <DatePicker
+            id="border-crossing-from"
             value={staged.draft.from}
             onChange={(next) => staged.setDraft({ ...staged.draft, from: next })}
             className=""
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+          <label htmlFor="border-crossing-to" className="block text-sm font-medium text-gray-700 mb-1">
+            To
+          </label>
           <DatePicker
+            id="border-crossing-to"
             value={staged.draft.to}
             onChange={(next) => staged.setDraft({ ...staged.draft, to: next })}
             className=""
