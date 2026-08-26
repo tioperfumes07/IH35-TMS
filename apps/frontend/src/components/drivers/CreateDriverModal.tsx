@@ -256,6 +256,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   const driverCreateAttemptCloseRef = useRef<(() => void) | null>(null);
   const saveModeRef = useRef<"default" | "add_another">("default");
+  const companyGenerationRef = useRef(0);
   const [driverCreateBaseline, setDriverCreateBaseline] = useState<DriverCreateModalSnapshot | null>(null);
 
   const driverCreateSnapshot = useMemo(
@@ -273,6 +274,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   // Reset the whole create flow every time the modal opens (was pages/Drivers.tsx openDriverCreate()).
   useEffect(() => {
+    companyGenerationRef.current += 1;
     if (!open) return;
     setForm({ ...DRIVER_CREATE_FORM_INITIAL });
     setWizardStep(1);
@@ -439,18 +441,24 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             : undefined;
 
   const createMutation = useMutation({
-    mutationFn: createDriver,
-    onSuccess: async (created) => {
-      const displayName = [form.first_name, form.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
+    mutationFn: (input: {
+      generation: number;
+      payload: Parameters<typeof createDriver>[0];
+      pendingDocs: Array<[PendingDriverDocKey, File]>;
+      categoryIds: Record<string, string>;
+      saveMode: "default" | "add_another";
+    }) => createDriver(input.payload),
+    onSuccess: async (created, input) => {
+      const displayName = [input.payload.first_name, input.payload.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
 
       // DQ docs staged on wizard step 4 upload after the driver row exists (entity_links need driver id).
-      const opco = created.operating_company_id || form.operating_company_id;
-      for (const [key, file] of Object.entries(pendingDocs) as Array<[PendingDriverDocKey, File]>) {
+      const opco = created.operating_company_id || input.payload.operating_company_id;
+      for (const [key, file] of input.pendingDocs) {
         if (!file) continue;
         try {
           const code = DRIVER_CREATE_DOC_CATEGORY_CODES[key];
-          const categoryId = categoryIdByCode.get(code);
+          const categoryId = input.categoryIds[code];
           const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
             operating_company_id: opco || undefined,
             category_id: categoryId,
@@ -459,11 +467,14 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
           await confirmUpload(file_id);
         } catch (err) {
-          pushToast(userFacingApiError(err, `Driver created; could not upload ${key} document`), "error");
+          if (input.generation === companyGenerationRef.current) {
+            pushToast(userFacingApiError(err, `Driver created; could not upload ${key} document`), "error");
+          }
         }
       }
 
-      if (saveModeRef.current === "add_another") {
+      if (input.generation !== companyGenerationRef.current) return;
+      if (input.saveMode === "add_another") {
         pushToast("Driver created. No invite sent yet.", "success");
         setForm({ ...DRIVER_CREATE_FORM_INITIAL });
         setWizardStep(1);
@@ -540,7 +551,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         overrideReturningWarning &&
         rehireAction === "rehire" &&
         Boolean(selectedPriorDriverId);
-      await createMutation.mutateAsync({
+      const generation = companyGenerationRef.current;
+      const payload = {
         operating_company_id: parsed.operating_company_id,
         first_name: properPersonOrPlaceName(parsed.first_name),
         last_name: properPersonOrPlaceName(parsed.last_name),
@@ -585,7 +597,19 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
         is_rehire: shouldLinkRehire ? true : undefined,
         prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
-      });
+      };
+      try {
+        await createMutation.mutateAsync({
+          generation,
+          payload,
+          pendingDocs: [...pendingDocEntries],
+          categoryIds: Object.fromEntries(categoryIdByCode),
+          saveMode: saveModeRef.current,
+        });
+      } catch (error) {
+        if (generation !== companyGenerationRef.current) return;
+        throw error;
+      }
     },
   });
 
