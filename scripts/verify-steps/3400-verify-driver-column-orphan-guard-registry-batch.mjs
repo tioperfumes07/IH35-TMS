@@ -47,5 +47,7 @@ export default {
     await ctx.run("node", ["scripts/verify-maint-work-order-detail-action-lifecycle.mjs"]);
     await ctx.run("node", ["scripts/verify-maint-parts-adjustment-company-lifecycle.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-maint-parts-adjustment-company-lifecycle.mjs"]);
+    await ctx.run("node", ["scripts/verify-safety-detail-drawer-record-lifecycle.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-safety-detail-drawer-record-lifecycle.mjs"]);
   },
 };

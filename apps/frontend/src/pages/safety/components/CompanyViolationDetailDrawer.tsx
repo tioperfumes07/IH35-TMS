@@ -25,6 +25,12 @@ type Props = {
 
 const DRAWER_TITLE = "Company Violation Detail";
 
+type ViolationActionScope = {
+  violationId: string;
+  companyId: string;
+  generation: number;
+};
+
 export function CompanyViolationDetailDrawer({ open, violation, operatingCompanyId, onClose, onUpdated }: Props) {
   // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
   // element type follows. Focus behaviour is unchanged.
@@ -32,31 +38,44 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
   const [outcome, setOutcome] = useState<"warning" | "written_reprimand" | "monetary_fine" | "termination" | "dismissed">("warning");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [fineOverrideCents, setFineOverrideCents] = useState("");
+  const actionGenerationRef = useRef(0);
   const patchMutation = useMutation({
-    mutationFn: (payload: Record<string, unknown>) =>
-      updateCompanyViolation(String(violation?.id ?? ""), operatingCompanyId, payload),
-    onSuccess: onUpdated,
+    mutationFn: (input: ViolationActionScope & { payload: Record<string, unknown> }) =>
+      updateCompanyViolation(input.violationId, input.companyId, input.payload),
+    onSuccess: (_result, input) => {
+      if (input.generation === actionGenerationRef.current) onUpdated();
+    },
   });
   const completeMutation = useMutation({
-    mutationFn: ({ completedDate, notes }: { completedDate: string; notes: string }) =>
-      completeCompanyViolationCorrectiveAction(String(violation?.id ?? ""), operatingCompanyId, {
-        completed_date: completedDate,
-        notes,
+    mutationFn: (input: ViolationActionScope & { completedDate: string; notes: string }) =>
+      completeCompanyViolationCorrectiveAction(input.violationId, input.companyId, {
+        completed_date: input.completedDate,
+        notes: input.notes,
       }),
-    onSuccess: onUpdated,
+    onSuccess: (_result, input) => {
+      if (input.generation === actionGenerationRef.current) onUpdated();
+    },
   });
   const escalateMutation = useMutation({
-    mutationFn: () => escalateCompanyViolation(String(violation?.id ?? ""), operatingCompanyId, "Escalated from Safety UI"),
-    onSuccess: onUpdated,
+    mutationFn: (input: ViolationActionScope) =>
+      escalateCompanyViolation(input.violationId, input.companyId, "Escalated from Safety UI"),
+    onSuccess: (_result, input) => {
+      if (input.generation === actionGenerationRef.current) onUpdated();
+    },
   });
   const resolveMutation = useMutation({
-    mutationFn: () =>
-      resolveCompanyViolation(String(violation?.id ?? ""), operatingCompanyId, {
-        outcome,
-        resolutionNotes,
-        fineAmountCentsOverride: fineOverrideCents.trim() ? Number(fineOverrideCents) : undefined,
+    mutationFn: (input: ViolationActionScope & {
+      outcome: typeof outcome;
+      resolutionNotes: string;
+      fineAmountCentsOverride?: number;
+    }) =>
+      resolveCompanyViolation(input.violationId, input.companyId, {
+        outcome: input.outcome,
+        resolutionNotes: input.resolutionNotes,
+        fineAmountCentsOverride: input.fineAmountCentsOverride,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       onUpdated();
       setResolutionNotes("");
       setFineOverrideCents("");
@@ -68,6 +87,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
   const resetResolveMutation = resolveMutation.reset;
 
   const resetActionState = useCallback(() => {
+    actionGenerationRef.current += 1;
     setOutcome("warning");
     setResolutionNotes("");
     setFineOverrideCents("");
@@ -175,14 +195,23 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
-            onClick={() => patchMutation.mutate({ status: "in_progress" })}
+            onClick={() => patchMutation.mutate({
+              violationId: String(violation.id ?? ""),
+              companyId: operatingCompanyId,
+              generation: actionGenerationRef.current,
+              payload: { status: "in_progress" },
+            })}
           >
             Mark In Progress
           </button>
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
-            onClick={() => escalateMutation.mutate()}
+            onClick={() => escalateMutation.mutate({
+              violationId: String(violation.id ?? ""),
+              companyId: operatingCompanyId,
+              generation: actionGenerationRef.current,
+            })}
           >
             Escalate
           </button>
@@ -240,7 +269,14 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
               type="button"
               className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={resolveMutation.isPending || resolutionNotes.trim().length < 20}
-              onClick={() => resolveMutation.mutate()}
+              onClick={() => resolveMutation.mutate({
+                violationId: String(violation.id ?? ""),
+                companyId: operatingCompanyId,
+                generation: actionGenerationRef.current,
+                outcome,
+                resolutionNotes: resolutionNotes.trim(),
+                fineAmountCentsOverride: fineOverrideCents.trim() ? Number(fineOverrideCents) : undefined,
+              })}
             >
               Resolve & Apply Outcome
             </button>
@@ -256,7 +292,13 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <CompanyViolationCorrectiveActionForm
             key={`${operatingCompanyId}:${String(violation.id ?? "")}`}
             loading={completeMutation.isPending}
-            onComplete={(completedDate, notes) => completeMutation.mutate({ completedDate, notes })}
+            onComplete={(completedDate, notes) => completeMutation.mutate({
+              violationId: String(violation.id ?? ""),
+              companyId: operatingCompanyId,
+              generation: actionGenerationRef.current,
+              completedDate,
+              notes,
+            })}
           />
           {completeMutation.isError ? (
             <p className="mt-2 text-xs text-red-700" data-testid="company-violation-complete-error">
