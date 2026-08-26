@@ -189,6 +189,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   // Initialize draft/baseline exactly once per record/open cycle so a background
   // refetch cannot wipe edits and a record switch cannot retain another unit's draft.
   const initializedRef = useRef(false);
+  const attemptCloseRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     actionGenerationRef.current += 1;
     initializedRef.current = false;
@@ -371,6 +372,9 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       title={`Edit Vehicle · ${unitLabel}`}
       confirmDiscardOnClose
       isDirty={dirtyCount > 0}
+      onRegisterAttemptClose={(attemptClose) => {
+        attemptCloseRef.current = attemptClose;
+      }}
       modalKind="edit-vehicle"
       sizePreset="lg"
     >
@@ -438,7 +442,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
         ) : null}
 
         <div className="mt-auto flex justify-end gap-2 border-t border-gray-200 pt-3">
-          <Button variant="secondary" onClick={resetAndClose} type="button">Cancel</Button>
+          <Button variant="secondary" onClick={() => attemptCloseRef.current()} type="button">Cancel</Button>
           <Button
             variant="primary"
             type="button"

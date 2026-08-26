@@ -75,6 +75,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
 
   // Initialize once per open so a refetch can't reset the form + wipe edits.
   const initializedRef = useRef(false);
+  const attemptCloseRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     actionGenerationRef.current += 1;
     initializedRef.current = false;
@@ -163,7 +164,16 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   const set = (key: string, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
   return (
-    <Modal open={open} title="Edit trailer" onClose={resetAndClose}>
+    <Modal
+      open={open}
+      title="Edit trailer"
+      onClose={resetAndClose}
+      confirmDiscardOnClose
+      isDirty={Object.keys(patchPayload).length > 0}
+      onRegisterAttemptClose={(attemptClose) => {
+        attemptCloseRef.current = attemptClose;
+      }}
+    >
       <div className="max-h-[70vh] space-y-3 overflow-y-auto text-sm" data-testid="tp-edit-trailer-modal">
         {profileQuery.isLoading ? <p>Loading…</p> : null}
         {profileQuery.isError ? (
@@ -268,7 +278,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           </>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={resetAndClose}>
+          <Button size="sm" variant="secondary" onClick={() => attemptCloseRef.current()}>
             Cancel
           </Button>
           <Button
