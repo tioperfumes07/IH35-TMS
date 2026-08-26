@@ -21,6 +21,24 @@ type Props = {
   onCreated: () => void;
 };
 
+type FineSubmission = {
+  companyId: string;
+  generation: number;
+  subjectType: "driver" | "company";
+  subjectDriverId: string | null;
+  issuedByAuthority: string;
+  jurisdiction: string;
+  civilFineTypeId: string;
+  violationCode: string | null;
+  violationDescription: string;
+  issuedDate: string;
+  amountUsd: string;
+  notes: string;
+  sourceDocFile: File | null;
+  relatedLoadId: string | null;
+  relatedUnitId: string | null;
+};
+
 
 export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [subjectType, setSubjectType] = useState<"driver" | "company">("driver");
@@ -128,27 +146,27 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // onto the LIABILITY the fine spawns (fines.routes.ts:391), so the payable an auditor, insurer or
   // attorney reads had no supporting document behind it. The evidence is uploaded FIRST so the fine
   // is never created pointing at a file that failed to land.
-  const uploadSourceDoc = async (): Promise<string | null> => {
-    if (!sourceDocFile) return null;
-    const { file_id, presigned_url } = await requestUploadUrlFromFile(sourceDocFile, {
+  const uploadSourceDoc = async (input: FineSubmission): Promise<string | null> => {
+    if (!input.sourceDocFile) return null;
+    const { file_id, presigned_url } = await requestUploadUrlFromFile(input.sourceDocFile, {
       // File under the VIEWED company, not the uploader's default (backend fallback files it under
       // the lowest-UUID company the user can access, and the scoped read then 404s).
-      operating_company_id: operatingCompanyId || undefined,
+      operating_company_id: input.companyId || undefined,
       // docs.file_links has no "fine" entity type, so the citation is filed under the entities it
       // concerns — that is what makes it reachable FROM the driver/unit/load document lists. The
       // fine->document direction is the source_doc_id FK below.
       entity_links: [
-        ...(subjectType === "driver" && subjectDriverId
-          ? [{ entity_type: "driver" as const, entity_id: subjectDriverId }]
+        ...(input.subjectType === "driver" && input.subjectDriverId
+          ? [{ entity_type: "driver" as const, entity_id: input.subjectDriverId }]
           : []),
-        ...(relatedUnitId ? [{ entity_type: "unit" as const, entity_id: relatedUnitId }] : []),
-        ...(relatedLoadId ? [{ entity_type: "load" as const, entity_id: relatedLoadId }] : []),
+        ...(input.relatedUnitId ? [{ entity_type: "unit" as const, entity_id: input.relatedUnitId }] : []),
+        ...(input.relatedLoadId ? [{ entity_type: "load" as const, entity_id: input.relatedLoadId }] : []),
       ],
     });
     const put = await fetch(presigned_url, {
       method: "PUT",
-      headers: { "Content-Type": sourceDocFile.type || "application/octet-stream" },
-      body: sourceDocFile,
+      headers: { "Content-Type": input.sourceDocFile.type || "application/octet-stream" },
+      body: input.sourceDocFile,
     });
     if (!put.ok) throw new Error(`Citation upload failed (${put.status}). The fine was not created.`);
     await confirmUpload(file_id);
@@ -162,36 +180,33 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     (subjectType === "company" || Boolean(subjectDriverId));
 
   const createMutation = useMutation({
-    mutationFn: async (_submissionGeneration: number) => {
+    mutationFn: async (input: FineSubmission) => {
       // SAF-FINE-CATALOG: catalogs.civil_fine_types must be selected — free-text-only creates left
       // civil_fine_type_id / violation_code null so Lists could not group or rename types safely.
-      if (!civilFineTypeId) {
-        throw new Error("Violation type (catalog) is required");
-      }
-      const sourceDocId = await uploadSourceDoc();
-      return createSafetyFine(operatingCompanyId, {
-        subject_type: subjectType,
-        subject_driver_id: subjectType === "driver" ? subjectDriverId || null : null,
-        issued_by_authority: issuedByAuthority,
-        jurisdiction: jurisdiction || null,
+      const sourceDocId = await uploadSourceDoc(input);
+      return createSafetyFine(input.companyId, {
+        subject_type: input.subjectType,
+        subject_driver_id: input.subjectType === "driver" ? input.subjectDriverId || null : null,
+        issued_by_authority: input.issuedByAuthority,
+        jurisdiction: input.jurisdiction || null,
         // SAF-B14: the coded type, not just the prose. `violation_code` has been in the create route's
         // schema since it was written and arrived NULL on every fine because nothing sent it.
-        violation_code: civilFineTypeRows.find((row) => row.id === civilFineTypeId)?.code ?? null,
+        violation_code: input.violationCode,
         // LST-LINK-02: the FK itself, not just the code. catalogs.civil_fine_types had ZERO inbound
         // foreign keys, so the category was a copied string nothing could join or rename safely.
-        civil_fine_type_id: civilFineTypeId,
-        violation_description: violationDescription,
-        issued_date: issuedDate,
-        amount_cents: Math.round(Number(amountUsd || 0) * 100),
+        civil_fine_type_id: input.civilFineTypeId,
+        violation_description: input.violationDescription,
+        issued_date: input.issuedDate,
+        amount_cents: Math.round(Number(input.amountUsd || 0) * 100),
         // SAF-F19: the route has always accepted these; nothing was collecting them.
-        related_load_id: relatedLoadId || null,
-        related_unit_id: relatedUnitId || null,
+        related_load_id: input.relatedLoadId || null,
+        related_unit_id: input.relatedUnitId || null,
         source_doc_id: sourceDocId,
-        notes: notes || null,
+        notes: input.notes || null,
       });
     },
-    onSuccess: (_created, submissionGeneration) => {
-      if (lifecycleGenerationRef.current !== submissionGeneration) return;
+    onSuccess: (_created, input) => {
+      if (lifecycleGenerationRef.current !== input.generation) return;
       onCreated();
       handleClose();
     },
@@ -240,7 +255,24 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            createMutation.mutate(lifecycleGenerationRef.current);
+            if (!civilFineTypeId) return;
+            createMutation.mutate({
+              companyId: operatingCompanyId,
+              generation: lifecycleGenerationRef.current,
+              subjectType,
+              subjectDriverId,
+              issuedByAuthority,
+              jurisdiction,
+              civilFineTypeId,
+              violationCode: civilFineTypeRows.find((row) => row.id === civilFineTypeId)?.code ?? null,
+              violationDescription,
+              issuedDate,
+              amountUsd,
+              notes,
+              sourceDocFile,
+              relatedLoadId,
+              relatedUnitId,
+            });
           }}
         >
           <div className="grid gap-3 md:grid-cols-2">
@@ -406,14 +438,14 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                   {sourceDocFile.name} — filed under the driver, unit and load selected above.
                 </span>
               ) : null}
-              {createMutation.isError ? (
+              {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
                 <span className="text-[11px] text-[#dc2626]" data-testid="fine-create-error">
                   {createMutation.error instanceof Error ? createMutation.error.message : "Could not create the fine."}
                 </span>
               ) : null}
             </div>
           </div>
-          {createMutation.isError ? (
+          {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
             <p className="text-xs text-red-700">{(createMutation.error as Error)?.message ?? "Create failed"}</p>
           ) : null}
         </form>

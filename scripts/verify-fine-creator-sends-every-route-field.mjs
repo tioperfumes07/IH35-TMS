@@ -42,7 +42,7 @@ function routeFields(src) {
  * cannot have. Only top-level keys count: a nested object's keys are not payload fields.
  */
 function creatorPayloadKeys(src) {
-  const start = src.indexOf("createSafetyFine(operatingCompanyId, {");
+  const start = src.indexOf("createSafetyFine(input.companyId, {");
   if (start === -1) return null;
   const open = src.indexOf("{", start);
   let depth = 0;
