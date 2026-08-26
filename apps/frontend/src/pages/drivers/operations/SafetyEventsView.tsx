@@ -12,8 +12,8 @@ export function SafetyEventsView({ driverId, operatingCompanyId }: Props) {
       description="DVIR, harsh-brake and speeding events from Samsara telematics."
       columns={[
         { key: "occurred_at", label: "Occurred" },
-        { key: "event_type", label: "Type" },
-        { key: "severity", label: "Severity" },
+        { key: "event_type", label: "Type", enumLabel: true },
+        { key: "severity", label: "Severity", enumLabel: true },
         { key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id" },
         { key: "source", label: "Source" },
       ]}

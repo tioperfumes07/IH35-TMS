@@ -12,7 +12,7 @@ export function PwaEngagementView({ driverId, operatingCompanyId }: Props) {
       description="Driver app responses and acceptance activity."
       columns={[
         { key: "responded_at", label: "Responded" },
-        { key: "response", label: "Response" },
+        { key: "response", label: "Response", enumLabel: true },
         { key: "accepted", label: "Accepted" },
       ]}
     />
