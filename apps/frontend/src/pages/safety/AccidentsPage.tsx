@@ -321,16 +321,18 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-trailer-filter"
               />
             </label>
-            <span className="font-semibold text-slate-500">From:</span>
+            <label htmlFor="accidents-from-date" className="font-semibold text-slate-500">From:</label>
             <DatePicker
+              id="accidents-from-date"
               value={draft.from}
               onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
               className="w-32"
               max={draft.to || undefined}
               data-testid="accidents-from-date"
             />
-            <span className="font-semibold text-slate-500">To:</span>
+            <label htmlFor="accidents-to-date" className="font-semibold text-slate-500">To:</label>
             <DatePicker
+              id="accidents-to-date"
               value={draft.to}
               onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
               className="w-32"

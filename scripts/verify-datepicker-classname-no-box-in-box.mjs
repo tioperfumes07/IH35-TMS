@@ -27,6 +27,8 @@ const DATEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DatePicke
 const HISTORY = path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx");
 const TRIP = path.join(ROOT, "apps/frontend/src/pages/dispatch/TripProfitability.tsx");
 const BORDER = path.join(ROOT, "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx");
+const CONTRACTS = path.join(ROOT, "apps/frontend/src/components/customers/CustomerContractsTab.tsx");
+const CUSTOMERS = path.join(ROOT, "apps/frontend/src/pages/Customers.tsx");
 const FE = path.join(ROOT, "apps/frontend/src");
 
 const CHROME_TOKEN = /(?:^|\s)(?:rounded(?:-\S+)?|border(?:-\S+)?|p[xytblr]?-\S+|text-\S+|focus:\S+|hover:border\S*)(?:\s|$)/;
@@ -172,6 +174,25 @@ function run() {
     errors.push("TripProfitability To must htmlFor/id trip-profit-to");
   }
 
+  const contracts = fs.readFileSync(CONTRACTS, "utf8");
+  if (/<label[^>]*>(?:(?!<\/label>)[\s\S])*<DatePicker/.test(contracts)) {
+    errors.push("CustomerContractsTab must not wrap DatePicker inside <label> (GO-2310 click-theft)");
+  }
+  if (!contracts.includes('htmlFor="customer-contract-effective"') || !contracts.includes('id="customer-contract-effective"')) {
+    errors.push("CustomerContractsTab Effective must htmlFor/id customer-contract-effective");
+  }
+  if (!contracts.includes('htmlFor="customer-contract-expiration"') || !contracts.includes('id="customer-contract-expiration"')) {
+    errors.push("CustomerContractsTab Expiration must htmlFor/id customer-contract-expiration");
+  }
+
+  const customers = fs.readFileSync(CUSTOMERS, "utf8");
+  if (!customers.includes('htmlFor="customers-tx-from"') || !customers.includes('id="customers-tx-from"')) {
+    errors.push("Customers transaction Date range From must htmlFor/id customers-tx-from");
+  }
+  if (!customers.includes('htmlFor="customers-tx-to"') || !customers.includes('id="customers-tx-to"')) {
+    errors.push("Customers transaction Date range To must htmlFor/id customers-tx-to");
+  }
+
   errors.push(...scanCallSites());
 
   if (errors.length) {
@@ -265,6 +286,28 @@ function selftest() {
     }
   } finally {
     fs.writeFileSync(TRIP, tripBak);
+  }
+  const contractsBak = fs.readFileSync(CONTRACTS, "utf8");
+  try {
+    const orphaned = contractsBak.replace(
+      `htmlFor="customer-contract-effective"`,
+      `data-orphaned="customer-contract-effective"`,
+    );
+    if (orphaned === contractsBak) {
+      console.error("selftest FAIL: could not orphan customer-contract-effective htmlFor");
+      process.exit(1);
+    }
+    fs.writeFileSync(CONTRACTS, orphaned);
+    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (red.status === 0) {
+      console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned contract Effective label did not redden");
+      process.exit(1);
+    }
+  } finally {
+    fs.writeFileSync(CONTRACTS, contractsBak);
   }
   console.log("verify-datepicker-classname-no-box-in-box --selftest PASS");
 }

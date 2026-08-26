@@ -24,6 +24,15 @@ function analyze(pageSrc, helperSrc, detailSrc) {
   if (!/from ["'].*lib\/customerStatusLabel["']/.test(pageSrc)) {
     failures.push("Customers.tsx must import customerStatusLabel");
   }
+  if (!/customerTypeLabel/.test(pageSrc)) {
+    failures.push("Customers.tsx must import/use customerTypeLabel for Type");
+  }
+  if (!/label="Type"\s+value=\{customerTypeLabel\(customer\.customer_type\)\}/.test(pageSrc)) {
+    failures.push("Customers.tsx Type DetailRow must call customerTypeLabel(customer.customer_type)");
+  }
+  if (/label="Type"\s+value=\{dash\(customer\.customer_type\)\}/.test(pageSrc)) {
+    failures.push("Customers.tsx must not dash(customer.customer_type) for Type display");
+  }
   if (!/label="Status"\s+value=\{customerStatusLabel\(customer\.status\)\}/.test(pageSrc)) {
     failures.push("Customers.tsx Status DetailRow must call customerStatusLabel(customer.status)");
   }
@@ -43,6 +52,12 @@ function analyze(pageSrc, helperSrc, detailSrc) {
       failures.push(`helper must map ${code} → ${label}`);
     }
   }
+  if (!/export function customerTypeLabel/.test(helperSrc)) {
+    failures.push("customerTypeLabel helper missing");
+  }
+  if (!helperSrc.includes('"Broker"') || !helperSrc.includes('"Direct shipper"')) {
+    failures.push("customerTypeLabel must map broker / direct_shipper to human labels");
+  }
   if (!/from ["'].*lib\/customerStatusLabel["']/.test(detailSrc)) {
     failures.push("CustomerDetail.tsx must import shared customerStatusLabel");
   }
@@ -61,10 +76,12 @@ function selftest() {
   const goodPage = `
     import { customerStatusLabel } from "../lib/customerStatusLabel";
     <DetailRow label="Status" value={customerStatusLabel(customer.status)} />
+    <DetailRow label="Type" value={customerTypeLabel(customer.customer_type)} />
   `;
   const badPage = `
     import { customerStatusLabel } from "../lib/customerStatusLabel";
     <DetailRow label="Status" value={dash(customer.status)} />
+    <DetailRow label="Type" value={dash(customer.customer_type)} />
   `;
   const goodHelper = `
     export function customerStatusLabel(status) {
@@ -73,6 +90,11 @@ function selftest() {
       if (status === "inactive") return "Inactive";
       if (status === "active") return "Active";
       return status;
+    }
+    export function customerTypeLabel(type) {
+      if (type === "broker") return "Broker";
+      if (type === "direct_shipper") return "Direct shipper";
+      return type;
     }
   `;
   const goodDetail = `
@@ -125,4 +147,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = analyze(read(PAGE), read(HELPER), read(DETAIL));
 if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — Customers master-detail Status uses customerStatusLabel`);
+console.log(`${LABEL} PASS — Customers master-detail Status/Type use governed labels`);

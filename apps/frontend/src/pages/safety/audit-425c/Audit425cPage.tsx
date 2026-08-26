@@ -320,8 +320,9 @@ export default function Audit425cPage() {
           />
         </label>
         <div className="text-xs text-slate-600">
-          <span>From</span>
+          <label htmlFor="audit-425c-from-date">From</label>
           <DatePicker
+            id="audit-425c-from-date"
             className="mt-1 block"
             value={draft.from}
             onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
@@ -329,8 +330,9 @@ export default function Audit425cPage() {
           />
         </div>
         <div className="text-xs text-slate-600">
-          <span>To</span>
+          <label htmlFor="audit-425c-to-date">To</label>
           <DatePicker
+            id="audit-425c-to-date"
             className="mt-1 block"
             value={draft.to}
             onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}

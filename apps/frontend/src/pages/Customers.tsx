@@ -38,7 +38,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
-import { customerStatusLabel } from "../lib/customerStatusLabel";
+import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
 
@@ -122,7 +122,7 @@ function CustomerDetailsTab({
         <div>
           <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Contact info</h4>
           <DetailRow label="Customer" value={dash(customer.name)} />
-          <DetailRow label="Type" value={dash(customer.customer_type)} />
+          <DetailRow label="Type" value={customerTypeLabel(customer.customer_type)} />
           <DetailRow label="Email" value={dash(customer.email)} />
           <DetailRow label="Phone" value={dash(customer.phone)} />
           <DetailRow label="Mobile" value={dash(customer.main_contact_mobile)} />
@@ -1081,16 +1081,28 @@ export function CustomersPage() {
                         </SelectCombobox>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                         <div className="mb-2 grid grid-cols-2 gap-2">
-                          <DatePicker
-                            value={txFilters.draft.dateFrom}
-                            onChange={(next) => txFilters.setDraft({ ...txFilters.draft, dateFrom: next })}
-                            className=""
-                          />
-                          <DatePicker
-                            value={txFilters.draft.dateTo}
-                            onChange={(next) => txFilters.setDraft({ ...txFilters.draft, dateTo: next })}
-                            className=""
-                          />
+                          <div>
+                            <label htmlFor="customers-tx-from" className="mb-1 block text-xs font-semibold text-gray-600">
+                              From
+                            </label>
+                            <DatePicker
+                              id="customers-tx-from"
+                              value={txFilters.draft.dateFrom}
+                              onChange={(next) => txFilters.setDraft({ ...txFilters.draft, dateFrom: next })}
+                              className=""
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="customers-tx-to" className="mb-1 block text-xs font-semibold text-gray-600">
+                              To
+                            </label>
+                            <DatePicker
+                              id="customers-tx-to"
+                              value={txFilters.draft.dateTo}
+                              onChange={(next) => txFilters.setDraft({ ...txFilters.draft, dateTo: next })}
+                              className=""
+                            />
+                          </div>
                         </div>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
                         <input

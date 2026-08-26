@@ -133,16 +133,18 @@ export function SafetyDashboardFilter({
             <div className="space-y-1.5">
               <div className="text-xs font-semibold text-gray-600">Date range</div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-500">From</span>
+                <label htmlFor="safety-from-date" className="text-slate-500">From</label>
                 <DatePicker
+                  id="safety-from-date"
                   value={draft.fromDate}
                   onChange={(next) => staged.setDraft({ ...draft, fromDate: next })}
                   className="w-32"
                   max={draft.toDate || undefined}
                   data-testid="safety-from-date"
                 />
-                <span className="text-slate-500">To</span>
+                <label htmlFor="safety-to-date" className="text-slate-500">To</label>
                 <DatePicker
+                  id="safety-to-date"
                   value={draft.toDate}
                   onChange={(next) => staged.setDraft({ ...draft, toDate: next })}
                   className="w-32"

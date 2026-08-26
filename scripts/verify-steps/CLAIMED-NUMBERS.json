@@ -1,9 +1,4 @@
 {
-  "9820": {
-    "claimed_at": "2026-08-26",
-    "claimed_by": "cursor",
-    "purpose": "verify-safety-accident-workplace-incident-live-and-labels"
-  },
   "9807": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
@@ -13,6 +8,11 @@
     "claimed_at": "2026-08-25",
     "claimed_by": "cc-3",
     "purpose": "verify-user-activity-audit-actor-filter"
+  },
+  "9810": {
+    "claimed_at": "2026-08-26",
+    "claimed_by": "cc-3",
+    "purpose": "verify-datepicker-label-clickthrough-reopen"
   },
   "2912": {
     "claimed_at": "2026-08-08",
