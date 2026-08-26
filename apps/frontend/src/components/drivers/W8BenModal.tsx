@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { Button } from "../Button";
@@ -65,6 +65,36 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  const resetDraft = useCallback(() => {
+    setFullName(driverName);
+    setCitizenship("Mexico");
+    setResStreet("");
+    setResCity("");
+    setResCountry("Mexico");
+    setMailStreet("");
+    setMailCity("");
+    setMailCountry("");
+    setUsTin("");
+    setForeignTin("");
+    setReferenceNumbers("");
+    setDob("");
+    setTreatyCountry("");
+    setTreatyArticle("");
+    setCertName("");
+    setSignedDate(companyToday());
+    setNotes("");
+    setError("");
+  }, [driverName]);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, companyId, driverId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const submit = async () => {
     setError("");
     if (!fullName.trim()) {
@@ -102,7 +132,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
         notes: trim(notes),
       });
       onCreated?.();
-      onClose();
+      handleClose();
     } catch {
       setError("Failed to save W-8BEN.");
     } finally {
@@ -111,7 +141,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   };
 
   return (
-    <Modal variant="drawer" open={open} onClose={onClose} title={`Create W-8BEN — ${driverName}`}>
+    <Modal variant="drawer" open={open} onClose={handleClose} title={`Create W-8BEN — ${driverName}`}>
       <form
         className="space-y-3"
         data-testid="w8ben-modal"
@@ -214,7 +244,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" loading={pending} data-testid="w8ben-submit">
