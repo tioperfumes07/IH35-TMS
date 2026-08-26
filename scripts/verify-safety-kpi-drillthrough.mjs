@@ -119,6 +119,18 @@ requireAll(tabPath, tab, [
     pattern: /\/safety\/safety-events\?event_id=/,
     label: "event drill targets /safety/safety-events?event_id=",
   },
+  {
+    pattern: /data-testid="safety-home-retry"/,
+    label: "SAFETY-F6437 Retry control when dashboard queries fail",
+  },
+  {
+    pattern: /retryFailedDashboardQueries/,
+    label: "Retry refetches failed Safety home queries",
+  },
+  {
+    pattern: /if \(query\.isError\) void query\.refetch\(\)/,
+    label: "Retry only refetches failed queries",
+  },
 ]);
 // A KPI/drill link must never be a bare `/safety` (no trailing segment).
 // Accidents must never read a phantom row.status (defaults to "open" = no-op fake filter).
