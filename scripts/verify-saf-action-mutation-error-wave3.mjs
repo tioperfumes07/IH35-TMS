@@ -12,7 +12,7 @@ const LABEL = "verify-saf-action-mutation-error-wave3";
 const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/tabs/CSAScoreTab.tsx",
-    needles: ["userFacingApiError", "recomputeMutation.isError", "csa-recompute-error"],
+    needles: ["userFacingApiError", "recomputeError", "csa-recompute-error"],
   },
   {
     file: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
