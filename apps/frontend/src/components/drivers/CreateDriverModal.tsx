@@ -678,9 +678,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ["dot_medical_expires_at", "DOT Medical Expires"],
           ].map(([key, label]) => (
             <div key={key} className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">{label}</label>
+              <label htmlFor={key} className="text-xs font-semibold text-gray-600">{label}</label>
               {key.includes("date") || key.includes("expires") ? (
                 <DatePicker
+                  id={key}
                   data-testid={key}
                   value={form[key] ?? ""}
                   onChange={(value) => {
@@ -691,6 +692,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 />
               ) : (
                 <input
+                  id={key}
                   data-field={key}
                   type="text"
                   required={key === "first_name" || key === "last_name"}
@@ -825,9 +827,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ["cdl_expires_at", "CDL Expires"],
           ].map(([key, label]) => (
             <div key={key} className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">{label}</label>
+              <label htmlFor={key} className="text-xs font-semibold text-gray-600">{label}</label>
               {key.includes("date") || key.includes("expires") ? (
                 <DatePicker
+                  id={key}
                   data-testid={key}
                   value={form[key] ?? ""}
                   onChange={(value) => {
@@ -838,6 +841,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 />
               ) : (
                 <input
+                  id={key}
                   data-field={key}
                   type="text"
                   value={form[key] ?? ""}
@@ -873,9 +877,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   ["mx_postal_code", "MX Postal Code"],
                 ].map(([key, label]) => (
                   <div key={key} className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-gray-600">{label}</label>
+                    <label htmlFor={key} className="text-xs font-semibold text-gray-600">{label}</label>
                     {key.includes("expiration") || key.includes("expires") ? (
                       <DatePicker
+                        id={key}
                         data-testid={key}
                         value={form[key] ?? ""}
                         onChange={(value) => {
@@ -886,6 +891,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       />
                     ) : (
                       <input
+                        id={key}
                         data-field={key}
                         type="text"
                         value={form[key] ?? ""}
@@ -962,9 +968,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   ["emergency_contact_phone_alternate", "Emergency Phone Alternate"],
                 ].map(([key, label]) => (
                   <div key={key} className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-gray-600">{label}</label>
+                    <label htmlFor={key} className="text-xs font-semibold text-gray-600">{label}</label>
                     {key.includes("expires") ? (
                       <DatePicker
+                        id={key}
                         data-testid={key}
                         value={form[key] ?? ""}
                         onChange={(value) => {
@@ -975,6 +982,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       />
                     ) : (
                       <input
+                        id={key}
                         data-field={key}
                         type="text"
                         maxLength={key === "passport_country" ? 2 : undefined}
