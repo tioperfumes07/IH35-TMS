@@ -79,7 +79,25 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        // DATEPICKER-LABEL-CLICKTHROUGH-REOPEN: several callers wrap this component in a bare
+        // <label>text<DatePicker/></label> (implicit label-for). Clicking the label's own text
+        // node is a real click OUTSIDE ref.current (it fires this outside-mousedown close), but
+        // the browser then separately activates the label's associated control -- the trigger
+        // <button> below -- with a synthetic click, which toggles it straight back open. Net
+        // effect: "click outside to close" silently no-ops (live-confirmed via a MutationObserver
+        // on /lists/accounting/chart-of-accounts "Balance As Of": one physical click produced
+        // REMOVE then ADD of the popover ~2ms apart). Reuse the existing day-pick suppression
+        // ref for this one synthetic follow-up click, self-clearing on the next tick so a later,
+        // genuinely separate click on the trigger is never swallowed.
+        if (open) {
+          suppressToggleRef.current = true;
+          setTimeout(() => {
+            suppressToggleRef.current = false;
+          }, 0);
+        }
+        setOpen(false);
+      }
     }
     if (open) document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
