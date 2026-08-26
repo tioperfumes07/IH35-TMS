@@ -31,6 +31,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
   const [checkedAt, setCheckedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
 
   const query = useQuery({
     queryKey: ["safety", "background-checks", operatingCompanyId, driverId ?? "all"],
@@ -57,7 +58,12 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     }),
     onSuccess: async (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
+      companyGenerationRef.current += 1;
       setOpen(false);
+      setSelectedDriverId(driverId ?? "");
+      setCheckType("mvr");
+      setResult("pass");
+      setCheckedAt(companyToday());
       setExpiryDate("");
       setNotes("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "background-checks", input.companyId] });
@@ -74,6 +80,17 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     setExpiryDate("");
     setNotes("");
   }, [operatingCompanyId, driverId]);
+
+  const closeCreate = () => {
+    if (createMutation.isPending) return;
+    setOpen(false);
+  };
+  const isCreateDirty = selectedDriverId !== (driverId ?? "")
+    || checkType !== "mvr"
+    || result !== "pass"
+    || checkedAt !== companyToday()
+    || Boolean(expiryDate)
+    || Boolean(notes.trim());
 
   const columns: Array<ParityColumn<SafetyBackgroundCheckRow>> = [
     { key: "checked_at", label: "Checked", sortable: true, render: (row) => formatDateUS(row.checked_at) },
@@ -104,7 +121,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           />
         )}
       </div>
-      <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Add background check">
+      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add background check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           createMutation.mutate({
@@ -131,7 +148,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           <div className="block text-xs text-slate-600"><label htmlFor="background-check-expiry-date">Expiry date (optional)</label><DatePicker id="background-check-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
           <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
           {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? <p className="text-xs text-red-700">The check could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
-          <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
         </form>
       </Modal>
     </section>
