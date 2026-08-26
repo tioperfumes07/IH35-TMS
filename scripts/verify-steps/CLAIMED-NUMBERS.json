@@ -1,24 +1,4 @@
 {
-  "9804": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-form2290-embedded-back-link"
-  },
-  "9802": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cc-3",
-    "purpose": "verify-driver-scheduler-leave-enum-humanized"
-  },
-  "9801": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cursor",
-    "purpose": "verify-truck-planner-oos-signal-parity"
-  },
-  "9800": {
-    "claimed_at": "2026-08-25",
-    "claimed_by": "cursor",
-    "purpose": "verify-reserve-dashboard-no-double-pagination"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4398,6 +4378,31 @@
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
     "purpose": "verify-transaction-register-no-double-pagination"
+  },
+  "9800": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-reserve-dashboard-no-double-pagination"
+  },
+  "9801": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-truck-planner-oos-signal-parity"
+  },
+  "9802": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-scheduler-leave-enum-humanized"
+  },
+  "9803": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-quality-events-reverse-link"
+  },
+  "9804": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-form2290-embedded-back-link"
   },
   "_band": {
     "cc-1": "n%4===1",
