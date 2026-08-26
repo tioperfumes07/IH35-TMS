@@ -6,7 +6,7 @@ import { runRelayFuelBackfill } from "../../../api/relayDeposits";
 // historical backfill (3-day windows, idempotent + resumable) so the owner can seed full history in-app
 // instead of POSTing from a console. Returns 202 immediately; rows land in Fuel transactions as windows
 // complete. Owner-only (the backend also enforces Owner/Administrator).
-export function RelayHistoryImport() {
+export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId: string }) {
   const { user } = useAuth();
   const [months, setMonths] = useState(24);
   const [state, setState] = useState<"idle" | "starting" | "started" | "error">("idle");
@@ -18,7 +18,7 @@ export function RelayHistoryImport() {
     setState("starting");
     setMsg("");
     try {
-      const res = await runRelayFuelBackfill(months);
+      const res = await runRelayFuelBackfill(operatingCompanyId, months);
       setState("started");
       setMsg(
         `Backfill started for the last ${res.months} month(s), pulled in 3-day windows. Rows appear in Fuel transactions as each window completes — refresh to watch progress.`

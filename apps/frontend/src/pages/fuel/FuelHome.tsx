@@ -141,7 +141,7 @@ export function FuelHomePage() {
         <FuelCardOverageKpiCard />
       </div>
       <div className="max-w-md">
-        <RelayHistoryImport />
+        <RelayHistoryImport operatingCompanyId={companyId} />
       </div>
     </div>
   );
