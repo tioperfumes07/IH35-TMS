@@ -432,7 +432,14 @@ export async function getDailyPrediction(
   // ledger derivation. Never re-sum bank_transactions for the Plaid-mixed population — that produced
   // the phantom -$4.79M opening (signed amount_cents + is_credit). Credit / investment / virtual
   // (factoring/escrow/advance) stay excluded via account_class='depository'. BANK-ACCOUNT-HIDE respected.
-  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId).catch(() => false);
+  //
+  // BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN — this used to `.catch(() => false)`, so a
+  // schema/RLS/connection failure on the flag read silently meant "hide is OFF" and let accounts
+  // that may be intentionally hidden for this entity back into opening cash. `false` is only a
+  // safe default AFTER a successful read that says the flag is off — never a substitute for a
+  // failed read. No catch: a broken flag read fails the request loud, same standard already
+  // applied to accounting/cash-forecast.routes.ts's own (uncaught) call to this same function.
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, {
     hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
     hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
