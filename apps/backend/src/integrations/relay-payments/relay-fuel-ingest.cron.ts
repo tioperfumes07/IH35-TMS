@@ -288,7 +288,10 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
  * yields whatever history is available. Jorge 2026-07-05: "set to maximum past time, 24 months or more if
  * available." Owner directive 2026-07-15: pull in 3-day windows.
  */
-export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months?: number }): Promise<void> {
+export async function runRelayFuelBackfill(
+  app: FastifyInstance,
+  opts?: { months?: number; operatingCompanyId?: string }
+): Promise<void> {
   const months =
     opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
   const windowDays = relayIngestWindowDays();
@@ -296,7 +299,13 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
   const failures: { operating_company_id: string; error: unknown }[] = [];
   const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
-  const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
+  const activeCompanyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
+  const companyIds = opts?.operatingCompanyId
+    ? activeCompanyIds.filter(({ id }) => id === opts.operatingCompanyId)
+    : activeCompanyIds;
+  if (opts?.operatingCompanyId && companyIds.length === 0) {
+    throw new Error("relay_fuel_ingest_backfill_company_not_active");
+  }
 
   const interCompanyDelayMs = relayInterCompanyDelayMs();
   let companiesPulled = 0;

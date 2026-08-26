@@ -9,6 +9,8 @@
  */
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../auth/session-middleware.js";
+import { withCurrentUser } from "../../auth/db.js";
+import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js";
 import { runRelayFuelBackfill } from "./relay-fuel-ingest.cron.js";
 
 export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
@@ -18,14 +20,25 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
     if (!["Owner", "Administrator"].includes(role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const body = req.body as { months?: number } | undefined;
+    const body = req.body as { operating_company_id?: string; months?: number } | undefined;
+    const requestedCompanyId = body?.operating_company_id?.trim();
+    if (!requestedCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    const userId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
+    const operatingCompanyId = await withCurrentUser(userId, (client) =>
+      resolveOperatingCompanyId(client, userId, requestedCompanyId)
+    );
+    if (!operatingCompanyId) {
+      return reply.code(403).send({ error: "forbidden_company_membership" });
+    }
     const months = Number.isFinite(Number(body?.months)) && Number(body?.months) > 0 ? Number(body?.months) : 24;
     // Fire in the background: pulling N months of transactions per flagged company can exceed the request
     // timeout. Errors are logged (and re-thrown inside runRelayFuelBackfill → audit stream), never swallowed.
-    void runRelayFuelBackfill(app, { months }).catch((err) =>
+    void runRelayFuelBackfill(app, { months, operatingCompanyId }).catch((err) =>
       app.log.error({ err }, "[RELAY_FUEL_BACKFILL] backfill failed")
     );
-    app.log.info({ months, triggered_by_role: role }, "[RELAY_FUEL_BACKFILL] backfill started");
-    return reply.code(202).send({ status: "relay_fuel_backfill_started", months });
+    app.log.info({ months, operating_company_id: operatingCompanyId, triggered_by_role: role }, "[RELAY_FUEL_BACKFILL] backfill started");
+    return reply.code(202).send({ status: "relay_fuel_backfill_started", months, operating_company_id: operatingCompanyId });
   });
 }
