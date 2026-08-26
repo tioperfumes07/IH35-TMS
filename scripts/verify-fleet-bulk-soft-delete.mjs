@@ -20,7 +20,7 @@ function audit(text) {
     ["no hard DELETE", (value) => !/method:\s*["']DELETE["']/.test(value)],
     ["truck reactivation", /patchUnit\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/],
     ["trailer reactivation", /patchTrailer\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/],
-    ["confirmation invokes mutation", /onConfirm=\{\(\) => \{[\s\S]*?inactivateMutation\.mutate\(\{[\s\S]*?targets: selectedRows\.map/],
+    ["confirmation awaits mutation", /onConfirm=\{async \(\) => \{[\s\S]*?await inactivateMutation\.mutateAsync\(\{[\s\S]*?targets: selectedRows\.map/],
   ];
   return checks.filter(([, check]) => typeof check === "function" ? !check(text) : !check.test(text)).map(([label]) => label);
 }
@@ -31,7 +31,7 @@ if (process.argv.includes("--selftest")) {
     src.replace('method: "POST", body: {}', 'method: "DELETE", body: {}'),
     src.replace("patchUnit(row.id, input.companyId, { deactivated_at: null })", "patchUnit(row.id, input.companyId, {})"),
     src.replace("patchTrailer(row.id, input.companyId, { deactivated_at: null })", "patchTrailer(row.id, input.companyId, {})"),
-    src.replace("inactivateMutation.mutate({", "void ({"),
+    src.replace("inactivateMutation.mutateAsync({", "void ({"),
   ];
   const escaped = mutations.filter((fixture) => audit(fixture).length === 0);
   if (audit(src).length || escaped.length) {
