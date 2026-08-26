@@ -22,7 +22,7 @@ function audit(s) {
   const patchUnitSource = apiStart >= 0 && apiEnd > apiStart ? s.api.slice(apiStart, apiEnd + 2) : "";
   if (!/patchUnit\(id: string, operatingCompanyId: string/.test(patchUnitSource) || !/operating_company_id: operatingCompanyId/.test(patchUnitSource)) failures.push("shared unit PATCH must carry selected company");
   if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(s.edit)) failures.push("Edit Vehicle submitted save must carry selected company");
-  if (!/patchUnit\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/.test(s.table)) failures.push("roster reactivation must carry selected company");
+  if (!/patchUnit\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/.test(s.table)) failures.push("roster reactivation must carry submitted company");
   if (!/patchUnit\(unitId, companyId, \{ status: "InService" \}\)/.test(s.header) || !/companyId=\{companyId\}/.test(s.header)) failures.push("identity status actions must carry selected company");
   if (!/patchUnit\(unitId, companyId, body\)/.test(s.status)) failures.push("status modal save must carry selected company");
   if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(s.profile) || !/saveMutation\.mutate\(\{[\s\S]*?unitId: id,[\s\S]*?companyId,[\s\S]*?generation: actionGenerationRef\.current/.test(s.profile)) failures.push("profile save must snapshot selected unit/company/generation");
@@ -38,7 +38,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["api scope", "api", /export function patchUnit\(id: string, operatingCompanyId: string, body: Record<string, unknown>\) \{\n  const qs = new URLSearchParams\(\{ operating_company_id: operatingCompanyId \}\);/, "export function patchUnit(id: string, operatingCompanyId: string, body: Record<string, unknown>) {\n  const qs = new URLSearchParams({ wrong_company: operatingCompanyId });"],
     ["edit scope", "edit", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(input.unitId, input.patch)"],
-    ["roster scope", "table", /patchUnit\(row\.id, operatingCompanyId, \{ deactivated_at: null \}\)/, "patchUnit(row.id, { deactivated_at: null })"],
+    ["roster scope", "table", /patchUnit\(row\.id, input\.companyId, \{ deactivated_at: null \}\)/, "patchUnit(row.id, operatingCompanyId, { deactivated_at: null })"],
     ["header scope", "header", /patchUnit\(unitId, companyId, \{ status: "InService" \}\)/, 'patchUnit(unitId, { status: "InService" })'],
     ["status scope", "status", /patchUnit\(unitId, companyId, body\)/, "patchUnit(unitId, body)"],
     ["profile scope", "profile", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(input.unitId, companyId, input.patch)"],
