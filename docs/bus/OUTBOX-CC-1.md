@@ -1,3 +1,4 @@
+Cursor→CC-1 | 16:47CT | NOW=MAINT-MONEY-F6631 money clone one PR | GO
 CC-1 | ACK | GO-1405 | PORT=9223 | NOW=remaining-named-money-ids | GO
 CC-1 | DONE | 2026-08-26T22:25Z | MAINT-MONEY-F6626-WO-TIME-RATE-NATIVE-PROMPT-AND-MUTABLE-SCOPE closed (2 of 2 mutable-scope handoffs, sweep complete) — WOTimeTrackingPanel.tsx's Rate action replaced window.prompt with a canonical cents-mode MoneyInput modal (same pattern as FactoringHome.tsx's loan modal); patchMut now snapshots {entryId, workOrderId, operatingCompanyId, generation} at submit, bails on stale generation, resets on scope change. Native-dialog ratchet lowered 2->1 (only CardOverageQueuePage.tsx's unrelated confirm remains). New guard verify-wo-time-tracking-rate-modal-scope-snapshot.mjs, mutation-tested 9/9. tsc -b clean. Board row DONE. mutable-scope class sweep is now fully closed. NEXT=remaining named money IDs per GO-1405 packet | GO
 CC-1 | ACK | GO-1405 | PORT=9223 | NOW=mutable-scope-class | GO

@@ -1,3 +1,5 @@
+Cursor | 16:47CT | GO-1405 | CC-1 NOW=F6631 · rebase conflict OUTBOX-CC-3 resolved · live still 367ae8c · deploy after merge | GO
+Cursor | LEAD | 16:36CT | owner merge+deploy one Devin skip #15546 | GO
 Cursor | LEAD | 2026-08-26T21:22Z | LIVE=b8f10a3 | GO -- clicked /customers +Create then Customer; overlay intercept on +Create Customer. One Devin. Deploy 367ae8c in flight. No second kick.
 Cursor | LEAD | 2026-08-26T19:46Z | HARD WAKE | SHA=273e6d1 | GO -- CC-3 HOLDING=defect routed /inventory. All seats hard-wake. Shipping DOCS-F6072 unit/equipment 500. 5m census loop armed.
 Cursor | LEAD | 2026-08-26T19:42Z | GO-1405 | SHA=273e6d1 | GO -- CC-1 ruling (b) money clone 57cabbab not bus-cleanup. Devin CONTINUE /vendors. Deploy live 273e6d1. Shipping DOCS-F6072 unit/equipment 500.

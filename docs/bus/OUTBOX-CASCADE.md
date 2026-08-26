@@ -1,3 +1,4 @@
+Cursor→Cascade | 16:36CT | HARD-RELOAD healthz NOW=/customers then /dispatch | GO
 Cursor→Cascade | 16:22CT | LIVE=b8f10a3 NOW=/customers then /dispatch | GO
 Cursor→Cascade | 16:15CT | LIVE=b8f10a3 NOW=/customers FINDING then /dispatch | GO
 Cursor→Cascade | 2026-08-26T19:46Z | HARD WAKE | if accounting done NOW=/customers then /dispatch FINDING only · live 273e6d1 · never idle · never recertify · never trigger_deploy | GO

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getTrainingCompletions } from "../../api/safety";
@@ -52,6 +52,8 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
 
   const programsQuery = useQuery({
     queryKey: ["safety", "training-completions", companyId],
@@ -82,13 +84,17 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   }, []);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPending(false);
     if (open) resetForm();
   }, [open, companyId, driverId, resetForm]);
 
   const handleClose = useCallback(() => {
+    if (pending) return;
+    requestGenerationRef.current += 1;
     resetForm();
     onClose();
-  }, [onClose, resetForm]);
+  }, [onClose, pending, resetForm]);
 
   const submit = async () => {
     setError("");
@@ -100,25 +106,45 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
       setError("Completion date is required.");
       return;
     }
-    setPending(true);
-    try {
-      await createDriverTrainingRecord(driverId, companyId, {
+    const input = {
+      driverId,
+      companyId,
+      generation: requestGenerationRef.current,
+      body: {
         training_name: resolvedTrainingName,
         completed_at: new Date(`${completedAt}T12:00:00`).toISOString(),
         expiry_date: expiryDate || undefined,
         notes: notes.trim() || undefined,
-      });
+      },
+    };
+    setPending(true);
+    try {
+      await createDriverTrainingRecord(input.driverId, input.companyId, input.body);
+      if (input.generation !== requestGenerationRef.current) return;
       onCreated?.();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetForm();
+      onClose();
     } catch (err) {
+      if (input.generation !== requestGenerationRef.current) return;
       setError(userFacingApiError(err, "Failed to create training record."));
     } finally {
-      setPending(false);
+      if (input.generation === requestGenerationRef.current) setPending(false);
     }
   };
 
+  const isDirty = Boolean(trainingName || customName || expiryDate || notes || completedAt !== companyToday());
+
   return (
-    <Modal variant="drawer" open={open} onClose={handleClose} title={`Create Training — ${driverName}`}>
+    <Modal
+      variant="drawer"
+      open={open}
+      onClose={handleClose}
+      title={`Create Training — ${driverName}`}
+      confirmDiscardOnClose
+      isDirty={isDirty}
+      onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
+    >
       <form
         className="space-y-3"
         data-testid="add-training-modal"
@@ -204,7 +230,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="submit" loading={pending} data-testid="add-training-submit">

@@ -25,11 +25,13 @@ export function validate(modal, test) {
   ) {
     failures.push("AddTrainingModal must render an expiry DatePicker");
   }
-  if (
-    !/createDriverTrainingRecord\(driverId,\s*companyId,\s*\{[\s\S]*?expiry_date:\s*expiryDate\s*\|\|\s*undefined[\s\S]*?\}\)/.test(
-      modal,
-    )
-  ) {
+  const inlinePayload = /createDriverTrainingRecord\(driverId,\s*companyId,\s*\{[\s\S]*?expiry_date:\s*expiryDate\s*\|\|\s*undefined[\s\S]*?\}\)/.test(
+    modal,
+  );
+  const snapshottedPayload =
+    /body:\s*\{[\s\S]*?expiry_date:\s*expiryDate\s*\|\|\s*undefined[\s\S]*?\}/.test(modal) &&
+    /createDriverTrainingRecord\(input\.driverId,\s*input\.companyId,\s*input\.body\)/.test(modal);
+  if (!inlinePayload && !snapshottedPayload) {
     failures.push("AddTrainingModal submit must include optional expiry_date in the create payload");
   }
   if (!/getByTestId\("add-training-expiry"\)/.test(test)) {
