@@ -17,6 +17,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { Combobox } from "../../components/Combobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -230,34 +231,40 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               required
             />
           </label>
-          <label className="block text-xs text-slate-600">
-            Category
-            <select
+          <div className="block text-xs text-slate-600">
+            <label htmlFor="training-program-category">Category</label>
+            <Combobox
+              id="training-program-category"
+              dataTestId="training-program-category"
+              options={[
+                { value: "entry_level", label: "Entry level" },
+                { value: "refresher", label: "Refresher" },
+                { value: "remedial", label: "Remedial" },
+                { value: "hazmat", label: "Hazmat" },
+                { value: "other", label: "Other" },
+              ]}
               value={category}
-              onChange={(event) => setCategory(event.target.value as TrainingProgramCategory)}
-              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-              data-testid="training-program-category"
-            >
-              <option value="entry_level">Entry level</option>
-              <option value="refresher">Refresher</option>
-              <option value="remedial">Remedial</option>
-              <option value="hazmat">Hazmat</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-          <label className="block text-xs text-slate-600">
-            Recertify interval
-            <select
+              onChange={(next) => next && setCategory(next as TrainingProgramCategory)}
+              className="mt-1"
+              placeholder="Select category"
+            />
+          </div>
+          <div className="block text-xs text-slate-600">
+            <label htmlFor="training-program-frequency">Recertify interval</label>
+            <Combobox
+              id="training-program-frequency"
+              dataTestId="training-program-frequency"
+              options={[
+                { value: "one_time", label: "One time" },
+                { value: "annual", label: "Annual" },
+                { value: "n_month", label: "Every N months" },
+              ]}
               value={frequency}
-              onChange={(event) => setFrequency(event.target.value as TrainingProgramFrequency)}
-              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-              data-testid="training-program-frequency"
-            >
-              <option value="one_time">One time</option>
-              <option value="annual">Annual</option>
-              <option value="n_month">Every N months</option>
-            </select>
-          </label>
+              onChange={(next) => next && setFrequency(next as TrainingProgramFrequency)}
+              className="mt-1"
+              placeholder="Select recertification interval"
+            />
+          </div>
           {frequency === "n_month" ? (
             <label className="block text-xs text-slate-600">
               Months
