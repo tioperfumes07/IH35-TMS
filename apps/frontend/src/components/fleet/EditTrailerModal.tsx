@@ -75,8 +75,10 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   // Initialize once per open so a refetch can't reset the form + wipe edits.
   const initializedRef = useRef(false);
   useEffect(() => {
-    if (!open) initializedRef.current = false;
-  }, [open]);
+    initializedRef.current = false;
+    setDraft({});
+    setBaseline({});
+  }, [open, trailerId, operatingCompanyId]);
   useEffect(() => {
     if (!equipment || initializedRef.current) return;
     const next: Record<string, string> = {
@@ -133,13 +135,19 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   }, [draft, baseline]);
 
   const { pushToast } = useToast();
+  const resetAndClose = () => {
+    initializedRef.current = false;
+    setDraft({});
+    setBaseline({});
+    onClose();
+  };
   const saveMutation = useMutation({
     mutationFn: () => patchTrailer(trailerId, operatingCompanyId, patchPayload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["trailer-profile", trailerId, operatingCompanyId] });
       void queryClient.invalidateQueries({ queryKey: ["edit-trailer-modal", trailerId, operatingCompanyId] });
       onSaved?.();
-      onClose();
+      resetAndClose();
     },
     onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save trailer", "error"),
   });
@@ -147,7 +155,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   const set = (key: string, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
   return (
-    <Modal open={open} title="Edit trailer" onClose={onClose}>
+    <Modal open={open} title="Edit trailer" onClose={resetAndClose}>
       <div className="max-h-[70vh] space-y-3 overflow-y-auto text-sm" data-testid="tp-edit-trailer-modal">
         {profileQuery.isLoading ? <p>Loading…</p> : null}
         {profileQuery.isError ? (
@@ -252,7 +260,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           </>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
+          <Button size="sm" variant="secondary" onClick={resetAndClose}>
             Cancel
           </Button>
           <Button
@@ -261,7 +269,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             disabled={profileQuery.isError || companiesQuery.isError}
             onClick={() => {
               if (Object.keys(patchPayload).length === 0) {
-                onClose();
+                resetAndClose();
                 return;
               }
               saveMutation.mutate();
