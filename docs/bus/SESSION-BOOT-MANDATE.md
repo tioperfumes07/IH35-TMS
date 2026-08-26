@@ -15,7 +15,9 @@
 
 **FAST-MERGE 4 min ON · CONTINUOUS.** `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
-Then `git pull --ff-only origin main` → **`docs/bus/NOW-ONE-SOURCE.md`** → `docs/bus/INBOX-<SEAT>.md` TOP.
+Then `git pull --ff-only origin main` → **`docs/bus/LEAD-SEAT.md`** → **`docs/bus/NOW-ONE-SOURCE.md`** → `docs/bus/INBOX-<SEAT>.md` TOP.
+
+If `LEAD-SEAT=CC-1`, Claude is lead (`docs/bus/CLAUDE-LEAD-NOW.md`). Cursor is worker. T1–T6: `docs/bus/LEAD-CONTRACT.md`.
 
 USMCA only. HOLD / awaiting next order = DEFECT.
 

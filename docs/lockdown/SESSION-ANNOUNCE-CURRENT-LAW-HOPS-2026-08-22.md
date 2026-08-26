@@ -38,7 +38,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead | GO-2237 35-item lists. Unique leftover Cursor #1–35. Skip #15546. Nobody kick unless gate. |
+| Cursor | 9222 | Lead **unless** `docs/bus/LEAD-SEAT.md` is `CC-1` | GO-2310 + leftover. Census every turn (`LEAD-CONTRACT.md`). Skip #15546. Nobody kick unless gate. |
 | CC-1 | 9223 | money | GO-2237 **NOW=#3 expense 57cabbab**. Then 4–35. STOP `/425c`. Never `trigger_deploy`. |
 | CC-2 | 9224 | leftover POST | GO-2237 **NOW=#1 `/cash-flow` walk** then 2–35. Do not remake #15947 #16002. |
 | CC-3 | 9225 | FE | GO-2237 **NOW=#1 matrix lists/legal** then 2–35. #22 waits money #6. |

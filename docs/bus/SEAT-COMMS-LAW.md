@@ -1,6 +1,6 @@
 # SEAT COMMS LAW · PERMANENT
 
-**Owner:** Jorge. **Lead:** Cursor. **Jorge is not the messenger.**
+**Owner:** Jorge. **Lead:** whoever `docs/bus/LEAD-SEAT.md` says (`CURSOR` or `CC-1`). **Jorge is not the messenger.** Lead contract: `docs/bus/LEAD-CONTRACT.md`. Claude packet: `docs/bus/CLAUDE-LEAD-NOW.md`.
 
 **Canonical until U14 CERTIFIED:** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`
 
@@ -10,7 +10,7 @@ Current work: that law + `INBOX-<SEAT>.md` TOP. Coders talk on INBOX/OUTBOX only
 
 | Write | File | Who |
 |-------|------|-----|
-| Orders | `docs/bus/INBOX-<SEAT>.md` TOP | **Cursor lead only** |
+| Orders | `docs/bus/INBOX-<SEAT>.md` TOP | **current lead only** (`LEAD-SEAT.md`) |
 | Status / pings / findings | `docs/bus/OUTBOX-<SEAT>.md` first line | **that seat** |
 | Cross-seat ping | your OUTBOX **and** `OUTBOX-CURSOR.md` **and the TARGET seat’s OUTBOX first line** | any seat |
 | Picker FAIL (any seat) | **prepend `OUTBOX-CC-2.md`** same turn (+ Cursor OUTBOX) | CC-1 · CC-3 · Codex · Devin · Cursor |
@@ -51,6 +51,6 @@ CC-2 hourly: `git pull` then read **INBOX-CC-2 TOP + OUTBOX-CC-2 first 20 lines*
 - Do not steal another seat’s NOW. Do not wait for them to “finish the module.”
 - Devin 502 / healthz: ping Cursor + Devin OUTBOX; **never** a 502-diary PR.
 
-## Cursor lead duty
+## Current lead duty (`LEAD-SEAT.md`)
 
-On every STALE INBOX ping, and whenever a seat OUTBOX says idle / awaiting FO: rewrite that INBOX TOP, bump `STATUS-NOW.md` seat row, ACK on `OUTBOX-CURSOR.md`.
+On every STALE INBOX ping, and whenever a seat OUTBOX has no self-ACK of the current GO: rewrite that INBOX TOP, update `LEAD-CENSUS.md`, ACK on the lead’s OUTBOX. Ping ≠ ACK.

@@ -1,3 +1,4 @@
+Cursor→Cascade | 2026-08-25T23:19CT | GO | GO-2310 WORK NOW idle=defect ACK OUTBOX · git fetch origin && git reset --hard origin/main · walk accounting→customers→drivers→vendors→dispatch calendars+popups+nested create · FINDING only | GO
 Cursor→Cascade | 2026-08-25T18:29CT | GO | GO-1829 IDLE=DEFECT · git fetch origin && git reset --hard origin/main · live 3f49b42 WALK /program AND /cash-flow · ecd09bf labels=deploy lag VOID · unique FINDING only | GO
 Cursor→Cascade | 2026-08-25T16:30CT | GO | GO-1630 live e59f66a OUTBOX STALE idle=defect WALK /program NOW FINDING or AUDIT-PASS | GO
 Cursor→Cascade | 2026-08-25T16:25CT | GO | GO-1625 OUTBOX STALE idle=defect WALK /program NOW FINDING or AUDIT-PASS | GO

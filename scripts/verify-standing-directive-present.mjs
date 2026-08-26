@@ -135,6 +135,36 @@ export function assertStandingDirectivePresent(root = ROOT) {
     }
   }
 
+  const leadFiles = [
+    "docs/bus/LEAD-CONTRACT.md",
+    "docs/bus/CLAUDE-LEAD-NOW.md",
+    "docs/bus/LEAD-SEAT.md",
+    "docs/bus/LEAD-CENSUS.md",
+    "docs/bus/LEAD-TRIPWIRE.md",
+    ".cursor/rules/47-lead-contract-tripwire.mdc",
+    "scripts/ops/activate-claude-lead.mjs",
+  ];
+  for (const rel of leadFiles) {
+    if (!fs.existsSync(path.join(root, rel))) problems.push(`MISSING ${rel}`);
+  }
+  const rule47 = path.join(root, ".cursor/rules/47-lead-contract-tripwire.mdc");
+  if (fs.existsSync(rule47)) {
+    const t = fs.readFileSync(rule47, "utf8");
+    if (!/^---[\s\S]*?alwaysApply:\s*true[\s\S]*?---/m.test(t)) {
+      problems.push(".cursor/rules/47-lead-contract-tripwire.mdc: alwaysApply: true required");
+    }
+    if (!t.includes("activate-claude-lead.mjs") || !t.includes("CLAUDE-LEAD-NOW.md")) {
+      problems.push(".cursor/rules/47-lead-contract-tripwire.mdc: must name activate script + CLAUDE-LEAD-NOW.md");
+    }
+  }
+  const contract = path.join(root, "docs/bus/LEAD-CONTRACT.md");
+  if (fs.existsSync(contract)) {
+    const c = fs.readFileSync(contract, "utf8");
+    if (!/T1|T6/.test(c) || !/self-ACK/.test(c)) {
+      problems.push("docs/bus/LEAD-CONTRACT.md: must lock tripwire T1–T6 + self-ACK vs ping");
+    }
+  }
+
   for (const p of POINTERS) {
     const abs = path.join(root, p.rel);
     if (!fs.existsSync(abs)) {
@@ -174,6 +204,18 @@ if (SELFTEST) {
     fs.writeFileSync(path.join(tmpRoot, ".claude", "skills", "ih35-tms-standards", "SKILL.md"), "# no standing\n");
     fs.writeFileSync(path.join(tmpRoot, ".cursor", "rules", "00-always-read-first.mdc"), "---\nalwaysApply: true\n---\n# no standing\n");
     fs.writeFileSync(path.join(tmpRoot, "AGENTS.md"), "# no standing\n");
+    fs.mkdirSync(path.join(tmpRoot, "docs", "bus"), { recursive: true });
+    fs.mkdirSync(path.join(tmpRoot, "scripts", "ops"), { recursive: true });
+    fs.writeFileSync(path.join(tmpRoot, "docs/bus/LEAD-CONTRACT.md"), "T1 T6 self-ACK\n");
+    fs.writeFileSync(path.join(tmpRoot, "docs/bus/CLAUDE-LEAD-NOW.md"), "YOU ARE LEAD\n");
+    fs.writeFileSync(path.join(tmpRoot, "docs/bus/LEAD-SEAT.md"), "SEAT=CURSOR\n");
+    fs.writeFileSync(path.join(tmpRoot, "docs/bus/LEAD-CENSUS.md"), "census\n");
+    fs.writeFileSync(path.join(tmpRoot, "docs/bus/LEAD-TRIPWIRE.md"), "tripwire\n");
+    fs.writeFileSync(
+      path.join(tmpRoot, ".cursor/rules/47-lead-contract-tripwire.mdc"),
+      "---\nalwaysApply: true\n---\nactivate-claude-lead.mjs CLAUDE-LEAD-NOW.md\n",
+    );
+    fs.writeFileSync(path.join(tmpRoot, "scripts/ops/activate-claude-lead.mjs"), "// stub\n");
     const planted = assertStandingDirectivePresent(tmpRoot);
     if (planted.length < 4) {
       console.error(`${LABEL} SELFTEST FAIL — planted missing refs not caught (${planted.length})`);

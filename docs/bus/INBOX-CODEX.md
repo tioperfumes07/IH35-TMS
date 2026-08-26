@@ -1,5 +1,7 @@
 # INBOX-CODEX · 9226
 
+**23:19 CT WORK NOW. Idle = defect. ACK YOUR OUTBOX.** Paste GO-2310. **NOW hop.assign UI** then drivers/fleet/safety/fuel calendars + canonical CreateDriver/Unit/Trailer. Never restamp U14. Never `trigger_deploy`. Cursor is lead.
+
 **23:10 CT GO-2310.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2310.md`. **NOW = hop.assign UI** then `/drivers` `/fleet` `/safety` `/fuel` DatePickers + CreateDriver/Unit/Trailer = canonical modals. Never restamp U14. Never `trigger_deploy`. ACK `GO-2310`.
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #1** `hop.assign` UI. Then **2–35**. Mint is CC-1. Never restamp U14. Never `trigger_deploy`. ACK `GO-2237`.
