@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import {
@@ -161,6 +161,13 @@ export function MessagesInboxPage() {
   const queryClient = useQueryClient();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [markReadError, setMarkReadError] = useState<string | null>(null);
+  const actionGenerationRef = useRef(0);
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setSelectedDriverId(null);
+    setMarkReadError(null);
+  }, [operatingCompanyId]);
 
   const inboxQuery = useQuery({
     queryKey: ["drivers", "messages", "inbox", operatingCompanyId],
@@ -174,13 +181,23 @@ export function MessagesInboxPage() {
     [conversations, selectedDriverId]
   );
 
+  /** @matrix-built modules=drivers cols=driver,connectivity,reverse_link */
   const markReadMutation = useMutation({
-    mutationFn: (messageId: string) => markDriverMessageRead(messageId, operatingCompanyId),
+    mutationFn: (input: { messageId: string; companyId: string; driverId: string; generation: number }) =>
+      markDriverMessageRead(input.messageId, input.companyId),
     onMutate: () => setMarkReadError(null),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["drivers", "messages"] });
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["drivers", "messages", "inbox", input.companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["drivers", "messages", "thread", input.companyId, input.driverId] }),
+      ]);
     },
-    onError: (error) => setMarkReadError(error instanceof Error ? error.message : "Failed to mark message as read"),
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) {
+        setMarkReadError(error instanceof Error ? error.message : "Failed to mark message as read");
+      }
+    },
   });
 
   if (!operatingCompanyId) {
@@ -225,7 +242,12 @@ export function MessagesInboxPage() {
               driverId={selectedDriverId}
               driverName={selectedConversation.driver_name}
               operatingCompanyId={operatingCompanyId}
-              onMarkRead={(messageId) => markReadMutation.mutate(messageId)}
+              onMarkRead={(messageId) => markReadMutation.mutate({
+                messageId,
+                companyId: operatingCompanyId,
+                driverId: selectedDriverId,
+                generation: actionGenerationRef.current,
+              })}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-gray-500">Select a driver conversation</div>
