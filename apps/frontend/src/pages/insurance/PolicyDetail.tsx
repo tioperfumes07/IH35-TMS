@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -46,6 +47,12 @@ export function PolicyDetail() {
   const [status, setStatus] = useState<InsurancePolicyStatus>("active");
   const [effectiveDate, setEffectiveDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const policyActionGenerationRef = useRef(0);
+  const [pendingArchive, setPendingArchive] = useState<{
+    policyId: string;
+    companyId: string;
+    generation: number;
+  } | null>(null);
 
   const policyQuery = useQuery({
     queryKey: ["insurance", "policy", policyId, companyId],
@@ -84,26 +91,45 @@ export function PolicyDetail() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { status: InsurancePolicyStatus; effective_date: string; expiry_date: string }) =>
-      updateInsurancePolicy(policyId!, companyId, payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["insurance", "policy", policyId, companyId] });
-      await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
+    mutationFn: (input: {
+      policyId: string;
+      companyId: string;
+      generation: number;
+      payload: { status: InsurancePolicyStatus; effective_date: string; expiry_date: string };
+    }) => updateInsurancePolicy(input.policyId, input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== policyActionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["insurance", "policy", input.policyId, input.companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", input.companyId] });
       pushToast("Policy updated", "success");
       setEditing(false);
     },
-    onError: () => pushToast("Failed to update policy", "error"),
+    onError: (_error, input) => {
+      if (input.generation === policyActionGenerationRef.current) pushToast("Failed to update policy", "error");
+    },
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => archiveInsurancePolicy(policyId!, companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
+    mutationFn: (input: { policyId: string; companyId: string; generation: number }) =>
+      archiveInsurancePolicy(input.policyId, input.companyId),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== policyActionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", input.companyId] });
       pushToast("Policy archived", "success");
       navigate("/safety/insurance/policies");
     },
-    onError: () => pushToast("Failed to archive policy", "error"),
+    onError: (_error, input) => {
+      if (input.generation === policyActionGenerationRef.current) pushToast("Failed to archive policy", "error");
+    },
   });
+
+  useEffect(() => {
+    policyActionGenerationRef.current += 1;
+    setPendingArchive(null);
+    setEditing(false);
+    updateMutation.reset();
+    archiveMutation.reset();
+  }, [companyId, policyId]);
 
   const claims = claimsQuery.data ?? [];
   const coiRows = coiQuery.data ?? [];
@@ -226,9 +252,7 @@ export function PolicyDetail() {
 
   const handleArchive = () => {
     if (!policyId || archiveMutation.isPending) return;
-    const confirmed = window.confirm("Archive this policy? This action cannot be undone.");
-    if (!confirmed) return;
-    archiveMutation.mutate();
+    setPendingArchive({ policyId, companyId, generation: policyActionGenerationRef.current });
   };
 
   return (
@@ -285,7 +309,14 @@ export function PolicyDetail() {
             <Button
               size="sm"
               loading={updateMutation.isPending}
-              onClick={() => updateMutation.mutate({ status, effective_date: effectiveDate, expiry_date: expiryDate })}
+              onClick={() =>
+                updateMutation.mutate({
+                  policyId,
+                  companyId,
+                  generation: policyActionGenerationRef.current,
+                  payload: { status, effective_date: effectiveDate, expiry_date: expiryDate },
+                })
+              }
             >
               Save
             </Button>
@@ -383,6 +414,21 @@ export function PolicyDetail() {
           </div>
         </div>
       </section>
+
+      <ConfirmModal
+        open={Boolean(pendingArchive)}
+        title="Archive this policy?"
+        message="This removes the policy from active workflows while retaining its historical record and reverse links."
+        confirmLabel="Archive policy"
+        danger
+        onClose={() => setPendingArchive(null)}
+        onConfirm={() => {
+          if (!pendingArchive) return;
+          const input = pendingArchive;
+          setPendingArchive(null);
+          archiveMutation.mutate(input);
+        }}
+      />
     </div>
   );
 }
