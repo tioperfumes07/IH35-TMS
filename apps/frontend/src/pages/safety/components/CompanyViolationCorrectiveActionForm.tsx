@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Button } from "../../../components/Button";
 import { companyToday } from "../../../lib/businessDate";
@@ -6,11 +6,16 @@ import { companyToday } from "../../../lib/businessDate";
 type Props = {
   loading?: boolean;
   onComplete: (completedDate: string, notes: string) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
-export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Props) {
+export function CompanyViolationCorrectiveActionForm({ loading, onComplete, onDirtyChange }: Props) {
   const [completedDate, setCompletedDate] = useState(companyToday());
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    onDirtyChange?.(completedDate !== companyToday() || Boolean(notes.trim()));
+  }, [completedDate, notes, onDirtyChange]);
 
   return (
     <form

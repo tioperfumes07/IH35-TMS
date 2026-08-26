@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { acknowledgeIntegrityAlert, resolveIntegrityAlert, snoozeIntegrityAlert } from "../../../api/safety";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
@@ -77,12 +76,12 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
     resetActionState();
   }, [open, operatingCompanyId, alert?.id, resetActionState]);
 
+  const actionPending = ackMutation.isPending || resolveMutation.isPending || snoozeMutation.isPending;
   const handleClose = useCallback(() => {
+    if (actionPending) return;
     resetActionState();
     onClose();
-  }, [onClose, resetActionState]);
-
-  useEscapeKey(handleClose, open && Boolean(alert));
+  }, [actionPending, onClose, resetActionState]);
 
   useEffect(() => {
     if (!open || !alert) return;
@@ -206,6 +205,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           <button
             type="button"
             className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            disabled={actionPending}
             onClick={() => ackMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Acknowledge
@@ -213,6 +213,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           <button
             type="button"
             className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            disabled={actionPending}
             onClick={() => resolveMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Resolve
@@ -221,6 +222,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             type="button"
             className="rounded-sm border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
             data-testid="integrity-alert-snooze-btn"
+            disabled={actionPending}
             onClick={() => snoozeMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
             Snooze 24h
