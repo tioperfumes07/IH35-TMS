@@ -388,6 +388,22 @@ export function createSafetyTrainingRecord(
   });
 }
 
+export function createSafetyTrainingRecordsBatch(
+  companyId: string,
+  body: {
+    driver_ids: string[];
+    training_name: string;
+    completed_at: string;
+    expiry_date?: string;
+    notes?: string;
+  }
+) {
+  return apiRequest<{ training_records: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/training-records/batch?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
+
 export type SafetyBackgroundCheckRow = {
   id: string;
   driver_id: string;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createSafetyTrainingRecord,
+  createSafetyTrainingRecordsBatch,
   createTrainingProgram,
   listTrainingPrograms,
   type TrainingProgram,
@@ -97,17 +97,13 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           : program.frequency === "n_month" && program.recertify_months
             ? addUtcMonths(new Date(input.completedAt), program.recertify_months)
             : undefined;
-      await Promise.all(
-        input.driverIds.map((driverId) =>
-          createSafetyTrainingRecord(input.companyId, {
-            driver_id: driverId,
-            training_name: program.name,
-            completed_at: input.completedAt,
-            expiry_date: expiryDate,
-            notes: "Assigned from training programs page",
-          })
-        )
-      );
+      await createSafetyTrainingRecordsBatch(input.companyId, {
+        driver_ids: input.driverIds,
+        training_name: program.name,
+        completed_at: input.completedAt,
+        expiry_date: expiryDate,
+        notes: "Assigned from training programs page",
+      });
     },
     onSuccess: (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
