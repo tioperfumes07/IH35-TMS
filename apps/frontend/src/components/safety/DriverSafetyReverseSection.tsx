@@ -173,14 +173,14 @@ export function DriverSafetyReverseSection({
 
   if (!canViewSafety) return null;
 
-  const civilFines: Row[] = civilFinesQuery.data?.fines ?? [];
-  const internalFines: Row[] = internalFinesQuery.data?.fines ?? [];
-  const complaints: Row[] = complaintsQuery.data?.complaints ?? [];
-  const tests: Row[] = testsQuery.data?.tests ?? [];
-  const dotInspections: Row[] = dotInspectionsQuery.data?.dot_inspections ?? [];
-  const accidents: Row[] = accidentsQuery.data?.accidents ?? [];
-  const trainingRecords: Row[] = trainingQuery.data?.training_completions ?? [];
-  const hosViolations: Row[] = hosViolationsQuery.data?.hos_violations ?? [];
+  const civilFines: Row[] = civilFinesQuery.isError ? [] : civilFinesQuery.data?.fines ?? [];
+  const internalFines: Row[] = internalFinesQuery.isError ? [] : internalFinesQuery.data?.fines ?? [];
+  const complaints: Row[] = complaintsQuery.isError ? [] : complaintsQuery.data?.complaints ?? [];
+  const tests: Row[] = testsQuery.isError ? [] : testsQuery.data?.tests ?? [];
+  const dotInspections: Row[] = dotInspectionsQuery.isError ? [] : dotInspectionsQuery.data?.dot_inspections ?? [];
+  const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
+  const trainingRecords: Row[] = trainingQuery.isError ? [] : trainingQuery.data?.training_completions ?? [];
+  const hosViolations: Row[] = hosViolationsQuery.isError ? [] : hosViolationsQuery.data?.hos_violations ?? [];
 
   return (
     <div className="space-y-3" data-testid={testId}>

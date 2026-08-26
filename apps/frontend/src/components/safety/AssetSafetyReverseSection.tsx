@@ -156,7 +156,7 @@ function IncidentsBlock({
     queryFn: () => listSafetyIncidents(companyId, kind.type, filter),
     enabled: Boolean(companyId) && Boolean(assetId),
   });
-  const rows: Row[] = query.data?.incidents ?? [];
+  const rows: Row[] = query.isError ? [] : query.data?.incidents ?? [];
 
   return (
     <SectionShell
@@ -241,9 +241,9 @@ export function AssetSafetyReverseSection({
 
   if (!canViewSafety) return null;
 
-  const accidents: Row[] = accidentsQuery.data?.accidents ?? [];
-  const inspections: Row[] = inspectionsQuery.data?.dot_inspections ?? [];
-  const dvirs: Row[] = dvirQuery.data?.submissions ?? [];
+  const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
+  const inspections: Row[] = inspectionsQuery.isError ? [] : inspectionsQuery.data?.dot_inspections ?? [];
+  const dvirs: Row[] = dvirQuery.isError ? [] : dvirQuery.data?.submissions ?? [];
   const contextLabel = isUnit ? "unit" : "trailer";
 
   return (
