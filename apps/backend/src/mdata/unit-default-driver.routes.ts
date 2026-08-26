@@ -8,6 +8,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const unitParamsSchema = z.object({ id: z.string().uuid() });
 const setDefaultSchema = z.object({ driver_id: z.string().uuid() });
+const clearDefaultSchema = z.object({ expected_driver_id: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -166,7 +167,7 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
       if (!unitOk) return null;
-      await client.query(
+      const cleared = await client.query(
         `
           UPDATE telematics.vehicle_driver_assignments
           SET ended_at = now()
@@ -201,28 +202,34 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = unitParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
+    const body = clearDefaultSchema.safeParse(req.body ?? {});
+    if (!params.success || !query.success || !body.success) return reply.code(400).send({ error: "validation_error" });
     const result = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
       if (!unitOk) return null;
-      await client.query(
+      const cleared = await client.query(
         `
           UPDATE telematics.vehicle_driver_assignments
           SET ended_at = now()
           WHERE unit_id = $1::uuid
             AND operating_company_id = $2::uuid
+            AND driver_id = $3::uuid
             AND is_default = true
             AND ended_at IS NULL
+          RETURNING id::text
         `,
-        [params.data.id, query.data.operating_company_id]
+        [params.data.id, query.data.operating_company_id, body.data.expected_driver_id]
       );
+      if (!cleared.rows[0]) return { conflict: true as const };
       await appendCrudAudit(client, user.uuid, "mdata.unit.default_driver_cleared", {
         resource_id: params.data.id,
+        driver_id: body.data.expected_driver_id,
       });
       return fetchDriverAssignments(client, params.data.id, query.data.operating_company_id);
     });
     if (!result) return reply.code(404).send({ error: "mdata_unit_not_found" });
+    if ("conflict" in result) return reply.code(409).send({ error: "default_driver_changed" });
     return result;
   });
 }
