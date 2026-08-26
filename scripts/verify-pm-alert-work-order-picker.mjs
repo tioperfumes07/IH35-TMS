@@ -12,7 +12,7 @@ const sources = {
 const checks = [
   ["ui", /kind="work_order"[\s\S]*operatingCompanyId=\{operatingCompanyId\}/, "PM alert uses scoped canonical WO picker"],
   ["ui", /value=\{selectedWorkOrderId\}[\s\S]*onChange=\{setSelectedWorkOrderId\}/, "WO picker selection is controlled"],
-  ["ui", /scheduleMutation\.mutate\(\{ alertId: alert\.id, workOrderId: selectedWorkOrderId \}\)/, "selected WO reaches mutation payload"],
+  ["ui", /scheduleMutation\.mutate\(\{[\s\S]*alertId: alert\.id,[\s\S]*workOrderId: selectedWorkOrderId,[\s\S]*companyId: operatingCompanyId,[\s\S]*generation: actionGenerationRef\.current/, "selected WO reaches immutable mutation payload"],
   ["ui", /kind="unit" id=\{alert\.unit_id\}/, "PM alert unit drills canonically"],
   ["ui", /setSchedulingAlertId\(null\)[\s\S]*setSelectedWorkOrderId\(null\)/, "success/cancel clears picker state"],
   ["ui", /disabled=\{!selectedWorkOrderId \|\| scheduleMutation\.isPending\}/, "Apply rejects empty selection and duplicate submit"],
