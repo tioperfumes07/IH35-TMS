@@ -64,7 +64,7 @@ const CHECKS = [
   ["apps/frontend/src/components/drivers/SendMessageModal.tsx", /await sendDriverProfileMessage\(input\.driverId, input\.companyId, input\.body\)/],
   ["apps/frontend/src/components/drivers/SuspendConfirmModal.tsx", /await suspendDriver\(input\.driverId, input\.reason\);/],
   ["apps/frontend/src/components/drivers/TerminateConfirmModal.tsx", /await createSafetyEvent\(input\.driverId, input\.body\);/],
-  ["apps/frontend/src/components/drivers/W8BenModal.tsx", /await createDriverW8ben\(driverId, companyId, \{/],
+  ["apps/frontend/src/components/drivers/W8BenModal.tsx", /await createDriverW8ben\(input\.driverId, input\.companyId, input\.body\)/],
   ["apps/frontend/src/pages/drivers/DriverImportModal.tsx", /const res = await importDriversCsv\(file, companyId, "preview"\);/],
   ["apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx", /driver_id: driverId,/],
   ["apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx", /listDriverQualificationItems\(driverId, companyId\)/],

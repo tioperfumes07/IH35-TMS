@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { Button } from "../Button";
@@ -64,6 +64,8 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setFullName(driverName);
@@ -87,13 +89,17 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   }, [driverName]);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPending(false);
     if (open) resetDraft();
   }, [open, companyId, driverId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (pending) return;
+    requestGenerationRef.current += 1;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [onClose, pending, resetDraft]);
 
   const submit = async () => {
     setError("");
@@ -109,10 +115,12 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
       setError("Signed date is required.");
       return;
     }
-    setPending(true);
-    try {
-      const trim = (v: string) => (v.trim() ? v.trim() : undefined);
-      await createDriverW8ben(driverId, companyId, {
+    const trim = (v: string) => (v.trim() ? v.trim() : undefined);
+    const input = {
+      driverId,
+      companyId,
+      generation: requestGenerationRef.current,
+      body: {
         full_legal_name: fullName.trim(),
         country_of_citizenship: citizenship.trim(),
         permanent_residence_street: trim(resStreet),
@@ -130,18 +138,41 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
         certification_name: trim(certName),
         signed_date: signedDate,
         notes: trim(notes),
-      });
+      } satisfies W8BenBody,
+    };
+    setPending(true);
+    try {
+      await createDriverW8ben(input.driverId, input.companyId, input.body);
+      if (input.generation !== requestGenerationRef.current) return;
       onCreated?.();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     } catch {
+      if (input.generation !== requestGenerationRef.current) return;
       setError("Failed to save W-8BEN.");
     } finally {
-      setPending(false);
+      if (input.generation === requestGenerationRef.current) setPending(false);
     }
   };
 
+  const isDirty =
+    fullName !== driverName || citizenship !== "Mexico" || resStreet !== "" || resCity !== "" ||
+    resCountry !== "Mexico" || mailStreet !== "" || mailCity !== "" || mailCountry !== "" ||
+    usTin !== "" || foreignTin !== "" || referenceNumbers !== "" || dob !== "" ||
+    treatyCountry !== "" || treatyArticle !== "" || certName !== "" ||
+    signedDate !== companyToday() || notes !== "";
+
   return (
-    <Modal variant="drawer" open={open} onClose={handleClose} title={`Create W-8BEN — ${driverName}`}>
+    <Modal
+      variant="drawer"
+      open={open}
+      onClose={handleClose}
+      title={`Create W-8BEN — ${driverName}`}
+      confirmDiscardOnClose
+      isDirty={isDirty}
+      onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
+    >
       <form
         className="space-y-3"
         data-testid="w8ben-modal"
@@ -244,7 +275,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="submit" loading={pending} data-testid="w8ben-submit">
