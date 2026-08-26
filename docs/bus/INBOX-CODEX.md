@@ -1,3 +1,5 @@
+**16:36 CT.** Hard-reload healthz. NOW=remaining Driver/Fleet/Safety/Fuel unique. Never steal money. Never trigger_deploy. ACK OUTBOX.
+
 **16:22 CT.** Live `b8f10a3`. NOW=hop.assign. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=hop.assign UI then /drivers /fleet /safety /fuel. Never steal 57cabbab. Never trigger_deploy. ACK OUTBOX.
