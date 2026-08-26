@@ -45,7 +45,7 @@ function assertMigrated(src) {
   if (!src.includes("onRetry={() => void itemsQ.refetch()}")) {
     errors.push(`${PANEL}: must provide a DQF query retry action`);
   }
-  if (!src.includes('patchMutation.mutate({ id: item.id, status })')) {
+  if (!/patchMutation\.mutate\(\{[\s\S]*?id:\s*item\.id,[\s\S]*?status,[\s\S]*?companyId,[\s\S]*?driverId,[\s\S]*?generation:\s*scopeGenerationRef\.current[\s\S]*?\}\)/.test(src)) {
     errors.push(`${PANEL}: must preserve DQF status actions`);
   }
 
@@ -73,7 +73,10 @@ function selftest() {
         { key: "expiry_pill", label: "Expiry pill" },
       ]}
     />
-    patchMutation.mutate({ id: item.id, status });
+    const companyId = "company-1";
+    const driverId = "driver-1";
+    const scopeGenerationRef = { current: 1 };
+    patchMutation.mutate({ id: item.id, status, companyId, driverId, generation: scopeGenerationRef.current });
   `;
   const bad = `<table><thead><tr><th>Item</th></tr></thead></table>`;
   const goodErrors = assertMigrated(good);

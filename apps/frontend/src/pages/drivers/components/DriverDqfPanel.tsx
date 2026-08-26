@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createDriverQualificationItem,
@@ -21,6 +21,13 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
   const queryClient = useQueryClient();
   const [itemName, setItemName] = useState("");
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const scopeGenerationRef = useRef(0);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+    setItemName("");
+    setMutationError(null);
+  }, [companyId, driverId]);
 
   const itemsQ = useQuery({
     queryKey: ["safety", "driver-dqf", companyId, driverId],
@@ -29,28 +36,36 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createDriverQualificationItem(companyId, {
-        driver_id: driverId,
-        item_name: itemName.trim(),
+    mutationFn: (input: { companyId: string; driverId: string; itemName: string; generation: number }) =>
+      createDriverQualificationItem(input.companyId, {
+        driver_id: input.driverId,
+        item_name: input.itemName,
         status: "present",
       }),
     onMutate: () => setMutationError(null),
-    onSuccess: async () => {
+    onSuccess: async (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       setItemName("");
-      await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", companyId, driverId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", input.companyId, input.driverId] });
     },
-    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to create DQF item"),
+    onError: (error, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      setMutationError(error instanceof Error ? error.message : "Failed to create DQF item");
+    },
   });
 
   const patchMutation = useMutation({
-    mutationFn: (payload: { id: string; status: DriverQualificationFileItem["status"] }) =>
-      patchDriverQualificationItem(payload.id, companyId, { status: payload.status }),
+    mutationFn: (input: { id: string; status: DriverQualificationFileItem["status"]; companyId: string; driverId: string; generation: number }) =>
+      patchDriverQualificationItem(input.id, input.companyId, { status: input.status }),
     onMutate: () => setMutationError(null),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", companyId, driverId] });
+    onSuccess: async (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", input.companyId, input.driverId] });
     },
-    onError: (error) => setMutationError(error instanceof Error ? error.message : "Failed to update DQF item"),
+    onError: (error, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      setMutationError(error instanceof Error ? error.message : "Failed to update DQF item");
+    },
   });
 
   if (!driverId) {
@@ -69,7 +84,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
           onSubmit={(event) => {
             event.preventDefault();
             if (!itemName.trim()) return;
-            createMutation.mutate();
+            createMutation.mutate({
+              companyId,
+              driverId,
+              itemName: itemName.trim(),
+              generation: scopeGenerationRef.current,
+            });
           }}
         >
           <label className="block text-xs text-slate-600">
@@ -164,7 +184,15 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
                             type="button"
                             className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] hover:bg-gray-50 disabled:opacity-50"
                             disabled={patchMutation.isPending || item.status === status}
-                            onClick={() => patchMutation.mutate({ id: item.id, status })}
+                            onClick={() =>
+                              patchMutation.mutate({
+                                id: item.id,
+                                status,
+                                companyId,
+                                driverId,
+                                generation: scopeGenerationRef.current,
+                              })
+                            }
                           >
                             {status}
                           </button>
