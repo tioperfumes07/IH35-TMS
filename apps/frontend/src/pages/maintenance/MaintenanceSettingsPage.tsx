@@ -21,9 +21,16 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
   const [bayAssignmentPolicy, setBayAssignmentPolicy] = useState("Auto-assign by first available bay");
   const [notificationEmailEnabled, setNotificationEmailEnabled] = useState(true);
   const hydratedRef = useRef(false);
+  const saveGenerationRef = useRef(0);
 
   useEffect(() => {
     hydratedRef.current = false;
+    saveGenerationRef.current += 1;
+    saveMutation.reset();
+    setPmIntervalDays("30");
+    setDefaultShopLocation("Main yard");
+    setBayAssignmentPolicy("Auto-assign by first available bay");
+    setNotificationEmailEnabled(true);
   }, [operatingCompanyId]);
 
   useEffect(() => {
@@ -36,18 +43,35 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
   }, [settings]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      updateMaintenanceSettings(operatingCompanyId, {
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: {
+        pm_interval_days_default: number;
+        default_shop_location: string;
+        bay_assignment_policy: string;
+        notification_email_enabled: boolean;
+      };
+    }) => updateMaintenanceSettings(input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== saveGenerationRef.current) return;
+      hydratedRef.current = false;
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "settings", input.companyId] });
+    },
+  });
+
+  const saveSettings = () => {
+    saveMutation.mutate({
+      companyId: operatingCompanyId,
+      generation: saveGenerationRef.current,
+      payload: {
         pm_interval_days_default: Number(pmIntervalDays),
         default_shop_location: defaultShopLocation.trim(),
         bay_assignment_policy: bayAssignmentPolicy.trim(),
         notification_email_enabled: notificationEmailEnabled,
-      }),
-    onSuccess: async () => {
-      hydratedRef.current = false;
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "settings", operatingCompanyId] });
-    },
-  });
+      },
+    });
+  };
 
   return (
     <form
@@ -55,7 +79,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
       data-testid="maintenance-settings-page"
       onSubmit={(event) => {
         event.preventDefault();
-        saveMutation.mutate();
+        saveSettings();
       }}
     >
       {settingsQuery.isLoading ? (
