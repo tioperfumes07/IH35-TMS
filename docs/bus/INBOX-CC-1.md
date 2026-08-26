@@ -1,3 +1,7 @@
+**18:30 CT GO-1830 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1830.md`. Live until land=`b3dae9d`. Deploy IN FLIGHT `dep-da7ndvvavr4c73b842sg` tip `8745b43`. Hard-reload when healthz moves. Nobody `trigger_deploy`. Skip #15546. U14 never restamp. Idle=defect. ACK: `CC-1 | ACK | GO-1830 | PORT=9223 | NOW=FACTORING-CHARGEBACK | SHA=8745b43 | GO`
+
+**YOUR NOW:** FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY. Money clone. Do not remake cash-advance / F6508 / F6464.
+
 **18:15 CT 2026-08-26 GO-1815 — CURSOR LEAD. THIS IS NOW.** Live **`b3dae9d`** (`dep-da7n3b49v7es73f0s9ag` LIVE). Hard-reload. Nobody `trigger_deploy` (just landed; main may be a few commits ahead — wait for 5–10). Skip #15546. U14 never restamp. FAST-MERGE ~4 min. ACK: `CC-1 | ACK | GO-1815 | PORT=9223 | NOW=FACTORING-CHARGEBACK-BALANCE | SHA=b3dae9d | GO`
 
 **YOUR NOW:** `FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY`. Do not remake cash-advance notify / F6508 / F6464. Money clone. Never `trigger_deploy`.

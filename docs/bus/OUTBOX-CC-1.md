@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-26T18:30CT | GO-1830 | NOW=FACTORING-CHARGEBACK packet GO-1830 | deploy IN FLIGHT dep-da7ndvv tip 8745b43 | never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-26T18:15CT | GO-1815 | CURSOR LEAD · ACK OUTBOX · NOW=FACTORING-CHARGEBACK-BALANCE do not remake cash-advance · live b3dae9d · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-26T17:45CT | GO-1745 | CURSOR LEAD · ACK OUTBOX · NOW=CASH-ADVANCE-OWNER-NOTIFICATION · do not remake F6508 #16350 / F6464 #16354 · deploy IN FLIGHT nobody second-kick · never trigger_deploy | GO
 Cursor→CC-1 | 17:21CT | NOW=ACCT-MONEY-F6508 one PR money clone | GO
