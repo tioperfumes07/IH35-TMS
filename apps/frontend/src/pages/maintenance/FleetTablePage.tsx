@@ -177,14 +177,17 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     enabled: Boolean(operatingCompanyId),
   });
 
-  const kpis = kpisQuery.data ?? {
+  const kpis = (kpisQuery.isError ? undefined : kpisQuery.data) ?? {
     total_units: 0,
     active_units: 0,
     in_shop_units: 0,
     out_of_service_units: 0,
     avg_age_years: null as number | null,
   };
-  const allRows = useMemo(() => (rowsQuery.data?.rows ?? []) as UnifiedUnitRow[], [rowsQuery.data?.rows]);
+  const allRows = useMemo(
+    () => (rowsQuery.isError ? [] : rowsQuery.data?.rows ?? []) as UnifiedUnitRow[],
+    [rowsQuery.data?.rows, rowsQuery.isError]
+  );
 
   // AUTO-05: live city/state per unit from the existing fleet-location-hos feed (reverse-geo #1233, ~3-min fresh).
   const fleetLocationQuery = useQuery({
@@ -196,9 +199,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   });
   const locationByUnit = useMemo(() => {
     const m: Record<string, { city: string | null; state: string | null }> = {};
-    for (const r of fleetLocationQuery.data?.rows ?? []) m[r.unit_id] = { city: r.city, state: r.state };
+    for (const r of fleetLocationQuery.isError ? [] : fleetLocationQuery.data?.rows ?? []) m[r.unit_id] = { city: r.city, state: r.state };
     return m;
-  }, [fleetLocationQuery.data]);
+  }, [fleetLocationQuery.data, fleetLocationQuery.isError]);
 
   // Keystone: live maintenance status per unit (odometer · next PM due · open WO count), merged by
   // unit id like locationByUnit. Owner-company units only; leased/trailer rows show "—" (honest).
@@ -214,10 +217,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   });
   const maintByUnit = useMemo(() => {
     const m: Record<string, { odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }> = {};
-    for (const r of maintStatusQuery.data?.rows ?? [])
+    for (const r of maintStatusQuery.isError ? [] : maintStatusQuery.data?.rows ?? [])
       m[r.id] = { odometer_mi: r.odometer_mi, next_due_odometer: r.next_due_odometer, open_wo_count: r.open_wo_count };
     return m;
-  }, [maintStatusQuery.data]);
+  }, [maintStatusQuery.data, maintStatusQuery.isError]);
 
   async function exportLocationHos() {
     setLocationHosExportError(null);
@@ -278,13 +281,15 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just
   // the fetched page — the unified/trailers endpoint previously returned no total, leaving "of 50".
   const totalVehicleCount =
-    typeFilter !== "" ? (totalRowsQuery.data?.total ?? 0) : (rowsQuery.data?.total ?? allRows.length);
+    typeFilter !== ""
+      ? (totalRowsQuery.isError ? 0 : totalRowsQuery.data?.total ?? 0)
+      : (rowsQuery.isError ? 0 : rowsQuery.data?.total ?? allRows.length);
   const filteredCount = searchedRows.length;
   const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "" || rosterSearch.trim() !== "";
 
   const counters = useMemo(() => {
     // Count the same soft-delete slice the table uses (default: active / not deactivated).
-    const sourceRows = (rowsQuery.data?.rows ?? []).filter((r) => {
+    const sourceRows = (rowsQuery.isError ? [] : rowsQuery.data?.rows ?? []).filter((r) => {
       if (softDeleteFilter === "active" && r.deactivated_at != null) return false;
       if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
       return true;
@@ -299,7 +304,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
       outOfService: sourceRows.filter((r) => rowMatchesFleetStatus(r, "OutOfService")).length,
     };
-  }, [rowsQuery.data?.rows, softDeleteFilter]);
+  }, [rowsQuery.data?.rows, rowsQuery.isError, softDeleteFilter]);
 
   const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
