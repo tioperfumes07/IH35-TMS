@@ -19,6 +19,7 @@ const FILES = {
   page: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx",
   api: "apps/frontend/src/api/safety.ts",
   routes: "apps/backend/src/safety/events/safety-events.routes.ts",
+  dateTimePicker: "apps/frontend/src/components/forms/DateTimePicker.tsx",
 };
 
 function stripComments(text) {
@@ -30,6 +31,7 @@ export function assertGuard(sources) {
   const page = stripComments(sources.page);
   const api = stripComments(sources.api);
   const routes = stripComments(sources.routes);
+  const dateTimePicker = stripComments(sources.dateTimePicker);
 
   if (!/occurred_at:\s*string/.test(page)) {
     errors.push(`${FILES.page}: EventDraft must include occurred_at: string`);
@@ -58,8 +60,8 @@ export function assertGuard(sources) {
   if (!/Time of occurrence/.test(page)) {
     errors.push(`${FILES.page}: occurred_at field must be labeled "Time of occurrence"`);
   }
-  if (!/occurred_at:\s*draft\.occurred_at/.test(page)) {
-    errors.push(`${FILES.page}: create mutation payload must pass occurred_at: draft.occurred_at`);
+  if (!/occurred_at:\s*(?:input\.)?draft\.occurred_at/.test(page)) {
+    errors.push(`${FILES.page}: create mutation payload must pass the active draft occurred_at`);
   }
   if (!/toISOString\(\)/.test(page)) {
     errors.push(`${FILES.page}: occurred_at must be converted to ISO (toISOString) before POST`);
@@ -74,6 +76,19 @@ export function assertGuard(sources) {
   }
   if (!/COALESCE\(\$10::timestamptz,\s*now\(\)\)/.test(routes)) {
     errors.push(`${FILES.routes}: INSERT must COALESCE client occurred_at with now()`);
+  }
+
+  if (!/function\s+onDoc\(e:\s*PointerEvent\)/.test(dateTimePicker)) {
+    errors.push(`${FILES.dateTimePicker}: outside-dismiss handler must accept PointerEvent`);
+  }
+  if (!/document\.addEventListener\("pointerdown",\s*onDoc\)/.test(dateTimePicker)) {
+    errors.push(`${FILES.dateTimePicker}: open picker must close on pointerdown outside (mouse/touch/pen)`);
+  }
+  if (!/document\.removeEventListener\("pointerdown",\s*onDoc\)/.test(dateTimePicker)) {
+    errors.push(`${FILES.dateTimePicker}: pointerdown outside listener must be removed on cleanup`);
+  }
+  if (/document\.(?:add|remove)EventListener\("mousedown",\s*onDoc\)/.test(dateTimePicker)) {
+    errors.push(`${FILES.dateTimePicker}: mouse-only outside-dismiss regression is forbidden`);
   }
 
   return errors;
@@ -97,6 +112,11 @@ function selftest() {
     routes: `
       occurred_at: z.string().datetime().optional(),
       COALESCE($10::timestamptz, now())
+    `,
+    dateTimePicker: `
+      function onDoc(e: PointerEvent) { if (ref.current) setOpen(false); }
+      document.addEventListener("pointerdown", onDoc);
+      document.removeEventListener("pointerdown", onDoc);
     `,
   };
   if (assertGuard(good).length) {
@@ -124,6 +144,20 @@ function selftest() {
   const unimported = { ...good, page: good.page.replace('import { DateTimePicker } from "../../components/forms/DateTimePicker";', "") };
   if (!assertGuard(unimported).some((e) => e.includes("must be imported"))) {
     console.error(`[${LABEL}] --selftest FAIL: missing import not rejected`);
+    process.exit(1);
+  }
+
+  // Bad fixture 4: a mouse-only listener misses touch and pen interactions.
+  const mouseOnly = {
+    ...good,
+    dateTimePicker: good.dateTimePicker
+      .replace("PointerEvent", "MouseEvent")
+      .replaceAll("pointerdown", "mousedown"),
+  };
+  const mouseOnlyErrors = assertGuard(mouseOnly);
+  if (!mouseOnlyErrors.some((e) => e.includes("PointerEvent")) ||
+      !mouseOnlyErrors.some((e) => e.includes("mouse-only"))) {
+    console.error(`[${LABEL}] --selftest FAIL: mouse-only outside-dismiss regression not rejected`, mouseOnlyErrors);
     process.exit(1);
   }
 
