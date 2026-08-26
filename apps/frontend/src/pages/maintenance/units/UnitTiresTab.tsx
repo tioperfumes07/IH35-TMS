@@ -1,7 +1,7 @@
 /**
  * Unit Tires Tab — GAP-62 wear chart on unit detail
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { TireWearProjectionChart } from "../../../components/maintenance/TireWearProjectionChart";
@@ -40,6 +40,10 @@ function fetchProjections(unitId: string, companyId: string) {
 
 export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
   const [selectedPosition, setSelectedPosition] = useState<string>("");
+
+  useEffect(() => {
+    setSelectedPosition("");
+  }, [unitId, companyId]);
 
   const measurementsQ = useQuery({
     queryKey: ["unit-tire-measurements", unitId, companyId],

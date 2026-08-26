@@ -20,6 +20,9 @@ function audit(source = files) {
   }
   if (!/positions\.length === 0[\s\S]{0,180}!latestQ\.isError[\s\S]{0,100}!projectionsQ\.isError/.test(source.brakes)) failures.push("brakes error-before-empty");
   if (!/positions\.length === 0[\s\S]{0,220}!measurementsQ\.isError[\s\S]{0,100}!projectionsQ\.isError/.test(source.tires)) failures.push("tires error-before-empty");
+  if (!/useEffect\(\(\) => \{\s*setSelectedPosition\(""\);\s*\}, \[unitId, companyId\]\)/.test(source.tires)) {
+    failures.push("tires selected position resets on unit/company transition");
+  }
   return failures;
 }
 
@@ -29,6 +32,7 @@ if (process.argv.includes("--selftest")) {
     ["brakes", "onRetry={() => void projectionsQ.refetch()}"],
     ["tires", "onRetry={() => void measurementsQ.refetch()}"],
     ["tires", "onRetry={() => void projectionsQ.refetch()}"],
+    ["tires", 'setSelectedPosition("");'],
   ];
   for (const [file, needle] of mutations) {
     const changed = { ...files, [file]: files[file].replace(needle, "") };
