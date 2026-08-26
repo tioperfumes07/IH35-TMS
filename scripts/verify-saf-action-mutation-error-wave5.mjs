@@ -24,7 +24,7 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/FinesPage.tsx",
-    needles: ["userFacingApiError", "convertMutation.isError", "fine-convert-liability-error"],
+    needles: ["userFacingApiError", "convertError", "fine-convert-liability-error"],
   },
 ];
 
