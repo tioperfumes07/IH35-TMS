@@ -44,7 +44,7 @@ export function LegalMattersReverseSection({
 
   if (!canView) return null;
 
-  const matters = query.data?.matters ?? [];
+  const matters = query.isError ? [] : (query.data?.matters ?? []);
   const openKind =
     "unit_id" in filter
       ? ("legal_matters_unit" as const)
