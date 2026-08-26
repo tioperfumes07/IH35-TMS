@@ -73,7 +73,8 @@ function check({ migration, modal, board, register }) {
   if (!/pendingDocCategoriesUnavailable/.test(modal)) {
     errors.push("CreateDriverModal must fail closed when staged document categories are unavailable");
   }
-  if (!/pendingDocCategoriesUnavailable\s*\|\|\s*returningCheckLoading/.test(modal)) {
+  const saveDropdown = modal.match(/<SaveDropdown[\s\S]*?\/>/)?.[0] ?? "";
+  if (!/disabled=\{[\s\S]*?pendingDocCategoriesUnavailable[\s\S]*?\}/.test(saveDropdown)) {
     errors.push("CreateDriverModal Save must be disabled while staged document categories are unavailable");
   }
   if (!/if \(pendingDocCategoriesUnavailable\) \{[\s\S]*?return;[\s\S]*?\}\s*saveModeRef\.current/.test(modal)) {
@@ -142,14 +143,14 @@ function selftest() {
     },
     {
       name: "staged upload save gate",
-      modal: modal.replace("pendingDocCategoriesUnavailable ||\n                    returningCheckLoading", "returningCheckLoading"),
+      modal: modal.replace("pendingDocCategoriesUnavailable ||", "false ||"),
       expected: "Save must be disabled",
     },
     {
       name: "save handler defense",
       modal: modal.replace(
-        "if (pendingDocCategoriesUnavailable) {\n        pushToast(\"Document categories are unavailable. Retry before saving staged files.\", \"error\");\n        return;\n      }\n      saveModeRef.current",
-        "saveModeRef.current"
+        /\s*if \(pendingDocCategoriesUnavailable\) \{\s*pushToast\("Document categories are unavailable\. Retry before saving staged files\.", "error"\);\s*return;\s*\}/,
+        ""
       ),
       expected: "save handler must reject",
     },
