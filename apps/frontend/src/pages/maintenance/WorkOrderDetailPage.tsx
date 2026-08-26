@@ -1,6 +1,6 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getMaintenanceWorkOrderPdfUrl,
@@ -45,6 +45,12 @@ const OOS_DAILY_LOSS_CENTS = 50_000;
 // Read-only display grids (qbo-parity-a1). The posting preview is a PREVIEW ONLY — no journal
 // entries are created or edited from this surface; bills/expenses are reverse drill-through links.
 type PostingPreviewTableRow = WorkOrderPostingPreviewLine & { row_key: string };
+
+type WorkOrderActionScope = {
+  workOrderId: string;
+  companyId: string;
+  generation: number;
+};
 
 const POSTING_PREVIEW_COLUMNS: Array<ParityColumn<PostingPreviewTableRow>> = [
   {
@@ -293,11 +299,13 @@ export function WorkOrderDetailPage() {
   const [reasonText, setReasonText] = useState("");
   const [createBillOpen, setCreateBillOpen] = useState(false);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
-  const invalidateWo = () => {
-    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", id, companyId] });
-    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", id, companyId] });
-    void queryClient.invalidateQueries({ queryKey: ["accounting", "wo-linked-financials", id, companyId] });
+  const actionGenerationRef = useRef(0);
+  const invalidateWoScope = (scope: Pick<WorkOrderActionScope, "workOrderId" | "companyId">) => {
+    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", scope.workOrderId, scope.companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", scope.workOrderId, scope.companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["accounting", "wo-linked-financials", scope.workOrderId, scope.companyId] });
   };
+  const invalidateWo = () => invalidateWoScope({ workOrderId: String(id), companyId });
   const woCancelReasonsQ = useQuery({
     queryKey: ["catalogs", "wo-cancellation-reasons"],
     queryFn: () => listWoCancellationReasons(),
@@ -317,36 +325,56 @@ export function WorkOrderDetailPage() {
   // Combobox's own allowAddNew/onAddNew (this catalog is GLOBAL — no operating_company_id — so the
   // registry/ReferenceSelect inline-create flow, which assumes entity scoping, does not apply here).
   const createWoReasonMut = useMutation({
-    mutationFn: (label: string) => createWoCancellationReason(label),
-    onSuccess: (created) => {
+    mutationFn: (input: WorkOrderActionScope & { label: string }) => createWoCancellationReason(input.label),
+    onSuccess: (created, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       void queryClient.invalidateQueries({ queryKey: ["catalogs", "wo-cancellation-reasons"] });
       setCancelReasonCode(created.reason_code);
       pushToast(`Added cancellation reason "${created.reason_label}"`, "success");
     },
-    onError: () => pushToast("Could not add that cancellation reason", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Could not add that cancellation reason", "error");
+    },
   });
   const cancelMut = useMutation({
-    mutationFn: (body: { cancel_reason_code: string; cancel_notes?: string }) =>
-      cancelWorkOrderConsole(String(id), companyId, body),
-    onSuccess: () => {
+    mutationFn: (input: WorkOrderActionScope & { body: { cancel_reason_code: string; cancel_notes?: string } }) =>
+      cancelWorkOrderConsole(input.workOrderId, input.companyId, input.body),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Work order cancelled", "success");
       setReasonModal(null);
       setCancelReasonCode(null);
       setCancelNotes("");
-      invalidateWo();
+      invalidateWoScope(input);
     },
-    onError: (error: unknown) => pushToast(userFacingApiError(error, "Cancel failed"), "error"),
+    onError: (error: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Cancel failed"), "error");
+    },
   });
   const voidMut = useMutation({
-    mutationFn: (reason: string) => voidWorkOrderConsole(String(id), companyId, reason),
-    onSuccess: () => {
+    mutationFn: (input: WorkOrderActionScope & { reason: string }) =>
+      voidWorkOrderConsole(input.workOrderId, input.companyId, input.reason),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Work order voided", "success");
       setReasonModal(null);
       setReasonText("");
-      invalidateWo();
+      invalidateWoScope(input);
     },
-    onError: (error: unknown) => pushToast(userFacingApiError(error, "Void failed"), "error"),
+    onError: (error: unknown, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast(userFacingApiError(error, "Void failed"), "error");
+    },
   });
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createWoReasonMut.reset();
+    cancelMut.reset();
+    voidMut.reset();
+    setReasonModal(null);
+    setCancelReasonCode(null);
+    setCancelNotes("");
+    setReasonText("");
+  }, [companyId, id]);
   const cancelValid = Boolean(cancelReasonCode);
   const voidValid = reasonText.trim().length >= 3;
   const submitReason = () => {
@@ -354,13 +382,23 @@ export function WorkOrderDetailPage() {
     if (reasonModal.kind === "cancel") {
       if (!cancelValid || !cancelReasonCode) return;
       void cancelMut.mutateAsync({
-        cancel_reason_code: cancelReasonCode,
-        cancel_notes: cancelNotes.trim() || undefined,
+        workOrderId: String(id),
+        companyId,
+        generation: actionGenerationRef.current,
+        body: {
+          cancel_reason_code: cancelReasonCode,
+          cancel_notes: cancelNotes.trim() || undefined,
+        },
       });
       return;
     }
     if (!voidValid) return;
-    void voidMut.mutateAsync(reasonText.trim());
+    void voidMut.mutateAsync({
+      workOrderId: String(id),
+      companyId,
+      generation: actionGenerationRef.current,
+      reason: reasonText.trim(),
+    });
   };
 
   const [woQ, costQ] = useQueries({
@@ -670,7 +708,12 @@ export function WorkOrderDetailPage() {
                   allowAddNew
                   onAddNew={(typedText) => {
                     const label = typedText.trim();
-                    if (label) createWoReasonMut.mutate(label);
+                    if (label) createWoReasonMut.mutate({
+                      workOrderId: String(id),
+                      companyId,
+                      generation: actionGenerationRef.current,
+                      label,
+                    });
                   }}
                 />
                 <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-notes">
