@@ -32,6 +32,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../../components/ListErrorState";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { WarrantyClaimsReverseSection } from "../../components/maintenance/WarrantyClaimsReverseSection";
@@ -517,8 +518,20 @@ export function WorkOrderDetailPage() {
     return <div className="p-4 text-sm text-gray-500">Loading work order…</div>;
   }
 
-  if (woQ.isError || !wo) {
-    return <div className="p-4 text-sm text-red-600">Failed to load work order.</div>;
+  if (woQ.isError) {
+    return (
+      <div className="p-4">
+        <ListErrorState
+          status={0}
+          message={userFacingApiError(woQ.error, "Failed to load work order.")}
+          onRetry={() => void woQ.refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (!wo) {
+    return <div className="p-4 text-sm text-slate-700">Work order not found or unavailable for this operating company.</div>;
   }
 
   return (
