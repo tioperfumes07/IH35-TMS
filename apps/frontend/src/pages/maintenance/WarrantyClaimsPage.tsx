@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -47,6 +47,7 @@ export function WarrantyClaimsPage() {
   const [detectWoId, setDetectWoId] = useState("");
   const [claimDraft, setClaimDraft] = useState<ClaimDraft>(EMPTY_CLAIM);
   const [fileClaimNumber, setFileClaimNumber] = useState("");
+  const actionGenerationRef = useRef(0);
 
   const claimsQ = useQuery({
     queryKey: ["maintenance", "warranty-claims", companyId],
@@ -58,58 +59,79 @@ export function WarrantyClaimsPage() {
   // EntityPicker kind=vendor allowCreate reads/writes that same table (no catalogs.maintenance_vendors,
   // no capped listVendors page).
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "warranty-claims", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["maintenance", "warranty-claims", submittedCompanyId] });
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; generation: number; draft: ClaimDraft }) =>
       createMaintenanceWarrantyClaim({
-        operating_company_id: companyId,
-        part_description: claimDraft.part_description,
-        claim_amount_cents: Number(claimDraft.claim_amount_cents || "0"),
-        vendor_id: claimDraft.vendor_id || undefined,
-        work_order_id: claimDraft.work_order_id || undefined,
-        claim_number: claimDraft.claim_number,
+        operating_company_id: input.companyId,
+        part_description: input.draft.part_description,
+        claim_amount_cents: Number(input.draft.claim_amount_cents || "0"),
+        vendor_id: input.draft.vendor_id || undefined,
+        work_order_id: input.draft.work_order_id || undefined,
+        claim_number: input.draft.claim_number,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setClaimDraft(EMPTY_CLAIM);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Warranty claim created", "success");
     },
-    onError: () => pushToast("Failed to create claim", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create claim", "error");
+    },
   });
 
   const fileMutation = useMutation({
-    mutationFn: () =>
-      fileMaintenanceWarrantyClaim(String(fileTarget?.id), {
-        operating_company_id: companyId,
-        claim_number: fileClaimNumber || undefined,
+    mutationFn: (input: { id: string; companyId: string; generation: number; claimNumber: string }) =>
+      fileMaintenanceWarrantyClaim(input.id, {
+        operating_company_id: input.companyId,
+        claim_number: input.claimNumber || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setFileTarget(null);
       setFileClaimNumber("");
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Claim filed with vendor", "success");
     },
-    onError: () => pushToast("Failed to file claim", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to file claim", "error");
+    },
   });
 
   const detectMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; generation: number; workOrderId: string }) =>
       detectMaintenanceWarrantyFromWorkOrder({
-        operating_company_id: companyId,
-        work_order_id: detectWoId,
+        operating_company_id: input.companyId,
+        work_order_id: input.workOrderId,
         create_draft_claims: true,
       }),
-    onSuccess: async (result) => {
-      await refresh();
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       const count = result.created_claims?.length ?? result.eligible?.length ?? 0;
       pushToast(count ? `Detected ${count} warranty-eligible part(s)` : "No eligible warranty parts found", "success");
     },
-    onError: () => pushToast("Failed to detect warranty parts from WO", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to detect warranty parts from WO", "error");
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    fileMutation.reset();
+    detectMutation.reset();
+    setCreateOpen(false);
+    setFileTarget(null);
+    setDetectWoId("");
+    setClaimDraft(EMPTY_CLAIM);
+    setFileClaimNumber("");
+  }, [companyId]);
 
   const claims = claimsQ.data?.rows ?? [];
 
@@ -176,7 +198,7 @@ export function WarrantyClaimsPage() {
             type="button"
             variant="secondary"
             disabled={!companyId || !detectWoId.trim() || detectMutation.isPending}
-            onClick={() => detectMutation.mutate()}
+            onClick={() => detectMutation.mutate({ companyId, generation: actionGenerationRef.current, workOrderId: detectWoId })}
             data-testid="warranty-detect-from-wo"
           >
             Detect from WO
@@ -258,7 +280,7 @@ export function WarrantyClaimsPage() {
           <Button
             type="button"
             disabled={!claimDraft.part_description.trim() || createMutation.isPending}
-            onClick={() => createMutation.mutate()}
+            onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...claimDraft } })}
           >
             Save claim
           </Button>
@@ -287,7 +309,14 @@ export function WarrantyClaimsPage() {
               onChange={(e) => setFileClaimNumber(e.target.value)}
             />
           </label>
-          <Button type="button" disabled={fileMutation.isPending} onClick={() => fileMutation.mutate()}>
+          <Button
+            type="button"
+            disabled={!fileTarget || fileMutation.isPending}
+            onClick={() => {
+              if (!fileTarget) return;
+              fileMutation.mutate({ id: fileTarget.id, companyId, generation: actionGenerationRef.current, claimNumber: fileClaimNumber });
+            }}
+          >
             File claim
           </Button>
         </div>

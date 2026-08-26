@@ -16,7 +16,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/EntityPicker[\s\S]{0,400}kind="work_order"[\s\S]{0,400}dataField="warranty-claim-work-order"/.test(s.page)) failures.push("claim creator must use the canonical work-order picker");
-  if (!/work_order_id:\s*claimDraft\.work_order_id \|\| undefined/.test(s.page)) failures.push("claim creator must submit the selected work_order_id");
+  if (!/work_order_id:\s*input\.draft\.work_order_id \|\| undefined/.test(s.page)) failures.push("claim creator must submit the snapshotted work_order_id");
   if (!/<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/.test(s.page)) failures.push("claim list must use an unresolved-safe work-order drill");
   if (!/wo\.display_id AS work_order_display_id/.test(s.route)) failures.push("claim list must project the work-order display id");
   if (!/LEFT JOIN maintenance\.work_orders wo[\s\S]{0,180}wo\.operating_company_id = wc\.operating_company_id/.test(s.route)) failures.push("claim list work-order label join must be company scoped");
@@ -42,7 +42,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "page", /kind="work_order"/, 'kind="unit"'],
-    ["payload", "page", /work_order_id:\s*claimDraft\.work_order_id \|\| undefined/, "work_order_id: undefined"],
+    ["payload", "page", /work_order_id:\s*input\.draft\.work_order_id \|\| undefined/, "work_order_id: undefined"],
     ["WO tombstone drill", "page", /<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/, '<EntityLink kind="work_order" id={row.work_order_id} label={row.work_order_display_id}'],
     ["WO label projection", "route", /wo\.display_id AS work_order_display_id/, "NULL AS work_order_display_id"],
     ["WO label scope", "route", /wo\.operating_company_id = wc\.operating_company_id/, "TRUE"],
