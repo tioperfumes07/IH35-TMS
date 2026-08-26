@@ -688,7 +688,10 @@ export function VehicleProfilePage() {
         danger
         onClose={() => setArchiveConfirmOpen(false)}
         onConfirm={async () => {
-          await archiveMutation.mutateAsync({ unitId: id, companyId, generation: actionGenerationRef.current }).catch(() => undefined); // onError above already toasts
+          // ConfirmModal closes only after this promise resolves. Preserve the rejection so a
+          // failed canonical archive remains retryable in-place instead of disappearing behind a
+          // toast while the unit is still active.
+          await archiveMutation.mutateAsync({ unitId: id, companyId, generation: actionGenerationRef.current });
         }}
       />
     </div>
