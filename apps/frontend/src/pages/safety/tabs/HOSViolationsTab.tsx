@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
@@ -35,6 +35,17 @@ function toDatetimeLocalValue(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+const emptyHosViolationForm = () => ({
+  driver_id: "",
+  related_load_id: "",
+  violation_type: "",
+  occurred_at: defaultOccurredAtIso(),
+  duration_minutes: "",
+  source: "manual_office" as Source,
+  notes: "",
+});
+
+/** @matrix-built modules=safety cols=driver,load,connectivity,reverse_link */
 export function HOSViolationsTab() {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightedViolationId = searchParams.get("violation_id")?.trim() ?? "";
@@ -45,16 +56,9 @@ export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
   const [voidTarget, setVoidTarget] = useState<HosViolationRow | null>(null);
-  const [form, setForm] = useState({
-    driver_id: "",
-    related_load_id: "",
-    violation_type: "",
-    occurred_at: defaultOccurredAtIso(),
-    duration_minutes: "",
-    source: "manual_office" as Source,
-    notes: "",
-  });
+  const [form, setForm] = useState(emptyHosViolationForm);
 
   function patchSearchParam(next: { driverId: string; loadId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -146,41 +150,32 @@ export function HOSViolationsTab() {
   }
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createHosViolation(companyId, {
-        driver_id: form.driver_id.trim(),
-        related_load_id: form.related_load_id || null,
-        violation_type: form.violation_type.trim(),
-        occurred_at: new Date(form.occurred_at).toISOString(),
-        duration_minutes: form.duration_minutes.trim() ? Number(form.duration_minutes) : null,
-        source: form.source,
-        notes: form.notes.trim() || null,
-        csa_points: selectedViolationType?.severity_weight ?? null,
-        // LST-LINK-02: the FK itself. catalogs.dot_violation_types had ZERO inbound foreign keys, so
-        // the FMCSA code was a copied string with nothing tying it to the catalog row.
-        dot_violation_type_id: selectedViolationType?.id ?? null,
-      }),
-    onSuccess: async () => {
-      setForm({
-        driver_id: "",
-        related_load_id: "",
-        violation_type: "",
-        occurred_at: defaultOccurredAtIso(),
-        duration_minutes: "",
-        source: "manual_office",
-        notes: "",
-      });
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", companyId] });
+    mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createHosViolation>[1] }) =>
+      createHosViolation(input.companyId, input.payload),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      setForm(emptyHosViolationForm());
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", input.companyId] });
     },
   });
 
   const voidMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => voidHosViolation(companyId, id, reason),
-    onSuccess: async () => {
+    mutationFn: (input: { id: string; reason: string; companyId: string; generation: number }) => voidHosViolation(input.companyId, input.id, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setVoidTarget(null);
-      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", companyId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    voidMutation.reset();
+    setVoidTarget(null);
+    setForm(emptyHosViolationForm());
+    setViolationTypeSearch("");
+  }, [companyId]);
 
   // LIST-EMPTY: the empty message renders only after the violations query settles.
   const listState = useListState(query, (query.data?.hos_violations ?? []).length === 0);
@@ -377,12 +372,26 @@ export function HOSViolationsTab() {
           type="button"
           className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
           disabled={!form.driver_id || !selectedViolationType?.id || createMutation.isPending}
-          onClick={() => createMutation.mutate()}
+          onClick={() => createMutation.mutate({
+            companyId,
+            generation: companyGenerationRef.current,
+            payload: {
+              driver_id: form.driver_id.trim(),
+              related_load_id: form.related_load_id || null,
+              violation_type: form.violation_type.trim(),
+              occurred_at: new Date(form.occurred_at).toISOString(),
+              duration_minutes: form.duration_minutes.trim() ? Number(form.duration_minutes) : null,
+              source: form.source,
+              notes: form.notes.trim() || null,
+              csa_points: selectedViolationType?.severity_weight ?? null,
+              dot_violation_type_id: selectedViolationType?.id ?? null,
+            },
+          })}
         >
           + Create
         </button>
       </div>
-      {createMutation.isError ? (
+      {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? (
         <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
           {createMutation.error instanceof Error ? createMutation.error.message : "Create failed."}
         </div>
@@ -425,7 +434,7 @@ export function HOSViolationsTab() {
         onClose={() => setVoidTarget(null)}
         onSubmit={async (reason) => {
           if (!voidTarget?.id) return;
-          await voidMutation.mutateAsync({ id: String(voidTarget.id), reason });
+          await voidMutation.mutateAsync({ id: String(voidTarget.id), reason, companyId, generation: companyGenerationRef.current });
         }}
       />
     </div>
