@@ -268,8 +268,17 @@ export function ReserveDashboard() {
               loading={historyListState.isLoading}
               storageKey="factoring-reserve-balance-history"
               tableTestId="factoring-reserve-balance-history-table"
-              pageSizeOptions={[20, 50, 100, 300]}
-              initialPageSize={20}
+              // ACCT-F-PARITYTABLE-DOUBLE-PAGINATION: `rows` is already one server page (limit=
+              // pageSize of `historyQuery.data.total`, offset-driven via the `page` state below).
+              // Without pageSize+hidePager, ParityTable's own uncontrolled pager re-derives
+              // "total" from rows.length and renders a second, contradictory pager directly above
+              // the real "Page {page+1} of {totalPages}" Prev/Next pager rendered right below this
+              // table -- same class already fixed 4x this session (REPORTS-F6363,
+              // DOCS-F-PARITYTABLE-DOUBLE-PAGINATION, ADMIN-F-PARITYTABLE-DOUBLE-PAGINATION,
+              // ACCT-F6433). Per ParityTable's own documented "caller pre-pages" combo: pageSize =
+              // server page size + hidePager -- no double slicing.
+              pageSize={pageSize}
+              hidePager
               // Settled-only empty text (LIST-EMPTY-1): supplied only once the query settles empty.
               emptyText={historyListState.isEmpty ? "No reserve movements found for the selected factor." : undefined}
             />
