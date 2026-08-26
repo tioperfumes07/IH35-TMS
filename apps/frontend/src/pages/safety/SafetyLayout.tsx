@@ -65,6 +65,10 @@ export function SafetyLayout() {
   });
   const prefsMutation = useMutation({
     mutationFn: (preferences: Record<string, unknown>) => patchUserPreferences(preferences),
+    // Both controls PATCH the complete Safety preference object. TanStack serializes mutations
+    // sharing a scope, so an older Active/All write cannot finish after and overwrite a newer
+    // activity-window choice (or vice versa).
+    scope: { id: "safety-filter-preferences" },
   });
   // Cross-module KPI strip + cached CSA badge — shown on every Safety tab (Law of Total
   // Connectivity: a persistent view of company-wide safety health regardless of which tab is active).
