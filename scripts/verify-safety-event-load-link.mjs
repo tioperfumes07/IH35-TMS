@@ -20,14 +20,14 @@ const FILE = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
 export function collectProblems(src) {
   const problems = [];
   if (!/related_load_id:\s*string;/.test(src)) problems.push("draft type is missing `related_load_id: string;`");
-  if (!/related_load_id:\s*draft\.related_load_id\.trim\(\)\s*\|\|\s*undefined/.test(src)) {
-    problems.push("create payload does not send related_load_id from the draft");
+  if (!/related_load_id:\s*input\.draft\.related_load_id\.trim\(\)\s*\|\|\s*undefined/.test(src)) {
+    problems.push("create payload does not send related_load_id from the snapshotted draft");
   }
   const hasLoadKind = /kind="load"/.test(src);
   const hasPickerIdentity = /safety-event-related-load-picker/.test(src);
   if (!hasLoadKind) problems.push('log modal picker must use kind="load"');
   if (!hasPickerIdentity) problems.push("log modal picker must expose safety-event-related-load-picker");
-  const sendsField = /related_load_id:\s*draft\.related_load_id/.test(src);
+  const sendsField = /related_load_id:\s*input\.draft\.related_load_id/.test(src);
   if ((hasLoadKind && hasPickerIdentity) !== sendsField) {
     problems.push("UI picker and create payload disagree — one sends related_load_id, the other does not");
   }
@@ -37,16 +37,16 @@ export function collectProblems(src) {
 if (process.argv.includes("--selftest")) {
   const good = `
     type Draft = { related_load_id: string; };
-    const payload = { related_load_id: draft.related_load_id.trim() || undefined };
+    const payload = { related_load_id: input.draft.related_load_id.trim() || undefined };
     <EntityPicker kind="load" data-testid="safety-event-related-load-picker" />;
   `;
   if (collectProblems(good).length) throw new Error(`good fixture rejected: ${collectProblems(good).join("; ")}`);
   const mutations = [
     [good.replace("related_load_id: string;", "removed_load_id: string;"), "draft type is missing"],
-    [good.replace("draft.related_load_id.trim() || undefined", "undefined"), "create payload does not send"],
+    [good.replace("input.draft.related_load_id.trim() || undefined", "undefined"), "create payload does not send"],
     [good.replace('kind="load"', 'kind="driver"'), 'must use kind="load"'],
     [good.replace("safety-event-related-load-picker", "removed-load-picker"), "must expose safety-event-related-load-picker"],
-    [good.replace("related_load_id: draft.related_load_id", "removed_load_id: draft.related_load_id"), "UI picker and create payload disagree"],
+    [good.replace("related_load_id: input.draft.related_load_id", "removed_load_id: input.draft.related_load_id"), "UI picker and create payload disagree"],
   ];
   for (const [fixture, expected] of mutations) {
     const problems = collectProblems(fixture);

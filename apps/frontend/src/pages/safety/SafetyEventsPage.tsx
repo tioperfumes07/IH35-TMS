@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +27,8 @@ import { Combobox } from "../../components/Combobox";
 type Props = {
   operatingCompanyId: string;
 };
+
+/** @matrix-built modules=safety cols=driver,unit,load,connectivity,reverse_link */
 
 type EventDraft = {
   event_type: string;
@@ -103,6 +105,7 @@ function initialEventDraft(): EventDraft {
 
 export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   // C-13 / LST-F106: Safety Home drill links here as /safety/safety-events?event_id=<id>.
   // Detail panel loads via getSafetyEventDetail — no need for the id to be in the current list page.
@@ -246,36 +249,47 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   });
 
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (input: { companyId: string; generation: number; draft: EventDraft }) => {
       const payload = {
-        operating_company_id: operatingCompanyId,
-        event_type: draft.event_type,
-        severity: draft.severity,
-        status: draft.status,
-        kpi_bucket: draft.kpi_bucket,
-        subject_type: draft.subject_type,
-        subject_driver_id: draft.subject_driver_id.trim() || undefined,
-        subject_unit_id: draft.subject_unit_id.trim() || undefined,
-        related_load_id: draft.related_load_id.trim() || undefined,
-        location_text: draft.location_text.trim() || undefined,
-        injury_count: Number(draft.injury_count) || 0,
-        fatality_count: Number(draft.fatality_count) || 0,
-        tow_away_required: draft.tow_away_required,
-        dot_reportable: draft.dot_reportable,
-        police_report_number: draft.police_report_number.trim() || undefined,
-        title: draft.title.trim(),
-        description: draft.description.trim() || undefined,
-        occurred_at: draft.occurred_at,
+        operating_company_id: input.companyId,
+        event_type: input.draft.event_type,
+        severity: input.draft.severity,
+        status: input.draft.status,
+        kpi_bucket: input.draft.kpi_bucket,
+        subject_type: input.draft.subject_type,
+        subject_driver_id: input.draft.subject_driver_id.trim() || undefined,
+        subject_unit_id: input.draft.subject_unit_id.trim() || undefined,
+        related_load_id: input.draft.related_load_id.trim() || undefined,
+        location_text: input.draft.location_text.trim() || undefined,
+        injury_count: Number(input.draft.injury_count) || 0,
+        fatality_count: Number(input.draft.fatality_count) || 0,
+        tow_away_required: input.draft.tow_away_required,
+        dot_reportable: input.draft.dot_reportable,
+        police_report_number: input.draft.police_report_number.trim() || undefined,
+        title: input.draft.title.trim(),
+        description: input.draft.description.trim() || undefined,
+        occurred_at: input.draft.occurred_at,
       };
       return createSafetyEvent(payload);
     },
-    onSuccess: () => {
+    onSuccess: (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
       setLogModalOpen(false);
       setDraft(initialEventDraft());
       setLogDraftBaseline(null);
-      void queryClient.invalidateQueries({ queryKey: ["safety", "events-v2", operatingCompanyId] });
+      void queryClient.invalidateQueries({ queryKey: ["safety", "events-v2", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    createMutation.reset();
+    setSelectedEventId(null);
+    setLogModalOpen(false);
+    setDraft(initialEventDraft());
+    setLogDraftBaseline(null);
+    setSuggestionPinned(false);
+  }, [operatingCompanyId]);
 
   const allRows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
 
@@ -805,14 +819,21 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         </div>
 
         <div className="mt-4 flex flex-col items-end gap-2">
-          {createMutation.isError ? (
+          {createMutation.isError &&
+          createMutation.variables?.generation === companyGenerationRef.current ? (
             <p className="w-full text-xs text-red-700" data-testid="safety-event-create-error">
               {userFacingApiError(createMutation.error, "Could not save the safety event.")}
             </p>
           ) : null}
           <button
             type="button"
-            onClick={() => createMutation.mutate()}
+            onClick={() =>
+              createMutation.mutate({
+                companyId: operatingCompanyId,
+                generation: companyGenerationRef.current,
+                draft: { ...draft },
+              })
+            }
             disabled={createMutation.isPending || !draft.title.trim() || !draft.event_type.trim()}
             className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
           >
