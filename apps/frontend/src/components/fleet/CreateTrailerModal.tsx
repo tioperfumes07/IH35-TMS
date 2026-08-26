@@ -123,8 +123,8 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
       });
     },
     onSuccess: async (created, input) => {
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       pushToast("Trailer created", "success");
       onCreated?.(String(created.id), input.draft.equipment_number.trim());
       resetAndClose();

@@ -11,6 +11,7 @@ const checks = [
   ["lease scope uses submitted company", /currently_leased_to_company_id: input\.draft\.currently_leased_to_company_id \|\| input\.companyId/],
   ["created label uses submitted draft", /onCreated\?\.\(String\(created\.id\), input\.draft\.equipment_number\.trim\(\)\)/],
   ["stale success rejected", /input\.generation !== actionGenerationRef\.current/],
+  ["stale success rejected before side effects", /onSuccess: async \(created, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;\s*await queryClient\.invalidateQueries/],
   ["stale error rejected", /input\.generation === actionGenerationRef\.current/],
   ["transition increments generation", /actionGenerationRef\.current \+= 1/],
   ["transition resets mutation", /createMutation\.reset\(\)/],
@@ -27,11 +28,12 @@ if (process.argv.includes("--selftest")) {
     source.replace("input.draft.equipment_number.trim()", "draft.equipment_number.trim()"),
     source.replace("input.draft.currently_leased_to_company_id || input.companyId", "draft.currently_leased_to_company_id || operatingCompanyId"),
     source.replace("input.generation !== actionGenerationRef.current", "false"),
+    source.replace("if (input.generation !== actionGenerationRef.current) return;\n      await queryClient.invalidateQueries", "await queryClient.invalidateQueries\n      if (input.generation !== actionGenerationRef.current) return;"),
     source.replace("draft: { ...draft }", "draft"),
   ];
   const escaped = mutations.filter((text) => failures(text).length === 0).length;
-  if (escaped) { console.error(`verify-create-trailer-company-lifecycle selftest FAIL: ${escaped}/5 mutations escaped`); process.exit(1); }
-  console.log("verify-create-trailer-company-lifecycle selftest PASS — 5/5 planted defects detected");
+  if (escaped) { console.error(`verify-create-trailer-company-lifecycle selftest FAIL: ${escaped}/6 mutations escaped`); process.exit(1); }
+  console.log("verify-create-trailer-company-lifecycle selftest PASS — 6/6 planted defects detected");
   process.exit(0);
 }
 console.log("verify-create-trailer-company-lifecycle PASS — creator preserves submitted company/draft/kind and human label across transitions");
