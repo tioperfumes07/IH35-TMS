@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUnit } from "../../api/mdata";
 import { listMyCompanies, type MyCompany } from "../../api/org";
@@ -42,6 +42,7 @@ type UnitDraft = typeof EMPTY;
 type CreateUnitSubmission = {
   draft: UnitDraft;
   operatingCompanyId: string;
+  generation: number;
 };
 
 /**
@@ -52,6 +53,7 @@ type CreateUnitSubmission = {
 export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const actionGenerationRef = useRef(0);
   const initialDraft = useMemo(
     () => ({ ...EMPTY, currently_leased_to_company_id: operatingCompanyId }),
     [operatingCompanyId]
@@ -59,12 +61,14 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   const [draft, setDraft] = useState(initialDraft);
 
   useEffect(() => {
+    actionGenerationRef.current += 1;
     if (open) setDraft(initialDraft);
   }, [initialDraft, open]);
 
   const set = (key: keyof typeof EMPTY, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
   const resetAndClose = () => {
+    actionGenerationRef.current += 1;
     setDraft(initialDraft);
     onClose();
   };
@@ -106,13 +110,17 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
       });
     },
     onSuccess: async (created, submission) => {
+      if (submission.generation !== actionGenerationRef.current) return;
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       pushToast("Unit created", "success");
-      if (submission.operatingCompanyId !== operatingCompanyId) return;
       onCreated?.(String(created.id), submission.draft.unit_number.trim());
       resetAndClose();
     },
-    onError: (error) => pushToast(userFacingApiError(error, "Failed to create unit"), "error"),
+    onError: (error, submission) => {
+      if (submission.generation === actionGenerationRef.current) {
+        pushToast(userFacingApiError(error, "Failed to create unit"), "error");
+      }
+    },
   });
 
   const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending && !companiesQuery.isError;
@@ -143,7 +151,13 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
           // INLINE-CREATE-NESTED-FORM: React still bubbles across the Modal portal into Book Load's
           // outer <form> — without stopPropagation the wizard submits (native GET / silent close).
           e.stopPropagation();
-          if (canSubmit) createMutation.mutate({ draft: { ...draft }, operatingCompanyId });
+          if (canSubmit) {
+            createMutation.mutate({
+              draft: { ...draft },
+              operatingCompanyId,
+              generation: actionGenerationRef.current,
+            });
+          }
         }}
       >
         {companiesQuery.isError ? (
