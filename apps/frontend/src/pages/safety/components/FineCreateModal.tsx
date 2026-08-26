@@ -330,8 +330,9 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               ) : null}
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Issued date</label>
+              <label htmlFor="fine-issued-date" className="text-xs font-semibold text-gray-600">Issued date</label>
               <DatePicker
+                id="fine-issued-date"
                 value={issuedDate}
                 onChange={setIssuedDate}
                 className="h-9"

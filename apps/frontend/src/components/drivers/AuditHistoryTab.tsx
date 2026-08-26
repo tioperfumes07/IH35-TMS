@@ -187,24 +187,24 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="driver-audit-history-tab">
       {/* ARCHIVE (A24-6): prior placeholder lived inline on DriverDetail — now live drill-down with QBO-style filters */}
       <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
-        <label className="text-xs text-gray-600">
-          From
+        <div className="text-xs text-gray-600">
+          <span>From</span>
           <DatePicker
             className="mt-1 block"
             value={fromDate}
             onChange={(next) => setFromDate(next)}
             data-testid="driver-audit-filter-from"
           />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
+        </div>
+        <div className="text-xs text-gray-600">
+          <span>To</span>
           <DatePicker
             className="mt-1 block"
             value={toDate}
             onChange={(next) => setToDate(next)}
             data-testid="driver-audit-filter-to"
           />
-        </label>
+        </div>
         <label className="text-xs text-gray-600">
           Event type
           <MultiSelectDropdown

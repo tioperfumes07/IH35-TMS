@@ -206,8 +206,8 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             createMutation.mutate();
           }}
         >
-          <label className="block text-xs text-slate-600">
-            Date
+          <div className="block text-xs text-slate-600">
+            <span>Date</span>
             <DatePicker
               value={meetingDate}
               onChange={setMeetingDate}
@@ -215,7 +215,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
               className="mt-1 block w-full"
               data-testid="safety-meeting-date"
             />
-          </label>
+          </div>
           <label className="block text-xs text-slate-600">
             Topic
             <input

@@ -159,8 +159,9 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Reported date</label>
+            <label htmlFor="company-violation-reported-date" className="text-xs font-semibold text-gray-600">Reported date</label>
             <DatePicker
+              id="company-violation-reported-date"
               value={reportedDate}
               onChange={(next) => setReportedDate(next)}
               className=""

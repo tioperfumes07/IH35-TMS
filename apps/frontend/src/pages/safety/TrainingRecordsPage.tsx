@@ -252,8 +252,8 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               required
             />
           </label>
-          <label className="block text-xs text-slate-600">
-            Completed date
+          <div className="block text-xs text-slate-600">
+            <span>Completed date</span>
             <DatePicker
               value={completedAt}
               onChange={setCompletedAt}
@@ -261,16 +261,16 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               className="mt-1 block w-full"
               data-testid="training-record-completed"
             />
-          </label>
-          <label className="block text-xs text-slate-600">
-            Expiry date (optional)
+          </div>
+          <div className="block text-xs text-slate-600">
+            <span>Expiry date (optional)</span>
             <DatePicker
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
               className="mt-1 block h-8 w-full"
               data-testid="training-record-expiry"
             />
-          </label>
+          </div>
           <label className="block text-xs text-slate-600">
             Notes
             <textarea

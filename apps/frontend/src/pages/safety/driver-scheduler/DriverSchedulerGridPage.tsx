@@ -354,17 +354,17 @@ export function DriverSchedulerGridPage() {
             </div>
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-xs font-semibold uppercase text-gray-600">
-              Start date
+            <div className="block text-xs font-semibold uppercase text-gray-600">
+              <span>Start date</span>
               <div className="mt-1">
                 <DatePicker
                   value={tempCoverForm.startDate}
                   onChange={(startDate) => setTempCoverForm((f) => ({ ...f, startDate, endDate: f.endDate < startDate ? startDate : f.endDate }))}
                 />
               </div>
-            </label>
-            <label className="block text-xs font-semibold uppercase text-gray-600">
-              End date
+            </div>
+            <div className="block text-xs font-semibold uppercase text-gray-600">
+              <span>End date</span>
               <div className="mt-1">
                 <DatePicker
                   value={tempCoverForm.endDate}
@@ -372,7 +372,7 @@ export function DriverSchedulerGridPage() {
                   onChange={(endDate) => setTempCoverForm((f) => ({ ...f, endDate }))}
                 />
               </div>
-            </label>
+            </div>
           </div>
           <label className="block text-xs font-semibold uppercase text-gray-600">
             Notes (optional)
