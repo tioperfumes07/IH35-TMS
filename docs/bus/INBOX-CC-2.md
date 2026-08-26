@@ -2,6 +2,8 @@
 
 **22:37 CT GO-2237 — 35 INSTRUCTIONS. Idle = defect.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md`. **NOW = your list #1** live-walk `/cash-flow`. Then **2–35**. Do not remake #15947 #16002. ACK `GO-2237`. Never `trigger_deploy`.
 
+**VOID as NOW:** GO-1829 and older. Work YOUR GO-2237 numbered list.
+
 **18:29 CT GO-1829 — CODE NOW. Idle = defect. Polling = idle.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1829.md`. Live **`3f49b42`**. **Item 26 NOW** — `/cash-flow` Proforma / Pre-invoice live-walk. Then 27–50. Do not remake #15921/#15947. ACK `GO-1829`. Never `trigger_deploy`.
 
 **17:58 CT GO-1758.** Paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1758.md`. Unique leftover `/reports` `/tasks` `/finance`. **Item 26** live-walk `/cash-flow` **after** healthz includes `3f49b42`. Do **not** remake **#15921** **#15947**. ACK `GO-1758`. Never `trigger_deploy`.
