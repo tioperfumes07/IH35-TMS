@@ -103,10 +103,13 @@ export function assertVoidRequiresReason(sources) {
     if (!/setVoidTargetId/.test(code)) {
       problems.push(`${tab.rel}: void button must open VoidReasonModal via setVoidTargetId, not fire void directly.`);
     }
-    if (
-      !/mutationFn:\s*\(\{\s*id,\s*reason\s*\}/.test(code) ||
-      !new RegExp(`${tab.apiFn}\\([^)]*reason`).test(code)
-    ) {
+    const destructuredReason =
+      /mutationFn:\s*\(\{\s*id,\s*reason\s*\}/.test(code) &&
+      new RegExp(`${tab.apiFn}\\([^)]*reason`).test(code);
+    const snapshottedReason =
+      /mutationFn:\s*\(input:\s*\{[^}]*id:\s*string;[^}]*reason:\s*string;[^}]*companyId:\s*string;[^}]*generation:\s*number[^}]*\}\)/.test(code) &&
+      new RegExp(`${tab.apiFn}\\(input\\.companyId,\\s*input\\.id,\\s*input\\.reason\\)`).test(code);
+    if (!destructuredReason && !snapshottedReason) {
       problems.push(`${tab.rel}: void mutation must pass user-supplied reason to ${tab.apiFn}.`);
     }
     if (!/<VoidReasonModal[\s\S]{0,800}onSubmit=\{async\s*\(reason\)/.test(code)) {
