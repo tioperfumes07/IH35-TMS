@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { getSafetyEventsFiltered, listDaEnrollments } from "../../api/safety";
 import type { SafetyActivityWindow, SafetyDriverFilter } from "./SafetyDashboardFilter";
+import { Combobox } from "../Combobox";
 
 type Props = {
   companyId: string;
@@ -316,21 +317,18 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               className="w-40 rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
             />
           </label>
-          <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
-            Sort
-            <select
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <label htmlFor="driver-cards-sort">Sort</label>
+            <Combobox
+              id="driver-cards-sort"
+              dataTestId="driver-cards-sort"
               value={sort}
-              onChange={(e) => setSort(e.target.value as CardSort)}
-              data-testid="driver-cards-sort"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
-            >
-              {sortOptions.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={sortOptions.map((option) => ({ value: option.id, label: option.label }))}
+              onChange={(next) => setSort(next as CardSort)}
+              ariaLabel="Sort driver safety cards"
+              className="min-w-40"
+            />
+          </div>
         </div>
       </div>
 
