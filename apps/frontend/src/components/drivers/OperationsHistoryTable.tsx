@@ -106,9 +106,9 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
 
-  const rows = query.data?.rows ?? [];
-  const total = query.data?.total ?? 0;
-  const hasMore = query.data?.has_more ?? false;
+  const rows = query.isError ? [] : query.data?.rows ?? [];
+  const total = query.isError ? 0 : query.data?.total ?? 0;
+  const hasMore = query.isError ? false : query.data?.has_more ?? false;
 
   // Stable keys for ParityTable (rowKey is (row) => string — no index arg).
   const keyedRows = useMemo(

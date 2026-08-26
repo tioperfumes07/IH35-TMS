@@ -98,7 +98,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   });
 
   const exportCSV = () => {
-    const events = auditQuery.data?.events ?? [];
+    const events = auditQuery.isError ? [] : auditQuery.data?.events ?? [];
     if (!events.length) return;
     const rows = events.map((e: DriverAuditEvent) => ({
       Date: e.created_at,
@@ -118,7 +118,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
     URL.revokeObjectURL(url);
   };
 
-  const events = auditQuery.data?.events ?? [];
+  const events = auditQuery.isError ? [] : auditQuery.data?.events ?? [];
   const eventTypeOptions = useMemo(() => {
     const unique = new Set(events.map((row) => row.event_type));
     return Array.from(unique).sort();
