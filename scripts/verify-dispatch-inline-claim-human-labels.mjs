@@ -38,7 +38,7 @@ function assertAll(srcs) {
   }
   const creatorContracts = [
     ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", /onCreated\?: \(driverId: string, displayName: string\)/, /onCreated\(created\.id, displayName\)/, "driver"],
-    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", /onCreated\?: \(unitId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), draft\.unit_number\.trim\(\)\)/, "unit"],
+    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", /onCreated\?: \(unitId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), submission\.draft\.unit_number\.trim\(\)\)/, "unit"],
     ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", /onCreated\?: \(equipmentId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), draft\.equipment_number\.trim\(\)\)/, "trailer"],
   ];
   for (const [file, signature, callback, noun] of creatorContracts) {
@@ -106,10 +106,13 @@ function assertAll(srcs) {
     ["apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx", /entityLabel\(inv\.display_id, inv\.invoice_id, "Invoice"\)/, "invoice display ID"],
     ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", /EntityLinkOrTombstone kind="driver" id=\{selectedPending\.driver_id\} name=\{selectedPending\.driver_name\}/, "unresolved-safe deduction driver name"],
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", /EntityLinkOrTombstone kind="load" id=\{String\(currentLoad\.load_id\)\} name=\{currentLoad\.load_number\}/, "unresolved-safe current load number"],
-    ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", /entityLabel\(tx\.categorization_load_number, tx\.categorization_load_id \|\| tx\.matched_load_id, "Load"\)/, "bank load number"],
   ];
   for (const [file, pattern, label] of exactConsumers) {
     if (!pattern.test(srcs[file])) problems.push(`${file}: missing exact ${label} consumer`);
+  }
+  const banking = srcs["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"];
+  if ((banking.match(/entityLabel\(tx\.resolved_load_number, tx\.resolved_load_id, "Load"\)/g) ?? []).length !== 2) {
+    problems.push("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx: missing exact bank load number consumers");
   }
   return problems;
 }
@@ -121,7 +124,7 @@ if (SELFTEST) {
   const mutations = [
     ["apps/frontend/src/components/parity/EntityPicker.tsx", "onChange(next, next ? options.find((option) => option.value === next) ?? null : null)", "onChange(next)", "picker option return"],
     ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", "onCreated(created.id, displayName)", "onCreated(created.id)", "created driver label"],
-    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "onCreated?.(String(created.id), draft.unit_number.trim())", "onCreated?.(String(created.id))", "created unit label"],
+    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "onCreated?.(String(created.id), submission.draft.unit_number.trim())", "onCreated?.(String(created.id))", "created unit label"],
     ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "onCreated?.(String(created.id), draft.equipment_number.trim())", "onCreated?.(String(created.id))", "created trailer label"],
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "const label = option?.label", "const label = next.slice(0, 8) || option?.label", "unit roster label"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
@@ -133,6 +136,7 @@ if (SELFTEST) {
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", 'name={currentLoad.load_number}', 'name={null}', "current load human label"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'getLoad(id as string, companyId)', 'getLoad(id as string)', "load label company scope"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'name={loadNumber}', 'name={null}', "load banking reverse label"],
+    ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", 'entityLabel(tx.resolved_load_number, tx.resolved_load_id, "Load")', 'entityLabel(null, tx.resolved_load_id, "Load")', "bank resolved load number"],
   ];
   for (const [file, needle, replacement, label] of mutations) {
     const planted = { ...srcs, [file]: srcs[file].replace(needle, replacement) };

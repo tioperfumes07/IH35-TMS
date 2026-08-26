@@ -38,6 +38,12 @@ const EMPTY = {
   currently_leased_to_company_id: "",
 };
 
+type UnitDraft = typeof EMPTY;
+type CreateUnitSubmission = {
+  draft: UnitDraft;
+  operatingCompanyId: string;
+};
+
 /**
  * Create truck/unit modal for /fleet roster.
  * Wires to POST /api/v1/mdata/units. Scopes the new unit to the selected operating
@@ -83,26 +89,27 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   );
 
   const createMutation = useMutation({
-    mutationFn: () => {
-      const yearRaw = draft.year.trim();
+    mutationFn: ({ draft: submittedDraft, operatingCompanyId: submittedCompanyId }: CreateUnitSubmission) => {
+      const yearRaw = submittedDraft.year.trim();
       const year = yearRaw ? Number(yearRaw) : undefined;
       return createUnit({
-        unit_number: draft.unit_number.trim(),
-        vin: draft.vin.trim(),
-        make: draft.make.trim() || undefined,
-        model: draft.model.trim() || undefined,
+        unit_number: submittedDraft.unit_number.trim(),
+        vin: submittedDraft.vin.trim(),
+        make: submittedDraft.make.trim() || undefined,
+        model: submittedDraft.model.trim() || undefined,
         year: year != null && Number.isFinite(year) ? year : undefined,
-        license_plate: draft.license_plate.trim() || undefined,
-        license_state: draft.license_state.trim() || undefined,
-        notes: draft.notes.trim() || undefined,
-        owner_company_id: draft.owner_company_id || undefined,
-        currently_leased_to_company_id: draft.currently_leased_to_company_id || operatingCompanyId,
+        license_plate: submittedDraft.license_plate.trim() || undefined,
+        license_state: submittedDraft.license_state.trim() || undefined,
+        notes: submittedDraft.notes.trim() || undefined,
+        owner_company_id: submittedDraft.owner_company_id || undefined,
+        currently_leased_to_company_id: submittedDraft.currently_leased_to_company_id || submittedCompanyId,
       });
     },
-    onSuccess: async (created) => {
+    onSuccess: async (created, submission) => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       pushToast("Unit created", "success");
-      onCreated?.(String(created.id), draft.unit_number.trim());
+      if (submission.operatingCompanyId !== operatingCompanyId) return;
+      onCreated?.(String(created.id), submission.draft.unit_number.trim());
       resetAndClose();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create unit"), "error"),
@@ -136,7 +143,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
           // INLINE-CREATE-NESTED-FORM: React still bubbles across the Modal portal into Book Load's
           // outer <form> — without stopPropagation the wizard submits (native GET / silent close).
           e.stopPropagation();
-          if (canSubmit) createMutation.mutate();
+          if (canSubmit) createMutation.mutate({ draft: { ...draft }, operatingCompanyId });
         }}
       >
         {companiesQuery.isError ? (
