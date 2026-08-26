@@ -78,7 +78,7 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
   }, [value]);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    function onDoc(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         // DATEPICKER-LABEL-CLICKTHROUGH-REOPEN: several callers wrap this component in a bare
         // <label>text<DatePicker/></label> (implicit label-for). Clicking the label's own text
@@ -99,8 +99,8 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
         setOpen(false);
       }
     }
-    if (open) document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    if (open) document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
   }, [open]);
 
   const firstDay = new Date(viewY, viewM, 1).getDay();
