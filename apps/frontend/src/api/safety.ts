@@ -340,6 +340,21 @@ export function getTrainingCompletions(companyId: string, params: { driver_id?: 
 
 export type TrainingProgramCategory = "entry_level" | "refresher" | "remedial" | "hazmat" | "other";
 export type TrainingProgramFrequency = "one_time" | "annual" | "n_month";
+export type TrainingProgram = {
+  id: string;
+  operating_company_id: string;
+  name: string;
+  category: TrainingProgramCategory;
+  frequency: TrainingProgramFrequency;
+  recertify_months: number | null;
+  passing_grade: string | null;
+};
+
+export function listTrainingPrograms(companyId: string) {
+  return apiRequest<{ training_programs: TrainingProgram[] }>(
+    `/api/v1/safety/training-programs?${q(companyId)}`
+  );
+}
 
 export function createTrainingProgram(
   companyId: string,
@@ -347,10 +362,11 @@ export function createTrainingProgram(
     name: string;
     category: TrainingProgramCategory;
     frequency: TrainingProgramFrequency;
+    recertify_months?: number;
     passing_grade?: string;
   }
 ) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/training-programs?${q(companyId)}`, {
+  return apiRequest<TrainingProgram>(`/api/v1/safety/training-programs?${q(companyId)}`, {
     method: "POST",
     body,
   });
