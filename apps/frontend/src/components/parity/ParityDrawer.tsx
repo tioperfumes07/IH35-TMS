@@ -7,8 +7,9 @@
  * creator-chrome lock for Expense / Bill / Bill-payment create (QBO-like
  * side panels). Create Vendor / Create Customer stay centered rich modals.
  */
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { ConfirmDiscardDialog } from "../dialogs/ConfirmDiscardDialog";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
 import "../../styles/proportion-chrome.css";
 
@@ -31,6 +32,11 @@ export type ParityDrawerProps = {
    * still paints on top of it.
    */
   stackAboveModal?: boolean;
+  /** Keep dirty creator drafts open until the operator explicitly confirms discard. */
+  confirmDiscardOnClose?: boolean;
+  isDirty?: boolean;
+  /** Exposes the same guarded close to footer Cancel buttons. */
+  onRegisterAttemptClose?: (attemptClose: () => void) => void;
 };
 
 export function ParityDrawer({
@@ -43,7 +49,33 @@ export function ParityDrawer({
   children,
   size = "regular",
   stackAboveModal = false,
+  confirmDiscardOnClose = false,
+  isDirty = false,
+  onRegisterAttemptClose,
 }: ParityDrawerProps) {
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const finalizeClose = useCallback(() => {
+    setShowDiscardConfirm(false);
+    onClose();
+  }, [onClose]);
+  const attemptClose = useCallback(() => {
+    if (confirmDiscardOnClose && isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    onClose();
+  }, [confirmDiscardOnClose, isDirty, onClose]);
+
+  useEffect(() => {
+    if (!onRegisterAttemptClose) return;
+    onRegisterAttemptClose(attemptClose);
+    return () => onRegisterAttemptClose(() => {});
+  }, [attemptClose, onRegisterAttemptClose]);
+
+  useEffect(() => {
+    if (!open) setShowDiscardConfirm(false);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -62,11 +94,11 @@ export function ParityDrawer({
       if (stackAboveModal) {
         e.stopImmediatePropagation();
       }
-      onClose();
+      attemptClose();
     };
     document.addEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
     return () => document.removeEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
-  }, [open, onClose, stackAboveModal]);
+  }, [attemptClose, open, stackAboveModal]);
 
   if (!open) return null;
   const widthClass = size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
@@ -106,7 +138,7 @@ export function ParityDrawer({
       className={`fixed inset-0 ${stackClass}`}
       {...(stackAboveModal ? { "data-parity-drawer-stack-above-modal": "true" } : {})}
     >
-      <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={attemptClose} />
       <aside
         role="dialog"
         aria-label={title}
@@ -123,7 +155,7 @@ export function ParityDrawer({
               <button
                 type="button"
                 aria-label="Back to previous surface"
-                onClick={onBack}
+                onClick={confirmDiscardOnClose ? attemptClose : onBack}
                 className="min-h-11 rounded-sm px-2 text-lg text-gray-600 hover:bg-gray-100 sm:min-h-0"
               >
                 ←
@@ -137,7 +169,7 @@ export function ParityDrawer({
           <button
             type="button"
             aria-label="Close"
-            onClick={onClose}
+            onClick={attemptClose}
             className="min-h-11 rounded-sm px-2 text-gray-500 hover:bg-gray-100 sm:min-h-0"
           >
             ✕
@@ -148,6 +180,11 @@ export function ParityDrawer({
           <footer className="sticky bottom-0 border-t border-gray-200 bg-white px-4 py-3">{footer}</footer>
         ) : null}
       </aside>
+      <ConfirmDiscardDialog
+        open={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onDiscard={finalizeClose}
+      />
     </div>,
     document.body
   );
