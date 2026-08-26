@@ -31,6 +31,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   const [requiredAttendees, setRequiredAttendees] = useState<string[]>([]);
   const [attendeePick, setAttendeePick] = useState<string | null>(null);
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   const meetingsQuery = useQuery({
@@ -44,8 +45,10 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
       createSafetyMeeting(input.companyId, input.payload),
     onSuccess: (_result, input) => {
       if (input.generation !== lifecycleGenerationRef.current) return;
+      lifecycleGenerationRef.current += 1;
       setCreateOpen(false);
       setTopic("");
+      setMeetingDate(companyToday());
       setRequiredAttendees([]);
       setAttendeePick(null);
       void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", input.companyId] });
@@ -67,6 +70,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   });
 
   const closeCreate = () => {
+    if (createMutation.isPending) return;
     lifecycleGenerationRef.current += 1;
     createMutation.reset();
     setCreateOpen(false);
@@ -75,6 +79,9 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     setRequiredAttendees([]);
     setAttendeePick(null);
   };
+
+  const isCreateDirty =
+    topic !== "" || meetingDate !== companyToday() || requiredAttendees.length > 0;
 
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
@@ -221,7 +228,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         </div>
       ) : null}
 
-      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Meeting">
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Meeting" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form
           className="space-y-3"
           data-testid="safety-meeting-create-modal"
@@ -307,7 +314,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={closeCreate}>
+            <Button type="button" variant="secondary" size="sm" onClick={attemptClose} disabled={createMutation.isPending}>
               Cancel
             </Button>
             <Button type="submit" size="sm" loading={createMutation.isPending} data-testid="safety-meeting-submit">
