@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createSafetyEvent, listTerminationReasons } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -36,6 +36,22 @@ export function TerminateConfirmModal({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  const resetDraft = useCallback(() => {
+    setTerminationReasonId("");
+    setSummary("");
+    setEventDate(companyToday());
+    setError("");
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, operatingCompanyId, driverId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   const reasonsQ = useQuery({
     queryKey: ["driver-termination-reasons", operatingCompanyId],
     queryFn: () => listTerminationReasons(operatingCompanyId).then((result) => result.reasons),
@@ -67,10 +83,8 @@ export function TerminateConfirmModal({
         summary: summary.trim(),
         termination_reason_id: terminationReasonId,
       });
-      setSummary("");
-      setTerminationReasonId("");
       onTerminated?.();
-      onClose();
+      handleClose();
     } catch {
       setError("Failed to terminate driver.");
     } finally {
@@ -86,7 +100,7 @@ export function TerminateConfirmModal({
     })) ?? [];
 
   return (
-    <Modal open={open} onClose={onClose} title={`Terminate — ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Terminate — ${driverName}`}>
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
           Creates a termination safety event and updates driver status to Terminated.
@@ -140,7 +154,7 @@ export function TerminateConfirmModal({
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} disabled={reasonsQ.isError} data-testid="terminate-confirm">
