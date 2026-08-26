@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -31,6 +31,8 @@ import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
+import { Modal } from "../../components/Modal";
+import { Button } from "../../components/Button";
 
 // ADDITIVE: "filings" is the module's new overview/home landing tab (owner decision 2026-07-05,
 // memory `compliance-taxes-permits-module-org`) — a cross-module "view all pending" rollup. Every
@@ -79,6 +81,9 @@ export function ComplianceDashboardPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
   const [ruleError, setRuleError] = useState<string | null>(null);
+  const ruleGenerationRef = useRef(0);
+  const [ruleCreateOpen, setRuleCreateOpen] = useState(false);
+  const [credentialTypeDraft, setCredentialTypeDraft] = useState("cdl");
   const tab = parseComplianceTab(searchParams.get("tab"));
 
   const setTab = (next: ComplianceTab) => {
@@ -113,28 +118,50 @@ export function ComplianceDashboardPage() {
   });
 
   const createRuleM = useMutation({
-    mutationFn: (credentialType: string) =>
+    mutationFn: (input: { companyId: string; generation: number; credentialType: string }) =>
       createComplianceRule({
-        operating_company_id: companyId,
-        credential_type: credentialType,
+        operating_company_id: input.companyId,
+        credential_type: input.credentialType,
         entity_scope: "all",
         recipient_emails: [],
         notify_days_before: [30, 14, 7, 1],
         channel: ["email", "in_app"],
       }),
     onMutate: () => setRuleError(null),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["compliance-rules", companyId] }),
-    onError: (error) =>
-      setRuleError(error instanceof Error ? error.message : "Failed to create notification rule"),
+    onSuccess: (_result, input) => {
+      if (input.generation !== ruleGenerationRef.current) return;
+      setRuleCreateOpen(false);
+      setCredentialTypeDraft("cdl");
+      void queryClient.invalidateQueries({ queryKey: ["compliance-rules", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation !== ruleGenerationRef.current) return;
+      setRuleError(error instanceof Error ? error.message : "Failed to create notification rule");
+    },
   });
 
   const archiveRuleM = useMutation({
-    mutationFn: (id: string) => archiveComplianceRule(id, companyId),
+    mutationFn: (input: { id: string; companyId: string; generation: number }) =>
+      archiveComplianceRule(input.id, input.companyId),
     onMutate: () => setRuleError(null),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["compliance-rules", companyId] }),
-    onError: (error) =>
-      setRuleError(error instanceof Error ? error.message : "Failed to archive notification rule"),
+    onSuccess: (_result, input) => {
+      if (input.generation !== ruleGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["compliance-rules", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation !== ruleGenerationRef.current) return;
+      setRuleError(error instanceof Error ? error.message : "Failed to archive notification rule");
+    },
   });
+
+  useEffect(() => {
+    ruleGenerationRef.current += 1;
+    setRuleCreateOpen(false);
+    setCredentialTypeDraft("cdl");
+    setRuleError(null);
+    createRuleM.reset();
+    archiveRuleM.reset();
+  }, [companyId]);
 
   const filteredRows = useMemo(() => {
     let rows = dashboardQ.data?.credentials ?? [];
@@ -280,10 +307,12 @@ export function ComplianceDashboardPage() {
             channel?: string[] | null;
           }>}
           onCreate={() => {
-            const credentialType = window.prompt("Credential type (e.g. cdl, us_insurance):", "cdl");
-            if (credentialType?.trim()) createRuleM.mutate(credentialType.trim());
+            setCredentialTypeDraft("cdl");
+            setRuleCreateOpen(true);
           }}
-          onArchive={(id) => archiveRuleM.mutate(id)}
+          onArchive={(id) =>
+            archiveRuleM.mutate({ id, companyId, generation: ruleGenerationRef.current })
+          }
         />
       </section>
       </SectionErrorBoundary>
@@ -310,6 +339,37 @@ export function ComplianceDashboardPage() {
       ) : null}
       </>
       )}
+
+      <Modal open={ruleCreateOpen} onClose={() => setRuleCreateOpen(false)} title="Create notification rule">
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const credentialType = credentialTypeDraft.trim();
+            if (!credentialType) return;
+            createRuleM.mutate({ companyId, generation: ruleGenerationRef.current, credentialType });
+          }}
+        >
+          <label className="block text-xs font-medium text-slate-700" htmlFor="compliance-rule-credential-type">
+            Credential type
+          </label>
+          <input
+            id="compliance-rule-credential-type"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            value={credentialTypeDraft}
+            onChange={(event) => setCredentialTypeDraft(event.target.value)}
+            placeholder="cdl or us_insurance"
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setRuleCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!credentialTypeDraft.trim()} loading={createRuleM.isPending}>
+              Create rule
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
