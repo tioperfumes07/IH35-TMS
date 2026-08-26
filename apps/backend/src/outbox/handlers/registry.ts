@@ -36,6 +36,7 @@ import { ShipperPortalMilestoneEmailHandler } from "./shipper-portal-milestone-e
 import { ShipperPortalPasswordResetEmailHandler } from "./shipper-portal-password-reset-email.handler.js";
 import { MaintenanceEngineFaultNotificationHandler } from "./maintenance-engine-fault-notification.handler.js";
 import { ComplianceReminderEmailHandler } from "./compliance-reminder-email.handler.js";
+import { CashAdvanceOwnerNotificationHandler } from "./cash-advance-owner-notification.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -144,6 +145,7 @@ export function buildOutboxHandlerRegistry() {
     new ShipperPortalPasswordResetEmailHandler(),
     new MaintenanceEngineFaultNotificationHandler(),
     new ComplianceReminderEmailHandler(),
+    new CashAdvanceOwnerNotificationHandler(),
     // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),

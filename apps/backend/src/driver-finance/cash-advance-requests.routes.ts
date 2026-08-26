@@ -24,7 +24,6 @@ import {
 import { escalateCashAdvanceRequestToOwner, listPendingOwnerApprovalCashAdvanceRequests, sendOwnerEscalationEmails } from "./cash-advance-owner-approval.service.js";
 import { emitDriverRequestViewedOnce } from "./driver-request-spine-emit.js";
 import { disburseDriverAdvanceCore } from "../cash-advances/cash-advance-disburse.js";
-import { notifyOwnersCashAdvanceSubmitted } from "../notifications/dispatcher.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -73,7 +72,11 @@ async function fetchDriverOperatingCompanyId(userUuid: string, driverId: string)
 }
 
 export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/cash-advance-requests", async (req, reply) => {
+  // CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS touched this file, bringing every
+  // route in it into verify-new-auth-routes-rate-limited's scope (CodeQL js/missing-rate-limiting)
+  // — a pre-existing gap unrelated to the notification fix, closed with the same convention every
+  // other route in this app already carries.
+  app.get("/api/v1/driver/cash-advance-requests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const d = req.driver!;
     const oc = await fetchDriverOperatingCompanyId(req.user!.uuid, d.id);
@@ -86,7 +89,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.post("/api/v1/driver/cash-advance-requests", async (req, reply) => {
+  app.post("/api/v1/driver/cash-advance-requests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsed = driverCreateCashAdvanceRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -103,11 +106,13 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
         body: parsed.data,
       });
     });
-    void notifyOwnersCashAdvanceSubmitted({
-      operatingCompanyId: oc,
-      request: result.request as Record<string, unknown>,
-      actorUserId: req.user!.uuid,
-    }).catch(() => undefined);
+    // CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS: the fire-and-forget dispatch that
+    // used to live here (void ...catch(() => undefined)) discarded every real delivery failure and
+    // never retried. createCashAdvanceRequest already enqueues
+    // driver_finance.cash_advance_request.submitted onto the durable outbox in the SAME
+    // transaction; CashAdvanceOwnerNotificationHandler (outbox/handlers/registry.ts) now owns that
+    // event and does the actual owner delivery with requiresDelivery=true, so a failure is
+    // retried by the outbox processor instead of silently discarded here.
     return reply.code(201).send(result);
   });
 

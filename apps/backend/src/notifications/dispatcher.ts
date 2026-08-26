@@ -417,36 +417,16 @@ export async function listCompanyUserIdsByRoles(
   });
 }
 
-export async function notifyOwnersCashAdvanceSubmitted(input: {
-  operatingCompanyId: string;
-  request: Record<string, unknown>;
-  actorUserId: string;
-}) {
-  const owners = await listCompanyUserIdsByRoles(input.operatingCompanyId, ["Owner"]);
-  const displayId = String(input.request.display_id ?? "");
-  const cents = Number(input.request.requested_amount_cents ?? 0);
-  const amountLabel = `USD ${(cents / 100).toFixed(2)}`;
-  const headline = `Cash advance request ${displayId}`;
-  const bodyText = `A driver submitted cash advance ${displayId} for ${amountLabel}.`;
-
-  await Promise.all(
-    owners.map((userId) =>
-      dispatchNotification({
-        user_id: userId,
-        event_type: "advance.created",
-        actor_user_id: input.actorUserId,
-        payload: {
-          operating_company_id: input.operatingCompanyId,
-          request_id: String(input.request.id ?? ""),
-          headline,
-          bodyText,
-          sms_body: `${headline} (${amountLabel}).`,
-          whatsapp_skip: true,
-        },
-      }).catch(() => undefined)
-    )
-  );
-}
+// CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS — notifyOwnersCashAdvanceSubmitted used
+// to be called fire-and-forget (void ...catch(() => undefined)) AFTER the request's own
+// transaction committed, from cash-advance-requests.routes.ts. dispatchNotification() converts
+// every real failure into a resolved { ok: false } (it does not reject under normal operation),
+// so that .catch() never fired and the discarded { ok: false } results meant a request could
+// commit while every owner notification silently failed with no durable retry. Retired in favor
+// of outbox/handlers/cash-advance-owner-notification.handler.ts, which does the same delivery
+// work but as the registered consumer of driver_finance.cash_advance_request.submitted — an event
+// already enqueued in the SAME request transaction — with requiresDelivery=true so a failure is
+// retried by the outbox processor instead of silently discarded.
 
 export async function notifyAbandonedLoadStakeholders(input: {
   operatingCompanyId: string;

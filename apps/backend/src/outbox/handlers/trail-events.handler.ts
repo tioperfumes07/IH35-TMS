@@ -29,7 +29,11 @@ export function buildTrailEventHandlers(): OutboxEventHandler[] {
     new TrailEventHandler("driver_finance.cash_advance_request.escalated_to_owner"),
     new TrailEventHandler("driver_finance.cash_advance_request.owner_approved"),
     new TrailEventHandler("driver_finance.cash_advance_request.owner_denied"),
-    new TrailEventHandler("driver_finance.cash_advance_request.submitted"),
+    // CASH-ADVANCE-OWNER-NOTIFICATION-FAILURE-RETURNS-SUCCESS: "submitted" moved to its own
+    // CashAdvanceOwnerNotificationHandler (registry.ts) — it now does real owner delivery with
+    // requiresDelivery=true instead of a bare trail acknowledgment. Do not re-add it here: the
+    // Map-based registry keys by eventType, and this generic handler would silently shadow the
+    // real one since buildTrailEventHandlers() is spread LAST into the registry array.
     new TrailEventHandler("driver_finance.cash_advance_request.cancelled_by_driver"),
     new TrailEventHandler("driver_finance.cash_advance_request.approved"),
     new TrailEventHandler("driver_finance.cash_advance_request.denied"),
