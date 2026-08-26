@@ -387,6 +387,10 @@ export type FactoringVirtualCompany = {
   display_name: string;
   reserve_balance: number;
   chargeback_balance: number;
+  // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest name for
+  // chargeback_balance above (both are outstanding_liability_signed_cents, not a real
+  // chargeback/recourse figure) — prefer this field in new code.
+  outstanding_liability_balance: number;
   last_advance_at?: string | null;
 };
 
