@@ -9,7 +9,7 @@ export function UnitSevereRepairsReverseSection({ operatingCompanyId, unitId }: 
     queryFn: () => listSevereRepairEstimates(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.data ?? [];
+  const rows = query.isError ? [] : (query.data?.data ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-severe-repairs-reverse">
       <div className="flex items-center justify-between gap-2">

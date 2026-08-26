@@ -16,7 +16,7 @@ export function WarrantyClaimsReverseSection({ operatingCompanyId, filter, conte
     queryFn: () => listMaintenanceWarrantyClaims(operatingCompanyId, filter),
     enabled: Boolean(operatingCompanyId) && Boolean("work_order_id" in filter ? filter.work_order_id : filter.vendor_id),
   });
-  const rows = query.data?.rows ?? [];
+  const rows = query.isError ? [] : (query.data?.rows ?? []);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
