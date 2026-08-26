@@ -196,6 +196,8 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
           <FormField label="Owner Company" name="owner_company_id">
             <div data-testid="fleet-create-unit-owner_company_id">
               <Combobox
+                id="owner_company_id"
+                dataTestId="fleet-create-unit-owner-company"
                 options={companyOptions}
                 value={draft.owner_company_id || null}
                 onChange={(v) => set("owner_company_id", v ?? "")}
@@ -209,6 +211,8 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
           <FormField label="Leased To Company" name="currently_leased_to_company_id">
             <div data-testid="fleet-create-unit-currently_leased_to_company_id">
               <Combobox
+                id="currently_leased_to_company_id"
+                dataTestId="fleet-create-unit-leased-to-company"
                 options={companyOptions}
                 value={draft.currently_leased_to_company_id || null}
                 onChange={(v) => set("currently_leased_to_company_id", v ?? "")}

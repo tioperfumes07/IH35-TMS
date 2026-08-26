@@ -212,6 +212,8 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
           <FormField label="Leased To Company" name="currently_leased_to_company_id">
             <div data-testid="fleet-create-trailer-currently_leased_to_company_id">
               <Combobox
+                id="currently_leased_to_company_id"
+                dataTestId="fleet-create-trailer-leased-to-company"
                 options={companyOptions}
                 value={draft.currently_leased_to_company_id || null}
                 onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
