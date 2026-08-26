@@ -63,6 +63,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // specific load and truck was stored as if it belonged to nothing.
   const [relatedLoadId, setRelatedLoadId] = useState<string | null>(null);
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   /** Once the active-trip resolver fills the load, preserve an operator override. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const lifecycleGenerationRef = useRef(0);
@@ -208,7 +209,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     onSuccess: (_created, input) => {
       if (lifecycleGenerationRef.current !== input.generation) return;
       onCreated();
-      handleClose();
+      completeClose();
     },
   });
 
@@ -218,12 +219,23 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     createMutation.reset();
   }, [open, operatingCompanyId, resetDraft]);
 
-  const handleClose = useCallback(() => {
+  const completeClose = useCallback(() => {
     lifecycleGenerationRef.current += 1;
     resetDraft();
     createMutation.reset();
     onClose();
   }, [createMutation, onClose, resetDraft]);
+  const handleClose = useCallback(() => {
+    if (createMutation.isPending) return;
+    completeClose();
+  }, [completeClose, createMutation.isPending]);
+  const isDirty = subjectType !== "driver"
+    || Boolean(subjectDriverId)
+    || issuedByAuthority !== "DOT"
+    || Boolean(jurisdiction.trim() || civilFineTypeId || violationDescription.trim())
+    || issuedDate !== companyToday()
+    || Boolean(amountUsd.trim() || notes.trim() || sourceDocFile || civilFineTypeSearch.trim())
+    || Boolean(relatedLoadId || relatedUnitId);
 
   return (
     <>
@@ -232,9 +244,12 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         onClose={handleClose}
         title="Create Fine"
         size="wide"
+        confirmDiscardOnClose
+        isDirty={isDirty}
+        onRegisterAttemptClose={setAttemptClose}
         footer={
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={handleClose}>
+            <Button type="button" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>
               Cancel
             </Button>
             <Button
