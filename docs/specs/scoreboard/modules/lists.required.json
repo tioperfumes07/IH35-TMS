@@ -543,7 +543,6 @@
       "sub": "Detention Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -554,7 +553,6 @@
       "sub": "+ Create — Detention Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -605,7 +603,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -616,7 +613,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -771,7 +767,6 @@
       "sub": "Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -782,7 +777,6 @@
       "sub": "+ Create — Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -853,7 +847,6 @@
       "sub": "Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -864,7 +857,6 @@
       "sub": "+ Create — Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1184,7 +1176,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1195,7 +1186,6 @@
       "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2061,7 +2051,6 @@
       "sub": "Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2144,7 +2133,6 @@
       "sub": "Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -8009,6 +7997,24 @@
         { "id": "catalog.accounting.void_cancel_reasons.list", "removed": ["picker_law"] },
         { "id": "catalog.accounting.classes.list", "removed": ["picker_law"] },
         { "id": "catalog.accounting.classes.create", "removed": ["picker_law"] }
+      ]
+    },
+    "picker_law_flat_catalog_overreach_drops_2026_08_26_batch6": {
+      "finding": "LST-PICKER-LAW-FLAT-CATALOG-OVERREACH",
+      "note": "Continues batch1-5. This batch covers the ~22-leaf remainder that was outside the original 66-catalog audited list (from LST-PICKER-LAW-FLAT-CATALOG-OVERREACH batch3-5's own honestly-disclosed REMAINING note), verified independently 2026-08-26 against real Create-form source for each: dispatch.load_cancellation_reasons (SelectCombobox on a fixed 4-value literal CATEGORY_OPTIONS array, no catalog-backed reference, no + Add new anywhere), drivers.deduction_types (DriverCatalogModal generic shell + a closed 4-value literal INSURANCE_CLAIM_RECOVERY_RAIL_VALUES enum, no reference), drivers.driver_load_statuses (Combobox on closed literal phase/status enums, DriverLoadStatusesPage.tsx, no + Add new), drivers.termination_reasons (SelectCombobox on a closed 3-value literal SEVERITY_OPTIONS array, no reference), maintenance.oem_parts_reference (OemPartsCreateModal: Brand/OEM Part#/Name/Default Supplier are all plain text inputs -- Default Supplier is NOT a vendor picker -- Category is a closed literal OEM_PART_CATEGORIES enum). Two explicit EXCLUSIONS verified and left Required, not dropped: dispatch.dispatch_flag_colors -- this is the ONE genuine picker gap this whole finding already fixed directly (LST-F8792, PR #12839): DispatchFlagColorsCatalog.tsx confirms a real `type: \"color\"` field (hex_color) exists on the create form today. drivers.teams -- DriverTeamModal.tsx uses the real `DriverPickerWithCreate` reference-picker component three times (a genuine catalog-backed picker with inline create), so picker_law correctly applies and must not be dropped. Also drops the two accounting .list leaves whose .create sibling was already correctly dropped by the separate, already-closed CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM sweep (chart_of_accounts_seeds: generic-factory route with zero FK/metadata support; qbo_bulk_link: a bulk vendor/class-MATCHING wizard against existing QBO records, never creates a new TMS catalog row) -- same established fact extended to the never-touched .list leaf, matching batch5's own precedent.",
+      "drops_applied": [
+        { "id": "catalog.dispatch.load_cancellation_reasons.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.deduction_types.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.driver_load_statuses.list", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.termination_reasons.list", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.oem_parts_reference.list", "removed": ["picker_law"] },
+        { "id": "catalog.dispatch.load_cancellation_reasons.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.deduction_types.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.driver_load_statuses.create", "removed": ["picker_law"] },
+        { "id": "catalog.drivers.termination_reasons.create", "removed": ["picker_law"] },
+        { "id": "catalog.maintenance.oem_parts_reference.create", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.chart_of_accounts_seeds.list", "removed": ["picker_law"] },
+        { "id": "catalog.accounting.qbo_bulk_link.list", "removed": ["picker_law"] }
       ]
     }
   }
