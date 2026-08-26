@@ -27,8 +27,10 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
   const selectedIssueId = useMemo(() => String(card?.issues?.[0]?.issue_id ?? ""), [card]);
 
   useEffect(() => {
+    if (!open) return;
     setSourceType(suggested);
-  }, [suggested]);
+    setNotes("");
+  }, [open, operatingCompanyId, selectedIssueId, suggested]);
 
   const mutation = useMutation({
     mutationFn: () => convertIssueToWo(String(card!.load_id), operatingCompanyId, { issue_id: selectedIssueId, wo_source_type: sourceType, additional_notes: notes || undefined }),
