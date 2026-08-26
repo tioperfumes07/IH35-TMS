@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ const EMPTY_FILTERS = { status: "", subjectType: "", driverId: "", unitId: "" };
 
 export function FinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
   // C-06: Home "Open Company Violations" drills with ?record_type=company-violation so the
   // merged External Fines tab opens on the company-violation filter (not the driver-fine default).
@@ -38,6 +39,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>(initialRecordType);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedFine, setSelectedFine] = useState<Record<string, unknown> | null>(null);
+  const [convertError, setConvertError] = useState<unknown>(null);
   const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
   const relatedUnitFromUrl = searchParams.get("related_unit_id")?.trim() ?? "";
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
@@ -82,8 +84,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
     staged.setDraft((d) => ({ ...d, unitId: next }));
   }
 
-  const finesQuery = useQuery({
-    queryKey: [
+  const finesQueryKey = [
       "safety",
       "fines",
       operatingCompanyId,
@@ -94,7 +95,9 @@ export function FinesPage({ operatingCompanyId }: Props) {
       applied.driverId,
       relatedUnitFromUrl,
       subjectDriverFromUrl,
-    ],
+    ] as const;
+  const finesQuery = useQuery({
+    queryKey: finesQueryKey,
     queryFn: () =>
       getSafetyFines(operatingCompanyId, {
         status: applied.status || undefined,
@@ -106,23 +109,16 @@ export function FinesPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
+  /** @matrix-built modules=safety cols=driver,unit,load,gl_je,connectivity,reverse_link */
   const convertMutation = useMutation({
-    mutationFn: (fineId: string) => convertFineToLiability(fineId, operatingCompanyId),
-    onSuccess: (payload) => {
+    mutationFn: (input: { fineId: string; companyId: string; generation: number; queryKey: readonly unknown[] }) =>
+      convertFineToLiability(input.fineId, input.companyId),
+    onMutate: () => setConvertError(null),
+    onSuccess: (payload, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       const fineId = String(payload.fine?.id ?? "");
       queryClient.setQueryData(
-        [
-          "safety",
-          "fines",
-          operatingCompanyId,
-          applied.status,
-          applied.subjectType,
-          relatedLoadFromUrl,
-          applied.unitId,
-          applied.driverId,
-          relatedUnitFromUrl,
-          subjectDriverFromUrl,
-        ],
+        input.queryKey,
         (old: { fines?: Array<Record<string, unknown>> } | undefined) => {
           if (!old?.fines) return old;
           return {
@@ -133,7 +129,17 @@ export function FinesPage({ operatingCompanyId }: Props) {
       );
       void queryClient.invalidateQueries({ queryKey: ["driver-settlements"] });
     },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setConvertError(error);
+    },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setSelectedFine(null);
+    setConvertError(null);
+    convertMutation.reset();
+  }, [operatingCompanyId]); // Mutation reset is stable; company transitions own a fresh fine action lifecycle.
 
   const rows = finesQuery.data?.fines ?? [];
 
@@ -367,12 +373,17 @@ export function FinesPage({ operatingCompanyId }: Props) {
         operatingCompanyId={operatingCompanyId}
         converting={convertMutation.isPending}
         onClose={() => setSelectedFine(null)}
-        onConvertToLiability={(fineId) => convertMutation.mutate(fineId)}
+        onConvertToLiability={(fineId) => convertMutation.mutate({
+          fineId,
+          companyId: operatingCompanyId,
+          generation: actionGenerationRef.current,
+          queryKey: finesQueryKey,
+        })}
         onUpdated={() => void queryClient.invalidateQueries({ queryKey: ["safety", "fines", operatingCompanyId] })}
       />
-      {convertMutation.isError ? (
+      {convertError ? (
         <p className="text-xs text-red-700" data-testid="fine-convert-liability-error">
-          {userFacingApiError(convertMutation.error, "Could not convert the fine to a liability.")}
+          {userFacingApiError(convertError, "Could not convert the fine to a liability.")}
         </p>
       ) : null}
     </div>
