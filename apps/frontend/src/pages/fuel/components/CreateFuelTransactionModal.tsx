@@ -49,6 +49,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [locationState, setLocationState] = useState("");
   const [notes, setNotes] = useState("");
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
@@ -76,12 +77,24 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     resetDraft();
   }, [open, operatingCompanyId, resetDraft]);
 
-  const handleClose = useCallback(() => {
+  const completeClose = useCallback(() => {
     lifecycleGenerationRef.current += 1;
     setSaving(false);
     resetDraft();
     onClose();
   }, [onClose, resetDraft]);
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    completeClose();
+  }, [completeClose, saving]);
+
+  const isDirty = transactionDate !== companyToday()
+    || Boolean(driverId || unitId || trailerId || vendorId || loadId)
+    || Boolean(loadExemptionReason.trim())
+    || fuelType !== "diesel"
+    || Boolean(gallons.trim() || pricePerGallon.trim())
+    || totalCost != null
+    || Boolean(locationCity.trim() || locationState.trim() || notes.trim());
 
   const suggestionQuery = useQuery({
     queryKey: ["fuel-office-create", "suggest-load", operatingCompanyId, driverId, unitId, trailerId, transactionDate],
@@ -141,7 +154,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast("Fuel purchase recorded", "success");
       onCreated();
-      handleClose();
+      completeClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Failed to record fuel purchase"), "error");
@@ -151,7 +164,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer">
+    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={setAttemptClose}>
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
         <div className="block font-semibold text-gray-700">
           <label htmlFor="fuel-purchase-date">Purchase date *</label>
@@ -338,7 +351,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         </label>
 
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={handleClose}>
+          <Button size="sm" variant="secondary" onClick={attemptClose} disabled={saving}>
             Cancel
           </Button>
           <Button size="sm" loading={saving} onClick={() => void submit()} data-testid="fuel-create-submit">
