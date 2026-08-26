@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listInsurancePaymentSchedule,
@@ -55,6 +55,19 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<"" | PaymentScheduleStatus>("");
 
+  // INSURANCE-MONEY-F6628-PAYMENT-SCHEDULE-MARK-PAID-MUTABLE-SCOPE — markPaidMutation used to
+  // submit only scheduleId and close over the LIVE operatingCompanyId/policyId props inside
+  // mutationFn/onSuccess. A company or policy switch while the request is in flight could post
+  // the "mark paid" write under the wrong company, or invalidate/toast for the wrong now-visible
+  // context. Same fix idiom already used by units/UnitPermitsTab.tsx's deleteMutation: an
+  // immutable scope generation snapshot at submit time, checked before any success/error effect
+  // touches the cache or the UI.
+  const scopeGenerationRef = useRef(0);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+  }, [operatingCompanyId, policyId]);
+
   const query = useQuery({
     queryKey: ["insurance-payment-schedule", operatingCompanyId ?? "none", policyId ?? "all", statusFilter || "all"],
     queryFn: () =>
@@ -70,15 +83,25 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
   const listState = useListState(query, (query.data ?? []).length === 0);
 
   const markPaidMutation = useMutation({
-    mutationFn: (scheduleId: string) => markInsurancePaymentSchedulePaid(scheduleId, operatingCompanyId!),
-    onSuccess: () => {
+    mutationFn: (input: { scheduleId: string; operatingCompanyId: string; policyId: string | undefined; generation: number }) =>
+      markInsurancePaymentSchedulePaid(input.scheduleId, input.operatingCompanyId),
+    onSuccess: (_data, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
       pushToast("Payment marked as paid", "success");
       void queryClient.invalidateQueries({
-        queryKey: ["insurance-payment-schedule", operatingCompanyId ?? "none", policyId ?? "all"],
+        queryKey: ["insurance-payment-schedule", input.operatingCompanyId, input.policyId ?? "all"],
       });
     },
-    onError: () => pushToast("Failed to mark payment as paid", "error"),
+    onError: (_error, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      pushToast("Failed to mark payment as paid", "error");
+    },
   });
+  const resetMarkPaidMutation = markPaidMutation.reset;
+
+  useEffect(() => {
+    resetMarkPaidMutation();
+  }, [operatingCompanyId, policyId, resetMarkPaidMutation]);
 
   if (!operatingCompanyId) {
     return (
@@ -137,9 +160,16 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
           rowActions={(row) => (
             <Button
               size="sm"
-              onClick={() => markPaidMutation.mutate(row.id)}
+              onClick={() =>
+                markPaidMutation.mutate({
+                  scheduleId: row.id,
+                  operatingCompanyId: operatingCompanyId!,
+                  policyId,
+                  generation: scopeGenerationRef.current,
+                })
+              }
               disabled={!canMarkPaid(row)}
-              loading={markPaidMutation.isPending && markPaidMutation.variables === row.id}
+              loading={markPaidMutation.isPending && markPaidMutation.variables?.scheduleId === row.id}
             >
               Mark paid
             </Button>
