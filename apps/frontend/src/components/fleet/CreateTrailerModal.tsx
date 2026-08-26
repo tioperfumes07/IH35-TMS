@@ -76,7 +76,9 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   );
   const [draft, setDraft] = useState(initialDraft);
   const actionGenerationRef = useRef(0);
+  const attemptCloseRef = useRef<() => void>(() => undefined);
   const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
+  const isDirty = (Object.keys(initialDraft) as Array<keyof typeof initialDraft>).some((key) => draft[key] !== initialDraft[key]);
 
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -147,10 +149,15 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
       open={open}
       title={equipmentKind === "chassis" ? "Create Chassis" : "Create Trailer"}
       onClose={resetAndClose}
+      confirmDiscardOnClose
+      isDirty={isDirty}
+      onRegisterAttemptClose={(attemptClose) => {
+        attemptCloseRef.current = attemptClose;
+      }}
       stackAboveModal
       footer={
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={resetAndClose}>
+          <Button type="button" variant="secondary" onClick={() => attemptCloseRef.current()}>
             Cancel
           </Button>
           <Button form="fleet-create-trailer-form" type="submit" data-testid="fleet-create-trailer-submit" loading={createMutation.isPending} disabled={!canSubmit}>
