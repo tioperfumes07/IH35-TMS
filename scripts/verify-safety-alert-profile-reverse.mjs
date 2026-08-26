@@ -161,6 +161,12 @@ function failures(s = files) {
         s.entityLink.includes("/safety/integrity-reports?anomaly_id="),
     ],
     [
+      "failed reverse reads suppress cached safety rows",
+      s.section.includes("const violations = failed ? [] :") &&
+        s.section.includes("const alerts = failed ? [] :") &&
+        s.section.includes("const anomalies = failed ? [] :"),
+    ],
+    [
       "target drawers honor ids",
       s.companyPage.includes('searchParams.get("violation_id")') &&
         s.integrityPage.includes('searchParams.get("alert_id")') &&
@@ -256,6 +262,10 @@ function failures(s = files) {
 }
 if (process.argv.includes("--selftest")) {
   const checks = [
+    failures({
+      ...files,
+      section: files.section.replace("const violations = failed ? [] :", "const violations ="),
+    }).includes("failed reverse reads suppress cached safety rows"),
     failures({
       ...files,
       companyRoutes: files.companyRoutes.replace(
