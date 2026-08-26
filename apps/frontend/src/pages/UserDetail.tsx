@@ -168,22 +168,22 @@ export function UserDetailPage() {
 
   const customerOptions = useMemo<ComboboxOption[]>(
     () =>
-      (customersQuery.data ?? []).map((customer) => ({
+      (customersQuery.isError ? [] : customersQuery.data ?? []).map((customer) => ({
         value: customer.id,
         label: customer.name,
         sublabel: customer.mc_number ?? customer.dot_number ?? "",
       })),
-    [customersQuery.data]
+    [customersQuery.data, customersQuery.isError]
   );
 
   const costSummary = useMemo(() => {
-    const rows = safetyEventsQuery.data ?? [];
+    const rows = safetyEventsQuery.isError ? [] : safetyEventsQuery.data ?? [];
     const severeCount = rows.filter((row) => row.severity === "severe").length;
     const totalCost = rows.reduce((acc, row) => acc + Number(row.cost_amount ?? 0), 0);
     const recovered = rows.reduce((acc, row) => acc + Number(row.cost_recovered_amount ?? 0), 0);
     const pending = Math.max(totalCost - recovered, 0);
     return { totalEvents: rows.length, severeCount, totalCost, recovered, pending };
-  }, [safetyEventsQuery.data]);
+  }, [safetyEventsQuery.data, safetyEventsQuery.isError]);
 
   const isOwner = auth.user?.role === "Owner";
   const canReadSafety = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
@@ -358,6 +358,15 @@ export function UserDetailPage() {
             </div>
           </div>
 
+          {safetyEventsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load dispatcher safety events"
+              status={0}
+              message={(safetyEventsQuery.error as Error)?.message}
+              onRetry={() => void safetyEventsQuery.refetch()}
+            />
+          ) : null}
+
           <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs md:grid-cols-5">
             <div>
               <div className="text-gray-500">Total events</div>
@@ -382,7 +391,7 @@ export function UserDetailPage() {
           </div>
 
           <div className="space-y-2">
-            {(safetyEventsQuery.data ?? []).map((event) => (
+            {(safetyEventsQuery.isError ? [] : safetyEventsQuery.data ?? []).map((event) => (
               <div
                 key={event.id}
                 className={`rounded-sm border p-3 ${event.voided_at ? "border-gray-300 bg-gray-100 text-gray-500" : "border-gray-200 bg-white"}`}
@@ -641,7 +650,7 @@ export function UserDetailPage() {
             </label>
             {enableRelated ? (
               <div className="mt-2 space-y-2">
-                {selectedCompanyId ? (
+                {selectedCompanyId && !customersQuery.isError ? (
                   <ReferenceSelect
                     value={relatedCustomerId}
                     onChange={setRelatedCustomerId}
@@ -651,6 +660,12 @@ export function UserDetailPage() {
                     placeholder="Related customer"
                     onSearch={setCustomerSearch}
                     loading={customersQuery.isLoading}
+                  />
+                ) : customersQuery.isError ? (
+                  <ListErrorState
+                    status={0}
+                    message="Could not load related customers."
+                    onRetry={() => void customersQuery.refetch()}
                   />
                 ) : (
                   <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Select company first" disabled />
