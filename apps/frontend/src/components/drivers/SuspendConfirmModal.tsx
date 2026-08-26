@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { suspendDriver } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -15,6 +15,8 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setReason("");
@@ -22,13 +24,17 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
   }, []);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPending(false);
     if (open) resetDraft();
   }, [open, driverId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (pending) return;
+    requestGenerationRef.current += 1;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [onClose, pending, resetDraft]);
 
   const submit = async () => {
     setError("");
@@ -36,20 +42,25 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
       setError("Reason is required.");
       return;
     }
+    const input = { driverId, reason: reason.trim(), generation: requestGenerationRef.current };
     setPending(true);
     try {
-      await suspendDriver(driverId, reason.trim());
+      await suspendDriver(input.driverId, input.reason);
+      if (input.generation !== requestGenerationRef.current) return;
       onSuspended?.();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     } catch {
+      if (input.generation !== requestGenerationRef.current) return;
       setError("Failed to suspend driver.");
     } finally {
-      setPending(false);
+      if (input.generation === requestGenerationRef.current) setPending(false);
     }
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Suspend — ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Suspend — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(reason)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
           Sets driver status to Inactive and records a safety incident for audit.
@@ -66,7 +77,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} data-testid="suspend-confirm">

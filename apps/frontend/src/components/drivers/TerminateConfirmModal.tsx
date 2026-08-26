@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createSafetyEvent, listTerminationReasons } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -35,6 +35,8 @@ export function TerminateConfirmModal({
   const [eventDate, setEventDate] = useState(companyToday());
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const requestGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setTerminationReasonId("");
@@ -44,13 +46,17 @@ export function TerminateConfirmModal({
   }, []);
 
   useEffect(() => {
+    requestGenerationRef.current += 1;
+    setPending(false);
     if (open) resetDraft();
   }, [open, operatingCompanyId, driverId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (pending) return;
+    requestGenerationRef.current += 1;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [onClose, pending, resetDraft]);
 
   const reasonsQ = useQuery({
     queryKey: ["driver-termination-reasons", operatingCompanyId],
@@ -74,21 +80,30 @@ export function TerminateConfirmModal({
       setError("Summary is required.");
       return;
     }
-    setPending(true);
-    try {
-      await createSafetyEvent(driverId, {
-        event_type: "termination",
+    const input = {
+      driverId,
+      generation: requestGenerationRef.current,
+      body: {
+        event_type: "termination" as const,
         event_date: eventDate,
         severity: selectedReason.severity,
         summary: summary.trim(),
         termination_reason_id: terminationReasonId,
-      });
+      },
+    };
+    setPending(true);
+    try {
+      await createSafetyEvent(input.driverId, input.body);
+      if (input.generation !== requestGenerationRef.current) return;
       onTerminated?.();
-      handleClose();
+      requestGenerationRef.current += 1;
+      resetDraft();
+      onClose();
     } catch {
+      if (input.generation !== requestGenerationRef.current) return;
       setError("Failed to terminate driver.");
     } finally {
-      setPending(false);
+      if (input.generation === requestGenerationRef.current) setPending(false);
     }
   };
 
@@ -100,7 +115,7 @@ export function TerminateConfirmModal({
     })) ?? [];
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Terminate — ${driverName}`}>
+    <Modal open={open} onClose={handleClose} title={`Terminate — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(terminationReasonId || summary || eventDate !== companyToday())} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
           Creates a termination safety event and updates driver status to Terminated.
@@ -154,7 +169,7 @@ export function TerminateConfirmModal({
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void submit()} loading={pending} disabled={reasonsQ.isError} data-testid="terminate-confirm">

@@ -56,7 +56,7 @@ export function checkSources({ backendRoutes, suspendModal, mdataApi, actionBarT
   if (!mdataApi.includes("export function suspendDriver")) {
     failures.push("mdata API must export suspendDriver");
   }
-  if (!suspendModal.includes("suspendDriver(driverId")) {
+  if (!suspendModal.includes("suspendDriver(input.driverId, input.reason)")) {
     failures.push("SuspendConfirmModal must call suspendDriver");
   }
   if (suspendModal.includes("updateDriver(driverId") || suspendModal.includes("createSafetyEvent(driverId")) {
