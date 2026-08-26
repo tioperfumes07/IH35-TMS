@@ -8,8 +8,8 @@ const tests=fs.readFileSync("apps/backend/src/maintenance/__tests__/tires.routes
 const failures=(source=ui)=>[
   ["mounted record creator",source.includes("+ Create Tire Record")&&source.includes("setMountOpen(true)")],
   ["mounted brand creator",source.includes("+ Create Brand")&&source.includes("setBrandOpen(true)")],
-  ["record payload",source.includes("createMaintenanceTireRecord({")&&source.includes("operating_company_id: companyId")&&source.includes("...assetParams")],
-  ["brand payload",source.includes("createMaintenanceTireBrand({")&&source.includes("name: brandName")],
+  ["record payload",source.includes("createMaintenanceTireRecord({")&&source.includes("operating_company_id: input.companyId")&&source.includes('input.assetKind === "trailer" ? { equipment_id: input.assetId } : { unit_id: input.assetId }')],
+  ["brand payload",source.includes("createMaintenanceTireBrand({")&&source.includes("name: input.name")],
   ["canonical clients",api.includes("/api/v1/maintenance/tires/records")&&api.includes("/api/v1/maintenance/tires/brands")],
   ["canonical inserts",routes.includes("INSERT INTO maintenance.tire_records")&&routes.includes("INSERT INTO maintenance.tire_brands")],
   ["asset ownership",routes.includes("assetBelongsToCompany(client, body.operating_company_id")&&routes.includes("linked_entity_not_in_operating_company")],

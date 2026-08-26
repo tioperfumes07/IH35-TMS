@@ -13,7 +13,7 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
-  if (!/kind=\{assetKind\}/.test(s.creator) || !/assetKind === "trailer" \? \{ equipment_id: assetId \} : \{ unit_id: assetId \}/.test(s.creator) || !/createMaintenanceTireRecord\(\{[\s\S]{0,180}\.\.\.assetParams/.test(s.creator)) failures.push("asset picker-to-record payload missing");
+  if (!/kind=\{assetKind\}/.test(s.creator) || !/input\.assetKind === "trailer" \? \{ equipment_id: input\.assetId \} : \{ unit_id: input\.assetId \}/.test(s.creator) || !/createMaintenanceTireRecord\(\{[\s\S]{0,220}operating_company_id: input\.companyId/.test(s.creator)) failures.push("asset picker-to-record payload missing");
   if (!/assetBelongsToCompany\(client, body\.operating_company_id, body\.unit_id, body\.equipment_id\)/.test(s.route)) failures.push("writer asset scope validation missing");
   if (!/\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750}tr\.operating_company_id = \$1::uuid[\s\S]{0,300}tr\.unit_id = \$\$\{values\.length\}/.test(s.route) || !/\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750}tr\.status = 'active'/.test(s.route)) failures.push("exact active unit layout reverse filter missing");
   if (!/getMaintenanceTireLayout\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No tire records mounted to this unit/.test(s.reverse)) failures.push("honest unit tire reverse missing");
@@ -26,7 +26,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "creator", /kind=\{assetKind\}/, 'kind="driver"'],
-    ["payload", "creator", /\.\.\.assetParams/, "unit_id: undefined"],
+    ["payload", "creator", /input\.assetKind === "trailer" \? \{ equipment_id: input\.assetId \} : \{ unit_id: input\.assetId \}/, "{ unit_id: undefined }"],
     ["writer", "route", /assetBelongsToCompany\(client, body\.operating_company_id, body\.unit_id, body\.equipment_id\)/, "true"],
     ["company", "route", /(\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750})tr\.operating_company_id = \$1::uuid/, "$1TRUE"],
     ["filter", "route", /(\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,950})tr\.unit_id = \$\$\{values\.length\}/, "$1TRUE"],

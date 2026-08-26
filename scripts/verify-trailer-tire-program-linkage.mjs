@@ -13,7 +13,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/assetKind.*"unit" \| "trailer"/.test(s.page) || !/kind=\{assetKind\}/.test(s.page)) failures.push("tire creator must select unit or trailer canonically");
-  if (!/equipment_id: assetId/.test(s.page) || !/createMaintenanceTireRecord\([\s\S]{0,220}\.\.\.assetParams/.test(s.page)) failures.push("trailer selection must reach create payload");
+  if (!/equipment_id: input\.assetId/.test(s.page) || !/createMaintenanceTireRecord\([\s\S]{0,260}input\.assetKind === "trailer"/.test(s.page)) failures.push("trailer selection must reach create payload");
   if (!/searchParams\.get\("equipment_id"\)/.test(s.page)) failures.push("canonical tire page must consume exact trailer deep-link");
   // LST-F5200 — asset selection must write URL.
   if (!/setSearchParams/.test(s.page) || !/writeAssetToUrl/.test(s.page)) failures.push("tire page must write unit_id/equipment_id to URL");
@@ -30,7 +30,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "page", /kind=\{assetKind\}/, 'kind="unit"'],
-    ["payload", "page", /equipment_id: assetId/, "unit_id: assetId"],
+    ["payload", "page", /equipment_id: input\.assetId/, "unit_id: input.assetId"],
     ["deep-link", "page", /searchParams\.get\("equipment_id"\)/, 'searchParams.get("unit_id")'],
     ["url-write", "page", /writeAssetToUrl/g, "noopAssetUrl"],
     ["scope", "route", /COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/g, "TRUE"],
