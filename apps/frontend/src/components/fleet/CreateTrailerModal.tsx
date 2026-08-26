@@ -176,20 +176,18 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
             />
           </FormField>
           <FormField label="Type" name="equipment_type">
-            <select
+            <Combobox
               id="equipment_type"
-              data-testid="fleet-create-trailer-type"
-              className={inputClass}
+              dataTestId="fleet-create-trailer-type"
+              dataField="equipment_type"
+              options={allowedTypes.map((type) => ({
+                value: type,
+                label: type === "DryVan" ? "Dry Van" : type === "StepDeck" ? "Step Deck" : type,
+              }))}
               value={draft.equipment_type}
-              onChange={(e) => set("equipment_type", e.target.value as CreateEquipmentInput["equipment_type"])}
-              required
-            >
-              {allowedTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t === "DryVan" ? "Dry Van" : t === "StepDeck" ? "Step Deck" : t}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => next && set("equipment_type", next as CreateEquipmentInput["equipment_type"])}
+              placeholder="Select equipment type"
+            />
           </FormField>
           <FormField label="VIN" name="vin">
             <input id="vin" className={inputClass} value={draft.vin} onChange={(e) => set("vin", e.target.value)} />
