@@ -35,11 +35,11 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
     enabled: Boolean(operatingCompanyId && subjectId && ["driver", "unit", "customer", "invoice"].includes(subjectKind)),
   });
 
-  const violations = companyViolationQ.data?.company_violations ?? [];
-  const alerts = integrityAlertQ.data?.integrity_alerts ?? [];
-  const anomalies = anomalyQ.data?.anomalies ?? [];
   const loading = companyViolationQ.isLoading || integrityAlertQ.isLoading || anomalyQ.isLoading;
   const failed = companyViolationQ.isError || integrityAlertQ.isError || anomalyQ.isError;
+  const violations = failed ? [] : (companyViolationQ.data?.company_violations ?? []);
+  const alerts = failed ? [] : (integrityAlertQ.data?.integrity_alerts ?? []);
+  const anomalies = failed ? [] : (anomalyQ.data?.anomalies ?? []);
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`safety-alerts-reverse-${subjectKind}`}>
