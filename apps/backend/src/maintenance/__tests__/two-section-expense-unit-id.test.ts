@@ -28,7 +28,7 @@ vi.mock("../../accounting/posting-engine.service.js", () => ({
 import { autoCreateExpenseFromWO } from "../two-section-service.js";
 import { PostingEngineError } from "../../accounting/posting-engine.service.js";
 
-function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean }) {
+function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean; vendorUuid?: string | null }) {
   const hasUnitId = opts?.hasUnitId !== false;
   const hasLoadId = opts?.hasLoadId !== false;
   const calls: { sql: string; params?: unknown[] }[] = [];
@@ -50,7 +50,7 @@ function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean }) {
         rows: [
           {
             operating_company_id: "oc-1",
-            vendor_uuid: "vendor-1",
+            vendor_uuid: opts?.vendorUuid !== undefined ? opts.vendorUuid : "vendor-1",
             unit_id: "unit-1",
             load_id: null,
             total_amount_cents: 100,
@@ -137,11 +137,43 @@ describe("autoCreateExpenseFromWO — unit_id stamp (Law §9)", () => {
       expect(update!.params).toEqual(expect.arrayContaining(["exp-1", "je-1", "oc-1"]));
     });
 
-    it("does NOT attempt GL posting when no payment account was given (in_house/vendor_invoice callers pass null)", async () => {
+    // PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE — the gate used to be `paymentAccountUuid` alone,
+    // so every in_house/vendor_invoice completion (no payment account, but a real vendor from the
+    // WO) silently never even attempted posting, forever, despite the row already reading
+    // status='posted'. The canonical POST /:id/post route's own orphan rule is
+    // `!payment_account_uuid && !vendor_uuid` (a known vendor with no payment account posts to
+    // A/P); this writer now matches it, so a WO with a resolved vendor posts even with no payment
+    // account chosen yet. Live proof: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f.
+    it("DOES attempt GL posting when no payment account was given but the WO has a vendor (in_house/vendor_invoice, posts to A/P)", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockResolvedValue(true);
+      mockPostInClientTx.mockResolvedValue({ journal_entry_id: "je-2" });
+      const { client, calls } = makeClient();
+
+      const res = await autoCreateExpenseFromWO(client, "user-1", "wo-1", null, null);
+      expect(res).toEqual({ uuid: "exp-1" });
+
+      expect(mockPostInClientTx).toHaveBeenCalledWith(
+        client,
+        expect.objectContaining({
+          operating_company_id: "oc-1",
+          source_transaction_type: "expense",
+          source_transaction_id: "exp-1",
+        }),
+        expect.objectContaining({ userId: "user-1" })
+      );
+      const update = calls.find((c) => c.sql.includes("UPDATE accounting.expenses") && c.sql.includes("posting_status"));
+      expect(update, "posting_status UPDATE must run").toBeTruthy();
+      expect(update!.params).toEqual(expect.arrayContaining(["exp-1", "je-2", "oc-1"]));
+    });
+
+    // Genuine orphan case, unchanged: no payment account AND no vendor on the WO (e.g. in-house
+    // labor with nothing external to owe) — nothing to post against, correctly still skipped.
+    it("does NOT attempt GL posting when there is neither a payment account NOR a vendor (genuine orphan)", async () => {
       mockAudit.mockResolvedValue(undefined);
       mockIsEnabled.mockClear();
       mockPostInClientTx.mockClear();
-      const { client } = makeClient();
+      const { client } = makeClient({ vendorUuid: null });
 
       await autoCreateExpenseFromWO(client, "user-1", "wo-1", null, null);
 

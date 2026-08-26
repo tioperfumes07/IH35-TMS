@@ -1051,7 +1051,21 @@ export async function autoCreateExpenseFromWO(
   // the exact cross-connection READ-COMMITTED visibility bug already fixed once this session for
   // the revenue latch (LV-REVREC-NOT-FIRING) would otherwise silently no-op here too, since this
   // expense row is not yet committed on any other connection.
-  if (paymentAccountUuid) {
+  //
+  // PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE — this attempt was gated on `paymentAccountUuid`
+  // alone, so every in_house/vendor_invoice WO completion (no payment account chosen — that is the
+  // vendor-payable case, not a cash-out) NEVER even tried to post, forever, with no retry and no UI
+  // surfacing that posting was skipped rather than attempted-and-failed. The row above still writes
+  // status='posted' unconditionally, so the document reads finalized while GL state silently never
+  // catches up. Live proof of the gap: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f (WO
+  // 850e2cc4-1578-40c2-b38d-a528f7ea821d) sat status=posted/posting_status=unposted from creation
+  // until this fix; posted live via the canonical poster (JE becfecd1-19f7-4fb3-a011-bef5be3f3638,
+  // DR category / CR "Expense AP", balanced) to close that instance. The canonical POST
+  // /api/v1/expenses/:id/post route's own orphan rule is `!payment_account_uuid && !vendor_uuid`
+  // (a known vendor with no payment account posts to A/P — not an orphan); this writer's own
+  // attempt-gate was narrower than the route it mirrors. Matching it here closes the gap for every
+  // future WO expense with a resolved vendor (the normal case — wo.vendor_uuid), not just this one.
+  if (paymentAccountUuid || wo.vendor_uuid) {
     const flagOn = await isEnabled(client as never, WO_EXPENSE_GL_POSTING_FLAG_KEY, {
       operating_company_id: wo.operating_company_id,
       user_uuid: userId,
