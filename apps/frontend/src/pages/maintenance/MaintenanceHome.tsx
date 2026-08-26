@@ -348,18 +348,27 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <RMStatStrip kpis={kpis} />
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
           <div className="min-w-0">
-            <RMBucketsGrid
-              inHouse={rmStatusQuery.data?.in_house ?? []}
-              external={rmStatusQuery.data?.external ?? []}
-              roadside={rmStatusQuery.data?.roadside ?? []}
-              onCreateRoadside={() => {
-                setCreateWoType("repair");
-                setPrefillFromIssue(null);
-                setCreateWoOpen(true);
-              }}
-              onOpen={(id) => setSelectedWorkOrderId(id)}
-              onAdvanceStatus={(id, status) => statusMutation.mutate({ id, status })}
-            />
+            {rmStatusQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load R&M status board"
+                status={0}
+                message={(rmStatusQuery.error as Error)?.message}
+                onRetry={() => void rmStatusQuery.refetch()}
+              />
+            ) : (
+              <RMBucketsGrid
+                inHouse={rmStatusQuery.data?.in_house ?? []}
+                external={rmStatusQuery.data?.external ?? []}
+                roadside={rmStatusQuery.data?.roadside ?? []}
+                onCreateRoadside={() => {
+                  setCreateWoType("repair");
+                  setPrefillFromIssue(null);
+                  setCreateWoOpen(true);
+                }}
+                onOpen={(id) => setSelectedWorkOrderId(id)}
+                onAdvanceStatus={(id, status) => statusMutation.mutate({ id, status })}
+              />
+            )}
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (
@@ -378,10 +387,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             {companyId ? (
               <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
             ) : null}
-            <RoadServiceActivePanel
-              roadside={rmStatusQuery.data?.roadside ?? []}
-              onOpen={(id) => setSelectedWorkOrderId(id)}
-            />
+            {!rmStatusQuery.isError ? (
+              <RoadServiceActivePanel
+                roadside={rmStatusQuery.data?.roadside ?? []}
+                onOpen={(id) => setSelectedWorkOrderId(id)}
+              />
+            ) : null}
             <InTransitTriageBand
               issues={triageQuery.data?.issues ?? []}
               totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
