@@ -640,7 +640,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           {wizardStep === 1 ? (
           <>
           <div className="col-span-full flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Operating Company</label>
+            <label htmlFor="operating_company_id" className="text-xs font-semibold text-gray-600">Operating Company</label>
             {companiesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load operating companies"
@@ -651,6 +651,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               />
             ) : null}
             <Combobox
+              id="operating_company_id"
+              dataTestId="driver-create-operating-company"
               dataField="operating_company_id"
               options={(companiesQuery.data ?? []).map((company) => ({
                 value: company.id,
@@ -709,7 +711,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </div>
           ))}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">CDL State</label>
+            <label htmlFor="cdl_state" className="text-xs font-semibold text-gray-600">CDL State</label>
             {usStatesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load US states"
@@ -720,6 +722,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               />
             ) : null}
             <Combobox
+              id="cdl_state"
+              dataTestId="driver-create-cdl-state"
               dataField="cdl_state"
               options={(usStatesQuery.data ?? []).map((state) => ({
                 value: state.code,
@@ -739,8 +743,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="cdl_state" message={driverFieldErrors.cdl_state} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Country</label>
+            <label htmlFor="country_code" className="text-xs font-semibold text-gray-600">Country</label>
             <SelectCombobox
+              id="country_code"
               data-field="country_code"
               value={form.country_code}
               aria-describedby={driverFieldErrors.country_code ? "country_code-error" : undefined}
@@ -756,8 +761,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="country_code" message={driverFieldErrors.country_code} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Phone (10 digits) *</label>
+            <label htmlFor="phone_input" className="text-xs font-semibold text-gray-600">Phone (10 digits) *</label>
             <input
+              id="phone_input"
               data-field="phone_input"
               required
               value={form.phone_input}
@@ -772,8 +778,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="phone_input" message={driverFieldErrors.phone_input} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">CDL Class</label>
+            <label htmlFor="cdl_class" className="text-xs font-semibold text-gray-600">CDL Class</label>
             <Combobox
+              id="cdl_class"
+              dataTestId="driver-create-cdl-class"
               dataField="cdl_class"
               options={cdlClassComboboxOptions}
               value={form.cdl_class || null}
@@ -787,8 +795,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="cdl_class" message={driverFieldErrors.cdl_class} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Status</label>
+            <label htmlFor="status" className="text-xs font-semibold text-gray-600">Status</label>
             <Combobox
+              id="status"
+              dataTestId="driver-create-status"
               dataField="status"
               options={statusFieldComboboxOptions}
               value={form.status || null}
@@ -802,8 +812,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="status" message={driverFieldErrors.status} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
+            <label htmlFor="pay_basis" className="text-xs font-semibold text-gray-600">Pay Basis</label>
             <Combobox
+              id="pay_basis"
+              dataTestId="driver-create-pay-basis"
               dataField="pay_basis"
               options={payBasisComboboxOptions}
               value={form.pay_basis || null}
@@ -907,7 +919,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   </div>
                 ))}
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-gray-600">MX State</label>
+                  <label htmlFor="mx_state" className="text-xs font-semibold text-gray-600">MX State</label>
                   {mexicoStatesQuery.isError ? (
                     <ListErrorState
                       title="Couldn't load Mexico states"
@@ -918,6 +930,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     />
                   ) : null}
                   <Combobox
+                    id="mx_state"
+                    dataTestId="driver-create-mx-state"
                     dataField="mx_state"
                     options={(mexicoStatesQuery.data ?? []).map((state) => ({
                       value: state.code,
@@ -1003,8 +1017,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   </div>
                 ))}
                 <div className="md:col-span-2 flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-gray-600">Emergency Contact Address</label>
+                  <label htmlFor="emergency_contact_address" className="text-xs font-semibold text-gray-600">Emergency Contact Address</label>
                   <textarea
+                    id="emergency_contact_address"
                     data-field="emergency_contact_address"
                     value={form.emergency_contact_address ?? ""}
                     aria-describedby={driverFieldErrors.emergency_contact_address ? "emergency_contact_address-error" : undefined}
@@ -1018,8 +1033,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   <FieldError id="emergency_contact_address" message={driverFieldErrors.emergency_contact_address} />
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-gray-600">Emergency Contact Notes</label>
+                  <label htmlFor="emergency_contact_notes" className="text-xs font-semibold text-gray-600">Emergency Contact Notes</label>
                   <textarea
+                    id="emergency_contact_notes"
                     data-field="emergency_contact_notes"
                     value={form.emergency_contact_notes ?? ""}
                     aria-describedby={driverFieldErrors.emergency_contact_notes ? "emergency_contact_notes-error" : undefined}
