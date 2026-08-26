@@ -73,6 +73,8 @@ export function assertFinanceScenariosWired(sources) {
   if (/not yet built|future module placeholder/i.test(src[PROJECTIONS_PAGE])) problems.push(`${PROJECTIONS_PAGE}: still contains the old placeholder copy`);
   if (!/createScenario/.test(src[SCENARIOS_PAGE]) || !/listScenarios/.test(src[SCENARIOS_PAGE])) problems.push(`${SCENARIOS_PAGE}: must create+list real scenarios, not a static blurb`);
   if (/not available yet|no working feature/i.test(src[SCENARIOS_PAGE])) problems.push(`${SCENARIOS_PAGE}: still contains the old placeholder copy`);
+  if (!/Assumption \*/.test(src[SCENARIOS_PAGE])) problems.push(`${SCENARIOS_PAGE}: Assumption * required mark (FINANCE-HUB-SILENT-DISABLED-BUTTON)`);
+  if (!/finance-scenario-submit-hint/.test(src[SCENARIOS_PAGE])) problems.push(`${SCENARIOS_PAGE}: disabled Create must expose submit hint (not a silent no-op)`);
 
   return problems;
 }
@@ -96,6 +98,8 @@ function selftest() {
     { ...good, [FE_API]: good[FE_API].replace("export function createScenario", "function createScenario") },
     { ...good, [OVERVIEW_PAGE]: good[OVERVIEW_PAGE].replace(/getActiveScenarioSummary/g, "removedCall") },
     { ...good, [SCENARIOS_PAGE]: good[SCENARIOS_PAGE].replace(/createScenario/g, "removedCall") },
+    { ...good, [SCENARIOS_PAGE]: good[SCENARIOS_PAGE].replace("Assumption *", "Assumption") },
+    { ...good, [SCENARIOS_PAGE]: good[SCENARIOS_PAGE].replace(/finance-scenario-submit-hint/g, "x-hint") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFinanceScenariosWired(mutated).length === 0) {

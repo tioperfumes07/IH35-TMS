@@ -118,19 +118,19 @@ export function CalculatorPage() {
     <div className="p-6"><FinanceModuleTabs />{header}
       <div className="rounded-sm border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {moneyField("Price ($)", "price")}{moneyField("Down payment ($)", "down")}
+          {moneyField("Price ($) *", "price")}{moneyField("Down payment ($)", "down")}
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">First payment</span>
+            <span className="text-xs font-medium text-slate-600">First payment *</span>
             <DatePicker
               className="mt-1 w-full"
               value={form.firstPaymentDate}
               onChange={(next) => setForm((f) => ({ ...f, firstPaymentDate: next }))}
             />
           </label>
-          {field("Scenario A rate (%)", "rateA", "number")}{field("Scenario A term (mo)", "termA", "number")}
+          {field("Scenario A rate (%) *", "rateA", "number")}{field("Scenario A term (mo) *", "termA", "number")}
           {field("Scenario B rate (%) — optional", "rateB", "number")}{field("Scenario B term (mo)", "termB", "number")}
         </div>
-        <button onClick={onCompute} disabled={busy || !calcReady} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+        <button onClick={onCompute} disabled={busy || !calcReady} title={!calcReady ? "Enter price, first payment date, Scenario A rate, and term before calculating." : undefined} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
           {busy ? "Calculating…" : "Calculate"}
         </button>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

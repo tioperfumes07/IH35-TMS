@@ -138,6 +138,21 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
     firstInput?.focus();
   }, [open, violation]);
 
+  const currentViolationId = String(violation?.id ?? "");
+  const isCurrentAction = (variables: ViolationActionScope | undefined) =>
+    variables?.violationId === currentViolationId &&
+    variables?.companyId === operatingCompanyId &&
+    variables?.generation === actionGenerationRef.current;
+  const patchErrorCurrent = patchMutation.isError && isCurrentAction(patchMutation.variables);
+  const escalateErrorCurrent = escalateMutation.isError && isCurrentAction(escalateMutation.variables);
+  const resolveErrorCurrent = resolveMutation.isError && isCurrentAction(resolveMutation.variables);
+  const completeErrorCurrent = completeMutation.isError && isCurrentAction(completeMutation.variables);
+  const currentActionError = patchErrorCurrent
+    ? patchMutation.error
+    : escalateErrorCurrent
+      ? escalateMutation.error
+      : null;
+
   if (!open || !violation) return null;
   const driverLabels = (violation.related_driver_labels && typeof violation.related_driver_labels === "object"
     ? violation.related_driver_labels
@@ -216,10 +231,10 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             Escalate
           </button>
         </div>
-        {(patchMutation.isError || escalateMutation.isError) ? (
+        {(patchErrorCurrent || escalateErrorCurrent) ? (
           <p className="mt-2 text-xs text-red-700" data-testid="company-violation-action-error">
             {userFacingApiError(
-              patchMutation.error ?? escalateMutation.error,
+              currentActionError,
               "Could not update the company violation.",
             )}
           </p>
@@ -280,7 +295,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             >
               Resolve & Apply Outcome
             </button>
-            {resolveMutation.isError ? (
+            {resolveErrorCurrent ? (
               <p className="mt-2 text-xs text-red-700" data-testid="company-violation-resolve-error">
                 {userFacingApiError(resolveMutation.error, "Could not resolve the company violation.")}
               </p>
@@ -300,7 +315,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
               notes,
             })}
           />
-          {completeMutation.isError ? (
+          {completeErrorCurrent ? (
             <p className="mt-2 text-xs text-red-700" data-testid="company-violation-complete-error">
               {userFacingApiError(completeMutation.error, "Could not complete the corrective action.")}
             </p>
