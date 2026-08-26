@@ -172,8 +172,8 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
             <input value={referenceNumbers} onChange={(e) => setReferenceNumbers(e.target.value)} className={inputCls} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelCls}>Date of birth</label>
-            <DatePicker value={dob} onChange={setDob} className={inputCls} data-testid="w8ben-dob" />
+            <label htmlFor="w8ben-dob" className={labelCls}>Date of birth</label>
+            <DatePicker id="w8ben-dob" value={dob} onChange={setDob} className={inputCls} data-testid="w8ben-dob" />
           </div>
         </div>
 
@@ -196,8 +196,8 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
             <input value={certName} onChange={(e) => setCertName(e.target.value)} className={inputCls} data-testid="w8ben-cert-name" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelCls}>Signed date</label>
-            <DatePicker value={signedDate} onChange={setSignedDate} className={inputCls} data-testid="w8ben-signed" />
+            <label htmlFor="w8ben-signed" className={labelCls}>Signed date</label>
+            <DatePicker id="w8ben-signed" value={signedDate} onChange={setSignedDate} className={inputCls} data-testid="w8ben-signed" />
           </div>
         </div>
 

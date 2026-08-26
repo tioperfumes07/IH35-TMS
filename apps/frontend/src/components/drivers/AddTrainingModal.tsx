@@ -163,8 +163,9 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           </div>
         ) : null}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Completion date</label>
+          <label htmlFor="add-training-completed" className="text-xs font-semibold text-gray-600">Completion date</label>
           <DatePicker
+            id="add-training-completed"
             value={completedAt}
             onChange={setCompletedAt}
             className="h-9"
@@ -172,8 +173,9 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Expiry date (optional)</label>
+          <label htmlFor="add-training-expiry" className="text-xs font-semibold text-gray-600">Expiry date (optional)</label>
           <DatePicker
+            id="add-training-expiry"
             value={expiryDate}
             onChange={setExpiryDate}
             min={completedAt}
