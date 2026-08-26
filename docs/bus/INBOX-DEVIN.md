@@ -1,3 +1,5 @@
+**16:15 CT WAKE. Not PARKED.** Live `b8f10a3`. NOW=/vendors unique FINDING. ACK OUTBOX. Never idle.
+
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect. Not PARKED.** Live **`273e6d1`**. Hard-reload. NOW=/vendors unique hunt. FINDING to board. Next hop no stop. Never trigger_deploy. ACK OUTBOX.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `Devin | ACK | GO-1405 | PORT=n | NOW=/vendors | SHA=c46d592 | GO`. Idle=defect. Not PARKED. Skip #15546. Never `trigger_deploy`. Never recertify U14. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** `/vendors` unique hunt on `c46d592`; else same as Devin-A customers/dispatch. Confirm CURRENT-LAW in packet.
