@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getRelayCompanyCards,
@@ -53,26 +53,47 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
 
   const [newCard, setNewCard] = useState("");
   const [newLabel, setNewLabel] = useState("");
+  const lifecycleGenerationRef = useRef(0);
 
   const addCardMutation = useMutation({
-    mutationFn: (card: string) => putRelayCompanyCard(companyId, { card_last4: card, label: newLabel || undefined, is_active: true }),
-    onSuccess: (res) => {
+    mutationFn: (input: { companyId: string; card: string; label?: string; generation: number }) =>
+      putRelayCompanyCard(input.companyId, { card_last4: input.card, label: input.label, is_active: true }),
+    onSuccess: (res, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast(`Card ${res.card_last4} added — reclassified ${res.reclassified_deposits} deposit(s) as company`, "success");
       setNewCard("");
       setNewLabel("");
-      void queryClient.invalidateQueries({ queryKey: ["relay"] });
+      void queryClient.invalidateQueries({ queryKey: ["relay", "deposits", input.companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["relay", "company-cards", input.companyId] });
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to add card", "error"),
+    onError: (e, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(e instanceof Error ? e.message : "Failed to add card", "error");
+    },
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: (card: string) => putRelayCompanyCard(companyId, { card_last4: card, is_active: false }),
-    onSuccess: (res) => {
+    mutationFn: (input: { companyId: string; card: string; generation: number }) =>
+      putRelayCompanyCard(input.companyId, { card_last4: input.card, is_active: false }),
+    onSuccess: (res, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast(`Card ${res.card_last4} removed — ${res.reclassified_deposits} deposit(s) back to unclassified`, "success");
-      void queryClient.invalidateQueries({ queryKey: ["relay"] });
+      void queryClient.invalidateQueries({ queryKey: ["relay", "deposits", input.companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["relay", "company-cards", input.companyId] });
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to remove card", "error"),
+    onError: (e, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
+      pushToast(e instanceof Error ? e.message : "Failed to remove card", "error");
+    },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    addCardMutation.reset();
+    deactivateMutation.reset();
+    setNewCard("");
+    setNewLabel("");
+  }, [companyId]); // Mutation reset functions are stable; company transitions own a fresh review draft.
 
   const unclassifiedCards = byCard.filter((c) => c.classification === "unclassified");
 
@@ -104,7 +125,11 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
               type="button"
               className="rounded-sm border border-slate-300 px-2 py-0.5 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               disabled={addCardMutation.isPending}
-              onClick={() => addCardMutation.mutate(c.funding_card_last4!)}
+              onClick={() => addCardMutation.mutate({
+                companyId,
+                card: c.funding_card_last4!,
+                generation: lifecycleGenerationRef.current,
+              })}
             >
               Mark as company card
             </button>
@@ -225,7 +250,11 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
                   className="text-slate-500 hover:text-red-600 disabled:opacity-50"
                   title="Remove from company set"
                   disabled={deactivateMutation.isPending}
-                  onClick={() => deactivateMutation.mutate(c.card_last4)}
+                  onClick={() => deactivateMutation.mutate({
+                    companyId,
+                    card: c.card_last4,
+                    generation: lifecycleGenerationRef.current,
+                  })}
                 >
                   ×
                 </button>
@@ -255,7 +284,12 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
           <button
             type="button"
             disabled={newCard.length !== 4 || addCardMutation.isPending}
-            onClick={() => addCardMutation.mutate(newCard)}
+            onClick={() => addCardMutation.mutate({
+              companyId,
+              card: newCard,
+              label: newLabel || undefined,
+              generation: lifecycleGenerationRef.current,
+            })}
             className="rounded-sm bg-slate-800 px-3 py-1.5 font-semibold text-white disabled:opacity-50"
           >
             + Add company card
