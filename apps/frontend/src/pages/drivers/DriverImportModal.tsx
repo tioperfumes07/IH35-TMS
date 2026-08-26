@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   importDriversCsv,
@@ -8,6 +8,7 @@ import {
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
+import { Modal } from "../../components/Modal";
 import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
@@ -67,6 +68,22 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const columns = useMemo(() => PREVIEW_COLUMNS, []);
 
+  const resetDraft = useCallback(() => {
+    setFile(null);
+    setPreview(null);
+    setPreviewError(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }, []);
+
+  useEffect(() => {
+    resetDraft();
+  }, [companyId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   async function runPreview() {
     if (!file || !companyId) return;
     setBusy(true);
@@ -90,7 +107,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
       const res = await importDriversCsv(file, companyId, "commit");
       pushToast(`Imported ${res.created ?? 0} driver profiles`, "success");
       onImported();
-      onClose();
+      handleClose();
     } catch (error) {
       pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
@@ -102,13 +119,8 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const sampleRows = preview?.sample ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 shadow-xl" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Import drivers from Master Contacts List (CSV)</h2>
-          <button type="button" onClick={onClose} aria-label="Close import drivers dialog" className="text-slate-400 hover:text-slate-700">✕</button>
-        </div>
-
+    <Modal open onClose={handleClose} title="Import drivers from Master Contacts List (CSV)" sizePreset="lg">
+      <div className="space-y-3">
         <p className="mb-3 text-xs text-slate-600">
           Upload the master contacts CSV. Drivers with a termination date import as <span className="font-medium">Terminated</span> (kept off active rosters,
           reachable for rehire). Preview writes nothing.
@@ -177,7 +189,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             />
 
             <div className="flex items-center justify-end gap-2">
-              <button type="button" onClick={onClose} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
+              <button type="button" onClick={handleClose} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
                 Cancel
               </button>
               <button
@@ -192,6 +204,6 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
           </div>
         ) : null}
       </div>
-    </div>
+    </Modal>
   );
 }
