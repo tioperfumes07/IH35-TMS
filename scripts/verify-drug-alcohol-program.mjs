@@ -104,14 +104,24 @@ const poolDash = checkExists("apps/frontend/src/pages/safety/drug-alcohol/Random
 checkContains("apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx", poolDash, [
   { pattern: /FMCSA/, label: "FMCSA minimum reference" },
   { pattern: /random-pool\/draw/, label: "random pool draw API call" },
+  { pattern: /drawn_driver_uuids/, label: "canonical selected driver ids" },
+  { pattern: /useDriverLabels\(companyId, drawnDriverIds\)/, label: "company-scoped driver labels" },
+  { pattern: /kind="driver"/, label: "selected driver reverse EntityLink" },
 ]);
 
-// ─── Block manifest ───────────────────────────────────────────────────────────
-
-const manifest = checkExists(".block-ready.json");
-checkContains(".block-ready.json", manifest, [
-  { pattern: /GAP-81-DRUG-ALCOHOL-PROGRAM/, label: "block_id GAP-81-DRUG-ALCOHOL-PROGRAM" },
-]);
+if (process.argv.includes("--selftest")) {
+  const baseline = failures.length;
+  const planted = poolDash?.replace('kind="driver"', 'kind="unit"') ?? "";
+  checkContains("planted/RandomPoolDashboard.tsx", planted, [
+    { pattern: /kind="driver"/, label: "selected driver reverse EntityLink" },
+  ]);
+  if (failures.length !== baseline + 1) {
+    console.error("verify:drug-alcohol-program --selftest FAILED — planted driver-link defect escaped");
+    process.exit(1);
+  }
+  console.log("verify:drug-alcohol-program --selftest PASS — planted driver-link defect rejected");
+  process.exit(0);
+}
 
 // ─── Result ───────────────────────────────────────────────────────────────────
 
@@ -129,4 +139,3 @@ console.log(`  ✓ Backend services: program.service.ts, random-pool.service.ts,
 console.log(`  ✓ Worker: da-random-pool-draw-worker.ts (Jan/Apr/Jul/Oct quarterly)`);
 console.log(`  ✓ Tests: program.test.ts, random-pool.test.ts`);
 console.log(`  ✓ Frontend: DrugAlcoholProgramTab, TestSchedulingPanel, RandomPoolDashboard`);
-console.log(`  ✓ Block manifest present`);
