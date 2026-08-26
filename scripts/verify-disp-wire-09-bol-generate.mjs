@@ -9,6 +9,7 @@
  *   (d) FE generateLoadBol client missing
  *   (e) LoadBolPanel missing bol-generate-button / not used on PodReview + LoadDetailDrawer
  *   (f) Stored-copy download rejects silently instead of surfacing an operator error
+ *   (g) Generate BOL closes over a mutable load/company or applies stale completion state
  *
  * Mutation-tested both directions.
  *
@@ -74,6 +75,21 @@ export function auditBolWire(sources) {
   }
   if (!/generateLoadBol/.test(panel)) {
     problems.push(`${PATHS.panel}: LoadBolPanel does not call generateLoadBol`);
+  }
+  if (!/mutationFn:\s*\(input:\s*\{ loadId: string; companyId: string; generation: number \}\)\s*=>\s*generateLoadBol\(input\.loadId, input\.companyId\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL must submit an immutable load/company/generation snapshot`);
+  }
+  if (!/queryKey:\s*\["pod-bol-summary", input\.companyId, input\.loadId\]/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL must invalidate the submitted load/company cache`);
+  }
+  if (!/generateGenerationRef\.current \+= 1;[\s\S]{0,120}setGenerateError\(null\);[\s\S]{0,120}generateMutation\.reset\(\);[\s\S]{0,80}\[companyId, loadId\]/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL must retire and reset action state on load/company change`);
+  }
+  if (!/input\.generation === generateGenerationRef\.current\) setGenerateError\(error as Error\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL must suppress stale error completion state`);
+  }
+  if (!/generateMutation\.mutate\(\{\s*loadId,\s*companyId,\s*generation: generateGenerationRef\.current,\s*\}\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL click must snapshot the visible load/company intent`);
   }
   if (!/data-testid=["']bol-stored-download-button["'][\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,360}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
@@ -171,6 +187,57 @@ function selftest() {
           ),
         }),
       expect: "stored BOL download must surface",
+    },
+    {
+      label: "generate input falls back to mutable props",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(
+            real.panel,
+            "generateLoadBol(input.loadId, input.companyId)",
+            "generateLoadBol(loadId, companyId)",
+            "generate input",
+          ),
+        }),
+      expect: "immutable load/company/generation snapshot",
+    },
+    {
+      label: "submitted cache identity falls back to visible props",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(
+            real.panel,
+            '["pod-bol-summary", input.companyId, input.loadId]',
+            '["pod-bol-summary", companyId, loadId]',
+            "submitted cache",
+          ),
+        }),
+      expect: "submitted load/company cache",
+    },
+    {
+      label: "scope change does not retire generation",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(real.panel, "generateGenerationRef.current += 1;", "void generateGenerationRef.current;", "generation reset"),
+        }),
+      expect: "retire and reset action state",
+    },
+    {
+      label: "stale error completion accepted",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(
+            real.panel,
+            "input.generation === generateGenerationRef.current",
+            "true",
+            "stale error",
+          ),
+        }),
+      expect: "suppress stale error completion",
     },
   ];
 

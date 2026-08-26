@@ -7,6 +7,7 @@ import {
 } from "../../api/dispatch";
 import { useToast } from "../Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -16,6 +17,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const generateGenerationRef = useRef(0);
+  const [generateError, setGenerateError] = useState<Error | null>(null);
   const summaryQuery = useQuery({
     queryKey: ["pod-bol-summary", companyId, loadId],
     queryFn: () => getLoadPodBolSummary(loadId, companyId),
@@ -23,11 +26,22 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   });
 
   const generateMutation = useMutation({
-    mutationFn: () => generateLoadBol(loadId, companyId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pod-bol-summary", companyId, loadId] });
+    mutationFn: (input: { loadId: string; companyId: string; generation: number }) =>
+      generateLoadBol(input.loadId, input.companyId),
+    onMutate: () => setGenerateError(null),
+    onSuccess: (_result, input) => {
+      void queryClient.invalidateQueries({ queryKey: ["pod-bol-summary", input.companyId, input.loadId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === generateGenerationRef.current) setGenerateError(error as Error);
     },
   });
+
+  useEffect(() => {
+    generateGenerationRef.current += 1;
+    setGenerateError(null);
+    generateMutation.reset();
+  }, [companyId, loadId]);
 
   const bols = summaryQuery.data?.bols ?? [];
   const pods = summaryQuery.data?.pods ?? [];
@@ -48,8 +62,18 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
             type="button"
             className="rounded-sm bg-[#1f2a44] px-3 py-1 text-sm text-white"
             data-testid="bol-generate-button"
-            disabled={generateMutation.isPending}
-            onClick={() => generateMutation.mutate()}
+            disabled={
+              generateMutation.isPending &&
+              generateMutation.variables?.companyId === companyId &&
+              generateMutation.variables?.loadId === loadId
+            }
+            onClick={() =>
+              generateMutation.mutate({
+                loadId,
+                companyId,
+                generation: generateGenerationRef.current,
+              })
+            }
           >
             {generateMutation.isPending ? "Generating…" : "Generate BOL"}
           </button>
@@ -58,9 +82,9 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
       <p className="mb-2 text-xs text-slate-600">
         {pods.length} POD(s) · {bols.length} generated BOL(s)
       </p>
-      {generateMutation.isError ? (
+      {generateError ? (
         <p className="mb-2 text-xs text-[#dc2626]" data-testid="bol-generate-error">
-          {(generateMutation.error as Error)?.message ?? "BOL generate failed"}
+          {generateError.message || "BOL generate failed"}
         </p>
       ) : null}
       {bols.length > 0 ? (
