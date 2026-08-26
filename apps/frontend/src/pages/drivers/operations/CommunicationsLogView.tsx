@@ -13,7 +13,7 @@ export function CommunicationsLogView({ driverId, operatingCompanyId }: Props) {
       columns={[
         { key: "created_at", label: "Date" },
         { key: "direction", label: "Direction" },
-        { key: "channel", label: "Channel" },
+        { key: "channel", label: "Channel", enumLabel: true },
         { key: "body", label: "Message" },
       ]}
     />

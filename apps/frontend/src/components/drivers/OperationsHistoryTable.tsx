@@ -5,6 +5,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import type { EntityKind } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 
 export type OperationsColumn = {
   key: string;
@@ -17,6 +18,15 @@ export type OperationsColumn = {
    */
   entityKind?: EntityKind;
   idKey?: string;
+  /**
+   * DRIVER-OPS-HISTORY-ENUM-RAW-DISPLAY — this table is the shared render path for all 12 driver
+   * operations-depth sub-views, so `formatCell`'s plain `String(value)` fallback below is generic
+   * by necessity (free text, dates, ids — humanizing all of it would mangle non-enum columns).
+   * Opt a specific column into `humanizeEnumLabel()` only when its backend source is a real
+   * checked/constrained enum (e.g. safety.harsh_events.event_kind, driver_profile_messages.channel)
+   * — never set this on a free-text or already-human column.
+   */
+  enumLabel?: boolean;
 };
 
 type OperationsRow = Record<string, unknown>;
@@ -86,6 +96,11 @@ function renderCell(row: OperationsRow, column: OperationsColumn) {
         noun={linkNoun(column.entityKind)}
       />
     );
+  }
+  if (column.enumLabel) {
+    const value = row[column.key];
+    if (value === null || value === undefined || value === "") return "—";
+    return humanizeEnumLabel(value);
   }
   return formatCell(row[column.key]);
 }
