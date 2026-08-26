@@ -2,6 +2,7 @@
 export default {
   name: "maint-labor-tracker-no-box-in-box",
   run(ctx) {
-    return ctx.run("node", ["scripts/verify-maint-labor-tracker-no-box-in-box.mjs"]);
+    if (ctx.run("node", ["scripts/verify-maint-labor-tracker-no-box-in-box.mjs"]) !== 0) return 1;
+    return ctx.run("node", ["scripts/verify-maint-labor-action-company-lifecycle.mjs"]);
   },
 };
