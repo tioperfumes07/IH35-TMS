@@ -14,7 +14,7 @@ export function TrailerTiresReverseSection({ operatingCompanyId, equipmentId }: 
     queryFn: () => listMaintenanceTireRecords(operatingCompanyId, { equipment_id: equipmentId }),
     enabled: Boolean(operatingCompanyId && equipmentId),
   });
-  const rows = query.data?.rows ?? [];
+  const rows = query.isError ? [] : query.data?.rows ?? [];
   return (
     <DataPanel title="Tires">
       <div className="mb-2 flex justify-end">

@@ -9,6 +9,7 @@ import { Button } from "../../../components/Button";
 import { ApiError } from "../../../api/client";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
 export function DriverSchedulerRequestDetailPage() {
   const { id = "" } = useParams();
@@ -77,7 +78,7 @@ export function DriverSchedulerRequestDetailPage() {
             <div className="font-semibold text-gray-900">Driver</div>
             <div><EntityLinkOrTombstone kind="driver" id={String(req.driver_id ?? "")} name={req.driver_name} noun="Driver" /></div>
             <div className="mt-2 font-semibold">Type</div>
-            <div>{String(req.leave_type)}</div>
+            <div>{humanizeEnumLabel(req.leave_type)}</div>
             <div className="mt-2 font-semibold">Dates</div>
             <div>
               {formatDateUS(req.start_date)} – {formatDateUS(req.end_date)}
@@ -85,7 +86,7 @@ export function DriverSchedulerRequestDetailPage() {
             <div className="mt-2 font-semibold">Reason</div>
             <div className="whitespace-pre-wrap text-gray-700">{String(req.reason ?? "")}</div>
             <div className="mt-2 font-semibold">Status</div>
-            <div>{String(req.status)}</div>
+            <div>{humanizeEnumLabel(req.status)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-semibold text-gray-900">Review actions</div>

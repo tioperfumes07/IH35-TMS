@@ -20,6 +20,7 @@ import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   open: boolean;
@@ -98,8 +99,8 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     enabled: open && Boolean(operatingCompanyId),
   });
   const users = useMemo(
-    () => (usersQuery.data?.users ?? []).filter((u) => !u.deactivated_at).sort((a, b) => userLabel(a).localeCompare(userLabel(b))),
-    [usersQuery.data]
+    () => (usersQuery.isError ? [] : usersQuery.data?.users ?? []).filter((u) => !u.deactivated_at).sort((a, b) => userLabel(a).localeCompare(userLabel(b))),
+    [usersQuery.data, usersQuery.isError]
   );
 
   const profilesQuery = useQuery({
@@ -107,7 +108,12 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     queryFn: () => fetchTaskTypes(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
-  const profiles = profilesQuery.data?.types ?? [];
+  const profiles = profilesQuery.isError ? [] : profilesQuery.data?.types ?? [];
+
+  useEffect(() => {
+    if (usersQuery.isError) setAssignedTo("");
+    if (profilesQuery.isError) setTaskTypeId("");
+  }, [profilesQuery.isError, usersQuery.isError]);
 
   // When a profile is chosen, adopt its category and suggest an alarm from its lead days + due date.
   const applyProfile = (p: TaskType | undefined) => {
@@ -244,11 +250,15 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
               }}
               placeholder={profilesQuery.isLoading ? "Loading…" : "No profile"}
               loading={profilesQuery.isLoading}
+              disabled={profilesQuery.isError}
               allowAddNew={{
                 label: "+ Add new profile",
                 onAdd: () => setShowAddProfile(true),
               }}
             />
+            {profilesQuery.isError ? (
+              <ListErrorState status={0} message="Could not load task profiles." onRetry={() => void profilesQuery.refetch()} />
+            ) : null}
           </div>
           {showAddProfile ? (
             <div className="mt-2 flex items-center gap-2">
@@ -281,7 +291,11 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 onChange={(next) => setAssignedTo(next ?? "")}
                 placeholder={usersQuery.isLoading ? "Loading…" : "Select an employee"}
                 loading={usersQuery.isLoading}
+                disabled={usersQuery.isError}
               />
+              {usersQuery.isError ? (
+                <ListErrorState status={0} message="Could not load assignable employees." onRetry={() => void usersQuery.refetch()} />
+              ) : null}
             </div>
           </div>
           <div>

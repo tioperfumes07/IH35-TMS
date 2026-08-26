@@ -28,6 +28,7 @@ import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
 import { apiRequest } from "../../api/client";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   open: boolean;
@@ -167,6 +168,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   });
 
   useEffect(() => {
+    if (detailQuery.isError) {
+      setSpawnedWorkOrders([]);
+      return;
+    }
     const rows = detailQuery.data?.spawned_work_orders;
     if (!Array.isArray(rows)) return;
     setSpawnedWorkOrders(
@@ -179,7 +184,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         })
         .filter((r): r is { id: string; display_id: string } => r != null)
     );
-  }, [detailQuery.data]);
+  }, [detailQuery.data, detailQuery.isError]);
 
   const accidentTypesQuery = useQuery({
     queryKey: ["accident-types", operatingCompanyId],
@@ -698,7 +703,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             Save the report first to attach photos.
           </div>
         ) : null}
-        {spawnedWorkOrders.length > 0 ? (
+        {detailQuery.isError ? (
+          <div className="mt-2" data-testid="accident-spawned-wo-error">
+            <ListErrorState
+              status={0}
+              message="Could not load linked work orders for this accident."
+              onRetry={() => void detailQuery.refetch()}
+            />
+          </div>
+        ) : null}
+        {!detailQuery.isError && spawnedWorkOrders.length > 0 ? (
           <div
             className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
             data-testid="accident-spawned-wo"

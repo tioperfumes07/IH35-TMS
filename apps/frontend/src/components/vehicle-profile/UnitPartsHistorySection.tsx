@@ -92,8 +92,8 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
     staleTime: 30_000,
   });
 
-  const rows: PartsAssignmentRow[] = partsQuery.data?.rows ?? [];
-  const totalCount = partsQuery.data?.total_count ?? rows.length;
+  const rows: PartsAssignmentRow[] = partsQuery.isError ? [] : partsQuery.data?.rows ?? [];
+  const totalCount = partsQuery.isError ? 0 : partsQuery.data?.total_count ?? rows.length;
 
   return (
     <section
