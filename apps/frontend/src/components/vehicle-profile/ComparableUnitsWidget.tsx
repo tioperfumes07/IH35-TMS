@@ -60,6 +60,10 @@ export function ComparableUnitsWidget({
           aria-label={`Fleet comparison for unit ${unitNumber}`}
           className="mt-2 overflow-hidden rounded-sm border border-gray-200"
         >
+          {/* MOBILE-RESPONSIVE-AUDIT: overflow-x-auto lets this table scroll horizontally on a
+              narrow viewport instead of clipping under the parent's overflow-hidden (border-radius
+              clip) — no visual change at normal widths, defensive on a 375px mobile viewport. */}
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
@@ -86,6 +90,7 @@ export function ComparableUnitsWidget({
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       ) : null}
     </div>
