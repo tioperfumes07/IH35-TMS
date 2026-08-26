@@ -76,7 +76,10 @@ contains("apps/backend/src/safety/incidents/auto-workflow-trigger.ts", workflowT
   { pattern: /safety\.accidents/, label: "accident workflow action" },
   { pattern: /safety\.cargo_claims/, label: "cargo workflow action" },
   { pattern: /safety\.workers_comp_claims/, label: "workers comp workflow action" },
-  { pattern: /dispatchNotification/, label: "stakeholder notification dispatch" },
+  {
+    pattern: /enqueueOutboxEvent\(\s*client,\s*(?:\r?\n\s*)?"safety\.incident\.stakeholder_notification"/,
+    label: "stakeholder notification dispatch (transactional outbox enqueue)",
+  },
 ]);
 
 const indexTs = read("apps/backend/src/index.ts");
