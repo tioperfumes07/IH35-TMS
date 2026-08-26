@@ -6,6 +6,9 @@ import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useEffect, useRef } from "react";
+
+/** @matrix-built modules=safety,compliance cols=driver,connectivity,reverse_link */
 
 // SAF-F06: these page-local helpers called bare fetch(path), so with
 // VITE_API_BASE_URL set and NO /api rewrite on the static site the request hit
@@ -33,6 +36,7 @@ export function ReturnToDuty() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const companyGenerationRef = useRef(0);
 
   const rtdQ = useQuery({
     queryKey: ["compliance", "drug-alcohol", "rtd", companyId],
@@ -48,14 +52,20 @@ export function ReturnToDuty() {
   });
 
   const reportMutation = useMutation({
-    mutationFn: (testId: string) =>
-      apiPatch(`/api/v1/compliance/drug-alcohol/results/${testId}/clearinghouse`, {
-        operating_company_id: companyId,
+    mutationFn: (input: { companyId: string; generation: number; testId: string }) =>
+      apiPatch(`/api/v1/compliance/drug-alcohol/results/${input.testId}/clearinghouse`, {
+        operating_company_id: input.companyId,
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["compliance", "drug-alcohol", "results", companyId] });
+    onSuccess: async (_result, input) => {
+      if (input.generation !== companyGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["compliance", "drug-alcohol", "results", input.companyId] });
     },
   });
+
+  useEffect(() => {
+    companyGenerationRef.current += 1;
+    reportMutation.reset();
+  }, [companyId]);
 
   const processes = (rtdQ.data as { processes?: Array<Record<string, unknown>> })?.processes ?? [];
   const positivePending = (
@@ -109,7 +119,13 @@ export function ReturnToDuty() {
                   type="button"
                   className="rounded-sm bg-slate-700 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
                   disabled={reportMutation.isPending}
-                  onClick={() => reportMutation.mutate(String(row.id))}
+                  onClick={() =>
+                    reportMutation.mutate({
+                      companyId,
+                      generation: companyGenerationRef.current,
+                      testId: String(row.id),
+                    })
+                  }
                 >
                   Mark reported
                 </button>
@@ -118,7 +134,8 @@ export function ReturnToDuty() {
             {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
           </ul>
         )}
-        {reportMutation.isError ? (
+        {reportMutation.isError &&
+        reportMutation.variables?.generation === companyGenerationRef.current ? (
           <p className="mt-2 text-xs text-red-700" data-testid="rtd-clearinghouse-report-error">
             {userFacingApiError(reportMutation.error, "Could not mark the Clearinghouse report as submitted.")}
           </p>
