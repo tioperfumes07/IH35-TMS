@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeSafetyReminder, listSafetyReminders, type SafetyReminderRow } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -74,6 +74,8 @@ export function DOTComplianceTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const actionGenerationRef = useRef(0);
+  const [acknowledgeError, setAcknowledgeError] = useState<unknown>(null);
 
   const remindersQ = useQuery({
     queryKey: ["safety", "reminders", companyId],
@@ -81,12 +83,25 @@ export function DOTComplianceTab() {
     queryFn: () => listSafetyReminders(companyId).then((payload) => payload.reminders),
   });
 
+  /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
   const acknowledgeMutation = useMutation({
-    mutationFn: (reminderId: string) => acknowledgeSafetyReminder(reminderId, companyId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "reminders", companyId] });
+    mutationFn: (input: { reminderId: string; companyId: string; generation: number }) =>
+      acknowledgeSafetyReminder(input.reminderId, input.companyId),
+    onMutate: () => setAcknowledgeError(null),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["safety", "reminders", input.companyId] });
+    },
+    onError: (error, input) => {
+      if (input.generation === actionGenerationRef.current) setAcknowledgeError(error);
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    setAcknowledgeError(null);
+    acknowledgeMutation.reset();
+  }, [companyId]); // Mutation reset is stable; company transitions own a fresh reminder lifecycle.
 
   // Hooks must run unconditionally (Rules of Hooks). Early return AFTER all hooks.
   const reminders = remindersQ.data ?? [];
@@ -129,7 +144,7 @@ export function DOTComplianceTab() {
             type="button"
             className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
             disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
-            onClick={() => acknowledgeMutation.mutate(row.id)}
+            onClick={() => acknowledgeMutation.mutate({ reminderId: row.id, companyId, generation: actionGenerationRef.current })}
           >
             Dismiss
           </button>
@@ -171,9 +186,9 @@ export function DOTComplianceTab() {
             exportFilename="dot-compliance-reminders"
           />
         </div>
-        {acknowledgeMutation.isError ? (
+        {acknowledgeError ? (
           <p className="mt-2 text-xs text-red-700" data-testid="dot-compliance-dismiss-error">
-            {userFacingApiError(acknowledgeMutation.error, "Could not dismiss the compliance reminder.")}
+            {userFacingApiError(acknowledgeError, "Could not dismiss the compliance reminder.")}
           </p>
         ) : null}
       </div>

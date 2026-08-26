@@ -12,7 +12,7 @@ const LABEL = "verify-saf-action-mutation-error-wave5";
 const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
-    needles: ["userFacingApiError", "acknowledgeMutation.isError", "dot-compliance-dismiss-error"],
+    needles: ["userFacingApiError", "acknowledgeError", "dot-compliance-dismiss-error"],
   },
   {
     file: "apps/frontend/src/pages/safety/ReturnToDuty.tsx",
