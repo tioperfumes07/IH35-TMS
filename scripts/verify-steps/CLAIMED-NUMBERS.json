@@ -1,4 +1,9 @@
 {
+  "9802": {
+    "claimed_at": "2026-08-25",
+    "claimed_by": "cc-3",
+    "purpose": "verify-driver-scheduler-leave-enum-humanized"
+  },
   "9801": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",
