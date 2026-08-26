@@ -18,7 +18,9 @@ const FILES = {
 function inspect(parts) {
   const errors = [];
   if (!parts.home.includes("<RelayHistoryImport operatingCompanyId={companyId} />")) errors.push("Fuel home does not forward selected company");
-  if (!parts.control.includes("runRelayFuelBackfill(operatingCompanyId, months)")) errors.push("control does not submit selected company");
+  if (!/const request = \{\s*companyId: operatingCompanyId,\s*months,\s*generation: lifecycleGenerationRef\.current/.test(parts.control) || !parts.control.includes("runRelayFuelBackfill(request.companyId, request.months)")) errors.push("control does not snapshot and submit selected company/months");
+  if (!/useEffect\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setMonths\(24\);\s*setState\("idle"\);\s*setMsg\(""\);\s*\}, \[operatingCompanyId\]\)/.test(parts.control)) errors.push("company transition does not retire request and reset control");
+  if ((parts.control.match(/request\.generation !== lifecycleGenerationRef\.current/g)?.length ?? 0) !== 2) errors.push("success and failure do not reject stale company generation");
   if (!/body: \{ operating_company_id: operatingCompanyId, months \}/.test(parts.api)) errors.push("API client omits operating_company_id");
   if (!parts.route.includes("operating_company_id_required")) errors.push("route does not require explicit company");
   if (!parts.route.includes("resolveOperatingCompanyId(client, userId, requestedCompanyId)")) errors.push("route does not membership-validate company");
@@ -37,13 +39,16 @@ if (process.argv.includes("--selftest")) {
     { ...source, api: source.api.replace("body: { operating_company_id: operatingCompanyId, months }", "body: { months }") },
     { ...source, route: source.route.replace("resolveOperatingCompanyId(client, userId, requestedCompanyId)", "requestedCompanyId") },
     { ...source, cron: source.cron.replace("activeCompanyIds.filter(({ id }) => id === opts.operatingCompanyId)", "activeCompanyIds") },
+    { ...source, control: source.control.replace("companyId: operatingCompanyId", "companyId: ''") },
+    { ...source, control: source.control.replace("lifecycleGenerationRef.current += 1;", "void operatingCompanyId;") },
+    { ...source, control: source.control.replace("request.generation !== lifecycleGenerationRef.current", "false") },
   ];
   const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
   if (missed.length) {
-    console.error(`verify-relay-history-import-company-scope SELFTEST FAIL — ${missed.length}/3 mutation(s) survived`);
+    console.error(`verify-relay-history-import-company-scope SELFTEST FAIL — ${missed.length}/6 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-relay-history-import-company-scope selftest PASS — 3/3 planted defects rejected");
+  console.log("verify-relay-history-import-company-scope selftest PASS — 6/6 planted defects rejected");
   process.exit(0);
 }
 
