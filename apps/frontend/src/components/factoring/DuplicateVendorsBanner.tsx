@@ -112,13 +112,32 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
         </p>
         {topPairs.length > 0 ? (
           <ul className="list-inside list-disc text-xs text-slate-600">
-            {topPairs.map((p) => (
-              <li key={`${p.from_vendor_id}-${p.to_vendor_id}`}>
-                <EntityLink kind="vendor" id={p.from_vendor_id} label={p.from_vendor_name} /> ↔{" "}
-                <EntityLink kind="vendor" id={p.to_vendor_id} label={p.to_vendor_name} /> (
-                {Math.round(Number(p.similarity) * 100)}% similar)
-              </li>
-            ))}
+            {topPairs.map((p) => {
+              // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the scan already resolved both real vendor
+              // ids for this pair; carry them into the merge form via query params so "review and
+              // merge" is one click, not "go find the raw QBO vendor uuid yourself" (the merge
+              // form's from/to fields are free text — see FactoringHome.tsx vendor_merges tab).
+              const mergeParams = new URLSearchParams({
+                merge_from_vendor_id: p.from_vendor_id,
+                merge_from_vendor_name: p.from_vendor_name,
+                merge_to_vendor_id: p.to_vendor_id,
+                merge_to_vendor_name: p.to_vendor_name,
+              });
+              return (
+                <li key={`${p.from_vendor_id}-${p.to_vendor_id}`}>
+                  <EntityLink kind="vendor" id={p.from_vendor_id} label={p.from_vendor_name} /> ↔{" "}
+                  <EntityLink kind="vendor" id={p.to_vendor_id} label={p.to_vendor_name} /> (
+                  {Math.round(Number(p.similarity) * 100)}% similar) —{" "}
+                  <NavLink
+                    to={`${FACTORING_TAB_PATH.vendor_merges}?${mergeParams.toString()}`}
+                    className="font-semibold underline underline-offset-2 hover:text-slate-900"
+                    data-testid="factoring-duplicate-vendors-banner-merge-pair-link"
+                  >
+                    Merge these
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
         ) : null}
         <NavLink

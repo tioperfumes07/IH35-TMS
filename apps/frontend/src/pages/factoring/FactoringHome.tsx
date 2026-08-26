@@ -232,6 +232,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const [mergeConfirm, setMergeConfirm] = useState("");
   const [mergeFromVendor, setMergeFromVendor] = useState("");
   const [mergeToVendor, setMergeToVendor] = useState("");
+  const [mergeFromVendorName, setMergeFromVendorName] = useState("");
+  const [mergeToVendorName, setMergeToVendorName] = useState("");
   const [mergeReason, setMergeReason] = useState("duplicate_vendor_cleanup");
   const [mergeApplyToDriver, setMergeApplyToDriver] = useState(true);
   const [creatingMerge, setCreatingMerge] = useState(false);
@@ -261,6 +263,32 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const loanIdFromUrl = searchParams.get("loan_id")?.trim() ?? "";
+
+  // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the Duplicate factoring vendors banner
+  // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
+  // to discard them on "Open Driver Vendor Merges" (a bare nav link), dumping the office user on
+  // an empty form whose from/to fields are free text — they had no way to know the raw QBO vendor
+  // uuid the scan already found. Consume the banner's deep-link params ONCE, prefill the merge
+  // form, land on its tab, and clear the params so they don't re-fire the effect or linger in the
+  // URL. Manual entry into the free-text fields is untouched (still works, still requires typing
+  // MERGE to confirm) — this only removes the "go find the id yourself" dead end.
+  useEffect(() => {
+    const fromId = searchParams.get("merge_from_vendor_id")?.trim();
+    const toId = searchParams.get("merge_to_vendor_id")?.trim();
+    if (!fromId || !toId) return;
+    setMergeFromVendor(fromId);
+    setMergeToVendor(toId);
+    setMergeFromVendorName(searchParams.get("merge_from_vendor_name")?.trim() ?? "");
+    setMergeToVendorName(searchParams.get("merge_to_vendor_name")?.trim() ?? "");
+    setTab("vendor_merges");
+    const next = new URLSearchParams(searchParams);
+    next.delete("merge_from_vendor_id");
+    next.delete("merge_from_vendor_name");
+    next.delete("merge_to_vendor_id");
+    next.delete("merge_to_vendor_name");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const EMPTY_FILTERS = {
     customerId: "",
@@ -1199,21 +1227,27 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               <input
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={mergeFromVendor}
-                onChange={(event) => setMergeFromVendor(event.target.value)}
+                onChange={(event) => {
+                  setMergeFromVendor(event.target.value);
+                  setMergeFromVendorName(""); // manual edit invalidates a deep-linked name
+                }}
                 placeholder="from qbo vendor id"
               />
               <input
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={mergeToVendor}
-                onChange={(event) => setMergeToVendor(event.target.value)}
+                onChange={(event) => {
+                  setMergeToVendor(event.target.value);
+                  setMergeToVendorName(""); // manual edit invalidates a deep-linked name
+                }}
                 placeholder="to qbo vendor id"
               />
             </div>
             <VendorMergeDiffPreview
               driverName={mergeDriverName}
-              fromVendorName={mergeFromVendor}
+              fromVendorName={mergeFromVendorName || mergeFromVendor}
               fromVendorId={mergeFromVendor}
-              toVendorName={mergeToVendor}
+              toVendorName={mergeToVendorName || mergeToVendor}
               toVendorId={mergeToVendor}
               mergeConfirm={mergeConfirm}
               onMergeConfirmChange={setMergeConfirm}
