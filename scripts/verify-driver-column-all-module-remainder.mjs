@@ -69,8 +69,8 @@ export function verify(source) {
     failures.push("both mounted prior-driver consumers must bind the canonical nullable id+human label through EntityLinkOrTombstone");
   }
 
-  need("maintenancePage", "createMaintenanceDriver(companyId, {", "maintenance creator must forward company scope to the canonical client");
-  need("maintenancePage", 'queryKey: ["maintenance", "master-data", "drivers", companyId]', "maintenance creator must reload the same scoped driver roster");
+  need("maintenancePage", "createMaintenanceDriver(input.companyId, {", "maintenance creator must forward the submitted company snapshot to the canonical client");
+  need("maintenancePage", 'queryKey: ["maintenance", "master-data", "drivers", submittedCompanyId]', "maintenance creator must reload the submitted scoped driver roster");
   need("maintenancePage", 'kind="driver"', "reloaded maintenance rows must drill to the canonical driver");
   need("maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}", "maintenance client must send explicit company scope");
   need("maintenanceRoutes", "const result = await createDriverCanonical(", "maintenance route must reuse the canonical driver writer");
@@ -120,7 +120,7 @@ if (process.argv.includes("--selftest")) {
     ["driverDetail", 'data-testid="driver-detail-prior-driver-link"'],
     ["driverDetail", 'data-testid="driver-detail-prior-driver-field-link"'],
     ["driverDetail", "name={driver.prior_driver_name}"],
-    ["maintenancePage", "createMaintenanceDriver(companyId, {"],
+    ["maintenancePage", "createMaintenanceDriver(input.companyId, {"],
     ["maintenancePage", 'kind="driver"'],
     ["maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
     ["maintenanceRoutes", "const result = await createDriverCanonical("],

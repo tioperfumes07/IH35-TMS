@@ -18,9 +18,9 @@ export function verify(source) {
   catch { failures.push("maintenance matrix must remain valid JSON"); }
   if (matrix && !matrix.leaves?.find((leaf) => leaf.id === "master.vehicles.create")?.required?.includes("unit")) failures.push("master.vehicles.create must remain an exact unit Required leaf");
 
-  need("page", "createMaintenanceVehicle(companyId, {", "creator must forward the selected company");
-  need("page", "unit_display_id: draft.unit_display_id", "creator must submit the canonical unit number");
-  need("page", 'queryKey: ["maintenance", "master-data", "vehicles", companyId]', "creator must reload the same scoped roster");
+  need("page", "createMaintenanceVehicle(input.companyId, {", "creator must forward the submitted company snapshot");
+  need("page", "unit_display_id: input.draft.unit_display_id", "creator must submit the snapshotted canonical unit number");
+  need("page", 'queryKey: ["maintenance", "master-data", "vehicles", submittedCompanyId]', "creator must reload the submitted scoped roster");
   need("page", 'kind="unit"', "reloaded rows must drill to the canonical unit");
   need("api", "/api/v1/maintenance/vehicles?operating_company_id=${encodeURIComponent(operatingCompanyId)}", "client must send explicit company scope");
   need("route", 'app.post("/api/v1/maintenance/vehicles"', "canonical maintenance unit route must remain mounted");
@@ -39,8 +39,8 @@ if (failures.length) { console.error(`verify-unit-column-all-module-remainder FA
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["page", "createMaintenanceVehicle(companyId, {"],
-    ["page", "unit_display_id: draft.unit_display_id"],
+    ["page", "createMaintenanceVehicle(input.companyId, {"],
+    ["page", "unit_display_id: input.draft.unit_display_id"],
     ["page", 'kind="unit"'],
     ["api", "/api/v1/maintenance/vehicles?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
     ["route", 'app.post("/api/v1/maintenance/vehicles"'],

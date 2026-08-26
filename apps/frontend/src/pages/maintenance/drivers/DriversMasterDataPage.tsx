@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +55,7 @@ export function DriversMasterDataPage() {
   const [editing, setEditing] = useState<MaintenanceDriverRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [voiding, setVoiding] = useState<MaintenanceDriverRow | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const driversQuery = useQuery({
     queryKey: ["maintenance", "master-data", "drivers", companyId, search],
@@ -62,65 +63,97 @@ export function DriversMasterDataPage() {
     enabled: Boolean(companyId),
   });
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "drivers", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "drivers", submittedCompanyId] });
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createMaintenanceDriver(companyId, {
-        first_name: draft.first_name,
-        last_name: draft.last_name,
-        phone: draft.phone,
-        email: draft.email || undefined,
-        cdl_number: draft.cdl_number || undefined,
-        cdl_state: draft.cdl_state || undefined,
-        status: draft.status,
-        notes: draft.notes || undefined,
+    mutationFn: (input: { companyId: string; generation: number; draft: DriverDraft }) =>
+      createMaintenanceDriver(input.companyId, {
+        first_name: input.draft.first_name,
+        last_name: input.draft.last_name,
+        phone: input.draft.phone,
+        email: input.draft.email || undefined,
+        cdl_number: input.draft.cdl_number || undefined,
+        cdl_state: input.draft.cdl_state || undefined,
+        status: input.draft.status,
+        notes: input.draft.notes || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(EMPTY_DRAFT);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Driver created", "success");
     },
-    onError: () => pushToast("Failed to create driver", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create driver", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!editing) throw new Error("No driver selected");
-      return updateMaintenanceDriver(editing.id, companyId, {
-        first_name: editing.first_name,
-        last_name: editing.last_name,
-        phone: editing.phone,
-        email: editing.email,
-        cdl_number: editing.cdl_number,
-        cdl_state: editing.cdl_state,
-        status: editing.status as DriverDraft["status"],
-        notes: editing.notes,
-      });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; row: MaintenanceDriverRow }) =>
+      updateMaintenanceDriver(input.row.id, input.companyId, {
+        first_name: input.row.first_name,
+        last_name: input.row.last_name,
+        phone: input.row.phone,
+        email: input.row.email,
+        cdl_number: input.row.cdl_number,
+        cdl_state: input.row.cdl_state,
+        status: input.row.status as DriverDraft["status"],
+        notes: input.row.notes,
+      }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setEditing(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Driver updated", "success");
     },
-    onError: () => pushToast("Failed to update driver", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update driver", "error");
+    },
   });
 
   const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!csvFile) throw new Error("File required");
-      return importMaintenanceDrivers(companyId, csvFile);
-    },
-    onSuccess: async (result) => {
-      await refresh();
+    mutationFn: (input: { companyId: string; generation: number; file: File }) =>
+      importMaintenanceDrivers(input.companyId, input.file),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       setCsvFile(null);
       pushToast(`Driver import completed (${String(result.inserted_rows ?? 0)} inserted)`, "success");
     },
-    onError: () => pushToast("Driver CSV import failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Driver CSV import failed", "error");
+    },
   });
+
+  const voidMutation = useMutation({
+    mutationFn: (input: { id: string; companyId: string; generation: number; reason: string }) =>
+      voidMaintenanceDriver(input.id, input.companyId, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      setVoiding(null);
+      await refresh(input.companyId);
+      pushToast("Driver voided", "success");
+    },
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to void driver", "error");
+    },
+  });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [companyId]);
 
   const rows = useMemo(() => driversQuery.data?.rows ?? [], [driversQuery.data?.rows]);
   const csvEnabled = driversQuery.data?.csv_import_enabled ?? false;
@@ -203,7 +236,10 @@ export function DriversMasterDataPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
           <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
+          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+            if (!csvFile) return;
+            importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
+          }}>
             CSV Import
           </Button>
           {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
@@ -251,7 +287,7 @@ export function DriversMasterDataPage() {
             />
           </div>
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate()}>
+          <Button disabled={!draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -269,7 +305,7 @@ export function DriversMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, email: e.target.value || null } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
-            <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -284,8 +320,7 @@ export function DriversMasterDataPage() {
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
           if (!voiding) return;
-          await voidMaintenanceDriver(voiding.id, companyId, reason);
-          await refresh();
+          await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
     </div>
