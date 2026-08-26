@@ -8,11 +8,13 @@ const source = fs.readFileSync(file, "utf8");
 function failures(input = source) {
   return [
     ["complete HOS form factory", /function emptyHosViolationForm\(\) \{[\s\S]*?driver_id: ""[\s\S]*?violation_type: ""[\s\S]*?occurred_at: defaultOccurredAtIso\(\)[\s\S]*?duration_minutes: ""[\s\S]*?source: "manual_office"[\s\S]*?notes: ""[\s\S]*?related_load_id: ""/.test(input)],
-    ["draft reset includes form suggestion and search", /const resetDraft = useCallback\(\(\) => \{\s*setForm\(emptyHosViolationForm\(\)\);\s*setSuggestionPinned\(false\);\s*setViolationTypeSearch\(""\);/.test(input)],
+    ["draft reset includes form baseline suggestion and search", /const resetDraft = useCallback\(\(\) => \{\s*const next = emptyHosViolationForm\(\);\s*pristineOccurredAtRef\.current = next\.occurred_at;\s*setForm\(next\);\s*setSuggestionPinned\(false\);\s*setViolationTypeSearch\(""\);/.test(input)],
     ["open/company transition resets lifecycle", /lifecycleGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*resetMutation\(\);\s*\}, \[open, operatingCompanyId, resetDraft, resetMutation\]\);/.test(input)],
-    ["dismiss resets lifecycle", /const handleClose = useCallback\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input) && input.includes("onClose={handleClose}") && /onClick=\{handleClose\}/.test(input)],
+    ["actual close retires lifecycle", /const handleClose = useCallback\(\(\) => \{\s*if \(mutation\.isPending\) return;\s*lifecycleGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input)],
+    ["dirty drawer confirmation", input.includes("confirmDiscardOnClose") && input.includes("isDirty={isDirty}")],
+    ["cancel uses confirm-aware close", input.includes("onRegisterAttemptClose") && /onClick=\{attemptClose\} disabled=\{mutation\.isPending\}/.test(input)],
     ["submit snapshots company generation draft and catalog identity", /mutation\.mutate\(\{\s*companyId: operatingCompanyId,\s*generation: lifecycleGenerationRef\.current,\s*draft: \{ \.\.\.form \},\s*violationType: \{\s*id: selectedViolationType\.id,\s*severityWeight: selectedViolationType\.severity_weight \?\? null/.test(input)],
-    ["stale success cannot close new context", /onSuccess: \(_created, input\) => \{\s*if \(lifecycleGenerationRef\.current !== input\.generation\) return;\s*onCreated\(\);\s*handleClose\(\);/.test(input)],
+    ["stale success cannot close new context", /onSuccess: \(_created, input\) => \{\s*if \(lifecycleGenerationRef\.current !== input\.generation\) return;\s*onCreated\(\);\s*lifecycleGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
     ["stale rejection cannot paint new context", /mutation\.isError && mutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(input)],
     ["canonical scoped HOS linkage remains", /createHosViolation\(input\.companyId, \{[\s\S]*?driver_id: input\.draft\.driver_id[\s\S]*?dot_violation_type_id: input\.violationType\.id,[\s\S]*?related_load_id: input\.draft\.related_load_id/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
@@ -25,6 +27,8 @@ if (process.argv.includes("--selftest")) {
   const mutableDraft = source.replace("draft: { ...form }", "draft: form");
   const staleSuccess = source.replace("if (lifecycleGenerationRef.current !== input.generation) return;", "void input.generation;");
   const staleError = source.replace("mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current", "mutation.isError");
+  const bypassCancel = source.replace("onClick={attemptClose}", "onClick={handleClose}");
+  const noConfirm = source.replace("confirmDiscardOnClose", "");
   const checks = [
     failures(staleLoad).includes("complete HOS form factory"),
     failures(staleCompany).includes("open/company transition resets lifecycle"),
@@ -32,9 +36,11 @@ if (process.argv.includes("--selftest")) {
     failures(mutableDraft).includes("submit snapshots company generation draft and catalog identity"),
     failures(staleSuccess).includes("stale success cannot close new context"),
     failures(staleError).includes("stale rejection cannot paint new context"),
+    failures(bypassCancel).includes("cancel uses confirm-aware close"),
+    failures(noConfirm).includes("dirty drawer confirmation"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-hos-violation-create-lifecycle selftest PASS — 6/6 stale load/company/draft/request mutations red");
+  console.log("verify-hos-violation-create-lifecycle selftest PASS — 8/8 stale/discard load/company/draft/request mutations red");
   process.exit(0);
 }
 
@@ -43,4 +49,4 @@ if (missing.length) {
   console.error(`verify-hos-violation-create-lifecycle FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
-console.log("verify-hos-violation-create-lifecycle PASS — HOS draft is isolated per company/open lifecycle");
+console.log("verify-hos-violation-create-lifecycle PASS — HOS draft is isolated and confirm-protected per company/open lifecycle");

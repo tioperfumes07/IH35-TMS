@@ -36,6 +36,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
   // SAF-B29 wave-4: catalog capped at 200 — typed term must reach listCompanyViolationTypes.
   const [typeSearch, setTypeSearch] = useState("");
+  const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const queryClient = useQueryClient();
   const companyGenerationRef = useRef(0);
 
@@ -76,6 +77,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
     onSuccess: (_created, input) => {
       if (input.generation !== companyGenerationRef.current) return;
       onCreated();
+      companyGenerationRef.current += 1;
       resetDraft();
       onClose();
     },
@@ -90,15 +92,21 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   }, [open, operatingCompanyId, resetDraft, resetMutation]);
 
   const handleClose = useCallback(() => {
+    if (mutation.isPending) return;
+    companyGenerationRef.current += 1;
     resetDraft();
     resetMutation();
     onClose();
-  }, [onClose, resetDraft, resetMutation]);
+  }, [mutation.isPending, onClose, resetDraft, resetMutation]);
 
   const canSubmit = Boolean(violationTypeUuid) && description.trim().length > 0;
+  const isDirty =
+    violationType !== "DOT_inspection" || severity !== "minor" || reportedDate !== companyToday() ||
+    description !== "" || correctivePlan !== "" || violationTypeUuid !== null ||
+    relatedDriverId !== null || relatedUnitId !== null;
 
   return (
-    <Modal variant="drawer" open={open} onClose={handleClose} title="Create Company Violation">
+    <Modal variant="drawer" open={open} onClose={handleClose} title="Create Company Violation" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <form
         className="space-y-3"
         data-testid="company-violation-create-modal"
@@ -251,7 +259,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
           </p>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+          <Button type="button" variant="secondary" onClick={attemptClose} disabled={mutation.isPending}>
             Cancel
           </Button>
           <Button type="submit" loading={mutation.isPending} disabled={!canSubmit}>

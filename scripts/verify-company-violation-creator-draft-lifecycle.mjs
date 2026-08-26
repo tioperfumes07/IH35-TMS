@@ -21,33 +21,37 @@ function failures(input = source) {
   return [
     ["complete violation draft reset", RESETTERS.every((token) => body.includes(token))],
     ["reset draft and mutation on open/company change", /if \(!open\) return;\s*resetDraft\(\);\s*resetMutation\(\);\s*\}, \[open, operatingCompanyId, resetDraft, resetMutation\]\);/.test(input)],
-    ["all dismiss paths reset", /const handleClose = useCallback\(\(\) => \{\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input)],
-    ["drawer dismiss uses reset close", input.includes('open={open} onClose={handleClose} title="Create Company Violation"')],
-    ["cancel uses reset close", /variant="secondary" onClick=\{handleClose\}/.test(input)],
+    ["actual close retires request and resets", /const handleClose = useCallback\(\(\) => \{\s*if \(mutation\.isPending\) return;\s*companyGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input)],
+    ["dirty drawer confirmation", input.includes("confirmDiscardOnClose") && input.includes("isDirty={isDirty}")],
+    ["cancel uses confirm-aware close", input.includes("onRegisterAttemptClose") && /variant="secondary" onClick=\{attemptClose\} disabled=\{mutation\.isPending\}/.test(input)],
     ["create snapshots company and payload", /createCompanyViolation\(input\.companyId, input\.payload\)/.test(input)],
     ["company transition advances generation", /companyGenerationRef\.current \+= 1;\s*if \(!open\) return;/.test(input)],
     ["stale success is rejected", /input\.generation !== companyGenerationRef\.current/.test(input)],
     ["stale error is hidden", /mutation\.variables\?\.generation === companyGenerationRef\.current/.test(input)],
     ["submit snapshots every entity field", /companyId: operatingCompanyId,[\s\S]*generation: companyGenerationRef\.current,[\s\S]*violation_type_uuid: violationTypeUuid,[\s\S]*related_drivers: relatedDriverId \? \[relatedDriverId\] : \[\],[\s\S]*related_units: relatedUnitId \? \[relatedUnitId\] : \[\]/.test(input)],
-    ["success clears draft", /onSuccess: \(_created, input\) => \{[\s\S]*onCreated\(\);\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
+    ["success retires request and clears draft", /onSuccess: \(_created, input\) => \{[\s\S]*onCreated\(\);\s*companyGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
 if (process.argv.includes("--selftest")) {
   const staleDriver = source.replace("setRelatedDriverId(null);", "void relatedDriverId;");
   const staleCompany = source.replace("[open, operatingCompanyId, resetDraft, resetMutation]", "[open, resetDraft, resetMutation]");
-  const staleError = source.replace("resetMutation();\n    onClose();", "onClose();");
+  const staleClose = source.replace("companyGenerationRef.current += 1;\n    resetDraft();\n    resetMutation();", "resetDraft();\n    resetMutation();");
   const staleCallback = source.replace("input.generation !== companyGenerationRef.current", "false");
   const mutableCompany = source.replace("createCompanyViolation(input.companyId, input.payload)", "createCompanyViolation(operatingCompanyId, input.payload)");
+  const bypassCancel = source.replace("onClick={attemptClose}", "onClick={handleClose}");
+  const noConfirm = source.replace("confirmDiscardOnClose", "");
   const checks = [
     failures(staleDriver).includes("complete violation draft reset"),
     failures(staleCompany).includes("reset draft and mutation on open/company change"),
-    failures(staleError).includes("all dismiss paths reset"),
+    failures(staleClose).includes("actual close retires request and resets"),
     failures(staleCallback).includes("stale success is rejected"),
     failures(mutableCompany).includes("create snapshots company and payload"),
+    failures(bypassCancel).includes("cancel uses confirm-aware close"),
+    failures(noConfirm).includes("dirty drawer confirmation"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-company-violation-creator-draft-lifecycle selftest PASS — 5/5 stale entity-draft mutations red");
+  console.log("verify-company-violation-creator-draft-lifecycle selftest PASS — 7/7 stale/discard entity-draft mutations red");
   process.exit(0);
 }
 
@@ -56,4 +60,4 @@ if (missing.length) {
   console.error(`verify-company-violation-creator-draft-lifecycle FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
-console.log("verify-company-violation-creator-draft-lifecycle PASS — Company Violation creator resets every entity-bound field and error state");
+console.log("verify-company-violation-creator-draft-lifecycle PASS — Company Violation retires requests and protects every entity-bound dirty draft");
