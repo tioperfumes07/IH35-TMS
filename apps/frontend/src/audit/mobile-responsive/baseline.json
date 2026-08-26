@@ -2533,6 +2533,84 @@
       },
       "suggested_fix": "See gap-91 spec",
       "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 input, same dense-industrial convention as the other 189+ baselined issues (CLAUDE.md 10: dense UI is intentional, design tokens not casually changed). File predates this baseline snapshot (git-first-commit 2026-07-23); backfilled, not a new regression."
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 input, same dense-industrial convention as the other 189+ baselined issues. File predates this baseline snapshot (git-first-commit 2026-07-05); backfilled, not a new regression."
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 inputs, same dense-industrial convention as the other 189+ baselined issues. Backfilled, not a new regression."
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 input, same dense-industrial convention as the other 189+ baselined issues. File predates this baseline snapshot (git-first-commit 2026-06-03); backfilled, not a new regression."
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/parity/ParityTable.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/parity/ParityTable.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 inline-edit input, same dense-industrial convention as the other 189+ baselined issues. File predates this baseline snapshot (git-first-commit 2026-06-08); backfilled, not a new regression."
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/UniversalListToolbar.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/UniversalListToolbar.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms",
+      "note": "CI-RED-BASELINE-DRIFT-MOBILE — h-8 filter inputs, same dense-industrial convention as the other 189+ baselined issues. Backfilled, not a new regression."
     }
   ]
 }
