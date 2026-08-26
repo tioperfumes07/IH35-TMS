@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPartsAssignment } from "../../api/maintenance";
 import { Button } from "../Button";
@@ -25,6 +25,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
   const [amountDollars, setAmountDollars] = useState<number | null>(null);
   const [qty, setQty] = useState("1");
   const [partDescription, setPartDescription] = useState("");
+  const actionGenerationRef = useRef(0);
 
   const reset = () => {
     setVendorId("");
@@ -35,22 +36,38 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createPartsAssignment(workOrderId, operatingCompanyId, {
-        vendor_id: vendorId,
-        vendor_invoice_number: invoiceNumber.trim(),
-        vendor_invoice_amount: Number(amountDollars ?? 0),
-        qty_used: Math.max(1, Number(qty) || 1),
-        part_description: partDescription.trim(),
+    mutationFn: (input: {
+      workOrderId: string;
+      companyId: string;
+      generation: number;
+      vendorId: string;
+      invoiceNumber: string;
+      amountDollars: number;
+      qty: number;
+      partDescription: string;
+    }) =>
+      createPartsAssignment(input.workOrderId, input.companyId, {
+        vendor_id: input.vendorId,
+        vendor_invoice_number: input.invoiceNumber,
+        vendor_invoice_amount: input.amountDollars,
+        qty_used: input.qty,
+        part_description: input.partDescription,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-assignments", operatingCompanyId] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-parts-history", operatingCompanyId] });
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-assignments", input.companyId] });
+      queryClient.invalidateQueries({ queryKey: ["vendor-parts-history", input.companyId] });
       queryClient.invalidateQueries({ queryKey: ["unit-parts-history"] });
       reset();
       onClose();
     },
   });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    reset();
+  }, [open, workOrderId, operatingCompanyId]);
 
   const canSubmit = Boolean(vendorId) && invoiceNumber.trim().length > 0 && partDescription.trim().length > 0 && (amountDollars ?? 0) > 0;
 
@@ -60,7 +77,18 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (canSubmit) createMutation.mutate();
+          if (canSubmit) {
+            createMutation.mutate({
+              workOrderId,
+              companyId: operatingCompanyId,
+              generation: actionGenerationRef.current,
+              vendorId,
+              invoiceNumber: invoiceNumber.trim(),
+              amountDollars: Number(amountDollars ?? 0),
+              qty: Math.max(1, Number(qty) || 1),
+              partDescription: partDescription.trim(),
+            });
+          }
         }}
         className="space-y-3"
       >
