@@ -59,7 +59,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
     queryFn: () => listMaintenanceLaborCodes(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-  const laborCodes = laborCodesQuery.data?.labor_codes ?? [];
+  const laborCodes = laborCodesQuery.isError ? [] : laborCodesQuery.data?.labor_codes ?? [];
 
   const entriesQuery = useQuery({
     queryKey: ["wo-time-entries", workOrderId, operatingCompanyId],
@@ -143,7 +143,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
     onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Delete failed"), "error"),
   });
 
-  const entries = entriesQuery.data?.time_entries ?? [];
+  const entries = entriesQuery.isError ? [] : entriesQuery.data?.time_entries ?? [];
   const openEntry = useMemo(() => entries.find((row) => !row.ended_at) ?? null, [entries]);
 
   useEffect(() => {
@@ -249,10 +249,20 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
               operatingCompanyId={operatingCompanyId}
               placeholder={laborCodesQuery.isLoading ? "Loading labor codes…" : "Select labor code"}
               loading={laborCodesQuery.isLoading}
+              disabled={laborCodesQuery.isError}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["maintenance", "labor-codes", operatingCompanyId] });
               }}
             />
+            {laborCodesQuery.isError ? (
+              <div className="mt-2">
+                <ListErrorState
+                  status={0}
+                  message="Could not load labor codes."
+                  onRetry={() => void laborCodesQuery.refetch()}
+                />
+              </div>
+            ) : null}
           </div>
         </label>
         <label className="text-xs text-slate-600">
