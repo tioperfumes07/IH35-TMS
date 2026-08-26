@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +58,7 @@ export function VehiclesMasterDataPage() {
   const [editing, setEditing] = useState<MaintenanceVehicleRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [voiding, setVoiding] = useState<MaintenanceVehicleRow | null>(null);
+  const actionGenerationRef = useRef(0);
 
   const vehiclesQuery = useQuery({
     queryKey: ["maintenance", "master-data", "vehicles", companyId, search],
@@ -65,68 +66,100 @@ export function VehiclesMasterDataPage() {
     enabled: Boolean(companyId),
   });
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "vehicles", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["maintenance", "master-data", "vehicles", submittedCompanyId] });
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createMaintenanceVehicle(companyId, {
-        unit_display_id: draft.unit_display_id,
-        vehicle_type: draft.vehicle_type || undefined,
-        make: draft.make || undefined,
-        model: draft.model || undefined,
-        year: draft.year ? Number(draft.year) : undefined,
-        vin: draft.vin,
-        plate: draft.plate || undefined,
-        mileage: draft.mileage ? Number(draft.mileage) : undefined,
-        status: draft.status,
-        notes: draft.notes || undefined,
+    mutationFn: (input: { companyId: string; generation: number; draft: VehicleDraft }) =>
+      createMaintenanceVehicle(input.companyId, {
+        unit_display_id: input.draft.unit_display_id,
+        vehicle_type: input.draft.vehicle_type || undefined,
+        make: input.draft.make || undefined,
+        model: input.draft.model || undefined,
+        year: input.draft.year ? Number(input.draft.year) : undefined,
+        vin: input.draft.vin,
+        plate: input.draft.plate || undefined,
+        mileage: input.draft.mileage ? Number(input.draft.mileage) : undefined,
+        status: input.draft.status,
+        notes: input.draft.notes || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(EMPTY_DRAFT);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Vehicle created", "success");
     },
-    onError: () => pushToast("Failed to create vehicle", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create vehicle", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!editing) throw new Error("No vehicle selected");
-      return updateMaintenanceVehicle(editing.id, companyId, {
-        vehicle_type: editing.vehicle_type,
-        make: editing.make,
-        model: editing.model,
-        year: editing.year,
-        vin: editing.vin,
-        plate: editing.plate,
-        mileage: editing.mileage,
-        status: editing.status as VehicleDraft["status"],
-        notes: editing.notes,
-      });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; row: MaintenanceVehicleRow }) =>
+      updateMaintenanceVehicle(input.row.id, input.companyId, {
+        vehicle_type: input.row.vehicle_type,
+        make: input.row.make,
+        model: input.row.model,
+        year: input.row.year,
+        vin: input.row.vin,
+        plate: input.row.plate,
+        mileage: input.row.mileage,
+        status: input.row.status as VehicleDraft["status"],
+        notes: input.row.notes,
+      }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setEditing(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Vehicle updated", "success");
     },
-    onError: () => pushToast("Failed to update vehicle", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update vehicle", "error");
+    },
   });
 
   const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!csvFile) throw new Error("File required");
-      return importMaintenanceVehicles(companyId, csvFile);
-    },
-    onSuccess: async (result) => {
-      await refresh();
+    mutationFn: (input: { companyId: string; generation: number; file: File }) =>
+      importMaintenanceVehicles(input.companyId, input.file),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       setCsvFile(null);
       pushToast(`Vehicle import completed (${String(result.inserted_rows ?? 0)} inserted)`, "success");
     },
-    onError: () => pushToast("Vehicle CSV import failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Vehicle CSV import failed", "error");
+    },
   });
+
+  const voidMutation = useMutation({
+    mutationFn: (input: { id: string; companyId: string; generation: number; reason: string }) =>
+      voidMaintenanceVehicle(input.id, input.companyId, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      setVoiding(null);
+      await refresh(input.companyId);
+      pushToast("Vehicle voided", "success");
+    },
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to void vehicle", "error");
+    },
+  });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [companyId]);
 
   const rows = useMemo(() => vehiclesQuery.data?.rows ?? [], [vehiclesQuery.data?.rows]);
   const csvEnabled = vehiclesQuery.data?.csv_import_enabled ?? false;
@@ -220,7 +253,10 @@ export function VehiclesMasterDataPage() {
             onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)}
             className="text-xs"
           />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
+          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+            if (!csvFile) return;
+            importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
+          }}>
             CSV Import
           </Button>
           {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
@@ -267,7 +303,7 @@ export function VehiclesMasterDataPage() {
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Plate" value={draft.plate} onChange={(e) => setDraft((p) => ({ ...p, plate: e.target.value }))} />
           </div>
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.unit_display_id || !draft.vin || createMutation.isPending} onClick={() => createMutation.mutate()}>
+          <Button disabled={!draft.unit_display_id || !draft.vin || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -289,7 +325,7 @@ export function VehiclesMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.plate ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, plate: e.target.value } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
-            <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -304,8 +340,7 @@ export function VehiclesMasterDataPage() {
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
           if (!voiding) return;
-          await voidMaintenanceVehicle(voiding.id, companyId, reason);
-          await refresh();
+          await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
     </div>

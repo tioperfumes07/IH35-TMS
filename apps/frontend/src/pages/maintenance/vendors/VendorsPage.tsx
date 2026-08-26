@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,6 +71,7 @@ export function VendorsPage() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   // SAF-B29 / LST-PICKER-01: AP link must server-search — silent limit:1000 dropped vendors past page 1.
   const [apVendorSearch, setApVendorSearch] = useState("");
+  const actionGenerationRef = useRef(0);
 
   const listQ = useQuery({
     queryKey: ["maintenance", "vendors", companyId, search],
@@ -122,70 +123,103 @@ export function VendorsPage() {
     return map;
   }, [apVendorsQ.data?.vendors]);
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", companyId] });
+  const refresh = async (submittedCompanyId: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", submittedCompanyId] });
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { companyId: string; generation: number; draft: VendorDraft }) =>
       createMaintenanceVendor({
-        operating_company_id: companyId,
-        code: draft.code || undefined,
-        display_name: draft.display_name,
-        description: draft.description || undefined,
-        type: draft.type || undefined,
-        contact_email: draft.contact_email || undefined,
-        contact_phone: draft.contact_phone || undefined,
-        address: draft.address || undefined,
-        payment_terms: draft.payment_terms || undefined,
-        notes: draft.notes || undefined,
-        mdata_vendor_id: draft.mdata_vendor_id,
+        operating_company_id: input.companyId,
+        code: input.draft.code || undefined,
+        display_name: input.draft.display_name,
+        description: input.draft.description || undefined,
+        type: input.draft.type || undefined,
+        contact_email: input.draft.contact_email || undefined,
+        contact_phone: input.draft.contact_phone || undefined,
+        address: input.draft.address || undefined,
+        payment_terms: input.draft.payment_terms || undefined,
+        notes: input.draft.notes || undefined,
+        mdata_vendor_id: input.draft.mdata_vendor_id,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setCreateOpen(false);
       setDraft(EMPTY_DRAFT);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Vendor created", "success");
     },
-    onError: () => pushToast("Failed to create vendor", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to create vendor", "error");
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!editing) throw new Error("No vendor selected");
-      return updateMaintenanceVendor(editing.id, {
-        operating_company_id: companyId,
-        display_name: editing.display_name,
-        description: editing.description ?? undefined,
-        type: editing.type ?? undefined,
-        contact_email: editing.contact_email ?? undefined,
-        contact_phone: editing.contact_phone ?? undefined,
-        address: editing.address ?? undefined,
-        payment_terms: editing.payment_terms ?? undefined,
-        notes: editing.notes ?? undefined,
-        mdata_vendor_id: editing.mdata_vendor_id,
-      });
-    },
-    onSuccess: async () => {
+    mutationFn: (input: { companyId: string; generation: number; row: MaintenanceVendorRow }) =>
+      updateMaintenanceVendor(input.row.id, {
+        operating_company_id: input.companyId,
+        display_name: input.row.display_name,
+        description: input.row.description ?? undefined,
+        type: input.row.type ?? undefined,
+        contact_email: input.row.contact_email ?? undefined,
+        contact_phone: input.row.contact_phone ?? undefined,
+        address: input.row.address ?? undefined,
+        payment_terms: input.row.payment_terms ?? undefined,
+        notes: input.row.notes ?? undefined,
+        mdata_vendor_id: input.row.mdata_vendor_id,
+      }),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       setEditing(null);
-      await refresh();
+      await refresh(input.companyId);
       pushToast("Vendor updated", "success");
     },
-    onError: () => pushToast("Failed to update vendor", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to update vendor", "error");
+    },
   });
 
   const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!csvFile) throw new Error("File required");
-      return importMaintenanceVendors(companyId, csvFile);
-    },
-    onSuccess: async (result) => {
-      await refresh();
+    mutationFn: (input: { companyId: string; generation: number; file: File }) =>
+      importMaintenanceVendors(input.companyId, input.file),
+    onSuccess: async (result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      await refresh(input.companyId);
       setCsvFile(null);
       pushToast(`Vendor import completed (${String(result.inserted_rows ?? 0)} rows)`, "success");
     },
-    onError: () => pushToast("Vendor CSV import failed", "error"),
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Vendor CSV import failed", "error");
+    },
   });
+
+  const archiveMutation = useMutation({
+    mutationFn: (input: { id: string; companyId: string; generation: number; reason: string }) =>
+      archiveMaintenanceVendor(input.id, input.companyId, input.reason),
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      setArchiveTarget(null);
+      await refresh(input.companyId);
+      pushToast("Vendor archived", "success");
+    },
+    onError: (_error, input) => {
+      if (input.generation === actionGenerationRef.current) pushToast("Failed to archive vendor", "error");
+    },
+  });
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    archiveMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setArchiveTarget(null);
+    setCsvFile(null);
+    setApVendorSearch("");
+    setDraft(EMPTY_DRAFT);
+  }, [companyId]);
 
   const rows = useMemo(() => listQ.data?.rows ?? [], [listQ.data?.rows]);
   const csvEnabled = listQ.data?.csv_import_enabled ?? false;
@@ -274,7 +308,10 @@ export function VendorsPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
+          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+            if (!csvFile) return;
+            importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
+          }}>
             CSV Import
           </Button>
           <a className="text-xs text-slate-600 underline" href={getMaintenanceVendorsTemplateUrl(companyId)}>
@@ -340,7 +377,7 @@ export function VendorsPage() {
           </div>
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Type" value={draft.type} onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value }))} />
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.display_name || createMutation.isPending} onClick={() => createMutation.mutate()}>
+          <Button disabled={!draft.display_name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -378,7 +415,7 @@ export function VendorsPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_phone: e.target.value || null } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value || null } : p))} />
-            <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>
               Save Changes
             </Button>
           </div>
@@ -394,9 +431,7 @@ export function VendorsPage() {
         onClose={() => setArchiveTarget(null)}
         onSubmit={async (reason) => {
           if (!archiveTarget) return;
-          await archiveMaintenanceVendor(archiveTarget.id, companyId, reason);
-          await refresh();
-          pushToast("Vendor archived", "success");
+          await archiveMutation.mutateAsync({ id: archiveTarget.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
     </div>
