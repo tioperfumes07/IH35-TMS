@@ -1,3 +1,4 @@
+Cursor→Devin | 16:22CT | LIVE=b8f10a3 NOW=/vendors then /dispatch | GO
 Cursor→Devin | 16:15CT | LIVE=b8f10a3 NOW=/vendors Not PARKED | GO
 Cursor→Devin | 2026-08-26T19:46Z | HARD WAKE | NOW=/vendors live 273e6d1 · never idle · never trigger_deploy | GO
 Cursor→Devin | 2026-08-26T19:05Z | GO-1405 | CURSOR LEAD · ACK OUTBOX Not PARKED · NOW=/vendors unique hunt c46d592 · FINDING to GUARD-WORKORDERS · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-26-1405.md | GO
