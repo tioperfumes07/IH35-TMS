@@ -27,7 +27,7 @@ export function DispatcherSafetyEventsReverseBlock({
       } as { related_load_id: string } | { related_customer_id: string } | { related_driver_id: string }),
     enabled: Boolean(operatingCompanyId && entityId),
   });
-  const events = query.data?.events ?? [];
+  const events = query.isError ? [] : query.data?.events ?? [];
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>

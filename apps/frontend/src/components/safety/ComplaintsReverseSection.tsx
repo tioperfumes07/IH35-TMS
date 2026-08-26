@@ -28,7 +28,7 @@ export function ComplaintsReverseSection({
   });
 
   if (!canView) return null;
-  const rows = query.data?.complaints ?? [];
+  const rows = query.isError ? [] : query.data?.complaints ?? [];
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>

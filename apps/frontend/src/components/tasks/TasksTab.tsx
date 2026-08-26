@@ -42,7 +42,7 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
     enabled: Boolean(operatingCompanyId && targetId),
   });
 
-  const tasks = tasksQuery.data?.tasks ?? [];
+  const tasks = tasksQuery.isError ? [] : tasksQuery.data?.tasks ?? [];
 
   // TASK-F3558 — ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
   const columns = useMemo<ParityColumn<Task>[]>(

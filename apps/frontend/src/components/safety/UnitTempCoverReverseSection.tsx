@@ -10,7 +10,7 @@ export function UnitTempCoverReverseSection({ operatingCompanyId, unitId }: { op
     queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId && unitId),
   });
-  const rows = query.data?.assignments ?? [];
+  const rows = query.isError ? [] : query.data?.assignments ?? [];
   return <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-temp-cover-reverse">
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-sm font-semibold text-slate-900">Temporary Driver Coverage{rows.length ? ` (${rows.length})` : ""}</h3>
