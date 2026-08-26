@@ -272,7 +272,7 @@
     {
       "id": "catalog.safety.workplace_incident_types.list",
       "tab": "Safety",
-      "sub": "Accident Types",
+      "sub": "Workplace Incident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
         "qbo_chrome",
@@ -282,7 +282,7 @@
     {
       "id": "catalog.safety.workplace_incident_types.create",
       "tab": "Safety",
-      "sub": "+ Create — Accident Types",
+      "sub": "+ Create — Workplace Incident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
         "qbo_chrome",
@@ -292,7 +292,7 @@
     {
       "id": "catalog.safety.internal_fine_reasons.list",
       "tab": "Safety",
-      "sub": "Accident Types",
+      "sub": "Internal Fine Reasons",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
         "qbo_chrome",
@@ -302,7 +302,7 @@
     {
       "id": "catalog.safety.internal_fine_reasons.create",
       "tab": "Safety",
-      "sub": "+ Create — Accident Types",
+      "sub": "+ Create — Internal Fine Reasons",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
         "qbo_chrome",
@@ -312,7 +312,7 @@
     {
       "id": "catalog.safety.civil_fine_types.list",
       "tab": "Safety",
-      "sub": "Accident Types",
+      "sub": "Civil Fine Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
         "qbo_chrome",
@@ -322,7 +322,7 @@
     {
       "id": "catalog.safety.civil_fine_types.create",
       "tab": "Safety",
-      "sub": "+ Create — Accident Types",
+      "sub": "+ Create — Civil Fine Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
         "qbo_chrome",
@@ -332,7 +332,7 @@
     {
       "id": "catalog.safety.company_violation_types.list",
       "tab": "Safety",
-      "sub": "Workplace Incident Types",
+      "sub": "Company Violation Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
         "qbo_chrome",
@@ -342,7 +342,7 @@
     {
       "id": "catalog.safety.company_violation_types.create",
       "tab": "Safety",
-      "sub": "+ Create — Workplace Incident Types",
+      "sub": "+ Create — Company Violation Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
         "qbo_chrome",
@@ -352,7 +352,7 @@
     {
       "id": "catalog.safety.complaint_types.list",
       "tab": "Safety",
-      "sub": "Internal Fine Reasons",
+      "sub": "Complaint Types",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
         "picker_law",
@@ -363,7 +363,7 @@
     {
       "id": "catalog.safety.complaint_types.create",
       "tab": "Safety",
-      "sub": "+ Create — Internal Fine Reasons",
+      "sub": "+ Create — Complaint Types",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
         "picker_law",
@@ -374,7 +374,7 @@
     {
       "id": "catalog.safety.dot_violation_types.list",
       "tab": "Safety",
-      "sub": "Civil Fine Types",
+      "sub": "DOT Violation Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
         "picker_law",
@@ -385,7 +385,7 @@
     {
       "id": "catalog.safety.dot_violation_types.create",
       "tab": "Safety",
-      "sub": "+ Create — Civil Fine Types",
+      "sub": "+ Create — DOT Violation Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
         "picker_law",
@@ -396,7 +396,7 @@
     {
       "id": "catalog.safety.cargo_claim_reasons.list",
       "tab": "Safety",
-      "sub": "Company Violation Types",
+      "sub": "Cargo Claim Reasons",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
         "picker_law",
@@ -407,7 +407,7 @@
     {
       "id": "catalog.safety.cargo_claim_reasons.create",
       "tab": "Safety",
-      "sub": "+ Create — Company Violation Types",
+      "sub": "+ Create — Cargo Claim Reasons",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
         "picker_law",
@@ -2432,6 +2432,17 @@
       "route_hint": "surface://pages/lists/driver/DriverCatalogModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/lists/driver/DriverCatalogModal.tsx",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "lists.modal.safety_generic_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Safety Generic Catalog",
+      "route_hint": "surface://pages/lists/safety/SafetyGenericCatalogModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/safety/SafetyGenericCatalogModal.tsx",
       "required": [
         "connectivity"
       ]

@@ -1,4 +1,9 @@
 {
+  "9820": {
+    "claimed_at": "2026-08-26",
+    "claimed_by": "cursor",
+    "purpose": "verify-safety-accident-workplace-incident-live-and-labels"
+  },
   "9807": {
     "claimed_at": "2026-08-25",
     "claimed_by": "cursor",

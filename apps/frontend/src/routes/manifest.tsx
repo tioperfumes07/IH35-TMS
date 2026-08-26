@@ -432,6 +432,8 @@ const MaintenanceServicesCatalog = React.lazy(() => import("../pages/lists/Maint
 const MaintenanceShopLocationsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceShopLocationsListPage").then((m) => ({ default: m.MaintenanceShopLocationsListPage })));
 const MaintenanceVendorsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceVendorsListPage").then((m) => ({ default: m.MaintenanceVendorsListPage })));
 const WorkOrderStatusesListPage = React.lazy(() => import("../pages/lists/maintenance/WorkOrderStatusesListPage").then((m) => ({ default: m.WorkOrderStatusesListPage })));
+const AccidentTypesListPage = React.lazy(() => import("../pages/lists/safety/AccidentTypesListPage").then((m) => ({ default: m.AccidentTypesListPage })));
+const WorkplaceIncidentTypesListPage = React.lazy(() => import("../pages/lists/safety/WorkplaceIncidentTypesListPage").then((m) => ({ default: m.WorkplaceIncidentTypesListPage })));
 const CivilFineTypesListPage = React.lazy(() => import("../pages/lists/safety/CivilFineTypesListPage").then((m) => ({ default: m.CivilFineTypesListPage })));
 const CompanyViolationTypesListPage = React.lazy(() => import("../pages/lists/safety/CompanyViolationTypesListPage").then((m) => ({ default: m.CompanyViolationTypesListPage })));
 const ComplaintTypesListPage = React.lazy(() => import("../pages/lists/safety/ComplaintTypesListPage").then((m) => ({ default: m.ComplaintTypesListPage })));
@@ -2959,6 +2961,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CurrencyCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/accident-types"
+          element={
+            <ProtectedRoute>
+              <AccidentTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/workplace-incident-types"
+          element={
+            <ProtectedRoute>
+              <WorkplaceIncidentTypesListPage />
             </ProtectedRoute>
           }
         />
