@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 
 /**
@@ -159,7 +159,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
                     className="truncate text-xs font-medium text-gray-800"
                     data-testid="load-driver-pay-bill-number"
                   >
-                    {entityLabel(bill.bill_number, bill.id, "Driver bill")}
+                    {visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}
                   </span>
                   {bill.settled_in_settlement_id ? (
                     <EntityLink

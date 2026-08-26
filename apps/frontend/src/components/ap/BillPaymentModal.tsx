@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { visibleDocumentLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVendorBills, type VendorBill } from "../../api/accounting";
@@ -122,7 +122,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
         return [
           {
             bill_id: bill.id,
-            bill_number: entityLabel(bill.bill_number, bill.id, "Record"),
+            bill_number: visibleDocumentLabel(bill.bill_number, bill.id, "Record"),
             original_balance_cents: open,
             payment_amount_cents: apply,
           },
@@ -136,7 +136,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
       return [
         {
           bill_id: bill.id,
-          bill_number: entityLabel(bill.bill_number, bill.id, "Record"),
+          bill_number: visibleDocumentLabel(bill.bill_number, bill.id, "Record"),
           original_balance_cents: billOpenBalanceCents(bill),
           payment_amount_cents: apply,
         },
@@ -361,7 +361,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
             {
               key: "bill",
               label: "Bill #",
-              render: (bill) => entityLabel(bill.bill_number, bill.id, "Record"),
+              render: (bill) => visibleDocumentLabel(bill.bill_number, bill.id, "Record"),
             },
             {
               key: "open",
@@ -380,7 +380,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
                     valueDollars={amounts[bill.id] ?? null}
                     onChangeDollars={(d) => setAmounts((prev) => ({ ...prev, [bill.id]: d }))}
                     disabled={!included[bill.id]}
-                    ariaLabel={`Apply to ${entityLabel(bill.bill_number, bill.id, "Record")}`}
+                    ariaLabel={`Apply to ${visibleDocumentLabel(bill.bill_number, bill.id, "Record")}`}
                     className="w-24"
                   />
                 );

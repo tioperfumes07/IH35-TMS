@@ -7,7 +7,7 @@ import { getAllAccounts } from "../../../../api/banking";
 import { DatePicker } from "../../../../components/forms/DatePicker";
 import { ParityTable } from "../../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
-import { entityLabel } from "../../../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../../../lib/entity-label";
 
 type Props = {
   value: Record<string, unknown>;
@@ -114,7 +114,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             <option value="">Select unpaid bill...</option>
             {(billsQuery.data?.rows ?? []).map((bill) => (
               <option key={bill.id} value={bill.id}>
-                {entityLabel(bill.bill_number, bill.id, "Bill") +
+                {visibleDocumentLabel(bill.bill_number, bill.id, "Bill") +
                   " · " +
                   entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
               </option>
@@ -134,7 +134,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             {
               key: "bill",
               label: "Bill #",
-              render: (bill) => entityLabel(bill.bill_number, bill.id, "Bill"),
+              render: (bill) => visibleDocumentLabel(bill.bill_number, bill.id, "Bill"),
             },
             {
               key: "total",

@@ -9,7 +9,7 @@ import { billVendorDrillId } from "../../api/accounting";
 import { getAllocations, type AllocationListItem } from "../../api/allocations";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BillAllocationPanel } from "../../components/allocation/BillAllocationPanel";
 
@@ -49,7 +49,7 @@ function ReallocatePanel({
         <BillAllocationPanel
           companyId={companyId}
           billId={row.bill_id}
-          billLabel={entityLabel(row.bill_number, row.bill_id, "Bill")}
+          billLabel={visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")}
           billAmountCents={row.bill_amount_cents}
         />
         <div className="mt-3 flex justify-end">
@@ -119,7 +119,7 @@ export function AllocationsPage() {
         key: "bill_number",
         label: "Bill",
         sortable: true,
-        render: (row) => <EntityLink kind="bill" id={row.bill_id} label={entityLabel(row.bill_number, row.bill_id, "Bill")} />,
+        render: (row) => <EntityLink kind="bill" id={row.bill_id} label={visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")} />,
       },
       { key: "bill_date", label: "Bill Date", sortable: true, cellClass: "whitespace-nowrap", render: (row) => fmtDate(row.bill_date) },
       {

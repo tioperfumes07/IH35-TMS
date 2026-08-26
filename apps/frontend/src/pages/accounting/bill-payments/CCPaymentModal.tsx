@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { entityLabel } from "../../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import type { VendorBill } from "../../../api/accounting";
@@ -178,7 +178,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
                   ever rendered it as disabled plain text -- same pattern PayBillModal.tsx already
                   uses for the same kind of bill via ACH/check/wire. */}
               <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]">
-                <EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />
+                <EntityLink kind="bill" id={bill.id} label={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")} />
               </div>
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

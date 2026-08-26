@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -828,7 +828,7 @@ export function BillsPage() {
               operatingCompanyId={companyId}
               targetType="bill"
               targetId={bill.id}
-              targetLabel={entityLabel(bill.bill_number, bill.id, "Bill")}
+              targetLabel={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}
             />
           </div>
         )}
@@ -869,7 +869,7 @@ export function BillsPage() {
         <BillAllocationPanel
           companyId={companyId}
           billId={allocationBill.id}
-          billLabel={`${entityLabel(allocationBill.vendor_name, allocationBill.vendor_id, "Vendor")} · ${entityLabel(allocationBill.bill_number, allocationBill.id, "Bill")}`}
+          billLabel={`${entityLabel(allocationBill.vendor_name, allocationBill.vendor_id, "Vendor")} · ${visibleDocumentLabel(allocationBill.bill_number, allocationBill.id, "Bill")}`}
           billAmountCents={allocationBill.amount_cents}
         />
       ) : null}

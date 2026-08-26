@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -394,7 +394,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     key={b.id}
                     kind="bill"
                     id={b.id}
-                    label={entityLabel(b.bill_number, b.id, "Bill")}
+                    label={visibleDocumentLabel(b.bill_number, b.id, "Bill")}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-bill-${b.id}`}
                   />

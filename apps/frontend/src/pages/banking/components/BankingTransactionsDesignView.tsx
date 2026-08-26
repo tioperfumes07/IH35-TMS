@@ -1105,7 +1105,7 @@ export function BankingTransactionsDesignView({
                       <EntityLink
                         kind="bill"
                         id={tx.matched_bill_id}
-                        label={entityLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill")}
+                        label={visibleDocumentLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill")}
                       />
                     ) : null}
                     {tx.matched_transfer_id ? (

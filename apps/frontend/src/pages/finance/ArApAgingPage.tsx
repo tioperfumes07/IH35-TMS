@@ -6,7 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -159,7 +159,7 @@ const AP_DRILL_COLUMNS: ParityColumn<ApAgingBillRow>[] = [
     label: "Bill #",
     sortable: true,
     cellClass: "whitespace-nowrap",
-    render: (b) => <EntityLink kind="bill" id={b.bill_id} label={entityLabel(b.bill_number, b.bill_id, "Bill")} />,
+    render: (b) => <EntityLink kind="bill" id={b.bill_id} label={visibleDocumentLabel(b.bill_number, b.bill_id, "Bill")} />,
   },
   {
     // VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — drill to the bill's posted JE (nullable: an

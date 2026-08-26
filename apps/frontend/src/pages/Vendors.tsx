@@ -1,4 +1,4 @@
-import { entityLabel } from "../lib/entity-label";
+import { visibleDocumentLabel } from "../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -383,7 +383,7 @@ export function VendorsPage() {
         key: "doc_no",
         label: "Doc #",
         render: (r) => (
-          <EntityLink kind="bill" id={r.id} label={entityLabel(r.bill_number, r.id, "Bill")} />
+          <EntityLink kind="bill" id={r.id} label={visibleDocumentLabel(r.bill_number, r.id, "Bill")} />
         ),
       },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },

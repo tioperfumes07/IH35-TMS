@@ -14,7 +14,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
@@ -424,7 +424,7 @@ function OpenDriverBillsPanel({
                   className="text-[10px] text-gray-400"
                   data-testid="settlements-open-driver-bill-number"
                 >
-                  ({entityLabel(bill.bill_number, bill.id, "Driver bill")})
+                  ({visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")})
                 </span>
               </span>
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>

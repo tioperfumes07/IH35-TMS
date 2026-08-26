@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { titleize } from "../../lib/titleize";
 import { useMemo, useState } from "react";
@@ -130,7 +130,7 @@ export function VendorBalancesPage() {
                 <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-gray-900">{entityLabel(bill.bill_number, bill.id, "Bill")}</div>
+                      <div className="text-sm font-semibold text-gray-900">{visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}</div>
                       <div className="text-xs font-semibold text-red-700">{money(remaining)}</div>
                     </div>
                     <div className="mt-0.5 text-xs text-gray-600">
