@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -33,6 +33,27 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   const [initialComplaint, setInitialComplaint] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const resetDraft = useCallback(() => {
+    setTicketNumber("");
+    setVendorId("");
+    setVendorName("");
+    setUnitId("");
+    setDriverId("");
+    setServiceType("tire_change");
+    setLocationAddress("");
+    setInitialComplaint("");
+    setError(null);
+  }, []);
+
+  useEffect(() => {
+    if (open) resetDraft();
+  }, [open, operatingCompanyId, resetDraft]);
+
+  const handleClose = useCallback(() => {
+    resetDraft();
+    onClose();
+  }, [onClose, resetDraft]);
+
   async function handleSubmit() {
     setError(null);
     if (!ticketNumber.trim() || !vendorId || !vendorName.trim() || !unitId) {
@@ -50,21 +71,14 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         location_address: locationAddress || undefined,
         initial_complaint: initialComplaint || undefined,
       });
-      onClose();
-      setTicketNumber("");
-      setVendorId("");
-      setVendorName("");
-      setUnitId("");
-      setDriverId("");
-      setLocationAddress("");
-      setInitialComplaint("");
+      handleClose();
     } catch (err) {
       setError(userFacingApiError(err, "Failed to create road service ticket"));
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Road service ticket">
+    <Modal open={open} onClose={handleClose} title="Road service ticket">
       <div className="space-y-3" data-testid="road-service-ticket-modal">
         <label className="block text-xs font-medium text-gray-700">
           Ticket #
@@ -145,7 +159,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         </label>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void handleSubmit()}>
