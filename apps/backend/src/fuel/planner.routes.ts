@@ -16,7 +16,7 @@ const recommendationIdParamsSchema = z.object({
 });
 
 const plannerSettingsPatchSchema = z.object({
-  expensive_states: z.array(z.string().trim().min(2).max(2)).min(1).max(50).optional(),
+  expensive_states: z.array(z.string().trim().min(2).max(2)).max(50).optional(),
   max_off_highway_miles: z.number().positive().optional(),
   max_backwards_miles: z.number().positive().optional(),
   max_miles_per_shift: z.number().positive().optional(),
@@ -416,7 +416,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
       const setClauses: string[] = [];
       const values: unknown[] = [companyId];
-      if (body.data.expensive_states) {
+      if (body.data.expensive_states !== undefined) {
         values.push(body.data.expensive_states);
         setClauses.push(`expensive_states = $${values.length}::text[]`);
       }

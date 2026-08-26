@@ -693,7 +693,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
               max_off_highway_miles: Number(maxOffHighway),
               max_backwards_miles: Number(maxBackwards),
               overfill_threshold_pct: Number(overfillPct),
-              ...(expensiveStates.length > 0 ? { expensive_states: [...expensiveStates] } : {}),
+              expensive_states: [...expensiveStates],
             },
           })}
           className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
