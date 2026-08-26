@@ -5,6 +5,8 @@ import { buildForecastWeeks, type ForecastSettings } from "./cash-forecast.math.
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { lastDeliveryStopLateralSql, proformaRemainingCentsSql } from "../cash-flow/cash-flow.service.js";
+import { projectedCashDateSql } from "../cash-flow/projected-cash-date.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -193,28 +195,47 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
         [query.data.operating_company_id, startWeek, endWeek]
       );
 
+      // ACCT-F9408: bucket by the same ETA-adjusted projected_cash_date /cash-flow already uses
+      // (cash-flow.service.ts's getDailyPrediction/proformaSql), not the raw delivery-stop date —
+      // otherwise a proforma whose real cash lands in the future, past this forecast's rolling
+      // start, is bucketed onto a date that has already scrolled out of every visible week and
+      // silently vanishes from both the weekly figure and the running projected balance. Reuses
+      // the existing projectedCashDateSql helper — no new date math — gated on the same
+      // CASH_FOLLOWS_ETA_ENABLED flag /cash-flow reads; OFF keeps this byte-identical to before.
+      const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
       const proformaRes = await client.query(
         `
           SELECT
-            scheduled_arrival_at::date::text AS delivery_date,
+            bucket_date::text AS delivery_date,
             amount_cents::int AS amount_cents
           FROM (
             SELECT DISTINCT ON (l.id)
-              fd.scheduled_arrival_at,
+              ${
+                cashFollowsEta
+                  ? projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })
+                  : "fd.scheduled_arrival_at::date"
+              } AS bucket_date,
               ${proformaRemainingCentsSql("i")} AS amount_cents
             FROM accounting.invoices i
             JOIN mdata.loads l
               ON l.id = i.source_load_id
              AND l.operating_company_id = i.operating_company_id
+            LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                       AND c.operating_company_id = l.operating_company_id
+            LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                            AND pt.operating_company_id = c.operating_company_id
             ${lastDeliveryStopLateralSql("l")}
             WHERE i.operating_company_id = $1::uuid
               AND i.status = 'proforma'
               AND i.voided_at IS NULL
               AND i.source_load_id IS NOT NULL
               AND l.status <> 'cancelled'
-              AND fd.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
+          WHERE bucket_date BETWEEN $2::date AND $3::date
         `,
         [query.data.operating_company_id, startWeek, endWeek]
       );
