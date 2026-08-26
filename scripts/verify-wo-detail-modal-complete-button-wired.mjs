@@ -113,7 +113,7 @@ function selftest() {
 
   // Offender 2: remove the work-order-detail invalidation from onSuccess.
   const noInvalidate = real.replace(
-    /queryClient\.invalidateQueries\(\{ queryKey: \["maintenance", "work-order-detail", companyId\] \}\),\n/,
+    /queryClient\.invalidateQueries\(\{ queryKey: \["maintenance", "work-order-detail", args\.companyId\] \}\),\n/,
     ""
   );
   const p2 = check(noInvalidate);
