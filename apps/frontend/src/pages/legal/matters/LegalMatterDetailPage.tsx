@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../../components/Toast";
@@ -120,6 +121,11 @@ export function LegalMatterDetailPage() {
   const [dlAt, setDlAt] = useState("");
   const [dlEmails, setDlEmails] = useState("");
   const [closeNotes, setCloseNotes] = useState("");
+  // LEGAL-MATTER-CLOSE-NO-CONFIRM: closing a matter is a terminal, unreopenable transition (the
+  // edit form's own read-only "closed" note says "reopen not supported via edit") — the same
+  // consequence class as terminating a driver, which DOES gate behind a confirm modal
+  // (TerminateConfirmModal). This flag gates the actual mutation behind one too.
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [docTitle, setDocTitle] = useState("");
   const [docPriv, setDocPriv] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -479,7 +485,7 @@ export function LegalMatterDetailPage() {
                     size="sm"
                     className="mt-2"
                     disabled={closeMut.isPending || closeNotes.trim().length < 10}
-                    onClick={() => void closeMut.mutate()}
+                    onClick={() => setCloseConfirmOpen(true)}
                   >
                     Close matter
                   </Button>
@@ -487,6 +493,18 @@ export function LegalMatterDetailPage() {
               ) : null}
             </div>
           ) : null}
+
+          <ConfirmModal
+            open={closeConfirmOpen}
+            title="Close this matter?"
+            message="This is a terminal action — closing marks the matter closed with this outcome and cannot be reopened via edit. Confirm the outcome documentation is complete before proceeding."
+            confirmLabel="Close matter"
+            danger
+            onClose={() => setCloseConfirmOpen(false)}
+            onConfirm={async () => {
+              await closeMut.mutateAsync();
+            }}
+          />
 
           {tab === "timeline" ? (
             <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
