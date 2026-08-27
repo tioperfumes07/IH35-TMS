@@ -37,6 +37,8 @@ const queueQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   severity: severityEnum.optional(),
   status: z.enum(["open", "routed", "closed"]).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const defectParamsSchema = z.object({ defectId: z.string().uuid() });
@@ -141,17 +143,19 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           b.work_order_id::text AS work_order_id,
           w.display_id AS work_order_display_id,
           b.auto_wo_id::text AS auto_wo_id,
-          b.routed, b.status
+          b.routed, b.status,
+          COUNT(*) OVER()::int AS total_count
         FROM base b
         LEFT JOIN maintenance.work_orders w ON w.id = b.work_order_id
         WHERE ($2::text IS NULL OR b.severity = $2::text)
           AND ($3::text IS NULL OR b.status = $3::text)
         ORDER BY b.submitted_at DESC
-        LIMIT 500
+        LIMIT $4
+        OFFSET $5
         `,
-        [companyId, severity ?? null, status ?? null]
+        [companyId, severity ?? null, status ?? null, query.data.limit, query.data.offset]
       );
-      return { defects: res.rows };
+      return { defects: res.rows, total_count: Number((res.rows[0] as (QueueRow & { total_count?: number }) | undefined)?.total_count ?? 0) };
     });
   });
 

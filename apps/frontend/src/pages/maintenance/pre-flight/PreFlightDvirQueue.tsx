@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listPreFlightDvirQueue,
@@ -37,6 +37,8 @@ export function PreFlightDvirQueue() {
   const qc = useQueryClient();
   const actionGenerationRef = useRef(0);
   const [searchParams, setSearchParams] = useSearchParams();
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const tab = parsePreFlightDvirTab(searchParams.get("tab"));
   const setTab = (next: DvirSeverityLevel) => {
     const params = new URLSearchParams(searchParams);
@@ -49,18 +51,23 @@ export function PreFlightDvirQueue() {
   // route-to-WO. Keep retries disabled because this is a dispatch-blocking compliance queue: a
   // failed request must remain an explicit unavailable state, never repeated traffic or fake empty.
   const q = useQuery({
-    queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId, tab],
-    queryFn: () => listPreFlightDvirQueue(operatingCompanyId, { severity: tab, status: "open" }),
+    queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId, tab, page],
+    queryFn: () => listPreFlightDvirQueue(operatingCompanyId, { severity: tab, status: "open", limit: pageSize, offset: (page - 1) * pageSize }),
     enabled: Boolean(operatingCompanyId),
     retry: false,
   });
 
   const rows = useMemo(() => q.data?.defects ?? [], [q.data?.defects]);
+  const totalCount = q.isError ? 0 : q.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  useEffect(() => { setPage(1); }, [operatingCompanyId, tab]);
+  useEffect(() => setPage((current) => Math.min(current, pageCount)), [pageCount]);
 
   const routeMut = useMutation({
     mutationFn: (input: { defectId: string; companyId: string; generation: number }) => routePreFlightDvirDefect(input.defectId, input.companyId),
     onSuccess: async (result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
+      setPage(1);
       if (result.action === "work_order_created") {
         pushToast(`Work order ${entityLabel(result.display_id, result.work_order_id, "Work order")} created`, "success");
       } else if (result.action === "queued_next_pm") {
@@ -82,6 +89,7 @@ export function PreFlightDvirQueue() {
       setPreFlightDvirSeverity(input.defectId, { operating_company_id: input.companyId, severity: "minor" }),
     onSuccess: async (_result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
+      setPage(1);
       pushToast("Severity set to minor", "success");
       await qc.invalidateQueries({ queryKey: ["maintenance", "pre-flight-dvir", input.companyId] });
     },
@@ -195,8 +203,18 @@ export function PreFlightDvirQueue() {
         exportFilename="pre-flight-dvir-queue"
         tableTestId="pre-flight-dvir-table"
         rowTestId={(row) => `dvir-queue-row-${row.id}`}
+        pageSize={pageSize}
+        pageSizeOptions={[pageSize]}
+        hidePager
       />
       )}
+      {!q.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="pre-flight-dvir-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || q.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} {tab} defects</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || q.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
     </div>
   );
 }

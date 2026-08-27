@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^(defects\.convert_to_wo|pre_flight_dvir\.queue|maintenance\.panel\.pm_alerts)$","task":"VERTICAL-REVERSE-LINK-MAINTENANCE-SOURCE-WO"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["defects.convert_to_wo","pre_flight_dvir.queue","maintenance.panel.pm_alerts"],"task":"VERTICAL-REVERSE-LINK-MAINTENANCE-SOURCE-WO"} */
 import fs from "node:fs";
 const defectsRoute=fs.readFileSync("apps/backend/src/maintenance/defects.routes.ts","utf8");
 const alertsRoute=fs.readFileSync("apps/backend/src/maintenance/pm-alerts.routes.ts","utf8");
@@ -17,7 +17,7 @@ const failures=(d=defect,p=preflight,a=alerts,r=defectsRoute,i=inbox)=>[
  ["defect inbox WO drill",i.includes('kind="work_order"')&&i.includes("id={row.follow_up_wo_id}")&&i.includes("row.follow_up_wo_display_id")],
  ["defect inbox duplicate conversion suppressed",i.includes("!row.follow_up_wo_id ? (")],
  ["preflight WO drill",p.includes('EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order"')],
- ["scheduled query",a.includes('listMaintenancePmAlerts(operatingCompanyId, "scheduled")')],
+ ["scheduled query",/listMaintenancePmAlerts\(operatingCompanyId, "scheduled", \{ limit: pageSize, offset: \(scheduledPage - 1\) \* pageSize \}\)/.test(a)],
  ["scheduled reverse surface",a.includes('data-testid="pm-alerts-scheduled-reverse"')],
  ["scheduled WO drill",a.includes('kind="work_order" id={alert.scheduled_work_order_id}')&&a.includes("alert.scheduled_work_order_display_id")],
  ["scheduled scoped display join",alertsRoute.includes("wo.display_id AS scheduled_work_order_display_id")&&alertsRoute.includes("wo.operating_company_id = a.operating_company_id")],
@@ -32,12 +32,14 @@ if (process.argv.includes("--selftest")) {
     'EntityLinkOrTombstone kind="unit" id={row.work_order_id} name={null} noun="Unit"'
   );
   const a = alerts.replace('kind="work_order" id={alert.scheduled_work_order_id}', 'kind="unit" id={alert.scheduled_work_order_id}');
+  const scheduledRange = alerts.replace("offset: (scheduledPage - 1) * pageSize", "offset: 0");
   const checks = [
     failures(d, preflight, alerts).includes("defect WO drill"),
     failures(unitDefect, preflight, alerts).includes("defect unit drill"),
     failures(driverDefect, preflight, alerts).includes("defect driver drill"),
     failures(defect, p, alerts).includes("preflight WO drill"),
     failures(defect, preflight, a).includes("scheduled WO drill"),
+    failures(defect, preflight, scheduledRange).includes("scheduled query"),
     failures(defect, preflight, alerts, defectsRoute.replace("wo.display_id AS follow_up_wo_display_id", "NULL AS follow_up_wo_display_id"), inbox).includes("defect inbox display join"),
     failures(defect, preflight, alerts, defectsRoute.replace("AND wo.operating_company_id = dd.operating_company_id", ""), inbox).includes("defect inbox display join"),
     failures(defect, preflight, alerts, defectsRoute, inbox.replace('id={row.follow_up_wo_id}', 'id={undefined}')).includes("defect inbox WO drill"),
