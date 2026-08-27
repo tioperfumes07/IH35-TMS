@@ -1769,6 +1769,7 @@ export function listUnits(
     limit?: number;
     offset?: number;
     include?: "trailers";
+    type?: "Truck" | "Tractor" | "Trailer" | "Reefer" | "DryVan" | "Flatbed" | "Stepdeck" | "Lowboy" | "Tanker" | "Custom";
   } = {}
 ) {
   const query = new URLSearchParams();
@@ -1784,6 +1785,7 @@ export function listUnits(
   // include=trailers returns the UNIFIED fleet (trucks from mdata.units + trailers from mdata.equipment),
   // each row tagged kind:"truck"|"trailer" and already deactivated_at-filtered.
   if (params.include) query.set("include", params.include);
+  if (params.type) query.set("type", params.type);
   const qs = query.toString();
   // total = real server-side count (GO-LIVE Block 1A) so the Fleet UI can page through the FULL fleet.
   return apiRequest<{ units: unknown[]; total?: number }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);

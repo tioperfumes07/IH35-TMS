@@ -1,3 +1,5 @@
+**GO-1505** live `5ecbc67` · API `dep-da89he4s728c73b4kbug` `282777f` IN FLIGHT · SPA tsc red · idle=defect
+
 **GO-1439** live `d49fbfa` · API `dep-da895cqd0e5s73a1gtrg` `5ecbc67` IN FLIGHT · idle=defect
 
 **GO-1412** live `4b859b7` · API `dep-da88o9ifngtc73bnmv90` `d49fbfa` IN FLIGHT · idle=defect

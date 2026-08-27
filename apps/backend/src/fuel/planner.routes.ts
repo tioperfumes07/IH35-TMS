@@ -11,6 +11,11 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const activeRoutesQuerySchema = companyQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 const recommendationIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -147,25 +152,29 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/planner/active-routes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = activeRoutesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
+    const { operating_company_id: companyId, limit, offset } = query.data;
 
-    const routes = await withCompanyScope(authUser.uuid, companyId, async (client) => {
-      if (!(await hasRelation(client, "views.fuel_planner_active_routes"))) return [];
+    const result = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      if (!(await hasRelation(client, "views.fuel_planner_active_routes"))) return { routes: [], total_count: 0 };
+      const countRes = await client.query<{ total_count: number }>(
+        `SELECT count(*)::int AS total_count FROM views.fuel_planner_active_routes WHERE operating_company_id = $1::uuid`,
+        [companyId]
+      );
       const res = await client.query(
         `
           SELECT *
           FROM views.fuel_planner_active_routes
           WHERE operating_company_id = $1::uuid
-          ORDER BY computed_at DESC
-          LIMIT 100
+          ORDER BY computed_at DESC, id DESC
+          LIMIT $2 OFFSET $3
         `,
-        [companyId]
+        [companyId, limit, offset]
       );
-      return res.rows;
+      return { routes: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
-    return { routes };
+    return { ...result, limit, offset };
   });
 
   app.get("/api/v1/fuel/planner/recommendations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

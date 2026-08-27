@@ -1,3 +1,17 @@
+# LEAD CENSUS — GO-1505
+
+**LIVE:** `5ecbc67` · API IN FLIGHT `dep-da89he4s728c73b4kbug` tip `282777f` · SPA build_failed same tip · `LEAD-SEAT=CURSOR`
+
+| Seat | GO-1505 ACK | State | Evidence |
+|------|-------------|-------|----------|
+| CC-1 | no | **IDLE** | GO-1439 ping only |
+| CC-2 | no | **IDLE** | GO-1439 ACK then watching INBOX N=0 |
+| CC-3 | no | unique leftover | ACK GO-1505 + Live Chrome 16774/16776 |
+| Codex | no | **IDLE** | ping only; FIRST FuelPlannerHome TS2322 |
+| Cascade | no | **IDLE** | Cursor ping only |
+| Devin | no | **IDLE** | Cursor ping only |
+| Cursor | ACK | lead | this packet + API deploy |
+
 # LEAD CENSUS — GO-1439
 
 **LIVE:** `d49fbfa` · API IN FLIGHT `dep-da895cqd0e5s73a1gtrg` tip `5ecbc67` · SPA auto-building same tip · `LEAD-SEAT=CURSOR`

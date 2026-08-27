@@ -3,6 +3,7 @@ import { z } from "zod";
 export const FLEET_TYPE_FILTER_VALUES = [
   "Truck",
   "Tractor",
+  "Trailer",
   "Reefer",
   "DryVan",
   "Flatbed",
@@ -19,7 +20,7 @@ export const fleetTypeFilterSchema = z.enum(FLEET_TYPE_FILTER_VALUES);
 const TRAILER_EQUIPMENT_TYPES = new Set(["Reefer", "DryVan", "Flatbed", "Stepdeck", "Lowboy", "Tanker"]);
 
 export function isTrailerTypeFilter(type: FleetTypeFilter): boolean {
-  return TRAILER_EQUIPMENT_TYPES.has(type) || type === "Custom";
+  return type === "Trailer" || TRAILER_EQUIPMENT_TYPES.has(type) || type === "Custom";
 }
 
 export function equipmentTypeForFilter(type: FleetTypeFilter): string {
@@ -44,6 +45,9 @@ export function truckTypeSqlFilter(type: FleetTypeFilter): string {
 export function trailerTypeSqlFilter(type: FleetTypeFilter, values: unknown[]): string {
   if (type === "Truck" || type === "Tractor") {
     return "FALSE";
+  }
+  if (type === "Trailer") {
+    return "TRUE";
   }
   if (type === "Custom") {
     return `(equipment_type IN ('Other', 'Conestoga', 'RGN', 'Container', 'Chassis')
