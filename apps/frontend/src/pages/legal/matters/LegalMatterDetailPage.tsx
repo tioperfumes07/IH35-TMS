@@ -18,6 +18,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
+import { companyWallClockToIso } from "../../../lib/businessDate";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { resolveApiUrl } from "../../../api/client";
@@ -162,7 +163,12 @@ export function LegalMatterDetailPage() {
       legalMattersApi.addDeadline(companyId, id, {
         deadline_type: dlType,
         title: dlTitle,
-        deadline_at: new Date(dlAt).toISOString(),
+        // LEGAL-MATTER-DEADLINE-CREATE-WRONG-TZ-INSTANT: `new Date(dlAt).toISOString()` interpreted
+        // this zoneless DateTimePicker wall-clock string in the VIEWER's browser timezone, not
+        // Central (CLAUDE.md §8) — a paralegal on a non-Central machine would have the stored
+        // deadline land on the wrong hour, or the wrong calendar day entirely for a near-midnight
+        // entry. companyWallClockToIso treats it as the intended Central-Time wall clock.
+        deadline_at: companyWallClockToIso(dlAt),
         reminder_recipients: dlEmails.split(",").map((s) => s.trim()).filter(Boolean),
       }),
     onSuccess: () => {

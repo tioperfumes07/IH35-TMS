@@ -91,6 +91,61 @@ export function monthBoundsIso(iso: string): { start: string; end: string } {
   return { start, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
 }
 
+const WALL_CLOCK_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
+
+/**
+ * Convert a LOCAL WALL-CLOCK "YYYY-MM-DDTHH:mm" string (a DateTimePicker value, assumed to be the
+ * operator's intended America/Chicago time — CLAUDE.md §8 "Central Time always") to a real UTC ISO
+ * instant, correctly handling the CST/CDT DST offset.
+ *
+ * LEGAL-MATTER-DEADLINE-CREATE-WRONG-TZ-INSTANT: `new Date(localValue).toISOString()` — the naive
+ * round-trip — interprets the zoneless string in the VIEWER's browser timezone, not Central. A
+ * paralegal entering a court filing deadline while their machine's timezone/clock is not Central
+ * (traveling, misconfigured OS) would have the stored instant land on the wrong hour, or — for a
+ * wall-clock time near midnight — the wrong calendar day entirely. There is no `Intl` "parse a wall
+ * clock as instant in this zone" primitive, so this reprojects: treat the digits as UTC, see what
+ * wall clock that instant reads as in America/Chicago, then correct by the difference. Converges in
+ * one pass except within a few minutes of a DST transition edge (spring-forward gap /
+ * fall-back ambiguity), where a second pass stabilizes it — this is the same technique
+ * `date-fns-tz`/Luxon use internally; there being no such library in this app's dependencies is why
+ * it's hand-rolled here rather than imported.
+ *
+ * Returns "" for empty/unparseable input (mirrors formatDate.ts's convention).
+ */
+export function companyWallClockToIso(localValue: string): string {
+  const m = WALL_CLOCK_RE.exec(localValue);
+  if (!m) return "";
+  const [, yStr, moStr, dStr, hhStr, miStr] = m;
+  const y = Number(yStr);
+  const mo = Number(moStr);
+  const d = Number(dStr);
+  const hh = Number(hhStr);
+  const mi = Number(miStr);
+  const targetAsUTC = Date.UTC(y, mo - 1, d, hh, mi);
+
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: COMPANY_TIME_ZONE,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  let guessUTC = targetAsUTC;
+  for (let i = 0; i < 2; i++) {
+    const parts = dtf.formatToParts(new Date(guessUTC));
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+    const chicagoHour = get("hour") === 24 ? 0 : get("hour");
+    const chicagoAsUTC = Date.UTC(get("year"), get("month") - 1, get("day"), chicagoHour, get("minute"));
+    const diff = targetAsUTC - chicagoAsUTC;
+    if (diff === 0) break;
+    guessUTC += diff;
+  }
+  return new Date(guessUTC).toISOString();
+}
+
 /**
  * Parse a business date (`YYYY-MM-DD`) as a LOCAL calendar date.
  *
