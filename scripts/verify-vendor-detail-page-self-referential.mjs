@@ -31,6 +31,7 @@ const CHECKS = [
   ["inactivate", /updateVendor\(id, \{ deactivated_at: new Date\(\)\.toISOString\(\) \}\)/],
   ["reactivate", /updateVendor\(id, \{ deactivated_at: null \}\)/],
   ["safer_verify", /"fmcsa-safer-status", "vendor", id,/],
+  ["safer_verify_now_opco", /fmcsa-safer\/verify-now[\s\S]{0,280}operating_company_id:\s*companyId/],
   ["ap.record_bill_payment", /recordVendorBillPayment\(id, \{/],
   ["ap.bills", /listVendorBills\(companyId, \{ vendor_id: id,/],
   ["ap.bills_history", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, limit:/],

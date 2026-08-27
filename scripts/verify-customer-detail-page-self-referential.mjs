@@ -55,6 +55,7 @@ const CHECKS = [
   ["audit", /<EntityAuditHistoryTab operatingCompanyId=\{operatingCompanyId \?\? ""\} entityType="customer" entityId=\{customer\.id\}/],
   ["edit", /await updateCustomer\(id, \{/],
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id, operatingCompanyId!\)/],
+  ["safer_verify_now_opco", /fmcsa-safer\/verify-now[\s\S]{0,280}operating_company_id:\s*operatingCompanyId/],
 ];
 
 const customerLanesRoutes = fs.readFileSync(path.join(ROOT, CUSTOMER_LANES_ROUTES), "utf8");
