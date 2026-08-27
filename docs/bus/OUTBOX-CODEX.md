@@ -1423,3 +1423,4 @@ Codex | WORKING | GO-0808 | FINDING=SAFETY-F6860-DRIVER-SCORE-HARSH-EVENTS-DOUBL
 Codex | SHIPPED | GO-0808 | FINDING=MAINT-F6859 | PR=#16674 | merge=3c9d2727ee | guard=13/13 | NEXT=driver-score vertical | GO
 Codex | WORKING | GO-0808 | FINDING=MAINT-F6861-PREFLIGHT-DVIR-QUEUE-SILENT-500-CAP-LOCAL-PAGER | vertical=major+minor+observation driver/unit/WO | guard=11/11+10/10 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | GO-0808 | FINDING=SAFETY-F6860 | PR=#16677 | merge=fa900121d3 | guard=10/10 | NEXT=pre-flight DVIR vertical | GO
+Codex | WORKING | GO-0808 | FINDING=SAFETY-F6872-GEOFENCE-BREACH-SILENT-1000-CAP | vertical=Safety register+Dispatch overview/list/kanban | guard=10/10 | NEXT=FAST-MERGE | GO

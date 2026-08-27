@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeBreach, listGeofenceBreaches, type GeofenceBreachFilter } from "../../../api/safetyGeofence";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -16,11 +16,13 @@ export function GeofenceBreachesTab() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<GeofenceBreachFilter>("active");
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
   const companyGenerationRef = useRef(0);
 
   const eventsQuery = useQuery({
-    queryKey: ["safety", "geofence-breaches", companyId, filter],
-    queryFn: () => listGeofenceBreaches({ operating_company_id: companyId, filter }),
+    queryKey: ["safety", "geofence-breaches", companyId, filter, page],
+    queryFn: () => listGeofenceBreaches({ operating_company_id: companyId, filter, page_size: pageSize, offset: page * pageSize }),
     enabled: Boolean(companyId),
     refetchInterval: 30_000,
   });
@@ -38,12 +40,11 @@ export function GeofenceBreachesTab() {
     companyGenerationRef.current += 1;
     acknowledgeMutation.reset();
     setFilter("active");
+    setPage(0);
   }, [companyId]);
 
-  const activeCount = useMemo(
-    () => (eventsQuery.data?.events ?? []).filter((event) => !event.acknowledged_at).length,
-    [eventsQuery.data?.events]
-  );
+  const activeCount = eventsQuery.data?.active_count ?? 0;
+  const totalCount = eventsQuery.data?.total_count ?? 0;
 
   return (
     <div className="space-y-3">
@@ -59,7 +60,7 @@ export function GeofenceBreachesTab() {
             <button
               key={item}
               type="button"
-              onClick={() => setFilter(item)}
+              onClick={() => { setFilter(item); setPage(0); }}
               className={`rounded-sm px-2 py-1 text-xs ${filter === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             >
               {item}
@@ -137,6 +138,15 @@ export function GeofenceBreachesTab() {
           <p className="text-xs text-red-700" data-testid="geofence-acknowledge-error">
             {userFacingApiError(acknowledgeMutation.error, "Could not acknowledge the geofence breach.")}
           </p>
+        ) : null}
+        {!eventsQuery.isError && totalCount > 0 ? (
+          <div className="flex items-center justify-between text-xs text-slate-600" data-testid="geofence-breaches-server-pager">
+            <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
+            <div className="flex gap-2">
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page === 0 || eventsQuery.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={(page + 1) * pageSize >= totalCount || eventsQuery.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+            </div>
+          </div>
         ) : null}
       </div>
     </div>

@@ -10,6 +10,8 @@ const listQuerySchema = z.object({
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   filter: z.enum(["active", "acknowledged", "all"]).default("all"),
+  page_size: z.coerce.number().int().min(1).max(300).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({
@@ -65,6 +67,27 @@ export async function registerGeofenceBreachRoutes(app: FastifyInstance) {
           ackFilter = "AND e.acknowledged_at IS NOT NULL";
         }
 
+        const summary = await client.query<{
+          total_count: string | number;
+          active_count: string | number;
+          active_vehicle_ids: string[] | null;
+        }>(
+          `
+            SELECT
+              COUNT(*) FILTER (
+                WHERE ($4::text = 'all')
+                   OR ($4::text = 'active' AND acknowledged_at IS NULL)
+                   OR ($4::text = 'acknowledged' AND acknowledged_at IS NOT NULL)
+              )::int AS total_count,
+              COUNT(*) FILTER (WHERE acknowledged_at IS NULL)::int AS active_count,
+              COALESCE(array_agg(DISTINCT vehicle_id::text) FILTER (WHERE acknowledged_at IS NULL), ARRAY[]::text[]) AS active_vehicle_ids
+            FROM safety.geofence_breach_events
+            WHERE operating_company_id = $1::uuid
+              AND event_at >= $2::timestamptz
+              AND event_at <= $3::timestamptz
+          `,
+          [...params, query.data.filter]
+        );
         const res = await client.query(
           `
             SELECT
@@ -94,15 +117,21 @@ export async function registerGeofenceBreachRoutes(app: FastifyInstance) {
               AND e.event_at <= $3::timestamptz
               ${ackFilter}
             ORDER BY e.event_at DESC
-            LIMIT 1000
+            LIMIT $4::int OFFSET $5::int
           `,
-          params
+          [...params, query.data.page_size, query.data.offset]
         );
-        return res.rows;
+        const metadata = summary.rows[0];
+        return {
+          events: res.rows,
+          total_count: Number(metadata?.total_count ?? 0),
+          active_count: Number(metadata?.active_count ?? 0),
+          active_vehicle_ids: metadata?.active_vehicle_ids ?? [],
+        };
       }
     );
 
-    return { events, from, to, filter: query.data.filter };
+    return { ...events, from, to, filter: query.data.filter, page_size: query.data.page_size, offset: query.data.offset };
   });
 
   app.post("/api/v1/safety/geofence-breaches/:id/acknowledge", async (req, reply) => {
