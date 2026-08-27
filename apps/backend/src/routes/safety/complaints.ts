@@ -204,7 +204,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/safety/complaints", async (req, reply) => {
+  app.post("/api/v1/safety/complaints", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const appRole = ensureComplaintReadRole(user, reply);
@@ -226,6 +226,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
            ($2::uuid IS NULL OR EXISTS (
              SELECT 1 FROM mdata.drivers d
              WHERE d.id = $2::uuid
+               AND d.archived_at IS NULL
                AND (d.operating_company_id = $1::uuid OR EXISTS (
                  SELECT 1 FROM mdata.driver_company_authorizations complaint_create_complainant_dca
                  WHERE complaint_create_complainant_dca.driver_id = d.id
@@ -237,6 +238,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
            ($3::uuid IS NULL OR EXISTS (
              SELECT 1 FROM mdata.drivers d
              WHERE d.id = $3::uuid
+               AND d.archived_at IS NULL
                AND (d.operating_company_id = $1::uuid OR EXISTS (
                  SELECT 1 FROM mdata.driver_company_authorizations complaint_create_respondent_dca
                  WHERE complaint_create_respondent_dca.driver_id = d.id
@@ -265,7 +267,13 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
            EXISTS (
              SELECT 1 FROM catalogs.complaint_types ct
              WHERE ct.id = $7::uuid AND ct.operating_company_id = $1::uuid AND ct.is_active = true
-           ) AS complaint_type_ok`,
+           ) AS complaint_type_ok,
+           (COALESCE(cardinality($8::uuid[]), 0) = (
+             SELECT count(*)::int FROM docs.files f
+              WHERE f.id = ANY(COALESCE($8::uuid[], ARRAY[]::uuid[]))
+                AND f.operating_company_id = $1::uuid
+                AND f.deleted_at IS NULL
+           )) AS evidence_docs_ok`,
         [
           query.data.operating_company_id,
           body.data.complainant_driver_id ?? null,
@@ -274,6 +282,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           body.data.complainant_user_id ?? null,
           body.data.respondent_user_id ?? null,
           body.data.complaint_type_id,
+          body.data.evidence_doc_ids ?? [],
         ]
       );
       const validity = linked.rows[0];
@@ -335,7 +344,8 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           user.uuid,
         ]
       );
-      const row = res.rows[0];
+      const row = res.rows[0] as Record<string, unknown> | undefined;
+      if (!row?.id) throw new Error("safety_complaint_insert_failed");
       await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, severity: row.severity }, "warning", "P3-T11.17.2-SAFETY-V6.4");
       return row;
     });
