@@ -813,6 +813,7 @@ export function CustomerDetailPage() {
         body: {
           entity_type: "customer",
           entity_id: id,
+          operating_company_id: operatingCompanyId,
           force: true,
         },
       }),
