@@ -305,8 +305,9 @@ export default function PositionHistoryPage() {
             exportFilename="position-history"
             tableTestId="position-history-table"
             rowTestId={(row) => `position-history-row-${row.id}`}
-            initialPageSize={limit}
+            pageSize={limit}
             pageSizeOptions={[limit]}
+            hidePager
           />
         </div>
       )}
