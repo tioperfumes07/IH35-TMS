@@ -149,6 +149,7 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
         "safety.dot_inspection_event.follow_up_recorded",
         {
           dot_inspection_event_id: params.data.id,
+          operating_company_id: body.data.operating_company_id,
           follow_up_state: body.data.follow_up_state,
         },
         "info",
