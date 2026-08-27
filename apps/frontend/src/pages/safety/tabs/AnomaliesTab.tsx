@@ -47,17 +47,25 @@ export function AnomaliesTab() {
     onApply: (next) => { setSeverity(next.severity); setStatus(next.status); },
   });
   const [selected, setSelected] = useState<SafetyAnomaly | null>(null);
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
+
+  useEffect(() => setPage(1), [companyId, severity, status]);
 
   const anomaliesQuery = useQuery({
-    queryKey: ["safety", "anomalies", companyId, severity, status],
+    queryKey: ["safety", "anomalies", companyId, severity, status, page],
     queryFn: () =>
       listAnomalies(companyId, {
         severity: severity === "all" ? undefined : severity,
         status: status === "all" ? undefined : status,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(companyId),
   });
   const rows = anomaliesQuery.data?.anomalies ?? [];
+  const totalCount = anomaliesQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
   const anomalyId = searchParams.get("anomaly_id");
   useEffect(() => {
     if (!anomalyId) return;
@@ -177,8 +185,19 @@ export function AnomaliesTab() {
         storageKey="safety-anomalies"
         exportFilename="anomalies"
         filterBar={filterBar}
+        pageSize={pageSize}
+        pageSizeOptions={[pageSize]}
+        hidePager
       />
       )}
+
+      {!anomaliesQuery.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="anomalies-server-pager">
+          <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page <= 1 || anomaliesQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
+          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} anomalies</span>
+          <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page >= pageCount || anomaliesQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</button>
+        </div>
+      ) : null}
 
       <AnomalyDetailDrawer
         open={Boolean(selected)}

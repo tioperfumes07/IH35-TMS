@@ -1080,14 +1080,16 @@ export type SafetyAnomaly = {
 
 export function listAnomalies(
   companyId: string,
-  params: { status?: SafetyAnomalyStatus; severity?: SafetyAnomalySeverity; subject?: SafetyAnomalySubjectType; subject_id?: string } = {}
+  params: { status?: SafetyAnomalyStatus; severity?: SafetyAnomalySeverity; subject?: SafetyAnomalySubjectType; subject_id?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.status) qs.set("status", params.status);
   if (params.severity) qs.set("severity", params.severity);
   if (params.subject) qs.set("subject", params.subject);
   if (params.subject_id) qs.set("subject_id", params.subject_id);
-  return apiRequest<{ anomalies: SafetyAnomaly[] }>(`/api/v1/integrity/anomalies?${qs.toString()}`);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ anomalies: SafetyAnomaly[]; total_count: number }>(`/api/v1/integrity/anomalies?${qs.toString()}`);
 }
 
 export function getAnomaly(id: string, companyId: string) {
