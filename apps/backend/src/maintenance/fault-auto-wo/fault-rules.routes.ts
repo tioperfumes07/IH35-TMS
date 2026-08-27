@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -67,7 +68,10 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
     return { rules: rows };
   });
 
-  app.post("/api/v1/maintenance/fault-rules", async (req, reply) => {
+  app.post(
+    "/api/v1/maintenance/fault-rules",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = createRuleSchema.safeParse(req.body ?? {});
@@ -96,10 +100,19 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
           b.estimated_repair_hours ?? null,
         ]
       );
-      return res.rows[0];
+      const created = res.rows[0] as { id?: string } | undefined;
+      if (!created?.id) throw new Error("maintenance_fault_rule_insert_failed");
+      await appendCrudAudit(client as never, user.uuid, "maintenance.fault_rule.created", {
+        resource_type: "maintenance.fault_code_severity_rules",
+        resource_id: created.id,
+        operating_company_id: b.operating_company_id,
+        fault_code: b.fault_code,
+      });
+      return created;
     });
-    return reply.code(201).send(row);
-  });
+      return reply.code(201).send(row);
+    }
+  );
 
   app.patch("/api/v1/maintenance/fault-rules/:id", async (req, reply) => {
     const user = authed(req, reply);
