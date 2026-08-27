@@ -3,8 +3,9 @@
 import fs from "node:fs";
 
 const source = fs.readFileSync("apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx", "utf8");
+const backendSource = fs.readFileSync("apps/backend/src/routes/safety/dot-inspections.ts", "utf8");
 
-function inspect(value) {
+function inspect(value, backend = backendSource) {
   const failures = [];
   const checks = [
     [/companyGenerationRef = useRef\(0\)/, "missing company generation"],
@@ -30,6 +31,10 @@ function inspect(value) {
     const matches = value.match(pattern);
     if (!matches || (message === "stale successes are not rejected" && matches.length < 4)) failures.push(message);
   }
+  for (const event of ["oos_spawned_wo", "created", "updated", "voided"]) {
+    const pattern = new RegExp(`"safety\\.dot_inspection\\.${event}",[\\s\\S]{0,260}operating_company_id: query\\.data\\.operating_company_id`);
+    if (!pattern.test(backend)) failures.push(`${event} audit must identify the operating company`);
+  }
   return failures;
 }
 
@@ -50,7 +55,12 @@ if (process.argv.includes("--selftest")) {
     if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
   }
   if (source.includes("window.confirm")) throw new Error("native confirm remains");
-  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 3}/${mutations.length + 3})`);
+  for (const event of ["oos_spawned_wo", "created", "updated", "voided"]) {
+    const eventBlock = new RegExp(`("safety\\.dot_inspection\\.${event}",[\\s\\S]{0,260})operating_company_id: query\\.data\\.operating_company_id,`);
+    const mutatedBackend = backendSource.replace(eventBlock, "$1");
+    if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error(`missed ${event} audit mutation`);
+  }
+  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 7}/${mutations.length + 7})`);
 } else {
   const failures = inspect(source);
   if (failures.length) {
