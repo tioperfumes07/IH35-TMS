@@ -8,6 +8,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   follow_up_state: z.enum(["open", "reviewed", "citation", "clean"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({
@@ -52,6 +54,7 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
         stateFilter = `WHERE COALESCE(f.latest_state, e.follow_up_state) = $${params.length}`;
       }
 
+      params.push(query.data.limit, query.data.offset);
       const res = await client.query(
         `
           WITH latest_followup AS (
@@ -76,6 +79,7 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
             e.departed_at::text,
             e.dwell_minutes,
             COALESCE(f.latest_state, e.follow_up_state)::text AS follow_up_state,
+            COUNT(*) OVER()::int AS total_count,
             COALESCE(f.latest_user_uuid, e.follow_up_by_user_uuid::text) AS follow_up_by_user_uuid,
             COALESCE(f.latest_at::text, e.created_at::text) AS follow_up_at
           FROM compliance.dot_inspection_events e
@@ -95,13 +99,13 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
           LEFT JOIN latest_followup f ON f.dot_inspection_event_id = e.id
           ${stateFilter}
           ORDER BY e.departed_at DESC
-          LIMIT 500
+          LIMIT $${params.length - 1} OFFSET $${params.length}
         `,
         params
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
-    return { events };
+    return { events: events.rows, total_count: events.total_count };
   });
 
   app.post("/api/v1/safety/dot-inspection-events/:id/follow-up", async (req, reply) => {
