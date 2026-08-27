@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { companyQuerySchema, validationError, withCompanyScope } from "../accounting/shared.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 const woIdParamsSchema = z.object({ woId: z.string().uuid() });
 const entryIdParamsSchema = z.object({ entryId: z.string().uuid() });
@@ -198,8 +199,15 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
-
-      return { kind: "ok" as const, entry: insert.rows[0] };
+      const createdEntry = insert.rows[0];
+      if (!createdEntry?.id) throw new Error("wo_time_entry_start_returned_no_row");
+      await appendCrudAudit(client, user.uuid, "maintenance.wo_time_entry.started", {
+        resource_type: "maintenance.wo_time_entries",
+        resource_id: createdEntry.id,
+        operating_company_id: body.data.operating_company_id,
+        work_order_id: params.data.woId,
+      });
+      return { kind: "ok" as const, entry: createdEntry };
     });
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
@@ -273,6 +281,12 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
 
       const row = update.rows[0];
       if (!row) return { kind: "missing_or_closed" as const };
+      await appendCrudAudit(client, user.uuid, "maintenance.wo_time_entry.stopped", {
+        resource_type: "maintenance.wo_time_entries",
+        resource_id: row.id,
+        operating_company_id: body.data.operating_company_id,
+        work_order_id: row.work_order_id,
+      });
       return { kind: "ok" as const, entry: row };
     });
 
@@ -338,8 +352,15 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
-
-      return { kind: "ok" as const, entry: insert.rows[0] };
+      const createdEntry = insert.rows[0];
+      if (!createdEntry?.id) throw new Error("wo_time_entry_manual_create_returned_no_row");
+      await appendCrudAudit(client, user.uuid, "maintenance.wo_time_entry.created", {
+        resource_type: "maintenance.wo_time_entries",
+        resource_id: createdEntry.id,
+        operating_company_id: body.data.operating_company_id,
+        work_order_id: body.data.work_order_id,
+      });
+      return { kind: "ok" as const, entry: createdEntry };
     });
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
@@ -377,6 +398,12 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
 
       const row = update.rows[0];
       if (!row) return { kind: "missing" as const };
+      await appendCrudAudit(client, user.uuid, "maintenance.wo_time_entry.updated", {
+        resource_type: "maintenance.wo_time_entries",
+        resource_id: row.id,
+        operating_company_id: body.data.operating_company_id,
+        work_order_id: row.work_order_id,
+      });
       return { kind: "ok" as const, entry: row };
     });
 
@@ -412,6 +439,12 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
 
       const row = update.rows[0];
       if (!row) return { kind: "missing" as const };
+      await appendCrudAudit(client, user.uuid, "maintenance.wo_time_entry.archived", {
+        resource_type: "maintenance.wo_time_entries",
+        resource_id: row.id,
+        operating_company_id: query.data.operating_company_id,
+        work_order_id: row.work_order_id,
+      });
       return { kind: "ok" as const, entry: row };
     });
 

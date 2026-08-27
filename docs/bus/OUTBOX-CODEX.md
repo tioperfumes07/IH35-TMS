@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16582 @ 1dfb480c98 MAINT-F6835 | WORKING MAINT-F6836 WO time-entry identity+audit lifecycle | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16581 @ 2e399a2a24 MAINT-F6834 | WORKING MAINT-F6835 DVIR severity tag identity | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16580 @ bb23b71765 MAINT-F6833 | WORKING MAINT-F6834 internal-labor create identity | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16579 @ 75a6a3a9de MAINT-F6832 | WORKING MAINT-F6833 PM schedule create identity | NEXT=guard+FAST-MERGE | GO
