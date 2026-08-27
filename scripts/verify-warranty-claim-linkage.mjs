@@ -26,6 +26,8 @@ function audit(s) {
   if (!/AS warranty_ok/.test(s.route)) failures.push("claim writer must validate warranty ownership before insert");
   if (!/AS work_order_ok/.test(s.route)) failures.push("claim writer must validate work-order ownership before insert");
   if (!/AS vendor_ok/.test(s.route)) failures.push("claim writer must validate vendor ownership before insert");
+  if (!/app\.post\("\/api\/v1\/maintenance\/warranty\/parts"[\s\S]{0,1400}AS inventory_ok[\s\S]{0,500}AS vendor_ok[\s\S]{0,500}AS work_order_ok/.test(s.route)) failures.push("warranty-part writer must validate inventory, vendor, and work-order ownership before insert");
+  if (!/app\.post\("\/api\/v1\/maintenance\/warranty\/parts"[\s\S]{0,4200}if \(!row\) return reply\.code\(400\)\.send\(\{ error: "linked_entity_not_in_operating_company" \}\)/.test(s.route)) failures.push("warranty-part writer must reject cross-company linked entities honestly");
   if (!/if \(!row\) return reply\.code\(400\)\.send\(\{ error: "linked_entity_not_in_operating_company" \}\)/.test(s.route)) failures.push("claim writer must reject cross-company linked entities honestly");
   if (!/if \(body\.vendor_id\)[\s\S]{0,500}FROM mdata\.vendors[\s\S]{0,250}operating_company_id = \$2::uuid[\s\S]{0,180}deactivated_at IS NULL[\s\S]{0,250}invalid_vendor/.test(s.route)) failures.push("claim update must validate an active tenant vendor before replacing vendor_id");
   if (!/outcome\.kind === "invalid_vendor"[\s\S]{0,180}reply\.code\(400\)[\s\S]{0,120}linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid update vendor must return an honest 400");
@@ -52,6 +54,8 @@ if (process.argv.includes("--selftest")) {
     ["warranty writer ownership", "route", /AS warranty_ok/, "AS warranty_missing"],
     ["work-order writer ownership", "route", /AS work_order_ok/, "AS work_order_missing"],
     ["vendor writer ownership", "route", /AS vendor_ok/, "AS vendor_missing"],
+    ["part inventory ownership", "route", /AS inventory_ok/, "AS inventory_missing"],
+    ["part writer ownership error", "route", /(app\.post\("\/api\/v1\/maintenance\/warranty\/parts"[\s\S]{0,4200}if \(!row\) return reply\.code\(400\)\.send\(\{ error: ")linked_entity_not_in_operating_company/, "$1linked_entity_unknown"],
     ["writer ownership error", "route", /(if \(!row\) return reply\.code\(400\)\.send\(\{ error: ")linked_entity_not_in_operating_company/, "$1linked_entity_unknown"],
     ["update writer", "route", /(if \(body\.vendor_id\)[\s\S]{0,500})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["update error", "route", /outcome\.kind === "invalid_vendor"/, 'outcome.kind === "ok"'],
