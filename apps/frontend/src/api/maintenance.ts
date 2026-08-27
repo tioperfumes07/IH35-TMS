@@ -808,16 +808,21 @@ export type PartsAssignmentRow = {
 export type PartsAssignmentsResponse = {
   rows: PartsAssignmentRow[];
   total_count: number;
+  limit: number;
+  offset: number;
 };
 
 export function getPartsAssignmentsPage(
   operatingCompanyId: string,
-  filters?: { vendor_id?: string; work_order_id?: string; unit_id?: string },
+  filters?: { vendor_id?: string; work_order_id?: string; unit_id?: string; unit_linked_only?: boolean; limit?: number; offset?: number },
 ) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters?.vendor_id) query.set("vendor_id", filters.vendor_id);
   if (filters?.work_order_id) query.set("work_order_id", filters.work_order_id);
   if (filters?.unit_id) query.set("unit_id", filters.unit_id);
+  if (filters?.unit_linked_only) query.set("unit_linked_only", "true");
+  query.set("limit", String(filters?.limit ?? 50));
+  query.set("offset", String(filters?.offset ?? 0));
   return apiRequest<PartsAssignmentsResponse>(
     `/api/v1/maintenance/parts-invoice-links?${query.toString()}`
   );
@@ -850,9 +855,14 @@ export function createPartsAssignment(workOrderId: string, operatingCompanyId: s
 }
 
 /** Unit reverse drill-through — parts used on WOs for a unit via work_orders.unit_id. */
-export function getUnitPartsHistoryPage(unitId: string, operatingCompanyId: string) {
+export function getUnitPartsHistoryPage(unitId: string, operatingCompanyId: string, range: { limit?: number; offset?: number } = {}) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    limit: String(range.limit ?? 50),
+    offset: String(range.offset ?? 0),
+  });
   return apiRequest<PartsAssignmentsResponse>(
-    `/api/v1/maintenance/units/${encodeURIComponent(unitId)}/parts-history?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/maintenance/units/${encodeURIComponent(unitId)}/parts-history?${query.toString()}`
   );
 }
 

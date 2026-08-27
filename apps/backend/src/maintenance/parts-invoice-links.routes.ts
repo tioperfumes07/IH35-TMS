@@ -10,6 +10,9 @@ const querySchema = z.object({
   vendor_id: z.string().uuid().optional(),
   work_order_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  unit_linked_only: z.coerce.boolean().optional(),
+  limit: z.coerce.number().int().min(1).max(300).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 // ACCT-F5756 — no frontend caller of DELETE exists yet (verified via repo-wide grep before this fix),
 // so this can add a reason without breaking an in-flight UI; defaults to a fixed reason for API
@@ -72,6 +75,14 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         values.push(query.data.unit_id);
         filters.push(`wo.unit_id = $${values.length}::uuid`);
       }
+      if (query.data.unit_linked_only) filters.push("wo.unit_id IS NOT NULL");
+      const countRes = await client.query(
+        `SELECT COUNT(*)::text AS total_count
+           FROM maintenance.parts_invoice_links pil
+           INNER JOIN maintenance.work_orders wo ON wo.id = pil.work_order_id AND wo.operating_company_id = pil.operating_company_id
+          WHERE ${filters.join(" AND ")} AND pil.voided_at IS NULL`,
+        values,
+      );
       const res = await client.query(
         `
           SELECT
@@ -90,8 +101,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
             pil.vendor_invoice_number,
             pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
             pil.created_at,
-            pil.created_by_user_id::text AS created_by_user_id,
-            COUNT(*) OVER()::int AS total_count
+            pil.created_by_user_id::text AS created_by_user_id
           FROM maintenance.parts_invoice_links pil
           INNER JOIN maintenance.work_orders wo
             ON wo.id = pil.work_order_id
@@ -105,14 +115,15 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
           WHERE ${filters.join(" AND ")}
             AND pil.voided_at IS NULL
           ORDER BY pil.created_at DESC
-          LIMIT 500
+          LIMIT $${values.length + 1}
+          OFFSET $${values.length + 2}
         `,
-        values
+        [...values, query.data.limit, query.data.offset]
       );
-      return res.rows;
+      return { rows: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
-    return { rows, total_count: Number(rows[0]?.total_count ?? 0) };
+    return { rows: rows.rows, total_count: rows.totalCount, limit: query.data.limit, offset: query.data.offset };
   });
 
   /**
@@ -139,6 +150,13 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         );
         if (!unitRes.rows[0]) return { notFound: true as const };
 
+        const countRes = await client.query(
+          `SELECT COUNT(*)::text AS total_count
+             FROM maintenance.parts_invoice_links pil
+             INNER JOIN maintenance.work_orders wo ON wo.id = pil.work_order_id AND wo.operating_company_id = pil.operating_company_id
+            WHERE pil.operating_company_id = $1::uuid AND wo.unit_id = $2::uuid AND pil.voided_at IS NULL`,
+          [query.data.operating_company_id, params.data.unitId],
+        );
         const res = await client.query(
           `
             SELECT
@@ -157,8 +175,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
               pil.vendor_invoice_number,
               pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
               pil.created_at,
-              pil.created_by_user_id::text AS created_by_user_id,
-              COUNT(*) OVER()::int AS total_count
+              pil.created_by_user_id::text AS created_by_user_id
             FROM maintenance.parts_invoice_links pil
             INNER JOIN maintenance.work_orders wo
               ON wo.id = pil.work_order_id
@@ -173,15 +190,15 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
               AND wo.unit_id = $2
               AND pil.voided_at IS NULL
             ORDER BY pil.created_at DESC
-            LIMIT 500
+            LIMIT $3 OFFSET $4
           `,
-          [query.data.operating_company_id, params.data.unitId]
+          [query.data.operating_company_id, params.data.unitId, query.data.limit, query.data.offset]
         );
-        return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
+        return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
       });
 
       if ("notFound" in rows) return reply.code(404).send({ error: "unit_not_found" });
-      return { rows: rows.rows, total_count: rows.total_count };
+      return { rows: rows.rows, total_count: rows.total_count, limit: query.data.limit, offset: query.data.offset };
     }
   );
 

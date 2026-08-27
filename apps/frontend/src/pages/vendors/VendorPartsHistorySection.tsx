@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -21,9 +22,12 @@ function formatMoney(value: number | null | undefined) {
 // surfaced it. The shared GET route applies vendor_id server-side and returns the filtered total;
 // this compact profile section discloses its 500-row cap and drills to the complete assignment trail.
 export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Props) {
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(0);
+  useEffect(() => setPage(0), [operatingCompanyId, vendorId]);
   const query = useQuery({
-    queryKey: ["vendor-parts-history", operatingCompanyId, vendorId],
-    queryFn: () => getPartsAssignmentsPage(operatingCompanyId, { vendor_id: vendorId }),
+    queryKey: ["vendor-parts-history", operatingCompanyId, vendorId, page],
+    queryFn: () => getPartsAssignmentsPage(operatingCompanyId, { vendor_id: vendorId, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
 
@@ -43,9 +47,9 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
         <p className="text-xs text-gray-500">No parts invoices are linked to this vendor.</p>
       ) : (
         <div className="space-y-1" data-testid="vendor-parts-history-reverse">
-          {totalCount > rows.length ? (
+          {totalCount ? (
             <p className="text-xs text-slate-500" data-testid="vendor-parts-history-range">
-              Showing {rows.length} of {totalCount} parts invoices. Open Inventory Assignments to review the complete trail.
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} parts invoices
             </p>
           ) : null}
           {rows.map((row) => (
@@ -77,6 +81,7 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
               </span>
             </div>
           ))}
+          {totalCount > PAGE_SIZE ? <div className="flex justify-end gap-2"><button type="button" disabled={page === 0 || query.isFetching} onClick={() => setPage((v) => Math.max(0, v - 1))}>Previous</button><button type="button" disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching} onClick={() => setPage((v) => v + 1)}>Next</button></div> : null}
         </div>
       )}
     </DataPanel>
