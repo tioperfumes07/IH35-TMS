@@ -3,11 +3,13 @@
  *
  * SAFETY CONTRACT (GUARD #4/#5, anti-data-loss):
  *  - Only the persisted-and-editable set round-trips: columns that exist on mdata.loads AND the dispatch
- *    PATCH schema accepts. Block 7 (Jorge-approved 2026-06-22, no migration) ADDS commodity, weight
- *    (cargo_weight_lbs), reefer setpoint (reefer_setpoint_temp_f), and trip_type to that set.
- *    Still EXCLUDED (no column / gated / forbidden): load_type, trailer_type, customer_po_number + pieces
- *    (gated migration — see docs/specs/block7-loads-piece-po-migration.md), and HAZMAT (forbidden by §4,
- *    Jorge ruling 2026-06-22). Excluded fields are NEVER prefilled-then-saved and NEVER in the PATCH body.
+ *    PATCH schema accepts. Block 7 (Jorge-approved 2026-06-22, no migration) ADDS trip_type to that set.
+ *    commodity/weight (cargo_weight_lbs)/reefer setpoint (reefer_setpoint_temp_f) were REMOVED
+ *    2026-08-27 (DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500) — mdata.loads never had those columns,
+ *    so the original "no migration" ADD silently 500'd every Edit save that touched them.
+ *    Still EXCLUDED (no column / gated / forbidden): load_type, trailer_type,
+ *    and HAZMAT (forbidden by §4, Jorge ruling 2026-06-22). Excluded fields are NEVER prefilled-then-saved
+ *    and NEVER in the PATCH body.
  *  - buildEditPatchBody sends ONLY fields the user actually changed (react-hook-form dirtyFields). A
  *    field the user didn't touch is absent from the body → the partial-update service leaves it
  *    untouched in the DB (never nulled). charges/stops are sent only if that group is dirty.
@@ -116,11 +118,10 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     team_id: str(load.team_id),
     assigned_primary_driver_id: str(load.assigned_primary_driver_id),
     assigned_secondary_driver_id: str(load.assigned_secondary_driver_id),
-    // Block 7 (Jorge-approved, no migration): freight attributes now round-trip. Weight column is
-    // cargo_weight_lbs; reefer setpoint is the numeric reefer_setpoint_temp_f surfaced as text.
-    commodity: str(load.commodity),
-    weight_lbs: num(load.cargo_weight_lbs),
-    reefer_setpoint: str(load.reefer_setpoint_temp_f),
+    // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/weight_lbs/reefer_setpoint
+    // prefill REMOVED — mdata.loads has never had commodity/cargo_weight_lbs/reefer_setpoint_temp_f
+    // columns (verified live, no migration ever added them), so these were always blank on prefill and
+    // 500'd the whole PATCH the moment a user touched them. See docs/audit/GUARD-WORKORDERS.md.
     trip_type: str(load.trip_type),
     // Block 7 (migration 202606221000): pieces + customer PO round-trip.
     pieces: str(load.piece_count),
@@ -168,18 +169,9 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["miles_shortest", "miles_shortest", (v) => num(v.miles_shortest)],
   ["miles_deadhead", "miles_deadhead", (v) => num(v.miles_deadhead)],
   ["assigned_unit_id", "assigned_unit_id", (v) => str(v.assigned_unit_id) || null],
-  // Block 7 (Jorge-approved, no migration). form key → PATCH key (= mdata.loads column) → transform.
-  ["commodity", "commodity", (v) => str(v.commodity) || null],
-  ["weight_lbs", "cargo_weight_lbs", (v) => {
-    const n = Number(v.weight_lbs);
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
-  }],
-  ["reefer_setpoint", "reefer_setpoint_temp_f", (v) => {
-    const s = str(v.reefer_setpoint).trim();
-    if (!s) return null;
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  }],
+  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/weight_lbs/reefer_setpoint
+  // entries REMOVED — the backend PATCH schema no longer accepts them (mdata.loads has no matching
+  // columns; the old wiring 500'd any Edit save that touched these fields).
   // trip_type is a non-nullable enum (NB/TR/SB) — omit (undefined) when blank so it's never cleared to null.
   ["trip_type", "trip_type", (v) => str(v.trip_type) || undefined],
   // Block 7 (migration 202606221000): pieces (form text) → piece_count (int) ; customer PO text.

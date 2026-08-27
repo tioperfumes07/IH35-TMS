@@ -153,10 +153,11 @@ export type LoadDetail = DispatchLoadRow & {
     description?: string | null;
     amount_cents: number;
   }>;
-  // Block 7 (Jorge-approved, no migration): freight attributes the Edit wizard prefills + round-trips.
+  // commodity is read-only display data here (DispatchBoard/DispatchKanban columns); it is NOT
+  // Edit-wizard-writable — mdata.loads has no per-load commodity/weight/reefer-setpoint columns
+  // (DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500, 2026-08-27). cargo_weight_lbs/
+  // reefer_setpoint_temp_f were removed from this type — no writer or reader remained after that fix.
   commodity?: string | null;
-  cargo_weight_lbs?: number | null;
-  reefer_setpoint_temp_f?: number | null;
   trip_type?: "NB" | "TR" | "SB" | null;
   piece_count?: number | null;
   customer_po_number?: string | null;

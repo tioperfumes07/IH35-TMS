@@ -314,10 +314,12 @@ const updateDispatchLoadBodySchema = z.object({
   miles_shortest: z.number().int().min(0).nullable().optional(),
   miles_deadhead: z.number().int().min(0).nullable().optional(),
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
-  // Block 7 (Jorge-approved, no migration): commodity/weight/reefer setpoint round-trip in the Edit wizard.
-  commodity: z.string().trim().max(120).nullable().optional(),
-  cargo_weight_lbs: z.number().int().min(0).nullable().optional(),
-  reefer_setpoint_temp_f: z.number().nullable().optional(),
+  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500: commodity/cargo_weight_lbs/reefer_setpoint_temp_f
+  // were REMOVED here (2026-08-27) — mdata.loads has never had these columns (verified live, no migration
+  // ever added them), so accepting them here fed update-load.service.ts's SCALAR_COLUMNS a direct write to
+  // a nonexistent column, 42703-ing any PATCH that touched them (including unrelated dirty fields in the
+  // same request). No per-load storage exists anywhere for these 3 concepts today; re-adding them requires
+  // a real migration, not a schema/route change. See docs/audit/GUARD-WORKORDERS.md.
   // Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
   piece_count: z.number().int().min(0).nullable().optional(),
   customer_po_number: z.string().trim().max(120).nullable().optional(),
