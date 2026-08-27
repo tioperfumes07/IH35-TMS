@@ -1,4 +1,9 @@
 {
+  "9839": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-deduction-trail-audit-events-sink"
+  },
   "9835": {
     "claimed_at": "2026-08-27",
     "claimed_by": "cc-2",
