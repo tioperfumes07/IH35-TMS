@@ -73,13 +73,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Driver Pay Types", description: "Pay event and compensation code set", live: true, catalogKey: "pay-types" },
       { name: "Escrow Types", description: "Escrow bucket definitions", live: true, catalogKey: "escrow-types" },
       { name: "License Classes", description: "CDL license class reference codes", live: true, catalogKey: "license-classes" },
-      { name: "CDL Endorsements", description: "Endorsement code reference set", live: true, catalogKey: "endorsements" },
-      { name: "CDL Restrictions", description: "Restriction code reference set", live: true, catalogKey: "restrictions" },
-      { name: "Medical Card Status", description: "DOT medical card status codes", live: true, catalogKey: "medical-card-status" },
-      { name: "Employment Status", description: "Driver employment classification codes", live: true, catalogKey: "employment-status" },
       // LST-A-01 — catalog was mounted at /catalogs/driver-load-statuses but absent from the hub map.
       { name: "Driver Load Statuses", description: "In-trip / stop status taxonomy for driver updates", live: true, catalogKey: "driver-load-statuses" },
-      { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: true, catalogKey: "termination-reasons" },
       // LST-F10 — /lists/driver/teams was route-mounted but absent from the hub map (unreachable
       // from nav). buildCatalogPath("drivers","teams") → /lists/driver/teams (drivers→driver).
       { name: "Driver Teams", description: "Primary + secondary driver pairings (team roster)", live: true, catalogKey: "teams" },
