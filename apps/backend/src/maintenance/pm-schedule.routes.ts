@@ -173,30 +173,64 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     if (!query.success) return validationError(reply, query.error);
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const schedule = await client.query(
-        `SELECT id, unit_id FROM maintenance.pm_schedules WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id, unit_id, label FROM maintenance.pm_schedules WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       if (!schedule.rows[0]) return null;
-      const wo = await client.query(
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [params.data.id]);
+      const existing = await client.query(
         `
-          SELECT id::text
+          SELECT id::text, display_id
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             AND unit_id = $2
             AND wo_type = 'pm'
+            AND status IN ('open', 'in_progress', 'waiting_parts')
+            AND origin = 'pm_schedule'
+            AND description ILIKE $3
           ORDER BY created_at DESC
           LIMIT 1
         `,
-        [query.data.operating_company_id, schedule.rows[0].unit_id]
+        [query.data.operating_company_id, schedule.rows[0].unit_id, `%[pm_schedule] schedule ${params.data.id}:%`]
       );
+      if (existing.rows[0]) return { ...existing.rows[0], created: false as const };
+
+      const display = await client.query(
+        `SELECT display_id, sequence
+           FROM maintenance.next_wo_display_id($1::uuid, 'PM', CURRENT_DATE, $2::uuid)`,
+        [schedule.rows[0].unit_id, query.data.operating_company_id]
+      );
+      const displayId = display.rows[0]?.display_id ?? null;
+      const sequence = Number(display.rows[0]?.sequence ?? 0) || null;
+      const description = `[pm_schedule] schedule ${params.data.id}: ${schedule.rows[0].label}`;
+      const wo = await client.query(
+        `INSERT INTO maintenance.work_orders (
+           operating_company_id, wo_type, source_type, status, unit_id, opened_at,
+           repair_location, description, display_id, unit_sequence, origin, wo_title
+         ) VALUES (
+           $1::uuid, 'pm', 'IS', 'open', $2::uuid, now(),
+           'in_house', $3, $4, $5, 'pm_schedule', $6
+         )
+         RETURNING id::text, display_id`,
+        [
+          query.data.operating_company_id,
+          schedule.rows[0].unit_id,
+          description,
+          displayId,
+          sequence,
+          `PM — ${schedule.rows[0].label}`,
+        ]
+      );
+      const created = wo.rows[0];
+      if (!created) throw new Error("pm_work_order_create_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.pm_schedule.generated_wo", {
         resource_id: params.data.id,
-        generated_work_order_id: wo.rows[0]?.id ?? "pending",
+        generated_work_order_id: created.id,
         operating_company_id: query.data.operating_company_id,
       });
-      return { id: wo.rows[0]?.id ?? "pending" };
+      return { ...created, created: true as const };
     });
     if (!result) return reply.code(404).send({ error: "pm_schedule_not_found" });
-    return { work_order_id: result.id };
+    return { work_order_id: result.id, display_id: result.display_id ?? null, created: result.created };
   });
 }
