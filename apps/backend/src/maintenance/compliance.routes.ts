@@ -6,6 +6,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -31,7 +33,13 @@ export async function registerMaintenanceComplianceRoutes(app: FastifyInstance) 
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
-    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const predicate = `payload->>'operating_company_id' = $1
+        AND (event_class ILIKE '%425c%' OR event_class ILIKE '%inspection%' OR event_class ILIKE '%compliance%')`;
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count FROM audit.audit_events WHERE ${predicate}`,
+        [query.data.operating_company_id]
+      );
       const res = await client.query(
         `
           -- audit.audit_events PK is uuid (not id); class is event_class (not event_type);
@@ -43,19 +51,14 @@ export async function registerMaintenanceComplianceRoutes(app: FastifyInstance) 
             created_at::text,
             payload
           FROM audit.audit_events
-          WHERE payload->>'operating_company_id' = $1
-            AND (
-              event_class ILIKE '%425c%'
-              OR event_class ILIKE '%inspection%'
-              OR event_class ILIKE '%compliance%'
-            )
-          ORDER BY created_at DESC
-          LIMIT 200
+          WHERE ${predicate}
+          ORDER BY created_at DESC, uuid DESC
+          LIMIT $2 OFFSET $3
         `,
-        [query.data.operating_company_id]
+        [query.data.operating_company_id, query.data.limit, query.data.offset]
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
-    return { rows };
+    return result;
   });
 }
