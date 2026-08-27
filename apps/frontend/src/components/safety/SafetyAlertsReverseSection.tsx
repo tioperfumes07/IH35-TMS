@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCompanyViolations, getIntegrityAlerts, listAnomalies, type SafetyAnomalySubjectType } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
+import { Button } from "../Button";
 
 type SubjectKind = "driver" | "unit" | "vendor" | "customer" | "invoice";
 
@@ -12,6 +14,9 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   subjectKind: SubjectKind;
   subjectId: string;
 }) {
+  const alertPageSize = 25;
+  const [alertPage, setAlertPage] = useState(1);
+  useEffect(() => setAlertPage(1), [operatingCompanyId, subjectKind, subjectId]);
   const companyViolationQ = useQuery({
     queryKey: ["safety-reverse", "company-violations", operatingCompanyId, subjectKind, subjectId],
     queryFn: () => getCompanyViolations(operatingCompanyId, {
@@ -21,11 +26,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
     enabled: Boolean(operatingCompanyId && subjectId && (subjectKind === "driver" || subjectKind === "unit")),
   });
   const integrityAlertQ = useQuery({
-    queryKey: ["safety-reverse", "integrity-alerts", operatingCompanyId, subjectKind, subjectId],
+    queryKey: ["safety-reverse", "integrity-alerts", operatingCompanyId, subjectKind, subjectId, alertPage],
     queryFn: () => getIntegrityAlerts(operatingCompanyId, {
       subject_driver_id: subjectKind === "driver" ? subjectId : undefined,
       subject_unit_id: subjectKind === "unit" ? subjectId : undefined,
       subject_vendor_id: subjectKind === "vendor" ? subjectId : undefined,
+      limit: alertPageSize,
+      offset: (alertPage - 1) * alertPageSize,
     }),
     enabled: Boolean(operatingCompanyId && subjectId && ["driver", "unit", "vendor"].includes(subjectKind)),
   });
@@ -39,6 +46,8 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   const failed = companyViolationQ.isError || integrityAlertQ.isError || anomalyQ.isError;
   const violations = failed ? [] : (companyViolationQ.data?.company_violations ?? []);
   const alerts = failed ? [] : (integrityAlertQ.data?.integrity_alerts ?? []);
+  const alertTotal = failed ? 0 : (integrityAlertQ.data?.total_count ?? 0);
+  const alertPageCount = Math.max(1, Math.ceil(alertTotal / alertPageSize));
   const anomalies = failed ? [] : (anomalyQ.data?.anomalies ?? []);
 
   return (
@@ -91,6 +100,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
           </div>
         ))}
       </div>
+      {!failed && alertTotal > alertPageSize ? (
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-alerts-reverse-pager-${subjectKind}`}>
+          <Button size="sm" variant="secondary" disabled={alertPage <= 1 || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.max(1, current - 1))}>Previous alerts</Button>
+          <span className="text-slate-600">Page {alertPage} of {alertPageCount} · {alertTotal} alerts</span>
+          <Button size="sm" variant="secondary" disabled={alertPage >= alertPageCount || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.min(alertPageCount, current + 1))}>Next alerts</Button>
+        </div>
+      ) : null}
     </section>
   );
 }

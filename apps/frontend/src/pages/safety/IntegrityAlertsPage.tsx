@@ -55,6 +55,8 @@ function parseIntegrityAlertsTab(raw: string | null): PageTab {
 }
 
 export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageTab = parseIntegrityAlertsTab(searchParams.get("tab"));
@@ -132,6 +134,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       applied.driverId,
       applied.unitId,
       applied.vendorId,
+      page,
     ],
     queryFn: () =>
       getIntegrityAlerts(operatingCompanyId, {
@@ -141,9 +144,14 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         subject_driver_id: applied.driverId || undefined,
         subject_unit_id: applied.unitId || undefined,
         subject_vendor_id: applied.vendorId || undefined,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
+  const totalCount = alertsQuery.isError ? 0 : alertsQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  useEffect(() => setPage(1), [operatingCompanyId, applied.category, applied.severity, applied.status, applied.driverId, applied.unitId, applied.vendorId]);
 
   const rulesQuery = useQuery({
     queryKey: ["safety", "integrity-alert-rules", operatingCompanyId],
@@ -338,6 +346,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       ) : null}
 
       {pageTab === "inbox" ? (
+        <>
         <ParityTable<IntegrityAlertRow>
           columns={alertColumns}
           rows={rows}
@@ -346,6 +355,9 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           emptyText="No active integrity alerts. Run the evaluator or wait for the scheduled job."
           storageKey="safety-integrity-alerts"
           exportFilename="integrity-alerts"
+          pageSize={pageSize}
+          pageSizeOptions={[pageSize]}
+          hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="integrity-alerts-filters">
               <input
@@ -444,6 +456,14 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             </div>
           }
         />
+        {totalCount > pageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="integrity-alerts-server-pager">
+            <Button size="sm" variant="secondary" disabled={page <= 1 || alertsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+            <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} alerts</span>
+            <Button size="sm" variant="secondary" disabled={page >= pageCount || alertsQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+          </div>
+        ) : null}
+        </>
       ) : (
         <ParityTable<IntegrityAlertRuleRow>
           columns={ruleColumns}

@@ -993,7 +993,7 @@ export function createComplaint(companyId: string, body: Record<string, unknown>
 
 export function getIntegrityAlerts(
   companyId: string,
-  params: { alert_category?: string; severity?: string; resolution_status?: string; subject_driver_id?: string; subject_unit_id?: string; subject_vendor_id?: string } = {}
+  params: { alert_category?: string; severity?: string; resolution_status?: string; subject_driver_id?: string; subject_unit_id?: string; subject_vendor_id?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.alert_category) qs.set("alert_category", params.alert_category);
@@ -1002,7 +1002,9 @@ export function getIntegrityAlerts(
   if (params.subject_driver_id) qs.set("subject_driver_id", params.subject_driver_id);
   if (params.subject_unit_id) qs.set("subject_unit_id", params.subject_unit_id);
   if (params.subject_vendor_id) qs.set("subject_vendor_id", params.subject_vendor_id);
-  return apiRequest<{ integrity_alerts: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity-alerts?${qs.toString()}`);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ integrity_alerts: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/integrity-alerts?${qs.toString()}`);
 }
 
 export function acknowledgeIntegrityAlert(id: string, companyId: string, note: string) {
