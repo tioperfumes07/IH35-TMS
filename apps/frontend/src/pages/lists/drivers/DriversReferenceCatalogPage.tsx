@@ -7,7 +7,9 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useToast } from "../../../components/Toast";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListsSubNav } from "../ListsSubNav";
 import { DriversReferenceCatalogModal, type DriversReferenceCatalogClient } from "./DriversReferenceCatalogModal";
 
@@ -26,6 +28,7 @@ function archivedPillClass(archived: boolean) {
 }
 
 export function DriversReferenceCatalogPage({ client, displayName, catalogKey }: Props) {
+  const { pushToast } = useToast();
   const [search, setSearch] = useState("");
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,12 +60,22 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
   const total = query.data?.total_count ?? 0;
 
   async function toggleArchive(row: DriversReferenceCatalogRow) {
-    if (row.archived_at) {
-      await client.restore(row.id);
-    } else {
-      await client.archive(row.id);
+    // LISTS-F6334-class: no try/catch, called via `void toggleArchive(row)` — a rejected
+    // archive/restore (409 double-archive, RLS, expired session) was completely silent, the
+    // button just appearing to do nothing.
+    try {
+      if (row.archived_at) {
+        await client.restore(row.id);
+      } else {
+        await client.archive(row.id);
+      }
+      void query.refetch();
+    } catch (error) {
+      pushToast(
+        userFacingApiError(error, row.archived_at ? "Could not unarchive this row" : "Could not archive this row"),
+        "error"
+      );
     }
-    void query.refetch();
   }
 
   const columns: Array<ParityColumn<DriversReferenceCatalogRow>> = [
