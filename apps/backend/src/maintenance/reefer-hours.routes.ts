@@ -481,11 +481,13 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
       if (body.notes !== undefined) add("notes", body.notes);
 
       values.push(body.equipment_id, body.operating_company_id);
-      await client.query(
+      const updated = await client.query(
         `UPDATE maintenance.reefer_specs SET ${sets.join(", ")}
-         WHERE equipment_id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL`,
+         WHERE equipment_id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL
+         RETURNING id::text`,
         values
       );
+      if (!updated.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_specs.updated", {
         operating_company_id: body.operating_company_id,
         equipment_id: body.equipment_id,
@@ -497,6 +499,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
       const currentHours = await fetchLatestHours(client, body.operating_company_id, body.equipment_id);
       return mapReeferSpecsRow(specs.rows[0] ?? {}, currentHours);
     });
+    if (!row) return reply.code(409).send({ error: "reefer_specs_changed_during_update" });
     return reply.send(row);
   });
 
