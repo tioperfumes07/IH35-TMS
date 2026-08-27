@@ -20,6 +20,8 @@ const listQuerySchema = z.object({
   severity: z.enum(ANOMALY_SEVERITIES).optional(),
   subject: z.enum(ANOMALY_SUBJECT_TYPES).optional(),
   subject_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({
@@ -97,7 +99,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const anomalies = await withTenantScope(user.uuid, tenantId, async (client) => {
+    const result = await withTenantScope(user.uuid, tenantId, async (client) => {
       const values: unknown[] = [tenantId];
       const filters: string[] = ["a.tenant_id = $1::uuid"];
 
@@ -118,7 +120,12 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
         filters.push(`a.subject_id = $${values.length}::uuid`);
       }
 
-      const result = await client.query(
+      const countResult = await client.query<{ total_count: string }>(
+        `SELECT COUNT(*)::text AS total_count FROM integrity.anomalies a WHERE ${filters.join(" AND ")}`,
+        values
+      );
+      values.push(parsed.data.limit, parsed.data.offset);
+      const pageResult = await client.query(
         `
           SELECT
             a.id::text,
@@ -170,13 +177,17 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
            AND i.operating_company_id = a.tenant_id
           WHERE ${filters.join(" AND ")}
           ORDER BY a.detected_at DESC, a.id DESC
+          LIMIT $${values.length - 1}::int OFFSET $${values.length}::int
         `,
         values
       );
-      return result.rows.map((row) => mapAnomalyRow(row));
+      return {
+        anomalies: pageResult.rows.map((row) => mapAnomalyRow(row)),
+        total_count: Number(countResult.rows[0]?.total_count ?? 0),
+      };
     });
 
-    return { anomalies };
+    return result;
   });
 
   app.get("/api/v1/integrity/anomalies/:id", async (req, reply) => {

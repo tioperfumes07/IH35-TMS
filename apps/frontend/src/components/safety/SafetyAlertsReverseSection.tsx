@@ -16,7 +16,12 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
 }) {
   const alertPageSize = 25;
   const [alertPage, setAlertPage] = useState(1);
-  useEffect(() => setAlertPage(1), [operatingCompanyId, subjectKind, subjectId]);
+  const anomalyPageSize = 25;
+  const [anomalyPage, setAnomalyPage] = useState(1);
+  useEffect(() => {
+    setAlertPage(1);
+    setAnomalyPage(1);
+  }, [operatingCompanyId, subjectKind, subjectId]);
   const companyViolationQ = useQuery({
     queryKey: ["safety-reverse", "company-violations", operatingCompanyId, subjectKind, subjectId],
     queryFn: () => getCompanyViolations(operatingCompanyId, {
@@ -37,8 +42,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
     enabled: Boolean(operatingCompanyId && subjectId && ["driver", "unit", "vendor"].includes(subjectKind)),
   });
   const anomalyQ = useQuery({
-    queryKey: ["safety-reverse", "anomalies", operatingCompanyId, subjectKind, subjectId],
-    queryFn: () => listAnomalies(operatingCompanyId, { subject: subjectKind as SafetyAnomalySubjectType, subject_id: subjectId }),
+    queryKey: ["safety-reverse", "anomalies", operatingCompanyId, subjectKind, subjectId, anomalyPage],
+    queryFn: () => listAnomalies(operatingCompanyId, {
+      subject: subjectKind as SafetyAnomalySubjectType,
+      subject_id: subjectId,
+      limit: anomalyPageSize,
+      offset: (anomalyPage - 1) * anomalyPageSize,
+    }),
     enabled: Boolean(operatingCompanyId && subjectId && ["driver", "unit", "customer", "invoice"].includes(subjectKind)),
   });
 
@@ -49,6 +59,8 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   const alertTotal = failed ? 0 : (integrityAlertQ.data?.total_count ?? 0);
   const alertPageCount = Math.max(1, Math.ceil(alertTotal / alertPageSize));
   const anomalies = failed ? [] : (anomalyQ.data?.anomalies ?? []);
+  const anomalyTotal = failed ? 0 : (anomalyQ.data?.total_count ?? 0);
+  const anomalyPageCount = Math.max(1, Math.ceil(anomalyTotal / anomalyPageSize));
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`safety-alerts-reverse-${subjectKind}`}>
@@ -105,6 +117,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
           <Button size="sm" variant="secondary" disabled={alertPage <= 1 || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.max(1, current - 1))}>Previous alerts</Button>
           <span className="text-slate-600">Page {alertPage} of {alertPageCount} · {alertTotal} alerts</span>
           <Button size="sm" variant="secondary" disabled={alertPage >= alertPageCount || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.min(alertPageCount, current + 1))}>Next alerts</Button>
+        </div>
+      ) : null}
+      {!failed && anomalyTotal > anomalyPageSize ? (
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-anomalies-reverse-pager-${subjectKind}`}>
+          <Button size="sm" variant="secondary" disabled={anomalyPage <= 1 || anomalyQ.isFetching} onClick={() => setAnomalyPage((current) => Math.max(1, current - 1))}>Previous anomalies</Button>
+          <span className="text-slate-600">Page {anomalyPage} of {anomalyPageCount} · {anomalyTotal} anomalies</span>
+          <Button size="sm" variant="secondary" disabled={anomalyPage >= anomalyPageCount || anomalyQ.isFetching} onClick={() => setAnomalyPage((current) => Math.min(anomalyPageCount, current + 1))}>Next anomalies</Button>
         </div>
       ) : null}
     </section>
