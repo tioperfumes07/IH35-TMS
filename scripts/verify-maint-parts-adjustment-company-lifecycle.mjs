@@ -10,9 +10,9 @@ const checks = [
   [/mutationFn: \(input: \{[\s\S]*rowId: string;[\s\S]*companyId: string;[\s\S]*generation: number;[\s\S]*deltaQty: number;[\s\S]*reason:[\s\S]*\}\) => adjustPartsInventory\(input\.rowId, input\.companyId, \{ delta_qty: input\.deltaQty, reason: input\.reason \}\)/, "adjustment submits immutable row company delta and reason"],
   [/onSuccess: async \(_result, input\) => \{\s*if \(input\.generation !== adjustmentGenerationRef\.current\) return;[\s\S]*\["maintenance", "parts-inventory", input\.companyId\]/, "adjustment rejects stale success and refreshes submitted company"],
   [/onError: \(err, input\) => \{\s*if \(input\.generation === adjustmentGenerationRef\.current\)/, "adjustment rejects stale error"],
-  [/useEffect\(\(\) => \{\s*adjustmentGenerationRef\.current \+= 1;\s*adjustMutation\.reset\(\);\s*setAdjustRow\(null\);\s*setDeltaQty\(0\);\s*setReason\("recount"\);\s*\}, \[companyId\]\)/, "company switch retires adjustment and clears draft"],
+  [/useEffect\(\(\) => \{[\s\S]{0,120}adjustmentGenerationRef\.current \+= 1;[\s\S]{0,120}adjustMutation\.reset\(\);[\s\S]{0,120}setAdjustRow\(null\);[\s\S]{0,120}setDeltaQty\(0\);[\s\S]{0,120}setReason\("recount"\);[\s\S]{0,420}purchaseMutation\.reset\(\);[\s\S]{0,120}setOpenPurchase\(false\);[\s\S]{0,120}setForm\(EMPTY_PURCHASE\);[\s\S]{0,120}setLastGlPosting\(null\);[\s\S]{0,80}\}, \[companyId\]\)/, "company switch retires both mutations and clears both drafts"],
   [/adjustMutation\.mutate\(\{\s*rowId: adjustRow\.id,\s*companyId,\s*generation: adjustmentGenerationRef\.current,\s*deltaQty,\s*reason,\s*\}\)/, "Apply Adjustment snapshots full intent"],
-  [/const purchaseMutation = useMutation\(\{\s*mutationFn: \(\) =>\s*recordPartsPurchase\(companyId,/, "money purchase path remains untouched for CC-1"],
+  [/const purchaseMutation = useMutation\(\{\s*mutationFn: \(input: \{ companyId: string; generation: number; draft: PurchaseForm \}\) =>\s*recordPartsPurchase\(input\.companyId, \{[\s\S]{0,520}part_description: input\.draft\.part_description,[\s\S]{0,520}purchase_amount: input\.draft\.purchase_amount,[\s\S]{0,160}\}\)/, "purchase path snapshots company generation and complete draft"],
 ];
 
 const failures = (candidate) => checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);
