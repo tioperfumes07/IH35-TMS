@@ -216,6 +216,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
         ]
       );
       const created = inserted.rows[0];
+      if (!created?.id) throw new Error("maintenance_vehicle_insert_returned_no_row");
       await ensureUnitAsset(client, {
         tenantId: companyId,
         unitId: String(created.id),
