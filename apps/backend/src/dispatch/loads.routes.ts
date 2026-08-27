@@ -662,7 +662,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT
             l.*,
-            c.customer_name,
+            -- DISPATCH-CUSTOMER-LABEL-LOST-FOR-DEACTIVATED-CUSTOMERS: c.customer_name comes from a
+            -- plain LEFT JOIN mdata.customers c — an archived/deactivated customer drops out of that
+            -- join and customer_name resolves to null, rendering "Customer — not visible" for a load
+            -- whose customer is real, just no longer active. Same shape as driver_short_name below,
+            -- which already falls back to mdata.resolve_driver_label_same_company for exactly this
+            -- reason; resolve_customer_label_same_company is the same-company SECURITY DEFINER
+            -- resolver already used by invoices.routes.ts and cancellations-report.routes.ts.
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
             u.unit_number,
             tr.equipment_number AS trailer_number,
             tr.equipment_type AS trailer_equipment_type,
@@ -807,7 +814,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // is effective-dated per-qualification) → intentionally not surfaced here (stays "—"), no fabrication.
       const loadRes = await client.query(
         `
-          SELECT l.*, c.customer_name,
+          SELECT l.*,
+                 -- DISPATCH-CUSTOMER-LABEL-LOST-FOR-DEACTIVATED-CUSTOMERS: same gap as the list query
+                 -- above — a plain c.customer_name drops to null for an archived/deactivated customer.
+                 COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
                  COALESCE(
                    NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), ''),
                    mdata.resolve_driver_label_same_company(l.assigned_secondary_driver_id, l.operating_company_id)
