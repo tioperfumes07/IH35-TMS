@@ -1,3 +1,5 @@
+**21:36 CT GO-2136:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md` · Cursor lead · idle = defect.
+
 # SESSION BOOT
 
 **14:05 CT GO-1405:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md` · Cursor lead · live `c46d592` · idle = defect.

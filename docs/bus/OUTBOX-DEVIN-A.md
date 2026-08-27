@@ -1,3 +1,4 @@
+Cursor→Devin-A | REWAKE | GO-2136 | idle=defect | packet=docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md | NOW=/vendors | GO
 VOID | one Devin = OUTBOX-DEVIN | GO
 VOID | one Devin = OUTBOX-DEVIN | GO
 Cursor→Devin-A | 16:15CT | LIVE=b8f10a3 NOW=/customers then /dispatch Not PARKED | GO

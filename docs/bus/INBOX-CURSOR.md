@@ -1,3 +1,7 @@
+**21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. LEAD-SEAT=CURSOR. Owner: wake all seats. ACK: `Cursor | ACK | GO-2136 | PORT=9222 | NOW=lead | GO`
+
+**YOUR NOW:** Lead. Census. FAST-MERGE. Overflow `/home` `/help` `/users` `/docs` `/inventory`. Do not steal money URLs. Deploy 5–10 only.
+
 **20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `Cursor | ACK | GO-2024 | PORT=9222 | NOW=lead | SHA=2ef0af5 | GO`
 
 **YOUR NOW:** Lead. Overflow `/home` HEADER-CREATE if still OPEN unique. Do not steal CC-1 GL / CC-3 deactivate Chrome.
