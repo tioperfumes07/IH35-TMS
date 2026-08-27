@@ -86,4 +86,22 @@ describe("equipment-types routes", () => {
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ error: "equipment_type_name_collision" });
   });
+
+  it("GET explicitly binds the requested company on parent and child catalog reads", async () => {
+    const app = await buildApp();
+    const companyId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/catalogs/equipment-types?operating_company_id=${companyId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = queryMock.mock.calls.find(([sql]) =>
+      sql.includes("json_agg") && sql.includes("FROM catalogs.equipment_types et")
+    );
+    expect(listCall).toBeDefined();
+    expect(listCall?.[0]).toContain("WHERE et.operating_company_id = $1");
+    expect(listCall?.[0]).toContain("lit.operating_company_id = $1");
+    expect(listCall?.[1]).toEqual([companyId]);
+  });
 });

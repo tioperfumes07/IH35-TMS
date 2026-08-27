@@ -286,8 +286,9 @@ export function DriverDetailPage() {
   });
 
   const equipmentTypesQuery = useQuery({
-    queryKey: ["equipment-types-for-driver-detail"],
-    queryFn: () => listEquipmentTypes(false).then((result) => result.equipment_types),
+    queryKey: ["equipment-types-for-driver-detail", companyId],
+    queryFn: () => listEquipmentTypes(companyId, false).then((result) => result.equipment_types),
+    enabled: Boolean(companyId),
   });
 
   const usStatesQuery = useQuery({
@@ -1856,7 +1857,7 @@ export function DriverDetailPage() {
               loading={equipmentTypesQuery.isLoading}
               disabled={equipmentTypesQuery.isError}
               onOptionCreated={() => {
-                void queryClient.invalidateQueries({ queryKey: ["equipment-types-for-driver-detail"] });
+                void queryClient.invalidateQueries({ queryKey: ["equipment-types-for-driver-detail", companyId] });
                 void queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
               }}
             />

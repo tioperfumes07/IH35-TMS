@@ -23,6 +23,7 @@ import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
 const lineItemUnitOptions: Array<{ value: LineItemUnit; label: string }> = [
   { value: "per_loaded_mile", label: "per loaded mile" },
@@ -128,6 +129,8 @@ function lineItemUnitLabel(unit: LineItemUnit) {
 
 export function EquipmentTypesPage() {
   const auth = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -167,12 +170,13 @@ export function EquipmentTypesPage() {
   const [searchParams] = useSearchParams();
 
   const equipmentTypesQuery = useQuery({
-    queryKey: ["catalogs", "equipment-types", includeInactive],
-    queryFn: () => listEquipmentTypes(includeInactive).then((result) => result.equipment_types),
+    queryKey: ["catalogs", "equipment-types", companyId, includeInactive],
+    queryFn: () => listEquipmentTypes(companyId, includeInactive).then((result) => result.equipment_types),
+    enabled: Boolean(companyId),
   });
 
   const createEquipmentMutation = useMutation({
-    mutationFn: createEquipmentType,
+    mutationFn: (payload: Parameters<typeof createEquipmentType>[1]) => createEquipmentType(companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
       setAddEquipmentOpen(false);
@@ -189,7 +193,7 @@ export function EquipmentTypesPage() {
 
   const updateEquipmentMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: { name: string; description?: string; sort_order: number; is_active: boolean } }) =>
-      updateEquipmentType(id, payload),
+      updateEquipmentType(id, companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
       setEditingEquipment(null);
@@ -199,7 +203,7 @@ export function EquipmentTypesPage() {
 
   const createLineItemMutation = useMutation({
     mutationFn: ({ equipmentTypeId, payload }: { equipmentTypeId: string; payload: NewLineItemForm }) =>
-      addLineItemTemplate(equipmentTypeId, payload),
+      addLineItemTemplate(equipmentTypeId, companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
       setLineItemTargetType(null);
@@ -209,7 +213,8 @@ export function EquipmentTypesPage() {
   });
 
   const updateLineItemMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: typeof editingLineItemForm }) => updateLineItemTemplate(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: typeof editingLineItemForm }) =>
+      updateLineItemTemplate(id, companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
       setEditingLineItem(null);
