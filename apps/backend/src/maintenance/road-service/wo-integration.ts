@@ -148,6 +148,7 @@ export async function createWorkOrderFromRoadServiceTicket(
     userId,
     "maintenance.road_service_ticket.wo_created",
     {
+      operating_company_id: input.operatingCompanyId,
       resource_type: "maintenance.road_service_tickets",
       resource_id: input.ticketId,
       wo_id: String(woUuid),
