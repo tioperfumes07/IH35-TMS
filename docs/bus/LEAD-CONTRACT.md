@@ -49,7 +49,7 @@ Do **not** say: done, complete, fully wired, launch-ready, CERTIFIED, all seats 
 
 CI-green, route exists, prior stamp, scoreboard Built ≠ proof.
 
-Empty TMS is expected. CREATE-TEST-THEN-VOID. U14 14/14 never restamp.
+Empty TMS is expected. CREATE-TEST-THEN-VOID: all seats may create TEST; do not void until launch. U14 14/14 never restamp.
 
 ---
 

@@ -1,3 +1,5 @@
+**17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create labeled TEST/samples as needed — **all seats have permission**. **Do not void until launch.** Reuse vendors/customers/loads. Finish exclusive Live Chrome + FIX then immediately NEXT URL. ACK `CC-1 | ACK | GO-1655 | PORT=9223 | NOW=/accounting | SHA=<healthz> | GO`. STOP `/425c`. Never `trigger_deploy`.
+
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/accounting TEST then /factoring. Live `33c41fc`. ACK `CC-1 | ACK | GO-1640 | PORT=9223 | NOW=/accounting | SHA=<healthz> | GO`.
 
 **16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. NOW=/accounting create TEST (do not void). ACK `CC-1 | ACK | GO-1615 | PORT=9223 | NOW=accounting-test | SHA=<healthz> | GO`.

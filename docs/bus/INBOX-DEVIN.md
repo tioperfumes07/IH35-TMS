@@ -1,3 +1,5 @@
+**17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/vendors` unique. Create TEST vendor if needed — **do not void until launch**. ACK `Devin | ACK | GO-1655 | NOW=/vendors | SHA=<healthz> | GO`.
+
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/vendors unique on `33c41fc`. ACK `Devin | ACK | GO-1640 | NOW=/vendors | SHA=<healthz> | GO`.
 
 **16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. NOW=/vendors unique FINDING. N=0 is not park. ACK `Devin | ACK | GO-1615 | NOW=/vendors | SHA=<healthz> | GO`.

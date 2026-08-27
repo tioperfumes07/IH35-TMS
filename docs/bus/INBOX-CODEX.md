@@ -1,3 +1,5 @@
+**17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create TEST customers/drivers if needed — **permission granted**. **Do not void until launch.** `/customers` `/drivers` `/fleet` then NEXT `/fuel` `/eld`. ACK `Codex | ACK | GO-1655 | PORT=9226 | NOW=/customers | SHA=<healthz> | GO`.
+
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/customers then /drivers then /fleet. ACK `Codex | ACK | GO-1640 | PORT=9226 | NOW=/customers | SHA=<healthz> | GO`.
 
 **16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Do NOT remake Combobox (Cursor FUEL-F6910). Next silent-cap + Live Chrome. ACK `Codex | ACK | GO-1615 | PORT=9226 | NOW=next-silent-cap | SHA=<healthz> | GO`.
