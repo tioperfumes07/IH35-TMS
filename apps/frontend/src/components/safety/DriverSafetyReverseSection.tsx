@@ -132,11 +132,14 @@ export function DriverSafetyReverseSection({
   const [civilFinePage, setCivilFinePage] = useState(1);
   const internalFinePageSize = 25;
   const [internalFinePage, setInternalFinePage] = useState(1);
+  const complaintPageSize = 25;
+  const [complaintPage, setComplaintPage] = useState(1);
   useEffect(() => {
     setInspectionPage(1);
     setAccidentPage(1);
     setCivilFinePage(1);
     setInternalFinePage(1);
+    setComplaintPage(1);
   }, [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
@@ -160,8 +163,12 @@ export function DriverSafetyReverseSection({
   });
 
   const complaintsQuery = useQuery({
-    queryKey: ["safety", "reverse", "complaints", operatingCompanyId, driverId],
-    queryFn: () => getComplaints(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["safety", "reverse", "complaints", operatingCompanyId, driverId, complaintPage],
+    queryFn: () => getComplaints(operatingCompanyId, {
+      driver_id: driverId,
+      limit: complaintPageSize,
+      offset: (complaintPage - 1) * complaintPageSize,
+    }),
     enabled: enabled && canViewComplaints,
   });
 
@@ -208,6 +215,8 @@ export function DriverSafetyReverseSection({
   const internalFineTotal = internalFinesQuery.isError ? 0 : internalFinesQuery.data?.total_count ?? 0;
   const internalFinePageCount = Math.max(1, Math.ceil(internalFineTotal / internalFinePageSize));
   const complaints: Row[] = complaintsQuery.isError ? [] : complaintsQuery.data?.complaints ?? [];
+  const complaintTotal = complaintsQuery.isError ? 0 : complaintsQuery.data?.total_count ?? 0;
+  const complaintPageCount = Math.max(1, Math.ceil(complaintTotal / complaintPageSize));
   const tests: Row[] = testsQuery.isError ? [] : testsQuery.data?.tests ?? [];
   const dotInspections: Row[] = dotInspectionsQuery.isError ? [] : dotInspectionsQuery.data?.dot_inspections ?? [];
   const dotInspectionTotal = dotInspectionsQuery.isError ? 0 : dotInspectionsQuery.data?.total_count ?? 0;
@@ -463,7 +472,7 @@ export function DriverSafetyReverseSection({
           errorText="Failed to load this driver's complaints."
           onRetry={() => void complaintsQuery.refetch()}
           emptyText="No complaints involving this driver."
-          count={complaints.length}
+          count={complaintTotal}
         >
           {complaints.map((complaint) => {
             // The driver can be on either side of a complaint; say which, because "a complaint" on
@@ -484,6 +493,13 @@ export function DriverSafetyReverseSection({
             );
           })}
         </SectionShell>
+      ) : null}
+      {canViewComplaints && !complaintsQuery.isError && complaintTotal > complaintPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-complaints-pager">
+          <Button size="sm" variant="secondary" disabled={complaintPage <= 1 || complaintsQuery.isFetching} onClick={() => setComplaintPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
+          <span className="text-slate-600">Page {complaintPage} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <Button size="sm" variant="secondary" disabled={complaintPage >= complaintPageCount || complaintsQuery.isFetching} onClick={() => setComplaintPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
+        </div>
       ) : null}
 
       <SectionShell

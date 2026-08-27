@@ -966,14 +966,16 @@ export function createInternalFine(companyId: string, body: Record<string, unkno
 
 export function getComplaints(
   companyId: string,
-  params: { driver_id?: string; customer_id?: string; user_id?: string } = {}
+  params: { driver_id?: string; customer_id?: string; user_id?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   // SAF-F16: matches EITHER complainant_driver_id OR respondent_driver_id, server-side.
   if (params.driver_id) qs.set("driver_id", params.driver_id);
   if (params.customer_id) qs.set("customer_id", params.customer_id);
   if (params.user_id) qs.set("user_id", params.user_id);
-  return apiRequest<{ complaints: Array<Record<string, unknown>> }>(`/api/v1/safety/complaints?${qs.toString()}`);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ complaints: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/complaints?${qs.toString()}`);
 }
 
 /**

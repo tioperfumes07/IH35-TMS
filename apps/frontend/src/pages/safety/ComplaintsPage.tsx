@@ -4,7 +4,7 @@
  * ARCHIVE-not-DELETE: retained for reference / deprecated SafetyHome.tsx cluster only.
  * Do not re-mount in routes/manifest.tsx. Sunset: 2026-09-01.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -15,6 +15,7 @@ import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { Button } from "../../components/Button";
 
 type Props = {
   operatingCompanyId: string;
@@ -31,6 +32,9 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   const deepLinkComplaintId = searchParams.get("complaint_id")?.trim() || "";
   const canView = useMemo(() => ["Owner", "Administrator", "Safety"].includes(String(role ?? "")), [role]);
   const queryClient = useQueryClient();
+  const pageSize = 25;
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [operatingCompanyId]);
   const [form, setForm] = useState({
     complaint_date: companyToday(),
     complainant_type: "external",
@@ -54,8 +58,8 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   });
 
   const query = useQuery({
-    queryKey: ["safety", "complaints", operatingCompanyId],
-    queryFn: () => getComplaints(operatingCompanyId),
+    queryKey: ["safety", "complaints", operatingCompanyId, page],
+    queryFn: () => getComplaints(operatingCompanyId, { limit: pageSize, offset: (page - 1) * pageSize }),
     enabled: Boolean(operatingCompanyId && canView),
   });
 
@@ -108,6 +112,8 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
     ],
     [],
   );
+  const complaintTotal = query.isError ? 0 : query.data?.total_count ?? 0;
+  const complaintPageCount = Math.max(1, Math.ceil(complaintTotal / pageSize));
 
   if (!canView) {
     return <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Complaints tab is restricted to Owner/Admin/Safety.</div>;
@@ -172,8 +178,16 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           emptyText="No complaints found."
           storageKey="safety-complaints"
           exportFilename="complaints"
+          hidePager
         />
       )}
+      {!query.isError && complaintTotal > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="complaints-page-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
+          <span className="text-slate-600">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <Button size="sm" variant="secondary" disabled={page >= complaintPageCount || query.isFetching} onClick={() => setPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
+        </div>
+      ) : null}
     </div>
   );
 }
