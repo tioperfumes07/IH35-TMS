@@ -259,7 +259,9 @@ export function ScenarioTrackerHome() {
         Grey pipelines while STALE are not current — the red banner means do not trust the numbers until the heartbeat is
         green again.
       </div>
-      <p className="st-foot">One posting engine · Spec → Built → Merged → Proof → Passed → Complete · poll every 20s · CT.</p>
+      <p className="st-foot">
+        One posting engine · Spec → Built → Merged → Proof → Passed → Complete · poll every {POLL_MS / 1000}s · CT.
+      </p>
     </div>
   );
 }
