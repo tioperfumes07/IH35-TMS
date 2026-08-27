@@ -12,10 +12,11 @@ export type DetectorFn = (
 
 async function detectDuplicateLoadNumber(client: Parameters<DetectorFn>[0], oci: string, _config: Record<string, unknown>) {
   const res = await client.query<{ load_number: string; cnt: string; load_ids: string[] }>(
-    `SELECT load_number, COUNT(*)::text AS cnt, array_agg(id::text) AS load_ids
+    `SELECT load_number, COUNT(*)::text AS cnt, array_agg(id::text ORDER BY id) AS load_ids
      FROM mdata.loads
      WHERE operating_company_id = $1::uuid AND load_number IS NOT NULL AND load_number <> ''
-     GROUP BY load_number HAVING COUNT(*) > 1 LIMIT 50`,
+     GROUP BY load_number HAVING COUNT(*) > 1
+     ORDER BY load_number`,
     [oci]
   );
   return res.rows.map((row) => ({
@@ -49,7 +50,7 @@ async function detectDvirMajorOpen(client: Parameters<DetectorFn>[0], oci: strin
     `SELECT DISTINCT d.unit_id::text AS unit_id, d.id::text AS dvir_id
      FROM safety.dvir_submissions d
      WHERE d.operating_company_id = $1::uuid AND d.has_major_defect = true
-     LIMIT 50`,
+     ORDER BY d.id`,
     [oci]
   );
   return res.rows.map((row) => ({
@@ -61,14 +62,14 @@ async function detectDvirMajorOpen(client: Parameters<DetectorFn>[0], oci: strin
 
 async function detectInactiveDriverAssignment(client: Parameters<DetectorFn>[0], oci: string, _config: Record<string, unknown>) {
   const res = await client.query<{ driver_id: string; status: string }>(
-    `SELECT d.id::text AS driver_id, d.status::text AS status
+    `SELECT DISTINCT d.id::text AS driver_id, d.status::text AS status
      FROM mdata.drivers d
      JOIN mdata.loads l ON l.assigned_primary_driver_id = d.id
                         AND l.operating_company_id = $1::uuid
      WHERE d.operating_company_id = $1::uuid
        AND (d.status <> 'Active' OR d.deactivated_at IS NOT NULL OR d.archived_at IS NOT NULL)
        AND l.status IN ('assigned','dispatched','in_transit')
-     LIMIT 50`,
+     ORDER BY d.id`,
     [oci]
   );
   return res.rows.map((row) => ({
@@ -84,7 +85,8 @@ async function detectGeofenceDuplicateFire(client: Parameters<DetectorFn>[0], oc
      FROM safety.integrity_findings
      WHERE operating_company_id = $1::uuid AND anomaly_class = 'duplicate_fire'
        AND report_date >= CURRENT_DATE - 1 AND resolved = false
-     GROUP BY geofence_id, unit_id LIMIT 50`,
+     GROUP BY geofence_id, unit_id
+     ORDER BY geofence_id, unit_id`,
     [oci]
   );
   return res.rows.map((row) => ({
