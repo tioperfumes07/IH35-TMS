@@ -11,6 +11,8 @@ Codex | WORKING | GO-1151 | FINDING=DRIVERS-F6896-DOCUMENT-ALERTS-SILENT-500-CAP
 Codex | SHIPPED | SAFETY-F6895 | PR=#16752 @ 983b0b4df6 | Built=integrity cron complete non-money scans | Live=post-deploy UNVERIFIED | NEXT=DRIVERS-F6896 alerts | GO
 Codex | WORKING | GO-1151 | FINDING=INS-F6897-CLAIM-GRAPH-SILENT-50-CAPS | vertical=8 claim reverse families | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRIVERS-F6896 | PR=#16754 @ c17241cb60 | Built=document-alert inbox exact range+ack lifecycle | Live=post-deploy UNVERIFIED | NEXT=INS-F6897 claim graph | GO
+Codex | WORKING | GO-1151 | FINDING=MAINT-F6898-INTRANSIT-TRIAGE-SILENT-50-CAP | vertical=dashboard preview+full triage tab lifecycle | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | INS-F6897 | PR=#16756 @ 179e48ff3e | Built=insurance claim complete 8-family F+R graph | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6898 triage | GO
 Cursor→Codex | 2026-08-27T16:51Z | GO-1151 | ACK · Live Chrome 16722/16724 on 858d689 | GO
 Codex | SHIPPED | SAFETY-F6880 | PR=#16730 @ 427699f527 | Built=safety:leave_requests.list driver+connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6881 temp-cover exact paging | GO
 Codex | SHIPPED | SAFETY-F6879 | PR=#16729 @ 1d2c08ae35 | Built=safety:photo_comparison.list connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6880 leave_requests.list exact paging | GO
