@@ -15,6 +15,7 @@ import {
   type ReturningDispatcherDetectionResult,
 } from "../api/identity";
 import { Button } from "../components/Button";
+import { CappedListNotice } from "../components/CappedListNotice";
 import { Combobox } from "../components/Combobox";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { KpiCard } from "../components/layout/KpiCard";
@@ -225,7 +226,7 @@ export function UsersPage() {
 
   const usersQuery = useQuery({
     queryKey: ["users", isOwnerOrAdmin],
-    queryFn: () => listUsers(isOwnerOrAdmin).then((result) => result.users),
+    queryFn: () => listUsers(isOwnerOrAdmin),
     enabled: Boolean(auth.user),
   });
 
@@ -278,7 +279,12 @@ export function UsersPage() {
     deactivateMutation.reset();
   }, [selectedCompanyId]);
 
-  const allUsers = usersQuery.data ?? [];
+  const allUsers = usersQuery.data?.users ?? [];
+  // USERS-LIST-SILENT-50-CAP: the backend now returns total_count alongside the page — if it
+  // exceeds the fetched page (beyond the 200-row max this page requests), the roster is
+  // genuinely truncated and every count below is a floor, not the true total. Disclose it rather
+  // than silently presenting allUsers.length as complete.
+  const totalUserCount = usersQuery.data?.total_count ?? allUsers.length;
   const roleApproverOptions = useMemo(
     () =>
       allUsers
@@ -295,12 +301,16 @@ export function UsersPage() {
 
   const tabCounts = useMemo(() => {
     return {
-      all: allUsers.length,
+      // "all" comes from the server's own total_count, not allUsers.length — the backend already
+      // knows the true count for the current filters; active/pending/deactivated below are still
+      // derived from the fetched page only (no per-category breakdown from the server), so those
+      // three remain floors when CappedListNotice below is showing (i.e. totalUserCount > allUsers.length).
+      all: totalUserCount,
       active: allUsers.filter((u) => userRowCategory(u) === "active").length,
       pending: allUsers.filter((u) => userRowCategory(u) === "pending").length,
       deactivated: allUsers.filter((u) => userRowCategory(u) === "deactivated").length,
     };
-  }, [allUsers]);
+  }, [allUsers, totalUserCount]);
 
   const invitePasswordStrength = useMemo(
     () => evaluatePasswordStrength(inviteInitialPassword),
@@ -610,6 +620,16 @@ export function UsersPage() {
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
+
+      {/* USERS-LIST-SILENT-50-CAP: this page fetches at most 200 users; below this, only the
+          Total-users KPI (which reads the server's own total_count) stays accurate beyond that —
+          the active/pending/deactivated splits and the on-screen rows are still a floor. */}
+      <CappedListNotice
+        shown={allUsers.length}
+        limit={200}
+        total={totalUserCount}
+        hint="Narrow by role or search to see the rest."
+      />
 
       <KpiStrip>
         {/* B10 dead-click rollout: each card drills into the existing ?tab= list filter (already wired
