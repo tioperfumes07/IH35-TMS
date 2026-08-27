@@ -409,14 +409,17 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
           body.notes,
         ]
       );
-      const id = String(res.rows[0]?.id);
+      const id = res.rows[0]?.id == null ? null : String(res.rows[0].id);
+      if (!id) throw new Error("parts_warranty_insert_returned_no_row");
       const fetched = await client.query(`${PART_SELECT} WHERE pw.id = $1`, [id]);
+      const createdPart = fetched.rows[0];
+      if (!createdPart) throw new Error("parts_warranty_reload_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.parts_warranty.created", {
         operating_company_id: body.operating_company_id,
         part_description: body.part_description,
         expires_at: expiresAt,
       });
-      return fetched.rows[0];
+      return createdPart;
     });
     if (!row) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return reply.code(201).send(mapWarrantyPartRow(row ?? {}));
@@ -498,8 +501,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
           user.uuid,
         ]
       );
-      const id = String(res.rows[0]?.id);
+      const id = res.rows[0]?.id == null ? null : String(res.rows[0].id);
+      if (!id) throw new Error("warranty_claim_insert_returned_no_row");
       const fetched = await fetchClaimById(client, body.operating_company_id, id);
+      if (!fetched) throw new Error("warranty_claim_reload_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.created", {
         operating_company_id: body.operating_company_id,
         part_description: body.part_description,
@@ -724,12 +729,11 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
             user.uuid,
           ]
         );
-        const claim = await fetchClaimById(
-          client,
-          parsed.data.operating_company_id,
-          String(insert.rows[0]?.id)
-        );
-        if (claim) created.push(mapWarrantyClaimRow(claim));
+        const claimId = insert.rows[0]?.id == null ? null : String(insert.rows[0].id);
+        if (!claimId) throw new Error("warranty_detect_claim_insert_returned_no_row");
+        const claim = await fetchClaimById(client, parsed.data.operating_company_id, claimId);
+        if (!claim) throw new Error("warranty_detect_claim_reload_returned_no_row");
+        created.push(mapWarrantyClaimRow(claim));
       }
 
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_detected_from_wo", {
