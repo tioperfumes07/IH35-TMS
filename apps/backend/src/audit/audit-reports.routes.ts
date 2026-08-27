@@ -90,6 +90,9 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'daily_task' THEN NULLIF(TRIM(audit_daily_task.title), '')
       WHEN ${alias}.subject_type = 'hos_violation' THEN NULLIF(TRIM(audit_hos_violation.violation_type), '')
       WHEN ${alias}.subject_type = 'internal_fine' THEN NULLIF(TRIM('Fine ' || to_char(audit_internal_fine.imposed_date, 'YYYY-MM-DD') || ' — $' || audit_internal_fine.amount::text), '')
+      -- DEDUCTION-TRAIL-MISSING-AUDIT-EVENTS-SINK: safety.fine.created (civil/DOT fines, distinct
+      -- from internal company fines) had no resolver at all.
+      WHEN ${alias}.subject_type = 'civil_fine' THEN NULLIF(TRIM(COALESCE(audit_civil_fine.violation_code, audit_civil_fine.violation_description)), '')
       -- 982-row-scale gap on /reports/audit/activity-by-module: recon.run_started/.completed (RECON-01,
       -- the twice-daily AM/PM reconciliation job) carry subject_type='alert' with a real, joinable
       -- subject_id (accounting.recon_runs) -- 'alert' had zero resolver anywhere, not even a label
@@ -225,6 +228,10 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'internal_fine'
      AND audit_internal_fine.id = ${alias}.subject_id
      AND audit_internal_fine.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN safety.civil_fines audit_civil_fine
+      ON ${alias}.subject_type = 'civil_fine'
+     AND audit_civil_fine.id = ${alias}.subject_id
+     AND audit_civil_fine.operating_company_id = ${alias}.operating_company_id
     LEFT JOIN accounting.recon_runs audit_recon_run
       ON ${alias}.subject_type = 'alert'
      AND audit_recon_run.id = ${alias}.subject_id
@@ -366,7 +373,23 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     });
   });
 
-  /** Deduction trail */
+  /** Deduction trail.
+   *  UNIONs TWO audit sinks, same shape as void-reversal's combined CTE:
+   *    1. events.event_log — never actually carries a deduction/fine event today (confirmed on
+   *       prod: zero rows match this filter across ALL companies, all time).
+   *    2. audit.audit_events — where every real deduction/fine transaction event actually lands
+   *       (safety.internal_fine.*, safety.company_violation.auto_fine_created, safety.fine.created,
+   *       driver_finance.deduction.created, driver_finance.settlement.deductions_applied). The
+   *       original report read ONLY (1) and was therefore 100% empty for every company, always --
+   *       DEDUCTION-TRAIL-MISSING-AUDIT-EVENTS-SINK, the same root-cause family as the original
+   *       VOID-REVERSAL bug. Each event_class carries the entity id under its own payload key (no
+   *       shared resource_type/resource_id convention), so subject_type/subject_id are derived by
+   *       event_class, reusing existing resolvers wherever one already exists (internal_fine,
+   *       driver, and the task+driver_finance.driver_settlements branch) rather than inventing new
+   *       joins. Deliberately does NOT special-case the 3 catalogs.*_fine_types/*_reasons_created/
+   *       deactivated events matched by the same broad filter -- those are catalog/config setup, not
+   *       driver-facing deduction transactions; they still appear (raw event_class, generic subject),
+   *       same fallback behavior as any other unmapped event elsewhere in this file. */
   app.get("/api/v1/audit/reports/deduction-trail", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.extend({
@@ -375,23 +398,79 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
     const d = p.data;
     const values: unknown[] = [d.operating_company_id];
-    const filters = [
-      `el.operating_company_id = $1::uuid`,
-      `el.event_type ILIKE ANY(ARRAY['%deduction%','%fine%','%accident_cost%','%chargeback%'])`,
-      ...buildDateFilter(d.from, d.to, values, "el"),
-    ];
-    if (d.driver_id) { values.push(d.driver_id); filters.push(`el.subject_id = $${values.length}::uuid`); }
+    let fromPos = 0;
+    let toPos = 0;
+    if (d.from) { values.push(d.from); fromPos = values.length; }
+    if (d.to) { values.push(d.to); toPos = values.length; }
+    let driverPos = 0;
+    if (d.driver_id) { values.push(d.driver_id); driverPos = values.length; }
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
+
+    const elDate = [
+      ...(fromPos ? [`el.occurred_at >= $${fromPos}::timestamptz`] : []),
+      ...(toPos ? [`el.occurred_at <= $${toPos}::timestamptz`] : []),
+    ].join(" AND ");
+    const aeDate = [
+      ...(fromPos ? [`ae.created_at >= $${fromPos}::timestamptz`] : []),
+      ...(toPos ? [`ae.created_at <= $${toPos}::timestamptz`] : []),
+    ].join(" AND ");
+
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
-             u.email AS actor_email, el.occurred_at::text, el.payload, el.source,
-             count(*) OVER()::int AS total_count
-      FROM events.event_log el
-      LEFT JOIN identity.users u ON u.id = el.actor_user_id
-      ${auditSubjectJoins("el")}
-      WHERE ${filters.join(" AND ")}
-      ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
+      WITH combined AS (
+        SELECT el.event_type, el.subject_type, el.subject_id,
+               el.actor_user_id::text AS actor_user_id, el.occurred_at AS occurred_at,
+               el.payload, el.source, 'events.event_log'::text AS audit_source,
+               el.operating_company_id, el.source_table, el.source_reference_id
+        FROM events.event_log el
+        WHERE el.operating_company_id = $1::uuid
+          AND el.event_type ILIKE ANY(ARRAY['%deduction%','%fine%','%accident_cost%','%chargeback%'])
+          ${elDate ? `AND ${elDate}` : ""}
+        UNION ALL
+        SELECT ae.event_class AS event_type,
+               CASE
+                 WHEN ae.event_class IN ('safety.company_violation.auto_fine_created', 'safety.internal_fine.created', 'safety.internal_fine.voided') THEN 'internal_fine'
+                 WHEN ae.event_class = 'safety.fine.created' THEN 'civil_fine'
+                 WHEN ae.event_class = 'driver_finance.deduction.created' THEN 'driver'
+                 WHEN ae.event_class = 'driver_finance.settlement.deductions_applied' THEN 'task'
+                 ELSE NULL
+               END AS subject_type,
+               CASE WHEN COALESCE(
+                              CASE WHEN ae.event_class IN ('safety.company_violation.auto_fine_created', 'safety.internal_fine.created', 'safety.internal_fine.voided') THEN ae.payload->>'internal_fine_id' END,
+                              CASE WHEN ae.event_class = 'safety.fine.created' THEN ae.payload->>'resource_id' END,
+                              CASE WHEN ae.event_class = 'driver_finance.deduction.created' THEN ae.payload->>'driver_id' END,
+                              CASE WHEN ae.event_class = 'driver_finance.settlement.deductions_applied' THEN ae.payload->>'settlement_id' END,
+                              '')
+                              ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                    THEN COALESCE(
+                              CASE WHEN ae.event_class IN ('safety.company_violation.auto_fine_created', 'safety.internal_fine.created', 'safety.internal_fine.voided') THEN ae.payload->>'internal_fine_id' END,
+                              CASE WHEN ae.event_class = 'safety.fine.created' THEN ae.payload->>'resource_id' END,
+                              CASE WHEN ae.event_class = 'driver_finance.deduction.created' THEN ae.payload->>'driver_id' END,
+                              CASE WHEN ae.event_class = 'driver_finance.settlement.deductions_applied' THEN ae.payload->>'settlement_id' END
+                         )::uuid
+                    ELSE NULL END AS subject_id,
+               ae.actor_user_uuid::text AS actor_user_id, ae.created_at AS occurred_at,
+               ae.payload, ae.source, 'audit.audit_events'::text AS audit_source,
+               $1::uuid AS operating_company_id,
+               CASE WHEN ae.event_class = 'driver_finance.settlement.deductions_applied' THEN 'driver_finance.driver_settlements' ELSE NULL END AS source_table,
+               CASE WHEN ae.event_class = 'driver_finance.settlement.deductions_applied'
+                         AND (ae.payload->>'settlement_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                    THEN (ae.payload->>'settlement_id')::uuid
+                    ELSE NULL END AS source_reference_id
+        FROM audit.audit_events ae
+        WHERE ae.event_class ILIKE ANY(ARRAY['%deduction%','%fine%','%accident_cost%','%chargeback%'])
+          AND COALESCE(ae.payload->>'operating_company_id', '') IN ('', $1::text)
+          ${aeDate ? `AND ${aeDate}` : ""}
+      )
+      SELECT c.event_type, c.subject_type, c.subject_id::text, ${auditSubjectProjection("c")}, c.actor_user_id,
+             u.email AS actor_email, c.occurred_at::text AS occurred_at, c.payload, c.source,
+             c.audit_source, count(*) OVER()::int AS total_count
+      FROM combined c
+      LEFT JOIN identity.users u ON u.id = c.actor_user_id::uuid
+      ${auditSubjectJoins("c")}
+      ${driverPos ? `WHERE c.subject_id = $${driverPos}::uuid` : ""}
+      ORDER BY c.occurred_at DESC
+      LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
