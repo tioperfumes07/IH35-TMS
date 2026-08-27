@@ -203,7 +203,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       sendFuelRecommendationToDriver(input.routeId, input.companyId),
     onSuccess: (_result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
-      pushToast("Recommendation sent to driver app", "success");
+      pushToast("Recommendation queued for delivery", "success");
       void queryClient.invalidateQueries({
         queryKey: ["fuel", "planner", "active-routes", input.companyId],
         exact: true,

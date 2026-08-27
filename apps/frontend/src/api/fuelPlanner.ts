@@ -91,7 +91,7 @@ export function getFuelRecommendationDetail(id: string, companyId: string) {
 }
 
 export function sendFuelRecommendationToDriver(id: string, companyId: string) {
-  return apiRequest<{ ok: boolean; recommendation_id: string; sent_at: string }>(
+  return apiRequest<{ ok: boolean; recommendation_id: string; delivery_status: "queued"; queued_at: string }>(
     `/api/v1/fuel/planner/recommendations/${id}/send-to-driver?${q(companyId)}`,
     { method: "POST" }
   );

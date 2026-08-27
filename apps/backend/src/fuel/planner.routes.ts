@@ -275,7 +275,8 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       return {
         ok: true,
         recommendation_id: params.data.id,
-        sent_at: new Date().toISOString(),
+        delivery_status: "queued" as const,
+        queued_at: new Date().toISOString(),
       };
     });
 
