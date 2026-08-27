@@ -219,6 +219,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
       const auditBase = {
         resource_type: "safety.dvir_defects",
         resource_id: params.data.id,
+        operating_company_id: body.data.operating_company_id,
         dvir_submission_id: defect.dvir_submission_id,
         unit_id: defect.unit_id,
         item_key: defect.item_key,
