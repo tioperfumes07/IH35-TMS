@@ -14,6 +14,8 @@ import { formatDateUS } from "../../lib/formatDate";
 
 /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId?: string }) {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const companyGenerationRef = useRef(0);
   const [open, setOpen] = useState(false);
@@ -24,10 +26,12 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
   const [notes, setNotes] = useState("");
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const query = useQuery({
-    queryKey: ["safety", "medical-cards", operatingCompanyId, driverId ?? "all"],
+    queryKey: ["safety", "medical-cards", operatingCompanyId, driverId ?? "all", page],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => listSafetyMedicalCards(operatingCompanyId, driverId),
+    queryFn: () => listSafetyMedicalCards(operatingCompanyId, driverId, { limit: pageSize, offset: (page - 1) * pageSize }),
   });
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
   const createMutation = useMutation({
     mutationFn: (input: {
       companyId: string;
@@ -65,6 +69,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
     setIssuedDate(companyToday());
     setExpiryDate("");
     setNotes("");
+    setPage(1);
   }, [operatingCompanyId, driverId]);
   const closeCreate = () => {
     if (createMutation.isPending) return;
@@ -89,7 +94,14 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
         <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Add card</Button>
       </div>
       <div className="mt-3">
-        {query.isError ? <ListErrorBanner message="Medical card history could not be loaded." onRetry={() => void query.refetch()} /> : <ParityTable<SafetyMedicalCardRow> rows={query.data?.cards ?? []} columns={columns} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No medical cards found." storageKey={driverId ? "driver-medical-cards" : "safety-medical-cards"} />}
+        {query.isError ? <ListErrorBanner message="Medical card history could not be loaded." onRetry={() => void query.refetch()} /> : <ParityTable<SafetyMedicalCardRow> rows={query.data?.cards ?? []} columns={columns} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No medical cards found." storageKey={driverId ? "driver-medical-cards" : "safety-medical-cards"} pageSize={pageSize} pageSizeOptions={[pageSize]} hidePager />}
+        {!query.isError && totalCount > pageSize ? (
+          <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="medical-cards-server-pager">
+            <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+            <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} cards</span>
+            <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+          </div>
+        ) : null}
       </div>
       <Modal variant="drawer" open={open} onClose={closeCreate} title="Add DOT medical card" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form className="space-y-3" onSubmit={(event) => {

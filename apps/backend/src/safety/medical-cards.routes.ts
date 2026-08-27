@@ -8,6 +8,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
@@ -102,12 +104,21 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
             LIMIT 1`,
           [company.data.driver_id, company.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false, cards: [] };
+        if (!parent.rows[0]) return { found: false, cards: [], total_count: 0 };
       }
       const values: unknown[] = [company.data.operating_company_id];
       const driverFilter = company.data.driver_id
         ? (values.push(company.data.driver_id), `AND mc.driver_id = $${values.length}::uuid`)
         : "";
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+         FROM safety.medical_cards mc
+         WHERE mc.operating_company_id = $1::uuid
+           AND mc.voided_at IS NULL
+           ${driverFilter}`,
+        values
+      );
+      values.push(company.data.limit, company.data.offset);
       const res = await client.query(
         `
           SELECT mc.*,
@@ -130,14 +141,18 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
             AND mc.voided_at IS NULL
             ${driverFilter}
           ORDER BY mc.expiry_date ASC, mc.created_at DESC
-          LIMIT 500
+          LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
         values
       );
-      return { found: true, cards: res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>)) };
+      return {
+        found: true,
+        cards: res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>)),
+        total_count: Number(countRes.rows[0]?.total_count ?? 0),
+      };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { cards: result.cards };
+    return { cards: result.cards, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/medical-cards/drivers/:driver_id", RL_READ, async (req, reply) => {
