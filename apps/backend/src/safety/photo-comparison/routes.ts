@@ -33,6 +33,8 @@ const listQuerySchema = companyQuerySchema.extend({
     .optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
+  limit: z.coerce.number().int().min(1).max(300).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const preTripBodySchema = z.object({
@@ -213,16 +215,23 @@ export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const sessions = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
       listSessions(client, {
         operatingCompanyId: query.data.operating_company_id,
         driverUuid: query.data.driver,
         status: query.data.status as DiffStatus | undefined,
         from: query.data.from,
         to: query.data.to,
+        limit: query.data.limit,
+        offset: query.data.offset,
       })
     );
-    return { sessions };
+    return {
+      sessions: result.sessions,
+      total_count: result.totalCount,
+      limit: query.data.limit,
+      offset: query.data.offset,
+    };
   });
 
   app.patch("/api/safety/photo-comparison/:session_uuid/manual-override", async (req, reply) => {
