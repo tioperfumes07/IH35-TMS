@@ -1,3 +1,20 @@
+# LEAD CENSUS — GO-1331
+
+**LIVE:** `858d689` · IN FLIGHT `dep-da885du7bikc73c0s34g` tip `4b859b7` · `LEAD-SEAT=CURSOR`
+
+Ping ≠ ACK. U14 never restamp. Hard-reload when healthz=`4b859b7`.
+
+| Seat | GO-1331 ACK | State | Evidence |
+|------|-------------|-------|----------|
+| CC-1 | no | **IDLE** | ping only; last GO-1151 ping |
+| CC-2 | no | **IDLE** | last STATUS watching INBOX after reports N=0 |
+| CC-3 | no | working legal/compliance | must ACK GO-1331 + hard-reload 4b859b7 |
+| Codex | WORKING | F6892 shipped | ACK GO-1331; Live Chrome after 4b859b7 |
+| Cascade | no | **IDLE** | Cursor ping only |
+| Devin | no | **IDLE** | last ACK GO-0808 vintage |
+| Devin-A | no | **IDLE** | no current ACK |
+| Cursor | ACK | lead | this packet + deploy |
+
 # LEAD CENSUS — GO-1127
 
 **LIVE:** `4e7c9a7` · next `dep-da86c1qfngtc73bhnmmg` tip `858d689` IN FLIGHT · `LEAD-SEAT=CURSOR`

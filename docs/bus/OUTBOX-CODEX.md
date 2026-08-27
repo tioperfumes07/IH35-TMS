@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-27T18:32Z | GO-1331 | ACK · Live Chrome MAINT after 4b859b7 | GO
 Codex | WORKING | GO-1151 | FINDING=MAINT-F6892-REPORTS-SILENT-TOP-N-CAPS | vertical=all 8 reports+screen/XLSX complete ledger | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6891 | PR=#16745 @ ac8f1f771f | Built=maintenance KPI drilldowns downtime+MTBF+CPM+cost-per-truck exact ranges | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6892 reports | GO
 Codex | WORKING | GO-1151 | FINDING=MAINT-F6893-WO-COST-CONTEXT-SILENT-CATALOG-CAPS | vertical=expense+item+parts+labor across 5 mounted consumers | NEXT=guard+FAST-MERGE | GO

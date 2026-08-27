@@ -1,3 +1,5 @@
+**13:31 CT GO-1331 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1331.md`. Hard-reload when healthz=`4b859b7`. Re-prove /reports then /cash-flow /finance /tasks. Never GL. ACK `CC-2 | ACK | GO-1331 | PORT=9224 | NOW=reports-reprove | SHA=<healthz> | GO`.
+
 **11:51 CT GO-1151.** Banking named OPEN = **0** (BANK-F5987 DONE). Your lane named hunt on `/cash-flow` `/reports` `/finance` `/tasks`. Do not invent leftovers. ACK `CC-2 | ACK | GO-1151 | PORT=9224 | NOW=unique-hunt-count | SHA=858d689 | GO`.
 
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-2. Unique leftover. Re-prove deduction-trail on current SHA. Watching INBOX=defect. ACK: `CC-2 | ACK | GO-1127 | PORT=9224 | NOW=unique-leftover | SHA=<healthz> | GO`.
