@@ -631,14 +631,21 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       const existing = await fetchClaimById(client, parsed.data.operating_company_id, params.data.id);
       if (!existing || existing.archived_at) return null;
 
-      await client.query(
+      // MAINT-MONEY-F6750A — this UPDATE's result used to be discarded entirely: a concurrent
+      // archive between the `existing` pre-read above and this statement makes the WHERE
+      // (archived_at IS NULL) match zero rows, but fetchClaimById below has no archived_at filter
+      // of its own, so it would still return the (now-archived) claim and the handler would go on
+      // to audit "reimbursed" and call postWarrantyReimbursement for a transition that changed
+      // nothing on the canonical claim row. Require exactly one row updated before doing either.
+      const reimbursed = await client.query(
         `UPDATE maintenance.warranty_claims
          SET status = 'reimbursed',
              reimbursement_amount_cents = $3,
              reimbursement_received_at = now(),
              notes = CASE WHEN $4 IS NULL OR $4 = '' THEN notes ELSE $4 END,
              updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL
+         RETURNING id::text`,
         [
           params.data.id,
           parsed.data.operating_company_id,
@@ -646,6 +653,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
           parsed.data.notes ?? null,
         ]
       );
+      if (!reimbursed.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.reimbursed", {
         operating_company_id: parsed.data.operating_company_id,
         id: params.data.id,
