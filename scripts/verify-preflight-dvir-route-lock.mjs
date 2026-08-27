@@ -22,6 +22,12 @@ function failures(candidate) {
   if (!/pre-flight-dvir\/:defectId\/route"[\s\S]{0,180}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/.test(route)) {
     problems.push("authenticated routing endpoint must be rate limited");
   }
+  if (!/const wo = woRes\.rows\[0\];\s*if \(!wo\?\.id\) throw new Error\("preflight_dvir_work_order_insert_failed"\)/.test(route)) {
+    problems.push("major routing must fail before tag/audit when WO insert has no identity");
+  }
+  if (/wo\?\.id \?\? null/.test(route)) {
+    problems.push("routed tag/audit must never accept a null WO identity");
+  }
   return problems;
 }
 
@@ -37,6 +43,7 @@ if (process.argv.includes("--selftest")) {
     ["AND operating_company_id = $2::uuid", "AND TRUE"],
     ['if (!lockRes.rows[0]) return { code: 404 as const, error: "defect_not_found" };', ""],
     ["const lockRes = await client.query", "const lockResMissing = await client.query"],
+    ['if (!wo?.id) throw new Error("preflight_dvir_work_order_insert_failed");', ""],
     [
       '"/api/v1/maintenance/pre-flight-dvir/:defectId/route",\n    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },',
       '"/api/v1/maintenance/pre-flight-dvir/:defectId/route",',
