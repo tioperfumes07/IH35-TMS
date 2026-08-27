@@ -7,6 +7,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 interface DispatcherStats {
   dispatcher_id: string | null;
@@ -43,9 +44,13 @@ function rowColor(rank: number, total: number): string {
 }
 
 export function BookingGapReport() {
-  const [operatingCompanyId] = useState(
-    () => sessionStorage.getItem("operating_company_id") ?? ""
-  );
+  // BOOKING-GAP-REPORT-NEVER-FETCHES-DEAD-QUERY: this read `sessionStorage["operating_company_id"]`,
+  // a key nothing in this codebase has ever written (repo-wide grep for a matching setItem: zero
+  // hits) — operatingCompanyId was always "", the query was permanently `enabled: false`, and every
+  // "No data available" this page ever showed was a false empty, not a real one. Every sibling
+  // report page sources the entity id from the reactive company-switcher context instead.
+  const { selectedCompanyId } = useCompanyContext();
+  const operatingCompanyId = selectedCompanyId ?? "";
   const emptyFilters = { period: DEFAULT_PERIOD as Period };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
