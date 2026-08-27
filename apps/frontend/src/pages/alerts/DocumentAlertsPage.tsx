@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   acknowledgeDocumentAlert,
@@ -149,6 +149,8 @@ export function DocumentAlertsPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [inboxPage, setInboxPage] = useState(1);
+  const inboxPageSize = 50;
   const tab = parseDocumentAlertsTab(searchParams.get("tab"));
   const setTab = (next: DocumentAlertsTab) => {
     const params = new URLSearchParams(searchParams);
@@ -158,8 +160,8 @@ export function DocumentAlertsPage() {
   };
 
   const inboxQuery = useQuery({
-    queryKey: ["drivers", "document-alerts", "inbox", companyId],
-    queryFn: () => getDocumentAlertsInbox(companyId),
+    queryKey: ["drivers", "document-alerts", "inbox", companyId, inboxPage],
+    queryFn: () => getDocumentAlertsInbox(companyId, { limit: inboxPageSize, offset: (inboxPage - 1) * inboxPageSize }),
     enabled: Boolean(companyId),
   });
 
@@ -186,6 +188,12 @@ export function DocumentAlertsPage() {
     () => [...events].sort((a, b) => a.days_until_expiry - b.days_until_expiry),
     [events]
   );
+
+  useEffect(() => setInboxPage(1), [companyId]);
+  const inboxTotalPages = Math.max(1, Math.ceil(pendingCount / inboxPageSize));
+  useEffect(() => {
+    if (inboxPage > inboxTotalPages) setInboxPage(inboxTotalPages);
+  }, [inboxPage, inboxTotalPages]);
 
   if (!companyId) {
     return <p className="p-6 text-sm text-gray-500">Select an operating company to view document expiry alerts.</p>;
@@ -256,6 +264,17 @@ export function DocumentAlertsPage() {
               />
             ))}
           </ul>
+          {pendingCount > 0 ? (
+            <div className="mt-4 flex items-center justify-between gap-3 text-sm" data-testid="document-alerts-server-pager">
+              <span>
+                {Math.min((inboxPage - 1) * inboxPageSize + 1, pendingCount)}–{Math.min(inboxPage * inboxPageSize, pendingCount)} of {pendingCount}
+              </span>
+              <div className="flex gap-2">
+                <Button type="button" disabled={inboxPage <= 1 || inboxQuery.isFetching} onClick={() => setInboxPage((page) => Math.max(1, page - 1))}>Previous</Button>
+                <Button type="button" disabled={inboxPage >= inboxTotalPages || inboxQuery.isFetching} onClick={() => setInboxPage((page) => Math.min(inboxTotalPages, page + 1))}>Next</Button>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : (
         <section className="grid gap-3 md:grid-cols-2">

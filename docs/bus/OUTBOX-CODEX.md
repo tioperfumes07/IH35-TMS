@@ -6,6 +6,8 @@ Codex | WORKING | GO-1151 | FINDING=MAINT-F6894-LABOR-CODES-SILENT-200-CAP | ver
 Codex | SHIPPED | MAINT-F6893 | PR=#16747 @ 90bb4b4c9d | Built=shared cost-context 6 complete catalogs across 5 consumers | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6894 labor codes | GO
 Codex | WORKING | GO-1151 | FINDING=SAFETY-F6895-INTEGRITY-ENGINE-SILENT-200-SCAN-CAPS | vertical=fuel+GPS/dwell+WO-cost detection cron | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6894 | PR=#16749 @ 6d6987e835 | Built=labor-code complete feed across both WO trackers | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6895 engine | GO
+Codex | WORKING | GO-1151 | FINDING=DRIVERS-F6896-DOCUMENT-ALERTS-SILENT-500-CAP | vertical=inbox+evaluate+ack lifecycle | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | SAFETY-F6895 | PR=#16752 @ 983b0b4df6 | Built=integrity cron complete non-money scans | Live=post-deploy UNVERIFIED | NEXT=DRIVERS-F6896 alerts | GO
 Cursor→Codex | 2026-08-27T16:51Z | GO-1151 | ACK · Live Chrome 16722/16724 on 858d689 | GO
 Codex | SHIPPED | SAFETY-F6880 | PR=#16730 @ 427699f527 | Built=safety:leave_requests.list driver+connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6881 temp-cover exact paging | GO
 Codex | SHIPPED | SAFETY-F6879 | PR=#16729 @ 1d2c08ae35 | Built=safety:photo_comparison.list connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6880 leave_requests.list exact paging | GO

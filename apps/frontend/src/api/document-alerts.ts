@@ -30,9 +30,12 @@ export type DocumentAlertRule = {
   enabled: boolean;
 };
 
-export function getDocumentAlertsInbox(operatingCompanyId: string) {
-  return apiRequest<{ events: DocumentAlertEvent[]; pending_count: number }>(
-    `/api/v1/drivers/document-alerts/inbox?${q(operatingCompanyId)}`
+export function getDocumentAlertsInbox(operatingCompanyId: string, range: { limit?: number; offset?: number } = {}) {
+  const params = new URLSearchParams(q(operatingCompanyId));
+  params.set("limit", String(range.limit ?? 50));
+  params.set("offset", String(range.offset ?? 0));
+  return apiRequest<{ events: DocumentAlertEvent[]; pending_count: number; limit: number; offset: number }>(
+    `/api/v1/drivers/document-alerts/inbox?${params.toString()}`
   );
 }
 

@@ -12,6 +12,10 @@ import {
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+const inboxQuerySchema = companyQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(300).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 const ruleParamsSchema = z.object({ ruleId: z.string().uuid() });
 const eventParamsSchema = z.object({ eventId: z.string().uuid() });
 
@@ -53,12 +57,12 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
   app.get("/api/v1/drivers/document-alerts/inbox", async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = inboxQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
-    const events = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
-      listOpenDocumentAlertEvents(client, query.data.operating_company_id)
+    const result = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
+      listOpenDocumentAlertEvents(client, query.data.operating_company_id, query.data.limit, query.data.offset)
     );
-    return reply.send({ events, pending_count: events.length });
+    return reply.send({ events: result.events, pending_count: result.totalCount, limit: query.data.limit, offset: query.data.offset });
   });
 
   app.get("/api/v1/drivers/document-alert-rules", async (req, reply) => {
