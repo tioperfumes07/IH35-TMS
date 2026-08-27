@@ -31,7 +31,10 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
 }
 
 export async function registerSafetyHosRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/hos/exceptions", async (req, reply) => {
+  app.post(
+    "/api/v1/safety/hos/exceptions",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -40,6 +43,16 @@ export async function registerSafetyHosRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const driver = await client.query<{ id: string }>(
+        `SELECT id::text
+           FROM mdata.drivers
+          WHERE operating_company_id = $1::uuid
+            AND id = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1`,
+        [query.data.operating_company_id, body.data.driver_id]
+      );
+      if (!driver.rows[0]?.id) return { kind: "driver_not_found" as const };
       const res = await client.query(
         `
           INSERT INTO safety.hos_exceptions (
@@ -60,6 +73,8 @@ export async function registerSafetyHosRoutes(app: FastifyInstance) {
           body.data.justification,
         ]
       );
+      const exception = res.rows[0] as { id?: string } | undefined;
+      if (!exception?.id) throw new Error("safety_hos_exception_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -67,14 +82,17 @@ export async function registerSafetyHosRoutes(app: FastifyInstance) {
         {
           operating_company_id: query.data.operating_company_id,
           resource_type: "safety.hos_exceptions",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: exception.id,
+          driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAFETY-TRAINING-PROGRAMS"
       );
-      return res.rows[0];
+      return { kind: "ok" as const, exception };
     });
 
-    return reply.code(201).send(created);
-  });
+    if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    return reply.code(201).send(created.exception);
+    }
+  );
 }
