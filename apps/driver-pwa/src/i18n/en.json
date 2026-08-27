@@ -26,6 +26,8 @@
     "accept": "Accept",
     "reject": "Reject",
     "next": "Next",
+    "previous": "Previous",
+    "of": "of",
     "continue": "Continue",
     "delete": "Delete",
     "show_error": "Show error",

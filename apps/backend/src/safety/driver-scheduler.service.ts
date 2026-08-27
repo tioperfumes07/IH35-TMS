@@ -583,19 +583,35 @@ export async function attachLeaveRequestDocumentation(
   return { request: row };
 }
 
-export async function listMyLeaveRequests(client: QueryableClient, operatingCompanyId: string, driverId: string) {
+export async function listMyLeaveRequests(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  driverId: string,
+  limit: number,
+  offset: number,
+) {
+  const countRes = await client.query(
+    `
+      SELECT COUNT(*)::int AS total_count
+      FROM safety.driver_leave_requests
+      WHERE operating_company_id = $1::uuid
+        AND driver_id = $2
+    `,
+    [operatingCompanyId, driverId]
+  );
   const res = await client.query(
     `
       SELECT *
       FROM safety.driver_leave_requests
       WHERE operating_company_id = $1::uuid
         AND driver_id = $2
-      ORDER BY created_at DESC
-      LIMIT 200
+      ORDER BY created_at DESC, id DESC
+      LIMIT $3
+      OFFSET $4
     `,
-    [operatingCompanyId, driverId]
+    [operatingCompanyId, driverId, limit, offset]
   );
-  return res.rows;
+  return { requests: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function getMySchedule(
@@ -1074,8 +1090,7 @@ export async function getFleetSchedule(
         -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
         -- its RLS is identity/role-scoped, so scope the vacant-unit picker by the owner/leased pair.
         AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
-      ORDER BY u.unit_number
-      LIMIT 200
+      ORDER BY u.unit_number, u.id
     `,
     [args.operatingCompanyId]
   );
