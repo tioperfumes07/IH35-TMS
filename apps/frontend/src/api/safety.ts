@@ -417,10 +417,12 @@ export type SafetyBackgroundCheckRow = {
   notes: string | null;
 };
 
-export function listSafetyBackgroundChecks(companyId: string, driverId?: string) {
+export function listSafetyBackgroundChecks(companyId: string, driverId?: string, range: { limit?: number; offset?: number } = {}) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (driverId) params.set("driver_id", driverId);
-  return apiRequest<{ background_checks: SafetyBackgroundCheckRow[] }>(`/api/v1/safety/background-checks?${params.toString()}`);
+  if (range.limit != null) params.set("limit", String(range.limit));
+  if (range.offset != null) params.set("offset", String(range.offset));
+  return apiRequest<{ background_checks: SafetyBackgroundCheckRow[]; total_count: number }>(`/api/v1/safety/background-checks?${params.toString()}`);
 }
 
 export function createSafetyBackgroundCheck(

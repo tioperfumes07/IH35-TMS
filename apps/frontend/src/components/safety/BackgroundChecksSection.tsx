@@ -22,6 +22,8 @@ const CHECK_TYPES = [
 
 /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function BackgroundChecksSection({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId?: string }) {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const companyGenerationRef = useRef(0);
   const [open, setOpen] = useState(false);
@@ -34,10 +36,12 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
 
   const query = useQuery({
-    queryKey: ["safety", "background-checks", operatingCompanyId, driverId ?? "all"],
+    queryKey: ["safety", "background-checks", operatingCompanyId, driverId ?? "all", page],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => listSafetyBackgroundChecks(operatingCompanyId, driverId),
+    queryFn: () => listSafetyBackgroundChecks(operatingCompanyId, driverId, { limit: pageSize, offset: (page - 1) * pageSize }),
   });
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
   const createMutation = useMutation({
     mutationFn: (input: {
       companyId: string;
@@ -79,6 +83,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     setCheckedAt(companyToday());
     setExpiryDate("");
     setNotes("");
+    setPage(1);
   }, [operatingCompanyId, driverId]);
 
   const closeCreate = () => {
@@ -118,8 +123,18 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
             loading={query.isLoading}
             emptyText="No background checks found."
             storageKey={driverId ? "driver-background-checks" : "safety-background-checks"}
+            pageSize={pageSize}
+            pageSizeOptions={[pageSize]}
+            hidePager
           />
         )}
+        {!query.isError && totalCount > pageSize ? (
+          <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="background-checks-server-pager">
+            <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+            <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} checks</span>
+            <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+          </div>
+        ) : null}
       </div>
       <Modal variant="drawer" open={open} onClose={closeCreate} title="Add background check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form className="space-y-3" onSubmit={(event) => {
