@@ -113,6 +113,11 @@ function canMutate(role: string) {
   return ["Owner", "Administrator", "Manager", "Accountant"].includes(role);
 }
 
+// INS-MONEY-F6810A — tags a bill-schedule failure inside the renewal transaction so the route's
+// outer catch can map ONLY this failure to 502, without mislabeling an unrelated in-transaction
+// error (membership, constraint, unexpected DB failure) the same way.
+class PolicyRenewBillScheduleError extends Error {}
+
 async function withCompanyScope<T>(
   userId: string,
   operatingCompanyId: string,
@@ -671,63 +676,81 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const body = parsed.data;
 
-    const result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
-      const insertRes = await client.query(
-        `INSERT INTO insurance.policy (
-           tenant_id, operating_company_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
-           effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count,
-           due_day, pay_day, late_fee_pct, insurer_email, agent_contact, status, vendor_id, insurer_name
-         )
-         SELECT $1::uuid, $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
-           $4::date, $5::date, $6, $7, $8,
-           due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
-         FROM insurance.policy
-         WHERE tenant_id = $1::uuid AND id = $2::uuid
-         RETURNING ${policySelectColumns()}, renewed_from_policy_id::text`,
-        [
-          body.operating_company_id,
-          params.data.policy_id,
-          body.policy_number,
-          body.effective_date,
-          body.expiry_date,
-          body.total_premium_cents,
-          body.down_payment_cents,
-          body.installment_count,
-        ]
-      );
-      const newPolicy = insertRes.rows[0] as Record<string, unknown> | undefined;
-      if (!newPolicy) return { kind: "policy_not_found" as const };
+    // INS-MONEY-F6810A — this used to commit the cloned policy + units in withCompanyScope's own
+    // transaction, THEN create the bill schedule in a SEPARATE withCurrentUser transaction. A
+    // schedule failure returned 502 while the renewed policy (and its cloned units) stayed
+    // committed with no bill schedule — a real, silently-incomplete renewal. createPolicyBillSchedule
+    // already takes an arbitrary `client` (its only caller was this one), so it composes directly
+    // into the SAME transaction: policy clone + unit clone + bill schedule now either all commit
+    // together or all roll back together, with no window where one exists without the others.
+    let result:
+      | { kind: "policy_not_found" }
+      | { kind: "ok"; newPolicy: Record<string, unknown> };
+    try {
+      result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+        const insertRes = await client.query(
+          `INSERT INTO insurance.policy (
+             tenant_id, operating_company_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
+             effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count,
+             due_day, pay_day, late_fee_pct, insurer_email, agent_contact, status, vendor_id, insurer_name
+           )
+           SELECT $1::uuid, $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
+             $4::date, $5::date, $6, $7, $8,
+             due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
+           FROM insurance.policy
+           WHERE tenant_id = $1::uuid AND id = $2::uuid
+           RETURNING ${policySelectColumns()}, renewed_from_policy_id::text`,
+          [
+            body.operating_company_id,
+            params.data.policy_id,
+            body.policy_number,
+            body.effective_date,
+            body.expiry_date,
+            body.total_premium_cents,
+            body.down_payment_cents,
+            body.installment_count,
+          ]
+        );
+        const newPolicy = insertRes.rows[0] as Record<string, unknown> | undefined;
+        if (!newPolicy) return { kind: "policy_not_found" as const };
 
-      await client.query(
-        `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
-         SELECT $1::uuid, $1::uuid, $2::uuid, asset_id, insured_value_cents
-         FROM insurance.policy_unit
-         WHERE tenant_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
-        [body.operating_company_id, newPolicy.id, params.data.policy_id]
-      );
+        await client.query(
+          `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
+           SELECT $1::uuid, $1::uuid, $2::uuid, asset_id, insured_value_cents
+           FROM insurance.policy_unit
+           WHERE tenant_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
+          [body.operating_company_id, newPolicy.id, params.data.policy_id]
+        );
 
-      await appendCrudAudit(client, user.uuid, "insurance.policy.renewed", {
-        resource_id: newPolicy.id,
-        operating_company_id: body.operating_company_id,
-        renewed_from_policy_id: params.data.policy_id,
-      });
+        if (body.installment_count > 0) {
+          try {
+            await createPolicyBillSchedule(String(newPolicy.id), user.uuid, client);
+          } catch (scheduleErr) {
+            // Re-thrown as a tagged error so the outer catch can map ONLY this failure to 502 —
+            // any other in-transaction error (membership, constraint, unexpected DB failure)
+            // must keep propagating as a genuine 500, not be mislabeled as a schedule failure.
+            throw new PolicyRenewBillScheduleError(String((scheduleErr as Error)?.message ?? scheduleErr));
+          }
+        }
 
-      return { kind: "ok" as const, newPolicy };
-    });
-
-    if (result.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
-
-    const newPolicyId = String(result.newPolicy.id);
-
-    if (body.installment_count > 0) {
-      try {
-        await withCurrentUser(user.uuid, async (client) => {
-          await createPolicyBillSchedule(newPolicyId, user.uuid, client);
+        await appendCrudAudit(client, user.uuid, "insurance.policy.renewed", {
+          resource_id: newPolicy.id,
+          operating_company_id: body.operating_company_id,
+          renewed_from_policy_id: params.data.policy_id,
         });
-      } catch {
+
+        return { kind: "ok" as const, newPolicy };
+      });
+    } catch (err) {
+      // A bill-schedule failure rolls back the WHOLE renewal — no policy, no units, no schedule —
+      // rather than the old half-committed state. Any other error keeps its normal 500 behavior.
+      if (err instanceof PolicyRenewBillScheduleError) {
         return reply.code(502).send({ error: "bill_schedule_failed" });
       }
+      throw err;
     }
+
+    if (result.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
 
     return reply.code(201).send(result.newPolicy);
   });

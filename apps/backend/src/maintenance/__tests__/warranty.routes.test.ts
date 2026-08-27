@@ -15,13 +15,19 @@ const WARRANTY_ID = "44444444-4444-4444-8444-444444444444";
 const INVENTORY_ID = "55555555-5555-4555-8555-555555555555";
 const VENDOR_ID = "66666666-6666-4666-8666-666666666666";
 
-const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit, mockPostWarrantyReimbursement } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
     fn({ query })
   );
   const appendCrudAudit = vi.fn(async () => undefined);
-  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit };
+  const postWarrantyReimbursement = vi.fn(async () => ({ posted: false, reason: "flag_off" }));
+  return {
+    mockQuery: query,
+    mockWithCurrentUser: withCurrentUser,
+    mockAppendCrudAudit: appendCrudAudit,
+    mockPostWarrantyReimbursement: postWarrantyReimbursement,
+  };
 });
 
 vi.mock("../../auth/db.js", () => ({
@@ -34,6 +40,10 @@ vi.mock("../../auth/session-middleware.js", () => ({
 
 vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAppendCrudAudit,
+}));
+
+vi.mock("../../accounting/warranty-posting/poster.service.js", () => ({
+  postWarrantyReimbursement: mockPostWarrantyReimbursement,
 }));
 
 // Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
@@ -124,6 +134,8 @@ describe("maintenance warranty routes (B33)", () => {
   beforeEach(async () => {
     mockQuery.mockReset();
     mockAppendCrudAudit.mockReset();
+    mockPostWarrantyReimbursement.mockClear();
+    mockPostWarrantyReimbursement.mockResolvedValue({ posted: false, reason: "flag_off" });
     app = Fastify({ logger: false });
     app.decorateRequest("user", null);
     app.addHook("preHandler", async (req) => {
@@ -289,6 +301,53 @@ describe("maintenance warranty routes (B33)", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ status: "filed", status_label: "Filed" });
+  });
+
+  it("POST /api/v1/maintenance/warranty/claims/:id/reimburse marks claim reimbursed and posts GL", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("UPDATE maintenance.warranty_claims")) return { rows: [{ id: CLAIM_ID }], rowCount: 1 };
+      return { rows: [sampleClaim({ status: "reimbursed", reimbursement_amount_cents: 40000 })], rowCount: 1 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/maintenance/warranty/claims/${CLAIM_ID}/reimburse`,
+      payload: { operating_company_id: COMPANY, reimbursement_amount_cents: 40000 },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ status: "reimbursed", status_label: "Reimbursed" });
+    expect(mockPostWarrantyReimbursement).toHaveBeenCalledTimes(1);
+    const reimburseAudit = mockAppendCrudAudit.mock.calls.find((c) => c[2] === "maintenance.warranty_claim.reimbursed");
+    expect(reimburseAudit).toBeDefined();
+  });
+
+  // MAINT-MONEY-F6750A — a concurrent archive between the pre-read and the reimburse UPDATE makes
+  // the UPDATE's WHERE (archived_at IS NULL) match zero rows. Before the fix, the discarded UPDATE
+  // result let the handler fall through to fetchClaimById (which has no archived_at filter of its
+  // own), audit "reimbursed", and post a GL entry for a transition that changed nothing.
+  it("never posts/audits reimbursement when the UPDATE matches zero rows (e.g. concurrently archived)", async () => {
+    // Distinguish the pre-read (fetchClaimById call #1, must be active so the handler proceeds
+    // past its own `!existing || existing.archived_at` guard) from the post-UPDATE re-read
+    // (fetchClaimById call #2, which — pre-fix — has no archived_at filter and would still find
+    // the row). A single fixed mock return can't tell these apart; both are the identical SELECT.
+    let fetchCount = 0;
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("UPDATE maintenance.warranty_claims")) return { rows: [], rowCount: 0 };
+      fetchCount += 1;
+      if (fetchCount === 1) return { rows: [sampleClaim({ archived_at: null })], rowCount: 1 };
+      // fetchClaimById has no archived_at filter — simulate it still finding the (now-archived) row.
+      return { rows: [sampleClaim({ archived_at: "2026-06-05T00:00:00Z" })], rowCount: 1 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/maintenance/warranty/claims/${CLAIM_ID}/reimburse`,
+      payload: { operating_company_id: COMPANY, reimbursement_amount_cents: 40000 },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(mockPostWarrantyReimbursement).not.toHaveBeenCalled();
+    const reimburseAudit = mockAppendCrudAudit.mock.calls.find((c) => c[2] === "maintenance.warranty_claim.reimbursed");
+    expect(reimburseAudit).toBeUndefined();
   });
 
   it("POST /api/v1/maintenance/warranty/detect-from-wo returns eligible parts", async () => {

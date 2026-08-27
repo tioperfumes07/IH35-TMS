@@ -269,8 +269,16 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     }
 
     const created = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      await client.query("BEGIN");
-      try {
+      // SAFETY-MONEY-F6822A: this callback used to open its own BEGIN/COMMIT/ROLLBACK here, nested
+      // inside withCurrentUser's own transaction (auth/db.ts). Postgres has no real nested
+      // transactions — a BEGIN while one is already open is a no-op WARNING, but the inner COMMIT
+      // genuinely commits the OUTER transaction early, mid-handler. Every statement issued afterward
+      // (the final "internal_fine.created" appendCrudAudit call below) then ran with no open
+      // transaction and no SET LOCAL tenant GUC / forced app role (both are transaction-scoped in
+      // withCurrentUser), so a failure there rolled back nothing — the fine, liability, and
+      // settlement deduction stayed durably committed even though the request reported failure to
+      // the caller. Removed the nested BEGIN/COMMIT/ROLLBACK; the wrapper's own single transaction
+      // now owns the whole callback, matching every other route in this file.
         const fineRes = await client.query(
           `
             INSERT INTO safety.internal_fines (
@@ -329,10 +337,24 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               loadId: body.data.related_load_uuid ?? null,
               createdByUserId: user.uuid,
             });
-            await client.query(
-              `UPDATE safety.internal_fines SET status = 'converted_to_liability', driver_liability_id = $2 WHERE id = $1`,
-              [fine.id, (liability as { id?: string }).id ?? null]
+            // SAFETY-MONEY-F6741 — this UPDATE used to match by fine.id alone and ignore the
+            // affected-row result, so a mismatch (wrong company, or a fine that already carries a
+            // driver_liability_id) would leave the just-inserted liability + settlement deduction
+            // as an orphan money recovery with no backlink, while the transaction still reported
+            // success. Scope by company + driver_liability_id IS NULL and require exactly one row —
+            // a mismatch throws here, which rolls back the whole transaction (including the
+            // liability/deduction just inserted above) rather than committing an orphan.
+            const fineLinked = await client.query(
+              `UPDATE safety.internal_fines
+                  SET status = 'converted_to_liability', driver_liability_id = $2
+                WHERE id = $1
+                  AND operating_company_id = $3::uuid
+                  AND driver_liability_id IS NULL`,
+              [fine.id, (liability as { id?: string }).id ?? null, query.data.operating_company_id]
             );
+            if ((fineLinked.rowCount ?? 0) !== 1) {
+              throw new Error("safety_internal_fine_liability_backlink_failed");
+            }
             await appendCrudAudit(
               client,
               user.uuid,
@@ -356,12 +378,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           "info",
           "P3-T11.17-TWO-SECTION-V5"
         );
-        await client.query("COMMIT");
         return { fine, liability };
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      }
     });
     return reply.code(201).send(created);
   });
