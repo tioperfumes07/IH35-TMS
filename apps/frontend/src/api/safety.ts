@@ -223,7 +223,7 @@ export function getSafetyDvirDetail(id: string, companyId: string) {
 
 export function getSafetyAccidents(
   companyId: string,
-  params: { driver_id?: string; unit_id?: string; load_id?: string; trailer_id?: string } = {}
+  params: { driver_id?: string; unit_id?: string; load_id?: string; trailer_id?: string; from?: string; to?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) qs.set("driver_id", params.driver_id);
@@ -233,7 +233,11 @@ export function getSafetyAccidents(
   if (params.unit_id) qs.set("unit_id", params.unit_id);
   if (params.load_id) qs.set("load_id", params.load_id);
   if (params.trailer_id) qs.set("trailer_id", params.trailer_id);
-  return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${qs.toString()}`);
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ accidents: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/accidents?${qs.toString()}`);
 }
 
 export function getSafetyAccidentDetail(id: string, companyId: string) {

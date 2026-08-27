@@ -220,12 +220,21 @@ export function AssetSafetyReverseSection({
   const isUnit = assetKind === "unit";
   const inspectionPageSize = 25;
   const [inspectionPage, setInspectionPage] = useState(1);
-  useEffect(() => setInspectionPage(1), [operatingCompanyId, assetKind, assetId]);
+  const accidentPageSize = 25;
+  const [accidentPage, setAccidentPage] = useState(1);
+  useEffect(() => {
+    setInspectionPage(1);
+    setAccidentPage(1);
+  }, [operatingCompanyId, assetKind, assetId]);
 
   const accidentsQuery = useQuery({
-    queryKey: ["safety", "reverse", "accidents", assetKind, operatingCompanyId, assetId],
+    queryKey: ["safety", "reverse", "accidents", assetKind, operatingCompanyId, assetId, accidentPage],
     queryFn: () =>
-      getSafetyAccidents(operatingCompanyId, isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+      getSafetyAccidents(operatingCompanyId, {
+        ...(isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+        limit: accidentPageSize,
+        offset: (accidentPage - 1) * accidentPageSize,
+      }),
     // RANK5-ACCIDENT-TRAILER-ID (PR #6324): trailer_id is now a real, filterable column (see file header).
     enabled,
   });
@@ -251,6 +260,8 @@ export function AssetSafetyReverseSection({
   if (!canViewSafety) return null;
 
   const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
+  const accidentTotal = accidentsQuery.isError ? 0 : accidentsQuery.data?.total_count ?? 0;
+  const accidentPageCount = Math.max(1, Math.ceil(accidentTotal / accidentPageSize));
   const inspections: Row[] = inspectionsQuery.isError ? [] : inspectionsQuery.data?.dot_inspections ?? [];
   const inspectionTotal = inspectionsQuery.isError ? 0 : inspectionsQuery.data?.total_count ?? 0;
   const inspectionPageCount = Math.max(1, Math.ceil(inspectionTotal / inspectionPageSize));
@@ -272,7 +283,7 @@ export function AssetSafetyReverseSection({
         errorText={`Failed to load accidents for this ${contextLabel}.`}
         onRetry={() => void accidentsQuery.refetch()}
         emptyText={`No accidents recorded for this ${contextLabel}.`}
-        count={accidents.length}
+        count={accidentTotal}
       >
         {accidents.map((accident) => (
           <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -302,6 +313,13 @@ export function AssetSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!accidentsQuery.isError && accidentTotal > accidentPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-accidents-pager">
+          <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
+          <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+          <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="DOT Inspections"

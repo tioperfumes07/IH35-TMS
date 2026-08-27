@@ -126,7 +126,12 @@ export function DriverSafetyReverseSection({
   const enabled = canViewSafety && Boolean(operatingCompanyId) && Boolean(driverId);
   const inspectionPageSize = 25;
   const [inspectionPage, setInspectionPage] = useState(1);
-  useEffect(() => setInspectionPage(1), [operatingCompanyId, driverId]);
+  const accidentPageSize = 25;
+  const [accidentPage, setAccidentPage] = useState(1);
+  useEffect(() => {
+    setInspectionPage(1);
+    setAccidentPage(1);
+  }, [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
     queryKey: ["safety", "reverse", "civil-fines", operatingCompanyId, driverId],
@@ -163,8 +168,8 @@ export function DriverSafetyReverseSection({
   });
 
   const accidentsQuery = useQuery({
-    queryKey: ["safety", "reverse", "accidents", operatingCompanyId, driverId],
-    queryFn: () => getSafetyAccidents(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["safety", "reverse", "accidents", operatingCompanyId, driverId, accidentPage],
+    queryFn: () => getSafetyAccidents(operatingCompanyId, { driver_id: driverId, limit: accidentPageSize, offset: (accidentPage - 1) * accidentPageSize }),
     enabled,
   });
 
@@ -190,6 +195,8 @@ export function DriverSafetyReverseSection({
   const dotInspectionTotal = dotInspectionsQuery.isError ? 0 : dotInspectionsQuery.data?.total_count ?? 0;
   const dotInspectionPageCount = Math.max(1, Math.ceil(dotInspectionTotal / inspectionPageSize));
   const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
+  const accidentTotal = accidentsQuery.isError ? 0 : accidentsQuery.data?.total_count ?? 0;
+  const accidentPageCount = Math.max(1, Math.ceil(accidentTotal / accidentPageSize));
   const trainingRecords: Row[] = trainingQuery.isError ? [] : trainingQuery.data?.training_completions ?? [];
   const hosViolations: Row[] = hosViolationsQuery.isError ? [] : hosViolationsQuery.data?.hos_violations ?? [];
 
@@ -254,7 +261,7 @@ export function DriverSafetyReverseSection({
         errorText="Failed to load this driver's accidents."
         onRetry={() => void accidentsQuery.refetch()}
         emptyText="No accident reports for this driver."
-        count={accidents.length}
+        count={accidentTotal}
       >
         {accidents.map((accident) => (
           <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -266,6 +273,13 @@ export function DriverSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!accidentsQuery.isError && accidentTotal > accidentPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-accidents-pager">
+          <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
+          <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+          <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="HOS Violations"
