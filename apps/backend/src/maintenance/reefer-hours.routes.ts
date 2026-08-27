@@ -210,7 +210,7 @@ async function ensureReeferSpecs(
     `SELECT reefer_brand, reefer_service_interval_hours, reefer_last_service_hours, reefer_last_service_date::text
      FROM mdata.equipment WHERE id = $1 AND (
        owner_company_id = $2 OR currently_leased_to_company_id = $2
-     ) LIMIT 1`,
+     ) AND deactivated_at IS NULL LIMIT 1`,
     [equipmentId, companyId]
   );
   const eq = eqRes.rows[0];
@@ -230,11 +230,15 @@ async function ensureReeferSpecs(
       eq.reefer_last_service_date ?? null,
     ]
   );
+  const specsId = insert.rows[0]?.id == null ? null : String(insert.rows[0].id);
+  if (!specsId) throw new Error("reefer_specs_insert_returned_no_row");
   const fetched = await client.query(`${SPECS_SELECT} WHERE rs.id = $1 AND rs.operating_company_id = $2::uuid`, [
-    String(insert.rows[0]?.id),
+    specsId,
     companyId,
   ]);
-  return fetched.rows[0] ?? {};
+  const createdSpecs = fetched.rows[0];
+  if (!createdSpecs) throw new Error("reefer_specs_reload_returned_no_row");
+  return createdSpecs;
 }
 
 export async function appendReeferHoursLogEntry(
@@ -272,12 +276,15 @@ export async function appendReeferHoursLogEntry(
       input.created_by_user_id ?? null,
     ]
   );
-  const id = String(res.rows[0]?.id ?? "");
+  const id = res.rows[0]?.id == null ? null : String(res.rows[0].id);
+  if (!id) throw new Error("reefer_hours_log_insert_returned_no_row");
   const fetched = await client.query(`${LOG_SELECT} WHERE l.id = $1 AND l.operating_company_id = $2::uuid`, [
     id,
     input.operating_company_id,
   ]);
-  return fetched.rows[0] ?? null;
+  const createdLog = fetched.rows[0];
+  if (!createdLog) throw new Error("reefer_hours_log_reload_returned_no_row");
+  return createdLog;
 }
 
 export async function ingestReeferHoursFromSamsaraForCompany(
