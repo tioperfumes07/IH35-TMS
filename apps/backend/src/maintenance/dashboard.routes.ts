@@ -368,8 +368,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             AND u.deactivated_at IS NULL
             AND ${excludeDemoPhantomSql("u.unit_number")}
             AND ${excludeSampleDataSql("u.is_sample_data")}
-          ORDER BY u.unit_number ASC
-          LIMIT 500
+          ORDER BY u.unit_number ASC, u.id ASC
         `,
         [companyId]
       );
