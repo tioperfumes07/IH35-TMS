@@ -1,4 +1,6 @@
 Cursor→Codex | 2026-08-27T19:40Z | GO-1439 | ACK · F6903 Live Chrome 5ecbc67 · next silent-cap | GO
+Codex | WORKING | FINDING=INS-F6906-POLICY-WIZARD-TRAILER-FILTER-READS-TRUCKS-ONLY | vertical=unified scoped fleet+server type chips+USMCA-only creator | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6905 | PR=#16775 @ e7990326fd | Built=inspection DVIR complete search+selected reload | Live=post-deploy UNVERIFIED | NEXT=INS-F6906 | GO
 Codex | WORKING | FINDING=MAINT-F6905-INSPECTION-DVIR-PICKER-FIRST-50-ONLY | vertical=server search+selected exact hydration+canonical FK | NEXT=FAST-MERGE | GO
 Codex | LIVE PASS | SAFETY-F6903 | SHA=5ecbc67 | HOS=82 of 82 active drivers loaded+exact pager · DriverSafetyCards=All 82 complete roster | NEXT=MAINT-F6905 | GO
 Codex | SHIPPED | FLEET-F6904 | PR=#16772 @ 945771a66d | Built=exact scoped unit fault KPIs | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6905 | GO

@@ -99,23 +99,10 @@ const ALLOCATION_LABELS: Record<AllocationMethod, string> = {
   weighted: "Weighted custom %",
 };
 
-const UNIT_TYPE_CHIPS = ["All", "Tractor", "Trailer", "Reefer", "TRK", "TRANSP"] as const;
+const UNIT_TYPE_CHIPS = ["All", "Tractor", "Trailer", "Reefer"] as const;
 
 function unitLabel(unit: UnitRow) {
   return unit.unit_code ?? entityLabel(unit.unit_number, unit.id, "Unit");
-}
-
-function unitMatchesChip(unit: UnitRow, chip: string): boolean {
-  if (chip === "All") return true;
-  const t = (unit.asset_type ?? "").toLowerCase();
-  const code = (unit.unit_code ?? "").toUpperCase();
-  const oci = (unit.operating_company_id ?? "").toLowerCase();
-  if (chip === "Tractor") return t.includes("tractor") || t.includes("truck");
-  if (chip === "Trailer") return t.includes("trailer");
-  if (chip === "Reefer") return t.includes("reefer");
-  if (chip === "TRK") return code.includes("TRK") || oci.includes("trk");
-  if (chip === "TRANSP") return code.includes("TRANSP") || oci.includes("transp");
-  return true;
 }
 
 function parsePremiumCents(raw: string): number | null {
@@ -192,23 +179,22 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   });
 
   const unitsQuery = useQuery({
-    queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery],
+    queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery, activeChip],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () =>
       listUnits({
         operating_company_id: operatingCompanyId,
         limit: 200,
         search: unitSearchQuery.trim() || undefined,
+        include: "trailers",
+        type: activeChip === "All" ? undefined : activeChip,
       }).then((r) => r.units as UnitRow[]),
   });
 
   const allUnits = useMemo(() => (unitsQuery.data ?? []).filter((u) => Boolean(u.id)), [unitsQuery.data]);
 
-  // Chip filter stays client-side on the current server page; search is server-side (no silent 500).
-  const filteredUnits = useMemo(() => {
-    if (activeChip === "All") return allUnits;
-    return allUnits.filter((u) => unitMatchesChip(u, activeChip));
-  }, [allUnits, activeChip]);
+  // Type chips and text search are both server-side so the result is complete beyond page one.
+  const filteredUnits = allUnits;
 
   useEffect(() => {
     // Bump the generation on EVERY mount of this effect (open transition OR a company switch while
