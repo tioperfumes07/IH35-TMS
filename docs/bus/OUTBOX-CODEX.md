@@ -1241,3 +1241,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6720 anomaly audit company r
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6721 parts void+adjust audit company linkage | SHIPPED #16451 SAFETY-F6720 @ d084e4d1d4 guards=13/13 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6722 stale parts adjustment guard root fix | SHIPPED #16452 MAINT-F6721 @ 16e14240ae guards=2/2 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6723 WO status atomic company scope | SHIPPED #16453 MAINT-F6722 @ 2fd682f711 guards=7/7 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
+Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6724 parts-link add→refresh→void audit company linkage | SHIPPED #16454 MAINT-F6723 @ dc2418002d guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO

@@ -267,7 +267,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         client,
         user.uuid,
         "maintenance.wo.parts_link_added",
-        { resource_id: params.data.id, parts_invoice_link_id: link.id, display_id: displayId },
+        { operating_company_id: query.data.operating_company_id, resource_id: params.data.id, parts_invoice_link_id: link.id, display_id: displayId },
         "info",
         "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
       );
@@ -275,7 +275,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         client,
         user.uuid,
         "maintenance.wo.display_id_refreshed",
-        { resource_id: params.data.id, trigger: "parts_link_added", display_id: displayId },
+        { operating_company_id: query.data.operating_company_id, resource_id: params.data.id, trigger: "parts_link_added", display_id: displayId },
         "info",
         "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
       );
@@ -346,6 +346,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         user.uuid,
         "maintenance.wo.parts_link_removed",
         {
+          operating_company_id: query.data.operating_company_id,
           resource_id: row.work_order_id,
           parts_invoice_link_id: row.id,
           void_reason: query.data.void_reason ?? "Removed via parts-invoice-links API",
