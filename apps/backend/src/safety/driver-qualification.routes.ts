@@ -154,6 +154,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
       const driver = await client.query(
         `SELECT id FROM mdata.drivers d
          WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
            AND (d.operating_company_id = $2::uuid OR EXISTS (
              SELECT 1 FROM mdata.driver_company_authorizations qualification_create_driver_dca
              WHERE qualification_create_driver_dca.driver_id = d.id
@@ -165,7 +166,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;
-      const insertRes = await client.query(
+      const insertRes = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.driver_qualification_files (
             operating_company_id,
@@ -189,6 +190,8 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           body.data.notes ?? null,
         ]
       );
+      const qualificationItem = insertRes.rows[0];
+      if (!qualificationItem?.id) throw new Error("safety_driver_qualification_insert_failed");
 
       await appendCrudAudit(
         client,
@@ -196,14 +199,14 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         "safety.driver_qualification.item_created",
         {
           resource_type: "safety.driver_qualification_files",
-          resource_id: (insertRes.rows[0] as { id?: string })?.id ?? null,
+          resource_id: qualificationItem.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAF-DRIVER-DQF"
       );
-      return insertRes.rows[0];
+      return qualificationItem;
     });
 
     if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
