@@ -345,12 +345,14 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
         RETURNING id::text, name, manufacturer, tread_warranty_32nds, is_active, sort_order`,
         [body.operating_company_id, body.name, body.manufacturer, body.tread_warranty_32nds ?? null, body.sort_order]
       );
+      const createdBrand = res.rows[0];
+      if (!createdBrand?.id) throw new Error("tire_brand_insert_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.tire_brand.created", {
         operating_company_id: body.operating_company_id,
         name: body.name,
         manufacturer: body.manufacturer,
       });
-      return res.rows[0];
+      return createdBrand;
     });
     return reply.code(201).send(row);
   });
@@ -462,7 +464,10 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
           user.uuid,
         ]
       );
-      const created = await fetchRecordById(client, body.operating_company_id, String(res.rows[0]?.id));
+      const tireRecordId = res.rows[0]?.id == null ? null : String(res.rows[0].id);
+      if (!tireRecordId) throw new Error("tire_record_insert_returned_no_row");
+      const created = await fetchRecordById(client, body.operating_company_id, tireRecordId);
+      if (!created) throw new Error("tire_record_reload_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.created", {
         operating_company_id: body.operating_company_id,
         position_code: body.position_code,
@@ -471,7 +476,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       return created;
     });
     if (row && "__error" in row) return reply.code(400).send({ error: row.__error });
-    return reply.code(201).send(mapTireRecordRow(row ?? {}));
+    return reply.code(201).send(mapTireRecordRow(row));
   });
 
   app.patch("/api/v1/maintenance/tires/records/:id", async (req, reply) => {

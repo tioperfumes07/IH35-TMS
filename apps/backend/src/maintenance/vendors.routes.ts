@@ -388,12 +388,14 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
             linkedVendorId ?? null,
           ]
         );
+        const createdVendor = res.rows[0];
+        if (!createdVendor?.id) throw new Error("maintenance_vendor_insert_returned_no_row");
         await appendCrudAudit(client, user.uuid, "maintenance.vendor.created", {
-          resource_id: res.rows[0]?.id,
+          resource_id: createdVendor.id,
           operating_company_id: body.operating_company_id,
           code,
         });
-        return mapVendorRow(res.rows[0]);
+        return mapVendorRow(createdVendor);
       });
       return reply.code(201).send(vendor);
     } catch (error) {

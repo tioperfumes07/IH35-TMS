@@ -258,14 +258,16 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           body.data.reorder_threshold,
         ]
       );
+      const createdPart = result.rows[0];
+      if (!createdPart?.id) throw new Error("maintenance_part_insert_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.parts.created", {
         operating_company_id: companyId,
-        resource_id: result.rows[0].id,
-        part_number: result.rows[0].part_number,
+        resource_id: createdPart.id,
+        part_number: createdPart.part_number,
         category: body.data.category ?? null,
         reorder_threshold: body.data.reorder_threshold,
       });
-      return result.rows[0];
+      return createdPart;
     });
     if ("__error" in created) return reply.code(400).send({ error: created.__error });
     return reply.code(201).send(created);
