@@ -837,7 +837,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                 body.header.load_exemption_reason ?? null
               );
             } else {
-              await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
+              await allocateInHouseFromWO(client as never, user.uuid, created.woUuid, body.header.operating_company_id);
             }
             await validateWoVendorInvoiceTotals(client as never, created.woUuid);
             await client.query("COMMIT");
