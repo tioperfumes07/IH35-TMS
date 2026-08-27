@@ -10,6 +10,11 @@ const listQuerySchema = z.object({
   period_days: z.coerce.number().int().min(1).max(365).default(30),
 });
 
+const eventListQuerySchema = listQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 const detailParamsSchema = z.object({
   driver_id: z.string().uuid(),
 });
@@ -166,7 +171,7 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/driver-scoring/:driver_id/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const query = listQuerySchema.safeParse(req.query ?? {});
+    const query = eventListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const params = detailParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -189,7 +194,16 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           LIMIT 1`,
         [params.data.driver_id, query.data.operating_company_id]
       );
-      if (!parent.rows[0]) return { found: false, events: [] };
+      if (!parent.rows[0]) return { found: false, events: [], totalCount: 0 };
+      const count = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+           FROM safety.harsh_events e
+          WHERE e.operating_company_id = $1::uuid
+            AND e.driver_id = $2::uuid
+            AND e.event_at >= (now() - make_interval(days => $3::int))
+            AND e.event_at < now()`,
+        [query.data.operating_company_id, params.data.driver_id, query.data.period_days]
+      );
       const res = await client.query(
         `
           SELECT
@@ -224,13 +238,14 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
             AND e.event_at >= (now() - make_interval(days => $3::int))
             AND e.event_at < now()
           ORDER BY e.event_at DESC
-          LIMIT 1000
+          LIMIT $4
+          OFFSET $5
         `,
-        [query.data.operating_company_id, params.data.driver_id, query.data.period_days]
+        [query.data.operating_company_id, params.data.driver_id, query.data.period_days, query.data.limit, query.data.offset]
       );
-      return { found: true, events: res.rows };
+      return { found: true, events: res.rows, totalCount: Number(count.rows[0]?.total_count ?? 0) };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { events: result.events };
+    return { events: result.events, total_count: result.totalCount };
   });
 }
