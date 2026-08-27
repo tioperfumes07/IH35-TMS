@@ -137,11 +137,13 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
 
   app.post("/api/safety/anomaly/seed-defaults", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
+    if ((user as { role?: string }).role?.toLowerCase() !== "owner") return reply.code(403).send({ error: "forbidden" });
     const q = companyQuery.safeParse(req.body ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       await seedDefaultAnomalyRules(client, q.data.operating_company_id);
+      await appendCrudAudit(client, user.uuid, "safety.anomaly_rules.seed_defaults", { operating_company_id: q.data.operating_company_id });
     });
     return { ok: true };
   });
