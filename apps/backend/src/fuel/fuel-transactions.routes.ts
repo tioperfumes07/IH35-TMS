@@ -532,6 +532,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           RETURNING id::text AS id, load_id::text AS load_id, load_exemption_reason`,
         [params.data.id, b.operating_company_id, b.load_id ?? null, b.exemption_reason ?? null, authUser.uuid]
       )) as { rows: Array<{ id: string; load_id: string | null; load_exemption_reason: string | null }> };
+      const updatedRow = updated.rows[0] ?? null;
+      if (!updatedRow) return { error: "fuel_transaction_changed_during_attribution" as const };
 
       await appendCrudAudit(
         client,
@@ -549,11 +551,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         "G18-FUEL-LOAD-ATTRIBUTION"
       );
 
-      return { row: updated.rows[0] ?? null };
+      return { row: updatedRow };
     });
 
     if ("error" in result) {
       if (result.error === "fuel_transaction_not_found") return reply.code(404).send({ error: result.error });
+      if (result.error === "fuel_transaction_changed_during_attribution") return reply.code(409).send({ error: result.error });
       return reply.code(400).send({ error: result.error });
     }
     return reply.code(200).send(result.row);
