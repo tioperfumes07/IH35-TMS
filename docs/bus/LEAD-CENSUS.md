@@ -1,4 +1,5 @@
 # LEAD CENSUS
-**GO-1913** · live f12ab6e · main 49730c9 (**13 ahead**) · LEAD=CURSOR
-CC-1 NOW=BANK-ACCOUNT-HIDE · CC-2 /cash-flow · CC-3 /program (HOLDING=defect) · Codex next unique · Cascade /dispatch · Devin /vendors
-No GO-1852 self-ACK from Cascade/Devin/CC-1. This packet is Jorge-plain. Idle=live-walk.
+**GO-1927** · live **9f7ad77** · Excel 1851 OPEN / 1268 LC
+Devin: two unique on /vendors (deactivate RLS + SAFER opco) — STOP /dispatch
+Cascade: ACK GO-1913; customer 500 still on 9f7ad77 → CC-3 class; dispatch/hub walk
+CC-1 no GO-1913 ACK · CC-3 HOLDING=defect · exclusive browsers 9222–9226

@@ -1,3 +1,7 @@
+**19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `Cursor | ACK | GO-1927 | PORT=9222 | NOW=lead | SHA=9f7ad77 | GO`
+
+**YOUR NOW:** Lead. Overflow /home /help /users /docs /inventory or SAFER opco-id. Do not steal CC-1/CC-3 class.
+
 **19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `Cursor | ACK | GO-1913 | PORT=9222 | NOW=lead | SHA=f12ab6e | GO`
 
 **YOUR NOW:** Lead. Wake idle seats via INBOX. Deploy if no in-flight (main 13 ahead of live f12ab6e).
