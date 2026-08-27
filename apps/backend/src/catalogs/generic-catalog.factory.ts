@@ -79,6 +79,16 @@ export type GenericCatalogConfig = {
    * alias keeps ONE physical column as the truth.
    */
   displayNameColumn?: string;
+  /**
+   * CATALOG-AUDIT-EVENT-TYPES-GET-500: physical column that serves as the row's stable identifier,
+   * when the table has no literal `id` column. Defaults to `"id"`. The list SELECT used to hardcode
+   * `t.id` unconditionally — exactly the same class of bug `hasUpdatedAt` already exists to prevent
+   * for `updated_at` (see above) — so catalogs.audit_event_types (code/description/severity_default/
+   * created_at only, no `id` at all) 500'd every load with a raw `column t.id does not exist` (42703).
+   * Set to the table's natural key (e.g. `"code"`) for a catalog with no surrogate id column; the
+   * value is aliased AS `id` in the API response so every other consumer is unaffected.
+   */
+  idColumn?: string;
 };
 
 type RouteMode = "all" | "extensions";
@@ -155,6 +165,7 @@ export function createCatalogRoutes(
     ...config.searchableColumns,
     config.defaultSort.column,
     ...(config.softDeleteColumn ? [config.softDeleteColumn] : []),
+    ...(config.idColumn ? [config.idColumn] : []),
   ]) {
     if (!columnGuard.test(column) && column !== "display_name") {
       throw new Error(`invalid_column_for_catalog_factory: ${column}`);
@@ -177,8 +188,9 @@ export function createCatalogRoutes(
 
   const hasUpdatedAt = config.hasUpdatedAt !== false;
   const hasAuditUserColumns = config.hasAuditUserColumns ?? hasUpdatedAt;
+  const idDbColumn = config.idColumn ?? "id";
   const selectColumns = [
-    "t.id",
+    `t.${idDbColumn} AS id`,
     ...config.allowedColumns.map((column) => {
       const dbColumn = dbColumnForApiColumn(column, config);
       const apiColumn = apiColumnForDbColumn(dbColumn, config);
