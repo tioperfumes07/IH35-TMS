@@ -1,4 +1,29 @@
 {
+  "9831": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-audit-activity-module-alert-banking-label-resolver"
+  },
+  "9827": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-customer-profitability-dispatch-margin-label-resolver"
+  },
+  "9819": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-audit-subject-banking-accounting-label"
+  },
+  "9815": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-audit-trail-customer-vendor-label-resolver"
+  },
+  "9811": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-void-reversal-payload-subject-type-normalization"
+  },
   "9820": {
     "claimed_at": "2026-08-26",
     "claimed_by": "cursor",
