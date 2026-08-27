@@ -90,4 +90,30 @@ describe("maintenance KPI helpers (B35)", () => {
     expect(body.pm_compliance_pct).toBe(75);
     await app.close();
   });
+
+  it("returns an exact deterministic PM-compliance range", async () => {
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
+      if (sql.includes("COUNT(*)::int AS total_count")) {
+        expect(values).toEqual([COMPANY]);
+        return { rows: [{ total_count: 212 }] };
+      }
+      if (sql.includes("FROM maintenance.pm_schedules ps")) {
+        expect(values).toEqual([COMPANY, 25, 50]);
+        expect(sql).toContain("LIMIT $2");
+        expect(sql).toContain("OFFSET $3");
+        return { rows: [{ schedule_id: "pm-1", schedule_label: "Oil", unit_number: "T-101", unit_id: "unit-1", compliance_status: "compliant" }] };
+      }
+      throw new Error(`unexpected SQL: ${sql}`);
+    });
+    const app: FastifyInstance = Fastify();
+    app.addHook("preHandler", async (req) => { (req as { user?: { uuid: string } }).user = { uuid: "user-test-1" }; });
+    await registerMaintenanceKpiRoutes(app);
+    const res = await app.inject({ method: "GET", url: `/api/v1/maintenance/kpi/pm-compliance?operating_company_id=${COMPANY}&period_start=2026-06-01&period_end=2026-06-07&limit=25&offset=50` });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ total_count: 212, rows: [{ schedule_id: "pm-1" }] });
+    await app.close();
+  });
 });

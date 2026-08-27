@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -98,6 +98,8 @@ export function MaintKpiDashboardPage() {
     onApply: (next) => { setPeriodStart(next.periodStart); setPeriodEnd(next.periodEnd); setUnitId(next.unitId); },
   });
   const [activeKpi, setActiveKpi] = useState<KpiTileId>("downtime");
+  const [pmPage, setPmPage] = useState(1);
+  const pmPageSize = 25;
 
   const summaryQ = useQuery({
     queryKey: ["maintenance", "kpi-dashboard", "summary", companyId, periodStart, periodEnd, unitId],
@@ -106,17 +108,19 @@ export function MaintKpiDashboardPage() {
   });
 
   const drilldownQ = useQuery({
-    queryKey: ["maintenance", "kpi-dashboard", "drilldown", activeKpi, companyId, periodStart, periodEnd, unitId],
+    queryKey: ["maintenance", "kpi-dashboard", "drilldown", activeKpi, companyId, periodStart, periodEnd, unitId, pmPage],
     queryFn: async () => {
       if (activeKpi === "pm_compliance") {
-        const pm = await getMaintenanceKpiPmCompliance(companyId, periodStart, periodEnd, unitId || undefined);
-        return { kind: "pm_compliance" as const, rows: pm.rows as Record<string, unknown>[] };
+        const pm = await getMaintenanceKpiPmCompliance(companyId, periodStart, periodEnd, unitId || undefined, { limit: pmPageSize, offset: (pmPage - 1) * pmPageSize });
+        return { kind: "pm_compliance" as const, rows: pm.rows as Record<string, unknown>[], total_count: pm.total_count };
       }
       const res = await getMaintenanceKpiDrilldown(activeKpi, companyId, periodStart, periodEnd, unitId || undefined);
       return { kind: res.kind, rows: res.rows };
     },
     enabled: Boolean(companyId),
   });
+
+  useEffect(() => { setPmPage(1); }, [companyId, periodStart, periodEnd, unitId]);
 
   const summary = summaryQ.data;
 
@@ -297,8 +301,20 @@ export function MaintKpiDashboardPage() {
             storageKey={`maintenance-kpi-drilldown-${activeKpi}`}
             emptyText="No drill-down rows for this filter window."
             exportFilename={`maint-kpi-drilldown-${activeKpi}`}
+            pageSize={activeKpi === "pm_compliance" ? (drillRows.length || pmPageSize) : undefined}
+            pageSizeOptions={activeKpi === "pm_compliance" ? [pmPageSize] : undefined}
+            hidePager={activeKpi === "pm_compliance"}
           />
         )}
+        {activeKpi === "pm_compliance" && !drilldownQ.isError && Number(drilldownQ.data?.total_count ?? 0) > 0 ? (
+          <nav className="flex items-center justify-between border-t border-gray-100 px-3 py-2 text-xs" data-testid="maint-kpi-pm-server-pager">
+            <span>{(pmPage - 1) * pmPageSize + 1}–{Math.min(pmPage * pmPageSize, Number(drilldownQ.data?.total_count ?? 0))} of {Number(drilldownQ.data?.total_count ?? 0)}</span>
+            <div className="flex gap-2">
+              <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={pmPage === 1 || drilldownQ.isFetching} onClick={() => setPmPage((value) => Math.max(1, value - 1))}>Previous</button>
+              <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={pmPage * pmPageSize >= Number(drilldownQ.data?.total_count ?? 0) || drilldownQ.isFetching} onClick={() => setPmPage((value) => value + 1)}>Next</button>
+            </div>
+          </nav>
+        ) : null}
       </section>
     </div>
   );
