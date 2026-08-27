@@ -90,6 +90,8 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
           encodeDualAckNotes(input.notes ?? null, initialDualAckState()),
         ]
       );
+      const createdTransfer = transfer.rows[0];
+      if (!createdTransfer?.id) throw new Error("E_EQUIPMENT_TRANSFER_INSERT_FAILED");
 
       await appendCrudAudit(
         client,
@@ -97,7 +99,7 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
         "mdata.equipment_transfer.initiated",
         {
           resource_type: "mdata.equipment_transfers",
-          resource_id: transfer.rows[0]?.id,
+          resource_id: createdTransfer.id,
           operating_company_id: input.operating_company_id,
           equipment_id: input.equipment_id,
           from_driver_id: input.from_driver_id,
@@ -111,9 +113,9 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
       await client.query("COMMIT");
       const dualNotes = encodeDualAckNotes(input.notes ?? null, initialDualAckState());
       return enrichTransferRow({
-        id: transfer.rows[0]?.id,
+        id: createdTransfer.id,
         status: "pending_to_confirm",
-        expires_at: transfer.rows[0]?.expires_at,
+        expires_at: createdTransfer.expires_at,
         notes: dualNotes,
       });
     } catch (error) {
