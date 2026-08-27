@@ -161,6 +161,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         user.uuid,
         "maintenance.work_order.created",
         {
+          operating_company_id: query.data.operating_company_id,
           resource_type: "maintenance.work_orders",
           resource_id: workOrderId,
           source_issue_id: params.data.issue_id,
@@ -268,6 +269,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         user.uuid,
         "safety.incident.created",
         {
+          operating_company_id: query.data.operating_company_id,
           resource_type: "safety.incidents",
           resource_id: damageReportId,
           source_issue_id: params.data.issue_id,
