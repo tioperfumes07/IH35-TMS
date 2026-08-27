@@ -136,7 +136,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await laborCodesReady(client))) return { kind: "unavailable" as const };
       const rows = await client.query(
-        `SELECT id, code, display_name, description, metadata, is_active, sort_order FROM catalogs.maintenance_labor_codes WHERE operating_company_id = $1::uuid AND is_active = true ORDER BY sort_order ASC LIMIT 200`,
+        `SELECT id, code, display_name, description, metadata, is_active, sort_order FROM catalogs.maintenance_labor_codes WHERE operating_company_id = $1::uuid AND is_active = true ORDER BY sort_order ASC, display_name ASC, id ASC`,
         [query.data.operating_company_id]
       );
       return { kind: "ok" as const, rows: rows.rows.map((row: Record<string, unknown>) => ({ ...row, rate_cents_per_hour: laborCodeRateCentsPerHour(row.metadata) })) };
