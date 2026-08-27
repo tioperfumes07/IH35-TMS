@@ -359,7 +359,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             client,
             user.uuid,
             "safety.dot_inspection.oos_spawned_wo",
-            { dot_inspection_id: inspection.id, spawned_wo_id: createdWo.woUuid },
+            { dot_inspection_id: inspection.id, operating_company_id: query.data.operating_company_id, spawned_wo_id: createdWo.woUuid },
             "warning",
             "P3-T11.17.2-SAFETY-V6.4"
           );
@@ -371,7 +371,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           client,
           user.uuid,
           "safety.dot_inspection.created",
-          { dot_inspection_id: inspection.id, outcome: inspection.outcome, csa_score_id: csaScore.id },
+          { dot_inspection_id: inspection.id, operating_company_id: query.data.operating_company_id, outcome: inspection.outcome, csa_score_id: csaScore.id },
           inspection.outcome === "OOS" ? "warning" : "info",
           "P3-T11.17.2-SAFETY-V6.4"
         );
@@ -429,7 +429,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.dot_inspection.updated",
-        { dot_inspection_id: row.id, inspection_pdf_url: pdfUrl },
+        { dot_inspection_id: row.id, operating_company_id: query.data.operating_company_id, inspection_pdf_url: pdfUrl },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );
@@ -469,7 +469,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.dot_inspection.voided",
-        { dot_inspection_id: row.id, void_reason: body.data.void_reason },
+        { dot_inspection_id: row.id, operating_company_id: query.data.operating_company_id, void_reason: body.data.void_reason },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );
