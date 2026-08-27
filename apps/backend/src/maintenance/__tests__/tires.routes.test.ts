@@ -13,6 +13,7 @@ const RECORD_ID = "22222222-2222-4222-8222-222222222222";
 const UNIT_ID = "33333333-3333-4333-8333-333333333333";
 const BRAND_ID = "44444444-4444-4444-8444-444444444444";
 const EQUIPMENT_ID = "55555555-5555-4555-8555-555555555555";
+const WORK_ORDER_ID = "66666666-6666-4666-8666-666666666666";
 
 const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
   const query = vi.fn();
@@ -169,6 +170,28 @@ describe("maintenance tire routes (B32)", () => {
     expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("FROM mdata.equipment"))).toBe(true);
   });
 
+  it("rejects a tire work-order link outside the selected company", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("FROM mdata.units")) return { rows: [{ id: UNIT_ID }] };
+      if (sql.includes("FROM maintenance.work_orders")) return { rows: [] };
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/tires/records",
+      payload: {
+        operating_company_id: COMPANY,
+        unit_id: UNIT_ID,
+        position_code: "STEER-LF",
+        work_order_id: WORK_ORDER_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "work_order_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO maintenance.tire_records"))).toBe(false);
+  });
+
   it("rejects a tractor position for a trailer before writing", async () => {
     const res = await app.inject({
       method: "POST",
@@ -184,7 +207,7 @@ describe("maintenance tire routes (B32)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("INSERT INTO maintenance.tire_events")) return { rows: [{ id: "evt-1" }] };
-      if (sql.includes("UPDATE maintenance.tire_records")) return { rows: [], rowCount: 1 };
+      if (sql.includes("UPDATE maintenance.tire_records")) return { rows: [{ id: RECORD_ID }], rowCount: 1 };
       return { rows: [sampleRecord({ position_code: "STEER-RF" })], rowCount: 1 };
     });
     const res = await app.inject({
@@ -205,7 +228,7 @@ describe("maintenance tire routes (B32)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("INSERT INTO maintenance.tire_events")) return { rows: [{ id: "evt-2" }] };
-      if (sql.includes("UPDATE maintenance.tire_records SET tread_depth_32nds")) return { rows: [], rowCount: 1 };
+      if (sql.includes("UPDATE maintenance.tire_records SET tread_depth_32nds")) return { rows: [{ id: RECORD_ID }], rowCount: 1 };
       return { rows: [sampleRecord({ tread_depth_32nds: 3 })], rowCount: 1 };
     });
     const res = await app.inject({

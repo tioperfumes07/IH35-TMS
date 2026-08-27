@@ -292,6 +292,24 @@ async function assetBelongsToCompany(
   return Boolean(result.rows[0]);
 }
 
+async function workOrderBelongsToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  companyId: string,
+  workOrderId?: string | null,
+) {
+  if (!workOrderId) return true;
+  const result = await client.query(
+    `SELECT id
+       FROM maintenance.work_orders
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND voided_at IS NULL
+      LIMIT 1`,
+    [workOrderId, companyId],
+  );
+  return Boolean(result.rows[0]);
+}
+
 export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/tires/brands", async (req, reply) => {
     const user = authed(req, reply);
@@ -412,6 +430,9 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       if (!(await assetBelongsToCompany(client, body.operating_company_id, body.unit_id, body.equipment_id))) {
         return { __error: "linked_entity_not_in_operating_company" as const };
       }
+      if (!(await workOrderBelongsToCompany(client, body.operating_company_id, body.work_order_id))) {
+        return { __error: "work_order_not_in_operating_company" as const };
+      }
       const brandName = await resolveBrandName(client, body.operating_company_id, body.brand_id, body.brand_name);
       const res = await client.query(
         `INSERT INTO maintenance.tire_records (
@@ -466,6 +487,9 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const existing = await fetchRecordById(client, body.operating_company_id, params.data.id);
       if (!existing || existing.status === "archived") return null;
+      if (!(await workOrderBelongsToCompany(client, body.operating_company_id, body.work_order_id))) {
+        return { __error: "work_order_not_in_operating_company" as const };
+      }
 
       let brandName = body.brand_name;
       if (body.brand_id !== undefined) {
@@ -504,6 +528,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       return fetchRecordById(client, body.operating_company_id, params.data.id);
     });
 
+    if (row && "__error" in row) return reply.code(400).send({ error: row.__error });
     if (!row) return reply.code(404).send({ error: "not_found" });
     return reply.send(mapTireRecordRow(row));
   });
@@ -586,6 +611,9 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const source = await fetchRecordById(client, body.operating_company_id, body.tire_record_id);
       if (!source || source.status !== "active") return null;
+      if (!(await workOrderBelongsToCompany(client, body.operating_company_id, body.work_order_id))) {
+        return { __error: "work_order_not_in_operating_company" as const };
+      }
 
       const occupant = await client.query(
         `${RECORD_SELECT}
@@ -658,6 +686,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       return fetchRecordById(client, body.operating_company_id, body.tire_record_id);
     });
 
+    if (result && "__error" in result) return reply.code(400).send({ error: result.__error });
     if (!result) return reply.code(404).send({ error: "not_found" });
     return reply.send({ record: mapTireRecordRow(result) });
   });
@@ -672,6 +701,9 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const existing = await fetchRecordById(client, body.operating_company_id, body.tire_record_id);
       if (!existing || existing.status !== "active") return null;
+      if (!(await workOrderBelongsToCompany(client, body.operating_company_id, body.work_order_id))) {
+        return { __error: "work_order_not_in_operating_company" as const };
+      }
 
       const archivedExisting = await client.query(
         `UPDATE maintenance.tire_records
@@ -732,6 +764,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       return fetchRecordById(client, body.operating_company_id, newId);
     });
 
+    if (result && "__error" in result) return reply.code(400).send({ error: result.__error });
     if (!result) return reply.code(404).send({ error: "not_found" });
     return reply.send({ record: mapTireRecordRow(result) });
   });
