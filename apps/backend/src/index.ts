@@ -390,6 +390,7 @@ import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
 import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeDepreciationAutopostCron } from "./cron/depreciation-autopost.cron.js";
+import { initializeCashFlowProjectionSnapshotCron } from "./cron/cash-flow-projection-snapshot.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
@@ -1225,6 +1226,16 @@ async function main() {
       app.log.info("[STARTUP] depreciation-autopost cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
+    }
+
+    try {
+      // CASH-FLOW-ACTUAL-VS-PROJECTED-INCOME-STRUCTURALLY-ALWAYS-ZERO — daily append-only snapshot
+      // of each company's projected income, captured before the day's loads can complete their
+      // lifecycle and retroactively zero out the live projection query.
+      initializeCashFlowProjectionSnapshotCron(app);
+      app.log.info("[STARTUP] cash-flow-projection-snapshot cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cash-flow-projection-snapshot cron failed");
     }
 
     try {

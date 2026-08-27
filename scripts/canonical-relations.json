@@ -355,6 +355,7 @@
     "fixed_assets_archived.depreciation_schedules",
     "fixed_assets_archived.disposals",
     "forecast.cash_entries",
+    "forecast.cash_flow_projection_snapshots",
     "forecast.opening_balance",
     "forecast.predicted_delivery_changes",
     "fuel.fraud_alerts",
