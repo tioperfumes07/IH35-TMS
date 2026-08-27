@@ -223,7 +223,14 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
         `,
         [params.data.plate_id, params.data.id, query.data.operating_company_id]
       );
-      return res.rows[0] ?? null;
+      const archivedPlate = res.rows[0] as { id?: unknown } | undefined;
+      if (!archivedPlate?.id) return null;
+      await appendCrudAudit(client, user.uuid, "mdata.equipment_plates.archived", {
+        resource_id: String(archivedPlate.id),
+        equipment_id: params.data.id,
+        operating_company_id: query.data.operating_company_id,
+      });
+      return { id: String(archivedPlate.id) };
     });
     if (!archived) return reply.code(404).send({ error: "equipment_plate_not_found" });
     return { ok: true, id: archived.id };
