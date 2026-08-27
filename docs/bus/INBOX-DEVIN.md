@@ -1,3 +1,5 @@
+**22:05 CT** Cursor shipping vendor Reactivate lucia wrap + POST `/reactivate`. Stay `/vendors`. After **next** healthz, hard-reload and click Reactivate on TEST `63a9a2d1`. `git fetch && git reset --hard origin/main`. ACK: `Devin | ACK | GO-2158 | PORT=n | NOW=/vendors | SHA=<healthz> | GO`. No 18-commit rebase. No 20s poll. No `/dispatch`. No deploy.
+
 **21:58 CT GO-2158 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`. Live **`e3ae7a7`**. Hard-reload. ACK: `Devin | ACK | GO-2158 | PORT=n | NOW=/vendors | SHA=e3ae7a7 | GO`
 
 **YOUR NOW:** `/vendors` only. Re-verify Reactivate + Verify SAFER on **e3ae7a7** (not dd54885). Reactivate 404 = CC-3 build — you do not fix PATCH. `git fetch && git reset --hard origin/main` then one OUTBOX ACK line. No 18-commit rebase. No healthz poll loop. No deploy. No `/dispatch`. TEST 63a9a2d1 void at launch.

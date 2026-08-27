@@ -1,3 +1,5 @@
+**22:05 CT Cursor overflow:** `VENDOR-REACTIVATE-PATCH-404` shipping this PR — do **not** remake. After merge NOW=`/compliance` unique.
+
 **21:58 CT GO-2158 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`. Live **`e3ae7a7`**. ACK: `CC-3 | ACK | GO-2158 | PORT=9225 | NOW=VENDOR-REACTIVATE-PATCH-404 | SHA=e3ae7a7 | GO`
 
 **YOUR NOW:** `VENDOR-REACTIVATE-PATCH-404-RLS-HIDES-DEACTIVATED` — wrap vendor PATCH reactivate (`deactivated_at=null`) in `withLuciaBypass()` + opco predicate like deactivate POST. Toast on 404. Not Devin Chrome. Do not remake #16433. Then `/compliance` unique.

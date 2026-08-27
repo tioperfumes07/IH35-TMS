@@ -1,3 +1,4 @@
+Cursor→Devin | Reactivate fix shipping | stay /vendors | git reset --hard origin/main | re-click after NEXT healthz | no poll | GO
 Cursor→Devin | GO-2158 | live=e3ae7a7 hard-reload | ACK | NOW=/vendors re-verify Reactivate+SAFER | reactivate 404 = CC-3 | reset --hard origin/main | no poll loop | no deploy | GO
 Cursor→Devin | REWAKE | GO-2136 | idle=defect | packet=docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md | NOW=/vendors | GO
 Cursor→DEVIN | 2026-08-26T20:43CT | GO-2024 | /vendors ONLY ACK GO-2024 | live 2ef0af5 | GO

@@ -689,7 +689,15 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const oldRes = await client.query(
+        // VENDOR-REACTIVATE-PATCH-404: vendors_select hides deactivated_at IS NOT NULL, so a
+        // Reactivate PATCH {deactivated_at:null} SELECT/UPDATE under withCurrentUser returns 0 rows → 404.
+        // withLuciaBypass GUC is a SENTINEL — entity scope is the membership IN-list + explicit opco on UPDATE.
+        const queryVendor = (sql: string, params: unknown[]) =>
+          "deactivated_at" in b
+            ? withLuciaBypass((bypassClient) => bypassClient.query(sql, params), { actorUserId: authUser.uuid })
+            : client.query(sql, params);
+
+        const oldRes = await queryVendor(
           `
             SELECT ${VENDOR_SELECT_COLUMNS}
             FROM mdata.vendors
@@ -710,7 +718,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
 
         values.push(oldRow.operating_company_id);
         const scopeIdx = values.length;
-        const res = await client.query(
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oldRow.operating_company_id]);
+        const res = await queryVendor(
           `
             UPDATE mdata.vendors
             SET ${setParts.join(", ")}
@@ -828,6 +837,77 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
     return deactivated;
+  });
+
+  app.post("/api/v1/mdata/vendors/:id/reactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const reactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      const oldRes = await withLuciaBypass(
+        (bypassClient) =>
+          bypassClient.query(
+            `
+              SELECT id, operating_company_id, deactivated_at
+              FROM mdata.vendors
+              WHERE id = $1
+                AND operating_company_id IN (
+                  SELECT uca.company_id
+                    FROM org.user_company_access uca
+                    JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+                   WHERE uca.user_id = $2::uuid
+                     AND uca.deactivated_at IS NULL
+                )
+              LIMIT 1
+            `,
+            [parsedParams.data.id, authUser.uuid]
+          ),
+        { actorUserId: authUser.uuid }
+      );
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oldRow.operating_company_id]);
+
+      let deactivatedAt = oldRow.deactivated_at as string | null;
+      const wasActive = oldRow.deactivated_at === null;
+      if (!wasActive) {
+        const res = await withLuciaBypass(
+          (bypassClient) =>
+            bypassClient.query(
+              `
+                UPDATE mdata.vendors
+                SET deactivated_at = NULL, updated_by_user_id = $2
+                WHERE id = $1
+                  AND operating_company_id = $3::uuid
+                  AND deactivated_at IS NOT NULL
+                RETURNING id, deactivated_at
+              `,
+              [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+            ),
+          { actorUserId: authUser.uuid }
+        );
+        deactivatedAt = (res.rows[0]?.deactivated_at as string | null | undefined) ?? null;
+      }
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.vendors.reactivated", {
+        resource_id: oldRow.id,
+        resource_type: "mdata.vendors",
+        was_already_active: wasActive,
+      });
+      await enqueueTmsVendorPushRequested(client, {
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
+        vendor_id: String(oldRow.id),
+        operation: "update",
+      });
+
+      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_active: wasActive };
+    });
+    if (!reactivated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
+    return reactivated;
   });
 
   app.get("/api/v1/mdata/vendors/:id/classifications", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

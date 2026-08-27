@@ -21,6 +21,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const CUSTOMERS_FILE = "apps/backend/src/mdata/customers.routes.ts";
 const VENDORS_FILE = "apps/backend/src/mdata/vendors.routes.ts";
+const DETAIL_FILE = "apps/frontend/src/pages/VendorDetail.tsx";
+const MDATA_API = "apps/frontend/src/api/mdata.ts";
 
 export function check(customersText, vendorsText) {
   const failures = [];
@@ -59,19 +61,63 @@ export function check(customersText, vendorsText) {
     failures.push(`${VENDORS_FILE} withLuciaBypass call no longer passes actorUserId for audit attribution`);
   }
 
+  const vendorsPatchIdx = vendorsText.indexOf('app.patch("/api/v1/mdata/vendors/:id"');
+  const vendorsDeactivateStart = vendorsText.indexOf('app.post("/api/v1/mdata/vendors/:id/deactivate"');
+  const vendorsPatchBlock =
+    vendorsPatchIdx >= 0
+      ? vendorsText.slice(
+          vendorsPatchIdx,
+          vendorsDeactivateStart > vendorsPatchIdx ? vendorsDeactivateStart : vendorsPatchIdx + 4000,
+        )
+      : "";
+  if (!/\? withLuciaBypass\(\(bypassClient\) => bypassClient\.query\(sql, params\)/.test(vendorsPatchBlock)) {
+    failures.push(`${VENDORS_FILE} PATCH no longer uses withLuciaBypass when body includes deactivated_at (Reactivate 404)`);
+  }
+
+  const vendorsReactivateIdx = vendorsText.indexOf("/api/v1/mdata/vendors/:id/reactivate");
+  const vendorsReactivateBlock = vendorsReactivateIdx >= 0 ? vendorsText.slice(vendorsReactivateIdx, vendorsReactivateIdx + 3500) : "";
+  if (vendorsReactivateIdx < 0) {
+    failures.push(`${VENDORS_FILE} POST /reactivate route missing`);
+  }
+  if (!/await withLuciaBypass\(/.test(vendorsReactivateBlock)) {
+    failures.push(`${VENDORS_FILE} reactivate route no longer wraps SELECT/UPDATE in withLuciaBypass()`);
+  }
+  if (!/SET deactivated_at = NULL[\s\S]*?AND operating_company_id = \$3::uuid/.test(vendorsReactivateBlock)) {
+    failures.push(`${VENDORS_FILE} reactivate UPDATE no longer clears deactivated_at with explicit operating_company_id WHERE match`);
+  }
+
+  return failures;
+}
+
+function checkFrontend(detailText, apiText) {
+  const failures = [];
+  if (!/mutationFn: \(\) => reactivateVendor\(id\)/.test(detailText)) {
+    failures.push(`${DETAIL_FILE} Reactivate is not POST reactivateVendor(id) — silent PATCH 404 will return`);
+  }
+  if (!/mutationFn: \(\) => deactivateVendor\(id\)/.test(detailText)) {
+    failures.push(`${DETAIL_FILE} Inactivate is not POST deactivateVendor(id)`);
+  }
+  if (!/export function reactivateVendor\(id: string\)/.test(apiText)) {
+    failures.push(`${MDATA_API} reactivateVendor helper missing`);
+  }
+  if (!/\/api\/v1\/mdata\/vendors\/\$\{id\}\/reactivate/.test(apiText)) {
+    failures.push(`${MDATA_API} reactivateVendor does not POST /reactivate`);
+  }
   return failures;
 }
 
 function run() {
   const customersText = fs.readFileSync(path.join(root, CUSTOMERS_FILE), "utf8");
   const vendorsText = fs.readFileSync(path.join(root, VENDORS_FILE), "utf8");
-  const failures = check(customersText, vendorsText);
+  const detailText = fs.readFileSync(path.join(root, DETAIL_FILE), "utf8");
+  const apiText = fs.readFileSync(path.join(root, MDATA_API), "utf8");
+  const failures = [...check(customersText, vendorsText), ...checkFrontend(detailText, apiText)];
   if (failures.length > 0) {
     console.error("FAIL: mdata-deactivate-rls-bypass-wrap");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("PASS: mdata.customers and mdata.vendors deactivate routes both wrap the deactivating UPDATE in withLuciaBypass() with explicit entity-scoped WHERE clauses");
+  console.log("PASS: mdata.customers and mdata.vendors deactivate+reactivate wrap writes in withLuciaBypass(); VendorDetail uses POST /deactivate and /reactivate");
 }
 
 function selftest() {
@@ -106,7 +152,34 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log("PASS(selftest): both planted regressions correctly caught; baseline clean");
+  const offenderPatch = vendorsText.replace(
+    'const queryVendor = (sql: string, params: unknown[]) =>\n          "deactivated_at" in b\n            ? withLuciaBypass((bypassClient) => bypassClient.query(sql, params), { actorUserId: authUser.uuid })\n            : client.query(sql, params);',
+    "const queryVendor = (sql: string, params: unknown[]) => client.query(sql, params);",
+  );
+  if (offenderPatch === vendorsText) {
+    console.error("FAIL(selftest): offender mutation did not change vendor PATCH queryVendor — pattern out of sync");
+    process.exit(1);
+  }
+  const failuresC = check(customersText, offenderPatch);
+  if (failuresC.length === 0) {
+    console.error("FAIL(selftest): planted offender (PATCH deactivated_at no longer lucia) was NOT caught");
+    process.exit(1);
+  }
+
+  const detailText = fs.readFileSync(path.join(root, DETAIL_FILE), "utf8");
+  const apiText = fs.readFileSync(path.join(root, MDATA_API), "utf8");
+  const offenderFe = detailText.replace("mutationFn: () => reactivateVendor(id)", "mutationFn: () => updateVendor(id, { deactivated_at: null })");
+  if (offenderFe === detailText) {
+    console.error("FAIL(selftest): offender mutation did not change VendorDetail Reactivate — pattern out of sync");
+    process.exit(1);
+  }
+  const failuresD = checkFrontend(offenderFe, apiText);
+  if (failuresD.length === 0) {
+    console.error("FAIL(selftest): planted VendorDetail PATCH reactivate was NOT caught");
+    process.exit(1);
+  }
+
+  console.log("PASS(selftest): planted regressions correctly caught; baseline clean");
 }
 
 if (process.argv.includes("--selftest")) {

@@ -9,7 +9,7 @@ import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } f
 import { listVendorCredits } from "../api/vendor-credits";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
-import { getVendor, updateVendor, listPaymentTermOptions } from "../api/mdata";
+import { getVendor, updateVendor, deactivateVendor, reactivateVendor, listPaymentTermOptions } from "../api/mdata";
 import { listCatalogAccounts } from "../api/catalog-accounts";
 import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
@@ -409,25 +409,24 @@ export function VendorDetailPage() {
   });
 
   // Soft-delete (Inactivate / Reactivate) — never hard-delete a master record.
-  // Vendors have no dedicated /deactivate route; toggle the canonical deactivated_at via PATCH.
   const inactivateVendorMutation = useMutation({
-    mutationFn: () => updateVendor(id, { deactivated_at: new Date().toISOString() }),
+    mutationFn: () => deactivateVendor(id),
     onSuccess: async () => {
       pushToast("Vendor inactivated", "success");
       await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
       await queryClient.invalidateQueries({ queryKey: ["vendors"] });
     },
-    onError: () => pushToast("Failed to inactivate vendor", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to inactivate vendor"), "error"),
   });
 
   const reactivateVendorMutation = useMutation({
-    mutationFn: () => updateVendor(id, { deactivated_at: null }),
+    mutationFn: () => reactivateVendor(id),
     onSuccess: async () => {
       pushToast("Vendor reactivated", "success");
       await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
       await queryClient.invalidateQueries({ queryKey: ["vendors"] });
     },
-    onError: () => pushToast("Failed to reactivate vendor", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to reactivate vendor"), "error"),
   });
 
   useEffect(() => {
