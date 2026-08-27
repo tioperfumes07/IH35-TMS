@@ -52,7 +52,8 @@ const KNOWN_GAPS = new Map([
   ],
 ]);
 
-const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+const strip = (s) =>
+  s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -68,7 +69,10 @@ function walk(dir, out = []) {
 }
 
 export function insertsInto(code, relation) {
-  return new RegExp(`INSERT\\s+INTO\\s+${relation.replace(".", "\\.")}\\b`, "i").test(code);
+  return new RegExp(
+    `INSERT\\s+INTO\\s+${relation.replace(".", "\\.")}\\b`,
+    "i",
+  ).test(code);
 }
 
 export function collectProblems(files) {
@@ -77,7 +81,8 @@ export function collectProblems(files) {
     const code = strip(src);
     if (!insertsInto(code, "mdata.units")) continue;
 
-    const mintsAsset = insertsInto(code, "mdata.assets") || /\bensureUnitAsset\s*\(/.test(code);
+    const mintsAsset =
+      insertsInto(code, "mdata.assets") || /\bensureUnitAsset\s*\(/.test(code);
     const listed = KNOWN_GAPS.has(rel);
 
     if (!mintsAsset && !listed) {
@@ -85,22 +90,23 @@ export function collectProblems(files) {
         `${rel}: INSERTs into mdata.units but never INSERTs into mdata.assets. A unit with no asset row ` +
           `can never be insured — insurance.policy_unit.asset_id has nothing to point at and the wizard ` +
           `resolver returns asset_not_found (FAIL-INS-POLICY-ASSET-404). Mint the asset, or add this file ` +
-          `to KNOWN_GAPS with a reason.`
+          `to KNOWN_GAPS with a reason.`,
       );
     }
     if (mintsAsset && listed) {
       problems.push(
-        `${rel}: now mints its asset — remove it from KNOWN_GAPS so the list cannot silently regrow.`
+        `${rel}: now mints its asset — remove it from KNOWN_GAPS so the list cannot silently regrow.`,
       );
     }
     if (rel === "apps/backend/src/mdata/units.routes.ts" && mintsAsset) {
-      const scopeCall = "await setScopedCompanyContext(client, authUser.uuid, resolvedLeasedId ?? resolvedOwnerId);";
-      const scopeAt = src.indexOf(scopeCall);
+      const scopeAt = src.search(
+        /await setScopedCompanyContext\(\s*client,\s*authUser\.uuid,\s*(?:resolvedLeasedId \?\? resolvedOwnerId|operatingCompanyId),?\s*\)/,
+      );
       const assetAt = src.indexOf("await ensureUnitAsset(client, {");
       if (scopeAt < 0 || assetAt < 0 || scopeAt > assetAt) {
         problems.push(
           `${rel}: canonical unit create must validate and bind the effective operating company before ` +
-            `ensureUnitAsset; mdata.assets is FORCE-RLS and otherwise rejects the live create.`
+            `ensureUnitAsset; mdata.assets is FORCE-RLS and otherwise rejects the live create.`,
         );
       }
     }
@@ -109,7 +115,10 @@ export function collectProblems(files) {
 }
 
 function readTree() {
-  return walk(DIR).map((f) => ({ rel: path.relative(root, f), src: fs.readFileSync(f, "utf8") }));
+  return walk(DIR).map((f) => ({
+    rel: path.relative(root, f),
+    src: fs.readFileSync(f, "utf8"),
+  }));
 }
 
 function selftest() {
@@ -118,12 +127,22 @@ function selftest() {
     { name: "real tree passes", files: null, expect: 0 },
     {
       name: "unit creator without asset mint is caught",
-      files: [mk("apps/backend/src/x/foo.ts", "INSERT INTO mdata.units (a) VALUES ($1)")],
+      files: [
+        mk(
+          "apps/backend/src/x/foo.ts",
+          "INSERT INTO mdata.units (a) VALUES ($1)",
+        ),
+      ],
       expectAtLeast: 1,
     },
     {
       name: "unit creator that mints passes",
-      files: [mk("apps/backend/src/x/foo.ts", "INSERT INTO mdata.units (a) VALUES ($1); INSERT INTO mdata.assets (b) VALUES ($2)")],
+      files: [
+        mk(
+          "apps/backend/src/x/foo.ts",
+          "INSERT INTO mdata.units (a) VALUES ($1); INSERT INTO mdata.assets (b) VALUES ($2)",
+        ),
+      ],
       expect: 0,
     },
     {
@@ -133,31 +152,52 @@ function selftest() {
     },
     {
       name: "commented-out insert does not count",
-      files: [mk("apps/backend/src/x/baz.ts", "// INSERT INTO mdata.units (a)\nconst a = 1;")],
+      files: [
+        mk(
+          "apps/backend/src/x/baz.ts",
+          "// INSERT INTO mdata.units (a)\nconst a = 1;",
+        ),
+      ],
       expect: 0,
     },
     {
       name: "stale KNOWN_GAPS entry is caught",
-      files: [mk("apps/backend/src/seed/csv-seed-import.ts", "INSERT INTO mdata.units (a); INSERT INTO mdata.assets (b)")],
+      files: [
+        mk(
+          "apps/backend/src/seed/csv-seed-import.ts",
+          "INSERT INTO mdata.units (a); INSERT INTO mdata.assets (b)",
+        ),
+      ],
       expectAtLeast: 1,
     },
     {
       name: "real route without company context before asset mint is caught",
-      files: readTree().map((file) => file.rel === "apps/backend/src/mdata/units.routes.ts"
-        ? { ...file, src: file.src.replace(
-            "await setScopedCompanyContext(client, authUser.uuid, resolvedLeasedId ?? resolvedOwnerId);",
-            "// planted defect: missing company context"
-          ) }
-        : file),
+      files: readTree().map((file) =>
+        file.rel === "apps/backend/src/mdata/units.routes.ts"
+          ? {
+              ...file,
+              src: file.src.replace(
+                /await setScopedCompanyContext\(\s*client,\s*authUser\.uuid,\s*operatingCompanyId,?\s*\);/,
+                "// planted defect: missing company context",
+              ),
+            }
+          : file,
+      ),
       expectAtLeast: 1,
     },
   ];
   let pass = 0;
   for (const c of cases) {
     const problems = collectProblems(c.files ?? readTree());
-    const ok = c.expect === 0 ? problems.length === 0 : problems.length >= (c.expectAtLeast ?? 1);
+    const ok =
+      c.expect === 0
+        ? problems.length === 0
+        : problems.length >= (c.expectAtLeast ?? 1);
     if (ok) pass += 1;
-    else console.error(`  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`);
+    else
+      console.error(
+        `  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`,
+      );
   }
   console.log(`${LABEL} selftest ${pass}/${cases.length}`);
   return pass === cases.length ? 0 : 1;
@@ -176,7 +216,8 @@ function main() {
     return 1;
   }
   console.log(`${LABEL}: ok`);
-  for (const [file, reason] of KNOWN_GAPS) console.log(`  KNOWN GAP (must shrink) — ${file}\n      ${reason}`);
+  for (const [file, reason] of KNOWN_GAPS)
+    console.log(`  KNOWN GAP (must shrink) — ${file}\n      ${reason}`);
   return 0;
 }
 

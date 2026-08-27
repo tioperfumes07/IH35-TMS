@@ -1,3 +1,5 @@
+**05:21 CT GO-0521 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. `/vendors` only. When healthz leaves `13604db`, hard-reload; Reactivate TEST `63a9a2d1`. `git fetch && git reset --hard origin/main`. ACK: `Devin | ACK | GO-0521 | NOW=/vendors | SHA=<healthz> | GO`. No rebase 18 commits. No deploy. Not PARKED.
+
 **22:05 CT** Cursor shipping vendor Reactivate lucia wrap + POST `/reactivate`. Stay `/vendors`. After **next** healthz, hard-reload and click Reactivate on TEST `63a9a2d1`. `git fetch && git reset --hard origin/main`. ACK: `Devin | ACK | GO-2158 | PORT=n | NOW=/vendors | SHA=<healthz> | GO`. No 18-commit rebase. No 20s poll. No `/dispatch`. No deploy.
 
 **21:58 CT GO-2158 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`. Live **`e3ae7a7`**. Hard-reload. ACK: `Devin | ACK | GO-2158 | PORT=n | NOW=/vendors | SHA=e3ae7a7 | GO`

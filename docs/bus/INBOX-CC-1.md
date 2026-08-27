@@ -1,3 +1,5 @@
+**05:21 CT GO-0521 — THIS IS NOW.** Owner: 2h launch drain. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. API deploy IN FLIGHT `dep-da810bgae00c73ade7gg` tip **`168257680f`** — nobody second-kicks. ACK: `CC-1 | ACK | GO-0521 | PORT=9223 | NOW=57cabbab-or-escrow | SHA=<healthz> | GO`. Serial money. Never `trigger_deploy`. Never restamp U14.
+
 **21:58 CT GO-2158.** Live **`e3ae7a7`**. ACK GO-2158. NOW=escrow residual then DEADHEAD then VENDOR-OPEN-BALANCE draft bills. Prove USMCA flags ON. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`.
 
 **21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-2136 | PORT=9223 | NOW=escrow-residual | GO`
