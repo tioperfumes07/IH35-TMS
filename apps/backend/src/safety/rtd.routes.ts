@@ -445,6 +445,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1::uuid
             AND id = $2
             AND voided_at IS NULL
+            AND stage = $14::safety.rtd_stage_enum
           RETURNING
             id::text,
             operating_company_id::text,
@@ -477,9 +478,13 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
           body.data.training_records_url ?? null,
           clearinghouseUpdated,
           closedAt,
+          current.stage,
         ]
       );
       const row = res.rows[0];
+      if (!row) {
+        throw Object.assign(new Error("concurrent_transition"), { code: "E_RTD_CONCURRENT_TRANSITION" });
+      }
       await appendCrudAudit(
         client,
         user.uuid,
@@ -517,6 +522,13 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
         reply.code(422).send({
           error: error.code,
           message: "Clearinghouse update is required before RTD case can complete.",
+        });
+        return null;
+      }
+      if (error.code === "E_RTD_CONCURRENT_TRANSITION") {
+        reply.code(409).send({
+          error: error.code,
+          message: "RTD case changed while this transition was being saved. Reload and retry.",
         });
         return null;
       }
