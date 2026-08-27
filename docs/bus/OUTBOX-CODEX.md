@@ -1467,3 +1467,4 @@ Codex | SHIPPED | MAINT-F6889 | PR=#16741 @ d54125cd1d | Built=maintenance+dispa
 Codex | WORKING | MAINT-F6890 | Built=maintenance KPI PM-compliance exact range | guard=6/6 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6890 | PR=#16743 @ cb8c793645 | Built=maintenance KPI PM-compliance exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6891 | GO
 Codex | WORKING | MAINT-F6891 | Built=maintenance KPI downtime+MTBF+CPM+cost-per-truck exact ranges | NEXT=root fix+guard | GO
+Codex | LIVE PASS | GO-1331 | SHA=4b859b7 | MAINT F6884–F6892: assignments 4/4 · vendor WO+invoice histories 0/0 · tire events USMCA-001 0/0 · 425C audit ledger rendered · arriving-soon full table 0/0 with dashboard disclosure 5/15 · KPI downtime 3/3 + PM compliance 0/0 · reports cost-per-unit 6/6 + XLSX · no 500/dead/silent | NEXT=next named silent-cap | GO
