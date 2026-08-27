@@ -42,6 +42,7 @@ export type DriverAppAccessError =
   | "driver_not_found"
   | "driver_no_contact_method"
   | "driver_company_unresolved"
+  | "driver_app_access_state_changed"
   | "identity_user_conflict_credentials";
 
 export type DriverAppAccessResult =
@@ -194,7 +195,7 @@ export async function ensureDriverAppAccess(
 
   // COALESCE on email/phone so re-inviting a driver never ERASES a contact detail the user record
   // already had and the driver row happens to be missing.
-  await client.query(
+  const identityRes = await client.query<{ id: string }>(
     `
       UPDATE identity.users
          SET role = 'Driver',
@@ -203,11 +204,19 @@ export async function ensureDriverAppAccess(
              email = COALESCE($4, email),
              deactivated_at = NULL
        WHERE id = $1::uuid
+         AND (role IS DISTINCT FROM 'Driver'
+           OR default_company_id IS NULL
+           OR ($3::text IS NOT NULL AND phone IS DISTINCT FROM $3)
+           OR ($4::text IS NOT NULL AND email IS DISTINCT FROM $4)
+           OR deactivated_at IS NOT NULL)
+      RETURNING id::text AS id
     `,
     [identityUserId, operatingCompanyId, phone, email]
   );
 
-  await client.query(
+  // Preserve the original grant actor/time for active access. A resend is not a new grant. Only an
+  // insert or a real reactivation may replace grant provenance and receive an access-granted audit.
+  const accessRes = await client.query<{ user_id: string }>(
     `
       INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id, deactivated_at, granted_at)
       VALUES ($1::uuid, $2::uuid, $3::uuid, NULL, now())
@@ -215,6 +224,8 @@ export async function ensureDriverAppAccess(
       DO UPDATE SET deactivated_at = NULL,
                     granted_by_user_id = EXCLUDED.granted_by_user_id,
                     granted_at = now()
+            WHERE org.user_company_access.deactivated_at IS NOT NULL
+      RETURNING user_id::text AS user_id
     `,
     [identityUserId, operatingCompanyId, actorUserId]
   );
@@ -226,33 +237,42 @@ export async function ensureDriverAppAccess(
              updated_at = now()
        WHERE id = $1::uuid
          AND identity_user_id IS DISTINCT FROM $2::uuid
+         AND operating_company_id = $3::uuid
+         AND deactivated_at IS NULL
       RETURNING id::text AS id
     `,
-    [driverId, identityUserId]
+    [driverId, identityUserId, operatingCompanyId]
   );
+  if (driver.identity_user_id !== identityUserId && !linkRes.rows[0]) {
+    return { ok: false, error: "driver_app_access_state_changed" };
+  }
 
   // AUDIT AT THE POINT OF CHANGE. This function can CREATE a login, GRANT company access and re-link a
   // driver — an access-control mutation. The invite routes audit the invite; that is a different fact.
   // An auditor asking "who gave this driver a login, and when" must find the answer here, on the
   // mutation itself, not inferred from a notification that may never have been sent.
-  await appendCrudAudit(
-    client as Parameters<typeof appendCrudAudit>[0],
-    actorUserId,
-    "mdata.driver.app_access_granted",
-    {
-      resource_type: "mdata.drivers",
-      resource_id: driverId,
-      driver_id: driverId,
-      identity_user_id: identityUserId,
-      operating_company_id: operatingCompanyId,
-      created_identity_user: createdUser,
-      linked_driver: linkRes.rows.length > 0,
-      matched_on: email ? "email_or_phone" : "phone",
-    },
-    // warning, not info: creating a login and granting company access is a privilege change.
-    "warning",
-    "BT-3-DRIVER-ONBOARDING"
-  );
+  if (createdUser || identityRes.rows.length > 0 || accessRes.rows.length > 0 || linkRes.rows.length > 0) {
+    await appendCrudAudit(
+      client as Parameters<typeof appendCrudAudit>[0],
+      actorUserId,
+      "mdata.driver.app_access_granted",
+      {
+        resource_type: "mdata.drivers",
+        resource_id: driverId,
+        driver_id: driverId,
+        identity_user_id: identityUserId,
+        operating_company_id: operatingCompanyId,
+        created_identity_user: createdUser,
+        identity_updated_or_reactivated: identityRes.rows.length > 0,
+        company_access_inserted_or_reactivated: accessRes.rows.length > 0,
+        linked_driver: linkRes.rows.length > 0,
+        matched_on: email ? "email_or_phone" : "phone",
+      },
+      // warning, not info: creating/reactivating a login or granting company access is a privilege change.
+      "warning",
+      "BT-3-DRIVER-ONBOARDING"
+    );
+  }
 
   return {
     ok: true,
