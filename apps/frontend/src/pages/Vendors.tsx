@@ -202,15 +202,6 @@ export function VendorsPage() {
     companyId,
     enabled: Boolean(companyId),
   });
-  // ACCT-F5793 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
-  // total is that tab's own authoritative server COUNT, picked per listStatus (mirrors ACCT-F5792's
-  // identical fix for Customers.tsx). Byte-for-byte the same active-only total for every other tab.
-  const vendorsServerTotal =
-    listStatus === "inactive"
-      ? inactiveVendorsQuery.data?.total ?? 0
-      : listStatus === "all"
-        ? (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
-        : vendorsQuery.data?.total ?? 0;
   const balancesQuery = useQuery({
     queryKey: ["accounting", "vendor-balances", companyId],
     queryFn: () => listVendorBalances(companyId, { all: true }),
@@ -288,6 +279,27 @@ export function VendorsPage() {
     }),
     [fullVendorsRoster, categoryFilter, vendorTypes]
   );
+
+  // ACCT-F5793 — PAGER-SERVERTOTAL-01 still holds (never derive from .length) wherever a server COUNT
+  // exists: each tab's pager total is that tab's own authoritative server COUNT, picked per listStatus
+  // (mirrors ACCT-F5792's identical fix for Customers.tsx). VENDORS-BY-CATEGORY-PAGER-TOTAL-STUCK-ACTIVE-ONLY:
+  // "by-category" fell through to the plain active-only branch below, so with no vendor-type selected the
+  // tab's OWN label ("By Category (124)", from vendorTabCounts.byCategory) and its body pager ("1-50 of
+  // 113") disagreed on the same screen — the 11 real inactive vendors were unreachable via pagination on
+  // this tab even though visibleVendors (no categoryFilter branch) already includes them. With no
+  // categoryFilter, by-category shows the same merged roster as "all" (a real server COUNT exists for
+  // that). With a categoryFilter, there is no server-side category COUNT, so fall back to the same
+  // clientside vendorTabCounts.byCategory the tab label itself already uses — never a fresh divergent count.
+  const vendorsServerTotal =
+    listStatus === "inactive"
+      ? inactiveVendorsQuery.data?.total ?? 0
+      : listStatus === "all"
+        ? (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
+        : listStatus === "by-category"
+          ? categoryFilter
+            ? vendorTabCounts.byCategory
+            : (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
+          : vendorsQuery.data?.total ?? 0;
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
