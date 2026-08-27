@@ -1,3 +1,5 @@
+**17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK: `Codex | ACK | GO-1750 | PORT=9226 | NOW=/customers | SHA=88a6e98 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never steal `57cabbab`. Never restamp U14 customers/drivers/fleet. **YOUR NOW:** `/customers` then `/drivers` then `/fleet` unique leftover; then `/fuel` `/eld`. Confirm CURRENT-LAW in packet.
+
 **17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. `/customers` `/drivers` `/fleet` then `/fuel` `/eld`. Hard-reload. Create TEST. **Do not void.** ACK `Codex | ACK | GO-1722 | PORT=9226 | NOW=/customers | SHA=88a6e98 | GO`.
 
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create TEST customers/drivers if needed — **permission granted**. **Do not void until launch.** `/customers` `/drivers` `/fleet` then NEXT `/fuel` `/eld`. ACK `Codex | ACK | GO-1655 | PORT=9226 | NOW=/customers | SHA=<healthz> | GO`.
