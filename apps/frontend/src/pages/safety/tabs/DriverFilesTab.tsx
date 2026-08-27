@@ -11,19 +11,25 @@ import { TrainingTable } from "../components/TrainingTable";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { Button } from "../../../components/Button";
 
 export function DriverFilesTab() {
   const [driverId, setDriverId] = useState<string | null>(null);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const trainingPageSize = 25;
+  const [trainingPage, setTrainingPage] = useState(1);
+  useEffect(() => setTrainingPage(1), [companyId]);
   // DQF connectivity: driver training completions are part of the Driver Qualification File —
   // surface them on the Driver Files landing tab (they were previously only reachable via the
   // unlinked /safety/training/records URL).
   const trainingQuery = useQuery({
-    queryKey: ["safety", "training", companyId],
-    queryFn: () => getTrainingCompletions(companyId),
+    queryKey: ["safety", "training", companyId, trainingPage],
+    queryFn: () => getTrainingCompletions(companyId, { limit: trainingPageSize, offset: (trainingPage - 1) * trainingPageSize }),
     enabled: Boolean(companyId),
   });
+  const trainingTotal = trainingQuery.isError ? 0 : trainingQuery.data?.total_count ?? 0;
+  const trainingPageCount = Math.max(1, Math.ceil(trainingTotal / trainingPageSize));
   // SM3: consume the shared Safety layout UI context so the driver-files landing finally FEEDS the
   // orphaned Activity-window / Status filter + counter bar (previously only the deprecated v5 shell did).
   const { filter, activityWindow, setDriverCounts, clearDriverCounts } = useSafetyUiContext();
@@ -70,8 +76,13 @@ export function DriverFilesTab() {
                 />
               </div>
             ) : (
-              <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
+              <TrainingTable rows={trainingQuery.data?.training_completions ?? []} hidePager />
             )}
+            {!trainingQuery.isError && trainingTotal > trainingPageSize ? <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-files-training-server-pager">
+              <Button size="sm" variant="secondary" disabled={trainingPage <= 1 || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.max(1, current - 1))}>Previous training</Button>
+              <span className="text-slate-600">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
+              <Button size="sm" variant="secondary" disabled={trainingPage >= trainingPageCount || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.min(trainingPageCount, current + 1))}>Next training</Button>
+            </div> : null}
           </div>
         </>
       )}

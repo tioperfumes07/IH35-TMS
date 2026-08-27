@@ -136,6 +136,8 @@ export function DriverSafetyReverseSection({
   const [complaintPage, setComplaintPage] = useState(1);
   const hosViolationPageSize = 25;
   const [hosViolationPage, setHosViolationPage] = useState(1);
+  const trainingPageSize = 25;
+  const [trainingPage, setTrainingPage] = useState(1);
   useEffect(() => {
     setInspectionPage(1);
     setAccidentPage(1);
@@ -143,6 +145,7 @@ export function DriverSafetyReverseSection({
     setInternalFinePage(1);
     setComplaintPage(1);
     setHosViolationPage(1);
+    setTrainingPage(1);
   }, [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
@@ -198,8 +201,8 @@ export function DriverSafetyReverseSection({
   });
 
   const trainingQuery = useQuery({
-    queryKey: ["safety", "reverse", "training-records", operatingCompanyId, driverId],
-    queryFn: () => getTrainingCompletions(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["safety", "reverse", "training-records", operatingCompanyId, driverId, trainingPage],
+    queryFn: () => getTrainingCompletions(operatingCompanyId, { driver_id: driverId, limit: trainingPageSize, offset: (trainingPage - 1) * trainingPageSize }),
     enabled,
   });
 
@@ -228,6 +231,8 @@ export function DriverSafetyReverseSection({
   const accidentTotal = accidentsQuery.isError ? 0 : accidentsQuery.data?.total_count ?? 0;
   const accidentPageCount = Math.max(1, Math.ceil(accidentTotal / accidentPageSize));
   const trainingRecords: Row[] = trainingQuery.isError ? [] : trainingQuery.data?.training_completions ?? [];
+  const trainingTotal = trainingQuery.isError ? 0 : trainingQuery.data?.total_count ?? 0;
+  const trainingPageCount = Math.max(1, Math.ceil(trainingTotal / trainingPageSize));
   const hosViolations: Row[] = hosViolationsQuery.isError ? [] : hosViolationsQuery.data?.hos_violations ?? [];
   const hosViolationTotal = hosViolationsQuery.isError ? 0 : hosViolationsQuery.data?.total_count ?? 0;
   const hosViolationPageCount = Math.max(1, Math.ceil(hosViolationTotal / hosViolationPageSize));
@@ -267,7 +272,7 @@ export function DriverSafetyReverseSection({
         errorText="Failed to load this driver's training records."
         onRetry={() => void trainingQuery.refetch()}
         emptyText="No training records for this driver."
-        count={trainingRecords.length}
+        count={trainingTotal}
       >
         {trainingRecords.map((record) => (
           <li key={s(record.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -281,6 +286,13 @@ export function DriverSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!trainingQuery.isError && trainingTotal > trainingPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-training-records-pager">
+          <Button size="sm" variant="secondary" disabled={trainingPage <= 1 || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.max(1, current - 1))}>Previous training</Button>
+          <span className="text-slate-600">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
+          <Button size="sm" variant="secondary" disabled={trainingPage >= trainingPageCount || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.min(trainingPageCount, current + 1))}>Next training</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="Accidents"

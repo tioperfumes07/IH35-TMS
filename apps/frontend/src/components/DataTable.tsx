@@ -57,6 +57,8 @@ type DataTableProps<T> = {
   errorState?: DataTableErrorState;
   /** Override the default "No records found." message shown for a settled, zero-row table. Additive. */
   emptyText?: string;
+  /** Server-ranged consumers render their own authoritative pager. */
+  hidePager?: boolean;
 };
 
 export function DataTable<T>({
@@ -69,6 +71,7 @@ export function DataTable<T>({
   onRowClick,
   errorState,
   emptyText = "No records found.",
+  hidePager = false,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -234,7 +237,7 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
+      {!hidePager ? <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
         <div className="flex items-center gap-2">
           <span>
             {inError
@@ -279,7 +282,7 @@ export function DataTable<T>({
             Next
           </button>
         </div>
-      </div>
+      </div> : null}
     </div>
   );
 }

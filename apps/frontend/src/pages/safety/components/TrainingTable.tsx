@@ -8,14 +8,16 @@ import { formatDateUS } from "../../../lib/formatDate";
 type Row = Record<string, unknown>;
 type Props = {
   rows: Row[];
+  hidePager?: boolean;
 };
 
-export function TrainingTable({ rows }: Props) {
+export function TrainingTable({ rows, hidePager = false }: Props) {
   return (
     <DataTable<Row>
       rows={rows}
       rowKey={(row) => String(row.id)}
       tableKey="safety-training"
+      hidePager={hidePager}
       columns={[
         { key: "completed_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.completed_at ?? row.due_at) },
         {
