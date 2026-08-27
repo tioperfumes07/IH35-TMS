@@ -36,6 +36,8 @@ const companyQuerySchema = z.object({
 const tempAssignmentsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(300).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const dateRangeQuerySchema = companyQuerySchema.extend({
@@ -440,16 +442,23 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
             LIMIT 1`,
           [parsed.data.driver_id, parsed.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false, assignments: [] };
+        if (!parent.rows[0]) return { found: false, assignments: [], totalCount: 0 };
       }
-      const assignments = await listTempAssignments(client, parsed.data.operating_company_id, {
+      const page = await listTempAssignments(client, parsed.data.operating_company_id, {
         driverId: parsed.data.driver_id,
         unitId: parsed.data.unit_id,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
       });
-      return { found: true, assignments };
+      return { found: true, ...page };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { assignments: result.assignments };
+    return {
+      assignments: result.assignments,
+      total_count: result.totalCount,
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+    };
   });
 
   app.post("/api/v1/safety/scheduler/temp-assignments", async (req, reply) => {
