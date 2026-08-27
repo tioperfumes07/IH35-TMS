@@ -8,6 +8,10 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
+const historyQuerySchema = companyQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+});
 
 export const INTERNAL_CSA_SOURCE_METADATA = {
   system: "ih35_safety",
@@ -152,16 +156,23 @@ export async function registerSafetyCsaScoresRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/csa-scores", async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = historyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1::uuid ORDER BY period_end DESC LIMIT 50`,
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count FROM safety.csa_scores WHERE operating_company_id = $1::uuid`,
         [query.data.operating_company_id]
       );
-      return res.rows.map((row: Record<string, unknown>) => ({ ...row, basic_hazmat: null }));
+      const res = await client.query(
+        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1::uuid ORDER BY period_end DESC LIMIT $2 OFFSET $3`,
+        [query.data.operating_company_id, query.data.limit, query.data.offset]
+      );
+      return {
+        rows: res.rows.map((row: Record<string, unknown>) => ({ ...row, basic_hazmat: null })),
+        total_count: Number(countRes.rows[0]?.total_count ?? 0),
+      };
     });
-    return { csa_scores: rows, source: INTERNAL_CSA_SOURCE_METADATA };
+    return { csa_scores: rows.rows, total_count: rows.total_count, source: INTERNAL_CSA_SOURCE_METADATA };
   });
 
   app.get("/api/v1/safety/csa-scores/current", async (req, reply) => {

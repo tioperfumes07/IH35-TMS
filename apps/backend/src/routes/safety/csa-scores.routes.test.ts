@@ -78,6 +78,28 @@ describe("safety CSA source-honesty routes", () => {
     });
   });
 
+  it("returns an exact company total and forwards the requested history range", async () => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("count(*)::int AS total_count")) return { rows: [{ total_count: 137 }] };
+      if (sql.includes("ORDER BY period_end DESC LIMIT $2 OFFSET $3")) {
+        expect(values).toEqual([COMPANY_A, 25, 50]);
+        return { rows: [{ id: "score-page", basic_hazmat: 88 }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/safety/csa-scores?operating_company_id=${COMPANY_A}&limit=25&offset=50`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      csa_scores: [{ id: "score-page", basic_hazmat: null }],
+      total_count: 137,
+    });
+  });
+
   it("checks membership and scopes each tenant request independently", async () => {
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM safety.csa_scores")) {

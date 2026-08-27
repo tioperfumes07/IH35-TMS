@@ -21,7 +21,7 @@
  *    control is wired to it. ParityTable's CSV export (real rendered rows) is offered instead.
  * Those claims are stated as "not yet available" rather than faked.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -33,6 +33,7 @@ import {
   type SafetyReportRollupRow,
 } from "../../../api/safety";
 import { getCurrentCsaScore, listCsaScores } from "../../../api/safetyV64";
+import { CsaHistoryPager } from "../../../components/safety/CsaHistoryPager";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -67,6 +68,7 @@ export default function SafetyReportsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const enabled = Boolean(companyId);
+  const [csaHistoryPage, setCsaHistoryPage] = useState(1);
 
   const currentCsaQuery = useQuery({
     queryKey: ["saf-b31", "csa-current", companyId],
@@ -75,8 +77,8 @@ export default function SafetyReportsPage() {
   });
 
   const csaHistoryQuery = useQuery({
-    queryKey: ["saf-b31", "csa-history", companyId],
-    queryFn: () => listCsaScores(companyId),
+    queryKey: ["saf-b31", "csa-history", companyId, csaHistoryPage],
+    queryFn: () => listCsaScores(companyId, { limit: 50, offset: (csaHistoryPage - 1) * 50 }),
     enabled,
   });
 
@@ -94,6 +96,8 @@ export default function SafetyReportsPage() {
 
   const current = currentCsaQuery.data?.current ?? null;
   const cleanRate = cleanRateQuery.data ?? null;
+
+  useEffect(() => setCsaHistoryPage(1), [companyId]);
 
   const csaColumns = useMemo<Array<ParityColumn<CsaScoreRow>>>(
     () => [
@@ -253,8 +257,20 @@ export default function SafetyReportsPage() {
             storageKey="saf-b31-csa-history"
             exportFilename="safety-csa-period-history"
             tableTestId="safety-reports-csa-table"
+            pageSize={50}
+            hidePager
           />
         )}
+        {!csaHistoryQuery.isError ? (
+          <CsaHistoryPager
+            page={csaHistoryPage}
+            pageSize={50}
+            totalCount={csaHistoryQuery.data?.total_count ?? 0}
+            fetching={csaHistoryQuery.isFetching}
+            onPageChange={setCsaHistoryPage}
+            testId="safety-reports-csa-server-pager"
+          />
+        ) : null}
       </section>
 
       <section className="space-y-2">
