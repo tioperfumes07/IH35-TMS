@@ -5,6 +5,7 @@ import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import {
   EMPTY_LEGAL_MATTER_FORM,
@@ -44,7 +45,11 @@ export function LegalMatterNewPage() {
               Save
             </Button>
           </div>
-          {createMut.isError ? <p className="text-sm text-red-600">Could not create matter.</p> : null}
+          {createMut.isError ? (
+            <p className="text-sm text-red-600">
+              {userFacingApiError(createMut.error, "Could not create matter.")}
+            </p>
+          ) : null}
         </div>
       )}
     </div>
