@@ -2239,7 +2239,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at, identity_user_id, status
+          SELECT id, operating_company_id, deactivated_at, identity_user_id, status
           FROM mdata.drivers
           WHERE id = $1
             AND operating_company_id IN (
@@ -2255,31 +2255,27 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+      if (oldRow.deactivated_at !== null) return { error: "mdata_driver_already_deactivated" as const };
 
-      let deactivatedAt = oldRow.deactivated_at as string | null;
-      let newStatus = oldRow.status as string | null;
-      let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
-      if (!wasAlreadyDeactivated) {
-        // Set status -> 'Inactive' in the SAME update as deactivated_at. Every UI surface
-        // (badge, Status field, Active/Inactive tab filter) reads the text `status` column, not
-        // deactivated_at — so writing only deactivated_at left drivers reading "Active" forever.
-        // Preserve a 'Terminated' status (a stronger, deliberate end-state) rather than downgrade it.
-        const res = await client.query(
-          `
-            UPDATE mdata.drivers
-            SET deactivated_at = now(),
-                status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
-                updated_by_user_id = $2
-            WHERE id = $1
-              AND deactivated_at IS NULL
-            RETURNING id, deactivated_at, status
-          `,
-          [parsedParams.data.id, authUser.uuid]
-        );
-        deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
-        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
-        wasAlreadyDeactivated = false;
-      }
+      // Set status -> 'Inactive' in the SAME update as deactivated_at. Every UI surface
+      // (badge, Status field, Active/Inactive tab filter) reads the text `status` column, not
+      // deactivated_at — so writing only deactivated_at left drivers reading "Active" forever.
+      // Preserve a 'Terminated' status (a stronger, deliberate end-state) rather than downgrade it.
+      const res = await client.query(
+        `
+          UPDATE mdata.drivers
+          SET deactivated_at = now(),
+              status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
+              updated_by_user_id = $2
+          WHERE id = $1
+            AND operating_company_id = $3::uuid
+            AND deactivated_at IS NULL
+          RETURNING id, deactivated_at, status
+        `,
+        [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+      );
+      const changedRow = res.rows[0] ?? null;
+      if (!changedRow) return { error: "mdata_driver_state_changed" as const };
 
       const identityUserId = oldRow.identity_user_id as string | null;
       if (identityUserId) {
@@ -2313,12 +2309,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, authUser.uuid, "mdata.drivers.deactivated", {
         resource_id: oldRow.id,
         resource_type: "mdata.drivers",
-        was_already_deactivated: wasAlreadyDeactivated,
+        operating_company_id: oldRow.operating_company_id,
       });
 
-      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
+      return { id: oldRow.id, deactivated_at: changedRow.deactivated_at, status: changedRow.status, was_already_deactivated: false };
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    if ("error" in deactivated) return reply.code(409).send({ error: deactivated.error });
     return deactivated;
   });
 
@@ -2334,7 +2331,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const reactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at, identity_user_id, status
+          SELECT id, operating_company_id, deactivated_at, identity_user_id, status
           FROM mdata.drivers
           WHERE id = $1
             AND operating_company_id IN (
@@ -2350,26 +2347,26 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+      if (oldRow.status === "Terminated") return { error: "mdata_driver_terminated" as const };
+      if (oldRow.deactivated_at === null) return { error: "mdata_driver_already_active" as const };
 
-      let deactivatedAt = oldRow.deactivated_at as string | null;
-      let newStatus = oldRow.status as string | null;
-      const wasInactive = oldRow.deactivated_at !== null && oldRow.status !== "Terminated";
-      if (wasInactive) {
-        const res = await client.query(
-          `UPDATE mdata.drivers
-              SET deactivated_at = NULL,
-                  status = 'Active'::mdata.driver_status,
-                  updated_by_user_id = $2
-            WHERE id = $1 AND deactivated_at IS NOT NULL AND status <> 'Terminated'
-            RETURNING id, deactivated_at, status`,
-          [parsedParams.data.id, authUser.uuid]
-        );
-        deactivatedAt = (res.rows[0]?.deactivated_at as string | null) ?? null;
-        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
-      }
+      const res = await client.query(
+        `UPDATE mdata.drivers
+            SET deactivated_at = NULL,
+                status = 'Active'::mdata.driver_status,
+                updated_by_user_id = $2
+          WHERE id = $1
+            AND operating_company_id = $3::uuid
+            AND deactivated_at IS NOT NULL
+            AND status <> 'Terminated'
+          RETURNING id, deactivated_at, status`,
+        [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+      );
+      const changedRow = res.rows[0] ?? null;
+      if (!changedRow) return { error: "mdata_driver_state_changed" as const };
 
       const identityUserId = oldRow.identity_user_id as string | null;
-      if (wasInactive && identityUserId) {
+      if (identityUserId) {
         const identityRes = await client.query<{ deactivated_at: string | null }>(
           `UPDATE identity.users SET deactivated_at = NULL WHERE id = $1 AND deactivated_at IS NOT NULL RETURNING deactivated_at`,
           [identityUserId]
@@ -2389,12 +2386,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, authUser.uuid, "mdata.drivers.reactivated", {
         resource_id: oldRow.id,
         resource_type: "mdata.drivers",
-        was_inactive: wasInactive,
+        operating_company_id: oldRow.operating_company_id,
       });
 
-      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_inactive: wasInactive };
+      return { id: oldRow.id, deactivated_at: changedRow.deactivated_at, status: changedRow.status, was_inactive: true };
     });
     if (!reactivated) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    if ("error" in reactivated) return reply.code(409).send({ error: reactivated.error });
     return reactivated;
   });
 
