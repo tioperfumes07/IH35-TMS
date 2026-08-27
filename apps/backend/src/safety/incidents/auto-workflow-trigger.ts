@@ -278,6 +278,7 @@ export async function triggerIncidentAutoWorkflow(
     actorUserId,
     "safety.incident.auto_workflow_triggered",
     {
+      operating_company_id: input.operating_company_id,
       resource_type: "safety.incidents",
       resource_id: input.incident_id,
       incident_type: input.type,
