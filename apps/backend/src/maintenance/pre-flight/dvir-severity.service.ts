@@ -195,6 +195,7 @@ export async function setSeverity(
     args.userId,
     "safety.dvir.severity_override",
     {
+      operating_company_id: args.operatingCompanyId,
       resource_type: "safety.dvir_defect_severity_tags",
       resource_id: tag.id,
       dvir_defect_id: args.defectId,
