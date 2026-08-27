@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveInternalWalletBalanceCents,
+  sumAuthoritativeDepositoryCashCents,
   withInternalWalletBalances,
   withInternalWalletTileBalances,
 } from "./internal-wallet-balance.js";
@@ -96,5 +97,48 @@ describe("internal-wallet-balance", () => {
     expect(result[0]?.current_balance).toBe(-153933.67);
     expect(result[1]?.current_balance).toBe(500);
     expect(result[2]?.current_balance).toBe(5.38);
+  });
+
+  // BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: sumAuthoritativeDepositoryCashCents used to swallow both of its
+  // internal queries with `.catch(() => ({ rows: [{ ... : 0 }] }))`, so a real DB failure silently
+  // became "$0 depository cash" -- a number indistinguishable from an actually-empty account, fed
+  // into the /banking KPI strip, /cash-flow opening cash, and /accounts/all at once. It must now fail
+  // loud (reject) instead of resolving to a masked zero.
+  it("BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: rejects instead of masking a failed Plaid-depository query as $0", async () => {
+    const client = {
+      async query(sql: string) {
+        if (sql.includes("current_balance_cents")) throw new Error("simulated connection failure");
+        return { rows: [{ internal_total: "0" }] };
+      },
+    };
+    await expect(
+      sumAuthoritativeDepositoryCashCents(client, COMPANY_ID, { hideFilterOnBankAccounts: "", hideFilterOnBaAlias: "" })
+    ).rejects.toThrow("simulated connection failure");
+  });
+
+  it("BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: rejects instead of masking a failed internal-wallet-ledger query as $0", async () => {
+    const client = {
+      async query(sql: string) {
+        if (sql.includes("bt.is_credit")) throw new Error("simulated connection failure");
+        return { rows: [{ total_cash: "0" }] };
+      },
+    };
+    await expect(
+      sumAuthoritativeDepositoryCashCents(client, COMPANY_ID, { hideFilterOnBankAccounts: "", hideFilterOnBaAlias: "" })
+    ).rejects.toThrow("simulated connection failure");
+  });
+
+  it("still sums both legs correctly on the happy path (no regression from removing the catches)", async () => {
+    const client = {
+      async query(sql: string) {
+        if (sql.includes("current_balance_cents")) return { rows: [{ total_cash: "500000" }] };
+        return { rows: [{ internal_total: "-15393367" }] };
+      },
+    };
+    const cents = await sumAuthoritativeDepositoryCashCents(client, COMPANY_ID, {
+      hideFilterOnBankAccounts: "",
+      hideFilterOnBaAlias: "",
+    });
+    expect(cents).toBe(500000 + -15393367);
   });
 });

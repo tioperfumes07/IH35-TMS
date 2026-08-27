@@ -175,10 +175,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // total_cash / cash-flow opening / accounts/all must agree via sumAuthoritativeDepositoryCashCents:
       // Plaid depository SUM(current_balance_cents) + non-Plaid internal-wallet ledger derivation.
       // Never re-sum bank_transactions for the Plaid-mixed population (phantom -$4.79M class).
+      // BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: this used to be `.catch(() => 0)` — a real failure resolving
+      // the authoritative cash total silently painted "$0.00" over the KPI strip, indistinguishable
+      // from an actually-empty account. The frontend's kpiQuery.isError -> ListErrorBanner path already
+      // exists (BankingHome.tsx) for exactly this; it just never fired because this never threw.
       const authoritativeTotalCash = await sumAuthoritativeDepositoryCashCents(client, companyId, {
         hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
         hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
-      }).catch(() => 0);
+      });
       // BANKING-1: the UNCATEGORIZED headline must count the SAME population the Transactions
       // "For review" queue lists — entity-scoped status IN ('pending_categorization','uncategorized')
       // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
