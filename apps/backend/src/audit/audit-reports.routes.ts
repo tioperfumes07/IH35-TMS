@@ -49,6 +49,10 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'catalogs.void_cancel_reasons' THEN 'void_cancel_reason'
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'mdata.customer_quality_events' THEN 'customer_quality_event'
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'driver_finance.driver_settlements' THEN 'driver_settlement'
+      -- Live-observed on /reports/audit/financial-change-log: request.posted events (source
+      -- "driver_request") carry subject_type='task', source_table='driver_finance.cash_advance_requests'
+      -- -- correctly populated by the emitter, simply never added to this shared resolver.
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'driver_finance.cash_advance_requests' THEN 'cash_advance_request'
       ELSE ${alias}.subject_type
     END AS subject_kind,
     CASE
@@ -81,6 +85,7 @@ function auditSubjectProjection(alias: string) {
         WHEN 'catalogs.void_cancel_reasons' THEN NULLIF(TRIM(audit_void_cancel_reason.reason_label), '')
         WHEN 'mdata.customer_quality_events' THEN NULLIF(TRIM(audit_customer_quality_event.summary), '')
         WHEN 'driver_finance.driver_settlements' THEN NULLIF(TRIM(audit_driver_settlement.display_id), '')
+        WHEN 'driver_finance.cash_advance_requests' THEN NULLIF(TRIM(audit_cash_advance_request.display_id), '')
         ELSE NULL
       END
       ELSE NULL
@@ -171,7 +176,12 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'task'
      AND ${alias}.source_table = 'driver_finance.driver_settlements'
      AND audit_driver_settlement.id = ${alias}.source_reference_id
-     AND audit_driver_settlement.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_driver_settlement.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN driver_finance.cash_advance_requests audit_cash_advance_request
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'driver_finance.cash_advance_requests'
+     AND audit_cash_advance_request.id = ${alias}.source_reference_id
+     AND audit_cash_advance_request.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
