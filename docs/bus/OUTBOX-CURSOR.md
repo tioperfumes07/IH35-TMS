@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1104 | PORT=9222 | NOW=lead | SHA=8e4380a | DEPLOY=dep-da860rqfngtc73bgpm4g LIVE | idle=defect | GO
 Cursor | ACK | GO-0808 | PORT=9222 | NOW=lead+wait-times+driver-label | SHA=0340406 | Fully-Wired 1-12 IS the law | GO
 Cursor | ACK | GO-0758 | PORT=9222 | NOW=lead | SHA=0340406 | paste-boxes Fully-Wired 1-12 | GO
 Cursor | ACK | GO-0745 | PORT=9222 | NOW=lead+F6851A | SHA=0340406 | 7d grep-verified drain | GO

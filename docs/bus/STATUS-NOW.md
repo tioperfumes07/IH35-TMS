@@ -1,5 +1,7 @@
 # STATUS-NOW
 
+**11:04 CT:** GO-1104 idle=defect · live **`8e4380a`** · deploy `dep-da860rqfngtc73bgpm4g` LIVE
+
 **08:08 CT:** GO-0808 Fully-Wired 1–12 IS the law · Cursor shipping wait-times lucia + driver labels · live `0340406`
 
 **07:58 CT:** GO-0758 paste boxes · Fully-Wired 1–12 · live `0340406` · 7d grep-verified not exhaustive click-proof.
