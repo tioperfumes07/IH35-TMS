@@ -121,11 +121,18 @@ export function TypeCatalogAdmin() {
   const orderedRows = useMemo(() => query.data ?? [], [query.data]);
 
   const beginEdit = (row: InsuranceTypeCatalogEntry) => {
+    if (updateMutation.isPending) return;
     setEditingId(row.id);
     setEditingName(row.name);
     setEditingDescription(row.description ?? "");
     setEditingSortOrder(String(row.sort_order));
     setEditingActive(row.active);
+  };
+
+  const closeEdit = () => {
+    if (updateMutation.isPending) return;
+    setEditingId(null);
+    updateMutation.reset();
   };
 
   const columns: Array<ParityColumn<InsuranceTypeCatalogEntry>> = useMemo(
@@ -145,6 +152,7 @@ export function TypeCatalogAdmin() {
               className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editingName}
               onChange={(event) => setEditingName(event.target.value)}
+              disabled={updateMutation.isPending}
             />
           ) : (
             row.name
@@ -161,6 +169,7 @@ export function TypeCatalogAdmin() {
               className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editingDescription}
               onChange={(event) => setEditingDescription(event.target.value)}
+              disabled={updateMutation.isPending}
             />
           ) : (
             row.description || "-"
@@ -177,6 +186,7 @@ export function TypeCatalogAdmin() {
               className="w-20 rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editingSortOrder}
               onChange={(event) => setEditingSortOrder(event.target.value)}
+              disabled={updateMutation.isPending}
             />
           ) : (
             row.sort_order
@@ -190,7 +200,12 @@ export function TypeCatalogAdmin() {
         render: (row) =>
           row.id === editingId ? (
             <label className="flex items-center gap-1 text-xs">
-              <input type="checkbox" checked={editingActive} onChange={(event) => setEditingActive(event.target.checked)} />
+              <input
+                type="checkbox"
+                checked={editingActive}
+                onChange={(event) => setEditingActive(event.target.checked)}
+                disabled={updateMutation.isPending}
+              />
               Active
             </label>
           ) : row.active ? (
@@ -232,8 +247,9 @@ export function TypeCatalogAdmin() {
                 variant="tertiary"
                 onClick={(event) => {
                   event.stopPropagation();
-                  setEditingId(null);
+                  closeEdit();
                 }}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </Button>
@@ -247,6 +263,7 @@ export function TypeCatalogAdmin() {
                   event.stopPropagation();
                   beginEdit(row);
                 }}
+                disabled={updateMutation.isPending}
               >
                 Edit
               </Button>
@@ -275,6 +292,7 @@ export function TypeCatalogAdmin() {
       editingName,
       editingSortOrder,
       updateMutation,
+      closeEdit,
     ],
   );
 
