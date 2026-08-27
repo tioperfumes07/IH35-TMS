@@ -1176,8 +1176,18 @@ export function CustomerDetailPage() {
         }
       />
 
+      {/* CUSTOMER-DETAIL-BADGE-IGNORES-DEACTIVATED-AT: this badge used to read the raw mdata.customers.status
+          enum column, which the Inactivate/Reactivate action (line ~1138 above, and every list-filter
+          `status=active|inactive` query in customers.routes.ts) never touches -- only `deactivated_at`
+          is the codebase's established lifecycle signal (contacts/lanes further down this same page
+          already correctly derive Active/Inactive from `deactivated_at`, not this column). Deactivating
+          a customer flipped the button to "Reactivate" and correctly dropped it from `status=active`
+          list views, yet this badge kept showing "Active" -- deactivated_at wins when set; the richer
+          status values (credit_hold/blacklist) still show when the record isn't deactivated. */}
       <div className="flex items-center gap-2">
-        <StatusBadge variant={statusVariant(customer.status)}>{statusLabel(customer.status)}</StatusBadge>
+        <StatusBadge variant={statusVariant(customer.deactivated_at != null ? "inactive" : customer.status)}>
+          {statusLabel(customer.deactivated_at != null ? "inactive" : customer.status)}
+        </StatusBadge>
         <MissingRequiredChip operatingCompanyId={operatingCompanyId} entityKind="customer" entityId={id} />
         {customer.fmcsa_verified_at ? (
           <button type="button" onClick={() => setFmcsaHistoryOpen(true)}>

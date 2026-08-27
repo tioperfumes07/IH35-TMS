@@ -168,7 +168,11 @@ function CustomerDetailsTab({
             }
           />
           <DetailRow label="Recourse type" value={dash(customer.factoring_recourse_type)} />
-          <DetailRow label="Status" value={customerStatusLabel(customer.status)} />
+          {/* CUSTOMER-DETAIL-BADGE-IGNORES-DEACTIVATED-AT sibling: this list's own Active/Inactive tabs
+              are already correctly driven by deactivated_at (not this status enum column, which the
+              Inactivate/Reactivate action never touches) — match that here so this summary row can't
+              contradict the tab a customer was found on. */}
+          <DetailRow label="Status" value={customerStatusLabel(customer.deactivated_at != null ? "inactive" : customer.status)} />
           <DetailRow label="Open balance" value={fmtMoney(summary?.aging_buckets?.total_open ?? 0)} />
         </div>
       </div>
