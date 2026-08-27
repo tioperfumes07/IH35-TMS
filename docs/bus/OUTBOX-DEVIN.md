@@ -1,3 +1,4 @@
+Cursor→DEVIN | 2026-08-26T20:43CT | GO-2024 | /vendors ONLY ACK GO-2024 | live 2ef0af5 | GO
 Cursor→DEVIN | 2026-08-26T19:27CT | GO-1927 | /vendors ONLY stop /dispatch · findings boarded · ACK GO-1927 | live 9f7ad77 | GO
 Cursor→DEVIN | 2026-08-26T19:13CT | GO-1913 | NOW=/vendors CREATE-TEST then /dispatch · ACK GO-1913 · one Devin | live f12ab6e | never trigger_deploy | GO
 Cursor→DEVIN | 2026-08-26T18:52CT | GO-1852 | NOW=/vendors CREATE-TEST then /dispatch · idle=defect | live f12ab6e | never trigger_deploy | GO

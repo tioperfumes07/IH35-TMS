@@ -96,7 +96,7 @@ export async function routeDefect(
       client,
       userId,
       "maintenance.dvir.routed_observation",
-      { resource_type: "safety.dvir_defects", resource_id: defectId },
+      { operating_company_id: operatingCompanyId, resource_type: "safety.dvir_defects", resource_id: defectId },
       "info",
       "WF-050"
     );
@@ -115,7 +115,7 @@ export async function routeDefect(
       client,
       userId,
       "maintenance.dvir.queued_next_pm",
-      { resource_type: "safety.dvir_defects", resource_id: defectId, unit_id: defect.unit_id },
+      { operating_company_id: operatingCompanyId, resource_type: "safety.dvir_defects", resource_id: defectId, unit_id: defect.unit_id },
       "info",
       "WF-050"
     );
@@ -177,6 +177,7 @@ export async function routeDefect(
     userId,
     "maintenance.dvir.major_auto_wo",
     {
+      operating_company_id: operatingCompanyId,
       resource_type: "maintenance.work_orders",
       resource_id: workOrderId,
       dvir_defect_id: defectId,

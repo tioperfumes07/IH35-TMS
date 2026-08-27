@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CC-3 | ACK | GO-2024 | PORT=9225 | NOW=MDATA-DEACTIVATE-RLS-500 | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** CLASS deactivate 500 (vendor+customer). Not Chrome `/vendors`. SAFER #16401 do not remake. Scheduled-reports Edit Report id namespace (CC-2 UPDATE) after class.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CC-3 | ACK | GO-1927 | PORT=9225 | NOW=MDATA-DEACTIVATE-RLS-500 | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** CLASS: customer+vendor deactivate 500 RLS (Cascade CUSTOMER-INACTIVATE + Devin MDATA-DEACTIVATE). Then SAFER opco if still OPEN. Chrome 9225: /lists /legal /compliance /program /system. HOLDING=defect.

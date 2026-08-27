@@ -9,6 +9,10 @@ const api = fs.readFileSync("apps/frontend/src/api/maintenance.ts", "utf8");
 const routes = fs.readFileSync("apps/backend/src/maintenance/triage.routes.ts", "utf8");
 
 function failures(routeSource = routes) {
+  const auditCarriesCompany = (event) => {
+    const eventIndex = routeSource.indexOf(`\"${event}\"`);
+    return eventIndex >= 0 && routeSource.slice(eventIndex, eventIndex + 420).includes("operating_company_id:");
+  };
   return [
     ["embedded inventory", required.includes('"id": "damage_reports.intake"') && required.includes('"route_hint": "surface://pages/maintenance/components/TriageModal.tsx"')],
     ["mounted triage", home.includes("<TriageModal")],
@@ -19,13 +23,24 @@ function failures(routeSource = routes) {
     ["canonical damage insert", routeSource.includes("INSERT INTO safety.incidents") && routeSource.includes("driver_id, unit_id, load_id, photo_keys")],
     ["source lineage", routeSource.includes("promoted_to_damage_report_id = $2")],
     ["audit/outbox", routeSource.includes('"maintenance.triage.converted_to_damage"') && routeSource.includes('"safety.incident.created"')],
+    ["work-order audit company", auditCarriesCompany("maintenance.work_order.created")],
+    ["damage audit company", auditCarriesCompany("safety.incident.created")],
     ["parent invalidation", home.includes('queryKey: ["maintenance", "dashboard", "triage", companyId]')],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 if (process.argv.includes("--selftest")) {
-  const planted = routes.replace("INSERT INTO safety.incidents", "INSERT INTO maintenance.fake_damage");
-  if (!failures(planted).includes("canonical damage insert")) process.exit(1);
-  console.log("verify-maintenance-damage-intake-connectivity selftest PASS — table mutation red");
+  const mutations = [
+    [routes.replace("INSERT INTO safety.incidents", "INSERT INTO maintenance.fake_damage"), "canonical damage insert"],
+    ...["maintenance.work_order.created", "safety.incident.created"].map((event) => {
+      const eventIndex = routes.indexOf(`\"${event}\"`);
+      const companyIndex = routes.indexOf("operating_company_id:", eventIndex);
+      return [`${routes.slice(0, companyIndex)}PLANTED_SCOPE:${routes.slice(companyIndex + "operating_company_id:".length)}`, event === "maintenance.work_order.created" ? "work-order audit company" : "damage audit company"];
+    }),
+  ];
+  for (const [planted, expected] of mutations) {
+    if (!failures(planted).includes(expected)) process.exit(1);
+  }
+  console.log(`verify-maintenance-damage-intake-connectivity selftest PASS — ${mutations.length}/${mutations.length} mutations red`);
   process.exit(0);
 }
 const missing = failures();
