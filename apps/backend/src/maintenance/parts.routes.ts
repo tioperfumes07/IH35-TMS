@@ -259,6 +259,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.parts.created", {
+        operating_company_id: companyId,
         resource_id: result.rows[0].id,
         part_number: result.rows[0].part_number,
         category: body.data.category ?? null,
@@ -317,6 +318,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       );
       const newRow = result.rows[0];
       await appendCrudAudit(client, user.uuid, "maintenance.parts.updated", {
+        operating_company_id: companyId,
         resource_id: params.data.id,
         changes: buildPatchChanges(
           body.data as unknown as Record<string, unknown>,
@@ -365,6 +367,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       );
       if (!updated.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.parts.voided", {
+        operating_company_id: companyId,
         resource_id: params.data.id,
         void_reason: body.data.void_reason,
       });
