@@ -1273,3 +1273,4 @@ Codex | GO-2158 | WORKING | FINDING=MAINT-F6751 | Tire archive now returns 404/n
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6752 | Inspection edit now requires active company CAS + scoped readback before audit | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=FLEET-F6753 | Unit+equipment deactivate now require exactly one scoped active UPDATE before timestamp/audit | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=DRIVER-F6754 | Clear Default Truck now returns 409/no audit when no active default exists | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=FUEL-F6755 | Load attribution now returns 409/no audit on zero-row active mutation | NEXT=guard+tests+FAST-MERGE | GO
