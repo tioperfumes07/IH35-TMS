@@ -538,18 +538,22 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
       return validationError(reply, (params.success ? parsed.error : params.error) as z.ZodError);
     }
 
-    await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      await client.query(
+    const archived = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const result = await client.query(
         `UPDATE maintenance.reefer_hours_log
          SET archived_at = now(), archive_reason = $3
-         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL
+         RETURNING id::text`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived reefer hours entry"]
       );
+      if (!result.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.archived", {
         operating_company_id: parsed.data.operating_company_id,
         id: params.data.id,
       });
+      return result.rows[0];
     });
+    if (!archived) return reply.code(404).send({ error: "reefer_hours_log_not_found_or_already_archived" });
     return reply.send({ ok: true, id: params.data.id });
   });
 }

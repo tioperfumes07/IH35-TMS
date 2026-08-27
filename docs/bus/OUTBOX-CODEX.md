@@ -1263,3 +1263,4 @@ Codex | GO-2158 | WORKING | FINDING=SAFETY-F6741 | DOT inspection→WO reverse F
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6742 | Tire rotation source+occupant swaps now company-scoped+mandatory | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6743 | Tire replacement requires one active company source archive before insert | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6744 | Tread event now requires one active company tire update | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6745 | Reefer-hours archive now returns 404/no audit on zero-row mutation | NEXT=guard+tests+FAST-MERGE | GO
