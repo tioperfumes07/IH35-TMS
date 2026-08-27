@@ -34,6 +34,8 @@ function expiryLabel(expiryDate: string | null | undefined) {
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkTrainingId = searchParams.get("training_id")?.trim() || "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() || "";
@@ -82,14 +84,20 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
 
   const effectiveDriverId = applied.driverId.trim() || undefined;
 
+  useEffect(() => setPage(1), [operatingCompanyId, effectiveDriverId]);
+
   const recordsQuery = useQuery({
-    queryKey: ["safety", "training-records", operatingCompanyId, effectiveDriverId],
+    queryKey: ["safety", "training-records", operatingCompanyId, effectiveDriverId, page],
     queryFn: () =>
       getTrainingCompletions(operatingCompanyId, {
         driver_id: effectiveDriverId,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
+  const totalCount = recordsQuery.isError ? 0 : recordsQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const createMutation = useMutation({
     mutationFn: (input: { companyId: string; generation: number; payload: Parameters<typeof createSafetyTrainingRecord>[1] }) =>
@@ -201,6 +209,9 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           exportFilename="training-records"
           tableTestId="training-records-table"
           rowTestId={(row) => `training-record-row-${String(row.id)}`}
+          pageSize={pageSize}
+          pageSizeOptions={[pageSize]}
+          hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="training-records-filters">
               <label className="text-[11px] text-slate-600">
@@ -246,6 +257,13 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           }
         />
       )}
+      {!recordsQuery.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="training-records-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || recordsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} records</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || recordsQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form

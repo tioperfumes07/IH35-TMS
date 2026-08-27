@@ -1,5 +1,6 @@
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
+import { Link } from "react-router-dom";
 
 function statusClass(status: string | undefined) {
   if (status === "red") return "text-red-700";
@@ -12,10 +13,14 @@ type TrainingRecordRow = Record<string, unknown> & { __rowKey: string };
 
 export function TrainingRecordsSection({
   records,
+  totalCount,
+  driverId,
   unavailable = false,
   onAddTraining,
 }: {
   records: Array<Record<string, unknown>>;
+  totalCount: number;
+  driverId: string;
   unavailable?: boolean;
   onAddTraining?: () => void;
 }) {
@@ -62,6 +67,14 @@ export function TrainingRecordsSection({
           columns={columns}
           storageKey="dp-training-records"
         />
+        {totalCount > rows.length ? (
+          <div className="mt-2 flex items-center justify-between text-xs" data-testid="driver-training-records-range-disclosure">
+            <span className="text-gray-600">Showing {rows.length} of {totalCount} records.</span>
+            <Link className="font-medium text-slate-700 underline" to={`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`}>
+              Open full training history
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -330,10 +330,12 @@ export function spawnSafetyWo(id: string, companyId: string) {
   });
 }
 
-export function getTrainingCompletions(companyId: string, params: { driver_id?: string } = {}) {
+export function getTrainingCompletions(companyId: string, params: { driver_id?: string; limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) qs.set("driver_id", params.driver_id);
-  return apiRequest<{ training_completions: Array<Record<string, unknown>> }>(
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ training_completions: Array<Record<string, unknown>>; total_count: number }>(
     `/api/v1/safety/training/completions?${qs.toString()}`
   );
 }
