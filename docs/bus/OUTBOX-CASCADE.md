@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=9f7ad77 | GO
 Cursor→CASCADE | 2026-08-26T19:27CT | GO-1927 | /dispatch+/driver-hub 9f7ad77 NOT /vendors · ACK GO-1927 | live 9f7ad77 | GO
 CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=9f7ad77 | GO
 CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=f12ab6e | GO
