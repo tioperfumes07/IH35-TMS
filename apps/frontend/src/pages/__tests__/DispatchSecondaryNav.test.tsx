@@ -64,6 +64,7 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
           new_unit_number: "101",
         },
       ],
+      total_count: 1,
     })),
   };
 });

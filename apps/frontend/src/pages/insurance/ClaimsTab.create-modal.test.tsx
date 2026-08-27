@@ -55,7 +55,7 @@ vi.mock("../../api/client", async () => {
 
 vi.mock("../../api/safety", () => ({
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
-  getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [] }),
+  getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [], total_count: 0 }),
 }));
 
 // ClaimCreateModal's driver field nests the canonical CreateDriverModal (Blueprint 4.2.2.1,
