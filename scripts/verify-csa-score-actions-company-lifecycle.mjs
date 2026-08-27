@@ -3,8 +3,10 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/safety/tabs/CSAScoreTab.tsx";
 const source = fs.readFileSync(file, "utf8");
+const backendFile = "apps/backend/src/routes/safety/csa-scores.ts";
+const backendSource = fs.readFileSync(backendFile, "utf8");
 
-function audit(text) {
+function audit(text, backend = backendSource) {
   const failures = [];
   const need = (ok, message) => { if (!ok) failures.push(message); };
   need(text.includes("actionGenerationRef = useRef(0)"), "generation ref missing");
@@ -17,6 +19,7 @@ function audit(text) {
   need((text.match(/input\.generation === actionGenerationRef\.current/g) ?? []).length >= 2, "stale SAFER error is not rejected");
   need((text.match(/mutate\(\{ companyId, generation: actionGenerationRef\.current \}\)/g) ?? []).length === 2, "both CSA actions must capture company/generation");
   need(text.includes("@matrix-built modules=safety cols=connectivity,reverse_link"), "leaf annotation missing");
+  need(/"safety\.csa_score\.computed",[\s\S]{0,180}operating_company_id: companyId/.test(backend), "CSA recompute audit omits operating company");
   return failures;
 }
 
@@ -34,7 +37,9 @@ if (process.argv.includes("--selftest")) {
     const mutated = source.replace(pattern, replacement);
     if (mutated === source || audit(mutated).length === 0) throw new Error(`mutation ${index + 1} escaped`);
   }
-  console.log(`verify-csa-score-actions-company-lifecycle selftest PASS — ${mutations.length}/${mutations.length} planted defects red`);
+  const mutatedBackend = backendSource.replace("operating_company_id: companyId,", "");
+  if (mutatedBackend === backendSource || audit(source, mutatedBackend).length === 0) throw new Error(`mutation ${mutations.length + 1} escaped`);
+  console.log(`verify-csa-score-actions-company-lifecycle selftest PASS — ${mutations.length + 1}/${mutations.length + 1} planted defects red`);
   process.exit(0);
 }
 
