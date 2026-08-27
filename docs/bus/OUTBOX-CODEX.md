@@ -1473,3 +1473,5 @@ Codex | LIVE PASS | GO-1331 | SHA=4b859b7 | MAINT F6884–F6892: assignments 4/4
 Codex | WORKING | GO-1331 | FINDING=SAFETY-F6899-ANOMALY-DETECTORS-SILENT-50-CAPS-AND-DUPLICATE-OPEN-ALERTS | vertical=duplicate-load+DVIR+inactive-driver+geofence full scans and idempotent alert/notification lifecycle | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | SAFETY-F6900 | PR=#16766 @ 249e9b1258 | Built=Driver Scheduler exact personal-history range+complete scoped vacant-unit roster | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6901 WO parts reverse | GO
 Codex | WORKING | FINDING=MAINT-F6901-WO-PARTS-LINKS-FIRST-PAGE-ONLY | vertical=WO exact parts reverse range+vendor/economic labels | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6901 | PR=#16767 @ 64e0b709f7 | Built=WO exact parts reverse range+vendor/economic labels | Live=post-deploy UNVERIFIED | NEXT=DRIVERS-F6902 audit history | GO
+Codex | WORKING | FINDING=DRIVERS-F6902-AUDIT-HISTORY-FIRST-200-ONLY | vertical=driver audit exact range+filters+actor reverse | NEXT=guard+FAST-MERGE | GO
