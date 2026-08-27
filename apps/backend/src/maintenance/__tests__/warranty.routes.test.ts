@@ -12,6 +12,8 @@ const COMPANY = "11111111-1111-4111-8111-111111111111";
 const CLAIM_ID = "22222222-2222-4222-8222-222222222222";
 const WO_ID = "33333333-3333-4333-8333-333333333333";
 const WARRANTY_ID = "44444444-4444-4444-8444-444444444444";
+const INVENTORY_ID = "55555555-5555-4555-8555-555555555555";
+const VENDOR_ID = "66666666-6666-4666-8666-666666666666";
 
 const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
   const query = vi.fn();
@@ -181,6 +183,73 @@ describe("maintenance warranty routes (B33)", () => {
     );
   });
 
+  it("POST /api/v1/maintenance/warranty/parts creates a company-linked warranty", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS inventory_ok") && sql.includes("AS vendor_ok") && sql.includes("AS work_order_ok")) {
+        return { rows: [{ inventory_ok: true, vendor_ok: true, work_order_ok: true }] };
+      }
+      if (sql.includes("INSERT INTO maintenance.parts_warranty")) return { rows: [{ id: WARRANTY_ID }] };
+      return {
+        rows: [{
+          id: WARRANTY_ID,
+          operating_company_id: COMPANY,
+          parts_inventory_id: INVENTORY_ID,
+          part_description: "Alternator",
+          vendor_id: VENDOR_ID,
+          vendor_name: "Fleet Parts Co",
+          warranty_months: 12,
+          purchased_at: "2026-08-27",
+          expires_at: "2027-08-27",
+          original_invoice_number: "INV-100",
+          work_order_id: WO_ID,
+          notes: "",
+        }],
+      };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/warranty/parts",
+      payload: {
+        operating_company_id: COMPANY,
+        parts_inventory_id: INVENTORY_ID,
+        part_description: "Alternator",
+        vendor_id: VENDOR_ID,
+        work_order_id: WO_ID,
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({
+      parts_inventory_id: INVENTORY_ID,
+      vendor_id: VENDOR_ID,
+      work_order_id: WO_ID,
+    });
+  });
+
+  it("rejects warranty-part links outside the operating company before insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS inventory_ok") && sql.includes("AS vendor_ok") && sql.includes("AS work_order_ok")) {
+        return { rows: [{ inventory_ok: true, vendor_ok: false, work_order_ok: true }] };
+      }
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/warranty/parts",
+      payload: {
+        operating_company_id: COMPANY,
+        parts_inventory_id: INVENTORY_ID,
+        part_description: "Alternator",
+        vendor_id: VENDOR_ID,
+        work_order_id: WO_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "linked_entity_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO maintenance.parts_warranty"))).toBe(false);
+  });
+
   it("rejects claim links outside the operating company before insert", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
@@ -207,7 +276,7 @@ describe("maintenance warranty routes (B33)", () => {
   it("POST /api/v1/maintenance/warranty/claims/:id/file marks claim filed", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
-      if (sql.includes("UPDATE maintenance.warranty_claims")) return { rows: [], rowCount: 1 };
+      if (sql.includes("UPDATE maintenance.warranty_claims")) return { rows: [{ id: CLAIM_ID }], rowCount: 1 };
       return { rows: [sampleClaim({ status: "filed", filed_at: "2026-06-04T09:00:00Z" })], rowCount: 1 };
     });
     const res = await app.inject({

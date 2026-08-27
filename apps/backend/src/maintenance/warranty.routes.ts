@@ -364,6 +364,32 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     const expiresAt = computeWarrantyExpiry(purchasedAt, body.warranty_months);
 
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+      const links = await client.query(
+        `SELECT
+           ($2::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maintenance.parts_inventory pi
+             WHERE pi.id = $2::uuid AND pi.operating_company_id = $1::uuid
+           )) AS inventory_ok,
+           ($3::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.vendors v
+             WHERE v.id = $3::uuid AND v.operating_company_id = $1::uuid AND v.deactivated_at IS NULL
+           )) AS vendor_ok,
+           ($4::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maintenance.work_orders wo
+             WHERE wo.id = $4::uuid AND wo.operating_company_id = $1::uuid
+           )) AS work_order_ok`,
+        [
+          body.operating_company_id,
+          body.parts_inventory_id ?? null,
+          body.vendor_id ?? null,
+          body.work_order_id ?? null,
+        ]
+      );
+      const integrity = links.rows[0] as
+        | { inventory_ok?: boolean; vendor_ok?: boolean; work_order_ok?: boolean }
+        | undefined;
+      if (!integrity || Object.values(integrity).some((value) => value !== true)) return null;
+
       const res = await client.query(
         `INSERT INTO maintenance.parts_warranty (
           operating_company_id, parts_inventory_id, part_description, vendor_id,
@@ -392,6 +418,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       });
       return fetched.rows[0];
     });
+    if (!row) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return reply.code(201).send(mapWarrantyPartRow(row ?? {}));
   });
 
