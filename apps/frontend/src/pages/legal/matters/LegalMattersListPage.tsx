@@ -213,6 +213,15 @@ export function LegalMattersListPage() {
           loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
           storageKey="legal-matters"
           emptyText="No matters match filters."
+          // LEGAL-MATTERS-DOUBLE-PAGER-CONTRADICTS-TOTAL (same class as NAMES-MASTER-DOUBLE-PAGER-
+          // CONTRADICTS-TOTAL): `rows` is one server-paginated page (limit/offset, PAGE_SIZE=100) out
+          // of a real `total` that can span many pages; the external "Showing X-Y of Z / Previous/Next"
+          // pager above already reads that real total correctly. Without hidePager, ParityTable's own
+          // built-in pager would compute its "of N"/"Page X of Y" from rows.length alone (always
+          // PAGE_SIZE, always "Page 1 of 1") and contradict the correct external pager the moment
+          // matters exceed one page -- currently masked because there are only 7 real rows (< 100).
+          pageSize={PAGE_SIZE}
+          hidePager
           filterBar={
             <CollapsedListFilters
               activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0) + (unitId ? 1 : 0)}
