@@ -24,6 +24,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 type IntegrityRow = IntegrityReportRow & { _rowKey: string };
 
 type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
+const REPORT_PAGE_SIZE = 50;
 
 function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   const driverId = String(row.driver_id ?? row.subject_driver_id ?? "").trim();
@@ -46,6 +47,7 @@ export function IntegrityReportsTab() {
   const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
   const [subTab, setSubTab] = useState<SubTab>("wo-cost");
+  const [page, setPage] = useState(1);
   const [reviewError, setReviewError] = useState<unknown>(null);
   useEffect(() => {
     if (searchParams.get("anomaly_id")) setSubTab("anomalies");
@@ -53,29 +55,24 @@ export function IntegrityReportsTab() {
   }, [searchParams]);
 
   const woQuery = useQuery({
-    queryKey: ["safety-v64", "integrity", "wo-cost", companyId],
-    queryFn: () => getIntegrityWoCostOutliers(companyId),
-    enabled: Boolean(companyId),
+    queryKey: ["safety-v64", "integrity", "wo-cost", companyId, page],
+    queryFn: () => getIntegrityWoCostOutliers(companyId, { limit: REPORT_PAGE_SIZE, offset: (page - 1) * REPORT_PAGE_SIZE }),
+    enabled: Boolean(companyId) && subTab === "wo-cost",
   });
   const fuelQuery = useQuery({
-    queryKey: ["safety-v64", "integrity", "fuel-mpg", companyId],
-    queryFn: () => getIntegrityFuelMpgAnomalies(companyId),
-    enabled: Boolean(companyId),
+    queryKey: ["safety-v64", "integrity", "fuel-mpg", companyId, page],
+    queryFn: () => getIntegrityFuelMpgAnomalies(companyId, { limit: REPORT_PAGE_SIZE, offset: (page - 1) * REPORT_PAGE_SIZE }),
+    enabled: Boolean(companyId) && subTab === "fuel-mpg",
   });
   const dwellQuery = useQuery({
-    queryKey: ["safety-v64", "integrity", "driver-dwell", companyId],
-    queryFn: () => getIntegrityDriverDwellOutliers(companyId),
-    enabled: Boolean(companyId),
+    queryKey: ["safety-v64", "integrity", "driver-dwell", companyId, page],
+    queryFn: () => getIntegrityDriverDwellOutliers(companyId, { limit: REPORT_PAGE_SIZE, offset: (page - 1) * REPORT_PAGE_SIZE }),
+    enabled: Boolean(companyId) && subTab === "driver-dwell",
   });
   const hosQuery = useQuery({
-    queryKey: ["safety-v64", "integrity", "hos-pattern", companyId],
-    queryFn: () => getIntegrityHosPatternBreaks(companyId),
-    enabled: Boolean(companyId),
-  });
-  const observationsQuery = useQuery({
-    queryKey: ["safety-v64", "integrity", "observations", companyId],
-    queryFn: () => getIntegrityObservations(companyId),
-    enabled: Boolean(companyId),
+    queryKey: ["safety-v64", "integrity", "hos-pattern", companyId, page],
+    queryFn: () => getIntegrityHosPatternBreaks(companyId, { limit: REPORT_PAGE_SIZE, offset: (page - 1) * REPORT_PAGE_SIZE }),
+    enabled: Boolean(companyId) && subTab === "hos-pattern",
   });
 
   /** @matrix-built modules=safety cols=driver,unit,vendor,connectivity,reverse_link */
@@ -96,7 +93,12 @@ export function IntegrityReportsTab() {
     actionGenerationRef.current += 1;
     setReviewError(null);
     reviewMutation.reset();
+    setPage(1);
   }, [companyId]); // Mutation reset is stable; company transitions own a fresh integrity review lifecycle.
+
+  useEffect(() => {
+    setPage(1);
+  }, [subTab]);
 
   const rows = useMemo(() => {
     if (subTab === "wo-cost") return woQuery.data?.outliers ?? [];
@@ -111,6 +113,16 @@ export function IntegrityReportsTab() {
     () => rows.map((row, idx) => ({ ...row, _rowKey: row.id ? String(row.id) : `${subTab}-${idx}` })),
     [rows, subTab],
   );
+
+  const currentRowIds = useMemo(
+    () => keyedRows.map((row) => String(row.id ?? "").trim()).filter(Boolean),
+    [keyedRows],
+  );
+  const observationsQuery = useQuery({
+    queryKey: ["safety-v64", "integrity", "observations", companyId, currentRowIds.join(",")],
+    queryFn: () => getIntegrityObservations(companyId, currentRowIds),
+    enabled: Boolean(companyId) && currentRowIds.length > 0,
+  });
 
   const observationsById = useMemo(() => {
     const map = new Map<string, Record<string, unknown>>();
@@ -137,6 +149,19 @@ export function IntegrityReportsTab() {
         : subTab === "driver-dwell"
           ? dwellQuery
           : hosQuery;
+  const totalCount =
+    subTab === "wo-cost"
+      ? woQuery.data?.total_count ?? 0
+      : subTab === "fuel-mpg"
+        ? fuelQuery.data?.total_count ?? 0
+        : subTab === "driver-dwell"
+          ? dwellQuery.data?.total_count ?? 0
+          : hosQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / REPORT_PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
   const columns = useMemo<ParityColumn<IntegrityRow>[]>(
     () => [
@@ -298,8 +323,24 @@ export function IntegrityReportsTab() {
         emptyText="No observations available for this integrity report."
         storageKey="safety-integrity-reports"
         exportFilename="integrity-reports"
+        pageSize={REPORT_PAGE_SIZE}
+        hidePager
       />
       )}
+      {!activeListQuery.isError ? (
+        <div className="flex items-center justify-between text-xs text-slate-600" data-testid="integrity-reports-server-pager">
+          <span>
+            {totalCount === 0
+              ? "0 of 0"
+              : `${(page - 1) * REPORT_PAGE_SIZE + 1}–${Math.min(page * REPORT_PAGE_SIZE, totalCount)} of ${totalCount}`}
+          </span>
+          <div className="flex items-center gap-2">
+            <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={page <= 1 || activeListQuery.isFetching} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button>
+            <span>Page {page} of {pageCount}</span>
+            <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={page >= pageCount || activeListQuery.isFetching} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>Next</button>
+          </div>
+        </div>
+      ) : null}
       {observationsQuery.isError ? (
         <p className="text-xs text-red-700" data-testid="integrity-observations-query-error">
           {userFacingApiError(observationsQuery.error, "Could not load integrity observation review state.")}
