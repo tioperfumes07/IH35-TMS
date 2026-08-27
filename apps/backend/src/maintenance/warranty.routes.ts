@@ -386,6 +386,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       const id = String(res.rows[0]?.id);
       const fetched = await client.query(`${PART_SELECT} WHERE pw.id = $1`, [id]);
       await appendCrudAudit(client, user.uuid, "maintenance.parts_warranty.created", {
+        operating_company_id: body.operating_company_id,
         part_description: body.part_description,
         expires_at: expiresAt,
       });
@@ -473,6 +474,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       const id = String(res.rows[0]?.id);
       const fetched = await fetchClaimById(client, body.operating_company_id, id);
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.created", {
+        operating_company_id: body.operating_company_id,
         part_description: body.part_description,
       });
       return fetched;
@@ -527,7 +529,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL`,
         values
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.updated", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.updated", {
+        operating_company_id: body.operating_company_id,
+        id: params.data.id,
+      });
       return { kind: "ok" as const, row: await fetchClaimById(client, body.operating_company_id, params.data.id) };
     });
 
@@ -566,7 +571,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
           parsed.data.notes ?? null,
         ]
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.filed", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.filed", {
+        operating_company_id: parsed.data.operating_company_id,
+        id: params.data.id,
+      });
       return fetchClaimById(client, parsed.data.operating_company_id, params.data.id);
     });
 
@@ -603,6 +611,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.reimbursed", {
+        operating_company_id: parsed.data.operating_company_id,
         id: params.data.id,
         reimbursement_amount_cents: parsed.data.reimbursement_amount_cents,
       });
@@ -639,7 +648,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
          WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived from warranty claims"]
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.archived", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.archived", {
+        operating_company_id: parsed.data.operating_company_id,
+        id: params.data.id,
+      });
     });
     return reply.send({ ok: true, id: params.data.id });
   });
@@ -686,6 +698,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       }
 
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_detected_from_wo", {
+        operating_company_id: parsed.data.operating_company_id,
         work_order_id: parsed.data.work_order_id,
         eligible_count: detection.eligible.length,
         created_count: created.length,
