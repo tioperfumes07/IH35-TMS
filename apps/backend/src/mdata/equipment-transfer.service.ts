@@ -163,25 +163,32 @@ export async function confirmTransfer(
       const dualAck = parseDualAckNotes(notesRes.rows[0]?.notes);
       if (dualAck && !dualAckComplete(dualAck)) throw new Error("E_TRANSFER_DUAL_ACK_INCOMPLETE");
 
-      await client.query(
+      const confirmed = await client.query<{ id: string }>(
         `
           UPDATE mdata.equipment_transfers
           SET status = 'confirmed',
               confirmed_at = now(),
               updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND status = 'pending_to_confirm'
+          RETURNING id::text AS id
         `,
-        [input.transfer_id]
+        [input.transfer_id, input.operating_company_id]
       );
-      await client.query(
+      if (!confirmed.rows[0]?.id) throw new Error("E_EQUIPMENT_TRANSFER_CONFIRM_FAILED");
+      const assigned = await client.query<{ id: string }>(
         `
           UPDATE mdata.equipment
           SET assigned_driver_id = $2,
               updated_at = now()
           WHERE id = $1
+            AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+          RETURNING id::text AS id
         `,
-        [transfer.equipment_id, input.confirming_driver_id]
+        [transfer.equipment_id, input.confirming_driver_id, input.operating_company_id]
       );
+      if (!assigned.rows[0]?.id) throw new Error("E_EQUIPMENT_TRANSFER_ASSIGN_FAILED");
       const equipmentLogId = await insertEquipmentTransferLog(client, userId, {
         equipmentId: transfer.equipment_id,
         transferId: input.transfer_id,
@@ -199,7 +206,7 @@ export async function confirmTransfer(
           operating_company_id: input.operating_company_id,
           equipment_id: transfer.equipment_id,
           to_driver_id: input.confirming_driver_id,
-          equipment_log_id: equipmentLogId || undefined,
+          equipment_log_id: equipmentLogId,
         },
         "info",
         "P5-F5-EQUIPMENT-TRANSFER"
@@ -367,27 +374,26 @@ async function insertEquipmentTransferLog(
     `,
     [args.equipmentId, notes, userId]
   );
-  const equipmentLogId = String(logRes.rows[0]?.id ?? "");
-  if (equipmentLogId) {
-    await appendCrudAudit(
-      client,
-      userId,
-      "mdata.equipment_log.created",
-      {
-        resource_id: equipmentLogId,
-        resource_type: "mdata.equipment_log",
-        id: equipmentLogId,
-        equipment_id: args.equipmentId,
-        event_type: "Moved",
-        transfer_id: args.transferId,
-        from_driver_id: args.fromDriverId,
-        to_driver_id: args.toDriverId,
-        operating_company_id: args.operatingCompanyId,
-      },
-      "info",
-      "P5-F5-EQUIPMENT-TRANSFER"
-    );
-  }
+  const equipmentLogId = logRes.rows[0]?.id;
+  if (!equipmentLogId) throw new Error("E_EQUIPMENT_TRANSFER_LOG_INSERT_FAILED");
+  await appendCrudAudit(
+    client,
+    userId,
+    "mdata.equipment_log.created",
+    {
+      resource_id: equipmentLogId,
+      resource_type: "mdata.equipment_log",
+      id: equipmentLogId,
+      equipment_id: args.equipmentId,
+      event_type: "Moved",
+      transfer_id: args.transferId,
+      from_driver_id: args.fromDriverId,
+      to_driver_id: args.toDriverId,
+      operating_company_id: args.operatingCompanyId,
+    },
+    "info",
+    "P5-F5-EQUIPMENT-TRANSFER"
+  );
   return equipmentLogId;
 }
 
@@ -398,14 +404,23 @@ async function finalizeDualAckTransfer(
   transfer: Record<string, unknown>,
   receivingDriverId: string
 ) {
-  await client.query(
-    `UPDATE mdata.equipment_transfers SET status = 'confirmed', confirmed_at = now(), updated_at = now() WHERE id = $1`,
-    [transfer.id]
+  const confirmed = await client.query<{ id: string }>(
+    `UPDATE mdata.equipment_transfers
+     SET status = 'confirmed', confirmed_at = now(), updated_at = now()
+     WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'pending_to_confirm'
+     RETURNING id::text AS id`,
+    [transfer.id, operatingCompanyId]
   );
-  await client.query(
-    `UPDATE mdata.equipment SET assigned_driver_id = $2, updated_at = now() WHERE id = $1`,
-    [transfer.equipment_id, receivingDriverId]
+  if (!confirmed.rows[0]?.id) throw new Error("E_EQUIPMENT_TRANSFER_CONFIRM_FAILED");
+  const assigned = await client.query<{ id: string }>(
+    `UPDATE mdata.equipment
+     SET assigned_driver_id = $2, updated_at = now()
+     WHERE id = $1
+       AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+     RETURNING id::text AS id`,
+    [transfer.equipment_id, receivingDriverId, operatingCompanyId]
   );
+  if (!assigned.rows[0]?.id) throw new Error("E_EQUIPMENT_TRANSFER_ASSIGN_FAILED");
   const equipmentLogId = await insertEquipmentTransferLog(client, userId, {
     equipmentId: String(transfer.equipment_id),
     transferId: String(transfer.id),
@@ -424,7 +439,7 @@ async function finalizeDualAckTransfer(
       equipment_id: transfer.equipment_id,
       to_driver_id: receivingDriverId,
       wf047_dual_ack: true,
-      equipment_log_id: equipmentLogId || undefined,
+      equipment_log_id: equipmentLogId,
     },
     "info",
     "P5-F5-EQUIPMENT-TRANSFER"
