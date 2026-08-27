@@ -75,7 +75,7 @@ export function audit(src) {
   if (!/fetchUnitProfile\(id, companyId/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.* sections must all be fed by a real fetchUnitProfile(id, ...) query`);
   }
-  if (!/patchUnit\(id, companyId, \{/.test(src.profile)) {
+  if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(src.profile)) {
     failures.push(`${FILES.profile}: profile-level unit edits (e.g. QBO mapping) must patch the real unit id`);
   }
   if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(src.profile)) {
@@ -189,7 +189,7 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["profile-query", "profile", /fetchUnitProfile\(id, companyId(?:, signal)?\)/g, "fetchSomethingElse(id, companyId)"],
-    ["profile-patch", "profile", /patchUnit\(id, companyId, \{/, "patchSomethingElse(id, companyId, {"],
+    ["profile-patch", "profile", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchSomethingElse(input.unitId, input.companyId, input.patch)"],
     ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
     ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],

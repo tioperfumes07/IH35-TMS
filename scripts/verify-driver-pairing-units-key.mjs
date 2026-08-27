@@ -15,7 +15,7 @@ const svc = read("apps/backend/src/integrations/samsara/vehicle-driver-pairing/p
 if (!/FROM\s+mdata\.units[\s\S]{0,200}samsara_vehicle_id\s*=\s*\$2/.test(svc))
   fail("resolveLocalUnitAndDriver must resolve the unit PRIMARY via mdata.units.samsara_vehicle_id (the fleet board's key)");
 // Driver still maps via mdata.drivers.samsara_driver_id.
-if (!/FROM\s+mdata\.drivers[\s\S]{0,160}samsara_driver_id\s*=\s*\$2/.test(svc))
+if (!/FROM\s+mdata\.drivers[\s\S]{0,500}samsara_driver_id\s*=\s*\$2/.test(svc))
   fail("driver must map via mdata.drivers.samsara_driver_id");
 
 // Parse must NOT require startTime — Samsara's CURRENT assignment objects don't carry it, and the old

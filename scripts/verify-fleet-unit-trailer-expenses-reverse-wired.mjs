@@ -48,7 +48,7 @@ const CHECKS = [
   {
     name: "ExpensesReverseSection drills each row via EntityLink kind=\"expense\" (reverse nav)",
     file: "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx",
-    pattern: /<EntityLink kind="expense" id=\{row\.id\}/,
+    pattern: /<EntityLink\s+kind="expense"\s+id=\{row\.id\}/,
   },
   {
     name: "EntityLink's expense case resolves to a real detail route",
