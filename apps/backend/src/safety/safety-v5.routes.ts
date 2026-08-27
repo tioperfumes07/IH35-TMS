@@ -465,7 +465,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.internal_fine.disputed",
-        { internal_fine_id: updated.id, reason: body.data.reason, previous_status: row.status },
+        { operating_company_id: query.data.operating_company_id, internal_fine_id: updated.id, reason: body.data.reason, previous_status: row.status },
         "warning",
         "SAF-F12-INTERNAL-FINE-LIFECYCLE"
       );
@@ -556,7 +556,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.internal_fine.voided",
-        { internal_fine_id: updated.id, void_reason: body.data.reason, previous_status: row.status },
+        { operating_company_id: query.data.operating_company_id, internal_fine_id: updated.id, void_reason: body.data.reason, previous_status: row.status },
         "warning",
         "SAF-F12-INTERNAL-FINE-LIFECYCLE"
       );
@@ -629,7 +629,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.complaint.created",
-        { complaint_id: row.id, severity: row.severity, status: row.status },
+        { operating_company_id: query.data.operating_company_id, complaint_id: row.id, severity: row.severity, status: row.status },
         "warning",
         "P3-T11.17-TWO-SECTION-V5"
       );
