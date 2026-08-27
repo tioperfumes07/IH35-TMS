@@ -262,7 +262,10 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return policy;
   });
 
-  app.post("/api/v1/insurance/policies", async (req, reply) => {
+  app.post(
+    "/api/v1/insurance/policies",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -343,17 +346,23 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           body.status,
         ]
       );
+      const policy = result.rows[0] as { id?: string } | undefined;
+      if (!policy?.id) throw new Error("insurance_policy_insert_failed");
       await appendCrudAudit(client, user.uuid, "insurance.policy.created", {
-        resource_id: result.rows[0]?.id,
+        resource_type: "insurance.policy",
+        resource_id: policy.id,
         operating_company_id: body.operating_company_id,
+        vendor_id: body.vendor_id,
+        coverage_type_id: coverageTypeRes.rows[0].id,
       });
-      return { kind: "created" as const, policy: result.rows[0] };
+      return { kind: "created" as const, policy };
     });
 
     if (created.kind === "vendor_not_found") return reply.code(400).send({ error: "insurance_vendor_not_found" });
     if (created.kind === "coverage_type_not_found") return reply.code(400).send({ error: "coverage_type_not_found" });
     return reply.code(201).send(created.policy);
-  });
+    }
+  );
 
   app.patch("/api/v1/insurance/policies/:id", async (req, reply) => {
     const user = authUser(req, reply);
