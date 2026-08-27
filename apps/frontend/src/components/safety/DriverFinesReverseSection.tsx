@@ -1,8 +1,10 @@
 import { entityLabel } from "../../lib/entity-label";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../ListErrorState";
 import { getSafetyFines, getInternalFines } from "../../api/safety";
 import { EntityLink } from "../shared/EntityLink";
+import { Button } from "../Button";
 
 type Props = {
   operatingCompanyId: string;
@@ -30,10 +32,17 @@ export function DriverFinesReverseSection({
   "data-testid": testId = "driver-fines-reverse-section",
 }: Props) {
   const enabled = Boolean(operatingCompanyId) && Boolean(driverId);
+  const civilPageSize = 25;
+  const [civilPage, setCivilPage] = useState(1);
+  useEffect(() => setCivilPage(1), [operatingCompanyId, driverId]);
 
   const civilQuery = useQuery({
-    queryKey: ["safety-fines", "reverse-driver", operatingCompanyId, driverId],
-    queryFn: () => getSafetyFines(operatingCompanyId, { subject_driver_id: driverId }),
+    queryKey: ["safety-fines", "reverse-driver", operatingCompanyId, driverId, civilPage],
+    queryFn: () => getSafetyFines(operatingCompanyId, {
+      subject_driver_id: driverId,
+      limit: civilPageSize,
+      offset: (civilPage - 1) * civilPageSize,
+    }),
     enabled,
   });
 
@@ -44,6 +53,8 @@ export function DriverFinesReverseSection({
   });
 
   const civil = civilQuery.data?.fines ?? [];
+  const civilTotal = civilQuery.isError ? 0 : civilQuery.data?.total_count ?? 0;
+  const civilPageCount = Math.max(1, Math.ceil(civilTotal / civilPageSize));
   const internal = internalQuery.data?.fines ?? [];
   const isLoading = civilQuery.isLoading || internalQuery.isLoading;
   // Reported per-source: if only one call fails, saying "no fines" would be a lie about the other.
@@ -83,6 +94,13 @@ export function DriverFinesReverseSection({
               );
             })}
           </ul>
+        </div>
+      ) : null}
+      {!civilQuery.isError && civilTotal > civilPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-civil-server-pager">
+          <Button size="sm" variant="secondary" disabled={civilPage <= 1 || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.max(1, current - 1))}>Previous civil fines</Button>
+          <span className="text-slate-600">Page {civilPage} of {civilPageCount} · {civilTotal} civil fines</span>
+          <Button size="sm" variant="secondary" disabled={civilPage >= civilPageCount || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.min(civilPageCount, current + 1))}>Next civil fines</Button>
         </div>
       ) : null}
 

@@ -128,14 +128,21 @@ export function DriverSafetyReverseSection({
   const [inspectionPage, setInspectionPage] = useState(1);
   const accidentPageSize = 25;
   const [accidentPage, setAccidentPage] = useState(1);
+  const civilFinePageSize = 25;
+  const [civilFinePage, setCivilFinePage] = useState(1);
   useEffect(() => {
     setInspectionPage(1);
     setAccidentPage(1);
+    setCivilFinePage(1);
   }, [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
-    queryKey: ["safety", "reverse", "civil-fines", operatingCompanyId, driverId],
-    queryFn: () => getSafetyFines(operatingCompanyId, { subject_driver_id: driverId }),
+    queryKey: ["safety", "reverse", "civil-fines", operatingCompanyId, driverId, civilFinePage],
+    queryFn: () => getSafetyFines(operatingCompanyId, {
+      subject_driver_id: driverId,
+      limit: civilFinePageSize,
+      offset: (civilFinePage - 1) * civilFinePageSize,
+    }),
     enabled,
   });
 
@@ -188,6 +195,8 @@ export function DriverSafetyReverseSection({
   if (!canViewSafety) return null;
 
   const civilFines: Row[] = civilFinesQuery.isError ? [] : civilFinesQuery.data?.fines ?? [];
+  const civilFineTotal = civilFinesQuery.isError ? 0 : civilFinesQuery.data?.total_count ?? 0;
+  const civilFinePageCount = Math.max(1, Math.ceil(civilFineTotal / civilFinePageSize));
   const internalFines: Row[] = internalFinesQuery.isError ? [] : internalFinesQuery.data?.fines ?? [];
   const complaints: Row[] = complaintsQuery.isError ? [] : complaintsQuery.data?.complaints ?? [];
   const tests: Row[] = testsQuery.isError ? [] : testsQuery.data?.tests ?? [];
@@ -359,7 +368,7 @@ export function DriverSafetyReverseSection({
         errorText="Failed to load this driver's external fines."
         onRetry={() => void civilFinesQuery.refetch()}
         emptyText="No external fines for this driver."
-        count={civilFines.length}
+        count={civilFineTotal}
       >
         {civilFines.map((fine) => (
           <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -377,6 +386,13 @@ export function DriverSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!civilFinesQuery.isError && civilFineTotal > civilFinePageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-civil-fines-pager">
+          <Button size="sm" variant="secondary" disabled={civilFinePage <= 1 || civilFinesQuery.isFetching} onClick={() => setCivilFinePage((current) => Math.max(1, current - 1))}>Previous external fines</Button>
+          <span className="text-slate-600">Page {civilFinePage} of {civilFinePageCount} · {civilFineTotal} external fines</span>
+          <Button size="sm" variant="secondary" disabled={civilFinePage >= civilFinePageCount || civilFinesQuery.isFetching} onClick={() => setCivilFinePage((current) => Math.min(civilFinePageCount, current + 1))}>Next external fines</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="Internal Fines"
