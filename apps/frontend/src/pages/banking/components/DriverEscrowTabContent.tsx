@@ -111,6 +111,13 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
   const driverRows = driverBalancesQuery.data?.drivers ?? [];
   const selectedDriver = driverRows.find((row) => row.driver_id === selectedDriverId) ?? null;
   const supportsPerDriverBreakdown = driverBalancesQuery.isSuccess;
+  // DRIVER-ESCROW-VISUALIZER-BALANCES-AVAILABLE-LABEL-MISLEADING-COUNT: the API deliberately returns
+  // every active driver (so the picker can reach a $0 driver's timeline), so driverRows.length was
+  // being labeled "Driver balances available" — reading as "drivers with an available balance" —
+  // when it actually meant "total drivers in the picker." The Banking Home widget's identical data
+  // is correctly filtered to nonzero balances before counting ("Drivers with escrow:"); match that
+  // semantics here instead of relabeling, since the label's own wording is otherwise correct.
+  const driversWithEscrowBalance = driverRows.filter((row) => Number(row.escrow_balance) > 0).length;
 
   const tableRows = useMemo(() => {
     if (selectedDriverId) {
@@ -223,7 +230,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           </div>
           <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Driver balances available</p>
-            <p className="mt-1 text-xl font-semibold text-gray-900">{driverRows.length}</p>
+            <p className="mt-1 text-xl font-semibold text-gray-900">{driversWithEscrowBalance}</p>
           </div>
           <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ledger scope</p>
