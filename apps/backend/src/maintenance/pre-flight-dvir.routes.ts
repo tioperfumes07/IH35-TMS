@@ -265,6 +265,7 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           ]
         );
         const wo = woRes.rows[0];
+        if (!wo?.id) throw new Error("preflight_dvir_work_order_insert_failed");
 
         await client.query(
           `
@@ -274,7 +275,7 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           )
           VALUES ($1::uuid, $2::uuid, $3, $4, 'override', true, $5::uuid, $6::uuid, 'pre_flight_dvir_route')
           `,
-          [companyId, defectId, severity, def.major_defect_code, wo?.id ?? null, user.uuid]
+          [companyId, defectId, severity, def.major_defect_code, wo.id, user.uuid]
         );
 
         await appendCrudAudit(client, user.uuid, "maintenance.pre_flight_dvir.route", {
@@ -282,15 +283,15 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           resource_id: defectId,
           operating_company_id: companyId,
           action: "work_order_created",
-          work_order_id: wo?.id ?? null,
+          work_order_id: wo.id,
         });
 
         return {
           code: 200 as const,
           data: {
             action: "work_order_created" as const,
-            work_order_id: wo?.id,
-            display_id: wo?.display_id ?? null,
+            work_order_id: wo.id,
+            display_id: wo.display_id ?? null,
           },
         };
       }
