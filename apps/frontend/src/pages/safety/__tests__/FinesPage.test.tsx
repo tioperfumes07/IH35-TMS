@@ -37,6 +37,7 @@ describe("FinesPage (A23-9)", () => {
           status: "open",
         },
       ],
+      total_count: 1,
     });
     vi.spyOn(safetyApi, "getCompanyViolations").mockResolvedValue({
       company_violations: [
@@ -49,6 +50,7 @@ describe("FinesPage (A23-9)", () => {
           status: "open",
         },
       ],
+      total_count: 1,
     });
     vi.spyOn(safetyApi, "createCompanyViolation").mockResolvedValue({ id: "cv-new" });
   });
