@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-1655 | PORT=MCP | NOW=/dispatch | SHA=33c41fc | GO
 Cursor→Cascade | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · finish Live Chrome+FIX then NEXT · create TEST · do NOT void until launch · all seats have permission | GO
 CASCADE | ACK | GO-1640 | PORT=MCP | NOW=/dispatch | SHA=33c41fc | GO
 CASCADE | ACK | GO-1745 | PORT=n | NOW=/customers-then-/dispatch | SHA=ece4a06 | GO
