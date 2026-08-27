@@ -1407,9 +1407,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
-      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1`, [
+      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`, [
         params.data.id,
         parsed.data.new_status,
+        companyId,
       ]);
       await client.query(
         `
@@ -1422,14 +1423,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "maintenance.work_order.status_transition",
-        { resource_id: params.data.id, from_status: current.status, to_status: parsed.data.new_status },
+        { operating_company_id: companyId, resource_id: params.data.id, from_status: current.status, to_status: parsed.data.new_status },
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
       if (CLOSED_STATUSES.has(parsed.data.new_status)) {
         const closedRes = await client.query(
-          `SELECT closed_at::text, updated_at::text, status FROM maintenance.work_orders WHERE id = $1 LIMIT 1`,
-          [params.data.id]
+          `SELECT closed_at::text, updated_at::text, status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, companyId]
         );
         const closedRow = closedRes.rows[0] as { closed_at?: string | null; updated_at?: string | null; status?: string } | undefined;
         await appendCrudAudit(
@@ -1498,9 +1499,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
-      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1`, [
+      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`, [
         params.data.id,
         parsed.data.new_status,
+        companyId,
       ]);
       await client.query(
         `
@@ -1513,7 +1515,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "maintenance.work_order.status_transition",
-        { resource_id: params.data.id, from_status: current.status, to_status: parsed.data.new_status },
+        { operating_company_id: companyId, resource_id: params.data.id, from_status: current.status, to_status: parsed.data.new_status },
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
