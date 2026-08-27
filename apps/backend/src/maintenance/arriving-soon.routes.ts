@@ -14,6 +14,8 @@ const listQuerySchema = companyQuerySchema.extend({
   include_already_arrived: z.coerce.boolean().default(true),
   include_non_yard_destination: z.coerce.boolean().default(true),
   severity_min: z.enum(["info", "warning", "severe"]).default("info"),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const loadParamsSchema = z.object({
@@ -85,6 +87,9 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
       }
 
       const whereSql = `WHERE ${filters.join(" AND ")}`;
+      values.push(q.limit, q.offset);
+      const limitParam = values.length - 1;
+      const offsetParam = values.length;
       const res = await client.query(
         `
           SELECT *
@@ -93,8 +98,11 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
           ORDER BY
             COALESCE(predicted_yard_arrival_at, now() + interval '999 days') ASC,
             severe_count DESC,
-            warning_count DESC
-          LIMIT 300
+            warning_count DESC,
+            load_id ASC,
+            unit_id ASC
+          LIMIT $${limitParam}
+          OFFSET $${offsetParam}
         `,
         values
       );
@@ -126,15 +134,21 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
       };
       });
 
-      const counts = {
-        total: cards.length,
-        severe: cards.filter((row: any) => Number(row.severe_count) > 0).length,
-        warning: cards.filter((row: any) => Number(row.warning_count) > 0).length,
-        info: cards.filter((row: any) => Number(row.info_count) > 0).length,
-        already_arrived: cards.filter((row: any) => row.already_arrived).length,
-        within_24h: cards.filter((row: any) => typeof row.hours_until_yard_arrival === "number" && Number(row.hours_until_yard_arrival) <= 24).length,
-        within_48h: cards.filter((row: any) => typeof row.hours_until_yard_arrival === "number" && Number(row.hours_until_yard_arrival) <= 48).length,
-      };
+      const countValues = values.slice(0, -2);
+      const countRes = await client.query(
+        `SELECT
+           COUNT(*)::int AS total,
+           COUNT(*) FILTER (WHERE severe_count > 0)::int AS severe,
+           COUNT(*) FILTER (WHERE warning_count > 0)::int AS warning,
+           COUNT(*) FILTER (WHERE info_count > 0)::int AS info,
+           COUNT(*) FILTER (WHERE already_arrived)::int AS already_arrived,
+           COUNT(*) FILTER (WHERE hours_until_yard_arrival <= 24)::int AS within_24h,
+           COUNT(*) FILTER (WHERE hours_until_yard_arrival <= 48)::int AS within_48h
+         FROM maintenance.v_arriving_soon
+         ${whereSql}`,
+        countValues
+      );
+      const counts = countRes.rows[0] ?? { total: 0, severe: 0, warning: 0, info: 0, already_arrived: 0, within_24h: 0, within_48h: 0 };
 
       // Converted issues leave v_arriving_soon by design. Keep their persisted
       // issue -> WO reverse edge visible on this source surface instead of

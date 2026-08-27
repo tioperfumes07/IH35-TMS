@@ -1444,3 +1444,5 @@ Codex | SHIPPED | MAINT-F6885 | PR=#16737 @ d8932bf601 | Built=maintenance vendo
 Codex | WORKING | MAINT-F6886 | Built=maintenance/fleet tire event exact range | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6886 | PR=#16738 @ 83aa0097b1 | Built=maintenance/fleet tire event exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6887 | GO
 Codex | WORKING | MAINT-F6887 | Built=maintenance compliance 425C exact range | guard=11/11 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6887 | PR=#16739 @ 9f286713f1 | Built=maintenance compliance 425C exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6888 | GO
+Codex | WORKING | MAINT-F6888 | Built=maintenance arriving-soon exact range+full-set KPIs | guard=6/6 | NEXT=FAST-MERGE | GO
