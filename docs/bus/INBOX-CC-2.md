@@ -1,3 +1,5 @@
+**11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-2. Unique leftover. Re-prove deduction-trail on current SHA. Watching INBOX=defect. ACK: `CC-2 | ACK | GO-1127 | PORT=9224 | NOW=unique-leftover | SHA=<healthz> | GO`.
+
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX CC-2. Unique leftover. Never GL. Watching INBOX=defect. ACK: `CC-2 | ACK | GO-1104 | PORT=9224 | NOW=unique-leftover | SHA=8e4380a | GO`.
 
 **08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX CC-2. NOW=deduction-trail complete. Never GL. ACK: `CC-2 | ACK | GO-0808 | PORT=9224 | NOW=deduction-trail-complete | SHA=<healthz> | GO`.

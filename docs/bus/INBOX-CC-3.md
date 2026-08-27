@@ -1,3 +1,5 @@
+**11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-3. HOS Retry **is live** on `4e7c9a7`. Live Chrome then lists unique. ACK: `CC-3 | ACK | GO-1127 | PORT=9225 | NOW=hos-retry-live-chrome | SHA=<healthz> | GO`.
+
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX CC-3. Driver-label Live Chrome then /lists /legal /compliance unique. ACK: `CC-3 | ACK | GO-1104 | PORT=9225 | NOW=driver-label-live-chrome | SHA=8e4380a | GO`.
 
 **08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX CC-3. NOW=status-filter 400 system-wide. Do not remake resolver. ACK: `CC-3 | ACK | GO-0808 | PORT=9225 | NOW=status-filter-400-systemwide | SHA=<healthz> | GO`.

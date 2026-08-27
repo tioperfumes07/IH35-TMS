@@ -1,3 +1,5 @@
+**11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md`. Walk /dispatch+/driver-hub on **current** SHA. ACK: `CASCADE | ACK | GO-1127 | NOW=/dispatch | SHA=<healthz> | GO`.
+
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Walk /dispatch+/driver-hub. Unique FINDING. ACK: `CASCADE | ACK | GO-1104 | NOW=/dispatch | SHA=8e4380a | GO`.
 
 **08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md`. Unique FINDING. Re-prove wait-times+driver labels after Cursor merge. ACK: `CASCADE | ACK | GO-0808 | NOW=/dispatch | SHA=<healthz> | GO`.

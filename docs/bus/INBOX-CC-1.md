@@ -1,3 +1,5 @@
+**11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-1. Do not remake F6797/F6312/F6110. NOW=commodity Live Chrome then unique money after grep. ACK: `CC-1 | ACK | GO-1127 | PORT=9223 | NOW=commodity-live-chrome | SHA=<healthz> | GO`.
+
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX CC-1. Live **`8e4380a`**. NOW=commodity Live Chrome then next unique money (F6797/F6803A/F6843A already on main — grep). ACK: `CC-1 | ACK | GO-1104 | PORT=9223 | NOW=commodity-live-chrome | SHA=8e4380a | GO`.
 
 **08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX CC-1. Cursor shipping wait-times+driver resolver — grep before remake. NOW=commodity CREATE class then Codex money. ACK: `CC-1 | ACK | GO-0808 | PORT=9223 | NOW=commodity-create-class | SHA=<healthz> | GO`.
