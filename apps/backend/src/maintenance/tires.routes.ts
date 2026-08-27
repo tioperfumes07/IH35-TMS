@@ -517,18 +517,22 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       return validationError(reply, (params.success ? parsed.error : params.error) as z.ZodError);
     }
 
-    await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      await client.query(
+    const archived = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const result = await client.query(
         `UPDATE maintenance.tire_records
          SET status = 'archived', archived_at = now(), archive_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'active'`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'active'
+         RETURNING id::text`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived from tire program"]
       );
+      if (!result.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.archived", {
         operating_company_id: parsed.data.operating_company_id,
         id: params.data.id,
       });
+      return result.rows[0];
     });
+    if (!archived) return reply.code(404).send({ error: "not_found_or_not_active" });
     return reply.send({ ok: true, id: params.data.id });
   });
 
