@@ -328,6 +328,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
         [body.operating_company_id, body.name, body.manufacturer, body.tread_warranty_32nds ?? null, body.sort_order]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.tire_brand.created", {
+        operating_company_id: body.operating_company_id,
         name: body.name,
         manufacturer: body.manufacturer,
       });
@@ -442,6 +443,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       );
       const created = await fetchRecordById(client, body.operating_company_id, String(res.rows[0]?.id));
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.created", {
+        operating_company_id: body.operating_company_id,
         position_code: body.position_code,
         brand_name: brandName,
       });
@@ -493,7 +495,10 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid`,
         values
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.tire_record.updated", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.tire_record.updated", {
+        operating_company_id: body.operating_company_id,
+        id: params.data.id,
+      });
       return fetchRecordById(client, body.operating_company_id, params.data.id);
     });
 
@@ -517,7 +522,10 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
          WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'active'`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived from tire program"]
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.tire_record.archived", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.tire_record.archived", {
+        operating_company_id: parsed.data.operating_company_id,
+        id: params.data.id,
+      });
     });
     return reply.send({ ok: true, id: params.data.id });
   });
@@ -628,6 +636,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       );
 
       await appendCrudAudit(client, user.uuid, "maintenance.tire_rotated", {
+        operating_company_id: body.operating_company_id,
         tire_record_id: body.tire_record_id,
         from_position_code: fromCode,
         to_position_code: body.to_position_code,
@@ -700,6 +709,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.tire_replaced", {
+        operating_company_id: body.operating_company_id,
         previous_record_id: body.tire_record_id,
         new_record_id: newId,
       });
@@ -736,6 +746,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
         [body.operating_company_id, body.tire_record_id, body.tread_depth_32nds, body.notes, alert, user.uuid]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.tire_tread_audited", {
+        operating_company_id: body.operating_company_id,
         tire_record_id: body.tire_record_id,
         tread_depth_32nds: body.tread_depth_32nds,
         is_low_tread_alert: alert,
