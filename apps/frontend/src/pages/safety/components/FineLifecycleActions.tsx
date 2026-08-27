@@ -105,15 +105,21 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
     enabled: Boolean(operatingCompanyId) && canMutate,
   });
 
+  // SAFETY-MONEY-F6437-READ-RECOVERY-DEAD-ENDS: TanStack Query keeps the last successful `data`
+  // around across a failed refetch — without this guard a rejected search could leave stale bank
+  // transactions selectable in the picker with no indication the list is no longer current, on a
+  // money-consequential choice (which bank transaction paid this fine).
   const bankOptions = useMemo(
     () =>
-      (bankTxQuery.data?.transactions ?? []).map((tx) => ({
-        value: String(tx.id),
-        label: `${formatDateUS(tx.transaction_date)} · $${(Math.abs(Number(tx.amount_cents ?? 0)) / 100).toFixed(2)} · ${
-          tx.merchant_name ?? tx.description ?? "(no description)"
-        }`,
-      })),
-    [bankTxQuery.data]
+      bankTxQuery.isError
+        ? []
+        : (bankTxQuery.data?.transactions ?? []).map((tx) => ({
+            value: String(tx.id),
+            label: `${formatDateUS(tx.transaction_date)} · $${(Math.abs(Number(tx.amount_cents ?? 0)) / 100).toFixed(2)} · ${
+              tx.merchant_name ?? tx.description ?? "(no description)"
+            }`,
+          })),
+    [bankTxQuery.data, bankTxQuery.isError]
   );
 
   type LifecycleScope = { fineId: string; operatingCompanyId: string; generation: number };
@@ -397,8 +403,16 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
         </div>
         {bankTxQuery.isError ? (
-          <p className="mt-2 text-xs text-[#dc2626]" data-testid="fine-payment-picker-error">
-            Couldn't load bank transactions: {apiErrorText(bankTxQuery.error)}
+          <p className="mt-2 flex items-center gap-2 text-xs text-[#dc2626]" data-testid="fine-payment-picker-error">
+            <span>Couldn't load bank transactions: {apiErrorText(bankTxQuery.error)}</span>
+            <button
+              type="button"
+              className="shrink-0 rounded-sm border border-[#dc2626] px-2 py-0.5 font-semibold text-[#dc2626] hover:bg-red-50"
+              data-testid="fine-payment-picker-retry"
+              onClick={() => void bankTxQuery.refetch()}
+            >
+              Retry
+            </button>
           </p>
         ) : null}
         {linkPaymentMutation.isError ? (
