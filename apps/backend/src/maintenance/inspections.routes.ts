@@ -371,17 +371,23 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
         if (body.is_ad_hoc !== undefined) setField("is_ad_hoc", body.is_ad_hoc);
 
         values.push(params.data.id, body.operating_company_id);
-        await client.query(
+        const mutation = await client.query(
           `
           UPDATE maintenance.inspections
           SET ${fields.join(", ")}, updated_at = now()
-          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid
+          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL
+          RETURNING id::text
         `,
           values
         );
+        if (!mutation.rows[0]) return null;
 
-        const detail = await client.query(`${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`, [params.data.id]);
-        const updatedRow = detail.rows[0] ?? existing;
+        const detail = await client.query(
+          `${INSPECTION_SELECT} WHERE i.id = $1 AND i.operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, body.operating_company_id]
+        );
+        const updatedRow = detail.rows[0];
+        if (!updatedRow) return null;
 
         await appendCrudAudit(client, user.uuid, "maintenance.inspection.updated", {
           resource_id: params.data.id,
