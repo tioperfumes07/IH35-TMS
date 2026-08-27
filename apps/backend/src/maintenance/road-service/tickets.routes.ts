@@ -239,7 +239,11 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "maintenance.road_service_ticket.created",
-        { resource_type: "maintenance.road_service_tickets", resource_id: String(ticket?.id ?? "") },
+        {
+          operating_company_id: body.data.operating_company_id,
+          resource_type: "maintenance.road_service_tickets",
+          resource_id: String(ticket?.id ?? ""),
+        },
         "info",
         "P5-T17-ROAD-SERVICE"
       );
