@@ -34,6 +34,17 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
   // system-wide, live-confirmed 2026-08-21) that was never kept in sync with the real GL-linked
   // liability subledger, accounting.escrow_accounts (Block-23) — the same table /accounting/escrow
   // already reads correctly. Repointed here so this KPI count matches reality.
+  //
+  // DRIVER-ESCROW-VISUALIZER-BALANCES-AVAILABLE-LABEL-MISLEADING-COUNT (residual): this query used
+  // to also require `d.deactivated_at IS NULL`, silently excluding a deactivated-but-still-owing
+  // driver from the count even when they hold a real nonzero escrow balance — a completeness gap
+  // on a liability-tracking KPI (Banking Home showed 1, /banking/driver-escrow's post-fix count
+  // showed 2). Dropped that filter to match escrow-visualizer.routes.ts's own documented policy: a
+  // separated/terminated driver's outstanding escrow is a real liability the company still
+  // owes/holds (see escrow-separation.service.ts) and must not silently disappear from a count.
+  // The INNER JOIN + nonzero-balance filter below already scope this to drivers with a REAL
+  // balance regardless of active/deactivated status — no separate deactivated-inclusion clause
+  // is needed.
   const withBalanceRes = await client.query<{ count: number }>(
     `
       SELECT count(DISTINCT d.id)::int AS count
@@ -44,7 +55,6 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
         AND ea.purpose = 'driver_bond'
         AND ea.operating_company_id = d.operating_company_id
       WHERE d.operating_company_id = $1::uuid
-        AND d.deactivated_at IS NULL
         AND COALESCE(ea.balance_cents, 0) <> 0
     `,
     [operatingCompanyId]
