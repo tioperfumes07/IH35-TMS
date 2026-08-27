@@ -57,6 +57,21 @@ async function woTimeEntriesReady(client: { query: (sql: string, values?: unknow
   return Boolean(res.rows[0]?.ok);
 }
 
+export async function laborVendorBelongsToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  vendorId: string | null | undefined,
+  companyId: string
+) {
+  if (!vendorId) return true;
+  const vendor = await client.query(
+    `SELECT id FROM mdata.vendors
+     WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
+     LIMIT 1`,
+    [vendorId, companyId]
+  );
+  return Boolean(vendor.rows[0]);
+}
+
 
 const laborMetaPrefix = "ih35-labor-meta:";
 export type LaborNotesMeta = { labor_code_id: string | null; text: string | null };
@@ -146,6 +161,9 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
         [params.data.woId, body.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
+      if (!(await laborVendorBelongsToCompany(client, body.data.actor_vendor_id, body.data.operating_company_id))) {
+        return { kind: "invalid_vendor" as const };
+      }
 
       const insert = await client.query(
         `
@@ -186,6 +204,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
     if (payload.kind === "missing_wo") return reply.code(404).send({ error: "work_order_not_found" });
+    if (payload.kind === "invalid_vendor") return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return { time_entry: payload.entry };
   });
 
@@ -206,7 +225,6 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
         [params.data.woId, query.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
-
       const rows = await client.query(
         `
           SELECT *
@@ -281,6 +299,9 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
         [body.data.work_order_id, body.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
+      if (!(await laborVendorBelongsToCompany(client, body.data.actor_vendor_id, body.data.operating_company_id))) {
+        return { kind: "invalid_vendor" as const };
+      }
 
       const insert = await client.query(
         `
@@ -323,6 +344,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
     if (payload.kind === "missing_wo") return reply.code(404).send({ error: "work_order_not_found" });
+    if (payload.kind === "invalid_vendor") return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return { time_entry: payload.entry };
   });
 
