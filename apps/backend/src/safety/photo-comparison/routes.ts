@@ -166,7 +166,12 @@ export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const session = await submitPostTripPhotos(client, params.data.session_uuid, body.data.evidence_uuids);
+      const session = await submitPostTripPhotos(
+        client,
+        body.data.operating_company_id,
+        params.data.session_uuid,
+        body.data.evidence_uuids
+      );
       await appendCrudAudit(
         client,
         user.uuid,
