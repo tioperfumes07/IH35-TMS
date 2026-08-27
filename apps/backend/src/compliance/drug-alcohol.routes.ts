@@ -21,6 +21,10 @@ const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
   year: z.coerce.number().int().optional(),
   quarter: z.coerce.number().int().min(1).max(4).optional(),
+  draw_limit: z.coerce.number().int().min(1).max(50).default(5),
+  draw_offset: z.coerce.number().int().min(0).default(0),
+  selection_limit: z.coerce.number().int().min(1).max(100).default(12),
+  selection_offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createTestSchema = z.object({
@@ -99,14 +103,25 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     const parsed = companyQuery.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const drawCount = await client.query<{ total_count: number }>(
+        `SELECT count(*)::int AS total_count FROM compliance.drug_alcohol_random_draws WHERE operating_company_id = $1::uuid`,
+        [parsed.data.operating_company_id]
+      );
       const draws = await client.query(
         `
           SELECT id::text, quarter, year, drug_count, alcohol_count, drawn_at::text, selection_seed
           FROM compliance.drug_alcohol_random_draws
           WHERE operating_company_id = $1::uuid
-          ORDER BY year DESC, quarter DESC
-          LIMIT 20
+          ORDER BY year DESC, quarter DESC, id DESC
+          LIMIT $2 OFFSET $3
         `,
+        [parsed.data.operating_company_id, parsed.data.draw_limit, parsed.data.draw_offset]
+      );
+      const selectionCount = await client.query<{ total_count: number }>(
+        `SELECT count(*)::int AS total_count
+         FROM compliance.drug_alcohol_random_selections s
+         JOIN compliance.drug_alcohol_random_draws d ON d.id = s.draw_id
+         WHERE d.operating_company_id = $1::uuid`,
         [parsed.data.operating_company_id]
       );
       const selections = await client.query(
@@ -131,12 +146,17 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
                AND drug_draw_list_dca.deactivated_at IS NULL
            ))
           WHERE d.operating_company_id = $1::uuid
-          ORDER BY s.created_at DESC
-          LIMIT 100
+          ORDER BY s.created_at DESC, s.id DESC
+          LIMIT $2 OFFSET $3
         `,
-        [parsed.data.operating_company_id]
+        [parsed.data.operating_company_id, parsed.data.selection_limit, parsed.data.selection_offset]
       );
-      return { draws: draws.rows, selections: selections.rows };
+      return {
+        draws: draws.rows,
+        draw_total_count: Number(drawCount.rows[0]?.total_count ?? 0),
+        selections: selections.rows,
+        selection_total_count: Number(selectionCount.rows[0]?.total_count ?? 0),
+      };
     });
     return reply.send(rows);
   });
