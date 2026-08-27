@@ -9,10 +9,10 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
     queryKey: ["anomaly-open-critical", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      const res = await apiRequest<{ alerts: Array<{ severity: string }> }>(
-        `/api/safety/anomaly/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=open&severity=critical`
+      const res = await apiRequest<{ alerts: Array<{ severity: string }>; total_count: number }>(
+        `/api/safety/anomaly/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=open&severity=critical&limit=1&offset=0`
       );
-      return res.alerts?.length ?? 0;
+      return res.total_count ?? 0;
     },
     refetchInterval: 60_000,
   });

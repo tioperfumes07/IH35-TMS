@@ -23,6 +23,8 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
   const [actionError, setActionError] = useState<unknown>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const severity = parseSeverity(searchParams.get("severity"));
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
   const setSeverity = (next: string | null) => {
     setSearchParams(
       (prev) => {
@@ -35,10 +37,10 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
     );
   };
   const q = useQuery({
-    queryKey: ["anomaly-alerts", operatingCompanyId, severity],
+    queryKey: ["anomaly-alerts", operatingCompanyId, severity, page],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => apiRequest<{ alerts: AlertRow[] }>(
-      `/api/safety/anomaly/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=open${severity ? `&severity=${severity}` : ""}`
+    queryFn: () => apiRequest<{ alerts: AlertRow[]; total_count: number }>(
+      `/api/safety/anomaly/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=open&limit=${pageSize}&offset=${page * pageSize}${severity ? `&severity=${severity}` : ""}`
     ),
   });
   const ack = useMutation({
@@ -70,8 +72,11 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
     setActionError(null);
     ack.reset();
     resolve.reset();
+    setPage(0);
   }, [operatingCompanyId]); // Company transitions own a fresh anomaly-action lifecycle.
+  useEffect(() => setPage(0), [severity]);
   const rows = q.data?.alerts ?? [];
+  const totalCount = q.data?.total_count ?? 0;
   return (
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
       <div className="flex items-center gap-2">
@@ -117,6 +122,13 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           ]}
         />
       )}
+      {!q.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-between text-xs text-slate-600" data-testid="anomaly-alerts-server-pager">
+          <Button type="button" variant="secondary" disabled={page === 0 || q.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
+          <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
+          <Button type="button" variant="secondary" disabled={(page + 1) * pageSize >= totalCount || q.isFetching} onClick={() => setPage((value) => value + 1)}>Next</Button>
+        </div>
+      ) : null}
       {actionError ? (
         <p className="text-xs text-red-700" data-testid="anomaly-dashboard-action-error">
           {userFacingApiError(actionError, "Could not update the anomaly alert.")}
