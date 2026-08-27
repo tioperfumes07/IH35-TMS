@@ -283,6 +283,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       const newRow = result.rows[0];
       const pushed = await enqueueDriverPushIfProjected(client, params.data.id, companyId, user.uuid);
       await appendCrudAudit(client, user.uuid, "maintenance.drivers.updated", {
+        operating_company_id: companyId,
         resource_id: params.data.id,
         projected_push_enqueued: pushed,
         changes: buildPatchChanges(
@@ -316,6 +317,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       if (!updated.rows[0]) return null;
       const pushed = await enqueueDriverPushIfProjected(client, params.data.id, companyId, user.uuid);
       await appendCrudAudit(client, user.uuid, "maintenance.drivers.voided", {
+        operating_company_id: companyId,
         resource_id: params.data.id,
         void_reason: body.data.void_reason,
         projected_push_enqueued: pushed,
