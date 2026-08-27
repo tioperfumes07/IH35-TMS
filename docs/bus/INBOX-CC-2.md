@@ -1,3 +1,5 @@
+**14:39 CT GO-1439 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1439.md`. Hard-reload `5ecbc67`. Unique hunt N=. Never GL. ACK `CC-2 | ACK | GO-1439 | PORT=9224 | NOW=unique-hunt-N | SHA=<healthz> | GO`.
+
 **14:12 CT GO-1412 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1412.md`. Hard-reload `d49fbfa`. Re-prove /reports /cash-flow /finance /tasks. Never GL. ACK `CC-2 | ACK | GO-1412 | PORT=9224 | NOW=reports-reprove | SHA=<healthz> | GO`.
 
 **13:31 CT GO-1331 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1331.md`. Hard-reload when healthz=`4b859b7`. Re-prove /reports then /cash-flow /finance /tasks. Never GL. ACK `CC-2 | ACK | GO-1331 | PORT=9224 | NOW=reports-reprove | SHA=<healthz> | GO`.

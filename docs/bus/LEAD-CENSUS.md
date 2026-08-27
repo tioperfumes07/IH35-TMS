@@ -1,3 +1,20 @@
+# LEAD CENSUS — GO-1439
+
+**LIVE:** `d49fbfa` · API IN FLIGHT `dep-da895cqd0e5s73a1gtrg` tip `5ecbc67` · SPA auto-building same tip · `LEAD-SEAT=CURSOR`
+
+Ping ≠ ACK. Watching INBOX = idle.
+
+| Seat | GO-1439 ACK | State | Evidence |
+|------|-------------|-------|----------|
+| CC-1 | no | **IDLE** | GO-1412 ping only |
+| CC-2 | no | **IDLE** | GO-1412 ACK then watching INBOX |
+| CC-3 | no | unique leftover | ACK GO-1439 + Live Chrome 16764 after SPA |
+| Codex | WORKING | F6903 | ACK GO-1439; Live Chrome 5ecbc67 |
+| Cascade | no | **IDLE** | Cursor ping only |
+| Devin | no | **IDLE** | Cursor ping only |
+| Devin-A | no | **IDLE** | no current ACK |
+| Cursor | ACK | lead | this packet + deploy |
+
 # LEAD CENSUS — GO-1412
 
 **LIVE:** `4b859b7` · API IN FLIGHT `dep-da88o9ifngtc73bnmv90` tip `d49fbfa` · SPA auto-building same tip · `LEAD-SEAT=CURSOR`
