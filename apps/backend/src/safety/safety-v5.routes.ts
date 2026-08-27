@@ -192,7 +192,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
             client,
             user.uuid,
             "safety.dot_inspection.spawned_wo",
-            { inspection_id: inspection.id, spawned_wo_id: spawnedWo.woUuid },
+            { operating_company_id: query.data.operating_company_id, inspection_id: inspection.id, spawned_wo_id: spawnedWo.woUuid },
             "warning",
             "P3-T11.17-TWO-SECTION-V5"
           );
@@ -201,7 +201,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           client,
           user.uuid,
           "safety.dot_inspection.created",
-          { inspection_id: inspection.id, outcome: body.data.outcome, spawned_wo_id: spawnedWo?.woUuid ?? null },
+          { operating_company_id: query.data.operating_company_id, inspection_id: inspection.id, outcome: body.data.outcome, spawned_wo_id: spawnedWo?.woUuid ?? null },
           body.data.outcome === "OOS" ? "warning" : "info",
           "P3-T11.17-TWO-SECTION-V5"
         );
@@ -304,6 +304,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               user.uuid,
               "safety.internal_fine.converted_to_liability",
               {
+                operating_company_id: query.data.operating_company_id,
                 internal_fine_id: fine.id,
                 liability_id: (liability as { id?: string }).id ?? null,
                 driver_settlement_deduction_id: deduction.id,
@@ -317,7 +318,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           client,
           user.uuid,
           "safety.internal_fine.created",
-          { internal_fine_id: fine.id, status: body.data.status },
+          { operating_company_id: query.data.operating_company_id, internal_fine_id: fine.id, status: body.data.status },
           "info",
           "P3-T11.17-TWO-SECTION-V5"
         );
