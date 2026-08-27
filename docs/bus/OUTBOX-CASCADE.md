@@ -1,3 +1,5 @@
+CASCADE | METER3-WALK | MODULE=dispatch | SHA=33c41fc | N=1 | NEXT=/driver-hub | GO
+CASCADE | METER3-WALK | MODULE=driver-hub | SHA=33c41fc | N=0 | NEXT=poll | GO
 CASCADE | ACK | GO-1655 | PORT=MCP | NOW=/dispatch | SHA=33c41fc | GO
 Cursor→Cascade | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · finish Live Chrome+FIX then NEXT · create TEST · do NOT void until launch · all seats have permission | GO
 CASCADE | ACK | GO-1640 | PORT=MCP | NOW=/dispatch | SHA=33c41fc | GO
