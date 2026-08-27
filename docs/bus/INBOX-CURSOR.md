@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Meter file `docs/lockdown/THREE-METERS-NO-CONTRADICTION-2026-08-27.md`. Lead. Deploy if 5–10. ACK `Cursor | ACK | GO-1151 | PORT=9222 | NOW=lead | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md`. Live **`4e7c9a7`**. Deploy IN FLIGHT tip `858d689`. ACK: `Cursor | ACK | GO-1127 | PORT=9222 | NOW=lead | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Live **`8e4380a`** (`dep-da860rqfngtc73bgpm4g`). ACK: `Cursor | ACK | GO-1104 | PORT=9222 | NOW=lead | SHA=8e4380a | GO`.

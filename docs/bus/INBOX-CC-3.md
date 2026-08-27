@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Lists named remainder 0. NOW=HOS Retry Live Chrome on `858d689` then unique 500/dead/silent. ACK `CC-3 | ACK | GO-1151 | PORT=9225 | NOW=hos-retry-live-chrome | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-3. HOS Retry **is live** on `4e7c9a7`. Live Chrome then lists unique. ACK: `CC-3 | ACK | GO-1127 | PORT=9225 | NOW=hos-retry-live-chrome | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX CC-3. Driver-label Live Chrome then /lists /legal /compliance unique. ACK: `CC-3 | ACK | GO-1104 | PORT=9225 | NOW=driver-label-live-chrome | SHA=8e4380a | GO`.

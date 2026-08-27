@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Accounting named OPEN = **0**. F6797/F9508/F6437 = **DONE**. NOW=Live Chrome `/accounting` TEST create (do not void) on SHA `858d689`. Then unique 500/dead/silent after grep. ACK `CC-1 | ACK | GO-1151 | PORT=9223 | NOW=accounting-live-chrome | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX CC-1. Do not remake F6797/F6312/F6110. NOW=commodity Live Chrome then unique money after grep. ACK: `CC-1 | ACK | GO-1127 | PORT=9223 | NOW=commodity-live-chrome | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX CC-1. Live **`8e4380a`**. NOW=commodity Live Chrome then next unique money (F6797/F6803A/F6843A already on main — grep). ACK: `CC-1 | ACK | GO-1104 | PORT=9223 | NOW=commodity-live-chrome | SHA=8e4380a | GO`.

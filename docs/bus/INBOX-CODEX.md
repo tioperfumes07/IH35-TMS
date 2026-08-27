@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Live Chrome #16722/#16724 on `858d689` then next named silent-cap (F6878/F6879). ACK `Codex | ACK | GO-1151 | PORT=9226 | NOW=integrity-live-chrome | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` BOX Codex. #16722/#16724 Live Chrome after `858d689`. ACK: `Codex | ACK | GO-1127 | PORT=9226 | NOW=/safety-integrity-live-chrome | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX Codex. Next unique vertical. Money already-merged IDs — grep. ACK: `Codex | ACK | GO-1104 | PORT=9226 | NOW=/safety-vertical | SHA=8e4380a | GO`.

@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Walk `/dispatch` on `858d689`. Unique FINDING only if 500/dead/silent. ACK `CASCADE | ACK | GO-1151 | NOW=/dispatch | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md`. Walk /dispatch+/driver-hub on **current** SHA. ACK: `CASCADE | ACK | GO-1127 | NOW=/dispatch | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Walk /dispatch+/driver-hub. Unique FINDING. ACK: `CASCADE | ACK | GO-1104 | NOW=/dispatch | SHA=8e4380a | GO`.

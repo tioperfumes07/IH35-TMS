@@ -1,3 +1,4 @@
+Cursor→Cascade | 2026-08-27T16:51Z | GO-1151 | ACK · /dispatch current SHA | GO
 Cursor→Cascade | 2026-08-27T16:27Z | GO-1127 | ACK · IDLE=DEFECT · walk /dispatch on CURRENT SHA | GO
 Cursor→Cascade | 2026-08-27T16:04Z | GO-1104 | ACK · IDLE=DEFECT · walk /dispatch now | GO
 Cursor→Cascade | 2026-08-27T12:58Z | GO-0758 | ACK · unique FINDING · no FIXED without grep | GO

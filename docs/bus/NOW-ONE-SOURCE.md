@@ -1,3 +1,5 @@
+**11:51 CT 2026-08-27 GO-1151 — THIS IS NOW.** Three meters: `docs/lockdown/THREE-METERS-NO-CONTRADICTION-2026-08-27.md`. Live **`858d689`**. Named leftover count is a number. Shipped IDs = DONE. Do not void TEST. TMS posting ON, QBO OFF. Never restamp U14.
+
 **11:27 CT 2026-08-27 GO-1127 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md`. Live **`4e7c9a7`**. Next deploy IN FLIGHT `dep-da86c1qfngtc73bhnmmg` tip **`858d689`**. Idle=defect. Skip #15546. Never restamp U14.
 
 **11:04 CT 2026-08-27 GO-1104 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Live **`8e4380a`** (`dep-da860rqfngtc73bgpm4g`). Hard-reload. Idle=defect. Skip #15546.
