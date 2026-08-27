@@ -1035,6 +1035,22 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, expenseNumber]);
         }
 
+        // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
+        // withCompanyScope transaction opened AFTER this one had already committed, with a bare
+        // .catch(warn) — a real emit failure was silently swallowed (the expense exists, the audit
+        // trail doesn't). Moved into the expense's own creation transaction, awaited, so the write
+        // and its spine event can never diverge. By this point every early-return validation branch
+        // (schema-missing/category-unbridged/vendor-mismatch/duplicate) has already exited above, so
+        // reaching here means the expense row is real.
+        await emitAccountingSpineEvent(client, {
+          operating_company_id: body.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "expense.created",
+          entity_id: expenseId,
+          entity_type: "expense",
+          source_table: "accounting.expenses",
+        });
+
         return {
           expense_id: expenseId,
           expense_number: expenseNumber,
@@ -1063,21 +1079,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             "An expense with this exact memo was already recorded for this company in the last 2 minutes. If this is intentional, vary the memo text.",
           existing_expense_id: (payload as { existingExpenseId?: string }).existingExpenseId ?? null,
         });
-      await withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
-          operating_company_id: body.operating_company_id,
-          actor_user_id: String(user.uuid),
-          event_type: "expense.created",
-          entity_id: (payload as { id?: string })?.id ?? "",
-          entity_type: "expense",
-          source_table: "accounting.expenses",
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, expense_id: (payload as { id?: string })?.id ?? null, company_id: body.operating_company_id },
-          "spine_emit_expense_created_failed"
-        )
-      );
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: expense.created now emits inside the
+      // creation transaction above — awaited, never diverges from the row.
 
       // (P-NOW) GL POSTING — a categorized cash-out (category account + payment account) posts a balanced
       // JE through the EXISTING engine: DR the resolved category account, CR the payment account. Still
@@ -1252,12 +1255,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           "P6-T11176"
         );
 
-        return { expense_number: numbered.number };
-      });
-
-      if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
-      await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
+        // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
+        // withCompanyScope transaction opened AFTER this one had already committed, with a bare
+        // .catch(warn) — a real emit failure was silently swallowed (the reattribution happened, the
+        // audit trail doesn't). Moved into the reattribution's own transaction, awaited, so the write
+        // and its spine event can never diverge.
+        await emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,
           actor_user_id: String(user.uuid),
           event_type: "expense.reattributed",
@@ -1265,13 +1268,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           entity_type: "expense",
           source_table: "accounting.expenses",
           payload: { new_load_id: body.new_load_id },
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, expense_id: params.data.expenseId, company_id: body.operating_company_id },
-          "spine_emit_expense_reattributed_failed"
-        )
-      );
+        });
+
+        return { expense_number: numbered.number };
+      });
+
+      if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
       return reply.code(200).send(payload);
     } catch (error) {
       const code = (error as { code?: string }).code;

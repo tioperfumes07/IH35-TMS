@@ -23,7 +23,6 @@ import {
 } from "./bills.service.js";
 import { nextBillDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
@@ -370,21 +369,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
-      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
-          operating_company_id: query.data.operating_company_id,
-          actor_user_id: String(user.uuid),
-          event_type: "bill.created",
-          entity_id: (bill as { id?: string })?.id ?? "",
-          entity_type: "bill",
-          source_table: "accounting.bills",
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, bill_id: (bill as { id?: string })?.id ?? null, company_id: query.data.operating_company_id },
-          "spine_emit_bill_created_failed"
-        )
-      );
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: bill.created now emits inside
+      // createBill()'s own transaction (bills.service.ts) — awaited, never diverges from the row.
       return reply.code(201).send({ bill });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_create_failed");
@@ -449,21 +435,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       // P1-BILLPAY-GL: payBill always records the payment + bank decrement; payment.gl_posting reports
       // whether the balanced JE was also posted ("posted") or skipped because the per-entity flag is OFF
       // ("blocked_flag_off") — no silent success, no bill-payment outage for flag-OFF entities.
-      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
-          operating_company_id: query.data.operating_company_id,
-          actor_user_id: String(user.uuid),
-          event_type: "bill.paid",
-          entity_id: params.data.id,
-          entity_type: "bill",
-          source_table: "accounting.bills",
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, bill_id: params.data.id, company_id: query.data.operating_company_id },
-          "spine_emit_bill_paid_failed"
-        )
-      );
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: bill.paid now emits inside payBill()'s
+      // own transaction (bills.service.ts) — awaited, never diverges from the row.
       return reply.code(201).send({ payment });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_failed");
@@ -500,22 +473,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid), {
         role: user.role,
       });
-      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
-          operating_company_id: query.data.operating_company_id,
-          actor_user_id: String(user.uuid),
-          event_type: "bill.voided",
-          entity_id: params.data.id,
-          entity_type: "bill",
-          source_table: "accounting.bills",
-          payload: { reason: body.data.reason ?? null },
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, bill_id: params.data.id, company_id: query.data.operating_company_id },
-          "spine_emit_bill_voided_failed"
-        )
-      );
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: bill.voided now emits inside
+      // voidBill()'s own transaction (bills.service.ts) — awaited, never diverges from the row.
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_void_failed");
@@ -547,22 +506,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     try {
       await voidBillPayment(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
-      await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
-        emitAccountingSpineEvent(client, {
-          operating_company_id: query.data.operating_company_id,
-          actor_user_id: String(user.uuid),
-          event_type: "payment.bill_voided",
-          entity_id: params.data.id,
-          entity_type: "bill_payment",
-          source_table: "accounting.bill_payments",
-          payload: { reason: body.data.reason ?? null },
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, bill_payment_id: params.data.id, company_id: query.data.operating_company_id },
-          "spine_emit_bill_payment_voided_failed"
-        )
-      );
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: payment.bill_voided now emits inside
+      // voidBillPayment()'s own transaction (bills.service.ts) — awaited, never diverges from the row.
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_void_failed");
