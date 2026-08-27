@@ -1,3 +1,5 @@
+**07:45 CT GO-0745.** Complete unique leftover. Never GL. Packet GO-0745. ACK: `CC-2 | ACK | GO-0745 | PORT=9224 | NOW=/settlements | SHA=0340406 | GO`.
+
 **07:41 CT GO-0741.** Complete unique leftover. Never GL. ACK GO-0741.
 
 **07:38 CT GO-0738.** Exclusive leftover. Packet names Cascade 7 for CC-1/CC-3. ACK GO-0738. NOW=/settlements.

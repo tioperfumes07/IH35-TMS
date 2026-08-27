@@ -14,7 +14,7 @@ const checks = [
   ["border crossing unit FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /unit_id:\s*form\.unitId/],
   ["road-service unit FK", "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id:\s*unitId/],
   ["insurance policy unit FKs", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnitIds/],
-  ["safety event unit FK", "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", /subject_unit_id:\s*draft\.subject_unit_id\.trim\(\)/],
+  ["safety event unit FK", "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", /subject_unit_id:\s*input\.draft\.subject_unit_id\.trim\(\)\s*\|\|\s*undefined/],
 ];
 const files = [...new Set(checks.map(([, file]) => file))];
 const original = new Map(files.map((file) => [file, fs.readFileSync(file, "utf8")]));

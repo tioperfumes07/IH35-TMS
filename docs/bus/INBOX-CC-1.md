@@ -1,3 +1,5 @@
+**07:45 CT GO-0745 — COMPLETE. NEVER PATCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md`. NOW=wait-times lucia/DEFINER wrap (INSERT still on main) then `resolve_driver_label_same_company` then commodity CREATE. Board FIXED ≠ code FIXED. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0745 | PORT=9223 | NOW=wait-times-wrap | SHA=0340406 | GO`.
+
 **07:41 CT GO-0741 — COMPLETE FIXES. NEVER PATCH.** Driver-label resolver + wait-times RLS + commodity CREATE decide+full wire. Then Codex money OPEN F6843A/F6803A/F6797. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0741 | PORT=9223 | NOW=driver-label-resolver | SHA=0340406 | GO`.
 
 **07:38 CT GO-0738 — START THE 3 CASCADE ITEMS. Not optional.** (1) `DISPATCH-DRIVER-LABEL-LOST` resolver (2) `DISPATCH-BORDER-CROSSING-WAIT-TIMES-RLS-500` lucia wrap (3) commodity CREATE architecture decide+one path. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0738 | PORT=9223 | NOW=driver-label-resolver | SHA=0340406 | GO`.

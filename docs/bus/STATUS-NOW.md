@@ -1,5 +1,7 @@
 # STATUS-NOW
 
+**07:45 CT:** GO-0745 grep-verified 7d drain · paste `PASTE-ALL-SEATS-GO-2026-08-27-0745.md` · live `0340406` · CC-1 wait-times wrap still OPEN on main.
+
 **13:50 CT:** GO-1350 remaining-scenario wake · paste `PASTE-ALL-SEATS-GO-2026-08-25-1350.md` · deploy in-flight `dep-da6u8615efls73cul3fg` · CC-1 still #1.
 
 **Canonical NOW:** `docs/bus/NOW-ONE-SOURCE.md`  
