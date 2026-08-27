@@ -106,25 +106,35 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     const parsed = enrollSchema.safeParse(req.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
-    const enrollment = await withCurrentUser(user.uuid, async (client) => {
-      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
-      const row = await enrollDriver(
-        client,
-        parsed.data.operating_company_id,
-        parsed.data.driver_uuid,
-        parsed.data.consortium_name,
-        parsed.data.enrolled_at
-      );
-      await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.enrolled", {
-        operating_company_id: parsed.data.operating_company_id,
-        resource_type: "safety.da_program_enrollments",
-        resource_id: row.uuid,
-        driver_uuid: parsed.data.driver_uuid,
-        consortium_name: parsed.data.consortium_name,
+    try {
+      const enrollment = await withCurrentUser(user.uuid, async (client) => {
+        await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
+        const row = await enrollDriver(
+          client,
+          parsed.data.operating_company_id,
+          parsed.data.driver_uuid,
+          parsed.data.consortium_name,
+          parsed.data.enrolled_at
+        );
+        await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.enrolled", {
+          operating_company_id: parsed.data.operating_company_id,
+          resource_type: "safety.da_program_enrollments",
+          resource_id: row.uuid,
+          driver_uuid: parsed.data.driver_uuid,
+          consortium_name: parsed.data.consortium_name,
+        });
+        return row;
       });
-      return row;
-    });
-    return reply.code(201).send(enrollment);
+      return reply.code(201).send(enrollment);
+    } catch (error) {
+      if ((error as Error).message === "active_enrollment_exists") {
+        return reply.code(409).send({ error: "active_enrollment_exists" });
+      }
+      if ((error as Error).message === "active_driver_not_in_operating_company") {
+        return reply.code(404).send({ error: "active_driver_not_in_operating_company" });
+      }
+      throw error;
+    }
   });
 
   // Bulk-enroll every active human driver into the consortium random pool.
