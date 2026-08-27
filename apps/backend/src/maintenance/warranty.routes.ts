@@ -558,14 +558,15 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       const existing = await fetchClaimById(client, parsed.data.operating_company_id, params.data.id);
       if (!existing || existing.archived_at) return null;
 
-      await client.query(
+      const filed = await client.query(
         `UPDATE maintenance.warranty_claims
          SET status = 'filed',
              filed_at = now(),
              claim_number = COALESCE(NULLIF($3, ''), claim_number),
              notes = CASE WHEN $4 IS NULL OR $4 = '' THEN notes ELSE $4 END,
              updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL
+         RETURNING id::text`,
         [
           params.data.id,
           parsed.data.operating_company_id,
@@ -573,6 +574,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
           parsed.data.notes ?? null,
         ]
       );
+      if (!filed.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.filed", {
         operating_company_id: parsed.data.operating_company_id,
         id: params.data.id,

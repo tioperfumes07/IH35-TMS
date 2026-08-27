@@ -1266,3 +1266,4 @@ Codex | GO-2158 | WORKING | FINDING=MAINT-F6744 | Tread event now requires one a
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6745 | Reefer-hours archive now returns 404/no audit on zero-row mutation | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6746 | Reefer-specs update now requires one active company row before audit/readback | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6747 | Warranty claim edit now requires one active company row before audit/readback | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6748 | Warranty claim filing now requires one active company row before audit/readback | NEXT=guard+tests+FAST-MERGE | GO
