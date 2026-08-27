@@ -180,6 +180,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, authUser.uuid, "fleet.trailer.status_changed", {
         resource_id: row.id,
         resource_type: "mdata.equipment",
+        operating_company_id: query.data.operating_company_id,
         before_status: oldRow.status,
         after_status: body.data.status,
         reason: body.data.reason,
@@ -281,6 +282,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
         await appendCrudAudit(client, authUser.uuid, "fleet.trailer.updated", {
           resource_id: updatedRow.id,
           resource_type: "mdata.equipment",
+          operating_company_id: query.data.operating_company_id,
           changes,
         });
         return updatedRow;
