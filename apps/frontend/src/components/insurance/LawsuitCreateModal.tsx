@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -84,6 +84,7 @@ function mapApi4xxToErrors(error: ApiError): {
 
 export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const lifecycleGenerationRef = useRef(0);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
@@ -98,27 +99,18 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
   }, [open]);
 
   const createMutation = useMutation({
-    mutationFn: (payload: { demandCents?: number; settlementCents?: number }) =>
-      insuranceLawsuitsApi.create({
-        operating_company_id: operatingCompanyId,
-        case_number: form.case_number.trim(),
-        plaintiff: form.plaintiff.trim(),
-        defendant: form.defendant.trim(),
-        court_name: form.court_name.trim(),
-        filed_date: form.filed_date,
-        status: form.status,
-        claim_id: form.claim_id || null,
-        demand_cents: payload.demandCents,
-        settlement_cents: payload.settlementCents,
-        attorney_name: form.attorney_name.trim() || null,
-        attorney_email: form.attorney_email.trim() || null,
-        notes: form.notes.trim() || null,
-      }),
-    onSuccess: (lawsuit) => {
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: Omit<Parameters<typeof insuranceLawsuitsApi.create>[0], "operating_company_id">;
+    }) => insuranceLawsuitsApi.create({ ...input.payload, operating_company_id: input.companyId }),
+    onSuccess: (lawsuit, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Lawsuit created successfully.", "success");
       onCreated(lawsuit.id, lawsuit.case_number);
     },
-    onError: (error) => {
+    onError: (error, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       if (!(error instanceof ApiError)) {
         setServerError("Unexpected error while creating lawsuit. Please try again.");
         return;
@@ -132,6 +124,22 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
       if (mapped.formError) setFormError(mapped.formError);
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setForm(INITIAL_FORM);
+    setFieldErrors({});
+    setFormError("");
+    setServerError("");
+  }, [operatingCompanyId]);
+
+  const closeModal = () => {
+    if (createMutation.isPending) return;
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    onClose();
+  };
 
   const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -164,13 +172,27 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
     if (Object.keys(nextFieldErrors).length > 0) return;
 
     createMutation.mutate({
-      demandCents: typeof demandCents === "number" ? demandCents : undefined,
-      settlementCents: typeof settlementCents === "number" ? settlementCents : undefined,
+      companyId: operatingCompanyId,
+      generation: lifecycleGenerationRef.current,
+      payload: {
+        case_number: form.case_number.trim(),
+        plaintiff: form.plaintiff.trim(),
+        defendant: form.defendant.trim(),
+        court_name: form.court_name.trim(),
+        filed_date: form.filed_date,
+        status: form.status,
+        claim_id: form.claim_id || null,
+        demand_cents: typeof demandCents === "number" ? demandCents : undefined,
+        settlement_cents: typeof settlementCents === "number" ? settlementCents : undefined,
+        attorney_name: form.attorney_name.trim() || null,
+        attorney_email: form.attorney_email.trim() || null,
+        notes: form.notes.trim() || null,
+      },
     });
   };
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Create Lawsuit" size="wide">
+    <ParityDrawer open={open} onClose={closeModal} title="Create Lawsuit" size="wide">
       <form
         className="space-y-4 text-sm"
         onSubmit={(event) => {
@@ -324,7 +346,12 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         </label>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
+            onClick={closeModal}
+            disabled={createMutation.isPending}
+          >
             Cancel
           </button>
           <button

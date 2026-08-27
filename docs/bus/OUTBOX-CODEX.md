@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16586 @ 0fe36f7b13 INS-F6839 | WORKING INS-F6840 Lawsuit Create immutable scope+pending lifecycle | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16585 @ 5188f0b9e7 INS-F6838 | WORKING INS-F6839 Claim Create immutable scope+pending lifecycle | guard=9/9 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16584 @ c51bd67020 MAINT-F6837 | WORKING INS-F6838 claim update atomic reverse truth | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16583 @ 4c0f17c55b MAINT-F6836 | WORKING MAINT-F6837 PM auto run+WO identities | NEXT=guard+FAST-MERGE | GO
