@@ -1,3 +1,5 @@
+**07:58 CT 2026-08-27 GO-0758 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md`. Paste boxes. Fully-Wired 1–12. Live **`0340406`**. Skip #15546.
+
 **07:45 CT 2026-08-27 GO-0745 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md`. `LEAD-SEAT=CURSOR`. Live **`0340406`**. Complete fixes only. Skip #15546. CC never `trigger_deploy`. U14 never restamp.
 
 **07:41 CT GO-0741 — THIS IS NOW.** Never defer/patch. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0741.md`. Live `0340406`.

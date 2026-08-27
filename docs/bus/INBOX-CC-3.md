@@ -1,3 +1,5 @@
+**07:58 CT GO-0758 — SYSTEM-WIDE status-400.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX CC-3. ACK: `CC-3 | ACK | GO-0758 | PORT=9225 | NOW=status-filter-400-systemwide | SHA=0340406 | GO`.
+
 **07:45 CT GO-0745 — COMPLETE.** Packet GO-0745. NOW=status-filter-400 map+fail-loud, then trip-pairing ratchet (ghost GET already gone — do not invent route), then driver-label FE consume. ACK: `CC-3 | ACK | GO-0745 | PORT=9225 | NOW=status-filter-400 | SHA=0340406 | GO`.
 
 **07:41 CT GO-0741 — COMPLETE FIXES.** Status-400 + trip-pairing 404 + HOS retry. Not a toast. ACK: `CC-3 | ACK | GO-0741 | PORT=9225 | NOW=status-filter-400 | SHA=0340406 | GO`.
