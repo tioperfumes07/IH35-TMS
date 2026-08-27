@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -33,39 +34,36 @@ export function InventoryAssignmentsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const unitId = searchParams.get("unit_id") ?? "";
+  const PAGE_SIZE = 50;
+  const [page, setPage] = useState(0);
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [unitLinkedOnly, setUnitLinkedOnly] = useState(false);
+  useEffect(() => setPage(0), [companyId, unitId, vendorId, unitLinkedOnly]);
 
   const assignmentsQuery = useQuery({
-    queryKey: ["maintenance", "parts-assignments", companyId, unitId],
-    queryFn: () => getPartsAssignmentsPage(companyId, unitId ? { unit_id: unitId } : undefined),
+    queryKey: ["maintenance", "parts-assignments", companyId, unitId, vendorId, unitLinkedOnly, page],
+    queryFn: () => getPartsAssignmentsPage(companyId, {
+      unit_id: unitId || undefined,
+      vendor_id: vendorId || undefined,
+      unit_linked_only: unitLinkedOnly || undefined,
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    }),
     enabled: Boolean(companyId),
   });
 
   // Search is ONLY the canonical ParityTable UniversalListToolbar (LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH).
   const allRows = assignmentsQuery.data?.rows ?? [];
   const totalCount = assignmentsQuery.data?.total_count ?? allRows.length;
-  const [vendorFilter, setVendorFilter] = useState("");
-  const [unitLinkedOnly, setUnitLinkedOnly] = useState(false);
   const staged = useStagedListFilters({
-    applied: { vendorFilter, unitLinkedOnly },
-    empty: { vendorFilter: "", unitLinkedOnly: false },
+    applied: { vendorId, unitLinkedOnly },
+    empty: { vendorId: null as string | null, unitLinkedOnly: false },
     onApply: (next) => {
-      setVendorFilter(next.vendorFilter);
+      setVendorId(next.vendorId);
       setUnitLinkedOnly(next.unitLinkedOnly);
     },
   });
-  const vendorOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(allRows.map((r) => (r.vendor_name ?? "").trim()).filter(Boolean)),
-      ).sort((a, b) => a.localeCompare(b)),
-    [allRows],
-  );
-  const rows = useMemo(() => {
-    let next = allRows;
-    if (vendorFilter) next = next.filter((r) => (r.vendor_name ?? "") === vendorFilter);
-    if (unitLinkedOnly) next = next.filter((r) => Boolean(r.unit_id));
-    return next;
-  }, [allRows, vendorFilter, unitLinkedOnly]);
+  const rows = allRows;
 
   const columns: Array<ParityColumn<PartsAssignmentRow>> = [
     {
@@ -185,11 +183,7 @@ export function InventoryAssignmentsPage() {
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h3 className="text-sm font-semibold">Assignment trail</h3>
-          {totalCount > allRows.length ? (
-            <p className="text-xs text-slate-500" data-testid="inventory-assignments-range">
-              Showing {allRows.length} of {totalCount} assignments. Narrow the filters to review the complete matching trail.
-            </p>
-          ) : null}
+          {totalCount ? <p className="text-xs text-slate-500" data-testid="inventory-assignments-range">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} assignments</p> : null}
           <ParityTable<PartsAssignmentRow>
             columns={columns}
             rows={rows}
@@ -199,7 +193,7 @@ export function InventoryAssignmentsPage() {
             exportFilename="inventory-assignments"
             filterBar={
               <CollapsedListFilters
-                activeFilterCount={(vendorFilter ? 1 : 0) + (unitLinkedOnly ? 1 : 0)}
+                activeFilterCount={(vendorId ? 1 : 0) + (unitLinkedOnly ? 1 : 0)}
                 onApply={staged.apply}
                 onReset={staged.reset}
                 onCancel={staged.cancel}
@@ -208,21 +202,7 @@ export function InventoryAssignmentsPage() {
                 dataAttributes={{ "data-inventory-assignments-filter-toolbar": "collapsed" }}
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="text-sm text-gray-700">
-                    Vendor{" "}
-                    <select
-                      className="ml-1 rounded-sm border px-2 py-1"
-                      value={staged.draft.vendorFilter}
-                      onChange={(e) => staged.setDraft({ ...staged.draft, vendorFilter: e.target.value })}
-                    >
-                      <option value="">All</option>
-                      {vendorOptions.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <label className="min-w-64 text-sm text-gray-700">Vendor<EntityPicker kind="vendor" operatingCompanyId={companyId} value={staged.draft.vendorId} onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next })} placeholder="All vendors" allowCreate={false} /></label>
                   <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                     <input
                       type="checkbox"
@@ -235,6 +215,7 @@ export function InventoryAssignmentsPage() {
               </CollapsedListFilters>
             }
           />
+          {totalCount > PAGE_SIZE ? <div className="flex justify-end gap-2 text-xs"><button type="button" disabled={page === 0 || assignmentsQuery.isFetching} onClick={() => setPage((v) => Math.max(0, v - 1))}>Previous</button><button type="button" disabled={(page + 1) * PAGE_SIZE >= totalCount || assignmentsQuery.isFetching} onClick={() => setPage((v) => v + 1)}>Next</button></div> : null}
         </div>
       )}
     </div>

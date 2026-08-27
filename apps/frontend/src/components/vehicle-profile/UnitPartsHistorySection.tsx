@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { useEffect, useState } from "react";
 
 type Props = {
   unitId: string;
@@ -85,9 +86,12 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
  * SoR: GET /api/v1/maintenance/units/:unitId/parts-history
  */
 export function UnitPartsHistorySection({ unitId, companyId }: Props) {
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(0);
+  useEffect(() => setPage(0), [unitId, companyId]);
   const partsQuery = useQuery({
-    queryKey: ["unit-parts-history", unitId, companyId],
-    queryFn: () => getUnitPartsHistoryPage(unitId, companyId),
+    queryKey: ["unit-parts-history", unitId, companyId, page],
+    queryFn: () => getUnitPartsHistoryPage(unitId, companyId, { limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
     enabled: Boolean(unitId && companyId),
     staleTime: 30_000,
   });
@@ -126,9 +130,9 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
         </div>
       ) : (
         <div className="mt-3">
-          {totalCount > rows.length ? (
+          {totalCount ? (
             <p className="mb-2 text-xs text-slate-500" data-testid="unit-parts-history-range">
-              Showing {rows.length} of {totalCount} parts assignments. Open Assignments to review the complete trail.
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} parts assignments
             </p>
           ) : null}
           <ParityTable
@@ -142,7 +146,9 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
             emptyText="No parts linked to work orders for this unit."
             initialPageSize={20}
             pageSizeOptions={[10, 20, 50]}
+            hidePager
           />
+          {totalCount > PAGE_SIZE ? <div className="mt-2 flex justify-end gap-2 text-xs"><button type="button" disabled={page === 0 || partsQuery.isFetching} onClick={() => setPage((v) => Math.max(0, v - 1))}>Previous</button><button type="button" disabled={(page + 1) * PAGE_SIZE >= totalCount || partsQuery.isFetching} onClick={() => setPage((v) => v + 1)}>Next</button></div> : null}
         </div>
       )}
     </section>
