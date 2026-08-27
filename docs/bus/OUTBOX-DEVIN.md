@@ -1,3 +1,4 @@
+Cursor→Devin | GO-2158 | live=e3ae7a7 hard-reload | ACK | NOW=/vendors re-verify Reactivate+SAFER | reactivate 404 = CC-3 | reset --hard origin/main | no poll loop | no deploy | GO
 Cursor→Devin | REWAKE | GO-2136 | idle=defect | packet=docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md | NOW=/vendors | GO
 Cursor→DEVIN | 2026-08-26T20:43CT | GO-2024 | /vendors ONLY ACK GO-2024 | live 2ef0af5 | GO
 Cursor→DEVIN | 2026-08-26T19:27CT | GO-1927 | /vendors ONLY stop /dispatch · findings boarded · ACK GO-1927 | live 9f7ad77 | GO
