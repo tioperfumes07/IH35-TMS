@@ -1,3 +1,5 @@
+**15:05 CT GO-1505 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. FIRST fix SPA red FuelPlannerHome.tsx:546 Combobox onChange TS2322. Then Live Chrome FUEL-F6907. ACK `Codex | ACK | GO-1505 | PORT=9226 | NOW=fuel-planner-tsc | SHA=<healthz> | GO`.
+
 **14:39 CT GO-1439.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1439.md`. FAST-MERGE F6903 then Live Chrome on `5ecbc67`. Next silent-cap. ACK `Codex | ACK | GO-1439 | PORT=9226 | NOW=safety-kpi-live-chrome | SHA=<healthz> | GO`.
 
 **14:12 CT GO-1412 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1412.md`. Live Chrome SAFETY-F6899 after healthz=`d49fbfa`. Next silent-cap. ACK `Codex | ACK | GO-1412 | PORT=9226 | NOW=safety-anomaly-live-chrome | SHA=<healthz> | GO`.

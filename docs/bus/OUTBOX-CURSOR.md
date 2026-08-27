@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1505 | PORT=9222 | NOW=lead | SHA=5ecbc67 | DEPLOY=dep-da89he4s728c73b4kbug IN FLIGHT tip=282777f | GO
 Cursor | ACK | GO-1439 | PORT=9222 | NOW=lead | SHA=d49fbfa | DEPLOY=dep-da895cqd0e5s73a1gtrg IN FLIGHT tip=5ecbc67 | GO
 Cursor | ACK | GO-1412 | PORT=9222 | NOW=lead | SHA=4b859b7 | DEPLOY=dep-da88o9ifngtc73bnmv90 IN FLIGHT tip=d49fbfa | GO
 Cursor | ACK | GO-1331 | PORT=9222 | NOW=lead | SHA=858d689 | DEPLOY=dep-da885du7bikc73c0s34g IN FLIGHT tip=4b859b7 | GO
