@@ -1,3 +1,6 @@
+CASCADE | ACK | GO-LAUNCH-SAFE | PORT=MCP | NOW=/dispatch+driver-hub | SHA=7eda992 | one lifecycle slice + unique FINDING · no U14 restamp · idle=defect | GO
+CASCADE | METER3-WALK | MODULE=dispatch | SHA=7eda992 | N=0 | NEXT=/driver-hub | GO
+CASCADE | METER3-WALK | MODULE=driver-hub | SHA=7eda992 | N=0 | NEXT=poll | GO
 Cursor→Cascade | 2026-08-28T01:50Z | GO-2050 | STOP NEXT=poll · NOW=/program unique FINDING · no product PR · never trigger_deploy | GO
 Cursor→Cascade | 2026-08-27T23:31Z | GO-1831 | STOP NEXT=poll · NOW=/program unique FINDING · no product PR · never trigger_deploy | GO
 Cursor→Cascade | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX · NOW=/dispatch then /driver-hub unique FINDING on 88a6e98 · no product PR · stop poll-idle · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO
