@@ -692,8 +692,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           ) c ON true
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          -- DISPATCH-DRIVER-LABEL-LOST-FOR-DEACTIVATED-DRIVERS — this join used to exclude the
+          -- driver entirely once archived (AND d.archived_at IS NULL), turning a load's real,
+          -- historical driver assignment into "Driver — not visible" the moment that driver was
+          -- later archived/deactivated — same anti-pattern as the customer/vendor "historical
+          -- reference" bug class fixed elsewhere in this file (see the customer LATERAL join
+          -- above, LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END). The load's assignment is a fact of history
+          -- and must stay visible; only "selectable for a NEW assignment" should exclude an
+          -- archived driver, and this is a read of an EXISTING assignment, not a picker. Root
+          -- cause was NOT RLS (mdata.drivers' own drivers_select policy does not filter
+          -- deactivated_at at all, confirmed live) — it was this join's own extra filter.
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.archived_at IS NULL
                                    AND (d.operating_company_id = l.operating_company_id OR EXISTS (
                                      SELECT 1 FROM mdata.driver_company_authorizations load_list_dca
                                      WHERE load_list_dca.driver_id = d.id AND load_list_dca.company_id = l.operating_company_id
@@ -776,8 +785,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             ORDER BY lah.assigned_at DESC, lah.created_at DESC
             LIMIT 1
           ) tr ON true
+          -- DISPATCH-DRIVER-LABEL-LOST-FOR-DEACTIVATED-DRIVERS — see the matching count-query join
+          -- above for the full root-cause note; same fix, same reason (historical assignment, not
+          -- an active-driver picker).
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-                                   AND d.archived_at IS NULL
                                    AND (d.operating_company_id = l.operating_company_id OR EXISTS (
                                      SELECT 1 FROM mdata.driver_company_authorizations load_list_rows_dca
                                       WHERE load_list_rows_dca.driver_id = d.id
@@ -929,15 +940,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           -- has NO such column (§4) — it is scoped by the owner/leased PAIR, and the live case that
           -- exposed this is exactly a TRK-owned unit LEASED to USMCA, which a bare owner_company_id
           -- predicate would silently drop back to a raw id.
+          -- DISPATCH-DRIVER-LABEL-LOST-FOR-DEACTIVATED-DRIVERS — same root cause and fix as the
+          -- list-query joins above: dropped the "AND pd/sd.archived_at IS NULL" exclusion so a
+          -- load's historical driver assignment (primary or secondary) stays labeled after the
+          -- driver is later archived/deactivated. Not RLS (drivers_select does not filter
+          -- deactivated_at at all) — this join's own extra filter was the actual defect. The
+          -- SEPARATE driver-self-access EXISTS check below (mdata.drivers d, "AND d.archived_at IS
+          -- NULL") is intentionally UNCHANGED — that gate decides whether a live driver session may
+          -- read this load at all, a real access-control question, not a label-display one.
           LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
-                                    AND pd.archived_at IS NULL
                                     AND (pd.operating_company_id = l.operating_company_id OR EXISTS (
                                       SELECT 1 FROM mdata.driver_company_authorizations load_detail_primary_dca
                                       WHERE load_detail_primary_dca.driver_id = pd.id AND load_detail_primary_dca.company_id = l.operating_company_id
                                         AND load_detail_primary_dca.is_authorized = true AND load_detail_primary_dca.deactivated_at IS NULL
                                     ))
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
-                                    AND sd.archived_at IS NULL
                                     AND (sd.operating_company_id = l.operating_company_id OR EXISTS (
                                       SELECT 1 FROM mdata.driver_company_authorizations load_detail_secondary_dca
                                       WHERE load_detail_secondary_dca.driver_id = sd.id AND load_detail_secondary_dca.company_id = l.operating_company_id
