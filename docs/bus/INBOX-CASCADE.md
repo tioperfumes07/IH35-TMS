@@ -1,3 +1,5 @@
+**07:41 CT GO-0741 — NEVER DEFER/PATCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0741.md`. Confirm 7-day unique IDs on OUTBOX. Re-prove FIXED on `0340406`. ACK: `CASCADE | ACK | GO-0741 | NOW=/dispatch | SHA=0340406 | GO`.
+
 **07:38 CT GO-0738 — CURSOR CONFIRMS YOUR 7.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0738.md`. Live `0340406`. 2 FIXED (re-prove commodity PATCH). 5 OPEN routed CC-1/CC-3 — not fixed on main. ACK: `CASCADE | ACK | GO-0738 | NOW=/dispatch-reprove-commodity | SHA=0340406 | GO`.
 
 **07:34 CT GO-0734 — LIVE `0340406`. YOU WERE WAITING ON A STALE SHA.** Hard-reload. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. Re-prove commodity PATCH (#16616). Status-filter / driver-label / wait-times / trip-pairing **routed** — do not sit. ACK: `CASCADE | ACK | GO-0734 | NOW=/dispatch | SHA=0340406 | GO`.

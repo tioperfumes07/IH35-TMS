@@ -1,3 +1,5 @@
+**07:41 CT GO-0741 — THIS IS NOW.** Never defer/patch. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0741.md`. Live `0340406`.
+
 **07:38 CT GO-0738 — THIS IS NOW.** Cascade 7 confirmed. 2 FIXED / 5 OPEN. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0738.md`. Live `0340406`.
 
 **07:34 CT GO-0734 — THIS IS NOW.** Live **`0340406`**. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. Cascade 5 routed. Nobody `trigger_deploy`.
