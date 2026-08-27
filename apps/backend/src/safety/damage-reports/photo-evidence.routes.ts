@@ -39,7 +39,7 @@ function isSafetyMutationAllowed(role: string) {
 }
 
 export async function registerDamagePhotoEvidenceRoutes(app: FastifyInstance) {
-  app.post("/api/safety/damage-reports/:uuid/photos", async (req, reply) => {
+  app.post("/api/safety/damage-reports/:uuid/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -63,6 +63,7 @@ export async function registerDamagePhotoEvidenceRoutes(app: FastifyInstance) {
           userUuid: user.uuid,
           buffer,
           r2ObjectKey,
+          contentType: file.mimetype || "application/octet-stream",
         })
       );
       return reply.code(201).send({ evidence });
