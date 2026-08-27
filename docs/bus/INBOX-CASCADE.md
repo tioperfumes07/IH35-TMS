@@ -1,3 +1,5 @@
+**17:22 CT GO-1722 — FINISH LIVE CHROME + UNIQUE FIXES, THEN NEXT HOP · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. All seats: finish your current hop, then immediately take next leftover hop. Create TEST as needed — **do not void until launch**. ACK `SEAT | ACK | GO-1722 | PORT=n | NOW=<url> | SHA=<healthz> | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/dispatch` unique then NEXT `/driver-hub`. Create TEST load if needed — **do not void**. ACK `Cascade | ACK | GO-1655 | NOW=/dispatch | SHA=<healthz> | GO`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/dispatch unique on `33c41fc`. ACK `Cascade | ACK | GO-1640 | NOW=/dispatch | SHA=<healthz> | GO`.
