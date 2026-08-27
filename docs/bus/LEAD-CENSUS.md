@@ -6,8 +6,8 @@
 | Seat | GO-1640 ACK | NOW |
 |------|-------------|-----|
 | CC-1 | pending | /accounting then /factoring |
-| CC-2 | pending | /cash-flow then /finance then /settlements |
-| CC-3 | pending | /lists then /legal |
+| CC-2 | pending | /settlements (cash-flow+finance lead-walked) |
+| CC-3 | pending ACK | lists/legal unique N=0 overflow; hunt leftover |
 | Codex | pending | /customers /drivers /fleet |
 | Cascade | pending | /dispatch |
 | Devin | pending | /vendors |

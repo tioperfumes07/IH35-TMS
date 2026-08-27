@@ -1,3 +1,5 @@
+**16:52 CT GO-1640 — Cursor already Live Chrome `/cash-flow` (TEST $1,200, statement report) and `/finance` (hub KPIs + P&L) on `33c41fc`.** Do not remake that TEST. ACK GO-1640. NOW=/settlements unique hunt. Never GL. MCP “no tab” from a parallel agent is not a FINDING.
+
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/cash-flow then /finance then /settlements. Watching INBOX=defect. Never GL. ACK `CC-2 | ACK | GO-1640 | PORT=9224 | NOW=/cash-flow | SHA=<healthz> | GO`.
 
 **16:15 CT GO-1615 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Unique hunt N=. Never GL. ACK `CC-2 | ACK | GO-1615 | PORT=9224 | NOW=unique-hunt-N | SHA=<healthz> | GO`.
