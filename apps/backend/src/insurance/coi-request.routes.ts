@@ -53,7 +53,10 @@ export async function registerInsuranceCoiRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.post("/api/v1/insurance/coi-requests", async (req, reply) => {
+  app.post(
+    "/api/v1/insurance/coi-requests",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -81,8 +84,9 @@ export async function registerInsuranceCoiRequestRoutes(app: FastifyInstance) {
     if (created.kind === "customer_not_found") return reply.code(404).send({ error: "customer_not_found" });
     if (created.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
 
-    return reply.code(201).send(created.row);
-  });
+      return reply.code(201).send(created.row);
+    }
+  );
 
   app.patch("/api/v1/insurance/coi-requests/:id", async (req, reply) => {
     const user = authUser(req, reply);
