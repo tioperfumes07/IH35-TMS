@@ -262,6 +262,7 @@ export function VendorDetailPage() {
         body: {
           entity_type: "vendor",
           entity_id: id,
+          operating_company_id: companyId,
           force: true,
         },
       }),
