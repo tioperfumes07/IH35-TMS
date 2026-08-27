@@ -524,11 +524,13 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       if (body.status !== undefined) add("status", body.status);
 
       values.push(params.data.id, body.operating_company_id);
-      await client.query(
+      const updated = await client.query(
         `UPDATE maintenance.warranty_claims SET ${sets.join(", ")}
-         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL`,
+         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL
+         RETURNING id::text`,
         values
       );
+      if (!updated.rows[0]) return { kind: "not_found" as const };
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.updated", {
         operating_company_id: body.operating_company_id,
         id: params.data.id,
