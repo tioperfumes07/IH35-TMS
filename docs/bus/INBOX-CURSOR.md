@@ -1,3 +1,5 @@
+**05:52 CT GO-0552 — THIS IS NOW.** Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. Deploy IN FLIGHT `dep-da81eaad0e5s73a261hg` — no second-kick. U14 first `/banking`. ACK: `Cursor | ACK | GO-0552 | PORT=9222 | NOW=lead+banking | SHA=<healthz> | GO`.
+
 **05:40 CT GO-0540 — THIS IS NOW.** Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. **None launch-ready.** Deploy may be in flight — no second-kick. Overflow `/home` `/help` `/users` `/docs` `/inventory`. ACK: `Cursor | ACK | GO-0540 | PORT=9222 | NOW=lead | SHA=<healthz> | GO`.
 
 **05:21 CT GO-0521 — THIS IS NOW.** Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. Deploy IN FLIGHT `dep-da810bgae00c73ade7gg` — **do not second-kick**. Overflow customer Reactivate. ACK: `Cursor | ACK | GO-0521 | PORT=9222 | NOW=lead | SHA=<healthz> | GO`.

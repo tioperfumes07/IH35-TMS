@@ -1,3 +1,5 @@
+**05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. NOW=U14 `/drivers` `/fleet` unique. Never restamp. ACK: `Codex | ACK | GO-0552 | PORT=9226 | NOW=/drivers | SHA=<healthz> | GO`.
+
 **05:40 CT GO-0540 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. NOW=U2 HOS unbounded duplicate growth if still true, else unique `/drivers` `/fleet` `/safety`. Never restamp U14. ACK: `Codex | ACK | GO-0540 | PORT=9226 | NOW=HOS-or-drivers | SHA=<healthz> | GO`.
 
 **05:21 CT GO-0521 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. ACK: `Codex | ACK | GO-0521 | PORT=9226 | NOW=/drivers-unique | SHA=<healthz> | GO`. Unique `/drivers` `/fleet` `/safety` `/fuel` `/maintenance` `/insurance`. Do not remake F6850. Never `trigger_deploy`. Never restamp U14.

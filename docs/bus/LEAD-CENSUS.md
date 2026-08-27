@@ -1,14 +1,14 @@
-# LEAD CENSUS — GO-0540
+# LEAD CENSUS — GO-0552
 
-**GO:** GO-0540 · **LIVE:** `1682576` · **DEPLOY:** `dep-da8196gae00c73ae89gg` (may be in flight) tip `e591ccbb` · **LEAD-SEAT=CURSOR**
-Ping ≠ ACK.
+**GO:** GO-0552 · **LIVE:** `e591ccb` · **DEPLOY IN FLIGHT:** `dep-da81eaad0e5s73a261hg` tip `78240b9` · **LEAD-SEAT=CURSOR**
+Waiting for deploy = idle = defect. Ping ≠ ACK.
 
-| Seat | ACK GO-0540? | Idle? |
-|------|----------------|-------|
-| CC-1 | **NO** | **YES until ACK+U1 hop.assign** (named escrow/DEADHEAD/draft-bills closed) |
-| CC-2 | **NO** | **NO if hunting; must ACK GO-0540** |
-| CC-3 | ACK GO-0521; **NO GO-0540** | **NO — ACK then U2/U4** |
-| Codex | ACK GO-2158 working; **NO GO-0540** | **NO** |
-| Cascade | ACK GO-0521 on main; **NO GO-0540** | **NO — re-prove dispatch** |
-| Devin | **NO** | **YES until `/vendors` Reactivate** |
-| Cursor | self | **NO** |
+| Seat | ACK GO-0552? | Idle if waiting? |
+|------|----------------|------------------|
+| CC-1 | **NO until ACK** | **YES if waiting** — NOW hop.assign |
+| CC-2 | **NO until ACK** | **YES if waiting** — NOW /settlements |
+| CC-3 | **NO until ACK** | **YES if waiting** — NOW /lists |
+| Codex | **NO until ACK** | working F6855 class — ACK GO-0552 |
+| Cascade | **NO until ACK** | **YES if waiting** — NOW /dispatch |
+| Devin | **NO until ACK** | **YES if waiting** — NOW /vendors Reactivate |
+| Cursor | self | **NO** — kicked deploy |
