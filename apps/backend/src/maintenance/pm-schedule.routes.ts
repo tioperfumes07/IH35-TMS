@@ -116,7 +116,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     return { rows: filtered, due_soon_threshold: dueSoonConfig };
   });
 
-  app.post("/api/v1/maintenance/pm-schedule", async (req, reply) => {
+  app.post("/api/v1/maintenance/pm-schedule", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = createSchema.safeParse(req.body ?? {});
@@ -164,7 +164,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     return reply.code(201).send(created);
   });
 
-  app.post("/api/v1/maintenance/pm-schedule/:id/generate-wo", async (req, reply) => {
+  app.post("/api/v1/maintenance/pm-schedule/:id/generate-wo", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idSchema.safeParse(req.params ?? {});
@@ -173,7 +173,16 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     if (!query.success) return validationError(reply, query.error);
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const schedule = await client.query(
-        `SELECT id, unit_id, label FROM maintenance.pm_schedules WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true LIMIT 1`,
+        `SELECT pm_schedule.id, pm_schedule.unit_id, pm_schedule.label
+           FROM maintenance.pm_schedules pm_schedule
+           INNER JOIN mdata.units pm_schedule_unit
+                   ON pm_schedule_unit.id = pm_schedule.unit_id
+                  AND COALESCE(pm_schedule_unit.currently_leased_to_company_id, pm_schedule_unit.owner_company_id) = pm_schedule.operating_company_id
+                  AND pm_schedule_unit.deactivated_at IS NULL
+          WHERE pm_schedule.id = $1
+            AND pm_schedule.operating_company_id = $2::uuid
+            AND pm_schedule.is_active = true
+          LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       if (!schedule.rows[0]) return null;
