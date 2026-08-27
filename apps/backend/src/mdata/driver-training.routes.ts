@@ -59,7 +59,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
         [params.data.id, query.data.operating_company_id]
       );
       if (driver.rowCount === 0) return null;
-      const res = await client.query(
+      const res = await client.query<{ id: string; training_name: string; completed_at: string; expiry_date: string | null; notes: string | null }>(
         `
           SELECT id::text, training_name, completed_at::text, expiry_date::text, notes
           FROM safety.training_records
@@ -124,13 +124,15 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const trainingRecord = res.rows[0];
+      if (!trainingRecord?.id) throw new Error("driver_profile_training_record_insert_failed");
       await appendCrudAudit(client, authUser.uuid, "safety.training_record.logged", {
         resource_type: "safety.training_records",
-        resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+        resource_id: trainingRecord.id,
         operating_company_id: query.data.operating_company_id,
         driver_id: params.data.id,
       });
-      return res.rows[0];
+      return trainingRecord;
     });
     if (row === null) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return reply.code(201).send(row);
