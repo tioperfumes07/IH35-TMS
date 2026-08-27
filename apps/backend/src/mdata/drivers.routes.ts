@@ -1407,6 +1407,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
+            EXISTS (
+              SELECT 1
+              FROM identity.users phone_login_user
+              WHERE phone_login_user.id = mdata.drivers.identity_user_id
+                AND phone_login_user.deactivated_at IS NULL
+            ) AS phone_login_enabled,
             cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
             visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
@@ -2400,13 +2406,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const driverRes = await client.query<{ id: string; operating_company_id: string; phone: string; email: string | null; identity_user_id: string | null }>(
+        const driverRes = await client.query<{ id: string; operating_company_id: string; phone: string; email: string | null; identity_user_id: string | null; identity_user_deactivated_at: string | null }>(
           `
-            SELECT id, operating_company_id, phone, email, identity_user_id
-            FROM mdata.drivers
-            WHERE id = $1
-              AND deactivated_at IS NULL
-              AND operating_company_id IN (
+            SELECT d.id, d.operating_company_id, d.phone, d.email, d.identity_user_id,
+                   iu.deactivated_at AS identity_user_deactivated_at
+            FROM mdata.drivers d
+            LEFT JOIN identity.users iu ON iu.id = d.identity_user_id
+            WHERE d.id = $1
+              AND d.deactivated_at IS NULL
+              AND d.operating_company_id IN (
                 SELECT uca.company_id
                   FROM org.user_company_access uca
                   JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
@@ -2419,7 +2427,38 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         );
         const driver = driverRes.rows[0];
         if (!driver) return { error: "mdata_driver_not_found" as const };
-        if (driver.identity_user_id) return { error: "driver_phone_login_already_enabled" as const };
+        if (driver.identity_user_id && driver.identity_user_deactivated_at === null) {
+          return { error: "driver_phone_login_already_enabled" as const };
+        }
+
+        // Disable preserves the canonical driver-to-identity link so settlements, messages and audit
+        // history do not become orphaned. Re-enable must therefore reactivate that same identity row;
+        // creating a replacement account would break every reverse reference to the original user.
+        if (driver.identity_user_id) {
+          const reactivated = await client.query<{ id: string }>(
+            `UPDATE identity.users
+                SET deactivated_at = NULL
+              WHERE id = $1
+                AND deactivated_at IS NOT NULL
+              RETURNING id`,
+            [driver.identity_user_id]
+          );
+          if (!reactivated.rows[0]) return { error: "driver_phone_login_state_changed" as const };
+
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "identity.users.reactivated",
+            {
+              resource_id: driver.identity_user_id,
+              resource_type: "identity.users",
+              linked_driver_id: driver.id,
+            },
+            "warning",
+            "BT-1-AUTH-DRIVER"
+          );
+          return { identity_user_id: driver.identity_user_id, reactivated: true };
+        }
 
         const userRes = await client.query<{ id: string }>(
           `
@@ -2517,21 +2556,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         [driver.identity_user_id]
       );
       const changed = deactivateRes.rows.length > 0;
-      if (changed) {
-        await appendCrudAudit(
-          client,
-          authUser.uuid,
-          "identity.users.deactivated",
-          {
-            resource_id: driver.identity_user_id,
-            resource_type: "identity.users",
-            driver_id: driver.id,
-            reason: "manual_phone_login_disable",
-          },
-          "warning",
-          "BT-1-AUTH-DRIVER"
-        );
-      }
+      if (!changed) return { error: "driver_phone_login_already_disabled" as const };
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "identity.users.deactivated",
+        {
+          resource_id: driver.identity_user_id,
+          resource_type: "identity.users",
+          driver_id: driver.id,
+          reason: "manual_phone_login_disable",
+        },
+        "warning",
+        "BT-1-AUTH-DRIVER"
+      );
       return { identity_user_id: driver.identity_user_id, changed };
     });
 

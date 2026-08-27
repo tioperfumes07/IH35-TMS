@@ -62,6 +62,8 @@ export type Driver = {
   id: string;
   operating_company_id: string;
   identity_user_id: string | null;
+  /** True only while the linked identity account is active; the FK remains for audit/reverse links. */
+  phone_login_enabled?: boolean;
   first_name: string;
   last_name: string;
   phone: string;

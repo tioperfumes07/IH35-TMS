@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | WORKING DRIVER-F6772 phone-login disable/read/reactivate lifecycle | SHIPPED #16515 @ 204c407076 DRIVER-F6771 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING DRIVER-F6771 phone-login identity link CAS | SHIPPED #16514 @ c21ef78428 SAFETY-F6770 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING SAFETY-F6770 incident photo bytes durable | SHIPPED #16513 @ e46fb816e4 SAFETY-F6769 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING SAFETY-F6769 accident photo durable R2 evidence | SHIPPED #16512 @ 6954a4c344 FLEET-F6768 | NEXT=guard+Neon-rehearsal+FAST-MERGE | GO

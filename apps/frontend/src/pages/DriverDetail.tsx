@@ -785,7 +785,9 @@ export function DriverDetailPage() {
     ["hazmat_endorsement_expires_at", "Hazmat Endorsement Expires", "date"],
   ];
 
-  const hasPhoneLogin = Boolean(driver.identity_user_id);
+  // The identity FK intentionally survives disable so audit, settlement, message and reverse links
+  // retain their canonical subject. Account activity—not FK presence—is the login state.
+  const hasPhoneLogin = driver.phone_login_enabled ?? Boolean(driver.identity_user_id);
   // LV-DRIVER-DETAIL-PAGE-CRASHES — this line threw and blanked the whole page. The root cause was
   // the payload shape (fixed in api/mdata.ts getDriver), but the guard stays: it is the ONLY
   // unguarded string operation in this component and the same field is already guarded at L363
