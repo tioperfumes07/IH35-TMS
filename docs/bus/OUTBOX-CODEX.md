@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16575 @ 686d7405f7 MAINT-F6828 | WORKING MAINT-F6829 tire replacement identity fail-loud | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16574 @ 9420ddb22d FUEL-F6827 | WORKING MAINT-F6828 PM generate-WO stale unit lifecycle | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING FUEL-F6827 manual-create active parent linkage | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16546 @ 3fd0a02e6f MAINT-F6799 | WORKING MAINT-F6800 arriving-soon scoped atomic conversion | NEXT=guard+FAST-MERGE | GO
