@@ -58,9 +58,10 @@ function verify(source) {
   need(qualificationParentScope, "qualifications GET must validate canonical active driver authorization before reading children");
   need(/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(qualificationsHandler), "qualifications GET must distinguish a missing/unauthorized parent from a true empty qualifications list");
   need(
-    /WHERE dq\.driver_id = \$1[\s\S]{0,180}ORDER BY dq\.qualified_at DESC[\s\S]{0,100}\[parsed\.data\.id\]/.test(qualificationsHandler),
-    "qualifications child query must bind exactly the one placeholder it declares",
+    /JOIN catalogs\.equipment_types et[\s\S]{0,140}et\.operating_company_id = \$2::uuid[\s\S]{0,220}WHERE dq\.driver_id = \$1[\s\S]{0,180}ORDER BY dq\.qualified_at DESC[\s\S]{0,100}\[parsed\.data\.id, companyId\]/.test(qualificationsHandler),
+    "qualifications child query must scope its catalog label to the selected company",
   );
+  need(/JOIN catalogs\.equipment_line_item_templates lit[\s\S]{0,200}lit\.operating_company_id = \$2::uuid[\s\S]{0,900}\[qualificationIds, companyId\]/.test(qualificationsHandler), "qualification line-item read must scope templates to the selected company");
   need(/listSafetyEvents\(id, companyId, showVoidedSafetyEvents\)/.test(source.detail), "DriverDetail safety-event reverse GET must send selected companyId");
   need(/queryKey: \["driver-safety-events", id, companyId, showVoidedSafetyEvents\]/.test(source.detail), "safety-event query key must include selected companyId");
   need(/export function listSafetyEvents\(driverId: string, operatingCompanyId: string, includeVoided = false\)/.test(source.api), "safety-event API must require operatingCompanyId");
@@ -199,11 +200,12 @@ if (process.argv.includes("--selftest")) {
       key: "profileBackend",
       text: replaceOrFail(
         source.profileBackend,
-        /(WHERE dq\.driver_id = \$1[\s\S]{0,180}ORDER BY dq\.qualified_at DESC[\s\S]{0,100})\[parsed\.data\.id\]/,
-        "$1[parsed.data.id, companyId]",
-        "qualification child query placeholder count",
+        /et\.operating_company_id = \$2::uuid/,
+        "TRUE",
+        "qualification catalog selected-company scope",
       ),
     },
+    { key: "profileBackend", text: replaceOrFail(source.profileBackend, /lit\.operating_company_id = \$2::uuid/, "TRUE", "qualification line-item selected-company scope") },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
     { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },

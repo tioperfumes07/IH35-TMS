@@ -1211,3 +1211,5 @@ Codex | WORKING | FO=FLT-F6297-UNIT-PERMIT-EXPIRY-SCAN-HIDES-OWNER-WHEN-LEASED |
 Codex | ACK | GO-1405 | PORT=9226 | NOW=hop.assign | SHA=c46d592 | GO
 Codex | ACK | GO-1927 | PORT=9226 | SHA=9f7ad77 | LIVE WALK=/drivers+/fleet+/safety+/fuel+/maintenance+/insurance | PASS=no 500/dead/silent; canonical creates and reverse drills opened; no mutation submitted | SHIPPED=#16393,#16396,#16398 | NEXT=continue assigned live leaves | GO
 Codex | WORKING | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK | LIVE=USMCA picker showed 5 canonical types ×3 | FIX=explicit FE+BE company scope + company-keyed cache | GUARD=11/11 | NEXT=FAST-MERGE then reread INBOX | GO
+Codex | SHIPPED | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK | PR=#16412 @ c6a71537de | GUARD=PASS+11/11 | LIVE=post-deploy recheck | NEXT=DRV-F6703 | GO
+Codex | WORKING | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | FIX=selected-company equipment type+line item reads/writes across qualification lifecycle | GUARD=40/40+13/13 | NEXT=FAST-MERGE | GO
