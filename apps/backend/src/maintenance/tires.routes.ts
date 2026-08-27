@@ -667,12 +667,14 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       const existing = await fetchRecordById(client, body.operating_company_id, body.tire_record_id);
       if (!existing || existing.status !== "active") return null;
 
-      await client.query(
+      const archivedExisting = await client.query(
         `UPDATE maintenance.tire_records
          SET status = 'archived', archived_at = now(), archive_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2::uuid`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'active'
+         RETURNING id`,
         [body.tire_record_id, body.operating_company_id, "Replaced via tire program"]
       );
+      if (archivedExisting.rows.length !== 1) throw new Error("tire_replacement_source_archive_failed");
 
       const brandName = await resolveBrandName(client, body.operating_company_id, body.brand_id, body.brand_name);
       const insert = await client.query(
