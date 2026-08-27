@@ -3,6 +3,7 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx";
 const source = fs.readFileSync(file, "utf8");
+const backendSource = fs.readFileSync("apps/backend/src/fleet/trailer.routes.ts", "utf8");
 const checks = [
   ["leaf matrix claim", /@matrix-built modules=fleet cols=driver,trailer,connectivity,reverse_link/],
   ["generation ref", /const actionGenerationRef = useRef\(0\)/],
@@ -18,7 +19,14 @@ const checks = [
   ["load reverse drills retained", /kind="load"[\s\S]*?id=\{load\.load_id/],
   ["safety reverse retained", /<AssetSafetyReverseSection[\s\S]*?assetKind="trailer"[\s\S]*?assetId=\{id\}/],
 ];
-function failures(text) { return checks.filter(([, pattern]) => !pattern.test(text)).map(([label]) => label); }
+function failures(text, backend = backendSource) {
+  const result = checks.filter(([, pattern]) => !pattern.test(text)).map(([label]) => label);
+  for (const event of ["status_changed", "updated"]) {
+    const pattern = new RegExp(`"fleet\\.trailer\\.${event}",[\\s\\S]{0,220}operating_company_id: query\\.data\\.operating_company_id`);
+    if (!pattern.test(backend)) result.push(`${event} audit omits operating company`);
+  }
+  return result;
+}
 const base = failures(source);
 if (base.length) { console.error(`verify-trailer-profile-action-company-lifecycle FAIL: ${base.join(", ")}`); process.exit(1); }
 if (process.argv.includes("--selftest")) {
@@ -31,7 +39,12 @@ if (process.argv.includes("--selftest")) {
   ];
   const escaped = mutations.filter((text) => failures(text).length === 0).length;
   if (escaped) { console.error(`verify-trailer-profile-action-company-lifecycle selftest FAIL: ${escaped}/5 mutations escaped`); process.exit(1); }
-  console.log("verify-trailer-profile-action-company-lifecycle selftest PASS — 5/5 planted defects detected");
+  for (const event of ["status_changed", "updated"]) {
+    const eventBlock = new RegExp(`("fleet\\.trailer\\.${event}",[\\s\\S]{0,220})operating_company_id: query\\.data\\.operating_company_id,`);
+    const mutatedBackend = backendSource.replace(eventBlock, "$1");
+    if (mutatedBackend === backendSource || failures(source, mutatedBackend).length === 0) throw new Error(`missed ${event} audit mutation`);
+  }
+  console.log("verify-trailer-profile-action-company-lifecycle selftest PASS — 7/7 planted defects detected");
   process.exit(0);
 }
 console.log("verify-trailer-profile-action-company-lifecycle PASS — archive/quick-assign preserve company-trailer-driver lifecycle and reverse mounts");
