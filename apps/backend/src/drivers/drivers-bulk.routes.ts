@@ -143,9 +143,19 @@ async function handleSetStatus(ctx: BulkPerEntityContext<z.infer<typeof setStatu
         updated_by_user_id = $4,
         updated_at = now()
       WHERE id = $1::uuid
+        AND (
+          operating_company_id = $5::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations bulk_status_dca
+            WHERE bulk_status_dca.driver_id = mdata.drivers.id
+              AND bulk_status_dca.company_id = $5::uuid
+              AND bulk_status_dca.is_authorized = true
+              AND bulk_status_dca.deactivated_at IS NULL
+          )
+        )
       RETURNING *
     `,
-    [ctx.id, payload.status, payload.reason_code_id ?? null, ctx.actorUserId]
+    [ctx.id, payload.status, payload.reason_code_id ?? null, ctx.actorUserId, ctx.operatingCompanyId]
   );
   const newRow = res.rows[0] as Record<string, unknown> | undefined;
   if (!newRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
@@ -182,9 +192,19 @@ async function handleSetOosReason(ctx: BulkPerEntityContext<z.infer<typeof setOo
         updated_by_user_id = $3,
         updated_at = now()
       WHERE id = $1::uuid
+        AND (
+          operating_company_id = $4::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations bulk_oos_dca
+            WHERE bulk_oos_dca.driver_id = mdata.drivers.id
+              AND bulk_oos_dca.company_id = $4::uuid
+              AND bulk_oos_dca.is_authorized = true
+              AND bulk_oos_dca.deactivated_at IS NULL
+          )
+        )
       RETURNING *
     `,
-    [ctx.id, ctx.payload.reason_code_id, ctx.actorUserId]
+    [ctx.id, ctx.payload.reason_code_id, ctx.actorUserId, ctx.operatingCompanyId]
   );
   const newRow = res.rows[0] as Record<string, unknown> | undefined;
   if (!newRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
@@ -223,9 +243,19 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
         updated_at = now()
       WHERE id = $1::uuid
         AND archived_at IS NULL
+        AND (
+          operating_company_id = $3::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations bulk_archive_dca
+            WHERE bulk_archive_dca.driver_id = mdata.drivers.id
+              AND bulk_archive_dca.company_id = $3::uuid
+              AND bulk_archive_dca.is_authorized = true
+              AND bulk_archive_dca.deactivated_at IS NULL
+          )
+        )
       RETURNING *
     `,
-    [ctx.id, ctx.actorUserId]
+    [ctx.id, ctx.actorUserId, ctx.operatingCompanyId]
   );
   const newRow = res.rows[0] as Record<string, unknown> | undefined;
   if (!newRow) return { ok: false, code: "E_ALREADY_ARCHIVED", message: "Driver already archived" };
