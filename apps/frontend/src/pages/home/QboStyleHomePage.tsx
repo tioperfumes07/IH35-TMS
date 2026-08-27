@@ -174,14 +174,22 @@ export function QboStyleHomePage({ auth }: Props) {
           >
             Customize
           </button>
-          <button
-            type="button"
-            disabled
-            title="Not yet available"
-            className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
+          {/* HOME-ORPHANED-LEGAL-PAGES: /legal/privacy and /legal/terms were registered routes
+              with zero inbound links anywhere in the app (SAF-F22-class orphan — reachable only
+              by typing the exact URL). This header already had a disabled "Privacy" placeholder
+              button positioned exactly for this; wired it live and added a matching Terms link. */}
+          <Link
+            to="/legal/privacy"
+            className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           >
             Privacy
-          </button>
+          </Link>
+          <Link
+            to="/legal/terms"
+            className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          >
+            Terms
+          </Link>
         </div>
       </div>
 
