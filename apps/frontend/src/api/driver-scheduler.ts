@@ -48,9 +48,12 @@ export const driverSchedulerOfficeApi = {
     );
   },
 
-  listPending(operatingCompanyId: string) {
-    return apiRequest<{ requests: Record<string, unknown>[] }>(
-      withCompanyQuery("/api/v1/safety/scheduler/requests/pending", operatingCompanyId, {})
+  listPending(operatingCompanyId: string, limit = 50, offset = 0) {
+    return apiRequest<{ requests: Record<string, unknown>[]; total_count: number; limit: number; offset: number }>(
+      withCompanyQuery("/api/v1/safety/scheduler/requests/pending", operatingCompanyId, {
+        limit: String(limit),
+        offset: String(offset),
+      })
     );
   },
 

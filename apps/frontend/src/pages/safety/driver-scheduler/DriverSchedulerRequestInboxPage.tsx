@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../../lib/formatDate";
 import { Link } from "react-router-dom";
@@ -14,18 +14,24 @@ import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
 type PendingRequestRow = Record<string, unknown>;
+const PAGE_SIZE = 50;
 
 export function DriverSchedulerRequestInboxPage() {
+  // @matrix-built safety:leave_requests.list:{driver,connectivity,qbo_chrome}
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
+  const [page, setPage] = useState(0);
+
+  useEffect(() => setPage(0), [operatingCompanyId]);
 
   const query = useQuery({
-    queryKey: ["driver-scheduler", "pending", operatingCompanyId],
+    queryKey: ["driver-scheduler", "pending", operatingCompanyId, page],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => driverSchedulerOfficeApi.listPending(operatingCompanyId),
+    queryFn: () => driverSchedulerOfficeApi.listPending(operatingCompanyId, PAGE_SIZE, page * PAGE_SIZE),
   });
 
   const rows = query.data?.requests ?? [];
+  const totalCount = query.data?.total_count ?? 0;
 
   const columns = useMemo<ParityColumn<PendingRequestRow>[]>(
     () => [
@@ -87,7 +93,34 @@ export function DriverSchedulerRequestInboxPage() {
         emptyText="No pending leave requests."
         storageKey="safety-driver-scheduler-pending"
         exportFilename="driver-scheduler-pending-requests"
+        pageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        hidePager
       />
+      ) : null}
+
+      {!query.isError && totalCount > PAGE_SIZE ? (
+        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+          <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              disabled={page === 0 || query.isFetching}
+              onClick={() => setPage((value) => Math.max(0, value - 1))}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );
