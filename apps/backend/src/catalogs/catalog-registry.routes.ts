@@ -20,11 +20,18 @@ const catalogDepartmentSchema = z.enum(["dispatch", "safety", "accounting", "ide
 // from it — the enum, the create schema, and the stats lookup. A code that cannot be served can no
 // longer be created, and an unsupported code already in the table reports `stats_supported: false`
 // instead of a fake 0.
+// LISTS-F6704: EQUIPMENT_TYPES and DRIVER_LOAD_STATUSES are both company-owned (100% non-null
+// operating_company_id, real per-company row splits — verified live against prod; see
+// CATALOG-EQUIPMENT-TYPES-AND-DRIVER-LOAD-STATUSES-STALE-SELECT-ALL-RLS-POLICY-DEFEATS-ENTITY-SCOPE in
+// docs/audit/GUARD-WORKORDERS.md). Both tables ALSO carry a leftover unconditional `USING (true)` RLS
+// policy alongside their real `company_scope` policy — Postgres OR's permissive policies together, so RLS
+// alone does not scope these two reads today. The explicit `$1` predicate below is the actual fix for
+// this consumer, not just defense-in-depth (dropping the stale policy is a separate migration-owner fix).
 const CATALOG_REGISTRY_STATS_SQL = {
   EQUIPMENT_TYPES:
-    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.equipment_types WHERE deactivated_at IS NULL AND is_active = true",
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.equipment_types WHERE deactivated_at IS NULL AND is_active = true AND operating_company_id = $1::uuid",
   DRIVER_LOAD_STATUSES:
-    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.driver_load_statuses WHERE deactivated_at IS NULL AND is_active = true",
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.driver_load_statuses WHERE deactivated_at IS NULL AND is_active = true AND operating_company_id = $1::uuid",
   CHART_OF_ACCOUNTS:
     "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.accounts WHERE deactivated_at IS NULL",
   CLASSES: "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.classes WHERE deactivated_at IS NULL",
@@ -89,7 +96,11 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
-async function fetchCatalogStats(client: { query: (sql: string) => Promise<{ rows: Array<Record<string, unknown>> }> }, code: string) {
+async function fetchCatalogStats(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  code: string,
+  operatingCompanyId: string | null
+) {
   const sql = (CATALOG_REGISTRY_STATS_SQL as Record<string, string | undefined>)[code];
   if (!sql) {
     // LST-CAT-07: previously this returned `item_count: 0`, which is indistinguishable from a genuinely
@@ -98,7 +109,10 @@ async function fetchCatalogStats(client: { query: (sql: string) => Promise<{ row
     // (stats not available for this code) rather than inventing a count.
     return { item_count: 0, last_updated_at: null as string | null, stats_supported: false };
   }
-  const res = await client.query(sql);
+  // LISTS-F6704: EQUIPMENT_TYPES/DRIVER_LOAD_STATUSES SQL now has a $1 operating_company_id predicate;
+  // every other code's SQL has no placeholder, so the extra bound value is simply unused (harmless — the
+  // same pattern fetchPreviewItems already relies on below).
+  const res = await client.query(sql, [operatingCompanyId]);
   return {
     item_count: Number(res.rows[0]?.item_count ?? 0),
     last_updated_at: (res.rows[0]?.last_updated_at as string | null) ?? null,
@@ -125,6 +139,7 @@ async function fetchPreviewItems(
         FROM catalogs.equipment_types
         WHERE deactivated_at IS NULL
           AND is_active = true
+          AND operating_company_id = $1::uuid
         ORDER BY sort_order, name
         LIMIT ${limitPlusOne}
       `,
@@ -136,6 +151,7 @@ async function fetchPreviewItems(
         FROM catalogs.driver_load_statuses
         WHERE deactivated_at IS NULL
           AND is_active = true
+          AND operating_company_id = $1::uuid
         ORDER BY sort_order, name
         LIMIT ${limitPlusOne}
       `,
@@ -260,7 +276,7 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
 
       const catalogRows = await Promise.all(
         registryRes.rows.map(async (row) => {
-          const stats = await fetchCatalogStats(client, String(row.code));
+          const stats = await fetchCatalogStats(client, String(row.code), operatingCompanyId);
           return {
             department: row.department,
             code: row.code,
