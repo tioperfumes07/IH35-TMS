@@ -49,6 +49,32 @@ export async function updateScheduledReport(id: string, payload: Partial<Schedul
   return apiRequest<{ ok: boolean }>(`/api/v1/scheduled-reports/${encodeURIComponent(id)}`, { method: "PATCH", body: payload });
 }
 
+/** Raw `reporting.scheduled_reports` row shape, as returned by GET /:id — used to prefill the edit modal. */
+export type ScheduledReportRecord = {
+  id: string;
+  operating_company_id: string;
+  report_id: string;
+  report_params: Record<string, unknown> | null;
+  frequency: string;
+  cron_expression: string | null;
+  run_time: string | null;
+  run_day_of_week: number | null;
+  run_day_of_month: number | null;
+  timezone: string | null;
+  recipients_to: string[] | null;
+  recipients_cc: string[] | null;
+  recipients_bcc: string[] | null;
+  subject_template: string;
+  format: "pdf" | "xlsx" | "csv";
+  status: string;
+};
+
+export async function getScheduledReport(id: string, operatingCompanyId: string) {
+  return apiRequest<{ record: ScheduledReportRecord; runs: unknown[] }>(
+    withCompany(`/api/v1/scheduled-reports/${encodeURIComponent(id)}`, operatingCompanyId),
+  );
+}
+
 export async function pauseScheduledReport(id: string, operatingCompanyId: string) {
   return apiRequest<{ ok: boolean }>(`/api/v1/scheduled-reports/${encodeURIComponent(id)}/pause`, {
     method: "POST",

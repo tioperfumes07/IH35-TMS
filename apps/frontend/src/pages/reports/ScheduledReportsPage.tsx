@@ -107,6 +107,9 @@ export function ScheduledReportsPage() {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [modalOpen, setModalOpen] = useState(false);
+  // SCHEDULED-REPORTS-EDIT-BUTTON-OPENS-BLANK-CREATE-FORM-NOT-EDIT: the row being edited, or null for
+  // "+ Schedule a new report" (create mode). Threaded into ScheduleReportModal as `editId`.
+  const [editingRow, setEditingRow] = useState<ScheduledReportListRow | null>(null);
 
   const listQuery = useQuery({
     queryKey: ["scheduled-reports-v2", companyId],
@@ -193,7 +196,14 @@ export function ScheduledReportsPage() {
         title={preset?.title ?? "Scheduled reports"}
         subtitle={preset?.subtitle ?? "Automated report delivery via email queue"}
         actions={
-          <Button size="sm" onClick={() => setModalOpen(true)} disabled={!companyId}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingRow(null);
+              setModalOpen(true);
+            }}
+            disabled={!companyId}
+          >
             Schedule a new report
           </Button>
         }
@@ -210,7 +220,14 @@ export function ScheduledReportsPage() {
         emptyText={preset ? `No ${preset.title.toLowerCase()} schedules exist for this company.` : "No schedules yet. Create one when the backend endpoint is live (P6-T11201)."}
         rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">
-            <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setEditingRow(r);
+                setModalOpen(true);
+              }}
+            >
               Edit
             </Button>
             {r.status === "active" ? (
@@ -234,9 +251,13 @@ export function ScheduledReportsPage() {
 
       <ScheduleReportModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingRow(null);
+        }}
         operatingCompanyId={companyId}
         defaultEmail={user?.email ?? ""}
+        editId={editingRow?.id ?? null}
         onCreated={() => void qc.invalidateQueries({ queryKey: ["scheduled-reports-v2"] })}
       />
     </div>
