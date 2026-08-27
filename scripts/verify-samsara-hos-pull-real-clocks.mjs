@@ -88,6 +88,33 @@ if (!/listHosLogs\([\s\S]{0,90}\[\.\.\.localBySamsara\.keys\(\)\]\)/.test(svc))
 // 8-day window so the 70h cycle + hours-driven are REAL (48h can't carry the cycle).
 if (!/windowHours = 192/.test(svc))
   fail("hos pull window must be 8 days (192h) so the 70h cycle + hours-driven are real");
+// IDEMPOTENCY: /fleet/hos/logs clips a closed interval's logStartTime to the rolling request window while its
+// logEndTime stays stable. Keying only on started_at therefore inserted the same logical interval every five
+// minutes (live USMCA proof: up to 1,930 distinct starts for one driver/status/end). Closed poll rows must use
+// ended_at as their stable identity; open rows retain the existing exact-start conflict key.
+function closedIntervalDedupeProblems(source) {
+  const failures = [];
+  if (!/pg_advisory_xact_lock\(hashtextextended\('samsara_hos_pull:' \|\| \$1::text \|\| ':' \|\| \$2::text, 0\)\)/.test(source))
+    failures.push("concurrent HOS cron paths must serialize closed-interval dedupe per company+driver");
+  if (!/const closedIntervalKeys = new Set/.test(source))
+    failures.push("closed Samsara intervals must preload their stable identities once per driver");
+  for (const predicate of [
+    "operating_company_id = $1::uuid",
+    "driver_id = $2::uuid",
+    "source = 'samsara_eld'",
+    "ended_at >= $3::timestamptz",
+  ]) {
+    if (!source.includes(predicate)) failures.push(`closed interval dedupe is missing ${predicate}`);
+  }
+  if (!/closedIntervalKey = log\.endedAt[\s\S]{0,160}canonicalStatus[\s\S]{0,120}new Date\(log\.endedAt\)\.toISOString/.test(source))
+    failures.push("closed interval identity must use canonical status plus stable ended_at");
+  if (!/closedIntervalKey && closedIntervalKeys\.has\(closedIntervalKey\)\) continue/.test(source))
+    failures.push("known closed intervals must be skipped before INSERT");
+  if (!/if \(closedIntervalKey\) closedIntervalKeys\.add\(closedIntervalKey\)/.test(source))
+    failures.push("new closed intervals must join the in-memory set to dedupe the current response");
+  return failures;
+}
+for (const problem of closedIntervalDedupeProblems(svc)) fail(problem);
 // CANONICAL duty_status: the inserter must map Samsara hosStatusType to the FMCSA-canonical set the CHECK constraint
 // allows (off_duty/sleeper/driving/on_duty_not_driving/personal_conveyance/yard_moves). The old mapper emitted
 // "on_duty"/"yard_move"/sanitized unknowns -> CHECK rejected -> 47 driver_errors -> half-default clocks. NEVER again.
@@ -101,11 +128,9 @@ if (!/return "on_duty_not_driving"; \/\/ unknown/.test(svc))
 if (!/firstError = `driver_insert:/.test(svc))
   fail("syncSamsaraHosLogs must capture the per-driver insert error (no success=false + null error_message)");
 // Per-driver inserts savepoint-isolated (manual SAVEPOINT + ROLLBACK TO) so one bad log can't abort the others/log.
-// Window widened 400 -> 700 (2026-08-20, CC-3): real distance is 632 chars (the per-log
-// toCanonicalDutyStatus + off_duty/sleeper/personal_conveyance unit_id nulling comment between
-// SAVEPOINT and the INSERT pushed it past 400) — verified the savepoint correctly wraps the
-// INSERT, with RELEASE SAVEPOINT on success and ROLLBACK TO + captured error on catch.
-if (!/SAVEPOINT \$\{sp\}[\s\S]{0,700}INSERT INTO hos\.duty_status_events/.test(svc))
+// The per-driver concurrency lock + preload now intentionally sit between SAVEPOINT and INSERT. Verify ordering
+// across the service rather than maintaining a fragile character window.
+if (!/SAVEPOINT \$\{sp\}[\s\S]*INSERT INTO hos\.duty_status_events[\s\S]*RELEASE SAVEPOINT \$\{sp\}[\s\S]*ROLLBACK TO SAVEPOINT \$\{sp\}/.test(svc))
   fail("each driver's HOS insert batch must be savepoint-isolated (SAVEPOINT/ROLLBACK TO)");
 // The service must NEVER throw on fetch failure (a throw rolls back the observability row) — record + return.
 if (!/return \{ inserted: 0[\s\S]{0,120}error: `fetch:/.test(svc))
@@ -188,9 +213,21 @@ if (process.argv.includes("--selftest")) {
     enabledCheckProblems(source, name).length > 0
   ).length;
   const totalCaught = catches + enabledCheckCatches;
-  const total = scopePlanted.length + schemaPlanted.length + enabledCheckPlanted.length;
-  if (totalCaught !== total) fail(`selftest caught ${totalCaught}/${total} planted scope/schema/capability defects`);
-  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${totalCaught}/${total} planted scope/schema/capability defects`);
+  const dedupePlanted = [
+    ["concurrency lock", svc.replace("pg_advisory_xact_lock", "pg_advisory_unlock")],
+    ["company", svc.replace("operating_company_id = $1::uuid", "operating_company_id = operating_company_id")],
+    ["driver", svc.replace("driver_id = $2::uuid", "driver_id = driver_id")],
+    ["window", svc.replace("ended_at >= $3::timestamptz", "started_at >= $3::timestamptz")],
+    ["source", svc.replace("source = 'samsara_eld'", "source = source")],
+    ["stable end", svc.replace("new Date(log.endedAt).toISOString()", "new Date(log.startedAt).toISOString()")],
+    ["skip", svc.replace("closedIntervalKeys.has(closedIntervalKey)", "closedIntervalKeys.has('never')")],
+    ["batch dedupe", svc.replace("closedIntervalKeys.add(closedIntervalKey)", "closedIntervalKeys.delete(closedIntervalKey)")],
+  ];
+  const dedupeCatches = dedupePlanted.filter(([, source]) => closedIntervalDedupeProblems(source).length > 0).length;
+  const allCaught = totalCaught + dedupeCatches;
+  const total = scopePlanted.length + schemaPlanted.length + enabledCheckPlanted.length + dedupePlanted.length;
+  if (allCaught !== total) fail(`selftest caught ${allCaught}/${total} planted scope/schema/capability/dedupe defects`);
+  console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${allCaught}/${total} planted scope/schema/capability/dedupe defects`);
 } else {
   console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
 }

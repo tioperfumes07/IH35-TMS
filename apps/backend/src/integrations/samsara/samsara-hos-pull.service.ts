@@ -120,8 +120,33 @@ export async function syncSamsaraHosLogs(
     const sp = `hos_driver_${i}`;
     await client.query(`SAVEPOINT ${sp}`);
     try {
+      // Both the */5 positions cron and the hourly HOS cron call this service. Serialize their work per
+      // tenant+driver so concurrent polls cannot both pass the closed-interval NOT EXISTS check.
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtextextended('samsara_hos_pull:' || $1::text || ':' || $2::text, 0))`,
+        [operatingCompanyId, localDriverId]
+      );
+      const existingClosedRows = await client.query(
+        `SELECT duty_status, ended_at
+         FROM hos.duty_status_events
+         WHERE operating_company_id = $1::uuid
+           AND driver_id = $2::uuid
+           AND source = 'samsara_eld'
+           AND ended_at >= $3::timestamptz`,
+        [operatingCompanyId, localDriverId, start.toISOString()]
+      );
+      const closedIntervalKeys = new Set(
+        existingClosedRows.rows.map((raw) => {
+          const row = raw as { duty_status: string; ended_at: string | Date };
+          return `${row.duty_status}|${new Date(row.ended_at).toISOString()}`;
+        })
+      );
       for (const log of dl.logs) {
         const canonicalStatus = toCanonicalDutyStatus(log.hosStatusType);
+        const closedIntervalKey = log.endedAt
+          ? `${canonicalStatus}|${new Date(log.endedAt).toISOString()}`
+          : null;
+        if (closedIntervalKey && closedIntervalKeys.has(closedIntervalKey)) continue;
         // Same convention as hos-projector.ts: unit_id is only meaningful while the driver could be operating
         // the vehicle — null it for off_duty/sleeper/personal_conveyance even when we know the assigned unit.
         const unitId =
@@ -136,6 +161,7 @@ export async function syncSamsaraHosLogs(
           [operatingCompanyId, localDriverId, unitId, canonicalStatus, log.startedAt, log.endedAt]
         );
         inserted += res.rowCount ?? 0;
+        if (closedIntervalKey) closedIntervalKeys.add(closedIntervalKey);
       }
       await client.query(`RELEASE SAVEPOINT ${sp}`);
     } catch (err) {
