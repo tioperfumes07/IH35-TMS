@@ -86,6 +86,28 @@ export function check(customersText, vendorsText) {
     failures.push(`${VENDORS_FILE} reactivate UPDATE no longer clears deactivated_at with explicit operating_company_id WHERE match`);
   }
 
+  const customersPatchIdx = customersText.indexOf('app.patch("/api/v1/mdata/customers/:id"');
+  const customersDeactivateStart = customersText.indexOf("/api/v1/mdata/customers/:id/deactivate");
+  const customersPatchBlock =
+    customersPatchIdx >= 0
+      ? customersText.slice(
+          customersPatchIdx,
+          customersDeactivateStart > customersPatchIdx ? customersDeactivateStart : customersPatchIdx + 8000,
+        )
+      : "";
+  if (!/const queryCustomer =[\s\S]*\? withLuciaBypass\(\(bypassClient\) => bypassClient\.query\(sql, params\)/.test(customersPatchBlock)) {
+    failures.push(`${CUSTOMERS_FILE} PATCH no longer uses withLuciaBypass when body includes deactivated_at`);
+  }
+
+  const customersReactivateIdx = customersText.indexOf("/api/v1/mdata/customers/:id/reactivate");
+  const customersReactivateBlock = customersReactivateIdx >= 0 ? customersText.slice(customersReactivateIdx, customersReactivateIdx + 3500) : "";
+  if (customersReactivateIdx < 0) {
+    failures.push(`${CUSTOMERS_FILE} POST /reactivate route missing`);
+  }
+  if (!/SET deactivated_at = NULL[\s\S]*?AND operating_company_id = \$3::uuid/.test(customersReactivateBlock)) {
+    failures.push(`${CUSTOMERS_FILE} reactivate UPDATE no longer clears deactivated_at with explicit operating_company_id WHERE match`);
+  }
+
   return failures;
 }
 
@@ -100,8 +122,11 @@ function checkFrontend(detailText, apiText) {
   if (!/export function reactivateVendor\(id: string\)/.test(apiText)) {
     failures.push(`${MDATA_API} reactivateVendor helper missing`);
   }
-  if (!/\/api\/v1\/mdata\/vendors\/\$\{id\}\/reactivate/.test(apiText)) {
-    failures.push(`${MDATA_API} reactivateVendor does not POST /reactivate`);
+  if (!/\/api\/v1\/mdata\/customers\/\$\{id\}\/reactivate/.test(apiText)) {
+    failures.push(`${MDATA_API} reactivateCustomer does not POST /reactivate`);
+  }
+  if (/updateCustomer\(id, \{ operating_company_id: operatingCompanyId, deactivated_at: null \}\)/.test(apiText)) {
+    failures.push(`${MDATA_API} reactivateCustomer still PATCHes deactivated_at:null`);
   }
   return failures;
 }
@@ -166,6 +191,20 @@ function selftest() {
     process.exit(1);
   }
 
+  const offenderCustPatch = customersText.replace(
+    'const queryCustomer = (sql: string, params: unknown[]) =>\n          "deactivated_at" in b\n            ? withLuciaBypass((bypassClient) => bypassClient.query(sql, params), { actorUserId: authUser.uuid })\n            : client.query(sql, params);',
+    "const queryCustomer = (sql: string, params: unknown[]) => client.query(sql, params);",
+  );
+  if (offenderCustPatch === customersText) {
+    console.error("FAIL(selftest): offender mutation did not change customer PATCH queryCustomer — pattern out of sync");
+    process.exit(1);
+  }
+  const failuresCust = check(offenderCustPatch, vendorsText);
+  if (failuresCust.length === 0) {
+    console.error("FAIL(selftest): planted offender (customer PATCH lucia dropped) was NOT caught");
+    process.exit(1);
+  }
+
   const detailText = fs.readFileSync(path.join(root, DETAIL_FILE), "utf8");
   const apiText = fs.readFileSync(path.join(root, MDATA_API), "utf8");
   const offenderFe = detailText.replace("mutationFn: () => reactivateVendor(id)", "mutationFn: () => updateVendor(id, { deactivated_at: null })");
@@ -176,6 +215,20 @@ function selftest() {
   const failuresD = checkFrontend(offenderFe, apiText);
   if (failuresD.length === 0) {
     console.error("FAIL(selftest): planted VendorDetail PATCH reactivate was NOT caught");
+    process.exit(1);
+  }
+
+  const offenderApi = apiText.replace(
+    "`/api/v1/mdata/customers/${id}/reactivate?operating_company_id=${encodeURIComponent(operatingCompanyId)}`",
+    "`/api/v1/mdata/customers/${id}`",
+  );
+  if (offenderApi === apiText) {
+    console.error("FAIL(selftest): offender mutation did not change reactivateCustomer URL — pattern out of sync");
+    process.exit(1);
+  }
+  const failuresApi = checkFrontend(detailText, offenderApi);
+  if (failuresApi.length === 0) {
+    console.error("FAIL(selftest): planted reactivateCustomer PATCH URL was NOT caught");
     process.exit(1);
   }
 

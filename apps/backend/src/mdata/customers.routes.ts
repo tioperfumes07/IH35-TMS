@@ -998,7 +998,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
-      const res = await client.query(
+      // CUSTOMER-REACTIVATE-PATCH-404: customers_select hides deactivated_at IS NOT NULL.
+      const selectCustomer = (sql: string, params: unknown[]) =>
+        "deactivated_at" in b
+          ? withLuciaBypass((bypassClient) => bypassClient.query(sql, params), { actorUserId: authUser.uuid })
+          : client.query(sql, params);
+      const res = await selectCustomer(
         `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
       );
@@ -1115,15 +1120,21 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!scopedCompanyId) return null;
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
-        const oldRes = await client.query(
+        const queryCustomer = (sql: string, params: unknown[]) =>
+          "deactivated_at" in b
+            ? withLuciaBypass((bypassClient) => bypassClient.query(sql, params), { actorUserId: authUser.uuid })
+            : client.query(sql, params);
+        const oldRes = await queryCustomer(
           `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
-        const res = await client.query(
-          `UPDATE mdata.customers SET ${setParts.join(", ")} WHERE id = $${idIdx} RETURNING ${CUSTOMER_SELECT_COLUMNS}`,
+        values.push(scopedCompanyId);
+        const scopeIdx = values.length;
+        const res = await queryCustomer(
+          `UPDATE mdata.customers SET ${setParts.join(", ")} WHERE id = $${idIdx} AND operating_company_id = $${scopeIdx}::uuid RETURNING ${CUSTOMER_SELECT_COLUMNS}`,
           values
         );
         const updatedRow = res.rows[0] ?? null;
@@ -1366,5 +1377,56 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_customer_not_found" });
     return deactivated;
+  });
+
+  app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/customers/:id/reactivate", RL_WRITE, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const reactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
+      const oldRes = await withLuciaBypass(
+        (bypassClient) =>
+          bypassClient.query(
+            `SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+            [parsedParams.data.id, scopedCompanyId]
+          ),
+        { actorUserId: authUser.uuid }
+      );
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+      let deactivatedAt = oldRow.deactivated_at as string | null;
+      const wasAlreadyActive = oldRow.deactivated_at === null;
+      if (!wasAlreadyActive) {
+        const res = await withLuciaBypass(
+          (bypassClient) =>
+            bypassClient.query(
+              `UPDATE mdata.customers SET deactivated_at = NULL, updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NOT NULL RETURNING id, deactivated_at`,
+              [parsedParams.data.id, authUser.uuid, scopedCompanyId]
+            ),
+          { actorUserId: authUser.uuid }
+        );
+        deactivatedAt = (res.rows[0]?.deactivated_at as string | null | undefined) ?? null;
+      }
+      await appendCrudAudit(client, authUser.uuid, "mdata.customers.reactivated", {
+        resource_id: oldRow.id,
+        resource_type: "mdata.customers",
+        was_already_active: wasAlreadyActive,
+      });
+      await enqueueTmsCustomerPushRequested(client, {
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
+        customer_id: String(oldRow.id),
+        operation: "update",
+      });
+      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_active: wasAlreadyActive };
+    });
+    if (!reactivated) return reply.code(404).send({ error: "mdata_customer_not_found" });
+    return reactivated;
   });
 }
