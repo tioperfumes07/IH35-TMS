@@ -111,7 +111,13 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
               l.id,
               l.load_number,
               l.customer_id::text,
-              c.customer_name,
+              -- AUDIT-TRAIL-SUBJECT-LABEL-LOST-FOR-DEACTIVATED-ENTITIES: mdata.customers' FORCE RLS
+              -- excludes deactivated-but-not-deleted rows for a non-bypass reader, so this LEFT JOIN
+              -- alone left c.customer_name NULL ("Customer — not visible" on the FE) for any load
+              -- whose customer was later deactivated, even though the load and its dollar figures are
+              -- entirely real. Falls back to the canonical same-company label resolver (already proven
+              -- at scale by invoices/payments/transaction-register.routes.ts) instead of widening RLS.
+              COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, $1::uuid)) AS customer_name,
               COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents
             FROM mdata.loads l
             LEFT JOIN mdata.customers c ON c.id = l.customer_id

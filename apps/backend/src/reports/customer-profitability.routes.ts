@@ -151,6 +151,30 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
       const custRows = custRes.rows as Array<{ customer_id: string; customer_name: string }>;
       const nameMap = new Map(custRows.map((r) => [String(r.customer_id), String(r.customer_name)]));
 
+      // AUDIT-TRAIL-SUBJECT-LABEL-LOST-FOR-DEACTIVATED-ENTITIES: the blanket scan above is scoped by
+      // mdata.customers' own FORCE RLS policy, which excludes deactivated-but-not-deleted rows for a
+      // non-bypass reader -- so a customer with real, live revenue in revRows can be entirely absent
+      // from nameMap, rendering "Customer — not visible" even though the customer is real and merely
+      // deactivated. Resolve any such gap via the canonical same-company label resolver
+      // (mdata.resolve_customer_label_same_company, already proven at scale by
+      // invoices/payments/transaction-register.routes.ts) instead of widening the RLS-scoped scan
+      // above -- narrow, read-only, same-company-checked, label-only.
+      const missingCustomerIds = Array.from(
+        new Set((revRes.rows as Array<{ customer_id: string }>).map((r) => String(r.customer_id)))
+      ).filter((id) => !nameMap.has(id));
+      if (missingCustomerIds.length > 0) {
+        const resolvedRes = await client.query(
+          `
+            SELECT cid::text AS customer_id, mdata.resolve_customer_label_same_company(cid, $2::uuid) AS customer_name
+            FROM unnest($1::uuid[]) AS cid
+          `,
+          [missingCustomerIds, companyId]
+        );
+        for (const row of resolvedRes.rows as Array<{ customer_id: string; customer_name: string | null }>) {
+          if (row.customer_name) nameMap.set(row.customer_id, row.customer_name);
+        }
+      }
+
       const today = new Date();
 
       const revRows = revRes.rows as Array<{
