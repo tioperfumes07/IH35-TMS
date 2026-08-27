@@ -1380,3 +1380,5 @@ Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16569 @ e6ddd7f928 SAFETY-F6822 | W
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16570 @ 37ddc9821d SAFETY-F6823 | WORKING MAINT-F6824 position-history parent/create truth | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16571 @ d5e773d5cb MAINT-F6824 | WORKING SAFETY-F6825 photo-comparison durable R2 evidence | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16572 @ 9bff227439 SAFETY-F6825 | WORKING SAFETY-F6826 damage-photo durable R2/backlink | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F6857 | PR=#16624 @ 6372d5fc57 | LIVE=await-deploy-78240b9 | NEXT=DRV-F6858 guard alias attribution | GO
+Codex | ACK | GO-0556 | PORT=9226 | WORKING DRV-F6858 phantom guard alias attribution | SHA=78240b9 | GO

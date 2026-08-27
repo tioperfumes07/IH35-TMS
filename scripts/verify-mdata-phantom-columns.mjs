@@ -75,6 +75,41 @@ function backtickLiterals(src) {
 const EQUIPMENT_RE = /mdata\.equipment(?![_a-zA-Z0-9])/;
 const DRIVERS_RE = /mdata\.drivers(?![_a-zA-Z0-9])/;
 
+function hasPhantomDriverFullName(sql) {
+  const driverAliases = new Set();
+  for (const aliasMatch of sql.matchAll(/mdata\.drivers(?![_a-zA-Z0-9])\s+(?:AS\s+)?([a-z_]\w*)/gi)) {
+    const alias = aliasMatch[1];
+    if (!["ON", "WHERE", "USING", "LEFT", "RIGHT", "INNER", "JOIN", "AS", "LIMIT", "ORDER", "GROUP"].includes(alias.toUpperCase())) {
+      driverAliases.add(alias.toLowerCase());
+    }
+  }
+  const otherTable = /\b(?:FROM|JOIN)\s+(?!mdata\.drivers(?![_a-zA-Z0-9]))[a-z_]+\.[a-z_]+/i.test(sql);
+  for (const m of sql.matchAll(/(?<![A-Za-z0-9_])full_name(?![A-Za-z0-9_])/gi)) {
+    const before = sql.slice(Math.max(0, m.index - 6), m.index);
+    if (/\bas\s+$/i.test(before)) continue;
+    const qualifier = sql.slice(0, m.index).match(/([a-z_]\w*)\.\s*$/i)?.[1]?.toLowerCase();
+    if ((qualifier != null && driverAliases.has(qualifier)) || (qualifier == null && !otherTable)) return true;
+  }
+  return false;
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["SELECT d.full_name FROM mdata.drivers d", true, "driver-qualified phantom"],
+    ["SELECT full_name FROM mdata.drivers", true, "bare single-table phantom"],
+    ["SELECT CONCAT_WS(' ', d.first_name, d.last_name) AS full_name FROM mdata.drivers d", false, "derived alias"],
+    ["SELECT hos.full_name FROM views.drivers_with_hos_status hos JOIN mdata.drivers d ON d.id = hos.id", false, "view-qualified field"],
+  ];
+  for (const [sql, expected, label] of cases) {
+    if (hasPhantomDriverFullName(sql) !== expected) {
+      console.error(`✘ verify-mdata-phantom-columns selftest: ${label}`);
+      process.exit(1);
+    }
+  }
+  console.log(`✅ verify-mdata-phantom-columns selftest: ${cases.length}/${cases.length} fixtures classified`);
+  process.exit(0);
+}
+
 const violations = [];
 
 for (const file of tsFiles(BACKEND)) {
@@ -117,18 +152,10 @@ for (const file of tsFiles(BACKEND)) {
     }
 
     // --- Rule B: mdata.drivers bare full_name (phantom); `AS full_name` alias is allowed ---
-    if (DRIVERS_RE.test(sql)) {
-      // Word-boundaried `full_name` — NOT part of a larger identifier like `driver_full_name`.
-      for (const m of sql.matchAll(/(?<![A-Za-z0-9_])full_name(?![A-Za-z0-9_])/gi)) {
-        const before = sql.slice(Math.max(0, m.index - 6), m.index);
-        // Allowed only when immediately preceded by `AS ` (the CONCAT_WS(...) AS full_name fix form).
-        if (!/\bas\s+$/i.test(before)) {
-          violations.push(
-            `${relPath}: SQL against mdata.drivers references bare 'full_name' — drivers has no full_name column (use CONCAT_WS(' ', first_name, last_name) AS full_name) [§4/42703]`
-          );
-          break; // one report per SQL string is enough
-        }
-      }
+    if (DRIVERS_RE.test(sql) && hasPhantomDriverFullName(sql)) {
+      violations.push(
+        `${relPath}: SQL against mdata.drivers references bare 'full_name' — drivers has no full_name column (use CONCAT_WS(' ', first_name, last_name) AS full_name) [§4/42703]`
+      );
     }
   }
 }
