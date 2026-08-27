@@ -1226,3 +1226,5 @@ Codex | WORKING | GO-1927 | FINDING=MAINT-F6708 | MODULE=maintenance | NOW=triag
 Codex | SHIPPED | MAINT-F6707 | PR=#16427 merged @ 4ecc0b7307 | guard=18/18 | NEXT=MAINT-F6708 | GO
 Codex | WORKING | GO-1927 | FINDING=MAINT-F6709 | MODULE=maintenance | NOW=DVIR routing audit company scope | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6708 | PR=#16428 merged @ 79b1996164 | guard=3/3 | NEXT=MAINT-F6709 | GO
+Codex | WORKING | GO-1927 | FINDING=MAINT-F6710 | MODULE=maintenance | NOW=parts audit company scope | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6709 | PR=#16429 merged @ 1843a1dcb1 | guard=3/3 | NEXT=MAINT-F6710 | GO

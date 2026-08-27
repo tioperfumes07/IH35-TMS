@@ -4,6 +4,8 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx";
 const source = fs.readFileSync(file, "utf8");
+const backendFile = "apps/backend/src/maintenance/parts.routes.ts";
+const backendSource = fs.readFileSync(backendFile, "utf8");
 
 const tokens = [
   "const actionGenerationRef = useRef(0)",
@@ -32,7 +34,18 @@ function inspect(value) {
   return failures;
 }
 
-const failures = inspect(source);
+const auditEvents = ["maintenance.parts.created", "maintenance.parts.updated", "maintenance.parts.voided"];
+function inspectBackend(value) {
+  return auditEvents.flatMap((event) => {
+    const index = value.indexOf(`\"${event}\"`);
+    if (index < 0) return [`missing ${event} audit`];
+    return value.slice(index, index + 420).includes("operating_company_id:")
+      ? []
+      : [`${event} audit omits operating_company_id`];
+  });
+}
+
+const failures = [...inspect(source), ...inspectBackend(backendSource)];
 if (failures.length) {
   console.error(`verify-maint-parts-company-lifecycle FAIL:\n- ${failures.join("\n- ")}`);
   process.exit(1);
@@ -43,8 +56,15 @@ if (process.argv.includes("--selftest")) {
   for (const token of mutations) {
     if (inspect(source.replace(token, "PLANTED_DEFECT")).length === 0) throw new Error(`selftest missed ${token}`);
   }
-  console.log(`verify-maint-parts-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length} planted defects red)`);
+  for (const event of auditEvents) {
+    const eventIndex = backendSource.indexOf(`\"${event}\"`);
+    const companyIndex = backendSource.indexOf("operating_company_id:", eventIndex);
+    const mutant = `${backendSource.slice(0, companyIndex)}PLANTED_SCOPE:${backendSource.slice(companyIndex + "operating_company_id:".length)}`;
+    if (inspectBackend(mutant).length === 0) throw new Error(`selftest missed ${event} tenantless audit`);
+  }
+  const count = mutations.length + auditEvents.length;
+  console.log(`verify-maint-parts-company-lifecycle --selftest PASS (${count}/${count} planted defects red)`);
   process.exit(0);
 }
 
-console.log("verify-maint-parts-company-lifecycle PASS — create/edit/import/void preserve submitted company, record, draft, and file state");
+console.log("verify-maint-parts-company-lifecycle PASS — create/edit/import/void preserve submitted company, record, draft, file, and tenant-scoped audit state");
