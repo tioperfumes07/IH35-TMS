@@ -451,7 +451,10 @@ export function getMaintenanceKpiDrilldown(
   );
 }
 
-export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: string, periodEnd: string, unitId?: string) {
+export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: string, periodEnd: string, unitId?: string, range: { limit?: number; offset?: number } = {}) {
+  const params = new URLSearchParams(maintKpiQuery(companyId, periodStart, periodEnd, unitId));
+  if (range.limit != null) params.set("limit", String(range.limit));
+  if (range.offset != null) params.set("offset", String(range.offset));
   return apiRequest<{
     rows: Array<{
       schedule_id: string;
@@ -461,8 +464,9 @@ export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: st
       compliance_status: string;
       next_due_odometer: number | null;
     }>;
+    total_count: number;
     hub_links: { pm_auto_engine: string; pm_schedule: string };
-  }>(`/api/v1/maintenance/kpi/pm-compliance?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`);
+  }>(`/api/v1/maintenance/kpi/pm-compliance?${params.toString()}`);
 }
 
 export function listMaintenancePmAlerts(companyId: string, state?: MaintenancePmAlert["state"], range: { limit?: number; offset?: number } = {}) {

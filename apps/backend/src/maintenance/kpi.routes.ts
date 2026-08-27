@@ -15,6 +15,10 @@ const kpiQuerySchema = z.object({
   period_end: z.string().date(),
   unit_id: z.string().uuid().optional(),
 });
+const pmComplianceQuerySchema = kpiQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
 export type KpiSparkPoint = { day: string; value: number };
 
@@ -297,12 +301,17 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/kpi/pm-compliance", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const parsed = kpiQuerySchema.safeParse(req.query ?? {});
+    const parsed = pmComplianceQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
-    const { operating_company_id: companyId, unit_id: unitId } = parsed.data;
+    const { operating_company_id: companyId, unit_id: unitId, limit, offset } = parsed.data;
 
-    const rows = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.pm_schedules"))) return [];
+    const payload = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await relationExists(client, "maintenance.pm_schedules"))) return { rows: [], total_count: 0 };
+      const params: unknown[] = [companyId];
+      if (unitId) params.push(unitId);
+      params.push(limit, offset);
+      const limitParam = params.length - 1;
+      const offsetParam = params.length;
       const res = await client.query(
         `
           SELECT
@@ -328,14 +337,25 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
             AND ps.is_active = true
             ${unitId ? " AND ps.unit_id = $2::uuid" : ""}
           ORDER BY compliance_status DESC, u.unit_number ASC
-          LIMIT 200
+          LIMIT $${limitParam}
+          OFFSET $${offsetParam}
         `,
+        params
+      );
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+           FROM maintenance.pm_schedules ps
+           JOIN mdata.units u ON u.id = ps.unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
+          WHERE ps.operating_company_id = $1::uuid
+            AND ps.is_active = true
+            ${unitId ? " AND ps.unit_id = $2::uuid" : ""}`,
         unitId ? [companyId, unitId] : [companyId]
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
-    return { rows, hub_links: { pm_auto_engine: "/maintenance/pm-auto-engine", pm_schedule: "/maintenance/pm-schedule" } };
+    return { ...payload, hub_links: { pm_auto_engine: "/maintenance/pm-auto-engine", pm_schedule: "/maintenance/pm-schedule" } };
   });
 }
 
