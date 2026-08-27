@@ -894,9 +894,12 @@ export function createDotInspection(
   });
 }
 
-export function listDotInspectionEvents(companyId: string, followUpState = "open") {
-  return apiRequest<{ events: Array<Record<string, unknown>> }>(
-    `/api/v1/safety/dot-inspection-events?${q(companyId)}&follow_up_state=${encodeURIComponent(followUpState)}`
+export function listDotInspectionEvents(companyId: string, followUpState = "open", range: { limit?: number; offset?: number } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId, follow_up_state: followUpState });
+  if (range.limit != null) qs.set("limit", String(range.limit));
+  if (range.offset != null) qs.set("offset", String(range.offset));
+  return apiRequest<{ events: Array<Record<string, unknown>>; total_count: number }>(
+    `/api/v1/safety/dot-inspection-events?${qs.toString()}`
   );
 }
 

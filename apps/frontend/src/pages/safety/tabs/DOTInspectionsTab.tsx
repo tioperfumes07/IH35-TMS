@@ -242,9 +242,11 @@ export function DOTInspectionsTab() {
   ];
 
   // Open DOT station dwell-follow-up queue (samsara geofence dwell-detector → dot_inspection_events).
+  const [dwellPage, setDwellPage] = useState(0);
+  const dwellPageSize = 20;
   const openEventsQuery = useQuery({
-    queryKey: ["safety", "dot-inspection-events", companyId],
-    queryFn: () => listDotInspectionEvents(companyId, "open"),
+    queryKey: ["safety", "dot-inspection-events", companyId, dwellPage],
+    queryFn: () => listDotInspectionEvents(companyId, "open", { limit: dwellPageSize, offset: dwellPage * dwellPageSize }),
     enabled: Boolean(companyId),
   });
 
@@ -266,6 +268,7 @@ export function DOTInspectionsTab() {
     setPendingOosCreate(null);
     setVoidTargetId(null);
     setForm(emptyInspectionForm(trailerIdFromUrl));
+    setDwellPage(0);
   }, [companyId]);
 
   // SAF-F14 / S-A10: driver uses DriverPickerWithCreate; unit uses EntityPicker kind="unit" with
@@ -461,14 +464,17 @@ export function DOTInspectionsTab() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>
         {openEventsQuery.isError ? (
-          <p className="text-xs text-red-700" data-testid="dot-dwell-events-query-error">
-            {userFacingApiError(openEventsQuery.error, "Could not load DOT station dwell events.")}
-          </p>
+          <ListErrorState
+            title="Couldn't load DOT station dwell events"
+            status={0}
+            message={userFacingApiError(openEventsQuery.error, "Could not load DOT station dwell events.")}
+            onRetry={() => void openEventsQuery.refetch()}
+          />
         ) : (openEventsQuery.data?.events ?? []).length === 0 ? (
           <p className="text-xs text-slate-500">No open DOT dwell follow-ups.</p>
         ) : (
           <div className="space-y-2">
-            {(openEventsQuery.data?.events ?? []).slice(0, 20).map((row) => (
+            {(openEventsQuery.data?.events ?? []).map((row) => (
               <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-slate-800">
@@ -511,6 +517,13 @@ export function DOTInspectionsTab() {
               <p className="text-xs text-red-700" data-testid="dot-inspection-followup-error">
                 {userFacingApiError(followUpMutation.error, "Could not update the DOT follow-up.")}
               </p>
+            ) : null}
+            {(openEventsQuery.data?.total_count ?? 0) > 0 ? (
+              <div className="flex items-center justify-end gap-2 text-xs" data-testid="dot-dwell-events-server-pager">
+                <span>{dwellPage * dwellPageSize + 1}–{Math.min((dwellPage + 1) * dwellPageSize, openEventsQuery.data?.total_count ?? 0)} of {openEventsQuery.data?.total_count ?? 0}</span>
+                <Button type="button" size="sm" variant="secondary" disabled={dwellPage === 0} onClick={() => setDwellPage((value) => Math.max(0, value - 1))}>Previous</Button>
+                <Button type="button" size="sm" variant="secondary" disabled={(dwellPage + 1) * dwellPageSize >= (openEventsQuery.data?.total_count ?? 0)} onClick={() => setDwellPage((value) => value + 1)}>Next</Button>
+              </div>
             ) : null}
           </div>
         )}
