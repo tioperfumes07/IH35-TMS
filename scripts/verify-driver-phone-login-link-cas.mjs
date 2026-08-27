@@ -11,7 +11,7 @@ const source = fs.readFileSync(FILE, "utf8");
 function failuresFor(text) {
   const route = text.match(/app\.post\("\/api\/v1\/mdata\/drivers\/:id\/enable-phone-login"[\s\S]*?\n  \}\);/)?.[0] ?? "";
   const checks = [
-    ["pre-read selects company and active driver", /SELECT id, operating_company_id, phone, email, identity_user_id[\s\S]{0,180}deactivated_at IS NULL/.test(route)],
+    ["pre-read selects company and active driver", /SELECT d\.id, d\.operating_company_id, d\.phone, d\.email, d\.identity_user_id[\s\S]{0,420}d\.deactivated_at IS NULL/.test(route)],
     ["link update is company scoped", /UPDATE mdata\.drivers[\s\S]{0,260}operating_company_id = \$4::uuid/.test(route)],
     ["link update is unlinked active CAS", /identity_user_id IS NULL[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}RETURNING id/.test(route)],
     ["lost link returns state error before audit", /if \(!linked\.rows\[0\]\) return \{ error: "driver_phone_login_state_changed" as const \};[\s\S]{0,180}appendCrudAudit/.test(route)],
@@ -28,7 +28,7 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace("SELECT id, operating_company_id, phone, email, identity_user_id", "SELECT id, phone, email, identity_user_id"),
+    source.replace("SELECT d.id, d.operating_company_id, d.phone, d.email, d.identity_user_id", "SELECT d.id, d.phone, d.email, d.identity_user_id"),
     source.replace("AND operating_company_id = $4::uuid", "AND true"),
     source.replace("AND identity_user_id IS NULL", "AND true"),
     source.replace("AND identity_user_id IS NULL\n              AND deactivated_at IS NULL", "AND identity_user_id IS NULL\n              AND true"),
