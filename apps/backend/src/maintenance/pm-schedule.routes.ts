@@ -153,11 +153,13 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
           user.uuid,
         ]
       );
+      const createdSchedule = res.rows[0];
+      if (!createdSchedule?.id) throw new Error("pm_schedule_create_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.pm_schedule.created", {
-        resource_id: res.rows[0]?.id,
+        resource_id: createdSchedule.id,
         operating_company_id: body.operating_company_id,
       });
-      return res.rows[0];
+      return createdSchedule;
     });
 
     if (!created) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
