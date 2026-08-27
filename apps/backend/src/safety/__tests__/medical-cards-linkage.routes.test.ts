@@ -25,9 +25,13 @@ describe("medical-card driver linkage", () => {
   afterEach(async () => { await app.close(); });
 
   it("returns a labeled, exact-driver company-scoped reverse list", async () => {
-    mockQuery.mockImplementation(async (sql: string) => sql.includes("FROM safety.medical_cards mc")
-      ? { rows: [{ id: "card-1", driver_id: DRIVER, driver_name: "Alicia Vance", expiry_date: "2027-01-01", days_to_expiry: 100 }] }
-      : { rows: [] });
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT 1 FROM mdata.drivers d")) return { rows: [{ exists: 1 }] };
+      if (sql.includes("FROM safety.medical_cards mc")) {
+        return { rows: [{ id: "card-1", driver_id: DRIVER, driver_name: "Alicia Vance", expiry_date: "2027-01-01", days_to_expiry: 100 }] };
+      }
+      return { rows: [] };
+    });
     const response = await app.inject({ method: "GET", url: `/api/v1/safety/medical-cards?operating_company_id=${COMPANY}&driver_id=${DRIVER}` });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ cards: [{ driver_id: DRIVER, driver_name: "Alicia Vance" }] });
