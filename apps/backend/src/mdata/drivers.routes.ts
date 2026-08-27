@@ -688,6 +688,7 @@ export async function createDriverCanonical(
               SET deactivated_at = NULL,
                   granted_by_user_id = EXCLUDED.granted_by_user_id,
                   granted_at = now()
+              WHERE org.user_company_access.deactivated_at IS NOT NULL
             `,
           [identityUserId, resolvedOperatingCompanyId, authUser.uuid]
         );
