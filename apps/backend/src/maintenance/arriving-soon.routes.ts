@@ -178,16 +178,19 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
     return payload;
   });
 
-  app.post("/api/v1/maintenance/arriving-soon/:load_id/convert-issue-to-wo", async (req, reply) => {
-    const user = authed(req, reply);
-    if (!user) return;
-    if (!canConvert(user.role)) return reply.code(403).send({ error: "forbidden" });
-    const params = loadParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return validationError(reply, params.error);
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    const body = convertIssueBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
+  app.post(
+    "/api/v1/maintenance/arriving-soon/:load_id/convert-issue-to-wo",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      if (!canConvert(user.role)) return reply.code(403).send({ error: "forbidden" });
+      const params = loadParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const body = convertIssueBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
 
     const companyId = query.data.operating_company_id;
     const result = await withCompany(user.uuid, companyId, async (client) => {
@@ -210,12 +213,14 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
           SELECT *
           FROM dispatch.intransit_issues
           WHERE id = $1
-            AND unit_id = $2
+            AND operating_company_id = $2::uuid
+            AND unit_id = $3
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
+          FOR UPDATE
         `,
-        [body.data.issue_id, load.unit_id]
+        [body.data.issue_id, companyId, load.unit_id]
       );
       const issue = issueRes.rows[0];
       if (!issue) return { code: 404 as const, error: "issue_not_found_or_already_converted" };
@@ -316,6 +321,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             ]
       );
       const wo = woRes.rows[0];
+      if (!wo?.id) throw new Error("arriving_soon_work_order_insert_failed");
 
       const statusColumnRes = await client.query(
         `
@@ -329,41 +335,62 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         `
       );
       if (Boolean(statusColumnRes.rows[0]?.ok)) {
-        await client.query(
+        const linked = await client.query(
           `
             UPDATE dispatch.intransit_issues
             SET promoted_to_wo_id = $2,
                 status = 'converted'
             WHERE id = $1
+              AND operating_company_id = $3::uuid
+              AND promoted_to_wo_id IS NULL
+              AND promoted_to_damage_report_id IS NULL
+            RETURNING id::text
           `,
-          [body.data.issue_id, wo.id]
+          [body.data.issue_id, wo.id, companyId]
         );
+        if (!linked.rows[0]) throw new Error("arriving_soon_issue_link_lost");
       } else {
-        await client.query(
+        const linked = await client.query(
           `
             UPDATE dispatch.intransit_issues
             SET promoted_to_wo_id = $2
             WHERE id = $1
+              AND operating_company_id = $3::uuid
+              AND promoted_to_wo_id IS NULL
+              AND promoted_to_damage_report_id IS NULL
+            RETURNING id::text
           `,
-          [body.data.issue_id, wo.id]
+          [body.data.issue_id, wo.id, companyId]
         );
+        if (!linked.rows[0]) throw new Error("arriving_soon_issue_link_lost");
       }
 
       let unitBlocked = false;
       if (String(issue.severity ?? "") === "severe") {
-        await client.query(
+        const blocked = await client.query(
           `
-            UPDATE mdata.units
+            UPDATE mdata.units AS u
             SET
               is_dispatch_blocked = true,
               dispatch_block_reason = 'Auto-blocked from severe in-transit issue conversion',
               dispatch_block_source_uuid = $2,
               dispatch_block_source_type = 'maintenance_arriving_soon',
               updated_at = now()
-            WHERE id = $1
+            WHERE u.id = $1
+              AND u.operating_company_id = $4::uuid
+              AND EXISTS (
+                SELECT 1
+                FROM mdata.loads l
+                WHERE l.id = $3::uuid
+                  AND l.operating_company_id = $4::uuid
+                  AND l.assigned_unit_id = u.id
+                  AND l.soft_deleted_at IS NULL
+              )
+            RETURNING id::text
           `,
-          [load.unit_id, wo.id]
+          [load.unit_id, wo.id, load.id, companyId]
         );
+        if (!blocked.rows[0]) throw new Error("arriving_soon_unit_block_lost");
         unitBlocked = true;
         await appendCrudAudit(
           client,
@@ -425,9 +452,10 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
       };
     });
 
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    return reply.code(result.code).send(result.data);
-  });
+      if ("error" in result) return reply.code(result.code).send({ error: result.error });
+      return reply.code(result.code).send(result.data);
+    }
+  );
 
   app.post("/api/v1/maintenance/arriving-soon/audit-view", async (req, reply) => {
     const user = authed(req, reply);
