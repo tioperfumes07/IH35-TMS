@@ -106,7 +106,10 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/dashboard/intransit-triage-queue", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      limit: z.coerce.number().int().min(1).max(300).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
@@ -123,6 +126,23 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       // — and additionally exposes Load # + ETA for design-parity (in-transit-issues.html) without a gated
       // view migration. load_id/stop_id are real FKs on dispatch.intransit_issues; ETA = the issue stop's
       // scheduled_arrival_at (real scheduled data, not a fabricated column). RLS-scoped via withCompany.
+      const countRes = await client.query(`
+        SELECT COUNT(*)::int AS total_count
+        FROM dispatch.intransit_issues i
+        JOIN mdata.units u ON u.id = i.unit_id
+                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
+        JOIN mdata.drivers d ON d.id = i.driver_id
+                            AND (d.operating_company_id = i.operating_company_id OR EXISTS (
+                              SELECT 1 FROM mdata.driver_company_authorizations intransit_count_dca
+                              WHERE intransit_count_dca.driver_id = d.id
+                                AND intransit_count_dca.company_id = i.operating_company_id
+                                AND intransit_count_dca.is_authorized = true
+                                AND intransit_count_dca.deactivated_at IS NULL
+                            ))
+        WHERE i.operating_company_id = $1::uuid
+          AND i.promoted_to_wo_id IS NULL
+          AND i.promoted_to_damage_report_id IS NULL
+      `, [companyId]);
       const res = await client.query(`
         SELECT
           i.id,
@@ -143,7 +163,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           i.load_id,
           CASE WHEN l.id IS NOT NULL THEN COALESCE(l.load_number, l.id::text) END AS load_display_id,
           s.scheduled_arrival_at::text AS eta_at,
-          COUNT(*) OVER()::int AS total_count
+          i.updated_at
         FROM dispatch.intransit_issues i
         JOIN mdata.units u ON u.id = i.unit_id
                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
@@ -162,16 +182,18 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         LEFT JOIN mdata.load_stops s ON s.id = i.stop_id AND s.load_id = l.id
         WHERE i.promoted_to_wo_id IS NULL
           AND i.promoted_to_damage_report_id IS NULL
-        ORDER BY i.reported_at DESC
-        LIMIT 50
-      `, [companyId]);
-      if (res.rows.length > 0) return { issues: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
+        ORDER BY i.reported_at DESC, i.id ASC
+        LIMIT $2 OFFSET $3
+      `, [companyId, parsed.data.limit, parsed.data.offset]);
+      if (res.rows.length > 0 || Number(countRes.rows[0]?.total_count ?? 0) > 0) {
+        return { issues: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0), limit: parsed.data.limit, offset: parsed.data.offset };
+      }
       if (shouldUseDevFixturesForMaintenance()) {
         console.warn("Maintenance triage queue using DEV fixtures because queue is empty.");
         const issues = triageDevFixtures();
         return { issues, total_count: issues.length };
       }
-      return { issues: [], total_count: 0 };
+      return { issues: [], total_count: 0, limit: parsed.data.limit, offset: parsed.data.offset };
     });
     return result;
   });
