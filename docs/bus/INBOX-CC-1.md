@@ -1,3 +1,7 @@
+**19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CC-1 | ACK | GO-1927 | PORT=9223 | NOW=BANK-ACCOUNT-HIDE | SHA=9f7ad77 | GO`
+
+**YOUR NOW:** Browser 9223 only: /accounting /banking /settlements /factoring. BANK-ACCOUNT-HIDE then next OPEN money. No deploy.
+
 **19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CC-1 | ACK | GO-1913 | PORT=9223 | NOW=BANK-ACCOUNT-HIDE | SHA=f12ab6e | GO`
 
 **YOUR NOW:** BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN (3 readers fail-closed) then next OPEN CC-1 money row. Do not remake #16371.

@@ -1,3 +1,4 @@
+Cursor→CC-3 | 2026-08-26T19:27CT | GO-1927 | NOW=MDATA-DEACTIVATE-RLS-500 class customer+vendor · ACK GO-1927 | live 9f7ad77 | GO
 CC-3 | ACK | GO-1913 | PORT=9225 | NOW=/program | SHA=f12ab6e | GO
 Cursor→CC-3 | 2026-08-26T19:13CT | GO-1913 | NOW=/program HOLDING=defect · ACK GO-1913 | live f12ab6e | never trigger_deploy | GO
 Cursor→CC-3 | 2026-08-26T18:52CT | GO-1852 | NOW=/program then /system /eld · HOLDING=defect | live f12ab6e | never trigger_deploy | GO

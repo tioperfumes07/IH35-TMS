@@ -1,3 +1,7 @@
+**19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=9f7ad77 | GO`
+
+**YOUR NOW:** START-1 only. /dispatch + /driver-hub on 9f7ad77. NOT /vendors. Customer 500 = CC-3. Book Load incomplete 400 = not a FINDING.
+
 **19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=f12ab6e | GO`
 
 **YOUR NOW:** Live-walk /dispatch then /driver-hub on live SHA. FINDING to board. No idle. No U14 restamp.

@@ -1,3 +1,7 @@
+**19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `Devin | ACK | GO-1927 | NOW=/vendors | SHA=9f7ad77 | GO`
+
+**YOUR NOW:** /vendors ONLY. STOP /dispatch (Cascade). Findings on board. TEST 0e5de0a2 void at launch. One Devin. No deploy.
+
 **19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `Devin | ACK | GO-1913 | NOW=/vendors | SHA=f12ab6e | GO`
 
 **YOUR NOW:** CREATE TEST on /vendors then /dispatch. One Devin. ACK this GO. No deploy.

@@ -625,7 +625,12 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.incident.updated",
-        { incident_id: row.id, incident_type: row.incident_type, changed_fields: Object.keys(body.data) },
+        {
+          incident_id: row.id,
+          incident_type: row.incident_type,
+          operating_company_id: query.data.operating_company_id,
+          changed_fields: Object.keys(body.data),
+        },
         "info",
         "SAF-F20-INCIDENT-LIFECYCLE"
       );
@@ -692,6 +697,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         {
           incident_id: updatedRow.id,
           incident_type: updatedRow.incident_type,
+          operating_company_id: query.data.operating_company_id,
           previous_status: row.status,
           new_status: body.data.status,
           reason: body.data.reason,
@@ -750,7 +756,12 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.incident.voided",
-        { incident_id: row.id, incident_type: row.incident_type, void_reason: body.data.void_reason },
+        {
+          incident_id: row.id,
+          incident_type: row.incident_type,
+          operating_company_id: query.data.operating_company_id,
+          void_reason: body.data.void_reason,
+        },
         "warning",
         "SAF-F20-INCIDENT-VOID"
       );

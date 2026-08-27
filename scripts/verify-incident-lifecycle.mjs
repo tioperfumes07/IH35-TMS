@@ -57,6 +57,13 @@ export function assertIncidentLifecycle(sources) {
   if (!/(?<!void_)reason: z\.string\(\)\.trim\(\)\.min\(3\)/.test(src[ROUTES])) {
     problems.push(`${ROUTES}: the status change is not reason-required — a closed incident with no recorded reason cannot answer "why?" to an insurer or auditor.`);
   }
+  for (const event of ["safety.incident.updated", "safety.incident.status_changed", "safety.incident.voided"]) {
+    const start = src[ROUTES].indexOf(`"${event}"`);
+    const audit = start < 0 ? "" : src[ROUTES].slice(start, start + 650);
+    if (!/operating_company_id:\s*query\.data\.operating_company_id/.test(audit)) {
+      problems.push(`${ROUTES}: ${event} audit must carry the canonical submitted company.`);
+    }
+  }
 
   for (const fn of ["updateSafetyIncident", "setSafetyIncidentStatus"]) {
     if (!src[API].includes(`export function ${fn}`)) {
@@ -136,6 +143,16 @@ if (SELFTEST) {
       ),
     },
     "not reason-required");
+  for (const event of ["safety.incident.updated", "safety.incident.status_changed", "safety.incident.voided"]) {
+    const eventIndex = live[ROUTES].indexOf(`"${event}"`);
+    const companyToken = "operating_company_id: query.data.operating_company_id";
+    const companyIndex = live[ROUTES].indexOf(companyToken, eventIndex);
+    const mutatedRoute =
+      live[ROUTES].slice(0, companyIndex) +
+      "operating_company_id: missingCompany" +
+      live[ROUTES].slice(companyIndex + companyToken.length);
+    expectCaught(`${event}-company-dropped`, { ...live, [ROUTES]: mutatedRoute }, `${event} audit must carry`);
+  }
   expectCaught("fields-locked-again",
     { ...live, [SURFACE]: live[SURFACE].replace("const formEditable = createMode || editMode;", "const formEditable = createMode;") },
     "not gated on an editable flag");
@@ -169,7 +186,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 17 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 20 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
