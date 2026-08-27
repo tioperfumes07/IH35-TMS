@@ -15,6 +15,11 @@ const listQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+const detailQuerySchema = companyQuerySchema.extend({
+  history_limit: z.coerce.number().int().min(1).max(200).default(50),
+  history_offset: z.coerce.number().int().min(0).default(0),
+});
+
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const triageBodySchema = z.object({
@@ -128,7 +133,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = detailQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
@@ -171,6 +176,13 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
       const defect = defectRes.rows[0];
       if (!defect) return null;
 
+      const historyCountRes = await client.query(
+        `SELECT count(*)::int AS total_count
+           FROM audit.audit_events
+          WHERE payload->>'resource_id' = $1
+            AND event_class LIKE $2`,
+        [params.data.id, `${TRIAGE_EVENT_PREFIX}%`]
+      );
       const historyRes = await client.query(
         `
           SELECT event_class, created_at, payload
@@ -178,14 +190,15 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           WHERE payload->>'resource_id' = $1
             AND event_class LIKE $2
           ORDER BY created_at DESC
-          LIMIT 50
+          LIMIT $3::int OFFSET $4::int
         `,
-        [params.data.id, `${TRIAGE_EVENT_PREFIX}%`]
+        [params.data.id, `${TRIAGE_EVENT_PREFIX}%`, query.data.history_limit, query.data.history_offset]
       );
 
       return {
         defect: { ...defect, triage_status: triageStatusFromRow(defect) },
         triage_history: historyRes.rows,
+        triage_history_total: Number(historyCountRes.rows[0]?.total_count ?? 0),
       };
     });
 
