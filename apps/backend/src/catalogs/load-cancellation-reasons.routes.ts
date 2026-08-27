@@ -25,7 +25,9 @@ const listQuerySchema = z.object({
   include_inactive: z.enum(["true", "false"]).optional(),
 });
 
-const createReasonBodySchema = z.object({
+// Exported for the LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400 regression test — a
+// pure schema, no I/O.
+export const createReasonBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   reason_code: z
     .string()
@@ -36,7 +38,12 @@ const createReasonBodySchema = z.object({
   display_name: z.string().trim().min(1).max(160),
   category: cancellationCategorySchema,
   sort_order: z.number().int().min(0).max(10000).default(100),
-  description: z.string().trim().max(1000).optional(),
+  // LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400: matches updateReasonBodySchema's
+  // description field below — the frontend's blank-description form value is `null` (a deliberate,
+  // common client idiom for "no value"), not `undefined`; a bare `.optional()` here rejects that
+  // exact shape ("expected string, received null"), 400-ing every create where Description is left
+  // blank (the common case for this optional field).
+  description: z.string().trim().max(1000).nullable().optional(),
 });
 
 const updateReasonBodySchema = z

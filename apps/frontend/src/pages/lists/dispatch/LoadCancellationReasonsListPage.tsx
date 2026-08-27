@@ -43,11 +43,23 @@ function statusPill(isActive: boolean) {
     : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
 }
 
-function parseConflict(error: unknown): string | null {
+// Exported for the LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400 regression test.
+export function parseConflict(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
   if (error.status === 409) return "A reason with this code already exists for this company.";
   const data = error.data as { details?: { fieldErrors?: Record<string, string[]> } } | undefined;
-  return data?.details?.fieldErrors?.reason_code?.[0] ?? null;
+  const fieldErrors = data?.details?.fieldErrors;
+  if (!fieldErrors) return null;
+  // LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400: this used to read ONLY
+  // fieldErrors.reason_code — a validation error on any OTHER field (display_name, category,
+  // sort_order, description) silently returned null here, so setConflictError(null) left the modal
+  // showing nothing at all on a real 400 (live-reproduced: a blank Description 400'd with
+  // fieldErrors.description, and the Create Entry modal just sat there with no visible error).
+  // Surface the first field error from ANY field so a real validation failure is never silent.
+  for (const messages of Object.values(fieldErrors)) {
+    if (messages?.[0]) return messages[0];
+  }
+  return null;
 }
 
 type FormState = {
