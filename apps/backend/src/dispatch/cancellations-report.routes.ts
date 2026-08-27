@@ -66,7 +66,14 @@ export async function registerCancellationsReportRoutes(app: FastifyInstance) {
             lc.billable_to_customer,
             to_char(lc.cancelled_at AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') AS cancelled_on,
             l.customer_id,
-            c.customer_name,
+            -- CANCELLATIONS-REPORT-CUSTOMER-LABEL-LOST-FOR-DEACTIVATED-CUSTOMERS: mdata.customers'
+            -- own FORCE RLS policy excludes deactivated-but-not-deleted rows for a non-bypass
+            -- reader, so a plain join produces a NULL-extended row (never "Unknown customer" by
+            -- data, just by RLS visibility) for any cancellation whose customer was later
+            -- deactivated -- confirmed live (TEST-Customer-One-20260806, deactivated_at set).
+            -- Same fix family as AUDIT-TRAIL-SUBJECT-LABEL-LOST-FOR-DEACTIVATED-ENTITIES: fall back
+            -- to the canonical same-company resolver instead of widening RLS or the join.
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, lc.operating_company_id)) AS customer_name,
             l.assigned_primary_driver_id AS driver_id,
             NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
           FROM dispatch.load_cancellations lc
