@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../ListErrorState";
 import {
@@ -19,6 +20,7 @@ import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReve
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
 import { listHosViolations } from "../../api/safetyV64";
 import { DriverIncidentsReverseSection } from "./DriverIncidentsReverseSection";
+import { Button } from "../Button";
 
 /**
  * SAF-F16 — the REVERSE half of the driver↔safety link.
@@ -122,6 +124,9 @@ export function DriverSafetyReverseSection({
   const canViewComplaints = role === "Owner" || role === "Administrator" || role === "Safety";
 
   const enabled = canViewSafety && Boolean(operatingCompanyId) && Boolean(driverId);
+  const inspectionPageSize = 25;
+  const [inspectionPage, setInspectionPage] = useState(1);
+  useEffect(() => setInspectionPage(1), [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
     queryKey: ["safety", "reverse", "civil-fines", operatingCompanyId, driverId],
@@ -148,8 +153,12 @@ export function DriverSafetyReverseSection({
   });
 
   const dotInspectionsQuery = useQuery({
-    queryKey: ["safety", "reverse", "dot-inspections", operatingCompanyId, driverId],
-    queryFn: () => getDotInspections(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["safety", "reverse", "dot-inspections", operatingCompanyId, driverId, inspectionPage],
+    queryFn: () => getDotInspections(operatingCompanyId, {
+      driver_id: driverId,
+      limit: inspectionPageSize,
+      offset: (inspectionPage - 1) * inspectionPageSize,
+    }),
     enabled,
   });
 
@@ -178,6 +187,8 @@ export function DriverSafetyReverseSection({
   const complaints: Row[] = complaintsQuery.isError ? [] : complaintsQuery.data?.complaints ?? [];
   const tests: Row[] = testsQuery.isError ? [] : testsQuery.data?.tests ?? [];
   const dotInspections: Row[] = dotInspectionsQuery.isError ? [] : dotInspectionsQuery.data?.dot_inspections ?? [];
+  const dotInspectionTotal = dotInspectionsQuery.isError ? 0 : dotInspectionsQuery.data?.total_count ?? 0;
+  const dotInspectionPageCount = Math.max(1, Math.ceil(dotInspectionTotal / inspectionPageSize));
   const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
   const trainingRecords: Row[] = trainingQuery.isError ? [] : trainingQuery.data?.training_completions ?? [];
   const hosViolations: Row[] = hosViolationsQuery.isError ? [] : hosViolationsQuery.data?.hos_violations ?? [];
@@ -297,7 +308,7 @@ export function DriverSafetyReverseSection({
         errorText="Failed to load this driver's DOT inspections."
         onRetry={() => void dotInspectionsQuery.refetch()}
         emptyText="No DOT inspections for this driver."
-        count={dotInspections.length}
+        count={dotInspectionTotal}
       >
         {dotInspections.map((inspection) => (
           <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -315,6 +326,13 @@ export function DriverSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!dotInspectionsQuery.isError && dotInspectionTotal > inspectionPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-dot-inspections-pager">
+          <Button size="sm" variant="secondary" disabled={inspectionPage <= 1 || dotInspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.max(1, current - 1))}>Previous inspections</Button>
+          <span className="text-slate-600">Page {inspectionPage} of {dotInspectionPageCount} · {dotInspectionTotal} inspections</span>
+          <Button size="sm" variant="secondary" disabled={inspectionPage >= dotInspectionPageCount || dotInspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.min(dotInspectionPageCount, current + 1))}>Next inspections</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="External Fines"
