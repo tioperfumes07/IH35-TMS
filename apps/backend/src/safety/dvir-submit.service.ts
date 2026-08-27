@@ -287,6 +287,7 @@ export async function submitDriverDvir(
         resource_type: "mdata.units",
         resource_id: unit.id,
         dvir_submission_id: submissionId,
+        operating_company_id: load.operating_company_id,
       },
       "warning",
       "WF-050"
@@ -300,6 +301,7 @@ export async function submitDriverDvir(
     {
       resource_type: "safety.dvir_submissions",
       resource_id: submissionId,
+      operating_company_id: load.operating_company_id,
       has_major_defect: hasMajor,
       follow_up_wo_id: followUpWoId,
     },
