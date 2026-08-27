@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   listDispatchAssignmentHistory,
   type DispatchAssignmentHistoryRow,
@@ -124,12 +124,19 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
  * Assignment events alone are not load history.
  */
 export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
+  const assignedPageSize = 50;
+  const [assignedPage, setAssignedPage] = useState(1);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  useEffect(() => setAssignedPage(1), [driverId, operatingCompanyId]);
+
   const assignedQ = useQuery({
-    queryKey: ["driver-assigned-loads", driverId, operatingCompanyId],
-    queryFn: () => listDriverAssignedLoads(driverId, operatingCompanyId, { limit: 50 }),
+    queryKey: ["driver-assigned-loads", driverId, operatingCompanyId, assignedPage],
+    queryFn: () => listDriverAssignedLoads(driverId, operatingCompanyId, {
+      limit: assignedPageSize,
+      offset: (assignedPage - 1) * assignedPageSize,
+    }),
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
 
@@ -145,6 +152,8 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   });
 
   const assignedRows = assignedQ.isError ? [] : assignedQ.data?.loads ?? [];
+  const assignedTotal = assignedQ.isError ? 0 : assignedQ.data?.total_count ?? 0;
+  const assignedPageCount = Math.max(1, Math.ceil(assignedTotal / assignedPageSize));
   const historyRows = historyQ.isError ? [] : historyQ.data?.rows ?? [];
 
   return (
@@ -171,8 +180,32 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             storageKey="driver-assigned-loads"
             tableTestId="driver-assigned-loads-table"
             rowTestId={(row) => `driver-assigned-load-row-${row.id}`}
+            pageSize={assignedPageSize}
+            pageSizeOptions={[assignedPageSize]}
+            hidePager
           />
         )}
+        {!assignedQ.isError && assignedTotal > assignedPageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-assigned-loads-server-pager">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={assignedPage <= 1 || assignedQ.isFetching}
+              onClick={() => setAssignedPage((page) => Math.max(1, page - 1))}
+            >
+              Previous
+            </Button>
+            <span className="text-gray-600">Page {assignedPage} of {assignedPageCount} · {assignedTotal} loads</span>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={assignedPage >= assignedPageCount || assignedQ.isFetching}
+              onClick={() => setAssignedPage((page) => Math.min(assignedPageCount, page + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        ) : null}
       </section>
 
       <section className="space-y-3" data-testid="driver-assignment-change-log">
