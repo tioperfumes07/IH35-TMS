@@ -201,9 +201,14 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const sendRecommendationMutation = useMutation({
     mutationFn: (input: { routeId: string; companyId: string; generation: number }) =>
       sendFuelRecommendationToDriver(input.routeId, input.companyId),
-    onSuccess: (_result, input) => {
+    onSuccess: (result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
-      pushToast("Recommendation queued for delivery", "success");
+      pushToast(
+        result.delivery_status === "already_queued"
+          ? "Recommendation is already queued"
+          : "Recommendation queued for delivery",
+        "success"
+      );
       void queryClient.invalidateQueries({
         queryKey: ["fuel", "planner", "active-routes", input.companyId],
         exact: true,

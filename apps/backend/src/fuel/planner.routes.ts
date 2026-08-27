@@ -245,7 +245,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       const recommendation = recRes.rows[0] ?? null;
       if (!recommendation) return null;
 
-      await enqueueOutboxEvent(
+      const enqueueResult = await enqueueOutboxEvent(
         client,
         "fuel.recommendation_sent_to_driver",
         { aggregate_type: "fuel.route_recommendations", aggregate_id: params.data.id },
@@ -254,29 +254,32 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           operating_company_id: companyId,
           driver_id: recommendation.driver_id,
           load_id: recommendation.load_id,
-        }
+        },
+        `fuel:recommendation:${companyId}:${params.data.id}:driver-notice`
       );
 
-      await appendCrudAudit(
-        client,
-        authUser.uuid,
-        "fuel.recommendation_sent_to_driver",
-        {
-          resource_type: "fuel.route_recommendations",
-          resource_id: params.data.id,
-          entity_type: "fuel_recommendation",
-          entity_id: params.data.id,
-          operating_company_id: companyId,
-        },
-        "info",
-        "BT-3-FUEL-PLANNER-REBUILD"
-      );
+      if (enqueueResult.enqueued) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "fuel.recommendation_sent_to_driver",
+          {
+            resource_type: "fuel.route_recommendations",
+            resource_id: params.data.id,
+            entity_type: "fuel_recommendation",
+            entity_id: params.data.id,
+            operating_company_id: companyId,
+          },
+          "info",
+          "BT-3-FUEL-PLANNER-REBUILD"
+        );
+      }
 
       return {
         ok: true,
         recommendation_id: params.data.id,
-        delivery_status: "queued" as const,
-        queued_at: new Date().toISOString(),
+        delivery_status: enqueueResult.enqueued ? ("queued" as const) : ("already_queued" as const),
+        queued_at: enqueueResult.enqueued ? new Date().toISOString() : null,
       };
     });
 
