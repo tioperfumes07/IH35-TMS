@@ -1,3 +1,5 @@
+**11:51 CT GO-1151.** Re-prove `/vendors` on `858d689` (15857b1 walk is stale). ACK `Devin | ACK | GO-1151 | NOW=/vendors | SHA=858d689 | GO`.
+
 **11:27 CT GO-1127 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md`. Re-prove /vendors on `4e7c9a7` then `858d689`. GO-0808 `15857b1` is stale. ACK: `Devin | ACK | GO-1127 | NOW=/vendors | SHA=<healthz> | GO`.
 
 **11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Exclusive /vendors unique FINDING. Do not remake HEADER-CREATE. ACK: `Devin | ACK | GO-1104 | NOW=/vendors | SHA=8e4380a | GO`.

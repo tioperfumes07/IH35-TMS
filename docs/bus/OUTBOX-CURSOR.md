@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1151 | PORT=9222 | NOW=lead | SHA=858d689 | THREE-METERS | GO
 Cursor | ACK | GO-1127 | PORT=9222 | NOW=lead | SHA=4e7c9a7 | DEPLOY=dep-da86c1qfngtc73bhnmmg IN FLIGHT tip=858d689 | idle=defect | GO
 Cursor | ACK | GO-1104 | PORT=9222 | NOW=lead | SHA=8e4380a | DEPLOY=dep-da860rqfngtc73bgpm4g LIVE | idle=defect | GO
 Cursor | ACK | GO-0808 | PORT=9222 | NOW=lead+wait-times+driver-label | SHA=0340406 | Fully-Wired 1-12 IS the law | GO
