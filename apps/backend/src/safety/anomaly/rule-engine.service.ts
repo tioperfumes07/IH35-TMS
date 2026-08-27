@@ -8,10 +8,37 @@ export async function evaluateRule(client: Queryable, rule: AnomalyRule): Promis
   const findings = await detector(client, rule.operating_company_id, rule.threshold_config ?? {});
   let inserted = 0;
   for (const finding of findings) {
+    const fingerprint = JSON.stringify([
+      rule.operating_company_id,
+      rule.uuid,
+      finding.subject_kind,
+      finding.subject_uuid,
+      finding.evidence,
+    ]);
+    // SAFETY-F6899 — evaluation can be invoked concurrently and runs repeatedly by design. Serialize
+    // the canonical finding identity inside the surrounding withCurrentUser transaction, then insert
+    // only when the same unresolved finding is not already open. This prevents both duplicate alerts
+    // and duplicate high/critical notifications while still allowing a genuinely resolved condition
+    // to alert again if it later recurs.
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`,
+      [fingerprint],
+    );
     const res = await client.query<{ uuid: string }>(
       `INSERT INTO safety.anomaly_alerts (
         operating_company_id, rule_uuid, severity, subject_kind, subject_uuid, evidence
-      ) VALUES ($1,$2,$3,$4,$5::uuid,$6::jsonb)
+      )
+      SELECT $1::uuid,$2::uuid,$3,$4,$5::uuid,$6::jsonb
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM safety.anomaly_alerts existing
+        WHERE existing.operating_company_id = $1::uuid
+          AND existing.rule_uuid = $2::uuid
+          AND existing.subject_kind IS NOT DISTINCT FROM $4
+          AND existing.subject_uuid IS NOT DISTINCT FROM $5::uuid
+          AND existing.evidence = $6::jsonb
+          AND existing.resolution_status IN ('open', 'investigating')
+      )
       RETURNING uuid::text`,
       [rule.operating_company_id, rule.uuid, rule.severity, finding.subject_kind,
        finding.subject_uuid, JSON.stringify(finding.evidence)]

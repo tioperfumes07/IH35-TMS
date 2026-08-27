@@ -10,9 +10,15 @@ describe("anomaly detectors", () => {
   });
 
   it("duplicate_load_number returns findings from query", async () => {
-    const client = { query: async () => ({ rows: [{ load_number: "L-1", cnt: "2", load_ids: ["a","b"] }] }) };
+    let sql = "";
+    const client = { query: async (nextSql: string) => {
+      sql = nextSql;
+      return { rows: [{ load_number: "L-1", cnt: "2", load_ids: ["a","b"] }] };
+    } };
     const findings = await getDetector("duplicate_load_number")!(client, "oci", {});
     expect(findings).toHaveLength(1);
     expect(findings[0].evidence.load_number).toBe("L-1");
+    expect(sql).not.toMatch(/LIMIT\s+50/i);
+    expect(sql).toMatch(/ORDER BY load_number/i);
   });
 });
