@@ -57,6 +57,7 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
       const driver = await client.query(
         `SELECT id FROM mdata.drivers d
          WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
            AND (d.operating_company_id = $2::uuid OR EXISTS (
              SELECT 1 FROM mdata.driver_company_authorizations training_create_driver_dca
              WHERE training_create_driver_dca.driver_id = d.id
@@ -68,7 +69,7 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;
-      const res = await client.query(
+      const res = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.training_records (
             operating_company_id,
@@ -90,20 +91,22 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
           body.data.notes ?? null,
         ]
       );
+      const trainingRecord = res.rows[0];
+      if (!trainingRecord?.id) throw new Error("safety_training_record_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.training_record.logged",
         {
           resource_type: "safety.training_records",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: trainingRecord.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAFETY-DRIVER-PROFILES"
       );
-      return res.rows[0];
+      return trainingRecord;
     });
 
     if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
@@ -124,14 +127,15 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
         `SELECT requested.driver_id
            FROM unnest($1::uuid[]) requested(driver_id)
            JOIN mdata.drivers d ON d.id = requested.driver_id
-          WHERE d.operating_company_id = $2::uuid
+          WHERE d.archived_at IS NULL
+            AND (d.operating_company_id = $2::uuid
              OR EXISTS (
                SELECT 1 FROM mdata.driver_company_authorizations training_batch_dca
                 WHERE training_batch_dca.driver_id = d.id
                   AND training_batch_dca.company_id = $2::uuid
                   AND training_batch_dca.is_authorized = true
                   AND training_batch_dca.deactivated_at IS NULL
-             )`,
+             ))`,
         [body.data.driver_ids, company.data.operating_company_id]
       );
       if (eligible.rows.length !== body.data.driver_ids.length) return null;
@@ -152,6 +156,12 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
           body.data.driver_ids,
         ]
       );
+      if (
+        inserted.rows.length !== body.data.driver_ids.length ||
+        inserted.rows.some((row) => !row.id || !row.driver_id)
+      ) {
+        throw new Error("safety_training_record_batch_insert_failed");
+      }
       for (const row of inserted.rows) {
         await appendCrudAudit(
           client,
@@ -159,9 +169,9 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
           "safety.training_record.logged",
           {
             resource_type: "safety.training_records",
-            resource_id: (row as { id?: string }).id ?? null,
+            resource_id: row.id,
             operating_company_id: company.data.operating_company_id,
-            driver_id: (row as { driver_id?: string }).driver_id ?? null,
+            driver_id: row.driver_id,
           },
           "info",
           "P7-SAFETY-DRIVER-PROFILES"
