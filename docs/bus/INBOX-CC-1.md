@@ -1,3 +1,5 @@
+**08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX CC-1. Cursor shipping wait-times+driver resolver — grep before remake. NOW=commodity CREATE class then Codex money. ACK: `CC-1 | ACK | GO-0808 | PORT=9223 | NOW=commodity-create-class | SHA=<healthz> | GO`.
+
 **07:58 CT GO-0758 — FULLY-WIRED VERTICAL.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX CC-1. NOW=wait-times wrap then driver resolver then commodity class. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0758 | PORT=9223 | NOW=wait-times-wrap | SHA=0340406 | GO`.
 
 **07:45 CT GO-0745 — COMPLETE. NEVER PATCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md`. NOW=wait-times lucia/DEFINER wrap (INSERT still on main) then `resolve_driver_label_same_company` then commodity CREATE. Board FIXED ≠ code FIXED. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0745 | PORT=9223 | NOW=wait-times-wrap | SHA=0340406 | GO`.

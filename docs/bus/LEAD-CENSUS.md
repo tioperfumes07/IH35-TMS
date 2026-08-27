@@ -1,3 +1,11 @@
+# LEAD CENSUS — GO-0808
+
+**LIVE:** `0340406` · `LEAD-SEAT=CURSOR` · Ping ≠ ACK
+
+Fully-Wired 1–12 is the law. Cursor this hop: wait-times lucia + driver historical labels. Seats must ACK GO-0808 and finish remaining OPEN (commodity, deduction-trail, Codex unique, money F6797/F6803A/F6843A).
+
+Idle=defect.
+
 # LEAD CENSUS — GO-0758
 
 **LIVE:** `0340406` · `LEAD-SEAT=CURSOR` · Ping ≠ ACK
