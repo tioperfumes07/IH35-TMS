@@ -1255,3 +1255,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6725 mounted v5 audit compan
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6734 | Photo Comparison post-trip mutation now carries authenticated company route→service→SQL | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6735 | Photo Comparison analyzed-result write now binds the authenticated company | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6736 | Photo upload/session create validate company-owned driver+unit+load+evidence links | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=SAFETY-F6737 | Post-trip session update atomically validates every evidence UUID in the same company | NEXT=guard+tests+FAST-MERGE | GO
