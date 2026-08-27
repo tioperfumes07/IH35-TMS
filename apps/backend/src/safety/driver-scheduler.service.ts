@@ -768,11 +768,14 @@ export async function reviewLeaveRequest(
           review_action = 'deny',
           denial_reason = $4
         WHERE operating_company_id = $1::uuid AND id = $2
+          AND status = 'pending_review'
+          AND voided_at IS NULL
         RETURNING *
       `,
       [args.operatingCompanyId, args.requestId, args.actorUserId, input.denied_reason ?? null]
     );
     const row = res.rows[0];
+    if (!row) return { error: "leave_request_not_pending" as const };
     await appendLeaveAudit(client, {
       operatingCompanyId: args.operatingCompanyId,
       leaveRequestId: args.requestId,
@@ -799,11 +802,14 @@ export async function reviewLeaveRequest(
           review_action = 'defer',
           modification_reason = $4
         WHERE operating_company_id = $1::uuid AND id = $2
+          AND status = 'pending_review'
+          AND voided_at IS NULL
         RETURNING *
       `,
       [args.operatingCompanyId, args.requestId, args.actorUserId, input.modification_reason ?? null]
     );
     const row = res.rows[0];
+    if (!row) return { error: "leave_request_not_pending" as const };
     await appendLeaveAudit(client, {
       operatingCompanyId: args.operatingCompanyId,
       leaveRequestId: args.requestId,
@@ -871,6 +877,8 @@ export async function reviewLeaveRequest(
         review_action = $6::text,
         modification_reason = $7
       WHERE operating_company_id = $1::uuid AND id = $2
+        AND status = 'pending_review'
+        AND voided_at IS NULL
       RETURNING *
     `,
     [
@@ -884,6 +892,7 @@ export async function reviewLeaveRequest(
     ]
   );
   const updated = upd.rows[0];
+  if (!updated) return { error: "leave_request_not_pending" as const };
 
   for (const d of dayList) {
     await client.query(
