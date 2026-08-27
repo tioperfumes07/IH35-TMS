@@ -888,7 +888,15 @@ export const detailTypesCatalogConfig: GenericCatalogConfig = {
  * writes return 405 (integrity). `description` serves as the display name via the alias.
  */
 export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "audit.audit_event_types",
+  // CATALOG-AUDIT-EVENT-TYPES-GET-500: `catalogName` was "audit.audit_event_types" (wrong schema —
+  // the real table is catalogs.audit_event_types; `tableName` below already correctly reads
+  // `audit_event_types` under the factory's hardcoded `catalogs.` prefix, so this string was cosmetic
+  // drift, not the live bug). The real live 500 (`column t.id does not exist`, 42703) was the list
+  // SELECT unconditionally hardcoding `t.id` — this table has no `id` column at all (code/description/
+  // severity_default/created_at only). `idColumn: "code"` tells the factory to select+alias the real
+  // natural key instead, mirroring the existing `hasUpdatedAt: false` fix for the same table's missing
+  // `updated_at`.
+  catalogName: "catalogs.audit_event_types",
   tableName: "audit_event_types",
   routePrefix: "/api/v1/catalogs/accounting",
   urlSegment: "audit-event-types",
@@ -896,6 +904,7 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   displayNameColumn: "description",
   readOnly: true,
   hasUpdatedAt: false,
+  idColumn: "code",
   // Physical columns: code, description, severity_default, created_at — NO is_active / updated_at.
   // softDeleteColumn was wrongly set to "code" → list WHERE t.code = true → Postgres 42883 text=boolean.
   softDeleteColumn: null,
