@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16590 @ b87a6b0abb INS-F6843 | WORKING INS-F6844 policy update pending conflict lock | guard=5/5 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16589 @ 501567523f INS-F6842 | WORKING INS-F6843 type-catalog pending draft lock | HANDOFF=CC-1 INS-MONEY-F6843A policy+bills lifecycle | guard=5/5 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16588 @ bdc550e6b7 INS-F6841 | WORKING INS-F6842 COI Update immutable record+company+customer lifecycle | guard=11/11 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING INS-F6841 COI Create immutable company+customer scope and pending lifecycle | guard=12/12 | NEXT=FAST-MERGE | GO
