@@ -126,10 +126,13 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
 export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   const assignedPageSize = 50;
   const [assignedPage, setAssignedPage] = useState(1);
+  const historyPageSize = 50;
+  const [historyPage, setHistoryPage] = useState(1);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
   useEffect(() => setAssignedPage(1), [driverId, operatingCompanyId]);
+  useEffect(() => setHistoryPage(1), [driverId, operatingCompanyId, fromDate, toDate]);
 
   const assignedQ = useQuery({
     queryKey: ["driver-assigned-loads", driverId, operatingCompanyId, assignedPage],
@@ -141,12 +144,14 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   });
 
   const historyQ = useQuery({
-    queryKey: ["driver-load-history", driverId, operatingCompanyId, fromDate, toDate],
+    queryKey: ["driver-load-history", driverId, operatingCompanyId, fromDate, toDate, historyPage],
     queryFn: () =>
       listDispatchAssignmentHistory(operatingCompanyId, {
         driver_id: driverId,
         from: fromDate || undefined,
         to: toDate || undefined,
+        limit: historyPageSize,
+        offset: (historyPage - 1) * historyPageSize,
       }),
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
@@ -155,6 +160,8 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   const assignedTotal = assignedQ.isError ? 0 : assignedQ.data?.total_count ?? 0;
   const assignedPageCount = Math.max(1, Math.ceil(assignedTotal / assignedPageSize));
   const historyRows = historyQ.isError ? [] : historyQ.data?.rows ?? [];
+  const historyTotal = historyQ.isError ? 0 : historyQ.data?.total_count ?? 0;
+  const historyPageCount = Math.max(1, Math.ceil(historyTotal / historyPageSize));
 
   return (
     <div className="space-y-6" data-testid="driver-load-history-tab">
@@ -232,6 +239,9 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             storageKey="driver-load-history"
             tableTestId="driver-load-history-table"
             rowTestId={(row) => `driver-load-history-row-${row.id}`}
+            pageSize={historyPageSize}
+            pageSizeOptions={[historyPageSize]}
+            hidePager
             filterBar={
               <div className="flex flex-wrap items-end gap-2">
                 <div className="text-xs text-gray-600">
@@ -266,6 +276,17 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             }
           />
         )}
+        {!historyQ.isError && historyTotal > historyPageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-load-history-server-pager">
+            <Button size="sm" variant="secondary" disabled={historyPage <= 1 || historyQ.isFetching} onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}>
+              Previous
+            </Button>
+            <span className="text-gray-600">Page {historyPage} of {historyPageCount} · {historyTotal} changes</span>
+            <Button size="sm" variant="secondary" disabled={historyPage >= historyPageCount || historyQ.isFetching} onClick={() => setHistoryPage((page) => Math.min(historyPageCount, page + 1))}>
+              Next
+            </Button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

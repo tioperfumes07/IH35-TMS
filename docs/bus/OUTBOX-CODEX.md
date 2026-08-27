@@ -1,3 +1,4 @@
+Codex | WORKING | GO-0556 | FINDING=DRIVER-ASSIGNMENT-HISTORY-SILENT-200-CAP | guard=verify-driver-assignment-history-range | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0556 | FINDING=DRIVER-LOAD-HISTORY-ASSIGNED-LOADS-SILENT-50-CAP | guard=verify-load-history-tab-uses-paritytable | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0556 | FINDING=DRIVER-OPS-HISTORY-DOUBLE-PAGER-12-LEAVES | guard=verify-ops-history-uses-paritytable | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0556 | FINDING=PARITYTABLE-MISSING-HIDEPAGER-CLASS safety.position_history | guard=verify-safety-position-history-single-pager | NEXT=FAST-MERGE | GO

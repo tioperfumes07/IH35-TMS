@@ -910,14 +910,16 @@ export type DispatchAssignmentHistoryRow = {
 
 export function listDispatchAssignmentHistory(
   operatingCompanyId: string,
-  filters?: { driver_id?: string; from?: string; to?: string; reason?: string }
+  filters?: { driver_id?: string; from?: string; to?: string; reason?: string; limit?: number; offset?: number }
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters?.driver_id) q.set("driver_id", filters.driver_id);
   if (filters?.from) q.set("from", filters.from);
   if (filters?.to) q.set("to", filters.to);
   if (filters?.reason) q.set("reason", filters.reason);
-  return apiRequest<{ rows: DispatchAssignmentHistoryRow[] }>(`/api/v1/dispatch/assignment-history?${q.toString()}`);
+  if (filters?.limit != null) q.set("limit", String(filters.limit));
+  if (filters?.offset != null) q.set("offset", String(filters.offset));
+  return apiRequest<{ rows: DispatchAssignmentHistoryRow[]; total_count: number }>(`/api/v1/dispatch/assignment-history?${q.toString()}`);
 }
 
 // DISPATCH-F6251-OWNER-OVERRIDE-LOG / OWNER-OVERRIDE-LOG — the "Owner override — driver qualification (CDL / DOT

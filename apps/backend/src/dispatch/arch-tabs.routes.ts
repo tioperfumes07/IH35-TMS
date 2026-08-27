@@ -20,6 +20,8 @@ const companyQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   reason: z.string().trim().max(120).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createIssueBodySchema = z.object({
@@ -77,6 +79,8 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
       from: query.data.from,
       to: query.data.to,
       reason: query.data.reason,
+      limit: query.data.limit,
+      offset: query.data.offset,
     });
   });
 
