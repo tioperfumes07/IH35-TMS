@@ -1393,3 +1393,4 @@ Codex | SHIPPED | DRV-F6858 | PR=#16626 @ 412ab47f27 | guard=selftest-4/4 | NEXT
 Codex | ACK | GO-0556 | PORT=9226 | WORKING DRV-F6859 three required guard false reds | SHA=78240b9 | GO
 Codex | WORKING | GO-0556 | FINDING=SAFETY-DOT-INSPECTIONS-SILENT-500-CAP | guard=verify-safety-dot-inspections-range | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0556 | FINDING=SAFETY-DRUG-TEST-HISTORY-CLIENT-FILTERS-SILENT-500-CAP | guard=verify-safety-drug-test-history-range | NEXT=FAST-MERGE | GO
+Codex | WORKING | GO-0730 | FINDING=SAFETY-DRIVER-MEDICAL-CARD-HISTORY-SILENT-500-CAP | guard=verify-safety-medical-cards-range | NEXT=FAST-MERGE | GO

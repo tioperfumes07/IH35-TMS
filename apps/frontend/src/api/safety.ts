@@ -452,10 +452,12 @@ export type SafetyMedicalCardRow = {
   expiry_pill: "red" | "amber" | "green" | "unknown";
 };
 
-export function listSafetyMedicalCards(companyId: string, driverId?: string) {
+export function listSafetyMedicalCards(companyId: string, driverId?: string, range: { limit?: number; offset?: number } = {}) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (driverId) params.set("driver_id", driverId);
-  return apiRequest<{ cards: SafetyMedicalCardRow[] }>(`/api/v1/safety/medical-cards?${params.toString()}`);
+  if (range.limit != null) params.set("limit", String(range.limit));
+  if (range.offset != null) params.set("offset", String(range.offset));
+  return apiRequest<{ cards: SafetyMedicalCardRow[]; total_count: number }>(`/api/v1/safety/medical-cards?${params.toString()}`);
 }
 
 export function createSafetyMedicalCard(companyId: string, body: {
