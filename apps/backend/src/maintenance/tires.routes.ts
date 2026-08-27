@@ -739,7 +739,8 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
           user.uuid,
         ]
       );
-      const newId = String(insert.rows[0]?.id);
+      const newId = insert.rows[0]?.id == null ? null : String(insert.rows[0].id);
+      if (!newId) throw new Error("tire_replacement_insert_returned_no_row");
       await client.query(
         `INSERT INTO maintenance.tire_events (
           operating_company_id, tire_record_id, event_type, brand_id, brand_name, serial_number, tread_depth_32nds, notes, work_order_id, created_by_user_id
