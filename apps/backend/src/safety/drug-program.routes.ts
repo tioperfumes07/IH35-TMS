@@ -242,6 +242,10 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           `,
           [params.data.id, company.data.operating_company_id, body.data.voided_reason]
         );
+        const voided = voidRes.rows[0];
+        // The pre-read is not a mutation gate: another request can void the row before this UPDATE.
+        // Never write durable audit evidence unless this request changed the canonical row.
+        if (!voided) return null;
         await appendCrudAudit(
           client,
           user.uuid,
@@ -254,7 +258,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           "info",
           "P7-SAF-DRUG-PROGRAM"
         );
-        return voidRes.rows[0];
+        return voided;
       }
 
       const patchRes = await client.query(
@@ -283,6 +287,10 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const patched = patchRes.rows[0] as { result?: string } | undefined;
+      // Repeat the lifecycle truth check after the compare-and-swap UPDATE. A concurrent void must
+      // become an honest not-found response, not a phantom "updated" audit event.
+      if (!patched) return null;
       await appendCrudAudit(
         client,
         user.uuid,
@@ -291,12 +299,12 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           resource_type: "safety.drug_test",
           resource_id: params.data.id,
           operating_company_id: company.data.operating_company_id,
-          result: (patchRes.rows[0] as { result?: string })?.result ?? null,
+          result: patched.result ?? null,
         },
-        isBlockingDrugTestResult(String((patchRes.rows[0] as { result?: string })?.result ?? "")) ? "warning" : "info",
+        isBlockingDrugTestResult(String(patched.result ?? "")) ? "warning" : "info",
         "P7-SAF-DRUG-PROGRAM"
       );
-      return patchRes.rows[0];
+      return patched;
     });
 
     if (!updated) return reply.code(404).send({ error: "drug_test_not_found" });
