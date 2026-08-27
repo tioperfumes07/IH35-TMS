@@ -1,3 +1,5 @@
+**GO-1331** live `858d689` · deploy `dep-da885du7bikc73c0s34g` `4b859b7` IN FLIGHT · idle=defect · 16 leftover-POST table in PASTE packet
+
 # STATUS-NOW
 
 **11:27 CT:** GO-1127 · live **`4e7c9a7`** · deploy `dep-da86c1qfngtc73bhnmmg` IN FLIGHT tip `858d689` · idle=defect
