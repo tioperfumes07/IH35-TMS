@@ -744,11 +744,13 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       const threshold = Number(existing.tread_low_threshold_32nds ?? 4);
       const alert = isLowTread(body.tread_depth_32nds, threshold);
 
-      await client.query(
+      const updatedTread = await client.query(
         `UPDATE maintenance.tire_records SET tread_depth_32nds = $1, updated_at = now()
-         WHERE id = $2 AND operating_company_id = $3::uuid`,
+         WHERE id = $2 AND operating_company_id = $3::uuid AND status = 'active'
+         RETURNING id`,
         [body.tread_depth_32nds, body.tire_record_id, body.operating_company_id]
       );
+      if (updatedTread.rows.length !== 1) throw new Error("tire_tread_audit_update_failed");
       await client.query(
         `INSERT INTO maintenance.tire_events (
           operating_company_id, tire_record_id, event_type, tread_depth_32nds, notes, is_low_tread_alert, created_by_user_id

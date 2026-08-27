@@ -1262,3 +1262,4 @@ Codex | GO-2158 | WORKING | FINDING=SAFETY-F6740 | Spawned WO now fails transact
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6741 | DOT inspection→WO reverse FK now company-scoped+mandatory | HANDOFF=CC-1 SAFETY-MONEY-F6741 internal-fine liability sibling | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6742 | Tire rotation source+occupant swaps now company-scoped+mandatory | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6743 | Tire replacement requires one active company source archive before insert | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6744 | Tread event now requires one active company tire update | NEXT=guard+tests+FAST-MERGE | GO
