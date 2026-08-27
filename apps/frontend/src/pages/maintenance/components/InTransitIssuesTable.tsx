@@ -8,6 +8,10 @@ type Props = {
   /** MAINT-S14/S15 — ParityTable emptyText only when settled. */
   loading?: boolean;
   onTriage: (issue: InTransitIssue) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  fetching?: boolean;
 };
 
 // §7 severity styling — single red (severe), single amber (warning), slate (info).
@@ -32,7 +36,7 @@ function formatEta(iso?: string | null): string {
 
 // In-Transit faults are FLAT (one issue per row — no nesting), so this is a plain universal-list
 // ParityTable, not the parent+expand shape used by Arriving Soon.
-export function InTransitIssuesTable({ issues, totalCount, loading = false, onTriage }: Props) {
+export function InTransitIssuesTable({ issues, totalCount, loading = false, onTriage, page, totalPages, onPageChange, fetching = false }: Props) {
   const columns: Array<ParityColumn<InTransitIssue>> = [
     {
       key: "unit_display_id",
@@ -98,7 +102,17 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
       storageKey="maint-in-transit-issues"
       exportFilename="in-transit-issues"
       rowActions={rowActions}
+      hidePager
     />
+    {totalCount > 0 ? (
+      <div className="flex items-center justify-between gap-3 text-sm" data-testid="in-transit-issues-server-pager">
+        <span>Page {page} of {totalPages} · {totalCount} issues</span>
+        <div className="flex gap-2">
+          <button type="button" className="rounded-sm border px-2 py-1" disabled={page <= 1 || fetching} onClick={() => onPageChange(Math.max(1, page - 1))}>Previous</button>
+          <button type="button" className="rounded-sm border px-2 py-1" disabled={page >= totalPages || fetching} onClick={() => onPageChange(Math.min(totalPages, page + 1))}>Next</button>
+        </div>
+      </div>
+    ) : null}
     </div>
   );
 }

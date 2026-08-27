@@ -104,6 +104,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
+  const [triagePage, setTriagePage] = useState(1);
+  const triagePageSize = 50;
   // LV-MAINT-RM-STATUS-BOARD-SHELL / LV-MAINTENANCE-*-SHELL: derive from pathname when it
   // matches a leaf; otherwise honor MaintenanceTabRoute initialTab (never invent active_wos).
   const tab = (maintenanceTabFromPath(location.pathname) ?? initialTab) as MaintenanceTabId;
@@ -132,9 +134,19 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   });
   const triageQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage", companyId],
-    queryFn: () => getMaintenanceInTransitQueue(companyId),
+    queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: 50, offset: 0 }),
     enabled: Boolean(companyId),
   });
+  const triageTableQuery = useQuery({
+    queryKey: ["maintenance", "dashboard", "triage-table", companyId, triagePage],
+    queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: triagePageSize, offset: (triagePage - 1) * triagePageSize }),
+    enabled: Boolean(companyId) && tab === "in_transit_issues",
+  });
+  const triageTotalPages = Math.max(1, Math.ceil((triageTableQuery.data?.total_count ?? 0) / triagePageSize));
+  useEffect(() => setTriagePage(1), [companyId]);
+  useEffect(() => {
+    if (triagePage > triageTotalPages) setTriagePage(triageTotalPages);
+  }, [triagePage, triageTotalPages]);
   const severeAlertsQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "severe-alerts", companyId],
     queryFn: () => getMaintenanceSevereAlerts(companyId),
@@ -448,7 +460,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ) : null}
 
       {tab === "in_transit_issues"
-        ? triageQuery.isError
+        ? triageTableQuery.isError
           ? (
             <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <div className="font-semibold">Failed to load in-transit issues</div>
@@ -456,7 +468,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 type="button"
                 className="mt-2 rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700"
                 onClick={() => {
-                  void triageQuery.refetch();
+                  void triageTableQuery.refetch();
                   pushToast("Retrying in-transit issue load", "info");
                 }}
               >
@@ -466,13 +478,17 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             )
           : (
             <InTransitIssuesTable
-              issues={triageQuery.data?.issues ?? []}
-              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
+              issues={triageTableQuery.data?.issues ?? []}
+              totalCount={triageTableQuery.data?.total_count ?? triageTableQuery.data?.issues?.length ?? 0}
               loading={
-                triageQuery.isPending ||
-                (triageQuery.isFetching && (triageQuery.data?.issues?.length ?? 0) === 0)
+                triageTableQuery.isPending ||
+                (triageTableQuery.isFetching && (triageTableQuery.data?.issues?.length ?? 0) === 0)
               }
               onTriage={(issue) => setTriageIssue(issue)}
+              page={triagePage}
+              totalPages={triageTotalPages}
+              onPageChange={setTriagePage}
+              fetching={triageTableQuery.isFetching}
             />
             )
         : null}

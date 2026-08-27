@@ -567,9 +567,12 @@ export function markUnitBackInService(
   });
 }
 
-export function getMaintenanceInTransitQueue(companyId: string) {
-  return apiRequest<{ issues: InTransitIssue[]; total_count: number }>(
-    `/api/v1/maintenance/dashboard/intransit-triage-queue?${query(companyId)}`
+export function getMaintenanceInTransitQueue(companyId: string, range: { limit?: number; offset?: number } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  params.set("limit", String(range.limit ?? 50));
+  params.set("offset", String(range.offset ?? 0));
+  return apiRequest<{ issues: InTransitIssue[]; total_count: number; limit: number; offset: number }>(
+    `/api/v1/maintenance/dashboard/intransit-triage-queue?${params.toString()}`
   );
 }
 
