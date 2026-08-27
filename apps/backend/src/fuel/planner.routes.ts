@@ -379,15 +379,30 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const settings = await withCompanyScope(authUser.uuid, companyId, async (client) => {
       const res = await client.query(
         `
-          INSERT INTO fuel.fuel_planner_settings (operating_company_id)
-          VALUES ($1)
-          ON CONFLICT (operating_company_id) DO UPDATE
-            SET operating_company_id = EXCLUDED.operating_company_id
-          RETURNING *
+          SELECT operating_company_id,
+                 expensive_states,
+                 max_off_highway_miles,
+                 max_backwards_miles,
+                 max_miles_per_shift,
+                 overfill_threshold_pct,
+                 updated_at,
+                 updated_by_user_id
+          FROM fuel.fuel_planner_settings
+          WHERE operating_company_id = $1::uuid
+          LIMIT 1
         `,
         [companyId]
       );
-      return res.rows[0];
+      return res.rows[0] ?? {
+        operating_company_id: companyId,
+        expensive_states: ["NY", "PA", "NJ", "CA", "IL", "OR", "WA", "HI"],
+        max_off_highway_miles: 5,
+        max_backwards_miles: 5,
+        max_miles_per_shift: 720,
+        overfill_threshold_pct: 95,
+        updated_at: null,
+        updated_by_user_id: null,
+      };
     });
     return settings;
   });
