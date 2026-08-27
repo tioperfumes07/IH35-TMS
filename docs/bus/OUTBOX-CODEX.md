@@ -1257,3 +1257,4 @@ Codex | GO-2158 | WORKING | FINDING=SAFETY-F6735 | Photo Comparison analyzed-res
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6736 | Photo upload/session create validate company-owned driver+unit+load+evidence links | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6737 | Post-trip session update atomically validates every evidence UUID in the same company | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6738 | Photo staging reuse now keys company+load+driver+unit | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=SAFETY-F6739 | Incident→spawned-WO reverse mutation now binds operating company | NEXT=guard+tests+FAST-MERGE | GO
