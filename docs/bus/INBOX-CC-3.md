@@ -103,3 +103,4 @@
 3. Unit prefill is merged (#15649). Hard-reload the SPA. From that WO, **+ Create Bill** must stamp `unit_id`. Do not SQL-patch BILL-2026-00015. Do not duplicate the Cursor PR.
 
 OUTBOX: `CC-3 | ACK | WO-BILL-FK-LIVE | PORT=9225 | SHA=<healthz> | BILL=<uuid-if-created> | UNIT_ID=<uuid-or-null> | FINDING=<id-or-none> | GO`
+**CODEX HANDOFF 20:17 CT — OPEN `LISTS-F6704-CATALOG-REGISTRY-EQUIPMENT-CROSS-OPCO-STATS-PREVIEW`.** `/lists` lane only. `catalog-registry.routes.ts` resolves company but drops it from equipment stats/preview; see GUARD-WORKORDERS exact row. Dependency #16412. `BLOCKS=GO-1927-LISTS-CATALOG-REGISTRY-ENTITY-SCOPE`. Grep main, claim, root-fix + mutation guard; do not route through Jorge.
