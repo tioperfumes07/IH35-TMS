@@ -50,6 +50,11 @@ const driverDateRangeQuerySchema = z.object({
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+const driverRequestListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 const uuidParamSchema = z.object({
   id: z.string().uuid(),
 });
@@ -94,18 +99,24 @@ async function fetchDriverCompanyId(userUuid: string, driverId: string): Promise
 }
 
 export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/scheduler/my-requests", async (req, reply) => {
+  app.get(
+    "/api/v1/driver/scheduler/my-requests",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
+    const parsed = driverRequestListQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
     const d = req.driver!;
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const rows = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
-      return listMyLeaveRequests(client, oc, d.id);
+      return listMyLeaveRequests(client, oc, d.id, parsed.data.limit, parsed.data.offset);
     });
-    return { requests: rows };
-  });
+      return { requests: rows.requests, total_count: rows.totalCount };
+    },
+  );
 
   app.get("/api/v1/driver/scheduler/my-schedule", async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;

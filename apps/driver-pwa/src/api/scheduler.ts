@@ -22,8 +22,11 @@ export function getMySchedule(startDate: string, endDate: string) {
   return apiRequest<MyScheduleResponse>(`/api/v1/driver/scheduler/my-schedule?${rangeQuery(startDate, endDate)}`);
 }
 
-export function listMyLeaveRequests() {
-  return apiRequest<{ requests: DriverLeaveRequestRow[] }>("/api/v1/driver/scheduler/my-requests");
+export function listMyLeaveRequests(limit: number, offset: number) {
+  const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  return apiRequest<{ requests: DriverLeaveRequestRow[]; total_count: number }>(
+    `/api/v1/driver/scheduler/my-requests?${query.toString()}`,
+  );
 }
 
 export type MyLeaveBalance = {

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -15,13 +16,16 @@ function formatIsoDate(value: unknown, locale: string) {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { timeZone: "UTC" });
 }
 
+const PAGE_SIZE = 25;
+
 export function LeaveRequestListPage() {
   const { t, i18n } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(0);
   const listQuery = useQuery({
-    queryKey: ["driver", "scheduler", "my-requests"],
-    queryFn: listMyLeaveRequests,
+    queryKey: ["driver", "scheduler", "my-requests", page],
+    queryFn: () => listMyLeaveRequests(PAGE_SIZE, page * PAGE_SIZE),
   });
 
   const cancelMut = useMutation({
@@ -41,6 +45,13 @@ export function LeaveRequestListPage() {
   });
 
   const rows = listQuery.data?.requests ?? [];
+  const totalCount = listQuery.data?.total_count ?? 0;
+
+  useEffect(() => {
+    if (!listQuery.isFetching && page > 0 && rows.length === 0 && totalCount <= page * PAGE_SIZE) {
+      setPage(Math.max(0, Math.ceil(totalCount / PAGE_SIZE) - 1));
+    }
+  }, [listQuery.isFetching, page, rows.length, totalCount]);
 
   return (
     <div className="min-h-screen bg-pwa-bg px-3 py-3 pb-28">
@@ -94,6 +105,31 @@ export function LeaveRequestListPage() {
               })}
             </ul>
           )}
+          {!listQuery.isLoading && !listQuery.isError && totalCount > PAGE_SIZE ? (
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-pwa-border pt-3">
+              <PwaButton
+                type="button"
+                variant="ghost"
+                className="min-h-9 px-3 py-1 text-xs"
+                disabled={page === 0 || listQuery.isFetching}
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+              >
+                {t("common.previous")}
+              </PwaButton>
+              <span className="text-xs text-pwa-text-secondary">
+                {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} {t("common.of")} {totalCount}
+              </span>
+              <PwaButton
+                type="button"
+                variant="ghost"
+                className="min-h-9 px-3 py-1 text-xs"
+                disabled={(page + 1) * PAGE_SIZE >= totalCount || listQuery.isFetching}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                {t("common.next")}
+              </PwaButton>
+            </div>
+          ) : null}
         </PwaCard>
       </div>
     </div>
