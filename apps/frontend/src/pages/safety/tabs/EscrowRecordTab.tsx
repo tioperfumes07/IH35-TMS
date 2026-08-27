@@ -109,7 +109,12 @@ export function EscrowRecordTab() {
     setSelected(null);
   }, [operatingCompanyId, resetForfeitMutation]);
 
-  const rowsAll = escrowQuery.data?.records ?? [];
+  // SAFETY-MONEY-F6437-READ-RECOVERY-DEAD-ENDS: TanStack Query keeps the last successful `data`
+  // around across a failed refetch, so a rejected GET used to leave the table showing stale rows
+  // with no visible indication anything was wrong — the "Unable to load" banner rendered ABOVE the
+  // table, not instead of it. A money-bearing read (escrow balances) must never present a possibly
+  // stale table as if it were current on a known-failed fetch.
+  const rowsAll = escrowQuery.isError ? [] : (escrowQuery.data?.records ?? []);
   const effectiveDriverId = applied.driverId.trim() || escrowDriverIdParam || "";
   const rows = useMemo(() => {
     if (!effectiveDriverId) return rowsAll;
@@ -225,7 +230,17 @@ export function EscrowRecordTab() {
       </div>
 
       {escrowQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Unable to load escrow records.</div>
+        <div className="flex items-center justify-between gap-3 rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+          <span>Unable to load escrow records.</span>
+          <button
+            type="button"
+            className="shrink-0 rounded-sm border border-red-300 bg-white px-2 py-1 font-semibold text-red-700 hover:bg-red-100"
+            data-testid="escrow-records-retry"
+            onClick={() => void escrowQuery.refetch()}
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
 
       <ParityTable<EscrowRecordRow>
