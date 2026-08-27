@@ -82,8 +82,10 @@ export function getLovesSyncStatus(companyId: string) {
   return apiRequest<LovesSyncStatus>(`/api/v1/sync/loves/status?${q(companyId)}`);
 }
 
-export function getFuelActiveRoutes(companyId: string) {
-  return apiRequest<{ routes: FuelActiveRoute[] }>(`/api/v1/fuel/planner/active-routes?${q(companyId)}`);
+export function getFuelActiveRoutes(companyId: string, range: { limit: number; offset: number }) {
+  return apiRequest<{ routes: FuelActiveRoute[]; total_count: number; limit: number; offset: number }>(
+    `/api/v1/fuel/planner/active-routes?${q(companyId)}&limit=${range.limit}&offset=${range.offset}`
+  );
 }
 
 export function getFuelRecommendationDetail(id: string, companyId: string) {
