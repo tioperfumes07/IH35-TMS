@@ -653,6 +653,7 @@ export function ProgramBoardPage() {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Filter by id, description, module, where, status, PR, severity…"
+                aria-label="Filter board rows"
                 className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
               />
               <DeltasBadge deltas={deltas} open={deltasOpen} onToggle={() => setDeltasOpen((o) => !o)} />
@@ -853,6 +854,7 @@ export function ProgramBoardPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter by PR #, title, branch…"
+              aria-label="Filter merged PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
             <span className="text-[11px] tabular-nums text-slate-500">
@@ -911,6 +913,7 @@ export function ProgramBoardPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter by PR #, title, category…"
+              aria-label="Filter held PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
             <span className="text-[11px] tabular-nums text-slate-500">{holdFiltered.length} held items</span>

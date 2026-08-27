@@ -1129,6 +1129,9 @@ export function ParityTable<T>({
               className="h-6 w-12 rounded-sm border border-gray-300 px-1 text-center"
               value={pageInput}
               placeholder={String(safePage)}
+              // ARIA-COMBOBOX-NO-NAME: the "Page"/"of N" text around this input is plain sibling
+              // text, not linked via htmlFor/aria-labelledby — this backs 33+ list pages app-wide.
+              aria-label="Jump to page"
               onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ""))}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

@@ -51,6 +51,16 @@ type ComboboxProps = {
    */
   id?: string;
   className?: string;
+  /**
+   * ARIA-COMBOBOX-NO-NAME: a compact filter toolbar (no visible `<label>` beside any of its
+   * controls, e.g. Legal Matters' unit filter, Fleet HOS Board's unit filter) has no way to give
+   * this input an accessible name at all — `placeholder` is not one (same defect class as the
+   * DriversReferenceCatalogPage search-input fix: it disappears once the user types and most
+   * screen readers do not announce it as a label). Optional and additive: a call site that already
+   * wraps this in a real `<label>` (e.g. HosTrackerSection's "Driver" picker) needs neither this
+   * nor `id` — the wrapping label already provides an accessible name via implicit association.
+   */
+  ariaLabel?: string;
 };
 
 const MAX_VISIBLE_OPTIONS = 50;
@@ -138,6 +148,7 @@ export function Combobox({
   id,
   className,
   onSearch,
+  ariaLabel,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -472,6 +483,7 @@ export function Combobox({
           placeholder={placeholder}
           disabled={disabled}
           id={id}
+          aria-label={ariaLabel}
           role="combobox"
           aria-expanded={open}
           aria-controls={listboxId}

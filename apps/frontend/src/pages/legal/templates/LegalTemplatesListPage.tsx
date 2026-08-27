@@ -122,6 +122,7 @@ export function LegalTemplatesListPage() {
                 value={staged.draft.category}
                 onChange={(event) => staged.setDraft({ ...staged.draft, category: event.target.value })}
                 placeholder="Category"
+                aria-label="Filter by category"
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               />
               <SelectCombobox
