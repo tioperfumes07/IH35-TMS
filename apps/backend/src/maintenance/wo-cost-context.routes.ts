@@ -40,8 +40,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
             AND deactivated_at IS NULL
             AND is_postable = true
             AND account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
-          ORDER BY account_name ASC
-          LIMIT 500
+          ORDER BY account_name ASC, id ASC
         `,
         [oc]
       );
@@ -59,8 +58,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
               lower(trim(coalesce(item_type, ''))) IN ('inventory', 'service')
               OR lower(replace(trim(coalesce(item_type, '')), ' ', '')) = 'noninventory'
             )
-          ORDER BY name ASC
-          LIMIT 500
+          ORDER BY name ASC, id ASC
         `,
         [oc]
       );
@@ -74,7 +72,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
       const invParts = await client.query(`SELECT to_regclass('inventory.parts') IS NOT NULL AS ok`);
       if (invParts.rows[0]?.ok) {
         const pr = await client.query(
-          `SELECT * FROM inventory.parts WHERE operating_company_id = $1::uuid ORDER BY updated_at DESC NULLS LAST LIMIT 500`,
+          `SELECT * FROM inventory.parts WHERE operating_company_id = $1::uuid ORDER BY updated_at DESC NULLS LAST, id ASC`,
           [oc]
         );
         parts = pr.rows;
@@ -88,8 +86,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
               SELECT id, part_description, on_hand_qty, location, last_purchase_amount, operating_company_id, updated_at
               FROM maintenance.parts_inventory
               WHERE operating_company_id = $1::uuid
-              ORDER BY updated_at DESC
-              LIMIT 500
+              ORDER BY updated_at DESC, id ASC
             `,
             [oc]
           );
@@ -109,7 +106,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
       const mlr = await client.query(`SELECT to_regclass('maintenance.labor_rates') IS NOT NULL AS ok`);
       if (mlr.rows[0]?.ok) {
         const lr = await client.query(
-          `SELECT * FROM maintenance.labor_rates WHERE operating_company_id = $1::uuid ORDER BY rate_name ASC NULLS LAST LIMIT 200`,
+          `SELECT * FROM maintenance.labor_rates WHERE operating_company_id = $1::uuid ORDER BY rate_name ASC NULLS LAST, id ASC`,
           [oc]
         );
         labor_rates = lr.rows;
@@ -123,8 +120,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
               SELECT id, rate_code, rate_name, rate_per_hour, is_internal, is_active, operating_company_id
               FROM catalogs.labor_rates
               WHERE operating_company_id = $1::uuid AND is_active = true
-              ORDER BY rate_name ASC
-              LIMIT 200
+              ORDER BY rate_name ASC, id ASC
             `,
             [oc]
           );
