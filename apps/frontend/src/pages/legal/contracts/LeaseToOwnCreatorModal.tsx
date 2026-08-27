@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { getCustomerDetail } from "../../../api/mdata";
@@ -222,7 +223,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
       await onSaved(created.id);
       onClose();
     },
-    onError: (e) => pushToast(`Save failed: ${String((e as Error)?.message ?? e)}`, "error"),
+    onError: (e) => pushToast(userFacingApiError(e, "Save failed"), "error"),
   });
 
   function toggleUnit(u: LeaseToOwnFleetUnit) {
