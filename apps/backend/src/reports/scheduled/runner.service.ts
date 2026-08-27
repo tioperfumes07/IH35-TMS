@@ -13,6 +13,7 @@ import { cashArDailyQuery } from "../queries/cash-ar-daily.js";
 import { driverSettlementsWeeklyQuery } from "../queries/driver-settlements-weekly.js";
 import { iftaQuarterlyQuery } from "../queries/ifta-quarterly.js";
 import { buildScheduledReportFile } from "../../scheduled-reports/report-file-builder.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import type { ScheduledReportId } from "../scheduled-report-runner.js";
 import { Q8_REPORT_LABELS, type CadenceInput } from "./cadence.js";
 import {
@@ -52,7 +53,10 @@ type GeneratedBundle = {
 };
 
 async function generateWeeklyArAging60(operatingCompanyId: string): Promise<GeneratedBundle> {
-  const asOf = new Date().toISOString().slice(0, 10);
+  // FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE: found as a 5th instance of the
+  // same bug class — was new Date().toISOString() (UTC calendar date, rolls to the next day
+  // ~19:00 Central).
+  const asOf = companyBusinessDate();
   const report = await getArAgingReport({
     userId: SYSTEM_ACTOR_ID,
     operating_company_id: operatingCompanyId,

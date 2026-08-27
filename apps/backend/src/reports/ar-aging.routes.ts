@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 // REPORTS-1 — the Reports-module A/R aging report is now sourced from the CANONICAL aging objects
 // (the same bucket math the Finance Hub FIN-20 screen and the statement exports trace to), instead of
@@ -53,8 +54,13 @@ type ArAgingPayload = {
 
 const cache = createTtlCache<ArAgingPayload>();
 
+// FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE: this used to compute "today" as
+// new Date().toISOString().slice(0, 10) — the UTC calendar date, which after ~19:00 Central has
+// already rolled to the next day (see company-business-date.ts's own header comment for the real
+// production precedent this class of bug already caused). companyBusinessDate() is the canonical
+// fix, already proven in production elsewhere (fixed-assets.math.js's asOfToday()).
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 // A true historical request is a valid YYYY-MM-DD strictly before today. Today (or a future date) stays

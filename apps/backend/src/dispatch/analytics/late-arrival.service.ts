@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.j
 import type { PoolClient } from "pg";
 import { withCurrentUser } from "../../auth/db.js";
 import { lateArrivalGraceMinutes } from "../late-arrivals.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 export type LateArrivalGroupBy = "driver" | "customer" | "lane";
 
@@ -381,8 +382,12 @@ export async function getCustomerLateArrivalDetail(
 
 export async function runLateArrivalAggregatorTick(client: PoolClient): Promise<number> {
   const companies = await client.query(`SELECT id::text FROM org.companies WHERE is_active = true LIMIT 200`);
-  const to = new Date().toISOString().slice(0, 10);
-  const fromDate = new Date();
+  // FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE: found as a 6th instance of the
+  // same bug class — was new Date().toISOString() (UTC calendar date, rolls to the next day
+  // ~19:00 Central). `to` is now the real company business day; `fromDate` anchors on that same
+  // day (pure day-arithmetic, never rendered) so both boundaries of the 30-day window agree.
+  const to = companyBusinessDate();
+  const fromDate = new Date(`${to}T00:00:00Z`);
   fromDate.setUTCDate(fromDate.getUTCDate() - 30);
   const from = fromDate.toISOString().slice(0, 10);
   let processed = 0;
