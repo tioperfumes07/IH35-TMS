@@ -48,6 +48,7 @@ const emptyTempCoverForm = (): TempCoverForm => ({
 });
 
 export function DriverSchedulerGridPage() {
+  // @matrix-built safety:driver_scheduler.list:{driver,unit,connectivity,reverse_link,qbo_chrome}
   const driverId = useSearchParams()[0].get("driver_id") ?? undefined;
   const unitId = useSearchParams()[0].get("unit_id") ?? undefined;
   const { selectedCompanyId } = useCompanyContext();
@@ -59,6 +60,7 @@ export function DriverSchedulerGridPage() {
   const [tempCoverForm, setTempCoverForm] = useState<TempCoverForm>(() => emptyTempCoverForm());
   const [cancelTarget, setCancelTarget] = useState<TempAssignment | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [tempPage, setTempPage] = useState(0);
   const [assignAttemptClose, setAssignAttemptClose] = useState<() => void>(() => () => {});
   const [cancelAttemptClose, setCancelAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
@@ -100,12 +102,20 @@ export function DriverSchedulerGridPage() {
   // driver + cover driver + date range, all via the canonical pickers — never a raw-id input), and
   // a cancel affordance with a required reason, matching the void/cancel pattern used everywhere
   // else in this app.
+  const tempPageSize = 50;
+  useEffect(() => setTempPage(0), [operatingCompanyId, driverId, unitId]);
   const tempAssignmentsQuery = useQuery({
-    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId, driverId, unitId],
-    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, { driver_id: driverId, unit_id: unitId }),
+    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId, driverId, unitId, tempPage],
+    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, {
+      driver_id: driverId,
+      unit_id: unitId,
+      limit: tempPageSize,
+      offset: tempPage * tempPageSize,
+    }),
     enabled: Boolean(operatingCompanyId),
   });
   const tempAssignments = tempAssignmentsQuery.data?.assignments ?? [];
+  const tempAssignmentTotal = tempAssignmentsQuery.data?.total_count ?? 0;
 
   const assignMutation = useMutation({
     mutationFn: (input: { operatingCompanyId: string; form: TempCoverForm; generation: number }) => {
@@ -355,6 +365,31 @@ export function DriverSchedulerGridPage() {
               ))}
             </tbody>
           </table>
+        ) : null}
+        {!tempAssignmentsQuery.isError && tempAssignmentTotal > tempPageSize ? (
+          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-xs text-slate-600">
+            <span>
+              {tempPage * tempPageSize + 1}–{Math.min((tempPage + 1) * tempPageSize, tempAssignmentTotal)} of {tempAssignmentTotal}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={tempPage === 0 || tempAssignmentsQuery.isFetching}
+                onClick={() => setTempPage((value) => Math.max(0, value - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={(tempPage + 1) * tempPageSize >= tempAssignmentTotal || tempAssignmentsQuery.isFetching}
+                onClick={() => setTempPage((value) => value + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         ) : null}
       </div>
 

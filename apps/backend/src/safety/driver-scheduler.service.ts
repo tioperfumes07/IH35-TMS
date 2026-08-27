@@ -1090,12 +1090,28 @@ export async function getFleetSchedule(
   };
 }
 
-export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string, filters: { driverId?: string; unitId?: string } = {}) {
+export async function listTempAssignments(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  filters: { driverId?: string; unitId?: string; limit: number; offset: number },
+) {
   // SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — this used to be SELECT * with no joins (unusable
   // for a UI — raw driver/unit uuids, no names) and operating_company_id compared with no ::uuid
   // cast (the same DA-PROGRAM-ROUTES-500 shape: safety.temp_unit_assignments.operating_company_id is
   // UUID NOT NULL, and node-pg does not reliably infer the placeholder's type under a pooled
   // connection). Both fixed here: join unit/driver names, cast the scope predicate.
+  const values = [operatingCompanyId, filters.driverId ?? null, filters.unitId ?? null];
+  const countRes = await client.query(
+    `
+      SELECT COUNT(*)::text AS total_count
+      FROM safety.temp_unit_assignments t
+      WHERE t.operating_company_id = $1::uuid
+        AND t.voided_at IS NULL
+        AND ($2::uuid IS NULL OR t.primary_driver_id = $2::uuid OR t.cover_driver_id = $2::uuid)
+        AND ($3::uuid IS NULL OR t.unit_id = $3::uuid)
+    `,
+    values,
+  ) as { rows: Array<{ total_count: string }> };
   const res = await client.query(
     `
       SELECT
@@ -1128,11 +1144,12 @@ export async function listTempAssignments(client: QueryableClient, operatingComp
         AND ($2::uuid IS NULL OR t.primary_driver_id = $2::uuid OR t.cover_driver_id = $2::uuid)
         AND ($3::uuid IS NULL OR t.unit_id = $3::uuid)
       ORDER BY t.start_date DESC
-      LIMIT 200
+      LIMIT $4
+      OFFSET $5
     `,
-    [operatingCompanyId, filters.driverId ?? null, filters.unitId ?? null]
+    [...values, filters.limit, filters.offset]
   );
-  return res.rows;
+  return { assignments: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function assignTempCover(
