@@ -649,7 +649,8 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const updateRes = await client.query(
         `
           UPDATE mdata.dispatcher_safety_events
-          SET voided_at = now(), voided_by_user_id = $3, void_reason = $4, updated_by_user_id = $3
+          SET voided_at = now(), voided_by_user_id = $3, void_reason = $4,
+              updated_by_user_id = $3, updated_at = now()
           WHERE id = $1 AND dispatcher_user_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
@@ -711,6 +712,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       sets.push(`cost_recovered_amount = $${values.length}`);
     }
     sets.push("updated_by_user_id = $3");
+    sets.push("updated_at = now()");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       // CLS-JOIN-ENTITY-UNSCOPED fix (mirrors MDATA-F12 on the sibling driver-safety-events.routes.ts
