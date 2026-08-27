@@ -1,3 +1,5 @@
+**06:04 CT GO-0604 — DEVIN YOU ARE NOT WAITING.** Live healthz **`78240b9`**. NOW=`/vendors` only. Reactivate TEST `63a9a2d1`. Hard-reload. `git fetch && git reset --hard origin/main`. ACK: `Devin | ACK | GO-0604 | NOW=/vendors | SHA=78240b9 | GO`. Idle=defect.
+
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** `/vendors` Reactivate `63a9a2d1`. ACK: `Devin | ACK | GO-0556 | NOW=/vendors | SHA=78240b9 | GO`.
 
 **05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. `/vendors` Reactivate `63a9a2d1`. Hard-reload when healthz=`78240b9`. ACK: `Devin | ACK | GO-0552 | NOW=/vendors | SHA=<healthz> | GO`.
