@@ -200,6 +200,7 @@ export function getSafetyDvirSubmissions(
     trailer_id?: string;
     from?: string;
     to?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -210,6 +211,7 @@ export function getSafetyDvirSubmissions(
   if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
   if (filters.from) qs.set("from", filters.from);
   if (filters.to) qs.set("to", filters.to);
+  if (filters.search) qs.set("search", filters.search);
   if (filters.limit != null) qs.set("limit", String(filters.limit));
   if (filters.offset != null) qs.set("offset", String(filters.offset));
   return apiRequest<{ submissions: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/dvir?${qs.toString()}`);

@@ -17,6 +17,7 @@ const listQuerySchema = companyQuerySchema.extend({
   trailer_id: z.string().uuid().optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
+  search: z.string().trim().max(120).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -100,6 +101,11 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         filters.push(`ds.submitted_at <= $${idx++}`);
         values.push(query.data.to);
       }
+      if (query.data.search) {
+        filters.push(`(ds.type::text ILIKE $${idx} OR ds.submitted_at::text ILIKE $${idx})`);
+        values.push(`%${query.data.search}%`);
+        idx += 1;
+      }
       const countRes = await client.query<{ total_count: number }>(
         `SELECT COUNT(*)::int AS total_count FROM safety.dvir_submissions ds WHERE ${filters.join(" AND ")}`,
         values
@@ -152,7 +158,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
             WHERE dd.dvir_submission_id = ds.id
           ) dc ON true
           WHERE ${filters.join(" AND ")}
-          ORDER BY ds.submitted_at DESC
+          ORDER BY ds.submitted_at DESC, ds.id DESC
           LIMIT $${idx++} OFFSET $${idx}
         `,
         values

@@ -12,7 +12,7 @@ import {
   type MaintenanceInspectionRow,
   updateMaintenanceInspection,
 } from "../../../api/maintenance";
-import { getSafetyDvirSubmissions } from "../../../api/safety";
+import { getSafetyDvirDetail, getSafetyDvirSubmissions } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
@@ -92,6 +92,7 @@ export function InspectionsPage() {
   const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() ?? "";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [dvirSearch, setDvirSearch] = useState("");
 
   const listQ = useQuery({
     queryKey: ["maintenance", "inspections", companyId, search, page],
@@ -104,24 +105,35 @@ export function InspectionsPage() {
   });
 
   const dvirQ = useQuery({
-    queryKey: ["safety", "dvir", companyId, draft.unit_id],
+    queryKey: ["safety", "dvir", companyId, draft.unit_id, dvirSearch],
     queryFn: () =>
       getSafetyDvirSubmissions(companyId, {
         unit_id: draft.unit_id || undefined,
         limit: 50,
+        search: dvirSearch || undefined,
       }),
     enabled: Boolean(companyId) && (draft.inspection_type === "pre_trip" || draft.inspection_type === "post_trip"),
   });
 
+  const selectedDvirQ = useQuery({
+    queryKey: ["safety", "dvir", "selected", companyId, draft.dvir_submission_id],
+    queryFn: () => getSafetyDvirDetail(draft.dvir_submission_id, companyId),
+    enabled: Boolean(companyId && draft.dvir_submission_id),
+  });
+
   const dvirOptions = useMemo(
-    () =>
-      (dvirQ.data?.submissions ?? []).map((submission: Record<string, unknown>) => ({
+    () => {
+      const rows = [...(dvirQ.data?.submissions ?? [])];
+      const selected = selectedDvirQ.data?.submission;
+      if (selected && !rows.some((row) => String(row.id) === String(selected.id))) rows.unshift(selected);
+      return rows.map((submission: Record<string, unknown>) => ({
         value: String(submission.id ?? ""),
         label: `${humanizeEnumLabel(String(submission.type ?? "DVIR"))} · ${
           submission.submitted_at ? String(submission.submitted_at) : "Date unavailable"
         }`,
-      })).filter((option) => option.value),
-    [dvirQ.data?.submissions],
+      })).filter((option) => option.value);
+    },
+    [dvirQ.data?.submissions, selectedDvirQ.data?.submission],
   );
 
   const refresh = async (submittedCompanyId: string) => {
@@ -414,6 +426,8 @@ export function InspectionsPage() {
                 placeholder="No DVIR link"
                 loading={dvirQ.isLoading}
                 error={dvirQ.isError ? "Couldn't load DVIR submissions" : undefined}
+                onSearch={setDvirSearch}
+                clearCommittedOnEdit
               />
             </div>
           ) : null}
