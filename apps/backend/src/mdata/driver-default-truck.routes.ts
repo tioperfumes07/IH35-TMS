@@ -165,46 +165,59 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
-      if (!driverOk) return null;
-      const unitOk = await assertUnitScope(client, body.data.unit_id, query.data.operating_company_id);
-      if (!unitOk) return { error: "mdata_unit_not_found" as const };
-      await client.query(
-        `
-          UPDATE telematics.vehicle_driver_assignments
-          SET ended_at = now()
-          WHERE unit_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND is_default = true
-            AND ended_at IS NULL
-        `,
-        [body.data.unit_id, query.data.operating_company_id]
-      );
-      await client.query(
-        `
-          UPDATE telematics.vehicle_driver_assignments
-          SET ended_at = now()
-          WHERE driver_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND is_default = true
-            AND ended_at IS NULL
-        `,
-        [params.data.id, query.data.operating_company_id]
-      );
-      await client.query(
-        `
-          INSERT INTO telematics.vehicle_driver_assignments (
-            operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
-          ) VALUES ($1,$2,$3,now(),'manual_override',true,$4)
-        `,
-        [query.data.operating_company_id, body.data.unit_id, params.data.id, user.uuid]
-      );
-      await appendCrudAudit(client, user.uuid, "mdata.driver.default_truck_set", {
-        resource_id: params.data.id,
-        unit_id: body.data.unit_id,
-      });
-      return fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
+      await client.query("BEGIN");
+      try {
+        await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+        const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
+        if (!driverOk) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+        const unitOk = await assertUnitScope(client, body.data.unit_id, query.data.operating_company_id);
+        if (!unitOk) {
+          await client.query("ROLLBACK");
+          return { error: "mdata_unit_not_found" as const };
+        }
+        await client.query(
+          `UPDATE telematics.vehicle_driver_assignments
+           SET ended_at = now()
+           WHERE unit_id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND is_default = true
+             AND ended_at IS NULL`,
+          [body.data.unit_id, query.data.operating_company_id]
+        );
+        await client.query(
+          `UPDATE telematics.vehicle_driver_assignments
+           SET ended_at = now()
+           WHERE driver_id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND is_default = true
+             AND ended_at IS NULL`,
+          [params.data.id, query.data.operating_company_id]
+        );
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO telematics.vehicle_driver_assignments (
+             operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
+           ) VALUES ($1,$2,$3,now(),'manual_override',true,$4)
+           RETURNING id::text AS id`,
+          [query.data.operating_company_id, body.data.unit_id, params.data.id, user.uuid]
+        );
+        const assignmentId = inserted.rows[0]?.id;
+        if (!assignmentId) throw new Error("driver_default_truck_insert_failed");
+        await appendCrudAudit(client, user.uuid, "mdata.driver.default_truck_set", {
+          resource_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
+          unit_id: body.data.unit_id,
+          assignment_id: assignmentId,
+        });
+        const payload = await fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
+        await client.query("COMMIT");
+        return payload;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
     });
     if (!result) return reply.code(404).send({ error: "mdata_driver_not_found" });
     if ("error" in result) return reply.code(404).send({ error: result.error });

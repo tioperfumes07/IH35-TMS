@@ -37,6 +37,32 @@ async function assertUnitScope(
   return res.rows[0]?.id ?? null;
 }
 
+async function assertDriverScope(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  driverId: string,
+  operatingCompanyId: string
+) {
+  const res = await client.query(
+    `SELECT d.id::text
+       FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND d.archived_at IS NULL
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations set_default_dca
+             WHERE set_default_dca.driver_id = d.id
+               AND set_default_dca.company_id = $2::uuid
+               AND set_default_dca.is_authorized = true
+               AND set_default_dca.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1`,
+    [driverId, operatingCompanyId]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
 function mapDriver(row: Record<string, unknown> | undefined, extra?: Record<string, unknown>) {
   if (!row) return null;
   return {
@@ -164,35 +190,53 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
-      if (!unitOk) return null;
-      const cleared = await client.query(
-        `
-          UPDATE telematics.vehicle_driver_assignments
-          SET ended_at = now()
-          WHERE unit_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND is_default = true
-            AND ended_at IS NULL
-        `,
-        [params.data.id, query.data.operating_company_id]
-      );
-      await client.query(
-        `
-          INSERT INTO telematics.vehicle_driver_assignments (
-            operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
-          ) VALUES ($1,$2,$3,now(),'manual_override',true,$4)
-        `,
-        [query.data.operating_company_id, params.data.id, body.data.driver_id, user.uuid]
-      );
-      await appendCrudAudit(client, user.uuid, "mdata.unit.default_driver_set", {
-        resource_id: params.data.id,
-        driver_id: body.data.driver_id,
-      });
-      return fetchDriverAssignments(client, params.data.id, query.data.operating_company_id);
+      await client.query("BEGIN");
+      try {
+        await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+        const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
+        if (!unitOk) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+        const driverOk = await assertDriverScope(client, body.data.driver_id, query.data.operating_company_id);
+        if (!driverOk) {
+          await client.query("ROLLBACK");
+          return { error: "mdata_driver_not_found" as const };
+        }
+        await client.query(
+          `UPDATE telematics.vehicle_driver_assignments
+           SET ended_at = now()
+           WHERE unit_id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND is_default = true
+             AND ended_at IS NULL`,
+          [params.data.id, query.data.operating_company_id]
+        );
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO telematics.vehicle_driver_assignments (
+             operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
+           ) VALUES ($1,$2,$3,now(),'manual_override',true,$4)
+           RETURNING id::text AS id`,
+          [query.data.operating_company_id, params.data.id, body.data.driver_id, user.uuid]
+        );
+        const assignmentId = inserted.rows[0]?.id;
+        if (!assignmentId) throw new Error("unit_default_driver_insert_failed");
+        await appendCrudAudit(client, user.uuid, "mdata.unit.default_driver_set", {
+          resource_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
+          driver_id: body.data.driver_id,
+          assignment_id: assignmentId,
+        });
+        const payload = await fetchDriverAssignments(client, params.data.id, query.data.operating_company_id);
+        await client.query("COMMIT");
+        return payload;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
     });
     if (!result) return reply.code(404).send({ error: "mdata_unit_not_found" });
+    if ("error" in result) return reply.code(404).send({ error: result.error });
     return result;
   });
 
