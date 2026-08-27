@@ -742,12 +742,14 @@ export function listDriverScores(companyId: string, periodDays: number) {
   return apiRequest<{ rows: DriverScoreRow[] }>(`/api/v1/safety/driver-scoring?${qs.toString()}`);
 }
 
-export function listDriverScoreEvents(companyId: string, driverId: string, periodDays: number) {
+export function listDriverScoreEvents(companyId: string, driverId: string, periodDays: number, range: { limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams({
     operating_company_id: companyId,
     period_days: String(periodDays),
   });
-  return apiRequest<{ events: DriverScoreEvent[] }>(
+  if (range.limit != null) qs.set("limit", String(range.limit));
+  if (range.offset != null) qs.set("offset", String(range.offset));
+  return apiRequest<{ events: DriverScoreEvent[]; total_count: number }>(
     `/api/v1/safety/driver-scoring/${encodeURIComponent(driverId)}/events?${qs.toString()}`
   );
 }

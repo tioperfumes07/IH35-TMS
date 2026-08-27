@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow } from "../../../api/safety";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -121,11 +121,17 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
   // straight to "here's the clip" without leaving the driver's detail panel.
   const [eventPeriodDays, setEventPeriodDays] = useState<(typeof EVENT_PERIODS)[number]>(30);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const eventPageSize = 50;
+  const [eventPage, setEventPage] = useState(1);
   const eventsQuery = useQuery({
-    queryKey: ["safety", "driver-scoring-events", companyId, driverUuid, eventPeriodDays],
-    queryFn: () => listDriverScoreEvents(companyId, driverUuid, eventPeriodDays),
+    queryKey: ["safety", "driver-scoring-events", companyId, driverUuid, eventPeriodDays, eventPage],
+    queryFn: () => listDriverScoreEvents(companyId, driverUuid, eventPeriodDays, { limit: eventPageSize, offset: (eventPage - 1) * eventPageSize }),
     enabled: Boolean(companyId && driverUuid),
   });
+  const eventTotal = eventsQuery.isError ? 0 : eventsQuery.data?.total_count ?? 0;
+  const eventPageCount = Math.max(1, Math.ceil(eventTotal / eventPageSize));
+  useEffect(() => { setEventPage(1); setExpandedEventId(null); }, [companyId, driverUuid, eventPeriodDays]);
+  useEffect(() => setEventPage((current) => Math.min(current, eventPageCount)), [eventPageCount]);
 
   return (
     <div className="space-y-3">
@@ -233,7 +239,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
             </div>
           ) : (
             <>
-              {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
+              {(eventsQuery.data?.events ?? []).map((event) => (
                 <div key={event.id} className="px-3 py-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span>
@@ -270,6 +276,13 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
             </>
           )}
         </div>
+        {!eventsQuery.isError && eventTotal > eventPageSize ? (
+          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2 text-xs" data-testid="driver-score-events-server-pager">
+            <button type="button" disabled={eventPage <= 1 || eventsQuery.isFetching} onClick={() => setEventPage((current) => Math.max(1, current - 1))}>Previous</button>
+            <span>Page {eventPage} of {eventPageCount} · {eventTotal} harsh events</span>
+            <button type="button" disabled={eventPage >= eventPageCount || eventsQuery.isFetching} onClick={() => setEventPage((current) => Math.min(eventPageCount, current + 1))}>Next</button>
+          </div>
+        ) : null}
       </section>
     </div>
   );
