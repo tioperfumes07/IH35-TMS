@@ -100,6 +100,8 @@ export function MaintKpiDashboardPage() {
   const [activeKpi, setActiveKpi] = useState<KpiTileId>("downtime");
   const [pmPage, setPmPage] = useState(1);
   const pmPageSize = 25;
+  const [drillPage, setDrillPage] = useState(1);
+  const drillPageSize = 25;
 
   const summaryQ = useQuery({
     queryKey: ["maintenance", "kpi-dashboard", "summary", companyId, periodStart, periodEnd, unitId],
@@ -108,19 +110,20 @@ export function MaintKpiDashboardPage() {
   });
 
   const drilldownQ = useQuery({
-    queryKey: ["maintenance", "kpi-dashboard", "drilldown", activeKpi, companyId, periodStart, periodEnd, unitId, pmPage],
+    queryKey: ["maintenance", "kpi-dashboard", "drilldown", activeKpi, companyId, periodStart, periodEnd, unitId, pmPage, drillPage],
     queryFn: async () => {
       if (activeKpi === "pm_compliance") {
         const pm = await getMaintenanceKpiPmCompliance(companyId, periodStart, periodEnd, unitId || undefined, { limit: pmPageSize, offset: (pmPage - 1) * pmPageSize });
         return { kind: "pm_compliance" as const, rows: pm.rows as Record<string, unknown>[], total_count: pm.total_count };
       }
-      const res = await getMaintenanceKpiDrilldown(activeKpi, companyId, periodStart, periodEnd, unitId || undefined);
-      return { kind: res.kind, rows: res.rows };
+      const res = await getMaintenanceKpiDrilldown(activeKpi, companyId, periodStart, periodEnd, unitId || undefined, { limit: drillPageSize, offset: (drillPage - 1) * drillPageSize });
+      return { kind: res.kind, rows: res.rows, total_count: res.total_count };
     },
     enabled: Boolean(companyId),
   });
 
-  useEffect(() => { setPmPage(1); }, [companyId, periodStart, periodEnd, unitId]);
+  useEffect(() => { setPmPage(1); setDrillPage(1); }, [companyId, periodStart, periodEnd, unitId]);
+  useEffect(() => { setPmPage(1); setDrillPage(1); }, [activeKpi]);
 
   const summary = summaryQ.data;
 
@@ -301,9 +304,9 @@ export function MaintKpiDashboardPage() {
             storageKey={`maintenance-kpi-drilldown-${activeKpi}`}
             emptyText="No drill-down rows for this filter window."
             exportFilename={`maint-kpi-drilldown-${activeKpi}`}
-            pageSize={activeKpi === "pm_compliance" ? (drillRows.length || pmPageSize) : undefined}
-            pageSizeOptions={activeKpi === "pm_compliance" ? [pmPageSize] : undefined}
-            hidePager={activeKpi === "pm_compliance"}
+            pageSize={drillRows.length || (activeKpi === "pm_compliance" ? pmPageSize : drillPageSize)}
+            pageSizeOptions={[activeKpi === "pm_compliance" ? pmPageSize : drillPageSize]}
+            hidePager
           />
         )}
         {activeKpi === "pm_compliance" && !drilldownQ.isError && Number(drilldownQ.data?.total_count ?? 0) > 0 ? (
@@ -312,6 +315,15 @@ export function MaintKpiDashboardPage() {
             <div className="flex gap-2">
               <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={pmPage === 1 || drilldownQ.isFetching} onClick={() => setPmPage((value) => Math.max(1, value - 1))}>Previous</button>
               <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={pmPage * pmPageSize >= Number(drilldownQ.data?.total_count ?? 0) || drilldownQ.isFetching} onClick={() => setPmPage((value) => value + 1)}>Next</button>
+            </div>
+          </nav>
+        ) : null}
+        {activeKpi !== "pm_compliance" && !drilldownQ.isError && Number(drilldownQ.data?.total_count ?? 0) > 0 ? (
+          <nav className="flex items-center justify-between border-t border-gray-100 px-3 py-2 text-xs" data-testid="maint-kpi-drilldown-server-pager">
+            <span>{(drillPage - 1) * drillPageSize + 1}–{Math.min(drillPage * drillPageSize, Number(drilldownQ.data?.total_count ?? 0))} of {Number(drilldownQ.data?.total_count ?? 0)}</span>
+            <div className="flex gap-2">
+              <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={drillPage === 1 || drilldownQ.isFetching} onClick={() => setDrillPage((value) => Math.max(1, value - 1))}>Previous</button>
+              <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={drillPage * drillPageSize >= Number(drilldownQ.data?.total_count ?? 0) || drilldownQ.isFetching} onClick={() => setDrillPage((value) => value + 1)}>Next</button>
             </div>
           </nav>
         ) : null}

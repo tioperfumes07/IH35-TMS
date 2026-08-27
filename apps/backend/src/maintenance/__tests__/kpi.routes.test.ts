@@ -116,4 +116,25 @@ describe("maintenance KPI helpers (B35)", () => {
     expect(res.json()).toMatchObject({ total_count: 212, rows: [{ schedule_id: "pm-1" }] });
     await app.close();
   });
+
+  it("returns an exact deterministic non-PM drill-down range", async () => {
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
+      expect(values).toEqual([COMPANY, "2026-06-01", "2026-06-07", 25, 50]);
+      expect(sql).toContain("COUNT(*)::int AS total_count FROM data");
+      expect(sql).toContain("ORDER BY downtime_hours DESC, id ASC");
+      expect(sql).toContain("LIMIT $4 OFFSET $5");
+      return { rows: [{ id: "wo-1", display_id: "WO-1", unit_number: "T-101", downtime_hours: 4, total_count: 301 }] };
+    });
+    const app: FastifyInstance = Fastify();
+    app.addHook("preHandler", async (req) => { (req as { user?: { uuid: string } }).user = { uuid: "user-test-1" }; });
+    await registerMaintenanceKpiRoutes(app);
+    const res = await app.inject({ method: "GET", url: `/api/v1/maintenance/kpi/downtime?operating_company_id=${COMPANY}&period_start=2026-06-01&period_end=2026-06-07&limit=25&offset=50` });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ kind: "downtime", total_count: 301, rows: [{ id: "wo-1" }] });
+    expect(res.json().rows[0]).not.toHaveProperty("total_count");
+    await app.close();
+  });
 });
