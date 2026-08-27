@@ -1190,6 +1190,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             repaired_by = COALESCE($17, repaired_by),
             updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $18::uuid
           RETURNING *
         `,
         [
@@ -1210,9 +1211,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.authorization_number ?? null,
           body.service_location_type ?? null,
           body.repaired_by ?? null,
+          companyId,
         ]
       );
-      let updated = updatedRes.rows[0];
+      let updated = updatedRes.rows[0] ?? null;
+      if (!updated) return { notFound: true as const };
       // When vendor invoice/WO refs change, recompute V5 per Rule 03 (immutable only after complete).
       if (
         body.external_vendor_invoice_number !== undefined ||
