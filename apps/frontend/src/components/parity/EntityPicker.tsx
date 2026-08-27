@@ -82,6 +82,9 @@ export type EntityPickerProps = {
   disabled?: boolean;
   allowClear?: boolean;
   className?: string;
+  /** ARIA-COMBOBOX-NO-NAME: forwarded to the underlying Combobox — see its own doc comment.
+   *  A call site with no visible wrapping `<label>` around this picker must pass one. */
+  ariaLabel?: string;
   /** Focus target for form validation (`[data-field="…"]`). */
   dataField?: string;
   /**
@@ -114,6 +117,7 @@ export function EntityPicker({
   disabled = false,
   allowClear = true,
   className,
+  ariaLabel,
   dataField,
   dataTestId,
   onCreated,
@@ -223,6 +227,7 @@ export function EntityPicker({
         ) : null}
         <Combobox
           className={className}
+          ariaLabel={ariaLabel}
           dataField={dataField}
           dataTestId={dataTestId}
           options={options}

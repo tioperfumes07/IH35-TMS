@@ -361,6 +361,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                   onChange={(next) => setUnitFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All units"
+                  ariaLabel="Filter by unit"
                   dataTestId="fleet-hos-filter-unit"
                 />
               </div>

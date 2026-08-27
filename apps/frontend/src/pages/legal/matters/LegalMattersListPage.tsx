@@ -238,6 +238,7 @@ export function LegalMattersListPage() {
                     onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
                     allowCreate={false}
                     placeholder="All units"
+                    ariaLabel="Filter by unit"
                     dataTestId="legal-matters-filter-unit"
                   />
                 </div>
