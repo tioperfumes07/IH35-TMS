@@ -650,12 +650,13 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
         `
           UPDATE mdata.dispatcher_safety_events
           SET voided_at = now(), voided_by_user_id = $3, void_reason = $4, updated_by_user_id = $3
-          WHERE id = $1 AND dispatcher_user_id = $2
+          WHERE id = $1 AND dispatcher_user_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
         [parsedParams.data.event_id, parsedParams.data.user_id, authUser.uuid, parsedBody.data.void_reason]
       );
-      const row = updateRes.rows[0];
+      const row = updateRes.rows[0] ?? null;
+      if (!row) return { error: "already_voided" as const };
 
       await appendCrudAudit(
         client,
