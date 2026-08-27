@@ -26,6 +26,9 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
   let jeWithLinks: string;
   let jeWithoutLinks: string;
   let sourceBillId: string;
+  let jeWithExpenseSource: string;
+  let sourceExpenseId: string;
+  const expenseNumber = `EXP-SRC-LINK-TEST-${randomUUID().slice(0, 8)}`;
 
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
@@ -112,6 +115,46 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
          VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'debit', 5000)`,
         [companyId, jeWithoutLinks, accountId]
       );
+
+      // ACCT-F9511 / JE-SOURCE-LINKS-EXPENSE-NEVER-JOINED — real accounting.expenses row (not a bare
+      // random uuid like sourceBillId above) so source_transaction_display_id has something to
+      // resolve. Live-reproduced: created EXP-2026-00002 through the app, its JE detail's Source
+      // links panel tombstoned "Source — not visible" even though the row exists and posted.
+      const driverRes = await db.query<{ id: string }>(
+        `INSERT INTO mdata.drivers (operating_company_id, first_name, last_name, phone)
+         VALUES ($1::uuid, 'SrcLink', 'Fixture', $2) RETURNING id`,
+        [companyId, `+1000${suffix.slice(0, 7)}`]
+      );
+      const driverId = driverRes.rows[0]!.id;
+      const expenseRes = await db.query<{ id: string }>(
+        `INSERT INTO accounting.expenses
+           (operating_company_id, driver_uuid, transaction_date, total_amount_cents, status, expense_number)
+         VALUES ($1::uuid, $2::uuid, CURRENT_DATE, 1200, 'posted', $3)
+         RETURNING id`,
+        [companyId, driverId, expenseNumber]
+      );
+      sourceExpenseId = expenseRes.rows[0]!.id;
+
+      const jeExpRes = await db.query<{ id: string }>(
+        `INSERT INTO accounting.journal_entries (operating_company_id, entry_date, memo, status, source)
+         VALUES ($1::uuid, CURRENT_DATE, 'expense source-link test', 'posted', 'auto')
+         RETURNING id`,
+        [companyId]
+      );
+      jeWithExpenseSource = jeExpRes.rows[0]!.id;
+      await db.query(
+        `INSERT INTO accounting.journal_entry_postings
+           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+            source_transaction_type, source_transaction_id)
+         VALUES ($1::uuid, $2::uuid, 1, $3::uuid, 'debit', 1200, 'expense', $4)`,
+        [companyId, jeWithExpenseSource, accountId, sourceExpenseId]
+      );
+      await db.query(
+        `INSERT INTO accounting.journal_entry_postings
+           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
+         VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'credit', 1200)`,
+        [companyId, jeWithExpenseSource, accountId]
+      );
     });
 
     app = await createIntegrationApp(async (a) => {
@@ -161,6 +204,29 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
     };
     // The posting line itself still returns (LEFT JOIN), but with no source markers.
     expect(body.source_links.every((r) => r.source_transaction_type === null && r.linked_object_type === null)).toBe(true);
+  });
+
+  it("ACCT-F9511: resolves a real display id for an expense-sourced posting (was 'Source — not visible')", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/journal-entries/${jeWithExpenseSource}/source-links?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      source_links: Array<{
+        source_transaction_type: string | null;
+        source_transaction_id: string | null;
+        source_transaction_display_id: string | null;
+      }>;
+    };
+    const row = body.source_links.find((r) => r.source_transaction_type === "expense");
+    expect(row).toBeDefined();
+    expect(row!.source_transaction_id).toBe(sourceExpenseId);
+    // The regression: before the fix this was always null (no join existed for
+    // source_transaction_type = 'expense'), which is what forces JournalEntryDetailPage.tsx's
+    // entityLabel() fallback to render "Source — not visible" for every expense-sourced JE.
+    expect(row!.source_transaction_display_id).toBe(expenseNumber);
   });
 
   it("404s for an unknown journal entry id", async () => {
