@@ -150,7 +150,9 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
       input.expires_at ?? null,
     ]
   );
-  return { kind: "ok" as const, row: insert.rows[0] };
+  const created = insert.rows[0];
+  if (!created?.id) throw new Error("insurance_coi_request_insert_failed");
+  return { kind: "ok" as const, row: created };
 }
 
 export async function updateCoiRequest(client: Queryable, input: UpdateCoiRequestInput) {
