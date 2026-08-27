@@ -676,7 +676,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     }
   );
 
-  app.patch("/api/v1/insurance/claims/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/claims/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -824,24 +824,28 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       if (body.accident_report_id !== undefined) {
         if (priorAccidentReportId && priorAccidentReportId !== body.accident_report_id) {
           // Only clear if it still points at THIS claim — never clobber a link another claim made.
-          await client.query(
+          const clearedReverse = await client.query(
             `
               UPDATE safety.accident_reports
               SET insurance_claim_id = NULL
               WHERE id = $1::uuid AND operating_company_id = $2::uuid AND insurance_claim_id = $3::uuid
+              RETURNING id::text
             `,
             [priorAccidentReportId, query.data.operating_company_id, params.data.id]
           );
+          if (!clearedReverse.rows[0]?.id) throw new Error("insurance_claim_prior_accident_reverse_unlink_failed");
         }
         if (body.accident_report_id) {
-          await client.query(
+          const linkedReverse = await client.query(
             `
               UPDATE safety.accident_reports
               SET insurance_claim_id = $3::uuid
               WHERE id = $1::uuid AND operating_company_id = $2::uuid
+              RETURNING id::text
             `,
             [body.accident_report_id, query.data.operating_company_id, params.data.id]
           );
+          if (!linkedReverse.rows[0]?.id) throw new Error("insurance_claim_accident_reverse_link_failed");
         }
       }
       const result = await client.query(
@@ -853,7 +857,19 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id, params.data.id]
       );
-      return { kind: "ok" as const, row: result.rows[0] };
+      const claim = result.rows[0] as { id?: string; policy_id?: string | null; accident_report_id?: string | null; load_id?: string | null; driver_id?: string | null; trailer_id?: string | null } | undefined;
+      if (!claim?.id) throw new Error("insurance_claim_update_detail_read_failed");
+      await appendCrudAudit(client as never, user.uuid, "insurance.claim.updated", {
+        resource_type: "insurance.claim",
+        resource_id: claim.id,
+        operating_company_id: query.data.operating_company_id,
+        policy_id: claim.policy_id ?? null,
+        accident_report_id: claim.accident_report_id ?? null,
+        load_id: claim.load_id ?? null,
+        driver_id: claim.driver_id ?? null,
+        trailer_id: claim.trailer_id ?? null,
+      });
+      return { kind: "ok" as const, row: claim };
     });
 
     if (updated.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
