@@ -96,13 +96,19 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
     try {
       const row = await withCurrentUser(user.uuid, async (client) => {
         await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-        if (!(await assertEquipmentScope(client, params.data.id, query.data.operating_company_id))) return null;
         const res = await client.query(
           `
             INSERT INTO mdata.equipment_plates (
               operating_company_id, equipment_id, country, jurisdiction, plate_number, expiration, notes
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-            RETURNING id::text, country, jurisdiction, plate_number, expiration::text, status, notes
+            )
+            SELECT $1::uuid, equipment.id, $3, $4, $5, $6, $7
+            FROM mdata.equipment AS equipment
+            WHERE equipment.id = $2::uuid
+              AND (
+                equipment.owner_company_id = $1::uuid
+                OR equipment.currently_leased_to_company_id = $1::uuid
+              )
+            RETURNING id::text, equipment_id::text, country, jurisdiction, plate_number, expiration::text, status, notes
           `,
           [
             query.data.operating_company_id,
@@ -114,11 +120,14 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
             body.data.notes ?? null,
           ]
         );
+        const created = res.rows[0];
+        if (!created?.id || created.equipment_id !== params.data.id) return null;
         await appendCrudAudit(client, user.uuid, "mdata.equipment_plates.created", {
-          resource_id: res.rows[0]?.id,
+          resource_id: created.id,
           equipment_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
         });
-        return res.rows[0];
+        return created;
       });
       if (!row) return reply.code(404).send({ error: "mdata_equipment_not_found" });
       return reply.code(201).send(row);
