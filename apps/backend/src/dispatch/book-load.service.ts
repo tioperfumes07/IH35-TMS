@@ -1771,6 +1771,44 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
+    // HOP-ASSIGN-ZERO-RATECARD-DRIVER-BILLS — an initial driver/unit assignment made directly in
+    // the lockstep INSERT above (mdata.loads.assigned_primary_driver_id / assigned_unit_id) never
+    // got its own dispatch.load_assignment_history row: only trailer assignment did, above. Every
+    // OTHER assignment write path (quick-assign, quicksave, reassignment) writes a driver/unit row,
+    // so load_assignment_history is the canonical "this load has a real, current assignment" audit
+    // trail everything else (including the hop.assign Scenario Tracker probe and any reassignment's
+    // own "previous_driver_id/previous_unit_id" lookup) relies on — an initial full-form booking with
+    // a driver+unit silently had NO such row, live-confirmed on 3 real USMCA loads/bills (correctly
+    // rate-carded, differing from customer revenue) that the probe could never see for exactly this
+    // reason. A SEPARATE row from the trailer one above (not merged into it) — that row's own comment
+    // guarantees it stays new_unit_id/new_driver_id-NULL for its own downstream analytics; this is an
+    // additive, independent event, matching how quick-assign already writes a driver+unit row and a
+    // unit+trailer row as two separate history entries when both change. Uses the load's OWN
+    // persisted assigned_primary_driver_id/assigned_unit_id (RETURNING *, above) rather than the raw
+    // input — so a team_id booking (which the main INSERT deliberately leaves NULL) does not fabricate
+    // a driver_id here either; the probe's own JOIN on assigned_primary_driver_id would not match a
+    // team booking anyway.
+    if (load.assigned_primary_driver_id || load.assigned_unit_id) {
+      await client.query(
+        `
+          INSERT INTO dispatch.load_assignment_history (
+            operating_company_id, load_id, assignment_method,
+            previous_driver_id, new_driver_id,
+            previous_unit_id, new_unit_id,
+            assigned_by_user_id, warnings_acknowledged
+          )
+          VALUES ($1::uuid, $2::uuid, 'full_form', NULL, $3::uuid, NULL, $4::uuid, $5::uuid, '[]'::jsonb)
+        `,
+        [
+          input.operating_company_id,
+          String(load.id),
+          load.assigned_primary_driver_id ? String(load.assigned_primary_driver_id) : null,
+          load.assigned_unit_id ? String(load.assigned_unit_id) : null,
+          input.requestingUserUuid,
+        ]
+      );
+    }
+
     // Block 7 (migration 202606221000): persist pieces + customer PO at create — post-insert, same pattern
     // as trip_type below, so the 39-column lockstep INSERT is untouched. customer_po_number was previously
     // accepted-but-dropped; now it stores. Entity-scoped row (the load just inserted under $1 above).
