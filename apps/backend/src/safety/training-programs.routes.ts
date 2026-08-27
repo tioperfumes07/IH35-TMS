@@ -72,7 +72,7 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
     return reply.send({ training_programs: trainingPrograms });
   });
 
-  app.post("/api/v1/safety/training-programs", async (req, reply) => {
+  app.post("/api/v1/safety/training-programs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -81,7 +81,7 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      const res = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.training_programs (
             operating_company_id,
@@ -103,6 +103,8 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
           body.data.passing_grade ?? null,
         ]
       );
+      const trainingProgram = res.rows[0];
+      if (!trainingProgram?.id) throw new Error("safety_training_program_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -110,12 +112,12 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
         {
           operating_company_id: query.data.operating_company_id,
           resource_type: "safety.training_programs",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: trainingProgram.id,
         },
         "info",
         "P7-SAFETY-TRAINING-PROGRAMS"
       );
-      return res.rows[0];
+      return trainingProgram;
     });
     return reply.code(201).send(created);
   });
