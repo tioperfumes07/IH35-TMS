@@ -43,6 +43,14 @@ type DbClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
+class ReeferEquipmentScopeError extends Error {
+  statusCode = 400;
+  code = "linked_entity_not_in_operating_company";
+  constructor() {
+    super("linked_entity_not_in_operating_company");
+  }
+}
+
 export function reeferHoursSourceLabel(source: string) {
   switch (source) {
     case "samsara":
@@ -174,13 +182,13 @@ const SPECS_SELECT = `
                         AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = rs.operating_company_id
 `;
 
-async function fetchLatestHours(client: DbClient, equipmentId: string): Promise<number | null> {
+async function fetchLatestHours(client: DbClient, companyId: string, equipmentId: string): Promise<number | null> {
   const res = await client.query(
     `${LOG_SELECT}
-     WHERE l.equipment_id = $1 AND l.archived_at IS NULL
+     WHERE l.equipment_id = $1 AND l.operating_company_id = $2::uuid AND l.archived_at IS NULL
      ORDER BY l.recorded_at DESC, l.created_at DESC
      LIMIT 1`,
-    [equipmentId]
+    [equipmentId, companyId]
   );
   const row = res.rows[0];
   if (!row) return null;
@@ -192,9 +200,10 @@ async function ensureReeferSpecs(
   companyId: string,
   equipmentId: string
 ): Promise<Record<string, unknown>> {
-  const existing = await client.query(`${SPECS_SELECT} WHERE rs.equipment_id = $1 AND rs.archived_at IS NULL LIMIT 1`, [
-    equipmentId,
-  ]);
+  const existing = await client.query(
+    `${SPECS_SELECT} WHERE rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid AND rs.archived_at IS NULL LIMIT 1`,
+    [equipmentId, companyId]
+  );
   if (existing.rows[0]) return existing.rows[0];
 
   const eqRes = await client.query(
@@ -204,7 +213,8 @@ async function ensureReeferSpecs(
      ) LIMIT 1`,
     [equipmentId, companyId]
   );
-  const eq = eqRes.rows[0] ?? {};
+  const eq = eqRes.rows[0];
+  if (!eq) throw new ReeferEquipmentScopeError();
   const insert = await client.query(
     `INSERT INTO maintenance.reefer_specs (
       operating_company_id, equipment_id, reefer_brand, service_interval_hours,
@@ -220,7 +230,10 @@ async function ensureReeferSpecs(
       eq.reefer_last_service_date ?? null,
     ]
   );
-  const fetched = await client.query(`${SPECS_SELECT} WHERE rs.id = $1`, [String(insert.rows[0]?.id)]);
+  const fetched = await client.query(`${SPECS_SELECT} WHERE rs.id = $1 AND rs.operating_company_id = $2::uuid`, [
+    String(insert.rows[0]?.id),
+    companyId,
+  ]);
   return fetched.rows[0] ?? {};
 }
 
@@ -237,7 +250,7 @@ export async function appendReeferHoursLogEntry(
     created_by_user_id?: string | null;
   }
 ): Promise<Record<string, unknown> | null> {
-  const latest = await fetchLatestHours(client, input.equipment_id);
+  const latest = await fetchLatestHours(client, input.operating_company_id, input.equipment_id);
   if (latest != null && Math.abs(latest - input.hours_reading) < 0.01 && input.source === "samsara") {
     return null;
   }
@@ -260,7 +273,10 @@ export async function appendReeferHoursLogEntry(
     ]
   );
   const id = String(res.rows[0]?.id ?? "");
-  const fetched = await client.query(`${LOG_SELECT} WHERE l.id = $1`, [id]);
+  const fetched = await client.query(`${LOG_SELECT} WHERE l.id = $1 AND l.operating_company_id = $2::uuid`, [
+    id,
+    input.operating_company_id,
+  ]);
   return fetched.rows[0] ?? null;
 }
 
@@ -342,7 +358,7 @@ export async function evaluateReeferHoursPmSchedulesForCompany(
     const equipmentId = row.equipment_id ? String(row.equipment_id) : null;
     if (!equipmentId) continue;
     const specs = await ensureReeferSpecs(client, operatingCompanyId, equipmentId);
-    const currentHours = await fetchLatestHours(client, equipmentId);
+    const currentHours = await fetchLatestHours(client, operatingCompanyId, equipmentId);
     const mapped = mapReeferSpecsRow(specs, currentHours);
     if (mapped.pm_status === "due" || mapped.pm_status === "near_due") {
       dueRows.push({
@@ -406,6 +422,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
         created_by_user_id: user.uuid,
       });
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.manual_entry", {
+        operating_company_id: body.operating_company_id,
         equipment_id: body.equipment_id,
         hours_reading: body.hours_reading,
       });
@@ -426,13 +443,13 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
 
     const payload = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const specs = await ensureReeferSpecs(client, parsed.data.operating_company_id, parsed.data.equipment_id);
-      const currentHours = await fetchLatestHours(client, parsed.data.equipment_id);
+      const currentHours = await fetchLatestHours(client, parsed.data.operating_company_id, parsed.data.equipment_id);
       const logRes = await client.query(
         `${LOG_SELECT}
-         WHERE l.equipment_id = $1 AND l.archived_at IS NULL
+         WHERE l.equipment_id = $1 AND l.operating_company_id = $2::uuid AND l.archived_at IS NULL
          ORDER BY l.recorded_at DESC, l.created_at DESC
-         LIMIT $2`,
-        [parsed.data.equipment_id, parsed.data.limit]
+         LIMIT $3`,
+        [parsed.data.equipment_id, parsed.data.operating_company_id, parsed.data.limit]
       );
       return {
         specs: mapReeferSpecsRow(specs, currentHours),
@@ -470,12 +487,14 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
         values
       );
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_specs.updated", {
+        operating_company_id: body.operating_company_id,
         equipment_id: body.equipment_id,
       });
-      const specs = await client.query(`${SPECS_SELECT} WHERE rs.equipment_id = $1 AND rs.archived_at IS NULL LIMIT 1`, [
-        body.equipment_id,
-      ]);
-      const currentHours = await fetchLatestHours(client, body.equipment_id);
+      const specs = await client.query(
+        `${SPECS_SELECT} WHERE rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid AND rs.archived_at IS NULL LIMIT 1`,
+        [body.equipment_id, body.operating_company_id]
+      );
+      const currentHours = await fetchLatestHours(client, body.operating_company_id, body.equipment_id);
       return mapReeferSpecsRow(specs.rows[0] ?? {}, currentHours);
     });
     return reply.send(row);
@@ -489,7 +508,10 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
 
     const result = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const ingest = await ingestReeferHoursFromSamsaraForCompany(client, parsed.data.operating_company_id);
-      await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.samsara_ingest", ingest);
+      await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.samsara_ingest", {
+        operating_company_id: parsed.data.operating_company_id,
+        ...ingest,
+      });
       return ingest;
     });
     return reply.send(result);
@@ -523,7 +545,10 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
          WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived reefer hours entry"]
       );
-      await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.archived", { id: params.data.id });
+      await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.archived", {
+        operating_company_id: parsed.data.operating_company_id,
+        id: params.data.id,
+      });
     });
     return reply.send({ ok: true, id: params.data.id });
   });
