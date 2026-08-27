@@ -25,6 +25,8 @@ export function listGeofenceBreaches(args: {
   from?: string;
   to?: string;
   filter?: GeofenceBreachFilter;
+  page_size?: number;
+  offset?: number;
 }) {
   const query = new URLSearchParams({
     operating_company_id: args.operating_company_id,
@@ -32,7 +34,9 @@ export function listGeofenceBreaches(args: {
   });
   if (args.from) query.set("from", args.from);
   if (args.to) query.set("to", args.to);
-  return apiRequest<{ events: GeofenceBreachEvent[]; from: string; to: string; filter: GeofenceBreachFilter }>(
+  if (args.page_size != null) query.set("page_size", String(args.page_size));
+  if (args.offset != null) query.set("offset", String(args.offset));
+  return apiRequest<{ events: GeofenceBreachEvent[]; total_count: number; active_count: number; active_vehicle_ids: string[]; from: string; to: string; filter: GeofenceBreachFilter; page_size: number; offset: number }>(
     `/api/v1/safety/geofence-breaches?${query.toString()}`
   );
 }

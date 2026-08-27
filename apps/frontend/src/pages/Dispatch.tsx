@@ -190,6 +190,7 @@ export function DispatchPage({
       listGeofenceBreaches({
         operating_company_id: defaultCompanyIds[0] ?? "",
         filter: "active",
+        page_size: 1,
       }),
     enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board" && showLoadBoard,
     refetchInterval: 30_000,
@@ -234,11 +235,9 @@ export function DispatchPage({
   const awaitingTrucks = awaitingTrucksQuery.data?.units ?? [];
   const activeGeofenceBreachVehicleIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const event of geofenceBreachesQuery.data?.events ?? []) {
-      if (!event.acknowledged_at) ids.add(event.vehicle_id);
-    }
+    for (const unitId of geofenceBreachesQuery.data?.active_vehicle_ids ?? []) ids.add(unitId);
     return ids;
-  }, [geofenceBreachesQuery.data?.events]);
+  }, [geofenceBreachesQuery.data?.active_vehicle_ids]);
   const totalCount = loadsQuery.data?.total_count ?? 0;
 
   const setFilterState = (nextFilters: DispatchFilterState) => {

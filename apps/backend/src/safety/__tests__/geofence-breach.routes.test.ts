@@ -81,6 +81,35 @@ describe("geofence breach routes", () => {
     expect(resCompanyB.json().events).toEqual([]);
   });
 
+  it("returns exact range metadata and a bounded page", async () => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("COUNT(*) FILTER")) {
+        expect(values?.[3]).toBe("active");
+        return { rows: [{ total_count: 1205, active_count: 1205, active_vehicle_ids: ["unit-a", "unit-b"] }] };
+      }
+      if (sql.includes("FROM safety.geofence_breach_events e")) {
+        expect(values?.slice(3)).toEqual([50, 1000]);
+        return { rows: [{ id: "evt-1001", vehicle_id: "unit-a" }] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/safety/geofence-breaches?operating_company_id=11111111-1111-4111-8111-111111111111&filter=active&page_size=50&offset=1000",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      events: [{ id: "evt-1001" }],
+      total_count: 1205,
+      active_count: 1205,
+      active_vehicle_ids: ["unit-a", "unit-b"],
+      page_size: 50,
+      offset: 1000,
+    });
+  });
+
   it("acknowledges event for matching tenant", async () => {
     mockQuery.mockResolvedValue({
       rows: [
