@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { resolveApiUrl } from "../../api/client";
@@ -73,8 +74,14 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
 
   const generateMutation = useMutation({
     mutationFn: () => {
-      const year = new Date().getUTCFullYear();
-      const month = new Date().getUTCMonth();
+      // FORM2290-GENERATE-DRAFT-UTC-PERIOD-BOUNDARY: the HVUT tax-period boundary (July 1) is a
+      // Central-Time business date (CLAUDE.md §8), not a UTC one. Using getUTCFullYear/getUTCMonth
+      // rolled the computed period a year early for anyone clicking "Generate draft" in the
+      // ~5-6 hour window after 7 PM CT on June 30 (when UTC has already reached July 1 but it is
+      // still June 30 in Central Time). companyToday() anchors on America/Chicago instead.
+      const [ty, tmoStr] = companyToday().split("-");
+      const year = Number(ty);
+      const month = Number(tmoStr) - 1; // 0-indexed to match the original month>=6 comparison
       const periodYear = month >= 6 ? year : year - 1;
       const taxPeriodStart = `${periodYear}-07-01`;
       return apiPost(
