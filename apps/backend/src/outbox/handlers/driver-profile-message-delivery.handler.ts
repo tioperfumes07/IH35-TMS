@@ -16,6 +16,7 @@ export class DriverProfileMessageDeliveryHandler implements OutboxEventHandler {
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext): Promise<OutboxHandlerResult> {
     const companyId = requiredText(payload, "operating_company_id");
     const messageId = requiredText(payload, "aggregate_id");
+    const driverId = requiredText(payload, "driver_id");
     const channel = requiredText(payload, "channel");
     const to = requiredText(payload, "to");
     const message = requiredText(payload, "message");
@@ -45,9 +46,9 @@ export class DriverProfileMessageDeliveryHandler implements OutboxEventHandler {
     const updated = await ctx.client.query<{ id: string }>(
       `UPDATE mdata.driver_profile_messages
           SET delivery_status = 'sent', delivery_ref = $3
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND driver_id = $4::uuid
         RETURNING id::text`,
-      [messageId, companyId, deliveryRef]
+      [messageId, companyId, deliveryRef, driverId]
     );
     if (updated.rows.length !== 1) throw new Error("driver_profile_message_delivery_row_not_found");
     return { message: "driver_profile_message_delivered" };
