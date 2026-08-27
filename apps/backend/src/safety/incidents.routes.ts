@@ -679,6 +679,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
               description = COALESCE(description || E'\n', '') || $4,
               updated_at = now()
           WHERE id = $1 AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
+            AND status = $5
           RETURNING *
         `,
         [
@@ -686,10 +688,11 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           query.data.operating_company_id,
           body.data.status,
           `[${body.data.status.toUpperCase()}] ${body.data.reason}`,
+          row.status,
         ]
       );
       const updatedRow = res.rows[0];
-      if (!updatedRow) return { kind: "not_found" as const };
+      if (!updatedRow) return { kind: "conflict_race" as const };
       await appendCrudAudit(
         client,
         user.uuid,
@@ -713,6 +716,12 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       return reply
         .code(409)
         .send({ error: "incident_voided", message: "This incident was voided and its lifecycle is closed." });
+    }
+    if (outcome.kind === "conflict_race") {
+      return reply.code(409).send({
+        error: "incident_state_changed",
+        message: "This incident was voided or changed status while you were editing it. Reload and retry.",
+      });
     }
     if (outcome.kind === "unchanged") {
       return reply.code(409).send({ error: "incident_status_unchanged", message: `This incident is already ${outcome.status}.` });
