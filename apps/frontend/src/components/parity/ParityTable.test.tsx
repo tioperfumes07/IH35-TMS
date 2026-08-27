@@ -282,6 +282,44 @@ describe("ParityTable (A1 grammar)", () => {
     });
   });
 
+  // PARITY-SORT-COMPUTED-COLUMN-NO-OP — sort had the same bug class as export: falling back to
+  // raw row[key] when a computed column has no sortValue. If key doesn't match a real property,
+  // every row's extracted value is undefined, so every pairwise comparison hits the nulls-equal
+  // branch and returns 0 — clicking the header toggles the arrow but the row order never changes.
+  it("sortValue overrides the raw row lookup for a column whose key has no matching row property (a complete sort no-op without it)", () => {
+    type ComputedRow = { id: string; computed: string };
+    const noSortValueColumns: Array<ParityColumn<ComputedRow>> = [
+      // key "label" doesn't exist on ComputedRow at all — the real text comes from `computed`,
+      // exactly the ItemsListPage.tsx "type"/"category"/"income"/"expense"/"status" shape.
+      { key: "label", label: "Label", sortable: true, render: (r) => r.computed },
+    ];
+    const withSortValueColumns: Array<ParityColumn<ComputedRow>> = [
+      { key: "label", label: "Label", sortable: true, render: (r) => r.computed, sortValue: (r) => r.computed },
+    ];
+    const unordered: ComputedRow[] = [
+      { id: "1", computed: "Bravo" },
+      { id: "2", computed: "Alpha" },
+    ];
+    const renderedOrder = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((tr) => tr.textContent ?? "");
+
+    const { unmount } = render(<ParityTable<ComputedRow> columns={noSortValueColumns} rows={unordered} rowKey={(r) => r.id} />);
+    expect(renderedOrder()).toEqual(["Bravo", "Alpha"]); // input order
+    fireEvent.click(screen.getByText("Label"));
+    // THE BUG: without sortValue, row["label"] is undefined for every row → no-op.
+    expect(renderedOrder()).toEqual(["Bravo", "Alpha"]);
+    unmount();
+
+    render(<ParityTable<ComputedRow> columns={withSortValueColumns} rows={unordered} rowKey={(r) => r.id} />);
+    expect(renderedOrder()).toEqual(["Bravo", "Alpha"]); // input order
+    fireEvent.click(screen.getByText("Label"));
+    // THE FIX: with sortValue reading `computed`, the click genuinely reorders the rows.
+    expect(renderedOrder()).toEqual(["Alpha", "Bravo"]);
+  });
+
   it("renders resize handles by default and omits them when disabled", () => {
     const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     expect(screen.getByLabelText("Resize Name")).toBeInTheDocument();

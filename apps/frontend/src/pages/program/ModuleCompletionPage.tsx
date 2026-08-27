@@ -240,6 +240,12 @@ export function ModuleCompletionPage() {
         // "[object Object]". Mirrors U14HopBadge's own text exactly.
         exportValue: (row) =>
           !row.u14 ? "—" : row.u14.status === "CERTIFIED" ? `Hops certified · ${row.u14.liveSha}` : "Hops open",
+        // PARITY-SORT-COMPUTED-COLUMN-NO-OP: `sortable` with no sortValue fell back to raw
+        // row["u14"] — an OBJECT. compareSortValues stringifies non-numbers, so every defined
+        // row read as the identical "[object Object]" and compared equal to every other defined
+        // row; clicking the header only ever separated defined-vs-undefined rows, never actually
+        // ordered CERTIFIED vs open hops relative to each other.
+        sortValue: (row) => row.u14?.status ?? null,
       },
       {
         key: "progress",
@@ -263,6 +269,11 @@ export function ModuleCompletionPage() {
         sortable: true,
         render: (row) => (row.defined ? String(row.total - row.done) : "—"),
         exportValue: (row) => (row.defined ? String(row.total - row.done) : "—"),
+        // PARITY-SORT-COMPUTED-COLUMN-NO-OP: ModuleRow has no `open` field — `sortable` with no
+        // sortValue fell back to raw row["open"], `undefined` for EVERY row, so every pairwise
+        // comparison hit the nulls-equal branch and returned 0: clicking the "Open" header
+        // toggled the sort arrow but the row order never changed.
+        sortValue: (row) => (row.defined ? row.total - row.done : null),
       },
       {
         key: "detail",
