@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { titleize } from "../../lib/titleize";
@@ -28,6 +28,9 @@ type Props = {
 };
 
 export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventTypes = true }: Props) {
+  // @matrix-built fleet:unit.profile.maintenance:{unit,connectivity,reverse_link,qbo_chrome}
+  // @matrix-built fleet:trailer.profile.maintenance:{trailer,connectivity,reverse_link,qbo_chrome}
+  const PAGE_SIZE = 50;
   const navigate = useNavigate();
   const [selectedTypes, setSelectedTypes] = useState<ServiceTimelineEventType[]>(
     showUnitEventTypes
@@ -36,6 +39,9 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
   );
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(0);
+
+  useEffect(() => setPage(0), [companyId, unitId, equipmentId, selectedTypes, fromDate, toDate]);
 
   const visibleTypeOptions = useMemo(
     () => (showUnitEventTypes ? EVENT_TYPE_OPTIONS : EVENT_TYPE_OPTIONS.filter((opt) => opt.value === "work_order")),
@@ -43,7 +49,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
   );
 
   const timelineQ = useQuery({
-    queryKey: ["service-timeline", companyId, unitId, equipmentId, selectedTypes, fromDate, toDate],
+    queryKey: ["service-timeline", companyId, unitId, equipmentId, selectedTypes, fromDate, toDate, page],
     queryFn: () =>
       getMaintenanceServiceTimeline({
         operating_company_id: companyId,
@@ -52,11 +58,14 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
         event_types: selectedTypes,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       }),
     enabled: Boolean(companyId && (unitId || equipmentId)),
   });
 
   const events = timelineQ.data?.events ?? [];
+  const totalCount = timelineQ.data?.total_count ?? 0;
 
   const toggleType = (value: ServiceTimelineEventType) => {
     setSelectedTypes((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
@@ -140,6 +149,15 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
           )}
         </ul>
       )}
+      {!timelineQ.isError && totalCount > PAGE_SIZE ? (
+        <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-2 text-xs text-slate-600">
+          <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}</span>
+          <div className="flex gap-2">
+            <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={page === 0 || timelineQ.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
+            <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || timelineQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

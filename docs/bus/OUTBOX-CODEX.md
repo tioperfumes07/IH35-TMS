@@ -1436,3 +1436,4 @@ Codex | WORKING | GO-0808 | FINDING=SAFETY-F6872-GEOFENCE-BREACH-SILENT-1000-CAP
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6873-DRUG-PROGRAM-AUXILIARY-HISTORY-SILENT-500-CAP | vertical=random-pool+clearinghouse register | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6874-ANOMALY-DASHBOARD-SILENT-200-CAP | vertical=dashboard+global badge | guard=10/10 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=MAINT-F6875-DVIR-DEFECT-TRIAGE-HISTORY-SILENT-50-CAP | vertical=defect detail lifecycle history | guard=10/10 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | SAFETY-F6881 | PR=#16734 @ 2963591225 | Built=safety:driver_scheduler.list driver+unit+connectivity+reverse_link+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6882 service-timeline exact global range | GO

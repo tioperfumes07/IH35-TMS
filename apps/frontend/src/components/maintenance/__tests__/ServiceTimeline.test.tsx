@@ -44,7 +44,9 @@ function renderTimeline(props: Partial<React.ComponentProps<typeof ServiceTimeli
 describe("ServiceTimeline (B31)", () => {
   beforeEach(() => {
     navigate.mockReset();
-    vi.spyOn(maintenanceApi, "getMaintenanceServiceTimeline").mockResolvedValue({ events: [sampleEvent], filters: {} });
+    vi.spyOn(maintenanceApi, "getMaintenanceServiceTimeline").mockResolvedValue({
+      events: [sampleEvent], total_count: 1, limit: 50, offset: 0, filters: {},
+    });
   });
 
   it("renders service history timeline shell", async () => {
@@ -76,5 +78,14 @@ describe("ServiceTimeline (B31)", () => {
         expect.objectContaining({ from_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), unit_id: "unit-1" })
       );
     });
+  });
+
+  it("requests the next exact server range", async () => {
+    const spy = vi.spyOn(maintenanceApi, "getMaintenanceServiceTimeline").mockResolvedValue({
+      events: [sampleEvent], total_count: 75, limit: 50, offset: 0, filters: {},
+    });
+    renderTimeline();
+    fireEvent.click(await screen.findByRole("button", { name: "Next" }));
+    await waitFor(() => expect(spy).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, offset: 50 })));
   });
 });
