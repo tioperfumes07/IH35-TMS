@@ -150,13 +150,15 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     try {
       const row = await withCurrentUser(user.uuid, async (client) => {
         await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-        const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
-        if (!unitOk) return null;
-        const res = await client.query(
+        const res = await client.query<{ id: string; country: string; jurisdiction: string; plate_number: string; expiration: string | null; status: string; notes: string | null }>(
           `
             INSERT INTO mdata.unit_plates (
               operating_company_id, unit_id, country, jurisdiction, plate_number, expiration, notes
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+            )
+            SELECT $1::uuid, u.id, $3, $4, $5, $6, $7
+            FROM mdata.units u
+            WHERE u.id = $2::uuid
+              AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
             RETURNING id, country, jurisdiction, plate_number, expiration::text, status, notes
           `,
           [
@@ -170,9 +172,11 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
           ]
         );
         const created = res.rows[0];
+        if (!created?.id) return null;
         await appendCrudAudit(client, user.uuid, "mdata.unit_plates.created", {
           resource_id: created.id,
           unit_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
         });
         return created;
       });
