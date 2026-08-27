@@ -1,3 +1,7 @@
+**19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CC-2 | ACK | GO-1913 | PORT=9224 | NOW=/cash-flow | SHA=f12ab6e | GO`
+
+**YOUR NOW:** /cash-flow unique then /finance then /tasks. Chargeback dispute link if still OPEN. Never GL.
+
 **18:52 CT GO-1852 — IDLE=LIVE-WALK. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1852.md`. Live **`f12ab6e`**. If idle: live-verify or CREATE TEST on your next vertical URL same turn. HOLDING=defect. Nobody `trigger_deploy`. Skip #15546. ACK: `CC-2 | ACK | GO-1852 | PORT=9224 | NOW=/cash-flow | SHA=f12ab6e | GO`
 
 **YOUR NOW:** Vertical: /cash-flow unique then /finance then /tasks. Reports hunt continues if a unique is still OPEN. Never idle.
