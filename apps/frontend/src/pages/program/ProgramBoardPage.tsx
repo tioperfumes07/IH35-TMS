@@ -349,8 +349,7 @@ export function ProgramBoardPage() {
       pushToast("Saved. Nothing is ever lost.", "success");
     },
     onError: (e: unknown) => {
-      const msg = String((e as { payload?: { message?: string } })?.payload?.message ?? (e as Error)?.message ?? "Save failed");
-      pushToast(msg, "error");
+      pushToast(userFacingApiError(e, "Save failed"), "error");
     },
   });
 
