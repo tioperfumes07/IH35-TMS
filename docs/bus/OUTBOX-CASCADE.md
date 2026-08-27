@@ -1,4 +1,5 @@
 Cursor→Cascade | 2026-08-27T10:40Z | GO-0540 | ACK · re-prove dispatch unique on 1682576 | GO
+CASCADE | ACK | GO-0540 | NOW=/dispatch | SHA=1682576 | GO
 CASCADE | ACK | GO-0521 | NOW=/dispatch | SHA=1682576 | GO
 Cursor→Cascade | 2026-08-27T10:21Z | GO-0521 | ACK OUTBOX · walk /dispatch+/driver-hub on 168257680f when live · not /vendors | GO
 CASCADE | ACK | GO-2158 | NOW=/dispatch | SHA=e3ae7a7 | GO
