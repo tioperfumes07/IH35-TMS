@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const idParams = z.object({ id: z.string().uuid() });
@@ -50,6 +51,13 @@ function computePartsCost(partsUsed: Array<{ qty: number; unit_cost_cents: numbe
   return partsUsed.reduce((sum, p) => sum + p.qty * p.unit_cost_cents, 0);
 }
 
+class InternalLaborPartConflictError extends Error {
+  constructor(public readonly partId: string) {
+    super("internal_labor_part_not_found_or_insufficient_stock");
+    this.name = "InternalLaborPartConflictError";
+  }
+}
+
 export async function internalLaborRoutes(app: FastifyInstance) {
   // GET /api/v1/maintenance/internal-labor?operating_company_id=&work_order_id=
   app.get("/api/v1/maintenance/internal-labor", async (req, reply) => {
@@ -67,9 +75,9 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     }).parse(req.query);
 
     const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
-      const conditions: string[] = ["il.is_active = true"];
-      const params: unknown[] = [];
-      let idx = 1;
+      const conditions: string[] = ["il.operating_company_id = $1::uuid", "il.is_active = true"];
+      const params: unknown[] = [q.operating_company_id];
+      let idx = 2;
 
       if (q.work_order_id) { conditions.push(`il.work_order_id = $${idx++}`); params.push(q.work_order_id); }
       if (q.mechanic_user_id) { conditions.push(`il.mechanic_user_id = $${idx++}`); params.push(q.mechanic_user_id); }
@@ -86,6 +94,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         FROM maintenance.internal_labor_log il
         LEFT JOIN identity.users u ON u.id = il.mechanic_user_id
         LEFT JOIN maintenance.work_orders wo ON wo.id = il.work_order_id
+                                               AND wo.operating_company_id = il.operating_company_id
         WHERE ${conditions.join(" AND ")}
         ORDER BY il.start_time DESC
         LIMIT $${idx++} OFFSET $${idx++}
@@ -119,11 +128,12 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         FROM maintenance.internal_labor_log il
         LEFT JOIN identity.users u ON u.id = il.mechanic_user_id
         WHERE il.start_time BETWEEN $1 AND $2
+          AND il.operating_company_id = $3::uuid
           AND il.is_active = true
           AND il.end_time IS NOT NULL
         GROUP BY il.mechanic_user_id, mechanic_name
         ORDER BY total_hours DESC NULLS LAST
-      `, [q.from_date, q.to_date]);
+      `, [q.from_date, q.to_date, q.operating_company_id]);
       return rows;
     });
 
@@ -138,6 +148,19 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const totalPartsCost = computePartsCost(body.parts_used);
 
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+      const linked = await client.query(
+        `SELECT wo.id
+           FROM maintenance.work_orders wo
+           JOIN mdata.units u ON u.id = $3::uuid
+          WHERE wo.id = $2::uuid
+            AND wo.operating_company_id = $1::uuid
+            AND wo.unit_id = u.id
+            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+            AND u.deactivated_at IS NULL
+          LIMIT 1`,
+        [body.operating_company_id, body.work_order_id, body.unit_id]
+      );
+      if (!linked.rows[0]) return null;
       const { rows } = await client.query(`
         INSERT INTO maintenance.internal_labor_log (
           operating_company_id, tenant_id,
@@ -160,9 +183,17 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         totalPartsCost,
         body.notes ?? null,
       ]);
+      await appendCrudAudit(client, user.uuid, "maintenance.internal_labor.created", {
+        resource_type: "maintenance.internal_labor_log",
+        resource_id: rows[0]?.id,
+        operating_company_id: body.operating_company_id,
+        work_order_id: body.work_order_id,
+        unit_id: body.unit_id,
+      });
       return rows[0];
     });
 
+    if (!row) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     reply.code(201).send({ data: row });
   });
 
@@ -174,44 +205,55 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const body = closeLaborBody.parse(req.body);
 
-    const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-      await client.query("BEGIN");
+    let result: Record<string, unknown> | null;
+    try {
+      result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+        // withCurrentUser owns the transaction. Keep the row lock, mutation, inventory decrement,
+        // and audit in that single outer transaction so any part conflict rolls the close back.
+        const { rows: existing } = await client.query(
+          `SELECT *
+             FROM maintenance.internal_labor_log
+            WHERE id = $1
+              AND operating_company_id = $2::uuid
+              AND is_active = true
+              AND end_time IS NULL
+            FOR UPDATE`,
+          [id, body.operating_company_id]
+        );
+        if (!existing[0]) return null;
+        const entry = existing[0];
+        const partsUsed = body.parts_used ?? entry.parts_used ?? [];
+        const totalPartsCost = computePartsCost(partsUsed);
 
-      // 1. Fetch existing labor entry
-      const { rows: existing } = await client.query(
-        `SELECT * FROM maintenance.internal_labor_log WHERE id = $1 AND is_active = true FOR UPDATE`,
-        [id]
-      );
-      if (!existing[0]) {
-        await client.query("ROLLBACK");
-        return null;
-      }
-      const entry = existing[0];
-      const partsUsed = body.parts_used ?? entry.parts_used ?? [];
-      const totalPartsCost = computePartsCost(partsUsed);
+        const { rows: updated } = await client.query(`
+          UPDATE maintenance.internal_labor_log
+          SET end_time = $2,
+              parts_used = $3,
+              total_parts_cost_cents = $4,
+              notes = COALESCE($5, notes),
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $6::uuid
+            AND is_active = true
+            AND end_time IS NULL
+          RETURNING *
+        `, [id, body.end_time, JSON.stringify(partsUsed), totalPartsCost, body.notes ?? null, body.operating_company_id]);
 
-      // 2. Close the labor entry
-      const { rows: updated } = await client.query(`
-        UPDATE maintenance.internal_labor_log
-        SET end_time = $2,
-            parts_used = $3,
-            total_parts_cost_cents = $4,
-            notes = COALESCE($5, notes),
-            updated_at = now()
-        WHERE id = $1
-        RETURNING *
-      `, [id, body.end_time, JSON.stringify(partsUsed), totalPartsCost, body.notes ?? null]);
+        const closed = updated[0];
+        if (!closed) return null;
 
-      const closed = updated[0];
-
-      // 3. Decrement parts inventory for each part used
-      for (const part of partsUsed) {
-        await client.query(`
-          UPDATE maintenance.parts_inventory
-          SET on_hand_qty = on_hand_qty - $1
-          WHERE id = $2 AND on_hand_qty >= $1
-        `, [part.qty, part.part_id]);
-      }
+        for (const part of partsUsed) {
+          const decremented = await client.query(`
+            UPDATE maintenance.parts_inventory
+            SET on_hand_qty = on_hand_qty - $1,
+                updated_at = now()
+            WHERE id = $2
+              AND operating_company_id = $3::uuid
+              AND on_hand_qty >= $1
+            RETURNING id
+          `, [part.qty, part.part_id, body.operating_company_id]);
+          if (!decremented.rows[0]) throw new InternalLaborPartConflictError(part.part_id);
+        }
 
       // 4. GL POSTING — REMOVED (was a DEFECT): this previously INSERTed a `status='posted'`
       // accounting.journal_entries HEADER with NO journal_entry_postings LINES — an unbalanced, empty JE
@@ -225,9 +267,21 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       // Labor Recovery (labor portion), CR Parts Inventory (parts portion) — behind a default-OFF per-entity
       // flag, with the three accounts resolved via the CoA role resolver (no hardcoded account math here).
 
-      await client.query("COMMIT");
-      return closed;
-    });
+        await appendCrudAudit(client, user.uuid, "maintenance.internal_labor.closed", {
+          resource_type: "maintenance.internal_labor_log",
+          resource_id: id,
+          operating_company_id: body.operating_company_id,
+          work_order_id: entry.work_order_id,
+          unit_id: entry.unit_id,
+        });
+        return closed;
+      });
+    } catch (error) {
+      if (error instanceof InternalLaborPartConflictError) {
+        return reply.code(409).send({ error: error.message, part_id: error.partId });
+      }
+      throw error;
+    }
 
     if (!result) return reply.code(404).send({ error: "Labor entry not found" });
     reply.send({ data: result });
@@ -240,13 +294,26 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const { operating_company_id } = companyQuery.parse(req.query);
 
-    await withCompany(user.uuid, operating_company_id, async (client) => {
-      await client.query(
-        `UPDATE maintenance.internal_labor_log SET is_active = false, updated_at = now() WHERE id = $1`,
-        [id]
+    const archived = await withCompany(user.uuid, operating_company_id, async (client) => {
+      const res = await client.query(
+        `UPDATE maintenance.internal_labor_log
+            SET is_active = false, updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND is_active = true
+          RETURNING id`,
+        [id, operating_company_id]
       );
+      if (!res.rows[0]) return false;
+      await appendCrudAudit(client, user.uuid, "maintenance.internal_labor.archived", {
+        resource_type: "maintenance.internal_labor_log",
+        resource_id: id,
+        operating_company_id,
+      });
+      return true;
     });
 
+    if (!archived) return reply.code(404).send({ error: "Labor entry not found" });
     reply.code(204).send();
   });
 }
