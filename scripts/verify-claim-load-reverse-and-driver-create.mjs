@@ -52,7 +52,7 @@ export function computeFailures(sources) {
     errors.push("claim.routes.ts GET list must execute inside the selected operating company scope");
   }
   if (!/values(?:\s*:\s*unknown\[\])?\s*=\s*\[parsed\.data\.operating_company_id\]/.test(claimRoutes) ||
-      !/filters\s*=\s*\[\s*["'`]tenant_id = \$1::uuid["'`]\s*\]/.test(claimRoutes)) {
+      !/filters(?:\s*:\s*string\[\])?\s*=\s*\[\s*["'`]tenant_id = \$1::uuid["'`]\s*(?:,|\])/.test(claimRoutes)) {
     errors.push("claim.routes.ts GET list must seed the query with the selected operating company predicate");
   }
   if (!/if\s*\(parsed\.data\.load_id\)\s*\{[\s\S]{0,180}?values\.push\(parsed\.data\.load_id\)[\s\S]{0,180}?filters\.push\(`load_id = \$\$\{values\.length\}::uuid`\)/.test(claimRoutes)) {
@@ -151,6 +151,7 @@ function selftest() {
     ["claimShared", (f) => { f.claimShared = f.claimShared.replace("load_id: z.string().uuid().optional()", "load_id: z.string().optional()"); }, "listClaimsQuerySchema must accept optional load_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("withCompanyScope(user.uuid, parsed.data.operating_company_id", "withCompanyScope(user.uuid, user.operating_company_id"); }, "selected operating company scope"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("const values: unknown[] = [parsed.data.operating_company_id]", "const values: unknown[] = []"); }, "seed the query with the selected operating company"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace(/const filters(?:\s*:\s*string\[\])? = \["tenant_id = \$1::uuid"/, "const filters: string[] = ["); }, "seed the query with the selected operating company"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("values.push(parsed.data.load_id);", "values.push(parsed.data.driver_id);"); }, "bind load_id as a UUID query parameter"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('.replace(/^load_id/, "c.load_id")', '.replace(/^load_id/, "load_id")'); }, "scope load_id to c.load_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("AND cload.operating_company_id = ${scope}", "AND cload.operating_company_id IS NOT NULL"); }, "same-company mdata.loads join"],
