@@ -1,3 +1,4 @@
+Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6757 medical-card lifecycle audit race | SHIPPED #16500 @ 888b9ce6b6 SAFETY-F6756 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6756 drug-test lifecycle audit race | SHIPPED #16499 @ 4e331b4304 FUEL-F6755 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING INS-F6733 damage auto-claim explicit company scope | SHIPPED #16470 @ 8d9c7a6a49 SAFETY-F6732 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6732 damage continuity reverse-read company scope | SHIPPED #16468 @ 155ef19a96 SAFETY-F6731 | NEXT=guard+FAST-MERGE | GO
