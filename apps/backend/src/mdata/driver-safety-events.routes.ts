@@ -749,12 +749,13 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
             voided_by_user_id = $3,
             void_reason = $4,
             updated_by_user_id = $3
-          WHERE id = $1 AND driver_id = $2
+          WHERE id = $1 AND driver_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
         [parsedParams.data.event_id, parsedParams.data.driver_id, authUser.uuid, parsedBody.data.void_reason]
       );
       const row = updateRes.rows[0];
+      if (!row) return { error: "already_voided" as const };
 
       await appendCrudAudit(
         client,
@@ -764,6 +765,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "mdata.driver_safety_events",
           driver_id: row.driver_id,
+          operating_company_id: opco,
           void_reason: row.void_reason,
         },
         "warning",
