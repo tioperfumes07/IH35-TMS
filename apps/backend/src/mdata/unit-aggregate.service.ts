@@ -269,7 +269,7 @@ export async function buildUnitAggregate(
 
   const locPayloadRes = await client.query(
     `
-      SELECT payload
+      SELECT odometer_mi
       FROM telematics.vehicle_locations
       WHERE unit_id = $1::uuid
         AND operating_company_id IN (
@@ -282,7 +282,7 @@ export async function buildUnitAggregate(
     `,
     [unitId, operatingCompanyId]
   );
-  const locParsed = parseSamsaraVehiclePayload(locPayloadRes.rows[0]?.payload ?? null);
+  const locParsed = parseSamsaraVehiclePayload(locPayloadRes.rows[0] ?? null);
   const inventoryParsed = parseSamsaraVehiclePayload(samsaraRow?.raw_payload ?? null);
   const mergedParsed = {
     odometer_miles: locParsed.odometer_miles ?? inventoryParsed.odometer_miles,
