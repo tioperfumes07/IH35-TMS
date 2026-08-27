@@ -2400,11 +2400,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const driverRes = await client.query<{ id: string; phone: string; email: string | null; identity_user_id: string | null }>(
+        const driverRes = await client.query<{ id: string; operating_company_id: string; phone: string; email: string | null; identity_user_id: string | null }>(
           `
-            SELECT id, phone, email, identity_user_id
+            SELECT id, operating_company_id, phone, email, identity_user_id
             FROM mdata.drivers
             WHERE id = $1
+              AND deactivated_at IS NULL
               AND operating_company_id IN (
                 SELECT uca.company_id
                   FROM org.user_company_access uca
@@ -2431,11 +2432,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const identityUserId = userRes.rows[0]?.id;
         if (!identityUserId) return { error: "identity_user_create_failed" as const };
 
-        await client.query(`UPDATE mdata.drivers SET identity_user_id = $2, updated_by_user_id = $3 WHERE id = $1`, [
-          driver.id,
-          identityUserId,
-          authUser.uuid,
-        ]);
+        const linked = await client.query(
+          `UPDATE mdata.drivers
+              SET identity_user_id = $2, updated_by_user_id = $3
+            WHERE id = $1
+              AND operating_company_id = $4::uuid
+              AND identity_user_id IS NULL
+              AND deactivated_at IS NULL
+            RETURNING id`,
+          [driver.id, identityUserId, authUser.uuid, driver.operating_company_id]
+        );
+        if (!linked.rows[0]) return { error: "driver_phone_login_state_changed" as const };
 
         await appendCrudAudit(
           client,
@@ -2459,6 +2466,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if ("error" in updated) {
         if (updated.error === "mdata_driver_not_found") return reply.code(404).send({ error: updated.error });
         if (updated.error === "driver_phone_login_already_enabled") return reply.code(409).send({ error: updated.error });
+        if (updated.error === "driver_phone_login_state_changed") return reply.code(409).send({ error: updated.error });
         return reply.code(400).send({ error: updated.error });
       }
 
