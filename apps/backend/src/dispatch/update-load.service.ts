@@ -97,10 +97,10 @@ export type UpdateDispatchLoadFields = Partial<{
   is_sample_data: boolean;
   trip_type: "NB" | "TR" | "SB";
   tour_id: string | null;
-  // Block 7 (Jorge-approved, no migration): freight attributes round-tripped from the Edit wizard.
-  commodity: string | null;
-  cargo_weight_lbs: number | null;
-  reefer_setpoint_temp_f: number | null;
+  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/cargo_weight_lbs/
+  // reefer_setpoint_temp_f were REMOVED here — mdata.loads has never had these columns (verified live,
+  // no migration ever added them); SCALAR_COLUMNS below mapped them straight to nonexistent columns,
+  // 42703-ing any PATCH that touched them (poisoning unrelated dirty fields in the same request too).
   piece_count: number | null;
   customer_po_number: string | null;
   // render-v6 §B reefer/tarp detail (migration 202606231400).
@@ -181,9 +181,6 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   is_sample_data: "is_sample_data",
   trip_type: "trip_type",
   tour_id: "tour_id",
-  commodity: "commodity",
-  cargo_weight_lbs: "cargo_weight_lbs",
-  reefer_setpoint_temp_f: "reefer_setpoint_temp_f",
   piece_count: "piece_count",
   customer_po_number: "customer_po_number",
   reefer_temp_f: "reefer_temp_f",
