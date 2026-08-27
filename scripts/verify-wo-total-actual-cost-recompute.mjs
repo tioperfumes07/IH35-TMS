@@ -46,8 +46,21 @@ export function run(root = process.cwd()) {
 
   // The write must use the SAME line-total the function computed for validation (lineTotal), not a
   // hardcoded/different value that could silently drift from what was actually validated.
-  if (!/\[woId,\s*lineTotal\]/.test(fnBody)) {
-    failures.push("the UPDATE must be parameterized with [woId, lineTotal] — the exact sum just computed and validated");
+  if (!/\[woId,\s*lineTotal,\s*operatingCompanyId\]/.test(fnBody)) {
+    failures.push("the UPDATE must use [woId, lineTotal, operatingCompanyId] — the exact sum and explicit company scope");
+  }
+
+  if (!/JOIN\s+maintenance\.work_orders[\s\S]*?operating_company_id\s*=\s*\$2::uuid/i.test(fnBody)) {
+    failures.push("work_order_lines aggregation must join the company-scoped work order");
+  }
+  if (!/UPDATE\s+maintenance\.work_orders[\s\S]*?operating_company_id\s*=\s*\$3::uuid/i.test(fnBody)) {
+    failures.push("total_actual_cost UPDATE must include operating_company_id");
+  }
+  for (const table of ["parts_invoice_links", "bills"]) {
+    const query = fnBody.match(new RegExp(`FROM\\s+(?:maintenance\\.|accounting\\.)${table}[\\s\\S]*?\\[woId,\\s*operatingCompanyId\\]`, "i"))?.[0] ?? "";
+    if (!/operating_company_id\s*=\s*\$2::uuid/i.test(query)) {
+      failures.push(`${table} lookup must include operating_company_id and bind it`);
+    }
   }
 
   return failures;
@@ -60,18 +73,19 @@ if (process.argv.includes("--selftest")) {
     fs.writeFileSync(`${tmp}/${rel}`, body);
   };
   const good = `
-export async function validateWoVendorInvoiceTotals(client, woId) {
-  const linesRes = await client.query("SELECT SUM(total_cost) AS total FROM maintenance.work_order_lines WHERE work_order_uuid = $1::uuid", [woId]);
+export async function validateWoVendorInvoiceTotals(client, woId, operatingCompanyId) {
+  const linesRes = await client.query("SELECT SUM(li.total_cost) AS total FROM maintenance.work_order_lines li JOIN maintenance.work_orders wo ON wo.id = li.work_order_uuid AND wo.operating_company_id = $2::uuid WHERE li.work_order_uuid = $1::uuid", [woId, operatingCompanyId]);
   const lineTotal = linesRes.rows[0]?.total ?? 0;
 
   await client.query(
-    \`UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid\`,
-    [woId, lineTotal]
+    \`UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid AND operating_company_id = $3::uuid\`,
+    [woId, lineTotal, operatingCompanyId]
   );
 
-  const partsRes = await client.query("SELECT COUNT(*)::int AS cnt FROM maintenance.parts_invoice_links WHERE work_order_id = $1::uuid", [woId]);
+  const partsRes = await client.query("SELECT COUNT(*)::int AS cnt FROM maintenance.parts_invoice_links WHERE work_order_id = $1::uuid AND operating_company_id = $2::uuid", [woId, operatingCompanyId]);
   const partsCount = Number(partsRes.rows[0]?.cnt ?? 0);
-  const billsCount = 0;
+  const billsRes = await client.query("SELECT COUNT(*)::int AS cnt FROM accounting.bills WHERE linked_work_order_uuid = $1::uuid AND operating_company_id = $2::uuid", [woId, operatingCompanyId]);
+  const billsCount = Number(billsRes.rows[0]?.cnt ?? 0);
 
   if (partsCount === 0 && billsCount === 0) return;
 }
@@ -82,7 +96,7 @@ export async function validateWoVendorInvoiceTotals(client, woId) {
   // Regression 1: no UPDATE at all (the original bug).
   mk(
     "apps/backend/src/maintenance/wo-cost-validation.ts",
-    good.replace(/await client\.query\(\s*`UPDATE[\s\S]*?\[woId, lineTotal\]\s*\);\n\n/, "")
+    good.replace(/await client\.query\(\s*`UPDATE[\s\S]*?\[woId, lineTotal, operatingCompanyId\]\s*\);\n\n/, "")
   );
   let f = run(tmp);
   if (!f.length) throw new Error("FAIL fail: missing UPDATE entirely should be caught");
@@ -93,14 +107,30 @@ export async function validateWoVendorInvoiceTotals(client, woId) {
   mk(
     "apps/backend/src/maintenance/wo-cost-validation.ts",
     good
-      .replace(/await client\.query\(\s*`UPDATE[\s\S]*?\[woId, lineTotal\]\s*\);\n\n/, "")
+      .replace(/await client\.query\(\s*`UPDATE[\s\S]*?\[woId, lineTotal, operatingCompanyId\]\s*\);\n\n/, "")
       .replace(
         /\n\}$/,
-        `\n  await client.query(\`UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid\`, [woId, lineTotal]);\n}`
+        `\n  await client.query(\`UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid AND operating_company_id = $3::uuid\`, [woId, lineTotal, operatingCompanyId]);\n}`
       )
   );
   f = run(tmp);
   if (!f.length) throw new Error("FAIL fail: UPDATE placed after the early-return branch should be caught");
+
+  // Regression 3: the recompute write falls back to bare UUID scope.
+  mk(
+    "apps/backend/src/maintenance/wo-cost-validation.ts",
+    good.replace(/ AND operating_company_id = \$3::uuid/g, "")
+  );
+  f = run(tmp);
+  if (!f.length) throw new Error("FAIL fail: bare-ID work_orders UPDATE should be caught");
+
+  // Regression 4: a linked financial lookup drops its explicit company predicate.
+  mk(
+    "apps/backend/src/maintenance/wo-cost-validation.ts",
+    good.replace(/ AND operating_company_id = \$2::uuid\", \[woId, operatingCompanyId\]\);\n  const billsCount/, '\", [woId, operatingCompanyId]);\n  const billsCount')
+  );
+  f = run(tmp);
+  if (!f.length) throw new Error("FAIL fail: unscoped accounting.bills lookup should be caught");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-wo-total-actual-cost-recompute --selftest OK");

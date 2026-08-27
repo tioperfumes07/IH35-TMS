@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "../wo-cost-validation.js";
 
 const WO = "00000000-0000-0000-0000-0000000000bb";
+const COMPANY = "00000000-0000-0000-0000-0000000000cc";
 
 type FakeConfig = {
   lineTotal: number;
@@ -52,11 +53,11 @@ function fakeClient(cfg: FakeConfig) {
 describe("validateWoVendorInvoiceTotals — ACCT-F5626 total_actual_cost recompute", () => {
   it("persists total_actual_cost when NO bill/parts-invoice is linked yet (the most exposed case)", async () => {
     const client = fakeClient({ lineTotal: 450.5, partsCount: 0, billsExists: false });
-    await validateWoVendorInvoiceTotals(client, WO);
+    await validateWoVendorInvoiceTotals(client, WO, COMPANY);
 
     const updateCall = client.calls.find((c) => c.sql.includes("UPDATE maintenance.work_orders"));
     expect(updateCall, "expected a total_actual_cost UPDATE").toBeTruthy();
-    expect(updateCall?.values).toEqual([WO, 450.5]);
+    expect(updateCall?.values).toEqual([WO, 450.5, COMPANY]);
   });
 
   it("persists total_actual_cost when a linked bill's total MATCHES the line-item sum", async () => {
@@ -66,10 +67,10 @@ describe("validateWoVendorInvoiceTotals — ACCT-F5626 total_actual_cost recompu
       billsCount: 1,
       billsTotal: 1000,
     });
-    await expect(validateWoVendorInvoiceTotals(client, WO)).resolves.toBeUndefined();
+    await expect(validateWoVendorInvoiceTotals(client, WO, COMPANY)).resolves.toBeUndefined();
 
     const updateCall = client.calls.find((c) => c.sql.includes("UPDATE maintenance.work_orders"));
-    expect(updateCall?.values).toEqual([WO, 1000]);
+    expect(updateCall?.values).toEqual([WO, 1000, COMPANY]);
   });
 
   it("still throws WO_INVOICE_MISMATCH when a linked bill's total diverges (existing behavior preserved)", async () => {
@@ -81,7 +82,7 @@ describe("validateWoVendorInvoiceTotals — ACCT-F5626 total_actual_cost recompu
     });
     let caught: unknown = null;
     try {
-      await validateWoVendorInvoiceTotals(client, WO);
+      await validateWoVendorInvoiceTotals(client, WO, COMPANY);
     } catch (err) {
       caught = err;
     }
@@ -90,10 +91,10 @@ describe("validateWoVendorInvoiceTotals — ACCT-F5626 total_actual_cost recompu
 
   it("the recompute call always uses the exact sum just computed, not a stale/hardcoded value", async () => {
     const client = fakeClient({ lineTotal: 0, partsCount: 0, billsExists: false });
-    await validateWoVendorInvoiceTotals(client, WO);
+    await validateWoVendorInvoiceTotals(client, WO, COMPANY);
     const updateCall = client.calls.find((c) => c.sql.includes("UPDATE maintenance.work_orders"));
     // A brand-new WO whose lines were all deleted must recompute to ZERO, not silently keep whatever
     // total_actual_cost happened to hold before — this is exactly the delete-line-item exposure.
-    expect(updateCall?.values).toEqual([WO, 0]);
+    expect(updateCall?.values).toEqual([WO, 0, COMPANY]);
   });
 });

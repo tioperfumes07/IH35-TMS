@@ -846,7 +846,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             } else {
               await allocateInHouseFromWO(client as never, user.uuid, created.woUuid, body.header.operating_company_id);
             }
-            await validateWoVendorInvoiceTotals(client as never, created.woUuid);
+            await validateWoVendorInvoiceTotals(client as never, created.woUuid, body.header.operating_company_id);
             await client.query("COMMIT");
             return {
               wo: { uuid: created.woUuid, display_id: created.display_id },
@@ -1115,7 +1115,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         );
       }
 
-      await validateWoVendorInvoiceTotals(client, String(wo.id));
+      await validateWoVendorInvoiceTotals(client, String(wo.id), String(wo.operating_company_id));
 
       return { unavailable: false as const, row: wo };
     });
@@ -1309,7 +1309,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return { invalid: true as const, from: String(current.status), to: "complete" as const };
       }
       try {
-        await validateWoVendorInvoiceTotals(client, String(params.data.id));
+        await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
         const updateRes = await client.query(
           `
             UPDATE maintenance.work_orders
@@ -1628,7 +1628,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           `,
           [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount]
         );
-        await validateWoVendorInvoiceTotals(client, String(params.data.id));
+        await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
         return res.rows[0];
       });
     } catch (error) {
@@ -1702,7 +1702,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           [params.data.lid, params.data.id, companyId]
         );
         const ok = Boolean(res.rowCount && res.rowCount > 0);
-        if (ok) await validateWoVendorInvoiceTotals(client, String(params.data.id));
+        if (ok) await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
         return ok;
       });
     } catch (error) {

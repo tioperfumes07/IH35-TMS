@@ -33,16 +33,20 @@ export function isWoInvoiceMismatch(error: unknown): error is WoInvoiceMismatchE
 
 export async function validateWoVendorInvoiceTotals(
   client: { query: (sql: string, args?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
-  woId: string
+  woId: string,
+  operatingCompanyId: string
 ): Promise<void> {
   const linesRes = await client.query(
     `
       SELECT COALESCE(SUM(total_cost::numeric), 0)::numeric AS total
-      FROM maintenance.work_order_lines
-      WHERE work_order_uuid = $1::uuid
-        AND section IN ('A', 'B')
+      FROM maintenance.work_order_lines li
+      JOIN maintenance.work_orders wo
+        ON wo.id = li.work_order_uuid
+       AND wo.operating_company_id = $2::uuid
+      WHERE li.work_order_uuid = $1::uuid
+        AND li.section IN ('A', 'B')
     `,
-    [woId]
+    [woId, operatingCompanyId]
   );
   const lineTotal = linesRes.rows[0]?.total ?? 0;
 
@@ -59,8 +63,11 @@ export async function validateWoVendorInvoiceTotals(
   // case below where no bill/parts-invoice is linked yet, which is the exact case most exposed to
   // going stale since nothing else checks it at all).
   await client.query(
-    `UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid`,
-    [woId, lineTotal]
+    `UPDATE maintenance.work_orders
+     SET total_actual_cost = $2::numeric
+     WHERE id = $1::uuid
+       AND operating_company_id = $3::uuid`,
+    [woId, lineTotal, operatingCompanyId]
   );
 
   const partsRes = await client.query(
@@ -70,9 +77,10 @@ export async function validateWoVendorInvoiceTotals(
         COALESCE(SUM(vendor_invoice_amount::numeric * GREATEST(qty_used, 1)), 0)::numeric AS total
       FROM maintenance.parts_invoice_links
       WHERE work_order_id = $1::uuid
+        AND operating_company_id = $2::uuid
         AND voided_at IS NULL
     `,
-    [woId]
+    [woId, operatingCompanyId]
   );
   const partsCount = Number(partsRes.rows[0]?.cnt ?? 0);
   const partsTotal = partsRes.rows[0]?.total ?? 0;
@@ -88,9 +96,10 @@ export async function validateWoVendorInvoiceTotals(
           COALESCE(SUM(total_amount::numeric), 0)::numeric AS total
         FROM accounting.bills
         WHERE linked_work_order_uuid = $1::uuid
+          AND operating_company_id = $2::uuid
           AND revoked_at IS NULL
       `,
-      [woId]
+      [woId, operatingCompanyId]
     );
     billsCount = Number(bRes.rows[0]?.cnt ?? 0);
     billsTotal = bRes.rows[0]?.total ?? 0;
