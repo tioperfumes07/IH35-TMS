@@ -5,7 +5,9 @@
 import fs from "node:fs";
 import process from "node:process";
 const FILE = "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx";
-function inspect(source) {
+const BACKEND_FILE = "apps/backend/src/routes/safety/complaints.ts";
+const backendSource = fs.readFileSync(BACKEND_FILE, "utf8");
+function inspect(source, backend = backendSource) {
   const errors = [];
   if (!/useEffect\(\(\) => \{[\s\S]*createMutation\.reset\(\)[\s\S]*patchMutation\.reset\(\)[\s\S]*voidMutation\.reset\(\)[\s\S]*setForm\(EMPTY_COMPLAINT_FORM\)[\s\S]*setComplaintTypeSearch\(""\)[\s\S]*setVoidTargetId\(null\)[\s\S]*\}, \[companyId\]\)/.test(source)) errors.push("company transition does not reset create/resolve/void state");
   if (!/createComplaintV64\(input\.companyId, input\.payload\)/.test(source)) errors.push("create does not snapshot company and payload");
@@ -21,6 +23,10 @@ function inspect(source) {
   if (!/const patchErrorCurrent =[\s\S]*patchMutation\.isError[\s\S]*patchMutation\.variables\?\.companyId === companyId[\s\S]*patchMutation\.variables\?\.generation === lifecycleGenerationRef\.current/.test(source)) errors.push("resolve rejection is not company-generation scoped");
   if (!/\{createErrorCurrent \? \([\s\S]*Could not file complaint/.test(source)) errors.push("create banner does not use current-generation predicate");
   if (!/\{patchErrorCurrent \? \([\s\S]*complaint-resolve-error/.test(source)) errors.push("resolve banner does not use current-generation predicate");
+  for (const event of ["filed", "status_changed", "resolved", "voided"]) {
+    const pattern = new RegExp(`"safety\\.complaint\\.${event}",[\\s\\S]{0,240}operating_company_id: query\\.data\\.operating_company_id`);
+    if (!pattern.test(backend)) errors.push(`${event} audit does not identify the operating company`);
+  }
   return errors;
 }
 if (process.argv.includes("--selftest")) {
@@ -41,7 +47,12 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-complaints-actions-company-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-complaints-actions-company-lifecycle selftest PASS — 9/9 planted defects rejected");
+  for (const event of ["filed", "status_changed", "resolved", "voided"]) {
+    const eventBlock = new RegExp(`("safety\\.complaint\\.${event}",[\\s\\S]{0,240})operating_company_id: query\\.data\\.operating_company_id,`);
+    const mutatedBackend = backendSource.replace(eventBlock, "$1");
+    if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error(`missed ${event} audit mutation`);
+  }
+  console.log("verify-complaints-actions-company-lifecycle selftest PASS — 13/13 planted defects rejected");
   process.exit(0);
 }
 const errors = inspect(fs.readFileSync(FILE, "utf8"));
