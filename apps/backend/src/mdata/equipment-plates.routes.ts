@@ -147,13 +147,23 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
     if (!params.success || !query.success || !body.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
-    const updated = await withCurrentUser(user.uuid, async (client) => {
+    const outcome = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const existing = await client.query(
         `SELECT * FROM mdata.equipment_plates WHERE id = $1::uuid AND equipment_id = $2::uuid AND operating_company_id = $3::uuid LIMIT 1`,
         [params.data.plate_id, params.data.id, query.data.operating_company_id]
       );
-      if (!existing.rows[0]) return null;
+      const existingPlate = existing.rows[0] as { country?: unknown } | undefined;
+      if (!existingPlate) return { kind: "not_found" as const };
+      const existingCountry = existingPlate.country;
+      if (
+        body.data.jurisdiction !== undefined &&
+        (existingCountry !== "US" &&
+          existingCountry !== "MX" ||
+          !validatePlateJurisdiction(existingCountry, body.data.jurisdiction))
+      ) {
+        return { kind: "invalid_jurisdiction" as const };
+      }
       const setParts: string[] = [];
       const values: unknown[] = [];
       const add = (col: string, val: unknown) => {
@@ -165,15 +175,34 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
       if ("expiration" in body.data) add("expiration", body.data.expiration ?? null);
       if ("status" in body.data) add("status", body.data.status);
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
-      values.push(params.data.plate_id);
+      values.push(params.data.plate_id, params.data.id, query.data.operating_company_id);
       const res = await client.query(
-        `UPDATE mdata.equipment_plates SET ${setParts.join(", ")} WHERE id = $${values.length} RETURNING *`,
+        `UPDATE mdata.equipment_plates
+         SET ${setParts.join(", ")}
+         WHERE id = $${values.length - 2}::uuid
+           AND equipment_id = $${values.length - 1}::uuid
+           AND operating_company_id = $${values.length}::uuid
+         RETURNING *, equipment_id::text`,
         values
       );
-      return res.rows[0] ?? null;
+      const updated = res.rows[0] as { id?: unknown; equipment_id?: unknown } | undefined;
+      if (!updated?.id || String(updated.equipment_id) !== params.data.id) {
+        return { kind: "not_found" as const };
+      }
+      await appendCrudAudit(client, user.uuid, "mdata.equipment_plates.updated", {
+        resource_id: String(updated.id),
+        equipment_id: params.data.id,
+        operating_company_id: query.data.operating_company_id,
+      });
+      return { kind: "updated" as const, row: updated };
     });
-    if (!updated) return reply.code(404).send({ error: "equipment_plate_not_found" });
-    return updated;
+    if (outcome.kind === "not_found") {
+      return reply.code(404).send({ error: "equipment_plate_not_found" });
+    }
+    if (outcome.kind === "invalid_jurisdiction") {
+      return reply.code(400).send({ error: "invalid_jurisdiction" });
+    }
+    return outcome.row;
   });
 
   app.post("/api/v1/mdata/equipment/:id/plates/:plate_id/archive", async (req, reply) => {
