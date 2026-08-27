@@ -19,6 +19,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useSearchParams } from "react-router-dom";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
 
 const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportIds: Set<string> }> = {
   "owner-weekly": {
@@ -33,23 +34,12 @@ const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportId
   },
 };
 
-/** Governed display labels for known scheduled-custom report_id slugs (API id stays raw). */
-const REPORT_LABELS: Record<string, string> = {
-  "dispatch-board": "Dispatch board",
-  "cash-position-ar": "Cash position / A/R",
-  "profit-per-truck-week": "Profit per truck (week)",
-  "settlements-ready": "Settlements ready",
-  "maintenance-open-wos": "Maintenance open WOs",
-  "ifta-quarterly-state": "IFTA quarterly by state",
-  "cash-flow-overview": "Cash flow overview",
-  "settlement-summary": "Settlement summary",
-  "customer-profitability": "Customer profitability",
-  "profit-per-truck": "Profit per truck",
-  "fuel-reconciliation": "Fuel reconciliation",
-  "maintenance-cost-per-unit": "Maintenance cost per unit",
-  "ar-aging": "A/R aging",
-  "ap-aging": "A/P aging",
-};
+/**
+ * Governed display labels for known scheduled-custom report_id slugs (API id stays raw).
+ * SCHEDULED-REPORTS-EDIT-REPORT-FIELD-BLANK-UNKNOWN-ID: sourced from the shared catalog (also used by
+ * ScheduleReportModal.tsx's "Report" select) so the two can never drift apart again.
+ */
+const REPORT_LABELS = SCHEDULED_REPORT_LABELS;
 
 function isSlugLike(value: string, reportId: string): boolean {
   const v = value.trim();

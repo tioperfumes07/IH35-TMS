@@ -8,6 +8,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
 
 type Props = {
   open: boolean;
@@ -105,17 +106,13 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editId]);
 
+  // SCHEDULED-REPORTS-EDIT-REPORT-FIELD-BLANK-UNKNOWN-ID: sourced from the same shared catalog
+  // ScheduledReportsPage.tsx uses for its list-row labels — previously this was its own independent,
+  // narrower 8-id list that never learned about the 6 preset-driven ids (settlements-ready,
+  // dispatch-board, etc.) real live schedules actually use, so editing one of those rows showed the
+  // Report field blank ("Select...") even though every other field correctly pre-filled.
   const extraReports = useMemo(
-    () => [
-      { id: "cash-flow-overview", name: "Cash flow overview" },
-      { id: "settlement-summary", name: "Settlement summary" },
-      { id: "customer-profitability", name: "Customer profitability" },
-      { id: "profit-per-truck", name: "Profit per truck" },
-      { id: "fuel-reconciliation", name: "Fuel reconciliation" },
-      { id: "maintenance-cost-per-unit", name: "Maintenance cost per unit" },
-      { id: "ar-aging", name: "A/R aging" },
-      { id: "ap-aging", name: "A/P aging" },
-    ],
+    () => Object.entries(SCHEDULED_REPORT_LABELS).map(([id, name]) => ({ id, name })),
     [],
   );
 
@@ -123,8 +120,15 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
     const rows = libQuery.data ?? [];
     const base = rows.map((r) => ({ id: r.id, name: r.name }));
     const seen = new Set(base.map((r) => r.id));
-    return [...base, ...extraReports.filter((e) => !seen.has(e.id))];
-  }, [libQuery.data, extraReports]);
+    const combined = [...base, ...extraReports.filter((e) => !seen.has(e.id))];
+    // Belt-and-suspenders: if we're editing a row whose report_id is STILL not in either catalog (a
+    // genuinely new/unknown id), synthesize an option from the raw id rather than silently rendering
+    // a blank select for a real, non-empty value.
+    if (reportId && !combined.some((o) => o.id === reportId)) {
+      combined.push({ id: reportId, name: reportId });
+    }
+    return combined;
+  }, [libQuery.data, extraReports, reportId]);
 
   const selectedReportName = libraryOptions.find((o) => o.id === reportId)?.name ?? reportId;
 
