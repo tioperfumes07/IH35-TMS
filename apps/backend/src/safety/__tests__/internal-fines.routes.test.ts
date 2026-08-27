@@ -159,6 +159,31 @@ describe("safety internal-fines approval control (FD1)", () => {
     });
   });
 
+  // SAFETY-MONEY-F6822A — the handler used to issue its OWN BEGIN/COMMIT/ROLLBACK inside the
+  // callback withCurrentUser already wraps in one transaction. A nested BEGIN is a no-op in
+  // Postgres, but the inner COMMIT genuinely committed the outer transaction early, mid-handler —
+  // this test's mock `withCurrentUser` never sends these strings itself, so any occurrence in
+  // mockQuery's call log can only come from the handler re-introducing its own transaction
+  // control. Asserting zero occurrences on the full approved-fine path (fine + liability +
+  // deduction + two audit calls) locks the single-transaction fix in place.
+  it("never issues its own BEGIN/COMMIT/ROLLBACK — withCurrentUser owns the only transaction", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/internal-fines?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_uuid: DRIVER,
+        reason_uuid: REASON,
+        amount: 1,
+        imposed_date: "2026-07-03",
+        status: "approved",
+        approved_by_user_uuid: APPROVER,
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    const txnControlCalls = mockQuery.mock.calls.filter((c) => /^(BEGIN|COMMIT|ROLLBACK)$/.test(String(c[0]).trim()));
+    expect(txnControlCalls).toHaveLength(0);
+  });
+
   it("creates a pending fine with NO approver and NO liability → 201", async () => {
     const res = await app.inject({
       method: "POST",

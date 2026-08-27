@@ -269,8 +269,16 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     }
 
     const created = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      await client.query("BEGIN");
-      try {
+      // SAFETY-MONEY-F6822A: this callback used to open its own BEGIN/COMMIT/ROLLBACK here, nested
+      // inside withCurrentUser's own transaction (auth/db.ts). Postgres has no real nested
+      // transactions — a BEGIN while one is already open is a no-op WARNING, but the inner COMMIT
+      // genuinely commits the OUTER transaction early, mid-handler. Every statement issued afterward
+      // (the final "internal_fine.created" appendCrudAudit call below) then ran with no open
+      // transaction and no SET LOCAL tenant GUC / forced app role (both are transaction-scoped in
+      // withCurrentUser), so a failure there rolled back nothing — the fine, liability, and
+      // settlement deduction stayed durably committed even though the request reported failure to
+      // the caller. Removed the nested BEGIN/COMMIT/ROLLBACK; the wrapper's own single transaction
+      // now owns the whole callback, matching every other route in this file.
         const fineRes = await client.query(
           `
             INSERT INTO safety.internal_fines (
@@ -356,12 +364,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           "info",
           "P3-T11.17-TWO-SECTION-V5"
         );
-        await client.query("COMMIT");
         return { fine, liability };
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      }
     });
     return reply.code(201).send(created);
   });
