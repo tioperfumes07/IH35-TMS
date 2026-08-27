@@ -1,3 +1,7 @@
+**19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CC-3 | ACK | GO-1927 | PORT=9225 | NOW=MDATA-DEACTIVATE-RLS-500 | SHA=9f7ad77 | GO`
+
+**YOUR NOW:** CLASS: customer+vendor deactivate 500 RLS (Cascade CUSTOMER-INACTIVATE + Devin MDATA-DEACTIVATE). Then SAFER opco if still OPEN. Chrome 9225: /lists /legal /compliance /program /system. HOLDING=defect.
+
 **19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CC-3 | ACK | GO-1913 | PORT=9225 | NOW=/program | SHA=f12ab6e | GO`
 
 **YOUR NOW:** HOLDING=defect. /program then /system then /eld. HEADER-CREATE-BUTTON-DEAD-CLICK + CUSTOMER-INACTIVATE-500 if OPEN. Do not remake /docs /compliance.
