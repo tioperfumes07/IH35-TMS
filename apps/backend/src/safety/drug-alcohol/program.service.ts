@@ -54,11 +54,38 @@ export async function enrollDriver(
   consortiumName: string,
   enrolledAt: string
 ): Promise<DaEnrollment> {
+  const eligible = await client.query<{ id: string }>(
+    `
+      SELECT d.id::text
+      FROM mdata.drivers d
+      WHERE d.id = $2::uuid
+        AND d.status = 'Active'
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
+        AND (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM mdata.driver_company_authorizations authorization
+            WHERE authorization.driver_id = d.id
+              AND authorization.company_id = $1::uuid
+              AND authorization.is_authorized = true
+              AND authorization.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1
+    `,
+    [operatingCompanyId, driverUuid]
+  );
+  if (!eligible.rows[0]) throw new Error("active_driver_not_in_operating_company");
+
   const res = await client.query<DaEnrollment>(
     `
       INSERT INTO safety.da_program_enrollments
         (operating_company_id, driver_uuid, consortium_name, enrolled_at, is_active)
       VALUES ($1, $2::uuid, $3, $4::date, true)
+      ON CONFLICT (operating_company_id, driver_uuid) WHERE is_active = true
+      DO NOTHING
       RETURNING
         uuid::text,
         operating_company_id,
@@ -71,7 +98,7 @@ export async function enrollDriver(
     [operatingCompanyId, driverUuid, consortiumName, enrolledAt]
   );
   const row = res.rows[0];
-  if (!row) throw new Error("enrollment_insert_failed");
+  if (!row) throw new Error("active_enrollment_exists");
   return row;
 }
 

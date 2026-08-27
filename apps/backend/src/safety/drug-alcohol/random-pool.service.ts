@@ -115,9 +115,8 @@ export async function listActiveEnrolledDrivers(
  * rows existed because there was no bulk-enroll path. This inserts one active
  * enrollment per eligible driver that is not already actively enrolled.
  *
- * Idempotent: re-running enrolls only drivers not already active in the pool
- * (NOT EXISTS guard — the enrollment table has no unique (company,driver) index,
- * so existence is checked explicitly rather than via ON CONFLICT).
+ * Idempotent under concurrency: the partial unique index is the source of truth and
+ * ON CONFLICT prevents two simultaneous bulk enrollments from creating duplicate members.
  *
  * "Active human driver" matches the mdata.drivers list semantics used elsewhere:
  * status = 'Active', not archived, excluding the system pseudo-drivers.
@@ -141,13 +140,8 @@ export async function bulkEnrollActiveDrivers(
           TRIM(d.first_name) || ' ' || TRIM(d.last_name) NOT IN ('Safety Safety', 'System System')
           AND (d.cdl_number IS NULL OR lower(trim(d.cdl_number)) NOT IN ('safety', 'system'))
         )
-        AND NOT EXISTS (
-          SELECT 1
-          FROM safety.da_program_enrollments e
-          WHERE e.operating_company_id::text = $1::uuid::text
-            AND e.driver_uuid = d.id
-            AND e.is_active = true
-        )
+      ON CONFLICT (operating_company_id, driver_uuid) WHERE is_active = true
+      DO NOTHING
       RETURNING driver_uuid::text
     `,
     [operatingCompanyId, consortiumName]

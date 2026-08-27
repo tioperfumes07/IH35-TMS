@@ -33,16 +33,27 @@ describe("enrollDriver", () => {
       is_active: true,
       created_at: "2026-01-01T00:00:00Z",
     };
-    const client = mockClient([expected]);
+    const client = {
+      query: vi.fn().mockResolvedValueOnce({ rows: [{ id: "drv-1" }] }).mockResolvedValueOnce({ rows: [expected] }),
+    } as unknown as import("pg").PoolClient;
     const result = await enrollDriver(client, "co-1", "drv-1", "NTTS", "2026-01-01");
     expect(result).toEqual(expected);
-    expect(client.query).toHaveBeenCalledOnce();
+    expect(client.query).toHaveBeenCalledTimes(2);
   });
 
-  it("throws if no row returned (DB constraint)", async () => {
+  it("throws when the canonical driver is not active in company scope", async () => {
     const client = mockClient([]);
     await expect(enrollDriver(client, "co-1", "drv-1", "NTTS", "2026-01-01")).rejects.toThrow(
-      "enrollment_insert_failed"
+      "active_driver_not_in_operating_company"
+    );
+  });
+
+  it("throws an honest duplicate when the active unique arbiter returns no row", async () => {
+    const client = {
+      query: vi.fn().mockResolvedValueOnce({ rows: [{ id: "drv-1" }] }).mockResolvedValueOnce({ rows: [] }),
+    } as unknown as import("pg").PoolClient;
+    await expect(enrollDriver(client, "co-1", "drv-1", "NTTS", "2026-01-01")).rejects.toThrow(
+      "active_enrollment_exists"
     );
   });
 });
