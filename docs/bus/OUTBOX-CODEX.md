@@ -1215,3 +1215,5 @@ Codex | SHIPPED | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK |
 Codex | WORKING | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | FIX=selected-company equipment type+line item reads/writes across qualification lifecycle | GUARD=40/40+13/13 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | PR=#16417 @ a8c1b76945 | GUARD=40/40+13/13+full-gate | LIVE=post-deploy recheck | NEXT=assigned unique live/source sweep | GO
 Codex | LIVE PASS | GO-1927 | FO=DRV-F6702 | SHA=1c7969f | picker=+Create first; Dry Van/Flatbed/Reefer/Oversize/Pneumatic exactly once; 4 USMCA TEST rows | mutation=none | NEXT=Fleet/Driver adjacent consumer sweep | GO
+Codex | WORKING | GO-1927 | FINDING=MAINT-F6705 | MODULE=maintenance | NOW=warranty audit company scope | NEXT=gate+FAST-MERGE | GO
+Codex | ACK | GO-1927 | PORT=9226 | NOW=next Driver/Fleet/Safety/Fuel/Maintenance/Insurance unique | SHA=1c7969f | GO
