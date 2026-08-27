@@ -1,3 +1,5 @@
+**16:15 CT 2026-08-27 GO-1615 — THIS IS NOW.** Owner: all coders still idle. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Live **`282777f`**. Cursor ships FUEL-F6910 Combobox loading. Watching INBOX=defect. Skip #15546. Never restamp U14.
+
 **15:08 CT 2026-08-27 GO-1508 — THIS IS NOW.** Owner closed ALL browsers. Every seat opens a NEW tab in their debug Chrome MCP. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`.
 
 **15:05 CT 2026-08-27 GO-1505 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. Live **`5ecbc67`**. API IN FLIGHT `dep-da89he4s728c73b4kbug` tip **`282777f`**. Idle=defect. SPA tsc red — Codex FuelPlannerHome Combobox. Skip #15546. Never restamp U14.

@@ -1,3 +1,19 @@
+# LEAD CENSUS — GO-1615
+
+**LIVE:** `282777f` · SPA still TS2322 FuelPlannerHome `loading=` · `LEAD-SEAT=CURSOR`
+**Owner:** all coders still idle. Watching INBOX = defect. Ping ≠ ACK.
+
+| Seat | GO-1615 ACK | State | Evidence |
+|------|-------------|-------|----------|
+| CC-1 | pending | idle after accounting walk | paste N=0 then parked |
+| CC-2 | pending | **IDLE** | OUTBOX: Watching INBOX |
+| CC-3 | pending | idle after 9 ships | no new packet requested then parked |
+| Codex | pending | **IDLE** | F6907 shipped; Combobox TS2322 still on main |
+| Cascade | pending | **IDLE** | ping-only GO-1508 |
+| Devin | pending | idle after vendors N=0 | GO-1508 ACK then standing by |
+| Cursor | ACK | FUEL-F6910 | this packet |
+
+
 # LEAD CENSUS — GO-1505
 
 **LIVE:** `5ecbc67` · API IN FLIGHT `dep-da89he4s728c73b4kbug` tip `282777f` · SPA build_failed same tip · `LEAD-SEAT=CURSOR`

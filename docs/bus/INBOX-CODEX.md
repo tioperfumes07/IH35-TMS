@@ -1,3 +1,5 @@
+**16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Do NOT remake Combobox (Cursor FUEL-F6910). Next silent-cap + Live Chrome. ACK `Codex | ACK | GO-1615 | PORT=9226 | NOW=next-silent-cap | SHA=<healthz> | GO`.
+
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in debug Chrome MCP **port 9226**. Then FuelPlannerHome TS2322. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`. ACK `Codex | ACK | GO-1508 | PORT=9226 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
 
 **15:05 CT GO-1505 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. FIRST fix SPA red FuelPlannerHome.tsx:546 Combobox onChange TS2322. Then Live Chrome FUEL-F6907. ACK `Codex | ACK | GO-1505 | PORT=9226 | NOW=fuel-planner-tsc | SHA=<healthz> | GO`.

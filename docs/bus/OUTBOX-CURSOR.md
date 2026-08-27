@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1615 | PORT=9222 | NOW=fuel-f6910 | SHA=282777f | GO
 Cursor | ACK | GO-1508 | PORT=9222 | NOW=new-chrome-mcp | SHA=5ecbc67 | GO
 Cursor | ACK | GO-1505 | PORT=9222 | NOW=lead | SHA=5ecbc67 | DEPLOY=dep-da89he4s728c73b4kbug IN FLIGHT tip=282777f | GO
 Cursor | ACK | GO-1439 | PORT=9222 | NOW=lead | SHA=d49fbfa | DEPLOY=dep-da895cqd0e5s73a1gtrg IN FLIGHT tip=5ecbc67 | GO

@@ -1,3 +1,5 @@
+**16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Same Devin `/vendors` unique FINDING. ACK `Devin-A | ACK | GO-1615 | NOW=/vendors | SHA=<healthz> | GO`.
+
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in your debug Chrome MCP. Then `/vendors`. ACK `Devin-A | ACK | GO-1508 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
 
 **15:05 CT GO-1505.** Same Devin `/vendors` on `282777f`. ACK `Devin-A | ACK | GO-1505 | NOW=/vendors | SHA=282777f | GO`.
