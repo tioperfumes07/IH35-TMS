@@ -1270,3 +1270,4 @@ Codex | GO-2158 | WORKING | FINDING=MAINT-F6748 | Warranty claim filing now requ
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6749 | Warranty claim archive now returns 404/no audit on zero-row mutation | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6750 | Tire edit now requires one non-archived company row before audit/readback | HANDOFF=CC-1 MAINT-MONEY-F6750A | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6751 | Tire archive now returns 404/no audit on zero-row mutation | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6752 | Inspection edit now requires active company CAS + scoped readback before audit | NEXT=guard+tests+FAST-MERGE | GO
