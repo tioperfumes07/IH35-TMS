@@ -1533,6 +1533,27 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
+      if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+        const closedRes = await client.query(
+          `SELECT closed_at::text, updated_at::text, status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, companyId]
+        );
+        const closedRow = closedRes.rows[0] as { closed_at?: string | null; updated_at?: string | null; status?: string } | undefined;
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "maintenance.work_order.closed",
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            closed_at: closedRow?.closed_at ?? closedRow?.updated_at ?? new Date().toISOString(),
+            status: closedRow?.status ?? parsed.data.new_status,
+          },
+          "info",
+          "P5-D5-WO-TIME"
+        );
+      }
       return { ok: true as const };
     });
 
@@ -1554,6 +1575,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "spine_emit_wo_status_changed_failed"
       )
     );
+    if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+      await processMaintenanceWorkOrderClose({
+        operating_company_id: companyId,
+        work_order_id: params.data.id,
+        actor_user_id: user.uuid,
+      });
+    }
     return { ok: true };
   });
 
