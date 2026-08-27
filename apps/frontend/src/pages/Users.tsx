@@ -973,11 +973,9 @@ export function UsersPage() {
         confirmLabel="Deactivate user"
         danger
         onClose={() => setPendingDeactivate(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!pendingDeactivate) return;
-          const input = pendingDeactivate;
-          setPendingDeactivate(null);
-          deactivateMutation.mutate(input);
+          await deactivateMutation.mutateAsync(pendingDeactivate);
         }}
       />
     </div>

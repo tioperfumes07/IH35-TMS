@@ -15,7 +15,7 @@ function inspect(value) {
     [/onError: \(error, input\) => \{[\s\S]*input\.generation !== deactivateGenerationRef\.current/, "stale deactivate error can leak"],
     [/deactivateGenerationRef\.current \+= 1;[\s\S]*setPendingDeactivate\(null\);[\s\S]*deactivateMutation\.reset\(\);[\s\S]*\}, \[selectedCompanyId\]\)/, "company switch leaves stale deactivate state"],
     [/setPendingDeactivate\(\{[\s\S]*userId: row\.id,[\s\S]*userName: row\.name \|\| "this user",[\s\S]*companyId: selectedCompanyId,[\s\S]*generation: deactivateGenerationRef\.current/, "row action does not snapshot user/company/generation"],
-    [/<ConfirmModal[\s\S]*title="Deactivate this user\?"[\s\S]*const input = pendingDeactivate;[\s\S]*setPendingDeactivate\(null\);[\s\S]*deactivateMutation\.mutate\(input\)/, "deactivate lacks canonical confirmation cleanup"],
+    [/<ConfirmModal[\s\S]*title="Deactivate this user\?"[\s\S]*await deactivateMutation\.mutateAsync\(pendingDeactivate\)/, "deactivate lacks awaited confirmation write"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   if (/window\.confirm\(/.test(value)) failures.push("native confirmation still blocks user deactivation");

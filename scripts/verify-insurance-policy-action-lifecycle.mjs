@@ -15,7 +15,7 @@ function inspect(value) {
     [/(?:input\.generation !== policyActionGenerationRef\.current|input\.generation === policyActionGenerationRef\.current)/g, "stale callbacks are not gated"],
     [/policyActionGenerationRef\.current \+= 1;[\s\S]*setPendingArchive\(null\);[\s\S]*setEditing\(false\);[\s\S]*updateMutation\.reset\(\);[\s\S]*archiveMutation\.reset\(\);[\s\S]*\}, \[companyId, policyId\]\)/, "policy/company switch leaves stale actions"],
     [/setPendingArchive\(\{ policyId, companyId, generation: policyActionGenerationRef\.current \}\)/, "archive click does not snapshot policy/company/generation"],
-    [/<ConfirmModal[\s\S]*title="Archive this policy\?"[\s\S]*const input = pendingArchive;[\s\S]*setPendingArchive\(null\);[\s\S]*archiveMutation\.mutate\(input\)/, "archive lacks canonical confirmation cleanup"],
+    [/<ConfirmModal[\s\S]*title="Archive this policy\?"[\s\S]*await archiveMutation\.mutateAsync\(pendingArchive\)/, "archive lacks awaited confirmation write"],
     [/kind="unit"/, "policy unit reverse drill is missing"],
     [/kind="claim"/, "policy claim reverse drill is missing"],
     [/kind="customer"/, "policy customer reverse drill is missing"],

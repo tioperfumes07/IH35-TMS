@@ -12,7 +12,7 @@ function inspect(value) {
     [/postToggleAction\(input\.carrierId, input\.action, input\.notes\)/, "toggle writer reads mutable action or notes"],
     [/setPendingAction\(\{[\s\S]*carrierId: row\.operating_company_id,[\s\S]*companyCode: row\.company_code,[\s\S]*action: "launch",[\s\S]*notes: notes\.trim\(\)/, "launch action snapshot is incomplete"],
     [/setPendingAction\(\{[\s\S]*carrierId: row\.operating_company_id,[\s\S]*companyCode: row\.company_code,[\s\S]*action: "rollback",[\s\S]*notes: notes\.trim\(\)/, "rollback action snapshot is incomplete"],
-    [/<ConfirmModal[\s\S]*const input = pendingAction;[\s\S]*setPendingAction\(null\);[\s\S]*setPendingId\(input\.carrierId\);[\s\S]*actionMutation\.mutate\(input\)/, "toggle actions lack canonical confirmation cleanup"],
+    [/<ConfirmModal[\s\S]*const input = pendingAction;[\s\S]*setPendingId\(input\.carrierId\);[\s\S]*await actionMutation\.mutateAsync\(input\)/, "toggle actions lack awaited confirmation write"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   if (/window\.confirm\(/.test(value)) failures.push("native confirmation still blocks launch toggle actions");
