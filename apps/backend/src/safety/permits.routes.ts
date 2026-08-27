@@ -329,7 +329,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return reply.code(201).send({ permit: created.row });
   });
 
-  app.patch("/api/v1/safety/permits/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/permits/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -339,20 +339,35 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const body = patchBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    const hasIssuingState = Object.prototype.hasOwnProperty.call(body.data, "issuing_state");
+    const hasIssuedDate = Object.prototype.hasOwnProperty.call(body.data, "issued_date");
+    const hasUnitId = Object.prototype.hasOwnProperty.call(body.data, "unit_id");
+    const hasNotes = Object.prototype.hasOwnProperty.call(body.data, "notes");
 
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      if (body.data.unit_id) {
+        const unit = await client.query(
+          `SELECT id FROM mdata.units
+            WHERE id = $1::uuid
+              AND deactivated_at IS NULL
+              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            LIMIT 1`,
+          [body.data.unit_id, query.data.operating_company_id]
+        );
+        if (!unit.rows[0]) return { kind: "unit_not_found" as const };
+      }
+      const res = await client.query<Record<string, unknown>>(
         `
           UPDATE safety.permits
           SET permit_type = COALESCE($3, permit_type),
               permit_number = COALESCE($4, permit_number),
-              issuing_state = COALESCE($5, issuing_state),
-              holder_name = COALESCE($6, holder_name),
-              issued_date = COALESCE($7::date, issued_date),
-              expiry_date = COALESCE($8::date, expiry_date),
-              unit_id = COALESCE($9, unit_id),
-              notes = COALESCE($10, notes),
-              updated_by_user_id = $11,
+              issuing_state = CASE WHEN $5::boolean THEN $6 ELSE issuing_state END,
+              holder_name = COALESCE($7, holder_name),
+              issued_date = CASE WHEN $8::boolean THEN $9::date ELSE issued_date END,
+              expiry_date = COALESCE($10::date, expiry_date),
+              unit_id = CASE WHEN $11::boolean THEN $12::uuid ELSE unit_id END,
+              notes = CASE WHEN $13::boolean THEN $14 ELSE notes END,
+              updated_by_user_id = $15,
               updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -364,17 +379,21 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
           query.data.operating_company_id,
           body.data.permit_type ?? null,
           body.data.permit_number ?? null,
+          hasIssuingState,
           body.data.issuing_state ?? null,
           body.data.holder_name ?? null,
+          hasIssuedDate,
           body.data.issued_date ?? null,
           body.data.expiry_date ?? null,
+          hasUnitId,
           body.data.unit_id ?? null,
+          hasNotes,
           body.data.notes ?? null,
           user.uuid,
         ]
       );
       const row = res.rows[0];
-      if (!row) return null;
+      if (!row?.id) return { kind: "permit_not_found" as const };
       await appendCrudAudit(
         client,
         user.uuid,
@@ -387,11 +406,12 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
         "info",
         "A23-13"
       );
-      return mapPermitRow(row as Record<string, unknown>);
+      return { kind: "ok" as const, row: mapPermitRow(row) };
     });
 
-    if (!updated) return reply.code(404).send({ error: "permit_not_found" });
-    return { permit: updated };
+    if (updated.kind === "unit_not_found") return reply.code(404).send({ error: "mdata_unit_not_found" });
+    if (updated.kind === "permit_not_found") return reply.code(404).send({ error: "permit_not_found" });
+    return { permit: updated.row };
   });
 
   app.post("/api/v1/safety/permits/:id/archive", async (req, reply) => {
