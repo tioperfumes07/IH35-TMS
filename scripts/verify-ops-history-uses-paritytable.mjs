@@ -5,7 +5,8 @@
  * Driver operations-depth history (12 sub-views) must use shared ParityTable grammar
  * (sort/resize/gear), not a hand-rolled <table>. Outages must surface ListErrorState
  * (never false-empty "No records found" on failure). EntityLink drill-through via
- * OperationsColumn.entityKind must remain available.
+ * OperationsColumn.entityKind must remain available. The shared table receives one server page,
+ * so its local pager must stay hidden in favor of the server Previous/Next controls.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -47,6 +48,14 @@ function assertMigrated(src) {
   if (!src.includes("Previous") || !src.includes("Next")) {
     errors.push(`${PAGE}: must keep server-side Previous/Next pagination`);
   }
+  const tableStart = src.indexOf("<ParityTable");
+  const tableBlock = tableStart >= 0 ? src.slice(tableStart, tableStart + 900) : "";
+  if (!/pageSize=\{25\}/.test(tableBlock)) {
+    errors.push(`${PAGE}: ParityTable must use the server page size of 25`);
+  }
+  if (!/\bhidePager\b/.test(tableBlock)) {
+    errors.push(`${PAGE}: ParityTable must hide its local pager because Previous/Next are server-driven`);
+  }
   return errors;
 }
 
@@ -59,6 +68,8 @@ function selftest() {
     <ParityTable
       storageKey={\`driver-operations-\${subView}\`}
       emptyText="No records found for this driver."
+      pageSize={25}
+      hidePager
     />
     <button>Previous</button>
     <button>Next</button>
@@ -80,6 +91,11 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const doublePager = good.replace("pageSize={25}\n      hidePager", "initialPageSize={25}");
+  if (assertMigrated(doublePager).length < 2) {
+    console.error(`${LABEL} --selftest FAIL planted double-pager regression escaped detection`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

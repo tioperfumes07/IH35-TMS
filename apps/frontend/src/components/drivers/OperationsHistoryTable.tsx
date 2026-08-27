@@ -179,8 +179,9 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
             loading={query.isLoading}
             storageKey={`driver-operations-${subView}`}
             emptyText="No records found for this driver."
-            initialPageSize={25}
+            pageSize={25}
             pageSizeOptions={[25]}
+            hidePager
             tableTestId={`driver-operations-${subView}-table`}
             rowTestId={(row) => `driver-operations-${subView}-row-${String(row.__rowKey)}`}
           />
