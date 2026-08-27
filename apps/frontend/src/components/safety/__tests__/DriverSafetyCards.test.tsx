@@ -9,7 +9,7 @@ const getSafetyEventsFilteredMock = vi.fn();
 const listDaEnrollmentsMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
-  listDrivers: (...args: unknown[]) => listDriversMock(...args),
+  listAllDrivers: (...args: unknown[]) => listDriversMock(...args),
 }));
 
 vi.mock("../../../api/safety", () => ({

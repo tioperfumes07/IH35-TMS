@@ -7,14 +7,16 @@ import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateRes
 // is entity-scoped), which silently emptied the Driver roster despite 83 real drivers. Pass the
 // current company id (or null when none is selected yet + gate the query with `enabled`). This
 // compile-time requirement supersedes a grep guard — an omitted scope no longer compiles.
-export function listDrivers(params: {
+export type ListDriversParams = {
   status?: string;
   search?: string;
   operating_company_id: string | null | undefined; // REQUIRED key (no `?`): can't be silently omitted
   include_system?: boolean;
   limit?: number;
   offset?: number;
-}) {
+};
+
+export function listDrivers(params: ListDriversParams) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") {
     const statusValue = params.status === "Suspended" ? "Inactive" : params.status;
@@ -32,6 +34,33 @@ export function listDrivers(params: {
     drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),
     total: payload.total ?? payload.drivers.length,
   }));
+}
+
+/**
+ * Read every page of the canonical, company-scoped driver roster.
+ *
+ * This is intentionally separate from picker/search reads. Fleet-wide compliance summaries must
+ * not describe the first API page as the whole company, while pickers should continue to search
+ * incrementally. Progress is measured in server offsets because listDrivers removes system rows
+ * client-side while the server total can still include them.
+ */
+export async function listAllDrivers(params: Omit<ListDriversParams, "limit" | "offset">) {
+  const pageSize = 200;
+  const first = await listDrivers({ ...params, limit: pageSize, offset: 0 });
+  const expected = first.total ?? first.drivers.length;
+  const drivers = [...first.drivers];
+  let covered = pageSize;
+  const maxPages = 500;
+  for (let pageIndex = 1; covered < expected && pageIndex < maxPages; pageIndex += 1) {
+    const next = await listDrivers({ ...params, limit: pageSize, offset: pageIndex * pageSize });
+    drivers.push(...next.drivers);
+    covered += pageSize;
+  }
+  if (covered < expected) {
+    throw new Error(`Driver roster paging stopped after ${covered} of ${expected} records`);
+  }
+  const uniqueDrivers = [...new Map(drivers.map((driver) => [driver.id, driver])).values()];
+  return { drivers: uniqueDrivers, total: expected };
 }
 
 export type DriverLabel = { id: string; label: string };
