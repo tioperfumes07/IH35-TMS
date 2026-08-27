@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 const querySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
@@ -19,7 +20,10 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
     const parsed = querySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const asOf = parsed.data.as_of_date ?? new Date().toISOString().slice(0, 10);
+    // FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE: found as a 4th instance of the
+    // same bug class while fixing ar-aging/ap-aging/cash-flow-overview — was
+    // new Date().toISOString() (UTC calendar date, rolls to the next day ~19:00 Central).
+    const asOf = parsed.data.as_of_date ?? companyBusinessDate();
     const companyId = parsed.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
