@@ -42,7 +42,6 @@ import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { CappedListNotice } from "../../components/CappedListNotice";
 import { Combobox } from "../../components/shared/Combobox";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
@@ -69,10 +68,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const activeRoutePageSize = 25;
   const [activeRoutePage, setActiveRoutePage] = useState(1);
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);
+  const fuelHistoryPageSize = 50;
+  const [fuelHistoryPage, setFuelHistoryPage] = useState(1);
   useEffect(() => {
     actionGenerationRef.current += 1;
     setActiveRoutePage(1);
     setSelectedActiveRouteId(null);
+    setFuelHistoryPage(1);
   }, [companyId]);
   // ACCT-F5048 — reverse "Open Fuel History" carries ?trailer_id=|unit_id=|load_id=|driver_id=
   // LST-F5172 — visible EntityPicker filters (URL-only is not reverse chrome).
@@ -187,10 +189,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       effectiveLoadId,
       effectiveTrailerId,
       deepLinkTransactionId,
+      fuelHistoryPage,
     ],
     queryFn: () =>
       getFuelTransactions(companyId, {
-        limit: 200,
+        limit: fuelHistoryPageSize,
+        offset: (fuelHistoryPage - 1) * fuelHistoryPageSize,
         driver_id: effectiveDriverId,
         unit_id: effectiveUnitId,
         load_id: effectiveLoadId,
@@ -199,6 +203,14 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       }),
     enabled: Boolean(companyId) && tab === "history",
   });
+  const fuelHistoryTotal = fuelTransactionsQuery.data?.total_count ?? 0;
+  const fuelHistoryPageCount = Math.max(1, Math.ceil(fuelHistoryTotal / fuelHistoryPageSize));
+  useEffect(() => {
+    setFuelHistoryPage(1);
+  }, [companyId, effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId, deepLinkTransactionId]);
+  useEffect(() => {
+    if (fuelHistoryPage > fuelHistoryPageCount) setFuelHistoryPage(fuelHistoryPageCount);
+  }, [fuelHistoryPage, fuelHistoryPageCount]);
 
   const activeRoutes = activeRoutesQuery.data?.routes ?? [];
   const activeRouteTotal = activeRoutesQuery.data?.total_count ?? 0;
@@ -477,13 +489,21 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               ) : (
                 <>
                   <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
-                  <CappedListNotice
-                    shown={(fuelTransactionsQuery.data?.transactions ?? []).length}
-                    limit={200}
-                    total={fuelTransactionsQuery.data?.total_count}
-                    hint="History shows the most recent page — use import filters or a dedicated report for the full fleet-card history."
-                    className="mt-2 text-xs text-slate-600"
-                  />
+                  <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="fuel-history-server-pager">
+                    <ActionButton
+                      disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
+                      onClick={() => setFuelHistoryPage((page) => Math.max(1, page - 1))}
+                    >
+                      Previous transactions
+                    </ActionButton>
+                    <span>Page {fuelHistoryPage} of {fuelHistoryPageCount} · {fuelHistoryTotal} transactions</span>
+                    <ActionButton
+                      disabled={fuelHistoryPage >= fuelHistoryPageCount || fuelTransactionsQuery.isFetching}
+                      onClick={() => setFuelHistoryPage((page) => Math.min(fuelHistoryPageCount, page + 1))}
+                    >
+                      Next transactions
+                    </ActionButton>
+                  </div>
                 </>
               )}
             </div>
