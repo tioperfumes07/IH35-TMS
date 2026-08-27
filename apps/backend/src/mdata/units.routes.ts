@@ -515,7 +515,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/units/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -558,7 +558,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         // the row we already read and reuse them for the response — never RETURNING a soft-deleted row.
         const terminalStatuses = new Set(["Sold", "Totaled", "Transferred", "Damaged"]);
         newStatus = terminalStatuses.has(String(oldRow.status)) ? (oldRow.status as string) : "OutOfService";
-        await client.query(
+        const result = await client.query(
           `
             UPDATE mdata.units
             SET deactivated_at = now(),
@@ -570,6 +570,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           `,
           [parsedParams.data.id, newStatus, authUser.uuid, scopedCompanyId]
         );
+        if (result.rowCount !== 1) return null;
         // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
         // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
         const tsRes = await client.query(`SELECT now() AS deactivated_at`);

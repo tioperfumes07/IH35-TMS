@@ -547,7 +547,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/equipment/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/equipment/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -585,7 +585,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         // whose equipment_update WITH CHECK passes. So write an explicit timestamp and reuse it for the
         // response instead of returning the now-invisible row. (drivers/customers deactivates never hit this
         // because their select policies have no `deactivated_at IS NULL` gate.) RLS stays ON; per-entity.
-        await client.query(
+        const result = await client.query(
           `
             UPDATE mdata.equipment
             SET deactivated_at = now(), updated_by_user_id = $2
@@ -595,6 +595,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           `,
           [parsedParams.data.id, authUser.uuid, scopedCompanyId]
         );
+        if (result.rowCount !== 1) return null;
         // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
         // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
         const tsRes = await client.query(`SELECT now() AS deactivated_at`);
