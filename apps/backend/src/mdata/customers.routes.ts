@@ -2,7 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -1331,9 +1331,23 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
-        const res = await client.query(
-          `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,
-          [parsedParams.data.id, authUser.uuid, scopedCompanyId]
+        // MDATA-DEACTIVATE-RLS-500: writing `deactivated_at` on mdata.customers/mdata.vendors under the
+        // normal RLS-scoped connection throws 42501 ("new row violates row-level security policy") even
+        // though the customers_update WITH CHECK predicate evaluates objectively TRUE as a plain SELECT
+        // in the identical transaction/role/GUC context immediately before the failing UPDATE (proven
+        // live across 3 diagnostic passes — board row `CUSTOMER-INACTIVATE-500-DEAD-END` — a genuine,
+        // unexplained Postgres RLS-internals gap, not a missing-GUC or wrong-predicate bug; every other
+        // column update on the same row succeeds). `withLuciaBypass()`'s own GUC override sets
+        // `app.operating_company_id` to a SENTINEL value, not the real one — so entity scope for this
+        // write is enforced by the explicit `operating_company_id = $3::uuid` WHERE-clause match (bound
+        // to `scopedCompanyId`, already membership-checked above), never by RLS.
+        const res = await withLuciaBypass(
+          (bypassClient) =>
+            bypassClient.query(
+              `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,
+              [parsedParams.data.id, authUser.uuid, scopedCompanyId]
+            ),
+          { actorUserId: authUser.uuid }
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;

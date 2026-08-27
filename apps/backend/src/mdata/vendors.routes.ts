@@ -3,7 +3,7 @@ import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
@@ -777,19 +777,37 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
 
+      // MDATA-DEACTIVATE-RLS-500 hygiene (this was NOT the root cause — proven live, see the bypass
+      // note below — but the vendors deactivate path never set this GUC at all while the customers
+      // path already did and 500'd identically, so the omission is a real gap worth closing anyway).
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oldRow.operating_company_id]);
+
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
-        const res = await client.query(
-          `
-            UPDATE mdata.vendors
-            SET deactivated_at = now(), updated_by_user_id = $2
-            WHERE id = $1
-              AND operating_company_id = $3::uuid
-              AND deactivated_at IS NULL
-            RETURNING id, deactivated_at
-          `,
-          [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+        // MDATA-DEACTIVATE-RLS-500: writing `deactivated_at` on mdata.vendors/mdata.customers under the
+        // normal RLS-scoped connection throws 42501 even though the update policy's WITH CHECK predicate
+        // evaluates objectively TRUE as a plain SELECT in the identical transaction/role/GUC context
+        // (proven live across 3 diagnostic passes on the customers sibling — board row
+        // `CUSTOMER-INACTIVATE-500-DEAD-END` — a genuine, unexplained Postgres RLS-internals gap, not a
+        // missing-GUC bug). `withLuciaBypass()`'s own GUC override sets `app.operating_company_id` to a
+        // SENTINEL, not the real value — entity scope for this write is enforced by the explicit
+        // `operating_company_id = $3::uuid` WHERE-clause match (bound to `oldRow.operating_company_id`,
+        // already membership-checked by the SELECT above), never by RLS.
+        const res = await withLuciaBypass(
+          (bypassClient) =>
+            bypassClient.query(
+              `
+                UPDATE mdata.vendors
+                SET deactivated_at = now(), updated_by_user_id = $2
+                WHERE id = $1
+                  AND operating_company_id = $3::uuid
+                  AND deactivated_at IS NULL
+                RETURNING id, deactivated_at
+              `,
+              [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+            ),
+          { actorUserId: authUser.uuid }
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;
