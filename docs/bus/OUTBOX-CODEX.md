@@ -1268,3 +1268,4 @@ Codex | GO-2158 | WORKING | FINDING=MAINT-F6746 | Reefer-specs update now requir
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6747 | Warranty claim edit now requires one active company row before audit/readback | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6748 | Warranty claim filing now requires one active company row before audit/readback | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=MAINT-F6749 | Warranty claim archive now returns 404/no audit on zero-row mutation | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6750 | Tire edit now requires one non-archived company row before audit/readback | HANDOFF=CC-1 MAINT-MONEY-F6750A | NEXT=guard+tests+FAST-MERGE | GO
