@@ -53,6 +53,12 @@ function auditSubjectProjection(alias: string) {
       -- "driver_request") carry subject_type='task', source_table='driver_finance.cash_advance_requests'
       -- -- correctly populated by the emitter, simply never added to this shared resolver.
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'driver_finance.cash_advance_requests' THEN 'cash_advance_request'
+      -- Live-observed on /reports/audit/activity-by-module: reconciliation.started/.completed
+      -- (source "banking") and transaction.categorized carry subject_type='task', source_table
+      -- 'banking.reconciliation_sessions'/'banking.bank_transactions' -- correctly populated by the
+      -- emitter, simply never added to this shared resolver.
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'banking.reconciliation_sessions' THEN 'reconciliation_session'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'banking.bank_transactions' THEN 'bank_transaction'
       ELSE ${alias}.subject_type
     END AS subject_kind,
     CASE
@@ -84,6 +90,11 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'daily_task' THEN NULLIF(TRIM(audit_daily_task.title), '')
       WHEN ${alias}.subject_type = 'hos_violation' THEN NULLIF(TRIM(audit_hos_violation.violation_type), '')
       WHEN ${alias}.subject_type = 'internal_fine' THEN NULLIF(TRIM('Fine ' || to_char(audit_internal_fine.imposed_date, 'YYYY-MM-DD') || ' — $' || audit_internal_fine.amount::text), '')
+      -- 982-row-scale gap on /reports/audit/activity-by-module: recon.run_started/.completed (RECON-01,
+      -- the twice-daily AM/PM reconciliation job) carry subject_type='alert' with a real, joinable
+      -- subject_id (accounting.recon_runs) -- 'alert' had zero resolver anywhere, not even a label
+      -- branch, despite the referenced row always existing.
+      WHEN ${alias}.subject_type = 'alert' THEN NULLIF(TRIM(INITCAP(REPLACE(audit_recon_run.run_type, '_', ' ')) || ' — ' || to_char(audit_recon_run.window_start, 'YYYY-MM-DD')), '')
       WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
         WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(audit_wo.display_id), '')
         WHEN 'accounting.invoices' THEN NULLIF(TRIM(audit_invoice.display_id), '')
@@ -96,6 +107,8 @@ function auditSubjectProjection(alias: string) {
         WHEN 'mdata.customer_quality_events' THEN NULLIF(TRIM(audit_customer_quality_event.summary), '')
         WHEN 'driver_finance.driver_settlements' THEN NULLIF(TRIM(audit_driver_settlement.display_id), '')
         WHEN 'driver_finance.cash_advance_requests' THEN NULLIF(TRIM(audit_cash_advance_request.display_id), '')
+        WHEN 'banking.reconciliation_sessions' THEN NULLIF(TRIM('Reconciliation ' || to_char(audit_recon_session.period_start, 'YYYY-MM-DD') || '–' || to_char(audit_recon_session.period_end, 'YYYY-MM-DD')), '')
+        WHEN 'banking.bank_transactions' THEN NULLIF(TRIM(COALESCE(audit_bank_txn.description, audit_bank_txn.merchant_name)), '')
         ELSE NULL
       END
       ELSE NULL
@@ -211,7 +224,21 @@ function auditSubjectJoins(alias: string) {
     LEFT JOIN safety.internal_fines audit_internal_fine
       ON ${alias}.subject_type = 'internal_fine'
      AND audit_internal_fine.id = ${alias}.subject_id
-     AND audit_internal_fine.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_internal_fine.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.recon_runs audit_recon_run
+      ON ${alias}.subject_type = 'alert'
+     AND audit_recon_run.id = ${alias}.subject_id
+     AND audit_recon_run.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN banking.reconciliation_sessions audit_recon_session
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'banking.reconciliation_sessions'
+     AND audit_recon_session.id = ${alias}.source_reference_id
+     AND audit_recon_session.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN banking.bank_transactions audit_bank_txn
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'banking.bank_transactions'
+     AND audit_bank_txn.id = ${alias}.source_reference_id
+     AND audit_bank_txn.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
