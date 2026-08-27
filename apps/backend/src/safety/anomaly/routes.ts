@@ -84,6 +84,8 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     const q = companyQuery.extend({
       status: z.string().optional(), severity: z.string().optional(),
       from: z.string().optional(), to: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(200).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
     }).safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
@@ -93,10 +95,18 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
       if (q.data.severity) { filters.push(`severity = $${i++}`); vals.push(q.data.severity); }
       if (q.data.from) { filters.push(`detected_at >= $${i++}::timestamptz`); vals.push(q.data.from); }
       if (q.data.to) { filters.push(`detected_at <= $${i++}::timestamptz`); vals.push(q.data.to); }
-      const res = await client.query(`SELECT * FROM safety.anomaly_alerts WHERE ${filters.join(" AND ")} ORDER BY detected_at DESC LIMIT 200`, vals);
-      return res.rows;
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count FROM safety.anomaly_alerts WHERE ${filters.join(" AND ")}`,
+        vals
+      );
+      vals.push(q.data.limit, q.data.offset);
+      const res = await client.query(
+        `SELECT * FROM safety.anomaly_alerts WHERE ${filters.join(" AND ")} ORDER BY detected_at DESC LIMIT $${vals.length - 1}::int OFFSET $${vals.length}::int`,
+        vals
+      );
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
-    return { alerts: rows };
+    return { alerts: rows.rows, total_count: rows.total_count };
   });
 
   app.patch("/api/safety/anomaly/alerts/:uuid/acknowledge", async (req, reply) => {
