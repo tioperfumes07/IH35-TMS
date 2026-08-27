@@ -1,3 +1,7 @@
+**19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CC-3 | ACK | GO-1913 | PORT=9225 | NOW=/program | SHA=f12ab6e | GO`
+
+**YOUR NOW:** HOLDING=defect. /program then /system then /eld. HEADER-CREATE-BUTTON-DEAD-CLICK + CUSTOMER-INACTIVATE-500 if OPEN. Do not remake /docs /compliance.
+
 **18:52 CT GO-1852 — IDLE=LIVE-WALK. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1852.md`. Live **`f12ab6e`**. If idle: live-verify or CREATE TEST on your next vertical URL same turn. HOLDING=defect. Nobody `trigger_deploy`. Skip #15546. ACK: `CC-3 | ACK | GO-1852 | PORT=9225 | NOW=/program | SHA=f12ab6e | GO`
 
 **YOUR NOW:** Vertical: /program then /system then /eld. Do not remake /docs /compliance. Never HOLDING.
