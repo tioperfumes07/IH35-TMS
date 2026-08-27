@@ -138,14 +138,23 @@ export function DriverHosClocksBlock({
 // ITEM 5 (board) — a SINGLE HOS clock value for one column, for grids that wrap each column in their
 // own <td> (DispatchBoard's shared column model). Reuses the exact same store query + projection as the
 // 6-cell fragment so the List and the Board show identical numbers. Renders "—" until HOS data flows.
+//
+// HOS-RETRY-CONCAT: DispatchBoard/DispatchList each render one <DriverHosClockValue> PER HOS_COLUMNS
+// entry (6 per row) — all 6 share the same react-query cache key, so all 6 error together, and each one
+// independently rendered its own <HosRetryButton/> with no separator: "RetryRetryRetryRetryRetryRetry".
+// showRetryOnError defaults to false (render the same "—" every other error cell shows) — pass it true
+// on exactly ONE of the 6 column call sites (matching DriverHosClockCells' existing `index === 0`
+// convention below) so a row shows exactly one Retry control, not six concatenated.
 export function DriverHosClockValue({
   driverId,
   operatingCompanyId,
   colKey,
+  showRetryOnError = false,
 }: {
   driverId: string | null | undefined;
   operatingCompanyId: string | undefined;
   colKey: HosColumnKey;
+  showRetryOnError?: boolean;
 }) {
   const q = useDriverHos(driverId, operatingCompanyId);
   // HOS-PRC2 — board reads the certified Samsara ELD snapshot verbatim; falls back to the in-app
@@ -153,7 +162,9 @@ export function DriverHosClockValue({
   const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
   const col = HOS_COLUMNS.find((c) => c.key === colKey);
   if (!driverId) return <span className="text-gray-300">—</span>;
-  if (q.isError) return <HosRetryButton onRetry={() => void q.refetch()} />;
+  if (q.isError) {
+    return showRetryOnError ? <HosRetryButton onRetry={() => void q.refetch()} /> : <span className="text-gray-300">—</span>;
+  }
   return (
     <span
       className="font-mono text-[11px] text-gray-700"
