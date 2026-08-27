@@ -27,7 +27,7 @@ function stripComments(text) {
 /** Extract the convert_to_wo / triage WO-create body from defects.routes.ts */
 function convertBlock(src) {
   // From alreadyConverted / next_wo_display_id through converted_to_wo audit.
-  const start = src.search(/next_wo_display_id|alreadyConverted/);
+  const start = src.search(/lockedDefectRes|next_wo_display_id|alreadyConverted/);
   const end = src.search(/converted_to_wo/);
   if (start < 0 || end < 0 || end <= start) return src;
   return src.slice(start, end + "converted_to_wo".length + 200);
@@ -52,6 +52,15 @@ export function assertGuard(sourceText) {
 
   if (!/WHERE\s+id\s*=\s*\$1/i.test(block.match(/UPDATE\s+safety\.dvir_defects[\s\S]{0,400}/i)?.[0] ?? "")) {
     errors.push(`${ROUTES}: dvir_defects UPDATE must key on defect id (WHERE id = $1)`);
+  }
+  if (!/FOR UPDATE OF dd/i.test(block)) {
+    errors.push(`${ROUTES}: convert-to-WO must lock the defect before allocating a WO`);
+  }
+  if (!/UPDATE\s+safety\.dvir_defects[\s\S]{0,300}follow_up_wo_id IS NULL[\s\S]{0,100}RETURNING id::text/i.test(block)) {
+    errors.push(`${ROUTES}: follow-up linkage must be a null-only returning transition`);
+  }
+  if (!/if \(!linked\.rows\[0\]\) throw new Error\("dvir_defect_follow_up_link_lost"\)/.test(block)) {
+    errors.push(`${ROUTES}: a lost follow-up linkage must fail the transaction`);
   }
 
   // source_type literal or bound variable used in INSERT / next_wo_display_id
@@ -107,11 +116,13 @@ function readRoutes() {
 function runSelftest() {
   const good = `
     FROM maintenance.next_wo_display_id($1, $2, CURRENT_DATE, $3)
+    const lockedDefectRes = SELECT dd.follow_up_wo_id FROM safety.dvir_defects dd FOR UPDATE OF dd
     const woSourceType = "IS";
     INSERT INTO maintenance.work_orders (source_type) VALUES ($1,$2,$3,'open',$4)
     UPDATE safety.dvir_defects
-      SET follow_up_wo_id = COALESCE(follow_up_wo_id, $2)
-      WHERE id = $1
+      SET follow_up_wo_id = $2
+      WHERE id = $1 AND follow_up_wo_id IS NULL RETURNING id::text
+    if (!linked.rows[0]) throw new Error("dvir_defect_follow_up_link_lost");
     converted_to_wo
   `;
   const badTable = `
@@ -131,6 +142,9 @@ function runSelftest() {
     ["good path passes", assertGuard(good).length === 0],
     ["wrong table fails", assertGuard(badTable).some((e) => /dvir_submissions/.test(e))],
     ["invalid DV source fails", assertGuard(badSource).some((e) => /'DV'/.test(e) || /allowlist/.test(e))],
+    ["missing lock fails", assertGuard(good.replace("FOR UPDATE OF dd", "")).some((e) => /lock/.test(e))],
+    ["missing CAS fails", assertGuard(good.replace(" AND follow_up_wo_id IS NULL", "")).some((e) => /null-only/.test(e))],
+    ["missing lost-link failure fails", assertGuard(good.replace('if (!linked.rows[0]) throw new Error("dvir_defect_follow_up_link_lost");', "")).some((e) => /fail the transaction/.test(e))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
