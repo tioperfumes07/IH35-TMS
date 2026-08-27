@@ -454,7 +454,8 @@ export async function buildDriverAggregate(
             training_name AS type,
             completed_at::text AS completion_date,
             expiry_date::text AS expiration_date,
-            notes AS certificate_url
+            notes AS certificate_url,
+            count(*) OVER()::int AS total_count
           FROM safety.training_records
           WHERE driver_id = $1::uuid
             AND operating_company_id = $2::uuid
@@ -467,6 +468,7 @@ export async function buildDriverAggregate(
     { rows: [] as Array<Record<string, unknown>>, unavailable: true as const }
   );
   const training_records_unavailable = trainingRes.unavailable;
+  const training_records_total_count = training_records_unavailable ? 0 : Number(trainingRes.rows[0]?.total_count ?? 0);
   const training_records = trainingRes.rows.map((row) => {
     const days = daysUntil(row.expiration_date as string | null);
     let status: "green" | "yellow" | "red" | "gray" = complianceColor(days);
@@ -567,6 +569,7 @@ export async function buildDriverAggregate(
     performance_scorecard_unavailable,
     settlements,
     training_records,
+    training_records_total_count,
     training_records_unavailable,
     border_credentials,
     w8ben,

@@ -152,6 +152,7 @@ export type DriverProfileAggregate = {
   performance_scorecard_unavailable?: boolean;
   settlements?: Record<string, unknown>;
   training_records?: Array<Record<string, unknown>>;
+  training_records_total_count?: number;
   training_records_unavailable?: boolean;
   border_credentials?: Record<string, unknown>;
   w8ben?: Record<string, unknown>;
@@ -443,6 +444,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
         <TrainingRecordsSection
           records={aggregate.training_records ?? []}
+          totalCount={aggregate.training_records_total_count ?? aggregate.training_records?.length ?? 0}
+          driverId={id}
           unavailable={aggregate.training_records_unavailable === true}
           onAddTraining={() => setAddTrainingOpen(true)}
         />

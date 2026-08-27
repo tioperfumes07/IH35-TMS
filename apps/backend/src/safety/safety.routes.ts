@@ -27,6 +27,8 @@ const accidentsQuerySchema = companyQuerySchema.extend({
 });
 const trainingCompletionsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const eventsQuerySchema = z.object({
@@ -430,11 +432,20 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
            LIMIT 1`,
           [query.data.driver_id, query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [] };
+        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
       }
       const values: unknown[] = [query.data.operating_company_id];
       const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
       if (query.data.driver_id) values.push(query.data.driver_id);
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+         FROM safety.training_records tr
+         WHERE tr.operating_company_id = $1::uuid
+           AND tr.voided_at IS NULL
+           ${driverFilter}`,
+        values
+      );
+      values.push(query.data.limit, query.data.offset);
       const res = await client.query(
           `
             SELECT tr.*,
@@ -456,14 +467,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               AND tr.voided_at IS NULL
               ${driverFilter}
             ORDER BY tr.completed_at DESC
-            LIMIT 500
+            LIMIT $${values.length - 1} OFFSET $${values.length}
           `,
           values
         );
-      return { found: true as const, rows: res.rows };
+      return { found: true as const, rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { training_completions: result.rows };
+    return { training_completions: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/drug-alcohol/tests", async (req, reply) => {
