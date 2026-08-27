@@ -156,7 +156,10 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
   });
 
   // ── POST /:defectId/route ───────────────────────────────────────────────────────────────────
-  app.post("/api/v1/maintenance/pre-flight-dvir/:defectId/route", async (req, reply) => {
+  app.post(
+    "/api/v1/maintenance/pre-flight-dvir/:defectId/route",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = defectParamsSchema.safeParse(req.params ?? {});
@@ -167,6 +170,19 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
     const defectId = params.data.defectId;
 
     const result = await withCompanyScope(user.uuid, companyId, async (client: DbClient) => {
+      // Serialize routing before reading the latest routed tag or allocating a WO identity. Without
+      // this lock, two requests can both observe "not routed", create separate WOs, and append two
+      // routed tags for the same defect.
+      const lockRes = await client.query<{ id: string }>(
+        `SELECT id::text
+           FROM safety.dvir_defects
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          FOR UPDATE`,
+        [defectId, companyId]
+      );
+      if (!lockRes.rows[0]) return { code: 404 as const, error: "defect_not_found" };
+
       const defRes = await client.query<{
         id: string;
         unit_id: string;
@@ -304,7 +320,8 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
-  });
+    }
+  );
 
   // ── PATCH /:defectId/severity ───────────────────────────────────────────────────────────────
   app.patch("/api/v1/maintenance/pre-flight-dvir/:defectId/severity", async (req, reply) => {
