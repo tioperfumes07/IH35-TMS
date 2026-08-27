@@ -66,7 +66,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={setAttemptClose}>
+    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3 text-xs">
         <label
           className="block rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"

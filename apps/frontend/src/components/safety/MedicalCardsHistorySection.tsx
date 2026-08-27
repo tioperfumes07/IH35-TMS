@@ -91,7 +91,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
       <div className="mt-3">
         {query.isError ? <ListErrorBanner message="Medical card history could not be loaded." onRetry={() => void query.refetch()} /> : <ParityTable<SafetyMedicalCardRow> rows={query.data?.cards ?? []} columns={columns} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No medical cards found." storageKey={driverId ? "driver-medical-cards" : "safety-medical-cards"} />}
       </div>
-      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add DOT medical card" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
+      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add DOT medical card" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           createMutation.mutate({
