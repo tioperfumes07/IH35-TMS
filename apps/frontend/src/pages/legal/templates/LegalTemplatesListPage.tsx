@@ -73,7 +73,11 @@ export function LegalTemplatesListPage() {
   return (
     <div className="space-y-3">
       <BackArrowHeader
-        backTo="/home"
+        // LEGAL-TEMPLATES-BACK-TO-HOME: this page renders LegalModuleTabs (a sibling tab of
+        // Contracts/Policies/Attorney Review/Matters/Reports) — it is not the Legal module root
+        // (/legal is), so on a direct load/refresh (no in-app history for the smart-back to use)
+        // "← Back" dropped the user all the way out to /home instead of back to the Legal hub.
+        backTo="/legal"
         breadcrumb={["Legal", "Templates"]}
         title="Legal Template Library"
         countBadge={total}
