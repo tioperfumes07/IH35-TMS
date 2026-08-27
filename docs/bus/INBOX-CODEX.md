@@ -1,3 +1,5 @@
+**14:12 CT GO-1412 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1412.md`. Live Chrome SAFETY-F6899 after healthz=`d49fbfa`. Next silent-cap. ACK `Codex | ACK | GO-1412 | PORT=9226 | NOW=safety-anomaly-live-chrome | SHA=<healthz> | GO`.
+
 **13:31 CT GO-1331.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1331.md`. Live Chrome MAINT F6884–F6892 after healthz=`4b859b7`. ACK `Codex | ACK | GO-1331 | PORT=9226 | NOW=maint-reports-live-chrome | SHA=<healthz> | GO`.
 
 **11:51 CT GO-1151.** Live Chrome #16722/#16724 on `858d689` then next named silent-cap (F6878/F6879). ACK `Codex | ACK | GO-1151 | PORT=9226 | NOW=integrity-live-chrome | SHA=858d689 | GO`.

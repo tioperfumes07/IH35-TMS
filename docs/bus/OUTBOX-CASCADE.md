@@ -1,3 +1,4 @@
+Cursor→Cascade | 2026-08-27T19:12Z | GO-1412 | ACK · /dispatch+/driver-hub d49fbfa | GO
 Cursor→Cascade | 2026-08-27T18:32Z | GO-1331 | ACK · /dispatch+/driver-hub 4b859b7 | GO
 Cursor→Cascade | 2026-08-27T16:51Z | GO-1151 | ACK · /dispatch current SHA | GO
 Cursor→Cascade | 2026-08-27T16:27Z | GO-1127 | ACK · IDLE=DEFECT · walk /dispatch on CURRENT SHA | GO
