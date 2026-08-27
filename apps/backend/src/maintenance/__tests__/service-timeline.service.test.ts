@@ -5,6 +5,7 @@ import {
   filterServiceTimelineByDateRange,
   mergeServiceTimelineEvents,
   parseServiceTimelineEventTypes,
+  pageServiceTimeline,
   registerMaintenanceServiceTimelineRoutes,
   resolveServiceTimelineDetailPath,
   type ServiceTimelineEvent,
@@ -129,6 +130,34 @@ describe("aggregateServiceTimeline (B31)", () => {
   });
 });
 
+describe("pageServiceTimeline exact global range", () => {
+  it("counts and pages after the enabled sources are unioned and date-filtered", async () => {
+    const query = vi.fn(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
+      expect(sql).toContain("WITH timeline_unfiltered AS");
+      expect(sql).toContain("UNION ALL");
+      expect(sql).toContain("SELECT COUNT(*)::text AS total_count FROM timeline");
+      expect(sql).toContain("ORDER BY occurred_at DESC NULLS LAST, event_type, id LIMIT $5 OFFSET $6");
+      expect(values).toEqual([COMPANY, UNIT, "2026-01-01", "2026-12-31", 50, 50]);
+      return { rows: [{
+        id: "wo-51", event_type: "work_order", occurred_at: "2026-06-03T08:00:00.000Z",
+        title: "WO WO-251", subtitle: null, status: "complete", work_order_id: null, total_count: "123",
+      }] };
+    });
+    const result = await pageServiceTimeline({ query }, {
+      operating_company_id: COMPANY,
+      unit_id: UNIT,
+      event_types: ["work_order", "inspection"],
+      from_date: "2026-01-01",
+      to_date: "2026-12-31",
+      limit: 50,
+      offset: 50,
+    });
+    expect(result.totalCount).toBe(123);
+    expect(result.events[0]?.detail_path).toBe("/maintenance/work-orders/wo-51");
+  });
+});
+
 describe("service timeline routes (B31)", () => {
   let app: FastifyInstance;
 
@@ -137,17 +166,18 @@ describe("service timeline routes (B31)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
-      if (sql.includes("FROM maintenance.work_orders")) {
+      if (sql.includes("WITH timeline_unfiltered AS")) {
         return {
           rows: [
             {
               id: "wo-1",
-              display_id: "WO-200",
-              wo_type: "pm",
+              event_type: "work_order",
+              occurred_at: "2026-06-03T08:00:00.000Z",
+              title: "WO WO-200",
               status: "complete",
-              description: null,
-              opened_at: "2026-06-03T08:00:00.000Z",
-              updated_at: "2026-06-03T08:00:00.000Z",
+              subtitle: null,
+              work_order_id: null,
+              total_count: "1",
             },
           ],
         };

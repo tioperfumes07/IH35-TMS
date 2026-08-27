@@ -38,6 +38,7 @@ const timelineQuerySchema = z
     from_date: z.string().date().optional(),
     to_date: z.string().date().optional(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
   })
   .refine((v) => Boolean(v.unit_id) !== Boolean(v.equipment_id), {
     message: "exactly one of unit_id or equipment_id is required",
@@ -118,6 +119,116 @@ export function resolveServiceTimelineDetailPath(
     default:
       return "/maintenance";
   }
+}
+
+type TimelinePageRow = {
+  id: string | null;
+  event_type: ServiceTimelineEventType | null;
+  occurred_at: string | null;
+  title: string | null;
+  subtitle: string | null;
+  status: string | null;
+  work_order_id: string | null;
+  total_count: string;
+};
+
+/**
+ * Exact mounted timeline range. Each enabled source projects the same relationship shape into one
+ * UNION before date filtering, ordering, counting, and paging. This is intentionally one query:
+ * counting or paging each source independently cannot produce a correct global chronology.
+ */
+export async function pageServiceTimeline(
+  client: DbClient,
+  input: {
+    operating_company_id: string;
+    unit_id?: string;
+    equipment_id?: string;
+    event_types: ServiceTimelineEventType[];
+    from_date?: string;
+    to_date?: string;
+    limit: number;
+    offset: number;
+  }
+): Promise<{ events: ServiceTimelineEvent[]; totalCount: number }> {
+  const types = new Set(input.event_types);
+  const unions: string[] = [];
+  const assetId = input.unit_id ?? input.equipment_id;
+  if (!assetId) return { events: [], totalCount: 0 };
+
+  if (types.has("work_order") && await relationExists(client, "maintenance.work_orders")) {
+    const assetPredicate = input.unit_id ? "w.unit_id = $2::uuid" : "w.equipment_id = $2::uuid";
+    unions.push(`
+      SELECT w.id::text AS id, 'work_order'::text AS event_type,
+        COALESCE(w.opened_at, w.updated_at, w.created_at) AS occurred_at,
+        CASE WHEN w.display_id IS NOT NULL THEN 'WO ' || w.display_id ELSE 'Work order ' || w.wo_type END AS title,
+        w.description::text AS subtitle, w.status::text AS status, NULL::text AS work_order_id
+      FROM maintenance.work_orders w
+      WHERE w.operating_company_id = $1::uuid AND ${assetPredicate} AND w.status <> 'cancelled'
+    `);
+  }
+  if (input.unit_id && types.has("inspection") && await relationExists(client, "maintenance.inspections")) {
+    unions.push(`
+      SELECT i.id::text, 'inspection'::text,
+        COALESCE(i.inspection_date, i.scheduled_date, i.updated_at),
+        'Inspection · ' || replace(i.inspection_type, '_', ' '), NULL::text, i.status::text, NULL::text
+      FROM maintenance.inspections i
+      WHERE i.operating_company_id = $1::uuid AND i.unit_id = $2::uuid AND i.archived_at IS NULL
+    `);
+  }
+  if (input.unit_id && types.has("pm") && await relationExists(client, "maintenance.pm_auto_wo_log")) {
+    unions.push(`
+      SELECT l.id::text, 'pm'::text, l.created_at,
+        CASE WHEN ps.label IS NOT NULL THEN 'PM · ' || ps.label ELSE 'PM · ' || replace(l.action, '_', ' ') END,
+        CASE WHEN jsonb_typeof(l.detail->'reason') = 'string' THEN l.detail->>'reason' ELSE NULL END,
+        l.action::text, l.work_order_id::text
+      FROM maintenance.pm_auto_wo_log l
+      LEFT JOIN maintenance.pm_schedules ps ON ps.id = l.pm_schedule_id
+      WHERE l.operating_company_id = $1::uuid AND l.unit_id = $2::uuid
+    `);
+  }
+  if (input.unit_id && types.has("fuel") && await relationExists(client, "fuel.fuel_transactions")) {
+    unions.push(`
+      SELECT ft.id::text, 'fuel'::text, ft.transaction_at,
+        'Fuel · ' || replace(ft.fuel_type, '_', ' '),
+        COALESCE(NULLIF(concat_ws(', ', ft.location_city, ft.location_state), ''),
+          CASE WHEN ft.gallons IS NOT NULL THEN ft.gallons::text || ' gal · $' || ft.total_cost::text ELSE '$' || ft.total_cost::text END),
+        NULL::text, NULL::text
+      FROM fuel.fuel_transactions ft
+      WHERE ft.operating_company_id = $1::uuid AND ft.unit_id = $2::uuid AND ft.archived_at IS NULL
+    `);
+  }
+  if (input.unit_id && types.has("accident") && await relationExists(client, "safety.accident_reports")) {
+    unions.push(`
+      SELECT ar.id::text, 'accident'::text, ar.accident_at,
+        'Accident report'::text, ar.description::text, ar.status::text, NULL::text
+      FROM safety.accident_reports ar
+      WHERE ar.operating_company_id = $1::uuid AND ar.unit_id = $2::uuid
+    `);
+  }
+  if (!unions.length) return { events: [], totalCount: 0 };
+
+  const result = await client.query<TimelinePageRow>(`
+    WITH timeline_unfiltered AS (${unions.join("\nUNION ALL\n")}),
+    timeline AS (
+      SELECT * FROM timeline_unfiltered
+      WHERE ($3::date IS NULL OR occurred_at >= $3::date)
+        AND ($4::date IS NULL OR occurred_at < $4::date + INTERVAL '1 day')
+    ), totals AS (SELECT COUNT(*)::text AS total_count FROM timeline),
+    page AS (SELECT * FROM timeline ORDER BY occurred_at DESC NULLS LAST, event_type, id LIMIT $5 OFFSET $6)
+    SELECT page.*, totals.total_count FROM totals LEFT JOIN page ON true
+  `, [input.operating_company_id, assetId, input.from_date ?? null, input.to_date ?? null, input.limit, input.offset]);
+
+  const totalCount = Number(result.rows[0]?.total_count ?? 0);
+  const events = result.rows.filter((row) => row.id && row.event_type && row.occurred_at).map((row) => ({
+    id: row.id!,
+    event_type: row.event_type!,
+    occurred_at: row.occurred_at!,
+    title: row.title ?? "Service event",
+    subtitle: row.subtitle,
+    status: row.status,
+    detail_path: resolveServiceTimelineDetailPath(row.event_type!, row.id!, row.work_order_id),
+  }));
+  return { events, totalCount };
 }
 
 async function fetchWorkOrderEvents(
@@ -409,8 +520,8 @@ export async function registerMaintenanceServiceTimelineRoutes(app: FastifyInsta
     const q = parsed.data;
     const eventTypes = parseServiceTimelineEventTypes(q.event_types);
 
-    const events = await withCompany(user.uuid, q.operating_company_id, async (client) =>
-      aggregateServiceTimeline(client, {
+    const page = await withCompany(user.uuid, q.operating_company_id, async (client) =>
+      pageServiceTimeline(client, {
         operating_company_id: q.operating_company_id,
         unit_id: q.unit_id,
         equipment_id: q.equipment_id,
@@ -418,11 +529,15 @@ export async function registerMaintenanceServiceTimelineRoutes(app: FastifyInsta
         from_date: q.from_date,
         to_date: q.to_date,
         limit: q.limit,
+        offset: q.offset,
       })
     );
 
     return {
-      events,
+      events: page.events,
+      total_count: page.totalCount,
+      limit: q.limit,
+      offset: q.offset,
       filters: {
         event_types: eventTypes,
         from_date: q.from_date ?? null,

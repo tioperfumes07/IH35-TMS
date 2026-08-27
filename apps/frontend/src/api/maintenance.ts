@@ -1268,6 +1268,7 @@ export function getMaintenanceServiceTimeline(params: {
   from_date?: string;
   to_date?: string;
   limit?: number;
+  offset?: number;
 }) {
   const q = new URLSearchParams({ operating_company_id: params.operating_company_id });
   if (params.unit_id) q.set("unit_id", params.unit_id);
@@ -1276,7 +1277,8 @@ export function getMaintenanceServiceTimeline(params: {
   if (params.from_date) q.set("from_date", params.from_date);
   if (params.to_date) q.set("to_date", params.to_date);
   if (params.limit != null) q.set("limit", String(params.limit));
-  return apiRequest<{ events: ServiceTimelineEvent[]; filters: Record<string, unknown> }>(
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiRequest<{ events: ServiceTimelineEvent[]; total_count: number; limit: number; offset: number; filters: Record<string, unknown> }>(
     `/api/v1/maintenance/service-timeline?${q.toString()}`
   );
 }
