@@ -19,7 +19,8 @@ describe("dispatch/loads.routes — load-detail rate-con read-model (A9)", () =>
     expect(routes).toContain("rc.file_id AS ratecon_file_id");
     expect(routes).toContain("rc.original_filename AS ratecon_file_name");
     expect(routes).toContain("rc.uploaded_at AS ratecon_uploaded_at");
-    expect(routes).toContain("JOIN docs.files df ON df.id = dfl.file_id AND df.deleted_at IS NULL");
+    // Alias was later renamed df -> rate_file (cosmetic; same join, same deleted_at guard).
+    expect(routes).toContain("JOIN docs.files rate_file ON rate_file.id = dfl.file_id AND rate_file.deleted_at IS NULL");
     expect(routes).toContain("fc.code = 'rate_confirmation'");
     expect(routes).toContain("dfl.entity_type = 'load' AND dfl.entity_id = l.id AND dfl.deleted_at IS NULL");
   });
