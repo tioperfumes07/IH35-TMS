@@ -125,7 +125,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
   const violationsQuery = useQuery({
     queryKey: ["safety-v64", "hos-violations", operatingCompanyId, "dashboard"],
-    queryFn: () => listHosViolations(operatingCompanyId),
+    queryFn: () => listHosViolations(operatingCompanyId, { limit: 12, offset: 0 }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -135,6 +135,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
   const fleetIncomplete = failedDriverCount > 0;
   const metrics = useMemo(() => computeHosDashboardMetrics(rows), [rows]);
   const violations = (violationsQuery.isError ? [] : violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
+  const violationTotal = violationsQuery.isError ? 0 : violationsQuery.data?.total_count ?? 0;
 
   const fleetColumns = useMemo<Array<ParityColumn<FleetHosDriverRow>>>(
     () => [
@@ -296,7 +297,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-            <div className="text-xs font-semibold text-slate-800">HOS violations (read-only)</div>
+            <div className="text-xs font-semibold text-slate-800">HOS violations (read-only){violationTotal ? ` · ${violationTotal} total` : ""}</div>
             <Link to="/safety/hos-violations" className="text-[11px] font-semibold text-slate-700 hover:underline">
               Open violations tab
             </Link>
@@ -313,7 +314,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               <p className="text-xs text-slate-500">No open violations on file.</p>
             ) : (
               <ul className="space-y-2 text-xs">
-                {violations.slice(0, 12).map((row) => (
+                {violations.map((row) => (
                   <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
                     <div className="font-semibold">{String(row.violation_type ?? "Violation")}</div>
                     <div className="text-slate-600">

@@ -58,9 +58,12 @@ export function LoadSafetyReverseSection({
   const [accidentPage, setAccidentPage] = useState(1);
   const internalFinePageSize = 25;
   const [internalFinePage, setInternalFinePage] = useState(1);
+  const hosViolationPageSize = 25;
+  const [hosViolationPage, setHosViolationPage] = useState(1);
   useEffect(() => {
     setAccidentPage(1);
     setInternalFinePage(1);
+    setHosViolationPage(1);
   }, [operatingCompanyId, loadId]);
   const accidentsQ = useQuery({
     queryKey: [
@@ -86,11 +89,14 @@ export function LoadSafetyReverseSection({
       "load",
       operatingCompanyId,
       loadId,
+      hosViolationPage,
     ],
-    queryFn: () => listHosViolations(operatingCompanyId, { load_id: loadId }),
+    queryFn: () => listHosViolations(operatingCompanyId, { load_id: loadId, limit: hosViolationPageSize, offset: (hosViolationPage - 1) * hosViolationPageSize }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const hosViolations: Row[] = hosViolationsQ.data?.hos_violations ?? [];
+  const hosViolationTotal = hosViolationsQ.isError ? 0 : hosViolationsQ.data?.total_count ?? 0;
+  const hosViolationPageCount = Math.max(1, Math.ceil(hosViolationTotal / hosViolationPageSize));
   const internalFinesQ = useQuery({
     queryKey: [
       "safety",
@@ -224,7 +230,7 @@ export function LoadSafetyReverseSection({
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">
             HOS Violations
-            {hosViolations.length ? ` (${hosViolations.length})` : ""}
+            {hosViolationTotal ? ` (${hosViolationTotal})` : ""}
           </h3>
           <EntityLink
             kind="hos_violations_load"
@@ -260,6 +266,13 @@ export function LoadSafetyReverseSection({
             </span>
           </div>
         )) : null}
+        {!hosViolationsQ.isError && hosViolationTotal > hosViolationPageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-hos-violations-pager">
+            <Button size="sm" variant="secondary" disabled={hosViolationPage <= 1 || hosViolationsQ.isFetching} onClick={() => setHosViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
+            <span className="text-slate-600">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
+            <Button size="sm" variant="secondary" disabled={hosViolationPage >= hosViolationPageCount || hosViolationsQ.isFetching} onClick={() => setHosViolationPage((current) => Math.min(hosViolationPageCount, current + 1))}>Next violations</Button>
+          </div>
+        ) : null}
       </div>
       <CivilFinesReverseBlock
         companyId={operatingCompanyId}

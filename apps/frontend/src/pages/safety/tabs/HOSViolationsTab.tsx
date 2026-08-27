@@ -59,6 +59,8 @@ export function HOSViolationsTab() {
   const companyGenerationRef = useRef(0);
   const [voidTarget, setVoidTarget] = useState<HosViolationRow | null>(null);
   const [form, setForm] = useState(emptyHosViolationForm);
+  const pageSize = 25;
+  const [page, setPage] = useState(1);
 
   function patchSearchParam(next: { driverId: string; loadId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -92,6 +94,8 @@ export function HOSViolationsTab() {
     }));
   }, [driverIdFromUrl, loadIdFromUrl]);
 
+  useEffect(() => setPage(1), [companyId, applied.driverId, applied.loadId]);
+
   function setDriverFilter(next: string) {
     staged.setDraft((d) => ({ ...d, driverId: next }));
   }
@@ -100,11 +104,13 @@ export function HOSViolationsTab() {
   }
 
   const query = useQuery({
-    queryKey: ["safety-v64", "hos-violations", companyId, applied.loadId, applied.driverId],
+    queryKey: ["safety-v64", "hos-violations", companyId, applied.loadId, applied.driverId, page],
     queryFn: () =>
       listHosViolations(companyId, {
         load_id: applied.loadId || undefined,
         driver_id: applied.driverId || undefined,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(companyId),
   });
@@ -179,6 +185,8 @@ export function HOSViolationsTab() {
 
   // LIST-EMPTY: the empty message renders only after the violations query settles.
   const listState = useListState(query, (query.data?.hos_violations ?? []).length === 0);
+  const violationTotal = query.isError ? 0 : query.data?.total_count ?? 0;
+  const violationPageCount = Math.max(1, Math.ceil(violationTotal / pageSize));
 
   const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
     () => [
@@ -414,12 +422,20 @@ export function HOSViolationsTab() {
         emptyText="No HOS violations found."
         storageKey="safety-hos-violations"
         exportFilename="hos-violations"
+        hidePager
         rowClassName={(row) =>
           highlightedViolationId && String(row.id) === highlightedViolationId
             ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
             : ""
         }
       />
+      {!query.isError && violationTotal > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="hos-violations-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
+          <span className="text-slate-600">Page {page} of {violationPageCount} · {violationTotal} violations</span>
+          <Button size="sm" variant="secondary" disabled={page >= violationPageCount || query.isFetching} onClick={() => setPage((current) => Math.min(violationPageCount, current + 1))}>Next violations</Button>
+        </div>
+      ) : null}
 
       <VoidReasonModal
         open={Boolean(voidTarget)}

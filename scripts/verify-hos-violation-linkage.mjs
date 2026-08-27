@@ -21,9 +21,9 @@ function audit(s) {
   if (!/filters\.push\(`related_load_id = \$\$\{values\.length\}`\)/.test(s.route)) failures.push("load reverse filter must execute in SQL");
   if (!/filters\.load_id\) qs\.set\("load_id"/.test(s.api)) failures.push("client must forward load reverse filter");
   if (!/disabled=\{!form\.driver_id \|\| !selectedViolationType\?\.id/.test(s.tab) || !/Boolean\(form\.driver_id\.trim\(\) && selectedViolationType\?\.id/.test(s.modal)) failures.push("both creators must wait for a resolved catalog FK");
-  if (!/listHosViolations\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.driver) || !/kind="hos_violation"/.test(s.driver)) failures.push("driver profile must read and drill exact HOS links");
+  if (!/listHosViolations\(operatingCompanyId, \{[\s\S]{0,180}driver_id: driverId[\s\S]{0,180}offset:/.test(s.driver) || !/kind="hos_violation"/.test(s.driver)) failures.push("driver profile must read and drill exact HOS links");
   if (!/openKind="hos_violations_driver"/.test(s.driver) && !/kind="hos_violations_driver"/.test(s.driver)) failures.push("driver profile Open HOS must EntityLink the filtered queue");
-  if (!/listHosViolations\(operatingCompanyId, \{ load_id: loadId \}\)/.test(s.load) || !/kind="hos_violation"/.test(s.load)) failures.push("load drawer must read and drill exact HOS links");
+  if (!/listHosViolations\(operatingCompanyId, \{[\s\S]{0,180}load_id: loadId[\s\S]{0,180}offset:/.test(s.load) || !/kind="hos_violation"/.test(s.load)) failures.push("load drawer must read and drill exact HOS links");
   if (!/kind="hos_violations_load"/.test(s.load)) failures.push("load drawer Open HOS must EntityLink the filtered queue");
   if (!/case "hos_violation":[\s\S]{0,100}hos-violations\?violation_id=/.test(s.link)) failures.push("HOS EntityLink must target the canonical highlighted list");
   if (!/case "hos_violations_load":[\s\S]{0,80}hos-violations\?load_id=/.test(s.link) || !/case "hos_violations_driver":[\s\S]{0,80}hos-violations\?driver_id=/.test(s.link)) failures.push("HOS Open-queue EntityLinks must resolve filtered list routes");
@@ -53,10 +53,10 @@ if (process.argv.includes("--selftest")) {
     ["api load", "api", /qs\.set\("load_id", filters\.load_id\)/, 'qs.set("driver_id", filters.load_id)'],
     ["tab resolved FK", "tab", /disabled=\{!form\.driver_id \|\| !selectedViolationType\?\.id/, "disabled={!form.driver_id || !form.violation_type"],
     ["modal resolved FK", "modal", /Boolean\(form\.driver_id\.trim\(\) && selectedViolationType\?\.id/, "Boolean(form.driver_id.trim() && form.violation_type"],
-    ["driver read", "driver", /listHosViolations\(operatingCompanyId, \{ driver_id: driverId \}\)/, "listHosViolations(operatingCompanyId)"],
+    ["driver read", "driver", /listHosViolations\(operatingCompanyId, \{ driver_id: driverId, limit: hosViolationPageSize/, "listHosViolations(operatingCompanyId, { driver_id: '', limit: hosViolationPageSize"],
     ["driver drill", "driver", /kind="hos_violation"/, 'kind="driver"'],
     ["driver open queue", "driver", /openKind="hos_violations_driver"/, 'openKind="hos_violations_missing"'],
-    ["load read", "load", /listHosViolations\(operatingCompanyId, \{ load_id: loadId \}\)/, "listHosViolations(operatingCompanyId)"],
+    ["load read", "load", /listHosViolations\(operatingCompanyId, \{ load_id: loadId, limit: hosViolationPageSize/, "listHosViolations(operatingCompanyId, { load_id: '', limit: hosViolationPageSize"],
     ["load open queue", "load", /kind="hos_violations_load"/, 'kind="hos_violation"'],
     ["link", "link", /case "hos_violation":/, 'case "hos_missing":'],
     ["open queue kinds", "link", /case "hos_violations_load":/, 'case "hos_violations_gone":'],

@@ -17,8 +17,8 @@ export function fetchEldLiveDutyRoster(operatingCompanyId: string, date: string)
 }
 
 /** Open HOS violations (voided rows filtered by callers). */
-export function fetchEldHosViolations(operatingCompanyId: string) {
-  return listHosViolations(operatingCompanyId);
+export function fetchEldHosViolations(operatingCompanyId: string, range: { limit?: number; offset?: number } = {}) {
+  return listHosViolations(operatingCompanyId, range);
 }
 
 /**

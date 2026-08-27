@@ -134,12 +134,15 @@ export function DriverSafetyReverseSection({
   const [internalFinePage, setInternalFinePage] = useState(1);
   const complaintPageSize = 25;
   const [complaintPage, setComplaintPage] = useState(1);
+  const hosViolationPageSize = 25;
+  const [hosViolationPage, setHosViolationPage] = useState(1);
   useEffect(() => {
     setInspectionPage(1);
     setAccidentPage(1);
     setCivilFinePage(1);
     setInternalFinePage(1);
     setComplaintPage(1);
+    setHosViolationPage(1);
   }, [operatingCompanyId, driverId]);
 
   const civilFinesQuery = useQuery({
@@ -201,8 +204,8 @@ export function DriverSafetyReverseSection({
   });
 
   const hosViolationsQuery = useQuery({
-    queryKey: ["safety", "reverse", "hos-violations", operatingCompanyId, driverId],
-    queryFn: () => listHosViolations(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["safety", "reverse", "hos-violations", operatingCompanyId, driverId, hosViolationPage],
+    queryFn: () => listHosViolations(operatingCompanyId, { driver_id: driverId, limit: hosViolationPageSize, offset: (hosViolationPage - 1) * hosViolationPageSize }),
     enabled,
   });
 
@@ -226,6 +229,8 @@ export function DriverSafetyReverseSection({
   const accidentPageCount = Math.max(1, Math.ceil(accidentTotal / accidentPageSize));
   const trainingRecords: Row[] = trainingQuery.isError ? [] : trainingQuery.data?.training_completions ?? [];
   const hosViolations: Row[] = hosViolationsQuery.isError ? [] : hosViolationsQuery.data?.hos_violations ?? [];
+  const hosViolationTotal = hosViolationsQuery.isError ? 0 : hosViolationsQuery.data?.total_count ?? 0;
+  const hosViolationPageCount = Math.max(1, Math.ceil(hosViolationTotal / hosViolationPageSize));
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -319,7 +324,7 @@ export function DriverSafetyReverseSection({
         errorText="Failed to load this driver's HOS violations."
         onRetry={() => void hosViolationsQuery.refetch()}
         emptyText="No HOS violations for this driver."
-        count={hosViolations.length}
+        count={hosViolationTotal}
       >
         {hosViolations.map((violation) => (
           <li key={s(violation.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -337,6 +342,13 @@ export function DriverSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!hosViolationsQuery.isError && hosViolationTotal > hosViolationPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-hos-violations-pager">
+          <Button size="sm" variant="secondary" disabled={hosViolationPage <= 1 || hosViolationsQuery.isFetching} onClick={() => setHosViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
+          <span className="text-slate-600">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
+          <Button size="sm" variant="secondary" disabled={hosViolationPage >= hosViolationPageCount || hosViolationsQuery.isFetching} onClick={() => setHosViolationPage((current) => Math.min(hosViolationPageCount, current + 1))}>Next violations</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="DOT Inspections"

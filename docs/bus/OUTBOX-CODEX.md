@@ -1,3 +1,4 @@
+Codex | WORKING | GO-0808 | FINDING=SAFETY-F6870-HOS-VIOLATIONS-SILENT-500-CAP-ALL-SURFACES | vertical=Safety+ELD lists+dashboard+driver/load reverse | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6869-COMPLAINT-HISTORY-SILENT-500-CAP-ALL-REVERSE | vertical=register+driver/customer/user reverse | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6868-INTERNAL-FINES-REVERSE-FIRST-PAGE-ONLY | vertical=driver-profile+driver-detail+load reverse | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6867-CIVIL-FINES-REVERSE-FIRST-PAGE-ONLY | vertical=driver-profile+driver-detail+unit+load reverse | guard=11/11 | NEXT=FAST-MERGE | GO

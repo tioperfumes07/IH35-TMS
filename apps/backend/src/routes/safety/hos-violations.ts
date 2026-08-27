@@ -12,6 +12,8 @@ const companyQuerySchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
   source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createHosViolationSchema = z.object({
@@ -69,7 +71,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = ["operating_company_id = $1::uuid", "voided_at IS NULL"];
       if (query.data.driver_id) {
@@ -92,6 +94,17 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         values.push(query.data.source);
         filters.push(`source = $${values.length}`);
       }
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+         FROM safety.hos_violations hv
+         WHERE ${filters.map((filter) => `hv.${filter}`).join(" AND ")}`,
+        values,
+      );
+      const totalCount = Number(countRes.rows[0]?.total_count ?? 0);
+      values.push(query.data.limit);
+      const limitParam = values.length;
+      values.push(query.data.offset);
+      const offsetParam = values.length;
       // CLS-UUID-LABEL: no driver join — HOSViolationsTab's EntityLink reads row.driver_name
       // (undefined here), so it fell back to rendering the raw driver_id uuid. Mirrors the
       // driver-join pattern already used on accidents/dot_inspections/internal_fines/training.
@@ -115,14 +128,14 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
            AND l.operating_company_id = hv.operating_company_id
           WHERE ${filters.map((f) => `hv.${f}`).join(" AND ")}
           ORDER BY hv.occurred_at DESC, hv.created_at DESC
-          LIMIT 500
+          LIMIT $${limitParam} OFFSET $${offsetParam}
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total_count: totalCount };
     });
 
-    return { hos_violations: rows };
+    return { hos_violations: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/hos-violations/:id", async (req, reply) => {
