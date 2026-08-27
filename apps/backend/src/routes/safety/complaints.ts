@@ -17,6 +17,8 @@ const complaintsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   customer_id: z.string().uuid().optional(),
   user_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({
@@ -117,13 +119,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     const query = complaintsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = [];
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
-        // SAF-F16: filtered in SQL because this list is capped at LIMIT 500 — filtering
-        // client-side would silently drop a driver's complaints past that cap.
+        // SAF-F16: filter in SQL so every ranged page is scoped to the requested driver.
         filters.push(`(c.complainant_driver_id = $${values.length} OR c.respondent_driver_id = $${values.length})`);
       }
       if (query.data.customer_id) {
@@ -135,6 +136,18 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         filters.push(`(c.complainant_user_id = $${values.length} OR c.respondent_user_id = $${values.length})`);
       }
       const reverseFilter = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+         FROM safety.complaints c
+         WHERE c.operating_company_id = $1::uuid
+         ${reverseFilter}`,
+        values,
+      );
+      const totalCount = Number(countRes.rows[0]?.total_count ?? 0);
+      values.push(query.data.limit);
+      const limitParam = values.length;
+      values.push(query.data.offset);
+      const offsetParam = values.length;
       // FAIL-CP1: the grid rendered raw driver uuids because the row carried only ids and
       // EntityLink falls back to printing `id` when given no label. On a privacy-gated discipline
       // record, "who complained about whom" is the entire content of the row — so resolve both
@@ -169,13 +182,14 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
          LEFT JOIN identity.users ru ON ru.id = c.respondent_user_id
          WHERE c.operating_company_id = $1::uuid
          ${reverseFilter}
-         ORDER BY c.filed_at DESC LIMIT 500`,
+         ORDER BY c.filed_at DESC
+         LIMIT $${limitParam} OFFSET $${offsetParam}`,
         values
       );
-      return res.rows;
+      return { complaints: res.rows, total_count: totalCount };
     });
 
-    return { complaints: rows };
+    return result;
   });
 
   app.get("/api/v1/safety/complaints/:id", async (req, reply) => {

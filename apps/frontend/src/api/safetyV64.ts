@@ -102,13 +102,15 @@ export function pullCsaFromSafer(companyId: string) {
 
 export function listComplaints(
   companyId: string,
-  params: { driver_id?: string; customer_id?: string; user_id?: string } = {}
+  params: { driver_id?: string; customer_id?: string; user_id?: string; limit?: number; offset?: number } = {}
 ) {
   const query = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) query.set("driver_id", params.driver_id);
   if (params.customer_id) query.set("customer_id", params.customer_id);
   if (params.user_id) query.set("user_id", params.user_id);
-  return apiRequest<{ complaints: Array<Record<string, unknown>> }>(`/api/v1/safety/complaints?${query.toString()}`);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
+  return apiRequest<{ complaints: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/complaints?${query.toString()}`);
 }
 
 export function createComplaintV64(companyId: string, body: Record<string, unknown>) {

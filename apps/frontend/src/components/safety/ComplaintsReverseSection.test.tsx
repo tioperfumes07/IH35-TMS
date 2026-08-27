@@ -31,6 +31,7 @@ describe("ComplaintsReverseSection", () => {
     getComplaints.mockReset();
     getComplaints.mockResolvedValue({
       complaints: [{ id: "complaint-1", summary: "Late delivery complaint", status: "open", filed_at: "2026-08-12T12:00:00Z" }],
+      total_count: 1,
     });
   });
 
@@ -38,13 +39,13 @@ describe("ComplaintsReverseSection", () => {
     renderSection({ customer_id: "customer-1" });
     const link = await screen.findByRole("link", { name: "Late delivery complaint" });
     expect(link.getAttribute("href")).toBe("/safety/complaints?complaint_id=complaint-1");
-    expect(getComplaints).toHaveBeenCalledWith("usmca", { customer_id: "customer-1" });
+    expect(getComplaints).toHaveBeenCalledWith("usmca", { customer_id: "customer-1", limit: 25, offset: 0 });
   });
 
   it("uses the exact employee filter across complainant and respondent roles", async () => {
     renderSection({ user_id: "user-1" });
     await screen.findByRole("link", { name: "Late delivery complaint" });
-    expect(getComplaints).toHaveBeenCalledWith("usmca", { user_id: "user-1" });
+    expect(getComplaints).toHaveBeenCalledWith("usmca", { user_id: "user-1", limit: 25, offset: 0 });
   });
 
   it("does not request or reveal complaints to an unauthorized role", () => {

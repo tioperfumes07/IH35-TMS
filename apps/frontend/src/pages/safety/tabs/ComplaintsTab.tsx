@@ -93,12 +93,18 @@ export function ComplaintsTab() {
   const canCreate = ["Owner", "Administrator", "Safety"].includes(String(auth.user?.role ?? ""));
   const [form, setForm] = useState(EMPTY_COMPLAINT_FORM);
   const lifecycleGenerationRef = useRef(0);
+  const pageSize = 25;
+  const [page, setPage] = useState(1);
+
+  useEffect(() => setPage(1), [companyId, effectiveDriverId]);
 
   const complaintsQuery = useQuery({
-    queryKey: ["safety-v64", "complaints", companyId, effectiveDriverId],
+    queryKey: ["safety-v64", "complaints", companyId, effectiveDriverId, page],
     queryFn: () =>
       listComplaints(companyId, {
         driver_id: effectiveDriverId,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -234,6 +240,8 @@ export function ComplaintsTab() {
   const createDisabled = missingFields.length > 0 || createMutation.isPending;
 
   const listState = useListState(complaintsQuery, (complaintsQuery.data?.complaints ?? []).length === 0);
+  const complaintTotal = complaintsQuery.isError ? 0 : complaintsQuery.data?.total_count ?? 0;
+  const complaintPageCount = Math.max(1, Math.ceil(complaintTotal / pageSize));
 
   function resolveUserLabel(userId: string) {
     return userOptions.find((u) => u.value === userId)?.label ?? "Employee";
@@ -545,6 +553,7 @@ export function ComplaintsTab() {
         emptyText="No complaints found."
         storageKey="safety-complaints"
         exportFilename="complaints"
+        hidePager
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="complaints-filters">
             <label className="text-[11px] text-slate-600">
@@ -595,6 +604,13 @@ export function ComplaintsTab() {
         }
       />
       )}
+      {!listState.isError && complaintTotal > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="complaints-tab-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || complaintsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
+          <span className="text-slate-600">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <Button size="sm" variant="secondary" disabled={page >= complaintPageCount || complaintsQuery.isFetching} onClick={() => setPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
+        </div>
+      ) : null}
       {patchErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="complaint-resolve-error">
           {userFacingApiError(patchMutation.error, "Could not resolve the complaint.")}
