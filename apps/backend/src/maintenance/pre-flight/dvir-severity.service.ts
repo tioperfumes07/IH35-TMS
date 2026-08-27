@@ -120,7 +120,9 @@ export async function insertSeverityTag(
       input.reason ?? null,
     ]
   );
-  return { id: res.rows[0]?.id ?? "" };
+  const createdTag = res.rows[0];
+  if (!createdTag?.id) throw new Error("dvir_severity_tag_insert_returned_no_row");
+  return { id: createdTag.id };
 }
 
 export type SetSeverityResult =
