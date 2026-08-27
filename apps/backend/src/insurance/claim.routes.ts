@@ -15,6 +15,7 @@ import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 import { type ClaimColumnCapabilities, getClaimColumnCapabilities } from "./claim-columns.js";
 import { postInsuranceClaimRecovery } from "../accounting/insurance-claim-recovery-posting/poster.service.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -500,7 +501,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/insurance/claims", async (req, reply) => {
+  app.post("/api/v1/insurance/claims",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -611,21 +614,23 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         insertValues
       );
       const createdId = insert.rows[0]?.id;
-      if (!createdId) return { kind: "claim_not_found" as const };
+      if (!createdId) throw new Error("insurance_claim_insert_failed");
       // P41 — insurance.claim.accident_report_id (set above) is the FORWARD FK; nothing wrote the
       // reverse pointer safety.accident_reports.insurance_claim_id (migration 202607250000), so a
       // claim created FROM an accident was reachable claim->accident but not accident->claim. Sync
       // both directions the moment the link is known, scoped to the same tenant so a cross-entity
       // accident_report_id (already rejected above by assertOptionalHubExists) can never be reached.
       if (body.accident_report_id) {
-        await client.query(
+        const reverseLink = await client.query(
           `
             UPDATE safety.accident_reports
             SET insurance_claim_id = $3::uuid
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            RETURNING id::text
           `,
           [body.accident_report_id, body.operating_company_id, createdId]
         );
+        if (!reverseLink.rows[0]?.id) throw new Error("insurance_claim_accident_reverse_link_failed");
       }
       const result = await client.query(
         `
@@ -636,7 +641,19 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `,
         [body.operating_company_id, createdId]
       );
-      return { kind: "ok" as const, row: result.rows[0] };
+      const claim = result.rows[0] as { id?: string } | undefined;
+      if (!claim?.id) throw new Error("insurance_claim_detail_read_failed");
+      await appendCrudAudit(client as never, user.uuid, "insurance.claim.created", {
+        resource_type: "insurance.claim",
+        resource_id: claim.id,
+        operating_company_id: body.operating_company_id,
+        policy_id: body.policy_id,
+        accident_report_id: body.accident_report_id ?? null,
+        load_id: body.load_id ?? null,
+        driver_id: body.driver_id ?? null,
+        trailer_id: body.trailer_id ?? null,
+      });
+      return { kind: "ok" as const, row: claim };
     });
 
     if (created.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
@@ -655,9 +672,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           "Claim economics fields (fault, driver_responsible, trailer_id, deductible_cents, recovery_rail, repair_books_treatment) require migration 202607730000, which has not been applied to this database yet.",
       });
     }
-    if (created.kind === "claim_not_found") return reply.code(500).send({ error: "claim_create_failed" });
     return reply.code(201).send(created.row);
-  });
+    }
+  );
 
   app.patch("/api/v1/insurance/claims/:id", async (req, reply) => {
     const user = authUser(req, reply);
