@@ -235,6 +235,11 @@ export function ModuleCompletionPage() {
         label: "Urgent hops",
         sortable: true,
         render: (row) => <U14HopBadge row={row.u14} />,
+        // PARITY-EXPORT-COMPUTED-COLUMN-BLANK: `row.u14` is a U14ExclusiveRow OBJECT, not
+        // display text — export's raw String(v) turned every defined row into the literal
+        // "[object Object]". Mirrors U14HopBadge's own text exactly.
+        exportValue: (row) =>
+          !row.u14 ? "—" : row.u14.status === "CERTIFIED" ? `Hops certified · ${row.u14.liveSha}` : "Hops open",
       },
       {
         key: "progress",
@@ -248,12 +253,16 @@ export function ModuleCompletionPage() {
             prodVerifiedCount={row.prodVerifiedCount}
           />
         ),
+        // PARITY-EXPORT-COMPUTED-COLUMN-BLANK: ModuleRow has no `progress` field — export left
+        // this column blank on every row despite the on-screen bar always showing done/total.
+        exportValue: (row) => `${row.done}/${row.total}`,
       },
       {
         key: "open",
         label: "Open",
         sortable: true,
         render: (row) => (row.defined ? String(row.total - row.done) : "—"),
+        exportValue: (row) => (row.defined ? String(row.total - row.done) : "—"),
       },
       {
         key: "detail",
