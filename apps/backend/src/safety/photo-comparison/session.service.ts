@@ -373,6 +373,16 @@ export async function submitPostTripPhotos(
           diff_status = 'analyzing'
       WHERE uuid = $1::uuid
         AND operating_company_id = $3::uuid
+        AND NOT EXISTS (
+          SELECT 1
+          FROM unnest($2::uuid[]) evidence_id
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM documents.damage_photo_evidence evidence
+            WHERE evidence.id = evidence_id
+              AND evidence.operating_company_id = $3::uuid
+          )
+        )
         AND post_trip_evidence_uuids IS NULL
       RETURNING ${SESSION_COLUMNS}
     `,
