@@ -66,7 +66,7 @@ function analyze(s) {
   }
 
   if (
-    !/onSuccess:\s*\(lawsuit\)[\s\S]{0,200}onCreated\(lawsuit\.id, lawsuit\.case_number\)/.test(s.modal)
+    !/onSuccess:\s*\(lawsuit(?:,\s*input)?\)[\s\S]{0,260}onCreated\(lawsuit\.id, lawsuit\.case_number\)/.test(s.modal)
   ) {
     failures.push("LawsuitCreateModal must return persisted id + case_number to onCreated");
   }
