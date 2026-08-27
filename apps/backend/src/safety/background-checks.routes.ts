@@ -117,6 +117,7 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
       const driver = await client.query(
         `SELECT id FROM mdata.drivers d
          WHERE d.id = $1::uuid
+           AND d.archived_at IS NULL
            AND (d.operating_company_id = $2::uuid OR EXISTS (
              SELECT 1 FROM mdata.driver_company_authorizations background_check_create_driver_dca
              WHERE background_check_create_driver_dca.driver_id = d.id
@@ -128,7 +129,7 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;
-      const res = await client.query(
+      const res = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.background_checks (
             operating_company_id,
@@ -152,20 +153,22 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
           body.data.notes ?? null,
         ]
       );
+      const backgroundCheck = res.rows[0];
+      if (!backgroundCheck?.id) throw new Error("safety_background_check_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.background_check.created",
         {
           resource_type: "safety.background_checks",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: backgroundCheck.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAFETY-DRIVER-PROFILES"
       );
-      return res.rows[0];
+      return backgroundCheck;
     });
     if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
     return reply.code(201).send(created);
