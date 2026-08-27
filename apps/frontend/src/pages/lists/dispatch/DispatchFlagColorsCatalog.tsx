@@ -24,6 +24,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import type { CatalogColumnConfig, CatalogFieldConfig, CatalogRow } from "../../../hooks/useCatalogQuery";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import {
   createDispatchFlagColor,
   deactivateDispatchFlagColor,
@@ -134,20 +135,31 @@ export function DispatchFlagColorsCatalog() {
   );
 
   // Archive, never delete (Rule 07) — the route soft-deletes via is_active.
+  // LISTS-F6334-class: neither handler had a try/catch, and CatalogTable invokes them via
+  // `void onArchive(...)`/`void onRestore(...)` — a rejected archive/restore was completely
+  // silent with no toast, no banner, no indication the click did nothing.
   const handleArchive = useCallback(
     async (targets: CatalogRow[]) => {
-      for (const target of targets) await deactivateDispatchFlagColor(String(target.id));
-      pushToast(`${targets.length} row(s) archived`, "success");
-      await refresh();
+      try {
+        for (const target of targets) await deactivateDispatchFlagColor(String(target.id));
+        pushToast(`${targets.length} row(s) archived`, "success");
+        await refresh();
+      } catch (error) {
+        pushToast(userFacingApiError(error, "Could not archive one or more rows"), "error");
+      }
     },
     [pushToast, refresh]
   );
 
   const handleRestore = useCallback(
     async (targets: CatalogRow[]) => {
-      for (const target of targets) await reactivateDispatchFlagColor(String(target.id));
-      pushToast(`${targets.length} row(s) restored`, "success");
-      await refresh();
+      try {
+        for (const target of targets) await reactivateDispatchFlagColor(String(target.id));
+        pushToast(`${targets.length} row(s) restored`, "success");
+        await refresh();
+      } catch (error) {
+        pushToast(userFacingApiError(error, "Could not restore one or more rows"), "error");
+      }
     },
     [pushToast, refresh]
   );

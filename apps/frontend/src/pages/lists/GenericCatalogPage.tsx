@@ -9,6 +9,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../hooks/useCreateQueryParam";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
   GENERIC_CATALOG_REGISTRY,
   catalogKeyToCatalogName,
@@ -84,10 +85,18 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
 
   async function archiveRows(selected: CatalogRow[]) {
     if (!catalogName) return;
-    for (const row of selected) {
-      await mutations.archiveMutation.mutateAsync(row.id);
+    // LISTS-F6334-class: archiveMutation has no onError and both the per-row "Archive" button
+    // and the bulk "Archive selected" action call this via `void onArchive(...)` — a rejected
+    // archive (409 FK-in-use, RLS, expired session) was completely silent with no try/catch
+    // anywhere in the chain. Surface it like every sibling create/update path in this file.
+    try {
+      for (const row of selected) {
+        await mutations.archiveMutation.mutateAsync(row.id);
+      }
+      pushToast(`${selected.length} row(s) archived`, "success");
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Could not archive one or more rows"), "error");
     }
-    pushToast(`${selected.length} row(s) archived`, "success");
   }
 
   if (!catalogName || !definition) {
