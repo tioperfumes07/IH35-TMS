@@ -56,7 +56,12 @@ export function LoadSafetyReverseSection({
 }: Props) {
   const accidentPageSize = 25;
   const [accidentPage, setAccidentPage] = useState(1);
-  useEffect(() => setAccidentPage(1), [operatingCompanyId, loadId]);
+  const internalFinePageSize = 25;
+  const [internalFinePage, setInternalFinePage] = useState(1);
+  useEffect(() => {
+    setAccidentPage(1);
+    setInternalFinePage(1);
+  }, [operatingCompanyId, loadId]);
   const accidentsQ = useQuery({
     queryKey: [
       "safety",
@@ -94,11 +99,18 @@ export function LoadSafetyReverseSection({
       "load",
       operatingCompanyId,
       loadId,
+      internalFinePage,
     ],
-    queryFn: () => getInternalFines(operatingCompanyId, { load_id: loadId }),
+    queryFn: () => getInternalFines(operatingCompanyId, {
+      load_id: loadId,
+      limit: internalFinePageSize,
+      offset: (internalFinePage - 1) * internalFinePageSize,
+    }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const internalFines: Row[] = internalFinesQ.data?.fines ?? [];
+  const internalFineTotal = internalFinesQ.isError ? 0 : internalFinesQ.data?.total_count ?? 0;
+  const internalFinePageCount = Math.max(1, Math.ceil(internalFineTotal / internalFinePageSize));
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -261,7 +273,7 @@ export function LoadSafetyReverseSection({
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">
             Internal Fines
-            {internalFines.length ? ` (${internalFines.length})` : ""}
+            {internalFineTotal ? ` (${internalFineTotal})` : ""}
           </h3>
           <EntityLink
             kind="internal_fines_load"
@@ -308,6 +320,13 @@ export function LoadSafetyReverseSection({
             ) : null}
           </div>
         )) : null}
+        {!internalFinesQ.isError && internalFineTotal > internalFinePageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-internal-fines-pager">
+            <Button size="sm" variant="secondary" disabled={internalFinePage <= 1 || internalFinesQ.isFetching} onClick={() => setInternalFinePage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
+            <span className="text-slate-600">Page {internalFinePage} of {internalFinePageCount} · {internalFineTotal} internal fines</span>
+            <Button size="sm" variant="secondary" disabled={internalFinePage >= internalFinePageCount || internalFinesQ.isFetching} onClick={() => setInternalFinePage((current) => Math.min(internalFinePageCount, current + 1))}>Next internal fines</Button>
+          </div>
+        ) : null}
       </div>
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}
