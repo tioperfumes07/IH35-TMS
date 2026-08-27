@@ -1,3 +1,5 @@
+**18:31 CT GO-1831:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md` — Cursor lead. ACK `GO-1831`. Idle = defect. Live `88a6e98` until healthz moves. Deploy in flight. Codex/Devin/Cascade work NOW.
+
 **17:50 CT GO-1750:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md` — Cursor lead. ACK `GO-1750`. Idle = defect. Live `88a6e98`. Work YOUR NOW row immediately.
 
 **17:32 CT GO-1722 — LIVE `88a6e98`:** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. Same KEEP TEST law. ACK `GO-1722`. Walk **this** SHA. Idle = defect.

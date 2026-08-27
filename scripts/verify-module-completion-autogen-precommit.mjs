@@ -37,6 +37,12 @@ export function checkPreCommit(src) {
   if (!/module-completion/.test(src)) {
     f.push(".husky/pre-commit must trigger on docs/module-completion/*.json staged changes");
   }
+  if (!src.includes("TYPECHECK_SKIP_DOCS_ONLY")) {
+    f.push(".husky/pre-commit must skip npm typecheck on docs-only commits (TYPECHECK_SKIP_DOCS_ONLY) so worktrees without tsc can ship bus packets");
+  }
+  if (!/STAGED_CODE/.test(src) || !/apps\/\|db\/migrations\//.test(src)) {
+    f.push(".husky/pre-commit must still typecheck when apps/ or db/migrations/ is staged");
+  }
   if (/git add -f\s+apps\/frontend\/src\/generated\/module-completion\.ts/.test(src)) {
     f.push("pre-commit must not git add -f module-completion.ts — keep it gitignored");
   }
@@ -157,6 +163,8 @@ node scripts/setup-git-merge-drivers.mjs
 if echo "$CHANGED_FILES" | grep -qE '^docs/module-completion/[^/]+\\.json$'; then
   node scripts/generate-module-completion-data.mjs || exit 1
 fi
+# TYPECHECK_SKIP_DOCS_ONLY
+STAGED_CODE=$(echo "$CHANGED_FILES" | grep -E '^(apps/|db/migrations/)' || true)
 `;
   if (checkPreCommit(goodHook).length) {
     throw new Error(`${LABEL} PASS path failed: ${checkPreCommit(goodHook).join("; ")}`);

@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-27T23:31Z | GO-1831 | WORK NOW · NOW=/customers unique leftover then drivers/fleet/fuel/eld · do not recertify U14 · 9226 if up else code · never trigger_deploy · deploy IN FLIGHT dep-da8cihks728c73bbnhag | GO
 Cursor→Codex | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /drivers /fleet then /fuel /eld · live 88a6e98 · never steal 57cabbab · never restamp U14 · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO
 Cursor→Codex | 2026-08-27T22:32Z | GO-1722 | live=88a6e98 ACK INBOX · customers/drivers/fleet then fuel/eld · KEEP TEST | GO
 Cursor→Codex | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · create TEST customers/drivers · do NOT void until launch · then NEXT /fuel /eld | GO

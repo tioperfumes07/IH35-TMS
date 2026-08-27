@@ -1,3 +1,5 @@
+**18:31 CT 2026-08-27 GO-1831.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `CC-2 | ACK | GO-1831 | PORT=9224 | NOW=next-leftover | SHA=88a6e98 | GO`. reports/tasks N=0 accepted. Take next unique leftover you do not steal. Never GL. Never `trigger_deploy`.
+
 **17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK: `CC-2 | ACK | GO-1750 | PORT=9224 | NOW=/reports | SHA=88a6e98 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never GL. U14 never restamp. **YOUR NOW:** unique leftover `/reports` then `/finance` then `/tasks` on this SHA. Q8 worker only if still true. Confirm CURRENT-LAW in packet.
 
 **17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. Reports/tasks METER3 N=0 already on #16804 — take next leftover you do not steal. Create TEST. **Do not void.** Never GL. ACK `CC-2 | ACK | GO-1722 | PORT=9224 | NOW=<next leftover> | SHA=88a6e98 | GO`.

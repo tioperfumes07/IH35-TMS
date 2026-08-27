@@ -1,19 +1,19 @@
 # LEAD CENSUS — replace this table every lead turn
 
-**GO current:** GO-1750 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`)
-**Turn:** 2026-08-27 17:50 CT · **LEAD-SEAT=CURSOR** (OWNER-DIRECT-INSTRUCTION)
-**Live SHA:** `88a6e98` (`healthz/shallow`)
-**Self-ACK** = seat-authored line matching **GO-1750**. `Cursor→Seat` ping ≠ ACK.
+**GO current:** GO-1831 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`)
+**Turn:** 2026-08-27 18:31 CT · **LEAD-SEAT=CURSOR**
+**Live SHA:** `88a6e98` (deploy `dep-da8cihks728c73bbnhag` in flight tip `7eda992`)
+**Self-ACK** = seat-authored line matching **GO-1831**. Cursor ping ≠ ACK.
 
-| Seat | Last self-line | ACK GO-1750? | Idle? |
+| Seat | Last self-line | ACK GO-1831? | Idle? |
 |------|----------------|--------------|-------|
-| CC-1 | no CC-1 self-ACK of GO-1750 (OUTBOX is Cursor pings + old money notes) | **NO — ACK then NOW=57cabbab** | **YES until ACK+work** |
-| CC-2 | last self was GO-2237 hunt (CUSTOMER-PROFITABILITY label) not GO-1750 | **NO — ACK then NOW=/reports** | **YES until ACK+work** |
-| CC-3 | ACK GO-1405 on `c46d592` — stale vs this GO | **NO — ACK then NOW=/lists** | **YES until ACK+work** |
-| Codex | Cursor pings + old WORKING reverse; no GO-1750 | **NO — ACK then NOW=/customers** | **YES until ACK+work** |
-| Cascade | ACK GO-1405 on `a62f0cb` lists walk — stale SHA | **NO — ACK then NOW=/dispatch on 88a6e98** | **YES until ACK+work** |
-| Devin-A | Cursor pings only | **NO — ACK then NOW=/customers** | **YES until ACK+work** |
-| Devin | Cursor pings only | **NO — ACK then NOW=/vendors re-walk 88a6e98** | **YES until ACK+work** |
-| Cursor | shipping GO-1750 this turn | **self — GO-1750 author** | **NO — continuous** |
+| CC-1 | Cursor pings only (no 57cabbab ship this census) | **NO — ACK+JE** | **YES until ACK+work** |
+| CC-2 | METER3 reports/tasks N=0 on 88a6e98 (GO-1722) | **NO — ACK then next leftover** | **NO if hunting leftover** |
+| CC-3 | SHIPPED users-cap + compliance walk 88a6e98 | **NO — ACK then finish compliance ladder** | **NO if walking** |
+| Codex | SAFETY-F6909 WORKING; no GO-1750/1831 ACK | **NO — ISSUES: reverse-FO idle** | **YES until /customers unique** |
+| Cascade | METER3 driver-hub NEXT=poll | **NO — poll-idle** | **YES until /program** |
+| Devin | Cursor pings only | **NO** | **YES until /vendors re-walk** |
+| Devin-A | Cursor pings only | **NO** | **YES until /customers** |
+| Cursor | GO-1831 author + deploy kick | **self** | **NO** |
 
-**This turn:** owner said coders are waiting — packet + INBOX TOP rewritten before product overflow. Next census after seats write GO-1750 ACK lines.
+**This turn:** owner deploy + fix hook + unstick Codex/Devin/Cascade. Do not recertify U14. Keep until leftover unique dry on current SHA.
