@@ -187,6 +187,9 @@ describe("safety incidents full report route (WF-048)", () => {
       if (sql.includes("INSERT INTO maintenance.work_orders")) {
         return { rows: [{ id: "88888888-8888-4888-8888-888888888888" }], rowCount: 1 };
       }
+      if (sql.includes("UPDATE safety.incidents SET work_order_id")) {
+        return { rows: [], rowCount: 1 };
+      }
       if (sql.includes("INSERT INTO safety.accidents")) {
         return { rows: [{ id: "99999999-9999-4999-8999-999999999999" }], rowCount: 1 };
       }
