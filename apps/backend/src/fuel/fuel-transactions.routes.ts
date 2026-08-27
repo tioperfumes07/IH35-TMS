@@ -290,6 +290,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           `SELECT d.id::text AS id
              FROM mdata.drivers d
             WHERE d.id = $1::uuid
+              AND d.deactivated_at IS NULL
               AND (
                 d.operating_company_id = $2::uuid
                 OR EXISTS (
@@ -311,6 +312,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         const unitRes = (await client.query(
           `SELECT fuel_create_unit.id::text AS id FROM mdata.units fuel_create_unit
             WHERE fuel_create_unit.id = $1::uuid
+              AND fuel_create_unit.deactivated_at IS NULL
               AND COALESCE(fuel_create_unit.currently_leased_to_company_id, fuel_create_unit.owner_company_id) = $2::uuid
             LIMIT 1`,
           [b.unit_id, b.operating_company_id]
@@ -344,6 +346,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         const trailerRes = (await client.query(
           `SELECT id::text AS id FROM mdata.equipment
             WHERE id = $1::uuid
+              AND deactivated_at IS NULL
               AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
             LIMIT 1`,
           [b.trailer_id, b.operating_company_id]
