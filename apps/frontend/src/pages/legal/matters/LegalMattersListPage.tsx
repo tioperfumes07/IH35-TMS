@@ -13,6 +13,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
+import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
@@ -24,12 +25,28 @@ function matterDetailPath(id: string): string | null {
   return MATTER_ID_RE.test(normalized) ? `/legal/matters/${normalized}` : null;
 }
 
-function daysUntil(dateStr: unknown) {
+const ISO_DATE_DIGITS = /^(\d{4})-(\d{2})-(\d{2})/;
+
+// LEGAL-MATTERS-SOL-COUNTDOWN-TZ-OFFBYONE: statute_of_limitations_at is a SQL `date` column; the
+// default pg driver parses it to a JS Date at the BACKEND's local midnight, which serializes as a
+// full UTC ISO instant (e.g. "2026-08-31T00:00:00.000Z" on a UTC-TZ backend). The previous
+// implementation built `new Date(dateStr)` then called `.setHours(0,0,0,0)`, which re-derives the
+// calendar day from that instant in the VIEWER's browser timezone — for any negative-UTC-offset
+// viewer (all of the continental US, including this company's own Central Time), that shifts the
+// target day back by one, understating urgency on a statute-of-limitations deadline. Fixed by
+// parsing the calendar-date digits directly (never constructing a Date from the string, same rule
+// formatDate.ts documents) and diffing against "today" in the company's own timezone
+// (businessDate.ts's companyToday()) via UTC-anchored calendar math (same pattern as addDaysIso).
+// Exported for the LEGAL-MATTERS-SOL-COUNTDOWN-TZ-OFFBYONE regression test.
+export function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
-  const ms = d.setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
-  return Math.ceil(ms / (24 * 3600 * 1000));
+  const m = ISO_DATE_DIGITS.exec(dateStr);
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  const targetUTC = Date.UTC(Number(y), Number(mo) - 1, Number(d));
+  const [ty, tmo, td] = companyToday().split("-").map(Number);
+  const todayUTC = Date.UTC(ty, tmo - 1, td);
+  return Math.round((targetUTC - todayUTC) / (24 * 3600 * 1000));
 }
 
 export function LegalMattersListPage() {
