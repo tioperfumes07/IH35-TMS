@@ -12,6 +12,7 @@ import {
 } from "./claim.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -127,7 +128,10 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
     return { lawsuits: rows };
   });
 
-  app.post("/api/v1/insurance/lawsuits", async (req, reply) => {
+  app.post(
+    "/api/v1/insurance/lawsuits",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -189,12 +193,21 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           body.notes ?? null,
         ]
       );
-      return { kind: "ok" as const, row: result.rows[0] };
+      const lawsuit = result.rows[0] as { id?: string } | undefined;
+      if (!lawsuit?.id) throw new Error("insurance_lawsuit_insert_failed");
+      await appendCrudAudit(client as never, user.uuid, "insurance.lawsuit.created", {
+        resource_type: "insurance.lawsuit",
+        resource_id: lawsuit.id,
+        operating_company_id: body.operating_company_id,
+        claim_id: body.claim_id ?? null,
+      });
+      return { kind: "ok" as const, row: lawsuit };
     });
 
     if (created.kind === "claim_not_found") return reply.code(404).send({ error: "claim_not_found" });
-    return reply.code(201).send(created.row);
-  });
+      return reply.code(201).send(created.row);
+    }
+  );
 
   app.patch("/api/v1/insurance/lawsuits/:id", async (req, reply) => {
     const user = authUser(req, reply);
