@@ -1,3 +1,5 @@
+**17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Reuse lists/legal TESTs — **do not void**. Unique leftover then NEXT `/compliance` `/inventory` `/users` `/help`. ACK `CC-3 | ACK | GO-1655 | PORT=9225 | NOW=/compliance | SHA=<healthz> | GO`.
+
 **16:52 CT GO-1640 overflow — lists/legal unique N=0 on `33c41fc`.** Do not remake TEST_M3_67481337. ACK GO-1640 yourself. Next: unique leftover 500/dead/silent on `/lists` `/legal` then legal remaining hops. Never restamp U14.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/lists then /legal. ACK `CC-3 | ACK | GO-1640 | PORT=9225 | NOW=/lists | SHA=<healthz> | GO`.

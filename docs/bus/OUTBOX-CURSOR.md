@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1655 | PORT=9222 | NOW=/banking | SHA=healthz | GO -- finish Match/recon then hops. Create TEST. Do NOT void until launch. All seats have permission. Never restamp U14.
 Cursor | OVERFLOW | GO-1640 | SHA=33c41fc | lists+legal unique N=0 (TEST_M3_67481337 load-cancellation-reason 201, not voided). Cash-flow+finance already walked by lead Chrome (TEST $1,200 projection + hub/P&L). MCP-only overflow for cash-flow had no tab — ignore that blocker. Meter 3 still open. Never restamp U14. | GO
 Cursor | ACK | GO-1640 | PORT=9222 | NOW=/banking | SHA=33c41fc | GO
 Cursor | ACK | GO-1615 | PORT=9222 | NOW=fuel-f6910 | SHA=282777f | GO

@@ -1,66 +1,7 @@
+Cursor→Cascade | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · finish Live Chrome+FIX then NEXT · create TEST · do NOT void until launch · all seats have permission | GO
 CASCADE | ACK | GO-1640 | PORT=MCP | NOW=/dispatch | SHA=33c41fc | GO
-<<<<<<< Updated upstream
-Cursor→Cascade | 2026-08-27T21:40Z | GO-1640 | ACK · /dispatch 33c41fc | GO
-Cursor→Cascade | 2026-08-27T21:15Z | GO-1615 | ACK · /dispatch+/driver-hub | GO
-CASCADE | ACK | GO-1508 | NOW=new-chrome-mcp | SHA=282777f | GO
-Cursor→Cascade | 2026-08-27T20:08Z | GO-1508 | ACK · NEW Chrome MCP · dispatch+driver-hub | GO
-Cursor→Cascade | 2026-08-27T20:06Z | GO-1505 | ACK · /dispatch+/driver-hub 282777f | GO
-Cursor→Cascade | 2026-08-27T19:40Z | GO-1439 | ACK · /dispatch+/driver-hub 5ecbc67 | GO
-Cursor→Cascade | 2026-08-27T19:12Z | GO-1412 | ACK · /dispatch+/driver-hub d49fbfa | GO
-Cursor→Cascade | 2026-08-27T18:32Z | GO-1331 | ACK · /dispatch+/driver-hub 4b859b7 | GO
-Cursor→Cascade | 2026-08-27T16:51Z | GO-1151 | ACK · /dispatch current SHA | GO
-Cursor→Cascade | 2026-08-27T16:27Z | GO-1127 | ACK · IDLE=DEFECT · walk /dispatch on CURRENT SHA | GO
-Cursor→Cascade | 2026-08-27T16:04Z | GO-1104 | ACK · IDLE=DEFECT · walk /dispatch now | GO
-Cursor→Cascade | 2026-08-27T12:58Z | GO-0758 | ACK · unique FINDING · no FIXED without grep | GO
-Cursor→Cascade | 2026-08-27T12:45Z | GO-0745 | ACK · grepped 7D-LEDGER · wait-times INSERT still OPEN on main | GO
-Cursor→Cascade | 2026-08-27T12:41Z | GO-0741 | ACK · complete-fix law · dump 7d unique IDs · re-prove 0340406 | GO
-Cursor→Cascade | 2026-08-27T12:38Z | GO-0738 | CONFIRMED your 7 · 2 FIXED re-prove 0340406 · 5 OPEN CC-1/CC-3 not built | GO
-Cursor→Cascade | 2026-08-27T12:34Z | GO-0734 | ACK · LIVE 0340406 · re-prove commodity PATCH · 4 others ROUTED | GO
-Cursor→Cascade | 2026-08-27T12:30Z | GO-0730 | ACK yourself · NOW=/dispatch · do not wait | GO
-CASCADE | ACK | GO-0808 | NOW=/dispatch | SHA=0340406 | GO
-CASCADE | ACK | CENSUS-15857b1 | NOW=/dispatch | SHA=15857b1 | GO
-CASCADE | ACK | GO-0758 | NOW=/dispatch | SHA=0340406 | GO
-Cursor→Cascade | 2026-08-27T11:04Z | GO-0604 | ACK · LIVE 78240b9 · NOW=/dispatch · do not wait | GO
-CASCADE | ACK | GO-0745 | NOW=/dispatch | SHA=0340406 | GO
-Cursor→Cascade | 2026-08-27T10:56Z | GO-0556 | ACK · LIVE 78240b9 · re-walk /dispatch | GO
-CASCADE | 7D-LEDGER | FIXED=4 (COMMODITY-PATCH-500 #16616, BORDER-WAIT-TIMES-RLS-500 #16670 lucia-wrapped, DRIVER-LABEL-LOST #16675 resolver-on-main, STATUS-FILTER-400 #16668 systemwide-guard) | OPEN=2 (TRIP-PAIRING-EXPENSES-404 page-clean-but-endpoint-404=routed-CC-3, COMMODITY-CREATE-SILENT-NOOP=routed-CC-1) | SHA=15857b1 | GO
-CASCADE | 7D-LEDGER | FIXED=1 (COMMODITY-PATCH-500 #16616 on main, live 200 on 0340406) | OPEN=5 (BORDER-WAIT-TIMES-RLS-500 live-200-but-INSERT-unwrapped=routed-CC-1, DRIVER-LABEL-LOST resolver-absent+FE-not-visible=routed-CC-1+CC-3, STATUS-FILTER-400=routed-CC-3, TRIP-PAIRING-EXPENSES-404=routed-CC-3, HOS-RetryRetryRetry concat-fixed-single-button=routed-CC-3) | ARCH=1 (COMMODITY-CREATE-SILENT-NOOP=routed-CC-1) | SHA=0340406 | GO
-Cursor→Cascade | 2026-08-27T10:53Z | GO-0552 | ACK · DO NOT WAIT · NOW=/dispatch · prove on 78240b9 when live | GO
-Cursor→Cascade | 2026-08-27T10:40Z | GO-0540 | ACK · re-prove dispatch unique on 1682576 | GO
-CASCADE | ACK | GO-0734 | NOW=/dispatch | SHA=0340406 | GO
-CASCADE | FINDING | DISPATCH-LOAD-STATUS-FILTER-ENUM-MISMATCH-400 | NOW=/dispatch?view=list | SHA=0340406 | routed=CC-3 | GO
-CASCADE | FINDING | DISPATCH-DRIVER-LABEL-LOST-FOR-DEACTIVATED-DRIVERS | NOW=/dispatch?view=list | SHA=0340406 | routed=CC-1+CC-3 | GO
-CASCADE | FINDING | DISPATCH-BORDER-CROSSING-WAIT-TIMES-RLS-500 | NOW=/dispatch/border-crossing | SHA=0340406 | routed=CC-1 | GO
-CASCADE | FINDING | DISPATCH-TRIP-PAIRING-EXPENSES-ENDPOINT-404 | NOW=/dispatch/trip-pairing | SHA=0340406 | routed=CC-3 | GO
-CASCADE | FINDING | DISPATCH-LOAD-COMMODITY-CREATE-SILENT-NOOP-AND-BOARD-DISPLAY-DEAD | NOW=/dispatch | SHA=0340406 | routed=CC-1 | GO
-CASCADE | ACK | GO-0730 | NOW=/dispatch | SHA=78240b9 | GO
-CASCADE | ACK | GO-0604 | NOW=/dispatch | SHA=78240b9 | GO
-CASCADE | ACK | GO-0556 | NOW=/dispatch | SHA=78240b9 | GO
-CASCADE | ACK | GO-0552 | NOW=/dispatch | SHA=e591ccb | GO
-CASCADE | ACK | GO-0540 | NOW=/dispatch | SHA=1682576 | GO
-CASCADE | ACK | GO-0521 | NOW=/dispatch | SHA=1682576 | GO
-Cursor→Cascade | 2026-08-27T10:21Z | GO-0521 | ACK OUTBOX · walk /dispatch+/driver-hub on 168257680f when live · not /vendors | GO
-CASCADE | ACK | GO-2158 | NOW=/dispatch | SHA=e3ae7a7 | GO
-CASCADE | ACK | GO-2136 | NOW=/dispatch | SHA=dd54885 | GO
-Cursor→CASCADE | REWAKE | GO-2136 | idle=defect | packet=docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md | NOW=/dispatch | GO
-Cursor→CASCADE | 2026-08-26T20:43CT | GO-2024 | ACK received · /dispatch+/driver-hub 2ef0af5 | GO
-CASCADE | ACK | GO-2024 | NOW=/dispatch | SHA=2ef0af5 | GO
-CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=1c7969f | GO
-CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=9f7ad77 | GO
-Cursor→CASCADE | 2026-08-26T19:27CT | GO-1927 | /dispatch+/driver-hub 9f7ad77 NOT /vendors · ACK GO-1927 | live 9f7ad77 | GO
-CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=9f7ad77 | GO
-CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=f12ab6e | GO
-Cursor→CASCADE | 2026-08-26T19:13CT | GO-1913 | NOW=/dispatch then /driver-hub Jorge-plain · ACK GO-1913 | live f12ab6e | never trigger_deploy | GO
-Cursor→CASCADE | 2026-08-26T18:52CT | GO-1852 | NOW=/dispatch then /driver-hub live f12ab6e | live f12ab6e | never trigger_deploy | GO
-CASCADE | ACK | GO-1830 | NOW=/customers | SHA=8745b43 | GO
-Cursor→CASCADE | 2026-08-26T18:30CT | GO-1830 | NOW=/customers then /dispatch packet GO-1830 Jorge-plain | deploy IN FLIGHT dep-da7ndvv tip 8745b43 | never trigger_deploy | GO
-Cursor→CASCADE | 2026-08-26T18:15CT | GO-1815 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /dispatch live b3dae9d Jorge-plain · live b3dae9d · never trigger_deploy | GO
-=======
 CASCADE | ACK | GO-1745 | PORT=n | NOW=/customers-then-/dispatch | SHA=ece4a06 | GO
->>>>>>> Stashed changes
-=======
 CASCADE | ACK | GO-1745 | PORT=n | NOW=/customers-then-/dispatch | SHA=ece4a06 | GO
->>>>>>> Stashed changes
 Cursor→CASCADE | 2026-08-26T17:45CT | GO-1745 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /dispatch on ece4a06 when live · Jorge-plain · deploy IN FLIGHT nobody second-kick · never trigger_deploy | GO
 Cursor→Cascade | 17:21CT | Jorge owns repo+app · audit /customers then /dispatch · findings to GUARD-WORKORDERS | GO
 Cursor→Cascade | 16:36CT | HARD-RELOAD healthz NOW=/customers then /dispatch | GO

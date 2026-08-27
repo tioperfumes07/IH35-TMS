@@ -1,3 +1,18 @@
+# LEAD CENSUS — GO-1655
+
+**LIVE:** curl healthz · `LEAD-SEAT=CURSOR`
+**Owner:** Finish Live Chrome + unique FIX, then **next hop**. Create TEST. **Do not void until launch.** All seats have permission.
+
+| Seat | GO-1655 ACK | NOW then NEXT |
+|------|-------------|---------------|
+| CC-1 | pending | `/accounting` `/factoring` → money board |
+| CC-2 | pending | settlements → `/reports` `/tasks` |
+| CC-3 | pending | `/compliance` `/inventory` `/users` `/help` |
+| Codex | pending | `/customers` `/drivers` `/fleet` → `/fuel` `/eld` |
+| Cascade | pending | `/dispatch` → `/driver-hub` |
+| Devin | pending | `/vendors` depth |
+| Cursor | ACK | banking then maint/safety/insurance then `/home` `/system` |
+
 # LEAD CENSUS — GO-1640
 
 **LIVE:** `33c41fc` · `LEAD-SEAT=CURSOR`

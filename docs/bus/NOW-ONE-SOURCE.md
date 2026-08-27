@@ -1,3 +1,5 @@
+**17:00 CT GO-1655 — THIS IS NOW.** Finish Live Chrome + unique FIX then **next hop**. **Create TEST — all seats have permission. Do not void until launch.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Never restamp U14. Skip #15546.
+
 **16:52 CT GO-1640 overflow:** lists/legal unique N=0 on `33c41fc` (do not remake TEST_M3_67481337). Cash-flow/finance lead Chrome already done. Meter 3 still open. Seats ACK.
 
 **16:40 CT 2026-08-27 GO-1640 — THIS IS NOW.** Owner: U14 + cash-flow + finance = meter 3 on live SHA. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. Live **`33c41fc`**. Never restamp U14. Skip #15546.

@@ -26,7 +26,7 @@ USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). App `https://app.ih35dispat
 
 Fully-Wired items **1–12** on that module, **Live Chrome last**. Unique FINDING only on **500 / dead click / silent no-op**. Empty unique-FINDING → **next module on YOUR list**, never idle, never another seat’s current prefix.
 
-CREATE-TEST-THEN-VOID: empty TMS is expected; create labeled TEST; owner voids after launch.
+CREATE-TEST-THEN-VOID: empty TMS is expected; all seats have permission to create labeled TEST; **do not void until launch** (one clean pass after launch).
 
 **Stamp:** exclusive owner OUTBOX `CERTIFIED | MODULE=<id> | LIVE_SHA=<healthz> | hops=<one line>`. **Only Cursor** copies that into the table below after the SHA matches live `healthz`. Clicked ≠ CERTIFIED.
 
