@@ -3,6 +3,7 @@ import fs from "node:fs";
 
 const FILE = "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx";
 const source = fs.readFileSync(FILE, "utf8");
+const backendSource = fs.readFileSync("apps/backend/src/maintenance/defects.routes.ts", "utf8");
 
 function inspect(value) {
   const failures = [];
@@ -20,6 +21,21 @@ function inspect(value) {
   return failures;
 }
 
+function inspectBackend(value) {
+  const failures = [];
+  const auditBaseStart = value.indexOf("const auditBase = {");
+  if (auditBaseStart < 0) failures.push("missing shared triage audit base");
+  else if (!value.slice(auditBaseStart, auditBaseStart + 520).includes("operating_company_id: body.data.operating_company_id")) {
+    failures.push("triage audit base omits submitted company");
+  }
+  for (const event of ["assigned", "escalated", "closed_no_action", "converted_to_wo"]) {
+    if (!value.includes(`${TRIAGE_PREFIX}${event}`)) failures.push(`missing ${event} audit`);
+  }
+  return failures;
+}
+
+const TRIAGE_PREFIX = "${TRIAGE_EVENT_PREFIX}";
+
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["input.id", "row.id"],
@@ -33,11 +49,16 @@ if (process.argv.includes("--selftest")) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);
     if (inspect(source.replace(before, after)).length === 0) throw new Error(`selftest missed: ${before}`);
   }
-  console.log(`verify-maint-defects-inbox-action-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
+  const companyToken = "operating_company_id: body.data.operating_company_id";
+  if (!backendSource.includes(companyToken)) throw new Error(`selftest fixture missing: ${companyToken}`);
+  if (inspectBackend(backendSource.replace(companyToken, "PLANTED_SCOPE: body.data.operating_company_id")).length === 0) {
+    throw new Error("selftest missed tenantless triage audits");
+  }
+  console.log(`verify-maint-defects-inbox-action-lifecycle --selftest PASS (${mutations.length + 1}/${mutations.length + 1})`);
   process.exit(0);
 }
 
-const failures = inspect(source);
+const failures = [...inspect(source), ...inspectBackend(backendSource)];
 if (failures.length) {
   failures.forEach((failure) => console.error(` - ${failure}`));
   process.exit(1);
