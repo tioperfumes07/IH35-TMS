@@ -88,6 +88,8 @@ function eligibilityBadgeClass(eligible: boolean) {
 
 /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
 export function DrugAlcoholTab() {
+  const pageSize = 50;
+  const [historyPage, setHistoryPage] = useState(1);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -145,10 +147,22 @@ export function DrugAlcoholTab() {
   const { byId: driverNameById } = useDriverLabels(companyId, [effectiveDriverId]);
 
   const testsQ = useQuery({
-    queryKey: ["safety", "drug-program", "tests", companyId],
+    queryKey: ["safety", "drug-program", "tests", companyId, effectiveDriverId, appliedHistory, historyPage],
     enabled: Boolean(companyId),
-    queryFn: () => listDrugProgramTests(companyId).then((r) => r.tests),
+    queryFn: () => listDrugProgramTests(companyId, {
+      driver_id: effectiveDriverId || undefined,
+      test_type: appliedHistory.type || undefined,
+      result: appliedHistory.result || undefined,
+      from: appliedHistory.from || undefined,
+      to: appliedHistory.to || undefined,
+      limit: pageSize,
+      offset: (historyPage - 1) * pageSize,
+    }),
   });
+  const historyTotal = testsQ.isError ? 0 : testsQ.data?.total_count ?? 0;
+  const historyPageCount = Math.max(1, Math.ceil(historyTotal / pageSize));
+
+  useEffect(() => setHistoryPage(1), [companyId, effectiveDriverId, appliedHistory]);
 
   const poolQ = useQuery({
     queryKey: ["safety", "drug-program", "pool", companyId],
@@ -262,19 +276,6 @@ export function DrugAlcoholTab() {
     setTestDate(companyToday());
     setConsortiumName("");
   }, [companyId, effectiveDriverId]);
-
-  const filteredTests = useMemo(() => {
-    const rows = testsQ.data ?? [];
-    return rows.filter((row) => {
-      if (effectiveDriverId && String(row.driver_id) !== effectiveDriverId) return false;
-      if (appliedHistory.type && String(row.test_type) !== appliedHistory.type) return false;
-      if (appliedHistory.result && String(row.result) !== appliedHistory.result) return false;
-      const testDateStr = String(row.test_date ?? "").slice(0, 10);
-      if (appliedHistory.from && (!testDateStr || testDateStr < appliedHistory.from)) return false;
-      if (appliedHistory.to && (!testDateStr || testDateStr > appliedHistory.to)) return false;
-      return true;
-    });
-  }, [testsQ.data, effectiveDriverId, appliedHistory]);
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
@@ -605,7 +606,16 @@ export function DrugAlcoholTab() {
         {testsQ.isError ? (
           <div data-testid="drug-alcohol-tests-query-error"><ListErrorState status={0} message={userFacingApiError(testsQ.error, "Could not load drug test history.")} onRetry={() => void testsQ.refetch()} /></div>
         ) : (
-          <DrugAlcoholTable rows={filteredTests as Array<Record<string, unknown>>} />
+          <>
+            <DrugAlcoholTable rows={(testsQ.data?.tests ?? []) as Array<Record<string, unknown>>} pageSize={pageSize} hidePager />
+            {historyTotal > pageSize ? (
+              <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="drug-alcohol-tests-server-pager">
+                <Button size="sm" variant="secondary" disabled={historyPage <= 1 || testsQ.isFetching} onClick={() => setHistoryPage((current) => Math.max(1, current - 1))}>Previous</Button>
+                <span className="text-gray-600">Page {historyPage} of {historyPageCount} · {historyTotal} tests</span>
+                <Button size="sm" variant="secondary" disabled={historyPage >= historyPageCount || testsQ.isFetching} onClick={() => setHistoryPage((current) => Math.min(historyPageCount, current + 1))}>Next</Button>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
 

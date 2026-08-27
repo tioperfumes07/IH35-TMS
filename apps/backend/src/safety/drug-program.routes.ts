@@ -13,6 +13,16 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const drugTestsListQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+  test_type: z.string().trim().min(1).optional(),
+  result: z.string().trim().min(1).optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 const driverParamsSchema = z.object({
   driver_id: z.string().uuid(),
 });
@@ -138,10 +148,31 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/drug-program/tests", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const company = companyQuerySchema.safeParse(req.query ?? {});
+    const company = drugTestsListQuerySchema.safeParse(req.query ?? {});
     if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
 
-    const tests = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const values: unknown[] = [company.data.operating_company_id];
+      const filters: string[] = [];
+      const addFilter = (value: unknown, sql: (placeholder: number) => string) => {
+        if (value == null || value === "") return;
+        values.push(value);
+        filters.push(sql(values.length));
+      };
+      addFilter(company.data.driver_id, (n) => `AND t.driver_id = $${n}::uuid`);
+      addFilter(company.data.test_type, (n) => `AND t.test_type = $${n}`);
+      addFilter(company.data.result, (n) => `AND t.result = $${n}`);
+      addFilter(company.data.from, (n) => `AND t.test_date >= $${n}::date`);
+      addFilter(company.data.to, (n) => `AND t.test_date <= $${n}::date`);
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+         FROM safety.drug_test t
+         WHERE t.operating_company_id = $1::uuid
+           AND t.voided_at IS NULL
+           ${filters.join("\n           ")}`,
+        values
+      );
+      values.push(company.data.limit, company.data.offset);
       const res = await client.query(
         `
           SELECT
@@ -159,15 +190,16 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
            ))
           WHERE t.operating_company_id = $1::uuid
             AND t.voided_at IS NULL
+            ${filters.join("\n            ")}
           ORDER BY t.test_date DESC, t.created_at DESC
-          LIMIT 500
+          LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
-        [company.data.operating_company_id]
+        values
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
-    return { tests };
+    return { tests: result.rows, total_count: result.total_count };
   });
 
   app.post("/api/v1/safety/drug-program/tests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

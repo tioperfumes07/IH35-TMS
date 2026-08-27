@@ -576,8 +576,10 @@ export type RtdCase = {
   clearinghouse_updated?: boolean;
 };
 
-export function listDrugProgramTests(companyId: string) {
-  return apiRequest<{ tests: DrugProgramTest[] }>(`/api/v1/safety/drug-program/tests?${q(companyId)}`);
+export function listDrugProgramTests(companyId: string, filters: { driver_id?: string; test_type?: string; result?: string; from?: string; to?: string; limit?: number; offset?: number } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  for (const [key, value] of Object.entries(filters)) if (value != null && value !== "") qs.set(key, String(value));
+  return apiRequest<{ tests: DrugProgramTest[]; total_count: number }>(`/api/v1/safety/drug-program/tests?${qs.toString()}`);
 }
 
 export function createDrugProgramTest(
