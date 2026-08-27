@@ -211,12 +211,14 @@ async function ensureStagingIncident(
       WHERE operating_company_id = $1::uuid
         AND incident_type = 'damage_report'
         AND load_id IS NOT DISTINCT FROM $2::uuid
+        AND driver_id = $3::uuid
+        AND unit_id = $4::uuid
         AND description = 'GAP-50 pre/post trip photo staging'
         AND status = 'open'
       ORDER BY created_at DESC
       LIMIT 1
     `,
-    [input.operatingCompanyId, input.loadUuid]
+    [input.operatingCompanyId, input.loadUuid, input.driverUuid, input.unitUuid]
   );
   if (existing.rows[0]?.id) return existing.rows[0].id;
 
