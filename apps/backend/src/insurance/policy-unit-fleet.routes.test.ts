@@ -81,6 +81,9 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("UPDATE insurance.policy_unit") && sql.includes("removed_at = now()")) {
     return { rows: [] };
   }
+  if (sql.includes("UPDATE insurance.policy_unit") && sql.includes("removed_at = COALESCE")) {
+    return { rows: [{ id: UNIT }] };
+  }
   if (sql.includes("UPDATE insurance.policy_unit")) return { rows: [unitRow()] };
 
   if (sql.includes("SELECT count(*)")) return { rows: [{ count: state.activeCount }] };
@@ -253,5 +256,17 @@ describe("Block E — insurance fleet add/remove routes", () => {
     });
     expect(res.statusCode).toBe(404);
     expect(res.json()).toMatchObject({ error: "policy_unit_not_found" });
+  });
+
+  it("archives through the generic policy-unit endpoint without hard DELETE", async () => {
+    const app = await buildApp();
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/insurance/policy-units/${UNIT}?operating_company_id=${COMPANY}`,
+    });
+    expect(res.statusCode).toBe(204);
+    const calls = queryMock.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((sql) => sql.includes("removed_at = COALESCE(removed_at, now())"))).toBe(true);
+    expect(calls.some((sql) => sql.includes("DELETE FROM insurance.policy_unit"))).toBe(false);
   });
 });
