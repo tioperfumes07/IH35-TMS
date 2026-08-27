@@ -237,11 +237,19 @@ export function NamesMasterHub() {
           rowKey={(row) => `${row.entity_type}-${row.entity_id}`}
           loading={searchQuery.isLoading}
           emptyText="No results. Try a search term."
-          initialPageSize={50}
+          pageSize={pageSize}
           storageKey="names-master-hub"
           tableTestId="names-master-hub-table"
           // LST-F3528: keep API search form above; hide ParityTable toolbar Search
           suppressToolbarSearch
+          // NAMES-MASTER-DOUBLE-PAGER-CONTRADICTS-TOTAL: `rows` here is one server-paginated page
+          // (limit/offset, pageSize=50) out of a real total that can span many pages. Without
+          // hidePager, ParityTable's own built-in pager computed its "of N"/"Page X of Y" purely
+          // from rows.length (always 50, always "Page 1 of 1") -- flatly contradicting the correct
+          // external "Page {page+1} of {pageCount} · {total} results" pager rendered right below it
+          // on the same screen. hidePager suppresses ParityTable's own chrome so the external pager
+          // (which already reads the real server `total`) is the only one a reader sees.
+          hidePager
         />
       )}
 
