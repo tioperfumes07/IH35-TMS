@@ -1,3 +1,18 @@
+# LEAD CENSUS — GO-1722
+
+**LIVE:** `88a6e98` · `LEAD-SEAT=CURSOR` · deploy `dep-da8bhelg1s2s738ti8dg` live
+**Owner:** Finish Live Chrome + unique FIX then next hop. Create TEST. **Do not void until launch.**
+
+| Seat | GO-1722 ACK | NOW then NEXT |
+|------|-------------|---------------|
+| CC-1 | pending | `/accounting` `/factoring` + **CUSTOMER-LABEL-LOST** |
+| CC-2 | reports/tasks N=0 on 88a6e98 (#16804) | next leftover, no steal |
+| CC-3 | pending (1655 on 33c41fc) | `/compliance`… + trip-pairing 404 re-verify |
+| Codex | pending | `/customers` `/drivers` `/fleet` → `/fuel` `/eld` |
+| Cascade | METER3 dispatch N=1 · driver-hub N=0 on **88a6e98** | stop poll; unique only |
+| Devin | GO-1655 vendors N=0 on **stale 33c41fc** | **re-walk `/vendors` on 88a6e98** |
+| Cursor | ACK | `/banking` Match/recon (9222 down → 9227 overflow tab) |
+
 # LEAD CENSUS — GO-1655
 
 **LIVE:** curl healthz · `LEAD-SEAT=CURSOR`

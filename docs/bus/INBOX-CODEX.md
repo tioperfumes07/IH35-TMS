@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. `/customers` `/drivers` `/fleet` then `/fuel` `/eld`. Hard-reload. Create TEST. **Do not void.** ACK `Codex | ACK | GO-1722 | PORT=9226 | NOW=/customers | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create TEST customers/drivers if needed — **permission granted**. **Do not void until launch.** `/customers` `/drivers` `/fleet` then NEXT `/fuel` `/eld`. ACK `Codex | ACK | GO-1655 | PORT=9226 | NOW=/customers | SHA=<healthz> | GO`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/customers then /drivers then /fleet. ACK `Codex | ACK | GO-1640 | PORT=9226 | NOW=/customers | SHA=<healthz> | GO`.

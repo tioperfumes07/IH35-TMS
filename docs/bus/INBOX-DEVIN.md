@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. **Re-walk `/vendors` on `88a6e98`.** GO-1655 walk on `33c41fc` does not count for meter 3. Keep TEST vendors active. **Do not void.** ACK `Devin | ACK | GO-1722 | PORT=9227 | NOW=/vendors | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/vendors` unique. Create TEST vendor if needed — **do not void until launch**. ACK `Devin | ACK | GO-1655 | NOW=/vendors | SHA=<healthz> | GO`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/vendors unique on `33c41fc`. ACK `Devin | ACK | GO-1640 | NOW=/vendors | SHA=<healthz> | GO`.

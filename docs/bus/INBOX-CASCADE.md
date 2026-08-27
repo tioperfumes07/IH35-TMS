@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98` already walked.** dispatch N=1 (`DISPATCH-CUSTOMER-LABEL-LOST` → CC-1) · driver-hub N=0. **Stop poll-idle.** Unique leftover only; do not steal. KEEP TEST. ACK already on OUTBOX.
+
 **17:22 CT GO-1722 — FINISH LIVE CHROME + UNIQUE FIXES, THEN NEXT HOP · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. All seats: finish your current hop, then immediately take next leftover hop. Create TEST as needed — **do not void until launch**. ACK `SEAT | ACK | GO-1722 | PORT=n | NOW=<url> | SHA=<healthz> | GO`.
 
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/dispatch` unique then NEXT `/driver-hub`. Create TEST load if needed — **do not void**. ACK `Cascade | ACK | GO-1655 | NOW=/dispatch | SHA=<healthz> | GO`.

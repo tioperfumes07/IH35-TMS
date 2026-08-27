@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. `/accounting` `/factoring` then **NOW money/dispatch:** `DISPATCH-CUSTOMER-LABEL-LOST-FOR-DEACTIVATED-CUSTOMERS` (loads.routes.ts — wire `resolve_customer_label_same_company`). Create TEST. **Do not void.** STOP `/425c`. ACK `CC-1 | ACK | GO-1722 | PORT=9223 | NOW=/accounting | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create labeled TEST/samples as needed — **all seats have permission**. **Do not void until launch.** Reuse vendors/customers/loads. Finish exclusive Live Chrome + FIX then immediately NEXT URL. ACK `CC-1 | ACK | GO-1655 | PORT=9223 | NOW=/accounting | SHA=<healthz> | GO`. STOP `/425c`. Never `trigger_deploy`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/accounting TEST then /factoring. Live `33c41fc`. ACK `CC-1 | ACK | GO-1640 | PORT=9223 | NOW=/accounting | SHA=<healthz> | GO`.
