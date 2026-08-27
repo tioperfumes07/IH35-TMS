@@ -590,20 +590,28 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       );
 
       const fromCode = String(source.position_code);
-      await client.query(
+      const movedSource = await client.query(
         `UPDATE maintenance.tire_records
          SET position_code = $1, position_group = $2, updated_at = now()
-         WHERE id = $3`,
-        [body.to_position_code, positionGroupForCode(body.to_position_code), body.tire_record_id]
+         WHERE id = $3
+           AND operating_company_id = $4::uuid
+           AND status = 'active'
+         RETURNING id`,
+        [body.to_position_code, positionGroupForCode(body.to_position_code), body.tire_record_id, body.operating_company_id]
       );
+      if (movedSource.rows.length !== 1) throw new Error("tire_rotation_source_update_failed");
 
       if (occupant.rows[0] && String(occupant.rows[0].id) !== body.tire_record_id) {
-        await client.query(
+        const movedOccupant = await client.query(
           `UPDATE maintenance.tire_records
            SET position_code = $1, position_group = $2, updated_at = now()
-           WHERE id = $3`,
-          [fromCode, positionGroupForCode(fromCode), occupant.rows[0].id]
+           WHERE id = $3
+             AND operating_company_id = $4::uuid
+             AND status = 'active'
+           RETURNING id`,
+          [fromCode, positionGroupForCode(fromCode), occupant.rows[0].id, body.operating_company_id]
         );
+        if (movedOccupant.rows.length !== 1) throw new Error("tire_rotation_occupant_update_failed");
         await client.query(
           `INSERT INTO maintenance.tire_events (
             operating_company_id, tire_record_id, event_type, from_position_code, to_position_code, notes, work_order_id, created_by_user_id

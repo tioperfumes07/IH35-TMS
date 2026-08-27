@@ -1260,3 +1260,4 @@ Codex | GO-2158 | WORKING | FINDING=SAFETY-F6738 | Photo staging reuse now keys 
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6739 | Incident→spawned-WO reverse mutation now binds operating company | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6740 | Spawned WO now fails transaction unless incident reverse FK writes exactly once | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6741 | DOT inspection→WO reverse FK now company-scoped+mandatory | HANDOFF=CC-1 SAFETY-MONEY-F6741 internal-fine liability sibling | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=MAINT-F6742 | Tire rotation source+occupant swaps now company-scoped+mandatory | NEXT=guard+tests+FAST-MERGE | GO
