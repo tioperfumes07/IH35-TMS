@@ -115,6 +115,7 @@ export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
           angleLabel: query.data.angle_label,
           buffer,
           r2ObjectKey,
+          contentType: file.mimetype || "application/octet-stream",
         })
       );
       return reply.code(201).send(result);
