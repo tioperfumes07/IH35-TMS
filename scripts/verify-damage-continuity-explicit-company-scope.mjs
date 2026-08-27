@@ -3,7 +3,7 @@ import fs from "node:fs";
 const file = "apps/backend/src/safety/damage-continuity/continuity.service.ts";
 const source = fs.readFileSync(file, "utf8");
 const checks = [
-  ["AND operating_company_id = $2::uuid", 3],
+  ["AND operating_company_id = $2::uuid", 6],
   ["AND operating_company_id = $3::uuid", 2],
   ["AND operating_company_id = $4::uuid", 1],
   ["AND operating_company_id = $5::uuid", 1],

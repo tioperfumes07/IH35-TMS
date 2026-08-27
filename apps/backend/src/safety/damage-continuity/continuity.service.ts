@@ -295,9 +295,10 @@ export async function getChain(
       SELECT ${CHAIN_COLUMNS}
       FROM safety.damage_continuity_chains
       WHERE uuid = $1::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [params.chainId]
+    [params.chainId, params.operatingCompanyId]
   );
   const chain = chainRes.rows[0];
   if (!chain) return { kind: "chain_not_found" };
@@ -315,9 +316,10 @@ export async function getChain(
              final_resolution_status
       FROM safety.incidents
       WHERE continuity_chain_id = $1::uuid
+        AND operating_company_id = $2::uuid
       ORDER BY incident_at ASC
     `,
-    [params.chainId]
+    [params.chainId, params.operatingCompanyId]
   );
 
   let claim: ChainClaim | null = null;
@@ -331,9 +333,10 @@ export async function getChain(
                amount_paid_cents::bigint
         FROM insurance.claim
         WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
-      [chain.insurance_claim_id]
+      [chain.insurance_claim_id, params.operatingCompanyId]
     );
     claim = claimRes.rows[0] ?? null;
   }
