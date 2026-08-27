@@ -10,6 +10,8 @@ const sources = {
 const checks = [
   ["result contract carries company", "service", /updateSessionDiffResult\([\s\S]{0,180}sessionUuid: string;\s*operatingCompanyId: string;/],
   ["result update binds company", "service", /UPDATE safety\.photo_comparison_sessions[\s\S]{0,420}WHERE uuid = \$1::uuid\s+AND operating_company_id = \$6::uuid/],
+  ["result update is compare-and-set", "service", /AND diff_status = 'analyzing'[\s\S]{0,80}RETURNING uuid::text/],
+  ["lost result update fails closed", "service", /if \(!updated\.rows\[0\]\) throw new Error\("photo_comparison_result_update_lost"\)/],
   ["result query supplies company", "service", /input\.autoDamageReportUuid \?\? null,\s*input\.operatingCompanyId,/],
   ["diff engine forwards company", "engine", /updateSessionDiffResult\(client, \{\s*sessionUuid,\s*operatingCompanyId,\s*diffStatus,/],
 ];
@@ -28,6 +30,8 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     { key: "service", from: "    operatingCompanyId: string;\n    diffStatus:", to: "    diffStatus:" },
     { key: "service", from: "        AND operating_company_id = $6::uuid", to: "        AND TRUE" },
+    { key: "service", from: "        AND diff_status = 'analyzing'", to: "        AND TRUE" },
+    { key: "service", from: "  if (!updated.rows[0]) throw new Error(\"photo_comparison_result_update_lost\");", to: "" },
     {
       key: "service",
       from: "      input.autoDamageReportUuid ?? null,\n      input.operatingCompanyId,",
