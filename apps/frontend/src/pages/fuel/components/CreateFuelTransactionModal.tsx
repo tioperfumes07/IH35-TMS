@@ -164,7 +164,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={setAttemptClose}>
+    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
         <div className="block font-semibold text-gray-700">
           <label htmlFor="fuel-purchase-date">Purchase date *</label>

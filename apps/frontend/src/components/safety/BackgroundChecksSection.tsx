@@ -121,7 +121,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           />
         )}
       </div>
-      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add background check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
+      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add background check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           createMutation.mutate({

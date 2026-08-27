@@ -177,7 +177,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
         size="wide"
         confirmDiscardOnClose
         isDirty={outcome !== "warning" || Boolean(resolutionNotes.trim() || fineOverrideCents.trim()) || correctiveActionDirty}
-        onRegisterAttemptClose={setAttemptClose}
+        onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
         footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
       >
         <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-sm">

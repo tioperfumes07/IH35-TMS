@@ -246,7 +246,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         size="wide"
         confirmDiscardOnClose
         isDirty={isDirty}
-        onRegisterAttemptClose={setAttemptClose}
+        onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
         footer={
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>

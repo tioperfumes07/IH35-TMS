@@ -364,7 +364,7 @@ export function DriverSchedulerGridPage() {
         title="Assign temp cover"
         confirmDiscardOnClose
         isDirty={isAssignDirty}
-        onRegisterAttemptClose={setAssignAttemptClose}
+        onRegisterAttemptClose={(next) => setAssignAttemptClose(() => next)}
       >
         <div className="space-y-3 text-sm">
           <label className="block text-xs font-semibold uppercase text-gray-600">
@@ -457,7 +457,7 @@ export function DriverSchedulerGridPage() {
         title="Cancel temp cover assignment"
         confirmDiscardOnClose
         isDirty={Boolean(cancelReason.trim())}
-        onRegisterAttemptClose={setCancelAttemptClose}
+        onRegisterAttemptClose={(next) => setCancelAttemptClose(() => next)}
       >
         {cancelTarget ? (
           <div className="space-y-3 text-sm">

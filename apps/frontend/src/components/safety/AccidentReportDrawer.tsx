@@ -428,7 +428,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         title={createMode ? "Create Accident Report" : "Accident Damage Details"}
         confirmDiscardOnClose
         isDirty={isDirty}
-        onRegisterAttemptClose={setAttemptClose}
+        onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
       >
         <div className="text-xs" data-testid="accident-report-drawer">
         {createMode ? (

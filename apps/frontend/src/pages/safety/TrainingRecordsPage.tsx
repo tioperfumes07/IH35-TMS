@@ -247,7 +247,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={setAttemptClose}>
+      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Training Record" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form
           className="space-y-3"
           data-testid="training-record-create-modal"
