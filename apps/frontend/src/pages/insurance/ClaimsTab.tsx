@@ -423,10 +423,26 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     data-testid={`claim-reverse-wo-${wo.id}`}
                   />
                 ))}
+                {/* INS-F6883 — the graph endpoint has always returned damage_continuity_chains
+                    (backend + type both carried it), but this panel never rendered it, so a real
+                    linked chain was invisible here even though the other 7 families showed. No
+                    dedicated continuity-chain detail page/EntityLink kind exists yet anywhere in
+                    the app (grep-confirmed) — render the real resolution status as plain text
+                    rather than fabricate a link to a page that doesn't exist. */}
+                {graph.reverse.damage_continuity_chains.map((chain) => (
+                  <span
+                    key={chain.id}
+                    className="mr-2 text-slate-700"
+                    data-testid={`claim-reverse-continuity-chain-${chain.id}`}
+                  >
+                    Continuity chain · {chain.final_resolution_status ?? "in progress"}
+                  </span>
+                ))}
                 {graph.reverse.accidents.length === 0 &&
                 graph.reverse.lawsuits.length === 0 &&
                 graph.reverse.matters.length === 0 &&
                 graph.reverse.incidents.length === 0 &&
+                graph.reverse.damage_continuity_chains.length === 0 &&
                 (graph.reverse.bills ?? []).length === 0 &&
                 (graph.reverse.expenses ?? []).length === 0 &&
                 (graph.reverse.work_orders ?? []).length === 0
