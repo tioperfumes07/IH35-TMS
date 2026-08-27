@@ -46,6 +46,15 @@ export type ParityColumn<T> = {
    * (e.g. a computed/derived display column like a running balance). Default: `row[key]`.
    */
   sortValue?: (row: T) => string | number | null | undefined;
+  /**
+   * PARITY-EXPORT-COMPUTED-COLUMN-BLANK: `exportCsv` used to read `row[key]` directly, never
+   * calling `render`. Any column whose value only exists through `render` — a computed field
+   * with no matching row property (an HOS event's duration, a module's open-item count), or a
+   * `_cents` integer formatted for display — exported blank or a raw, unit-less number under a
+   * dollar-labeled header while the on-screen table looked complete. Same precedent as
+   * `sortValue` above: an optional plain-text extractor for export, default `row[key]`.
+   */
+  exportValue?: (row: T) => string | number | null | undefined;
 };
 
 export type ParityTableProps<T> = {
@@ -575,7 +584,11 @@ export function ParityTable<T>({
     };
     const header = cols.map((c) => esc(c.label)).join(",");
     const body = sortedRows
-      .map((row) => cols.map((c) => esc((row as Record<string, unknown>)[String(c.key)])).join(","))
+      .map((row) =>
+        cols
+          .map((c) => esc(c.exportValue ? c.exportValue(row) : (row as Record<string, unknown>)[String(c.key)]))
+          .join(",")
+      )
       .join("\n");
     const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

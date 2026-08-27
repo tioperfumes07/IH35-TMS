@@ -160,8 +160,23 @@ function RenditionListView({
       { key: "status", label: "Status", sortable: true, render: (r) => STATUS_LABEL[r.status] },
       { key: "value_basis", label: "Value Basis", sortable: true, render: (r) => r.value_basis.replace(/_/g, " ") },
       { key: "effective_due_date", label: "Due Date", sortable: true, render: (r) => formatDateUS(r.effective_due_date) },
-      { key: "total_rendered_value_cents", label: "Rendered Value", sortable: true, render: (r) => centsToUSD(r.total_rendered_value_cents) },
-      { key: "assessed_tax_cents", label: "Assessed Tax", sortable: true, render: (r) => centsToUSD(r.assessed_tax_cents) },
+      {
+        key: "total_rendered_value_cents",
+        label: "Rendered Value",
+        sortable: true,
+        render: (r) => centsToUSD(r.total_rendered_value_cents),
+        // PARITY-EXPORT-COMPUTED-COLUMN-BLANK: without this, export dumped the raw cents
+        // integer (e.g. 123456) under a dollar-labeled header — a 100x magnitude error with
+        // no unit, easily misread as $123,456 in a spreadsheet.
+        exportValue: (r) => centsToUSD(r.total_rendered_value_cents),
+      },
+      {
+        key: "assessed_tax_cents",
+        label: "Assessed Tax",
+        sortable: true,
+        render: (r) => centsToUSD(r.assessed_tax_cents),
+        exportValue: (r) => centsToUSD(r.assessed_tax_cents),
+      },
       {
         key: "open",
         label: "Open",
@@ -527,12 +542,14 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
             label: "Cost",
             sortable: true,
             render: (l) => centsToUSD(l.acquisition_cost_cents),
+            exportValue: (l) => centsToUSD(l.acquisition_cost_cents),
           },
           {
             key: "rendered_value_cents",
             label: "Rendered Value",
             sortable: true,
             render: (l) => centsToUSD(l.rendered_value_cents),
+            exportValue: (l) => centsToUSD(l.rendered_value_cents),
           },
         ]}
         rows={lines}

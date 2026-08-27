@@ -100,6 +100,9 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
         render: (ev) => (
           <span className="font-mono tabular-nums">{hmm(durationMinutes(ev.started_at, ev.ended_at))}</span>
         ),
+        // PARITY-EXPORT-COMPUTED-COLUMN-BLANK: HosEvent has no `duration` field — it's computed
+        // purely inside render — so export left this column blank on every row.
+        exportValue: (ev) => hmm(durationMinutes(ev.started_at, ev.ended_at)),
       },
     ],
     [],

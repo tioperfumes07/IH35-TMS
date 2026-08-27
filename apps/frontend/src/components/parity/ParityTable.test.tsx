@@ -228,6 +228,60 @@ describe("ParityTable (A1 grammar)", () => {
     expect(screen.getByLabelText("Export CSV")).toBeInTheDocument();
   });
 
+  // PARITY-EXPORT-COMPUTED-COLUMN-BLANK — exportCsv used to read row[key] directly, never
+  // calling render, so a column whose value only exists through render (a computed field with
+  // no matching row property, or a raw integer formatted for display) exported blank or a raw
+  // unit-less value while the on-screen table looked complete. `exportValue` fixes it.
+  it("exportValue overrides the raw row lookup in the exported CSV; columns without it still export row[key]", () => {
+    type ComputedRow = { id: string; label: string; totalCents: number };
+    const computedColumns: Array<ParityColumn<ComputedRow>> = [
+      { key: "label", label: "Label" }, // no exportValue — falls back to raw row[key]
+      {
+        key: "totalCents",
+        label: "Total",
+        render: (r) => `$${(r.totalCents / 100).toFixed(2)}`,
+        exportValue: (r) => `$${(r.totalCents / 100).toFixed(2)}`,
+      },
+      {
+        key: "duration", // no matching row property at all — the exact HosHistorySection shape
+        label: "Duration",
+        render: () => "8:00",
+        exportValue: () => "8:00",
+      },
+    ];
+    const computedRows: ComputedRow[] = [{ id: "1", label: "Alpha", totalCents: 123456 }];
+
+    const clicks: string[] = [];
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn((blob: Blob) => {
+      void blob.text().then((text) => clicks.push(text));
+      return "blob:mock";
+    });
+    URL.revokeObjectURL = vi.fn();
+
+    render(
+      <ParityTable<ComputedRow>
+        columns={computedColumns}
+        rows={computedRows}
+        rowKey={(r) => r.id}
+        exportFilename="computed-export-test"
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Export CSV"));
+
+    return Promise.resolve().then(() => {
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+      expect(clicks).toHaveLength(1);
+      const [header, row] = clicks[0].split("\n");
+      expect(header).toBe("Label,Total,Duration");
+      // "Alpha" from raw row[key]; "$1234.56" from exportValue (not the raw 123456 integer);
+      // "8:00" from exportValue (row.duration doesn't exist at all — would be blank without it).
+      expect(row).toBe("Alpha,$1234.56,8:00");
+    });
+  });
+
   it("renders resize handles by default and omits them when disabled", () => {
     const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     expect(screen.getByLabelText("Resize Name")).toBeInTheDocument();
