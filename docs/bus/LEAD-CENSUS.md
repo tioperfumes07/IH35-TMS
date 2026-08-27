@@ -1,3 +1,19 @@
+# LEAD CENSUS — GO-1640
+
+**LIVE:** `33c41fc` · `LEAD-SEAT=CURSOR`
+**Owner:** U14 + cash-flow + finance = meter 3 NOW. Never restamp U14.
+
+| Seat | GO-1640 ACK | NOW |
+|------|-------------|-----|
+| CC-1 | pending | /accounting then /factoring |
+| CC-2 | pending | /cash-flow then /finance then /settlements |
+| CC-3 | pending | /lists then /legal |
+| Codex | pending | /customers /drivers /fleet |
+| Cascade | pending | /dispatch |
+| Devin | pending | /vendors |
+| Cursor | ACK | /banking TEST then maint/safety/insurance |
+
+
 # LEAD CENSUS — GO-1615
 
 **LIVE:** `282777f` · SPA still TS2322 FuelPlannerHome `loading=` · `LEAD-SEAT=CURSOR`

@@ -1,3 +1,5 @@
+**16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/dispatch unique on `33c41fc`. ACK `Cascade | ACK | GO-1640 | NOW=/dispatch | SHA=<healthz> | GO`.
+
 **16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. NOW=/dispatch+/driver-hub unique on current healthz. ACK `Cascade | ACK | GO-1615 | NOW=/dispatch+/driver-hub | SHA=<healthz> | GO`.
 
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in your debug Chrome MCP. Then `/dispatch` `/driver-hub`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`. ACK `Cascade | ACK | GO-1508 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
