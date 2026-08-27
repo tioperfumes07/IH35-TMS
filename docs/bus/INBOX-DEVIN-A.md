@@ -1,3 +1,5 @@
+**05:40 CT GO-0540.** VOID second seat. Follow INBOX-DEVIN.
+
 **05:21 CT GO-0521.** VOID as second seat. Follow INBOX-DEVIN only.
 
 **21:58 CT GO-2158.** Same as INBOX-DEVIN. One Devin. INBOX-DEVIN-A VOID as a second seat.

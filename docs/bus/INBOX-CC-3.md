@@ -1,3 +1,5 @@
+**05:40 CT GO-0540 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. NOW=U2 dispatch 400/500 if still true on live SHA, else `/compliance` unique. Do not remake vendor Reactivate. ACK: `CC-3 | ACK | GO-0540 | PORT=9225 | NOW=dispatch-or-compliance | SHA=<healthz> | GO`.
+
 **05:21 CT GO-0521 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. **Do not remake** vendor Reactivate. NOW=`/compliance` unique then lists/legal. ACK: `CC-3 | ACK | GO-0521 | PORT=9225 | NOW=/compliance | SHA=<healthz> | GO`. Never `trigger_deploy`. Never restamp U14.
 
 **22:05 CT Cursor overflow:** `VENDOR-REACTIVATE-PATCH-404` shipping this PR — do **not** remake. After merge NOW=`/compliance` unique.

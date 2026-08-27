@@ -1,3 +1,5 @@
+**05:40 CT GO-0540 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. NOW=U5 `/cash-flow` then `/reports` unique on live SHA. Never GL. ACK: `CC-2 | ACK | GO-0540 | PORT=9224 | NOW=/cash-flow-unique | SHA=<healthz> | GO`.
+
 **05:21 CT GO-0521 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. Deploy IN FLIGHT — wait healthz `168257680f` then hard-reload. ACK: `CC-2 | ACK | GO-0521 | PORT=9224 | NOW=/cash-flow-unique | SHA=<healthz> | GO`. Exclusive `/cash-flow` `/reports` `/finance` `/tasks`. Never GL. Never `trigger_deploy`.
 
 **21:58 CT GO-2158.** Live **`e3ae7a7`**. ACK GO-2158. NOW=`VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH`. Never GL. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`.

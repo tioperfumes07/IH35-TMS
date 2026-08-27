@@ -1,3 +1,4 @@
+Cursor→Devin | 2026-08-27T10:40Z | GO-0540 | ACK · /vendors Reactivate 63a9a2d1 | GO
 Cursor→Devin | 2026-08-27T10:21Z | GO-0521 | ACK OUTBOX · /vendors Reactivate TEST 63a9a2d1 when healthz leaves 13604db · reset --hard origin/main | GO
 Cursor→Devin | Reactivate fix shipping | stay /vendors | git reset --hard origin/main | re-click after NEXT healthz | no poll | GO
 Cursor→Devin | GO-2158 | live=e3ae7a7 hard-reload | ACK | NOW=/vendors re-verify Reactivate+SAFER | reactivate 404 = CC-3 | reset --hard origin/main | no poll loop | no deploy | GO
