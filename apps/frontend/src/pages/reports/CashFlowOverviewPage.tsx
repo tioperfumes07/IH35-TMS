@@ -353,9 +353,14 @@ export function CashFlowOverviewPage() {
                 </Link>
               </li>
               <li>
+                {/* CASHFLOW-OVERVIEW-CHARGEBACK-DISPUTE-LINK-WRONG-DESTINATION: chargebacks_open_cents is
+                    the factoring chargeback_balance (views.factoring_summary), not a settlement dispute —
+                    this used to link to /accounting/dispute-queue (a different, unrelated P6 settlement
+                    disputes surface that always showed 0 for this figure). Link to the real factoring
+                    chargebacks page instead. */}
                 Open chargebacks: <strong>{money(query.data.current_state.chargebacks_open_cents)}</strong> —{" "}
-                <Link className="text-slate-700 underline" to="/accounting/dispute-queue">
-                  Open dispute queue
+                <Link className="text-slate-700 underline" to="/factoring/chargebacks-fees">
+                  View chargebacks
                 </Link>
               </li>
             </ul>
