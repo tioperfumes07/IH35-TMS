@@ -1,3 +1,5 @@
+**11:27 CT GO-1127:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` — CERTIFY BAR no restamp. ACK `GO-1127`. Live `4e7c9a7`. Deploy in flight `858d689`. Idle=defect.
+
 **11:04 CT GO-1104:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` — idle=defect. ACK `GO-1104`. Deploy in flight.
 
 **08:08 CT GO-0808:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` — Fully-Wired 1–12 IS the law. ACK `GO-0808`.

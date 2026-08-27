@@ -1,5 +1,7 @@
 # STATUS-NOW
 
+**11:27 CT:** GO-1127 · live **`4e7c9a7`** · deploy `dep-da86c1qfngtc73bhnmmg` IN FLIGHT tip `858d689` · idle=defect
+
 **11:04 CT:** GO-1104 idle=defect · live **`8e4380a`** · deploy `dep-da860rqfngtc73bgpm4g` LIVE
 
 **08:08 CT:** GO-0808 Fully-Wired 1–12 IS the law · Cursor shipping wait-times lucia + driver labels · live `0340406`
