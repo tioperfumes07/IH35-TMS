@@ -217,15 +217,23 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
       if ("expiration" in body.data) add("expiration", body.data.expiration ?? null);
       if ("status" in body.data) add("status", body.data.status);
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
-      values.push(params.data.plate_id);
+      values.push(params.data.plate_id, params.data.id, query.data.operating_company_id);
       const res = await client.query(
-        `UPDATE mdata.unit_plates SET ${setParts.join(", ")} WHERE id = $${values.length} RETURNING *`,
+        `UPDATE mdata.unit_plates
+         SET ${setParts.join(", ")}
+         WHERE id = $${values.length - 2}::uuid
+           AND unit_id = $${values.length - 1}::uuid
+           AND operating_company_id = $${values.length}::uuid
+           AND status <> 'archived'
+         RETURNING *`,
         values
       );
       const row = res.rows[0];
+      if (!row) return null;
       await appendCrudAudit(client, user.uuid, "mdata.unit_plates.updated", {
         resource_id: row.id,
         unit_id: params.data.id,
+        operating_company_id: query.data.operating_company_id,
         changes: body.data,
       });
       return row;
