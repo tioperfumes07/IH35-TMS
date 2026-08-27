@@ -46,6 +46,32 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+type LinkValidationClient = {
+  query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+};
+
+export async function validatePartsPurchaseLinks(
+  client: LinkValidationClient,
+  companyId: string,
+  vendorId: string | undefined,
+  workOrderId: string | undefined
+) {
+  const links = await client.query(
+    `SELECT
+       ($2::uuid IS NULL OR EXISTS (
+         SELECT 1 FROM mdata.vendors v
+         WHERE v.id = $2::uuid AND v.operating_company_id = $1::uuid AND v.deactivated_at IS NULL
+       )) AS vendor_ok,
+       ($3::uuid IS NULL OR EXISTS (
+         SELECT 1 FROM maintenance.work_orders wo
+         WHERE wo.id = $3::uuid AND wo.operating_company_id = $1::uuid
+       )) AS work_order_ok`,
+    [companyId, vendorId ?? null, workOrderId ?? null]
+  );
+  const row = links.rows[0] as { vendor_ok?: boolean; work_order_ok?: boolean } | undefined;
+  return Boolean(row?.vendor_ok && row.work_order_ok);
+}
+
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
@@ -162,10 +188,18 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     // either both land or neither does. Real identity = (operating_company_id, part_number); a
     // repeat purchase of the SAME part additively upserts on_hand_qty instead of fragmenting stock
     // across duplicate rows (the pre-fix behavior).
-    const { stockRow, purchaseRow } = await withCompany(
+    const purchaseResult = await withCompany(
       user.uuid,
       query.data.operating_company_id,
       async (client) => {
+        const linksValid = await validatePartsPurchaseLinks(
+          client,
+          query.data.operating_company_id,
+          body.data.vendor_id,
+          body.data.work_order_id
+        );
+        if (!linksValid) return null;
+
         const stock = await client.query(
           `
             INSERT INTO maintenance.parts_inventory (
@@ -227,6 +261,10 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
         return { stockRow, purchaseRow: purchase.rows[0] };
       }
     );
+    if (!purchaseResult) {
+      return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+    }
+    const { stockRow, purchaseRow } = purchaseResult;
 
     // MNT-ECON-01 economic hop — A/P bill + balanced JE behind PARTS_PURCHASE_GL_POSTING_ENABLED
     // (default OFF). Inventory + purchase-event rows are already committed; flag_off / zero_amount
