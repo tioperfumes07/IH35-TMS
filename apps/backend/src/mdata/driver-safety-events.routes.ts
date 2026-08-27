@@ -821,7 +821,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         `
           SELECT id, event_type, event_date, severity, termination_reason_id
           FROM mdata.driver_safety_events
-          WHERE id = $1 AND driver_id = $2
+          WHERE id = $1 AND driver_id = $2 AND voided_at IS NULL
           LIMIT 1
         `,
         [parsedParams.data.event_id, parsedParams.data.driver_id]
@@ -833,7 +833,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         `
           UPDATE mdata.driver_safety_events
           SET ${sets.join(", ")}
-          WHERE id = $1 AND driver_id = $2
+          WHERE id = $1 AND driver_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
         values
@@ -849,6 +849,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "mdata.driver_safety_events",
           driver_id: row.driver_id,
+          operating_company_id: opco,
           fields: Object.keys(parsedBody.data),
         },
         "info",
