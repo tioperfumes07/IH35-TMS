@@ -1,3 +1,4 @@
+Codex | ACK | GO-2136 | PORT=9226 | WORKING INS-F6733 damage auto-claim explicit company scope | SHIPPED #16470 @ 8d9c7a6a49 SAFETY-F6732 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6732 damage continuity reverse-read company scope | SHIPPED #16468 @ 155ef19a96 SAFETY-F6731 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6731 damage continuity explicit company scope | SHIPPED #16466 @ 32ac424a91 MAINT-F6730 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING MAINT-F6730 in-house parts allocation company scope | SHIPPED #16464 @ 278421808a MAINT-F6729 | NEXT=guard+FAST-MERGE | GO
@@ -1251,3 +1252,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6722 stale parts adjustment g
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6723 WO status atomic company scope | SHIPPED #16453 MAINT-F6722 @ 2fd682f711 guards=7/7 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6724 parts-link add→refresh→void audit company linkage | SHIPPED #16454 MAINT-F6723 @ dc2418002d guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6725 mounted v5 audit company remainder | SHIPPED #16455 MAINT-F6724 @ 91e020c83b guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=SAFETY-F6734 | Photo Comparison post-trip mutation now carries authenticated company route→service→SQL | NEXT=guard+tests+FAST-MERGE | GO
