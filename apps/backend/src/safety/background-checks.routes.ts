@@ -8,6 +8,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
@@ -70,11 +72,19 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
            LIMIT 1`,
           [query.data.driver_id, query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [] };
+        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
       }
       const driverFilter = query.data.driver_id
         ? (values.push(query.data.driver_id), `AND bc.driver_id = $${values.length}::uuid`)
         : "";
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+         FROM safety.background_checks bc
+         WHERE bc.operating_company_id = $1::uuid
+           ${driverFilter}`,
+        values
+      );
+      values.push(query.data.limit, query.data.offset);
       const res = await client.query(
         `
           SELECT bc.*,
@@ -95,14 +105,14 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
           WHERE bc.operating_company_id = $1::uuid
             ${driverFilter}
           ORDER BY bc.checked_at DESC, bc.id DESC
-          LIMIT 500
+          LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
         values
       );
-      return { found: true as const, rows: res.rows };
+      return { found: true as const, rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { background_checks: result.rows };
+    return { background_checks: result.rows, total_count: result.total_count };
   });
 
   app.post("/api/v1/safety/background-checks", RL_WRITE, async (req, reply) => {
