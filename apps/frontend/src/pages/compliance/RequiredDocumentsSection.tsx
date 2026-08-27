@@ -9,6 +9,7 @@ import {
   type RequiredDocEnforcement,
   type RequiredDocumentType,
 } from "../../api/requiredDocuments";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -30,6 +31,12 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
   const [entityKind, setEntityKind] = useState<RequiredDocEntityKind>("driver");
   const [showCreate, setShowCreate] = useState(false);
   const [patchError, setPatchError] = useState<string | null>(null);
+  // REQUIRED-DOC-DEACTIVATE-NO-CONFIRM: deactivating a required-document rule fires immediately —
+  // the list query filters is_active=true with no "show inactive"/reactivate affordance anywhere
+  // in this section, so a misclick silently drops a compliance enforcement rule (possibly
+  // hard_block) fleet-wide with no visible way back. This codebase's own established pattern for
+  // the word "Deactivate" (DeactivateFactorConfirmModal) already expects a confirm gate.
+  const [deactivateTarget, setDeactivateTarget] = useState<RequiredDocumentType | null>(null);
 
   const key = ["required-doc-types", operatingCompanyId, entityKind];
   const listQ = useQuery({
@@ -175,9 +182,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
                     <button
                       type="button"
                       disabled={patch.isPending}
-                      onClick={() =>
-                        patch.mutate({ id: row.id, input: { operating_company_id: operatingCompanyId, is_active: false } })
-                      }
+                      onClick={() => setDeactivateTarget(row)}
                       className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
                     >
                       Deactivate
@@ -188,6 +193,26 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
           }
         />
       )}
+
+      <ConfirmModal
+        open={Boolean(deactivateTarget)}
+        title="Deactivate this required-document rule?"
+        message={
+          deactivateTarget
+            ? `"${deactivateTarget.label}" will stop being enforced (including hard-block) and disappear from this list — there is no reactivate control here. Confirm before proceeding.`
+            : ""
+        }
+        confirmLabel="Deactivate"
+        danger
+        onClose={() => setDeactivateTarget(null)}
+        onConfirm={async () => {
+          if (!deactivateTarget) return;
+          await patch.mutateAsync({
+            id: deactivateTarget.id,
+            input: { operating_company_id: operatingCompanyId, is_active: false },
+          });
+        }}
+      />
     </section>
   );
 }
