@@ -47,7 +47,10 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
          body.data.detector_function, JSON.stringify(body.data.threshold_config ?? {}), body.data.severity,
          body.data.notify_roles ?? ["Owner"], body.data.cadence_minutes ?? 360]
       );
-      await appendCrudAudit(client, user.uuid, "safety.anomaly_rule.create", { entity_id: String(res.rows[0]?.uuid ?? "") });
+      await appendCrudAudit(client, user.uuid, "safety.anomaly_rule.create", {
+        entity_id: String(res.rows[0]?.uuid ?? ""),
+        operating_company_id: body.data.operating_company_id,
+      });
       return res.rows[0];
     });
     return reply.code(201).send(row);
@@ -109,7 +112,10 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
          WHERE uuid = $1::uuid AND operating_company_id = $3::uuid RETURNING *`,
         [p.data.uuid, user.uuid, body.data.operating_company_id]
       );
-      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.acknowledge", { entity_id: p.data.uuid });
+      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.acknowledge", {
+        entity_id: p.data.uuid,
+        operating_company_id: body.data.operating_company_id,
+      });
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "not_found" });
@@ -128,7 +134,11 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
          WHERE uuid = $1::uuid AND operating_company_id = $4::uuid RETURNING *`,
         [p.data.uuid, body.data.status, body.data.notes ?? null, body.data.operating_company_id]
       );
-      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.resolve", { entity_id: p.data.uuid, status: body.data.status });
+      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_alert.resolve", {
+        entity_id: p.data.uuid,
+        operating_company_id: body.data.operating_company_id,
+        status: body.data.status,
+      });
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "not_found" });
