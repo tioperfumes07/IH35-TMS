@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
-import { registerLoadCancellationReasonRoutes } from "./load-cancellation-reasons.routes.js";
+import { createReasonBodySchema, registerLoadCancellationReasonRoutes } from "./load-cancellation-reasons.routes.js";
 
 /**
  * Route-exists guard for the load-cancellation-reasons 404 report.
@@ -33,5 +33,38 @@ describe("load-cancellation-reasons — FE↔BE route contract (404 guard)", () 
     } finally {
       await app.close();
     }
+  });
+});
+
+// LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400 — live-reproduced this session: the
+// frontend's blank-Description form value is `description: null` (LoadCancellationReasonsListPage.tsx's
+// onSave: `description: form.description || null`), but createReasonBodySchema's description field was
+// a bare `.optional()` (accepts undefined, rejects null) — so ANY create with Description left blank
+// 400'd with `fieldErrors.description: ["Invalid input: expected string, received null"]`, and the
+// modal's own error-surfacing (parseConflict) only read fieldErrors.reason_code, so the failure was
+// completely silent — the Create Entry button just appeared to do nothing. Confirmed live via direct
+// fetch against prod: description:null -> 400; description:"real text" -> 201 (row created + voided).
+const VALID_CREATE_BODY = {
+  operating_company_id: "00000000-0000-0000-0000-000000000000",
+  reason_code: "TEST_CODE",
+  display_name: "Test Code",
+  category: "other" as const,
+  sort_order: 100,
+};
+
+describe("createReasonBodySchema — LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400", () => {
+  it("accepts description: null (the frontend's real blank-field value)", () => {
+    const parsed = createReasonBodySchema.safeParse({ ...VALID_CREATE_BODY, description: null });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("accepts description: undefined (the key omitted entirely)", () => {
+    const parsed = createReasonBodySchema.safeParse(VALID_CREATE_BODY);
+    expect(parsed.success).toBe(true);
+  });
+
+  it("still accepts a real description string", () => {
+    const parsed = createReasonBodySchema.safeParse({ ...VALID_CREATE_BODY, description: "a real reason" });
+    expect(parsed.success).toBe(true);
   });
 });
