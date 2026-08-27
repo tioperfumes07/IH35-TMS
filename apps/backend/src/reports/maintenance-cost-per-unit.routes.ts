@@ -200,6 +200,10 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
               SUM(CASE WHEN wl.line_type NOT IN ('part', 'parts', 'labor') THEN ROUND(wl.total_cost::numeric * 100) ELSE 0 END)::bigint AS other_cents
             FROM maintenance.work_order_lines wl
             INNER JOIN wo_scope wo ON wo.id = wl.work_order_uuid
+            -- MAINT-MONEY-F6797: exclude a voided line from the cost-per-unit financial report.
+            -- wo_enriched's LEFT JOIN + COALESCE(lt.*, 0) below already handles a WO whose lines
+            -- are all voided (it correctly reports 0, not a dropped row).
+            WHERE wl.voided_at IS NULL
             GROUP BY wl.work_order_uuid
           ),
           wo_enriched AS (

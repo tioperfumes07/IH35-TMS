@@ -267,6 +267,8 @@ async function insertBillLinesFromWorkOrder(
       FROM maintenance.work_order_lines
       WHERE work_order_uuid = $1::uuid
         AND line_type IN ('part', 'parts', 'labor')
+        -- MAINT-MONEY-F6797: a voided line must never become a bill line on the WO-close AP bill.
+        AND voided_at IS NULL
       ORDER BY created_at ASC
     `,
     [input.work_order_id]

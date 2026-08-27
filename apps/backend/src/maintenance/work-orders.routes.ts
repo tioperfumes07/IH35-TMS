@@ -53,6 +53,13 @@ const listByBucketQuerySchema = z.object({
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const lineItemParamsSchema = z.object({ id: z.string().uuid(), lid: z.string().uuid() });
+// MAINT-MONEY-F6797 — the line-item DELETE route now voids rather than deletes; a DELETE request
+// carries no body today (deleteWorkOrderLineItem() in the frontend api client sends none), so
+// `reason` stays optional with an honest default rather than breaking that existing call — a
+// dedicated reason-capture UI is a follow-up, not a blocker for the core void-not-delete fix.
+const lineItemVoidBodySchema = z
+  .object({ reason: z.string().trim().min(3).max(500).optional() })
+  .optional();
 
 const createWorkOrderSchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -1672,6 +1679,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (!user) return;
     const params = lineItemParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
+    const body = lineItemVoidBodySchema.safeParse(req.body ?? undefined);
+    if (!body.success) return validationError(reply, body.error);
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
@@ -1683,23 +1692,29 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         // diverge the WO from its AP document — refuse and tell the user to void the bill first.
         const posted = await findPostedApForWo(client, companyId, params.data.id);
         if (posted) throw new WoPostedApError(posted);
+        // MAINT-MONEY-F6797 — this used to be a hard DELETE, permanently destroying the cost line
+        // before it could ever be excluded from AP/GL totals. maintenance.work_order_lines now
+        // carries void metadata (migration 202613210000); this is a company-scoped, active-row
+        // compare-and-set (WHERE ... AND voided_at IS NULL) instead — a line can only be voided
+        // once, mirroring the RETURNING-CAS pattern used elsewhere in this file. Every cost/AP
+        // aggregation reader in this PR excludes voided rows, so total_actual_cost / the AP
+        // invoice-mismatch check / the WO-close bill poster all correctly stop counting a voided
+        // line without ever losing the historical row itself.
         const res = await client.query(
           `
-            -- MNT-PHANTOM-03: this matched on li.id. maintenance.work_order_lines has NO id column
-            -- (prod: 0) — its primary key is the uuid column. So this DELETE threw 42703 on every call, and
-            -- WO cost-line removal endpoint has never once executed. The posted-bill refusal above it
-            -- (WoPostedApError) was therefore also never reached in anger.
-            -- NOTE for F9-06: there is no working hard-delete here to "convert" to a soft-retire —
-            -- the endpoint must first be made to run at all. Sequencing recorded in the PR body.
-            DELETE FROM maintenance.work_order_lines li
-            USING maintenance.work_orders w
+            UPDATE maintenance.work_order_lines li
+            SET voided_at = now(),
+                void_reason = $4,
+                voided_by_user_id = $5::uuid
+            FROM maintenance.work_orders w
             WHERE li.uuid = $1
               AND li.work_order_uuid = w.id
               AND w.id = $2
               AND w.operating_company_id = $3::uuid
+              AND li.voided_at IS NULL
             RETURNING li.uuid
           `,
-          [params.data.lid, params.data.id, companyId]
+          [params.data.lid, params.data.id, companyId, body.data?.reason ?? "Removed via work order line delete", user.uuid]
         );
         const ok = Boolean(res.rowCount && res.rowCount > 0);
         if (ok) await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);

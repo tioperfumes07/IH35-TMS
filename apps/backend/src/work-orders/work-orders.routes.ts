@@ -1506,6 +1506,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         `SELECT line_type, COALESCE(SUM(total_cost), 0) AS total
            FROM maintenance.work_order_lines
           WHERE work_order_uuid = $1
+            -- MAINT-MONEY-F6797: a voided line must not appear on the printed Cost Breakdown.
+            AND voided_at IS NULL
           GROUP BY line_type`,
         [params.data.id]
       );

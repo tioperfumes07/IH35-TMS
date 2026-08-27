@@ -540,6 +540,8 @@ async function copyToAccountingLines(
         -- no new GL math — sub_rows still copy with their real amounts, just without a
         -- bill_lines-level parent reference when their own container was $0.
         AND total_cost <> 0
+        -- MAINT-MONEY-F6797: a voided line must never be copied into a real AP bill/expense.
+        AND voided_at IS NULL
       ORDER BY created_at ASC
     `,
     [sourceWoId]
