@@ -1,3 +1,5 @@
+**14:39 CT 2026-08-27 GO-1439 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1439.md`. Live **`d49fbfa`**. API IN FLIGHT `dep-da895cqd0e5s73a1gtrg` tip **`5ecbc67`**. Idle=defect including Cursor. Skip #15546. Never restamp U14.
+
 **14:12 CT 2026-08-27 GO-1412 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1412.md`. Live **`4b859b7`**. API IN FLIGHT `dep-da88o9ifngtc73bnmv90` tip **`d49fbfa`**. Idle=defect. Skip #15546. Never restamp U14.
 
 **13:31 CT 2026-08-27 GO-1331 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1331.md`. Live **`858d689`**. IN FLIGHT `dep-da885du7bikc73c0s34g` tip **`4b859b7`**. Idle=defect. 16 leftover-POST: meter 1 15/16; meter 3 reports only until re-prove. Skip #15546. Never restamp U14.
