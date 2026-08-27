@@ -211,7 +211,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/mdata/drivers/:id/clear-default-truck", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/clear-default-truck", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -222,7 +222,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
       if (!driverOk) return null;
-      await client.query(
+      const cleared = await client.query(
         `
           UPDATE telematics.vehicle_driver_assignments
           SET ended_at = now()
@@ -230,15 +230,18 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
             AND operating_company_id = $2::uuid
             AND is_default = true
             AND ended_at IS NULL
+          RETURNING id::text
         `,
         [params.data.id, query.data.operating_company_id]
       );
+      if (!cleared.rows[0]) return { error: "no_active_default_truck" as const };
       await appendCrudAudit(client, user.uuid, "mdata.driver.default_truck_cleared", {
         resource_id: params.data.id,
       });
       return fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
     });
     if (!result) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    if ("error" in result) return reply.code(409).send({ error: result.error });
     return result;
   });
 }
