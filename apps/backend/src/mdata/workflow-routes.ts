@@ -157,6 +157,7 @@ async function callerCanTargetResource(
         JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
        WHERE r.id = $1::uuid
        LIMIT 1
+       FOR UPDATE OF r
     `,
     [targetResourceId, callerUserId]
   );
@@ -370,47 +371,49 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
       );
       if (!approverCanTarget) return { error: "mdata_workflow_request_not_found" as const };
 
+      let targetUpdated = 0;
       if (workflow.action_code === "WF-064-MDATA-001") {
-        await client.query(
+        targetUpdated = (await client.query(
           `UPDATE mdata.drivers SET status = 'Active', updated_by_user_id = $2 WHERE id = $1`,
           [workflow.target_resource_id, authUser.uuid]
-        );
+        )).rowCount ?? 0;
       } else if (workflow.action_code === "WF-064-MDATA-002") {
-        await client.query(
+        targetUpdated = (await client.query(
           `UPDATE mdata.drivers SET status = 'Terminated', termination_date = now()::date, updated_by_user_id = $2 WHERE id = $1`,
           [workflow.target_resource_id, authUser.uuid]
-        );
+        )).rowCount ?? 0;
       } else if (workflow.action_code === "WF-064-MDATA-003") {
         const payload = actionPayloadSchemas["WF-064-MDATA-003"].parse(workflow.payload ?? {});
-        await client.query(
+        targetUpdated = (await client.query(
           `
             UPDATE mdata.units
             SET status = 'InService', acquired_date = $2::date, updated_by_user_id = $3
             WHERE id = $1
           `,
           [workflow.target_resource_id, payload.acquired_date, authUser.uuid]
-        );
+        )).rowCount ?? 0;
       } else if (workflow.action_code === "WF-064-MDATA-004") {
         const payload = actionPayloadSchemas["WF-064-MDATA-004"].parse(workflow.payload ?? {});
-        await client.query(
+        targetUpdated = (await client.query(
           `
             UPDATE mdata.units
             SET status = $2, disposed_date = $3::date, updated_by_user_id = $4
             WHERE id = $1
           `,
           [workflow.target_resource_id, payload.disposal_type, payload.disposed_date, authUser.uuid]
-        );
+        )).rowCount ?? 0;
       } else if (workflow.action_code === "WF-064-MDATA-005") {
         const payload = actionPayloadSchemas["WF-064-MDATA-005"].parse(workflow.payload ?? {});
-        await client.query(
+        targetUpdated = (await client.query(
           `
             UPDATE mdata.equipment
             SET status = $2, disposed_date = $3::date, updated_by_user_id = $4
             WHERE id = $1
           `,
           [workflow.target_resource_id, payload.disposal_type, payload.disposed_date, authUser.uuid]
-        );
+        )).rowCount ?? 0;
       }
+      if (targetUpdated !== 1) return { error: "mdata_workflow_request_not_found" as const };
 
       const updatedRes = await client.query<WorkflowRequestRow>(
         `
