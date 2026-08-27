@@ -244,6 +244,7 @@ export function PolicyDetail() {
     );
 
   const openEditPanel = () => {
+    if (updateMutation.isPending || archiveMutation.isPending) return;
     setStatus(policy.status);
     setEffectiveDate(policy.effective_date);
     setExpiryDate(policy.expiry_date);
@@ -251,8 +252,14 @@ export function PolicyDetail() {
   };
 
   const handleArchive = () => {
-    if (!policyId || archiveMutation.isPending) return;
+    if (!policyId || archiveMutation.isPending || updateMutation.isPending) return;
     setPendingArchive({ policyId, companyId, generation: policyActionGenerationRef.current });
+  };
+
+  const closeEditPanel = () => {
+    if (updateMutation.isPending) return;
+    setEditing(false);
+    updateMutation.reset();
   };
 
   return (
@@ -264,10 +271,10 @@ export function PolicyDetail() {
         subtitle={`${policy.insurer_name} · ${coverageTypeName} · ${policy.status}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={openEditPanel}>
+            <Button size="sm" variant="secondary" onClick={openEditPanel} disabled={archiveMutation.isPending || updateMutation.isPending}>
               Edit / Update
             </Button>
-            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive}>
+            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive} disabled={updateMutation.isPending}>
               Archive
             </Button>
           </div>
@@ -282,6 +289,7 @@ export function PolicyDetail() {
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={status}
               onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
+              disabled={updateMutation.isPending}
             >
               <option value="active">Active</option>
               <option value="pending">Pending</option>
@@ -295,6 +303,7 @@ export function PolicyDetail() {
               className="mt-1 w-full"
               value={effectiveDate}
               onChange={(next) => setEffectiveDate(next)}
+              disabled={updateMutation.isPending}
             />
           </label>
           <label className="text-xs font-semibold text-slate-600">
@@ -303,6 +312,7 @@ export function PolicyDetail() {
               className="mt-1 w-full"
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
+              disabled={updateMutation.isPending}
             />
           </label>
           <div className="flex items-end gap-2">
@@ -320,7 +330,7 @@ export function PolicyDetail() {
             >
               Save
             </Button>
-            <Button size="sm" variant="tertiary" onClick={() => setEditing(false)}>
+            <Button size="sm" variant="tertiary" onClick={closeEditPanel} disabled={updateMutation.isPending}>
               Cancel
             </Button>
           </div>
