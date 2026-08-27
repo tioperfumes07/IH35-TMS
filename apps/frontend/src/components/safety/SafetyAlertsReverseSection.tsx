@@ -18,15 +18,20 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   const [alertPage, setAlertPage] = useState(1);
   const anomalyPageSize = 25;
   const [anomalyPage, setAnomalyPage] = useState(1);
+  const violationPageSize = 25;
+  const [violationPage, setViolationPage] = useState(1);
   useEffect(() => {
     setAlertPage(1);
     setAnomalyPage(1);
+    setViolationPage(1);
   }, [operatingCompanyId, subjectKind, subjectId]);
   const companyViolationQ = useQuery({
-    queryKey: ["safety-reverse", "company-violations", operatingCompanyId, subjectKind, subjectId],
+    queryKey: ["safety-reverse", "company-violations", operatingCompanyId, subjectKind, subjectId, violationPage],
     queryFn: () => getCompanyViolations(operatingCompanyId, {
       driver_id: subjectKind === "driver" ? subjectId : undefined,
       unit_id: subjectKind === "unit" ? subjectId : undefined,
+      limit: violationPageSize,
+      offset: (violationPage - 1) * violationPageSize,
     }),
     enabled: Boolean(operatingCompanyId && subjectId && (subjectKind === "driver" || subjectKind === "unit")),
   });
@@ -55,6 +60,8 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
   const loading = companyViolationQ.isLoading || integrityAlertQ.isLoading || anomalyQ.isLoading;
   const failed = companyViolationQ.isError || integrityAlertQ.isError || anomalyQ.isError;
   const violations = failed ? [] : (companyViolationQ.data?.company_violations ?? []);
+  const violationTotal = failed ? 0 : (companyViolationQ.data?.total_count ?? 0);
+  const violationPageCount = Math.max(1, Math.ceil(violationTotal / violationPageSize));
   const alerts = failed ? [] : (integrityAlertQ.data?.integrity_alerts ?? []);
   const alertTotal = failed ? 0 : (integrityAlertQ.data?.total_count ?? 0);
   const alertPageCount = Math.max(1, Math.ceil(alertTotal / alertPageSize));
@@ -117,6 +124,13 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
           <Button size="sm" variant="secondary" disabled={alertPage <= 1 || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.max(1, current - 1))}>Previous alerts</Button>
           <span className="text-slate-600">Page {alertPage} of {alertPageCount} · {alertTotal} alerts</span>
           <Button size="sm" variant="secondary" disabled={alertPage >= alertPageCount || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.min(alertPageCount, current + 1))}>Next alerts</Button>
+        </div>
+      ) : null}
+      {!failed && violationTotal > violationPageSize ? (
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-violations-reverse-pager-${subjectKind}`}>
+          <Button size="sm" variant="secondary" disabled={violationPage <= 1 || companyViolationQ.isFetching} onClick={() => setViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
+          <span className="text-slate-600">Page {violationPage} of {violationPageCount} · {violationTotal} violations</span>
+          <Button size="sm" variant="secondary" disabled={violationPage >= violationPageCount || companyViolationQ.isFetching} onClick={() => setViolationPage((current) => Math.min(violationPageCount, current + 1))}>Next violations</Button>
         </div>
       ) : null}
       {!failed && anomalyTotal > anomalyPageSize ? (
