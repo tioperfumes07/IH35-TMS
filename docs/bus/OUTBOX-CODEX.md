@@ -1219,3 +1219,5 @@ Codex | WORKING | GO-1927 | FINDING=MAINT-F6705 | MODULE=maintenance | NOW=warra
 Codex | ACK | GO-1927 | PORT=9226 | NOW=next Driver/Fleet/Safety/Fuel/Maintenance/Insurance unique | SHA=1c7969f | GO
 Codex | WORKING | GO-1927 | FINDING=MAINT-F6706 | MODULE=maintenance | NOW=tire audit company scope | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6705 | PR=#16423 merged @ 30098a27e | guard=19/19 | NEXT=MAINT-F6706 | GO
+Codex | WORKING | GO-1927 | FINDING=MAINT-F6707 | MODULE=fleet+maintenance | NOW=reefer-hours company boundary | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6706 | PR=#16425 merged @ b366a08330 | guard=18/18 | NEXT=MAINT-F6707 | GO

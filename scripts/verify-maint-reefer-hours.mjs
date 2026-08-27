@@ -96,6 +96,30 @@ function main() {
   if (!routes.includes('app.post("/api/v1/maintenance/reefer-hours/ingest-samsara"')) {
     failures.push("routes must expose Samsara ingest endpoint");
   }
+  const scopeTokens = [
+    "async function fetchLatestHours(client: DbClient, companyId: string, equipmentId: string)",
+    "l.equipment_id = $1 AND l.operating_company_id = $2::uuid",
+    "rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid",
+    "if (!eq) throw new ReeferEquipmentScopeError()",
+    "fetchLatestHours(client, input.operating_company_id, input.equipment_id)",
+    "fetchLatestHours(client, parsed.data.operating_company_id, parsed.data.equipment_id)",
+    "fetchLatestHours(client, operatingCompanyId, equipmentId)",
+  ];
+  for (const token of scopeTokens) {
+    if (!routes.includes(token)) failures.push(`reefer company boundary missing: ${token}`);
+  }
+  const auditEvents = [
+    "maintenance.reefer_hours.manual_entry",
+    "maintenance.reefer_specs.updated",
+    "maintenance.reefer_hours.samsara_ingest",
+    "maintenance.reefer_hours.archived",
+  ];
+  for (const event of auditEvents) {
+    const eventIndex = routes.indexOf(`\"${event}\"`);
+    if (eventIndex < 0 || !routes.slice(eventIndex, eventIndex + 360).includes("operating_company_id:")) {
+      failures.push(`${event} audit must carry operating_company_id`);
+    }
+  }
   if ((routesTest.match(/\bit\(/g) ?? []).length < 5) {
     failures.push("reefer-hours.routes.test must include at least 5 vitest cases");
   }
@@ -151,7 +175,35 @@ if (process.argv.includes("--selftest")) {
   ];
   const escaped = mutations.filter((mutation) => [...reeferWriteFailureProblems(mutation), ...reeferWriteLifecycleProblems(mutation)].length === 0);
   if (escaped.length) fail(`--selftest: ${escaped.length}/${mutations.length} reefer write-failure mutations escaped`);
-  console.log(`verify:maint-reefer-hours SELFTEST PASS — ${mutations.length}/${mutations.length} mutations detected`);
+  const routes = read(paths.routes);
+  const backendMutations = [
+    routes.replaceAll("l.equipment_id = $1 AND l.operating_company_id = $2::uuid", "l.equipment_id = $1"),
+    routes.replaceAll("rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid", "rs.equipment_id = $1"),
+    routes.replace("if (!eq) throw new ReeferEquipmentScopeError()", "void eq"),
+    ...[
+      "maintenance.reefer_hours.manual_entry",
+      "maintenance.reefer_specs.updated",
+      "maintenance.reefer_hours.samsara_ingest",
+      "maintenance.reefer_hours.archived",
+    ].map((event) => {
+      const eventIndex = routes.indexOf(`\"${event}\"`);
+      const companyIndex = routes.indexOf("operating_company_id:", eventIndex);
+      return `${routes.slice(0, companyIndex)}PLANTED_SCOPE:${routes.slice(companyIndex + "operating_company_id:".length)}`;
+    }),
+  ];
+  const backendEscaped = backendMutations.filter((candidate) => {
+    const scopeMissing = !candidate.includes("l.equipment_id = $1 AND l.operating_company_id = $2::uuid") ||
+      !candidate.includes("rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid") ||
+      !candidate.includes("if (!eq) throw new ReeferEquipmentScopeError()");
+    const auditMissing = ["maintenance.reefer_hours.manual_entry", "maintenance.reefer_specs.updated", "maintenance.reefer_hours.samsara_ingest", "maintenance.reefer_hours.archived"].some((event) => {
+      const index = candidate.indexOf(`\"${event}\"`);
+      return !candidate.slice(index, index + 360).includes("operating_company_id:");
+    });
+    return !scopeMissing && !auditMissing;
+  });
+  if (backendEscaped.length) fail(`--selftest: ${backendEscaped.length}/${backendMutations.length} backend scope mutations escaped`);
+  const total = mutations.length + backendMutations.length;
+  console.log(`verify:maint-reefer-hours SELFTEST PASS — ${total}/${total} mutations detected`);
   process.exit(0);
 }
 
