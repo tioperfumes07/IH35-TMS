@@ -9,6 +9,8 @@ import { INTERNAL_CSA_SOURCE_METADATA } from "../routes/safety/csa-scores.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
+import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
+import { randomUUID } from "node:crypto";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -970,10 +972,33 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    if (!isR2Configured()) return reply.code(503).send({ error: "r2_not_configured" });
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: "file_required" });
 
+    const chunks: Buffer[] = [];
+    for await (const chunk of file.file) chunks.push(Buffer.from(chunk));
+    const buffer = Buffer.concat(chunks);
+    const safeFilename = (file.filename ?? "photo").replace(/[^a-zA-Z0-9._-]+/g, "-");
+    const photoKey = `safety/accidents/${query.data.operating_company_id}/${params.data.id}/${randomUUID()}-${safeFilename}`;
+
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const exists = await client.query(
+        `SELECT id FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (!exists.rows[0]) return null;
+      const persisted = await client.query(
+        `UPDATE safety.accident_reports
+            SET photo_keys = array_append(photo_keys, $3), updated_at = now()
+          WHERE id = $1 AND operating_company_id = $2::uuid
+          RETURNING id, photo_keys`,
+        [params.data.id, query.data.operating_company_id, photoKey]
+      );
+      if (!persisted.rows[0]) return null;
+      // Keep the canonical row mutation and its audit in the company transaction. If R2 rejects the
+      // bytes, this UPDATE rolls back and the endpoint cannot paint a durable photo key as uploaded.
+      await putObjectBytes(photoKey, buffer, file.mimetype || "application/octet-stream");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -981,7 +1006,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         {
           resource_type: "safety.accident_reports",
           resource_id: params.data.id,
-          filename: file.filename,
+          photo_key: photoKey,
           operating_company_id: query.data.operating_company_id,
         },
         "info",
@@ -989,11 +1014,13 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       );
       return {
         accident_id: params.data.id,
-        filename: file.filename,
+        photo_key: photoKey,
+        photo_keys: persisted.rows[0].photo_keys,
         added_at: new Date().toISOString(),
       };
     });
-    return result;
+    if (!result) return reply.code(404).send({ error: "accident_not_found" });
+    return reply.code(201).send(result);
   });
 
   // Rate-limited per the repo pattern (config.rateLimit, cf. accounting/expenses.routes.ts). 30/min:
