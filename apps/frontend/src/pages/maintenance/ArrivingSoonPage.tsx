@@ -79,9 +79,11 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   const [includeAlreadyArrived, setIncludeAlreadyArrived] = useState(true);
   const [includeNonYard, setIncludeNonYard] = useState(true);
   const [selectedCard, setSelectedCard] = useState<ArrivingSoonCardType | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   const query = useQuery({
-    queryKey: ["maintenance", "arriving-soon", operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard],
+    queryKey: ["maintenance", "arriving-soon", operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard, page],
     queryFn: () =>
       getArrivingSoon({
         operating_company_id: operatingCompanyId,
@@ -89,6 +91,8 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         severity_min: severityMin,
         include_already_arrived: includeAlreadyArrived,
         include_non_yard_destination: includeNonYard,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 60_000,
@@ -98,6 +102,10 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
     if (!operatingCompanyId) return;
     void logArrivingSoonView(operatingCompanyId);
   }, [operatingCompanyId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard]);
 
   const cards = query.data?.cards ?? [];
   const recentConversions = query.data?.recent_conversions ?? [];
@@ -255,8 +263,21 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
           exportFilename="arriving-soon"
           rowActions={rowActions}
           renderExpanded={renderExpanded}
+          pageSize={cards.length || pageSize}
+          pageSizeOptions={[pageSize]}
+          hidePager
         />
       </div>
+
+      {!query.isError && Number(counts.total ?? 0) > 0 ? (
+        <nav className="flex items-center justify-between text-xs text-slate-600" aria-label="Arriving Soon pages" data-testid="maint-arriving-soon-pager">
+          <span>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, Number(counts.total))} of {Number(counts.total)}</span>
+          <div className="flex gap-2">
+            <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page === 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
+            <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page * pageSize >= Number(counts.total) || query.isFetching} onClick={() => setPage((current) => current + 1)}>Next</button>
+          </div>
+        </nav>
+      ) : null}
       <div className="space-y-2 sm:hidden">
         {listLoading ? <div className="text-xs text-gray-500">Loading...</div> : null}
         {!listLoading && !query.isError && cards.length < 1 ? (
