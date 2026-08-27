@@ -1,6 +1,6 @@
 import { appendCustodyEvent, type CustodyEvent } from "../../documents/chain-of-custody.service.js";
 import { validateAndPreserveExif } from "../../documents/exif-preserver.js";
-import { generatePresignedDownloadUrl } from "../../storage/r2-client.js";
+import { generatePresignedDownloadUrl, putObjectBytes } from "../../storage/r2-client.js";
 
 export const PHOTO_ANGLES = [
   "front",
@@ -256,6 +256,7 @@ export async function uploadTripPhotoEvidence(
     angleLabel: PhotoAngle;
     buffer: Buffer;
     r2ObjectKey: string;
+    contentType: string;
   }
 ): Promise<{ evidence_uuid: string }> {
   await assertTripPhotoLinksCompany(client, input);
@@ -286,6 +287,8 @@ export async function uploadTripPhotoEvidence(
     },
     sha256_at_event: validation.sha256,
   });
+
+  await putObjectBytes(input.r2ObjectKey, input.buffer, input.contentType);
 
   const insertRes = await client.query<{ id: string }>(
     `
