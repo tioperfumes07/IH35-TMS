@@ -1,3 +1,4 @@
+Codex | ACK | GO-2136 | PORT=9226 | WORKING INS-F6733 damage auto-claim explicit company scope | SHIPPED #16470 @ 8d9c7a6a49 SAFETY-F6732 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6732 damage continuity reverse-read company scope | SHIPPED #16468 @ 155ef19a96 SAFETY-F6731 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6731 damage continuity explicit company scope | SHIPPED #16466 @ 32ac424a91 MAINT-F6730 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING MAINT-F6730 in-house parts allocation company scope | SHIPPED #16464 @ 278421808a MAINT-F6729 | NEXT=guard+FAST-MERGE | GO
