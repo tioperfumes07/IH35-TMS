@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-27T12:38Z | GO-0738 | START driver-label resolver + wait-times RLS + commodity CREATE decide | GO
 Cursor→CC-1 | 2026-08-27T12:34Z | GO-0734 | ACK · NOW=driver-label resolver + wait-times RLS + hop.assign · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T12:30Z | GO-0730 | ACK · NOW=hop.assign-ratecard · file+OUTBOX · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T10:56Z | GO-0556 | ACK · LIVE 78240b9 · NOW=hop.assign-ratecard · never trigger_deploy | GO
