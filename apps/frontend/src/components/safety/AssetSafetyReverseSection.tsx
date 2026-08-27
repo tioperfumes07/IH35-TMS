@@ -222,9 +222,12 @@ export function AssetSafetyReverseSection({
   const [inspectionPage, setInspectionPage] = useState(1);
   const accidentPageSize = 25;
   const [accidentPage, setAccidentPage] = useState(1);
+  const dvirPageSize = 25;
+  const [dvirPage, setDvirPage] = useState(1);
   useEffect(() => {
     setInspectionPage(1);
     setAccidentPage(1);
+    setDvirPage(1);
   }, [operatingCompanyId, assetKind, assetId]);
 
   const accidentsQuery = useQuery({
@@ -251,9 +254,13 @@ export function AssetSafetyReverseSection({
   });
 
   const dvirQuery = useQuery({
-    queryKey: ["safety", "reverse", "dvir", assetKind, operatingCompanyId, assetId],
+    queryKey: ["safety", "reverse", "dvir", assetKind, operatingCompanyId, assetId, dvirPage],
     queryFn: () =>
-      getSafetyDvirSubmissions(operatingCompanyId, isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+      getSafetyDvirSubmissions(operatingCompanyId, {
+        ...(isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+        limit: dvirPageSize,
+        offset: (dvirPage - 1) * dvirPageSize,
+      }),
     enabled,
   });
 
@@ -266,6 +273,8 @@ export function AssetSafetyReverseSection({
   const inspectionTotal = inspectionsQuery.isError ? 0 : inspectionsQuery.data?.total_count ?? 0;
   const inspectionPageCount = Math.max(1, Math.ceil(inspectionTotal / inspectionPageSize));
   const dvirs: Row[] = dvirQuery.isError ? [] : dvirQuery.data?.submissions ?? [];
+  const dvirTotal = dvirQuery.isError ? 0 : dvirQuery.data?.total_count ?? 0;
+  const dvirPageCount = Math.max(1, Math.ceil(dvirTotal / dvirPageSize));
   const contextLabel = isUnit ? "unit" : "trailer";
 
   return (
@@ -370,7 +379,7 @@ export function AssetSafetyReverseSection({
         errorText={`Failed to load DVIRs for this ${contextLabel}.`}
         onRetry={() => void dvirQuery.refetch()}
         emptyText={`No DVIRs for this ${contextLabel}.`}
-        count={dvirs.length}
+        count={dvirTotal}
       >
         {dvirs.map((dvir) => (
           <li key={s(dvir.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -411,6 +420,13 @@ export function AssetSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!dvirQuery.isError && dvirTotal > dvirPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-dvir-pager">
+          <Button size="sm" variant="secondary" disabled={dvirPage <= 1 || dvirQuery.isFetching} onClick={() => setDvirPage((current) => Math.max(1, current - 1))}>Previous DVIRs</Button>
+          <span className="text-slate-600">Page {dvirPage} of {dvirPageCount} · {dvirTotal} DVIRs</span>
+          <Button size="sm" variant="secondary" disabled={dvirPage >= dvirPageCount || dvirQuery.isFetching} onClick={() => setDvirPage((current) => Math.min(dvirPageCount, current + 1))}>Next DVIRs</Button>
+        </div>
+      ) : null}
 
       {isUnit ? <CivilFinesReverseBlock companyId={operatingCompanyId} related="unit" entityId={assetId} /> : null}
       {isUnit ? <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="unit" entityId={assetId} /> : null}

@@ -51,6 +51,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
     },
   });
   const draft = staged.draft;
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setApplied((prev) => ({
@@ -68,8 +70,10 @@ export function IdvrPage({ operatingCompanyId }: Props) {
       trailer_id: applied.trailerId.trim() || undefined,
       from: applied.from ? new Date(`${applied.from}T00:00:00`).toISOString() : undefined,
       to: applied.to ? new Date(`${applied.to}T23:59:59`).toISOString() : undefined,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
     }),
-    [applied]
+    [applied, page]
   );
 
   const listQuery = useQuery({
@@ -79,6 +83,9 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   });
 
   const rows = listQuery.data?.submissions ?? [];
+  const totalCount = listQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  useEffect(() => setPage(1), [operatingCompanyId, applied]);
   // LIST-EMPTY: the empty message renders only after the DVIR query settles.
   const listState = useListState(listQuery, rows.length === 0);
 
@@ -165,6 +172,9 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         exportFilename="dvir-submissions"
         tableTestId="idvr-table"
         rowTestId={(row) => `idvr-row-${String(row.id)}`}
+        pageSize={pageSize}
+        pageSizeOptions={[pageSize]}
+        hidePager
         onRowClick={(row) => {
           const id = String(row.id ?? "").trim();
           if (id) navigate(`/safety/idvr/${encodeURIComponent(id)}`);
@@ -262,6 +272,13 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         }
       />
       )}
+      {!listState.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="idvr-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || listQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} submissions</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || listQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
     </div>
   );
 }
