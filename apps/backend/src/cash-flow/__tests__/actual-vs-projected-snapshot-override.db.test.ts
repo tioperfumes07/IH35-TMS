@@ -81,6 +81,11 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
     const incomeLine = result.lines.find((l) => l.date === pastDate && l.category === "income");
     expect(incomeLine).toBeDefined();
     expect(incomeLine?.projected_cents).toBe(987654);
+    // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — the frozen snapshot's own captured_at
+    // (defaulted by the table to now() at insert time) must be surfaced on the income line whose
+    // figure it actually backs, so a caller can tell WHEN a past day's frozen projection was
+    // written, not just what it says.
+    expect(incomeLine?.projected_captured_at).toBeTruthy();
   });
 
   it("ignores a snapshot captured for today — today's prediction stays live", async () => {

@@ -77,6 +77,12 @@ export type AvpLineItem = {
   actual_cents: number;
   variance_cents: number;
   variance_pct: number | null;
+  // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set only for an "income" line whose
+  // projected_cents came from the frozen daily snapshot (forecast.cash_flow_projection_snapshots),
+  // not the live recomputation. Lets a caller/human see WHEN a past day's frozen projection was
+  // actually captured, distinct from prediction_date (the day it projects). null/undefined for
+  // every other line — never fabricated for a live-computed figure.
+  projected_captured_at?: string | null;
 };
 
 export type ActualVsProjectedResult = {
@@ -782,17 +788,28 @@ export async function getActualVsProjected(
   // snapshot row (pre-fix history, or a missed cron day) silently keeps the live value already in
   // the map — never worse than before this fix, only better once a snapshot exists.
   const today = companyBusinessDate();
+  const projIncomeCapturedAtMap = new Map<string, string>();
   if (from < today) {
-    const snapshotRows = await client.query<{ prediction_date: string; projected_income_cents: number }>(
+    const snapshotRows = await client.query<{
+      prediction_date: string;
+      projected_income_cents: number;
+      captured_at: string;
+    }>(
       `
-      SELECT prediction_date::text AS prediction_date, projected_income_cents::int AS projected_income_cents
+      SELECT prediction_date::text AS prediction_date, projected_income_cents::int AS projected_income_cents,
+             captured_at::text AS captured_at
       FROM forecast.cash_flow_projection_snapshots
       WHERE operating_company_id = $1::uuid
         AND prediction_date BETWEEN $2::date AND LEAST($3::date, ($4::date - INTERVAL '1 day')::date)
       `,
       [operatingCompanyId, from, to, today]
     );
-    for (const r of snapshotRows.rows) projIncomeMap.set(r.prediction_date, r.projected_income_cents);
+    for (const r of snapshotRows.rows) {
+      projIncomeMap.set(r.prediction_date, r.projected_income_cents);
+      // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — surface WHEN this frozen figure was
+      // captured (distinct from prediction_date, the day it projects) to the response below.
+      projIncomeCapturedAtMap.set(r.prediction_date, r.captured_at);
+    }
   }
 
   const actIncomeMap = new Map<string, number>();
@@ -838,6 +855,7 @@ export async function getActualVsProjected(
       actual_cents: actInc,
       variance_cents: actInc - projInc,
       variance_pct: variancePct(projInc, actInc),
+      projected_captured_at: projIncomeCapturedAtMap.get(date) ?? null,
     });
     lines.push({
       date,
