@@ -47,6 +47,8 @@ const REQUIRED_PATTERNS = [
   { name: "LEFT JOIN catalogs.void_cancel_reasons audit_void_cancel_reason", re: /LEFT JOIN catalogs\.void_cancel_reasons audit_void_cancel_reason/ },
   { name: "LEFT JOIN mdata.customer_quality_events audit_customer_quality_event", re: /LEFT JOIN mdata\.customer_quality_events audit_customer_quality_event/ },
   { name: "LEFT JOIN driver_finance.driver_settlements audit_driver_settlement", re: /LEFT JOIN driver_finance\.driver_settlements audit_driver_settlement/ },
+  { name: "subject_label branch for driver_finance.cash_advance_requests", re: /WHEN 'driver_finance\.cash_advance_requests' THEN NULLIF\(TRIM\(audit_cash_advance_request\.display_id\), ''\)/ },
+  { name: "LEFT JOIN driver_finance.cash_advance_requests audit_cash_advance_request", re: /LEFT JOIN driver_finance\.cash_advance_requests audit_cash_advance_request/ },
 ];
 
 export function check(text) {
