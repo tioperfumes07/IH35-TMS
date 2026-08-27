@@ -140,11 +140,15 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
             body.sort_order ?? 0,
           ]
         );
+        const catalogType = result.rows[0] as { id?: string } | undefined;
+        if (!catalogType?.id) throw new Error("insurance_type_catalog_insert_failed");
         await appendCrudAudit(client, user.uuid, "insurance.type_catalog.created", {
-          resource_id: result.rows[0]?.id,
+          resource_type: "insurance.type_catalog",
+          resource_id: catalogType.id,
           operating_company_id: body.operating_company_id,
+          code: body.code,
         });
-        return result.rows[0];
+        return catalogType;
       });
       return reply.code(201).send(created);
     } catch (error) {
