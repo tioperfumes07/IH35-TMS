@@ -54,6 +54,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   const queryClient = useQueryClient();
   const isFullPage = variant === "full-page";
   const createGenerationRef = useRef(0);
+  const updateGenerationRef = useRef(0);
 
   const [statusFilter, setStatusFilter] = useState<"" | CoiRequestStatus>("");
   const [requestOpen, setRequestOpen] = useState(false);
@@ -151,22 +152,32 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   }
 
   const updateMutation = useMutation({
-    mutationFn: (id: string) =>
-      updateInsuranceCoiRequest(id, operatingCompanyId!, {
-        status: editStatus,
-        notes: editNotes.trim() ? editNotes.trim() : null,
-        document_url: editDocumentUrl.trim() ? editDocumentUrl.trim() : null,
-        expires_at: editExpiresAt || null,
-      }),
-    onSuccess: () => {
+    mutationFn: (input: {
+      id: string;
+      companyId: string;
+      customerId: string;
+      generation: number;
+      payload: Parameters<typeof updateInsuranceCoiRequest>[2];
+    }) => updateInsuranceCoiRequest(input.id, input.companyId, input.payload),
+    onSuccess: (_request, input) => {
+      if (input.generation !== updateGenerationRef.current) return;
       pushToast("COI request updated", "success");
       setEditingId(null);
       void queryClient.invalidateQueries({
-        queryKey: ["insurance-coi-requests", operatingCompanyId ?? "none", customerId],
+        queryKey: ["insurance-coi-requests", input.companyId, input.customerId],
       });
     },
-    onError: () => pushToast("Failed to update COI request", "error"),
+    onError: (_error, input) => {
+      if (input.generation !== updateGenerationRef.current) return;
+      pushToast("Failed to update COI request", "error");
+    },
   });
+
+  useEffect(() => {
+    updateGenerationRef.current += 1;
+    updateMutation.reset();
+    setEditingId(null);
+  }, [operatingCompanyId, customerId, variant]);
 
   const requests = query.data ?? [];
   const selected = useMemo(
@@ -175,11 +186,35 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   );
 
   function beginEdit(request: InsuranceCoiRequest) {
+    if (updateMutation.isPending) return;
     setEditingId(request.id);
     setEditStatus(request.status);
     setEditNotes(request.notes ?? "");
     setEditDocumentUrl(request.document_url ?? "");
     setEditExpiresAt(request.expires_at ?? "");
+  }
+
+  function submitUpdate(request: InsuranceCoiRequest) {
+    if (!operatingCompanyId || updateMutation.isPending) return;
+    updateMutation.mutate({
+      id: request.id,
+      companyId: operatingCompanyId,
+      customerId,
+      generation: updateGenerationRef.current,
+      payload: {
+        status: editStatus,
+        notes: editNotes.trim() ? editNotes.trim() : null,
+        document_url: editDocumentUrl.trim() ? editDocumentUrl.trim() : null,
+        expires_at: editExpiresAt || null,
+      },
+    });
+  }
+
+  function closeUpdate() {
+    if (updateMutation.isPending) return;
+    updateGenerationRef.current += 1;
+    updateMutation.reset();
+    setEditingId(null);
   }
 
   if (!operatingCompanyId) {
@@ -482,10 +517,10 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
             />
           </label>
           <div className="flex gap-2 md:col-span-2">
-            <Button size="sm" onClick={() => updateMutation.mutate(selected.id)} loading={updateMutation.isPending}>
+            <Button size="sm" onClick={() => submitUpdate(selected)} loading={updateMutation.isPending}>
               Save Update
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+            <Button size="sm" variant="secondary" onClick={closeUpdate} disabled={updateMutation.isPending}>
               Cancel
             </Button>
           </div>

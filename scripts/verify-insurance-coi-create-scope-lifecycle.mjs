@@ -11,7 +11,6 @@ function inspect(source) {
     ["immutable mutation input", /mutationFn: \(input: \{[\s\S]{0,220}companyId: string;[\s\S]{0,220}customerId: string;[\s\S]{0,220}generation: number;[\s\S]{0,260}payload: Omit<Parameters<typeof createInsuranceCoiRequest>\[0\]/],
     ["submitted company and customer own payload", /createInsuranceCoiRequest\(\{\s*\.\.\.input\.payload,\s*operating_company_id: input\.companyId,\s*customer_id: input\.customerId,/],
     ["submit snapshots scope", /createMutation\.mutate\(\{\s*companyId: operatingCompanyId,\s*customerId,\s*generation: createGenerationRef\.current,\s*payload:/],
-    ["submitted scope owns refresh", /queryKey: \["insurance-coi-requests", input\.companyId, input\.customerId\]/],
     ["scope transition retires workflow", /useEffect\(\(\) => \{\s*createGenerationRef\.current \+= 1;\s*createMutation\.reset\(\);\s*resetCreateForm\(\);\s*\}, \[operatingCompanyId, customerId, variant\]\)/],
     ["pending close rejected", /function closeCreate\(\) \{\s*if \(createMutation\.isPending\) return;/],
     ["drawer uses guarded close", /<Modal variant="drawer"[^>]*onClose=\{closeCreate\}/],
@@ -21,6 +20,8 @@ function inspect(source) {
   for (const [label, pattern] of checks) {
     if (!pattern.test(source)) failures.push(label);
   }
+  const submittedRefreshes = source.match(/queryKey: \["insurance-coi-requests", input\.companyId, input\.customerId\]/g)?.length ?? 0;
+  if (submittedRefreshes !== 2) failures.push("both create and update refresh their submitted scope");
   const staleGuards = source.match(/input\.generation !== createGenerationRef\.current/g)?.length ?? 0;
   if (staleGuards !== 2) failures.push("success and error callbacks both reject stale scope");
   return failures;
