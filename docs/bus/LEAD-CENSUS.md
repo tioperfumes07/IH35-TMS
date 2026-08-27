@@ -1,14 +1,13 @@
-# LEAD CENSUS — GO-0552
+# LEAD CENSUS — GO-0556
 
-**GO:** GO-0552 · **LIVE:** `e591ccb` · **DEPLOY IN FLIGHT:** `dep-da81eaad0e5s73a261hg` tip `78240b9` · **LEAD-SEAT=CURSOR**
-Waiting for deploy = idle = defect. Ping ≠ ACK.
+**LIVE:** `78240b9` (healthz ok:true) · **DEPLOY:** `dep-da81eaad0e5s73a261hg` live · **main ahead:** 3 commits · **no second-kick**
 
-| Seat | ACK GO-0552? | Idle if waiting? |
-|------|----------------|------------------|
-| CC-1 | **NO until ACK** | **YES if waiting** — NOW hop.assign |
-| CC-2 | **NO until ACK** | **YES if waiting** — NOW /settlements |
-| CC-3 | **NO until ACK** | **YES if waiting** — NOW /lists |
-| Codex | **NO until ACK** | working F6855 class — ACK GO-0552 |
-| Cascade | **NO until ACK** | **YES if waiting** — NOW /dispatch |
-| Devin | **NO until ACK** | **YES if waiting** — NOW /vendors Reactivate |
-| Cursor | self | **NO** — kicked deploy |
+| Seat | Self-ACK GO-0552 | Idle? |
+|------|------------------|-------|
+| CC-1 | **NO** | **YES until ACK GO-0556 + hop.assign** |
+| CC-2 | ACK GO-0540/working source | must ACK GO-0556 · NOW /settlements |
+| CC-3 | **NO GO-0552** | **YES until ACK + /lists** |
+| Codex | shipping fleet | ACK GO-0556 |
+| Cascade | ACK GO-0552 on **stale e591ccb** | **re-walk 78240b9** |
+| Devin | **NO** | **YES until Reactivate on 78240b9** |
+| Cursor | self | **NO** |
