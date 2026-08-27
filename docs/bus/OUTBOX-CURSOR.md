@@ -1,3 +1,5 @@
+Cursor | ACK | GO-1831 | PORT=9222 | NOW=/banking | SHA=88a6e98 | DEPLOY=dep-da8cihks728c73bbnhag IN FLIGHT tip=7eda992 | GO -- unstick Codex/Devin/Cascade. Hook TYPECHECK_SKIP_DOCS_ONLY. Nobody second-kick.
+Cursor | ACK | GO-1750 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO -- instruct all seats this turn. Packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md. CC-1 NOW=57cabbab. Do not steal money. Deploy 5–10. Nobody else trigger_deploy. U14 never restamp. KEEP TEST.
 Cursor | ACK | GO-1722 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO -- Match/recon then maint/safety/insurance. KEEP TEST. Never restamp U14.
 Cursor | ACK | GO-1655 | PORT=9222 | NOW=/banking | SHA=healthz | GO -- finish Match/recon then hops. Create TEST. Do NOT void until launch. All seats have permission. Never restamp U14.
 Cursor | OVERFLOW | GO-1640 | SHA=33c41fc | lists+legal unique N=0 (TEST_M3_67481337 load-cancellation-reason 201, not voided). Cash-flow+finance already walked by lead Chrome (TEST $1,200 projection + hub/P&L). MCP-only overflow for cash-flow had no tab — ignore that blocker. Meter 3 still open. Never restamp U14. | GO

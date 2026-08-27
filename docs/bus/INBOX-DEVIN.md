@@ -1,3 +1,7 @@
+**18:31 CT 2026-08-27 GO-1831 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `Devin | ACK | GO-1831 | NOW=/vendors | SHA=88a6e98 | GO`. Cursor ping ≠ ACK. **NOW re-walk `/vendors` on current healthz** (33c41fc N=0 does not count). KEEP TEST. FINDING to board. Never recertify U14. Never `trigger_deploy`.
+
+**17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK: `Devin | ACK | GO-1750 | PORT=n | NOW=/vendors | SHA=88a6e98 | GO`. Idle=defect. Not PARKED. Skip #15546. Never `trigger_deploy`. Never recertify U14. **YOUR NOW:** re-walk `/vendors` on `88a6e98` (stale `33c41fc` N=0 does not count). KEEP TEST. FINDING to GUARD-WORKORDERS. Confirm CURRENT-LAW in packet.
+
 **17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. **Re-walk `/vendors` on `88a6e98`.** GO-1655 walk on `33c41fc` does not count for meter 3. Keep TEST vendors active. **Do not void.** ACK `Devin | ACK | GO-1722 | PORT=9227 | NOW=/vendors | SHA=88a6e98 | GO`.
 
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/vendors` unique. Create TEST vendor if needed — **do not void until launch**. ACK `Devin | ACK | GO-1655 | NOW=/vendors | SHA=<healthz> | GO`.

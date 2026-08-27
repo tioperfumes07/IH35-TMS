@@ -93,8 +93,20 @@ if echo "$CHANGED_FILES" | grep -qE '^docs/module-completion/[^/]+\.json$'; then
   node scripts/generate-module-completion-data.mjs --check || exit 1
 fi
 
-# Run typecheck on staged changes (existing behavior — keep)
-# This is a soft check; CI is authoritative.
-if command -v npm >/dev/null 2>&1; then
-  npm run typecheck --if-present
+# TYPECHECK_SKIP_DOCS_ONLY (HARD — worktree hook 2026-08-27)
+# Fresh git worktrees often have no node_modules/.bin/tsc. `npm run typecheck` then exits 127
+# and blocks docs/bus GO packets for 20–30 minutes. CI still typechecks. Skip only when the
+# staged set has no apps/ or db/migrations/ paths. Code commits still require a local tsc.
+STAGED_CODE=$(echo "$CHANGED_FILES" | grep -E '^(apps/|db/migrations/)' || true)
+if [ -n "$STAGED_CODE" ]; then
+  if [ ! -x node_modules/.bin/tsc ]; then
+    echo "COMMIT BLOCKED: apps/ or db/migrations/ staged but node_modules/.bin/tsc is missing."
+    echo "Run npm install in this worktree (do not --no-verify a code commit)."
+    exit 1
+  fi
+  if command -v npm >/dev/null 2>&1; then
+    npm run typecheck --if-present
+  fi
+else
+  echo "pre-commit: TYPECHECK_SKIP_DOCS_ONLY — no apps/db staged; CI still typechecks"
 fi
