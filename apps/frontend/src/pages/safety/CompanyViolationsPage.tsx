@@ -36,6 +36,8 @@ function asLabelMap(value: unknown): Record<string, string> {
 }
 
 export function CompanyViolationsPage({ operatingCompanyId }: Props) {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
@@ -88,14 +90,19 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const query = useQuery({
-    queryKey: ["safety", "company-violations", operatingCompanyId, effectiveDriverId, effectiveUnitId],
+    queryKey: ["safety", "company-violations", operatingCompanyId, effectiveDriverId, effectiveUnitId, page],
     queryFn: () =>
       getCompanyViolations(operatingCompanyId, {
         driver_id: effectiveDriverId,
         unit_id: effectiveUnitId,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  useEffect(() => setPage(1), [operatingCompanyId, effectiveDriverId, effectiveUnitId]);
   const rows = query.data?.company_violations ?? [];
   const violationId = searchParams.get("violation_id");
   useEffect(() => {
@@ -184,6 +191,9 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           storageKey="safety-company-violations"
           exportFilename="company-violations"
           tableTestId="company-violations-table"
+          pageSize={pageSize}
+          pageSizeOptions={[pageSize]}
+          hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="company-violations-filters">
               <label className="text-[11px] text-slate-600">
@@ -242,6 +252,13 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           }
         />
       )}
+      {!query.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="company-violations-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} violations</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       <CompanyViolationCreateModal
         open={createOpen}

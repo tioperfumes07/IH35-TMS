@@ -817,11 +817,13 @@ export function convertFineToLiability(fineId: string, companyId: string) {
   );
 }
 
-export function getCompanyViolations(companyId: string, params: { driver_id?: string; unit_id?: string } = {}) {
+export function getCompanyViolations(companyId: string, params: { driver_id?: string; unit_id?: string; limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) qs.set("driver_id", params.driver_id);
   if (params.unit_id) qs.set("unit_id", params.unit_id);
-  return apiRequest<{ company_violations: Array<Record<string, unknown>> }>(`/api/v1/safety/company-violations?${qs.toString()}`);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  return apiRequest<{ company_violations: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/company-violations?${qs.toString()}`);
 }
 
 export function createCompanyViolation(companyId: string, body: Record<string, unknown>) {
