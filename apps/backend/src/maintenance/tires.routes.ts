@@ -490,11 +490,13 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       if (body.work_order_id !== undefined) add("work_order_id", body.work_order_id);
 
       values.push(params.data.id, body.operating_company_id);
-      await client.query(
+      const updated = await client.query(
         `UPDATE maintenance.tire_records SET ${sets.join(", ")}
-         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid`,
+         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND status <> 'archived'
+         RETURNING id::text`,
         values
       );
+      if (!updated.rows[0]) return null;
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.updated", {
         operating_company_id: body.operating_company_id,
         id: params.data.id,
