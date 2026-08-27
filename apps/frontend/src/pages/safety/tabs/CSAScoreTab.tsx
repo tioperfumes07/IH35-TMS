@@ -8,6 +8,7 @@ import { getCurrentCsaScore, listCsaScores, pullCsaFromSafer, recomputeCsa } fro
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { CsaHistoryPager } from "../../../components/safety/CsaHistoryPager";
 
 type BasicRow = {
   label: string;
@@ -16,6 +17,7 @@ type BasicRow = {
 };
 
 type CsaScoreRow = Record<string, unknown>;
+const CSA_PAGE_SIZE = 50;
 
 function toNullableNumber(value: unknown) {
   if (value == null || value === "") return null;
@@ -33,6 +35,7 @@ export function CSAScoreTab() {
   const [period, setPeriod] = useState("rolling-24");
   const [recomputeError, setRecomputeError] = useState<unknown>(null);
   const [saferError, setSaferError] = useState<unknown>(null);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const currentQuery = useQuery({
     queryKey: ["safety-v64", "csa-current", companyId],
@@ -41,8 +44,8 @@ export function CSAScoreTab() {
   });
 
   const historyQuery = useQuery({
-    queryKey: ["safety-v64", "csa-history", companyId],
-    queryFn: () => listCsaScores(companyId),
+    queryKey: ["safety-v64", "csa-history", companyId, historyPage],
+    queryFn: () => listCsaScores(companyId, { limit: CSA_PAGE_SIZE, offset: (historyPage - 1) * CSA_PAGE_SIZE }),
     enabled: Boolean(companyId),
   });
 
@@ -77,6 +80,7 @@ export function CSAScoreTab() {
     setSaferError(null);
     recomputeMutation.reset();
     saferMutation.reset();
+    setHistoryPage(1);
   }, [companyId]); // Mutation resets are stable; company transitions own a fresh CSA action lifecycle.
 
   const current = currentQuery.data?.current ?? null;
@@ -182,8 +186,20 @@ export function CSAScoreTab() {
           emptyText="No CSA score history found."
           storageKey="safety-csa-history"
           exportFilename="csa-score-history"
+          pageSize={CSA_PAGE_SIZE}
+          hidePager
         />
       )}
+      {!historyQuery.isError ? (
+        <CsaHistoryPager
+          page={historyPage}
+          pageSize={CSA_PAGE_SIZE}
+          totalCount={historyQuery.data?.total_count ?? 0}
+          fetching={historyQuery.isFetching}
+          onPageChange={setHistoryPage}
+          testId="csa-score-history-server-pager"
+        />
+      ) : null}
     </div>
   );
 }

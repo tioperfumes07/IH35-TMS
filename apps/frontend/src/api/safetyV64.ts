@@ -88,8 +88,9 @@ export function getCurrentCsaScore(companyId: string) {
   return apiRequest<{ current: Record<string, unknown> | null }>(`/api/v1/safety/csa-scores/current?${companyQuery(companyId)}`);
 }
 
-export function listCsaScores(companyId: string) {
-  return apiRequest<{ csa_scores: Array<Record<string, unknown>> }>(`/api/v1/safety/csa-scores?${companyQuery(companyId)}`);
+export function listCsaScores(companyId: string, range: { limit: number; offset: number }) {
+  const query = new URLSearchParams({ operating_company_id: companyId, limit: String(range.limit), offset: String(range.offset) });
+  return apiRequest<{ csa_scores: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/csa-scores?${query.toString()}`);
 }
 
 export function recomputeCsa(companyId: string) {
