@@ -4,10 +4,16 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
 import { catalogCodeSchema, currentAuthUser, idParamSchema, listQuerySchema, validationError, withCompanyScope } from "./shared.js";
 
-const createBodySchema = z.object({
+// Exported for the SAFETY-CIVIL-FINE-TYPES-CREATE-DESCRIPTION-NULL-400 regression test — pure schema.
+export const createBodySchema = z.object({
   code: catalogCodeSchema,
   display_name: z.string().trim().min(1).max(160),
-  description: z.string().trim().max(500).optional(),
+  // SAFETY-CIVIL-FINE-TYPES-CREATE-DESCRIPTION-NULL-400: matches updateBodySchema's description field
+  // below — CivilFineTypeModal.tsx's blank-Description form value is `null`
+  // (`description: form.description.trim() || null`), not `undefined`; a bare `.optional()` here
+  // rejected that shape ("expected string, received null"), 400-ing every create where Description is
+  // left blank. Live-confirmed against prod.
+  description: z.string().trim().max(500).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
   is_active: z.boolean().default(true),
   sort_order: z.coerce.number().int().min(0).max(10000).default(0),
