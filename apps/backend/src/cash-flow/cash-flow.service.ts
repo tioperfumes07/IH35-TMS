@@ -23,6 +23,7 @@ import type pg from "pg";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type Queryable = pg.PoolClient;
 
@@ -684,8 +685,16 @@ export async function getActualVsProjected(
         AND ${noLiveProformaInvoiceSql("l")}
       GROUP BY ls.scheduled_arrival_at::date
       UNION ALL
+      -- CASH-FLOW-CASHFOLLOWSETA-FALSE-BRANCH-ALIAS-SCOPE-BUG (found as a drive-by while fixing
+      -- CASH-FLOW-ACTUAL-VS-PROJECTED-INCOME-STRUCTURALLY-ALWAYS-ZERO): this branch only runs when
+      -- CASH_FOLLOWS_ETA_ENABLED is OFF for a company (currently ON for all 3 live entities via
+      -- lib.feature_flag_overrides, so dead code in prod today — but reachable the moment any
+      -- entity's override is removed or a new entity is added without one). 'fd' is the LATERAL
+      -- alias from lastDeliveryStopLateralSql, in scope only INSIDE the 'pf' subquery below; the
+      -- outer SELECT/GROUP BY referenced it anyway, which Postgres rejects at parse time
+      -- ("missing FROM-clause entry for table fd") on every call, not merely when rows are absent.
       SELECT
-        fd.scheduled_arrival_at::date::text AS delivery_date,
+        pf.scheduled_arrival_at::date::text AS delivery_date,
         SUM(amount_cents)::int AS projected_income_cents
       FROM (
         SELECT DISTINCT ON (l.id)
@@ -704,7 +713,7 @@ export async function getActualVsProjected(
           AND fd.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
         ORDER BY l.id, i.created_at DESC NULLS LAST
       ) pf
-      GROUP BY fd.scheduled_arrival_at::date
+      GROUP BY pf.scheduled_arrival_at::date
     ) u
     GROUP BY delivery_date
     ORDER BY delivery_date
@@ -765,6 +774,26 @@ export async function getActualVsProjected(
   // Build date-indexed maps
   const projIncomeMap = new Map<string, number>();
   for (const r of projIncomeRows.rows) projIncomeMap.set(r.delivery_date, r.projected_income_cents);
+
+  // CASH-FLOW-ACTUAL-VS-PROJECTED-INCOME-STRUCTURALLY-ALWAYS-ZERO: for any date strictly before
+  // today, prefer the frozen daily snapshot (captured each morning before that day's loads could
+  // deliver/invoice/pay and retroactively zero out the live query above) over the live
+  // recomputation. Today itself stays live — its own prediction is still evolving. A date with no
+  // snapshot row (pre-fix history, or a missed cron day) silently keeps the live value already in
+  // the map — never worse than before this fix, only better once a snapshot exists.
+  const today = companyBusinessDate();
+  if (from < today) {
+    const snapshotRows = await client.query<{ prediction_date: string; projected_income_cents: number }>(
+      `
+      SELECT prediction_date::text AS prediction_date, projected_income_cents::int AS projected_income_cents
+      FROM forecast.cash_flow_projection_snapshots
+      WHERE operating_company_id = $1::uuid
+        AND prediction_date BETWEEN $2::date AND LEAST($3::date, ($4::date - INTERVAL '1 day')::date)
+      `,
+      [operatingCompanyId, from, to, today]
+    );
+    for (const r of snapshotRows.rows) projIncomeMap.set(r.prediction_date, r.projected_income_cents);
+  }
 
   const actIncomeMap = new Map<string, number>();
   for (const r of actIncomeRows.rows) actIncomeMap.set(r.payment_date, r.actual_income_cents);
