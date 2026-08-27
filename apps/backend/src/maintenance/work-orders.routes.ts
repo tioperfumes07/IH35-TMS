@@ -1295,6 +1295,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       ]);
       const current = currentRes.rows[0];
       if (!current) return { notFound: true as const };
+      if (current.status !== "in_progress") {
+        return { invalid: true as const, from: String(current.status), to: "complete" as const };
+      }
       try {
         await validateWoVendorInvoiceTotals(client, String(params.data.id));
         const updateRes = await client.query(
@@ -1303,10 +1306,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             SET status = 'complete',
                 updated_at = now()
             WHERE id = $1
+              AND operating_company_id = $2::uuid
+              AND status = 'in_progress'
             RETURNING *
           `,
-          [params.data.id]
+          [params.data.id, companyId]
         );
+        const completed = updateRes.rows[0] ?? null;
+        if (!completed) return { conflict: true as const };
         await appendCrudAudit(
           client,
           user.uuid,
@@ -1315,7 +1322,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             resource_type: "maintenance.work_orders",
             resource_id: params.data.id,
             operating_company_id: companyId,
-            source_type: updateRes.rows[0]?.source_type,
+            source_type: completed.source_type,
           },
           "info",
           "P3-T11.6.2-ARRIVING-SOON"
@@ -1328,13 +1335,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             resource_type: "maintenance.work_orders",
             resource_id: params.data.id,
             operating_company_id: companyId,
-            closed_at: updateRes.rows[0]?.closed_at ?? updateRes.rows[0]?.updated_at ?? new Date().toISOString(),
-            status: updateRes.rows[0]?.status ?? "complete",
+            closed_at: completed.closed_at ?? completed.updated_at ?? new Date().toISOString(),
+            status: completed.status,
           },
           "info",
           "P5-D5-WO-TIME"
         );
-        return { row: updateRes.rows[0] };
+        return { row: completed };
       } catch (error) {
         if (isWoInvoiceMismatch(error)) {
           return { invoiceMismatch: true as const, detail: error };
@@ -1348,6 +1355,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     });
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
+    if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    if ("conflict" in result) return reply.code(409).send({ error: "work_order_completion_conflict" });
     if ("invoiceMismatch" in result) {
       const d = result.detail;
       if (!d) {
