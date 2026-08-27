@@ -1725,9 +1725,14 @@ export function getMaintenanceReportXlsxUrl(report: string, operatingCompanyId: 
   );
 }
 
-export function listMaintenanceCompliance425cLog(operatingCompanyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
-    `/api/v1/maintenance/compliance/425c-log?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+export function listMaintenanceCompliance425cLog(operatingCompanyId: string, range: { limit?: number; offset?: number } = {}) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    limit: String(range.limit ?? 50),
+    offset: String(range.offset ?? 0),
+  });
+  return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
+    `/api/v1/maintenance/compliance/425c-log?${query.toString()}`
   );
 }
 

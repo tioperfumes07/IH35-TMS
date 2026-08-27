@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceCompliance425cLog } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -8,17 +8,21 @@ import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Compliance425cRow = Record<string, unknown>;
+const PAGE_SIZE = 50;
 
 export function Compliance425CPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [page, setPage] = useState(0);
   const listQ = useQuery({
-    queryKey: ["maintenance", "compliance-425c", companyId],
-    queryFn: () => listMaintenanceCompliance425cLog(companyId),
+    queryKey: ["maintenance", "compliance-425c", companyId, page],
+    queryFn: () => listMaintenanceCompliance425cLog(companyId, { limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
     enabled: Boolean(companyId),
   });
 
   const rows = listQ.data?.rows ?? [];
+  const totalCount = listQ.data?.total_count ?? 0;
+  useEffect(() => setPage(0), [companyId]);
 
   const columns = useMemo<ParityColumn<Compliance425cRow>[]>(
     () => [
@@ -55,14 +59,23 @@ export function Compliance425CPage() {
             onRetry={() => void listQ.refetch()}
           />
         ) : (
-        <ParityTable
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => String(row.id)}
-          loading={listQ.isLoading}
-          storageKey="maintenance-compliance-425c"
-          emptyText="No 425C-linked events found."
-        />
+          <>
+            <ParityTable
+              rows={rows}
+              columns={columns}
+              rowKey={(row) => String(row.id)}
+              loading={listQ.isLoading}
+              storageKey="maintenance-compliance-425c"
+              emptyText="No 425C-linked events found."
+            />
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-compliance-425c-pager">
+              <span>{totalCount === 0 ? "0 of 0" : `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount}`}</span>
+              <div className="flex gap-1">
+                <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={page === 0 || listQ.isFetching} onClick={() => setPage((value) => value - 1)}>Previous</button>
+                <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || listQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
