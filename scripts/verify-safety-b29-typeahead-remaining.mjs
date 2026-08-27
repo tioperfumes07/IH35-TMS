@@ -74,7 +74,7 @@ const CHECKS = [
     describe: "HOS fleet loader sends fleetSearch to listDrivers",
     test: (s) =>
       /loadFleetHosRows\([\s\S]*?fleetSearch/.test(s) &&
-      /listDrivers\([\s\S]*?search:\s*fleetSearch\s*\|\|\s*undefined/.test(s) &&
+      /listAllDrivers\([\s\S]*?search:\s*fleetSearch\s*\|\|\s*undefined/.test(s) &&
       /queryKey:\s*\["safety",\s*"hos-dashboard",\s*operatingCompanyId,\s*fleetSearch\]/.test(s),
   },
   {

@@ -24,7 +24,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers } from "../../api/mdata";
+import { listAllDrivers } from "../../api/mdata";
 import { getSafetyEventsFiltered, listDaEnrollments } from "../../api/safety";
 import type { SafetyActivityWindow, SafetyDriverFilter } from "./SafetyDashboardFilter";
 import { Combobox } from "../Combobox";
@@ -137,18 +137,17 @@ function CredentialRow({ label, expiresAt, days }: { label: string; expiresAt: s
 export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsChange, onOpenProfile }: Props) {
   const [sort, setSort] = useState<CardSort>("risk");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
-  // SAF-B29: this is a card roster, not a dropdown — but limit:200 still silently dropped every
-  // driver past page 1. Server search lets Safety find them; empty search keeps the first page.
+  // This is a company-wide compliance summary, not a picker. Server search remains useful, but the
+  // unfiltered view must page through the complete active roster before calculating risk totals.
   const [rosterSearch, setRosterSearch] = useState("");
 
   const driversQ = useQuery({
     queryKey: ["safety-cards", "drivers", companyId, rosterSearch],
     enabled: Boolean(companyId),
     queryFn: () =>
-      listDrivers({
+      listAllDrivers({
         operating_company_id: companyId,
         status: "Active",
-        limit: 200,
         search: rosterSearch || undefined,
       }),
   });

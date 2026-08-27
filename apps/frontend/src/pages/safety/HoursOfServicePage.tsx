@@ -2,14 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDriverHosDetail } from "../../api/hos";
-import { listDrivers } from "../../api/mdata";
+import { listAllDrivers } from "../../api/mdata";
 import { listHosViolations } from "../../api/safetyV64";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
 import { formatDateUS } from "../../lib/formatDate";
-import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorState } from "../../components/ListErrorState";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
@@ -71,14 +70,17 @@ async function loadFleetHosRows(
   operatingCompanyId: string,
   fleetSearch: string
 ): Promise<{ rows: FleetHosDriverRow[]; total?: number; failedDriverCount: number }> {
-  const { drivers, total } = await listDrivers({
+  const { drivers, total } = await listAllDrivers({
     operating_company_id: operatingCompanyId,
     status: "Active",
-    limit: 200,
     search: fleetSearch || undefined,
   });
-  const rows = await Promise.all(
-    drivers.map(async (driver) => {
+  const rows: FleetHosDriverRow[] = [];
+  const detailBatchSize = 20;
+  for (let start = 0; start < drivers.length; start += detailBatchSize) {
+    const batch = drivers.slice(start, start + detailBatchSize);
+    const batchRows = await Promise.all(
+      batch.map(async (driver) => {
       const base: FleetHosDriverRow = {
         driverId: driver.id,
         driverName: driverDisplayName(driver),
@@ -102,8 +104,10 @@ async function loadFleetHosRows(
         // telemetry unavailable so compliance KPIs cannot silently undercount.
         return { ...base, telemetryUnavailable: true };
       }
-    })
-  );
+      })
+    );
+    rows.push(...batchRows);
+  }
   return { rows, total, failedDriverCount: rows.filter((row) => row.telemetryUnavailable).length };
 }
 
@@ -286,13 +290,11 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             suppressToolbarSearch
           />
           )}
-          <CappedListNotice
-            shown={rows.length}
-            limit={200}
-            total={fleetTotal}
-            hint="Refine the search to see drivers beyond the first page."
-            className="mt-1 text-xs text-slate-600"
-          />
+          {!fleetQuery.isError && !fleetIncomplete ? (
+            <p className="mt-1 text-xs text-slate-600" data-testid="safety-hos-complete-roster-count">
+              {rows.length} of {fleetTotal ?? rows.length} active drivers loaded
+            </p>
+          ) : null}
         </section>
 
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">

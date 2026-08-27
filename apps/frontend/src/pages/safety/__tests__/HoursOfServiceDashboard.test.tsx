@@ -27,7 +27,7 @@ function wrap(ui: React.ReactElement) {
 
 describe("HoursOfServicePage", () => {
   beforeEach(() => {
-    vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
+    vi.spyOn(mdataApi, "listAllDrivers").mockResolvedValue({
       total: 0,
       drivers: [
         { id: "driver-on", first_name: "On", last_name: "Duty", status: "Active" } as never,
