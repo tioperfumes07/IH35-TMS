@@ -93,7 +93,22 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     sortable: true,
     className: "text-right",
     sortValue: (g) => g.income.projected_cents,
-    render: (g) => <span className="text-gray-700">{formatCents(g.income.projected_cents)}</span>,
+    render: (g) => (
+      <span className="text-gray-700">
+        {formatCents(g.income.projected_cents)}
+        {/* DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — honest provenance: this figure is a
+            frozen daily snapshot, not a live recomputation. Shown only when the backend actually
+            sourced it from forecast.cash_flow_projection_snapshots. */}
+        {g.income.projected_captured_at ? (
+          <span
+            className="block text-xs text-gray-400"
+            title={`Frozen snapshot captured ${new Date(g.income.projected_captured_at).toLocaleString()}`}
+          >
+            snapshot {new Date(g.income.projected_captured_at).toLocaleDateString()}
+          </span>
+        ) : null}
+      </span>
+    ),
   },
   {
     key: "actual_income",

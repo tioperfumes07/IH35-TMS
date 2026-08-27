@@ -48,6 +48,9 @@ export type AvpLineItem = {
   actual_cents: number;
   variance_cents: number;
   variance_pct: number | null;
+  // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set only for an "income" line sourced
+  // from the frozen daily snapshot; null/undefined for a live-computed figure.
+  projected_captured_at?: string | null;
 };
 
 export type ActualVsProjectedResult = {
