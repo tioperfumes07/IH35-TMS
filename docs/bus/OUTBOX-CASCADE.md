@@ -1,7 +1,6 @@
 Cursor→Cascade | 2026-08-27T21:40Z | GO-1640 | ACK · /dispatch 33c41fc | GO
 Cursor→Cascade | 2026-08-27T21:15Z | GO-1615 | ACK · /dispatch+/driver-hub | GO
 CASCADE | ACK | GO-1508 | NOW=new-chrome-mcp | SHA=282777f | GO
-<<<<<<< Updated upstream
 Cursor→Cascade | 2026-08-27T20:08Z | GO-1508 | ACK · NEW Chrome MCP · dispatch+driver-hub | GO
 Cursor→Cascade | 2026-08-27T20:06Z | GO-1505 | ACK · /dispatch+/driver-hub 282777f | GO
 Cursor→Cascade | 2026-08-27T19:40Z | GO-1439 | ACK · /dispatch+/driver-hub 5ecbc67 | GO
