@@ -1450,3 +1450,5 @@ Codex | SHIPPED | MAINT-F6888 | PR=#16740 @ b44b70d41a | Built=maintenance arriv
 Codex | WORKING | MAINT-F6889 | Built=maintenance/fleet mounted fleet-table rows exact range | NEXT=root fix+guard | GO
 Codex | SHIPPED | MAINT-F6889 | PR=#16741 @ d54125cd1d | Built=maintenance+dispatch complete fleet status feed | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6890 | GO
 Codex | WORKING | MAINT-F6890 | Built=maintenance KPI PM-compliance exact range | guard=6/6 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6890 | PR=#16743 @ cb8c793645 | Built=maintenance KPI PM-compliance exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6891 | GO
+Codex | WORKING | MAINT-F6891 | Built=maintenance KPI downtime+MTBF+CPM+cost-per-truck exact ranges | NEXT=root fix+guard | GO

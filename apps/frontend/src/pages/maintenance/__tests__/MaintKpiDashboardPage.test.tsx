@@ -64,6 +64,7 @@ describe("MaintKpiDashboardPage (B35)", () => {
     getMaintenanceKpiDrilldown.mockResolvedValue({
       kind: "downtime",
       rows: [{ display_id: "WO-1", unit_number: "T-101", downtime_hours: 4 }],
+      total_count: 26,
     });
     getMaintenanceKpiPmCompliance.mockResolvedValue({
       rows: [{ schedule_label: "Oil", unit_number: "T-101", compliance_status: "compliant" }],
@@ -116,6 +117,19 @@ describe("MaintKpiDashboardPage (B35)", () => {
     await user.click(await screen.findByTestId("maint-kpi-tile-pm_compliance"));
     expect(await screen.findByTestId("maint-kpi-pm-server-pager")).toHaveTextContent("1–25 of 26");
     expect(getMaintenanceKpiPmCompliance).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      expect.any(String),
+      expect.any(String),
+      undefined,
+      { limit: 25, offset: 0 }
+    );
+  });
+
+  it("requests and displays the exact non-PM drill-down server range", async () => {
+    renderPage();
+    expect(await screen.findByTestId("maint-kpi-drilldown-server-pager")).toHaveTextContent("1–25 of 26");
+    expect(getMaintenanceKpiDrilldown).toHaveBeenCalledWith(
+      "downtime",
       "11111111-1111-4111-8111-111111111111",
       expect.any(String),
       expect.any(String),
