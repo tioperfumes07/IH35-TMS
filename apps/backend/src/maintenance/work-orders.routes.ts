@@ -1416,11 +1416,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
-      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`, [
+      const transitionRes = await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid AND status = $4 RETURNING id::text`, [
         params.data.id,
         parsed.data.new_status,
         companyId,
+        current.status,
       ]);
+      if (!transitionRes.rows[0]) return { conflict: true as const };
       await client.query(
         `
           INSERT INTO maintenance.wo_status_history (work_order_id, from_status, to_status, changed_at, changed_by_user_id, notes)
@@ -1463,6 +1465,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    if ("conflict" in result) return reply.code(409).send({ error: "work_order_transition_conflict" });
     void withCurrentUser(user.uuid, (client) =>
       emitMaintenanceSpineEvent(client, {
         operating_company_id: companyId,
@@ -1508,11 +1511,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
-      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`, [
+      const transitionRes = await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid AND status = $4 RETURNING id::text`, [
         params.data.id,
         parsed.data.new_status,
         companyId,
+        current.status,
       ]);
+      if (!transitionRes.rows[0]) return { conflict: true as const };
       await client.query(
         `
           INSERT INTO maintenance.wo_status_history (work_order_id, from_status, to_status, changed_at, changed_by_user_id, notes)
@@ -1534,6 +1539,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    if ("conflict" in result) return reply.code(409).send({ error: "work_order_transition_conflict" });
     void withCurrentUser(user.uuid, (client) =>
       emitMaintenanceSpineEvent(client, {
         operating_company_id: companyId,
