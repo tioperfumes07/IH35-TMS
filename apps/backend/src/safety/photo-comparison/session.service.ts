@@ -511,7 +511,7 @@ export async function updateSessionDiffResult(
     autoDamageReportUuid?: string | null;
   }
 ): Promise<void> {
-  await client.query(
+  const updated = await client.query<{ uuid: string }>(
     `
       UPDATE safety.photo_comparison_sessions
       SET diff_status = $2,
@@ -521,6 +521,8 @@ export async function updateSessionDiffResult(
           auto_damage_report_uuid = COALESCE($5::uuid, auto_damage_report_uuid)
       WHERE uuid = $1::uuid
         AND operating_company_id = $6::uuid
+        AND diff_status = 'analyzing'
+      RETURNING uuid::text
     `,
     [
       input.sessionUuid,
@@ -531,4 +533,5 @@ export async function updateSessionDiffResult(
       input.operatingCompanyId,
     ]
   );
+  if (!updated.rows[0]) throw new Error("photo_comparison_result_update_lost");
 }

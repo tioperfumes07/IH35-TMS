@@ -101,7 +101,7 @@ describe("diff-engine (GAP-50)", () => {
     expect(HIGH_CONFIDENCE_THRESHOLD).toBe(0.8);
   });
 
-  it("auto-creates damage report on damage_detected and updates session", async () => {
+  it("fails closed when the final session result update is lost", async () => {
     const sessionRow = {
       uuid: SESSION,
       operating_company_id: COMPANY,
@@ -162,9 +162,9 @@ describe("diff-engine (GAP-50)", () => {
       }),
     };
 
-    const result = await runDiff(client, COMPANY, SESSION, anthropicClient);
-    expect(result.diff_status).toBe("damage_detected");
-    expect(result.auto_damage_report_uuid).toBe("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+    await expect(runDiff(client, COMPANY, SESSION, anthropicClient)).rejects.toThrow(
+      "photo_comparison_result_update_lost",
+    );
     expect(anthropicClient.compareImages).toHaveBeenCalledOnce();
 
     const sessionLookup = query.mock.calls.find((c) => String(c[0]).includes("photo_comparison_sessions"));
@@ -208,7 +208,7 @@ describe("diff-engine (GAP-50)", () => {
           custody_events: [],
         },
       ]],
-      ["UPDATE safety.photo_comparison_sessions", []],
+      ["UPDATE safety.photo_comparison_sessions", [{ uuid: SESSION }]],
     ]);
 
     const anthropicClient = {
