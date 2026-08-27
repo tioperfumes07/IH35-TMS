@@ -8,7 +8,7 @@
     "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
   "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
-  "count": 506,
+  "count": 507,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -3054,6 +3054,13 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606080244_usmca_ops_schema_grant.sql"
+    },
+    {
+      "object": "outbox.queue.external_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql",
+      "reason": "DEAD-SCHEMA-OUTBOX-QUEUE-EXTERNAL-ID-UNREAD (CC-3 2026-08-27): outbox.queue has an INSERT-only caller (lists-hub.routes.ts force-qbo-sync) and genuinely NO SELECT/UPDATE anywhere in apps/backend/src — confirmed via repo-wide grep, zero hits. The table has no dequeue/processor at all, so external_id (meant to record the remote system's assigned id after a successful push) is unread because nothing processes a row past insert, not because of a missing read on this one column specifically. The migration's own header comment says this exact thing: \"Long-term outbox unification with accounting.outbox_events is tracked separately\" — building a real QBO-sync processor is a genuine new feature (and QBO write-back-sensitive), not a drive-by reader. Baselined rather than fabricating a consumer."
     }
   ]
 }
