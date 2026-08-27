@@ -85,6 +85,19 @@ export function collectProblems(root = ROOT, overrides = null) {
       if (withCompanyCalls.length !== 1) {
         problems.push(`${ROUTES}: POST /purchases must do the stock upsert AND purchase-event insert inside exactly one withCompany(...) call (atomic), found ${withCompanyCalls.length}`);
       }
+      if (!/validatePartsPurchaseLinks\([\s\S]{0,260}body\.data\.vendor_id[\s\S]{0,120}body\.data\.work_order_id/.test(postHandler[0])) {
+        problems.push(`${ROUTES}: POST /purchases must validate vendor and work-order links before stock mutation`);
+      }
+      if (!/if \(!linksValid\) return null;[\s\S]{0,300}INSERT INTO maintenance\.parts_inventory/.test(postHandler[0])) {
+        problems.push(`${ROUTES}: invalid purchase links must stop before the stock upsert`);
+      }
+    }
+    if (!/FROM mdata\.vendors v[\s\S]{0,180}v\.operating_company_id = \$1::uuid[\s\S]{0,120}v\.deactivated_at IS NULL/.test(routes)
+        || !/FROM maintenance\.work_orders wo[\s\S]{0,180}wo\.operating_company_id = \$1::uuid/.test(routes)) {
+      problems.push(`${ROUTES}: purchase-link validator must enforce active same-company vendor and same-company work order`);
+    }
+    if (!/if \(!purchaseResult\)[\s\S]{0,120}linked_entity_not_in_operating_company/.test(routes)) {
+      problems.push(`${ROUTES}: cross-company purchase links must return the stable 400`);
     }
     if (!/parts_purchase_id: String\(purchaseRow\.id\)/.test(routes)) {
       problems.push(`${ROUTES}: POST /purchases must pass parts_purchase_id to postPartsInventoryPurchase`);
@@ -176,6 +189,21 @@ function selftest() {
     "must pass parts_purchase_id"
   );
   plant(
+    "route-drops-purchase-link-validator",
+    { [ROUTES]: routesReal.replace("const linksValid = await validatePartsPurchaseLinks(", "const linksValid = await missingPurchaseLinkValidation(") },
+    "must validate vendor and work-order links"
+  );
+  plant(
+    "route-allows-cross-company-vendor",
+    { [ROUTES]: routesReal.replace("v.operating_company_id = $1::uuid", "TRUE") },
+    "must enforce active same-company vendor"
+  );
+  plant(
+    "route-writes-after-invalid-link",
+    { [ROUTES]: routesReal.replace("if (!linksValid) return null;", "void linksValid;") },
+    "must stop before the stock upsert"
+  );
+  plant(
     "route-drops-void-stock-symmetry",
     { [ROUTES]: routesReal.replace("on_hand_qty = COALESCE(on_hand_qty, 0) - $2", "on_hand_qty = on_hand_qty") },
     "must exactly decrement"
@@ -196,7 +224,7 @@ function selftest() {
     "must accept optional parts_purchase_id"
   );
 
-  console.log(`${LABEL} SELFTEST PASS — 8 planted regressions all caught`);
+  console.log(`${LABEL} SELFTEST PASS — 11 planted regressions all caught`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
