@@ -1,3 +1,4 @@
+Codex | ACK | GO-2136 | PORT=9226 | WORKING MAINT-F6730 in-house parts allocation company scope | SHIPPED #16464 @ 278421808a MAINT-F6729 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING MAINT-F6729 two-section WO create audit company scope | SHIPPED #16463 @ 1058a5002f SAFETY-F6728 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2136 | PORT=9226 | WORKING SAFETY-F6728 mounted v5 DOT/fine create audit company scope | SHIPPED #16461 @ b5d04cd4a6 MAINT-F6727 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6727 DVIR severity override audit company scope | SHIPPED #16460 @ d542da7922 SAFETY-F6726 | NEXT=guard+FAST-MERGE | GO

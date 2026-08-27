@@ -1107,7 +1107,7 @@ export async function autoCreateExpenseFromWO(
   return { uuid: expenseId };
 }
 
-export async function allocateInHouseFromWO(client: DbClient, userId: string, woUuid: string) {
+export async function allocateInHouseFromWO(client: DbClient, userId: string, woUuid: string, operatingCompanyId: string) {
   if (await relationExists(client, "maintenance.parts_inventory")) {
     await client.query(
       `
@@ -1116,22 +1116,26 @@ export async function allocateInHouseFromWO(client: DbClient, userId: string, wo
             updated_at = now()
         FROM (
           SELECT part_uuid, SUM(COALESCE(quantity, 0))::int AS qty
-          FROM maintenance.work_order_lines
-          WHERE work_order_uuid = $1
-            AND line_type = 'parts'
-            AND part_uuid IS NOT NULL
-          GROUP BY part_uuid
+          FROM maintenance.work_order_lines wol
+          INNER JOIN maintenance.work_orders wo
+            ON wo.id = wol.work_order_uuid
+           AND wo.operating_company_id = $2::uuid
+          WHERE wol.work_order_uuid = $1
+            AND wol.line_type = 'parts'
+            AND wol.part_uuid IS NOT NULL
+          GROUP BY wol.part_uuid
         ) alloc
         WHERE p.id = alloc.part_uuid
+          AND p.operating_company_id = $2::uuid
       `,
-      [woUuid]
+      [woUuid, operatingCompanyId]
     );
   }
   await appendCrudAudit(
     client as never,
     userId,
     "maintenance.wo.in_house_allocated",
-    { work_order_id: woUuid },
+    { operating_company_id: operatingCompanyId, work_order_id: woUuid },
     "info",
     "P3-T11.17-TWO-SECTION-V5"
   );
