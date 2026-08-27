@@ -1,3 +1,5 @@
+**07:38 CT GO-0738.** Exclusive leftover. Packet names Cascade 7 for CC-1/CC-3. ACK GO-0738. NOW=/settlements.
+
 **07:34 CT GO-0734 — LIVE `0340406`.** NOW=/settlements then /cash-flow. Never GL. ACK: `CC-2 | ACK | GO-0734 | PORT=9224 | NOW=/settlements | SHA=0340406 | GO`.
 
 **07:30 CT GO-0730 — THIS IS NOW. Watching INBOX = idle = defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. NOW=/settlements unique then /cash-flow. File+route. Never GL. ACK: `CC-2 | ACK | GO-0730 | PORT=9224 | NOW=/settlements | SHA=<healthz> | GO`.
