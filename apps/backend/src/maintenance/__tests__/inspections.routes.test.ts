@@ -108,6 +108,7 @@ describe("maintenance inspection routes (B30)", () => {
   it("GET /api/v1/maintenance/inspections lists rows", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("count(*)::int AS total_count")) return { rows: [{ total_count: 251 }] };
       return { rows: [sampleRow()], rowCount: 1 };
     });
     const res = await app.inject({
@@ -117,7 +118,11 @@ describe("maintenance inspection routes (B30)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
       rows: [{ id: INSPECTION_ID, inspection_type_label: "Pre-trip" }],
+      total_count: 251,
     });
+    expect(mockQuery.mock.calls.some(([sql, values]) =>
+      String(sql).includes("LIMIT $2 OFFSET $3") && values?.[1] === 50 && values?.[2] === 0
+    )).toBe(true);
   });
 
   it("POST /api/v1/maintenance/inspections creates inspection with DVIR link", async () => {

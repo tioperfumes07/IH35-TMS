@@ -75,6 +75,7 @@ describe("Maintenance InspectionsPage (B30)", () => {
     confirmUpload.mockReset();
 
     listMaintenanceInspections.mockResolvedValue({
+      total_count: 1,
       rows: [
         {
           id: "insp-1",

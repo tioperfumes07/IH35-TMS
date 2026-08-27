@@ -65,6 +65,8 @@ const TYPE_OPTIONS: Array<{ value: MaintenanceInspectionRow["inspection_type"]; 
   { value: "custom", label: "Custom" },
 ];
 
+const INSPECTIONS_PAGE_SIZE = 50;
+
 async function uploadInspectionPhoto(file: File, unitId: string, operatingCompanyId: string) {
   const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
     // File under the VIEWED entity, not the uploader's default_company_id (backend fallback).
@@ -88,10 +90,16 @@ export function InspectionsPage() {
   const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
   const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() ?? "";
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const listQ = useQuery({
-    queryKey: ["maintenance", "inspections", companyId],
-    queryFn: () => listMaintenanceInspections(companyId),
+    queryKey: ["maintenance", "inspections", companyId, search, page],
+    queryFn: () => listMaintenanceInspections(companyId, {
+      limit: INSPECTIONS_PAGE_SIZE,
+      offset: (page - 1) * INSPECTIONS_PAGE_SIZE,
+      search: search || undefined,
+    }),
     enabled: Boolean(companyId),
   });
 
@@ -207,6 +215,8 @@ export function InspectionsPage() {
     setEditing(null);
     setDraft(EMPTY_DRAFT);
     setPhotoFile(null);
+    setPage(1);
+    setSearch("");
   }, [companyId]);
 
   const openEdit = (row: MaintenanceInspectionRow) => {
@@ -229,6 +239,12 @@ export function InspectionsPage() {
 
   const formOpen = createOpen || Boolean(editing);
   const rows = listQ.data?.rows ?? [];
+  const totalCount = listQ.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / INSPECTIONS_PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
   const columns = useMemo<ParityColumn<MaintenanceInspectionRow>[]>(
     () => [
@@ -305,7 +321,39 @@ export function InspectionsPage() {
           storageKey="maintenance-inspections"
           emptyText="No inspections logged yet."
           exportFilename="inspections"
+          suppressToolbarSearch
+          filterBar={(
+            <input
+              type="search"
+              aria-label="Search inspections"
+              placeholder="Search inspections…"
+              className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+            />
+          )}
+          pageSize={INSPECTIONS_PAGE_SIZE}
+          hidePager
         />
+        <div className="mt-3 flex items-center justify-between text-sm text-slate-600" data-testid="maintenance-inspections-server-pager">
+          <span>
+            {totalCount === 0
+              ? "0 of 0"
+              : `${(page - 1) * INSPECTIONS_PAGE_SIZE + 1}–${Math.min(page * INSPECTIONS_PAGE_SIZE, totalCount)} of ${totalCount}`}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" disabled={page <= 1 || listQ.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+              Previous
+            </Button>
+            <span>Page {page} of {pageCount}</span>
+            <Button type="button" variant="secondary" disabled={page >= pageCount || listQ.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Modal
