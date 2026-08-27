@@ -67,12 +67,15 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
-      const res = await client.query(
+      const res = await client.query<{ id: string; photo_url: string; photo_type: string; caption: string | null; taken_at: string }>(
         `
           INSERT INTO mdata.unit_photos (
             operating_company_id, unit_id, uploaded_by_user_id, photo_url, photo_type, caption, taken_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, now()))
+          SELECT $1::uuid, u.id, $3::uuid, $4, $5, $6, COALESCE($7::timestamptz, now())
+          FROM mdata.units u
+          WHERE u.id = $2::uuid
+            AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
           RETURNING id::text, photo_url, photo_type, caption, taken_at::text
         `,
         [
@@ -86,6 +89,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
         ]
       );
       const created = res.rows[0];
+      if (!created?.id) return null;
       await appendCrudAudit(client, authUser.uuid, "mdata.unit_photos.created", {
         resource_id: created.id,
         resource_type: "mdata.unit_photos",
@@ -93,6 +97,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
       });
       return created;
     });
+    if (!row) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return reply.code(201).send(row);
   });
 
