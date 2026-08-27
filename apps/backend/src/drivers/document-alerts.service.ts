@@ -105,7 +105,14 @@ export async function updateDocumentAlertRule(
   return res.rows[0] ?? null;
 }
 
-export async function listOpenDocumentAlertEvents(client: QueryableClient, operatingCompanyId: string) {
+export async function listOpenDocumentAlertEvents(client: QueryableClient, operatingCompanyId: string, limit = 50, offset = 0) {
+  const countRes = await client.query<{ total_count: number | string }>(
+    `SELECT COUNT(*)::int AS total_count
+       FROM safety.document_alert_events
+      WHERE operating_company_id = $1::uuid
+        AND event_status = 'open'`,
+    [operatingCompanyId]
+  );
   const res = await client.query(
     `
       SELECT
@@ -137,12 +144,12 @@ export async function listOpenDocumentAlertEvents(client: QueryableClient, opera
                                 )
       WHERE e.operating_company_id = $1::uuid
         AND e.event_status = 'open'
-      ORDER BY e.days_until_expiry ASC, e.detected_at DESC
-      LIMIT 500
+      ORDER BY e.days_until_expiry ASC, e.detected_at DESC, e.id ASC
+      LIMIT $2 OFFSET $3
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, limit, offset]
   );
-  return res.rows;
+  return { events: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 async function loadExpiryCandidates(

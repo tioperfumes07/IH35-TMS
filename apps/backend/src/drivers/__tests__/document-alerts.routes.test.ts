@@ -51,7 +51,7 @@ describe("drivers document alerts routes (A24-9)", () => {
     mockListRules.mockReset();
     mockUpdateRule.mockReset();
     mockAck.mockReset();
-    mockListInbox.mockResolvedValue([]);
+    mockListInbox.mockResolvedValue({ events: [], totalCount: 0 });
     mockListRules.mockResolvedValue([]);
     mockEvaluate.mockResolvedValue({ rules_scanned: 1, events_upserted: 0, notifications_sent: 0 });
     mockUpdateRule.mockResolvedValue({ id: RULE, document_type: "cdl" });
@@ -75,17 +75,18 @@ describe("drivers document alerts routes (A24-9)", () => {
   });
 
   it("GET inbox returns pending document alerts", async () => {
-    mockListInbox.mockResolvedValue([
-      { id: EVENT, driver_name: "Jane Doe", document_type: "cdl", days_until_expiry: 30 },
-    ]);
+    mockListInbox.mockResolvedValue({
+      events: [{ id: EVENT, driver_name: "Jane Doe", document_type: "cdl", days_until_expiry: 30 }],
+      totalCount: 501,
+    });
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/drivers/document-alerts/inbox?operating_company_id=${COMPANY}`,
     });
     expect(res.statusCode).toBe(200);
     const body = res.json() as { pending_count: number; events: unknown[] };
-    expect(body.pending_count).toBe(1);
-    expect(mockListInbox).toHaveBeenCalled();
+    expect(body.pending_count).toBe(501);
+    expect(mockListInbox).toHaveBeenCalledWith(expect.anything(), COMPANY, 50, 0);
   });
 
   it("GET rules lists document alert rules", async () => {
