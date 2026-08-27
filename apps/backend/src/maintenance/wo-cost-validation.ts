@@ -45,6 +45,9 @@ export async function validateWoVendorInvoiceTotals(
        AND wo.operating_company_id = $2::uuid
       WHERE li.work_order_uuid = $1::uuid
         AND li.section IN ('A', 'B')
+        -- MAINT-MONEY-F6797: a voided line (void-not-delete) must not count toward
+        -- total_actual_cost or the AP invoice-mismatch check below.
+        AND li.voided_at IS NULL
     `,
     [woId, operatingCompanyId]
   );

@@ -159,6 +159,8 @@ async function listWoPostingLines(client: DbClient, workOrderId: string) {
       FROM maintenance.work_order_lines
       WHERE work_order_uuid = $1::uuid
         AND line_type IN ('part', 'parts', 'labor')
+        -- MAINT-MONEY-F6797: a voided line must not inflate the AP posting preview's bill total.
+        AND voided_at IS NULL
       ORDER BY created_at ASC
     `,
     [workOrderId]

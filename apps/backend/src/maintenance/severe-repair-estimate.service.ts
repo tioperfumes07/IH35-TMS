@@ -312,7 +312,11 @@ export async function refreshEstimate(userId: string, estimate_id: string, opera
             COALESCE(SUM(ROUND(CASE WHEN wl.line_type NOT IN ('labor', 'part', 'parts') THEN COALESCE(wl.total_cost, 0) ELSE 0 END * 100)), 0)::bigint AS outside_cents
           FROM maintenance.severe_repair_estimates e
           JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
-          LEFT JOIN maintenance.work_order_lines wl ON wl.work_order_uuid = w.id
+          -- MAINT-MONEY-F6797: exclude a voided line from the $7,000 capitalize/expense threshold.
+          -- Filtered in the ON clause, not WHERE — a WHERE here would turn this LEFT JOIN into an
+          -- effective INNER JOIN, dropping the estimate row entirely once its lines are all voided
+          -- instead of correctly zeroing its cents.
+          LEFT JOIN maintenance.work_order_lines wl ON wl.work_order_uuid = w.id AND wl.voided_at IS NULL
           WHERE e.id = $1
             AND e.operating_company_id = $2::uuid
           GROUP BY e.id
