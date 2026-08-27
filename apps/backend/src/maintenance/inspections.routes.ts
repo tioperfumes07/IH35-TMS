@@ -18,6 +18,9 @@ const companyQuerySchema = z.object({
   include_archived: z.coerce.boolean().optional().default(false),
   unit_id: z.string().uuid().optional(),
   dvir_submission_id: z.string().uuid().optional(),
+  search: z.string().trim().max(120).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  offset: z.coerce.number().int().min(0).optional().default(0),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -206,18 +209,40 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
         values.push(parsed.data.dvir_submission_id);
         filters.push(`i.dvir_submission_id = $${values.length}::uuid`);
       }
+      if (parsed.data.search) {
+        values.push(`%${parsed.data.search}%`);
+        filters.push(`(
+          u.unit_number ILIKE $${values.length}
+          OR COALESCE(i.inspector_name, '') ILIKE $${values.length}
+          OR i.inspection_type::text ILIKE $${values.length}
+          OR i.status::text ILIKE $${values.length}
+          OR COALESCE(i.outcome::text, '') ILIKE $${values.length}
+        )`);
+      }
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+           FROM maintenance.inspections i
+           LEFT JOIN mdata.units u ON u.id = i.unit_id
+                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
+          WHERE ${filters.join(" AND ")}`,
+        values
+      );
+      const rangeValues = [...values, parsed.data.limit, parsed.data.offset];
       const res = await client.query(
         `
           ${INSPECTION_SELECT}
           WHERE ${filters.join(" AND ")}
           ORDER BY COALESCE(i.inspection_date, i.scheduled_date) DESC NULLS LAST, i.created_at DESC
-          LIMIT 200
+          LIMIT $${values.length + 1} OFFSET $${values.length + 2}
         `,
-        values
+        rangeValues
       );
-      return res.rows.map(mapInspectionRow);
+      return {
+        rows: res.rows.map(mapInspectionRow),
+        total_count: Number(countRes.rows[0]?.total_count ?? 0),
+      };
     });
-    return { rows };
+    return rows;
   });
 
   app.get("/api/v1/maintenance/inspections/:id", RL_READ, async (req, reply) => {

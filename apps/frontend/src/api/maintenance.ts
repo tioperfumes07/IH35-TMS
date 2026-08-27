@@ -1211,13 +1211,16 @@ export type MaintenanceInspectionRow = {
 
 export function listMaintenanceInspections(
   operatingCompanyId: string,
-  params: { include_archived?: boolean; unit_id?: string; dvir_submission_id?: string } = {}
+  params: { include_archived?: boolean; unit_id?: string; dvir_submission_id?: string; search?: string; limit?: number; offset?: number } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
   if (params.unit_id) q.set("unit_id", params.unit_id);
   if (params.dvir_submission_id) q.set("dvir_submission_id", params.dvir_submission_id);
-  return apiRequest<{ rows: MaintenanceInspectionRow[] }>(`/api/v1/maintenance/inspections?${q.toString()}`);
+  if (params.search) q.set("search", params.search);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiRequest<{ rows: MaintenanceInspectionRow[]; total_count: number }>(`/api/v1/maintenance/inspections?${q.toString()}`);
 }
 
 export function getMaintenanceInspectionDetail(id: string, operatingCompanyId: string) {
