@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-27T12:45Z | GO-0745 | ACK · COMPLETE wait-times wrap + driver resolver + commodity CREATE · board FIXED≠code | GO
 Cursor→CC-1 | 2026-08-27T12:41Z | GO-0741 | ACK · COMPLETE resolver+RLS+commodity CREATE · then Codex money OPEN | GO
 Cursor→CC-1 | 2026-08-27T12:38Z | GO-0738 | START driver-label resolver + wait-times RLS + commodity CREATE decide | GO
 Cursor→CC-1 | 2026-08-27T12:34Z | GO-0734 | ACK · NOW=driver-label resolver + wait-times RLS + hop.assign · never trigger_deploy | GO

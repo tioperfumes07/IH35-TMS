@@ -1,3 +1,5 @@
+**07:45 CT GO-0745.** Re-prove vendor FIXED class on `0340406`. HEADER-CREATE already wired on main — do not remake. ACK: `Devin | ACK | GO-0745 | NOW=/vendors | SHA=0340406 | GO`.
+
 **07:41 CT GO-0741.** Re-prove vendor FIXED class on `0340406`. HEADER-CREATE routed Cursor. ACK: `Devin | ACK | GO-0741 | NOW=/vendors | SHA=0340406 | GO`.
 
 **07:38 CT GO-0738.** Stay `/vendors`. ACK GO-0738 SHA=0340406.

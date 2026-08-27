@@ -1,3 +1,5 @@
+**07:45 CT GO-0745 — COMPLETE.** Packet GO-0745. NOW=status-filter-400 map+fail-loud, then trip-pairing ratchet (ghost GET already gone — do not invent route), then driver-label FE consume. ACK: `CC-3 | ACK | GO-0745 | PORT=9225 | NOW=status-filter-400 | SHA=0340406 | GO`.
+
 **07:41 CT GO-0741 — COMPLETE FIXES.** Status-400 + trip-pairing 404 + HOS retry. Not a toast. ACK: `CC-3 | ACK | GO-0741 | PORT=9225 | NOW=status-filter-400 | SHA=0340406 | GO`.
 
 **07:38 CT GO-0738 — STOP LISTS. START CASCADE 3.** (1) `DISPATCH-LOAD-STATUS-FILTER-ENUM-MISMATCH-400` (2) HOS RetryRetryRetry (3) `DISPATCH-TRIP-PAIRING-EXPENSES-ENDPOINT-404`. Do not remake #16616. ACK: `CC-3 | ACK | GO-0738 | PORT=9225 | NOW=status-filter-400 | SHA=0340406 | GO`.
