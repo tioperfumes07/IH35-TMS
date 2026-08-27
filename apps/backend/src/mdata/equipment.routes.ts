@@ -102,8 +102,9 @@ async function resolveAssetCompanyIds(
   ownerCompanyId?: string,
   leasedCompanyId?: string
 ) {
-  const resolvedOwnerId =
-    ownerCompanyId ??
+  const resolvedOwnerId = ownerCompanyId
+    ? await resolveOperatingCompanyId(client, userId, ownerCompanyId)
+    :
     (
       await client.query(
         `
@@ -117,7 +118,9 @@ async function resolveAssetCompanyIds(
     ).rows[0]?.id ??
     null;
 
-  let resolvedLeasedId = leasedCompanyId ?? null;
+  let resolvedLeasedId = leasedCompanyId
+    ? await resolveOperatingCompanyId(client, userId, leasedCompanyId)
+    : null;
   if (!resolvedLeasedId) {
     // LST-F05: this picked the LOWEST accessible UUID instead of the user's default, so a TRANSP
     // dispatcher creating a unit/equipment leased it to USMCA (5c854333… < 91e0bf0a…).
@@ -240,7 +243,10 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/mdata/equipment", async (req, reply) => {
+  app.post(
+    "/api/v1/mdata/equipment",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -259,14 +265,32 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         if (!resolvedOwnerId) {
           throw new Error("owner_company_id_required");
         }
+        const effectiveCompanyId = resolvedLeasedId ?? resolvedOwnerId;
+        await setScopedCompanyContext(client, authUser.uuid, effectiveCompanyId);
         const res = await client.query(
           `
             INSERT INTO mdata.equipment (
               equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id,
               owner_company_id, currently_leased_to_company_id, notes, created_by_user_id, updated_by_user_id
-            ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13
             )
+            SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13
+            WHERE (
+              $8::uuid IS NULL OR EXISTS (
+                SELECT 1 FROM mdata.units AS linked_unit
+                WHERE linked_unit.id = $8::uuid
+                  AND (
+                    linked_unit.owner_company_id = $14::uuid
+                    OR linked_unit.currently_leased_to_company_id = $14::uuid
+                  )
+              )
+            )
+              AND (
+                $9::uuid IS NULL OR EXISTS (
+                  SELECT 1 FROM mdata.locations AS linked_location
+                  WHERE linked_location.id = $9::uuid
+                    AND linked_location.operating_company_id = $14::uuid
+                )
+              )
             RETURNING
               id,
               equipment_number,
@@ -303,9 +327,11 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             resolvedLeasedId,
             b.notes ?? null,
             authUser.uuid,
+            effectiveCompanyId,
           ]
         );
         const row = res.rows[0];
+        if (!row?.id) throw new Error("invalid_equipment_fk_reference");
         await appendCrudAudit(client, authUser.uuid, "mdata.equipment.created", {
           resource_id: row.id,
           resource_type: "mdata.equipment",
@@ -313,6 +339,9 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           equipment_number: row.equipment_number,
           equipment_type: row.equipment_type,
           status: row.status,
+          owner_company_id: resolvedOwnerId,
+          currently_leased_to_company_id: resolvedLeasedId,
+          operating_company_id: effectiveCompanyId,
         });
         return row;
       });
@@ -321,12 +350,16 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_equipment_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_equipment_fk_reference" });
+      if ((err as Error).message === "invalid_equipment_fk_reference") {
+        return reply.code(400).send({ error: "invalid_equipment_fk_reference" });
+      }
       if ((err as Error).message === "owner_company_id_required") {
         return reply.code(400).send({ error: "owner_company_id_required" });
       }
       throw err;
     }
-  });
+    },
+  );
 
   app.get("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
