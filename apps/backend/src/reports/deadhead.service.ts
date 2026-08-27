@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { estimateCityPairMiles } from "./city-centroids.js";
 
 export type DeadheadCalculationMethod = "samsara" | "manual" | "estimated";
 
@@ -151,7 +152,19 @@ function resolveDeadheadToPickup(row: LoadRow, previousDeliveryCity: string | nu
   if (row.deadhead_miles_calculation_method === "samsara") {
     return { miles: 0, method: "samsara" };
   }
+  // DEADHEAD-REPORT-ESTIMATED-BRANCH-ALWAYS-RETURNS-ZERO-DEADHEAD: this branch used to return the
+  // exact same hardcoded { miles: 0, method: "estimated" } as the genuine same-city case below it —
+  // a load that truly deadheaded between two different cities was structurally incapable of ever
+  // showing nonzero deadhead. estimateCityPairMiles() gives a real (great-circle, approximate)
+  // distance for the carrier's known freight-corridor cities; a city pair outside that curated set
+  // still falls back to 0 (no external API call, no cost, no regression from today) — see
+  // city-centroids.ts's header for why a static table was chosen over the paid/rate-limited Trimble
+  // geocoder.
   if (previousDeliveryCity && nextPickupCity && previousDeliveryCity !== nextPickupCity) {
+    const estimatedMiles = estimateCityPairMiles(previousDeliveryCity, nextPickupCity);
+    if (estimatedMiles != null) {
+      return { miles: estimatedMiles, method: "estimated" };
+    }
     return { miles: 0, method: "estimated" };
   }
   return { miles: 0, method: "estimated" };

@@ -360,7 +360,9 @@ describe("refreshDeadheadCache — computeDeadhead oracle equivalence (G5-4)", (
         delivery_city: "Austin, TX",
         stop_ats: [t0],
       },
-      // Estimated path: null stored miles + previous delivery ≠ pickup → 0 estimated miles.
+      // Estimated path: null stored miles + previous delivery (Austin, TX) != pickup
+      // (San Antonio, TX) -> real curated-table great-circle estimate (74 miles), not the old
+      // hardcoded 0.
       {
         id: "a-2",
         unit_id: "unit-A",
@@ -449,13 +451,15 @@ describe("refreshDeadheadCache — computeDeadhead oracle equivalence (G5-4)", (
 
     expect(inserted).toEqual(expectedInsert);
 
-    // Spot-check: week0 unit-A has stored 40 + estimated 0 deadhead, loaded 350.
+    // Spot-check: week0 unit-A has stored 40 (a-1, Dallas -> Austin) + a real curated-table
+    // estimate for a-2's Austin, TX -> San Antonio, TX leg (74 miles, DEADHEAD-REPORT-ESTIMATED-
+    // BRANCH-ALWAYS-RETURNS-ZERO-DEADHEAD fix — previously hardcoded 0 for any differing-city pair).
     const week0A = oracleByKey.get(`unit-A|${week0.week}`)!;
     expect(week0A).toMatchObject({
       loaded_miles: 350,
-      deadhead_miles: 40,
+      deadhead_miles: 114,
       load_count: 2,
-      total_miles: 390,
+      total_miles: 464,
     });
     const week1A = oracleByKey.get(`unit-A|${week1.week}`)!;
     expect(week1A).toMatchObject({
