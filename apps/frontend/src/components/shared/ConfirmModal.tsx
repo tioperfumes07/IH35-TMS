@@ -12,12 +12,15 @@ type Props = {
   onConfirm: () => void | Promise<void>;
 };
 
+/** Shared dismiss gate: Cancel / Escape / backdrop must not abandon an in-flight confirmation write. */
+export function closeUnlessPending(pending: boolean, onClose: () => void) {
+  if (!pending) onClose();
+}
+
 /** In-app yes/no confirmation — replaces native window.confirm() on destructive/config actions. */
 export function ConfirmModal({ open, title, message, confirmLabel = "Confirm", danger = false, onClose, onConfirm }: Props) {
   const [busy, setBusy] = useState(false);
-  const closeUnlessBusy = () => {
-    if (!busy) onClose();
-  };
+  const closeUnlessBusy = () => closeUnlessPending(busy, onClose);
   return (
     <Modal open={open} onClose={closeUnlessBusy} title={title}>
       <div className="space-y-4">

@@ -1,4 +1,4 @@
-Cursor | LEAD | 2026-08-26T18:52CT | GO-1852 | IDLE=LIVE-WALK vertical leftover POST | packet PASTE-ALL-SEATS-GO-2026-08-26-1852.md | live f12ab6e | Jorge not messenger | GO
+Cursor | SHIP | 2026-08-26T18:58CT | CLS-F6691 remainder | shared closeUnlessPending + all ConfirmModal callers await mutateAsync | sibling FineConvert/Factor deactivate locked | do not remake leaf patches | GO
 Cursor | LEAD | 2026-08-26T18:30CT | GO-1830 | packet PASTE-ALL-SEATS-GO-2026-08-26-1830.md | deploy IN FLIGHT dep-da7ndvv tip 8745b43 | seats pull INBOX TOP | Jorge is not messenger | GO
 Cursor | LEAD | 2026-08-26T18:15CT | GO-1815 | live=b3dae9d dep-da7n3b49 LIVE | CC-3 NOW=/docs HOLDING=defect | CC-1 NOW=FACTORING-CHARGEBACK | nobody second-kick | skip #15546 | GO
 Cursor | LEAD | 2026-08-26T17:45CT | GO-1745 | live=29ad498 | deploy IN FLIGHT dep-da7mp2navr4c73b5h7hg tip=ece4a06 | skip #15546 | CC-1 NOW=CASH-ADVANCE-OWNER-NOTIFICATION do not remake F6508/F6464 | U14 never restamp | GO

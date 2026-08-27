@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
+import { closeUnlessPending } from "../shared/ConfirmModal";
 
 type Props = {
   open: boolean;
@@ -35,9 +36,10 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
 
   const typedOk = typed.trim().toUpperCase() === "DEACTIVATE";
   const holdOk = holdProgress >= 100;
+  const dismiss = () => closeUnlessPending(Boolean(loading), onClose);
 
   return (
-    <Modal open={open} onClose={onClose} title="Deactivate active factor">
+    <Modal open={open} onClose={dismiss} title="Deactivate active factor">
       <div className="space-y-3 text-sm" data-deactivate-factor-confirm-modal="true">
         <p className="text-gray-700">This disables the active factor for this operating company. Use only during controlled migration windows.</p>
         <ul className="list-disc pl-5 text-xs text-gray-600">
@@ -60,7 +62,7 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
           </Button>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={dismiss} disabled={loading}>
             Cancel
           </Button>
           <Button variant="danger" disabled={!typedOk || !holdOk || loading} onClick={onConfirm}>

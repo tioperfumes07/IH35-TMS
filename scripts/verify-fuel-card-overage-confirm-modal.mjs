@@ -36,8 +36,8 @@ if (!/onClick=\{\(\) => setConfirmApproveRow\(row\)\}/.test(src)) {
 if (!/<ConfirmModal\s*\n\s*open=\{confirmApproveRow != null\}/.test(src)) {
   failures.push(`${filePath}: ConfirmModal is no longer rendered, gated on confirmApproveRow`);
 }
-if (!/approveMut\.mutate\(\{ eventId: confirmApproveRow\.id, companyId, generation: actionGenerationRef\.current \}\)/.test(src)) {
-  failures.push(`${filePath}: ConfirmModal's onConfirm no longer submits the scoped {eventId, companyId, generation} snapshot`);
+if (!/approveMut\.mutateAsync\(\{[\s\S]*eventId: confirmApproveRow\.id,[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current/.test(src)) {
+  failures.push(`${filePath}: ConfirmModal's onConfirm no longer awaits the scoped {eventId, companyId, generation} snapshot`);
 }
 if (!/setConfirmApproveRow\(null\);\s*\n\s*\}, \[companyId\]\)/.test(src)) {
   failures.push(`${filePath}: the companyId-change effect no longer clears a pending confirmApproveRow`);

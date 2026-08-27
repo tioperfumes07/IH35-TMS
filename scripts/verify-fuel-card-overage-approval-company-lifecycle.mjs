@@ -13,7 +13,7 @@ function audit(text) {
   need(/onSuccess: \(_result, input\) => \{[\s\S]{0,100}input\.generation !== actionGenerationRef\.current/.test(text), "stale success is not rejected");
   need(text.includes('["fuel", "card-overage-events", input.companyId]'), "submitted company queue is not refreshed exactly");
   need(/onError: \(err: unknown, input\) => \{[\s\S]{0,120}input\.generation === actionGenerationRef\.current/.test(text), "stale error is not rejected");
-  need(/approveMut\.mutate\(\{ eventId: row\.id, companyId, generation: actionGenerationRef\.current \}\)/.test(text), "UI does not capture approval context");
+  need(/approveMut\.mutateAsync\(\{[\s\S]*eventId: confirmApproveRow\.id,[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current/.test(text), "UI does not capture approval context");
   need(text.includes("@matrix-built modules=fuel cols=driver,unit,gl_je,connectivity,reverse_link"), "leaf annotation missing");
   return failures;
 }

@@ -250,6 +250,7 @@ export function BankingPlaidConnectionsPanel({
             void queryClient.invalidateQueries({ queryKey: ["banking"] });
           } catch (e: unknown) {
             pushToast(String((e as Error).message || "Disconnect failed"), "error");
+            throw e;
           }
         }}
       />
