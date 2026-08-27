@@ -1,3 +1,4 @@
+Codex | WORKING | GO-0808 | FINDING=SAFETY-F6867-CIVIL-FINES-REVERSE-FIRST-PAGE-ONLY | vertical=driver-profile+driver-detail+unit+load reverse | guard=11/11 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6866-COMPANY-VIOLATIONS-REVERSE-FIRST-PAGE-ONLY | vertical=driver+unit reverse | guard=7/7 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6865-DVIR-RANGE-TOTAL-MISSING-PROFILE-FIRST-PAGE | vertical=idvr+unit/trailer reverse | guard=9/9 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6864-ACCIDENT-HISTORY-SILENT-500-CAP-ALL-REVERSE | vertical=list+driver/unit/trailer/load reverse | guard=12/12 | NEXT=FAST-MERGE | GO

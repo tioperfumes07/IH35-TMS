@@ -83,7 +83,7 @@ export function assertFineLinksAndViolationCatalog(sources) {
   if (!/u\.unit_number AS related_unit_number/.test(src[FINE_ROUTES]) || !/l\.load_number AS related_load_number/.test(src[FINE_ROUTES])) {
     problems.push(`${FINE_ROUTES}: direct detail must preserve unit/load labels.`);
   }
-  if (!/getSafetyFines\(companyId, related === "load" \? \{ related_load_id: entityId \} : \{ related_unit_id: entityId \}\)/.test(src[REVERSE_BLOCK]) || !/kind="safety_fine"/.test(src[REVERSE_BLOCK]) || !/kind=\{related === "load" \? "safety_fines_load" : "safety_fines_unit"\}/.test(src[REVERSE_BLOCK])) {
+  if (!/getSafetyFines\(companyId, \{[\s\S]{0,220}related === "load" \? \{ related_load_id: entityId \} : \{ related_unit_id: entityId \}[\s\S]{0,160}limit: pageSize,[\s\S]{0,100}offset: \(page - 1\) \* pageSize/.test(src[REVERSE_BLOCK]) || !/kind="safety_fine"/.test(src[REVERSE_BLOCK]) || !/kind=\{related === "load" \? "safety_fines_load" : "safety_fines_unit"\}/.test(src[REVERSE_BLOCK])) {
     problems.push(`${REVERSE_BLOCK}: shared load/unit fines reverse block must use exact server filters and canonical drill-through.`);
   }
   if (!/<CivilFinesReverseBlock[^>]*related="load"/.test(src[LOAD_REVERSE])) problems.push(`${LOAD_REVERSE}: load detail must mount civil-fine reverse history.`);
