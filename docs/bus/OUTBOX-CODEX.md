@@ -1254,3 +1254,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6724 parts-link add→refresh
 Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6725 mounted v5 audit company remainder | SHIPPED #16455 MAINT-F6724 @ 91e020c83b guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6734 | Photo Comparison post-trip mutation now carries authenticated company route→service→SQL | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=SAFETY-F6735 | Photo Comparison analyzed-result write now binds the authenticated company | NEXT=guard+tests+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=SAFETY-F6736 | Photo upload/session create validate company-owned driver+unit+load+evidence links | NEXT=guard+tests+FAST-MERGE | GO

@@ -80,6 +80,75 @@ function angleFromMetadata(metadata: Record<string, unknown>): string | null {
   return typeof angle === "string" && angle.length > 0 ? angle : null;
 }
 
+async function assertTripPhotoLinksCompany(
+  client: DbClient,
+  input: {
+    operatingCompanyId: string;
+    loadUuid: string | null;
+    driverUuid: string;
+    unitUuid: string;
+    evidenceUuids?: string[];
+  }
+): Promise<void> {
+  const result = await client.query<{
+    driver_ok: boolean;
+    unit_ok: boolean;
+    load_ok: boolean;
+    evidence_ok: boolean;
+  }>(
+    `
+      SELECT
+        EXISTS (
+          SELECT 1
+          FROM mdata.drivers d
+          WHERE d.id = $2::uuid
+            AND d.deactivated_at IS NULL
+            AND (
+              d.operating_company_id = $1::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = d.id
+                  AND dca.company_id = $1::uuid
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
+        ) AS driver_ok,
+        EXISTS (
+          SELECT 1
+          FROM mdata.units u
+          WHERE u.id = $3::uuid
+            AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+        ) AS unit_ok,
+        (
+          $4::uuid IS NULL
+          OR EXISTS (
+            SELECT 1 FROM mdata.loads l
+            WHERE l.id = $4::uuid
+              AND l.operating_company_id = $1::uuid
+              AND l.soft_deleted_at IS NULL
+          )
+        ) AS load_ok,
+        NOT EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE($5::uuid[], ARRAY[]::uuid[])) evidence_id
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM documents.damage_photo_evidence evidence
+            WHERE evidence.id = evidence_id
+              AND evidence.operating_company_id = $1::uuid
+          )
+        ) AS evidence_ok
+    `,
+    [input.operatingCompanyId, input.driverUuid, input.unitUuid, input.loadUuid, input.evidenceUuids ?? []]
+  );
+  const ownership = result.rows[0];
+  if (!ownership?.driver_ok || !ownership.unit_ok || !ownership.load_ok || !ownership.evidence_ok) {
+    throw new Error("photo_link_not_found_for_company");
+  }
+}
+
 async function loadEvidenceDetails(
   client: DbClient,
   operatingCompanyId: string,
@@ -187,6 +256,7 @@ export async function uploadTripPhotoEvidence(
     r2ObjectKey: string;
   }
 ): Promise<{ evidence_uuid: string }> {
+  await assertTripPhotoLinksCompany(client, input);
   const validation = validateAndPreserveExif(input.buffer);
   if (!validation.exifPresent) {
     throw new Error(`exif_missing:${validation.missingFields.join(",")}`);
@@ -255,6 +325,8 @@ export async function startPreTripSession(
   if (input.evidenceUuids.length === 0) {
     throw new Error("evidence_uuids_required");
   }
+
+  await assertTripPhotoLinksCompany(client, input);
 
   const inserted = await client.query<{ uuid: string }>(
     `
