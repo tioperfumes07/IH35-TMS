@@ -600,7 +600,9 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
           body.data.clearinghouse_updated ?? null,
         ]
       );
-      return enrichRtdCase(res.rows[0]);
+      const row = res.rows[0];
+      if (!row) return null;
+      return enrichRtdCase(row);
     });
 
     if (!updated) return reply.code(404).send({ error: "not_found", message: "RTD case not found." });
