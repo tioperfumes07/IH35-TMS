@@ -1400,3 +1400,4 @@ Codex | WORKING | GO-0734 | FINDING=SAFETY-DRIVER-BACKGROUND-CHECK-HISTORY-SILEN
 Codex | WORKING | GO-0738 | FINDING=SAFETY-COMPANY-VIOLATIONS-DRIVER-UNIT-REVERSE-SILENT-500-CAP | guard=verify-safety-company-violations-range | NEXT=FAST-MERGE | GO
 Codex | WORKING | FINDING=GUARD-F6809A | root=parser rejected tenant-first filters with fixture exclusion | guard=PASS selftest20/20 | audit7d=mechanical stale rows reconciled | NEXT=route remaining true money/schema findings | GO
 Codex | AUDIT-7D | window=2026-08-20..27 | stale-open reconciled | fixed-root evidence=itemized ledger | routed=CC-1:F6843A,F6803A,F6797,F6169 · CC-3:dead-schema-external-id | no-patch | NEXT=drivers/fleet/safety unique | GO
+Codex | WORKING | FINDING=SAFETY-FINES-DRIVER-UNIT-REVERSE-SILENT-500-CAP | root=500 cap/no total | guard=PASS selftest8/8 | NEXT=FAST-MERGE then next unique | GO
