@@ -118,7 +118,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return { inspections };
   });
 
-  app.post("/api/v1/safety/v5/dot-inspections", async (req, reply) => {
+  app.post("/api/v1/safety/v5/dot-inspections", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -128,8 +128,34 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const created = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      await client.query("BEGIN");
-      try {
+      if (body.data.driver_uuid) {
+        const driver = await client.query(
+          `SELECT id FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND d.archived_at IS NULL
+              AND (d.operating_company_id = $2::uuid OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations dot_inspection_driver_dca
+                 WHERE dot_inspection_driver_dca.driver_id = d.id
+                   AND dot_inspection_driver_dca.company_id = $2::uuid
+                   AND dot_inspection_driver_dca.is_authorized = true
+                   AND dot_inspection_driver_dca.deactivated_at IS NULL
+              ))
+            LIMIT 1`,
+          [body.data.driver_uuid, query.data.operating_company_id]
+        );
+        if (!driver.rows[0]) return { kind: "driver_not_found" as const };
+      }
+      if (body.data.unit_uuid) {
+        const unit = await client.query(
+          `SELECT id FROM mdata.units
+            WHERE id = $1::uuid
+              AND deactivated_at IS NULL
+              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            LIMIT 1`,
+          [body.data.unit_uuid, query.data.operating_company_id]
+        );
+        if (!unit.rows[0]) return { kind: "unit_not_found" as const };
+      }
         const inspectionRes = await client.query(
           `
             INSERT INTO safety.dot_inspections (
@@ -153,7 +179,8 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
             body.data.notes ?? null,
           ]
         );
-        const inspection = inspectionRes.rows[0];
+        const inspection = inspectionRes.rows[0] as Record<string, unknown> | undefined;
+        if (!inspection?.id) throw new Error("safety_dot_inspection_insert_failed");
         let spawnedWo: { woUuid: string; display_id: string; classHint: string } | null = null;
         if (body.data.outcome === "OOS" && body.data.unit_uuid) {
           spawnedWo = await createWorkOrderWithLines(
@@ -215,14 +242,11 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           body.data.outcome === "OOS" ? "warning" : "info",
           "P3-T11.17-TWO-SECTION-V5"
         );
-        await client.query("COMMIT");
-        return { inspection, spawned_wo: spawnedWo ? { uuid: spawnedWo.woUuid, display_id: spawnedWo.display_id } : null };
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      }
+        return { kind: "ok" as const, inspection, spawned_wo: spawnedWo ? { uuid: spawnedWo.woUuid, display_id: spawnedWo.display_id } : null };
     });
-    return reply.code(201).send(created);
+    if (created.kind === "driver_not_found") return reply.code(404).send({ error: "mdata_driver_not_found" });
+    if (created.kind === "unit_not_found") return reply.code(404).send({ error: "mdata_unit_not_found" });
+    return reply.code(201).send({ inspection: created.inspection, spawned_wo: created.spawned_wo });
   });
 
   app.post("/api/v1/safety/internal-fines", async (req, reply) => {
