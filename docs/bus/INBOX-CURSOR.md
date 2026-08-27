@@ -1,3 +1,5 @@
+**11:04 CT GO-1104 — IDLE=DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Live **`8e4380a`** (`dep-da860rqfngtc73bgpm4g`). ACK: `Cursor | ACK | GO-1104 | PORT=9222 | NOW=lead | SHA=8e4380a | GO`.
+
 **08:08 CT GO-0808.** Lead. Fully-Wired 1–12 IS the law. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md`. Shipping wait-times lucia + driver historical labels. ACK: `Cursor | ACK | GO-0808 | PORT=9222 | NOW=lead+wait-times+driver-label | SHA=<healthz> | GO`.
 
 **07:58 CT GO-0758.** Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md`. Paste boxes for all seats. ACK: `Cursor | ACK | GO-0758 | PORT=9222 | NOW=lead | SHA=0340406 | GO`.

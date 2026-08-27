@@ -1,3 +1,5 @@
+**11:04 CT GO-1104 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` BOX Codex. Next unique vertical. Money already-merged IDs — grep. ACK: `Codex | ACK | GO-1104 | PORT=9226 | NOW=/safety-vertical | SHA=8e4380a | GO`.
+
 **08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX Codex. Fully-Wired 1–12 per leaf. ACK: `Codex | ACK | GO-0808 | PORT=9226 | NOW=/drivers-vertical | SHA=<healthz> | GO`.
 
 **07:58 CT GO-0758 — VERTICAL unique.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX Codex. ACK: `Codex | ACK | GO-0758 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO`.

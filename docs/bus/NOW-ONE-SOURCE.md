@@ -1,3 +1,5 @@
+**11:04 CT 2026-08-27 GO-1104 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md`. Live **`8e4380a`** (`dep-da860rqfngtc73bgpm4g`). Hard-reload. Idle=defect. Skip #15546.
+
 **08:08 CT 2026-08-27 GO-0808 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md`. Fully-Wired 1–12 is the law. Live **`0340406`**. Skip #15546.
 
 **07:58 CT 2026-08-27 GO-0758 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md`. Paste boxes. Fully-Wired 1–12. Live **`0340406`**. Skip #15546.
