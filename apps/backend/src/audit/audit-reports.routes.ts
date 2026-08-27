@@ -41,6 +41,14 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.bills' THEN 'bill'
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'banking.transfers' THEN 'transfer'
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.payments' THEN 'payment'
+      -- VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH: the void-reversal route's
+      -- audit.audit_events arm normalizes its raw payload-derived subject_type to 'task' + this
+      -- source_table for these 3 tables (see that route's combined CTE); they had no resolver here.
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.bill_payments' THEN 'bill_payment'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'catalogs.load_cancellation_reasons' THEN 'load_cancellation_reason'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'catalogs.void_cancel_reasons' THEN 'void_cancel_reason'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'mdata.customer_quality_events' THEN 'customer_quality_event'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'driver_finance.driver_settlements' THEN 'driver_settlement'
       ELSE ${alias}.subject_type
     END AS subject_kind,
     CASE
@@ -68,6 +76,11 @@ function auditSubjectProjection(alias: string) {
         WHEN 'accounting.bills' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
         WHEN 'banking.transfers' THEN NULLIF(TRIM(COALESCE(audit_transfer.reference_number, audit_transfer.memo)), '')
         WHEN 'accounting.payments' THEN NULLIF(TRIM(audit_customer_payment.display_id), '')
+        WHEN 'accounting.bill_payments' THEN NULLIF(TRIM(COALESCE(audit_bill_payment.reference_number, audit_bill_payment.check_number, audit_bill_payment.memo)), '')
+        WHEN 'catalogs.load_cancellation_reasons' THEN NULLIF(TRIM(audit_load_cancel_reason.display_name), '')
+        WHEN 'catalogs.void_cancel_reasons' THEN NULLIF(TRIM(audit_void_cancel_reason.reason_label), '')
+        WHEN 'mdata.customer_quality_events' THEN NULLIF(TRIM(audit_customer_quality_event.summary), '')
+        WHEN 'driver_finance.driver_settlements' THEN NULLIF(TRIM(audit_driver_settlement.display_id), '')
         ELSE NULL
       END
       ELSE NULL
@@ -134,7 +147,31 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'task'
      AND ${alias}.source_table = 'banking.transfers'
      AND audit_transfer.id = ${alias}.source_reference_id
-     AND audit_transfer.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_transfer.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.bill_payments audit_bill_payment
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'accounting.bill_payments'
+     AND audit_bill_payment.id = ${alias}.source_reference_id
+     AND audit_bill_payment.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN catalogs.load_cancellation_reasons audit_load_cancel_reason
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'catalogs.load_cancellation_reasons'
+     AND audit_load_cancel_reason.id = ${alias}.source_reference_id
+     AND audit_load_cancel_reason.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN catalogs.void_cancel_reasons audit_void_cancel_reason
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'catalogs.void_cancel_reasons'
+     AND audit_void_cancel_reason.id = ${alias}.source_reference_id
+     AND audit_void_cancel_reason.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN mdata.customer_quality_events audit_customer_quality_event
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'mdata.customer_quality_events'
+     AND audit_customer_quality_event.id = ${alias}.source_reference_id
+    LEFT JOIN driver_finance.driver_settlements audit_driver_settlement
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'driver_finance.driver_settlements'
+     AND audit_driver_settlement.id = ${alias}.source_reference_id
+     AND audit_driver_settlement.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
@@ -338,7 +375,26 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
                -- fallback subject_type is NULL for every one of these rows, so the shared
                -- auditSubjectProjection() CASE below always falls to its ELSE NULL branch
                -- regardless of how many subject_type arms it has.
-               COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type') AS subject_type,
+               --
+               -- VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH: some payloads carry a
+               -- raw dotted table-path in resource_type/reversed_entity_type (e.g. literally
+               -- "accounting.invoices") instead of auditSubjectProjection()'s short vocabulary
+               -- ("invoice", "task", ...) -- that CASE never matches a raw path, so it fell to a bare
+               -- subject_kind = the raw path string and subject_label = NULL ("Subject — not
+               -- visible"). Normalize known raw paths to the short vocabulary here; anything already
+               -- short (or unrecognized) passes through unchanged via the ELSE.
+               CASE COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type')
+                 WHEN 'mdata.loads' THEN 'load'
+                 WHEN 'accounting.journal_entries' THEN 'journal_entry'
+                 WHEN 'accounting.invoices' THEN 'task'
+                 WHEN 'accounting.bills' THEN 'task'
+                 WHEN 'accounting.bill_payments' THEN 'task'
+                 WHEN 'catalogs.load_cancellation_reasons' THEN 'task'
+                 WHEN 'catalogs.void_cancel_reasons' THEN 'task'
+                 WHEN 'mdata.customer_quality_events' THEN 'task'
+                 WHEN 'driver_finance.driver_settlements' THEN 'task'
+                 ELSE COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type')
+               END AS subject_type,
                CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
                                   ae.payload->>'expense_id', ae.payload->>'entity_id', '')
                               ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
