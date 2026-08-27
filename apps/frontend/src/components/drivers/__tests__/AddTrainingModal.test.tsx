@@ -20,6 +20,7 @@ describe("AddTrainingModal (A24-7)", () => {
     vi.restoreAllMocks();
     vi.spyOn(safetyApi, "getTrainingCompletions").mockResolvedValue({
       training_completions: [{ training_name: "Defensive Driving", driver_id: driverId }],
+      total_count: 1,
     } as never);
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue({ id: "tr-1", training_name: "Defensive Driving" } as never);
   });

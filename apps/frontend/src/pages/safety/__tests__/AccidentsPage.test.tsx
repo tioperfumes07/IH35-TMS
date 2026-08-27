@@ -41,13 +41,13 @@ function wrap(ui: ReactElement, initialEntries: string[] = ["/"]) {
 
 describe("AccidentsPage", () => {
   beforeEach(() => {
-    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [accidentFixture] });
+    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [accidentFixture], total_count: 1 });
     vi.spyOn(safetyApi, "getSafetyAccidentDetail").mockResolvedValue(accidentFixture);
     vi.spyOn(safetyApi, "addAccidentPhoto").mockResolvedValue({ accident_id: "acc-1" } as never);
   });
 
   it("opens an exact accident reverse link even when the capped list omits it", async () => {
-    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [] });
+    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [], total_count: 0 });
     render(wrap(<AccidentsPage operatingCompanyId={companyId} />, ["/safety/accidents?accident_id=acc-1"]));
     expect(await screen.findByTestId("accident-report-drawer")).toBeTruthy();
     expect(safetyApi.getSafetyAccidentDetail).toHaveBeenCalledWith("acc-1", companyId);
@@ -100,6 +100,7 @@ describe("AccidentsPage", () => {
   it("renders an EntityLink to the joined claim when claim_id is present", async () => {
     vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({
       accidents: [{ ...accidentFixture, claim_id: "claim-1", claim_number: "CLM-0001" }],
+      total_count: 1,
     } as never);
     render(wrap(<AccidentsPage operatingCompanyId={companyId} />));
     const link = await screen.findByTestId("accident-row-claim-acc-1");

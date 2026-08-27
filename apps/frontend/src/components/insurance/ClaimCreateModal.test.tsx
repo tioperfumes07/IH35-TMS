@@ -48,7 +48,7 @@ vi.mock("../../api/loads", async () => {
 
 vi.mock("../../api/safety", async () => {
   const actual = await vi.importActual<typeof import("../../api/safety")>("../../api/safety");
-  return { ...actual, getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [] }) };
+  return { ...actual, getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [], total_count: 0 }) };
 });
 
 function wrap(ui: ReactElement) {

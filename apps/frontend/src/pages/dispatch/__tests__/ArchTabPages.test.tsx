@@ -87,6 +87,7 @@ describe("dispatch arch tab pages (B21-D2)", () => {
           new_unit_number: "101",
         },
       ],
+      total_count: 1,
     });
   });
 
