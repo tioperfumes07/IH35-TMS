@@ -49,6 +49,20 @@ function currentLoadCustomerFailures(unitSource) {
   return failures;
 }
 
+function vehicleLocationSchemaFailures(unitSource) {
+  const failures = [];
+  if (!/SELECT odometer_mi\s+FROM telematics\.vehicle_locations[\s\S]{0,500}ORDER BY captured_at DESC NULLS LAST\s+LIMIT 1/.test(unitSource)) {
+    failures.push("unit aggregate vehicle-location lookup must select the migration-defined odometer_mi column");
+  }
+  if (!/parseSamsaraVehiclePayload\(locPayloadRes\.rows\[0\] \?\? null\)/.test(unitSource)) {
+    failures.push("unit aggregate must parse the selected vehicle-location row without a phantom payload field");
+  }
+  if (/SELECT payload\s+FROM telematics\.vehicle_locations/.test(unitSource)) {
+    failures.push("unit aggregate must not query phantom telematics.vehicle_locations.payload");
+  }
+  return failures;
+}
+
 function trailerLastServiceVendorFailures(equipmentSource, consumerSource, requiredSource) {
   const failures = [];
   if (!/COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}FROM maintenance\.work_orders w\s+LEFT JOIN LATERAL \(\s+SELECT scoped_vendor\.vendor_name\s+FROM mdata\.get_vendor_same_company\(\s+COALESCE\(w\.external_vendor_id, w\.vendor_id\),\s+w\.operating_company_id\s+\) scoped_vendor\s+LIMIT 1\s+\) v ON TRUE[\s\S]{0,260}WHERE w\.equipment_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid/.test(equipmentSource)) failures.push("trailer aggregate last-service canonical historical vendor chain");
@@ -67,7 +81,7 @@ function trailerLastServiceVendorFailures(equipmentSource, consumerSource, requi
   return failures;
 }
 
-const routeStart = routes.indexOf('app.get("/api/v1/mdata/units/:id"');
+const routeStart = routes.indexOf('"/api/v1/mdata/units/:id"');
 if (routeStart < 0) {
   console.error("verify:aggregate-shape-route FAIL: missing GET /api/v1/mdata/units/:id route");
   process.exit(1);
@@ -116,6 +130,11 @@ if (currentLoadCustomerMissing.length > 0) {
   console.error(`verify:aggregate-shape-route FAIL: current-load customer reverse is unresolved: ${currentLoadCustomerMissing.join(", ")}`);
   process.exit(1);
 }
+const vehicleLocationSchemaMissing = vehicleLocationSchemaFailures(aggregate);
+if (vehicleLocationSchemaMissing.length > 0) {
+  console.error(`verify:aggregate-shape-route FAIL: vehicle-location schema drift: ${vehicleLocationSchemaMissing.join(", ")}`);
+  process.exit(1);
+}
 const trailerLastServiceVendorMissing = trailerLastServiceVendorFailures(equipmentAggregate, maintenanceSnapshot, fleetRequired);
 if (trailerLastServiceVendorMissing.length > 0) {
   console.error(`verify:aggregate-shape-route FAIL: trailer last-service vendor is unwired: ${trailerLastServiceVendorMissing.join(", ")}`);
@@ -135,6 +154,11 @@ if (process.argv.includes("--selftest")) {
     unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+ORDER BY COALESCE\(w\.updated_at, w\.opened_at\))/, "$1$2")),
     currentLoadCustomerFailures(aggregate.replace("mdata.get_customer_same_company(l.customer_id, l.operating_company_id)", "mdata.customers")),
+    vehicleLocationSchemaFailures(
+      aggregate
+        .replace("SELECT odometer_mi\n      FROM telematics.vehicle_locations", "SELECT payload\n      FROM telematics.vehicle_locations")
+        .replace("parseSamsaraVehiclePayload(locPayloadRes.rows[0] ?? null)", "parseSamsaraVehiclePayload(locPayloadRes.rows[0]?.payload ?? null)")
+    ),
     trailerLastServiceVendorFailures(equipmentAggregate.replace("mdata.get_vendor_same_company(", "mdata.get_vendor_active_only("), maintenanceSnapshot, fleetRequired),
     trailerLastServiceVendorFailures(equipmentAggregate, maintenanceSnapshot, fleetRequired.replace(/("id": "trailer\.profile\.maintenance"[\s\S]{0,220})"vendor",/, '$1"vendor_MISSING",')),
   ];
@@ -142,7 +166,7 @@ if (process.argv.includes("--selftest")) {
     console.error("verify:aggregate-shape-route SELFTEST FAIL: a PM schedule company-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify:aggregate-shape-route SELFTEST PASS — 11/11 aggregate scope/vendor/void/customer mutations red");
+  console.log("verify:aggregate-shape-route SELFTEST PASS — 12/12 aggregate scope/vendor/void/customer/schema mutations red");
   process.exit(0);
 }
 
