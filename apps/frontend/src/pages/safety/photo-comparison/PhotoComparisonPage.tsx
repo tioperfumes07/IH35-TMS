@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -19,23 +19,30 @@ type SessionRow = {
   driver_name?: string;
 };
 
-async function fetchSessions(operatingCompanyId: string) {
-  return apiRequest<{ sessions: SessionRow[] }>(
-    `/api/safety/photo-comparison/sessions?operating_company_id=${operatingCompanyId}`
+const PAGE_SIZE = 50;
+
+async function fetchSessions(operatingCompanyId: string, page: number) {
+  return apiRequest<{ sessions: SessionRow[]; total_count: number }>(
+    `/api/safety/photo-comparison/sessions?operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`
   );
 }
 
 export function PhotoComparisonPage() {
+  // @matrix-built safety:photo_comparison.list:{connectivity,qbo_chrome}
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [page, setPage] = useState(0);
+
+  useEffect(() => setPage(0), [companyId]);
 
   const query = useQuery({
-    queryKey: ["photo-comparison-sessions", companyId],
-    queryFn: () => fetchSessions(companyId),
+    queryKey: ["photo-comparison-sessions", companyId, page],
+    queryFn: () => fetchSessions(companyId, page),
     enabled: Boolean(companyId),
   });
 
   const sessions = query.data?.sessions ?? [];
+  const totalCount = query.data?.total_count ?? 0;
 
   const columns = useMemo<ParityColumn<SessionRow>[]>(
     () => [
@@ -87,8 +94,37 @@ export function PhotoComparisonPage() {
           emptyText="No photo comparison sessions found."
           storageKey="safety-photo-comparison-sessions"
           exportFilename="photo-comparison-sessions"
+          pageSize={PAGE_SIZE}
+          pageSizeOptions={[PAGE_SIZE]}
+          hidePager
         />
       )}
+
+      {!query.isError && totalCount > PAGE_SIZE ? (
+        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+          <span>
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              disabled={page === 0 || query.isFetching}
+              onClick={() => setPage((value) => Math.max(0, value - 1))}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

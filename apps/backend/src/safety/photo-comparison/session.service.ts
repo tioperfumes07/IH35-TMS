@@ -437,8 +437,10 @@ export async function listSessions(
     status?: DiffStatus;
     from?: string;
     to?: string;
+    limit: number;
+    offset: number;
   }
-): Promise<PhotoComparisonSession[]> {
+): Promise<{ sessions: PhotoComparisonSession[]; totalCount: number }> {
   const clauses = ["operating_company_id = $1::uuid"];
   const values: unknown[] = [filters.operatingCompanyId];
   let idx = 2;
@@ -464,17 +466,28 @@ export async function listSessions(
     idx += 1;
   }
 
+  const countRes = await client.query<{ total_count: string }>(
+    `
+      SELECT COUNT(*)::text AS total_count
+      FROM safety.photo_comparison_sessions
+      WHERE ${clauses.join(" AND ")}
+    `,
+    values
+  );
+
+  const pageValues = [...values, filters.limit, filters.offset];
   const res = await client.query<PhotoComparisonSession>(
     `
       SELECT ${SESSION_COLUMNS}
       FROM safety.photo_comparison_sessions
       WHERE ${clauses.join(" AND ")}
       ORDER BY created_at DESC
-      LIMIT 200
+      LIMIT $${pageValues.length - 1}
+      OFFSET $${pageValues.length}
     `,
-    values
+    pageValues
   );
-  return res.rows;
+  return { sessions: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function applyManualOverride(

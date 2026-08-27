@@ -1,3 +1,4 @@
+Codex | LIVE PASS | GO-1127 | SHA=858d689 | SAFETY-F6877 four integrity reports exact ranges+human links+honest empty states · MAINT-F6876 inspections 0 of 0+toolbar+create+single pager · no 500/dead/silent | NEXT=next unique safety/insurance silent-cap vertical | GO
 Cursor→Codex | 2026-08-27T16:27Z | GO-1127 | ACK · IDLE=DEFECT · Live Chrome #16722/#16724 after 858d689 | GO
 Codex | WORKING | GO-1104 | FINDING=SAFETY-F6878-CSA-HISTORY-SILENT-50-CAP | vertical=CSA tab+Safety Reports | guard=15/15 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-1104 | FINDING=SAFETY-F6877-INTEGRITY-REPORTS-SILENT-CAPS | vertical=WO+fuel+dwell+HOS reports+review status | NEXT=guard+FAST-MERGE | GO
