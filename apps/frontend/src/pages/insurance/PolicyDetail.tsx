@@ -422,11 +422,9 @@ export function PolicyDetail() {
         confirmLabel="Archive policy"
         danger
         onClose={() => setPendingArchive(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!pendingArchive) return;
-          const input = pendingArchive;
-          setPendingArchive(null);
-          archiveMutation.mutate(input);
+          await archiveMutation.mutateAsync(pendingArchive);
         }}
       />
     </div>

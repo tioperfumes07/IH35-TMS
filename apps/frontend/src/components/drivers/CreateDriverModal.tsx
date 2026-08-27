@@ -1401,6 +1401,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           } catch (error) {
             if (generation !== inviteGenerationRef.current) return;
             pushToast(userFacingApiError(error, "Could not send invite"), "error");
+            throw error;
           } finally {
             if (generation === inviteGenerationRef.current) setInvitePending(false);
           }

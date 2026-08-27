@@ -180,7 +180,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.integrity.observation_reviewed",
-        { integrity_observation_id: updated.id },
+        { integrity_observation_id: updated.id, operating_company_id: query.data.operating_company_id },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );

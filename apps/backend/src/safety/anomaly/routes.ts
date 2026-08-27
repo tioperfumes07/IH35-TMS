@@ -55,18 +55,21 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
 
   app.patch("/api/safety/anomaly/rules/:uuid", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
+    if ((user as { role?: string }).role?.toLowerCase() !== "owner") return reply.code(403).send({ error: "forbidden" });
     const p = uuidParams.safeParse(req.params ?? {});
-    const body = z.object({ is_active: z.boolean().optional(), threshold_config: z.record(z.string(), z.unknown()).optional(), severity: z.string().optional() }).safeParse(req.body ?? {});
+    const body = companyQuery.extend({ is_active: z.boolean().optional(), threshold_config: z.record(z.string(), z.unknown()).optional(), severity: z.string().optional() }).safeParse(req.body ?? {});
     if (!p.success || !body.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `UPDATE safety.anomaly_alert_rules SET
           is_active = COALESCE($2, is_active),
           threshold_config = COALESCE($3::jsonb, threshold_config),
           severity = COALESCE($4, severity), updated_at = now()
-         WHERE uuid = $1::uuid RETURNING *`,
-        [p.data.uuid, body.data.is_active ?? null, body.data.threshold_config ? JSON.stringify(body.data.threshold_config) : null, body.data.severity ?? null]
+         WHERE uuid = $1::uuid AND operating_company_id = $5::uuid RETURNING *`,
+        [p.data.uuid, body.data.is_active ?? null, body.data.threshold_config ? JSON.stringify(body.data.threshold_config) : null, body.data.severity ?? null, body.data.operating_company_id]
       );
+      if (res.rows[0]) await appendCrudAudit(client, user.uuid, "safety.anomaly_rule.update", { entity_id: p.data.uuid, operating_company_id: body.data.operating_company_id });
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "not_found" });
@@ -134,11 +137,13 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
 
   app.post("/api/safety/anomaly/seed-defaults", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
+    if ((user as { role?: string }).role?.toLowerCase() !== "owner") return reply.code(403).send({ error: "forbidden" });
     const q = companyQuery.safeParse(req.body ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       await seedDefaultAnomalyRules(client, q.data.operating_company_id);
+      await appendCrudAudit(client, user.uuid, "safety.anomaly_rules.seed_defaults", { operating_company_id: q.data.operating_company_id });
     });
     return { ok: true };
   });

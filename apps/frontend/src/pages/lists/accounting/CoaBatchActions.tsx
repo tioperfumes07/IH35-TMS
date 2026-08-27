@@ -71,6 +71,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to make accounts inactive");
+      throw err;
     } finally {
       setBusy(false);
     }

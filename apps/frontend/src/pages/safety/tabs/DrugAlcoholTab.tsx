@@ -676,11 +676,10 @@ export function DrugAlcoholTab() {
         }
         confirmLabel="Enroll drivers"
         onClose={() => setPendingBulkEnroll(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!pendingBulkEnroll) return;
           const input = pendingBulkEnroll;
-          setPendingBulkEnroll(null);
-          bulkEnrollMutation.mutate({
+          await bulkEnrollMutation.mutateAsync({
             companyId: input.companyId,
             generation: input.generation,
             consortiumName: input.consortiumName,

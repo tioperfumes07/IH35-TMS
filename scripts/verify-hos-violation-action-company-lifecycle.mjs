@@ -2,8 +2,9 @@
 import fs from "node:fs";
 
 const source = fs.readFileSync("apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx", "utf8");
+const backendSource = fs.readFileSync("apps/backend/src/routes/safety/hos-violations.ts", "utf8");
 
-function inspect(value) {
+function inspect(value, backend = backendSource) {
   const failures = [];
   const checks = [
     [/companyGenerationRef = useRef\(0\)/, "missing company generation"],
@@ -23,6 +24,12 @@ function inspect(value) {
     const matches = value.match(pattern);
     if (!matches || (message === "stale successes are not rejected" && matches.length < 2)) failures.push(message);
   }
+  if (!/"safety\.hos_violation\.created",[\s\S]{0,220}operating_company_id: query\.data\.operating_company_id/.test(backend)) {
+    failures.push("create audit must identify the operating company");
+  }
+  if (!/"safety\.hos_violation\.voided",[\s\S]{0,220}operating_company_id: query\.data\.operating_company_id/.test(backend)) {
+    failures.push("void audit must identify the operating company");
+  }
   return failures;
 }
 
@@ -38,7 +45,9 @@ if (process.argv.includes("--selftest")) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
     if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
   }
-  console.log(`verify-hos-violation-action-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
+  const mutatedBackend = backendSource.replace("operating_company_id: query.data.operating_company_id,", "");
+  if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error("missed scoped audit mutation");
+  console.log(`verify-hos-violation-action-company-lifecycle --selftest PASS (${mutations.length + 1}/${mutations.length + 1})`);
 } else {
   const failures = inspect(source);
   if (failures.length) {

@@ -1,3 +1,11 @@
+**19:13 CT GO-1913 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. Pull this INBOX TOP. ACK OUTBOX this turn. Idle=live-walk. HOLDING=defect. Nobody except Cursor lead `trigger_deploy`. Skip #15546. ACK: `CASCADE | ACK | GO-1913 | NOW=/dispatch | SHA=f12ab6e | GO`
+
+**YOUR NOW:** Live-walk /dispatch then /driver-hub on live SHA. FINDING to board. No idle. No U14 restamp.
+
+**18:52 CT GO-1852 — IDLE=LIVE-WALK. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1852.md`. Live **`f12ab6e`**. If idle: live-verify or CREATE TEST on your next vertical URL same turn. HOLDING=defect. Nobody `trigger_deploy`. Skip #15546. ACK: `CASCADE | ACK | GO-1852 | NOW=/dispatch | SHA=f12ab6e | GO`
+
+**YOUR NOW:** Live-walk /dispatch on f12ab6e then /driver-hub. FINDING to board. No idle. No U14 restamp.
+
 **18:30 CT GO-1830 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1830.md`. Live until land=`b3dae9d`. Deploy IN FLIGHT `dep-da7ndvvavr4c73b842sg` tip `8745b43`. Hard-reload when healthz moves. Nobody `trigger_deploy`. Skip #15546. U14 never restamp. Idle=defect. ACK: `CASCADE | ACK | GO-1830 | NOW=/customers | SHA=8745b43 | GO`
 
 **YOUR NOW:** Jorge-plain: /customers then /dispatch after hard-reload. FINDING to GUARD-WORKORDERS. No U14 restamp. No deploy.

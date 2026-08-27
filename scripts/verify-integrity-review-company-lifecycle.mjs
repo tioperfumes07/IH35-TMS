@@ -3,8 +3,9 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx";
 const source = fs.readFileSync(file, "utf8");
+const backendSource = fs.readFileSync("apps/backend/src/routes/safety/integrity.ts", "utf8");
 
-function audit(text) {
+function audit(text, backend = backendSource) {
   const failures = [];
   const need = (ok, message) => { if (!ok) failures.push(message); };
   need(text.includes("actionGenerationRef = useRef(0)"), "generation ref missing");
@@ -15,6 +16,7 @@ function audit(text) {
   need(/onError: \(error, input\) => \{[\s\S]{0,100}input\.generation === actionGenerationRef\.current/.test(text), "stale error is not rejected");
   need(/reviewMutation\.mutate\(\{ observationId: rowId, companyId, generation: actionGenerationRef\.current \}\)/.test(text), "row action does not capture review context");
   need(text.includes("@matrix-built modules=safety cols=driver,unit,vendor,connectivity,reverse_link"), "leaf annotation missing");
+  need(/"safety\.integrity\.observation_reviewed",[\s\S]{0,180}operating_company_id: query\.data\.operating_company_id/.test(backend), "review audit omits operating company");
   return failures;
 }
 
@@ -31,7 +33,12 @@ if (process.argv.includes("--selftest")) {
     const mutated = source.replace(pattern, replacement);
     if (mutated === source || audit(mutated).length === 0) throw new Error(`mutation ${index + 1} escaped`);
   }
-  console.log(`verify-integrity-review-company-lifecycle selftest PASS — ${mutations.length}/${mutations.length} planted defects red`);
+  const mutatedBackend = backendSource.replace(
+    "{ integrity_observation_id: updated.id, operating_company_id: query.data.operating_company_id }",
+    "{ integrity_observation_id: updated.id }",
+  );
+  if (mutatedBackend === backendSource || audit(source, mutatedBackend).length === 0) throw new Error(`mutation ${mutations.length + 1} escaped`);
+  console.log(`verify-integrity-review-company-lifecycle selftest PASS — ${mutations.length + 1}/${mutations.length + 1} planted defects red`);
   process.exit(0);
 }
 

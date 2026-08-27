@@ -1215,7 +1215,6 @@ export function CargoClaimIntakeSurface({
         onConfirm={async () => {
           if (!pendingUnlinkedCreate) return;
           const input = pendingUnlinkedCreate;
-          setPendingUnlinkedCreate(null);
           await persistCreate(input);
         }}
       />

@@ -348,9 +348,13 @@ export function CardOverageQueuePage() {
         }
         confirmLabel="Approve recovery"
         onClose={() => setConfirmApproveRow(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!confirmApproveRow) return;
-          approveMut.mutate({ eventId: confirmApproveRow.id, companyId, generation: actionGenerationRef.current });
+          await approveMut.mutateAsync({
+            eventId: confirmApproveRow.id,
+            companyId,
+            generation: actionGenerationRef.current,
+          });
         }}
       />
     </div>

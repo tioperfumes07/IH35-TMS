@@ -336,7 +336,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         ]
       );
       const row = res.rows[0];
-      await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, severity: row.severity }, "warning", "P3-T11.17.2-SAFETY-V6.4");
+      await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, severity: row.severity }, "warning", "P3-T11.17.2-SAFETY-V6.4");
       return row;
     });
     if (!created) {
@@ -382,9 +382,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       );
       const row = res.rows[0];
       if (!row) return null;
-      await appendCrudAudit(client, user.uuid, "safety.complaint.status_changed", { complaint_id: row.id, status: row.status }, "info", "P3-T11.17.2-SAFETY-V6.4");
+      await appendCrudAudit(client, user.uuid, "safety.complaint.status_changed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, status: row.status }, "info", "P3-T11.17.2-SAFETY-V6.4");
       if (["resolved", "dismissed"].includes(row.status)) {
-        await appendCrudAudit(client, user.uuid, "safety.complaint.resolved", { complaint_id: row.id, status: row.status }, "info", "P3-T11.17.2-SAFETY-V6.4");
+        await appendCrudAudit(client, user.uuid, "safety.complaint.resolved", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, status: row.status }, "info", "P3-T11.17.2-SAFETY-V6.4");
       }
       return row;
     });
@@ -433,7 +433,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.complaint.voided",
-        { complaint_id: row.id, void_reason: body.data.void_reason },
+        { complaint_id: row.id, operating_company_id: query.data.operating_company_id, void_reason: body.data.void_reason },
         "warning",
         "P3-T11.17.2-SAFETY-V6.4"
       );

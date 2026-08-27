@@ -22,5 +22,7 @@ export default {
     ctx.run("node", ["scripts/verify-launch-toggle-notification-scope.mjs"]);
     ctx.run("node", ["scripts/verify-launch-toggle-action-snapshot.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-launch-toggle-action-snapshot.mjs"]);
+    ctx.run("node", ["scripts/verify-confirm-modal-pending-dismiss-lock.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-confirm-modal-pending-dismiss-lock.mjs"]);
   },
 };

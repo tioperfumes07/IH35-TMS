@@ -137,7 +137,11 @@ export async function computeAndUpsertScore(client: any, companyId: string, acto
     client,
     actorId,
     "safety.csa_score.computed",
-    { csa_score_id: upsert.rows[0].id, total_violations: upsert.rows[0].total_violations },
+    {
+      csa_score_id: upsert.rows[0].id,
+      operating_company_id: companyId,
+      total_violations: upsert.rows[0].total_violations,
+    },
     "info",
     "P3-T11.17.2-SAFETY-V6.4"
   );

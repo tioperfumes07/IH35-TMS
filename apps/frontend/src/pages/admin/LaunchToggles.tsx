@@ -233,12 +233,11 @@ export function LaunchTogglesPage() {
         confirmLabel={pendingAction?.action === "rollback" ? "Rollback carrier" : "Launch carrier"}
         danger={pendingAction?.action === "rollback"}
         onClose={() => setPendingAction(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!pendingAction) return;
           const input = pendingAction;
-          setPendingAction(null);
           setPendingId(input.carrierId);
-          actionMutation.mutate(input);
+          await actionMutation.mutateAsync(input);
         }}
       />
     </div>

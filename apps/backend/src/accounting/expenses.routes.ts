@@ -617,6 +617,33 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
         const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
 
+        // TEST-DATA-BANK-MATCH-EXPENSES-DOUBLE-SEEDED-6210: this route has no per-call idempotency key,
+        // so a caller (script retry, or a UI double-click racing the "submitting" disable) that POSTs an
+        // identical (operating_company_id, memo) body twice creates a second real GL-posting expense with
+        // no error surfaced. Confirmed live on prod: 12 exact-duplicate pairs on account 6210, each pair's
+        // two rows ~20-30s apart, same memo (`TEST DATA VOID-AT-LAUNCH bank match <uuid>`), same amount,
+        // two different source_transaction_ids — $23,773.38 double-counted. memo is the closest thing to
+        // an idempotency key this route has; a genuinely distinct expense re-using the exact same memo
+        // text within 2 minutes for the same company is vanishingly rare next to the cost of a silent
+        // duplicate posting, so a repeat is rejected rather than silently accepted.
+        if (hasMemo && body.memo && body.memo.trim()) {
+          const dup = await client.query(
+            `SELECT id FROM accounting.expenses
+              WHERE operating_company_id = $1::uuid
+                AND memo = $2
+                AND voided_at IS NULL
+                AND created_at > now() - interval '2 minutes'
+              LIMIT 1`,
+            [body.operating_company_id, body.memo]
+          );
+          if (dup.rows[0]) {
+            return {
+              duplicateSubmission: true as const,
+              existingExpenseId: String((dup.rows[0] as { id?: string }).id ?? ""),
+            };
+          }
+        }
+
         if (body.vendor_uuid) {
           const vendorRes = await client.query(
             `SELECT id FROM mdata.vendors
@@ -1029,6 +1056,13 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         });
       if ("vendorNotInCompany" in payload)
         return reply.code(400).send({ error: "expense_vendor_not_in_company" });
+      if ("duplicateSubmission" in payload)
+        return reply.code(409).send({
+          error: "duplicate_expense_submission",
+          detail:
+            "An expense with this exact memo was already recorded for this company in the last 2 minutes. If this is intentional, vary the memo text.",
+          existing_expense_id: (payload as { existingExpenseId?: string }).existingExpenseId ?? null,
+        });
       await withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,

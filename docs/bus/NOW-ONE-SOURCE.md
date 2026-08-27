@@ -1,3 +1,5 @@
+**19:13 CT 2026-08-26 GO-1913 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. All seats ACK GO-1913. Idle=defect. Skip #15546. CC never `trigger_deploy`.
+
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
 **16:22 CT 2026-08-26.** Auditors = **Cascade + Devin only** (no Devin-A). Live healthz **`b8f10a3`**. Lead must click live same turn. Packet GO-1405 still.
