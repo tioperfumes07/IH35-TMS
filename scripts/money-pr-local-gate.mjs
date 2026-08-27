@@ -147,6 +147,7 @@ const STEPS = [
   ["verify-book-load-initial-assignment-history", "scripts/verify-book-load-initial-assignment-history.mjs"],
   ["verify-cbp-wait-times-cache-lucia-bypass", "scripts/verify-cbp-wait-times-cache-lucia-bypass.mjs"],
   ["verify-dispatch-driver-label-survives-archive", "scripts/verify-dispatch-driver-label-survives-archive.mjs"],
+  ["verify-wo-line-void-not-delete", "scripts/verify-wo-line-void-not-delete.mjs"],
 ];
 
 function runNode(rel) {
