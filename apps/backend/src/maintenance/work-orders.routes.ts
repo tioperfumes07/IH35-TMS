@@ -305,6 +305,13 @@ export function isWoPostedApError(error: unknown): error is WoPostedApError {
   return error instanceof WoPostedApError;
 }
 
+class WoTerminalCostMutationError extends Error {
+  constructor(public readonly status: string) {
+    super("wo_cost_locked_by_terminal_status");
+    this.name = "WoTerminalCostMutationError";
+  }
+}
+
 type ApGuardClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
@@ -1602,11 +1609,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     try {
       row = await withCompany(user.uuid, companyId, async (client) => {
         if (!(await maintenanceReady(client))) return null;
-        const wo = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
-          params.data.id,
-          companyId,
-        ]);
+        const wo = (await client.query(
+          `SELECT id, status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, companyId]
+        )) as { rows: Array<{ id: string; status: string | null }>; rowCount: number };
         if (wo.rowCount === 0) return undefined;
+        const status = String(wo.rows[0]?.status ?? "").toLowerCase();
+        if (CLOSED_STATUSES.has(status)) throw new WoTerminalCostMutationError(status);
         // FINANCIAL GUARD: a WO cost line feeds the linked Bill/Expense. If that AP document is
         // already posted/paid, adding a cost line would diverge the WO from its Bill — refuse.
         const posted = await findPostedApForWo(client, companyId, params.data.id);
@@ -1623,6 +1632,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return res.rows[0];
       });
     } catch (error) {
+      if (error instanceof WoTerminalCostMutationError) {
+        return reply.code(409).send({ error: error.message, status: error.status });
+      }
       if (isWoPostedApError(error)) return postedApReply(reply, error.detail);
       if (isWoInvoiceMismatch(error)) {
         const err = error;
