@@ -49,6 +49,7 @@ const EMPTY_MOUNT: MountDraft = {
   size: "295/75R22.5",
   tread_depth_32nds: "32",
 };
+const EVENT_PAGE_SIZE = 50;
 
 export function TireProgramPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -66,6 +67,7 @@ export function TireProgramPage() {
   const [brandName, setBrandName] = useState("");
   const [toPosition, setToPosition] = useState("");
   const [treadDepth, setTreadDepth] = useState("");
+  const [eventPage, setEventPage] = useState(0);
   const actionGenerationRef = useRef(0);
 
   useEffect(() => {
@@ -121,8 +123,8 @@ export function TireProgramPage() {
   });
 
   const eventsQ = useQuery({
-    queryKey: ["maintenance", "tire-events", companyId, assetKind, assetId],
-    queryFn: () => listMaintenanceTireEvents(companyId, assetParams),
+    queryKey: ["maintenance", "tire-events", companyId, assetKind, assetId, eventPage],
+    queryFn: () => listMaintenanceTireEvents(companyId, { ...assetParams, limit: EVENT_PAGE_SIZE, offset: eventPage * EVENT_PAGE_SIZE }),
     enabled: Boolean(companyId && assetId),
   });
 
@@ -252,6 +254,7 @@ export function TireProgramPage() {
     setBrandName("");
     setToPosition("");
     setTreadDepth("");
+    setEventPage(0);
   }, [companyId, assetKind, assetId]);
 
   const groupedPositions = useMemo(() => {
@@ -325,6 +328,7 @@ export function TireProgramPage() {
   );
 
   const eventRows = eventsQ.data?.rows ?? [];
+  const eventTotalCount = eventsQ.data?.total_count ?? 0;
 
   const eventColumns = useMemo<ParityColumn<MaintenanceTireEventRow>[]>(
     () => [
@@ -424,14 +428,23 @@ export function TireProgramPage() {
                 onRetry={() => void eventsQ.refetch()}
               />
             ) : (
-            <ParityTable
-              rows={eventRows}
-              columns={eventColumns}
-              rowKey={(row) => row.id}
-              loading={eventsQ.isPending}
-              storageKey="maintenance-tire-events"
-              emptyText={`No tire events yet for this ${assetKind}.`}
-            />
+              <>
+                <ParityTable
+                  rows={eventRows}
+                  columns={eventColumns}
+                  rowKey={(row) => row.id}
+                  loading={eventsQ.isPending}
+                  storageKey="maintenance-tire-events"
+                  emptyText={`No tire events yet for this ${assetKind}.`}
+                />
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-tire-event-pager">
+                  <span>{eventTotalCount === 0 ? "0 of 0" : `${eventPage * EVENT_PAGE_SIZE + 1}–${Math.min((eventPage + 1) * EVENT_PAGE_SIZE, eventTotalCount)} of ${eventTotalCount}`}</span>
+                  <div className="flex gap-1">
+                    <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={eventPage === 0 || eventsQ.isFetching} onClick={() => setEventPage((page) => page - 1)}>Previous</button>
+                    <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(eventPage + 1) * EVENT_PAGE_SIZE >= eventTotalCount || eventsQ.isFetching} onClick={() => setEventPage((page) => page + 1)}>Next</button>
+                  </div>
+                </div>
+              </>
             )}
           </section>
         </div>

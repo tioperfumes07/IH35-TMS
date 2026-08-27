@@ -1440,3 +1440,5 @@ Codex | SHIPPED | SAFETY-F6881 | PR=#16734 @ 2963591225 | Built=safety:driver_sc
 Codex | SHIPPED | MAINT-F6882 | PR=#16735 @ f6ae1cd2b1 | Built=fleet unit+trailer service-history connectivity+reverse+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6884 parts assignment vertical | GO
 Codex | SHIPPED | MAINT-F6884 | PR=#16736 @ 919f7e0ed5 | Built=inventory assignments+vendor/unit reverse exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6885 | GO
 Codex | WORKING | MAINT-F6885 | Built=maintenance vendor WO+invoice reverse exact range | guard=11/11 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6885 | PR=#16737 @ d8932bf601 | Built=maintenance vendor WO+invoice reverse exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6886 | GO
+Codex | WORKING | MAINT-F6886 | Built=maintenance/fleet tire event exact range | guard=12/12 | NEXT=FAST-MERGE | GO

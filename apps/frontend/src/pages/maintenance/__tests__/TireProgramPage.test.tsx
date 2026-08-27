@@ -97,7 +97,7 @@ describe("Maintenance TireProgramPage (B32)", () => {
     listUnits.mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] });
     listMaintenanceTireBrands.mockResolvedValue({ rows: [{ id: "brand-1", name: "Michelin X Line" }] });
     listMaintenanceTireAlerts.mockResolvedValue({ rows: [], count: 0 });
-    listMaintenanceTireEvents.mockResolvedValue({ rows: [] });
+    listMaintenanceTireEvents.mockResolvedValue({ rows: [], total_count: 0 });
     getMaintenanceTireLayout.mockResolvedValue({
       positions: [
         {
@@ -159,7 +159,7 @@ describe("Maintenance TireProgramPage (B32)", () => {
       );
       expect(listMaintenanceTireEvents).toHaveBeenCalledWith(
         "11111111-1111-4111-8111-111111111111",
-        { equipment_id: "trailer-1" },
+        { equipment_id: "trailer-1", limit: 50, offset: 0 },
       );
     });
   });

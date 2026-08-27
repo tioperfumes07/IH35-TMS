@@ -38,6 +38,8 @@ const companyQuerySchema = z.object({
   equipment_id: z.string().uuid().optional(),
   include_archived: z.coerce.boolean().optional().default(false),
   tire_record_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -572,7 +574,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const parsed = companyQuerySchema.safeParse(req.query);
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const filters = ["te.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.tire_record_id) {
@@ -587,20 +589,29 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
         values.push(parsed.data.equipment_id);
         filters.push(`tr.equipment_id = $${values.length}`);
       }
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+         FROM maintenance.tire_events te
+         JOIN maintenance.tire_records tr ON tr.id = te.tire_record_id
+          AND tr.operating_company_id = te.operating_company_id
+         WHERE ${filters.join(" AND ")}`,
+        values
+      );
       const res = await client.query(
         `SELECT te.id::text, te.tire_record_id::text, te.event_type, te.from_position_code, te.to_position_code,
                 te.tread_depth_32nds, te.brand_id::text, te.brand_name, te.serial_number, te.notes,
                 te.is_low_tread_alert, te.work_order_id::text, te.created_at
          FROM maintenance.tire_events te
          JOIN maintenance.tire_records tr ON tr.id = te.tire_record_id
+          AND tr.operating_company_id = te.operating_company_id
          WHERE ${filters.join(" AND ")}
-         ORDER BY te.created_at DESC
-         LIMIT 200`,
-        values
+         ORDER BY te.created_at DESC, te.id DESC
+         LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+        [...values, parsed.data.limit, parsed.data.offset]
       );
-      return res.rows.map(mapTireEventRow);
+      return { rows: res.rows.map(mapTireEventRow), total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
-    return reply.send({ rows });
+    return reply.send(result);
   });
 
   app.post("/api/v1/maintenance/tires/rotate", async (req, reply) => {

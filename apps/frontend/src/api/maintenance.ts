@@ -1423,13 +1423,15 @@ export function auditMaintenanceTireTread(body: {
 
 export function listMaintenanceTireEvents(
   operatingCompanyId: string,
-  params: { unit_id?: string; equipment_id?: string; tire_record_id?: string } = {}
+  params: { unit_id?: string; equipment_id?: string; tire_record_id?: string; limit?: number; offset?: number } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.unit_id) q.set("unit_id", params.unit_id);
   if (params.equipment_id) q.set("equipment_id", params.equipment_id);
   if (params.tire_record_id) q.set("tire_record_id", params.tire_record_id);
-  return apiRequest<{ rows: MaintenanceTireEventRow[] }>(`/api/v1/maintenance/tires/events?${q.toString()}`);
+  q.set("limit", String(params.limit ?? 50));
+  q.set("offset", String(params.offset ?? 0));
+  return apiRequest<{ rows: MaintenanceTireEventRow[]; total_count: number }>(`/api/v1/maintenance/tires/events?${q.toString()}`);
 }
 
 export function listMaintenanceTireAlerts(operatingCompanyId: string) {
