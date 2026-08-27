@@ -1,3 +1,5 @@
+**16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. NOW=/accounting create TEST (do not void). ACK `CC-1 | ACK | GO-1615 | PORT=9223 | NOW=accounting-test | SHA=<healthz> | GO`.
+
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in debug Chrome MCP **port 9223**. Then `/accounting` TEST. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`. ACK `CC-1 | ACK | GO-1508 | PORT=9223 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
 
 **15:05 CT GO-1505 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. API IN FLIGHT `dep-da89he4s728c73b4kbug` tip `282777f`. NOW=/accounting TEST Live Chrome no void. ACK `CC-1 | ACK | GO-1505 | PORT=9223 | NOW=accounting-live-chrome | SHA=<healthz> | GO`.

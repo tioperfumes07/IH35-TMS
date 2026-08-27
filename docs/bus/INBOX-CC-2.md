@@ -1,3 +1,5 @@
+**16:15 CT GO-1615 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Unique hunt N=. Never GL. ACK `CC-2 | ACK | GO-1615 | PORT=9224 | NOW=unique-hunt-N | SHA=<healthz> | GO`.
+
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in debug Chrome MCP **port 9224**. Then unique hunt N=. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`. ACK `CC-2 | ACK | GO-1508 | PORT=9224 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
 
 **15:05 CT GO-1505 — IDLE=DEFECT.** Watching INBOX is a defect. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. Hard-reload `282777f`. Unique hunt N=. Never GL. ACK `CC-2 | ACK | GO-1505 | PORT=9224 | NOW=unique-hunt-N | SHA=<healthz> | GO`.

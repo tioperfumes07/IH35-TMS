@@ -61,6 +61,12 @@ function assert(files) {
   if (!/id=\{id\}/.test(wrapper)) {
     problems.push(`${WRAPPER}: must forward id={id} to the engine Combobox`);
   }
+  if (!/\bloading\?:\s*boolean/.test(wrapper)) {
+    problems.push(`${WRAPPER}: must declare \`loading?: boolean\` (FuelPlannerHome passes loading=; SPA TS2322 if missing)`);
+  }
+  if (!/loading=\{loading\}/.test(wrapper)) {
+    problems.push(`${WRAPPER}: must forward loading={loading} to the engine Combobox`);
+  }
 
   // 3. The adapter must PASS it to the Combobox, not merely destructure it into synthetic events.
   if (!/<Combobox[\s\S]{0,200}id=\{id\}/.test(adapter)) {
@@ -88,8 +94,14 @@ if (SELFTEST) {
   const wrapperBroken = { ...files, [WRAPPER]: files[WRAPPER].replace(/\n\s*id=\{id\}/, "") };
   checks.push(["wrapper drops id", assert(wrapperBroken).some((p) => /must forward id/.test(p))]);
 
+  const wrapperDropsLoading = { ...files, [WRAPPER]: files[WRAPPER].replace(/\n\s*loading=\{loading\}/, "") };
+  checks.push(["wrapper drops loading", assert(wrapperDropsLoading).some((p) => /must forward loading/.test(p))]);
+
   // 3. Engine renders the id somewhere OTHER than the combobox input.
-  const engineBroken = { ...files, [ENGINE]: files[ENGINE].replace(/\n\s*id=\{id\}\n\s*role="combobox"/, '\n          role="combobox"') };
+  const engineBroken = {
+    ...files,
+    [ENGINE]: files[ENGINE].replace(/\n\s*id=\{id\}\n\s*aria-label=\{ariaLabel\}\n\s*role="combobox"/, '\n          aria-label={ariaLabel}\n          role="combobox"'),
+  };
   checks.push(["id not on the combobox element", assert(engineBroken).some((p) => /SAME element as role="combobox"/.test(p))]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);

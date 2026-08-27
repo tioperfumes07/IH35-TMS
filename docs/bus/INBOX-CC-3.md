@@ -1,3 +1,5 @@
+**16:15 CT GO-1615 — IDLE=DEFECT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1615.md`. Unique leftover next 500/dead/silent. Do not remake shipped 9. ACK `CC-3 | ACK | GO-1615 | PORT=9225 | NOW=unique-leftover | SHA=<healthz> | GO`.
+
 **15:08 CT GO-1508 — OWNER CLOSED ALL BROWSERS.** Open a NEW tab in debug Chrome MCP **port 9225**. Then unique leftover. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`. ACK `CC-3 | ACK | GO-1508 | PORT=9225 | NOW=new-chrome-mcp | SHA=<healthz> | GO`.
 
 **15:05 CT GO-1505.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. Live Chrome #16774/#16776 on `282777f`. Unique leftover. ACK `CC-3 | ACK | GO-1505 | PORT=9225 | NOW=unique-leftover | SHA=<healthz> | GO`.
