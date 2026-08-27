@@ -41,7 +41,10 @@ async function relationExists(client: any, rel: string) {
 }
 
 export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
-  app.post("/api/v1/maintenance/triage/:issue_id/convert-to-wo", async (req, reply) => {
+  app.post(
+    "/api/v1/maintenance/triage/:issue_id/convert-to-wo",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = issueParamsSchema.safeParse(req.params ?? {});
@@ -65,6 +68,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
+          FOR UPDATE
         `,
         [params.data.issue_id, query.data.operating_company_id]
       );
@@ -132,15 +136,20 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
               Number(display?.sequence ?? 0) || null,
             ]
       );
-      const workOrderId = String(woRes.rows[0].id);
+      const workOrderId = String(woRes.rows[0]?.id ?? "");
+      if (!workOrderId) throw new Error("triage_work_order_insert_failed");
 
-      await client.query(
+      const linked = await client.query(
         `UPDATE dispatch.intransit_issues
          SET promoted_to_wo_id = $2
          WHERE id = $1
-           AND operating_company_id = $3::uuid`,
+           AND operating_company_id = $3::uuid
+           AND promoted_to_wo_id IS NULL
+           AND promoted_to_damage_report_id IS NULL
+         RETURNING id::text`,
         [params.data.issue_id, workOrderId, query.data.operating_company_id]
       );
+      if (!linked.rows[0]) throw new Error("triage_work_order_link_lost");
 
       // ONE event, not one per recipient. The previous code emitted three near-identical events
       // differing only by notify_target; the consumer resolves the audience by role, so fanning out
@@ -177,9 +186,13 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_or_intransit_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "intransit_issue_not_found_or_already_promoted" });
     return reply.code(201).send(result);
-  });
+    }
+  );
 
-  app.post("/api/v1/maintenance/triage/:issue_id/convert-to-damage", async (req, reply) => {
+  app.post(
+    "/api/v1/maintenance/triage/:issue_id/convert-to-damage",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = issueParamsSchema.safeParse(req.params ?? {});
@@ -207,6 +220,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
+          FOR UPDATE
         `,
         [params.data.issue_id, query.data.operating_company_id]
       );
@@ -242,15 +256,20 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           issue.photo_keys ?? null,
         ]
       );
-      const damageReportId = String(incidentRes.rows[0].id);
+      const damageReportId = String(incidentRes.rows[0]?.id ?? "");
+      if (!damageReportId) throw new Error("triage_damage_report_insert_failed");
 
-      await client.query(
+      const linked = await client.query(
         `UPDATE dispatch.intransit_issues
          SET promoted_to_damage_report_id = $2
          WHERE id = $1
-           AND operating_company_id = $3::uuid`,
+           AND operating_company_id = $3::uuid
+           AND promoted_to_wo_id IS NULL
+           AND promoted_to_damage_report_id IS NULL
+         RETURNING id::text`,
         [params.data.issue_id, damageReportId, query.data.operating_company_id]
       );
+      if (!linked.rows[0]) throw new Error("triage_damage_report_link_lost");
 
       // ONE event, not one per recipient — see the converted_to_wo path above.
       await enqueueOutboxEvent(
@@ -285,5 +304,6 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "safety_or_intransit_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "intransit_issue_not_found_or_already_promoted" });
     return reply.code(201).send(result);
-  });
+    }
+  );
 }
