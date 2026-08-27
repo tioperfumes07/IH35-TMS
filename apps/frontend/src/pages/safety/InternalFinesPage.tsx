@@ -37,6 +37,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedFineId = searchParams.get("fine_id");
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   // LST-F5163L + LST-F5191: visible reverse filters must write URL params on Apply.
@@ -123,14 +125,22 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   }, [form.related_load_uuid, suggestionPinned, suggestionQuery.data]);
 
   const query = useQuery({
-    queryKey: ["safety", "internal-fines", operatingCompanyId, effectiveLoadId, effectiveDriverId],
+    queryKey: ["safety", "internal-fines", operatingCompanyId, effectiveLoadId, effectiveDriverId, page],
     queryFn: () =>
       getInternalFines(operatingCompanyId, {
         load_id: effectiveLoadId,
         driver_id: effectiveDriverId,
+        limit: pageSize,
+        offset: page * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  useEffect(() => {
+    setPage(0);
+  }, [operatingCompanyId, effectiveLoadId, effectiveDriverId]);
 
   // FIX 1 — reason picker: owner-managed internal-fine-reasons catalog (active only).
   // SAF-B29 wave-5: server search — catalog can exceed a silent 200-cap page.
@@ -389,6 +399,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           emptyText="No internal fines found."
           storageKey="safety-internal-fines"
           exportFilename="internal-fines"
+          pageSize={pageSize}
+          hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="internal-fines-filters">
               <label className="text-[11px] text-slate-600">
@@ -449,6 +461,13 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           rowTestId={(row) => String(row.id ?? "") === linkedFineId ? "linked-internal-fine" : `internal-fine-${String(row.id ?? "")}`}
         />
       )}
+      {!query.isError && totalCount > 0 ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="internal-fines-server-pager">
+          <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
+          <Button type="button" size="sm" variant="secondary" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
+          <Button type="button" size="sm" variant="secondary" disabled={page + 1 >= pageCount} onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       {/* SAF-F12: reason-required lifecycle shell, reused from the accounting void contract.
           postsReversingEntry={false} — a safety fine void posts no GL entry; claiming it would be a lie. */}
