@@ -47,8 +47,16 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'load' THEN NULLIF(TRIM(audit_load.load_number), '')
       WHEN ${alias}.subject_type = 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', audit_driver.first_name, audit_driver.last_name)), '')
       WHEN ${alias}.subject_type = 'unit' THEN NULLIF(TRIM(audit_unit.unit_number), '')
-      WHEN ${alias}.subject_type = 'customer' THEN NULLIF(TRIM(audit_customer.customer_name), '')
-      WHEN ${alias}.subject_type = 'vendor' THEN NULLIF(TRIM(audit_vendor.vendor_name), '')
+      -- AUDIT-TRAIL-SUBJECT-LABEL-LOST-FOR-DEACTIVATED-ENTITIES: mdata.customers'/mdata.vendors' own
+      -- FORCE RLS policies exclude deactivated-but-not-deleted rows for a non-bypass reader, so the
+      -- audit_customer/audit_vendor LEFT JOINs below produce a NULL-extended row (the row genuinely
+      -- never enters the join's candidate set) for any customer.*/vendor.* event whose subject was
+      -- later deactivated -- even though void-not-delete correctly preserved the row and its name is
+      -- fully available. Falls back to the canonical same-company label resolvers (SECURITY DEFINER,
+      -- already proven at scale by invoices/payments/transaction-register/customer-profitability/
+      -- dispatch-margin) instead of widening RLS or the join itself.
+      WHEN ${alias}.subject_type = 'customer' THEN COALESCE(NULLIF(TRIM(audit_customer.customer_name), ''), mdata.resolve_customer_label_same_company(${alias}.subject_id, ${alias}.operating_company_id))
+      WHEN ${alias}.subject_type = 'vendor' THEN COALESCE(NULLIF(TRIM(audit_vendor.vendor_name), ''), mdata.resolve_vendor_label_same_company(${alias}.subject_id, ${alias}.operating_company_id))
       WHEN ${alias}.subject_type = 'invoice' THEN NULLIF(TRIM(audit_invoice.display_id), '')
       WHEN ${alias}.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
       WHEN ${alias}.subject_type = 'journal_entry' THEN NULLIF(TRIM(audit_je.memo), '')
