@@ -1,4 +1,9 @@
 {
+  "9847": {
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-2",
+    "purpose": "verify-cancellations-report-customer-label-resolver"
+  },
   "9843": {
     "claimed_at": "2026-08-27",
     "claimed_by": "cc-2",
