@@ -160,8 +160,8 @@ export function VehicleProfilePage() {
   const faultSummaryQuery = useQuery({
     queryKey: ["unit-fault-summary", id, companyId],
     queryFn: () =>
-      apiRequest<{ items: Array<{ id: string; auto_wo_id: string | null }> }>(
-        `/api/v1/maintenance/fault-history?operating_company_id=${encodeURIComponent(companyId)}&unit_id=${encodeURIComponent(id)}&unresolved_only=true&limit=100`
+      apiRequest<{ items: Array<{ id: string; auto_wo_id: string | null }>; total_count: number; auto_wo_count: number }>(
+        `/api/v1/maintenance/fault-history?operating_company_id=${encodeURIComponent(companyId)}&unit_id=${encodeURIComponent(id)}&unresolved_only=true&limit=1`
       ),
     enabled: canFetchProfile,
     staleTime: 30_000,
@@ -365,10 +365,8 @@ export function VehicleProfilePage() {
               nextPmDue={profile.next_pm_due}
               lastService={profile.last_service}
               unitId={id}
-              activeFaultCount={faultSummaryQuery.data?.items?.length ?? 0}
-              pendingFaultDraftCount={
-                faultSummaryQuery.data?.items?.filter((row) => row.auto_wo_id != null).length ?? 0
-              }
+              activeFaultCount={faultSummaryQuery.data?.total_count ?? 0}
+              pendingFaultDraftCount={faultSummaryQuery.data?.auto_wo_count ?? 0}
               workOrders={profile.recent_activity?.work_orders ?? []}
             />
             <div className="mt-3">

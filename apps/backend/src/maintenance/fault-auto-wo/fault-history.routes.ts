@@ -54,6 +54,17 @@ export async function registerFaultHistoryRoutes(app: FastifyInstance) {
       if (q.unresolved_only) {
         where += " AND h.resolved_at IS NULL";
       }
+      const countRes = await client.query(
+        `
+          SELECT
+            COUNT(*)::text AS total_count,
+            COUNT(*) FILTER (WHERE h.auto_wo_id IS NOT NULL)::text AS auto_wo_count
+          FROM maintenance.samsara_fault_code_history h
+          WHERE ${where}
+        `,
+        params
+      );
+      const countRow = countRes.rows[0] as { total_count?: string; auto_wo_count?: string } | undefined;
       params.push(q.limit, q.offset);
       const res = await client.query(
         `
@@ -68,14 +79,18 @@ export async function registerFaultHistoryRoutes(app: FastifyInstance) {
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = h.operating_company_id
           LEFT JOIN maintenance.work_orders w ON w.id = h.auto_wo_id
           WHERE ${where}
-          ORDER BY h.occurred_at DESC
+          ORDER BY h.occurred_at DESC, h.id DESC
           LIMIT $${params.length - 1}
           OFFSET $${params.length}
         `,
         params
       );
-      return res.rows;
+      return {
+        items: res.rows,
+        total_count: Number(countRow?.total_count ?? 0),
+        auto_wo_count: Number(countRow?.auto_wo_count ?? 0),
+      };
     });
-    return { items: payload, limit: q.limit, offset: q.offset };
+    return { ...payload, limit: q.limit, offset: q.offset };
   });
 }
