@@ -107,6 +107,14 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const policy = await client.query(
+        `SELECT id FROM insurance.policy
+         WHERE id = $1::uuid AND tenant_id = $2::uuid
+         LIMIT 1`,
+        [parsed.data.policy_id, parsed.data.operating_company_id]
+      );
+      if (!policy.rows[0]) return null;
+
       const result = await client.query(
         `
           INSERT INTO insurance.payment_schedule (

@@ -27,6 +27,11 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     };
   }
 
+  if (sql.includes("FROM insurance.policy") && sql.includes("tenant_id = $2::uuid")) {
+    if (String(values?.[0]) === "99999999-9999-4999-8999-999999999999") return { rows: [] };
+    return { rows: [{ id: String(values?.[0]) }] };
+  }
+
   if (sql.includes("INSERT INTO insurance.payment_schedule")) {
     return {
       rows: [
@@ -147,6 +152,24 @@ describe("insurance payment schedule routes", () => {
       id: "33333333-3333-4333-8333-333333333333",
       status: "scheduled",
     });
+  });
+
+  it("rejects a policy outside the submitted operating company before insert", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/payment-schedule",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        policy_id: "99999999-9999-4999-8999-999999999999",
+        due_date: "2026-06-17",
+        amount_cents: 125000,
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "policy_not_found" });
+    expect(queryMock.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO insurance.payment_schedule"))).toBe(false);
   });
 
   it("PATCH marks payment schedule as paid", async () => {
