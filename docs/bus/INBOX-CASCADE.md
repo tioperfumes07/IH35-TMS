@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CASCADE | ACK | GO-2024 | NOW=/dispatch | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** /dispatch + /driver-hub on 2ef0af5. Not /vendors. Unique only.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** START-1 only. /dispatch + /driver-hub on 9f7ad77. NOT /vendors. Customer 500 = CC-3. Book Load incomplete 400 = not a FINDING.

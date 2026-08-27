@@ -3,7 +3,7 @@
 Excel: `docs/lockdown/USMCA-LIVE-CHROME-CERTIFY-INVENTORY-2026-08-26.xlsx` tab `00-ALL-PENDING-CHECKLIST`.
 **1870 rows · 1851 ☐ OPEN · 1268 Live Chrome leaves.** Filter Cluster=`LIVE CHROME leaf`, Module=YOUR exclusive module below.
 
-**Hard-reload live SHA `9f7ad77`.** One Devin. Skip #15546. Nobody except Cursor lead `trigger_deploy`.
+**Hard-reload live SHA `2ef0af5`.** One Devin. Skip #15546. Nobody except Cursor lead `trigger_deploy`.
 
 ## Exclusive Chrome (do not open another seat’s URL)
 

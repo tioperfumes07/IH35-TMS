@@ -1,3 +1,5 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. CC-2 NOW=AUDIT-ACTIVITY-BY-USER-TASK-SUBJECT. CC-1 NOW=FINANCIAL-REPORTS-UTC (HIDE already #16316). CC-3 MDATA-DEACTIVATE. Codex/Devin ACK. Nobody `trigger_deploy`.
+
 **19:27 CT GO-1927.** Exclusive browsers + Excel lock `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **9f7ad77**. Devin=/vendors only. Cascade=/dispatch+/driver-hub. CC-3=MDATA-DEACTIVATE class.
 
 **19:13 CT 2026-08-26 GO-1913 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1913.md`. Live **`f12ab6e`**. All seats ACK GO-1913. Idle=defect. Skip #15546. CC never `trigger_deploy`.

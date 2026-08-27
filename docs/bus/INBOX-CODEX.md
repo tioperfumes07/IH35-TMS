@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `Codex | ACK | GO-2024 | PORT=9226 | NOW=/drivers | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** Next unique Driver/Fleet/Safety/Fuel. Do not remake F6690–F6700. Not /dispatch /vendors.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `Codex | ACK | GO-1927 | PORT=9226 | NOW=/drivers | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** Browser 9226 only: /drivers /fleet /safety /fuel /maintenance /insurance. Do not remake F6690–F6700. Not /dispatch /vendors.

@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CC-1 | ACK | GO-2024 | PORT=9223 | NOW=FINANCIAL-REPORTS-UTC | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** BANK-ACCOUNT-HIDE already #16316 — skip. NOW=`FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE` then escrow residual then DEADHEAD. Never remake #16371. Never trigger_deploy.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CC-1 | ACK | GO-1927 | PORT=9223 | NOW=BANK-ACCOUNT-HIDE | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** Browser 9223 only: /accounting /banking /settlements /factoring. BANK-ACCOUNT-HIDE then next OPEN money. No deploy.
