@@ -67,6 +67,21 @@ contains("apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts", rout
   { pattern: /queued_next_pm/, label: "minor → next PM queue" },
   { pattern: /logged_observation/, label: "observation → log only" },
 ]);
+const routingAuditEvents = [
+  "maintenance.dvir.routed_observation",
+  "maintenance.dvir.queued_next_pm",
+  "maintenance.dvir.major_auto_wo",
+];
+function routingAuditProblems(source) {
+  return routingAuditEvents.flatMap((event) => {
+    const eventIndex = source.indexOf(`\"${event}\"`);
+    if (eventIndex < 0) return [`missing ${event} audit`];
+    return source.slice(eventIndex, eventIndex + 440).includes("operating_company_id:")
+      ? []
+      : [`${event} audit omits operating_company_id`];
+  });
+}
+failures.push(...routingAuditProblems(routingService));
 
 const routes = read("apps/backend/src/maintenance/pre-flight/routes.ts");
 contains("apps/backend/src/maintenance/pre-flight/routes.ts", routes, [
@@ -126,6 +141,20 @@ contains("docs/specs/gap-49-dvir-severity-tagging.md", docs, [
   { pattern: /396\.11/, label: "49 CFR §396.11 citation" },
   { pattern: /G18/, label: "G18 master rule citation" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  for (const event of routingAuditEvents) {
+    const eventIndex = routingService.indexOf(`\"${event}\"`);
+    const companyIndex = routingService.indexOf("operating_company_id:", eventIndex);
+    const mutant = `${routingService.slice(0, companyIndex)}PLANTED_SCOPE:${routingService.slice(companyIndex + "operating_company_id:".length)}`;
+    if (routingAuditProblems(mutant).length === 0) {
+      console.error(`verify:dvir-severity-tagging SELFTEST FAILED — ${event}`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:dvir-severity-tagging SELFTEST PASS — ${routingAuditEvents.length}/${routingAuditEvents.length} tenantless audit mutations red`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify:dvir-severity-tagging — FAILED");
