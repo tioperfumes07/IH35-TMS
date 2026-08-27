@@ -257,4 +257,56 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     expect(balance.debits).toBe(RATE_CENTS);
     expect(balance.credits).toBe(RATE_CENTS);
   });
+
+  it("INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE (reconciliation-gap half): Event 2's A/R posting is tagged source_transaction_type='invoice' when an invoice is linked to the load — through the real DB", async () => {
+    const { loadId, stopId } = await seedLoad();
+    const invoiceId = randomUUID();
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, source_load_id, due_date)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date)`,
+        [invoiceId, companyId, customerId, `INV-2026-${String(Number.parseInt(suffix, 16) % 100000).padStart(5, "0")}`, loadId]
+      );
+    });
+
+    const earned = await postLoadRevenueLatch({
+      operating_company_id: companyId,
+      load_id: loadId,
+      target_status: "delivered_pending_docs",
+      entry_date_iso: new Date().toISOString(),
+      actor_user_id: userId,
+    });
+    expect(earned.posted, `earn refused: ${JSON.stringify(earned)}`).toBe(true);
+
+    await insertApprovedPod(loadId, stopId);
+    const billed = await postLoadRevenueLatch({
+      operating_company_id: companyId,
+      load_id: loadId,
+      target_status: "completed_docs_received",
+      entry_date_iso: new Date().toISOString(),
+      actor_user_id: userId,
+    });
+    expect(billed.posted, `bill refused: ${JSON.stringify(billed)}`).toBe(true);
+
+    const row = await latchRow(loadId, "bill");
+    expect(row).not.toBeNull();
+
+    const taggedRes = await db.query<{
+      source_transaction_type: string | null;
+      source_transaction_id: string | null;
+      debit_or_credit: string;
+    }>(
+      `SELECT source_transaction_type, source_transaction_id, debit_or_credit
+         FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = $1::uuid
+        ORDER BY line_sequence ASC NULLS LAST, created_at ASC
+        LIMIT 1`,
+      [row!.journal_entry_id]
+    );
+    const arLine = taggedRes.rows[0];
+    expect(arLine, "expected the first (A/R debit) posting line to exist").toBeDefined();
+    expect(arLine!.debit_or_credit).toBe("debit");
+    expect(arLine!.source_transaction_type).toBe("invoice");
+    expect(arLine!.source_transaction_id).toBe(invoiceId);
+  });
 });

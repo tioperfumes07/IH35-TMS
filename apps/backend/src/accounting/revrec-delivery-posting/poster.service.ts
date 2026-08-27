@@ -531,6 +531,45 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
         linked_object_id: input.load_id,
         relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
       });
+
+      // INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE (reconciliation-gap half) — Event 2's DR A/R leg IS
+      // economically the invoice's own A/R: the invoice poster (posting-engine.service.ts) REFUSES
+      // to post its own A/R+revenue JE whenever this latch owns the load (see
+      // InvoiceRevrecLatchOwnsLoadError — "The invoice's A/R belongs to latch Event 2 ... do not
+      // post around it"). Leaving this posting's source_transaction_type/source_transaction_id NULL
+      // meant the invoice detail page's own JE lookup, account-register.service.ts, and any
+      // GL<->sub-ledger tie-out could never find this JE via its invoice — confirmed live: the
+      // Balance Sheet 1100 A/R control account and /reports/ar-aging silently diverged by exactly
+      // the sum of untagged Event-2 legs. Tag it here, the same structured
+      // source_transaction_type/source_transaction_id column pair every other money path
+      // (bank_categorization, customer_payment, bill_payment, ...) already uses — only for the bill
+      // (A/R) leg, and only when an invoice link is resolvable for this load.
+      if (prepared.event === "bill") {
+        const invoiceRes = await client.query<{ id: string }>(
+          `
+            SELECT id::text
+            FROM accounting.invoices
+            WHERE source_load_id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND voided_at IS NULL
+            ORDER BY created_at ASC
+            LIMIT 1
+          `,
+          [input.load_id, input.operating_company_id]
+        );
+        const invoiceId = invoiceRes.rows[0]?.id;
+        if (invoiceId) {
+          await client.query(
+            `
+              UPDATE accounting.journal_entry_postings
+              SET source_transaction_type = 'invoice', source_transaction_id = $2
+              WHERE id = $1::uuid
+                AND source_transaction_type IS NULL
+            `,
+            [postingId, invoiceId]
+          );
+        }
+      }
     }
     await client.query(
       `
