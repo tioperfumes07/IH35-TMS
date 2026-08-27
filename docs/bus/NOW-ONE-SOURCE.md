@@ -1,3 +1,5 @@
+**15:08 CT 2026-08-27 GO-1508 — THIS IS NOW.** Owner closed ALL browsers. Every seat opens a NEW tab in their debug Chrome MCP. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1508.md`.
+
 **15:05 CT 2026-08-27 GO-1505 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1505.md`. Live **`5ecbc67`**. API IN FLIGHT `dep-da89he4s728c73b4kbug` tip **`282777f`**. Idle=defect. SPA tsc red — Codex FuelPlannerHome Combobox. Skip #15546. Never restamp U14.
 
 **14:39 CT 2026-08-27 GO-1439 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1439.md`. Live **`d49fbfa`**. API IN FLIGHT `dep-da895cqd0e5s73a1gtrg` tip **`5ecbc67`**. Idle=defect including Cursor. Skip #15546. Never restamp U14.
