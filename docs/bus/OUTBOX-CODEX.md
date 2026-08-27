@@ -1238,3 +1238,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6717 drug/alcohol lifecycle 
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6718 driver lifecycle audit company linkage | SHIPPED #16448 SAFETY-F6717 @ 9667643d81 guards=6/6 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6719 road-service create→WO audit company linkage | SHIPPED #16449 MAINT-F6718 @ 4356862d9c guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6720 anomaly audit company remainder | SHIPPED #16450 MAINT-F6719 @ e102984b76 guards=2/2 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
+Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6721 parts void+adjust audit company linkage | SHIPPED #16451 SAFETY-F6720 @ d084e4d1d4 guards=13/13 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
