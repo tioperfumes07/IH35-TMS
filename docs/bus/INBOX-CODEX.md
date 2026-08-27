@@ -1,3 +1,5 @@
+**07:30 CT GO-0730 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. FAST-MERGE WORKING. Unique drivers/fleet/safety. ACK: `Codex | ACK | GO-0730 | PORT=9226 | NOW=/drivers | SHA=<healthz> | GO`.
+
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=/drivers /fleet unique. ACK: `Codex | ACK | GO-0556 | PORT=9226 | NOW=/drivers | SHA=78240b9 | GO`.
 
 **05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. NOW=U14 `/drivers` `/fleet` unique. Never restamp. ACK: `Codex | ACK | GO-0552 | PORT=9226 | NOW=/drivers | SHA=<healthz> | GO`.

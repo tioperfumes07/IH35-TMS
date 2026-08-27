@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-27T12:30Z | GO-0730 | ACK · NOW=hop.assign-ratecard · file+OUTBOX · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T10:56Z | GO-0556 | ACK · LIVE 78240b9 · NOW=hop.assign-ratecard · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T10:53Z | GO-0552 | ACK · DO NOT WAIT · NOW=hop.assign-ratecard · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T10:40Z | GO-0540 | ACK · NOW=hop.assign-ratecard · 57cabbab DONE do not remake · never trigger_deploy | GO

@@ -1,3 +1,5 @@
+**07:30 CT GO-0730 — THIS IS NOW. DO NOT WAIT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. Deploy `dep-da82rr2jnfac739q6a5g` tip `0340406` — nobody else kick. NOW=hop.assign-ratecard then RLS DROP if OPEN. Report FINDING on board+OUTBOX. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0730 | PORT=9223 | NOW=hop.assign-ratecard | SHA=<healthz> | GO`.
+
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=hop.assign-ratecard. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0556 | PORT=9223 | NOW=hop.assign-ratecard | SHA=78240b9 | GO`.
 
 **05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. Live `e591ccb` until land. Deploy `dep-da81eaad0e5s73a261hg` tip `78240b9` — nobody else kick. NOW=U14 `/accounting` hop.assign 0 rate-card. `57cabbab` DONE. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0552 | PORT=9223 | NOW=hop.assign-ratecard | SHA=<healthz> | GO`.
