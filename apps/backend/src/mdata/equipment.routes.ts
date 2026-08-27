@@ -458,31 +458,9 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const parsedBody = updateEquipmentBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
-
-    const setParts: string[] = [];
-    const values: unknown[] = [];
-    const add = (col: string, val: unknown) => {
-      values.push(val);
-      setParts.push(`${col} = $${values.length}`);
-    };
-
-    if ("equipment_number" in b) add("equipment_number", b.equipment_number ?? null);
-    if ("vin" in b) add("vin", b.vin ?? null);
-    if ("equipment_type" in b) add("equipment_type", b.equipment_type);
-    if ("make" in b) add("make", b.make ?? null);
-    if ("model" in b) add("model", b.model ?? null);
-    if ("year" in b) add("year", b.year ?? null);
-    if ("status" in b) add("status", b.status);
-    if ("current_unit_id" in b) add("current_unit_id", b.current_unit_id ?? null);
-    if ("current_location_id" in b) add("current_location_id", b.current_location_id ?? null);
-    if ("owner_company_id" in b) add("owner_company_id", b.owner_company_id ?? null);
-    if ("currently_leased_to_company_id" in b) add("currently_leased_to_company_id", b.currently_leased_to_company_id ?? null);
-    if ("notes" in b) add("notes", b.notes ?? null);
-    if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
-    add("updated_by_user_id", authUser.uuid);
-
-    values.push(parsedParams.data.id);
-    const idIdx = values.length;
+    if ("status" in b || "deactivated_at" in b) {
+      return reply.code(400).send({ error: "use_equipment_lifecycle_endpoint" });
+    }
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         // Entity scope (USMCA cross-entity leak fix): mdata.equipment RLS is role-scoped, so a bare
@@ -494,6 +472,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           authUser.uuid,
           (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
         );
+        if (!scopedCompanyId) return null;
         const oldRes = await client.query(
           `
             SELECT
@@ -526,7 +505,60 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
-
+        await setScopedCompanyContext(client, authUser.uuid, scopedCompanyId);
+        const resolvedOwnerId =
+          "owner_company_id" in b
+            ? await resolveOperatingCompanyId(client, authUser.uuid, b.owner_company_id)
+            : String(oldRow.owner_company_id);
+        if (!resolvedOwnerId) throw new Error("owner_company_id_required");
+        const resolvedLeasedId =
+          "currently_leased_to_company_id" in b && b.currently_leased_to_company_id
+            ? await resolveOperatingCompanyId(client, authUser.uuid, b.currently_leased_to_company_id)
+            : "currently_leased_to_company_id" in b
+              ? null
+              : oldRow.currently_leased_to_company_id
+                ? String(oldRow.currently_leased_to_company_id)
+                : null;
+        const targetCompanyId = resolvedLeasedId ?? resolvedOwnerId;
+        if (b.current_unit_id) {
+          const linkedUnit = await client.query(
+            `SELECT id FROM mdata.units
+             WHERE id = $1::uuid
+               AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+             FOR SHARE`,
+            [b.current_unit_id, targetCompanyId]
+          );
+          if (!linkedUnit.rows[0]?.id) throw new Error("invalid_equipment_fk_reference");
+        }
+        if (b.current_location_id) {
+          const linkedLocation = await client.query(
+            `SELECT id FROM mdata.locations
+             WHERE id = $1::uuid AND operating_company_id = $2::uuid
+             FOR SHARE`,
+            [b.current_location_id, targetCompanyId]
+          );
+          if (!linkedLocation.rows[0]?.id) throw new Error("invalid_equipment_fk_reference");
+        }
+        const setParts: string[] = [];
+        const values: unknown[] = [];
+        const add = (col: string, val: unknown) => {
+          values.push(val);
+          setParts.push(`${col} = $${values.length}`);
+        };
+        if ("equipment_number" in b) add("equipment_number", b.equipment_number ?? null);
+        if ("vin" in b) add("vin", b.vin ?? null);
+        if ("equipment_type" in b) add("equipment_type", b.equipment_type);
+        if ("make" in b) add("make", b.make ?? null);
+        if ("model" in b) add("model", b.model ?? null);
+        if ("year" in b) add("year", b.year ?? null);
+        if ("current_unit_id" in b) add("current_unit_id", b.current_unit_id ?? null);
+        if ("current_location_id" in b) add("current_location_id", b.current_location_id ?? null);
+        if ("owner_company_id" in b) add("owner_company_id", resolvedOwnerId);
+        if ("currently_leased_to_company_id" in b) add("currently_leased_to_company_id", resolvedLeasedId);
+        if ("notes" in b) add("notes", b.notes ?? null);
+        add("updated_by_user_id", authUser.uuid);
+        values.push(parsedParams.data.id);
+        const idIdx = values.length;
         values.push(scopedCompanyId);
         const scopeIdx = values.length;
         const res = await client.query(
@@ -558,7 +590,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           values
         );
         const updatedRow = res.rows[0] ?? null;
-        if (!updatedRow) return null;
+        if (!updatedRow) return { kind: "conflict" as const };
 
         const changes = buildPatchChanges(
           b as unknown as Record<string, unknown>,
@@ -569,15 +601,24 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           resource_id: updatedRow.id,
           resource_type: "mdata.equipment",
           changes,
+          owner_company_id: resolvedOwnerId,
+          currently_leased_to_company_id: resolvedLeasedId,
+          operating_company_id: targetCompanyId,
         });
-        return updatedRow;
+        return { kind: "updated" as const, row: updatedRow };
       });
       if (!updated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-      return updated;
+      if (updated.kind === "conflict") {
+        return reply.code(409).send({ error: "mdata_equipment_state_changed" });
+      }
+      return updated.row;
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_equipment_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_equipment_fk_reference" });
+      if ((err as Error).message === "invalid_equipment_fk_reference") {
+        return reply.code(400).send({ error: "invalid_equipment_fk_reference" });
+      }
       throw err;
     }
   });
