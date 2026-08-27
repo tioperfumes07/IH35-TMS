@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
-import { listPartsAssignments } from "../../api/maintenance";
+import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { AddPartsLinkDrawer } from "./AddPartsLinkDrawer";
@@ -64,19 +64,28 @@ function asEntityId(value: unknown): string | null {
 
 export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
   const [addPartsLinkOpen, setAddPartsLinkOpen] = useState(false);
+  const [partsPage, setPartsPage] = useState(0);
+  const partsPageSize = 25;
   const workOrderId = workOrder ? String(workOrder.id ?? "") : "";
   const operatingCompanyId = workOrder ? String(workOrder.operating_company_id ?? "") : "";
-  // TASKS-STYLE WRITE-ONLY GAP: parts_invoice_links are created via other flows but this modal
-  // never read them back — the section below rendered a static placeholder string forever, no
-  // matter how many parts were actually linked. The GET route has no work_order_id filter yet
-  // (backend follow-up), so fetch the company's recent links (LIMIT 500 server-side) and filter
-  // client-side — real data, not fabricated, at the cost of one shared query instead of a
-  // per-work-order one.
   const partsLinksQuery = useQuery({
-    queryKey: ["maintenance", "parts-assignments", operatingCompanyId],
-    queryFn: () => listPartsAssignments(operatingCompanyId, { work_order_id: workOrderId }),
-    enabled: open && Boolean(operatingCompanyId),
+    queryKey: ["maintenance", "parts-assignments", operatingCompanyId, workOrderId, partsPage],
+    queryFn: () => getPartsAssignmentsPage(operatingCompanyId, {
+      work_order_id: workOrderId,
+      limit: partsPageSize,
+      offset: partsPage * partsPageSize,
+    }),
+    enabled: open && Boolean(operatingCompanyId && workOrderId),
   });
+
+  useEffect(() => setPartsPage(0), [operatingCompanyId, workOrderId]);
+
+  const partsTotal = partsLinksQuery.data?.total_count ?? 0;
+  useEffect(() => {
+    if (!partsLinksQuery.isFetching && partsPage > 0 && (partsLinksQuery.data?.rows.length ?? 0) === 0) {
+      setPartsPage(Math.max(0, Math.ceil(partsTotal / partsPageSize) - 1));
+    }
+  }, [partsLinksQuery.data?.rows.length, partsLinksQuery.isFetching, partsPage, partsTotal]);
 
   if (!open || !workOrder) return null;
 
@@ -201,7 +210,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               ) : null}
             </div>
             {(() => {
-              const links = partsLinksQuery.data ?? [];
+              const links = partsLinksQuery.data?.rows ?? [];
               if (partsLinksQuery.isLoading) return <div className="text-gray-500">Loading…</div>;
               if (partsLinksQuery.isError) {
                 return (
@@ -213,8 +222,9 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               }
               if (links.length === 0) return <div className="text-gray-600">No parts invoices linked to this work order yet.</div>;
               return (
-                <ul className="space-y-1">
-                  {links.map((link) => (
+                <div className="space-y-2">
+                  <ul className="space-y-1">
+                    {links.map((link) => (
                     <li key={link.id} className="flex flex-wrap items-center gap-1">
                       <span>{link.part_description}</span>
                       <span className="text-gray-500">×{link.qty_used}</span>
@@ -229,8 +239,22 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
                         {link.vendor_invoice_number ? `inv ${link.vendor_invoice_number}` : ""} {money(link.vendor_invoice_amount)}
                       </span>
                     </li>
-                  ))}
-                </ul>
+                    ))}
+                  </ul>
+                  {partsTotal > partsPageSize ? (
+                    <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-2" data-testid="wo-parts-links-server-pager">
+                      <Button variant="secondary" size="sm" disabled={partsPage === 0 || partsLinksQuery.isFetching} onClick={() => setPartsPage((page) => Math.max(0, page - 1))}>
+                        Previous
+                      </Button>
+                      <span className="text-gray-500">
+                        {partsPage * partsPageSize + 1}–{Math.min((partsPage + 1) * partsPageSize, partsTotal)} of {partsTotal}
+                      </span>
+                      <Button variant="secondary" size="sm" disabled={(partsPage + 1) * partsPageSize >= partsTotal || partsLinksQuery.isFetching} onClick={() => setPartsPage((page) => page + 1)}>
+                        Next
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
               );
             })()}
             <AddPartsLinkDrawer
