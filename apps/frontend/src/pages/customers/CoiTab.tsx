@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createInsuranceCoiRequest,
   listInsuranceCoiRequests,
@@ -53,6 +53,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const isFullPage = variant === "full-page";
+  const createGenerationRef = useRef(0);
 
   const [statusFilter, setStatusFilter] = useState<"" | CoiRequestStatus>("");
   const [requestOpen, setRequestOpen] = useState(false);
@@ -89,27 +90,27 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   }
 
   const createMutation = useMutation({
-    mutationFn: () => {
-      const noteParts = [
-        requestNotes.trim(),
-        isFullPage && insurerEmail.trim() ? `Insurer email: ${insurerEmail.trim()}` : "",
-      ].filter(Boolean);
-      return createInsuranceCoiRequest({
-        operating_company_id: operatingCompanyId!,
-        customer_id: customerId,
-        policy_id: requestPolicyId.trim() ? requestPolicyId.trim() : null,
-        notes: noteParts.length ? noteParts.join("\n") : null,
-        expires_at: !isFullPage && requestExpiresAt ? requestExpiresAt : null,
-      });
-    },
-    onSuccess: () => {
+    mutationFn: (input: {
+      companyId: string;
+      customerId: string;
+      generation: number;
+      payload: Omit<Parameters<typeof createInsuranceCoiRequest>[0], "operating_company_id" | "customer_id">;
+    }) =>
+      createInsuranceCoiRequest({
+        ...input.payload,
+        operating_company_id: input.companyId,
+        customer_id: input.customerId,
+      }),
+    onSuccess: (_request, input) => {
+      if (input.generation !== createGenerationRef.current) return;
       pushToast("COI request created", "success");
       resetCreateForm();
       void queryClient.invalidateQueries({
-        queryKey: ["insurance-coi-requests", operatingCompanyId ?? "none", customerId],
+        queryKey: ["insurance-coi-requests", input.companyId, input.customerId],
       });
     },
-    onError: (error) => {
+    onError: (error, input) => {
+      if (input.generation !== createGenerationRef.current) return;
       if (error instanceof ApiError && error.status === 404) {
         pushToast("Customer or policy not found", "error");
         return;
@@ -117,6 +118,37 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       pushToast("Failed to create COI request", "error");
     },
   });
+
+  useEffect(() => {
+    createGenerationRef.current += 1;
+    createMutation.reset();
+    resetCreateForm();
+  }, [operatingCompanyId, customerId, variant]);
+
+  function submitCreate() {
+    if (!operatingCompanyId || createMutation.isPending) return;
+    const noteParts = [
+      requestNotes.trim(),
+      isFullPage && insurerEmail.trim() ? `Insurer email: ${insurerEmail.trim()}` : "",
+    ].filter(Boolean);
+    createMutation.mutate({
+      companyId: operatingCompanyId,
+      customerId,
+      generation: createGenerationRef.current,
+      payload: {
+        policy_id: requestPolicyId.trim() ? requestPolicyId.trim() : null,
+        notes: noteParts.length ? noteParts.join("\n") : null,
+        expires_at: !isFullPage && requestExpiresAt ? requestExpiresAt : null,
+      },
+    });
+  }
+
+  function closeCreate() {
+    if (createMutation.isPending) return;
+    createGenerationRef.current += 1;
+    createMutation.reset();
+    resetCreateForm();
+  }
 
   const updateMutation = useMutation({
     mutationFn: (id: string) =>
@@ -228,7 +260,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       </label>
       {!isFullPage ? (
         <div className="md:col-span-2">
-          <Button size="sm" onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
+          <Button size="sm" onClick={submitCreate} loading={createMutation.isPending}>
             + Create
           </Button>
         </div>
@@ -247,7 +279,12 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
         </div>
       ) : (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setRequestOpen((open) => !open)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => (requestOpen ? closeCreate() : setRequestOpen(true))}
+            disabled={createMutation.isPending}
+          >
             {requestOpen ? "Cancel" : "+ Create COI"}
           </Button>
         </div>
@@ -456,13 +493,13 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       ) : null}
 
       {isFullPage ? (
-        <Modal variant="drawer" title="Create COI Request" open={requestOpen} onClose={() => setRequestOpen(false)}>
+        <Modal variant="drawer" title="Create COI Request" open={requestOpen} onClose={closeCreate}>
           {createFormFields}
           <div className="mt-3 flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setRequestOpen(false)}>
+            <Button variant="secondary" onClick={closeCreate} disabled={createMutation.isPending}>
               Cancel
             </Button>
-            <Button onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
+            <Button onClick={submitCreate} loading={createMutation.isPending}>
               + Create
             </Button>
           </div>
