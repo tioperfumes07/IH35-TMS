@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CC-2 | ACK | GO-2024 | PORT=9224 | NOW=AUDIT-ACTIVITY-BY-USER-TASK-SUBJECT | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** Sweep DONE. Fix `AUDIT-ACTIVITY-BY-USER-TASK-SUBJECT-BANKING-ACCOUNTING-LABEL-LOST` then dedicated `AUDIT-TRAIL-SUBJECT-LABEL-LOST`. Never GL. UTC/DEADHEAD/HIDE/escrow = CC-1.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `CC-2 | ACK | GO-1927 | PORT=9224 | NOW=/cash-flow | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** Browser 9224 only: /cash-flow /reports /finance /tasks. Unique. Never GL. Never /dispatch /vendors.

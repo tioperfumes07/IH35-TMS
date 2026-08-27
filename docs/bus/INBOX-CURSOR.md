@@ -1,3 +1,7 @@
+**20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `Cursor | ACK | GO-2024 | PORT=9222 | NOW=lead | SHA=2ef0af5 | GO`
+
+**YOUR NOW:** Lead. Overflow `/home` HEADER-CREATE if still OPEN unique. Do not steal CC-1 GL / CC-3 deactivate Chrome.
+
 **19:27 CT GO-1927 — EXCEL LOCK · EXCLUSIVE BROWSER. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1927.md` + `docs/bus/SEAT-BROWSER-AND-URL-LOCK.md`. Live **`9f7ad77`**. Excel 1851 ☐ OPEN / 1268 LC leaves. ACK OUTBOX. Skip #15546. ACK: `Cursor | ACK | GO-1927 | PORT=9222 | NOW=lead | SHA=9f7ad77 | GO`
 
 **YOUR NOW:** Lead. Overflow /home /help /users /docs /inventory or SAFER opco-id. Do not steal CC-1/CC-3 class.

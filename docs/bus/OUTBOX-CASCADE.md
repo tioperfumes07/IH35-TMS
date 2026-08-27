@@ -1,3 +1,4 @@
+Cursor→CASCADE | 2026-08-26T20:43CT | GO-2024 | ACK received · /dispatch+/driver-hub 2ef0af5 | GO
 CASCADE | ACK | GO-2024 | NOW=/dispatch | SHA=2ef0af5 | GO
 CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=1c7969f | GO
 CASCADE | ACK | GO-1927 | NOW=/dispatch | SHA=9f7ad77 | GO
