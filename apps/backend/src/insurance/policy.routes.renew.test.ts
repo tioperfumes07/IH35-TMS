@@ -59,9 +59,12 @@ vi.mock("../auth/session-middleware.js", () => ({
   },
 }));
 
+const withCurrentUserMock = vi.fn(
+  async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) => fn({ query: queryMock })
+);
+
 vi.mock("../auth/db.js", () => ({
-  withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    fn({ query: queryMock }),
+  withCurrentUser: withCurrentUserMock,
 }));
 
 vi.mock("../audit/crud-audit.js", () => ({
@@ -85,6 +88,7 @@ describe("insurance policy renewal route", () => {
     requireAuthState.allowed = true;
     queryMock.mockClear();
     createPolicyBillScheduleMock.mockClear();
+    withCurrentUserMock.mockClear();
   });
 
   afterEach(async () => {
@@ -149,6 +153,37 @@ describe("insurance policy renewal route", () => {
 
     expect(createPolicyBillScheduleMock).toHaveBeenCalledTimes(1);
     expect(createPolicyBillScheduleMock.mock.calls[0]?.[0]).toBe(NEW_POLICY_ID);
+  });
+
+  // INS-MONEY-F6810A — withCurrentUser (auth/db.ts) is this codebase's one and only transaction
+  // boundary. Every withCompanyScope call opens it TWICE by design: once inside
+  // assertCompanyMembership's own read-only check, once for the real work — that baseline is
+  // unavoidable and not what this locks. The pre-fix bug added a THIRD, separate call solely for
+  // createPolicyBillSchedule, so a renewal with billing (installment_count > 0) opened one more
+  // transaction than a renewal without billing (installment_count = 0) — the tell that the clone
+  // and the schedule were never atomic. Post-fix both cases must open the exact same number of
+  // transactions, proving the schedule now composes into the existing work transaction instead of
+  // opening its own.
+  it("opens the SAME number of transactions whether or not a bill schedule is created (no extra transaction for billing)", async () => {
+    const withBilling = await buildApp();
+    await withBilling.inject({
+      method: "POST",
+      url: `/api/v1/insurance/policies/${SOURCE_POLICY_ID}/renew`,
+      payload: renewPayload,
+    });
+    const callsWithBilling = withCurrentUserMock.mock.calls.length;
+
+    withCurrentUserMock.mockClear();
+
+    const withoutBilling = await buildApp();
+    await withoutBilling.inject({
+      method: "POST",
+      url: `/api/v1/insurance/policies/${SOURCE_POLICY_ID}/renew`,
+      payload: { ...renewPayload, installment_count: 0 },
+    });
+    const callsWithoutBilling = withCurrentUserMock.mock.calls.length;
+
+    expect(callsWithBilling).toBe(callsWithoutBilling);
   });
 
   it("does not bill when installment_count is 0", async () => {
