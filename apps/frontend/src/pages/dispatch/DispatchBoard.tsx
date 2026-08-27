@@ -844,7 +844,7 @@ export function DispatchBoard({
     // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
     // remain. Drive/Shift/Break/Cycle = H:MM remaining; Stop By / Resume At are PROJECTED. Cells show
     // "—" until the Samsara HOS feed seeds hos.duty_status_events.
-    ...HOS_COLUMNS.map((hosCol) => ({
+    ...HOS_COLUMNS.map((hosCol, hosColIndex) => ({
       key: `hos_${hosCol.key}`,
       header: hosCol.label,
       cell: (load: BoardLoad) => (
@@ -852,6 +852,9 @@ export function DispatchBoard({
           driverId={load.assigned_primary_driver_id}
           operatingCompanyId={load.operating_company_id}
           colKey={hosCol.key}
+          // HOS-RETRY-CONCAT: only the first of the 6 HOS columns shows a Retry control on error — all
+          // 6 share one query, so 6 independent buttons rendered as "RetryRetryRetry…" with no separator.
+          showRetryOnError={hosColIndex === 0}
         />
       ),
     })),

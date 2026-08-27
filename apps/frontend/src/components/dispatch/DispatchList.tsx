@@ -319,7 +319,7 @@ export function DispatchList({
                   </span>
                 ),
             },
-            ...HOS_COLUMNS.map((c) => ({
+            ...HOS_COLUMNS.map((c, cIndex) => ({
               key: `hos_${c.key}`,
               label: c.label,
               cellClass: "font-mono text-[11px] text-gray-700",
@@ -328,6 +328,9 @@ export function DispatchList({
                   driverId={load.assigned_primary_driver_id}
                   operatingCompanyId={load.operating_company_id}
                   colKey={c.key}
+                  // HOS-RETRY-CONCAT: only the first of the 6 HOS columns shows a Retry control on
+                  // error — all 6 share one query, so 6 independent buttons rendered with no separator.
+                  showRetryOnError={cIndex === 0}
                 />
               ),
             })),
