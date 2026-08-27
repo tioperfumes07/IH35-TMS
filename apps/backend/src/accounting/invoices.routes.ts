@@ -819,24 +819,23 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         operation: "update",
       });
       const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
-      return { code: 200 as const, data: detail };
-    });
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      emitAccountingSpineEvent(client, {
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
+      // withCompanyScope call after this transaction had already committed, with a bare
+      // .catch(warn) — a real emit failure was silently swallowed (the row updates, the audit
+      // trail doesn't). Moved inside the same transaction, awaited, matching the already-correct
+      // pattern this file's own create-invoice handler uses (and settlement/lease/amortization
+      // posting services) — the write and its spine event can no longer diverge.
+      await emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: user.uuid,
         event_type: "invoice.updated",
         entity_id: params.data.id,
         entity_type: "invoice",
         source_table: "accounting.invoices",
-      })
-    ).catch((err) =>
-      req.log.warn(
-        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
-        "spine_emit_invoice_updated_failed"
-      )
-    );
+      });
+      return { code: 200 as const, data: detail };
+    });
+    if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
   });
 
@@ -863,6 +862,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         };
       }
       const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: moved inside this transaction,
+      // awaited — see the update handler above for the full root-cause note.
+      await emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: user.uuid,
+        event_type: "invoice.sent",
+        entity_id: params.data.id,
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+      });
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) {
@@ -878,21 +887,6 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       return reply.code(result.code).send({ error: result.error });
     }
-    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      emitAccountingSpineEvent(client, {
-        operating_company_id: query.data.operating_company_id,
-        actor_user_id: user.uuid,
-        event_type: "invoice.sent",
-        entity_id: params.data.id,
-        entity_type: "invoice",
-        source_table: "accounting.invoices",
-      })
-    ).catch((err) =>
-      req.log.warn(
-        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
-        "spine_emit_invoice_sent_failed"
-      )
-    );
     return result.data;
   });
 
@@ -1015,11 +1009,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         operation: "update",
       });
       const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
-      return { code: 200 as const, data: detail };
-    });
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      emitAccountingSpineEvent(client, {
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: moved inside this transaction,
+      // awaited — see the update handler above for the full root-cause note.
+      await emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: user.uuid,
         event_type: "invoice.voided",
@@ -1027,13 +1019,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         entity_type: "invoice",
         source_table: "accounting.invoices",
         payload: { reason: body.data.reason ?? null },
-      })
-    ).catch((err) =>
-      req.log.warn(
-        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
-        "spine_emit_invoice_voided_failed"
-      )
-    );
+      });
+      return { code: 200 as const, data: detail };
+    });
+    if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
   });
 

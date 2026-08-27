@@ -391,6 +391,20 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         "P6-T11204-PAYMENTS"
       );
 
+      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
+      // withCompanyScope transaction opened AFTER this one had already committed, with a bare
+      // .catch(warn) — a real emit failure was silently swallowed (the payment exists, the audit
+      // trail doesn't). Moved into the payment's own creation transaction, awaited, so the write and
+      // its spine event can never diverge.
+      await emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "payment.customer_created",
+        entity_id: payment.id,
+        entity_type: "customer_payment",
+        source_table: "accounting.payments",
+      });
+
       return {
         code: 201 as const,
         data: {
@@ -403,25 +417,6 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      emitAccountingSpineEvent(client, {
-        operating_company_id: query.data.operating_company_id,
-        actor_user_id: String(user.uuid),
-        event_type: "payment.customer_created",
-        entity_id: (result as { data?: { id?: string } })?.data?.id ?? "",
-        entity_type: "customer_payment",
-        source_table: "accounting.payments",
-      })
-    ).catch((err) =>
-      req.log.warn(
-        {
-          err,
-          customer_payment_id: (result as { data?: { id?: string } })?.data?.id ?? null,
-          company_id: query.data.operating_company_id,
-        },
-        "spine_emit_customer_payment_created_failed"
-      )
-    );
     return reply.code(result.code).send(result.data);
   });
 }

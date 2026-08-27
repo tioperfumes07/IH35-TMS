@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { nextBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
@@ -2245,6 +2246,19 @@ export async function createBill(input: CreateBillInput, userId: string) {
       "info",
       "P5-D2-BILL-PAYMENT"
     );
+    // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in the ROUTE
+    // handler, in a SEPARATE withCompanyScope transaction opened AFTER this one had already
+    // committed, with a bare .catch(warn) — a real emit failure was silently swallowed (the bill
+    // exists, the audit trail doesn't). Moved into the bill's own creation transaction, awaited,
+    // so the write and its spine event can never diverge. The route handler no longer emits this.
+    await emitAccountingSpineEvent(client, {
+      operating_company_id: input.operatingCompanyId,
+      actor_user_id: userId,
+      event_type: "bill.created",
+      entity_id: created.id,
+      entity_type: "bill",
+      source_table: "accounting.bills",
+    });
     return created;
   });
 
@@ -2453,6 +2467,19 @@ export async function payBill(input: PayBillInput, userId: string) {
         );
       }
     }
+
+    // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in the ROUTE handler,
+    // in a SEPARATE withCompanyScope transaction opened AFTER this one had already committed, with
+    // a bare .catch(warn) — a real emit failure was silently swallowed. Moved into this same
+    // transaction, awaited, so the write and its spine event can never diverge.
+    await emitAccountingSpineEvent(client, {
+      operating_company_id: input.operatingCompanyId,
+      actor_user_id: userId,
+      event_type: "bill.paid",
+      entity_id: input.billId,
+      entity_type: "bill",
+      source_table: "accounting.bills",
+    });
 
     return {
       ...paymentRes.rows[0],
@@ -2706,6 +2733,17 @@ export async function voidBill(
         "P5-D2-BILL-PAYMENT"
       );
     }
+    // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: moved inside this transaction,
+    // awaited — see payBill()'s comment above for the full root-cause note.
+    await emitAccountingSpineEvent(client, {
+      operating_company_id: operatingCompanyId,
+      actor_user_id: userId,
+      event_type: "bill.voided",
+      entity_id: billId,
+      entity_type: "bill",
+      source_table: "accounting.bills",
+      payload: { reason },
+    });
     return { ok: true };
   });
   await withCurrentUser(userId, async (client) => {
@@ -2955,7 +2993,7 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
   const currentBusinessDate = companyBusinessDate();
   const voided = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    return voidBillPaymentInClientTx(client, {
+    const result = await voidBillPaymentInClientTx(client, {
       operatingCompanyId,
       paymentId,
       reason,
@@ -2973,6 +3011,21 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
       // unset lets voidBillPaymentInClientTx derive it from the row.
       currentBusinessDate,
     });
+    // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in the ROUTE handler,
+    // in a SEPARATE withCompanyScope transaction opened AFTER this one had already committed, with a
+    // bare .catch(warn) — a real emit failure was silently swallowed (the payment is voided, the
+    // audit trail isn't). Moved into the payment's own void transaction, awaited, so the write and
+    // its spine event can never diverge. The route handler no longer emits this.
+    await emitAccountingSpineEvent(client, {
+      operating_company_id: operatingCompanyId,
+      actor_user_id: userId,
+      event_type: "payment.bill_voided",
+      entity_id: paymentId,
+      entity_type: "bill_payment",
+      source_table: "accounting.bill_payments",
+      payload: { reason: reason ?? null },
+    });
+    return result;
   });
 
   return voided;
