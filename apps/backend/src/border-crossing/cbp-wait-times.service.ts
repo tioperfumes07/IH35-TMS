@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
+import { withLuciaBypass } from "../auth/db.js";
 
 const CBP_WAIT_TIMES_URL = "https://bwt.cbp.gov/api/waittimes";
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -110,21 +111,32 @@ export async function getCachedCbpWaitTimes(
 
   const live = await fetchCbpWaitTimesFromApi(cbpPortCode);
   if (live.length > 0) {
-    await cacheCbpWaitTimes(client, live);
+    await cacheCbpWaitTimes(live);
   }
   return { rows: live, stale: live.some((r) => r.wait_time_minutes == null), source: "live" };
 }
 
-export async function cacheCbpWaitTimes(client: pg.PoolClient, rows: CbpWaitTimeRow[]) {
-  for (const row of rows) {
-    await client.query(
-      `
-        INSERT INTO reference.cbp_wait_times_cache (id, cbp_port_code, lane_type, wait_time_minutes, lanes_open, fetched_at)
-        VALUES ($1, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()))
-      `,
-      [randomUUID(), row.cbp_port_code, row.lane_type, row.wait_time_minutes, row.lanes_open, row.fetched_at]
-    );
-  }
+// DISPATCH-BORDER-CROSSING-WAIT-TIMES-RLS-500 — reference.cbp_wait_times_cache's own INSERT policy
+// (migration 0313) is `WITH CHECK (identity.is_lucia_bypass())` — it has ALWAYS required the write
+// to run under the lucia RLS-bypass GUC, but this INSERT ran on whatever plain, tenant-scoped
+// `client` the caller happened to pass in (a `withCurrentUser` connection for the office GET route,
+// or the cron's own client), which never set that GUC. Every write 42501'd. This is a global,
+// non-tenant reference cache (no operating_company_id column at all), so there is nothing to lose
+// by opening its own short-lived bypass connection here rather than threading the caller's —
+// the cache write was already effectively a fire-and-forget side effect, never required to share a
+// transaction with the caller's own read/cron work.
+export async function cacheCbpWaitTimes(rows: CbpWaitTimeRow[]) {
+  await withLuciaBypass(async (bypassClient) => {
+    for (const row of rows) {
+      await bypassClient.query(
+        `
+          INSERT INTO reference.cbp_wait_times_cache (id, cbp_port_code, lane_type, wait_time_minutes, lanes_open, fetched_at)
+          VALUES ($1, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()))
+        `,
+        [randomUUID(), row.cbp_port_code, row.lane_type, row.wait_time_minutes, row.lanes_open, row.fetched_at]
+      );
+    }
+  });
 }
 
 export async function refreshAllActivePortWaitTimes(client: pg.PoolClient) {
@@ -133,7 +145,7 @@ export async function refreshAllActivePortWaitTimes(client: pg.PoolClient) {
   );
   for (const port of ports.rows as Array<{ cbp_port_code: string }>) {
     const rows = await fetchCbpWaitTimesFromApi(port.cbp_port_code);
-    if (rows.length > 0) await cacheCbpWaitTimes(client, rows);
+    if (rows.length > 0) await cacheCbpWaitTimes(rows);
   }
 }
 
