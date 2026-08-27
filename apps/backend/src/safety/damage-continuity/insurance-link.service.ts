@@ -8,7 +8,7 @@
 //   * Claims are insurance.claim (cents, tenant_id, role ih35_app).
 //   * insurance.claim also carries operating_company_id (migration 202607490000, hand-applied to
 //     prod) and its FORCED RLS policy keys on THAT column, for every command including INSERT:
-//       identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)
+//       identity bypass or the session company. This service additionally uses explicit company predicates.
 //     Verified on the Neon prod branch br-fancy-credit-akjnd07a, 2026-07-22. Writing only
 //     tenant_id leaves operating_company_id NULL, the WITH CHECK is not satisfied, and the row is
 //     REJECTED — so this writer must set both. Prod insurance.claim.n_tup_ins was 0, i.e. no
@@ -71,10 +71,10 @@ export async function autoCreateClaimFromDamage(
       FROM safety.incidents
       WHERE id = $1::uuid
         AND incident_type = 'damage_report'
-        AND operating_company_id::text = current_setting('app.operating_company_id', true)
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [params.damageIncidentId]
+    [params.damageIncidentId, params.operatingCompanyId]
   );
   const incident = incidentRes.rows[0];
   if (!incident) return { kind: "incident_not_found" };
@@ -95,13 +95,14 @@ export async function autoCreateClaimFromDamage(
     `
       SELECT id::text
       FROM insurance.policy
-      WHERE tenant_id::text = current_setting('app.operating_company_id', true)
+      WHERE tenant_id = $2::uuid
+        AND operating_company_id = $2::uuid
         AND status = 'active'
         AND coverage_type = ANY($1::text[])
       ORDER BY array_position($1::text[], coverage_type), expiry_date DESC
       LIMIT 1
     `,
-    [[...ELIGIBLE_COVERAGE_TYPES]]
+    [[...ELIGIBLE_COVERAGE_TYPES], params.operatingCompanyId]
   );
   const policy = policyRes.rows[0];
   if (!policy) return { kind: "no_active_policy" };
@@ -165,11 +166,12 @@ export async function autoCreateClaimFromDamage(
       `
         SELECT id::text, claim_number, policy_id::text, status, amount_claimed_cents::bigint
         FROM insurance.claim
-        WHERE tenant_id::text = current_setting('app.operating_company_id', true)
-          AND claim_number = $1
+        WHERE claim_number = $1
+          AND tenant_id = $2::uuid
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
-      [claimNumber]
+      [claimNumber, params.operatingCompanyId]
     );
     claim = existing.rows[0] ?? null;
   }
@@ -182,8 +184,9 @@ export async function autoCreateClaimFromDamage(
           final_resolution_status = COALESCE(NULLIF(final_resolution_status, 'open'), 'claim_filed'),
           updated_at = now()
       WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
     `,
-    [params.damageIncidentId, claim.id]
+    [params.damageIncidentId, claim.id, params.operatingCompanyId]
   );
 
   return { kind: "created", claim };
@@ -209,12 +212,20 @@ export async function linkClaimToChain(
           ),
           updated_at = now()
       WHERE uuid = $1::uuid
+        AND operating_company_id = $4::uuid
+        AND EXISTS (
+          SELECT 1
+          FROM insurance.claim ic
+          WHERE ic.id = $2::uuid
+            AND ic.operating_company_id = $4::uuid
+        )
       RETURNING uuid
     `,
     [
       params.chainId,
       params.claimId,
-      JSON.stringify({ action: "claim_linked", at: new Date().toISOString(), claim_id: params.claimId }),
+      JSON.stringify({ action: "claim_linked", at: new Date().toISOString(), operating_company_id: params.operatingCompanyId, claim_id: params.claimId }),
+      params.operatingCompanyId,
     ]
   );
   if (!res.rows[0]) return { kind: "chain_not_found" };
