@@ -79,10 +79,30 @@ describe("units unified list", () => {
     expect(rows.find((r) => r.id === "trailer-1")?.type).toBe("Reefer (2019 Thermo King)");
   });
 
-  it("GET /api/v1/mdata/units accepts ?type= query param with nine fleet types", () => {
+  it("GET /api/v1/mdata/units accepts ?type= query param with the complete fleet types", () => {
     expect(unitsRoutes).toMatch(/type: fleetTypeFilterSchema\.optional\(\)/);
     expect(unitsRoutes).toMatch(/type,/);
-    expect(FLEET_TYPE_FILTER_VALUES).toHaveLength(9);
+    expect(FLEET_TYPE_FILTER_VALUES).toContain("Trailer");
+  });
+
+  it("fetchUnifiedFleetList filters type=Trailer to every trailer and no trucks", async () => {
+    const queries: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        queries.push(sql);
+        return { rows: [] };
+      },
+    };
+
+    await fetchUnifiedFleetList(client, {
+      limit: 200,
+      offset: 0,
+      type: "Trailer",
+      operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    });
+
+    expect(queries.find((sql) => sql.includes("mdata.units"))).toContain("FALSE");
+    expect(queries.find((sql) => sql.includes("mdata.equipment"))).toContain("TRUE");
   });
 
   it("fetchUnifiedFleetList filters by type=Reefer (trailers only)", async () => {
