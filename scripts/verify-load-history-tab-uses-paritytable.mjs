@@ -61,6 +61,15 @@ function assertMigrated(src) {
   if (!src.includes("filterBar")) {
     errors.push(`${PAGE}: must keep From/To filterBar`);
   }
+  if (!/listDriverAssignedLoads\(driverId, operatingCompanyId, \{[\s\S]{0,180}limit: assignedPageSize,[\s\S]{0,120}offset: \(assignedPage - 1\) \* assignedPageSize/.test(src)) {
+    errors.push(`${PAGE}: assigned-load reverse must request the selected server page`);
+  }
+  if (!/assignedTotal = assignedQ\.isError \? 0 : assignedQ\.data\?\.total_count \?\? 0/.test(src)) {
+    errors.push(`${PAGE}: assigned-load reverse must consume the exact server total`);
+  }
+  if (!/data-testid="driver-assigned-loads-server-pager"/.test(src) || !/pageSize=\{assignedPageSize\}[\s\S]{0,120}\bhidePager\b/.test(src)) {
+    errors.push(`${PAGE}: assigned-load reverse must use one server-total pager and hide ParityTable's local pager`);
+  }
   return errors;
 }
 
@@ -78,6 +87,8 @@ function selftest() {
       { key: "reason_code", label: "Reason" },
     ];
     function Tab() {
+      const assignedTotal = assignedQ.isError ? 0 : assignedQ.data?.total_count ?? 0;
+      listDriverAssignedLoads(driverId, operatingCompanyId, { limit: assignedPageSize, offset: (assignedPage - 1) * assignedPageSize });
       return (
         <div data-testid="driver-load-history-tab">
           <ListErrorState title="x" status={0} onRetry={() => {}} />
@@ -88,6 +99,8 @@ function selftest() {
             filterBar={<div>filters</div>}
             columns={COLUMNS}
           />
+          <ParityTable pageSize={assignedPageSize} hidePager />
+          <div data-testid="driver-assigned-loads-server-pager">Previous Next</div>
           <EntityLink kind="load" id={row.load_id} />
           <EntityLink kind="driver" id={row.previous_driver_id} />
           <EntityLink kind="driver" id={row.new_driver_id} />
@@ -112,6 +125,13 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const capped = good.replace("offset: (assignedPage - 1) * assignedPageSize", "offset: 0")
+    .replace('data-testid="driver-assigned-loads-server-pager"', 'data-testid="removed-pager"')
+    .replace("pageSize={assignedPageSize} hidePager", "initialPageSize={50}");
+  if (assertMigrated(capped).length < 2) {
+    console.error(`${LABEL} --selftest FAIL planted 50-row truncation escaped detection`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
