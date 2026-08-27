@@ -1,3 +1,5 @@
+**07:58 CT GO-0758:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` — paste boxes. ACK `GO-0758`.
+
 **07:45 CT GO-0745:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md` — Cursor lead. ACK `GO-0745`. Complete fixes. Idle = defect. Live `0340406`.
 
 # CODER INSTRUCTIONS — NOW (2026-08-24)

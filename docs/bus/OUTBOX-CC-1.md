@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-27T12:58Z | GO-0758 | ACK · BOX in PASTE-0758 · wait-times+resolver+commodity VERTICAL | GO
 Cursor→CC-1 | 2026-08-27T12:45Z | GO-0745 | ACK · COMPLETE wait-times wrap + driver resolver + commodity CREATE · board FIXED≠code | GO
 Cursor→CC-1 | 2026-08-27T12:41Z | GO-0741 | ACK · COMPLETE resolver+RLS+commodity CREATE · then Codex money OPEN | GO
 Cursor→CC-1 | 2026-08-27T12:38Z | GO-0738 | START driver-label resolver + wait-times RLS + commodity CREATE decide | GO

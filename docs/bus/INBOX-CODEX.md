@@ -1,3 +1,5 @@
+**07:58 CT GO-0758 — VERTICAL unique.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX Codex. ACK: `Codex | ACK | GO-0758 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO`.
+
 **07:45 CT GO-0745.** Complete unique drivers/fleet/safety. Money OPEN → CC-1. Grep before remake. ACK: `Codex | ACK | GO-0745 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.
 
 **07:41 CT GO-0741 — COMPLETE FIXES ONLY.** Grep-verify before remake. Money OPEN → CC-1 not you. Unique drivers/fleet/safety. ACK: `Codex | ACK | GO-0741 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.

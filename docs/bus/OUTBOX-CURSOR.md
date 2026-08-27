@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0758 | PORT=9222 | NOW=lead | SHA=0340406 | paste-boxes Fully-Wired 1-12 | GO
 Cursor | ACK | GO-0745 | PORT=9222 | NOW=lead+F6851A | SHA=0340406 | 7d grep-verified drain | GO
 Cursor | ACK | GO-0741 | PORT=9222 | NOW=lead | SHA=0340406 | NEVER-DEFER complete-fix | GO
 Cursor | ACK | GO-0738 | PORT=9222 | NOW=lead | SHA=0340406 | CONFIRMED Cascade 7: 2 FIXED 5 OPEN not on main | GO
