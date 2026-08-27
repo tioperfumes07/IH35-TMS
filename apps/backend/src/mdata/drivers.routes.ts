@@ -2431,6 +2431,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           return { error: "driver_phone_login_already_enabled" as const };
         }
 
+        // withCurrentUser commits returned domain errors. This savepoint makes the later lost-link
+        // return a real rollback boundary instead of committing the identity row it just created.
+        await client.query("SAVEPOINT driver_phone_login_enable");
+
         // Disable preserves the canonical driver-to-identity link so settlements, messages and audit
         // history do not become orphaned. Re-enable must therefore reactivate that same identity row;
         // creating a replacement account would break every reverse reference to the original user.
@@ -2457,6 +2461,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             "warning",
             "BT-1-AUTH-DRIVER"
           );
+          await client.query("RELEASE SAVEPOINT driver_phone_login_enable");
           return { identity_user_id: driver.identity_user_id, reactivated: true };
         }
 
@@ -2481,7 +2486,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             RETURNING id`,
           [driver.id, identityUserId, authUser.uuid, driver.operating_company_id]
         );
-        if (!linked.rows[0]) return { error: "driver_phone_login_state_changed" as const };
+        if (!linked.rows[0]) {
+          await client.query("ROLLBACK TO SAVEPOINT driver_phone_login_enable");
+          await client.query("RELEASE SAVEPOINT driver_phone_login_enable");
+          return { error: "driver_phone_login_state_changed" as const };
+        }
 
         await appendCrudAudit(
           client,
@@ -2498,6 +2507,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           "warning",
           "BT-1-AUTH-DRIVER"
         );
+
+        await client.query("RELEASE SAVEPOINT driver_phone_login_enable");
 
         return { identity_user_id: identityUserId };
       });

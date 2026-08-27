@@ -19,6 +19,7 @@ function failuresFor(backend, frontend, types) {
     ["enable reactivates the retained identity", /UPDATE identity\.users[\s\S]{0,100}SET deactivated_at = NULL[\s\S]{0,140}deactivated_at IS NOT NULL[\s\S]{0,80}RETURNING id/.test(enable)],
     ["reactivation is audited", /identity\.users\.reactivated[\s\S]{0,240}linked_driver_id/.test(enable)],
     ["lost reactivation is a 409", /if \(!reactivated\.rows\[0\]\) return \{ error: "driver_phone_login_state_changed" as const \};/.test(enable) && /driver_phone_login_state_changed[\s\S]{0,100}reply\.code\(409\)/.test(enable)],
+    ["lost new-account link rolls back identity creation", /ROLLBACK TO SAVEPOINT driver_phone_login_enable[\s\S]{0,180}driver_phone_login_state_changed/.test(enable)],
     ["repeated disable is rejected before audit", /if \(!changed\) return \{ error: "driver_phone_login_already_disabled" as const \};[\s\S]{0,80}appendCrudAudit/.test(disable)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
@@ -41,6 +42,7 @@ if (process.argv.includes("--selftest")) {
     [backend.replaceAll("SET deactivated_at = NULL", "SET deactivated_at = deactivated_at"), frontend, types],
     [backend.replace('"identity.users.reactivated"', '"identity.users.updated"'), frontend, types],
     [backend.replace('if (!reactivated.rows[0]) return { error: "driver_phone_login_state_changed" as const };', "void reactivated;"), frontend, types],
+    [backend.replace('await client.query("ROLLBACK TO SAVEPOINT driver_phone_login_enable");', 'await client.query("SELECT 1");'), frontend, types],
     [backend.replace('if (!changed) return { error: "driver_phone_login_already_disabled" as const };', "void changed;"), frontend, types],
   ];
   const missed = mutations.map(([b, f, t], index) => ({ index, failures: failuresFor(b, f, t) })).filter((entry) => entry.failures.length === 0);
