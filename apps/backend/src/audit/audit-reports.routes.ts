@@ -74,6 +74,16 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'journal_entry' THEN NULLIF(TRIM(audit_je.memo), '')
       WHEN ${alias}.subject_type = 'customer_payment' THEN NULLIF(TRIM(audit_customer_payment.display_id), '')
       WHEN ${alias}.subject_type = 'prepaid_purchase' THEN NULLIF(TRIM(COALESCE(audit_prepaid.asset_number, audit_prepaid.description)), '')
+      -- AUDIT-EVENTS-PAYLOAD-NO-RESOURCE-TYPE-FIELD: some audit.audit_events payloads carry a
+      -- direct id key (expense_id, task_id, hos_violation_id, internal_fine_id, or the
+      -- insurance.policy.cancelled resource_id) but NO resource_type/reversed_entity_type/
+      -- entity_type field at all -- the void-reversal route's combined CTE falls back to
+      -- event_class to assign these 5 direct (non-'task'-wrapped) subject_type values.
+      WHEN ${alias}.subject_type = 'insurance_policy' THEN NULLIF(TRIM(audit_insurance_policy.policy_number), '')
+      WHEN ${alias}.subject_type = 'expense' THEN NULLIF(TRIM(COALESCE(audit_expense.expense_number, audit_expense.memo)), '')
+      WHEN ${alias}.subject_type = 'daily_task' THEN NULLIF(TRIM(audit_daily_task.title), '')
+      WHEN ${alias}.subject_type = 'hos_violation' THEN NULLIF(TRIM(audit_hos_violation.violation_type), '')
+      WHEN ${alias}.subject_type = 'internal_fine' THEN NULLIF(TRIM('Fine ' || to_char(audit_internal_fine.imposed_date, 'YYYY-MM-DD') || ' — $' || audit_internal_fine.amount::text), '')
       WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
         WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(audit_wo.display_id), '')
         WHEN 'accounting.invoices' THEN NULLIF(TRIM(audit_invoice.display_id), '')
@@ -181,7 +191,27 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'task'
      AND ${alias}.source_table = 'driver_finance.cash_advance_requests'
      AND audit_cash_advance_request.id = ${alias}.source_reference_id
-     AND audit_cash_advance_request.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_cash_advance_request.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN insurance.policy audit_insurance_policy
+      ON ${alias}.subject_type = 'insurance_policy'
+     AND audit_insurance_policy.id = ${alias}.subject_id
+     AND audit_insurance_policy.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.expenses audit_expense
+      ON ${alias}.subject_type = 'expense'
+     AND audit_expense.id = ${alias}.subject_id
+     AND audit_expense.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN ops.daily_tasks audit_daily_task
+      ON ${alias}.subject_type = 'daily_task'
+     AND audit_daily_task.id = ${alias}.subject_id
+     AND audit_daily_task.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN safety.hos_violations audit_hos_violation
+      ON ${alias}.subject_type = 'hos_violation'
+     AND audit_hos_violation.id = ${alias}.subject_id
+     AND audit_hos_violation.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN safety.internal_fines audit_internal_fine
+      ON ${alias}.subject_type = 'internal_fine'
+     AND audit_internal_fine.id = ${alias}.subject_id
+     AND audit_internal_fine.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
@@ -393,33 +423,57 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
                -- subject_kind = the raw path string and subject_label = NULL ("Subject — not
                -- visible"). Normalize known raw paths to the short vocabulary here; anything already
                -- short (or unrecognized) passes through unchanged via the ELSE.
-               CASE COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type')
-                 WHEN 'mdata.loads' THEN 'load'
-                 WHEN 'accounting.journal_entries' THEN 'journal_entry'
-                 WHEN 'accounting.invoices' THEN 'task'
-                 WHEN 'accounting.bills' THEN 'task'
-                 WHEN 'accounting.bill_payments' THEN 'task'
-                 WHEN 'catalogs.load_cancellation_reasons' THEN 'task'
-                 WHEN 'catalogs.void_cancel_reasons' THEN 'task'
-                 WHEN 'mdata.customer_quality_events' THEN 'task'
-                 WHEN 'driver_finance.driver_settlements' THEN 'task'
-                 ELSE COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type')
+               -- AUDIT-EVENTS-PAYLOAD-NO-RESOURCE-TYPE-FIELD: a further-distinct root cause from
+               -- the raw-path vocabulary mismatch above -- these payloads have NO resource_type/
+               -- reversed_entity_type/entity_type key at ALL (confirmed live: insurance.policy.cancelled,
+               -- expense.voided, ops.daily_task.cancelled, safety.hos_violation.voided,
+               -- safety.internal_fine.voided), so the COALESCE below is NULL and there is nothing to
+               -- normalize -- fall back to the immutable ae.event_class to assign a direct subject_type.
+               -- mdata.customers.seed_purge_prod_voided is the one payload that DOES carry a type key,
+               -- just under a third name (entity_type) this route hadn't read yet.
+               CASE
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.loads' THEN 'load'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'accounting.journal_entries' THEN 'journal_entry'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'accounting.invoices' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'accounting.bills' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'accounting.bill_payments' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'catalogs.load_cancellation_reasons' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'catalogs.void_cancel_reasons' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.customer_quality_events' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'driver_finance.driver_settlements' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.customers' THEN 'customer'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') IS NOT NULL
+                   THEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type')
+                 WHEN ae.event_class = 'insurance.policy.cancelled' THEN 'insurance_policy'
+                 WHEN ae.event_class = 'expense.voided' THEN 'expense'
+                 WHEN ae.event_class = 'ops.daily_task.cancelled' THEN 'daily_task'
+                 WHEN ae.event_class = 'safety.hos_violation.voided' THEN 'hos_violation'
+                 WHEN ae.event_class = 'safety.internal_fine.voided' THEN 'internal_fine'
+                 ELSE NULL
                END AS subject_type,
                CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
-                                  ae.payload->>'expense_id', ae.payload->>'entity_id', '')
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id',
+                                  ae.payload->>'task_id', ae.payload->>'hos_violation_id',
+                                  ae.payload->>'internal_fine_id', '')
                               ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
                     THEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
-                                  ae.payload->>'expense_id', ae.payload->>'entity_id')::uuid
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id',
+                                  ae.payload->>'task_id', ae.payload->>'hos_violation_id',
+                                  ae.payload->>'internal_fine_id')::uuid
                     ELSE NULL END AS subject_id,
                ae.actor_user_uuid::text AS actor_user_id, ae.created_at AS occurred_at,
                ae.payload, ae.source, 'audit.audit_events'::text AS audit_source,
                $1::uuid AS operating_company_id,
-               COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type') AS source_table,
+               COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') AS source_table,
                CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
-                                  ae.payload->>'expense_id', ae.payload->>'entity_id', '')
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id',
+                                  ae.payload->>'task_id', ae.payload->>'hos_violation_id',
+                                  ae.payload->>'internal_fine_id', '')
                               ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
                     THEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
-                                  ae.payload->>'expense_id', ae.payload->>'entity_id')::uuid
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id',
+                                  ae.payload->>'task_id', ae.payload->>'hos_violation_id',
+                                  ae.payload->>'internal_fine_id')::uuid
                     ELSE NULL END AS source_reference_id
         FROM audit.audit_events ae
         WHERE ae.event_class ILIKE ANY(ARRAY['%void%','%revers%','%cancel%'])
