@@ -309,8 +309,10 @@ export async function deliverDriverProfileMessage(
 ): Promise<{ delivery_status: string; delivery_ref: string | null }> {
   if (input.channel === "in_app") {
     await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = 'delivered' WHERE id = $1`,
-      [input.messageId]
+      `UPDATE mdata.driver_profile_messages
+       SET delivery_status = 'delivered'
+       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
+      [input.messageId, input.operatingCompanyId, input.driverId]
     );
     return { delivery_status: "delivered", delivery_ref: null };
   }
@@ -334,8 +336,10 @@ export async function deliverDriverProfileMessage(
   const driver = driverRes.rows[0];
   if (!driver) {
     await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = 'failed' WHERE id = $1`,
-      [input.messageId]
+      `UPDATE mdata.driver_profile_messages
+       SET delivery_status = 'failed'
+       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
+      [input.messageId, input.operatingCompanyId, input.driverId]
     );
     return { delivery_status: "failed", delivery_ref: null };
   }
@@ -343,8 +347,10 @@ export async function deliverDriverProfileMessage(
   if (input.channel === "sms") {
     if (!driver.phone) {
       await client.query(
-        `UPDATE mdata.driver_profile_messages SET delivery_status = 'failed' WHERE id = $1`,
-        [input.messageId]
+        `UPDATE mdata.driver_profile_messages
+         SET delivery_status = 'failed'
+         WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
+        [input.messageId, input.operatingCompanyId, input.driverId]
       );
       return { delivery_status: "failed", delivery_ref: null };
     }
@@ -367,8 +373,10 @@ export async function deliverDriverProfileMessage(
 
   if (!driver.email) {
     await client.query(
-      `UPDATE mdata.driver_profile_messages SET delivery_status = 'failed' WHERE id = $1`,
-      [input.messageId]
+      `UPDATE mdata.driver_profile_messages
+       SET delivery_status = 'failed'
+       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
+      [input.messageId, input.operatingCompanyId, input.driverId]
     );
     return { delivery_status: "failed", delivery_ref: null };
   }

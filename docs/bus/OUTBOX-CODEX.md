@@ -1232,3 +1232,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6711 vehicle lifecycle audit 
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6712 DVIR defect triage audit company linkage | SHIPPED #16435 MAINT-F6711 @ 651bc6fc3b guards=4/4 | SHA=2ef0af5 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6713 DOT follow-up audit company linkage | SHIPPED #16437 MAINT-F6712 @ 74fa324e17 guards=7/7 | SHA=2ef0af5 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING DRIVER-F6714 bulk mutation atomic company scope | SHIPPED #16439 SAFETY-F6713 @ d0b677c6e5 guards=3/3 | SHA=2ef0af5 | NEXT=guard+FAST-MERGE | GO
+Codex | ACK | GO-2024 | PORT=9226 | WORKING DRIVER-F6715 message delivery write company+driver scope | SHIPPED #16440 DRIVER-F6714 @ 9f0e0fdd6f guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
