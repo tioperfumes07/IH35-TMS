@@ -228,7 +228,10 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return grid;
   });
 
-  app.get("/api/v1/safety/scheduler/requests", async (req, reply) => {
+  app.get(
+    "/api/v1/safety/scheduler/requests",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -238,19 +241,32 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
       listAllLeaveRequests(client, parsed.data.operating_company_id)
     );
     return { requests: rows };
-  });
+    },
+  );
 
-  app.get("/api/v1/safety/scheduler/requests/pending", async (req, reply) => {
+  app.get(
+    "/api/v1/safety/scheduler/requests/pending",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      limit: z.coerce.number().int().min(1).max(300).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      listPendingLeaveRequests(client, parsed.data.operating_company_id)
+    const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+      listPendingLeaveRequests(client, parsed.data.operating_company_id, parsed.data.limit, parsed.data.offset)
     );
-    return { requests: rows };
-  });
+    return {
+      requests: result.requests,
+      total_count: result.totalCount,
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+    };
+    },
+  );
 
   app.get("/api/v1/safety/scheduler/requests/:id", async (req, reply) => {
     const user = currentAuthUser(req, reply);

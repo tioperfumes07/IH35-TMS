@@ -632,7 +632,22 @@ export async function getMySchedule(
   return { approved_days: daysRes.rows, pending_requests: pendingRes.rows };
 }
 
-export async function listPendingLeaveRequests(client: QueryableClient, operatingCompanyId: string) {
+export async function listPendingLeaveRequests(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  limit: number,
+  offset: number,
+) {
+  const countRes = await client.query(
+    `
+      SELECT COUNT(*)::text AS total_count
+      FROM safety.driver_leave_requests r
+      WHERE r.operating_company_id = $1::uuid
+        AND r.status = 'pending_review'
+        AND r.voided_at IS NULL
+    `,
+    [operatingCompanyId],
+  ) as { rows: Array<{ total_count: string }> };
   const res = await client.query(
     `
       SELECT r.*,
@@ -650,11 +665,12 @@ export async function listPendingLeaveRequests(client: QueryableClient, operatin
         AND r.status = 'pending_review'
         AND r.voided_at IS NULL
       ORDER BY r.start_date ASC, r.created_at ASC
-      LIMIT 500
+      LIMIT $2
+      OFFSET $3
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, limit, offset]
   );
-  return res.rows;
+  return { requests: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function listAllLeaveRequests(client: QueryableClient, operatingCompanyId: string, limit = 200) {
