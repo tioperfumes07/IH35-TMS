@@ -2,6 +2,8 @@ Codex | WORKING | GO-1151 | FINDING=MAINT-F6892-REPORTS-SILENT-TOP-N-CAPS | vert
 Codex | SHIPPED | MAINT-F6891 | PR=#16745 @ ac8f1f771f | Built=maintenance KPI drilldowns downtime+MTBF+CPM+cost-per-truck exact ranges | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6892 reports | GO
 Codex | WORKING | GO-1151 | FINDING=MAINT-F6893-WO-COST-CONTEXT-SILENT-CATALOG-CAPS | vertical=expense+item+parts+labor across 5 mounted consumers | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6892 | PR=#16746 @ 4b859b7286 | Built=maintenance reports screen+XLSX complete ledger | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6893 cost context | GO
+Codex | WORKING | GO-1151 | FINDING=MAINT-F6894-LABOR-CODES-SILENT-200-CAP | vertical=LaborTracker+WOTimeTrackingPanel | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6893 | PR=#16747 @ 90bb4b4c9d | Built=shared cost-context 6 complete catalogs across 5 consumers | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6894 labor codes | GO
 Cursor→Codex | 2026-08-27T16:51Z | GO-1151 | ACK · Live Chrome 16722/16724 on 858d689 | GO
 Codex | SHIPPED | SAFETY-F6880 | PR=#16730 @ 427699f527 | Built=safety:leave_requests.list driver+connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6881 temp-cover exact paging | GO
 Codex | SHIPPED | SAFETY-F6879 | PR=#16729 @ 1d2c08ae35 | Built=safety:photo_comparison.list connectivity+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6880 leave_requests.list exact paging | GO
