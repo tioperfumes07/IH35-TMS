@@ -148,7 +148,7 @@ export async function listIntransitIssues(
 export async function listAssignmentHistoryGlobal(
   userId: string,
   operatingCompanyId: string,
-  filters: { driver_id?: string; from?: string; to?: string; reason?: string }
+  filters: { driver_id?: string; from?: string; to?: string; reason?: string; limit: number; offset: number }
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
@@ -172,6 +172,14 @@ export async function listAssignmentHistoryGlobal(
       clauses.push(`(h.reason_code ILIKE $${values.length} OR h.notes ILIKE $${values.length})`);
     }
 
+    const countRes = await client.query(
+      `SELECT count(*)::int AS total_count
+       FROM dispatch.load_assignment_history h
+       JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1::uuid
+       WHERE ${clauses.join(" AND ")}`,
+      values
+    );
+    values.push(filters.limit, filters.offset);
     const res = await client.query(
       `
         SELECT
@@ -222,11 +230,11 @@ export async function listAssignmentHistoryGlobal(
                                 AND COALESCE(nu.currently_leased_to_company_id, nu.owner_company_id) = l.operating_company_id
         WHERE ${clauses.join(" AND ")}
         ORDER BY h.assigned_at DESC
-        LIMIT 200
+        LIMIT $${values.length - 1} OFFSET $${values.length}
       `,
       values
     );
-    return { rows: res.rows };
+    return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
   });
 }
 
