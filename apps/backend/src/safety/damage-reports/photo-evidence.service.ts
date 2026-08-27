@@ -1,5 +1,6 @@
 import { appendCustodyEvent, getCustodyChain, type CustodyEvent } from "../../documents/chain-of-custody.service.js";
 import { validateAndPreserveExif } from "../../documents/exif-preserver.js";
+import { putObjectBytes } from "../../storage/r2-client.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -22,6 +23,7 @@ export async function attachPhotoToDamage(
     userUuid: string;
     buffer: Buffer;
     r2ObjectKey: string;
+    contentType: string;
   }
 ): Promise<DamagePhotoEvidence> {
   const validation = validateAndPreserveExif(input.buffer);
@@ -48,6 +50,8 @@ export async function attachPhotoToDamage(
     details: { r2_object_key: input.r2ObjectKey, missing_optional: validation.missingFields },
     sha256_at_event: validation.sha256,
   });
+
+  await putObjectBytes(input.r2ObjectKey, input.buffer, input.contentType);
 
   const insertRes = await client.query<DamagePhotoEvidence>(
     `
@@ -80,16 +84,19 @@ export async function attachPhotoToDamage(
   const row = insertRes.rows[0];
   if (!row) throw new Error("evidence_insert_failed");
 
-  await client.query(
+  const linked = await client.query<{ id: string }>(
     `
       UPDATE safety.incidents
-      SET evidence_uuids = array_append(evidence_uuids, $3::uuid),
+      SET evidence_uuids = array_append(COALESCE(evidence_uuids, ARRAY[]::uuid[]), $3::uuid),
           updated_at = now()
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND NOT ($3::uuid = ANY(COALESCE(evidence_uuids, ARRAY[]::uuid[])))
+      RETURNING id::text
     `,
     [input.damageUuid, input.operatingCompanyId, row.id]
   );
+  if (!linked.rows[0]?.id) throw new Error("damage_evidence_backlink_failed");
 
   return row;
 }
