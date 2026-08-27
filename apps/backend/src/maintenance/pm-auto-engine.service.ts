@@ -215,7 +215,9 @@ async function createPmAutoWorkOrder(
       `PM Auto — ${input.schedule.label}`,
     ]
   );
-  return woRes.rows[0]?.id ?? null;
+  const createdWorkOrder = woRes.rows[0];
+  if (!createdWorkOrder?.id) throw new Error("pm_auto_work_order_insert_returned_no_row");
+  return createdWorkOrder.id;
 }
 
 async function loadUnitOdometers(
@@ -320,7 +322,9 @@ export async function runPmAutoEngineForTenant(
       `,
       [operatingCompanyId, triggerSource]
     );
-    runId = runRes.rows[0]?.id ?? null;
+    const createdRun = runRes.rows[0];
+    if (!createdRun?.id) throw new Error("pm_auto_run_insert_returned_no_row");
+    runId = createdRun.id;
   }
 
   const occurredAt = new Date().toISOString();
